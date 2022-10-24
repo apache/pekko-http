@@ -4,9 +4,8 @@
 
 package akka
 
-import com.typesafe.sbt.{SbtMultiJvm, SbtScalariform}
+import com.typesafe.sbt.SbtMultiJvm
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys._
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import sbt._
 import sbt.Keys._
 
@@ -50,10 +49,10 @@ object MultiNode extends AutoPlugin {
 
   private val multiJvmSettings =
     SbtMultiJvm.multiJvmSettings ++
-    inConfig(MultiJvm)(SbtScalariform.configScalariformSettings) ++
+    //FIXME: inConfig(MultiJvm)(SbtScalariform.configScalariformSettings) ++
     Seq(
       MultiJvm / jvmOptions := defaultMultiJvmOptions,
-      MultiJvm / compile / compileInputs := ((MultiJvm / compile / compileInputs) dependsOn (MultiJvm / ScalariformKeys.format)).value,
+      MultiJvm / compile / compileInputs := ((MultiJvm / compile / compileInputs) /* FIXME: dependsOn (MultiJvm / ScalariformKeys.format)*/).value,
       MultiJvm / scalacOptions := (Test / scalacOptions).value,
       MultiJvm / compile := ((MultiJvm / compile) triggeredBy (Test / compile)).value
     ) ++

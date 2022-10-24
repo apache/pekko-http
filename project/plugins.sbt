@@ -8,7 +8,6 @@ resolvers += Resolver.jcenterRepo
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.4.0")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.0")
-addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.8.3")
 addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.1.1")
 addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.5.0")
 addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.2")
@@ -22,6 +21,7 @@ addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.30")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.10.0")
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.10")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
 
 // used in ValidatePullRequest to check github PR comments whether to build all subprojects
 libraryDependencies += "org.kohsuke" % "github-api" % "1.306"
