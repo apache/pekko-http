@@ -10,7 +10,7 @@ import akka.http.javadsl.model.HttpRequest
 import akka.http.javadsl.server._
 import akka.stream.Materializer
 import akka.stream.SystemMaterializer
-import com.typesafe.config.{ ConfigFactory, Config }
+import com.typesafe.config.{ Config, ConfigFactory }
 import org.junit.rules.ExternalResource
 import org.junit.{ Assert, Rule }
 import scala.concurrent.duration._
@@ -42,10 +42,11 @@ abstract class JUnitRouteTestBase extends RouteTest {
       }
 
       def reportDetails[T](block: => T): T = {
-        try block catch {
+        try block
+        catch {
           case t: Throwable => throw new AssertionError(t.getMessage + "\n" +
-            "  Request was:      " + request + "\n" +
-            "  Route result was: " + result + "\n", t)
+              "  Request was:      " + request + "\n" +
+              "  Route result was: " + result + "\n", t)
         }
       }
     }

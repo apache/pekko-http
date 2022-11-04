@@ -39,13 +39,13 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
 
           try {
             Post("/", formDataUpload) ~>
-              storeUploadedFile("fieldName", tempDest) { (info, tmpFile) =>
-                complete(info.toString)
-              } ~> check {
-                file.isDefined shouldEqual true
-                responseAs[String] shouldEqual FileInfo("fieldName", "age.xml", ContentTypes.`text/xml(UTF-8)`).toString
-                read(file.get) shouldEqual data
-              }
+            storeUploadedFile("fieldName", tempDest) { (info, tmpFile) =>
+              complete(info.toString)
+            } ~> check {
+              file.isDefined shouldEqual true
+              responseAs[String] shouldEqual FileInfo("fieldName", "age.xml", ContentTypes.`text/xml(UTF-8)`).toString
+              read(file.get) shouldEqual data
+            }
           } finally {
             file.foreach(_.delete())
           }
@@ -200,9 +200,7 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
           Multipart.FormData.BodyPart(
             "field2",
             HttpEntity.IndefiniteLength(ContentTypes.`text/plain(UTF-8)`, payload),
-            Map("filename" -> "data2.txt")
-          )
-        )
+            Map("filename" -> "data2.txt")))
 
       Post("/", multipartForm) ~> streamingEcho ~> check {
         status shouldEqual StatusCodes.OK
@@ -218,20 +216,18 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
         Multipart.FormData(
           Multipart.FormData.BodyPart(
             "field1",
-            HttpEntity.IndefiniteLength(ContentTypes.`text/plain(UTF-8)`, Source(List.fill(100)(ByteString("field1data")))),
-            Map("filename" -> "data1.txt")
-          ),
+            HttpEntity.IndefiniteLength(ContentTypes.`text/plain(UTF-8)`,
+              Source(List.fill(100)(ByteString("field1data")))),
+            Map("filename" -> "data1.txt")),
           Multipart.FormData.BodyPart(
             "field2",
             HttpEntity.IndefiniteLength(ContentTypes.`text/plain(UTF-8)`, payload),
-            Map("filename" -> "data2.txt")
-          ),
+            Map("filename" -> "data2.txt")),
           Multipart.FormData.BodyPart(
             "field3",
-            HttpEntity.IndefiniteLength(ContentTypes.`text/plain(UTF-8)`, Source(List.fill(100)(ByteString("field3data")))),
-            Map("filename" -> "data3.txt")
-          )
-        )
+            HttpEntity.IndefiniteLength(ContentTypes.`text/plain(UTF-8)`,
+              Source(List.fill(100)(ByteString("field3data")))),
+            Map("filename" -> "data3.txt")))
 
       Post("/", multipartForm) ~> streamingEcho ~> check {
         status shouldEqual StatusCodes.OK
@@ -310,15 +306,10 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
               Multipart.FormData.BodyPart.Strict(
                 "field1",
                 HttpEntity(str1),
-                Map("filename" -> "data1.txt")
-              ),
+                Map("filename" -> "data1.txt")),
               Multipart.FormData.BodyPart(
                 "field2",
-                HttpEntity.IndefiniteLength(ContentTypes.`application/octet-stream`, secondSource)
-              )
-            )
-          )
-        )
+                HttpEntity.IndefiniteLength(ContentTypes.`application/octet-stream`, secondSource)))))
 
       Post("/", multipartForm) ~> route ~> check {
         status shouldEqual StatusCodes.OK
@@ -344,16 +335,11 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
               // big part comes before the one we are interested in
               Multipart.FormData.BodyPart(
                 "field2",
-                HttpEntity.IndefiniteLength(ContentTypes.`application/octet-stream`, firstSource)
-              ),
+                HttpEntity.IndefiniteLength(ContentTypes.`application/octet-stream`, firstSource)),
               Multipart.FormData.BodyPart.Strict(
                 "field1",
                 HttpEntity(str1),
-                Map("filename" -> "data1.txt")
-              )
-            )
-          )
-        )
+                Map("filename" -> "data1.txt")))))
 
       Post("/", multipartForm) ~> route ~> check {
         status shouldEqual StatusCodes.OK
@@ -480,7 +466,20 @@ class MockFailingWritePath extends java.nio.file.Path { selfPath =>
   import java.nio.channels.{ FileChannel, FileLock, ReadableByteChannel, SeekableByteChannel, WritableByteChannel }
   import java.nio.file.attribute.{ BasicFileAttributes, FileAttribute, FileAttributeView, UserPrincipalLookupService }
   import java.nio.file.spi.FileSystemProvider
-  import java.nio.file.{ AccessMode, CopyOption, DirectoryStream, FileStore, FileSystem, LinkOption, OpenOption, Path, PathMatcher, WatchEvent, WatchKey, WatchService }
+  import java.nio.file.{
+    AccessMode,
+    CopyOption,
+    DirectoryStream,
+    FileStore,
+    FileSystem,
+    LinkOption,
+    OpenOption,
+    Path,
+    PathMatcher,
+    WatchEvent,
+    WatchKey,
+    WatchService
+  }
   import java.{ lang, util }
 
   override def getFileSystem: FileSystem =
@@ -490,8 +489,10 @@ class MockFailingWritePath extends java.nio.file.Path { selfPath =>
         override def newFileSystem(uri: URI, env: util.Map[String, _]): FileSystem = ???
         override def getFileSystem(uri: URI): FileSystem = ???
         override def getPath(uri: URI): Path = ???
-        override def newByteChannel(path: Path, options: util.Set[_ <: OpenOption], attrs: FileAttribute[_]*): SeekableByteChannel = ???
-        override def newDirectoryStream(dir: Path, filter: DirectoryStream.Filter[_ >: Path]): DirectoryStream[Path] = ???
+        override def newByteChannel(
+            path: Path, options: util.Set[_ <: OpenOption], attrs: FileAttribute[_]*): SeekableByteChannel = ???
+        override def newDirectoryStream(dir: Path, filter: DirectoryStream.Filter[_ >: Path]): DirectoryStream[Path] =
+          ???
         override def createDirectory(dir: Path, attrs: FileAttribute[_]*): Unit = ???
         override def delete(path: Path): Unit = ()
         override def copy(source: Path, target: Path, options: CopyOption*): Unit = ???
@@ -500,11 +501,15 @@ class MockFailingWritePath extends java.nio.file.Path { selfPath =>
         override def isHidden(path: Path): Boolean = ???
         override def getFileStore(path: Path): FileStore = ???
         override def checkAccess(path: Path, modes: AccessMode*): Unit = ???
-        override def getFileAttributeView[V <: FileAttributeView](path: Path, `type`: Class[V], options: LinkOption*): V = ???
-        override def readAttributes[A <: BasicFileAttributes](path: Path, `type`: Class[A], options: LinkOption*): A = ???
-        override def readAttributes(path: Path, attributes: String, options: LinkOption*): util.Map[String, AnyRef] = ???
+        override def getFileAttributeView[V <: FileAttributeView](
+            path: Path, `type`: Class[V], options: LinkOption*): V = ???
+        override def readAttributes[A <: BasicFileAttributes](path: Path, `type`: Class[A], options: LinkOption*): A =
+          ???
+        override def readAttributes(path: Path, attributes: String, options: LinkOption*): util.Map[String, AnyRef] =
+          ???
         override def setAttribute(path: Path, attribute: String, value: Any, options: LinkOption*): Unit = ???
-        override def newFileChannel(path: Path, options: util.Set[_ <: OpenOption], attrs: FileAttribute[_]*): FileChannel =
+        override def newFileChannel(
+            path: Path, options: util.Set[_ <: OpenOption], attrs: FileAttribute[_]*): FileChannel =
           new FileChannel {
             override def read(dst: ByteBuffer): Int = ???
             override def read(dsts: Array[ByteBuffer], offset: Int, length: Int): Long = ???
@@ -560,7 +565,8 @@ class MockFailingWritePath extends java.nio.file.Path { selfPath =>
   override def toFile: File = new File("") {
     override def toPath: Path = selfPath
   }
-  override def register(watcher: WatchService, events: Array[WatchEvent.Kind[_]], modifiers: WatchEvent.Modifier*): WatchKey = ???
+  override def register(
+      watcher: WatchService, events: Array[WatchEvent.Kind[_]], modifiers: WatchEvent.Modifier*): WatchKey = ???
   override def register(watcher: WatchService, events: WatchEvent.Kind[_]*): WatchKey = ???
   override def iterator(): util.Iterator[Path] = ???
   override def compareTo(other: Path): Int = ???

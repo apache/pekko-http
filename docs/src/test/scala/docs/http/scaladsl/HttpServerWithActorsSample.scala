@@ -6,7 +6,7 @@ package docs.http.scaladsl
 
 object HttpServerWithActorsSample {
 
-  //#akka-typed-behavior
+  // #akka-typed-behavior
   import akka.actor.typed.{ ActorRef, Behavior }
   import akka.actor.typed.scaladsl.Behaviors
 
@@ -47,9 +47,9 @@ object HttpServerWithActorsSample {
     }
 
   }
-  //#akka-typed-behavior
+  // #akka-typed-behavior
 
-  //#akka-typed-json
+  // #akka-typed-json
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
   import spray.json.DefaultJsonProtocol
   import spray.json.DeserializationException
@@ -77,9 +77,9 @@ object HttpServerWithActorsSample {
 
     implicit val jobFormat = jsonFormat4(Job)
   }
-  //#akka-typed-json
+  // #akka-typed-json
 
-  //#akka-typed-route
+  // #akka-typed-route
   import akka.actor.typed.ActorSystem
   import akka.util.Timeout
 
@@ -90,7 +90,8 @@ object HttpServerWithActorsSample {
   import scala.concurrent.duration._
   import scala.concurrent.Future
 
-  class JobRoutes(buildJobRepository: ActorRef[JobRepository.Command])(implicit system: ActorSystem[_]) extends JsonSupport {
+  class JobRoutes(buildJobRepository: ActorRef[JobRepository.Command])(
+      implicit system: ActorSystem[_]) extends JsonSupport {
 
     import akka.actor.typed.scaladsl.AskPattern.schedulerFromActorSystem
     import akka.actor.typed.scaladsl.AskPattern.Askable
@@ -121,8 +122,7 @@ object HttpServerWithActorsSample {
                   case JobRepository.OK         => complete("Jobs cleared")
                   case JobRepository.KO(reason) => complete(StatusCodes.InternalServerError -> reason)
                 }
-              }
-            )
+              })
           },
           (get & path(LongNumber)) { id =>
             val maybeJob: Future[Option[JobRepository.Job]] =
@@ -130,18 +130,17 @@ object HttpServerWithActorsSample {
             rejectEmptyResponse {
               complete(maybeJob)
             }
-          }
-        )
+          })
       }
   }
-  //#akka-typed-route
+  // #akka-typed-route
 
-  //#akka-typed-bootstrap
+  // #akka-typed-bootstrap
   import akka.actor.typed.PostStop
   import akka.http.scaladsl.Http.ServerBinding
   import akka.http.scaladsl.Http
 
-  import scala.util.{ Success, Failure }
+  import scala.util.{ Failure, Success }
 
   object Server {
 
@@ -151,7 +150,6 @@ object HttpServerWithActorsSample {
     case object Stop extends Message
 
     def apply(host: String, port: Int): Behavior[Message] = Behaviors.setup { ctx =>
-
       implicit val system = ctx.system
 
       val buildJobRepository = ctx.spawn(JobRepository(), "JobRepository")
@@ -203,5 +201,5 @@ object HttpServerWithActorsSample {
     val system: ActorSystem[Server.Message] =
       ActorSystem(Server("localhost", 8080), "BuildJobsServer")
   }
-  //#akka-typed-bootstrap
+  // #akka-typed-bootstrap
 }

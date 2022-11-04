@@ -63,7 +63,7 @@ class ScalatestRouteTestSpec extends AnyFreeSpec with Matchers with ScalatestRou
     "a test checking a route that returns infinite chunks" in {
       Get() ~> {
         val infiniteSource =
-          Source.unfold(0L)((acc) => Some((acc + 1, acc)))
+          Source.unfold(0L)(acc => Some((acc + 1, acc)))
             .throttle(1, 20.millis)
             .map(i => ByteString(i.toString))
         complete(HttpEntity(ContentTypes.`application/octet-stream`, infiniteSource))
@@ -87,13 +87,13 @@ class ScalatestRouteTestSpec extends AnyFreeSpec with Matchers with ScalatestRou
     }
 
     "running on akka dispatcher threads" in Await.result(Future {
-      // https://github.com/akka/akka-http/pull/2526
-      // Check will block while waiting on the response, this might lead to starvation
-      // on the BatchingExecutor of akka's dispatcher if the blocking is not managed properly.
-      Get() ~> complete(Future(HttpResponse())) ~> check {
-        status shouldEqual OK
-      }
-    }, 5.seconds)
+        // https://github.com/akka/akka-http/pull/2526
+        // Check will block while waiting on the response, this might lead to starvation
+        // on the BatchingExecutor of akka's dispatcher if the blocking is not managed properly.
+        Get() ~> complete(Future(HttpResponse())) ~> check {
+          status shouldEqual OK
+        }
+      }, 5.seconds)
 
     "separation of route execution from checking" in {
       val pinkHeader = RawHeader("Fancy", "pink")
@@ -158,8 +158,8 @@ class ScalatestRouteTestSpec extends AnyFreeSpec with Matchers with ScalatestRou
 
       val ex = the[Exception] thrownBy (runTest())
       ex.getMessage shouldEqual
-        "`akka.http.server.transparent-head-requests = on` not supported in RouteTest using `~>`. " +
-        "Use `~!>` instead for a full-stack test, e.g. `req ~!> route ~> check {...}`"
+      "`akka.http.server.transparent-head-requests = on` not supported in RouteTest using `~>`. " +
+      "Use `~!>` instead for a full-stack test, e.g. `req ~!> route ~> check {...}`"
     }
   }
 }

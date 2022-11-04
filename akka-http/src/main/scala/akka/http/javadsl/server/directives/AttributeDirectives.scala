@@ -4,7 +4,7 @@
 
 package akka.http.javadsl.server.directives
 
-import java.util.{ Optional, function => jf }
+import java.util.{ function => jf, Optional }
 
 import akka.http.javadsl.model.AttributeKey
 import akka.http.javadsl.server.Route

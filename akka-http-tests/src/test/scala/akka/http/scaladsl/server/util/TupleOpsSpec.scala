@@ -22,9 +22,9 @@ class TupleOpsSpec extends AnyWordSpec with Matchers {
     }
 
     "support joining tuples" in {
-      (1, Symbol("X2"), "3") join (()) shouldEqual ((1, Symbol("X2"), "3"))
-      () join ((1, Symbol("X2"), "3")) shouldEqual ((1, Symbol("X2"), "3"))
-      (1, Symbol("X2"), "3") join ((4.0, 5L)) shouldEqual ((1, Symbol("X2"), "3", 4.0, 5L))
+      (1, Symbol("X2"), "3").join(()) shouldEqual ((1, Symbol("X2"), "3"))
+      ().join((1, Symbol("X2"), "3")) shouldEqual ((1, Symbol("X2"), "3"))
+      (1, Symbol("X2"), "3").join((4.0, 5L)) shouldEqual ((1, Symbol("X2"), "3", 4.0, 5L))
     }
   }
 }

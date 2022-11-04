@@ -94,7 +94,8 @@ trait RouteTestResultComponent {
         case s: HttpEntity.Strict => () => s
 
         case HttpEntity.Default(contentType, contentLength, data) =>
-          val dataChunks = awaitAllElements(data); { () => HttpEntity.Default(contentType, contentLength, Source(dataChunks)) }
+          val dataChunks = awaitAllElements(data);
+          { () => HttpEntity.Default(contentType, contentLength, Source(dataChunks)) }
 
         case HttpEntity.CloseDelimited(contentType, data) =>
           val dataChunks = awaitAllElements(data); { () => HttpEntity.CloseDelimited(contentType, Source(dataChunks)) }

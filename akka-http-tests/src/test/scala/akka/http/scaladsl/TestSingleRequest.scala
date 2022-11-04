@@ -6,7 +6,7 @@ package akka.http.scaladsl
 
 import akka.http.scaladsl.model.HttpRequest
 import akka.util.ByteString
-import com.typesafe.config.{ ConfigFactory, Config }
+import com.typesafe.config.{ Config, ConfigFactory }
 import akka.actor.ActorSystem
 import akka.stream._
 import scala.concurrent.Await

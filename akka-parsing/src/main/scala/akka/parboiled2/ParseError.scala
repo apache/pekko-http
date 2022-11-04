@@ -20,9 +20,9 @@ import scala.annotation.tailrec
 import scala.collection.immutable
 
 case class ParseError(
-  position:          Position,
-  principalPosition: Position,
-  traces:            immutable.Seq[RuleTrace]) extends RuntimeException {
+    position: Position,
+    principalPosition: Position,
+    traces: immutable.Seq[RuleTrace]) extends RuntimeException {
   require(principalPosition.index >= position.index, "principalPosition must be > position")
   def format(parser: Parser): String = format(parser.input)
   def format(parser: Parser, formatter: ErrorFormatter): String = format(parser.input, formatter)
@@ -32,7 +32,7 @@ case class ParseError(
   override def toString = s"ParseError($position, $principalPosition, <${traces.size} traces>)"
 
   lazy val effectiveTraces: immutable.Seq[RuleTrace] =
-    traces map {
+    traces.map {
       val commonPrefixLen = RuleTrace.commonNonAtomicPrefixLength(traces)
       if (commonPrefixLen > 0) t => t.copy(prefix = t.prefix.drop(commonPrefixLen)).dropUnreportedPrefix
       else _.dropUnreportedPrefix
@@ -100,7 +100,7 @@ object RuleTrace {
         }
       @tailrec def rec(current: List[NonTerminal], namedIx: Int, ix: Int): Int =
         current match {
-          case head :: tail if tracesTail forall hasElem(ix, head) =>
+          case head :: tail if tracesTail.forall(hasElem(ix, head)) =>
             head.key match {
               case Named(_) => rec(tail, if (namedIx >= 0) namedIx else ix, ix + 1)
               case RuleCall => rec(tail, namedIx, ix + 1) // RuleCall elements allow the name to be carried over

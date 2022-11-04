@@ -55,7 +55,8 @@ abstract class BasicDirectives {
   }
 
   def mapRejections(f: JFunction[JList[Rejection], JList[Rejection]], inner: Supplier[Route]): Route = RouteAdapter {
-    D.mapRejections(rejections => Util.immutableSeq(f.apply(Util.javaArrayList(rejections.map(_.asJava)))).map(_.asScala)) { inner.get.delegate }
+    D.mapRejections(rejections =>
+      Util.immutableSeq(f.apply(Util.javaArrayList(rejections.map(_.asJava)))).map(_.asScala)) { inner.get.delegate }
   }
 
   def mapResponse(f: JFunction[HttpResponse, HttpResponse], inner: Supplier[Route]): Route = RouteAdapter {
@@ -66,9 +67,10 @@ abstract class BasicDirectives {
     D.mapResponseEntity(e => f.apply(e.asJava).asScala) { inner.get.delegate }
   }
 
-  def mapResponseHeaders(f: JFunction[JList[HttpHeader], JList[HttpHeader]], inner: Supplier[Route]): Route = RouteAdapter {
-    D.mapResponseHeaders(l => Util.immutableSeq(f.apply(Util.javaArrayList(l))).map(_.asScala)) { inner.get.delegate } // TODO try to remove map()
-  }
+  def mapResponseHeaders(f: JFunction[JList[HttpHeader], JList[HttpHeader]], inner: Supplier[Route]): Route =
+    RouteAdapter {
+      D.mapResponseHeaders(l => Util.immutableSeq(f.apply(Util.javaArrayList(l))).map(_.asScala)) { inner.get.delegate } // TODO try to remove map()
+    }
 
   def mapInnerRoute(f: JFunction[Route, Route], inner: Supplier[Route]): Route = RouteAdapter {
     D.mapInnerRoute(route => f(RouteAdapter(route)).delegate) { inner.get.delegate }
@@ -82,19 +84,27 @@ abstract class BasicDirectives {
     D.mapRouteResult(route => f(route.asJava).asScala) { inner.get.delegate }
   }
 
-  def mapRouteResultFuture(f: JFunction[CompletionStage[RouteResult], CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
+  def mapRouteResultFuture(f: JFunction[CompletionStage[RouteResult], CompletionStage[RouteResult]],
+      inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRouteResultFuture(stage =>
-      f(toJava(stage.fast.map(_.asJava)(ExecutionContexts.sameThreadExecutionContext))).toScala.fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) {
+      f(toJava(stage.fast.map(_.asJava)(ExecutionContexts.sameThreadExecutionContext))).toScala.fast.map(_.asScala)(
+        ExecutionContexts.sameThreadExecutionContext)) {
       inner.get.delegate
     }
   }
 
-  def mapRouteResultWith(f: JFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
-    D.mapRouteResultWith(r => f(r.asJava).toScala.fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) { inner.get.delegate }
-  }
+  def mapRouteResultWith(f: JFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route =
+    RouteAdapter {
+      D.mapRouteResultWith(r => f(r.asJava).toScala.fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) {
+        inner.get.delegate
+      }
+    }
 
-  def mapRouteResultWithPF(f: PartialFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
-    D.mapRouteResultWith(r => f(r.asJava).toScala.fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) { inner.get.delegate }
+  def mapRouteResultWithPF(
+      f: PartialFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
+    D.mapRouteResultWith(r => f(r.asJava).toScala.fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) {
+      inner.get.delegate
+    }
   }
 
   /**
@@ -147,8 +157,11 @@ abstract class BasicDirectives {
     D.recoverRejections(rs => f.apply(Util.javaArrayList(rs.map(_.asJava))).asScala) { inner.get.delegate }
   }
 
-  def recoverRejectionsWith(f: JFunction[JIterable[Rejection], CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
-    D.recoverRejectionsWith(rs => f.apply(Util.javaArrayList(rs.map(_.asJava))).toScala.fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) { inner.get.delegate }
+  def recoverRejectionsWith(
+      f: JFunction[JIterable[Rejection], CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
+    D.recoverRejectionsWith(rs =>
+      f.apply(Util.javaArrayList(rs.map(_.asJava))).toScala.fast.map(_.asScala)(
+        ExecutionContexts.sameThreadExecutionContext)) { inner.get.delegate }
   }
 
   /**
@@ -227,7 +240,9 @@ abstract class BasicDirectives {
    * Extracts a single value using the given function.
    */
   def extract[T](extract: JFunction[RequestContext, T], inner: JFunction[T, Route]): Route = RouteAdapter {
-    D.extract(sc => extract.apply(JavaMapping.toJava(sc)(server.RoutingJavaMapping.RequestContext))) { c => inner.apply(c).delegate }
+    D.extract(sc => extract.apply(JavaMapping.toJava(sc)(server.RoutingJavaMapping.RequestContext))) { c =>
+      inner.apply(c).delegate
+    }
   }
 
   /**
@@ -287,7 +302,9 @@ abstract class BasicDirectives {
    * Extracts the [[akka.http.javadsl.server.RequestContext]] itself.
    */
   def extractRequestContext(inner: JFunction[RequestContext, Route]) = RouteAdapter {
-    D.extractRequestContext { ctx => inner.apply(JavaMapping.toJava(ctx)(server.RoutingJavaMapping.RequestContext)).delegate }
+    D.extractRequestContext { ctx =>
+      inner.apply(JavaMapping.toJava(ctx)(server.RoutingJavaMapping.RequestContext)).delegate
+    }
   }
 
   /**
@@ -330,9 +347,10 @@ abstract class BasicDirectives {
    *
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
    */
-  def extractStrictEntity(timeout: FiniteDuration, maxBytes: Long, inner: JFunction[HttpEntity.Strict, Route]): Route = RouteAdapter {
-    D.extractStrictEntity(timeout, maxBytes) { strict => inner.apply(strict).delegate }
-  }
+  def extractStrictEntity(timeout: FiniteDuration, maxBytes: Long, inner: JFunction[HttpEntity.Strict, Route]): Route =
+    RouteAdapter {
+      D.extractStrictEntity(timeout, maxBytes) { strict => inner.apply(strict).delegate }
+    }
 
   /**
    * WARNING: This will read the entire request entity into memory and effectively disable streaming.

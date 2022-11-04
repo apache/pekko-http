@@ -90,22 +90,32 @@ object ParameterDirectives extends ParameterDirectives {
     implicit def forSymbol(symbol: Symbol)(implicit fsu: FSU[String]): ParamSpec.Aux[String] = forName(symbol.name, fsu)
     implicit def forNR[T](nr: NameReceptacle[T])(implicit fsu: FSU[T]): ParamSpec.Aux[T] = forName(nr.name, fsu)
     implicit def forNUR[T](nur: NameUnmarshallerReceptacle[T]): ParamSpec.Aux[T] = forName(nur.name, nur.um)
-    implicit def forNOR[T](nor: NameOptionReceptacle[T])(implicit fsou: FSOU[T]): ParamSpec.Aux[Option[T]] = forName(nor.name, fsou)
-    implicit def forNDR[T](ndr: NameDefaultReceptacle[T])(implicit fsou: FSOU[T]): ParamSpec.Aux[T] = forName(ndr.name, fsou.withDefaultValue(ndr.default))
-    implicit def forNOUR[T](nour: NameOptionUnmarshallerReceptacle[T]): ParamSpec.Aux[Option[T]] = forName(nour.name, nour.um: FSOU[T])
-    implicit def forNDUR[T](ndur: NameDefaultUnmarshallerReceptacle[T]): ParamSpec.Aux[T] = forName(ndur.name, (ndur.um: FSOU[T]).withDefaultValue(ndur.default))
+    implicit def forNOR[T](nor: NameOptionReceptacle[T])(implicit fsou: FSOU[T]): ParamSpec.Aux[Option[T]] =
+      forName(nor.name, fsou)
+    implicit def forNDR[T](ndr: NameDefaultReceptacle[T])(implicit fsou: FSOU[T]): ParamSpec.Aux[T] =
+      forName(ndr.name, fsou.withDefaultValue(ndr.default))
+    implicit def forNOUR[T](nour: NameOptionUnmarshallerReceptacle[T]): ParamSpec.Aux[Option[T]] =
+      forName(nour.name, nour.um: FSOU[T])
+    implicit def forNDUR[T](ndur: NameDefaultUnmarshallerReceptacle[T]): ParamSpec.Aux[T] =
+      forName(ndur.name, (ndur.um: FSOU[T]).withDefaultValue(ndur.default))
 
     // repeated
-    implicit def forRepVR[T](rvr: RepeatedValueReceptacle[T])(implicit fsu: FSU[T]): ParamSpec.Aux[Iterable[T]] = forNameRepeated(rvr.name, fsu)
-    implicit def forRepVUR[T](rvur: RepeatedValueUnmarshallerReceptacle[T]): ParamSpec.Aux[Iterable[T]] = forNameRepeated(rvur.name, rvur.um)
+    implicit def forRepVR[T](rvr: RepeatedValueReceptacle[T])(implicit fsu: FSU[T]): ParamSpec.Aux[Iterable[T]] =
+      forNameRepeated(rvr.name, fsu)
+    implicit def forRepVUR[T](rvur: RepeatedValueUnmarshallerReceptacle[T]): ParamSpec.Aux[Iterable[T]] =
+      forNameRepeated(rvur.name, rvur.um)
 
     // required
-    implicit def forRVR[T](rvr: RequiredValueReceptacle[T])(implicit fsu: FSU[T]): ParamSpec.Aux[Unit] = forNameRequired(rvr.name, fsu, rvr.requiredValue)
-    implicit def forRVUR[T](rvur: RequiredValueUnmarshallerReceptacle[T]): ParamSpec.Aux[Unit] = forNameRequired(rvur.name, rvur.um, rvur.requiredValue)
+    implicit def forRVR[T](rvr: RequiredValueReceptacle[T])(implicit fsu: FSU[T]): ParamSpec.Aux[Unit] =
+      forNameRequired(rvr.name, fsu, rvr.requiredValue)
+    implicit def forRVUR[T](rvur: RequiredValueUnmarshallerReceptacle[T]): ParamSpec.Aux[Unit] =
+      forNameRequired(rvur.name, rvur.um, rvur.requiredValue)
 
     private def forName[T](name: String, fsu: FSOU[T]): ParamSpec.Aux[T] = ParamSpec(filter(name, fsu))
-    private def forNameRepeated[T](name: String, fsu: FSU[T]): ParamSpec.Aux[Iterable[T]] = ParamSpec(repeatedFilter(name, fsu))
-    private def forNameRequired[T](name: String, fsu: FSU[T], requiredValue: T): ParamSpec.Aux[Unit] = ParamSpec(requiredFilter(name, fsu, requiredValue).tmap(_ => Tuple1(())))
+    private def forNameRepeated[T](name: String, fsu: FSU[T]): ParamSpec.Aux[Iterable[T]] =
+      ParamSpec(repeatedFilter(name, fsu))
+    private def forNameRequired[T](name: String, fsu: FSU[T], requiredValue: T): ParamSpec.Aux[Unit] =
+      ParamSpec(requiredFilter(name, fsu, requiredValue).tmap(_ => Tuple1(())))
   }
 
   @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility", "10.2.0")
@@ -152,18 +162,22 @@ object ParameterDirectives extends ParameterDirectives {
     def forNOR[T](implicit fsou: FSOU[T]): ParamDefAux[NameOptionReceptacle[T], Directive1[Option[T]]] =
       extractParameter[NameOptionReceptacle[T], Option[T]] { nr => filter[Option[T]](nr.name, fsou) }
     def forNDR[T](implicit fsou: FSOU[T]): ParamDefAux[NameDefaultReceptacle[T], Directive1[T]] =
-      extractParameter[NameDefaultReceptacle[T], T] { nr => filter[T](nr.name, fsou withDefaultValue nr.default) }
+      extractParameter[NameDefaultReceptacle[T], T] { nr => filter[T](nr.name, fsou.withDefaultValue(nr.default)) }
     def forNOUR[T]: ParamDefAux[NameOptionUnmarshallerReceptacle[T], Directive1[Option[T]]] =
       extractParameter[NameOptionUnmarshallerReceptacle[T], Option[T]] { nr => filter(nr.name, nr.um: FSOU[T]) }
     def forNDUR[T]: ParamDefAux[NameDefaultUnmarshallerReceptacle[T], Directive1[T]] =
-      extractParameter[NameDefaultUnmarshallerReceptacle[T], T] { nr => filter[T](nr.name, (nr.um: FSOU[T]) withDefaultValue nr.default) }
+      extractParameter[NameDefaultUnmarshallerReceptacle[T], T] { nr =>
+        filter[T](nr.name, (nr.um: FSOU[T]).withDefaultValue(nr.default))
+      }
 
     //////////////////// required parameter support ////////////////////
 
     def forRVR[T](implicit fsu: FSU[T]): ParamDefAux[RequiredValueReceptacle[T], Directive0] =
       paramDef[RequiredValueReceptacle[T], Directive0] { rvr => requiredFilter(rvr.name, fsu, rvr.requiredValue) }
     def forRVDR[T]: ParamDefAux[RequiredValueUnmarshallerReceptacle[T], Directive0] =
-      paramDef[RequiredValueUnmarshallerReceptacle[T], Directive0] { rvr => requiredFilter(rvr.name, rvr.um, rvr.requiredValue) }
+      paramDef[RequiredValueUnmarshallerReceptacle[T], Directive0] { rvr =>
+        requiredFilter(rvr.name, rvr.um, rvr.requiredValue)
+      }
 
     //////////////////// repeated parameter support ////////////////////
 
@@ -178,14 +192,17 @@ object ParameterDirectives extends ParameterDirectives {
     import akka.http.scaladsl.server.util.BinaryPolyFunc
 
     // not implicit any more
-    private[http] def forTuple[T](implicit fold: FoldLeft[Directive0, T, ConvertParamDefAndConcatenate.type]): ParamDefAux[T, fold.Out] =
+    private[http] def forTuple[T](
+        implicit fold: FoldLeft[Directive0, T, ConvertParamDefAndConcatenate.type]): ParamDefAux[T, fold.Out] =
       paramDef[T, fold.Out](fold(BasicDirectives.pass, _))
 
     object ConvertParamDefAndConcatenate extends BinaryPolyFunc {
-      implicit def from[P, TA, TB](implicit pdef: ParamDef[P] { type Out = Directive[TB] }, ev: Join[TA, TB]): BinaryPolyFunc.Case[Directive[TA], P, ConvertParamDefAndConcatenate.type] { type Out = Directive[ev.Out] } =
+      implicit def from[P, TA, TB](implicit pdef: ParamDef[P] { type Out = Directive[TB] }, ev: Join[TA, TB])
+          : BinaryPolyFunc.Case[Directive[TA], P, ConvertParamDefAndConcatenate.type] { type Out = Directive[ev.Out] } =
         at[Directive[TA], P] { (a, t) => a & pdef(t) }
     }
   }
+
   /** Actual directive implementations shared between old and new API */
   private object Impl {
     import BasicDirectives._
@@ -195,7 +212,7 @@ object ParameterDirectives extends ParameterDirectives {
     type FSOU[T] = Unmarshaller[Option[String], T]
 
     def filter[T](paramName: String, fsou: FSOU[T]): Directive1[T] =
-      extractRequestContext flatMap { ctx =>
+      extractRequestContext.flatMap { ctx =>
         import ctx.executionContext
         import ctx.materializer
         Try(ctx.request.uri.query()) match {
@@ -205,18 +222,19 @@ object ParameterDirectives extends ParameterDirectives {
       }
 
     def requiredFilter[T](paramName: String, fsou: FSOU[T], requiredValue: Any): Directive0 =
-      extractRequestContext flatMap { ctx =>
+      extractRequestContext.flatMap { ctx =>
         import ctx.executionContext
         import ctx.materializer
-        onComplete(fsou(ctx.request.uri.query().get(paramName))) flatMap {
+        onComplete(fsou(ctx.request.uri.query().get(paramName))).flatMap {
           case Success(value) if value == requiredValue => pass
-          case Success(value)                           => reject(InvalidRequiredValueForQueryParamRejection(paramName, requiredValue.toString, value.toString))
-          case _                                        => reject(MissingQueryParamRejection(paramName))
+          case Success(value) =>
+            reject(InvalidRequiredValueForQueryParamRejection(paramName, requiredValue.toString, value.toString))
+          case _ => reject(MissingQueryParamRejection(paramName))
         }
       }
 
     def repeatedFilter[T](paramName: String, fsu: FSU[T]): Directive1[Iterable[T]] =
-      extractRequestContext flatMap { ctx =>
+      extractRequestContext.flatMap { ctx =>
         import ctx.executionContext
         import ctx.materializer
         handleParamResult(paramName, Future.sequence(ctx.request.uri.query().getAll(paramName).map(fsu.apply)))

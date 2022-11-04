@@ -33,10 +33,12 @@ class UnmarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll
       Unmarshal(HttpEntity("Hällö")).to[String] should evaluateTo("Hällö")
     }
     "stringUnmarshaller should assume UTF-8 for textual content type with missing charset" in {
-      Unmarshal(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hällö".getBytes("UTF-8"))).to[String] should evaluateTo("Hällö")
+      Unmarshal(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hällö".getBytes("UTF-8"))).to[
+        String] should evaluateTo("Hällö")
     }
     "charArrayUnmarshaller should unmarshal `text/plain` content in UTF-8 to char arrays" in {
-      Unmarshal(HttpEntity("árvíztűrő ütvefúrógép")).to[Array[Char]] should evaluateTo("árvíztűrő ütvefúrógép".toCharArray)
+      Unmarshal(HttpEntity("árvíztűrő ütvefúrógép")).to[Array[Char]] should evaluateTo(
+        "árvíztűrő ütvefúrógép".toCharArray)
     }
   }
 
@@ -58,13 +60,16 @@ class UnmarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll
       Unmarshal(uuid.toString).to[UUID] should evaluateTo(uuid)
     }
     "uuidUnmarshaller should unmarshal nil uuid" in {
-      Unmarshal("00000000-0000-0000-0000-000000000000").to[UUID] should evaluateTo(UUID.fromString("00000000-0000-0000-0000-000000000000"))
+      Unmarshal("00000000-0000-0000-0000-000000000000").to[UUID] should evaluateTo(
+        UUID.fromString("00000000-0000-0000-0000-000000000000"))
     }
   }
 
   "The GenericUnmarshallers" - {
-    implicit val rawInt: FromEntityUnmarshaller[Int] = Unmarshaller(implicit ex => bs => bs.toStrict(1.second.dilated).map(_.data.utf8String.toInt))
-    implicit val rawlong: FromEntityUnmarshaller[Long] = Unmarshaller(implicit ex => bs => bs.toStrict(1.second.dilated).map(_.data.utf8String.toLong))
+    implicit val rawInt: FromEntityUnmarshaller[Int] =
+      Unmarshaller(implicit ex => bs => bs.toStrict(1.second.dilated).map(_.data.utf8String.toInt))
+    implicit val rawlong: FromEntityUnmarshaller[Long] =
+      Unmarshaller(implicit ex => bs => bs.toStrict(1.second.dilated).map(_.data.utf8String.toLong))
 
     "eitherUnmarshaller should unmarshal its Right value" in {
       // we'll find:
@@ -103,7 +108,8 @@ class UnmarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll
 
     "should handle media ranges of types with missing charset by assuming UTF-8 charset when matching" in {
       val um = Unmarshaller.stringUnmarshaller.forContentTypes(MediaTypes.`text/plain`)
-      Await.result(um(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hêllö".getBytes("utf-8"))), 1.second.dilated) should ===("Hêllö")
+      Await.result(um(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hêllö".getBytes("utf-8"))),
+        1.second.dilated) should ===("Hêllö")
     }
 
     "should handle custom media types case insensitively when matching" in {

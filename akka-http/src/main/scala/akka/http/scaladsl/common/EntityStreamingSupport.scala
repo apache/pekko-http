@@ -16,8 +16,10 @@ import akka.util.ByteString
  * See [[JsonEntityStreamingSupport]] or [[CsvEntityStreamingSupport]] for default implementations.
  */
 abstract class EntityStreamingSupport extends common.EntityStreamingSupport {
+
   /** Read-side, what content types it is able to frame and unmarshall. */
   def supported: ContentTypeRange
+
   /** Write-side, defines what Content-Type the Marshaller should offer and the final Content-Type of the response. */
   def contentType: ContentType
 
@@ -114,6 +116,7 @@ object EntityStreamingSupport {
    * See also <a href="https://en.wikipedia.org/wiki/JSON_Streaming">https://en.wikipedia.org/wiki/JSON_Streaming</a>
    */
   def json(): JsonEntityStreamingSupport = json(8 * 1024)
+
   /**
    * Default `application/json` entity streaming support.
    *
@@ -133,10 +136,10 @@ object EntityStreamingSupport {
    * Limits the maximum line-length to 8KB, if you want to increase this limit provide a value explicitly.
    */
   def csv(): CsvEntityStreamingSupport = csv(8 * 1024)
+
   /**
    * Default `text/csv(UTF-8)` entity streaming support.
    * Provides framing and rendering of `\n` separated lines and marshalling Sources into such values.
    */
   def csv(maxLineLength: Int): CsvEntityStreamingSupport = new CsvEntityStreamingSupport(maxLineLength)
 }
-

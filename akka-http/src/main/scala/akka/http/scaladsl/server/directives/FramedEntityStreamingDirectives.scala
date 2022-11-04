@@ -38,7 +38,8 @@ trait FramedEntityStreamingDirectives extends MarshallingDirectives {
    * See also [[MiscDirectives.withoutSizeLimit]] as you may want to allow streaming infinite streams of data in this route.
    * By default the uploaded data is limited by the `akka.http.parsing.max-content-length`.
    */
-  final def asSourceOf[T](implicit um: FromByteStringUnmarshaller[T], support: EntityStreamingSupport): RequestToSourceUnmarshaller[T] =
+  final def asSourceOf[T](
+      implicit um: FromByteStringUnmarshaller[T], support: EntityStreamingSupport): RequestToSourceUnmarshaller[T] =
     asSourceOfInternal(um, support)
 
   /**
@@ -56,7 +57,8 @@ trait FramedEntityStreamingDirectives extends MarshallingDirectives {
    * See also [[MiscDirectives.withoutSizeLimit]] as you may want to allow streaming infinite streams of data in this route.
    * By default the uploaded data is limited by the `akka.http.parsing.max-content-length`.
    */
-  final def asSourceOf[T](support: EntityStreamingSupport)(implicit um: FromByteStringUnmarshaller[T]): RequestToSourceUnmarshaller[T] =
+  final def asSourceOf[T](support: EntityStreamingSupport)(
+      implicit um: FromByteStringUnmarshaller[T]): RequestToSourceUnmarshaller[T] =
     asSourceOfInternal(um, support)
 
   // format: OFF

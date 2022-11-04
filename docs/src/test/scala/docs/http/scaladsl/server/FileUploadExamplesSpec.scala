@@ -27,11 +27,10 @@ class FileUploadExamplesSpec extends RoutingSpec with CompileOnlySpec {
   }
 
   "simple-upload" in {
-    //#simple-upload
+    // #simple-upload
     val uploadVideo =
       path("video") {
         entity(as[Multipart.FormData]) { formData =>
-
           // collect all parts of the multipart as it arrives into a map
           val allPartsF: Future[Map[String, Any]] = formData.parts.mapAsync[(String, Any)](1) {
 
@@ -40,12 +39,12 @@ class FileUploadExamplesSpec extends RoutingSpec with CompileOnlySpec {
               // file to where it got stored
               val file = File.createTempFile("upload", "tmp")
               b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ =>
-                (b.name -> file))
+                b.name -> file)
 
             case b: BodyPart =>
               // collect form field values
               b.toStrict(2.seconds).map(strict =>
-                (b.name -> strict.entity.data.utf8String))
+                b.name -> strict.entity.data.utf8String)
 
           }.runFold(Map.empty[String, Any])((map, tuple) => map + tuple)
 
@@ -65,7 +64,7 @@ class FileUploadExamplesSpec extends RoutingSpec with CompileOnlySpec {
           }
         }
       }
-    //#simple-upload
+    // #simple-upload
   }
 
   object MetadataActor {
@@ -74,7 +73,7 @@ class FileUploadExamplesSpec extends RoutingSpec with CompileOnlySpec {
   val metadataActor: ActorRef = system.deadLetters
 
   "stream-csv-upload" in {
-    //#stream-csv-upload
+    // #stream-csv-upload
     val splitLines = Framing.delimiter(ByteString("\n"), 256)
 
     val csvUploads =
@@ -98,7 +97,7 @@ class FileUploadExamplesSpec extends RoutingSpec with CompileOnlySpec {
           }
         }
       }
-    //#stream-csv-upload
+    // #stream-csv-upload
   }
 
 }

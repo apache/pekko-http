@@ -11,7 +11,7 @@ import docs.CompileOnlySpec
 class SprayJsonPrettyMarshalSpec extends RoutingSpec with CompileOnlySpec {
 
   "spray-json example" in {
-    //#example
+    // #example
     import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
     import spray.json._
 
@@ -45,11 +45,11 @@ class SprayJsonPrettyMarshalSpec extends RoutingSpec with CompileOnlySpec {
     // verify the pretty printed JSON
     Get("/") ~> service.route ~> check {
       responseAs[String] shouldEqual
-        """{""" + "\n" +
-        """  "id": 42,""" + "\n" +
-        """  "name": "akka"""" + "\n" +
-        """}"""
+      """{""" + "\n" +
+      """  "id": 42,""" + "\n" +
+      """  "name": "akka"""" + "\n" +
+      """}"""
     }
-    //#example
+    // #example
   }
 }

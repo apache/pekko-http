@@ -36,8 +36,7 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       val headers = Seq(
         ETag("tagetitag"),
         RawHeader("raw", "whatever"),
-        new MyCustomHeader("whatever", renderInResponses = true)
-      )
+        new MyCustomHeader("whatever", renderInResponses = true))
       renderServerHeaders(headers, builder)
       val out = builder.result()
       out.exists(_._1 == "etag") shouldBe true
@@ -89,8 +88,7 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
         Connection("whatever"),
         `Content-Length`(42L),
         `Content-Type`(ContentTypes.`application/json`),
-        `Transfer-Encoding`(TransferEncodings.gzip)
-      )
+        `Transfer-Encoding`(TransferEncodings.gzip))
       renderServerHeaders(invalidExplicitHeaders, builder)
       builder.result().exists(_._1 != "date") shouldBe false
     }
@@ -99,8 +97,7 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       val builder = new VectorBuilder[(String, String)]
       val shouldNotBeRendered = Seq(
         Host("example.com", 80),
-        new MyCustomHeader("whatever", renderInResponses = false)
-      )
+        new MyCustomHeader("whatever", renderInResponses = false))
       renderServerHeaders(shouldNotBeRendered, builder)
       val value1 = builder.result()
       value1.exists(_._1 != "date") shouldBe false
@@ -109,8 +106,8 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
     "exclude explicit raw headers that is not valid for HTTP/2 or should not be provided as raw headers" in {
       val builder = new VectorBuilder[(String, String)]
       val invalidRawHeaders = Seq(
-        "connection", "content-length", "content-type", "transfer-encoding", "date", "server"
-      ).map(name => RawHeader(name, "whatever"))
+        "connection", "content-length", "content-type", "transfer-encoding", "date", "server").map(name =>
+        RawHeader(name, "whatever"))
       renderServerHeaders(invalidRawHeaders, builder)
       builder.result().exists(_._1 != "date") shouldBe false
     }
@@ -134,8 +131,7 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       val builder = new VectorBuilder[(String, String)]
       val shouldNotBeRendered = Seq(
         Host("example.com", 80),
-        new MyCustomHeader("whatever", renderInResponses = false)
-      )
+        new MyCustomHeader("whatever", renderInResponses = false))
       renderClientHeaders(shouldNotBeRendered, builder)
       val value1 = builder.result()
       value1.exists(_._1 == "date") shouldBe false
@@ -143,14 +139,19 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
 
   }
 
-  private def renderClientHeaders(headers: immutable.Seq[HttpHeader], builder: VectorBuilder[(String, String)], peerIdHeader: Option[(String, String)] = None): Unit =
-    HttpMessageRendering.renderHeaders(headers, builder, peerIdHeader, NoLogging, isServer = false, shouldRenderAutoHeaders = true, dateHeaderRendering = DateHeaderRendering.Unavailable)
+  private def renderClientHeaders(headers: immutable.Seq[HttpHeader], builder: VectorBuilder[(String, String)],
+      peerIdHeader: Option[(String, String)] = None): Unit =
+    HttpMessageRendering.renderHeaders(headers, builder, peerIdHeader, NoLogging, isServer = false,
+      shouldRenderAutoHeaders = true, dateHeaderRendering = DateHeaderRendering.Unavailable)
 
-  private def renderServerHeaders(headers: immutable.Seq[HttpHeader], builder: VectorBuilder[(String, String)], peerIdHeader: Option[(String, String)] = None): Unit =
-    HttpMessageRendering.renderHeaders(headers, builder, peerIdHeader, NoLogging, isServer = true, shouldRenderAutoHeaders = true, dateHeaderRendering = new DateHeaderRendering {
-      // fake date rendering
-      override def renderHeaderPair(): (String, String) = "date" -> DateTime.now.toRfc1123DateTimeString
-      override def renderHeaderBytes(): Array[Byte] = ???
-      override def renderHeaderValue(): String = ???
-    })
+  private def renderServerHeaders(headers: immutable.Seq[HttpHeader], builder: VectorBuilder[(String, String)],
+      peerIdHeader: Option[(String, String)] = None): Unit =
+    HttpMessageRendering.renderHeaders(headers, builder, peerIdHeader, NoLogging, isServer = true,
+      shouldRenderAutoHeaders = true,
+      dateHeaderRendering = new DateHeaderRendering {
+        // fake date rendering
+        override def renderHeaderPair(): (String, String) = "date" -> DateTime.now.toRfc1123DateTimeString
+        override def renderHeaderBytes(): Array[Byte] = ???
+        override def renderHeaderValue(): String = ???
+      })
 }

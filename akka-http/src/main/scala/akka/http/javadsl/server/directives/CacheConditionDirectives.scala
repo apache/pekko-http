@@ -73,8 +73,9 @@ abstract class CacheConditionDirectives extends BasicDirectives {
    * it on the *outside* of the `withRangeSupport(...)` directive, i.e. `withRangeSupport(...)`
    * must be on a deeper level in your route structure in order to function correctly.
    */
-  def conditional(eTag: Optional[EntityTag], lastModified: Optional[DateTime], inner: Supplier[Route]): Route = RouteAdapter {
-    D.conditional(eTag.asScala.map(_.asScala), lastModified.asScala.map(_.asScala)) { inner.get.delegate }
-  }
+  def conditional(eTag: Optional[EntityTag], lastModified: Optional[DateTime], inner: Supplier[Route]): Route =
+    RouteAdapter {
+      D.conditional(eTag.asScala.map(_.asScala), lastModified.asScala.map(_.asScala)) { inner.get.delegate }
+    }
 
 }

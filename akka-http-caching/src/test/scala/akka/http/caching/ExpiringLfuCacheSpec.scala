@@ -48,12 +48,12 @@ class ExpiringLfuCacheSpec extends AnyWordSpec with Matchers with BeforeAndAfter
     "return Futures on uncached values during evaluation and replace these with the value afterwards" in {
       val cache = lfuCache[String]()
       val latch = new CountDownLatch(1)
-      val future1 = cache(1, (promise: Promise[String]) =>
-        Future {
-          latch.await()
-          promise.success("A")
-        }
-      )
+      val future1 = cache(1,
+        (promise: Promise[String]) =>
+          Future {
+            latch.await()
+            promise.success("A")
+          })
       val future2 = cache.get(1, () => "")
 
       latch.countDown()
@@ -133,22 +133,24 @@ class ExpiringLfuCacheSpec extends AnyWordSpec with Matchers with BeforeAndAfter
       val cache = lfuCache[Int](maxCapacity = 1000)
       // exercise the cache from 10 parallel "tracks" (threads)
       val views = Await.result(Future.traverse(Seq.tabulate(10)(identity)) { track =>
-        Future {
-          val array = Array.fill(1000)(0) // our view of the cache
-          val rand = new Random(track)
-          (1 to 10000) foreach { i =>
-            val ix = rand.nextInt(1000) // for a random index into the cache
-            val value = cache.get(ix, () => { // get (and maybe set) the cache value
-              Thread.sleep(0)
-              rand.nextInt(1000000) + 1
-            }).value.get.get // should always be Future.successful
-            if (array(ix) == 0) array(ix) = value // update our view of the cache
-            else assert(array(ix) == value, "Cache view is inconsistent (track " + track + ", iteration " + i +
-              ", index " + ix + ": expected " + array(ix) + " but is " + value)
+          Future {
+            val array = Array.fill(1000)(0) // our view of the cache
+            val rand = new Random(track)
+            (1 to 10000).foreach { i =>
+              val ix = rand.nextInt(1000) // for a random index into the cache
+              val value = cache.get(ix,
+                () => { // get (and maybe set) the cache value
+                  Thread.sleep(0)
+                  rand.nextInt(1000000) + 1
+                }).value.get.get // should always be Future.successful
+              if (array(ix) == 0) array(ix) = value // update our view of the cache
+              else assert(array(ix) == value,
+                "Cache view is inconsistent (track " + track + ", iteration " + i +
+                ", index " + ix + ": expected " + array(ix) + " but is " + value)
+            }
+            array
           }
-          array
-        }
-      }, 10.second)
+        }, 10.second)
 
       views.transpose.foreach { ints: Seq[Int] =>
         ints.filter(_ != 0).reduceLeft((a, b) => if (a == b) a else 0) should not be 0
@@ -164,7 +166,7 @@ class ExpiringLfuCacheSpec extends AnyWordSpec with Matchers with BeforeAndAfter
   }
 
   def lfuCache[T](maxCapacity: Int = 500, initialCapacity: Int = 16,
-                  timeToLive: Duration = Duration.Inf, timeToIdle: Duration = Duration.Inf): LfuCache[Int, T] = {
+      timeToLive: Duration = Duration.Inf, timeToIdle: Duration = Duration.Inf): LfuCache[Int, T] = {
     LfuCache[Int, T] {
       val settings = CachingSettings(system)
       settings.withLfuCacheSettings(
@@ -172,8 +174,7 @@ class ExpiringLfuCacheSpec extends AnyWordSpec with Matchers with BeforeAndAfter
           .withMaxCapacity(maxCapacity)
           .withInitialCapacity(initialCapacity)
           .withTimeToLive(timeToLive)
-          .withTimeToIdle(timeToIdle)
-      )
+          .withTimeToIdle(timeToIdle))
     }.asInstanceOf[LfuCache[Int, T]]
   }
 

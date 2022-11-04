@@ -44,7 +44,8 @@ object Directives extends AllDirectives {
    * @return the resulting route
    */
   @ApiMayChange
-  def anyOf(first: Function[Supplier[Route], Route], second: Function[Supplier[Route], Route], inner: Supplier[Route]): Route = {
+  def anyOf(first: Function[Supplier[Route], Route], second: Function[Supplier[Route], Route], inner: Supplier[Route])
+      : Route = {
     first.apply(inner).orElse(second.apply(inner))
   }
 
@@ -61,7 +62,8 @@ object Directives extends AllDirectives {
    * @return the resulting route
    */
   @ApiMayChange
-  def anyOf[A](first: Function[Function[A, Route], Route], second: Function[Function[A, Route], Route], inner: Function[A, Route]): Route = {
+  def anyOf[A](first: Function[Function[A, Route], Route], second: Function[Function[A, Route], Route],
+      inner: Function[A, Route]): Route = {
     first.apply(inner).orElse(second.apply(inner))
   }
 
@@ -75,7 +77,8 @@ object Directives extends AllDirectives {
    * @return the resulting route
    */
   @ApiMayChange
-  def allOf(first: Function[Supplier[Route], Route], second: Function[Supplier[Route], Route], inner: Supplier[Route]): Route = {
+  def allOf(first: Function[Supplier[Route], Route], second: Function[Supplier[Route], Route], inner: Supplier[Route])
+      : Route = {
     first.apply(new Supplier[Route] {
       override def get(): Route =
         second.apply(inner)
@@ -94,7 +97,8 @@ object Directives extends AllDirectives {
    * @return the resulting route
    */
   @ApiMayChange
-  def allOf[A, B](first: Function[Function[A, Route], Route], second: Function[Function[B, Route], Route], inner: BiFunction[A, B, Route]): Route = {
+  def allOf[A, B](first: Function[Function[A, Route], Route], second: Function[Function[B, Route], Route],
+      inner: BiFunction[A, B, Route]): Route = {
     first.apply(new Function[A, Route] {
       override def apply(a: A): Route =
         second.apply(new Function[B, Route] {
@@ -115,7 +119,8 @@ object Directives extends AllDirectives {
    * @return the resulting route
    */
   @ApiMayChange
-  def allOf[A](first: Function[Supplier[Route], Route], second: Function[Function[A, Route], Route], inner: Function[A, Route]): Route = {
+  def allOf[A](first: Function[Supplier[Route], Route], second: Function[Function[A, Route], Route],
+      inner: Function[A, Route]): Route = {
     first.apply(new Supplier[Route] {
       override def get(): Route =
         second.apply(new Function[A, Route] {

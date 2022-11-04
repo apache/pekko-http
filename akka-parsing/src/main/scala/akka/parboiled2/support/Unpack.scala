@@ -55,6 +55,7 @@ object Unpack extends AlternativeUnpacks {
 }
 
 sealed abstract class AlternativeUnpacks {
+
   /**
    * Import if you'd like to *always* deliver the valueStack as an `HList`
    * at the end of the parsing run, even if it has only zero or one element(s).
@@ -64,4 +65,3 @@ sealed abstract class AlternativeUnpacks {
     def apply(hlist: HList): HList = hlist
   }
 }
-

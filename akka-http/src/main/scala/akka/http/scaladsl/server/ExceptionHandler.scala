@@ -27,7 +27,7 @@ object ExceptionHandler {
   type PF = PartialFunction[Throwable, Route]
   private[http] val ErrorMessageTemplate: String = {
     "Error during processing of request: '{}'. Completing with {} response. " +
-      "To change default exception handling behavior, provide a custom ExceptionHandler."
+    "To change default exception handling behavior, provide a custom ExceptionHandler."
   }
 
   implicit def apply(pf: PF): ExceptionHandler = apply(knownToBeSealed = false)(pf)
@@ -37,9 +37,9 @@ object ExceptionHandler {
       def isDefinedAt(error: Throwable) = pf.isDefinedAt(error)
       def apply(error: Throwable) = pf(error)
       def withFallback(that: ExceptionHandler): ExceptionHandler =
-        if (!knownToBeSealed) ExceptionHandler(knownToBeSealed = false)(this orElse that) else this
+        if (!knownToBeSealed) ExceptionHandler(knownToBeSealed = false)(this.orElse(that)) else this
       def seal(settings: RoutingSettings): ExceptionHandler =
-        if (!knownToBeSealed) ExceptionHandler(knownToBeSealed = true)(this orElse default(settings)) else this
+        if (!knownToBeSealed) ExceptionHandler(knownToBeSealed = true)(this.orElse(default(settings))) else this
     }
 
   /**
@@ -48,26 +48,26 @@ object ExceptionHandler {
   def default(settings: RoutingSettings): ExceptionHandler =
     apply(knownToBeSealed = true) {
       case IllegalRequestException(info, status) => ctx => {
-        ctx.log.warning("Illegal request: '{}'. Completing with {} response.", info.summary, status)
-        ctx.request.discardEntityBytes(ctx.materializer)
-        ctx.complete((status, info.format(settings.verboseErrorMessages)))
-      }
+          ctx.log.warning("Illegal request: '{}'. Completing with {} response.", info.summary, status)
+          ctx.request.discardEntityBytes(ctx.materializer)
+          ctx.complete((status, info.format(settings.verboseErrorMessages)))
+        }
       case e: EntityStreamSizeException => ctx => {
-        ctx.log.error(e, ErrorMessageTemplate, e, PayloadTooLarge)
-        ctx.request.discardEntityBytes(ctx.materializer)
-        ctx.complete((PayloadTooLarge, e.getMessage))
-      }
+          ctx.log.error(e, ErrorMessageTemplate, e, PayloadTooLarge)
+          ctx.request.discardEntityBytes(ctx.materializer)
+          ctx.complete((PayloadTooLarge, e.getMessage))
+        }
       case e: ExceptionWithErrorInfo => ctx => {
-        ctx.log.error(e, ErrorMessageTemplate, e.info.formatPretty, InternalServerError)
-        ctx.request.discardEntityBytes(ctx.materializer)
-        ctx.complete((InternalServerError, e.info.format(settings.verboseErrorMessages)))
-      }
+          ctx.log.error(e, ErrorMessageTemplate, e.info.formatPretty, InternalServerError)
+          ctx.request.discardEntityBytes(ctx.materializer)
+          ctx.complete((InternalServerError, e.info.format(settings.verboseErrorMessages)))
+        }
       case NonFatal(e) => ctx => {
-        val message = Option(e.getMessage).getOrElse(s"${e.getClass.getName} (No error message supplied)")
-        ctx.log.error(e, ErrorMessageTemplate, message, InternalServerError)
-        ctx.request.discardEntityBytes(ctx.materializer)
-        ctx.complete(InternalServerError)
-      }
+          val message = Option(e.getMessage).getOrElse(s"${e.getClass.getName} (No error message supplied)")
+          ctx.log.error(e, ErrorMessageTemplate, message, InternalServerError)
+          ctx.request.discardEntityBytes(ctx.materializer)
+          ctx.complete(InternalServerError)
+        }
     }
 
   /**

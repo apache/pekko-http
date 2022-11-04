@@ -48,7 +48,8 @@ trait RangeDirectives {
 
       class IndexRange(val start: Long, val end: Long) {
         def length = end - start
-        def apply(entity: UniversalEntity): UniversalEntity = entity.transformDataBytes(length, StreamUtils.sliceBytesTransformer(start, length))
+        def apply(entity: UniversalEntity): UniversalEntity =
+          entity.transformDataBytes(length, StreamUtils.sliceBytesTransformer(start, length))
         def distance(other: IndexRange) = mergedEnd(other) - mergedStart(other) - (length + other.length)
         def mergeWith(other: IndexRange) = new IndexRange(mergedStart(other), mergedEnd(other))
         def contentRange(entityLength: Long) = ContentRange(start, end - 1, entityLength)
@@ -86,10 +87,11 @@ trait RangeDirectives {
             val range = coalescedRanges.head
             val flow = StreamUtils.sliceBytesTransformer(range.start, range.length)
             val bytes = entity.dataBytes.via(flow)
-            val part = Multipart.ByteRanges.BodyPart(range.contentRange(length), HttpEntity(entity.contentType, range.length, bytes))
+            val part = Multipart.ByteRanges.BodyPart(range.contentRange(length),
+              HttpEntity(entity.contentType, range.length, bytes))
             Source.single(part)
           case n =>
-            Source fromGraph GraphDSL.create() { implicit b =>
+            Source.fromGraph(GraphDSL.create() { implicit b =>
               import GraphDSL.Implicits._
               val bcast = b.add(Broadcast[ByteString](n))
               val merge = b.add(Concat[Multipart.ByteRanges.BodyPart](n))
@@ -97,12 +99,13 @@ trait RangeDirectives {
                 val flow = StreamUtils.sliceBytesTransformer(range.start, range.length)
                 bcast ~> flow.buffer(16, OverflowStrategy.backpressure).prefixAndTail(0).map {
                   case (_, bytes) =>
-                    Multipart.ByteRanges.BodyPart(range.contentRange(length), HttpEntity(entity.contentType, range.length, bytes))
+                    Multipart.ByteRanges.BodyPart(range.contentRange(length),
+                      HttpEntity(entity.contentType, range.length, bytes))
                 } ~> merge
               }
               entity.dataBytes ~> bcast
               SourceShape(merge.out)
-            }
+            })
         }
         Multipart.ByteRanges(source)
       }

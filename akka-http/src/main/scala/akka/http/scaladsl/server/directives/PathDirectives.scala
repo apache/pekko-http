@@ -51,7 +51,7 @@ trait PathDirectives extends PathMatchers with ImplicitPathMatcherConstruction w
   def rawPathPrefix[L](pm: PathMatcher[L]): Directive[L] = {
     implicit val LIsTuple = pm.ev
     extract(ctx => pm(ctx.unmatchedPath)).flatMap {
-      case Matched(rest, values) => tprovide(values) & mapRequestContext(_ withUnmatchedPath rest)
+      case Matched(rest, values) => tprovide(values) & mapRequestContext(_.withUnmatchedPath(rest))
       case Unmatched             => reject
     }
   }
@@ -209,6 +209,7 @@ trait PathDirectives extends PathMatchers with ImplicitPathMatcherConstruction w
    * @group path
    */
   def ignoreTrailingSlash: Directive0 = Directive[Unit] {
+
     /**
      * Converts a URL that ends with `/` to one without. Or one that ends without `/` to one with it.
      */
@@ -224,8 +225,7 @@ trait PathDirectives extends PathMatchers with ImplicitPathMatcherConstruction w
     val transformEmptyRejections = recoverRejections(rejections =>
       if (rejections == Nil) {
         Rejected(List(TrailingRetryRejection))
-      } else Rejected(rejections)
-    )
+      } else Rejected(rejections))
 
     inner =>
       import ExecutionDirectives._

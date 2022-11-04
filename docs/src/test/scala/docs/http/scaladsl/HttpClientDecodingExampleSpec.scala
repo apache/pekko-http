@@ -12,7 +12,7 @@ import akka.testkit.AkkaSpec
 
 class HttpClientDecodingExampleSpec extends AkkaSpec with CompileOnlySpec with ScalaFutures {
   "single-request-decoding-example" in compileOnlySpec {
-    //#single-request-decoding-example
+    // #single-request-decoding-example
     import akka.actor.ActorSystem
     import akka.http.scaladsl.Http
     import akka.http.scaladsl.coding.Coders
@@ -55,6 +55,6 @@ class HttpClientDecodingExampleSpec extends AkkaSpec with CompileOnlySpec with S
     }
 
     system.terminate()
-    //#single-request-decoding-example
+    // #single-request-decoding-example
   }
 }

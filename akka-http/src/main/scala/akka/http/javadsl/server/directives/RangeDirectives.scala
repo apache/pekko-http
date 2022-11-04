@@ -9,6 +9,7 @@ import java.util.function.Supplier
 import akka.http.scaladsl.server.{ Directives => D }
 
 abstract class RangeDirectives extends PathDirectives {
+
   /**
    * Answers GET requests with an `Accept-Ranges: bytes` header and converts HttpResponses coming back from its inner
    * route into partial responses if the initial request contained a valid `Range` request header. The requested

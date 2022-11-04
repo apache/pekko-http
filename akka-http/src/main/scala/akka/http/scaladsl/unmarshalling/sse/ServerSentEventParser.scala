@@ -18,7 +18,8 @@ private object ServerSentEventParser {
 
   final object PosInt {
     def unapply(s: String): Option[Int] =
-      try { Some(s.trim.toInt) } catch { case _: NumberFormatException => None }
+      try { Some(s.trim.toInt) }
+      catch { case _: NumberFormatException => None }
   }
 
   final class Builder {
@@ -87,7 +88,8 @@ private object ServerSentEventParser {
 
 /** INTERNAL API */
 @InternalApi
-private final class ServerSentEventParser(maxEventSize: Int, emitEmptyEvents: Boolean) extends GraphStage[FlowShape[String, ServerSentEvent]] {
+private final class ServerSentEventParser(
+    maxEventSize: Int, emitEmptyEvents: Boolean) extends GraphStage[FlowShape[String, ServerSentEvent]] {
 
   override val shape =
     FlowShape(Inlet[String]("ServerSentEventParser.in"), Outlet[ServerSentEvent]("ServerSentEventParser.out"))
@@ -111,12 +113,12 @@ private final class ServerSentEventParser(maxEventSize: Int, emitEmptyEvents: Bo
           builder.reset()
         } else if (builder.size + line.length <= maxEventSize) {
           line match {
-            case Id => builder.setId("")
+            case Id                                                    => builder.setId("")
             case Field(Data, data) if data.nonEmpty || emitEmptyEvents => builder.appendData(data)
-            case Field(EventType, t) if t.nonEmpty => builder.setType(t)
-            case Field(Id, id) => builder.setId(id)
-            case Field(Retry, s @ PosInt(r)) if r >= 0 => builder.setRetry(r, s.length)
-            case _ => // ignore according to spec
+            case Field(EventType, t) if t.nonEmpty                     => builder.setType(t)
+            case Field(Id, id)                                         => builder.setId(id)
+            case Field(Retry, s @ PosInt(r)) if r >= 0                 => builder.setRetry(r, s.length)
+            case _                                                     => // ignore according to spec
           }
           pull(in)
         } else {

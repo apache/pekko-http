@@ -15,7 +15,7 @@ import org.scalatest.concurrent.ScalaFutures
 import scala.concurrent.duration._
 
 class CustomMediaTypesSpec extends AkkaSpec with ScalaFutures
-  with Directives with RequestBuilding {
+    with Directives with RequestBuilding {
 
   implicit val mat = ActorMaterializer()
 
@@ -37,7 +37,7 @@ class CustomMediaTypesSpec extends AkkaSpec with ScalaFutures
 
     "allow registering custom media type" in {
       import system.dispatcher
-      //#application-custom
+      // #application-custom
 
       // similarly in Java: `akka.http.javadsl.settings.[...]`
       import akka.http.scaladsl.settings.ParserSettings
@@ -56,15 +56,16 @@ class CustomMediaTypesSpec extends AkkaSpec with ScalaFutures
         complete(r.entity.contentType.toString + " = " + r.entity.contentType.getClass)
       }
       val binding = Http().newServerAt("localhost", 0).withSettings(serverSettings).bind(routes)
-      //#application-custom
+      // #application-custom
 
-      val request = Get(s"http://localhost:${binding.futureValue.localAddress.getPort}/").withEntity(HttpEntity(`application/custom`, "~~example~=~value~~"))
+      val request = Get(s"http://localhost:${binding.futureValue.localAddress.getPort}/").withEntity(
+        HttpEntity(`application/custom`, "~~example~=~value~~"))
       val response = Http().singleRequest(request).futureValue
 
       response.status should ===(StatusCodes.OK)
-      val responseBody = response.toStrict(1.second.dilated).futureValue.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue.utf8String
+      val responseBody = response.toStrict(1.second.dilated).futureValue.entity.dataBytes.runFold(ByteString.empty)(
+        _ ++ _).futureValue.utf8String
       responseBody should ===("application/custom = class akka.http.scaladsl.model.ContentType$WithFixedCharset")
     }
   }
 }
-

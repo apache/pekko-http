@@ -21,13 +21,14 @@ import org.scalatest.{ Inside, Inspectors }
 class RangeDirectivesSpec extends RoutingSpec with Inspectors with Inside {
   lazy val wrs =
     mapSettings(_.withRangeCountLimit(10).withRangeCoalescingThreshold(1L)) &
-      withRangeSupport
+    withRangeSupport
 
   def bytes(length: Byte) = Array.tabulate[Byte](length)(_.toByte)
 
   "The `withRangeSupport` directive" should {
     def completeWithRangedBytes(length: Byte) =
-      wrs(complete(HttpEntity.Default(ContentTypes.`application/octet-stream`, length, Source(bytes(length).map(ByteString(_)).toVector))))
+      wrs(complete(HttpEntity.Default(ContentTypes.`application/octet-stream`, length,
+        Source(bytes(length).map(ByteString(_)).toVector))))
 
     "return an Accept-Ranges(bytes) header for GET requests" in {
       Get() ~> { wrs { complete("any") } } ~> check {

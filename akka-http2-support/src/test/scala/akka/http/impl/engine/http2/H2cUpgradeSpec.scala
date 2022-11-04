@@ -28,8 +28,7 @@ class H2cUpgradeSpec extends AkkaSpecWithMaterializer("""
       _ => Future.successful(HttpResponse(status = StatusCodes.ImATeapot)),
       "127.0.0.1",
       port = 0,
-      HttpConnectionContext()
-    ).futureValue
+      HttpConnectionContext()).futureValue
 
     // https://tools.ietf.org/html/rfc7540#section-3.2
     "respond with HTTP 101 and no initial settings" in {
@@ -45,8 +44,7 @@ class H2cUpgradeSpec extends AkkaSpecWithMaterializer("""
       val settings = encode(Seq(
         (SETTINGS_MAX_CONCURRENT_STREAMS, 100),
         (SETTINGS_INITIAL_WINDOW_SIZE, 33554432),
-        (SETTINGS_ENABLE_PUSH, 0)
-      ))
+        (SETTINGS_ENABLE_PUSH, 0)))
       settings shouldBe "AAMAAABkAAQCAAAAAAIAAAAA"
       testWith(settings)
     }
@@ -83,12 +81,12 @@ HTTP2-Settings: $settings
   def encode(settings: Seq[(SettingIdentifier, Int)]): String = {
     val bytes = settings.flatMap {
       case (id, value) => Seq(
-        0.toByte,
-        id.id.toByte,
-        (value >> 24).toByte,
-        (value >> 16).toByte,
-        (value >> 8).toByte,
-        value.toByte)
+          0.toByte,
+          id.id.toByte,
+          (value >> 24).toByte,
+          (value >> 16).toByte,
+          (value >> 8).toByte,
+          value.toByte)
     }
     ByteString.fromArrayUnsafe(bytes.toArray).encodeBase64.utf8String
   }

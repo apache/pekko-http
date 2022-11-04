@@ -28,7 +28,7 @@ trait ExecutionDirectives {
     Directive { innerRouteBuilder => ctx =>
       import ctx.executionContext
       def handleException: PartialFunction[Throwable, Future[RouteResult]] =
-        handler andThen (_(ctx.withAcceptAll))
+        handler.andThen(_(ctx.withAcceptAll))
       try innerRouteBuilder(())(ctx).fast.recoverWith(handleException)
       catch {
         case NonFatal(e) => handleException.applyOrElse[Throwable, Future[RouteResult]](e, throw _)
@@ -42,14 +42,16 @@ trait ExecutionDirectives {
    * @group execution
    */
   def handleRejections(handler: RejectionHandler): Directive0 =
-    extractRequestContext flatMap { ctx =>
+    extractRequestContext.flatMap { ctx =>
       val maxIterations = 8
       // allow for up to `maxIterations` nested rejections from RejectionHandler before bailing out
-      def handle(rejections: immutable.Seq[Rejection], originalRejections: immutable.Seq[Rejection], iterationsLeft: Int = maxIterations): Future[RouteResult] =
+      def handle(rejections: immutable.Seq[Rejection], originalRejections: immutable.Seq[Rejection],
+          iterationsLeft: Int = maxIterations): Future[RouteResult] =
         if (iterationsLeft > 0) {
           handler(rejections) match {
-            case Some(route) => recoverRejectionsWith(handle(_, originalRejections, iterationsLeft - 1))(route)(ctx.withAcceptAll)
-            case None        => FastFuture.successful(RouteResult.Rejected(rejections))
+            case Some(route) =>
+              recoverRejectionsWith(handle(_, originalRejections, iterationsLeft - 1))(route)(ctx.withAcceptAll)
+            case None => FastFuture.successful(RouteResult.Rejected(rejections))
           }
         } else
           sys.error(s"Rejection handler still produced new rejections after $maxIterations iterations. " +

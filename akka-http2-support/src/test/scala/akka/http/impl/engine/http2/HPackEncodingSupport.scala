@@ -32,8 +32,8 @@ trait HPackEncodingSupport {
   def headersForResponse(response: HttpResponse): Seq[HttpHeader] =
     Seq(
       RawHeader(":status", response.status.intValue.toString),
-      RawHeader("content-type", response.entity.contentType.render(new StringRendering).get)
-    ) ++ response.headers.filter(_.renderInResponses)
+      RawHeader("content-type",
+        response.entity.contentType.render(new StringRendering).get)) ++ response.headers.filter(_.renderInResponses)
 
   def headerPairsForRequest(request: HttpRequest): Seq[(String, String)] =
     Seq(
@@ -41,13 +41,12 @@ trait HPackEncodingSupport {
       ":scheme" -> request.uri.scheme.toString,
       ":path" -> request.uri.path.toString,
       ":authority" -> request.uri.authority.toString.drop(2),
-      "content-type" -> request.entity.contentType.render(new StringRendering).get
-    ) ++
-      request.entity.contentLengthOption.flatMap {
-        case len if len != 0 => Some("content-length" -> len.toString)
-        case _               => None
-      }.toSeq ++
-      headerPairsForHeaders(request.headers.filter(_.renderInRequests))
+      "content-type" -> request.entity.contentType.render(new StringRendering).get) ++
+    request.entity.contentLengthOption.flatMap {
+      case len if len != 0 => Some("content-length" -> len.toString)
+      case _               => None
+    }.toSeq ++
+    headerPairsForHeaders(request.headers.filter(_.renderInRequests))
 
   def headerPairsForHeaders(headers: Seq[HttpHeader]): Seq[(String, String)] =
     headers.map(h => h.lowercaseName -> h.value)

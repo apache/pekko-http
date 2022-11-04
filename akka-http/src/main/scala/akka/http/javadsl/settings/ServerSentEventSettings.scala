@@ -38,4 +38,3 @@ abstract class ServerSentEventSettings private[akka] () { self: ServerSentEventS
   def withLineLength(newValue: Int): ServerSentEventSettings = self.copy(maxLineSize = newValue)
   def withEmitEmptyEvents(newValue: Boolean): ServerSentEventSettings = self.copy(emitEmptyEvents = newValue)
 }
-

@@ -19,10 +19,10 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 abstract class HttpsServerExampleSpec extends AnyWordSpec with Matchers
-  with Directives with CompileOnlySpec {
+    with Directives with CompileOnlySpec {
 
   "low level api" in compileOnlySpec {
-    //#low-level-default
+    // #low-level-default
     implicit val system = ActorSystem()
     implicit val dispatcher = system.dispatcher
 
@@ -45,25 +45,25 @@ abstract class HttpsServerExampleSpec extends AnyWordSpec with Matchers
     val sslContext: SSLContext = SSLContext.getInstance("TLS")
     sslContext.init(keyManagerFactory.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
     val https: HttpsConnectionContext = ConnectionContext.httpsServer(sslContext)
-    //#low-level-default
+    // #low-level-default
 
-    //#both-https-and-http
+    // #both-https-and-http
     // you can run both HTTP and HTTPS in the same application as follows:
     val commonRoutes: Route = get { complete("Hello world!") }
     Http().newServerAt("127.0.0.1", 443).enableHttps(https).bind(commonRoutes)
     Http().newServerAt("127.0.0.1", 80).bind(commonRoutes)
-    //#both-https-and-http
+    // #both-https-and-http
 
-    //#bind-low-level-context
+    // #bind-low-level-context
     val routes: Route = get { complete("Hello world!") }
     Http().newServerAt("127.0.0.1", 8080).enableHttps(https).bind(routes)
-    //#bind-low-level-context
+    // #bind-low-level-context
 
     system.terminate()
   }
 
   "require-client-auth" in {
-    //#require-client-auth
+    // #require-client-auth
     val sslContext: SSLContext = ???
     ConnectionContext.httpsServer(() => {
       val engine = sslContext.createSSLEngine()
@@ -74,6 +74,6 @@ abstract class HttpsServerExampleSpec extends AnyWordSpec with Matchers
 
       engine
     })
-    //#require-client-auth
+    // #require-client-auth
   }
 }

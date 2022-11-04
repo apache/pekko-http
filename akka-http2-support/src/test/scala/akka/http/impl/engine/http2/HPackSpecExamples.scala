@@ -4,7 +4,7 @@
 
 package akka.http.impl.engine.http2
 
-import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpProtocols, HttpResponse, headers }
+import akka.http.scaladsl.model.{ headers, ContentTypes, HttpEntity, HttpProtocols, HttpResponse }
 import akka.http.scaladsl.model.headers.CacheDirectives
 import akka.http.scaladsl.model.headers.HttpEncodings
 import akka.http.scaladsl.model.headers.RawHeader
@@ -14,6 +14,7 @@ import akka.stream.scaladsl.Source
  * Examples from the HPACK specification. See https://tools.ietf.org/html/rfc7541#appendix-C
  */
 object HPackSpecExamples {
+
   /**
    * C.4.1.  First Request
    *
@@ -166,8 +167,7 @@ object HPackSpecExamples {
         headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:21 GMT").right.get,
         headers.Location("https://www.example.com")),
       entity = HttpEntity.CloseDelimited(ContentTypes.NoContentType, Source.empty),
-      protocol = HttpProtocols.`HTTP/2.0`
-    )
+      protocol = HttpProtocols.`HTTP/2.0`)
 
   /**
    * akka-http model representation of second request (as encoded in C.5.2 and C.6.2)
@@ -204,6 +204,7 @@ object HPackSpecExamples {
   val ThirdResponseModeled =
     ThirdResponse
       .withHeaders(ThirdResponse.headers.filter(_.name != "Set-Cookie") :+
-        headers.`Set-Cookie`(headers.HttpCookie("foo", "ASDJKHQKBZXOQWEOPIUAXQWEOIU").withMaxAge(3600).withExtension("version=1")))
+        headers.`Set-Cookie`(headers.HttpCookie("foo", "ASDJKHQKBZXOQWEOPIUAXQWEOIU").withMaxAge(3600).withExtension(
+          "version=1")))
       .withProtocol(HttpProtocols.`HTTP/2.0`)
 }

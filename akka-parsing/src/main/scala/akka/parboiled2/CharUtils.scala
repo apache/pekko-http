@@ -20,12 +20,13 @@ import java.lang.{ StringBuilder => JStringBuilder }
 import scala.annotation.tailrec
 
 object CharUtils {
+
   /**
    * Returns the int value of a given hex digit char.
    * Note: this implementation is very fast (since it's branchless) and therefore
    * does not perform ANY range checks!
    */
-  def hexValue(c: Char): Int = (c & 0x1f) + ((c >> 6) * 0x19) - 0x10
+  def hexValue(c: Char): Int = (c & 0x1F) + ((c >> 6) * 0x19) - 0x10
 
   /**
    * Computes the number of hex digits required to represent the given integer.
@@ -183,7 +184,7 @@ object CharUtils {
     case '\r'                           => "\\r"
     case '\n'                           => "\\n"
     case EOI                            => "EOI"
-    case x if Character.isISOControl(x) => "\\u%04x" format c.toInt
+    case x if Character.isISOControl(x) => "\\u%04x".format(c.toInt)
     case x                              => x.toString
   }
 

@@ -68,16 +68,19 @@ class H2ClientServerBenchmark extends CommonBenchmark with H2RequestResponseBenc
     implicit val ec = system.dispatcher
     val http1 = Flow[SslTlsInbound].mapAsync(1)(_ => {
       Future.failed[SslTlsOutbound](new IllegalStateException("Failed h2 detection"))
-    }).mapMaterializedValue(_ => new ServerTerminator {
-      override def terminate(deadline: FiniteDuration)(implicit ex: ExecutionContext): Future[Http.HttpTerminated] = ???
-    })
+    }).mapMaterializedValue(_ =>
+      new ServerTerminator {
+        override def terminate(deadline: FiniteDuration)(implicit ex: ExecutionContext): Future[Http.HttpTerminated] =
+          ???
+      })
     val http2 =
       Http2Blueprint.handleWithStreamIdHeader(1)(req => {
         req.discardEntityBytes().future.map(_ => response)
       })(system.dispatcher)
         .joinMat(Http2Blueprint.serverStackTls(settings, log, NoOpTelemetry, Http().dateHeaderRendering))(Keep.right)
     val server: Flow[ByteString, ByteString, Any] = Http2.priorKnowledge(http1, http2)
-    val client: BidiFlow[HttpRequest, ByteString, ByteString, HttpResponse, NotUsed] = Http2Blueprint.clientStack(ClientConnectionSettings(system), log, NoOpTelemetry)
+    val client: BidiFlow[HttpRequest, ByteString, ByteString, HttpResponse, NotUsed] =
+      Http2Blueprint.clientStack(ClientConnectionSettings(system), log, NoOpTelemetry)
     httpFlow = client.join(server)
   }
 

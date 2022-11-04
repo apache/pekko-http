@@ -27,7 +27,8 @@ class SprayJsonSupportSpec extends AnyWordSpec with Matchers with ScalaFutures {
   implicit val mat = ActorMaterializer()
   implicit val ec: ExecutionContext = sys.dispatcher
 
-  val TestString = "Contains all UTF-8 characters: 2-byte: £, 3-byte: ﾖ, 4-byte: 😁, 4-byte as a literal surrogate pair: \uD83D\uDE01"
+  val TestString =
+    "Contains all UTF-8 characters: 2-byte: £, 3-byte: ﾖ, 4-byte: 😁, 4-byte as a literal surrogate pair: \uD83D\uDE01"
 
   "SprayJsonSupport" should {
     "allow round trip via Marshal / Unmarshal case class <-> HttpEntity" in {
