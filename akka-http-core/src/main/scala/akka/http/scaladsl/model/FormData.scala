@@ -15,12 +15,15 @@ final case class FormData(fields: Uri.Query) {
   def toEntity: akka.http.scaladsl.model.RequestEntity =
     toEntityWithCharset(`application/x-www-form-urlencoded`.charset)
 
-  @deprecated("FormData always uses charset UTF-8 without appending the charset to 'Content-Type: application/x-www-form-urlencoded', use toEntity instead.", "10.1.7")
+  @deprecated(
+    "FormData always uses charset UTF-8 without appending the charset to 'Content-Type: application/x-www-form-urlencoded', use toEntity instead.",
+    "10.1.7")
   def toEntity(charset: HttpCharset): akka.http.scaladsl.model.RequestEntity =
     toEntityWithCharset(charset)
 
   private def toEntityWithCharset(charset: HttpCharset): akka.http.scaladsl.model.RequestEntity = {
-    val render: StringRendering = UriRendering.renderQuery(new StringRendering, this.fields, charset.nioCharset, CharacterClasses.unreserved)
+    val render: StringRendering =
+      UriRendering.renderQuery(new StringRendering, this.fields, charset.nioCharset, CharacterClasses.unreserved)
     HttpEntity(`application/x-www-form-urlencoded`, render.get)
   }
 }

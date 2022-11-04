@@ -28,30 +28,29 @@ import scala.util.Try
 /** INTERNAL API */
 @InternalApi
 private[akka] final case class ServerSettingsImpl(
-  serverHeader:                        Option[Server],
-  previewServerSettings:               PreviewServerSettings,
-  timeouts:                            ServerSettings.Timeouts,
-  maxConnections:                      Int,
-  pipeliningLimit:                     Int,
-  remoteAddressHeader:                 Boolean,
-  remoteAddressAttribute:              Boolean,
-  rawRequestUriHeader:                 Boolean,
-  transparentHeadRequests:             Boolean,
-  verboseErrorMessages:                Boolean,
-  responseHeaderSizeHint:              Int,
-  backlog:                             Int,
-  logUnencryptedNetworkBytes:          Option[Int],
-  socketOptions:                       immutable.Seq[SocketOption],
-  defaultHostHeader:                   Host,
-  websocketSettings:                   WebSocketSettings,
-  parserSettings:                      ParserSettings,
-  http2Settings:                       Http2ServerSettings,
-  defaultHttpPort:                     Int,
-  defaultHttpsPort:                    Int,
-  terminationDeadlineExceededResponse: HttpResponse,
-  parsingErrorHandler:                 String,
-  streamCancellationDelay:             FiniteDuration
-) extends ServerSettings {
+    serverHeader: Option[Server],
+    previewServerSettings: PreviewServerSettings,
+    timeouts: ServerSettings.Timeouts,
+    maxConnections: Int,
+    pipeliningLimit: Int,
+    remoteAddressHeader: Boolean,
+    remoteAddressAttribute: Boolean,
+    rawRequestUriHeader: Boolean,
+    transparentHeadRequests: Boolean,
+    verboseErrorMessages: Boolean,
+    responseHeaderSizeHint: Int,
+    backlog: Int,
+    logUnencryptedNetworkBytes: Option[Int],
+    socketOptions: immutable.Seq[SocketOption],
+    defaultHostHeader: Host,
+    websocketSettings: WebSocketSettings,
+    parserSettings: ParserSettings,
+    http2Settings: Http2ServerSettings,
+    defaultHttpPort: Int,
+    defaultHttpsPort: Int,
+    terminationDeadlineExceededResponse: HttpResponse,
+    parsingErrorHandler: String,
+    streamCancellationDelay: FiniteDuration) extends ServerSettings {
 
   require(0 < maxConnections, "max-connections must be > 0")
   require(0 < pipeliningLimit && pipeliningLimit <= 1024, "pipelining-limit must be > 0 and <= 1024")
@@ -59,15 +58,15 @@ private[akka] final case class ServerSettingsImpl(
   require(0 < backlog, "backlog must be > 0")
   require(
     Try { parserSettings.maxContentLength }.isSuccess,
-    "The provided ParserSettings is a generic object that does not contain the server-specific settings."
-  )
+    "The provided ParserSettings is a generic object that does not contain the server-specific settings.")
 
   override def websocketRandomFactory: () => Random = websocketSettings.randomFactory
 
   override def productPrefix = "ServerSettings"
 
   private[http] def parsingErrorHandlerInstance(system: ActorSystem): ParsingErrorHandler =
-    system.asInstanceOf[ExtendedActorSystem].dynamicAccess.createInstanceFor[ParsingErrorHandler](parsingErrorHandler, Nil).get
+    system.asInstanceOf[ExtendedActorSystem].dynamicAccess.createInstanceFor[ParsingErrorHandler](parsingErrorHandler,
+      Nil).get
 }
 
 /** INTERNAL API */
@@ -76,10 +75,10 @@ private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSett
   implicit def timeoutsShortcut(s: js.ServerSettings): js.ServerSettings.Timeouts = s.getTimeouts
 
   final case class Timeouts(
-    idleTimeout:    Duration,
-    requestTimeout: Duration,
-    bindTimeout:    FiniteDuration,
-    lingerTimeout:  Duration) extends ServerSettings.Timeouts {
+      idleTimeout: Duration,
+      requestTimeout: Duration,
+      bindTimeout: FiniteDuration,
+      lingerTimeout: Duration) extends ServerSettings.Timeouts {
     require(idleTimeout > Duration.Zero, "idleTimeout must be infinite or > 0")
     require(bindTimeout > Duration.Zero, "bindTimeout must be > 0")
     require(lingerTimeout > Duration.Zero, "lingerTimeout must be infinite or > 0")
@@ -92,7 +91,8 @@ private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSett
       PreviewServerSettingsImpl.fromSubConfig(root, c.getConfig("preview")),
       Timeouts(
         c.getPotentiallyInfiniteDuration("idle-timeout"),
-        if (c.getString("request-timeout") == "off") Duration.Zero else c.getPotentiallyInfiniteDuration("request-timeout"),
+        if (c.getString("request-timeout") == "off") Duration.Zero
+        else c.getPotentiallyInfiniteDuration("request-timeout"),
         c.getFiniteDuration("bind-timeout"),
         c.getPotentiallyInfiniteDuration("linger-timeout")),
       c.getInt("max-connections"),
@@ -120,16 +120,15 @@ private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSett
       c.getInt("default-https-port"),
       terminationDeadlineExceededResponseFrom(c),
       c.getString("parsing.error-handler"),
-      c.getFiniteDuration("stream-cancellation-delay")
-    )
+      c.getFiniteDuration("stream-cancellation-delay"))
   }
 
   private def terminationDeadlineExceededResponseFrom(c: Config): HttpResponse = {
-    val status = c getInt "termination-deadline-exceeded-response.status"
+    val status = c.getInt("termination-deadline-exceeded-response.status")
     HttpResponse(
       status = StatusCodes.getForKey(status)
-        .getOrElse(throw new IllegalArgumentException(s"Illegal status code set for `termination-deadline-exceeded-response.status`, was: [$status]"))
-    )
+        .getOrElse(throw new IllegalArgumentException(
+          s"Illegal status code set for `termination-deadline-exceeded-response.status`, was: [$status]")))
   }
 
 }

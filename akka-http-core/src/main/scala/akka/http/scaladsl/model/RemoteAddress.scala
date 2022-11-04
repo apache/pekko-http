@@ -4,7 +4,7 @@
 
 package akka.http.scaladsl.model
 
-import java.net.{ InetSocketAddress, UnknownHostException, InetAddress }
+import java.net.{ InetAddress, InetSocketAddress, UnknownHostException }
 import java.util.Optional
 import akka.http.impl.util._
 import akka.http.javadsl.{ model => jm }
@@ -51,7 +51,8 @@ object RemoteAddress {
 
   def apply(bytes: Array[Byte]): RemoteAddress = {
     require(bytes.length == 4 || bytes.length == 16)
-    try IP(InetAddress.getByAddress(bytes)) catch { case _: UnknownHostException => Unknown }
+    try IP(InetAddress.getByAddress(bytes))
+    catch { case _: UnknownHostException => Unknown }
   }
 
   private[akka] val renderWithoutPort = new Renderer[RemoteAddress] {

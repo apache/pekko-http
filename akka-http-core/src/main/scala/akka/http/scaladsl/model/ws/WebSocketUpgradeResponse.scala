@@ -12,5 +12,6 @@ import akka.http.scaladsl.model.HttpResponse
 sealed trait WebSocketUpgradeResponse {
   def response: HttpResponse
 }
-final case class ValidUpgrade(response: HttpResponse, chosenSubprotocol: Option[String]) extends WebSocketUpgradeResponse
+final case class ValidUpgrade(response: HttpResponse, chosenSubprotocol: Option[String])
+    extends WebSocketUpgradeResponse
 final case class InvalidUpgradeResponse(response: HttpResponse, cause: String) extends WebSocketUpgradeResponse

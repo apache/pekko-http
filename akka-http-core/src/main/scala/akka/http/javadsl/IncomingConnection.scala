@@ -19,6 +19,7 @@ import scala.compat.java8.FutureConverters._
  * Represents one accepted incoming HTTP connection.
  */
 class IncomingConnection private[http] (delegate: akka.http.scaladsl.Http.IncomingConnection) {
+
   /**
    * The local address of this connection.
    */
@@ -34,7 +35,8 @@ class IncomingConnection private[http] (delegate: akka.http.scaladsl.Http.Incomi
    *
    * Use `Flow.join` or one of the handleXXX methods to consume handle requests on this connection.
    */
-  def flow: Flow[HttpResponse, HttpRequest, NotUsed] = Flow.fromGraph(delegate.flow).asInstanceOf[Flow[HttpResponse, HttpRequest, NotUsed]]
+  def flow: Flow[HttpResponse, HttpRequest, NotUsed] =
+    Flow.fromGraph(delegate.flow).asInstanceOf[Flow[HttpResponse, HttpRequest, NotUsed]]
 
   /**
    * Handles the connection with the given flow, which is materialized exactly once
@@ -52,12 +54,15 @@ class IncomingConnection private[http] (delegate: akka.http.scaladsl.Http.Incomi
   /**
    * Handles the connection with the given handler function.
    */
-  def handleWithAsyncHandler(handler: Function[HttpRequest, CompletionStage[HttpResponse]], materializer: Materializer): Unit =
+  def handleWithAsyncHandler(
+      handler: Function[HttpRequest, CompletionStage[HttpResponse]], materializer: Materializer): Unit =
     delegate.handleWithAsyncHandler(handler.apply(_).toScala.asInstanceOf[Future[sm.HttpResponse]])(materializer)
 
   /**
    * Handles the connection with the given handler function.
    */
-  def handleWithAsyncHandler(handler: Function[HttpRequest, CompletionStage[HttpResponse]], parallelism: Int, materializer: Materializer): Unit =
-    delegate.handleWithAsyncHandler(handler.apply(_).toScala.asInstanceOf[Future[sm.HttpResponse]], parallelism)(materializer)
+  def handleWithAsyncHandler(handler: Function[HttpRequest, CompletionStage[HttpResponse]], parallelism: Int,
+      materializer: Materializer): Unit =
+    delegate.handleWithAsyncHandler(handler.apply(_).toScala.asInstanceOf[Future[sm.HttpResponse]], parallelism)(
+      materializer)
 }

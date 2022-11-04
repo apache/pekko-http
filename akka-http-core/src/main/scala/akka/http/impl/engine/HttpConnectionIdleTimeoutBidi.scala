@@ -18,34 +18,36 @@ import scala.util.control.NoStackTrace
 /** INTERNAL API */
 @InternalApi
 private[akka] object HttpConnectionIdleTimeoutBidi {
-  def apply(idleTimeout: Duration, remoteAddress: Option[InetSocketAddress]): BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] =
+  def apply(idleTimeout: Duration, remoteAddress: Option[InetSocketAddress])
+      : BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] =
     idleTimeout match {
       case f: FiniteDuration => apply(f, remoteAddress)
       case _                 => BidiFlow.identity
     }
-  def apply(idleTimeout: FiniteDuration, remoteAddress: Option[InetSocketAddress]): BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] = {
+  def apply(idleTimeout: FiniteDuration, remoteAddress: Option[InetSocketAddress])
+      : BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] = {
     val connectionToString = remoteAddress match {
       case Some(addr) => s" on connection to [$addr]"
       case _          => ""
     }
     val ex = new HttpIdleTimeoutException(
       "HTTP idle-timeout encountered" + connectionToString + ", " +
-        "no bytes passed in the last " + idleTimeout + ". " +
-        "This is configurable by akka.http.[server|client].idle-timeout.", idleTimeout)
+      "no bytes passed in the last " + idleTimeout + ". " +
+      "This is configurable by akka.http.[server|client].idle-timeout.", idleTimeout)
 
-    val mapError = Flow[ByteString].mapError({ case t: TimeoutException => ex })
+    val mapError = Flow[ByteString].mapError { case t: TimeoutException => ex }
 
     val toNetTimeout: BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] =
       BidiFlow.fromFlows(
         mapError,
-        Flow[ByteString]
-      )
+        Flow[ByteString])
     val fromNetTimeout: BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] =
       toNetTimeout.reversed
 
-    fromNetTimeout atop BidiFlow.bidirectionalIdleTimeout[ByteString, ByteString](idleTimeout) atop toNetTimeout
+    fromNetTimeout.atop(BidiFlow.bidirectionalIdleTimeout[ByteString, ByteString](idleTimeout)).atop(toNetTimeout)
   }
 
 }
 
-class HttpIdleTimeoutException(msg: String, timeout: FiniteDuration) extends TimeoutException(msg: String) with NoStackTrace
+class HttpIdleTimeoutException(msg: String, timeout: FiniteDuration) extends TimeoutException(msg: String)
+    with NoStackTrace

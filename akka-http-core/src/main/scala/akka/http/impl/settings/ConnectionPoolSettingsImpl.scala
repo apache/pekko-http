@@ -17,20 +17,20 @@ import scala.util.matching.Regex
 /** INTERNAL API */
 @InternalApi
 private[akka] final case class ConnectionPoolSettingsImpl(
-  maxConnections:                    Int,
-  minConnections:                    Int,
-  maxRetries:                        Int,
-  maxOpenRequests:                   Int,
-  pipeliningLimit:                   Int,
-  maxConnectionLifetime:             Duration,
-  baseConnectionBackoff:             FiniteDuration,
-  maxConnectionBackoff:              FiniteDuration,
-  idleTimeout:                       Duration,
-  keepAliveTimeout:                  Duration,
-  connectionSettings:                ClientConnectionSettings,
-  responseEntitySubscriptionTimeout: Duration,
-  hostOverrides:                     immutable.Seq[(Regex, ConnectionPoolSettings)])
-  extends ConnectionPoolSettings {
+    maxConnections: Int,
+    minConnections: Int,
+    maxRetries: Int,
+    maxOpenRequests: Int,
+    pipeliningLimit: Int,
+    maxConnectionLifetime: Duration,
+    baseConnectionBackoff: FiniteDuration,
+    maxConnectionBackoff: FiniteDuration,
+    idleTimeout: Duration,
+    keepAliveTimeout: Duration,
+    connectionSettings: ClientConnectionSettings,
+    responseEntitySubscriptionTimeout: Duration,
+    hostOverrides: immutable.Seq[(Regex, ConnectionPoolSettings)])
+    extends ConnectionPoolSettings {
 
   require(maxConnections > 0, "max-connections must be > 0")
   require(minConnections >= 0, "min-connections must be >= 0")
@@ -43,29 +43,32 @@ private[akka] final case class ConnectionPoolSettingsImpl(
   require(
     minConnections == 0 || (baseConnectionBackoff.toMillis > 0 && maxConnectionBackoff.toMillis > 10),
     "If min-connections > 0, you need to set a base-connection-backoff must be > 0 and max-connection-backoff must be > 10 millis " +
-      "to avoid client pools excessively trying to open up new connections.")
-  require(hostOverrides.isEmpty || hostOverrides.forall(_._2.hostOverrides.isEmpty), "host-overrides should not be nested")
+    "to avoid client pools excessively trying to open up new connections.")
+  require(hostOverrides.isEmpty || hostOverrides.forall(_._2.hostOverrides.isEmpty),
+    "host-overrides should not be nested")
 
   override def productPrefix = "ConnectionPoolSettings"
 
-  def withUpdatedConnectionSettings(f: ClientConnectionSettings => ClientConnectionSettings): ConnectionPoolSettingsImpl =
-    copy(connectionSettings = f(connectionSettings), hostOverrides = hostOverrides.map { case (k, v) => k -> v.withUpdatedConnectionSettings(f) })
+  def withUpdatedConnectionSettings(
+      f: ClientConnectionSettings => ClientConnectionSettings): ConnectionPoolSettingsImpl =
+    copy(connectionSettings = f(connectionSettings),
+      hostOverrides = hostOverrides.map { case (k, v) => k -> v.withUpdatedConnectionSettings(f) })
 
   /** INTERNAL API */
   private[http] def copyDeep(
-    mapHostOverrides:                  ConnectionPoolSettings => ConnectionPoolSettings,
-    maxConnections:                    Int                                              = maxConnections,
-    minConnections:                    Int                                              = minConnections,
-    maxRetries:                        Int                                              = maxRetries,
-    maxOpenRequests:                   Int                                              = maxOpenRequests,
-    pipeliningLimit:                   Int                                              = pipeliningLimit,
-    maxConnectionLifetime:             Duration                                         = maxConnectionLifetime,
-    baseConnectionBackoff:             FiniteDuration                                   = baseConnectionBackoff,
-    maxConnectionBackoff:              FiniteDuration                                   = maxConnectionBackoff,
-    idleTimeout:                       Duration                                         = idleTimeout,
-    keepAliveTimeout:                  Duration                                         = keepAliveTimeout,
-    connectionSettings:                ClientConnectionSettings                         = connectionSettings,
-    responseEntitySubscriptionTimeout: Duration                                         = responseEntitySubscriptionTimeout): ConnectionPoolSettings =
+      mapHostOverrides: ConnectionPoolSettings => ConnectionPoolSettings,
+      maxConnections: Int = maxConnections,
+      minConnections: Int = minConnections,
+      maxRetries: Int = maxRetries,
+      maxOpenRequests: Int = maxOpenRequests,
+      pipeliningLimit: Int = pipeliningLimit,
+      maxConnectionLifetime: Duration = maxConnectionLifetime,
+      baseConnectionBackoff: FiniteDuration = baseConnectionBackoff,
+      maxConnectionBackoff: FiniteDuration = maxConnectionBackoff,
+      idleTimeout: Duration = idleTimeout,
+      keepAliveTimeout: Duration = keepAliveTimeout,
+      connectionSettings: ClientConnectionSettings = connectionSettings,
+      responseEntitySubscriptionTimeout: Duration = responseEntitySubscriptionTimeout): ConnectionPoolSettings =
     copy(
       maxConnections,
       minConnections,
@@ -85,7 +88,8 @@ private[akka] final case class ConnectionPoolSettingsImpl(
 
 /** INTERNAL API */
 @InternalApi
-private[akka] object ConnectionPoolSettingsImpl extends SettingsCompanionImpl[ConnectionPoolSettingsImpl]("akka.http.host-connection-pool") {
+private[akka] object ConnectionPoolSettingsImpl
+    extends SettingsCompanionImpl[ConnectionPoolSettingsImpl]("akka.http.host-connection-pool") {
 
   def fromSubConfig(root: Config, c: Config): ConnectionPoolSettingsImpl = {
     new ConnectionPoolSettingsImpl(
@@ -100,9 +104,8 @@ private[akka] object ConnectionPoolSettingsImpl extends SettingsCompanionImpl[Co
       c.getPotentiallyInfiniteDuration("idle-timeout"),
       c.getPotentiallyInfiniteDuration("keep-alive-timeout"),
       ClientConnectionSettingsImpl.fromSubConfig(root, c.getConfig("client")),
-      c getPotentiallyInfiniteDuration "response-entity-subscription-timeout",
-      List.empty
-    )
+      c.getPotentiallyInfiniteDuration("response-entity-subscription-timeout"),
+      List.empty)
   }
 
   private[akka] def hostRegex(pattern: String): Regex = {

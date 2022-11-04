@@ -33,13 +33,14 @@ import scala.collection.immutable
 /** INTERNAL API */
 @InternalApi
 private[http] object WebSocketClientBlueprint {
+
   /**
    * Returns a WebSocketClientLayer that can be materialized once.
    */
   def apply(
-    request:  WebSocketRequest,
-    settings: ClientConnectionSettings,
-    log:      LoggingAdapter): Http.WebSocketClientLayer =
+      request: WebSocketRequest,
+      settings: ClientConnectionSettings,
+      log: LoggingAdapter): Http.WebSocketClientLayer =
     LogByteStringTools.logTLSBidiBySetting("client-plain-text", settings.logUnencryptedNetworkBytes).reversed
       .atop(simpleTls)
       .atopMat(handshake(request, settings, log))(Keep.right)
@@ -52,16 +53,18 @@ private[http] object WebSocketClientBlueprint {
    * can only be materialized once.
    */
   def handshake(
-    request:  WebSocketRequest,
-    settings: ClientConnectionSettings,
-    log:      LoggingAdapter): BidiFlow[ByteString, ByteString, ByteString, ByteString, Future[WebSocketUpgradeResponse]] = {
+      request: WebSocketRequest,
+      settings: ClientConnectionSettings,
+      log: LoggingAdapter)
+      : BidiFlow[ByteString, ByteString, ByteString, ByteString, Future[WebSocketUpgradeResponse]] = {
     import request._
     val result = Promise[WebSocketUpgradeResponse]()
 
     val valve = StreamUtils.OneTimeValve()
 
     val subprotocols: immutable.Seq[String] = subprotocol.toList.flatMap(_.split(",")).map(_.trim)
-    val (initialRequest, key) = Handshake.Client.buildRequest(uri, extraHeaders, subprotocols, settings.websocketRandomFactory())
+    val (initialRequest, key) =
+      Handshake.Client.buildRequest(uri, extraHeaders, subprotocols, settings.websocketRandomFactory())
     val hostHeader = Host(uri.authority.normalizedFor(uri.scheme))
     val renderedInitialRequest =
       HttpRequestRendererFactory.renderStrict(RequestRenderingContext(initialRequest, hostHeader), settings, log)
@@ -72,29 +75,30 @@ private[http] object WebSocketClientBlueprint {
         new GraphStageLogic(shape) with InHandler with OutHandler {
           // a special version of the parser which only parses one message and then reports the remaining data
           // if some is available
-          val parser: HttpResponseParser = new HttpResponseParser(settings.parserSettings, HttpHeaderParser(settings.parserSettings, log)) {
-            var first = true
-            override def handleInformationalResponses = false
-            override protected def parseMessage(input: ByteString, offset: Int): StateResult = {
-              if (first) {
-                try {
-                  // If we're called recursively then that's a next message
-                  first = false
-                  super.parseMessage(input, offset)
-                } catch {
-                  // Specifically NotEnoughDataException, but that's not visible here
-                  case t: SingletonException => {
-                    // If parsing the first message fails, retry and treat it like the first message again.
-                    first = true
-                    throw t
+          val parser: HttpResponseParser =
+            new HttpResponseParser(settings.parserSettings, HttpHeaderParser(settings.parserSettings, log)) {
+              var first = true
+              override def handleInformationalResponses = false
+              override protected def parseMessage(input: ByteString, offset: Int): StateResult = {
+                if (first) {
+                  try {
+                    // If we're called recursively then that's a next message
+                    first = false
+                    super.parseMessage(input, offset)
+                  } catch {
+                    // Specifically NotEnoughDataException, but that's not visible here
+                    case t: SingletonException => {
+                      // If parsing the first message fails, retry and treat it like the first message again.
+                      first = true
+                      throw t
+                    }
                   }
+                } else {
+                  emit(RemainingBytes(input.drop(offset)))
+                  terminate()
                 }
-              } else {
-                emit(RemainingBytes(input.drop(offset)))
-                terminate()
               }
             }
-          }
           parser.setContextForNextResponse(HttpResponseParser.ResponseContext(HttpMethods.GET, None))
 
           override def onPush(): Unit = {
@@ -106,13 +110,15 @@ private[http] object WebSocketClientBlueprint {
                   case Right(NegotiatedWebSocketSettings(protocol)) =>
                     result.success(ValidUpgrade(response, protocol))
 
-                    setHandler(in, new InHandler {
-                      override def onPush(): Unit = push(out, grab(in))
-                    })
+                    setHandler(in,
+                      new InHandler {
+                        override def onPush(): Unit = push(out, grab(in))
+                      })
                     valve.open()
 
                     val parseResult = parser.onPull()
-                    require(parseResult == ParserOutput.MessageEnd, s"parseResult should be MessageEnd but was $parseResult")
+                    require(parseResult == ParserOutput.MessageEnd,
+                      s"parseResult should be MessageEnd but was $parseResult")
                     parser.onPull() match {
                       case NeedMoreData          => pull(in)
                       case RemainingBytes(bytes) => push(out, bytes)
@@ -153,14 +159,14 @@ private[http] object WebSocketClientBlueprint {
       val httpRequestBytesAndThenWSBytes = b.add(Concat[ByteString]())
 
       handshakeRequestSource ~> httpRequestBytesAndThenWSBytes
-      wsIn.outlet ~> httpRequestBytesAndThenWSBytes
+      wsIn.outlet            ~> httpRequestBytesAndThenWSBytes
 
       BidiShape(
         networkIn.in,
         networkIn.out,
         wsIn.in,
         httpRequestBytesAndThenWSBytes.out)
-    }) mapMaterializedValue (_ => result.future)
+    }).mapMaterializedValue(_ => result.future)
   }
 
   def simpleTls: BidiFlow[SslTlsInbound, ByteString, ByteString, SendBytes, NotUsed] =

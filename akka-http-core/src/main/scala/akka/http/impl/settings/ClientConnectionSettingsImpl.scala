@@ -24,26 +24,25 @@ import scala.util.Try
 /** INTERNAL API */
 @InternalApi
 private[akka] final case class ClientConnectionSettingsImpl(
-  userAgentHeader:            Option[`User-Agent`],
-  connectingTimeout:          FiniteDuration,
-  idleTimeout:                Duration,
-  requestHeaderSizeHint:      Int,
-  logUnencryptedNetworkBytes: Option[Int],
-  websocketSettings:          WebSocketSettings,
-  socketOptions:              immutable.Seq[SocketOption],
-  parserSettings:             ParserSettings,
-  streamCancellationDelay:    FiniteDuration,
-  localAddress:               Option[InetSocketAddress],
-  http2Settings:              Http2ClientSettings,
-  transport:                  ClientTransport)
-  extends akka.http.scaladsl.settings.ClientConnectionSettings {
+    userAgentHeader: Option[`User-Agent`],
+    connectingTimeout: FiniteDuration,
+    idleTimeout: Duration,
+    requestHeaderSizeHint: Int,
+    logUnencryptedNetworkBytes: Option[Int],
+    websocketSettings: WebSocketSettings,
+    socketOptions: immutable.Seq[SocketOption],
+    parserSettings: ParserSettings,
+    streamCancellationDelay: FiniteDuration,
+    localAddress: Option[InetSocketAddress],
+    http2Settings: Http2ClientSettings,
+    transport: ClientTransport)
+    extends akka.http.scaladsl.settings.ClientConnectionSettings {
 
   require(connectingTimeout >= Duration.Zero, "connectingTimeout must be >= 0")
   require(requestHeaderSizeHint > 0, "request-size-hint must be > 0")
   require(
     Try { parserSettings.maxContentLength }.isSuccess,
-    "The provided ParserSettings is a generic object that does not contain the client-specific settings."
-  )
+    "The provided ParserSettings is a generic object that does not contain the client-specific settings.")
   override def productPrefix = "ClientConnectionSettings"
 
   override def websocketRandomFactory: () => Random = websocketSettings.randomFactory
@@ -51,7 +50,8 @@ private[akka] final case class ClientConnectionSettingsImpl(
 
 /** INTERNAL API */
 @InternalApi
-private[akka] object ClientConnectionSettingsImpl extends SettingsCompanionImpl[ClientConnectionSettingsImpl]("akka.http.client") {
+private[akka] object ClientConnectionSettingsImpl
+    extends SettingsCompanionImpl[ClientConnectionSettingsImpl]("akka.http.client") {
   def fromSubConfig(root: Config, inner: Config): ClientConnectionSettingsImpl = {
     val c = inner.withFallback(root.getConfig(prefix))
     new ClientConnectionSettingsImpl(
@@ -59,7 +59,7 @@ private[akka] object ClientConnectionSettingsImpl extends SettingsCompanionImpl[
       connectingTimeout = c.getFiniteDuration("connecting-timeout"),
       idleTimeout = c.getPotentiallyInfiniteDuration("idle-timeout"),
       requestHeaderSizeHint = c.getIntBytes("request-header-size-hint"),
-      logUnencryptedNetworkBytes = LogUnencryptedNetworkBytes(c getString "log-unencrypted-network-bytes"),
+      logUnencryptedNetworkBytes = LogUnencryptedNetworkBytes(c.getString("log-unencrypted-network-bytes")),
       websocketSettings = WebSocketSettingsImpl.client(c.getConfig("websocket")),
       socketOptions = SocketOptionSettings.fromSubConfig(root, c.getConfig("socket-options")),
       parserSettings = ParserSettingsImpl.fromSubConfig(root, c.getConfig("parsing")),

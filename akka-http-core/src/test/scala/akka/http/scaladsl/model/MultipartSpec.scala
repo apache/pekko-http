@@ -33,7 +33,8 @@ class MultipartSpec extends AkkaSpecWithMaterializer {
       val result = streamed.toEntity("boundary")
       result.contentType shouldBe MediaTypes.`multipart/mixed`.withBoundary("boundary").toContentType
       val encoding = Await.result(result.dataBytes.runWith(Sink.seq), 1.second.dilated)
-      encoding.map(_.utf8String).mkString shouldBe "--boundary\r\nContent-Type: text/plain; charset=UTF-8\r\nETag: \"xzy\"\r\n\r\ndata\r\n--boundary--"
+      encoding.map(
+        _.utf8String).mkString shouldBe "--boundary\r\nContent-Type: text/plain; charset=UTF-8\r\nETag: \"xzy\"\r\n\r\ndata\r\n--boundary--"
     }
   }
 
@@ -41,7 +42,7 @@ class MultipartSpec extends AkkaSpecWithMaterializer {
     "support `toStrict` on the streamed model" in {
       val streamed = Multipart.FormData(Source(
         Multipart.FormData.BodyPart("foo", defaultEntity("FOO")) ::
-          Multipart.FormData.BodyPart("bar", defaultEntity("BAR")) :: Nil))
+        Multipart.FormData.BodyPart("bar", defaultEntity("BAR")) :: Nil))
       val strict = Await.result(streamed.toStrict(1.second.dilated), 1.second.dilated)
 
       strict shouldEqual Multipart.FormData(Map("foo" -> HttpEntity("FOO"), "bar" -> HttpEntity("BAR")))
@@ -51,13 +52,17 @@ class MultipartSpec extends AkkaSpecWithMaterializer {
   "Multipart.ByteRanges" should {
     "support `toStrict` on the streamed model" in {
       val streamed = Multipart.ByteRanges(Source(
-        Multipart.ByteRanges.BodyPart(ContentRange(0, 6), defaultEntity("snippet"), _additionalHeaders = List(ETag("abc"))) ::
-          Multipart.ByteRanges.BodyPart(ContentRange(8, 9), defaultEntity("PR"), _additionalHeaders = List(ETag("xzy"))) :: Nil))
+        Multipart.ByteRanges.BodyPart(ContentRange(0, 6), defaultEntity("snippet"),
+          _additionalHeaders = List(ETag("abc"))) ::
+        Multipart.ByteRanges.BodyPart(ContentRange(8, 9), defaultEntity("PR"),
+          _additionalHeaders = List(ETag("xzy"))) :: Nil))
       val strict = Await.result(streamed.toStrict(1.second.dilated), 1.second.dilated)
 
       strict shouldEqual Multipart.ByteRanges(
-        Multipart.ByteRanges.BodyPart.Strict(ContentRange(0, 6), HttpEntity("snippet"), additionalHeaders = List(ETag("abc"))),
-        Multipart.ByteRanges.BodyPart.Strict(ContentRange(8, 9), HttpEntity("PR"), additionalHeaders = List(ETag("xzy"))))
+        Multipart.ByteRanges.BodyPart.Strict(ContentRange(0, 6), HttpEntity("snippet"),
+          additionalHeaders = List(ETag("abc"))),
+        Multipart.ByteRanges.BodyPart.Strict(ContentRange(8, 9), HttpEntity("PR"),
+          additionalHeaders = List(ETag("xzy"))))
     }
   }
 

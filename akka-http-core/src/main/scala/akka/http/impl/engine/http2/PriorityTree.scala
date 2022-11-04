@@ -23,6 +23,7 @@ private[http2] trait PriorityNode {
 /** INTERNAL API */
 @InternalApi
 private[http2] trait PriorityTree {
+
   /**
    * Returns a new priority tree containing the new or existing and updated stream.
    */
@@ -73,7 +74,8 @@ private[http2] object PriorityTree {
         insertNode(PriorityInfo(streamDependency, 0, DefaultWeight, TreeSet.empty)) // try again after creating intermediate
           .insert(streamId, streamDependency, weight, exclusive)
     }
-    private def update(streamId: Int, newStreamDependency: Int, newWeight: Int, newlyExclusive: Boolean): PriorityTree = {
+    private def update(
+        streamId: Int, newStreamDependency: Int, newWeight: Int, newlyExclusive: Boolean): PriorityTree = {
       require(nodes.isDefinedAt(streamId), s"Not must exist to be updated: $streamId")
       require(streamId != newStreamDependency, s"Stream cannot depend on itself: $streamId")
 
@@ -103,11 +105,9 @@ private[http2] object PriorityTree {
 
       create(
         (nodes - streamId) +
-          (info.streamDependency -> dependencyInfo.copy(childrenIds = dependencyInfo.childrenIds - streamId)) ++
-          info.childrenIds.unsorted.map(id =>
-            id -> nodes(id).copy(streamDependency = info.streamDependency)
-          )
-      )
+        (info.streamDependency -> dependencyInfo.copy(childrenIds = dependencyInfo.childrenIds - streamId)) ++
+        info.childrenIds.unsorted.map(id =>
+          id -> nodes(id).copy(streamDependency = info.streamDependency)))
     }
 
     private def dependsTransitivelyOn(child: Int, parent: Int): Boolean = {
@@ -128,7 +128,8 @@ private[http2] object PriorityTree {
       updateNodes { nodes =>
         nodes.updated(streamId, updater(nodes(streamId)))
       }
-    private def updateChildren(updater: immutable.TreeSet[Int] => immutable.TreeSet[Int]): PriorityInfo => PriorityInfo = { old =>
+    private def updateChildren(
+        updater: immutable.TreeSet[Int] => immutable.TreeSet[Int]): PriorityInfo => PriorityInfo = { old =>
       old.copy(childrenIds = updater(old.childrenIds))
     }
     private def insertNode(newNode: PriorityInfo): PriorityTreeImpl =
@@ -149,9 +150,8 @@ private[http2] object PriorityTree {
   }
 
   private case class PriorityInfo(
-    streamId:         Int,
-    streamDependency: Int,
-    weight:           Int,
-    childrenIds:      immutable.TreeSet[Int]
-  )
+      streamId: Int,
+      streamDependency: Int,
+      weight: Int,
+      childrenIds: immutable.TreeSet[Int])
 }

@@ -91,7 +91,8 @@ class HttpModelIntegrationSpec extends AnyWordSpec with Matchers with BeforeAndA
 
       // Finally convert the body into an Array[Byte].
 
-      val entityBytes: Array[Byte] = Await.result(request.entity.toStrict(1.second.dilated), 2.seconds.dilated).data.toArray
+      val entityBytes: Array[Byte] =
+        Await.result(request.entity.toStrict(1.second.dilated), 2.seconds.dilated).data.toArray
       entityBytes.to(Seq) shouldEqual ByteString("hello").to(Seq)
     }
 
@@ -112,8 +113,8 @@ class HttpModelIntegrationSpec extends AnyWordSpec with Matchers with BeforeAndA
       // we use Akka HTTP's HeaderParser to parse the headers, giving us a
       // List[HttpHeader].
 
-      val parsingResults = textHeaders map { case (name, value) => HttpHeader.parse(name, value) }
-      val convertedHeaders = parsingResults collect { case HttpHeader.ParsingResult.Ok(h, _) => h }
+      val parsingResults = textHeaders.map { case (name, value) => HttpHeader.parse(name, value) }
+      val convertedHeaders = parsingResults.collect { case HttpHeader.ParsingResult.Ok(h, _) => h }
       val parseErrors = parsingResults.flatMap(_.errors)
       parseErrors shouldBe empty
 

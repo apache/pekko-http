@@ -12,7 +12,7 @@ import akka.http.impl.engine.client.pool.SlotState._
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
-import akka.http.scaladsl.model.{ HttpRequest, HttpResponse, headers }
+import akka.http.scaladsl.model.{ headers, HttpRequest, HttpResponse }
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.stream.scaladsl.Source
 import akka.testkit.AkkaSpec
@@ -31,8 +31,7 @@ class SlotStateSpec extends AkkaSpec {
     RequestContext(
       HttpRequest(
         entity = HttpEntity(ContentTypes.`application/octet-stream`, Source.single(ByteString("test")))),
-      Promise[HttpResponse](), 0
-    )
+      Promise[HttpResponse](), 0)
 
   "The new connection pool slot state machine" should {
     "successfully complete a 'happy path' request" in {
@@ -156,7 +155,8 @@ class SlotStateSpec extends AkkaSpec {
     }
   }
 
-  class MockSlotContext(_log: LoggingAdapter, val settings: ConnectionPoolSettings = ConnectionPoolSettings("")) extends SlotContext {
+  class MockSlotContext(
+      _log: LoggingAdapter, val settings: ConnectionPoolSettings = ConnectionPoolSettings("")) extends SlotContext {
     override def log: LoggingAdapter = _log
 
     var connectionClosed = true
@@ -190,4 +190,3 @@ class SlotStateSpec extends AkkaSpec {
     }
   }
 }
-

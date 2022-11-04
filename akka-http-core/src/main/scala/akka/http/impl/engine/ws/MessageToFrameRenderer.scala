@@ -38,7 +38,7 @@ private[http] object MessageToFrameRenderer {
           FrameEvent.fullFrame(frameOpcode, None, data, fin = false)
         }
       })) ++
-        Source.single(FrameEvent.emptyLastContinuationFrame)
+      Source.single(FrameEvent.emptyLastContinuationFrame)
 
     Flow[Message]
       .flatMapConcat {

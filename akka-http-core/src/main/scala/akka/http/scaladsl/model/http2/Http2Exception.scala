@@ -20,6 +20,8 @@ class Http2Exception(msg: String) extends RuntimeException(msg)
  */
 @ApiMayChange
 class PeerClosedStreamException(val streamId: Int, val errorCode: String, val numericErrorCode: Int)
-  extends Http2Exception(f"Stream with ID [$streamId%d] was closed by peer with code $errorCode%s(0x$numericErrorCode%02x)") with NoStackTrace {
+    extends Http2Exception(
+      f"Stream with ID [$streamId%d] was closed by peer with code $errorCode%s(0x$numericErrorCode%02x)")
+    with NoStackTrace {
   private[http] def this(streamId: Int, errorCode: ErrorCode) = this(streamId, errorCode.toString, errorCode.id)
 }

@@ -7,7 +7,10 @@ package akka.http.impl.model.parser
 import akka.annotation.InternalApi
 import akka.http.scaladsl.settings.ParserSettings
 import akka.http.scaladsl.settings.ParserSettings.CookieParsingMode
-import akka.http.scaladsl.settings.ParserSettings.{ IllegalResponseHeaderValueProcessingMode, IllegalResponseHeaderNameProcessingMode }
+import akka.http.scaladsl.settings.ParserSettings.{
+  IllegalResponseHeaderNameProcessingMode,
+  IllegalResponseHeaderValueProcessingMode
+}
 import akka.http.scaladsl.model.headers.HttpCookiePair
 import akka.util.ConstantFun
 
@@ -22,23 +25,23 @@ import akka.http.scaladsl.model._
  */
 @InternalApi
 private[http] class HeaderParser(
-  val input: ParserInput,
-  settings:  HeaderParser.Settings = HeaderParser.DefaultSettings)
-  extends Parser with DynamicRuleHandler[HeaderParser, HttpHeader :: HNil]
-  with CommonRules
-  with AcceptCharsetHeader
-  with AcceptEncodingHeader
-  with AcceptHeader
-  with AcceptLanguageHeader
-  with CacheControlHeader
-  with ContentDispositionHeader
-  with ContentTypeHeader
-  with CommonActions
-  with IpAddressParsing
-  with LinkHeader
-  with SimpleHeaders
-  with StringBuilding
-  with WebSocketHeaders {
+    val input: ParserInput,
+    settings: HeaderParser.Settings = HeaderParser.DefaultSettings)
+    extends Parser with DynamicRuleHandler[HeaderParser, HttpHeader :: HNil]
+    with CommonRules
+    with AcceptCharsetHeader
+    with AcceptEncodingHeader
+    with AcceptHeader
+    with AcceptLanguageHeader
+    with CacheControlHeader
+    with ContentDispositionHeader
+    with ContentTypeHeader
+    with CommonActions
+    with IpAddressParsing
+    with LinkHeader
+    with SimpleHeaders
+    with StringBuilding
+    with WebSocketHeaders {
   import CharacterClasses._
 
   override def customMediaTypes = settings.customMediaTypes
@@ -116,7 +119,8 @@ private[http] object HeaderParser {
           Failure(ErrorInfo(
             "Header parsing error",
             s"Rule for $headerName accepted trailing garbage. Is the parser missing a trailing EOI?"))
-        case Failure(e)   => Failure(e.copy(summary = e.summary.filterNot(_ == EOI), detail = e.detail.filterNot(_ == EOI)))
+        case Failure(e) =>
+          Failure(e.copy(summary = e.summary.filterNot(_ == EOI), detail = e.detail.filterNot(_ == EOI)))
         case RuleNotFound => RuleNotFound
       }
     }
@@ -197,12 +201,14 @@ private[http] object HeaderParser {
     def illegalResponseHeaderValueProcessingMode: IllegalResponseHeaderValueProcessingMode
   }
   def Settings(
-    uriParsingMode:         Uri.ParsingMode                          = Uri.ParsingMode.Relaxed,
-    cookieParsingMode:      ParserSettings.CookieParsingMode         = ParserSettings.CookieParsingMode.RFC6265,
-    customMediaTypes:       MediaTypes.FindCustom                    = ConstantFun.scalaAnyTwoToNone,
-    maxCommentParsingDepth: Int                                      = 5,
-    modeValue:              IllegalResponseHeaderValueProcessingMode = ParserSettings.IllegalResponseHeaderValueProcessingMode.Error,
-    modeName:               IllegalResponseHeaderNameProcessingMode  = ParserSettings.IllegalResponseHeaderNameProcessingMode.Error): Settings = {
+      uriParsingMode: Uri.ParsingMode = Uri.ParsingMode.Relaxed,
+      cookieParsingMode: ParserSettings.CookieParsingMode = ParserSettings.CookieParsingMode.RFC6265,
+      customMediaTypes: MediaTypes.FindCustom = ConstantFun.scalaAnyTwoToNone,
+      maxCommentParsingDepth: Int = 5,
+      modeValue: IllegalResponseHeaderValueProcessingMode =
+        ParserSettings.IllegalResponseHeaderValueProcessingMode.Error,
+      modeName: IllegalResponseHeaderNameProcessingMode = ParserSettings.IllegalResponseHeaderNameProcessingMode.Error)
+      : Settings = {
 
     val _uriParsingMode = uriParsingMode
     val _cookieParsingMode = cookieParsingMode

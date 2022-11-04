@@ -11,7 +11,7 @@ import java.security.cert.{ Certificate, CertificateFactory }
 
 import akka.actor.ActorSystem
 import javax.net.ssl.{ KeyManagerFactory, SSLContext, TrustManagerFactory }
-import akka.http.scaladsl.{ ClientTransport, Http, ConnectionContext }
+import akka.http.scaladsl.{ ClientTransport, ConnectionContext, Http }
 import akka.http.impl.util.JavaMapping.Implicits._
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.stream.scaladsl.Flow
@@ -71,7 +71,8 @@ object ExampleHttpContexts {
    */
   def proxyTransport(realAddress: InetSocketAddress): ClientTransport =
     new ClientTransport {
-      override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] =
+      override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+          implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] =
         ClientTransport.TCP.connectTo(realAddress.getHostString, realAddress.getPort, settings)
     }
 }

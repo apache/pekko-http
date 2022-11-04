@@ -35,31 +35,35 @@ private[http] object StreamUtils {
    * input has been read it will call `finish` once to determine the final ByteString to post to the output.
    * Empty ByteStrings are discarded.
    */
-  def byteStringTransformer(f: ByteString => ByteString, finish: () => ByteString): GraphStage[FlowShape[ByteString, ByteString]] = new SimpleLinearGraphStage[ByteString] {
-    override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
-      override def onPush(): Unit = {
-        val data = f(grab(in))
-        if (data.nonEmpty) push(out, data)
-        else pull(in)
-      }
+  def byteStringTransformer(
+      f: ByteString => ByteString, finish: () => ByteString): GraphStage[FlowShape[ByteString, ByteString]] =
+    new SimpleLinearGraphStage[ByteString] {
+      override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+        new GraphStageLogic(shape) with InHandler with OutHandler {
+          override def onPush(): Unit = {
+            val data = f(grab(in))
+            if (data.nonEmpty) push(out, data)
+            else pull(in)
+          }
 
-      override def onPull(): Unit = pull(in)
+          override def onPull(): Unit = pull(in)
 
-      override def onUpstreamFinish(): Unit = {
-        val data = finish()
-        if (data.nonEmpty) emit(out, data)
-        completeStage()
-      }
+          override def onUpstreamFinish(): Unit = {
+            val data = finish()
+            if (data.nonEmpty) emit(out, data)
+            completeStage()
+          }
 
-      setHandlers(in, out, this)
+          setHandlers(in, out, this)
+        }
     }
-  }
 
   def captureTermination[T, Mat](source: Source[T, Mat]): (Source[T, Mat], Future[Unit]) = {
     val (newSource, termination, _, _) = captureMaterializationTerminationAndKillSwitch(source)
     (newSource, termination)
   }
-  def captureMaterializationTerminationAndKillSwitch[T, Mat](source: Source[T, Mat]): (Source[T, Mat], Future[Unit], Future[Unit], KillSwitch) = {
+  def captureMaterializationTerminationAndKillSwitch[T, Mat](
+      source: Source[T, Mat]): (Source[T, Mat], Future[Unit], Future[Unit], KillSwitch) = {
     val terminationPromise = Promise[Unit]()
     val materializationPromise = Promise[Unit]()
     val killResult = Promise[Unit]()
@@ -68,65 +72,68 @@ private[http] object StreamUtils {
       override def abort(ex: Throwable): Unit = killResult.tryFailure(ex)
     }
     val transformer = new SimpleLinearGraphStage[T] {
-      override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
-        override def preStart(): Unit = {
-          materializationPromise.trySuccess(())
-          killResult.future.value match {
-            case Some(res) => handleKill(res)
-            case None      => killResult.future.onComplete(killCallback.invoke)(ExecutionContexts.sameThreadExecutionContext)
+      override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+        new GraphStageLogic(shape) with InHandler with OutHandler {
+          override def preStart(): Unit = {
+            materializationPromise.trySuccess(())
+            killResult.future.value match {
+              case Some(res) => handleKill(res)
+              case None =>
+                killResult.future.onComplete(killCallback.invoke)(ExecutionContexts.sameThreadExecutionContext)
+            }
+          }
+
+          override def onPush(): Unit = push(out, grab(in))
+
+          override def onPull(): Unit = pull(in)
+
+          override def onUpstreamFailure(ex: Throwable): Unit = {
+            terminationPromise.tryFailure(ex)
+            failStage(ex)
+          }
+
+          override def postStop(): Unit = terminationPromise.trySuccess(())
+
+          setHandlers(in, out, this)
+
+          // KillSwitch implementation
+          private[this] val killCallback = getAsyncCallback[Try[Unit]](handleKill)
+
+          def handleKill(result: Try[Unit]): Unit = result match {
+            case Success(_)  => completeStage()
+            case Failure(ex) => failStage(ex)
           }
         }
-
-        override def onPush(): Unit = push(out, grab(in))
-
-        override def onPull(): Unit = pull(in)
-
-        override def onUpstreamFailure(ex: Throwable): Unit = {
-          terminationPromise.tryFailure(ex)
-          failStage(ex)
-        }
-
-        override def postStop(): Unit = terminationPromise.trySuccess(())
-
-        setHandlers(in, out, this)
-
-        // KillSwitch implementation
-        private[this] val killCallback = getAsyncCallback[Try[Unit]](handleKill)
-
-        def handleKill(result: Try[Unit]): Unit = result match {
-          case Success(_)  => completeStage()
-          case Failure(ex) => failStage(ex)
-        }
-      }
     }
     (source.via(transformer), terminationPromise.future, materializationPromise.future, killSwitch)
   }
 
   def sliceBytesTransformer(start: Long, length: Long): Flow[ByteString, ByteString, NotUsed] = {
     val transformer = new SimpleLinearGraphStage[ByteString] {
-      override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
-        override def onPull() = pull(in)
+      override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+        new GraphStageLogic(shape) with InHandler with OutHandler {
+          override def onPull() = pull(in)
 
-        var toSkip = start
-        var remaining = length
+          var toSkip = start
+          var remaining = length
 
-        override def onPush(): Unit = {
-          val element = grab(in)
-          if (toSkip >= element.length)
-            pull(in)
-          else {
-            val data = element.drop(toSkip.toInt).take(math.min(remaining, Int.MaxValue).toInt)
-            remaining -= data.size
-            push(out, data)
-            if (remaining <= 0) completeStage()
+          override def onPush(): Unit = {
+            val element = grab(in)
+            if (toSkip >= element.length)
+              pull(in)
+            else {
+              val data = element.drop(toSkip.toInt).take(math.min(remaining, Int.MaxValue).toInt)
+              remaining -= data.size
+              push(out, data)
+              if (remaining <= 0) completeStage()
+            }
+
+            if (toSkip > 0)
+              toSkip -= element.length
           }
 
-          if (toSkip > 0)
-            toSkip -= element.length
+          setHandlers(in, out, this)
         }
-
-        setHandlers(in, out, this)
-      }
     }
     Flow[ByteString].via(transformer).named("sliceBytes")
   }
@@ -197,49 +204,50 @@ private[http] object StreamUtils {
    *
    * Returns a flow that is almost identity but delays propagation of cancellation from downstream to upstream.
    */
-  def delayCancellation[T](cancelAfter: Duration): Flow[T, T, NotUsed] = Flow.fromGraph(new DelayCancellationStage(cancelAfter))
+  def delayCancellation[T](cancelAfter: Duration): Flow[T, T, NotUsed] =
+    Flow.fromGraph(new DelayCancellationStage(cancelAfter))
   final class DelayCancellationStage[T](cancelAfter: Duration) extends SimpleLinearGraphStage[T] {
-    def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with ScheduleSupport with InHandler with OutHandler with StageLogging {
-      setHandlers(in, out, this)
+    def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+      new GraphStageLogic(shape) with ScheduleSupport with InHandler with OutHandler with StageLogging {
+        setHandlers(in, out, this)
 
-      def onPush(): Unit = push(out, grab(in)) // using `passAlong` was considered but it seems to need some boilerplate to make it work
-      def onPull(): Unit = pull(in)
+        def onPush(): Unit = push(out, grab(in)) // using `passAlong` was considered but it seems to need some boilerplate to make it work
+        def onPull(): Unit = pull(in)
 
-      var timeout: OptionVal[Cancellable] = OptionVal.None
+        var timeout: OptionVal[Cancellable] = OptionVal.None
 
-      override def onDownstreamFinish(): Unit = {
-        cancelAfter match {
-          case finite: FiniteDuration =>
-            log.debug(s"Delaying cancellation for $finite")
-            timeout = OptionVal.Some {
-              scheduleOnce(finite) {
-                log.debug(s"Stage was canceled after delay of $cancelAfter")
-                timeout = OptionVal.None
-                completeStage()
+        override def onDownstreamFinish(): Unit = {
+          cancelAfter match {
+            case finite: FiniteDuration =>
+              log.debug(s"Delaying cancellation for $finite")
+              timeout = OptionVal.Some {
+                scheduleOnce(finite) {
+                  log.debug(s"Stage was canceled after delay of $cancelAfter")
+                  timeout = OptionVal.None
+                  completeStage()
+                }
               }
-            }
-          case _ => // do nothing
+            case _ => // do nothing
+          }
+
+          // don't pass cancellation to upstream but keep pulling until we get completion or failure
+          setHandler(
+            in,
+            new InHandler {
+              if (!hasBeenPulled(in)) pull(in)
+
+              def onPush(): Unit = {
+                grab(in) // ignore further elements
+                pull(in)
+              }
+            })
         }
 
-        // don't pass cancellation to upstream but keep pulling until we get completion or failure
-        setHandler(
-          in,
-          new InHandler {
-            if (!hasBeenPulled(in)) pull(in)
-
-            def onPush(): Unit = {
-              grab(in) // ignore further elements
-              pull(in)
-            }
-          }
-        )
+        override def postStop(): Unit = timeout match {
+          case OptionVal.Some(x) => x.cancel()
+          case OptionVal.None    => // do nothing
+        }
       }
-
-      override def postStop(): Unit = timeout match {
-        case OptionVal.Some(x) => x.cancel()
-        case OptionVal.None    => // do nothing
-      }
-    }
   }
 
   /**
@@ -261,6 +269,7 @@ private[http] object StreamUtils {
     Flow[T].via(ExposeAttributes[T, U](functionConstructor))
 
   trait ScheduleSupport { self: GraphStageLogic =>
+
     /**
      * Schedule a block to be run once after the given duration in the context of this graph stage.
      */
@@ -274,6 +283,7 @@ private[http] object StreamUtils {
 
   /** Dummy name to signify that the caller asserts that cancelSource is only run from within a GraphInterpreter context */
   val OnlyRunInGraphInterpreterContext: Materializer = null
+
   /**
    * Tries to guess whether a source needs to cancelled and how. In the best case no materialization should be needed.
    */
@@ -283,17 +293,17 @@ private[http] object StreamUtils {
       val mat =
         GraphInterpreter.currentInterpreterOrNull match {
           case null if materializer ne null => materializer
-          case null                         => throw new IllegalStateException("Need to pass materializer to cancelSource if not run from GraphInterpreter context.")
-          case x                            => x.subFusingMaterializer // try to use fuse if already running in interpreter context
+          case null => throw new IllegalStateException(
+              "Need to pass materializer to cancelSource if not run from GraphInterpreter context.")
+          case x => x.subFusingMaterializer // try to use fuse if already running in interpreter context
         }
       x.runWith(Sink.ignore)(mat)
   }
 
   case class StreamControl(
-    whenMaterialized: Future[Unit],
-    whenTerminated:   Future[Unit],
-    killSwitch:       Option[KillSwitch]
-  )
+      whenMaterialized: Future[Unit],
+      whenTerminated: Future[Unit],
+      killSwitch: Option[KillSwitch])
   private val successfulDone = Future.successful(())
   object CaptureMaterializationAndTerminationOp extends EntityStreamOp[StreamControl] {
     val strictM: StreamControl = StreamControl(successfulDone, successfulDone, None)
@@ -345,13 +355,14 @@ private[http] object StreamUtils {
     else FastFuture.failed(ioResult.getError)
 
   def encodeErrorAndComplete[T](f: Throwable => T): Flow[T, T, NotUsed] =
-    Flow[T].recoverWithRetries(1, {
-      case t: Throwable =>
-        try Source.single(f(t))
-        catch {
-          case NonFatal(ex) => Source.failed(ex) // avoid logged errors here
-        }
-    })
+    Flow[T].recoverWithRetries(1,
+      {
+        case t: Throwable =>
+          try Source.single(f(t))
+          catch {
+            case NonFatal(ex) => Source.failed(ex) // avoid logged errors here
+          }
+      })
 }
 
 /**
@@ -367,19 +378,20 @@ private[http] class EnhancedByteStringSource[Mat](val byteStringStream: Source[B
 
 /** INTERNAL API */
 @InternalApi private[http] case class ExposeAttributes[T, U](functionConstructor: Attributes => T => U)
-  extends GraphStage[FlowShape[T, U]] {
+    extends GraphStage[FlowShape[T, U]] {
 
   val in = Inlet[T]("ExposeAttributes.in")
   val out = Outlet[U]("ExposeAttributes.out")
   override val shape = FlowShape(in, out)
 
-  override def createLogic(inheritedAttributes: Attributes) = new GraphStageLogic(shape) with InHandler with OutHandler {
-    val f = functionConstructor(inheritedAttributes)
-    override def onPush(): Unit =
-      try push(out, f(grab(in)))
-      catch { case NonFatal(ex) => failStage(ex) }
-    override def onPull(): Unit = pull(in)
+  override def createLogic(inheritedAttributes: Attributes) =
+    new GraphStageLogic(shape) with InHandler with OutHandler {
+      val f = functionConstructor(inheritedAttributes)
+      override def onPush(): Unit =
+        try push(out, f(grab(in)))
+        catch { case NonFatal(ex) => failStage(ex) }
+      override def onPull(): Unit = pull(in)
 
-    setHandlers(in, out, this)
-  }
+      setHandlers(in, out, this)
+    }
 }

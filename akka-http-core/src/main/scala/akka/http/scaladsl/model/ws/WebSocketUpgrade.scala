@@ -21,6 +21,7 @@ import akka.http.scaladsl.model.HttpResponse
  * at https://doc.akka.io/docs/akka-http/current/server-side/websocket-support.html#routing-support
  */
 trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
+
   /**
    * A sequence of protocols the client accepts.
    *
@@ -38,8 +39,8 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    * Optionally, a subprotocol out of the ones requested by the client can be chosen.
    */
   def handleMessages(
-    handlerFlow: Graph[FlowShape[Message, Message], Any],
-    subprotocol: Option[String]                          = None): HttpResponse
+      handlerFlow: Graph[FlowShape[Message, Message], Any],
+      subprotocol: Option[String] = None): HttpResponse
 
   /**
    * The high-level interface to create a WebSocket server based on "messages".
@@ -52,9 +53,9 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    * Optionally, a subprotocol out of the ones requested by the client can be chosen.
    */
   def handleMessagesWithSinkSource(
-    inSink:      Graph[SinkShape[Message], Any],
-    outSource:   Graph[SourceShape[Message], Any],
-    subprotocol: Option[String]                   = None): HttpResponse =
+      inSink: Graph[SinkShape[Message], Any],
+      outSource: Graph[SourceShape[Message], Any],
+      subprotocol: Option[String] = None): HttpResponse =
     handleMessages(scaladsl.Flow.fromSinkAndSource(inSink, outSource), subprotocol)
 
   import scala.collection.JavaConverters._
@@ -73,24 +74,28 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
   /**
    * Java API
    */
-  def handleMessagesWith(handlerFlow: Graph[FlowShape[jm.ws.Message, jm.ws.Message], _ <: Any], subprotocol: String): HttpResponse =
+  def handleMessagesWith(
+      handlerFlow: Graph[FlowShape[jm.ws.Message, jm.ws.Message], _ <: Any], subprotocol: String): HttpResponse =
     handleMessages(JavaMapping.toScala(handlerFlow), subprotocol = Some(subprotocol))
 
   /**
    * Java API
    */
-  def handleMessagesWith(inSink: Graph[SinkShape[jm.ws.Message], _ <: Any], outSource: Graph[SourceShape[jm.ws.Message], _ <: Any]): HttpResponse =
+  def handleMessagesWith(inSink: Graph[SinkShape[jm.ws.Message], _ <: Any],
+      outSource: Graph[SourceShape[jm.ws.Message], _ <: Any]): HttpResponse =
     handleMessages(createScalaFlow(inSink, outSource))
 
   /**
    * Java API
    */
   def handleMessagesWith(
-    inSink:      Graph[SinkShape[jm.ws.Message], _ <: Any],
-    outSource:   Graph[SourceShape[jm.ws.Message], _ <: Any],
-    subprotocol: String): HttpResponse =
+      inSink: Graph[SinkShape[jm.ws.Message], _ <: Any],
+      outSource: Graph[SourceShape[jm.ws.Message], _ <: Any],
+      subprotocol: String): HttpResponse =
     handleMessages(createScalaFlow(inSink, outSource), subprotocol = Some(subprotocol))
 
-  private[this] def createScalaFlow(inSink: Graph[SinkShape[jm.ws.Message], _ <: Any], outSource: Graph[SourceShape[jm.ws.Message], _ <: Any]): Graph[FlowShape[Message, Message], NotUsed] =
-    JavaMapping.toScala(scaladsl.Flow.fromSinkAndSourceMat(inSink, outSource)(scaladsl.Keep.none): Graph[FlowShape[jm.ws.Message, jm.ws.Message], NotUsed])
+  private[this] def createScalaFlow(inSink: Graph[SinkShape[jm.ws.Message], _ <: Any],
+      outSource: Graph[SourceShape[jm.ws.Message], _ <: Any]): Graph[FlowShape[Message, Message], NotUsed] =
+    JavaMapping.toScala(scaladsl.Flow.fromSinkAndSourceMat(inSink, outSource)(scaladsl.Keep.none): Graph[FlowShape[
+        jm.ws.Message, jm.ws.Message], NotUsed])
 }

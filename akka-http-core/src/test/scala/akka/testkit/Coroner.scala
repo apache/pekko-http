@@ -7,8 +7,8 @@ package akka.testkit
 import java.io.PrintStream
 import java.lang.management.{ ManagementFactory, ThreadInfo }
 import java.util.Date
-import java.util.concurrent.{ TimeoutException, CountDownLatch }
-import scala.concurrent.{ Promise, Awaitable, CanAwait, Await }
+import java.util.concurrent.{ CountDownLatch, TimeoutException }
+import scala.concurrent.{ Await, Awaitable, CanAwait, Promise }
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
@@ -31,6 +31,7 @@ object Coroner {
    * The result of this Awaitable will be `true` if it has been cancelled.
    */
   trait WatchHandle extends Awaitable[Boolean] {
+
     /**
      * Will try to ensure that the Coroner has finished reporting.
      */
@@ -38,7 +39,7 @@ object Coroner {
   }
 
   private class WatchHandleImpl(startAndStopDuration: FiniteDuration)
-    extends WatchHandle {
+      extends WatchHandle {
     val cancelPromise = Promise[Boolean]()
     val startedLatch = new CountDownLatch(1)
     val finishedLatch = new CountDownLatch(1)
@@ -64,7 +65,8 @@ object Coroner {
     }
 
     override def result(atMost: Duration)(implicit permit: CanAwait): Boolean =
-      try { Await.result(cancelPromise.future, atMost) } catch { case _: TimeoutException => false }
+      try { Await.result(cancelPromise.future, atMost) }
+      catch { case _: TimeoutException => false }
 
   }
 
@@ -78,8 +80,8 @@ object Coroner {
    * and stop.
    */
   def watch(duration: FiniteDuration, reportTitle: String, out: PrintStream,
-            startAndStopDuration: FiniteDuration = defaultStartAndStopDuration,
-            displayThreadCounts:  Boolean        = false): WatchHandle = {
+      startAndStopDuration: FiniteDuration = defaultStartAndStopDuration,
+      displayThreadCounts: Boolean = false): WatchHandle = {
 
     val watchedHandle = new WatchHandleImpl(startAndStopDuration)
 
@@ -95,7 +97,8 @@ object Coroner {
         if (!Await.result(watchedHandle, duration)) {
           watchedHandle.expired()
           out.println(s"Coroner not cancelled after ${duration.toMillis}ms. Looking for signs of foul play...")
-          try printReport(reportTitle, out) catch {
+          try printReport(reportTitle, out)
+          catch {
             case NonFatal(ex) => {
               out.println("Error displaying Coroner's Report")
               ex.printStackTrace(out)
@@ -105,7 +108,8 @@ object Coroner {
       } finally {
         if (displayThreadCounts) {
           val endThreads = threadMx.getThreadCount
-          out.println(s"Coroner Thread Count started at $startThreads, ended at $endThreads, peaked at ${threadMx.getPeakThreadCount} in $reportTitle")
+          out.println(
+            s"Coroner Thread Count started at $startThreads, ended at $endThreads, peaked at ${threadMx.getPeakThreadCount} in $reportTitle")
         }
         out.flush()
         watchedHandle.finished()

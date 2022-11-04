@@ -4,7 +4,7 @@
 
 package akka.http.scaladsl.model
 
-import java.util.{ OptionalLong, Optional }
+import java.util.{ Optional, OptionalLong }
 import akka.http.impl.util.{ Rendering, ValueRenderable }
 import akka.http.javadsl.{ model => jm }
 import scala.compat.java8.OptionConverters._
@@ -23,6 +23,7 @@ sealed trait ByteContentRange extends ContentRange {
 
   /** Java API */
   def isByteContentRange: Boolean = true
+
   /** Java API */
   def getInstanceLength: OptionalLong = instanceLength.asPrimitive
 }
@@ -47,8 +48,10 @@ object ContentRange {
 
     /** Java API */
     override def isSatisfiable: Boolean = true
+
     /** Java API */
     override def getSatisfiableFirst: OptionalLong = OptionalLong.of(first)
+
     /** Java API */
     override def getSatisfiableLast: OptionalLong = OptionalLong.of(last)
   }
@@ -69,8 +72,10 @@ object ContentRange {
 
     /** Java API */
     def isByteContentRange = false
+
     /** Java API */
     def getInstanceLength: OptionalLong = OptionalLong.empty()
+
     /** Java API */
     override def getOtherValue: Optional[String] = Optional.of(value)
   }

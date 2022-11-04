@@ -39,16 +39,19 @@ package object util {
   private[http] implicit def enhanceConfig(config: Config): EnhancedConfig = new EnhancedConfig(config)
   private[http] implicit def enhanceString_(s: String): EnhancedString = new EnhancedString(s)
   private[http] implicit def enhanceRegex(regex: Regex): EnhancedRegex = new EnhancedRegex(regex)
-  private[http] implicit def enhanceByteStrings(byteStrings: TraversableOnce[ByteString]): EnhancedByteStringTraversableOnce =
+  private[http] implicit def enhanceByteStrings(
+      byteStrings: TraversableOnce[ByteString]): EnhancedByteStringTraversableOnce =
     new EnhancedByteStringTraversableOnce(byteStrings)
-  private[http] implicit def enhanceByteStringsMat[Mat](byteStrings: Source[ByteString, Mat]): EnhancedByteStringSource[Mat] =
+  private[http] implicit def enhanceByteStringsMat[Mat](
+      byteStrings: Source[ByteString, Mat]): EnhancedByteStringSource[Mat] =
     new EnhancedByteStringSource(byteStrings)
 
   private[this] var eventStreamLogger: ActorRef = _
   private[http] def installEventStreamLoggerFor(channel: Class[_])(implicit system: ActorSystem): Unit = {
     synchronized {
       if (eventStreamLogger == null)
-        eventStreamLogger = system.actorOf(Props[util.EventStreamLogger]().withDeploy(Deploy.local), name = "event-stream-logger")
+        eventStreamLogger =
+          system.actorOf(Props[util.EventStreamLogger]().withDeploy(Deploy.local), name = "event-stream-logger")
     }
     system.eventStream.subscribe(eventStreamLogger, channel)
   }
@@ -56,12 +59,14 @@ package object util {
     installEventStreamLoggerFor(ct.runtimeClass)
 
   private[http] implicit class AddFutureAwaitResult[T](future: Future[T]) {
+
     /** "Safe" Await.result that doesn't throw away half of the stacktrace */
     def awaitResult(atMost: Duration): T = {
       Await.ready(future, atMost)
       future.value.get match {
-        case Success(t)  => t
-        case Failure(ex) => throw new RuntimeException("Trying to await result of failed Future, see the cause for the original problem.", ex)
+        case Success(t) => t
+        case Failure(ex) => throw new RuntimeException(
+            "Trying to await result of failed Future, see the cause for the original problem.", ex)
       }
     }
   }
@@ -102,7 +107,7 @@ package util {
   import scala.concurrent.duration.FiniteDuration
 
   private[http] class ToStrict(timeout: FiniteDuration, maxBytes: Option[Long], contentType: ContentType)
-    extends GraphStage[FlowShape[ByteString, HttpEntity.Strict]] {
+      extends GraphStage[FlowShape[ByteString, HttpEntity.Strict]] {
 
     val byteStringIn = Inlet[ByteString]("ToStrict.byteStringIn")
     val httpEntityOut = Outlet[HttpEntity.Strict]("ToStrict.httpEntityOut")
@@ -117,32 +122,35 @@ package util {
 
       override def preStart(): Unit = scheduleOnce("ToStrictTimeoutTimer", timeout)
 
-      setHandler(httpEntityOut, new OutHandler {
-        override def onPull(): Unit = {
-          if (emptyStream) {
-            push(httpEntityOut, HttpEntity.Strict(contentType, ByteString.empty))
-            completeStage()
-          } else pull(byteStringIn)
-        }
-      })
-
-      setHandler(byteStringIn, new InHandler {
-        override def onPush(): Unit = {
-          bytes ++= grab(byteStringIn)
-          maxBytes match {
-            case Some(max) if bytes.length > max =>
-              failStage(new EntityStreamException(new ErrorInfo("Request too large", s"Request was longer than the maximum of $max")))
-            case _ =>
-              pull(byteStringIn)
+      setHandler(httpEntityOut,
+        new OutHandler {
+          override def onPull(): Unit = {
+            if (emptyStream) {
+              push(httpEntityOut, HttpEntity.Strict(contentType, ByteString.empty))
+              completeStage()
+            } else pull(byteStringIn)
           }
-        }
-        override def onUpstreamFinish(): Unit = {
-          if (isAvailable(httpEntityOut)) {
-            push(httpEntityOut, HttpEntity.Strict(contentType, bytes.result()))
-            completeStage()
-          } else emptyStream = true
-        }
-      })
+        })
+
+      setHandler(byteStringIn,
+        new InHandler {
+          override def onPush(): Unit = {
+            bytes ++= grab(byteStringIn)
+            maxBytes match {
+              case Some(max) if bytes.length > max =>
+                failStage(new EntityStreamException(new ErrorInfo("Request too large",
+                  s"Request was longer than the maximum of $max")))
+              case _ =>
+                pull(byteStringIn)
+            }
+          }
+          override def onUpstreamFinish(): Unit = {
+            if (isAvailable(httpEntityOut)) {
+              push(httpEntityOut, HttpEntity.Strict(contentType, bytes.result()))
+              completeStage()
+            } else emptyStream = true
+          }
+        })
 
       override def onTimer(key: Any): Unit =
         failStage(new java.util.concurrent.TimeoutException(

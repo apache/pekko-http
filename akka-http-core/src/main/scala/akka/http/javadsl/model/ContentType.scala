@@ -9,6 +9,7 @@ import java.util.Optional
 // Has to be defined in Scala even though it's JavaDSL because of:
 // https://issues.scala-lang.org/browse/SI-9621
 object ContentType {
+
   /** Represents a content-type which we know not to contain text (will never have a charset) */
   trait Binary extends ContentType
 
@@ -36,6 +37,7 @@ object ContentType {
  * See [[ContentTypes]] for convenience access to often used values.
  */
 trait ContentType {
+
   /**
    * The media-type of this content-type.
    */

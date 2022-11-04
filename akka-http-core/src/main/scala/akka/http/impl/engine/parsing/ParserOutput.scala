@@ -29,22 +29,22 @@ private[http] object ParserOutput {
   sealed trait ErrorOutput extends MessageOutput
 
   final case class RequestStart(
-    method:            HttpMethod,
-    uri:               Uri,
-    protocol:          HttpProtocol,
-    attributes:        Map[AttributeKey[_], _],
-    headers:           List[HttpHeader],
-    createEntity:      EntityCreator[RequestOutput, RequestEntity],
-    expect100Continue: Boolean,
-    closeRequested:    Boolean) extends MessageStart with RequestOutput
+      method: HttpMethod,
+      uri: Uri,
+      protocol: HttpProtocol,
+      attributes: Map[AttributeKey[_], _],
+      headers: List[HttpHeader],
+      createEntity: EntityCreator[RequestOutput, RequestEntity],
+      expect100Continue: Boolean,
+      closeRequested: Boolean) extends MessageStart with RequestOutput
 
   final case class ResponseStart(
-    statusCode:     StatusCode,
-    protocol:       HttpProtocol,
-    attributes:     Map[AttributeKey[_], _],
-    headers:        List[HttpHeader],
-    createEntity:   EntityCreator[ResponseOutput, ResponseEntity],
-    closeRequested: Boolean) extends MessageStart with ResponseOutput
+      statusCode: StatusCode,
+      protocol: HttpProtocol,
+      attributes: Map[AttributeKey[_], _],
+      headers: List[HttpHeader],
+      createEntity: EntityCreator[ResponseOutput, ResponseEntity],
+      closeRequested: Boolean) extends MessageStart with ResponseOutput
 
   case object MessageEnd extends MessageOutput
 
@@ -73,7 +73,8 @@ private[http] object ParserOutput {
   /**
    * An entity creator that uses the given entity directly and ignores the passed-in source.
    */
-  final case class StrictEntityCreator[-A <: ParserOutput, +B <: UniversalEntity](entity: B) extends EntityCreator[A, B] {
+  final case class StrictEntityCreator[-A <: ParserOutput, +B <: UniversalEntity](
+      entity: B) extends EntityCreator[A, B] {
     def apply(parts: Source[A, NotUsed]) = {
       // We might need to drain stray empty tail streams which will be read by no one.
       StreamUtils.cancelSource(parts)(StreamUtils.OnlyRunInGraphInterpreterContext) // only called within Http graphs stages
@@ -85,7 +86,7 @@ private[http] object ParserOutput {
    * An entity creator that creates the entity from the a source of parts.
    */
   final case class StreamedEntityCreator[-A <: ParserOutput, +B <: HttpEntity](creator: Source[A, NotUsed] => B)
-    extends EntityCreator[A, B] {
+      extends EntityCreator[A, B] {
     def apply(parts: Source[A, NotUsed]) = creator(parts)
   }
 }

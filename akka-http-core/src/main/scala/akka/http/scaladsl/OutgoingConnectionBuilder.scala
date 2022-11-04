@@ -24,6 +24,7 @@ import scala.concurrent.Future
  */
 @DoNotInherit
 trait OutgoingConnectionBuilder {
+
   /**
    * Change which host flows built with this builder connects to
    */

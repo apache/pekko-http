@@ -25,15 +25,15 @@ private[parser] trait ContentDispositionHeader { this: Parser with CommonRules w
       // https://tools.ietf.org/html/rfc6266#section-4.3
       // when both "filename" and "filename*" are present in a single header field value,
       //   recipients SHOULD pick "filename*" and ignore "filename"
-      all.get("filename*").map(fExt => all - "filename*" + ("filename" -> fExt)) getOrElse all
+      all.get("filename*").map(fExt => all - "filename*" + ("filename" -> fExt)).getOrElse(all)
     } ~> (`Content-Disposition`(_, _))
   }
 
   def `disposition-type` = rule(
     ignoreCase("inline") ~ OWS ~ push(ContentDispositionTypes.inline)
-      | ignoreCase("attachment") ~ OWS ~ push(ContentDispositionTypes.attachment)
-      | ignoreCase("form-data") ~ OWS ~ push(ContentDispositionTypes.`form-data`)
-      | `disp-ext-type` ~> (ContentDispositionTypes.Ext(_)))
+    | ignoreCase("attachment") ~ OWS ~ push(ContentDispositionTypes.attachment)
+    | ignoreCase("form-data") ~ OWS ~ push(ContentDispositionTypes.`form-data`)
+    | `disp-ext-type` ~> (ContentDispositionTypes.Ext(_)))
 
   def `disp-ext-type` = rule { token }
 
@@ -41,14 +41,14 @@ private[parser] trait ContentDispositionHeader { this: Parser with CommonRules w
 
   def `filename-parm` = rule(
     ignoreCase("filename") ~ OWS ~ ws('=') ~ push("filename") ~ word
-      | ignoreCase("filename*") ~ OWS ~ ws('=') ~ push("filename*") ~ `ext-value`)
+    | ignoreCase("filename*") ~ OWS ~ ws('=') ~ push("filename*") ~ `ext-value`)
 
   def `disp-ext-parm` = rule(
     token ~ ws('=') ~ word
-      | `ext-token` ~ ws('=') ~ `ext-value`)
+    | `ext-token` ~ ws('=') ~ `ext-value`)
 
   def `ext-token` = rule { // token which ends with '*'
-    token ~> (s => test(s endsWith "*") ~ push(s))
+    token ~> (s => test(s.endsWith("*")) ~ push(s))
   }
 
   // https://tools.ietf.org/html/rfc5987#section-3.2.1
@@ -58,7 +58,7 @@ private[parser] trait ContentDispositionHeader { this: Parser with CommonRules w
 
   def charset = rule {
     ignoreCase("utf-8") ~ push(UTF8) |
-      ignoreCase("iso-8859-1") ~ push(ISO88591)
+    ignoreCase("iso-8859-1") ~ push(ISO88591)
     // | `mime-charset` // reserved for future use
   }
 

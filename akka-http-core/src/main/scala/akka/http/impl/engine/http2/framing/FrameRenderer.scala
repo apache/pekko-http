@@ -25,8 +25,7 @@ private[http2] object FrameRenderer {
           8 + debug.length,
           Http2Protocol.FrameType.GOAWAY,
           Http2Protocol.Flags.NO_FLAGS,
-          Http2Protocol.NoStreamId
-        )
+          Http2Protocol.NoStreamId)
           .putInt32(lastStreamId)
           .putInt32(errorCode.id)
           // appends debug data, if any
@@ -39,8 +38,7 @@ private[http2] object FrameRenderer {
           payload.length,
           Http2Protocol.FrameType.DATA,
           Http2Protocol.Flags.END_STREAM.ifSet(endStream),
-          streamId
-        )
+          streamId)
           .put(payload)
           .build()
       case HeadersFrame(streamId, endStream, endHeaders, headerBlockFragment, prioInfo) =>
@@ -48,10 +46,9 @@ private[http2] object FrameRenderer {
           (if (prioInfo.isDefined) 5 else 0) + headerBlockFragment.length,
           Http2Protocol.FrameType.HEADERS,
           Http2Protocol.Flags.END_STREAM.ifSet(endStream) |
-            Http2Protocol.Flags.END_HEADERS.ifSet(endHeaders) |
-            Http2Protocol.Flags.PRIORITY.ifSet(prioInfo.isDefined),
-          streamId
-        )
+          Http2Protocol.Flags.END_HEADERS.ifSet(endHeaders) |
+          Http2Protocol.Flags.PRIORITY.ifSet(prioInfo.isDefined),
+          streamId)
           .putPriorityInfo(prioInfo)
           .put(headerBlockFragment)
           .build()
@@ -61,8 +58,7 @@ private[http2] object FrameRenderer {
           4,
           Http2Protocol.FrameType.WINDOW_UPDATE,
           Http2Protocol.Flags.NO_FLAGS,
-          streamId
-        )
+          streamId)
           .putInt32(windowSizeIncrement)
           .build()
 
@@ -71,8 +67,7 @@ private[http2] object FrameRenderer {
           payload.length,
           Http2Protocol.FrameType.CONTINUATION,
           Http2Protocol.Flags.END_HEADERS.ifSet(endHeaders),
-          streamId
-        )
+          streamId)
           .put(payload)
           .build()
 
@@ -81,8 +76,7 @@ private[http2] object FrameRenderer {
           settings.length * 6,
           Http2Protocol.FrameType.SETTINGS,
           Http2Protocol.Flags.NO_FLAGS,
-          Http2Protocol.NoStreamId
-        )
+          Http2Protocol.NoStreamId)
 
         @tailrec def renderNext(remaining: Seq[Setting]): Unit =
           remaining match {
@@ -102,8 +96,7 @@ private[http2] object FrameRenderer {
           0,
           Http2Protocol.FrameType.SETTINGS,
           Http2Protocol.Flags.ACK,
-          Http2Protocol.NoStreamId
-        )
+          Http2Protocol.NoStreamId)
           .build()
 
       case PingFrame(ack, data) =>
@@ -111,8 +104,7 @@ private[http2] object FrameRenderer {
           data.length,
           Http2Protocol.FrameType.PING,
           Http2Protocol.Flags.ACK.ifSet(ack),
-          Http2Protocol.NoStreamId
-        )
+          Http2Protocol.NoStreamId)
           .put(data)
           .build()
 
@@ -121,8 +113,7 @@ private[http2] object FrameRenderer {
           4,
           Http2Protocol.FrameType.RST_STREAM,
           Http2Protocol.Flags.NO_FLAGS,
-          streamId
-        )
+          streamId)
           .putInt32(errorCode.id)
           .build()
 
@@ -131,8 +122,7 @@ private[http2] object FrameRenderer {
           4 + headerBlockFragment.length,
           Http2Protocol.FrameType.PUSH_PROMISE,
           Http2Protocol.Flags.END_HEADERS.ifSet(endHeaders),
-          streamId
-        )
+          streamId)
           .putInt32(promisedStreamId)
           .put(headerBlockFragment)
           .build()
@@ -142,8 +132,7 @@ private[http2] object FrameRenderer {
           5,
           Http2Protocol.FrameType.PRIORITY,
           Http2Protocol.Flags.NO_FLAGS,
-          streamId
-        )
+          streamId)
           .putPriorityInfo(frame)
           .build()
       case _ => throw new IllegalStateException(s"Unexpected frame type ${frame.frameTypeName}.")
@@ -155,7 +144,8 @@ private[http2] object FrameRenderer {
       .build()
 
   private object Frame {
-    def apply(payloadSize: Int, tpe: FrameType, flags: ByteFlag, streamId: Int): Frame = new Frame(payloadSize, tpe, flags, streamId)
+    def apply(payloadSize: Int, tpe: FrameType, flags: ByteFlag, streamId: Int): Frame =
+      new Frame(payloadSize, tpe, flags, streamId)
   }
   private class Frame(payloadSize: Int, tpe: FrameType, flags: ByteFlag, streamId: Int) {
     private val targetSize = 9 + payloadSize

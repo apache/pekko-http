@@ -12,16 +12,15 @@ import akka.testkit.EventFilter
 import com.typesafe.config.ConfigFactory
 
 abstract class AkkaSpecWithMaterializer(configOverrides: String)
-  extends AkkaSpec(
-    ActorSystem(
-      AkkaSpecWithMaterializer.callerName(),
-      ConfigFactory.load(ConfigFactory.parseString(
-        configOverrides +
+    extends AkkaSpec(
+      ActorSystem(
+        AkkaSpecWithMaterializer.callerName(),
+        ConfigFactory.load(ConfigFactory.parseString(
+          configOverrides +
           """
             akka.loglevel = DEBUG
             akka.loggers = ["akka.http.impl.util.SilenceAllTestEventListener"]
-          """).withFallback(AkkaSpec.testConf))
-    )) with WithLogCapturing {
+          """).withFallback(AkkaSpec.testConf)))) with WithLogCapturing {
 
   def this() = this("")
 
@@ -42,7 +41,7 @@ abstract class AkkaSpecWithMaterializer(configOverrides: String)
 object AkkaSpecWithMaterializer {
   // adapted version of AkkaSpec.getCallerName that also works for `AkkaSpecWithMaterializer`
   def callerName(): String =
-    (Thread.currentThread.getStackTrace map (_.getClassName) drop 1)
-      .dropWhile(_ matches "(java.lang.Thread|.*AkkaSpecWithMaterializer.?$|.*StreamSpec.?$)")
+    Thread.currentThread.getStackTrace.map(_.getClassName).drop(1)
+      .dropWhile(_.matches("(java.lang.Thread|.*AkkaSpecWithMaterializer.?$|.*StreamSpec.?$)"))
       .head.replaceFirst(""".*\.""", "").replaceAll("[^a-zA-Z_0-9]", "_")
 }

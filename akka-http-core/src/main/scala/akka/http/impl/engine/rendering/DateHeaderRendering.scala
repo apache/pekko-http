@@ -8,7 +8,7 @@ import akka.actor.{ ClassicActorSystemProvider, Scheduler }
 import akka.annotation.InternalApi
 import akka.http.impl.util.Rendering.CrLf
 import akka.http.impl.util.{ ByteArrayRendering, StringRendering }
-import akka.http.scaladsl.model.{ DateTime, headers }
+import akka.http.scaladsl.model.{ headers, DateTime }
 
 import java.util.concurrent.atomic.AtomicReference
 import scala.concurrent.duration._
@@ -23,7 +23,8 @@ import scala.concurrent.ExecutionContext
 
 /** INTERNAL API */
 @InternalApi private[http] object DateHeaderRendering {
-  def apply(now: () => Long = () => System.currentTimeMillis())(implicit system: ClassicActorSystemProvider): DateHeaderRendering =
+  def apply(now: () => Long = () => System.currentTimeMillis())(
+      implicit system: ClassicActorSystemProvider): DateHeaderRendering =
     apply(system.classicSystem.scheduler, now)(system.classicSystem.dispatcher)
 
   def apply(scheduler: Scheduler, now: () => Long)(implicit ec: ExecutionContext): DateHeaderRendering = {
@@ -31,6 +32,7 @@ import scala.concurrent.ExecutionContext
       DateTime(now()).renderRfc1123DateTimeString(new StringRendering).get
 
     sealed trait DateState
+
     /** Date has not been used for a while */
     case object Idle extends DateState
     case class AutoUpdated(value: String) extends DateState {
@@ -56,7 +58,8 @@ import scala.concurrent.ExecutionContext
             scheduleAutoUpdate()
           } else
             dateState.set(Idle) // wasn't retrieved, no reason to continue autoupdating
-        case Idle => new IllegalStateException("Should not happen, invariant is either state == Idle or scheduled both never both")
+        case Idle =>
+          new IllegalStateException("Should not happen, invariant is either state == Idle or scheduled both never both")
       }
 
     def get(rendered: String): AutoUpdated =
@@ -86,8 +89,11 @@ import scala.concurrent.ExecutionContext
   }
 
   val Unavailable = new DateHeaderRendering {
-    override def renderHeaderPair(): (String, String) = throw new IllegalStateException("DateHeaderRendering is not available here")
-    override def renderHeaderBytes(): Array[Byte] = throw new IllegalStateException("DateHeaderRendering is not available here")
-    override def renderHeaderValue(): String = throw new IllegalStateException("DateHeaderRendering is not available here")
+    override def renderHeaderPair(): (String, String) =
+      throw new IllegalStateException("DateHeaderRendering is not available here")
+    override def renderHeaderBytes(): Array[Byte] =
+      throw new IllegalStateException("DateHeaderRendering is not available here")
+    override def renderHeaderValue(): String =
+      throw new IllegalStateException("DateHeaderRendering is not available here")
   }
 }

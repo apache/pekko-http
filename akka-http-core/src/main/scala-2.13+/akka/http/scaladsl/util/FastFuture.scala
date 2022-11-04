@@ -44,21 +44,21 @@ class FastFuture[A](val future: Future[A]) extends AnyVal {
       case FulfilledFuture(a) => strictTransform(a, s)
       case ErrorFuture(e)     => strictTransform(e, f)
       case _ => future.value match {
-        case None =>
-          val p = Promise[B]()
-          future.onComplete {
-            case Success(a) => p completeWith strictTransform(a, s)
-            case Failure(e) => p completeWith strictTransform(e, f)
-          }
-          p.future
-        case Some(Success(a)) => strictTransform(a, s)
-        case Some(Failure(e)) => strictTransform(e, f)
-      }
+          case None =>
+            val p = Promise[B]()
+            future.onComplete {
+              case Success(a) => p.completeWith(strictTransform(a, s))
+              case Failure(e) => p.completeWith(strictTransform(e, f))
+            }
+            p.future
+          case Some(Success(a)) => strictTransform(a, s)
+          case Some(Failure(e)) => strictTransform(e, f)
+        }
     }
   }
 
   def recover[B >: A](pf: PartialFunction[Throwable, B])(implicit ec: ExecutionContext): Future[B] =
-    transformWith(FastFuture.successful, t => if (pf isDefinedAt t) FastFuture.successful(pf(t)) else future)
+    transformWith(FastFuture.successful, t => if (pf.isDefinedAt(t)) FastFuture.successful(pf(t)) else future)
 
   def recoverWith[B >: A](pf: PartialFunction[Throwable, Future[B]])(implicit ec: ExecutionContext): Future[B] =
     transformWith(FastFuture.successful, t => pf.applyOrElse(t, (_: Throwable) => future))
@@ -79,9 +79,11 @@ object FastFuture {
     def isCompleted = true
     def result(atMost: Duration)(implicit permit: CanAwait) = a
     def ready(atMost: Duration)(implicit permit: CanAwait) = this
-    def transform[S](f: scala.util.Try[A] => scala.util.Try[S])(implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
+    def transform[S](f: scala.util.Try[A] => scala.util.Try[S])(
+        implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
       FastFuture(f(Success(a)))
-    def transformWith[S](f: scala.util.Try[A] => scala.concurrent.Future[S])(implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
+    def transformWith[S](f: scala.util.Try[A] => scala.concurrent.Future[S])(
+        implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
       new FastFuture(this).transformWith(f)
   }
   private case class ErrorFuture(error: Throwable) extends Future[Nothing] {
@@ -90,9 +92,11 @@ object FastFuture {
     def isCompleted = true
     def result(atMost: Duration)(implicit permit: CanAwait) = throw error
     def ready(atMost: Duration)(implicit permit: CanAwait) = this
-    def transform[S](f: scala.util.Try[Nothing] => scala.util.Try[S])(implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
+    def transform[S](f: scala.util.Try[Nothing] => scala.util.Try[S])(
+        implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
       FastFuture(f(Failure(error)))
-    def transformWith[S](f: scala.util.Try[Nothing] => scala.concurrent.Future[S])(implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
+    def transformWith[S](f: scala.util.Try[Nothing] => scala.concurrent.Future[S])(
+        implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
       new FastFuture(this).transformWith(f)
   }
 
@@ -100,7 +104,8 @@ object FastFuture {
     def fast: FastFuture[T] = new FastFuture[T](future)
   }
 
-  def sequence[T, M[_] <: IterableOnce[_]](in: M[Future[T]])(implicit cbf: BuildFrom[M[Future[T]], T, M[T]], executor: ExecutionContext): Future[M[T]] =
+  def sequence[T, M[_] <: IterableOnce[_]](in: M[Future[T]])(implicit cbf: BuildFrom[M[Future[T]], T, M[T]],
+      executor: ExecutionContext): Future[M[T]] =
     in.iterator.foldLeft(successful(cbf.newBuilder(in))) {
       (fr, fa) => for (r <- fr.fast; a <- fa.asInstanceOf[Future[T]].fast) yield r += a
     }.fast.map(_.result())
@@ -113,9 +118,10 @@ object FastFuture {
   def reduce[T, R >: T](futures: IterableOnce[Future[T]])(op: (R, T) => R)(implicit executor: ExecutionContext): Future[R] =
     if (futures.isEmpty) failed(new NoSuchElementException("reduce attempted on empty collection"))
     else sequence(futures).fast.map(_ reduceLeft op)
-*/
+   */
 
-  def traverse[A, B, M[_] <: IterableOnce[_]](in: M[A])(fn: A => Future[B])(implicit cbf: BuildFrom[M[A], B, M[B]], executor: ExecutionContext): Future[M[B]] =
+  def traverse[A, B, M[_] <: IterableOnce[_]](in: M[A])(fn: A => Future[B])(implicit cbf: BuildFrom[M[A], B, M[B]],
+      executor: ExecutionContext): Future[M[B]] =
     in.iterator.foldLeft(successful(cbf.newBuilder(in))) { (fr, a) =>
       val fb = fn(a.asInstanceOf[A])
       for (r <- fr.fast; b <- fb.fast) yield r += b

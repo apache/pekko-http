@@ -47,13 +47,14 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
   protected def settings: ParserSettings
   protected def headerParser: HttpHeaderParser
   protected def isResponseParser: Boolean
+
   /** invoked if the specified protocol is unknown */
   protected def onBadProtocol(input: ByteString): Nothing
   protected def parseMessage(input: ByteString, offset: Int): HttpMessageParser.StateResult
   protected def parseEntity(headers: List[HttpHeader], protocol: HttpProtocol, input: ByteString, bodyStart: Int,
-                            clh: Option[`Content-Length`], cth: Option[`Content-Type`], isChunked: Boolean,
-                            expect100continue: Boolean, hostHeaderPresent: Boolean, closeAfterResponseCompletion: Boolean,
-                            sslSession: SSLSession): HttpMessageParser.StateResult
+      clh: Option[`Content-Length`], cth: Option[`Content-Type`], isChunked: Boolean,
+      expect100continue: Boolean, hostHeaderPresent: Boolean, closeAfterResponseCompletion: Boolean,
+      sslSession: SSLSession): HttpMessageParser.StateResult
 
   protected final def initialHeaderBuffer: ListBuffer[HttpHeader] =
     if (settings.includeTlsSessionInfoHeader && tlsSessionInfoHeader != null) new ListBuffer() += tlsSessionInfoHeader
@@ -70,7 +71,7 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
     @tailrec def run(next: ByteString => StateResult): StateResult =
       (try next(input)
       catch {
-        case e: ParsingException => failMessageStart(e.status, e.info)
+        case e: ParsingException    => failMessageStart(e.status, e.info)
         case NotEnoughDataException =>
           // we are missing a try/catch{continue} wrapper somewhere
           throw new IllegalStateException("unexpected NotEnoughDataException", NotEnoughDataException)
@@ -134,11 +135,12 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
    * @param e100c expect 100 continue
    * @param hh host header seen
    */
-  @tailrec protected final def parseHeaderLines(input: ByteString, lineStart: Int, headers: ListBuffer[HttpHeader] = initialHeaderBuffer,
-                                                headerCount: Int = 0, ch: Option[Connection] = None,
-                                                clh: Option[`Content-Length`] = None, cth: Option[`Content-Type`] = None,
-                                                isChunked: Boolean = false, e100c: Boolean = false,
-                                                hh: Boolean = false): StateResult =
+  @tailrec protected final def parseHeaderLines(input: ByteString, lineStart: Int,
+      headers: ListBuffer[HttpHeader] = initialHeaderBuffer,
+      headerCount: Int = 0, ch: Option[Connection] = None,
+      clh: Option[`Content-Length`] = None, cth: Option[`Content-Type`] = None,
+      isChunked: Boolean = false, e100c: Boolean = false,
+      hh: Boolean = false): StateResult =
     if (headerCount < settings.maxHeaderCount) {
       var lineEnd = 0
       val resultHeader =
@@ -149,7 +151,8 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
           case NotEnoughDataException => null
         }
       resultHeader match {
-        case null => continue(input, lineStart)(parseHeaderLinesAux(headers, headerCount, ch, clh, cth, isChunked, e100c, hh))
+        case null =>
+          continue(input, lineStart)(parseHeaderLinesAux(headers, headerCount, ch, clh, cth, isChunked, e100c, hh))
 
         case EmptyHeader =>
           val close = HttpMessage.connectionCloseExpected(protocol, ch)
@@ -157,26 +160,30 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
           parseEntity(headers.toList, protocol, input, lineEnd, clh, cth, isChunked, e100c, hh, close, lastSession)
 
         case h: `Content-Length` => clh match {
-          case None      => parseHeaderLines(input, lineEnd, headers, headerCount + 1, ch, Some(h), cth, isChunked, e100c, hh)
-          case Some(`h`) => parseHeaderLines(input, lineEnd, headers, headerCount, ch, clh, cth, isChunked, e100c, hh)
-          case _         => failMessageStart("HTTP message must not contain more than one Content-Length header")
-        }
+            case None =>
+              parseHeaderLines(input, lineEnd, headers, headerCount + 1, ch, Some(h), cth, isChunked, e100c, hh)
+            case Some(`h`) => parseHeaderLines(input, lineEnd, headers, headerCount, ch, clh, cth, isChunked, e100c, hh)
+            case _         => failMessageStart("HTTP message must not contain more than one Content-Length header")
+          }
         case h: `Content-Type` => cth match {
-          case None =>
-            parseHeaderLines(input, lineEnd, headers, headerCount + 1, ch, clh, Some(h), isChunked, e100c, hh)
-          case Some(`h`) =>
-            parseHeaderLines(input, lineEnd, headers, headerCount, ch, clh, cth, isChunked, e100c, hh)
-          case Some(`Content-Type`(ContentTypes.`NoContentType`)) => // never encountered except when parsing conflicting headers (see below)
-            parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, ch, clh, cth, isChunked, e100c, hh)
-          case Some(x) =>
-            import ConflictingContentTypeHeaderProcessingMode._
-            settings.conflictingContentTypeHeaderProcessingMode match {
-              case Error         => failMessageStart("HTTP message must not contain more than one Content-Type header")
-              case First         => parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, ch, clh, cth, isChunked, e100c, hh)
-              case Last          => parseHeaderLines(input, lineEnd, headers += x, headerCount + 1, ch, clh, Some(h), isChunked, e100c, hh)
-              case NoContentType => parseHeaderLines(input, lineEnd, headers += x += h, headerCount + 1, ch, clh, Some(`Content-Type`(ContentTypes.`NoContentType`)), isChunked, e100c, hh)
-            }
-        }
+            case None =>
+              parseHeaderLines(input, lineEnd, headers, headerCount + 1, ch, clh, Some(h), isChunked, e100c, hh)
+            case Some(`h`) =>
+              parseHeaderLines(input, lineEnd, headers, headerCount, ch, clh, cth, isChunked, e100c, hh)
+            case Some(`Content-Type`(ContentTypes.`NoContentType`)) => // never encountered except when parsing conflicting headers (see below)
+              parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, ch, clh, cth, isChunked, e100c, hh)
+            case Some(x) =>
+              import ConflictingContentTypeHeaderProcessingMode._
+              settings.conflictingContentTypeHeaderProcessingMode match {
+                case Error => failMessageStart("HTTP message must not contain more than one Content-Type header")
+                case First =>
+                  parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, ch, clh, cth, isChunked, e100c, hh)
+                case Last => parseHeaderLines(input, lineEnd, headers += x, headerCount + 1, ch, clh, Some(h),
+                    isChunked, e100c, hh)
+                case NoContentType => parseHeaderLines(input, lineEnd, headers += x += h, headerCount + 1, ch, clh,
+                    Some(`Content-Type`(ContentTypes.`NoContentType`)), isChunked, e100c, hh)
+              }
+          }
         case h: `Transfer-Encoding` =>
           if (!isChunked) {
             h.encodings match {
@@ -194,28 +201,33 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
             failMessageStart("Multiple Transfer-Encoding entries not supported")
           }
         case h: Connection => ch match {
-          case None    => parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, Some(h), clh, cth, isChunked, e100c, hh)
-          case Some(x) => parseHeaderLines(input, lineEnd, headers, headerCount, Some(x append h.tokens), clh, cth, isChunked, e100c, hh)
-        }
+            case None =>
+              parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, Some(h), clh, cth, isChunked, e100c, hh)
+            case Some(x) => parseHeaderLines(input, lineEnd, headers, headerCount, Some(x.append(h.tokens)), clh, cth,
+                isChunked, e100c, hh)
+          }
         case h: Host =>
-          if (!hh || isResponseParser) parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, ch, clh, cth, isChunked, e100c, hh = true)
+          if (!hh || isResponseParser)
+            parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, ch, clh, cth, isChunked, e100c, hh = true)
           else failMessageStart("HTTP message must not contain more than one Host header")
 
-        case h: Expect => parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, ch, clh, cth, isChunked, e100c = true, hh)
+        case h: Expect =>
+          parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, ch, clh, cth, isChunked, e100c = true, hh)
 
-        case h         => parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, ch, clh, cth, isChunked, e100c, hh)
+        case h => parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, ch, clh, cth, isChunked, e100c, hh)
       }
-    } else failMessageStart(s"HTTP message contains more than the configured limit of ${settings.maxHeaderCount} headers")
+    } else
+      failMessageStart(s"HTTP message contains more than the configured limit of ${settings.maxHeaderCount} headers")
 
   // work-around for compiler complaining about non-tail-recursion if we inline this method
   private def parseHeaderLinesAux(headers: ListBuffer[HttpHeader], headerCount: Int, ch: Option[Connection],
-                                  clh: Option[`Content-Length`], cth: Option[`Content-Type`], isChunked: Boolean,
-                                  e100c: Boolean, hh: Boolean)(input: ByteString, lineStart: Int): StateResult =
+      clh: Option[`Content-Length`], cth: Option[`Content-Type`], isChunked: Boolean,
+      e100c: Boolean, hh: Boolean)(input: ByteString, lineStart: Int): StateResult =
     parseHeaderLines(input, lineStart, headers, headerCount, ch, clh, cth, isChunked, e100c, hh)
 
   protected final def parseFixedLengthBody(
-    remainingBodyBytes: Long,
-    isLastMessage:      Boolean)(input: ByteString, bodyStart: Int): StateResult = {
+      remainingBodyBytes: Long,
+      isLastMessage: Boolean)(input: ByteString, bodyStart: Int): StateResult = {
     val remainingInputBytes = input.length - bodyStart
     if (remainingInputBytes > 0) {
       if (remainingInputBytes < remainingBodyBytes) {
@@ -232,9 +244,10 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
     } else continue(input, bodyStart)(parseFixedLengthBody(remainingBodyBytes, isLastMessage))
   }
 
-  protected final def parseChunk(input: ByteString, offset: Int, isLastMessage: Boolean, totalBytesRead: Long): StateResult = {
+  protected final def parseChunk(
+      input: ByteString, offset: Int, isLastMessage: Boolean, totalBytesRead: Long): StateResult = {
     @tailrec def parseTrailer(extension: String, lineStart: Int, headers: List[HttpHeader] = Nil,
-                              headerCount: Int = 0): StateResult = {
+        headerCount: Int = 0): StateResult = {
       var errorInfo: ErrorInfo = null
       val lineEnd =
         try headerParser.parseHeaderLine(input, lineStart)()
@@ -243,7 +256,8 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
         headerParser.resultHeader match {
           case EmptyHeader =>
             val lastChunk =
-              if (extension.isEmpty && headers.isEmpty) HttpEntity.LastChunk else HttpEntity.LastChunk(extension, headers)
+              if (extension.isEmpty && headers.isEmpty) HttpEntity.LastChunk
+              else HttpEntity.LastChunk(extension, headers)
             emit(EntityChunk(lastChunk))
             emit(MessageEnd)
             setCompletionHandling(CompletionOk)
@@ -251,7 +265,8 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
             else startNewMessage(input, lineEnd)
           case header if headerCount < settings.maxHeaderCount =>
             parseTrailer(extension, lineEnd, header :: headers, headerCount + 1)
-          case _ => failEntityStream(s"Chunk trailer contains more than the configured limit of ${settings.maxHeaderCount} headers")
+          case _ => failEntityStream(
+              s"Chunk trailer contains more than the configured limit of ${settings.maxHeaderCount} headers")
         }
       } else failEntityStream(errorInfo)
     }
@@ -265,8 +280,8 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
         }
         byteChar(input, chunkBodyEnd) match {
           case '\r' if byteChar(input, chunkBodyEnd + 1) == '\n' => result(2)
-          case '\n' => result(1)
-          case x => failEntityStream("Illegal chunk termination")
+          case '\n'                                              => result(1)
+          case x                                                 => failEntityStream("Illegal chunk termination")
         }
       } else parseTrailer(extension, cursor)
 
@@ -275,20 +290,22 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
         def extension = asciiString(input, startIx, cursor)
         byteChar(input, cursor) match {
           case '\r' if byteChar(input, cursor + 1) == '\n' => parseChunkBody(chunkSize, extension, cursor + 2)
-          case '\n' => parseChunkBody(chunkSize, extension, cursor + 1)
-          case _ => parseChunkExtensions(chunkSize, cursor + 1)(startIx)
+          case '\n'                                        => parseChunkBody(chunkSize, extension, cursor + 1)
+          case _                                           => parseChunkExtensions(chunkSize, cursor + 1)(startIx)
         }
-      } else failEntityStream(s"HTTP chunk extension length exceeds configured limit of ${settings.maxChunkExtLength} characters")
+      } else failEntityStream(
+        s"HTTP chunk extension length exceeds configured limit of ${settings.maxChunkExtLength} characters")
 
     @tailrec def parseSize(cursor: Int, size: Long): StateResult =
       if (size <= settings.maxChunkSize) {
         byteChar(input, cursor) match {
           case c if CharacterClasses.HEXDIG(c) => parseSize(cursor + 1, size * 16 + CharUtils.hexValue(c))
-          case ';' if cursor > offset => parseChunkExtensions(size.toInt, cursor + 1)()
-          case '\r' if cursor > offset && byteChar(input, cursor + 1) == '\n' => parseChunkBody(size.toInt, "", cursor + 2)
-          case '\n' if cursor > offset => parseChunkBody(size.toInt, "", cursor + 1)
+          case ';' if cursor > offset          => parseChunkExtensions(size.toInt, cursor + 1)()
+          case '\r' if cursor > offset && byteChar(input, cursor + 1) == '\n' =>
+            parseChunkBody(size.toInt, "", cursor + 2)
+          case '\n' if cursor > offset      => parseChunkBody(size.toInt, "", cursor + 1)
           case c if CharacterClasses.WSP(c) => parseSize(cursor + 1, size) // illegal according to the spec but can happen, see issue #1812
-          case c => failEntityStream(s"Illegal character '${escape(c)}' in chunk start")
+          case c                            => failEntityStream(s"Illegal character '${escape(c)}' in chunk start")
         }
       } else failEntityStream(s"HTTP chunk size exceeds the configured limit of ${settings.maxChunkSize} bytes")
 
@@ -326,9 +343,12 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
   }
 
   protected final def failMessageStart(summary: String): StateResult = failMessageStart(summary, "")
-  protected final def failMessageStart(summary: String, detail: String): StateResult = failMessageStart(StatusCodes.BadRequest, summary, detail)
-  protected final def failMessageStart(status: StatusCode): StateResult = failMessageStart(status, status.defaultMessage)
-  protected final def failMessageStart(status: StatusCode, summary: String, detail: String = ""): StateResult = failMessageStart(status, ErrorInfo(summary, detail))
+  protected final def failMessageStart(summary: String, detail: String): StateResult =
+    failMessageStart(StatusCodes.BadRequest, summary, detail)
+  protected final def failMessageStart(status: StatusCode): StateResult =
+    failMessageStart(status, status.defaultMessage)
+  protected final def failMessageStart(status: StatusCode, summary: String, detail: String = ""): StateResult =
+    failMessageStart(status, ErrorInfo(summary, detail))
   protected final def failMessageStart(status: StatusCode, info: ErrorInfo): StateResult = {
     emit(MessageStartError(status, info))
     setCompletionHandling(CompletionOk)
@@ -336,7 +356,8 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
   }
 
   protected final def failEntityStream(summary: String): StateResult = failEntityStream(summary, "")
-  protected final def failEntityStream(summary: String, detail: String): StateResult = failEntityStream(ErrorInfo(summary, detail))
+  protected final def failEntityStream(summary: String, detail: String): StateResult =
+    failEntityStream(ErrorInfo(summary, detail))
   protected final def failEntityStream(info: ErrorInfo): StateResult = {
     emit(EntityStreamError(info))
     setCompletionHandling(CompletionOk)
@@ -363,7 +384,7 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
     StrictEntityCreator(if (cth.isDefined) HttpEntity.empty(cth.get.contentType) else HttpEntity.Empty)
 
   protected final def strictEntity(cth: Option[`Content-Type`], input: ByteString, bodyStart: Int,
-                                   contentLength: Int): StrictEntityCreator[Output, UniversalEntity] =
+      contentLength: Int): StrictEntityCreator[Output, UniversalEntity] =
     StrictEntityCreator(HttpEntity.Strict(contentType(cth), input.slice(bodyStart, bodyStart + contentLength)))
 
   protected final def defaultEntity[A <: ParserOutput](cth: Option[`Content-Type`], contentLength: Long) =
@@ -402,7 +423,8 @@ private[http] object HttpMessageParser {
   val CompletionIsMessageStartError: CompletionHandling =
     () => Some(ParserOutput.MessageStartError(StatusCodes.BadRequest, ErrorInfo("Illegal HTTP message start")))
   val CompletionIsEntityStreamError: CompletionHandling =
-    () => Some(ParserOutput.EntityStreamError(ErrorInfo(
-      "Entity stream truncation. The HTTP parser was receiving an entity when the underlying connection was " +
+    () =>
+      Some(ParserOutput.EntityStreamError(ErrorInfo(
+        "Entity stream truncation. The HTTP parser was receiving an entity when the underlying connection was " +
         "closed unexpectedly.")))
 }

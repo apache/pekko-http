@@ -26,7 +26,8 @@ import scala.concurrent.Future
 // #client-transport-definition
 @ApiMayChange
 abstract class ClientTransport {
-  def connectTo(host: String, port: Int, settings: ClientConnectionSettings, system: ActorSystem): Flow[ByteString, ByteString, CompletionStage[OutgoingConnection]]
+  def connectTo(host: String, port: Int, settings: ClientConnectionSettings, system: ActorSystem)
+      : Flow[ByteString, ByteString, CompletionStage[OutgoingConnection]]
 }
 // #client-transport-definition
 
@@ -102,13 +103,16 @@ object ClientTransport {
     }
 
   private class ScalaWrapper(val delegate: scaladsl.ClientTransport) extends ClientTransport {
-    def connectTo(host: String, port: Int, settings: ClientConnectionSettings, system: ActorSystem): akka.stream.javadsl.Flow[ByteString, ByteString, CompletionStage[javadsl.OutgoingConnection]] = {
+    def connectTo(host: String, port: Int, settings: ClientConnectionSettings, system: ActorSystem)
+        : akka.stream.javadsl.Flow[ByteString, ByteString, CompletionStage[javadsl.OutgoingConnection]] = {
       import system.dispatcher
       JavaMapping.toJava(delegate.connectTo(host, port, settings.asScala)(system))
     }
   }
   private class JavaWrapper(val delegate: ClientTransport) extends scaladsl.ClientTransport {
-    def connectTo(host: String, port: Int, settings: scaladsl.settings.ClientConnectionSettings)(implicit system: ActorSystem): akka.stream.scaladsl.Flow[ByteString, ByteString, Future[scaladsl.Http.OutgoingConnection]] = {
+    def connectTo(host: String, port: Int, settings: scaladsl.settings.ClientConnectionSettings)(
+        implicit system: ActorSystem)
+        : akka.stream.scaladsl.Flow[ByteString, ByteString, Future[scaladsl.Http.OutgoingConnection]] = {
       import system.dispatcher
       JavaMapping.toScala(delegate.connectTo(host, port, settings.asJava, system))
     }

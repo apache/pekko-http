@@ -63,9 +63,10 @@ private[http] final class FrameEventRenderer extends GraphStage[FlowShape[FrameE
       }
 
     setHandler(in, Initial)
-    setHandler(out, new OutHandler {
-      override def onPull(): Unit = pull(in)
-    })
+    setHandler(out,
+      new OutHandler {
+        override def onPull(): Unit = pull(in)
+      })
   }
 
   private def renderStart(start: FrameStart): ByteString = renderHeader(start.header) ++ start.data
@@ -88,9 +89,9 @@ private[http] final class FrameEventRenderer extends GraphStage[FlowShape[FrameE
     def bool(b: Boolean, mask: Int): Int = if (b) mask else 0
     val flags =
       bool(header.fin, FIN_MASK) |
-        bool(header.rsv1, RSV1_MASK) |
-        bool(header.rsv2, RSV2_MASK) |
-        bool(header.rsv3, RSV3_MASK)
+      bool(header.rsv1, RSV1_MASK) |
+      bool(header.rsv2, RSV2_MASK) |
+      bool(header.rsv3, RSV3_MASK)
 
     data(0) = (flags | header.opcode.code).toByte
     data(1) = (bool(header.mask.isDefined, MASK_MASK) | lengthBits).toByte
@@ -103,7 +104,7 @@ private[http] final class FrameEventRenderer extends GraphStage[FlowShape[FrameE
       case 8 =>
         @tailrec def addLongBytes(l: Long, writtenBytes: Int): Unit =
           if (writtenBytes < 8) {
-            data(2 + writtenBytes) = (l & 0xff).toByte
+            data(2 + writtenBytes) = (l & 0xFF).toByte
             addLongBytes(java.lang.Long.rotateLeft(l, 8), writtenBytes + 1)
           }
 

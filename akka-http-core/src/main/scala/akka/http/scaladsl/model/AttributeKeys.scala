@@ -12,4 +12,3 @@ object AttributeKeys {
   val sslSession = AttributeKey[SslSessionInfo](name = "ssl-session")
   val trailer = AttributeKey[Trailer](name = "trailer")
 }
-

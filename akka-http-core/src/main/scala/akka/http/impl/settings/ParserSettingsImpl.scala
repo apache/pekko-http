@@ -5,7 +5,13 @@
 package akka.http.impl.settings
 
 import akka.annotation.InternalApi
-import akka.http.scaladsl.settings.ParserSettings.{ ConflictingContentTypeHeaderProcessingMode, CookieParsingMode, ErrorLoggingVerbosity, IllegalResponseHeaderValueProcessingMode, IllegalResponseHeaderNameProcessingMode }
+import akka.http.scaladsl.settings.ParserSettings.{
+  ConflictingContentTypeHeaderProcessingMode,
+  CookieParsingMode,
+  ErrorLoggingVerbosity,
+  IllegalResponseHeaderNameProcessingMode,
+  IllegalResponseHeaderValueProcessingMode
+}
 import akka.util.ConstantFun
 import com.typesafe.config.Config
 
@@ -17,33 +23,33 @@ import akka.http.scaladsl.settings.ParserSettings
 /** INTERNAL API */
 @InternalApi
 private[akka] final case class ParserSettingsImpl(
-  maxUriLength:                               Int,
-  maxMethodLength:                            Int,
-  maxResponseReasonLength:                    Int,
-  maxHeaderNameLength:                        Int,
-  maxHeaderValueLength:                       Int,
-  maxHeaderCount:                             Int,
-  maxContentLengthSetting:                    Option[Long],
-  maxToStrictBytes:                           Long,
-  maxChunkExtLength:                          Int,
-  maxChunkSize:                               Int,
-  maxCommentParsingDepth:                     Int,
-  uriParsingMode:                             Uri.ParsingMode,
-  cookieParsingMode:                          CookieParsingMode,
-  illegalHeaderWarnings:                      Boolean,
-  ignoreIllegalHeaderFor:                     Set[String],
-  errorLoggingVerbosity:                      ErrorLoggingVerbosity,
-  illegalResponseHeaderNameProcessingMode:    IllegalResponseHeaderNameProcessingMode,
-  illegalResponseHeaderValueProcessingMode:   IllegalResponseHeaderValueProcessingMode,
-  conflictingContentTypeHeaderProcessingMode: ConflictingContentTypeHeaderProcessingMode,
-  headerValueCacheLimits:                     Map[String, Int],
-  includeTlsSessionInfoHeader:                Boolean,
-  includeSslSessionAttribute:                 Boolean,
-  modeledHeaderParsing:                       Boolean,
-  customMethods:                              String => Option[HttpMethod],
-  customStatusCodes:                          Int => Option[StatusCode],
-  customMediaTypes:                           MediaTypes.FindCustom)
-  extends akka.http.scaladsl.settings.ParserSettings {
+    maxUriLength: Int,
+    maxMethodLength: Int,
+    maxResponseReasonLength: Int,
+    maxHeaderNameLength: Int,
+    maxHeaderValueLength: Int,
+    maxHeaderCount: Int,
+    maxContentLengthSetting: Option[Long],
+    maxToStrictBytes: Long,
+    maxChunkExtLength: Int,
+    maxChunkSize: Int,
+    maxCommentParsingDepth: Int,
+    uriParsingMode: Uri.ParsingMode,
+    cookieParsingMode: CookieParsingMode,
+    illegalHeaderWarnings: Boolean,
+    ignoreIllegalHeaderFor: Set[String],
+    errorLoggingVerbosity: ErrorLoggingVerbosity,
+    illegalResponseHeaderNameProcessingMode: IllegalResponseHeaderNameProcessingMode,
+    illegalResponseHeaderValueProcessingMode: IllegalResponseHeaderValueProcessingMode,
+    conflictingContentTypeHeaderProcessingMode: ConflictingContentTypeHeaderProcessingMode,
+    headerValueCacheLimits: Map[String, Int],
+    includeTlsSessionInfoHeader: Boolean,
+    includeSslSessionAttribute: Boolean,
+    modeledHeaderParsing: Boolean,
+    customMethods: String => Option[HttpMethod],
+    customStatusCodes: Int => Option[StatusCode],
+    customMediaTypes: MediaTypes.FindCustom)
+    extends akka.http.scaladsl.settings.ParserSettings {
 
   require(maxUriLength > 0, "max-uri-length must be > 0")
   require(maxMethodLength > 0, "max-method-length must be > 0")
@@ -63,9 +69,9 @@ private[akka] final case class ParserSettingsImpl(
 
   override def maxContentLength: Long =
     maxContentLengthSetting.getOrElse(
-      throw new IllegalStateException("Generic ParserSettings were created missing a server/client specific max-content-length setting. " +
-        "Adapt settings in the config file or use ParserSettings.forClient or ParserSetting.forServer instead of ParserSettings.apply / ParserSettings.create.")
-    )
+      throw new IllegalStateException(
+        "Generic ParserSettings were created missing a server/client specific max-content-length setting. " +
+        "Adapt settings in the config file or use ParserSettings.forClient or ParserSetting.forServer instead of ParserSettings.apply / ParserSettings.create."))
 
   override def productPrefix = "ParserSettings"
 }
@@ -74,14 +80,15 @@ object ParserSettingsImpl extends SettingsCompanionImpl[ParserSettingsImpl]("akk
 
   private[this] val noCustomMethods: String => Option[HttpMethod] = ConstantFun.scalaAnyToNone
   private[this] val noCustomStatusCodes: Int => Option[StatusCode] = ConstantFun.scalaAnyToNone
-  private[ParserSettingsImpl] val noCustomMediaTypes: (String, String) => Option[MediaType] = ConstantFun.scalaAnyTwoToNone
+  private[ParserSettingsImpl] val noCustomMediaTypes: (String, String) => Option[MediaType] =
+    ConstantFun.scalaAnyTwoToNone
 
   def forServer(root: Config): ParserSettings =
     fromSubConfig(root, root.getConfig("akka.http.server.parsing"))
 
   def fromSubConfig(root: Config, inner: Config): ParserSettingsImpl = {
     val c = inner.withFallback(root.getConfig(prefix))
-    val cacheConfig = c getConfig "header-cache"
+    val cacheConfig = c.getConfig("header-cache")
 
     new ParserSettingsImpl(
       c.getIntBytes("max-uri-length"),
@@ -109,9 +116,7 @@ object ParserSettingsImpl extends SettingsCompanionImpl[ParserSettingsImpl]("akk
       c.getBoolean("modeled-header-parsing"),
       noCustomMethods,
       noCustomStatusCodes,
-      noCustomMediaTypes
-    )
+      noCustomMediaTypes)
   }
 
 }
-
