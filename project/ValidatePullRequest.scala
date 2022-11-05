@@ -6,7 +6,6 @@ package akka
 
 import java.io._
 
-import akka.MimaWithPrValidation.{MimaResult, NoErrors, Problems}
 import net.virtualvoid.sbt.graph.ModuleGraph
 import net.virtualvoid.sbt.graph.backend.SbtUpdateReport
 import org.kohsuke.github.GHIssueComment
@@ -360,9 +359,12 @@ object AggregatePRValidation extends AutoPlugin {
         case KeyValue(key, i: Inc) => KeyValue(key, i)
       }
 
+      /*
       val mimaFailures: Seq[KeyValue[MimaResult]] = allResults collect {
         case KeyValue(key, Value(p: Problems)) => KeyValue(key, p)
       }
+      */
+      val mimaFailures = Seq.empty
 
       val outputFile = new File(target.value, "pr-validation-report.txt")
       val fw = new PrintWriter(new FileWriter(outputFile))
@@ -420,6 +422,7 @@ object AggregatePRValidation extends AutoPlugin {
           write("</details>")
         }
 
+        /*
         if (mimaFailures.nonEmpty) {
           write("<details><summary>Mima Failures</summary>")
           write("")
@@ -433,6 +436,7 @@ object AggregatePRValidation extends AutoPlugin {
           write("```")
           write("</details>")
         }
+        */
 
         if (failedTasks.nonEmpty) {
           write("<details><summary>Other Failed Tasks</summary>")
