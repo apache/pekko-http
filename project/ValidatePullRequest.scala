@@ -478,6 +478,7 @@ object AggregatePRValidation extends AutoPlugin {
   * This auto plugin adds MiMa binary issue reporting to validatePullRequest task,
   * when a project has MimaPlugin auto plugin enabled.
   */
+/*
 object MimaWithPrValidation extends AutoPlugin {
   import ValidatePullRequest._
   import com.typesafe.tools.mima.plugin._
@@ -594,6 +595,7 @@ object MimaWithPrValidation extends AutoPlugin {
     }
   )
 }
+*/
 
 /**
   * This auto plugin adds UniDoc unification to validatePullRequest task.
