@@ -1,2 +1,0 @@
-# Internals
-ProblemFilters.exclude[DirectMissingMethodProblem]("akka.http.impl.util.LogByteStringTools.printByteString")
