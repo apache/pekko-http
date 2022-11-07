@@ -21,3 +21,9 @@ github:
     issues: true
     # Enable projects for project management boards
     projects: false
+
+notifications:
+  commits:              commits@pekko.apache.org
+  issues:               notifications@pekko.apache.org
+  pullrequests:         notifications@pekko.apache.org
+  discussions:          notifications@pekko.apache.org
