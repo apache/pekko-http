@@ -63,7 +63,7 @@ lazy val userProjects: Seq[ProjectReference] = List[ProjectReference](
 lazy val aggregatedProjects: Seq[ProjectReference] = userProjects ++ List[ProjectReference](
   httpTests,
   docs,
-  compatibilityTests,
+  //compatibilityTests,
   httpJmhBench,
   billOfMaterials
 )
@@ -75,7 +75,8 @@ lazy val root = Project(
   .disablePlugins(MimaPlugin)
   .settings(
     // Unidoc doesn't like macro definitions
-    unidocProjectExcludes := Seq(parsing, compatibilityTests, docs, httpTests, httpJmhBench, httpScalafix, httpScalafixRules, httpScalafixTestInput, httpScalafixTestOutput, httpScalafixTests),
+    // compatibilityTests temporarily disabled
+    unidocProjectExcludes := Seq(parsing, docs, httpTests, httpJmhBench, httpScalafix, httpScalafixRules, httpScalafixTestInput, httpScalafixTestOutput, httpScalafixTests),
     // Support applying macros in unidoc:
     scalaMacroSupport,
     Compile / headerCreate / unmanagedSources := (baseDirectory.value / "project").**("*.scala").get,
@@ -471,6 +472,7 @@ lazy val docs = project("docs")
   )
   .settings(ParadoxSupport.paradoxWithCustomDirectives)
 
+/*
 lazy val compatibilityTests = Project("akka-http-compatibility-tests", file("akka-http-compatibility-tests"))
   .enablePlugins(NoPublish)
   .disablePlugins(MimaPlugin)
@@ -486,6 +488,7 @@ lazy val compatibilityTests = Project("akka-http-compatibility-tests", file("akk
       (httpTests / Test / fullClasspath).value
     }
   )
+*/
 
 lazy val billOfMaterials = Project("bill-of-materials", file("akka-http-bill-of-materials"))
   .enablePlugins(BillOfMaterialsPlugin)

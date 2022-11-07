@@ -1,5 +1,0 @@
-# Add SameSite attribute to HttpCookie
-
-ProblemFilters.exclude[ReversedMissingMethodProblem]("akka.http.javadsl.model.headers.HttpCookie.getSameSite")
-ProblemFilters.exclude[ReversedMissingMethodProblem]("akka.http.javadsl.model.headers.HttpCookie.withSameSite")
-

@@ -1,3 +1,0 @@
-# Removal of deprecated methods
-ProblemFilters.exclude[DirectMissingMethodProblem]("akka.http.scaladsl.marshalling.PredefinedToResponseMarshallers.fromEntityStreamingSupportAndByteStringMarshaller")
-ProblemFilters.exclude[DirectMissingMethodProblem]("akka.http.scaladsl.marshalling.Marshaller.fromEntityStreamingSupportAndByteStringMarshaller")

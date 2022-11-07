@@ -1,2 +1,0 @@
-# Change to private, InternalApi class
-ProblemFilters.exclude[DirectMissingMethodProblem]("akka.http.scaladsl.unmarshalling.sse.ServerSentEventParser.this")
