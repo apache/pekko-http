@@ -1,3 +1,0 @@
-# New overloads in @DoNotInherit classes
-ProblemFilters.exclude[ReversedMissingMethodProblem]("akka.http.javadsl.model.HttpEntity.toStrict")
-ProblemFilters.exclude[ReversedMissingMethodProblem]("akka.http.javadsl.model.HttpMessage#MessageTransformations.toStrict")
