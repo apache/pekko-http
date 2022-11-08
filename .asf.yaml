@@ -27,6 +27,14 @@ github:
     merge:   false
     rebase:  true  
 
+  enabled_merge_buttons:
+    squash:  true
+    merge:   false
+    rebase:  true
+
+  protected_branches:
+    main: { }
+
 notifications:
   commits:              commits@pekko.apache.org
   issues:               notifications@pekko.apache.org
