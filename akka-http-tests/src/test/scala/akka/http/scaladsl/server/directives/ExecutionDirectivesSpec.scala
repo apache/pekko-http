@@ -57,56 +57,53 @@ class ExecutionDirectivesSpec extends RoutingSpec {
     }
     "not interfere with alternative routes" in EventFilter[MyException.type](
       occurrences = 1,
-      message = BasicRouteSpecs.defaultExnHandler500Error("Boom")
-    ).intercept {
-        Get("/abc") ~>
-          get {
-            handleExceptions(handler)(reject) ~ { ctx =>
-              throw MyException
-            }
-          } ~> check {
-            status shouldEqual StatusCodes.InternalServerError
-            responseAs[String] shouldEqual "There was an internal server error."
-          }
+      message = BasicRouteSpecs.defaultExnHandler500Error("Boom")).intercept {
+      Get("/abc") ~>
+      get {
+        handleExceptions(handler)(reject) ~ { ctx =>
+          throw MyException
+        }
+      } ~> check {
+        status shouldEqual StatusCodes.InternalServerError
+        responseAs[String] shouldEqual "There was an internal server error."
       }
+    }
     "not handle other exceptions" in EventFilter[RuntimeException](
       occurrences = 1,
-      message = BasicRouteSpecs.defaultExnHandler500Error("buh")
-    ).intercept {
-        Get("/abc") ~>
-          get {
-            handleExceptions(handler) {
-              throw new RuntimeException("buh")
-            }
-          } ~> check {
-            status shouldEqual StatusCodes.InternalServerError
-            responseAs[String] shouldEqual "There was an internal server error."
-          }
+      message = BasicRouteSpecs.defaultExnHandler500Error("buh")).intercept {
+      Get("/abc") ~>
+      get {
+        handleExceptions(handler) {
+          throw new RuntimeException("buh")
+        }
+      } ~> check {
+        status shouldEqual StatusCodes.InternalServerError
+        responseAs[String] shouldEqual "There was an internal server error."
       }
+    }
     "always fall back to a default content type" in EventFilter[RuntimeException](
       occurrences = 2,
-      message = BasicRouteSpecs.defaultExnHandler500Error("buh2")
-    ).intercept {
-        Get("/abc") ~> Accept(MediaTypes.`application/json`) ~>
-          get {
-            handleExceptions(handler) {
-              throw new RuntimeException("buh2")
-            }
-          } ~> check {
-            status shouldEqual StatusCodes.InternalServerError
-            responseAs[String] shouldEqual "There was an internal server error."
-          }
-
-        Get("/abc") ~> Accept(MediaTypes.`text/xml`, MediaRanges.`*/*`.withQValue(0f)) ~>
-          get {
-            handleExceptions(handler) {
-              throw new RuntimeException("buh2")
-            }
-          } ~> check {
-            status shouldEqual StatusCodes.InternalServerError
-            responseAs[String] shouldEqual "There was an internal server error."
-          }
+      message = BasicRouteSpecs.defaultExnHandler500Error("buh2")).intercept {
+      Get("/abc") ~> Accept(MediaTypes.`application/json`) ~>
+      get {
+        handleExceptions(handler) {
+          throw new RuntimeException("buh2")
+        }
+      } ~> check {
+        status shouldEqual StatusCodes.InternalServerError
+        responseAs[String] shouldEqual "There was an internal server error."
       }
+
+      Get("/abc") ~> Accept(MediaTypes.`text/xml`, MediaRanges.`*/*`.withQValue(0f)) ~>
+      get {
+        handleExceptions(handler) {
+          throw new RuntimeException("buh2")
+        }
+      } ~> check {
+        status shouldEqual StatusCodes.InternalServerError
+        responseAs[String] shouldEqual "There was an internal server error."
+      }
+    }
   }
 
   "The `handleRejections` directive" should {
@@ -119,60 +116,57 @@ class ExecutionDirectivesSpec extends RoutingSpec {
         }.result()
 
       Get("/hell0") ~>
-        get {
-          handleRejections(rejectionHandler) {
-            encodeResponseWith(Coders.Gzip) {
-              path("hello") {
-                get {
-                  complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "world"))
-                }
+      get {
+        handleRejections(rejectionHandler) {
+          encodeResponseWith(Coders.Gzip) {
+            path("hello") {
+              get {
+                complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "world"))
               }
             }
           }
-        } ~> check {
-          response should haveContentEncoding(gzip)
-          status shouldEqual StatusCodes.NotFound
         }
+      } ~> check {
+        response should haveContentEncoding(gzip)
+        status shouldEqual StatusCodes.NotFound
+      }
     }
   }
 
   "Default handler" should {
     "handle `IllegalRequestException` with appropriate block of `ErrorHandler`" in EventFilter.warning(
       occurrences = 1,
-      message = "Illegal request: 'Some summary.'. Completing with 409 Conflict response."
-    ).intercept {
+      message = "Illegal request: 'Some summary.'. Completing with 409 Conflict response.").intercept {
       Get("/abc") ~>
-        get {
-          throw new IllegalRequestException(ErrorInfo(summary = "Some summary."), StatusCodes.Conflict)
-        } ~> check {
-          status shouldEqual StatusCodes.Conflict
-        }
+      get {
+        throw new IllegalRequestException(ErrorInfo(summary = "Some summary."), StatusCodes.Conflict)
+      } ~> check {
+        status shouldEqual StatusCodes.Conflict
+      }
     }
 
-    "handle exceptions other than `IllegalRequestException` with appropriate block of `ErrorHandler`" in EventFilter[RuntimeException](
+    "handle exceptions other than `IllegalRequestException` with appropriate block of `ErrorHandler`" in EventFilter[
+      RuntimeException](
       occurrences = 1,
-      message = BasicRouteSpecs.defaultExnHandler500Error("re")
-    ).intercept {
-        Get("/abc") ~>
-          get {
-            throw new RuntimeException("re")
-          }
-      } ~> check {
-        status shouldEqual StatusCodes.InternalServerError
+      message = BasicRouteSpecs.defaultExnHandler500Error("re")).intercept {
+      Get("/abc") ~>
+      get {
+        throw new RuntimeException("re")
       }
+    } ~> check {
+      status shouldEqual StatusCodes.InternalServerError
+    }
 
     "show exception class if .getMessage == null" in EventFilter[NullPointerException](
       occurrences = 1,
       message = BasicRouteSpecs.defaultExnHandler500Error(
-        s"${classOf[NullPointerException].getName} (No error message supplied)"
-      )
-    ).intercept {
-        Get("/abc") ~> get {
-          throw new NullPointerException
-        } ~> check {
-          status shouldEqual StatusCodes.InternalServerError
-        }
+        s"${classOf[NullPointerException].getName} (No error message supplied)")).intercept {
+      Get("/abc") ~> get {
+        throw new NullPointerException
+      } ~> check {
+        status shouldEqual StatusCodes.InternalServerError
       }
+    }
   }
 
   def exceptionShouldBeHandled(route: Route) =
@@ -182,5 +176,5 @@ class ExecutionDirectivesSpec extends RoutingSpec {
     }
 
   def haveContentEncoding(encoding: HttpEncoding): Matcher[HttpResponse] =
-    be(Some(`Content-Encoding`(encoding))) compose { (_: HttpResponse).header[`Content-Encoding`] }
+    be(Some(`Content-Encoding`(encoding))).compose { (_: HttpResponse).header[`Content-Encoding`] }
 }

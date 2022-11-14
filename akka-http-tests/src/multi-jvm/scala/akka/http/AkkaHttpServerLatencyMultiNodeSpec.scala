@@ -54,7 +54,7 @@ object AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
   final def ifWrk2Available(test: => Unit): Unit =
     if (isWrk2Available) test else throw new TestPendingException()
   final def isWrk2Available: Boolean =
-    _ifWrk2Available getOrElse {
+    _ifWrk2Available.getOrElse {
       import scala.sys.process._
       val wrkExitCode = Try("""wrk""".!).getOrElse(-1)
 
@@ -67,7 +67,7 @@ object AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
     if (isAbAvailable) test else throw new TestPendingException()
 
   final def isAbAvailable: Boolean =
-    _abAvailable getOrElse {
+    _abAvailable.getOrElse {
       import scala.sys.process._
       val abExitCode = Try("""ab -h""".!).getOrElse(-1)
       _abAvailable = Some(abExitCode == 22) // app found, help displayed (22 return code is when -h runs in ab, weird but true)
@@ -83,20 +83,20 @@ object AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
     override def receive: Receive = {
       case SetServerPort(port) =>
         serverPort.success(port)
-        context become ready(port)
+        context.become(ready(port))
       case other =>
         throw new RuntimeException("No server port known! Initialize with SetServerPort() first! Got: " + other)
     }
 
     import scala.sys.process._
     def ready(port: Int): Receive = {
-      case LoadGenCommand(cmd) if cmd startsWith "wrk" =>
+      case LoadGenCommand(cmd) if cmd.startsWith("wrk") =>
         val res =
           if (isWrk2Available) cmd.!! // blocking. DON'T DO THIS AT HOME, KIDS!
           else "=== WRK NOT AVAILABLE ==="
         sender() ! LoadGenResults(res)
 
-      case LoadGenCommand(cmd) if cmd startsWith "ab" =>
+      case LoadGenCommand(cmd) if cmd.startsWith("ab") =>
         val res =
           if (isAbAvailable) cmd.!! // blocking. DON'T DO THIS AT HOME, KIDS!
           else "=== AB NOT AVAILABLE ==="
@@ -109,7 +109,7 @@ class AkkaHttpServerLatencyMultiNodeSpecMultiJvmNode1 extends AkkaHttpServerLate
 class AkkaHttpServerLatencyMultiNodeSpecMultiJvmNode2 extends AkkaHttpServerLatencyMultiNodeSpec
 
 class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLatencyMultiNodeSpec) with STMultiNodeSpec
-  with ScalaFutures with ImplicitSender {
+    with ScalaFutures with ImplicitSender {
 
   import AkkaHttpServerLatencyMultiNodeSpec._
 
@@ -141,15 +141,15 @@ class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLat
         if (n == 10) complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, source_100x))
         else if (n == 100) complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, source_100x))
         else throw new RuntimeException(s"Not implemented for ${n}")
-      }
-    )
+      })
   }
 
   val enableSpec = system.settings.config.getBoolean("akka.test.AkkaHttpServerLatencySpec.enable")
   val totalRequestsFactor = system.settings.config.getDouble("akka.test.AkkaHttpServerLatencySpec.totalRequestsFactor")
   val requests = Math.round(10000 * totalRequestsFactor)
   val rate = system.settings.config.getInt("akka.test.AkkaHttpServerLatencySpec.rate")
-  val testDuration = system.settings.config.getDuration("akka.test.AkkaHttpServerLatencySpec.duration", TimeUnit.SECONDS)
+  val testDuration =
+    system.settings.config.getDuration("akka.test.AkkaHttpServerLatencySpec.duration", TimeUnit.SECONDS)
   val connections: Long = 10
 
   override def binding = _binding
@@ -217,22 +217,21 @@ class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLat
 
       List(
         10 -> tenXResponseLength,
-        100 -> hundredXResponseLength
-      ) foreach {
-          case (n, length) =>
-            s"have good Latency (streaming-response($length), keep-alive)" taggedAs LongRunningTest in {
-              val id = s"Latency_stream($length)_R:${rate}_C:${connections}_p:"
+        100 -> hundredXResponseLength).foreach {
+        case (n, length) =>
+          s"have good Latency (streaming-response($length), keep-alive)" taggedAs LongRunningTest in {
+            val id = s"Latency_stream($length)_R:${rate}_C:${connections}_p:"
 
-              val wrkOptions = s"""-d ${testDuration}s -R $rate -c $connections -t $connections --u_latency"""
-              runLoadTest(id)(s"""wrk $wrkOptions ${url_longResponseStream(n)}""")
-            }
-            s"have good Latency (array-response($length), keep-alive)" taggedAs LongRunningTest in {
-              val id = s"Latency_array($length)_R:${rate}_C:${connections}_p:"
+            val wrkOptions = s"""-d ${testDuration}s -R $rate -c $connections -t $connections --u_latency"""
+            runLoadTest(id)(s"""wrk $wrkOptions ${url_longResponseStream(n)}""")
+          }
+          s"have good Latency (array-response($length), keep-alive)" taggedAs LongRunningTest in {
+            val id = s"Latency_array($length)_R:${rate}_C:${connections}_p:"
 
-              val wrkOptions = s"""-d ${testDuration}s -R $rate -c $connections -t $connections --u_latency"""
-              runLoadTest(id)(s"""wrk $wrkOptions ${url_longResponseArray(n)}""")
-            }
-        }
+            val wrkOptions = s"""-d ${testDuration}s -R $rate -c $connections -t $connections --u_latency"""
+            runLoadTest(id)(s"""wrk $wrkOptions ${url_longResponseArray(n)}""")
+          }
+      }
     }
   } else {
     "Akka HTTP" must {
@@ -250,8 +249,8 @@ class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLat
       val results = Await.result(res, timeout.duration)
 
       if (id contains "warmup") ()
-      else if (cmd startsWith "wrk") printWrkPercentiles(id, results.lines)
-      else if (cmd startsWith "ab") printAbPercentiles(id, results.lines)
+      else if (cmd.startsWith("wrk")) printWrkPercentiles(id, results.lines)
+      else if (cmd.startsWith("ab")) printAbPercentiles(id, results.lines)
       else throw new NotImplementedError(s"Unable to handle [$cmd] results!")
     }
 
@@ -280,7 +279,7 @@ class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLat
 
   private def durationAsMs(d: String): Long = {
     val dd = d.replace("us", "µs") // Scala Duration does not parse "us"
-    val ddd = if (dd endsWith "m") dd.replace("m", " minutes") else dd
+    val ddd = if (dd.endsWith("m")) dd.replace("m", " minutes") else dd
     Duration(ddd).toMillis
   }
 
@@ -363,7 +362,8 @@ class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLat
     val percentilesToPrint = 9
 
     var i = 0
-    val correctedDistributionStartsHere = lines.zipWithIndex.find(p => p._1 contains "Percentage of the requests").map(_._2).get
+    val correctedDistributionStartsHere =
+      lines.zipWithIndex.find(p => p._1 contains "Percentage of the requests").map(_._2).get
 
     var titles = List.empty[String]
     var metrics = List.empty[String]

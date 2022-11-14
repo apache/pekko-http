@@ -106,20 +106,21 @@ trait CacheConditionDirectives {
         def step2(): Route =
           header[`If-Unmodified-Since`] match {
             case Some(`If-Unmodified-Since`(ius)) if lastModified.isDefined && !unmodified(ius) => complete412()
-            case _ => step3()
+            case _                                                                              => step3()
           }
         def step3(): Route =
           header[`If-None-Match`] match {
             case Some(`If-None-Match`(inm)) if eTag.isDefined =>
               if (!matchesRange(eTag.get, inm, weakComparison = true)) step5()
-              else if (isGetOrHead) complete304() else complete412()
+              else if (isGetOrHead) complete304()
+              else complete412()
             case _ => step4()
           }
         def step4(): Route =
           if (isGetOrHead) {
             header[`If-Modified-Since`] match {
               case Some(`If-Modified-Since`(ims)) if lastModified.isDefined && unmodified(ims) => complete304()
-              case _ => step5()
+              case _                                                                           => step5()
             }
           } else step5()
         def step5(): Route =

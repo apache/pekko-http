@@ -52,7 +52,8 @@ object TupleOps {
       }
     // we implement the join by folding over the suffix with the prefix as growing accumulator
     object Fold extends BinaryPolyFunc {
-      implicit def step[T, A](implicit append: AppendOne[T, A]): BinaryPolyFunc.Case[T, A, Fold.type] { type Out = append.Out } =
+      implicit def step[T, A](
+          implicit append: AppendOne[T, A]): BinaryPolyFunc.Case[T, A, Fold.type] { type Out = append.Out } =
         at[T, A](append(_, _))
     }
   }

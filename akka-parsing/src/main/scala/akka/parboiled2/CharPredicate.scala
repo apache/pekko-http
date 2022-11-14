@@ -59,38 +59,38 @@ private[akka] sealed abstract class CharPredicate {
 
   def matchesAny(string: String): Boolean = {
     @tailrec def rec(ix: Int): Boolean =
-      if (ix == string.length) false else if (this(string charAt ix)) true else rec(ix + 1)
+      if (ix == string.length) false else if (this(string.charAt(ix))) true else rec(ix + 1)
     rec(0)
   }
 
   def matchesAll(string: String): Boolean = {
     @tailrec def rec(ix: Int): Boolean =
-      if (ix == string.length) true else if (!this(string charAt ix)) false else rec(ix + 1)
+      if (ix == string.length) true else if (!this(string.charAt(ix))) false else rec(ix + 1)
     rec(0)
   }
 
   def indexOfFirstMatch(string: String): Int = {
     @tailrec def rec(ix: Int): Int =
-      if (ix == string.length) -1 else if (this(string charAt ix)) ix else rec(ix + 1)
+      if (ix == string.length) -1 else if (this(string.charAt(ix))) ix else rec(ix + 1)
     rec(0)
   }
 
   def indexOfFirstMismatch(string: String): Int = {
     @tailrec def rec(ix: Int): Int =
-      if (ix == string.length) -1 else if (this(string charAt ix)) rec(ix + 1) else ix
+      if (ix == string.length) -1 else if (this(string.charAt(ix))) rec(ix + 1) else ix
     rec(0)
   }
 
   def firstMatch(string: String): Option[Char] =
     indexOfFirstMatch(string) match {
       case -1 => None
-      case ix => Some(string charAt ix)
+      case ix => Some(string.charAt(ix))
     }
 
   def firstMismatch(string: String): Option[Char] =
     indexOfFirstMismatch(string) match {
       case -1 => None
-      case ix => Some(string charAt ix)
+      case ix => Some(string.charAt(ix))
     }
 
   protected def or(that: CharPredicate): CharPredicate =
@@ -155,7 +155,7 @@ private[akka] object CharPredicate {
       case Empty                => this
       case _ if this == Empty   => that
       case MaskBased(low, high) => MaskBased(lowMask | low, highMask | high)
-      case _                    => this or that
+      case _                    => this.or(that)
     }
 
     def ++(chars: Seq[Char]): CharPredicate = chars.foldLeft(this: CharPredicate) {
@@ -169,13 +169,13 @@ private[akka] object CharPredicate {
       case Empty                => this
       case _ if this == Empty   => this
       case MaskBased(low, high) => MaskBased(lowMask & ~low, highMask & ~high)
-      case _                    => this andNot that
+      case _                    => this.andNot(that)
     }
 
     def --(chars: Seq[Char]): CharPredicate =
       if (this != Empty) {
         chars.foldLeft(this: CharPredicate) {
-          case (_: MaskBased, c) if unmaskable(c)  => this andNot new ArrayBased(chars.toArray)
+          case (_: MaskBased, c) if unmaskable(c)  => this.andNot(new ArrayBased(chars.toArray))
           case (MaskBased(low, high), c) if c < 64 => MaskBased(low & ~(1L << c), high)
           case (MaskBased(low, high), c)           => MaskBased(low, high & ~(1L << c))
           case (x, _)                              => x // once the fold acc is not a MaskBased we are done
@@ -217,14 +217,14 @@ private[akka] object CharPredicate {
 
     def ++(that: CharPredicate): CharPredicate = that match {
       case Empty => this
-      case _     => this or that
+      case _     => this.or(that)
     }
 
     def ++(other: Seq[Char]): CharPredicate = if (other.nonEmpty) this ++ CharPredicate(other) else this
 
     def --(that: CharPredicate): CharPredicate = that match {
       case Empty => this
-      case _     => this andNot that
+      case _     => this.andNot(that)
     }
 
     def --(other: Seq[Char]): CharPredicate = if (other.nonEmpty) this -- CharPredicate(other) else this
@@ -248,7 +248,7 @@ private[akka] object CharPredicate {
     def ++(that: CharPredicate): CharPredicate = that match {
       case Empty         => this
       case x: ArrayBased => this ++ x.chars.toIndexedSeq
-      case _             => this or that
+      case _             => this.or(that)
     }
 
     def ++(other: Seq[Char]): CharPredicate =
@@ -258,7 +258,7 @@ private[akka] object CharPredicate {
     def --(that: CharPredicate): CharPredicate = that match {
       case Empty         => this
       case x: ArrayBased => this -- x.chars.toIndexedSeq
-      case _             => this andNot that
+      case _             => this.andNot(that)
     }
 
     def --(other: Seq[Char]): ArrayBased =

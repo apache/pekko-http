@@ -12,15 +12,16 @@ import akka.http.impl.util._
  * Note that this implementation discards milliseconds (i.e. rounds down to full seconds).
  */
 final case class DateTime private (
-  year:       Int, // the year
-  month:      Int, // the month of the year. January is 1.
-  day:        Int, // the day of the month. The first day is 1.
-  hour:       Int, // the hour of the day. The first hour is 0.
-  minute:     Int, // the minute of the hour. The first minute is 0.
-  second:     Int, // the second of the minute. The first second is 0.
-  weekday:    Int, // the day of the week. Sunday is 0.
-  clicks:     Long, // milliseconds since January 1, 1970, 00:00:00 GMT
-  isLeapYear: Boolean) extends akka.http.javadsl.model.DateTime with Ordered[DateTime] with Renderable {
+    year: Int, // the year
+    month: Int, // the month of the year. January is 1.
+    day: Int, // the day of the month. The first day is 1.
+    hour: Int, // the hour of the day. The first hour is 0.
+    minute: Int, // the minute of the hour. The first minute is 0.
+    second: Int, // the second of the minute. The first second is 0.
+    weekday: Int, // the day of the week. Sunday is 0.
+    clicks: Long, // milliseconds since January 1, 1970, 00:00:00 GMT
+    isLeapYear: Boolean) extends akka.http.javadsl.model.DateTime with Ordered[DateTime] with Renderable {
+
   /**
    * The day of the week as a 3 letter abbreviation:
    * `Sun`, `Mon`, `Tue`, `Wed`, `Thu`, `Fri` or `Sat`
@@ -99,7 +100,8 @@ final case class DateTime private (
    * RFC1123 date string, e.g. `Sun, 06 Nov 1994 08:49:37 GMT`
    */
   def renderRfc1123DateTimeString[R <: Rendering](r: R): r.type =
-    put_##(put_##(put_##(put_##(r ~~ weekdayStr ~~ ',' ~~ ' ', day) ~~ ' ' ~~ monthStr ~~ ' ' ~~ year ~~ ' ', hour) ~~ ':', minute) ~~ ':', second) ~~ " GMT"
+    put_##(put_##(put_##(put_##(r ~~ weekdayStr ~~ ',' ~~ ' ', day) ~~ ' ' ~~ monthStr ~~ ' ' ~~ year ~~ ' ',
+          hour) ~~ ':', minute) ~~ ':', second) ~~ " GMT"
 
   /**
    * RFC1123 date string, e.g. `Sun, 06 Nov 1994 08:49:37 GMT`

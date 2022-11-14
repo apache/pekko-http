@@ -27,8 +27,7 @@ object HttpServerHighLevel {
           },
           path("crash") {
             sys.error("BOOM!")
-          }
-        )
+          })
       }
 
     // `route` will be implicitly converted to an async handler

@@ -30,14 +30,14 @@ trait HostDirectives {
    */
   def host(hostNames: String*): Directive0 = host(hostNames.contains(_))
 
-  //#require-host
+  // #require-host
   /**
    * Rejects all requests for whose host name the given predicate function returns false.
    *
    * @group host
    */
   def host(predicate: String => Boolean): Directive0 = extractHost.require(predicate)
-  //#require-host
+  // #require-host
 
   /**
    * Rejects all requests with a host name that doesn't have a prefix matching the given regular expression.
@@ -61,7 +61,7 @@ trait HostDirectives {
       case 0 => forFunc(regex.findPrefixOf(_))
       case 1 => forFunc(regex.findPrefixMatchOf(_).map(_.group(1)))
       case _ => throw new IllegalArgumentException("Path regex '" + regex.pattern.pattern +
-        "' must not contain more than one capturing group")
+          "' must not contain more than one capturing group")
     }
   }
 

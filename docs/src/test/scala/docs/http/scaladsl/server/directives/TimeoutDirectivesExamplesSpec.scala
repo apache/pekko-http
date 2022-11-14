@@ -20,21 +20,21 @@ import scala.concurrent.{ ExecutionContext, Future, Promise }
 import akka.testkit.{ AkkaSpec, SocketUtil }
 
 class TimeoutDirectivesExamplesSpec extends RoutingSpec
-  with ScalaFutures with CompileOnlySpec {
-  //#testSetup
+    with ScalaFutures with CompileOnlySpec {
+  // #testSetup
 
   implicit val timeout: RouteTestTimeout = RouteTestTimeout(3.seconds)
   override def testConfigSource: String =
     "akka.http.server.request-timeout = infinite\n" +
-      super.testConfigSource
+    super.testConfigSource
 
   def slowFuture(): Future[String] = Future.never
-  //#testSetup
+  // #testSetup
 
   // demonstrates that timeout is correctly set despite infinite initial value of akka.http.server.request-timeout
   "Request Timeout" should {
     "be configurable in routing layer despite infinite initial value of request-timeout" in {
-      //#withRequestTimeout-plain
+      // #withRequestTimeout-plain
       val route =
         path("timeout") {
           withRequestTimeout(1.seconds) { // modifies the global akka.http.server.request-timeout for this request
@@ -47,10 +47,10 @@ class TimeoutDirectivesExamplesSpec extends RoutingSpec
       Get("/timeout") ~!> route ~> check {
         status should ===(StatusCodes.ServiceUnavailable) // the timeout response
       }
-      //#withRequestTimeout-plain
+      // #withRequestTimeout-plain
     }
     "without timeout" in compileOnlySpec {
-      //#withoutRequestTimeout
+      // #withoutRequestTimeout
       val route =
         path("timeout") {
           withoutRequestTimeout {
@@ -60,11 +60,11 @@ class TimeoutDirectivesExamplesSpec extends RoutingSpec
         }
 
       // no check as there is no time-out, the future would time out failing the test
-      //#withoutRequestTimeout
+      // #withoutRequestTimeout
     }
 
     "allow mapping the response while setting the timeout" in {
-      //#withRequestTimeout-with-handler
+      // #withRequestTimeout-with-handler
       val timeoutResponse = HttpResponse(
         StatusCodes.EnhanceYourCalm,
         entity = "Unable to serve response within time limit, please enhance your calm.")
@@ -82,12 +82,12 @@ class TimeoutDirectivesExamplesSpec extends RoutingSpec
       Get("/timeout") ~!> route ~> check {
         status should ===(StatusCodes.EnhanceYourCalm) // the timeout response
       }
-      //#withRequestTimeout-with-handler
+      // #withRequestTimeout-with-handler
     }
 
     // make it compile only to avoid flaking in slow builds
     "allow mapping the response" in compileOnlySpec {
-      //#withRequestTimeoutResponse
+      // #withRequestTimeoutResponse
       val timeoutResponse = HttpResponse(
         StatusCodes.EnhanceYourCalm,
         entity = "Unable to serve response within time limit, please enhance your calm.")
@@ -106,12 +106,12 @@ class TimeoutDirectivesExamplesSpec extends RoutingSpec
       Get("/timeout") ~!> route ~> check {
         status should ===(StatusCodes.EnhanceYourCalm) // the timeout response
       }
-      //#withRequestTimeoutResponse
+      // #withRequestTimeoutResponse
     }
 
     // read currently set timeout
     "allow extraction of currently set timeout" in {
-      //#extractRequestTimeout
+      // #extractRequestTimeout
       val timeout1 = 500.millis
       val timeout2 = 1000.millis
       val route =
@@ -122,14 +122,13 @@ class TimeoutDirectivesExamplesSpec extends RoutingSpec
                 extractRequestTimeout { t2 =>
                   complete(
                     if (t1 == timeout1 && t2 == timeout2) StatusCodes.OK
-                    else StatusCodes.InternalServerError
-                  )
+                    else StatusCodes.InternalServerError)
                 }
               }
             }
           }
         }
-      //#extractRequestTimeout
+      // #extractRequestTimeout
 
       Get("/timeout") ~!> route ~> check {
         status should ===(StatusCodes.OK) // the timeout response
@@ -140,11 +139,11 @@ class TimeoutDirectivesExamplesSpec extends RoutingSpec
 }
 
 class TimeoutDirectivesFiniteTimeoutExamplesSpec extends RoutingSpec
-  with ScalaFutures with CompileOnlySpec {
+    with ScalaFutures with CompileOnlySpec {
   implicit val timeout: RouteTestTimeout = RouteTestTimeout(3.seconds)
   override def testConfigSource: String =
     "akka.http.server.request-timeout = 1000s\n" +
-      super.testConfigSource
+    super.testConfigSource
 
   def slowFuture(): Future[String] = Future.never
 
@@ -159,7 +158,7 @@ class TimeoutDirectivesFiniteTimeoutExamplesSpec extends RoutingSpec
           }
         }
 
-      //check
+      // check
       Get("/timeout") ~!> route ~> check {
         status should ===(StatusCodes.ServiceUnavailable) // the timeout response
       }

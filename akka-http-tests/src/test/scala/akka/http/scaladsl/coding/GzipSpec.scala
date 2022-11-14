@@ -41,7 +41,7 @@ class GzipSpec extends CoderSpec {
     }
     "throw early if header is corrupt" in {
       val cause = (the[RuntimeException] thrownBy ourDecode(ByteString(0, 1, 2, 3, 4))).ultimateCause
-      cause should (be(a[ZipException]) and have message "Not in GZIP format")
+      cause should ((be(a[ZipException]) and have).message("Not in GZIP format"))
     }
   }
 }

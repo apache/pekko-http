@@ -28,7 +28,8 @@ trait RequestBuilding extends TransformerPipelineSupport {
     def apply[T](uri: String, content: T)(implicit m: ToEntityMarshaller[T], ec: ExecutionContext): HttpRequest =
       apply(uri, Some(content))
 
-    def apply[T](uri: String, content: Option[T])(implicit m: ToEntityMarshaller[T], ec: ExecutionContext): HttpRequest =
+    def apply[T](uri: String, content: Option[T])(
+        implicit m: ToEntityMarshaller[T], ec: ExecutionContext): HttpRequest =
       apply(Uri(uri), content)
 
     def apply(uri: String, entity: RequestEntity): HttpRequest =
@@ -40,7 +41,8 @@ trait RequestBuilding extends TransformerPipelineSupport {
     def apply[T](uri: Uri, content: T)(implicit m: ToEntityMarshaller[T], ec: ExecutionContext): HttpRequest =
       apply(uri, Some(content))
 
-    def apply[T](uri: Uri, content: Option[T])(implicit m: ToEntityMarshaller[T], timeout: Timeout = Timeout(1.second), ec: ExecutionContext): HttpRequest =
+    def apply[T](uri: Uri, content: Option[T])(implicit m: ToEntityMarshaller[T], timeout: Timeout = Timeout(1.second),
+        ec: ExecutionContext): HttpRequest =
       content match {
         case None => apply(uri, HttpEntity.Empty)
         case Some(value) =>
@@ -61,7 +63,7 @@ trait RequestBuilding extends TransformerPipelineSupport {
   val Head = new RequestBuilder(HEAD)
 
   // TODO: reactivate after HTTP message encoding has been ported
-  //def encode(encoder: Encoder): RequestTransformer = encoder.encode(_, flow)
+  // def encode(encoder: Encoder): RequestTransformer = encoder.encode(_, flow)
 
   def addHeader(header: HttpHeader): RequestTransformer = _.mapHeaders(header +: _)
 
@@ -76,16 +78,16 @@ trait RequestBuilding extends TransformerPipelineSupport {
   def mapHeaders(f: immutable.Seq[HttpHeader] => immutable.Seq[HttpHeader]): RequestTransformer = _.mapHeaders(f)
 
   def removeHeader(headerName: String): RequestTransformer =
-    _ mapHeaders (_ filterNot (_.name equalsIgnoreCase headerName))
+    _.mapHeaders(_.filterNot(_.name.equalsIgnoreCase(headerName)))
 
   def removeHeader[T <: HttpHeader: ClassTag]: RequestTransformer =
     removeHeader(implicitly[ClassTag[T]].runtimeClass)
 
   def removeHeader(clazz: Class[_]): RequestTransformer =
-    _ mapHeaders (_ filterNot clazz.isInstance)
+    _.mapHeaders(_.filterNot(clazz.isInstance))
 
   def removeHeaders(names: String*): RequestTransformer =
-    _ mapHeaders (_ filterNot (header => names exists (_ equalsIgnoreCase header.name)))
+    _.mapHeaders(_.filterNot(header => names.exists(_.equalsIgnoreCase(header.name))))
 
   def addAttribute[T](key: AttributeKey[T], value: T): RequestTransformer =
     _.addAttribute(key, value)

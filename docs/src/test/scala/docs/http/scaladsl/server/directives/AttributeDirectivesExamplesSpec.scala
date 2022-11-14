@@ -13,7 +13,7 @@ import org.scalatest.Inside
 
 class AttributeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "attribute" in {
-    //#attribute
+    // #attribute
     val userId = AttributeKey[String]("user-id")
 
     val route =
@@ -29,10 +29,10 @@ class AttributeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/") ~> Route.seal(route) ~> check {
       status shouldEqual InternalServerError
     }
-    //#attribute
+    // #attribute
   }
   "optionalAttribute" in {
-    //#optionalAttribute
+    // #optionalAttribute
     val userId = AttributeKey[String]("user-id")
 
     val route =
@@ -40,14 +40,14 @@ class AttributeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
         case Some(userId) => complete(s"The user is $userId")
         case None         => complete(s"No user was provided")
       } ~ // can also be written as:
-        optionalAttribute(userId) { userId =>
-          complete {
-            userId match {
-              case Some(u) => s"The user is $u"
-              case _       => "No user was provided"
-            }
+      optionalAttribute(userId) { userId =>
+        complete {
+          userId match {
+            case Some(u) => s"The user is $u"
+            case _       => "No user was provided"
           }
         }
+      }
 
     // tests:
     Get("/") ~> addAttribute(userId, "Joe42") ~> route ~> check {
@@ -56,6 +56,6 @@ class AttributeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/") ~> Route.seal(route) ~> check {
       responseAs[String] shouldEqual "No user was provided"
     }
-    //#optionalAttribute
+    // #optionalAttribute
   }
 }

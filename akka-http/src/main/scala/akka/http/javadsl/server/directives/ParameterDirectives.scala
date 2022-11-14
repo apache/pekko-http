@@ -6,7 +6,7 @@ package akka.http.javadsl.server.directives
 
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.function.{ Function => JFunction }
-import java.util.{ Optional, List => JList, Map => JMap }
+import java.util.{ List => JList, Map => JMap, Optional }
 
 import akka.http.javadsl.server.Route
 import akka.http.javadsl.unmarshalling.Unmarshaller
@@ -24,21 +24,23 @@ abstract class ParameterDirectives extends MiscDirectives {
     })
 
   @CorrespondsTo("parameter")
-  def parameterOptional(name: String, inner: java.util.function.Function[Optional[String], Route]): Route = RouteAdapter(
+  def parameterOptional(
+      name: String, inner: java.util.function.Function[Optional[String], Route]): Route = RouteAdapter(
     D.parameter(name.optional) { value =>
       inner.apply(value.asJava).delegate
     })
 
   @CorrespondsTo("parameter")
-  def parameterRequiredValue[T](t: Unmarshaller[String, T], requiredValue: T, name: String, inner: java.util.function.Supplier[Route]): Route = {
+  def parameterRequiredValue[T](t: Unmarshaller[String, T], requiredValue: T, name: String,
+      inner: java.util.function.Supplier[Route]): Route = {
     import t.asScala
     RouteAdapter(
-      D.parameter(name.as[T].requiredValue(requiredValue)) { _ => inner.get.delegate }
-    )
+      D.parameter(name.as[T].requiredValue(requiredValue)) { _ => inner.get.delegate })
   }
 
   @CorrespondsTo("parameterSeq")
-  def parameterList(name: String, inner: java.util.function.Function[java.util.List[String], Route]): Route = RouteAdapter(
+  def parameterList(
+      name: String, inner: java.util.function.Function[java.util.List[String], Route]): Route = RouteAdapter(
     D.parameter(name.repeated) { values =>
       inner.apply(values.toSeq.asJava).delegate
     })
@@ -52,7 +54,8 @@ abstract class ParameterDirectives extends MiscDirectives {
   }
 
   @CorrespondsTo("parameter")
-  def parameterOptional[T](t: Unmarshaller[String, T], name: String, inner: java.util.function.Function[Optional[T], Route]): Route = {
+  def parameterOptional[T](t: Unmarshaller[String, T], name: String,
+      inner: java.util.function.Function[Optional[T], Route]): Route = {
     import t.asScala
     RouteAdapter(
       D.parameter(name.as[T].optional) { value =>
@@ -61,7 +64,8 @@ abstract class ParameterDirectives extends MiscDirectives {
   }
 
   @CorrespondsTo("parameter")
-  def parameterOrDefault[T](t: Unmarshaller[String, T], defaultValue: T, name: String, inner: java.util.function.Function[T, Route]): Route = {
+  def parameterOrDefault[T](t: Unmarshaller[String, T], defaultValue: T, name: String,
+      inner: java.util.function.Function[T, Route]): Route = {
     import t.asScala
     RouteAdapter(
       D.parameter(name.as[T].withDefault(defaultValue)) { value =>
@@ -70,7 +74,8 @@ abstract class ParameterDirectives extends MiscDirectives {
   }
 
   @CorrespondsTo("parameterSeq")
-  def parameterList[T](t: Unmarshaller[String, T], name: String, inner: java.util.function.Function[java.util.List[T], Route]): Route = {
+  def parameterList[T](t: Unmarshaller[String, T], name: String,
+      inner: java.util.function.Function[java.util.List[T], Route]): Route = {
     import t.asScala
     RouteAdapter(
       D.parameter(name.as[T].repeated) { values =>

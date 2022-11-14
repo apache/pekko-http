@@ -23,7 +23,7 @@ class TurkishISpec extends AnyWordSpec with Matchers {
 
         val testString = "ISO-8859-1"
         // demonstrate difference between toRootLowerCase and toLowerCase(turkishLocale)
-        testString.toLowerCase should not equal (testString.toRootLowerCase)
+        (testString.toLowerCase should not).equal(testString.toRootLowerCase)
 
         val newCharsets = charsetCons.newInstance().asInstanceOf[HttpCharsets.type]
         newCharsets.getForKey("iso-8859-1") shouldEqual Some(newCharsets.`ISO-8859-1`)

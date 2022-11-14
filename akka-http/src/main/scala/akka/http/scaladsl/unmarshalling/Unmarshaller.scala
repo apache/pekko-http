@@ -23,25 +23,25 @@ trait Unmarshaller[-A, B] extends akka.http.javadsl.unmarshalling.Unmarshaller[A
     Unmarshaller.withMaterializer { implicit ec => implicit mat => a => f(ec)(mat)(this(a)) }
 
   def map[C](f: B => C): Unmarshaller[A, C] =
-    transform(implicit ec => _ => _.fast map f)
+    transform(implicit ec => _ => _.fast.map(f))
 
   def flatMap[C](f: ExecutionContext => Materializer => B => Future[C]): Unmarshaller[A, C] =
-    transform(implicit ec => mat => _.fast flatMap f(ec)(mat))
+    transform(implicit ec => mat => _.fast.flatMap(f(ec)(mat)))
 
   def andThen[C](other: Unmarshaller[B, C]): Unmarshaller[A, C] =
     flatMap(ec => mat => data => other(data)(ec, mat))
 
   def recover[C >: B](pf: ExecutionContext => Materializer => PartialFunction[Throwable, C]): Unmarshaller[A, C] =
-    transform(implicit ec => mat => _.fast recover pf(ec)(mat))
+    transform(implicit ec => mat => _.fast.recover(pf(ec)(mat)))
 
   def withDefaultValue[BB >: B](defaultValue: BB): Unmarshaller[A, BB] =
     recover(_ => _ => { case Unmarshaller.NoContentException => defaultValue })
 }
 
 object Unmarshaller
-  extends GenericUnmarshallers
-  with PredefinedFromEntityUnmarshallers
-  with PredefinedFromStringUnmarshallers {
+    extends GenericUnmarshallers
+    with PredefinedFromEntityUnmarshallers
+    with PredefinedFromStringUnmarshallers {
 
   // format: OFF
 
@@ -109,18 +109,17 @@ object Unmarshaller
      * an IllegalStateException will be thrown!
      */
     def forContentTypes(ranges: ContentTypeRange*): FromEntityUnmarshaller[A] =
-      Unmarshaller.withMaterializer { implicit ec => implicit mat =>
-        entity =>
-          if (entity.contentType == ContentTypes.NoContentType || ranges.exists(_ matches entity.contentType)) {
-            underlying(entity).fast.recover[A](barkAtUnsupportedContentTypeException(ranges, entity.contentType))
-          } else FastFuture.failed(UnsupportedContentTypeException(Some(entity.contentType), ranges: _*))
+      Unmarshaller.withMaterializer { implicit ec => implicit mat => entity =>
+        if (entity.contentType == ContentTypes.NoContentType || ranges.exists(_.matches(entity.contentType))) {
+          underlying(entity).fast.recover[A](barkAtUnsupportedContentTypeException(ranges, entity.contentType))
+        } else FastFuture.failed(UnsupportedContentTypeException(Some(entity.contentType), ranges: _*))
       }
 
     private def barkAtUnsupportedContentTypeException(
-      ranges:         Seq[ContentTypeRange],
-      newContentType: ContentType): PartialFunction[Throwable, Nothing] = {
+        ranges: Seq[ContentTypeRange],
+        newContentType: ContentType): PartialFunction[Throwable, Nothing] = {
       case UnsupportedContentTypeException(supported) => throw new IllegalStateException(
-        s"Illegal use of `unmarshaller.forContentTypes($ranges)`: Content-Type [$newContentType] is not supported by underlying marshaller!")
+          s"Illegal use of `unmarshaller.forContentTypes($ranges)`: Content-Type [$newContentType] is not supported by underlying marshaller!")
     }
   }
 
@@ -141,10 +140,11 @@ object Unmarshaller
 
   /** Order of parameters (`right` first, `left` second) is intentional, since that's the order we evaluate them in. */
   final case class EitherUnmarshallingException(
-    rightClass: Class[_], right: Throwable,
-    leftClass: Class[_], left: Throwable)
-    extends RuntimeException(
-      s"Failed to unmarshal Either[${Logging.simpleName(leftClass)}, ${Logging.simpleName(rightClass)}] (attempted ${Logging.simpleName(rightClass)} first). " +
+      rightClass: Class[_], right: Throwable,
+      leftClass: Class[_], left: Throwable)
+      extends RuntimeException(
+        s"Failed to unmarshal Either[${Logging.simpleName(leftClass)}, ${Logging.simpleName(
+            rightClass)}] (attempted ${Logging.simpleName(rightClass)} first). " +
         s"Right failure: ${right.getMessage}, " +
         s"Left failure: ${left.getMessage}")
 
@@ -154,10 +154,10 @@ object Unmarshaller
    * [[akka.http.scaladsl.unmarshalling.Unmarshaller]] instead.
    */
   final class UnsupportedContentTypeException(
-    val supported:         Set[ContentTypeRange],
-    val actualContentType: Option[ContentType])
-    extends RuntimeException(supported.mkString(
-      s"Unsupported Content-Type [$actualContentType], supported: ", ", ", "")) with Product with Serializable {
+      val supported: Set[ContentTypeRange],
+      val actualContentType: Option[ContentType])
+      extends RuntimeException(supported.mkString(
+        s"Unsupported Content-Type [$actualContentType], supported: ", ", ", "")) with Product with Serializable {
 
     @deprecated("for binary compatibility", since = "10.1.9")
     def this(supported: Set[ContentTypeRange]) = this(supported, None)
@@ -172,15 +172,16 @@ object Unmarshaller
 
     @deprecated("for binary compatibility", since = "10.1.9")
     def copy(
-      supported:   Set[ContentTypeRange] = this.supported,
-      contentType: Option[ContentType]   = this.actualContentType): UnsupportedContentTypeException =
+        supported: Set[ContentTypeRange] = this.supported,
+        contentType: Option[ContentType] = this.actualContentType): UnsupportedContentTypeException =
       new UnsupportedContentTypeException(supported, contentType)
 
     override def canEqual(that: Any): Boolean = that.isInstanceOf[UnsupportedContentTypeException]
 
     override def equals(that: Any): Boolean = that match {
-      case that: UnsupportedContentTypeException => that.canEqual(this) && that.supported == this.supported && that.actualContentType == this.actualContentType
-      case _                                     => false
+      case that: UnsupportedContentTypeException =>
+        that.canEqual(this) && that.supported == this.supported && that.actualContentType == this.actualContentType
+      case _ => false
     }
     override def productArity: Int = 1
     override def productElement(n: Int): Any = supported

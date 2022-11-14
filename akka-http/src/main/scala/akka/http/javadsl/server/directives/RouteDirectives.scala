@@ -116,7 +116,8 @@ abstract class RouteDirectives extends RespondWithDirectives {
   /**
    * Completes the request using the given status code and headers, marshalling the given value as response entity.
    */
-  def complete[T](status: StatusCode, headers: java.lang.Iterable[HttpHeader], value: T, marshaller: Marshaller[T, RequestEntity]) = RouteAdapter {
+  def complete[T](status: StatusCode, headers: java.lang.Iterable[HttpHeader], value: T,
+      marshaller: Marshaller[T, RequestEntity]) = RouteAdapter {
     D.complete(ToResponseMarshallable(value)(fromToEntityMarshaller(status.asScala, headers.asScala)(marshaller)))
   }
 
@@ -163,9 +164,10 @@ abstract class RouteDirectives extends RespondWithDirectives {
   /**
    * Completes the request as HTTP 200 OK, adding the given headers, and marshalling the given value as response entity.
    */
-  def complete[T](headers: java.lang.Iterable[HttpHeader], value: T, marshaller: Marshaller[T, RequestEntity]) = RouteAdapter {
-    D.complete(ToResponseMarshallable(value)(fromToEntityMarshaller(headers = headers.asScala)(marshaller)))
-  }
+  def complete[T](headers: java.lang.Iterable[HttpHeader], value: T, marshaller: Marshaller[T, RequestEntity]) =
+    RouteAdapter {
+      D.complete(ToResponseMarshallable(value)(fromToEntityMarshaller(headers = headers.asScala)(marshaller)))
+    }
 
   /**
    * Completes the request as HTTP 200 OK, adding the given headers and response entity.
@@ -230,9 +232,10 @@ abstract class RouteDirectives extends RespondWithDirectives {
    * Completes the request by marshalling the given value into an http response.
    */
   @CorrespondsTo("complete")
-  def completeOKWithFuture[T](value: scala.concurrent.Future[T], marshaller: Marshaller[T, RequestEntity]) = RouteAdapter {
-    D.complete(value.fast.map(v => ToResponseMarshallable(v)(fromToEntityMarshaller()(marshaller))))
-  }
+  def completeOKWithFuture[T](value: scala.concurrent.Future[T], marshaller: Marshaller[T, RequestEntity]) =
+    RouteAdapter {
+      D.complete(value.fast.map(v => ToResponseMarshallable(v)(fromToEntityMarshaller()(marshaller))))
+    }
 
   /**
    * Completes the request by marshalling the given value into an http response.
@@ -281,7 +284,8 @@ abstract class RouteDirectives extends RespondWithDirectives {
    */
   @CorrespondsTo("complete")
   def completeOKWithFuture[T](value: CompletionStage[T], marshaller: Marshaller[T, RequestEntity]) = RouteAdapter {
-    D.complete(value.asScala.fast.map(v => ToResponseMarshallable(v)(fromToEntityMarshaller()(marshaller))).recover(unwrapCompletionException))
+    D.complete(value.asScala.fast.map(v => ToResponseMarshallable(v)(fromToEntityMarshaller()(marshaller))).recover(
+      unwrapCompletionException))
   }
 
   /**

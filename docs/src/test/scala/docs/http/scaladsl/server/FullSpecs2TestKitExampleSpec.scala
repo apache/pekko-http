@@ -23,8 +23,7 @@ class FullSpecs2TestKitExampleSpec extends Specification with Specs2RouteTest {
         },
         path("ping") {
           complete("PONG!")
-        }
-      )
+        })
     }
 
   "The service" should {

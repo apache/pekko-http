@@ -35,21 +35,20 @@ object Unmarshaller extends akka.http.javadsl.unmarshalling.Unmarshallers {
    * Unmarshaller is covariant in B, i.e. if B2 is a subclass of B1,
    * then Unmarshaller[X,B2] is OK to use where Unmarshaller[X,B1] is expected.
    */
-  private def downcast[A, B1, B2 <: B1](m: Unmarshaller[A, B2], target: Class[B1]): Unmarshaller[A, B1] = m.asInstanceOf[Unmarshaller[A, B1]]
+  private def downcast[A, B1, B2 <: B1](m: Unmarshaller[A, B2], target: Class[B1]): Unmarshaller[A, B1] =
+    m.asInstanceOf[Unmarshaller[A, B1]]
 
   /**
    * Creates an unmarshaller from an asynchronous Java function.
    */
   override def async[A, B](f: java.util.function.Function[A, CompletionStage[B]]): Unmarshaller[A, B] =
-    unmarshalling.Unmarshaller[A, B] { ctx => a => f(a).toScala
-    }
+    unmarshalling.Unmarshaller[A, B] { ctx => a => f(a).toScala }
 
   /**
    * Creates an unmarshaller from a Java function.
    */
   override def sync[A, B](f: java.util.function.Function[A, B]): Unmarshaller[A, B] =
-    unmarshalling.Unmarshaller[A, B] { ctx => a => scala.concurrent.Future.successful(f.apply(a))
-    }
+    unmarshalling.Unmarshaller[A, B] { ctx => a => scala.concurrent.Future.successful(f.apply(a)) }
 
   // format: OFF
   def entityToByteString: Unmarshaller[HttpEntity, ByteString] = unmarshalling.Unmarshaller.byteStringUnmarshaller
@@ -67,17 +66,20 @@ object Unmarshaller extends akka.http.javadsl.unmarshalling.Unmarshallers {
     unmarshalling.Unmarshaller.strict[HttpRequest, RequestEntity](_.entity)
 
   def forMediaType[B](t: MediaType, um: Unmarshaller[HttpEntity, B]): Unmarshaller[HttpEntity, B] = {
-    unmarshalling.Unmarshaller.withMaterializer[HttpEntity, B] { implicit ex => implicit mat => jEntity => {
-      val entity = jEntity.asScala
-      val mediaType = t.asScala
-      if (entity.contentType == ContentTypes.NoContentType || mediaType.matches(entity.contentType.mediaType)) {
-        um.asScala(entity)
-      } else FastFuture.failed(UnsupportedContentTypeException(Some(entity.contentType), ContentTypeRange(t.toRange.asScala)))
-    }
+    unmarshalling.Unmarshaller.withMaterializer[HttpEntity, B] { implicit ex => implicit mat => jEntity =>
+      {
+        val entity = jEntity.asScala
+        val mediaType = t.asScala
+        if (entity.contentType == ContentTypes.NoContentType || mediaType.matches(entity.contentType.mediaType)) {
+          um.asScala(entity)
+        } else FastFuture.failed(UnsupportedContentTypeException(Some(entity.contentType),
+          ContentTypeRange(t.toRange.asScala)))
+      }
     }
   }
 
-  def forMediaTypes[B](types: java.lang.Iterable[MediaType], um: Unmarshaller[HttpEntity, B]): Unmarshaller[HttpEntity, B] = {
+  def forMediaTypes[B](
+      types: java.lang.Iterable[MediaType], um: Unmarshaller[HttpEntity, B]): Unmarshaller[HttpEntity, B] = {
     val u: FromEntityUnmarshaller[B] = um.asScala
     val theTypes: Seq[akka.http.scaladsl.model.ContentTypeRange] = types.asScala.toSeq.map { media =>
       akka.http.scaladsl.model.ContentTypeRange(media.asScala)
@@ -89,20 +91,24 @@ object Unmarshaller extends akka.http.javadsl.unmarshalling.Unmarshallers {
     unmarshalling.Unmarshaller.firstOf(u1.asScala, u2.asScala)
   }
 
-  override def firstOf[A, B](u1: Unmarshaller[A, B], u2: Unmarshaller[A, B], u3: Unmarshaller[A, B]): Unmarshaller[A, B] = {
+  override def firstOf[A, B](
+      u1: Unmarshaller[A, B], u2: Unmarshaller[A, B], u3: Unmarshaller[A, B]): Unmarshaller[A, B] = {
     unmarshalling.Unmarshaller.firstOf(u1.asScala, u2.asScala, u3.asScala)
   }
 
-  override def firstOf[A, B](u1: Unmarshaller[A, B], u2: Unmarshaller[A, B], u3: Unmarshaller[A, B], u4: Unmarshaller[A, B]): Unmarshaller[A, B] = {
+  override def firstOf[A, B](u1: Unmarshaller[A, B], u2: Unmarshaller[A, B], u3: Unmarshaller[A, B],
+      u4: Unmarshaller[A, B]): Unmarshaller[A, B] = {
     unmarshalling.Unmarshaller.firstOf(u1.asScala, u2.asScala, u3.asScala, u4.asScala)
   }
 
-  override def firstOf[A, B](u1: Unmarshaller[A, B], u2: Unmarshaller[A, B], u3: Unmarshaller[A, B], u4: Unmarshaller[A, B], u5: Unmarshaller[A, B]): Unmarshaller[A, B] = {
+  override def firstOf[A, B](u1: Unmarshaller[A, B], u2: Unmarshaller[A, B], u3: Unmarshaller[A, B],
+      u4: Unmarshaller[A, B], u5: Unmarshaller[A, B]): Unmarshaller[A, B] = {
     unmarshalling.Unmarshaller.firstOf(u1.asScala, u2.asScala, u3.asScala, u4.asScala, u5.asScala)
   }
 
   @nowarn("msg=parameter value mi in method adaptInputToJava is never used")
-  private implicit def adaptInputToJava[JI, SI, O](um: unmarshalling.Unmarshaller[SI, O])(implicit mi: JavaMapping[JI, SI]): unmarshalling.Unmarshaller[JI, O] =
+  private implicit def adaptInputToJava[JI, SI, O](um: unmarshalling.Unmarshaller[SI, O])(
+      implicit mi: JavaMapping[JI, SI]): unmarshalling.Unmarshaller[JI, O] =
     um.asInstanceOf[unmarshalling.Unmarshaller[JI, O]] // since guarantee provided by existence of `mi`
 
 }
@@ -118,12 +124,14 @@ abstract class Unmarshaller[-A, B] extends UnmarshallerBase[A, B] {
 
   /** INTERNAL API */
   @InternalApi
-  private[akka] def asScalaCastInput[I]: unmarshalling.Unmarshaller[I, B] = asScala.asInstanceOf[unmarshalling.Unmarshaller[I, B]]
+  private[akka] def asScalaCastInput[I]: unmarshalling.Unmarshaller[I, B] =
+    asScala.asInstanceOf[unmarshalling.Unmarshaller[I, B]]
 
   /**
    * Apply this Unmarshaller to the given value.
    */
-  def unmarshal(value: A, ec: ExecutionContext, mat: Materializer): CompletionStage[B] = asScala.apply(value)(ec, mat).toJava
+  def unmarshal(value: A, ec: ExecutionContext, mat: Materializer): CompletionStage[B] =
+    asScala.apply(value)(ec, mat).toJava
 
   /**
    * Apply this Unmarshaller to the given value. Uses the default materializer [[ExecutionContext]].
@@ -134,13 +142,15 @@ abstract class Unmarshaller[-A, B] extends UnmarshallerBase[A, B] {
   /**
    * Apply this Unmarshaller to the given value.
    */
-  def unmarshal(value: A, ec: ExecutionContext, system: ClassicActorSystemProvider): CompletionStage[B] = unmarshal(value, ec, SystemMaterializer(system).materializer)
+  def unmarshal(value: A, ec: ExecutionContext, system: ClassicActorSystemProvider): CompletionStage[B] =
+    unmarshal(value, ec, SystemMaterializer(system).materializer)
 
   /**
    * Apply this Unmarshaller to the given value. Uses the default materializer [[ExecutionContext]].
    * If you expect the marshalling to be heavy, it is suggested to provide a specialized context for those operations.
    */
-  def unmarshal(value: A, system: ClassicActorSystemProvider): CompletionStage[B] = unmarshal(value, system.classicSystem.dispatcher, SystemMaterializer(system).materializer)
+  def unmarshal(value: A, system: ClassicActorSystemProvider): CompletionStage[B] =
+    unmarshal(value, system.classicSystem.dispatcher, SystemMaterializer(system).materializer)
 
   /**
    * Transform the result `B` of this unmarshaller to a `C` producing a marshaller that turns `A`s into `C`s

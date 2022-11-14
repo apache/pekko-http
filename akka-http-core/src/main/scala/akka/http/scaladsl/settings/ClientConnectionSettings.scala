@@ -24,7 +24,8 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
  * Public API but not intended for subclassing
  */
 @DoNotInherit
-abstract class ClientConnectionSettings private[akka] () extends akka.http.javadsl.settings.ClientConnectionSettings { self: ClientConnectionSettingsImpl =>
+abstract class ClientConnectionSettings private[akka] () extends akka.http.javadsl.settings.ClientConnectionSettings {
+  self: ClientConnectionSettingsImpl =>
   def userAgentHeader: Option[`User-Agent`]
   def connectingTimeout: FiniteDuration
   def idleTimeout: Duration
@@ -45,28 +46,37 @@ abstract class ClientConnectionSettings private[akka] () extends akka.http.javad
   // ---
 
   // overrides for more specific return type
-  def withConnectingTimeout(newValue: FiniteDuration): ClientConnectionSettings = self.copy(connectingTimeout = newValue)
+  def withConnectingTimeout(newValue: FiniteDuration): ClientConnectionSettings =
+    self.copy(connectingTimeout = newValue)
   def withIdleTimeout(newValue: Duration): ClientConnectionSettings = self.copy(idleTimeout = newValue)
   def withRequestHeaderSizeHint(newValue: Int): ClientConnectionSettings = self.copy(requestHeaderSizeHint = newValue)
-  def withStreamCancellationDelay(newValue: FiniteDuration): ClientConnectionSettings = self.copy(streamCancellationDelay = newValue)
+  def withStreamCancellationDelay(newValue: FiniteDuration): ClientConnectionSettings =
+    self.copy(streamCancellationDelay = newValue)
 
   // overloads for idiomatic Scala use
-  def withWebsocketSettings(newValue: WebSocketSettings): ClientConnectionSettings = self.copy(websocketSettings = newValue)
-  def withWebsocketRandomFactory(newValue: () => Random): ClientConnectionSettings = withWebsocketSettings(websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
-    override def get(): Random = newValue()
-  }))
-  def withUserAgentHeader(newValue: Option[`User-Agent`]): ClientConnectionSettings = self.copy(userAgentHeader = newValue)
-  def withLogUnencryptedNetworkBytes(newValue: Option[Int]): ClientConnectionSettings = self.copy(logUnencryptedNetworkBytes = newValue)
-  def withSocketOptions(newValue: immutable.Seq[SocketOption]): ClientConnectionSettings = self.copy(socketOptions = newValue)
+  def withWebsocketSettings(newValue: WebSocketSettings): ClientConnectionSettings =
+    self.copy(websocketSettings = newValue)
+  def withWebsocketRandomFactory(newValue: () => Random): ClientConnectionSettings =
+    withWebsocketSettings(websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
+      override def get(): Random = newValue()
+    }))
+  def withUserAgentHeader(newValue: Option[`User-Agent`]): ClientConnectionSettings =
+    self.copy(userAgentHeader = newValue)
+  def withLogUnencryptedNetworkBytes(newValue: Option[Int]): ClientConnectionSettings =
+    self.copy(logUnencryptedNetworkBytes = newValue)
+  def withSocketOptions(newValue: immutable.Seq[SocketOption]): ClientConnectionSettings =
+    self.copy(socketOptions = newValue)
   def withParserSettings(newValue: ParserSettings): ClientConnectionSettings = self.copy(parserSettings = newValue)
-  def withLocalAddress(newValue: Option[InetSocketAddress]): ClientConnectionSettings = self.copy(localAddress = newValue)
+  def withLocalAddress(newValue: Option[InetSocketAddress]): ClientConnectionSettings =
+    self.copy(localAddress = newValue)
   def withHttp2Settings(newValue: Http2ClientSettings): ClientConnectionSettings = self.copy(http2Settings = newValue)
 
   @ApiMayChange
   def withTransport(newTransport: ClientTransport): ClientConnectionSettings = self.copy(transport = newTransport)
 
   // Scala-only lenses
-  def mapHttp2Settings(f: Http2ClientSettings => Http2ClientSettings): ClientConnectionSettings = withHttp2Settings(f(http2Settings))
+  def mapHttp2Settings(f: Http2ClientSettings => Http2ClientSettings): ClientConnectionSettings =
+    withHttp2Settings(f(http2Settings))
 
   /**
    * Returns a new instance with the given local address set if the given override is `Some(address)`, otherwise

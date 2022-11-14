@@ -12,11 +12,11 @@ import akka.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSet
 import org.scalatest.concurrent.ScalaFutures
 
 class CustomStatusCodesSpec extends AkkaSpecWithMaterializer with ScalaFutures
-  with Directives with RequestBuilding {
+    with Directives with RequestBuilding {
 
   "Http" should {
     "allow registering custom status code" in {
-      //#application-custom
+      // #application-custom
       // similarly in Java: `akka.http.javadsl.settings.[...]`
       import akka.http.scaladsl.settings.{ ParserSettings, ServerSettings }
 
@@ -42,10 +42,9 @@ class CustomStatusCodesSpec extends AkkaSpecWithMaterializer with ScalaFutures
 
       // futureValue is a ScalaTest helper:
       response.futureValue.status should ===(LeetCode)
-      //#application-custom
+      // #application-custom
       binding.unbind()
     }
   }
 
 }
-

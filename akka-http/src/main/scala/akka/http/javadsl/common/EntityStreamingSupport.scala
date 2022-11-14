@@ -19,6 +19,7 @@ abstract class EntityStreamingSupport {
 
   /** Read-side, what content types it is able to frame and unmarshall. */
   def supported: ContentTypeRange
+
   /** Write-side, defines what Content-Type the Marshaller should offer and the final Content-Type of the response. */
   def contentType: ContentType
 
@@ -27,6 +28,7 @@ abstract class EntityStreamingSupport {
    * For example with an incoming JSON array, chunk it up into JSON objects contained within that array.
    */
   def getFramingDecoder: Flow[ByteString, ByteString, NotUsed]
+
   /**
    * Write-side, apply framing to outgoing entity stream.
    *
@@ -112,6 +114,7 @@ object EntityStreamingSupport {
    * See also <a href="https://en.wikipedia.org/wiki/JSON_Streaming">https://en.wikipedia.org/wiki/JSON_Streaming</a>
    */
   def json(): JsonEntityStreamingSupport = json(8 * 1024)
+
   /**
    * Default `application/json` entity streaming support.
    *
@@ -131,6 +134,7 @@ object EntityStreamingSupport {
    * Limits the maximum line-length to 8KB, if you want to increase this limit provide a value explicitly.
    */
   def csv(): CsvEntityStreamingSupport = csv(8 * 1024)
+
   /**
    * Default `text/csv(UTF-8)` entity streaming support.
    * Provides framing and rendering of `\n` separated lines and marshalling Sources into such values.
@@ -140,6 +144,7 @@ object EntityStreamingSupport {
 
 // extends Scala base, in order to get linearization right and (as we can't go into traits here, because companion object needed)
 abstract class JsonEntityStreamingSupport extends common.EntityStreamingSupport {
+
   /**
    * Java API: Write-side, apply framing to outgoing entity stream.
    *
@@ -154,6 +159,7 @@ abstract class JsonEntityStreamingSupport extends common.EntityStreamingSupport 
 
 // extends Scala base, in order to get linearization right and (as we can't go into traits here, because companion object needed)
 abstract class CsvEntityStreamingSupport extends common.EntityStreamingSupport {
+
   /**
    * Java API: Write-side, apply framing to outgoing entity stream.
    *

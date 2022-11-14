@@ -4,7 +4,7 @@
 
 package akka.http.scaladsl.client
 
-import scala.concurrent.{ Future, ExecutionContext }
+import scala.concurrent.{ ExecutionContext, Future }
 import akka.event.{ Logging, LoggingAdapter }
 
 trait TransformerPipelineSupport {
@@ -36,7 +36,7 @@ trait TransformerAux[A, B, AA, BB, R] {
 
 object TransformerAux {
   implicit def aux1[A, B, C]: TransformerAux[A, B, B, C, C] = new TransformerAux[A, B, B, C, C] {
-    def apply(f: A => B, g: B => C): A => C = f andThen g
+    def apply(f: A => B, g: B => C): A => C = f.andThen(g)
   }
   implicit def aux2[A, B, C](implicit ec: ExecutionContext): TransformerAux[A, Future[B], B, C, Future[C]] =
     new TransformerAux[A, Future[B], B, C, Future[C]] {

@@ -10,6 +10,7 @@ import akka.http.javadsl.{ model => jm }
 import scala.collection.immutable
 
 class Trailer(@ApiMayChange val headers: immutable.Seq[(String, String)]) extends jm.Trailer {
+
   /**
    * Java API
    */

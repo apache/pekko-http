@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.ws.{ TextMessage, BinaryMessage, Message }
+import akka.http.scaladsl.model.ws.{ BinaryMessage, Message, TextMessage }
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
 import akka.util.ByteString
@@ -55,7 +55,7 @@ object EchoTestClientApp extends App {
   def echoClient = Flow.fromSinkAndSourceMat(sink, source)(Keep.left)
 
   val (upgrade, res) = Http().singleWebSocketRequest("wss://echo.websocket.org", echoClient)
-  res onComplete {
+  res.onComplete {
     case Success(res) =>
       println("Run successful. Got these elements:")
       res.foreach(println)

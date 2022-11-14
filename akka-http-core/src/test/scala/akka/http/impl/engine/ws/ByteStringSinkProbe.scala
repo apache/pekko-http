@@ -72,8 +72,8 @@ private[http] object ByteStringSinkProbe {
           catch {
             case ex if ex.getMessage.contains("Expected OnNext") =>
               throw new AssertionError(
-                s"Expected [$length] bytes but only got [${inBuffer.size}] bytes\n${PrettyByteString.asPretty(inBuffer).prettyPrint(1024)}"
-              )
+                s"Expected [$length] bytes but only got [${inBuffer.size}] bytes\n${PrettyByteString.asPretty(
+                    inBuffer).prettyPrint(1024)}")
           }
           expectBytes(length)
         }
@@ -82,10 +82,10 @@ private[http] object ByteStringSinkProbe {
         val got = expectBytes(expected.length)
         val details =
           "Expected: \n" +
-            PrettyByteString.asPretty(expected).prettyPrint(1024) +
-            "\n" +
-            "But got: \n" +
-            PrettyByteString.asPretty(got).prettyPrint(1024)
+          PrettyByteString.asPretty(expected).prettyPrint(1024) +
+          "\n" +
+          "But got: \n" +
+          PrettyByteString.asPretty(got).prettyPrint(1024)
 
         assert(got == expected, s"expected ${expected.length} bytes, but got ${got.length} bytes \n$details")
       }

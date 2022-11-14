@@ -38,7 +38,9 @@ abstract class ConnectionPoolSettings extends js.ConnectionPoolSettings { self: 
    * the first matching set of overrides is selected.
    */
   private[akka] def forHost(host: String): ConnectionPoolSettings =
-    hostOverrides.collectFirst { case (regex, overrides) if regex.pattern.matcher(host).matches() => overrides }.getOrElse(this)
+    hostOverrides.collectFirst {
+      case (regex, overrides) if regex.pattern.matcher(host).matches() => overrides
+    }.getOrElse(this)
 
   /**
    * The underlying transport used to connect to hosts. By default [[ClientTransport.TCP]] is used.
@@ -53,25 +55,38 @@ abstract class ConnectionPoolSettings extends js.ConnectionPoolSettings { self: 
   // ---
 
   @ApiMayChange
-  def withHostOverrides(hostOverrides: immutable.Seq[(String, ConnectionPoolSettings)]): ConnectionPoolSettings = self.copy(hostOverrides = hostOverrides.map { case (h, s) => ConnectionPoolSettingsImpl.hostRegex(h) -> s })
+  def withHostOverrides(hostOverrides: immutable.Seq[(String, ConnectionPoolSettings)]): ConnectionPoolSettings =
+    self.copy(hostOverrides = hostOverrides.map { case (h, s) => ConnectionPoolSettingsImpl.hostRegex(h) -> s })
 
   @ApiMayChange
-  def appendHostOverride(hostPattern: String, settings: ConnectionPoolSettings): ConnectionPoolSettings = self.copy(hostOverrides = hostOverrides :+ (ConnectionPoolSettingsImpl.hostRegex(hostPattern) -> settings))
+  def appendHostOverride(hostPattern: String, settings: ConnectionPoolSettings): ConnectionPoolSettings =
+    self.copy(hostOverrides = hostOverrides :+ (ConnectionPoolSettingsImpl.hostRegex(hostPattern) -> settings))
 
-  override def withMaxConnections(n: Int): ConnectionPoolSettings = self.copyDeep(_.withMaxConnections(n), maxConnections = n)
-  override def withMinConnections(n: Int): ConnectionPoolSettings = self.copyDeep(_.withMinConnections(n), minConnections = n)
+  override def withMaxConnections(n: Int): ConnectionPoolSettings =
+    self.copyDeep(_.withMaxConnections(n), maxConnections = n)
+  override def withMinConnections(n: Int): ConnectionPoolSettings =
+    self.copyDeep(_.withMinConnections(n), minConnections = n)
   override def withMaxRetries(n: Int): ConnectionPoolSettings = self.copyDeep(_.withMaxRetries(n), maxRetries = n)
-  override def withMaxOpenRequests(newValue: Int): ConnectionPoolSettings = self.copyDeep(_.withMaxOpenRequests(newValue), maxOpenRequests = newValue)
-  override def withBaseConnectionBackoff(newValue: FiniteDuration): ConnectionPoolSettings = self.copyDeep(_.withBaseConnectionBackoff(newValue), baseConnectionBackoff = newValue)
-  override def withMaxConnectionBackoff(newValue: FiniteDuration): ConnectionPoolSettings = self.copyDeep(_.withMaxConnectionBackoff(newValue), maxConnectionBackoff = newValue)
-  override def withPipeliningLimit(newValue: Int): ConnectionPoolSettings = self.copyDeep(_.withPipeliningLimit(newValue), pipeliningLimit = newValue)
-  override def withIdleTimeout(newValue: Duration): ConnectionPoolSettings = self.copyDeep(_.withIdleTimeout(newValue), idleTimeout = newValue)
-  override def withKeepAliveTimeout(newValue: Duration): ConnectionPoolSettings = self.copyDeep(_.withKeepAliveTimeout(newValue), keepAliveTimeout = newValue)
-  override def withMaxConnectionLifetime(newValue: Duration): ConnectionPoolSettings = self.copyDeep(_.withMaxConnectionLifetime(newValue), maxConnectionLifetime = newValue)
-  def withConnectionSettings(newValue: ClientConnectionSettings): ConnectionPoolSettings = self.copyDeep(_.withConnectionSettings(newValue), connectionSettings = newValue)
+  override def withMaxOpenRequests(newValue: Int): ConnectionPoolSettings =
+    self.copyDeep(_.withMaxOpenRequests(newValue), maxOpenRequests = newValue)
+  override def withBaseConnectionBackoff(newValue: FiniteDuration): ConnectionPoolSettings =
+    self.copyDeep(_.withBaseConnectionBackoff(newValue), baseConnectionBackoff = newValue)
+  override def withMaxConnectionBackoff(newValue: FiniteDuration): ConnectionPoolSettings =
+    self.copyDeep(_.withMaxConnectionBackoff(newValue), maxConnectionBackoff = newValue)
+  override def withPipeliningLimit(newValue: Int): ConnectionPoolSettings =
+    self.copyDeep(_.withPipeliningLimit(newValue), pipeliningLimit = newValue)
+  override def withIdleTimeout(newValue: Duration): ConnectionPoolSettings =
+    self.copyDeep(_.withIdleTimeout(newValue), idleTimeout = newValue)
+  override def withKeepAliveTimeout(newValue: Duration): ConnectionPoolSettings =
+    self.copyDeep(_.withKeepAliveTimeout(newValue), keepAliveTimeout = newValue)
+  override def withMaxConnectionLifetime(newValue: Duration): ConnectionPoolSettings =
+    self.copyDeep(_.withMaxConnectionLifetime(newValue), maxConnectionLifetime = newValue)
+  def withConnectionSettings(newValue: ClientConnectionSettings): ConnectionPoolSettings =
+    self.copyDeep(_.withConnectionSettings(newValue), connectionSettings = newValue)
 
   @ApiMayChange
-  override def withResponseEntitySubscriptionTimeout(newValue: Duration): ConnectionPoolSettings = self.copyDeep(_.withResponseEntitySubscriptionTimeout(newValue), responseEntitySubscriptionTimeout = newValue)
+  override def withResponseEntitySubscriptionTimeout(newValue: Duration): ConnectionPoolSettings =
+    self.copyDeep(_.withResponseEntitySubscriptionTimeout(newValue), responseEntitySubscriptionTimeout = newValue)
 
   /**
    * Since 10.1.0, the transport is configured in [[ClientConnectionSettings]]. This method is a shortcut for
@@ -88,10 +103,11 @@ object ConnectionPoolSettings extends SettingsCompanion[ConnectionPoolSettings] 
   override def apply(config: Config): ConnectionPoolSettingsImpl = {
     import scala.collection.JavaConverters._
 
-    val hostOverrides = config.getConfigList("akka.http.host-connection-pool.per-host-override").asScala.toList.map { cfg =>
-      ConnectionPoolSettingsImpl.hostRegex(cfg.getString("host-pattern")) ->
+    val hostOverrides =
+      config.getConfigList("akka.http.host-connection-pool.per-host-override").asScala.toList.map { cfg =>
+        ConnectionPoolSettingsImpl.hostRegex(cfg.getString("host-pattern")) ->
         ConnectionPoolSettingsImpl(cfg.atPath("akka.http.host-connection-pool").withFallback(config))
-    }
+      }
 
     ConnectionPoolSettingsImpl(config).copy(hostOverrides = hostOverrides)
   }

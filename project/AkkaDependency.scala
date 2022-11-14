@@ -30,15 +30,15 @@ object AkkaDependency {
         Sources(akkaSources)
       case None =>
         Option(System.getProperty("akka.http.build.akka.version")) match {
-          case Some("master") => masterSnapshot
+          case Some("master")      => masterSnapshot
           case Some("release-2.5") =>
             // Don't 'downgrade' building even if akka.sources asks for it
             // (typically for the docs that require 2.6)
             if (defaultVersion.startsWith("2.5")) Artifact(determineLatestSnapshot("2.5"), true)
             else Artifact(defaultVersion)
           case Some("default") => Artifact(defaultVersion)
-          case Some(other) => Artifact(other, true)
-          case None => Artifact(defaultVersion)
+          case Some(other)     => Artifact(other, true)
+          case None            => Artifact(defaultVersion)
         }
     }
   }
@@ -53,14 +53,15 @@ object AkkaDependency {
 
   val akkaVersion: String = default match {
     case Artifact(version, _) => version
-    case Sources(uri, _) => uri
+    case Sources(uri, _)      => uri
   }
 
   implicit class RichProject(project: Project) {
+
     /** Adds either a source or a binary dependency, depending on whether the above settings are set */
     def addAkkaModuleDependency(module: String,
-                                config: String = "",
-                                akka: Akka = default): Project =
+        config: String = "",
+        akka: Akka = default): Project =
       akka match {
         case Sources(sources, _) =>
           // as a little hacky side effect also disable aggregation of samples
@@ -80,8 +81,9 @@ object AkkaDependency {
               else
                 "com.typesafe.akka" %% module % akkaVersion % config
             },
-            resolvers ++= (if (akkaSnapshot) Seq("Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots") else Nil)
-          )
+            resolvers ++= (if (akkaSnapshot)
+                             Seq("Sonatype Snapshots".at("https://oss.sonatype.org/content/repositories/snapshots"))
+                           else Nil))
       }
   }
 
@@ -94,7 +96,9 @@ object AkkaDependency {
     val snapshotVersionR = """href=".*/((\d+)\.(\d+)\.(\d+)\+(\d+)-[0-9a-f]+-SNAPSHOT)/"""".r
 
     // akka-cluster-sharding-typed_2.13 seems to be the last nightly published by `akka-publish-nightly` so if that's there then it's likely the rest also made it
-    val body = Await.result(http.run(url("https://oss.sonatype.org/content/repositories/snapshots/com/typesafe/akka/akka-cluster-sharding-typed_2.13/")), 10.seconds).bodyAsString
+    val body = Await.result(http.run(url(
+        "https://oss.sonatype.org/content/repositories/snapshots/com/typesafe/akka/akka-cluster-sharding-typed_2.13/")),
+      10.seconds).bodyAsString
     val allVersions =
       snapshotVersionR.findAllMatchIn(body)
         .map {
@@ -103,8 +107,7 @@ object AkkaDependency {
               ep.toInt,
               maj.toInt,
               min.toInt,
-              offset.toInt
-            ) -> full
+              offset.toInt) -> full
         }
         .filter(_._2.startsWith(prefix))
         .toVector.sortBy(_._1)

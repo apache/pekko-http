@@ -42,16 +42,20 @@ abstract class ConnectionPoolSettings private[akka] () { self: ConnectionPoolSet
   @ApiMayChange
   def withHostOverrides(hostOverrides: java.util.List[(String, ConnectionPoolSettings)]): ConnectionPoolSettings = {
     import scala.collection.JavaConverters._
-    self.copy(hostOverrides = hostOverrides.asScala.toList.map { case (h, s) => ConnectionPoolSettingsImpl.hostRegex(h) -> s.asScala })
+    self.copy(hostOverrides = hostOverrides.asScala.toList.map { case (h, s) =>
+      ConnectionPoolSettingsImpl.hostRegex(h) -> s.asScala
+    })
   }
 
   @ApiMayChange
-  def appendHostOverride(hostPattern: String, settings: ConnectionPoolSettings): ConnectionPoolSettings = self.copy(hostOverrides = hostOverrides :+ (ConnectionPoolSettingsImpl.hostRegex(hostPattern) -> settings.asScala))
+  def appendHostOverride(hostPattern: String, settings: ConnectionPoolSettings): ConnectionPoolSettings =
+    self.copy(hostOverrides = hostOverrides :+ (ConnectionPoolSettingsImpl.hostRegex(hostPattern) -> settings.asScala))
 
   def withMaxConnections(n: Int): ConnectionPoolSettings
   def withMinConnections(n: Int): ConnectionPoolSettings
   def withMaxRetries(n: Int): ConnectionPoolSettings
   def withMaxOpenRequests(newValue: Int): ConnectionPoolSettings
+
   /** Client-side pipelining is not currently supported, see https://github.com/akka/akka-http/issues/32 */
   def withPipeliningLimit(newValue: Int): ConnectionPoolSettings
   def withBaseConnectionBackoff(newValue: FiniteDuration): ConnectionPoolSettings
@@ -59,12 +63,14 @@ abstract class ConnectionPoolSettings private[akka] () { self: ConnectionPoolSet
   def withIdleTimeout(newValue: Duration): ConnectionPoolSettings
   def withKeepAliveTimeout(newValue: Duration): ConnectionPoolSettings
   def withMaxConnectionLifetime(newValue: Duration): ConnectionPoolSettings
-  def withConnectionSettings(newValue: ClientConnectionSettings): ConnectionPoolSettings = self.copyDeep(_.withConnectionSettings(newValue.asScala), connectionSettings = newValue.asScala)
+  def withConnectionSettings(newValue: ClientConnectionSettings): ConnectionPoolSettings =
+    self.copyDeep(_.withConnectionSettings(newValue.asScala), connectionSettings = newValue.asScala)
 
   @ApiMayChange
   def withResponseEntitySubscriptionTimeout(newValue: Duration): ConnectionPoolSettings
 
-  def withTransport(newValue: ClientTransport): ConnectionPoolSettings = withUpdatedConnectionSettings(_.withTransport(newValue.asScala))
+  def withTransport(newValue: ClientTransport): ConnectionPoolSettings =
+    withUpdatedConnectionSettings(_.withTransport(newValue.asScala))
 }
 
 object ConnectionPoolSettings extends SettingsCompanion[ConnectionPoolSettings] {

@@ -11,7 +11,7 @@ import akka.http.impl.engine.parsing.ParserOutput.{ NeedMoreData, RemainingBytes
 import akka.http.impl.engine.parsing.{ HttpHeaderParser, HttpResponseParser, ParserOutput }
 import akka.http.impl.util.ByteStringRendering
 import akka.http.impl.util.Rendering.CrLf
-import akka.http.scaladsl.model.headers.{ HttpCredentials, `Proxy-Authorization` }
+import akka.http.scaladsl.model.headers.{ `Proxy-Authorization`, HttpCredentials }
 import akka.http.scaladsl.model.{ HttpMethods, StatusCodes }
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.stream.scaladsl.BidiFlow
@@ -32,17 +32,18 @@ private[http] object HttpsProxyGraphStage {
   // State after Proxy responded  back
   case object Connected extends State
 
-  def apply(targetHostName: String, targetPort: Int, settings: ClientConnectionSettings, proxyAuth: Option[HttpCredentials]): BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] =
+  def apply(targetHostName: String, targetPort: Int, settings: ClientConnectionSettings,
+      proxyAuth: Option[HttpCredentials]): BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] =
     BidiFlow.fromGraph(new HttpsProxyGraphStage(targetHostName, targetPort, settings, proxyAuth))
 }
 
 /** INTERNAL API */
 @InternalApi
 private final class HttpsProxyGraphStage(
-  targetHostName: String, targetPort: Int,
-  settings:           ClientConnectionSettings,
-  proxyAuthorization: Option[HttpCredentials])
-  extends GraphStage[BidiShape[ByteString, ByteString, ByteString, ByteString]] {
+    targetHostName: String, targetPort: Int,
+    settings: ClientConnectionSettings,
+    proxyAuthorization: Option[HttpCredentials])
+    extends GraphStage[BidiShape[ByteString, ByteString, ByteString, ByteString]] {
 
   import HttpsProxyGraphStage._
 
@@ -52,7 +53,8 @@ private final class HttpsProxyGraphStage(
   val sslIn: Inlet[ByteString] = Inlet("OutgoingSSL.in")
   val sslOut: Outlet[ByteString] = Outlet("OutgoingSSL.out")
 
-  override def shape: BidiShape[ByteString, ByteString, ByteString, ByteString] = BidiShape.apply(sslIn, bytesOut, bytesIn, sslOut)
+  override def shape: BidiShape[ByteString, ByteString, ByteString, ByteString] =
+    BidiShape.apply(sslIn, bytesOut, bytesIn, sslOut)
 
   private val connectMsg = {
     val r = new ByteStringRendering(256)
@@ -66,122 +68,132 @@ private final class HttpsProxyGraphStage(
     r.get
   }
 
-  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with StageLogging {
-    private var state: State = Starting
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+    new GraphStageLogic(shape) with StageLogging {
+      private var state: State = Starting
 
-    lazy val parser = {
-      val p = new HttpResponseParser(settings.parserSettings, HttpHeaderParser(settings.parserSettings, log)) {
-        override def handleInformationalResponses = false
+      lazy val parser = {
+        val p = new HttpResponseParser(settings.parserSettings, HttpHeaderParser(settings.parserSettings, log)) {
+          override def handleInformationalResponses = false
 
-        override protected def parseMessage(input: ByteString, offset: Int): StateResult = {
-          // hacky, we want in the first branch *all fragments* of the first response
-          if (offset == 0) {
-            super.parseMessage(input, offset)
-          } else {
-            if (input.size > offset) {
-              emit(RemainingBytes(input.drop(offset)))
+          override protected def parseMessage(input: ByteString, offset: Int): StateResult = {
+            // hacky, we want in the first branch *all fragments* of the first response
+            if (offset == 0) {
+              super.parseMessage(input, offset)
             } else {
-              emit(NeedMoreData)
+              if (input.size > offset) {
+                emit(RemainingBytes(input.drop(offset)))
+              } else {
+                emit(NeedMoreData)
+              }
+              terminate()
             }
-            terminate()
           }
         }
-      }
-      p.setContextForNextResponse(HttpResponseParser.ResponseContext(HttpMethods.CONNECT, None))
-      p
-    }
-
-    setHandler(sslIn, new InHandler {
-      override def onPush() = {
-        state match {
-          case Starting =>
-            throw new IllegalStateException("inlet OutgoingSSL.in unexpectedly pushed in Starting state")
-          case Connecting =>
-            throw new IllegalStateException("inlet OutgoingSSL.in unexpectedly pushed in Connecting state")
-          case Connected =>
-            push(bytesOut, grab(sslIn))
-        }
+        p.setContextForNextResponse(HttpResponseParser.ResponseContext(HttpMethods.CONNECT, None))
+        p
       }
 
-      override def onUpstreamFinish(): Unit = {
-        complete(bytesOut)
-      }
-
-    })
-
-    setHandler(bytesIn, new InHandler {
-      override def onPush() = {
-        state match {
-          case Starting =>
-          // that means that proxy had sent us something even before CONNECT to proxy was sent, therefore we just ignore it
-          case Connecting =>
-            val proxyResponse = grab(bytesIn)
-            parser.parseBytes(proxyResponse) match {
-              case NeedMoreData =>
-                pull(bytesIn)
-              case ResponseStart(_: StatusCodes.Success, _, _, _, _, _) =>
-                var pushed = false
-                val parseResult = parser.onPull()
-                require(parseResult == ParserOutput.MessageEnd, s"parseResult should be MessageEnd but was $parseResult")
-                parser.onPull() match {
-                  // NeedMoreData is what we emit in overridden `parseMessage` in case input.size == offset
-                  case NeedMoreData =>
-                  case RemainingBytes(bytes) =>
-                    push(sslOut, bytes) // parser already read more than expected, forward that data directly
-                    pushed = true
-                  case other =>
-                    throw new IllegalStateException(s"unexpected element of type ${other.getClass}")
-                }
-                parser.onUpstreamFinish()
-
-                log.debug(s"HTTP(S) proxy connection to {}:{} established. Now forwarding data.", targetHostName, targetPort)
-
-                state = Connected
-                if (isAvailable(bytesOut)) pull(sslIn)
-                if (isAvailable(sslOut)) pull(bytesIn)
-              case ResponseStart(statusCode, _, _, _, _, _) =>
-                failStage(new ProxyConnectionFailedException(s"The HTTP(S) proxy rejected to open a connection to $targetHostName:$targetPort with status code: $statusCode"))
-              case other =>
-                throw new IllegalStateException(s"unexpected element of type $other")
+      setHandler(sslIn,
+        new InHandler {
+          override def onPush() = {
+            state match {
+              case Starting =>
+                throw new IllegalStateException("inlet OutgoingSSL.in unexpectedly pushed in Starting state")
+              case Connecting =>
+                throw new IllegalStateException("inlet OutgoingSSL.in unexpectedly pushed in Connecting state")
+              case Connected =>
+                push(bytesOut, grab(sslIn))
             }
+          }
 
-          case Connected =>
-            push(sslOut, grab(bytesIn))
-        }
-      }
+          override def onUpstreamFinish(): Unit = {
+            complete(bytesOut)
+          }
 
-      override def onUpstreamFinish(): Unit = complete(sslOut)
+        })
 
-    })
+      setHandler(bytesIn,
+        new InHandler {
+          override def onPush() = {
+            state match {
+              case Starting =>
+              // that means that proxy had sent us something even before CONNECT to proxy was sent, therefore we just ignore it
+              case Connecting =>
+                val proxyResponse = grab(bytesIn)
+                parser.parseBytes(proxyResponse) match {
+                  case NeedMoreData =>
+                    pull(bytesIn)
+                  case ResponseStart(_: StatusCodes.Success, _, _, _, _, _) =>
+                    var pushed = false
+                    val parseResult = parser.onPull()
+                    require(parseResult == ParserOutput.MessageEnd,
+                      s"parseResult should be MessageEnd but was $parseResult")
+                    parser.onPull() match {
+                      // NeedMoreData is what we emit in overridden `parseMessage` in case input.size == offset
+                      case NeedMoreData =>
+                      case RemainingBytes(bytes) =>
+                        push(sslOut, bytes) // parser already read more than expected, forward that data directly
+                        pushed = true
+                      case other =>
+                        throw new IllegalStateException(s"unexpected element of type ${other.getClass}")
+                    }
+                    parser.onUpstreamFinish()
 
-    setHandler(bytesOut, new OutHandler {
-      override def onPull() = {
-        state match {
-          case Starting =>
-            log.debug(s"TCP connection to HTTP(S) proxy connection established. Sending CONNECT {}:{} to HTTP(S) proxy", targetHostName, targetPort)
-            push(bytesOut, connectMsg)
-            state = Connecting
-          case Connecting =>
-          // don't need to do anything
-          case Connected =>
-            pull(sslIn)
-        }
-      }
+                    log.debug(s"HTTP(S) proxy connection to {}:{} established. Now forwarding data.", targetHostName,
+                      targetPort)
 
-      override def onDownstreamFinish(): Unit = cancel(sslIn)
+                    state = Connected
+                    if (isAvailable(bytesOut)) pull(sslIn)
+                    if (isAvailable(sslOut)) pull(bytesIn)
+                  case ResponseStart(statusCode, _, _, _, _, _) =>
+                    failStage(new ProxyConnectionFailedException(
+                      s"The HTTP(S) proxy rejected to open a connection to $targetHostName:$targetPort with status code: $statusCode"))
+                  case other =>
+                    throw new IllegalStateException(s"unexpected element of type $other")
+                }
 
-    })
+              case Connected =>
+                push(sslOut, grab(bytesIn))
+            }
+          }
 
-    setHandler(sslOut, new OutHandler {
-      override def onPull() = {
-        pull(bytesIn)
-      }
+          override def onUpstreamFinish(): Unit = complete(sslOut)
 
-      override def onDownstreamFinish(): Unit = cancel(bytesIn)
+        })
 
-    })
+      setHandler(bytesOut,
+        new OutHandler {
+          override def onPull() = {
+            state match {
+              case Starting =>
+                log.debug(
+                  s"TCP connection to HTTP(S) proxy connection established. Sending CONNECT {}:{} to HTTP(S) proxy",
+                  targetHostName, targetPort)
+                push(bytesOut, connectMsg)
+                state = Connecting
+              case Connecting =>
+              // don't need to do anything
+              case Connected =>
+                pull(sslIn)
+            }
+          }
 
-  }
+          override def onDownstreamFinish(): Unit = cancel(sslIn)
+
+        })
+
+      setHandler(sslOut,
+        new OutHandler {
+          override def onPull() = {
+            pull(bytesIn)
+          }
+
+          override def onDownstreamFinish(): Unit = cancel(bytesIn)
+
+        })
+
+    }
 
 }
 

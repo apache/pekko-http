@@ -7,7 +7,7 @@ package akka.http.impl.model.parser
 import java.nio.charset.Charset
 
 import akka.parboiled2._
-import akka.http.impl.util.{ StringRendering, enhanceString_ }
+import akka.http.impl.util.{ enhanceString_, StringRendering }
 import akka.http.scaladsl.model.{ Uri, UriRendering }
 import akka.http.scaladsl.model.headers.HttpOrigin
 import Parser.DeliveryScheme.Either
@@ -21,24 +21,25 @@ import akka.annotation.InternalApi
  */
 @InternalApi
 private[http] final class UriParser(
-  private[this] var _input: ParserInput,
-  val uriParsingCharset:    Charset,
-  val uriParsingMode:       Uri.ParsingMode,
-  val maxValueStackSize:    Int) extends Parser(maxValueStackSize = maxValueStackSize)
-  with IpAddressParsing with StringBuilding {
+    private[this] var _input: ParserInput,
+    val uriParsingCharset: Charset,
+    val uriParsingMode: Uri.ParsingMode,
+    val maxValueStackSize: Int) extends Parser(maxValueStackSize = maxValueStackSize)
+    with IpAddressParsing with StringBuilding {
   import CharacterClasses._
 
   override def input: ParserInput = _input
 
   def this(
-    input:             ParserInput,
-    uriParsingCharset: Charset         = UTF8,
-    uriParsingMode:    Uri.ParsingMode = Uri.ParsingMode.Relaxed) =
+      input: ParserInput,
+      uriParsingCharset: Charset = UTF8,
+      uriParsingMode: Uri.ParsingMode = Uri.ParsingMode.Relaxed) =
     this(input, uriParsingCharset, uriParsingMode, 1024)
 
   def parseAbsoluteUri(): Uri =
     rule(`absolute-URI` ~ EOI).run() match {
-      case Right(_)    => createUnsafe(_scheme, Authority(_host, _port, _userinfo), collapseDotSegments(_path), _rawQueryString, _fragment)
+      case Right(_) => createUnsafe(_scheme, Authority(_host, _port, _userinfo), collapseDotSegments(_path),
+          _rawQueryString, _fragment)
       case Left(error) => fail(error, "absolute URI")
     }
 
@@ -87,7 +88,8 @@ private[http] final class UriParser(
       rawQueryString
     case Uri.ParsingMode.Relaxed =>
       // Percent-encode invalid characters
-      UriRendering.encode(new StringRendering, rawQueryString, uriParsingCharset, `query-fragment-char` ++ '%', false).get
+      UriRendering.encode(new StringRendering, rawQueryString, uriParsingCharset, `query-fragment-char` ++ '%',
+        false).get
   }
 
   def parseQuery(): Query =
@@ -134,6 +136,7 @@ private[http] final class UriParser(
   private[this] var _host: Host = Host.Empty
   private[this] var _port: Int = 0
   private[this] var _path: Path = Path.Empty
+
   /**
    *  Percent-encoded. When in in 'relaxed' mode, characters not permitted by https://tools.ietf.org/html/rfc3986#section-3.4
    *  are already automatically percent-encoded here
@@ -159,7 +162,8 @@ private[http] final class UriParser(
   private[this] def setHost(host: Host): Unit = _host = host
   private[this] def setPort(port: Int): Unit = _port = port
   private[this] def setPath(path: Path): Unit = _path = path
-  private[this] def setRawQueryString(rawQueryString: String): Unit = _rawQueryString = Some(parseSafeRawQueryString(rawQueryString))
+  private[this] def setRawQueryString(rawQueryString: String): Unit =
+    _rawQueryString = Some(parseSafeRawQueryString(rawQueryString))
   private[this] def setFragment(fragment: String): Unit = _fragment = Some(fragment)
 
   // http://tools.ietf.org/html/rfc3986#appendix-A
@@ -170,9 +174,9 @@ private[http] final class UriParser(
 
   def `hier-part` = rule(
     '/' ~ '/' ~ authority ~ `path-abempty`
-      | `path-absolute`
-      | `path-rootless`
-      | `path-empty`)
+    | `path-absolute`
+    | `path-rootless`
+    | `path-empty`)
 
   def `URI-reference` = rule { URI | `relative-ref` }
 
@@ -184,20 +188,23 @@ private[http] final class UriParser(
 
   def `relative-part` = rule(
     '/' ~ '/' ~ authority ~ `path-abempty`
-      | `path-absolute`
-      | `path-noscheme`
-      | `path-empty`)
+    | `path-absolute`
+    | `path-noscheme`
+    | `path-empty`)
 
   def scheme = rule(
     'h' ~ 't' ~ 't' ~ 'p' ~ (&(':') ~ run(setScheme("http")) | 's' ~ &(':') ~ run(setScheme("https")))
-      | clearSB() ~ ALPHA ~ appendLowered() ~ zeroOrMore(`scheme-char` ~ appendLowered()) ~ &(':') ~ run(setScheme(sb.toString)))
+    | clearSB() ~ ALPHA ~ appendLowered() ~ zeroOrMore(`scheme-char` ~ appendLowered()) ~ &(':') ~ run(
+      setScheme(sb.toString)))
 
-  def `scheme-pushed` = rule { oneOrMore(`scheme-char` ~ appendLowered()) ~ run(setScheme(sb.toString)) ~ push(_scheme) }
+  def `scheme-pushed` =
+    rule { oneOrMore(`scheme-char` ~ appendLowered()) ~ run(setScheme(sb.toString)) ~ push(_scheme) }
 
   def authority = rule { optional(userinfo) ~ hostAndPort }
 
   def userinfo = rule {
-    clearSBForDecoding() ~ zeroOrMore(`userinfo-char` ~ appendSB() | `pct-encoded`) ~ '@' ~ run(setUserInfo(getDecodedString()))
+    clearSBForDecoding() ~ zeroOrMore(`userinfo-char` ~ appendSB() | `pct-encoded`) ~ '@' ~ run(
+      setUserInfo(getDecodedString()))
   }
 
   def hostAndPort = rule { host ~ optional(':' ~ port) }
@@ -223,9 +230,10 @@ private[http] final class UriParser(
   def ipv6Host = rule { capture(`ip-v6-address`) ~> ((b, a) => setHost(IPv6Host(b, a))) }
 
   def `reg-name` = rule(
-    clearSBForDecoding() ~ oneOrMore(`lower-reg-name-char` ~ appendSB() | UPPER_ALPHA ~ appendLowered() | `pct-encoded`) ~
-      run(setHost(NamedHost(getDecodedStringAndLowerIfEncoded(UTF8))))
-      | run(setHost(Host.Empty)))
+    clearSBForDecoding() ~ oneOrMore(
+      `lower-reg-name-char` ~ appendSB() | UPPER_ALPHA ~ appendLowered() | `pct-encoded`) ~
+    run(setHost(NamedHost(getDecodedStringAndLowerIfEncoded(UTF8))))
+    | run(setHost(Host.Empty)))
 
   def `path-abempty` = rule { clearSB() ~ slashSegments ~ savePath() }
   def `path-absolute` = rule { clearSB() ~ '/' ~ appendSB('/') ~ optional(`segment-nz` ~ slashSegments) ~ savePath() }
@@ -242,7 +250,8 @@ private[http] final class UriParser(
   def pchar = rule { `path-segment-char` ~ appendSB() | `pct-encoded` }
 
   def rawQueryString = rule {
-    clearSB() ~ oneOrMore(`query-char` ~ appendSB() | `pct-encoded`) ~ run(setRawQueryString(sb.toString)) | run(setRawQueryString(""))
+    clearSB() ~ oneOrMore(`query-char` ~ appendSB() | `pct-encoded`) ~ run(setRawQueryString(sb.toString)) | run(
+      setRawQueryString(""))
   }
 
   // https://www.w3.org/TR/html401/interact/forms.html#h-17.13.4.1
@@ -260,7 +269,7 @@ private[http] final class UriParser(
     def keyValuePairsWithLimitedStackUse: Rule1[Query] = rule {
       keyValuePair ~> { (key, value) => Query.Cons(key, value, Query.Empty) } ~ {
         zeroOrMore('&' ~ keyValuePair ~> { (prefix: Query, key, value) => Query.Cons(key, value, prefix) }) ~>
-          (_.reverse)
+        (_.reverse)
       }
     }
 
@@ -283,8 +292,9 @@ private[http] final class UriParser(
   }
 
   def fragment = rule(
-    clearSBForDecoding() ~ oneOrMore(`fragment-char` ~ appendSB() | `pct-encoded`) ~ run(setFragment(getDecodedString()))
-      | run(setFragment("")))
+    clearSBForDecoding() ~ oneOrMore(`fragment-char` ~ appendSB() | `pct-encoded`) ~ run(
+      setFragment(getDecodedString()))
+    | run(setFragment("")))
 
   def `pct-encoded` = rule {
     '%' ~ HEXDIG ~ HEXDIG ~ run {
@@ -303,8 +313,8 @@ private[http] final class UriParser(
   // http://tools.ietf.org/html/rfc7230#section-5.3
   def `request-target` = rule(
     `absolute-path` ~ optional('?' ~ rawQueryString) // origin-form
-      | `absolute-URI` // absolute-form
-      | authority) // authority-form or asterisk-form
+    | `absolute-URI` // absolute-form
+    | authority) // authority-form or asterisk-form
 
   def parseHttpRequestTarget(): Uri =
     rule(`request-target` ~ EOI).run() match {

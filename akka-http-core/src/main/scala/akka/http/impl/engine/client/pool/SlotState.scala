@@ -44,10 +44,13 @@ private[pool] sealed abstract class SlotState extends Product {
 
   def idle(ctx: SlotContext): SlotState = SlotState.Idle(ctx.settings.keepAliveTimeout)
   def onPreConnect(ctx: SlotContext): SlotState = illegalState(ctx, "onPreConnect")
-  def onConnectionAttemptSucceeded(ctx: SlotContext, outgoingConnection: Http.OutgoingConnection): SlotState = illegalState(ctx, "onConnectionAttemptSucceeded")
-  def onConnectionAttemptFailed(ctx: SlotContext, cause: Throwable): SlotState = illegalState(ctx, "onConnectionAttemptFailed")
+  def onConnectionAttemptSucceeded(ctx: SlotContext, outgoingConnection: Http.OutgoingConnection): SlotState =
+    illegalState(ctx, "onConnectionAttemptSucceeded")
+  def onConnectionAttemptFailed(ctx: SlotContext, cause: Throwable): SlotState =
+    illegalState(ctx, "onConnectionAttemptFailed")
 
-  def onNewConnectionEmbargo(ctx: SlotContext, embargoDuration: FiniteDuration): SlotState = illegalState(ctx, "onNewConnectionEmbargo")
+  def onNewConnectionEmbargo(ctx: SlotContext, embargoDuration: FiniteDuration): SlotState =
+    illegalState(ctx, "onNewConnectionEmbargo")
 
   def onNewRequest(ctx: SlotContext, requestContext: RequestContext): SlotState = illegalState(ctx, "onNewRequest")
 
@@ -66,7 +69,8 @@ private[pool] sealed abstract class SlotState extends Product {
 
   /** Will be called either immediately if the response entity is strict or otherwise later */
   def onResponseEntityCompleted(ctx: SlotContext): SlotState = illegalState(ctx, "onResponseEntityCompleted")
-  def onResponseEntityFailed(ctx: SlotContext, cause: Throwable): SlotState = illegalState(ctx, "onResponseEntityFailed")
+  def onResponseEntityFailed(ctx: SlotContext, cause: Throwable): SlotState =
+    illegalState(ctx, "onResponseEntityFailed")
 
   def onConnectionCompleted(ctx: SlotContext): SlotState = illegalState(ctx, "onConnectionCompleted")
   def onConnectionFailed(ctx: SlotContext, cause: Throwable): SlotState = illegalState(ctx, "onConnectionFailed")
@@ -122,20 +126,25 @@ private[pool] object SlotState {
       super.onShutdown(ctx)
     }
 
-    override def onConnectionAttemptFailed(ctx: SlotContext, cause: Throwable): SlotState = failOngoingRequest(ctx, "connection attempt failed", cause)
+    override def onConnectionAttemptFailed(ctx: SlotContext, cause: Throwable): SlotState =
+      failOngoingRequest(ctx, "connection attempt failed", cause)
 
-    override def onRequestEntityFailed(ctx: SlotContext, cause: Throwable): SlotState = failOngoingRequest(ctx, "request entity stream failed", cause)
+    override def onRequestEntityFailed(ctx: SlotContext, cause: Throwable): SlotState =
+      failOngoingRequest(ctx, "request entity stream failed", cause)
     override def onConnectionCompleted(ctx: SlotContext): SlotState =
       // There's no good reason why the connection stream (i.e. the user-facing client Flow[HttpRequest, HttpResponse])
       // would complete during processing of a request.
       // One reason might be that failures on the TCP layer don't necessarily propagate through the stack as failures
       // because of the notorious cancel/failure propagation which can convert failures into completion.
-      failOngoingRequest(ctx, "connection completed", new IllegalStateException("Connection was shutdown.") with NoStackTrace)
+      failOngoingRequest(ctx, "connection completed",
+        new IllegalStateException("Connection was shutdown.") with NoStackTrace)
 
-    override def onConnectionFailed(ctx: SlotContext, cause: Throwable): SlotState = failOngoingRequest(ctx, "connection failure", cause)
+    override def onConnectionFailed(ctx: SlotContext, cause: Throwable): SlotState =
+      failOngoingRequest(ctx, "connection failure", cause)
 
     private def failOngoingRequest(ctx: SlotContext, signal: String, cause: Throwable): SlotState = {
-      ctx.debug(s"Ongoing request [${ongoingRequest.request.debugString}] is failed because of [$signal]: [${cause.getMessage}]")
+      ctx.debug(
+        s"Ongoing request [${ongoingRequest.request.debugString}] is failed because of [$signal]: [${cause.getMessage}]")
       if (ongoingRequest.canBeRetried) { // push directly because it will be buffered internally
         ctx.dispatchResponseResult(ongoingRequest, Failure(cause))
         if (waitingForEndOfRequestEntity) WaitingForEndOfRequestEntity
@@ -204,7 +213,8 @@ private[pool] object SlotState {
   private[pool] final case class Connecting(ongoingRequest: RequestContext) extends ConnectedState with BusyState {
     val waitingForEndOfRequestEntity = false
 
-    override def onConnectionAttemptSucceeded(ctx: SlotContext, outgoingConnection: Http.OutgoingConnection): SlotState = {
+    override def onConnectionAttemptSucceeded(
+        ctx: SlotContext, outgoingConnection: Http.OutgoingConnection): SlotState = {
       ctx.debug("Slot connection was established")
       PushingRequestToConnection(ongoingRequest)
     }
@@ -212,7 +222,8 @@ private[pool] object SlotState {
   }
 
   private[pool] case object PreConnecting extends ConnectedState with IdleState {
-    override def onConnectionAttemptSucceeded(ctx: SlotContext, outgoingConnection: Http.OutgoingConnection): SlotState = {
+    override def onConnectionAttemptSucceeded(
+        ctx: SlotContext, outgoingConnection: Http.OutgoingConnection): SlotState = {
       ctx.debug("Slot connection was (pre-)established")
       idle(ctx)
     }
@@ -230,8 +241,7 @@ private[pool] object SlotState {
       onConnectionFailure(
         ctx,
         "connection completed",
-        new IllegalStateException("Unexpected connection closure") with NoStackTrace
-      )
+        new IllegalStateException("Unexpected connection closure") with NoStackTrace)
 
     private def onConnectionFailure(ctx: SlotContext, signal: String, cause: Throwable): SlotState = {
       ctx.debug(s"Connection was closed by [$signal] while preconnecting because of [${cause.getMessage}].")
@@ -242,10 +252,12 @@ private[pool] object SlotState {
     override def waitingForEndOfRequestEntity: Boolean = ???
 
     override def onRequestDispatched(ctx: SlotContext): SlotState =
-      if (ongoingRequest.request.entity.isStrict) WaitingForResponse(ongoingRequest, waitingForEndOfRequestEntity = false)
+      if (ongoingRequest.request.entity.isStrict)
+        WaitingForResponse(ongoingRequest, waitingForEndOfRequestEntity = false)
       else WaitingForResponse(ongoingRequest, waitingForEndOfRequestEntity = true)
   }
-  final case class WaitingForResponse(ongoingRequest: RequestContext, waitingForEndOfRequestEntity: Boolean) extends ConnectedState with BusyState {
+  final case class WaitingForResponse(
+      ongoingRequest: RequestContext, waitingForEndOfRequestEntity: Boolean) extends ConnectedState with BusyState {
 
     override def onRequestEntityCompleted(ctx: SlotContext): SlotState = {
       require(waitingForEndOfRequestEntity)
@@ -260,9 +272,9 @@ private[pool] object SlotState {
     // connection failures are handled by BusyState implementations
   }
   final case class WaitingForResponseDispatch(
-    ongoingRequest:               RequestContext,
-    result:                       Try[HttpResponse],
-    waitingForEndOfRequestEntity: Boolean) extends ConnectedState with BusyWithResultAlreadyDetermined {
+      ongoingRequest: RequestContext,
+      result: Try[HttpResponse],
+      waitingForEndOfRequestEntity: Boolean) extends ConnectedState with BusyWithResultAlreadyDetermined {
 
     override def onRequestEntityCompleted(ctx: SlotContext): SlotState = {
       require(waitingForEndOfRequestEntity)
@@ -274,7 +286,8 @@ private[pool] object SlotState {
       ctx.dispatchResponseResult(ongoingRequest, result)
 
       result match {
-        case Success(res)   => WaitingForResponseEntitySubscription(ongoingRequest, res, ctx.settings.responseEntitySubscriptionTimeout, waitingForEndOfRequestEntity)
+        case Success(res) => WaitingForResponseEntitySubscription(ongoingRequest, res,
+            ctx.settings.responseEntitySubscriptionTimeout, waitingForEndOfRequestEntity)
         case Failure(cause) => Failed(cause)
       }
     }
@@ -282,7 +295,8 @@ private[pool] object SlotState {
 
   private[pool] /* to avoid warnings */ trait BusyWithResultAlreadyDetermined extends ConnectedState with BusyState {
     override def onResponseEntityFailed(ctx: SlotContext, cause: Throwable): SlotState = {
-      ctx.debug(s"Response entity for request [${ongoingRequest.request.debugString}] failed with [${cause.getMessage}]")
+      ctx.debug(
+        s"Response entity for request [${ongoingRequest.request.debugString}] failed with [${cause.getMessage}]")
       // response must have already been dispatched, so don't try to dispatch a response
       Failed(cause)
     }
@@ -294,12 +308,14 @@ private[pool] object SlotState {
   }
 
   final case class WaitingForResponseEntitySubscription(
-    ongoingRequest:  RequestContext,
-    ongoingResponse: HttpResponse, override val stateTimeout: Duration, waitingForEndOfRequestEntity: Boolean) extends ConnectedState with BusyWithResultAlreadyDetermined {
+      ongoingRequest: RequestContext,
+      ongoingResponse: HttpResponse, override val stateTimeout: Duration, waitingForEndOfRequestEntity: Boolean)
+      extends ConnectedState with BusyWithResultAlreadyDetermined {
 
     override def onRequestEntityCompleted(ctx: SlotContext): SlotState = {
       require(waitingForEndOfRequestEntity)
-      WaitingForResponseEntitySubscription(ongoingRequest, ongoingResponse, stateTimeout, waitingForEndOfRequestEntity = false)
+      WaitingForResponseEntitySubscription(ongoingRequest, ongoingResponse, stateTimeout,
+        waitingForEndOfRequestEntity = false)
     }
 
     override def onResponseEntitySubscribed(ctx: SlotContext): SlotState =
@@ -308,16 +324,16 @@ private[pool] object SlotState {
     override def onTimeout(ctx: SlotContext): SlotState = {
       val msg =
         s"Response entity was not subscribed after $stateTimeout. Make sure to read the response `entity` body or call `entity.discardBytes()` on it -- in case you deal with `HttpResponse`, use the shortcut `response.discardEntityBytes()`. " +
-          s"${ongoingRequest.request.debugString} -> ${ongoingResponse.debugString}"
+        s"${ongoingRequest.request.debugString} -> ${ongoingResponse.debugString}"
       ctx.warning(msg) // FIXME: should still warn here?
       Failed(new TimeoutException(msg))
     }
 
   }
   final case class WaitingForEndOfResponseEntity(
-    ongoingRequest:               RequestContext,
-    ongoingResponse:              HttpResponse,
-    waitingForEndOfRequestEntity: Boolean) extends ConnectedState with BusyWithResultAlreadyDetermined {
+      ongoingRequest: RequestContext,
+      ongoingResponse: HttpResponse,
+      waitingForEndOfRequestEntity: Boolean) extends ConnectedState with BusyWithResultAlreadyDetermined {
 
     override def onResponseEntityCompleted(ctx: SlotContext): SlotState =
       if (waitingForEndOfRequestEntity)

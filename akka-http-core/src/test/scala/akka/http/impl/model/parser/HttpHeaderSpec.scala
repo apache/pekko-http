@@ -31,12 +31,12 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
 
     "Accept" in {
       "Accept: audio/midi;q=0.2, audio/basic" =!=
-        Accept(`audio/midi` withQValue 0.2, `audio/basic`)
+        Accept(`audio/midi`.withQValue(0.2), `audio/basic`)
       "Accept: text/plain;q=0.5, text/html,\r\n text/css;q=0.8" =!=
-        Accept(`text/plain` withQValue 0.5, `text/html`, `text/css` withQValue 0.8).renderedTo(
+        Accept(`text/plain`.withQValue(0.5), `text/html`, `text/css`.withQValue(0.8)).renderedTo(
           "text/plain;q=0.5, text/html, text/css;q=0.8")
       "Accept: text/html, image/gif, image/jpeg, *;q=.2, */*;q=.2" =!=
-        Accept(`text/html`, `image/gif`, `image/jpeg`, `*/*` withQValue 0.2, `*/*` withQValue 0.2).renderedTo(
+        Accept(`text/html`, `image/gif`, `image/jpeg`, `*/*`.withQValue(0.2), `*/*`.withQValue(0.2)).renderedTo(
           "text/html, image/gif, image/jpeg, */*;q=0.2, */*;q=0.2")
       "Accept: application/vnd.spray" =!=
         Accept(`application/vnd.spray`)
@@ -53,11 +53,12 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Accept-Charset: *" =!= `Accept-Charset`(HttpCharsetRange.`*`)
       "Accept-Charset: UTF-8" =!= `Accept-Charset`(`UTF-8`)
       "Accept-Charset: utf16;q=1" =!= `Accept-Charset`(`UTF-16`).renderedTo("UTF-16")
-      "Accept-Charset: utf-8; q=0.5, *" =!= `Accept-Charset`(`UTF-8` withQValue 0.5, HttpCharsetRange.`*`).renderedTo("UTF-8;q=0.5, *")
+      "Accept-Charset: utf-8; q=0.5, *" =!= `Accept-Charset`(`UTF-8`.withQValue(0.5), HttpCharsetRange.`*`).renderedTo(
+        "UTF-8;q=0.5, *")
       "Accept-Charset: latin1, UTf-16; q=0, *;q=0.8" =!=
-        `Accept-Charset`(`ISO-8859-1`, `UTF-16` withQValue 0, HttpCharsetRange.`*` withQValue 0.8).renderedTo(
+        `Accept-Charset`(`ISO-8859-1`, `UTF-16`.withQValue(0), HttpCharsetRange.`*`.withQValue(0.8)).renderedTo(
           "ISO-8859-1, UTF-16;q=0.0, *;q=0.8")
-      `Accept-Charset`(`UTF-16` withQValue 0.234567).unsafeToString shouldEqual "Accept-Charset: UTF-16;q=0.235"
+      `Accept-Charset`(`UTF-16`.withQValue(0.234567)).unsafeToString shouldEqual "Accept-Charset: UTF-16;q=0.235"
       "Accept-Charset: UTF-16, unsupported42" =!= `Accept-Charset`(`UTF-16`, HttpCharset.custom("unsupported42"))
     }
 
@@ -91,7 +92,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     }
 
     "Access-Control-Request-Headers" in {
-      "Access-Control-Request-Headers: Accept, X-My-Header" =!= `Access-Control-Request-Headers`("Accept", "X-My-Header")
+      "Access-Control-Request-Headers: Accept, X-My-Header" =!= `Access-Control-Request-Headers`("Accept",
+        "X-My-Header")
     }
 
     "Access-Control-Request-Method" in {
@@ -109,16 +111,16 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Accept-Encoding: compress, gzip, fancy" =!=
         `Accept-Encoding`(compress, gzip, HttpEncoding.custom("fancy"))
       "Accept-Encoding: gzip, identity;q=0.5, *;q=0.0" =!=
-        `Accept-Encoding`(gzip, identity withQValue 0.5, HttpEncodingRange.`*` withQValue 0)
-        .renderedTo("gzip, identity;q=0.5, *;q=0.0")
+        `Accept-Encoding`(gzip, identity.withQValue(0.5), HttpEncodingRange.`*`.withQValue(0))
+          .renderedTo("gzip, identity;q=0.5, *;q=0.0")
       "Accept-Encoding: " =!= `Accept-Encoding`()
     }
 
     "Accept-Language" in {
       "Accept-Language: da, en-gb;q=0.8, en;q=0.7" =!=
-        `Accept-Language`(Language("da"), Language("en", "gb") withQValue 0.8f, Language("en") withQValue 0.7f)
+        `Accept-Language`(Language("da"), Language("en", "gb").withQValue(0.8f), Language("en").withQValue(0.7f))
       "Accept-Language: de-CH-1901, *;q=0.0" =!=
-        `Accept-Language`(Language("de", "CH", "1901"), LanguageRange.`*` withQValue 0f)
+        `Accept-Language`(Language("de", "CH", "1901"), LanguageRange.`*`.withQValue(0f))
       "Accept-Language: es-419, es" =!= `Accept-Language`(Language("es", "419"), Language("es"))
     }
 
@@ -257,24 +259,26 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         `Content-Type`(ContentType.WithMissingCharset(MediaTypes.`text/plain`)).renderedTo("text/plain")
       "Content-Type: text/xml2; version=3; charset=windows-1252" =!=
         `Content-Type`(MediaType.customWithOpenCharset("text", "xml2", params = Map("version" -> "3"))
-          withCharset HttpCharsets.getForKey("windows-1252").get)
+          .withCharset(HttpCharsets.getForKey("windows-1252").get))
       "Content-Type: text/plain; charset=fancy-pants" =!=
-        `Content-Type`(`text/plain` withCharset HttpCharset.custom("fancy-pants"))
+        `Content-Type`(`text/plain`.withCharset(HttpCharset.custom("fancy-pants")))
       "Content-Type: multipart/mixed; boundary=ABC123" =!=
-        `Content-Type`(`multipart/mixed` withBoundary "ABC123")
-        .renderedTo("multipart/mixed; boundary=ABC123")
+        `Content-Type`(`multipart/mixed`.withBoundary("ABC123"))
+          .renderedTo("multipart/mixed; boundary=ABC123")
       "Content-Type: multipart/mixed; boundary=\"ABC/123\"" =!=
-        `Content-Type`(`multipart/mixed` withBoundary "ABC/123")
-        .renderedTo("""multipart/mixed; boundary="ABC/123"""")
+        `Content-Type`(`multipart/mixed`.withBoundary("ABC/123"))
+          .renderedTo("""multipart/mixed; boundary="ABC/123"""")
       "Content-Type: application/*" =!=
-        `Content-Type`(MediaType.customBinary("application", "*", MediaType.Compressible, allowArbitrarySubtypes = true))
+        `Content-Type`(MediaType.customBinary("application", "*", MediaType.Compressible,
+          allowArbitrarySubtypes = true))
     }
 
     "Content-Range" in {
       "Content-Range: bytes 42-1233/1234" =!= `Content-Range`(ContentRange(42, 1233, 1234))
       "Content-Range: bytes 42-1233/*" =!= `Content-Range`(ContentRange(42, 1233))
       "Content-Range: bytes */1234" =!= `Content-Range`(ContentRange.Unsatisfiable(1234))
-      "Content-Range: bytes */12345678901234567890123456789" =!= `Content-Range`(ContentRange.Unsatisfiable(999999999999999999L))
+      "Content-Range: bytes */12345678901234567890123456789" =!= `Content-Range`(
+        ContentRange.Unsatisfiable(999999999999999999L))
         .renderedTo("bytes */999999999999999999")
     }
 
@@ -298,16 +302,26 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     }
 
     "Cookie (Raw)" in {
-      "Cookie: SID=31d4d96e407aad42" =!= Cookie("SID" -> "31d4d96e407aad42").withCookieParsingMode(CookieParsingMode.Raw)
-      "Cookie: SID=31d4d96e407aad42; lang=en>US" =!= Cookie("SID" -> "31d4d96e407aad42", "lang" -> "en>US").withCookieParsingMode(CookieParsingMode.Raw)
+      "Cookie: SID=31d4d96e407aad42" =!= Cookie("SID" -> "31d4d96e407aad42").withCookieParsingMode(
+        CookieParsingMode.Raw)
+      "Cookie: SID=31d4d96e407aad42; lang=en>US" =!= Cookie("SID" -> "31d4d96e407aad42",
+        "lang" -> "en>US").withCookieParsingMode(CookieParsingMode.Raw)
       "Cookie: a=1; b=2" =!= Cookie("a" -> "1", "b" -> "2").withCookieParsingMode(CookieParsingMode.Raw)
-      "Cookie: a=1;b=2" =!= Cookie("a" -> "1", "b" -> "2").renderedTo("a=1; b=2").withCookieParsingMode(CookieParsingMode.Raw)
-      "Cookie: a=1 ;b=2" =!= Cookie(List(HttpCookiePair.raw("a" -> "1 "), HttpCookiePair("b" -> "2"))).renderedTo("a=1 ; b=2").withCookieParsingMode(CookieParsingMode.Raw)
+      "Cookie: a=1;b=2" =!= Cookie("a" -> "1", "b" -> "2").renderedTo("a=1; b=2").withCookieParsingMode(
+        CookieParsingMode.Raw)
+      "Cookie: a=1 ;b=2" =!= Cookie(List(HttpCookiePair.raw("a" -> "1 "), HttpCookiePair("b" -> "2"))).renderedTo(
+        "a=1 ; b=2").withCookieParsingMode(CookieParsingMode.Raw)
 
-      "Cookie: z=0; a=1,b=2" =!= Cookie(List(HttpCookiePair("z" -> "0"), HttpCookiePair.raw("a" -> "1,b=2"))).withCookieParsingMode(CookieParsingMode.Raw)
-      """Cookie: a=1;b="test"""" =!= Cookie(List(HttpCookiePair("a" -> "1"), HttpCookiePair.raw("b" -> "\"test\""))).renderedTo("a=1; b=\"test\"").withCookieParsingMode(CookieParsingMode.Raw)
-      "Cookie: a=1; b=f\"d\"c\"; c=xyz" =!= Cookie(List(HttpCookiePair("a" -> "1"), HttpCookiePair.raw("b" -> "f\"d\"c\""), HttpCookiePair("c" -> "xyz"))).withCookieParsingMode(CookieParsingMode.Raw)
-      "Cookie: a=1; b=ä; c=d" =!= Cookie(List(HttpCookiePair("a" -> "1"), HttpCookiePair.raw("b" -> "ä"), HttpCookiePair("c" -> "d"))).withCookieParsingMode(CookieParsingMode.Raw)
+      "Cookie: z=0; a=1,b=2" =!= Cookie(List(HttpCookiePair("z" -> "0"),
+        HttpCookiePair.raw("a" -> "1,b=2"))).withCookieParsingMode(CookieParsingMode.Raw)
+      """Cookie: a=1;b="test"""" =!= Cookie(List(HttpCookiePair("a" -> "1"),
+        HttpCookiePair.raw("b" -> "\"test\""))).renderedTo("a=1; b=\"test\"").withCookieParsingMode(
+        CookieParsingMode.Raw)
+      "Cookie: a=1; b=f\"d\"c\"; c=xyz" =!= Cookie(List(HttpCookiePair("a" -> "1"),
+        HttpCookiePair.raw("b" -> "f\"d\"c\""), HttpCookiePair("c" -> "xyz"))).withCookieParsingMode(
+        CookieParsingMode.Raw)
+      "Cookie: a=1; b=ä; c=d" =!= Cookie(List(HttpCookiePair("a" -> "1"), HttpCookiePair.raw("b" -> "ä"),
+        HttpCookiePair("c" -> "d"))).withCookieParsingMode(CookieParsingMode.Raw)
     }
 
     "Date" in {
@@ -399,7 +413,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Location: /en-us/default.aspx" =!= Location(Uri("/en-us/default.aspx"))
       "Location: https://spray.io/{sec}" =!= Location(Uri("https://spray.io/{sec}")).renderedTo(
         "https://spray.io/%7Bsec%7D")
-      "Location: https://spray.io/ sec" =!= ErrorInfo("Illegal HTTP header 'Location': Invalid input ' ', " +
+      "Location: https://spray.io/ sec" =!= ErrorInfo(
+        "Illegal HTTP header 'Location': Invalid input ' ', " +
         "expected '/', 'EOI', '#', segment or '?' (line 1, column 18)", "https://spray.io/ sec\n                 ^")
     }
 
@@ -407,19 +422,22 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Link: </?page=2>; rel=next" =!= Link(Uri("/?page=2"), LinkParams.next)
       "Link: <https://spray.io>; rel=next" =!= Link(Uri("https://spray.io"), LinkParams.next)
       """Link: </>; rel=prev, </page/2>; rel="next"""" =!=
-        Link(LinkValue(Uri("/"), LinkParams.prev), LinkValue(Uri("/page/2"), LinkParams.next)).renderedTo("</>; rel=prev, </page/2>; rel=next")
+        Link(LinkValue(Uri("/"), LinkParams.prev), LinkValue(Uri("/page/2"), LinkParams.next)).renderedTo(
+          "</>; rel=prev, </page/2>; rel=next")
 
       """Link: </>; rel="x.y-z http://spray.io"""" =!= Link(Uri("/"), LinkParams.rel("x.y-z http://spray.io"))
       """Link: </>; title="My Title"""" =!= Link(Uri("/"), LinkParams.title("My Title"))
       """Link: </>; rel=next; title="My Title"""" =!= Link(Uri("/"), LinkParams.next, LinkParams.title("My Title"))
       """Link: </>; anchor="http://example.com"""" =!= Link(Uri("/"), LinkParams.anchor(Uri("http://example.com")))
       """Link: </>; rev=foo; hreflang=de-de; media=print; type=application/json""" =!=
-        Link(Uri("/"), LinkParams.rev("foo"), LinkParams.hreflang(Language("de", "de")), LinkParams.media("print"), LinkParams.`type`(`application/json`))
+        Link(Uri("/"), LinkParams.rev("foo"), LinkParams.hreflang(Language("de", "de")), LinkParams.media("print"),
+          LinkParams.`type`(`application/json`))
 
       /* RFC 5988 examples */
       """Link: <http://example.com/TheBook/chapter2>; rel="previous"; title="previous chapter"""" =!=
-        Link(Uri("http://example.com/TheBook/chapter2"), LinkParams.rel("previous"), LinkParams.title("previous chapter"))
-        .renderedTo("""<http://example.com/TheBook/chapter2>; rel=previous; title="previous chapter"""")
+        Link(Uri("http://example.com/TheBook/chapter2"), LinkParams.rel("previous"),
+          LinkParams.title("previous chapter"))
+          .renderedTo("""<http://example.com/TheBook/chapter2>; rel=previous; title="previous chapter"""")
 
       """Link: </>; rel="http://example.net/foo"""" =!= Link(Uri("/"), LinkParams.rel("http://example.net/foo"))
         .renderedTo("</>; rel=http://example.net/foo")
@@ -439,9 +457,11 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
 
     "Proxy-Authenticate" in {
       "Proxy-Authenticate: Basic realm=\"WallyWorld\",attr=\"val>ue\", Fancy realm=\"yeah\"" =!=
-        `Proxy-Authenticate`(HttpChallenge("Basic", Some("WallyWorld"), Map("attr" -> "val>ue")), HttpChallenge("Fancy", Some("yeah")))
+        `Proxy-Authenticate`(HttpChallenge("Basic", Some("WallyWorld"), Map("attr" -> "val>ue")),
+          HttpChallenge("Fancy", Some("yeah")))
       """Proxy-Authenticate: NTLM TlRMTVNTUAABAAAABzIAAAYABgArAAAACwALACAAAABXT1JLU1RBVElPTkRPTUFJTg==""" =!=
-        `Proxy-Authenticate`(HttpChallenge("NTLM", None, Map("" -> "TlRMTVNTUAABAAAABzIAAAYABgArAAAACwALACAAAABXT1JLU1RBVElPTkRPTUFJTg==")))
+        `Proxy-Authenticate`(HttpChallenge("NTLM", None,
+          Map("" -> "TlRMTVNTUAABAAAABzIAAAYABgArAAAACwALACAAAABXT1JLU1RBVElPTkRPTUFJTg==")))
     }
 
     "Proxy-Authorization" in {
@@ -470,8 +490,10 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
 
     "Strict-Transport-Security" in {
       "Strict-Transport-Security: max-age=31536000" =!= `Strict-Transport-Security`(maxAge = 31536000)
-      "Strict-Transport-Security: max-age=31536000" =!= `Strict-Transport-Security`(maxAge = 31536000, includeSubDomains = false)
-      "Strict-Transport-Security: max-age=31536000; includeSubDomains" =!= `Strict-Transport-Security`(maxAge = 31536000, includeSubDomains = true)
+      "Strict-Transport-Security: max-age=31536000" =!= `Strict-Transport-Security`(maxAge = 31536000,
+        includeSubDomains = false)
+      "Strict-Transport-Security: max-age=31536000; includeSubDomains" =!= `Strict-Transport-Security`(
+        maxAge = 31536000, includeSubDomains = true)
     }
 
     "TE" in {
@@ -504,7 +526,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Sec-WebSocket-Extensions: abc, def" =!=
         `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("abc"), WebSocketExtension("def")))
       "Sec-WebSocket-Extensions: abc; param=2; use_y, def" =!=
-        `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("abc", Map("param" -> "2", "use_y" -> "")), WebSocketExtension("def")))
+        `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("abc", Map("param" -> "2", "use_y" -> "")),
+          WebSocketExtension("def")))
       "Sec-WebSocket-Extensions: abc; param=\",xyz\", def" =!=
         `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("abc", Map("param" -> ",xyz")), WebSocketExtension("def")))
 
@@ -512,14 +535,17 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Sec-WebSocket-Extensions: permessage-deflate" =!=
         `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("permessage-deflate")))
       "Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits; server_max_window_bits=10" =!=
-        `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("permessage-deflate", Map("client_max_window_bits" -> "", "server_max_window_bits" -> "10"))))
+        `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("permessage-deflate",
+          Map("client_max_window_bits" -> "", "server_max_window_bits" -> "10"))))
       "Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits; server_max_window_bits=10, permessage-deflate; client_max_window_bits" =!=
         `Sec-WebSocket-Extensions`(Vector(
-          WebSocketExtension("permessage-deflate", Map("client_max_window_bits" -> "", "server_max_window_bits" -> "10")),
+          WebSocketExtension("permessage-deflate",
+            Map("client_max_window_bits" -> "", "server_max_window_bits" -> "10")),
           WebSocketExtension("permessage-deflate", Map("client_max_window_bits" -> ""))))
     }
     "Sec-WebSocket-Key" in {
-      "Sec-WebSocket-Key: c2Zxb3JpbmgyMzA5dGpoMDIzOWdlcm5vZ2luCg==" =!= `Sec-WebSocket-Key`("c2Zxb3JpbmgyMzA5dGpoMDIzOWdlcm5vZ2luCg==")
+      "Sec-WebSocket-Key: c2Zxb3JpbmgyMzA5dGpoMDIzOWdlcm5vZ2luCg==" =!= `Sec-WebSocket-Key`(
+        "c2Zxb3JpbmgyMzA5dGpoMDIzOWdlcm5vZ2luCg==")
     }
     "Sec-WebSocket-Protocol" in {
       "Sec-WebSocket-Protocol: chat" =!= `Sec-WebSocket-Protocol`(Vector("chat"))
@@ -539,7 +565,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Set-Cookie: SID=31d4d96e407aad42; Domain=example.com; Path=/" =!=
         `Set-Cookie`(HttpCookie("SID", "31d4d96e407aad42", path = Some("/"), domain = Some("example.com")))
       "Set-Cookie: lang=en-US; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Path=/hello" =!=
-        `Set-Cookie`(HttpCookie("lang", "en-US", expires = Some(DateTime(2021, 6, 9, 10, 18, 14)), path = Some("/hello")))
+        `Set-Cookie`(HttpCookie("lang", "en-US", expires = Some(DateTime(2021, 6, 9, 10, 18, 14)),
+          path = Some("/hello")))
       "Set-Cookie: name=123; Max-Age=12345; Secure" =!=
         `Set-Cookie`(HttpCookie("name", "123", maxAge = Some(12345), secure = true))
       "Set-Cookie: name=123; HttpOnly; fancyPants" =!=
@@ -566,7 +593,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         `Set-Cookie`(HttpCookie("name", "123").withSameSite(SameSite.None)).renderedTo("name=123; SameSite=None")
       "Set-Cookie: name=123; SameSite=Wrong" =!=
         ErrorInfo(
-          "Illegal HTTP header 'Set-Cookie': Invalid input 'W', expected OWS or same-site-value (line 1, column 20)", "name=123; SameSite=Wrong\n                   ^")
+          "Illegal HTTP header 'Set-Cookie': Invalid input 'W', expected OWS or same-site-value (line 1, column 20)",
+          "name=123; SameSite=Wrong\n                   ^")
       "Set-Cookie: name=123" =!=
         `Set-Cookie`(HttpCookie("name", "123").withSameSite(SameSite("Wrong"))).renderedTo("name=123")
 
@@ -575,50 +603,51 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 7, 0, 42, 55)), maxAge = Some(12345)))
       "Set-Cookie: lang=; Expires=Sunday, 07 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 7, 0, 42, 55)), maxAge = Some(12345)))
-        .renderedTo("lang=; Expires=Sun, 07 Dec 2014 00:42:55 GMT; Max-Age=12345")
+          .renderedTo("lang=; Expires=Sun, 07 Dec 2014 00:42:55 GMT; Max-Age=12345")
 
       "Set-Cookie: lang=; Expires=Mon, 08 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 8, 0, 42, 55)), maxAge = Some(12345)))
       "Set-Cookie: lang=; Expires=Monday, 08 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 8, 0, 42, 55)), maxAge = Some(12345)))
-        .renderedTo("lang=; Expires=Mon, 08 Dec 2014 00:42:55 GMT; Max-Age=12345")
+          .renderedTo("lang=; Expires=Mon, 08 Dec 2014 00:42:55 GMT; Max-Age=12345")
 
       "Set-Cookie: lang=; Expires=Tue, 09 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 9, 0, 42, 55)), maxAge = Some(12345)))
       "Set-Cookie: lang=; Expires=Tuesday, 09 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 9, 0, 42, 55)), maxAge = Some(12345)))
-        .renderedTo("lang=; Expires=Tue, 09 Dec 2014 00:42:55 GMT; Max-Age=12345")
+          .renderedTo("lang=; Expires=Tue, 09 Dec 2014 00:42:55 GMT; Max-Age=12345")
 
       "Set-Cookie: lang=; Expires=Wed, 10 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 10, 0, 42, 55)), maxAge = Some(12345)))
       "Set-Cookie: lang=; Expires=Wednesday, 10 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 10, 0, 42, 55)), maxAge = Some(12345)))
-        .renderedTo("lang=; Expires=Wed, 10 Dec 2014 00:42:55 GMT; Max-Age=12345")
+          .renderedTo("lang=; Expires=Wed, 10 Dec 2014 00:42:55 GMT; Max-Age=12345")
 
       "Set-Cookie: lang=; Expires=Thu, 11 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 11, 0, 42, 55)), maxAge = Some(12345)))
       "Set-Cookie: lang=; Expires=Thursday, 11 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 11, 0, 42, 55)), maxAge = Some(12345)))
-        .renderedTo("lang=; Expires=Thu, 11 Dec 2014 00:42:55 GMT; Max-Age=12345")
+          .renderedTo("lang=; Expires=Thu, 11 Dec 2014 00:42:55 GMT; Max-Age=12345")
 
       "Set-Cookie: lang=; Expires=Fri, 12 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 12, 0, 42, 55)), maxAge = Some(12345)))
       "Set-Cookie: lang=; Expires=Friday, 12 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 12, 0, 42, 55)), maxAge = Some(12345)))
-        .renderedTo("lang=; Expires=Fri, 12 Dec 2014 00:42:55 GMT; Max-Age=12345")
+          .renderedTo("lang=; Expires=Fri, 12 Dec 2014 00:42:55 GMT; Max-Age=12345")
 
       "Set-Cookie: lang=; Expires=Sat, 13 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 13, 0, 42, 55)), maxAge = Some(12345)))
       "Set-Cookie: lang=; Expires=Saturday, 13 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime(2014, 12, 13, 0, 42, 55)), maxAge = Some(12345)))
-        .renderedTo("lang=; Expires=Sat, 13 Dec 2014 00:42:55 GMT; Max-Age=12345")
+          .renderedTo("lang=; Expires=Sat, 13 Dec 2014 00:42:55 GMT; Max-Age=12345")
 
       "Set-Cookie: lang=; Expires=Mon, 13 Dec 2014 00:42:55 GMT; Max-Age=12345" =!=
-        ErrorInfo("Illegal HTTP header 'Set-Cookie': Illegal weekday in date 2014-12-13T00:42:55", "is 'Mon' but should be 'Sat'")
+        ErrorInfo("Illegal HTTP header 'Set-Cookie': Illegal weekday in date 2014-12-13T00:42:55",
+          "is 'Mon' but should be 'Sat'")
 
       "Set-Cookie: lang=; Expires=xxxx" =!=
         `Set-Cookie`(HttpCookie("lang", "", expires = Some(DateTime.MinValue)))
-        .renderedTo("lang=; Expires=Wed, 01 Jan 1800 00:00:00 GMT")
+          .renderedTo("lang=; Expires=Wed, 01 Jan 1800 00:00:00 GMT")
 
       "Set-Cookie: lang=; domain=----" =!=
         ErrorInfo(
@@ -628,10 +657,11 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       // extra examples from play
       "Set-Cookie: PLAY_FLASH=\"success=found\"; Path=/; HTTPOnly" =!=
         `Set-Cookie`(HttpCookie("PLAY_FLASH", "success=found", path = Some("/"), httpOnly = true))
-        .renderedTo("PLAY_FLASH=success=found; Path=/; HttpOnly")
+          .renderedTo("PLAY_FLASH=success=found; Path=/; HttpOnly")
       "Set-Cookie: PLAY_FLASH=; Expires=Sun, 07 Dec 2014 22:48:47 GMT; Path=/; HTTPOnly" =!=
-        `Set-Cookie`(HttpCookie("PLAY_FLASH", "", expires = Some(DateTime(2014, 12, 7, 22, 48, 47)), path = Some("/"), httpOnly = true))
-        .renderedTo("PLAY_FLASH=; Expires=Sun, 07 Dec 2014 22:48:47 GMT; Path=/; HttpOnly")
+        `Set-Cookie`(HttpCookie("PLAY_FLASH", "", expires = Some(DateTime(2014, 12, 7, 22, 48, 47)), path = Some("/"),
+          httpOnly = true))
+          .renderedTo("PLAY_FLASH=; Expires=Sun, 07 Dec 2014 22:48:47 GMT; Path=/; HttpOnly")
     }
 
     "Upgrade" in {
@@ -643,7 +673,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
 
     "User-Agent" in {
       "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.31" =!=
-        `User-Agent`(ProductVersion("Mozilla", "5.0", "Macintosh; Intel Mac OS X 10_8_3"), ProductVersion("AppleWebKit", "537.31"))
+        `User-Agent`(ProductVersion("Mozilla", "5.0", "Macintosh; Intel Mac OS X 10_8_3"),
+          ProductVersion("AppleWebKit", "537.31"))
       "User-Agent: foo(bar)(baz)" =!=
         `User-Agent`(ProductVersion("foo", "", "bar"), ProductVersion(comment = "baz")).renderedTo("foo (bar) (baz)")
     }
@@ -661,14 +692,15 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
                            qop="auth,auth-int",
                            nonce=dcd98b7102dd2f0e8b11d0f600bfb0c093,
                            opaque=5ccc069c403ebaf9f0171e9517f40e41""".stripMarginWithNewline("\r\n") =!=
-        `WWW-Authenticate`(HttpChallenge("Digest", "testrealm@host.com", Map(
-          "nonce" -> "dcd98b7102dd2f0e8b11d0f600bfb0c093",
-          "opaque" -> "5ccc069c403ebaf9f0171e9517f40e41",
-          "qop" -> "auth,auth-int"
-        ))).renderedTo(
+        `WWW-Authenticate`(HttpChallenge("Digest", "testrealm@host.com",
+          Map(
+            "nonce" -> "dcd98b7102dd2f0e8b11d0f600bfb0c093",
+            "opaque" -> "5ccc069c403ebaf9f0171e9517f40e41",
+            "qop" -> "auth,auth-int"))).renderedTo(
           "Digest realm=\"testrealm@host.com\",nonce=dcd98b7102dd2f0e8b11d0f600bfb0c093,opaque=5ccc069c403ebaf9f0171e9517f40e41,qop=\"auth,auth-int\"")
       "WWW-Authenticate: Basic realm=\"WallyWorld\",attr=\"val>ue\", Fancy realm=\"yeah\"" =!=
-        `WWW-Authenticate`(HttpChallenge("Basic", Some("WallyWorld"), Map("attr" -> "val>ue")), HttpChallenge("Fancy", Some("yeah")))
+        `WWW-Authenticate`(HttpChallenge("Basic", Some("WallyWorld"), Map("attr" -> "val>ue")),
+          HttpChallenge("Fancy", Some("yeah")))
       "WWW-Authenticate: Basic another=\"val>ue\",attr=value" =!=
         `WWW-Authenticate`(HttpChallenge("Basic", None, Map("another" -> "val>ue", "attr" -> "value")))
       "WWW-Authenticate: Basic attr=value" =!=
@@ -676,16 +708,20 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       """WWW-Authenticate: Fancy realm="Secure Area",nonce=42""" =!=
         `WWW-Authenticate`(HttpChallenge("Fancy", Some("Secure Area"), Map("nonce" -> "42")))
       """WWW-Authenticate: NTLM TlRMTVNTUAABAAAABzIAAAYABgArAAAACwALACAAAABXT1JLU1RBVElPTkRPTUFJTg==""" =!=
-        `WWW-Authenticate`(HttpChallenge("NTLM", None, Map("" -> "TlRMTVNTUAABAAAABzIAAAYABgArAAAACwALACAAAABXT1JLU1RBVElPTkRPTUFJTg==")))
+        `WWW-Authenticate`(HttpChallenge("NTLM", None,
+          Map("" -> "TlRMTVNTUAABAAAABzIAAAYABgArAAAACwALACAAAABXT1JLU1RBVElPTkRPTUFJTg==")))
     }
 
     "X-Forwarded-For" in {
       "X-Forwarded-For: 1.2.3.4" =!= `X-Forwarded-For`(remoteAddress("1.2.3.4"))
       "X-Forwarded-For: 1.2.3.4" <=!= `X-Forwarded-For`(remoteAddress("1.2.3.4", Some(56789)))
-      "X-Forwarded-For: 234.123.5.6, 8.8.8.8" =!= `X-Forwarded-For`(remoteAddress("234.123.5.6"), remoteAddress("8.8.8.8"))
+      "X-Forwarded-For: 234.123.5.6, 8.8.8.8" =!= `X-Forwarded-For`(remoteAddress("234.123.5.6"),
+        remoteAddress("8.8.8.8"))
       "X-Forwarded-For: 1.2.3.4, unknown" =!= `X-Forwarded-For`(remoteAddress("1.2.3.4"), RemoteAddress.Unknown)
-      "X-Forwarded-For: 192.0.2.43, 2001:db8:cafe:0:0:0:0:17" =!= `X-Forwarded-For`(remoteAddress("192.0.2.43"), remoteAddress("2001:db8:cafe::17"))
-      "X-Forwarded-For: 1234:5678:9abc:def1:2345:6789:abcd:ef00" =!= `X-Forwarded-For`(remoteAddress("1234:5678:9abc:def1:2345:6789:abcd:ef00"))
+      "X-Forwarded-For: 192.0.2.43, 2001:db8:cafe:0:0:0:0:17" =!= `X-Forwarded-For`(remoteAddress("192.0.2.43"),
+        remoteAddress("2001:db8:cafe::17"))
+      "X-Forwarded-For: 1234:5678:9abc:def1:2345:6789:abcd:ef00" =!= `X-Forwarded-For`(
+        remoteAddress("1234:5678:9abc:def1:2345:6789:abcd:ef00"))
       "X-Forwarded-For: 1234:567:9a:d:2:67:abc:ef00" =!= `X-Forwarded-For`(remoteAddress("1234:567:9a:d:2:67:abc:ef00"))
       "X-Forwarded-For: 2001:db8:85a3::8a2e:370:7334" =!=> "2001:db8:85a3:0:0:8a2e:370:7334"
       "X-Forwarded-For: 1:2:3:4:5:6:7:8" =!= `X-Forwarded-For`(remoteAddress("1:2:3:4:5:6:7:8"))
@@ -720,7 +756,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     "X-Forwarded-Host" in {
       "X-Forwarded-Host: 1.2.3.4" =!= `X-Forwarded-Host`(Uri.Host("1.2.3.4"))
       "X-Forwarded-Host: [2001:db8:cafe:0:0:0:0:17]" =!= `X-Forwarded-Host`(Uri.Host("2001:db8:cafe:0:0:0:0:17"))
-      "X-Forwarded-Host: [1234:5678:9abc:def1:2345:6789:abcd:ef00]" =!= `X-Forwarded-Host`(Uri.Host("1234:5678:9abc:def1:2345:6789:abcd:ef00"))
+      "X-Forwarded-Host: [1234:5678:9abc:def1:2345:6789:abcd:ef00]" =!= `X-Forwarded-Host`(
+        Uri.Host("1234:5678:9abc:def1:2345:6789:abcd:ef00"))
       "X-Forwarded-Host: [1234:567:9a:d:2:67:abc:ef00]" =!= `X-Forwarded-Host`(Uri.Host("1234:567:9a:d:2:67:abc:ef00"))
       "X-Forwarded-Host: [1:2:3:4:5:6:7:8]" =!= `X-Forwarded-Host`(Uri.Host("1:2:3:4:5:6:7:8"))
       "X-Forwarded-Host: akka.io" =!= `X-Forwarded-Host`(Uri.Host("akka.io"))
@@ -737,7 +774,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "X-Real-Ip: 1.2.3.4" =!= `X-Real-Ip`(remoteAddress("1.2.3.4"))
       "X-Real-Ip: 1.2.3.4" <=!= `X-Real-Ip`(remoteAddress("1.2.3.4", Some(56789)))
       "X-Real-Ip: 2001:db8:cafe:0:0:0:0:17" =!= `X-Real-Ip`(remoteAddress("2001:db8:cafe:0:0:0:0:17"))
-      "X-Real-Ip: 1234:5678:9abc:def1:2345:6789:abcd:ef00" =!= `X-Real-Ip`(remoteAddress("1234:5678:9abc:def1:2345:6789:abcd:ef00"))
+      "X-Real-Ip: 1234:5678:9abc:def1:2345:6789:abcd:ef00" =!= `X-Real-Ip`(
+        remoteAddress("1234:5678:9abc:def1:2345:6789:abcd:ef00"))
       "X-Real-Ip: 1234:567:9a:d:2:67:abc:ef00" =!= `X-Real-Ip`(remoteAddress("1234:567:9a:d:2:67:abc:ef00"))
       "X-Real-Ip: 2001:db8:85a3::8a2e:370:7334" =!=> "2001:db8:85a3:0:0:8a2e:370:7334"
       "X-Real-Ip: 1:2:3:4:5:6:7:8" =!= `X-Real-Ip`(remoteAddress("1:2:3:4:5:6:7:8"))
@@ -787,7 +825,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     }
     "allow UTF8 characters in RawHeaders" in {
       parse("Flood-Resistant-Hammerdrill", "árvíztűrő ütvefúrógép") shouldEqual
-        ParsingResult.Ok(RawHeader("Flood-Resistant-Hammerdrill", "árvíztűrő ütvefúrógép"), Nil)
+      ParsingResult.Ok(RawHeader("Flood-Resistant-Hammerdrill", "árvíztűrő ütvefúrógép"), Nil)
     }
     "compress value whitespace into single spaces and trim" in {
       parse("Foo", " b  a \tr\t") shouldEqual ParsingResult.Ok(RawHeader("Foo", "b a r"), Nil)
@@ -798,8 +836,9 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
 
     "parse with custom uri parsing mode" in {
       val targetUri = Uri("http://example.org/?abc=def=ghi", Uri.ParsingMode.Relaxed)
-      HttpHeader.parse("location", "http://example.org/?abc=def=ghi", HeaderParser.Settings(uriParsingMode = Uri.ParsingMode.Relaxed)) shouldEqual
-        ParsingResult.Ok(Location(targetUri), Nil)
+      HttpHeader.parse("location", "http://example.org/?abc=def=ghi",
+        HeaderParser.Settings(uriParsingMode = Uri.ParsingMode.Relaxed)) shouldEqual
+      ParsingResult.Ok(Location(targetUri), Nil)
     }
     "parse content-type with custom media types" in {
       // Override the application/json media type and give it an open instead of fixed charset.
@@ -822,7 +861,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     }
     "fail gracefully for deeply nested header comments" in {
       parse("User-Agent", "(" * 10000).errors.head shouldEqual
-        ErrorInfo("Illegal HTTP header 'User-Agent': Illegal header value", "Header comment nested too deeply")
+      ErrorInfo("Illegal HTTP header 'User-Agent': Illegal header value", "Header comment nested too deeply")
     }
   }
 
@@ -848,7 +887,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       catch {
         case e: TestFailedException if parsedHeader.toString == header.unsafeToString =>
           def className[T](t: T): String = scala.reflect.NameTransformer.decode(t.getClass.getName)
-          throw new AssertionError(s"Test equals failed with equal toString. parsedHeader class was ${className(parsedHeader)}, " +
+          throw new AssertionError(
+            s"Test equals failed with equal toString. parsedHeader class was ${className(parsedHeader)}, " +
             s"header class was ${className(header)}", e)
       }
     }

@@ -26,11 +26,10 @@ import org.scalatest.concurrent.Eventually
 import scala.concurrent.Await
 
 class MessageSpec extends AkkaSpecWithMaterializer(
-  """
+      """
      akka.http.server.websocket.log-frames = on
      akka.http.client.websocket.log-frames = on
-  """
-) with Eventually {
+  """) with Eventually {
 
   import WSTestUtils._
 
@@ -464,7 +463,7 @@ class MessageSpec extends AkkaSpecWithMaterializer(
         expectNoNetworkData()
       }
 
-      List("ping", "pong") foreach { keepAliveMode =>
+      List("ping", "pong").foreach { keepAliveMode =>
         def expectedOpcode = if (keepAliveMode == "ping") Opcode.Ping else Opcode.Pong
 
         s"automatically send keep-alive [$keepAliveMode] frames, with empty data, when configured on the server side" in new ServerTestSetup {
@@ -586,7 +585,8 @@ class MessageSpec extends AkkaSpecWithMaterializer(
 
         val outData = ByteString("def", "ASCII")
         val mask = Random.nextInt()
-        pushInput(frameHeader(Protocol.Opcode.Continuation, 3, fin = false, mask = Some(mask)) ++ maskedBytes(outData, mask)._1)
+        pushInput(frameHeader(Protocol.Opcode.Continuation, 3, fin = false, mask = Some(mask)) ++ maskedBytes(outData,
+          mask)._1)
         inSub.request(5)
         inSubscriber.expectNext(outData)
 
@@ -725,7 +725,8 @@ class MessageSpec extends AkkaSpecWithMaterializer(
           netIn.expectCancellation()
         }
         "close message is invalid UTF8" in new ServerTestSetup {
-          pushInput(closeFrame(Protocol.CloseCodes.UnexpectedCondition, mask = true, msgBytes = InvalidUtf8TwoByteSequence))
+          pushInput(closeFrame(Protocol.CloseCodes.UnexpectedCondition, mask = true,
+            msgBytes = InvalidUtf8TwoByteSequence))
 
           val error = expectError(messageIn).asInstanceOf[PeerClosedConnectionException]
           error.closeCode shouldEqual Protocol.CloseCodes.ProtocolError
@@ -739,7 +740,8 @@ class MessageSpec extends AkkaSpecWithMaterializer(
       "timeout if user handler closes and peer doesn't send a close frame" in new ServerTestSetup {
         override protected def closeTimeout: FiniteDuration = 100.millis.dilated
 
-        EventFilter.debug(pattern = "Peer did not acknowledge CLOSE frame after .*, closing underlying connection now.", occurrences = 1).intercept {
+        EventFilter.debug(pattern = "Peer did not acknowledge CLOSE frame after .*, closing underlying connection now.",
+          occurrences = 1).intercept {
           messageOut.sendComplete()
           expectCloseCodeOnNetwork(Protocol.CloseCodes.Regular)
 
@@ -855,12 +857,12 @@ class MessageSpec extends AkkaSpecWithMaterializer(
         expectCloseCodeOnNetwork(Protocol.CloseCodes.InconsistentData)
       }
       "half a surrogate pair in utf8 encoding for a strict frame" in new ClientTestSetup {
-        val data = ByteString(0xed, 0xa0, 0x80) // not strictly supported by utf-8
+        val data = ByteString(0xED, 0xA0, 0x80) // not strictly supported by utf-8
         pushInput(frameHeader(Opcode.Text, 3, fin = true) ++ data)
         expectCloseCodeOnNetwork(Protocol.CloseCodes.InconsistentData)
       }
       "half a surrogate pair in utf8 encoding for a streamed frame" in new ClientTestSetup {
-        val data = ByteString(0xed, 0xa0, 0x80) // not strictly supported by utf-8
+        val data = ByteString(0xED, 0xA0, 0x80) // not strictly supported by utf-8
         pushInput(frameHeader(Opcode.Text, 0, fin = false))
         pushInput(frameHeader(Opcode.Continuation, 3, fin = true) ++ data)
 
@@ -913,50 +915,45 @@ class MessageSpec extends AkkaSpecWithMaterializer(
         Await.result(
           TextMessage
             .Streamed(Source(pre :: msg :: post :: Nil))
-            .toStrict(1.second), 1.second
-        ) should be(TextMessage.Strict(pre + msg + post))
+            .toStrict(1.second), 1.second) should be(TextMessage.Strict(pre + msg + post))
       }
       "convert streamed binary with multiple elements to strict binary" in {
         Await.result(
           BinaryMessage
-            .Streamed(Source(ByteString(pre.getBytes("UTF-8")) :: ByteString(msg.getBytes("UTF-8")) :: ByteString(post.getBytes("UTF-8")) :: Nil))
-            .toStrict(1.second), 1.second
-        ) should be(BinaryMessage.Strict(ByteString((pre + msg + post).getBytes("UTF-8"))))
+            .Streamed(Source(ByteString(pre.getBytes("UTF-8")) :: ByteString(msg.getBytes("UTF-8")) :: ByteString(
+              post.getBytes("UTF-8")) :: Nil))
+            .toStrict(1.second), 1.second) should be(
+          BinaryMessage.Strict(ByteString((pre + msg + post).getBytes("UTF-8"))))
       }
       "convert streamed text to strict text" in {
         Await.result(
           TextMessage
             .Streamed(Source.single(msg))
-            .toStrict(1.second), 1.second
-        ) should be(TextMessage.Strict(msg))
+            .toStrict(1.second), 1.second) should be(TextMessage.Strict(msg))
       }
       "convert streamed binary to strict binary" in {
         Await.result(
           BinaryMessage
             .Streamed(Source.single(ByteString(msg.getBytes("UTF-8"))))
-            .toStrict(1.second), 1.second
-        ) should be(BinaryMessage.Strict(ByteString(msg.getBytes("UTF-8"))))
+            .toStrict(1.second), 1.second) should be(BinaryMessage.Strict(ByteString(msg.getBytes("UTF-8"))))
       }
       "convert streamed text to strict text if stream is empty" in {
         Await.result(
           TextMessage
             .Streamed(Source.empty)
-            .toStrict(1.second), 1.second
-        ) should be(TextMessage.Strict(""))
+            .toStrict(1.second), 1.second) should be(TextMessage.Strict(""))
       }
       "convert streamed binary to strict binary if stream is empty" in {
         Await.result(
           BinaryMessage
             .Streamed(Source.empty)
-            .toStrict(1.second), 1.second
-        ) should be(BinaryMessage.Strict(ByteString()))
+            .toStrict(1.second), 1.second) should be(BinaryMessage.Strict(ByteString()))
       }
       "convert streamed text to strict text if stream is infinite" in {
         val future = Await.ready(
           TextMessage
             .Streamed(Source.repeat(msg))
-            .toStrict(1.second), 5.second
-        )
+            .toStrict(1.second), 5.second)
 
         future.onComplete {
           case Failure(ex) => ex.getClass should be(classOf[TimeoutException])
@@ -967,8 +964,7 @@ class MessageSpec extends AkkaSpecWithMaterializer(
         val future = Await.ready(
           BinaryMessage
             .Streamed(Source.repeat(ByteString(msg.getBytes("UTF-8"))))
-            .toStrict(1.second), 5.second
-        )
+            .toStrict(1.second), 5.second)
 
         future.onComplete {
           case Failure(ex) => ex.getClass should be(classOf[TimeoutException])
@@ -1069,27 +1065,27 @@ class MessageSpec extends AkkaSpecWithMaterializer(
       val length = length7 match {
         case 126 =>
           val length16Bytes = expectNetworkData(2)
-          (length16Bytes(0) & 0xff) << 8 | (length16Bytes(1) & 0xff) << 0
+          (length16Bytes(0) & 0xFF) << 8 | (length16Bytes(1) & 0xFF) << 0
         case 127 =>
           val length64Bytes = expectNetworkData(8)
-          (length64Bytes(0) & 0xff).toLong << 56 |
-            (length64Bytes(1) & 0xff).toLong << 48 |
-            (length64Bytes(2) & 0xff).toLong << 40 |
-            (length64Bytes(3) & 0xff).toLong << 32 |
-            (length64Bytes(4) & 0xff).toLong << 24 |
-            (length64Bytes(5) & 0xff).toLong << 16 |
-            (length64Bytes(6) & 0xff).toLong << 8 |
-            (length64Bytes(7) & 0xff).toLong << 0
+          (length64Bytes(0) & 0xFF).toLong << 56 |
+          (length64Bytes(1) & 0xFF).toLong << 48 |
+          (length64Bytes(2) & 0xFF).toLong << 40 |
+          (length64Bytes(3) & 0xFF).toLong << 32 |
+          (length64Bytes(4) & 0xFF).toLong << 24 |
+          (length64Bytes(5) & 0xFF).toLong << 16 |
+          (length64Bytes(6) & 0xFF).toLong << 8 |
+          (length64Bytes(7) & 0xFF).toLong << 0
         case x => x
       }
       val mask =
         if (hasMask) {
           val maskBytes = expectNetworkData(4)
           val mask =
-            (maskBytes(0) & 0xff) << 24 |
-              (maskBytes(1) & 0xff) << 16 |
-              (maskBytes(2) & 0xff) << 8 |
-              (maskBytes(3) & 0xff) << 0
+            (maskBytes(0) & 0xFF) << 24 |
+            (maskBytes(1) & 0xFF) << 16 |
+            (maskBytes(2) & 0xFF) << 8 |
+            (maskBytes(3) & 0xFF) << 0
           Some(mask)
         } else None
 
@@ -1109,7 +1105,7 @@ class MessageSpec extends AkkaSpecWithMaterializer(
         case None    => rawData
       }
 
-      val code = ((data(0) & 0xff) << 8) | ((data(1) & 0xff) << 0)
+      val code = ((data(0) & 0xFF) << 8) | ((data(1) & 0xFF) << 0)
       code shouldEqual expectedCode
     }
 

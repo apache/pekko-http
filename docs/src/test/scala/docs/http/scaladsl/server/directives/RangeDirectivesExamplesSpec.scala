@@ -19,7 +19,7 @@ class RangeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     ConfigFactory.parseString("akka.http.routing.range-coalescing-threshold=2").withFallback(super.testConfig)
 
   "withRangeSupport" in {
-    //#withRangeSupport
+    // #withRangeSupport
     val route =
       withRangeSupport {
         complete("ABCDEFGH")
@@ -40,7 +40,7 @@ class RangeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
       val response = Await.result(responseF, 3.seconds).reverse
 
-      response should have length 2
+      (response should have).length(2)
 
       val part1 = response(0)
       part1.contentRange shouldEqual ContentRange(0, 2, 8)
@@ -54,7 +54,7 @@ class RangeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
         case HttpEntity.Strict(_, bytes) if bytes.utf8String == "GH" =>
       }
     }
-    //#withRangeSupport
+    // #withRangeSupport
   }
 
 }

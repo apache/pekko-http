@@ -72,7 +72,7 @@ trait MiscDirectives {
    */
   def selectPreferredLanguage(first: Language, more: Language*): Directive1[Language] =
     BasicDirectives.extractRequest.map { request =>
-      LanguageNegotiator(request.headers).pickLanguage(first :: List(more: _*)) getOrElse first
+      LanguageNegotiator(request.headers).pickLanguage(first :: List(more: _*)).getOrElse(first)
     }
 
   /**
@@ -87,7 +87,6 @@ trait MiscDirectives {
     mapRequestContext(_.mapRequest(_.mapEntity(_.withSizeLimit(maxBytes))))
 
   /**
-   *
    * Disables the size limit (configured by `akka.http.parsing.max-content-length` by default) checking on the incoming
    * [[HttpRequest]] entity.
    * Can be useful when handling arbitrarily large data uploads in specific parts of your routes.
@@ -109,11 +108,11 @@ object MiscDirectives extends MiscDirectives {
 
   private val _extractClientIP: Directive1[RemoteAddress] =
     headerValuePF { case `X-Forwarded-For`(Seq(address, _*)) => address } |
-      headerValuePF { case `X-Real-Ip`(address) => address } |
-      headerValuePF { case `Remote-Address`(address) => address } |
-      extractRequest.map { request =>
-        request.attribute(AttributeKeys.remoteAddress).getOrElse(RemoteAddress.Unknown)
-      }
+    headerValuePF { case `X-Real-Ip`(address) => address } |
+    headerValuePF { case `Remote-Address`(address) => address } |
+    extractRequest.map { request =>
+      request.attribute(AttributeKeys.remoteAddress).getOrElse(RemoteAddress.Unknown)
+    }
 
   private val _requestEntityEmpty: Directive0 =
     extract(_.request.entity.isKnownEmpty).flatMap(if (_) pass else reject)
@@ -124,7 +123,7 @@ object MiscDirectives extends MiscDirectives {
   private val _rejectEmptyResponse: Directive0 =
     mapRouteResult {
       case Complete(response) if response.entity.isKnownEmpty => Rejected(Nil)
-      case x => x
+      case x                                                  => x
     }
 
   private val _withoutSizeLimit: Directive0 =

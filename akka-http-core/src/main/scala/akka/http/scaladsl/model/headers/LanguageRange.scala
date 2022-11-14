@@ -42,9 +42,9 @@ object LanguageRange {
   final case class One(language: Language, qValue: Float) extends LanguageRange {
     require(0.0f <= qValue && qValue <= 1.0f, "qValue must be >= 0 and <= 1.0")
     def matches(l: Language) =
-      (language.primaryTag equalsIgnoreCase l.primaryTag) &&
-        language.subTags.size <= l.subTags.size &&
-        (language.subTags zip l.subTags).forall(t => t._1 equalsIgnoreCase t._2)
+      (language.primaryTag.equalsIgnoreCase(l.primaryTag)) &&
+      language.subTags.size <= l.subTags.size &&
+      language.subTags.zip(l.subTags).forall(t => t._1.equalsIgnoreCase(t._2))
     def primaryTag = language.primaryTag
     def subTags = language.subTags
     def withQValue(qValue: Float) = One(language, qValue)
@@ -55,7 +55,7 @@ object LanguageRange {
 }
 
 final case class Language(primaryTag: String, subTags: immutable.Seq[String])
-  extends jm.headers.Language with ValueRenderable with WithQValue[LanguageRange] {
+    extends jm.headers.Language with ValueRenderable with WithQValue[LanguageRange] {
   def withQValue(qValue: Float) = LanguageRange(this, qValue.toFloat)
   def render[R <: Rendering](r: R): r.type = {
     r ~~ primaryTag

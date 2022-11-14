@@ -30,6 +30,7 @@ import scala.util.{ Failure, Success }
 // "Hasta la vista, baby."
 @InternalApi
 private[http] trait ServerTerminator {
+
   /**
    * Initiate the termination sequence of this server.
    */
@@ -52,7 +53,8 @@ private[http] final class MasterServerTerminator(log: LoggingAdapter) extends Se
   // if we get a termination signal from the outer (user-land) it has to send this signal to all existing connection
   // terminators such that they can initiate the termination (draining, failing) of their respective connections.
 
-  private val terminators = new AtomicReference[MasterServerTerminator.State](MasterServerTerminator.AliveConnectionTerminators(Set.empty))
+  private val terminators =
+    new AtomicReference[MasterServerTerminator.State](MasterServerTerminator.AliveConnectionTerminators(Set.empty))
   private val termination = Promise[HttpTerminated]()
 
   /**
@@ -67,7 +69,7 @@ private[http] final class MasterServerTerminator(log: LoggingAdapter) extends Se
     terminators.get() match {
       case v @ AliveConnectionTerminators(ts) =>
         terminators.compareAndSet(v, v.copy(ts = ts + terminator)) ||
-          registerConnection(terminator) // retry
+        registerConnection(terminator) // retry
 
       case Terminating(deadline) =>
         terminator.terminate(deadline.timeLeft)(ec)
@@ -126,7 +128,9 @@ private[http] final class MasterServerTerminator(log: LoggingAdapter) extends Se
         } else terminate(timeout)(ex) // retry
 
       case Terminating(existingDeadline) =>
-        log.warning(s"Issued terminate($timeout) while termination is in progress already (with deadline: time left: ${PrettyDuration.format(existingDeadline.timeLeft)}")
+        log.warning(
+          s"Issued terminate($timeout) while termination is in progress already (with deadline: time left: ${PrettyDuration.format(
+              existingDeadline.timeLeft)}")
         termination.future
     }
   }
@@ -140,10 +144,12 @@ private[http] final class MasterServerTerminator(log: LoggingAdapter) extends Se
  */
 @InternalApi
 private[http] final class ServerTerminationDeadlineReached()
-  extends RuntimeException("Server termination deadline reached, shutting down all connections and terminating server...")
+    extends RuntimeException(
+      "Server termination deadline reached, shutting down all connections and terminating server...")
 
 object GracefulTerminatorStage {
-  def apply(system: ActorSystem, serverSettings: ServerSettings): BidiFlow[HttpResponse, HttpResponse, HttpRequest, HttpRequest, ServerTerminator] = {
+  def apply(system: ActorSystem, serverSettings: ServerSettings)
+      : BidiFlow[HttpResponse, HttpResponse, HttpRequest, HttpRequest, ServerTerminator] = {
     val stage = new GracefulTerminatorStage(serverSettings)
     BidiFlow.fromGraph(stage)
   }
@@ -164,7 +170,8 @@ object GracefulTerminatorStage {
  */
 @InternalApi
 private[http] final class GracefulTerminatorStage(settings: ServerSettings)
-  extends GraphStageWithMaterializedValue[BidiShape[HttpResponse, HttpResponse, HttpRequest, HttpRequest], ServerTerminator] {
+    extends GraphStageWithMaterializedValue[BidiShape[HttpResponse, HttpResponse, HttpRequest, HttpRequest],
+      ServerTerminator] {
 
   val fromNet: Inlet[HttpRequest] = Inlet("netIn")
   val toUser: Outlet[HttpRequest] = Outlet("userOut")
@@ -175,7 +182,8 @@ private[http] final class GracefulTerminatorStage(settings: ServerSettings)
 
   final val TerminationDeadlineTimerKey = "TerminationDeadlineTimerKey"
 
-  final class ConnectionTerminator(triggerTermination: Promise[FiniteDuration => Future[HttpTerminated]]) extends ServerTerminator {
+  final class ConnectionTerminator(
+      triggerTermination: Promise[FiniteDuration => Future[HttpTerminated]]) extends ServerTerminator {
     override def terminate(deadline: FiniteDuration)(implicit ec: ExecutionContext): Future[HttpTerminated] = {
       triggerTermination.future.flatMap(callback => {
         callback(deadline)
@@ -222,101 +230,112 @@ private[http] final class GracefulTerminatorStage(settings: ServerSettings)
         }
       }
 
-      setHandler(fromUser, new InHandler {
-        override def onPush(): Unit = {
-          val response = grab(fromUser)
-          pendingUserHandlerResponse = false
-          push(toNet, response)
-        }
+      setHandler(fromUser,
+        new InHandler {
+          override def onPush(): Unit = {
+            val response = grab(fromUser)
+            pendingUserHandlerResponse = false
+            push(toNet, response)
+          }
 
-        override def onUpstreamFinish(): Unit = {
-          // don't finish the whole bidi stage, just propagate the completion:
-          complete(toNet)
-        }
-      })
-      setHandler(toUser, new OutHandler {
-        override def onPull(): Unit = {
-          pull(fromNet)
-        }
-      })
-      setHandler(fromNet, new InHandler {
-        override def onPush(): Unit = {
-          val request = grab(fromNet)
+          override def onUpstreamFinish(): Unit = {
+            // don't finish the whole bidi stage, just propagate the completion:
+            complete(toNet)
+          }
+        })
+      setHandler(toUser,
+        new OutHandler {
+          override def onPull(): Unit = {
+            pull(fromNet)
+          }
+        })
+      setHandler(fromNet,
+        new InHandler {
+          override def onPush(): Unit = {
+            val request = grab(fromNet)
 
-          pendingUserHandlerResponse = true
-          push(toUser, request)
-        }
+            pendingUserHandlerResponse = true
+            push(toUser, request)
+          }
 
-        override def onUpstreamFinish(): Unit = {
-          // don't finish the whole bidi stage, just propagate the completion:
-          complete(toUser)
-        }
-      })
-      setHandler(toNet, new OutHandler {
-        override def onPull(): Unit = {
-          pull(fromUser)
-        }
-      })
+          override def onUpstreamFinish(): Unit = {
+            // don't finish the whole bidi stage, just propagate the completion:
+            complete(toUser)
+          }
+        })
+      setHandler(toNet,
+        new OutHandler {
+          override def onPull(): Unit = {
+            pull(fromUser)
+          }
+        })
 
       def installTerminationHandlers(deadline: Deadline): Unit = {
         // when no inflight requests, fail stage right away, could probably be a complete
         // when https://github.com/akka/akka-http/issues/3209 is fixed
         if (!pendingUserHandlerResponse) failStage(new ServerTerminationDeadlineReached)
 
-        setHandler(fromUser, new InHandler {
-          override def onPush(): Unit = {
-            val overdue = deadline.isOverdue()
-            val response =
-              if (overdue) {
-                log.warning("Terminating server ({}), discarding user reply since arrived after deadline expiration", formatTimeLeft(deadline))
-                settings.terminationDeadlineExceededResponse
-              } else grab(fromUser)
+        setHandler(fromUser,
+          new InHandler {
+            override def onPush(): Unit = {
+              val overdue = deadline.isOverdue()
+              val response =
+                if (overdue) {
+                  log.warning("Terminating server ({}), discarding user reply since arrived after deadline expiration",
+                    formatTimeLeft(deadline))
+                  settings.terminationDeadlineExceededResponse
+                } else grab(fromUser)
 
-            pendingUserHandlerResponse = false
+              pendingUserHandlerResponse = false
 
-            // send response to pending in-flight request with Connection: close, and complete stage
-            emit(toNet, response.withHeaders(Connection("close") +: response.headers.filterNot(_.is(Connection.lowercaseName))), () => completeStage())
-          }
-        })
+              // send response to pending in-flight request with Connection: close, and complete stage
+              emit(toNet,
+                response.withHeaders(Connection("close") +: response.headers.filterNot(_.is(Connection.lowercaseName))),
+                () => completeStage())
+            }
+          })
 
         // once termination deadline hits, we stop pulling from network
-        setHandler(toUser, new OutHandler {
-          override def onPull(): Unit = {
-            // if (deadline.hasTimeLeft()) // we pull always as we want to reply errors to everyone
-            pull(fromNet)
-          }
-        })
+        setHandler(toUser,
+          new OutHandler {
+            override def onPull(): Unit = {
+              // if (deadline.hasTimeLeft()) // we pull always as we want to reply errors to everyone
+              pull(fromNet)
+            }
+          })
 
-        setHandler(fromNet, new InHandler {
-          override def onPush(): Unit = {
-            val request = grab(fromNet)
-            log.warning(
-              "Terminating server ({}), attempting to send termination reply to incoming [{} {}]",
-              formatTimeLeft(deadline), request.method, request.uri.path)
+        setHandler(fromNet,
+          new InHandler {
+            override def onPush(): Unit = {
+              val request = grab(fromNet)
+              log.warning(
+                "Terminating server ({}), attempting to send termination reply to incoming [{} {}]",
+                formatTimeLeft(deadline), request.method, request.uri.path)
 
-            // on purpose discard all incoming bytes for requests
-            // could discard with the deadline.timeLeft completion timeout, but not necessarily needed
-            request.entity.discardBytes()(interpreter.subFusingMaterializer).future.onComplete {
-              case Success(_) => // ignore
-              case Failure(ex) =>
-                // we do want to cause this failure to fail the termination eagerly
-                failureCallback.invoke(ex)
-            }(interpreter.materializer.executionContext)
+              // on purpose discard all incoming bytes for requests
+              // could discard with the deadline.timeLeft completion timeout, but not necessarily needed
+              request.entity.discardBytes()(interpreter.subFusingMaterializer).future.onComplete {
+                case Success(_)  => // ignore
+                case Failure(ex) =>
+                  // we do want to cause this failure to fail the termination eagerly
+                  failureCallback.invoke(ex)
+              }(interpreter.materializer.executionContext)
 
-            // we can reply right away with an termination response since user handler will never emit a response anymore
-            push(toNet, settings.terminationDeadlineExceededResponse.withHeaders(Connection("close")))
-            completeStage()
-          }
-        })
+              // we can reply right away with an termination response since user handler will never emit a response anymore
+              push(toNet, settings.terminationDeadlineExceededResponse.withHeaders(Connection("close")))
+              completeStage()
+            }
+          })
 
         // we continue pulling from user, to make sure we'd get the "final user reply" that may be sent during termination
-        setHandler(toNet, new OutHandler {
-          override def onPull(): Unit = {
-            if (pendingUserHandlerResponse) {
-              if (isAvailable(fromUser)) pull(fromUser)
+        setHandler(toNet,
+          new OutHandler {
+            override def onPull(): Unit = {
+              if (pendingUserHandlerResponse) {
+                if (isAvailable(fromUser)) pull(fromUser)
+              }
             }
-          }
-        })
+          })
       }
 
       override def postStop(): Unit = {

@@ -4,7 +4,7 @@
 
 package akka.http.scaladsl.coding
 
-import java.io.{ OutputStream, InputStream }
+import java.io.{ InputStream, OutputStream }
 
 class NoCodingSpec extends CoderSpec {
   protected def Coder: Coder = Coders.NoCoding

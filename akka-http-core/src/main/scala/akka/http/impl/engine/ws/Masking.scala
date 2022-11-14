@@ -19,7 +19,8 @@ import akka.stream.stage._
  */
 @InternalApi
 private[http] object Masking {
-  def apply(serverSide: Boolean, maskRandom: () => Random): BidiFlow[ /* net in */ FrameEvent, /* app out */ FrameEventOrError, /* app in */ FrameEvent, /* net out */ FrameEvent, NotUsed] =
+  def apply(serverSide: Boolean, maskRandom: () => Random): BidiFlow[/* net in */ FrameEvent,
+    /* app out */ FrameEventOrError, /* app in */ FrameEvent, /* net out */ FrameEvent, NotUsed] =
     BidiFlow.fromFlowsMat(unmaskIf(serverSide), maskIf(!serverSide, maskRandom))(Keep.none)
 
   def maskIf(condition: Boolean, maskRandom: () => Random): Flow[FrameEvent, FrameEvent, NotUsed] =
@@ -63,51 +64,52 @@ private[http] object Masking {
     val out = Outlet[FrameEventOrError](s"${toString}-out")
     override val shape: FlowShape[FrameEvent, FrameEventOrError] = FlowShape(in, out)
 
-    override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with OutHandler with InHandler {
+    override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+      new GraphStageLogic(shape) with OutHandler with InHandler {
 
-      def onPush(): Unit = grab(in) match {
-        case start @ FrameStart(header, data) =>
-          try {
-            val mask = extractMask(header)
+        def onPush(): Unit = grab(in) match {
+          case start @ FrameStart(header, data) =>
+            try {
+              val mask = extractMask(header)
 
-            val (masked, newMask) = FrameEventParser.mask(data, mask)
-            if (!start.lastPart) {
-              setHandler(in, runningHandler(newMask, this))
+              val (masked, newMask) = FrameEventParser.mask(data, mask)
+              if (!start.lastPart) {
+                setHandler(in, runningHandler(newMask, this))
+              }
+              push(out, start.copy(header = setNewMask(header, mask), data = masked))
+            } catch {
+              case p: ProtocolException => {
+                setHandler(in, doneHandler)
+                push(out, FrameError(p))
+              }
             }
-            push(out, start.copy(header = setNewMask(header, mask), data = masked))
-          } catch {
-            case p: ProtocolException => {
-              setHandler(in, doneHandler)
-              push(out, FrameError(p))
-            }
-          }
-        case _: FrameData => fail(out, new IllegalStateException("unexpected FrameData (need FrameStart first)"))
-      }
-
-      private def doneHandler = new InHandler {
-        override def onPush(): Unit = pull(in)
-      }
-
-      private def runningHandler(initialMask: Int, nextState: InHandler): InHandler = new InHandler {
-        var mask = initialMask
-
-        override def onPush(): Unit = {
-          val part = grab(in)
-          if (part.lastPart) {
-            setHandler(in, nextState)
-          }
-
-          val (masked, newMask) = FrameEventParser.mask(part.data, mask)
-          mask = newMask
-          push(out, part.withData(data = masked))
+          case _: FrameData => fail(out, new IllegalStateException("unexpected FrameData (need FrameStart first)"))
         }
+
+        private def doneHandler = new InHandler {
+          override def onPush(): Unit = pull(in)
+        }
+
+        private def runningHandler(initialMask: Int, nextState: InHandler): InHandler = new InHandler {
+          var mask = initialMask
+
+          override def onPush(): Unit = {
+            val part = grab(in)
+            if (part.lastPart) {
+              setHandler(in, nextState)
+            }
+
+            val (masked, newMask) = FrameEventParser.mask(part.data, mask)
+            mask = newMask
+            push(out, part.withData(data = masked))
+          }
+        }
+
+        def onPull(): Unit = pull(in)
+
+        setHandler(in, this)
+        setHandler(out, this)
+
       }
-
-      def onPull(): Unit = pull(in)
-
-      setHandler(in, this)
-      setHandler(out, this)
-
-    }
   }
 }

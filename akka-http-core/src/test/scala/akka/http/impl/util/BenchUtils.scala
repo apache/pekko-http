@@ -5,6 +5,7 @@
 package akka.http.impl.util
 
 private[akka] object BenchUtils {
+
   /**
    * Races f1 against f2 for attempts times (after 10 warmup runs) and returns the minimum factor
    * between f1 time and f2 time.

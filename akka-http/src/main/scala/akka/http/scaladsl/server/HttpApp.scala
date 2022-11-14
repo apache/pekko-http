@@ -15,7 +15,7 @@ import akka.http.scaladsl.settings.ServerSettings
 import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ Await, ExecutionContext, ExecutionContextExecutor, Future, Promise, blocking }
+import scala.concurrent.{ blocking, Await, ExecutionContext, ExecutionContextExecutor, Future, Promise }
 import scala.io.StdIn
 import scala.util.{ Failure, Success, Try }
 
@@ -29,6 +29,7 @@ import scala.util.{ Failure, Success, Try }
 abstract class HttpApp extends Directives {
 
   private val serverBinding = new AtomicReference[ServerBinding]()
+
   /**
    * [[ActorSystem]] used to start this server. Stopping this system will interfere with the proper functioning condition of the server.
    */
@@ -94,7 +95,7 @@ abstract class HttpApp extends Directives {
 
     bindingFuture.onComplete {
       case Success(binding) =>
-        //setting the server binding for possible future uses in the client
+        // setting the server binding for possible future uses in the client
         serverBinding.set(binding)
         postHttpBinding(binding)
       case Failure(cause) =>
@@ -119,7 +120,8 @@ abstract class HttpApp extends Directives {
    * You can use this method to attempt to retrieve the [[ServerBinding]] at any point in time to, for example, stop the server due to unexpected circumstances.
    */
   def binding(): Try[ServerBinding] = {
-    if (serverBinding.get() == null) Failure(new IllegalStateException("Binding not yet stored. Have you called startServer?"))
+    if (serverBinding.get() == null)
+      Failure(new IllegalStateException("Binding not yet stored. Have you called startServer?"))
     else Success(serverBinding.get())
   }
 
@@ -135,7 +137,8 @@ abstract class HttpApp extends Directives {
    * Hook that will be called just after the Http server binding is done. Override this method if you want to perform some actions after the server is up.
    */
   protected def postHttpBinding(binding: Http.ServerBinding): Unit = {
-    systemReference.get().log.info(s"Server online at http://${binding.localAddress.getHostName}:${binding.localAddress.getPort}/")
+    systemReference.get().log.info(
+      s"Server online at http://${binding.localAddress.getHostName}:${binding.localAddress.getPort}/")
   }
 
   /**

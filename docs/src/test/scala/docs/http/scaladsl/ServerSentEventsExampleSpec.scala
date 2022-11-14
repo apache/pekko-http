@@ -10,7 +10,7 @@ import docs.CompileOnlySpec
 final class ServerSentEventsExampleSpec extends RoutingSpec with Directives with CompileOnlySpec {
 
   "stream example" in compileOnlySpec {
-    //#event-stream-marshalling-example
+    // #event-stream-marshalling-example
     import akka.NotUsed
     import akka.stream.scaladsl.Source
 
@@ -37,15 +37,15 @@ final class ServerSentEventsExampleSpec extends RoutingSpec with Directives with
         }
       }
     }
-    //#event-stream-marshalling-example
+    // #event-stream-marshalling-example
 
-    //#event-stream-unmarshalling-example
+    // #event-stream-unmarshalling-example
     import akka.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling._
 
     Http()
       .singleRequest(Get("http://localhost:8000/events"))
       .flatMap(Unmarshal(_).to[Source[ServerSentEvent, NotUsed]])
       .foreach(_.runForeach(println))
-    //#event-stream-unmarshalling-example
+    // #event-stream-unmarshalling-example
   }
 }

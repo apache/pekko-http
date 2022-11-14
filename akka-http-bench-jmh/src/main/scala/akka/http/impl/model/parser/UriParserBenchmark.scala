@@ -18,8 +18,7 @@ class UriParserBenchmark {
 
   @Param(Array(
     "http://any.hostname?param1=111&amp;param2=222",
-    "http://any.hostname?param1=111&amp;param2=222&param3=333&param4=444&param5=555&param6=666&param7=777&param8=888&param9=999"
-  ))
+    "http://any.hostname?param1=111&amp;param2=222&param3=333&param4=444&param5=555&param6=666&param7=777&param8=888&param9=999"))
   var url = ""
 
   @Benchmark

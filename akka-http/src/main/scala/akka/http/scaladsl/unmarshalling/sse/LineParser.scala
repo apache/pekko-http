@@ -39,11 +39,11 @@ private final class LineParser(maxLineSize: Int) extends GraphStage[FlowShape[By
       override def onPush() = {
         @tailrec
         def parseLines(
-          bs:            ByteString,
-          from:          Int            = 0,
-          at:            Int,
-          parsedLines:   Vector[String] = Vector.empty,
-          lastCharWasCr: Boolean        = false): (ByteString, Vector[String], Boolean) =
+            bs: ByteString,
+            from: Int = 0,
+            at: Int,
+            parsedLines: Vector[String] = Vector.empty,
+            lastCharWasCr: Boolean = false): (ByteString, Vector[String], Boolean) =
           if (at >= bs.length)
             (bs.drop(from), parsedLines, lastCharWasCr)
           else

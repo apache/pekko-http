@@ -30,7 +30,7 @@ class HostConnectionPoolCompatSpec extends AkkaSpecWithMaterializer {
           .run()
 
       hcp0 shouldEqual hcp1
-      hcp0 should not equal (hcpOther)
+      (hcp0 should not).equal(hcpOther)
 
       HostConnectionPoolCompat.access(hcp0)
     }

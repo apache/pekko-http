@@ -20,6 +20,7 @@ import scala.annotation.tailrec
 import java.nio.ByteBuffer
 
 trait ParserInput {
+
   /**
    * Returns the character at the given (zero-based) index.
    * Note: this method is hot and should be small and efficient.
@@ -54,10 +55,12 @@ object ParserInput {
   val Empty = apply(Array.empty[Byte])
 
   implicit def apply(bytes: Array[Byte]): ByteArrayBasedParserInput = new ByteArrayBasedParserInput(bytes)
-  implicit def apply(bytes: Array[Byte], endIndex: Int): ByteArrayBasedParserInput = new ByteArrayBasedParserInput(bytes, endIndex)
+  implicit def apply(bytes: Array[Byte], endIndex: Int): ByteArrayBasedParserInput =
+    new ByteArrayBasedParserInput(bytes, endIndex)
   implicit def apply(string: String): StringBasedParserInput = new StringBasedParserInput(string)
   implicit def apply(chars: Array[Char]): CharArrayBasedParserInput = new CharArrayBasedParserInput(chars)
-  implicit def apply(chars: Array[Char], endIndex: Int): CharArrayBasedParserInput = new CharArrayBasedParserInput(chars, endIndex)
+  implicit def apply(chars: Array[Char], endIndex: Int): CharArrayBasedParserInput =
+    new CharArrayBasedParserInput(chars, endIndex)
 
   abstract class DefaultParserInput extends ParserInput {
     def getLine(line: Int): String = {
@@ -67,7 +70,8 @@ object ParserInput {
             if (lineNr < line) rec(ix + 1, ix + 1, lineNr + 1)
             else sliceString(lineStartIx, ix)
           else rec(ix + 1, lineStartIx, lineNr)
-        else if (lineNr == line) sliceString(lineStartIx, ix) else ""
+        else if (lineNr == line) sliceString(lineStartIx, ix)
+        else ""
       rec(ix = 0, lineStartIx = 0, lineNr = 1)
     }
   }

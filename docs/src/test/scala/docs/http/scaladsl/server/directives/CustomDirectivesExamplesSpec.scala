@@ -13,7 +13,7 @@ import docs.CompileOnlySpec
 class CustomDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "labeling" in {
-    //#labeling
+    // #labeling
     val getOrPut = get | put
 
     // tests:
@@ -26,11 +26,11 @@ class CustomDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Put("/") ~> route ~> check {
       responseAs[String] shouldEqual "ok"
     }
-    //#labeling
+    // #labeling
   }
 
   "map-0" in {
-    //#map-0
+    // #map-0
     val textParam: Directive1[String] =
       parameter("text".as[String])
 
@@ -41,11 +41,11 @@ class CustomDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/?text=abcdefg") ~> lengthDirective(x => complete(x.toString)) ~> check {
       responseAs[String] shouldEqual "7"
     }
-    //#map-0
+    // #map-0
   }
 
   "tmap-1" in {
-    //#tmap-1
+    // #tmap-1
     val twoIntParameters: Directive[(Int, Int)] =
       parameters("a".as[Int], "b".as[Int])
 
@@ -58,11 +58,11 @@ class CustomDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/?a=2&b=5") ~> myDirective(x => complete(x)) ~> check {
       responseAs[String] shouldEqual "7"
     }
-    //#tmap-1
+    // #tmap-1
   }
 
   "collect-1" in {
-    //#collect-1
+    // #collect-1
     val intParameter: Directive1[Int] = parameter("x".as[Int])
 
     val myRejection = MissingQueryParamRejection("test")
@@ -78,11 +78,11 @@ class CustomDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       rejection shouldEqual myRejection
     }
 
-    //#collect-1
+    // #collect-1
   }
 
   "flatMap-0" in {
-    //#flatMap-0
+    // #flatMap-0
     val intParameter: Directive1[Int] = parameter("a".as[Int])
 
     val myDirective: Directive1[Int] =
@@ -98,11 +98,11 @@ class CustomDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/?a=-18") ~> myDirective(i => complete(i.toString)) ~> check {
       handled shouldEqual false
     }
-    //#flatMap-0
+    // #flatMap-0
   }
 
   "scratch-1" in {
-    //#scratch-1
+    // #scratch-1
     def hostnameAndPort: Directive[(String, Int)] = Directive[(String, Int)] { inner => ctx =>
       val authority = ctx.request.uri.authority
       inner((authority.host.address(), authority.port))(ctx)
@@ -117,11 +117,11 @@ class CustomDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual OK
       responseAs[String] shouldEqual "The hostname is akka.io and the port is 8080"
     }
-    //#scratch-1
+    // #scratch-1
   }
 
   "scratch-2" in {
-    //#scratch-2
+    // #scratch-2
     object hostnameAndPort extends Directive[(String, Int)] {
       override def tapply(f: ((String, Int)) => Route): Route = { ctx =>
         val authority = ctx.request.uri.authority
@@ -138,7 +138,7 @@ class CustomDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual OK
       responseAs[String] shouldEqual "The hostname is akka.io and the port is 8080"
     }
-    //#scratch-2
+    // #scratch-2
   }
 
 }

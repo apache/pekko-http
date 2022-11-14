@@ -15,7 +15,7 @@ class AkkaHttp1020MigrationSpec {
   import akka.http.scaladsl.server.Directives._
 
   {
-    //#old-binding
+    // #old-binding
     // only worked with classic actor system
     implicit val system = akka.actor.ActorSystem("TheSystem")
     implicit val mat: Materializer = ActorMaterializer()
@@ -24,11 +24,11 @@ class AkkaHttp1020MigrationSpec {
         complete("Hello world")
       }
     Http().bindAndHandle(route, "localhost", 8080)
-    //#old-binding
+    // #old-binding
   }
 
   {
-    //#new-binding
+    // #new-binding
     // works with both classic and typed ActorSystem
     implicit val system = akka.actor.typed.ActorSystem(Behaviors.empty, "TheSystem")
     // or
@@ -41,6 +41,6 @@ class AkkaHttp1020MigrationSpec {
         complete("Hello world")
       }
     Http().newServerAt("localhost", 8080).bind(route)
-    //#new-binding
+    // #new-binding
   }
 }

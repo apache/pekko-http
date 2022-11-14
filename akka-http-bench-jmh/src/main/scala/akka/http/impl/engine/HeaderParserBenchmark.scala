@@ -49,8 +49,7 @@ private[engine] class HeaderParserBenchmark {
     val settings = ParserSettingsImpl.fromSubConfig(root, root.getConfig("akka.http.server.parsing"))
     if (withCustomMediaTypes == "no") settings
     else settings.withCustomMediaTypes(
-      MediaType.customWithOpenCharset("application", "json")
-    )
+      MediaType.customWithOpenCharset("application", "json"))
   }
 
   @TearDown

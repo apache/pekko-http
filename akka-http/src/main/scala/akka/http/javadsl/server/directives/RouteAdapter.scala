@@ -16,7 +16,7 @@ import akka.http.javadsl.server.{ ExceptionHandler, RejectionHandler, Route }
 import akka.http.scaladsl
 import akka.http.scaladsl.server.RouteConcatenation._
 import akka.japi.function.Function
-import akka.stream.{ Materializer, javadsl }
+import akka.stream.{ javadsl, Materializer }
 import akka.stream.scaladsl.Flow
 
 /** INTERNAL API */

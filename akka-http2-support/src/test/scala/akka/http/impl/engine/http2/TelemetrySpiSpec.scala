@@ -45,7 +45,8 @@ class TestTelemetryImpl(system: ActorSystem) extends TelemetrySpi {
 
   override def client: BidiFlow[HttpRequest, HttpRequest, HttpResponse, HttpResponse, NotUsed] = delegate.get.client
   override def serverBinding: Flow[Tcp.IncomingConnection, Tcp.IncomingConnection, NotUsed] = delegate.get.serverBinding
-  override def serverConnection: BidiFlow[HttpResponse, HttpResponse, HttpRequest, HttpRequest, NotUsed] = delegate.get.serverConnection
+  override def serverConnection: BidiFlow[HttpResponse, HttpResponse, HttpRequest, HttpRequest, NotUsed] =
+    delegate.get.serverConnection
 
 }
 
@@ -53,7 +54,7 @@ class TelemetrySpiPlaintextSpec extends TelemetrySpiSpec(false)
 class TelemetrySpiCypherSpec extends TelemetrySpiSpec(true)
 
 abstract class TelemetrySpiSpec(useTls: Boolean) extends AkkaSpecWithMaterializer(
-  """
+      """
      akka.http.server.preview.enable-http2 = on
      akka.actor.serialize-messages = false
      akka.http.http2-telemetry-class = "akka.http.impl.engine.http2.TestTelemetryImpl"
@@ -64,7 +65,8 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends AkkaSpecWithMaterialize
 
   case class ConnectionId(id: String) extends Attribute
 
-  def bindAndConnect(probe: TestProbe): (Http.ServerBinding, Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]]) = {
+  def bindAndConnect(
+      probe: TestProbe): (Http.ServerBinding, Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]]) = {
     val handler: HttpRequest => Future[HttpResponse] = { request =>
       request.headers.find(_.lowercaseName == "request-id").foreach(found => probe.ref ! found.value)
       Future.successful(HttpResponse())
@@ -84,11 +86,13 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends AkkaSpecWithMaterialize
       if (useTls) {
         Http().connectionTo("akka.example.org")
           .withCustomHttpsConnectionContext(ExampleHttpContexts.exampleClientContext)
-          .withClientConnectionSettings(ClientConnectionSettings(system).withTransport(ExampleHttpContexts.proxyTransport(serverBinding.localAddress)))
+          .withClientConnectionSettings(ClientConnectionSettings(system).withTransport(
+            ExampleHttpContexts.proxyTransport(serverBinding.localAddress)))
           .http2()
       } else {
         Http().connectionTo("akka.example.org")
-          .withClientConnectionSettings(ClientConnectionSettings(system).withTransport(ExampleHttpContexts.proxyTransport(serverBinding.localAddress)))
+          .withClientConnectionSettings(ClientConnectionSettings(system).withTransport(
+            ExampleHttpContexts.proxyTransport(serverBinding.localAddress)))
           .http2WithPriorKnowledge()
       }
 
@@ -120,14 +124,15 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends AkkaSpecWithMaterialize
               probe.ref ! "response-seen"
               probe.ref ! response.getAttribute(requestIdAttr).get
               response.removeAttribute(requestIdAttr)
-            }
-          ).mapMaterializedValue { _ =>
-              probe.ref ! "seen-connection"
-              NotUsed
-            }
+            }).mapMaterializedValue { _ =>
+            probe.ref ! "seen-connection"
+            NotUsed
+          }
 
-        override def serverBinding: Flow[Tcp.IncomingConnection, Tcp.IncomingConnection, NotUsed] = Flow[Tcp.IncomingConnection]
-        override def serverConnection: BidiFlow[HttpResponse, HttpResponse, HttpRequest, HttpRequest, NotUsed] = BidiFlow.identity
+        override def serverBinding: Flow[Tcp.IncomingConnection, Tcp.IncomingConnection, NotUsed] =
+          Flow[Tcp.IncomingConnection]
+        override def serverConnection: BidiFlow[HttpResponse, HttpResponse, HttpRequest, HttpRequest, NotUsed] =
+          BidiFlow.identity
       })
 
       val (serverBinding, http2ClientFow) = bindAndConnect(probe)
@@ -164,35 +169,35 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends AkkaSpecWithMaterialize
         override def client: BidiFlow[HttpRequest, HttpRequest, HttpResponse, HttpResponse, NotUsed] =
           BidiFlow.identity
 
-        override def serverBinding: Flow[Tcp.IncomingConnection, Tcp.IncomingConnection, NotUsed] = Flow[Tcp.IncomingConnection]
-          .mapMaterializedValue { _ =>
-            telemetryProbe.ref ! "bind-seen"
-            NotUsed
-          }
-          .map { conn =>
-            val connId = ConnectionId(UUID.randomUUID().toString)
-            telemetryProbe.ref ! "connection-seen"
-            telemetryProbe.ref ! connId
-            conn.copy(flow = conn.flow.addAttributes(Attributes(connId)))
-          }.watchTermination() { (notUsed, done) =>
-            done.onComplete(_ => telemetryProbe.ref ! "unbind-seen")(system.dispatcher)
-            notUsed
-          }
+        override def serverBinding: Flow[Tcp.IncomingConnection, Tcp.IncomingConnection, NotUsed] =
+          Flow[Tcp.IncomingConnection]
+            .mapMaterializedValue { _ =>
+              telemetryProbe.ref ! "bind-seen"
+              NotUsed
+            }
+            .map { conn =>
+              val connId = ConnectionId(UUID.randomUUID().toString)
+              telemetryProbe.ref ! "connection-seen"
+              telemetryProbe.ref ! connId
+              conn.copy(flow = conn.flow.addAttributes(Attributes(connId)))
+            }.watchTermination() { (notUsed, done) =>
+              done.onComplete(_ => telemetryProbe.ref ! "unbind-seen")(system.dispatcher)
+              notUsed
+            }
 
-        override def serverConnection: BidiFlow[HttpResponse, HttpResponse, HttpRequest, HttpRequest, NotUsed] = BidiFlow.fromFlows(
-          Flow[HttpResponse].map { response =>
-            telemetryProbe.ref ! "response-seen"
-            response
-          }.watchTermination() { (_, done) =>
-            done.foreach(_ => telemetryProbe.ref ! "close-seen")(system.dispatcher)
-          },
-          StreamUtils.statefulAttrsMap[HttpRequest, HttpRequest](attributes =>
-            { request =>
+        override def serverConnection: BidiFlow[HttpResponse, HttpResponse, HttpRequest, HttpRequest, NotUsed] =
+          BidiFlow.fromFlows(
+            Flow[HttpResponse].map { response =>
+              telemetryProbe.ref ! "response-seen"
+              response
+            }.watchTermination() { (_, done) =>
+              done.foreach(_ => telemetryProbe.ref ! "close-seen")(system.dispatcher)
+            },
+            StreamUtils.statefulAttrsMap[HttpRequest, HttpRequest](attributes => { request =>
               telemetryProbe.ref ! "request-seen"
               attributes.get[ConnectionId].foreach(telemetryProbe.ref ! _)
               request
-            }
-          ))
+            }))
       })
 
       val (serverBinding, http2ClientFlow) = bindAndConnect(telemetryProbe)
@@ -230,8 +235,9 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends AkkaSpecWithMaterialize
     }
 
     "fallback if impl class cannot be found" in {
-      val system = ActorSystem(s"${getClass.getSimpleName}-noImplFound", ConfigFactory.parseString(
-        s"""
+      val system = ActorSystem(s"${getClass.getSimpleName}-noImplFound",
+        ConfigFactory.parseString(
+          s"""
             akka.http.http2-telemetry-class = no.such.Clazz
           """))
       try {

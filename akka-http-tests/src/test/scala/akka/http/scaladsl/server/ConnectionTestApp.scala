@@ -35,7 +35,8 @@ object ConnectionTestApp {
 
   val sourceActor = {
     // Our superPool expects (HttpRequest, Int) as input
-    val source = Source.actorRef[(HttpRequest, Int)](10000, OverflowStrategy.dropNew).buffer(20000, OverflowStrategy.fail)
+    val source =
+      Source.actorRef[(HttpRequest, Int)](10000, OverflowStrategy.dropNew).buffer(20000, OverflowStrategy.fail)
     val sink = Sink.foreach[(Try[HttpResponse], Int)] {
       case (resp, id) => handleResponse(resp, id)
     }
@@ -84,12 +85,13 @@ object ConnectionTestApp {
       val u = s"http://127.0.0.1:6666/test/$i"
       println("u =>" + u)
       sendPoolFlow(Uri(u), i)
-      //sendPoolFuture(uri, i)
-      //sendSingle(uri, i)
+      // sendPoolFuture(uri, i)
+      // sendSingle(uri, i)
     }
 
     StdIn.readLine()
-    println("===================== \n\n" + system.asInstanceOf[ActorSystemImpl].printTree + "\n\n========================")
+    println(
+      "===================== \n\n" + system.asInstanceOf[ActorSystemImpl].printTree + "\n\n========================")
     StdIn.readLine()
     system.terminate()
   }

@@ -6,10 +6,10 @@ package akka.http.scaladsl.marshallers.sprayjson
 
 import java.lang.StringBuilder
 
-import akka.http.scaladsl.marshallers.{ JsonSupportSpec, Employee }
+import akka.http.scaladsl.marshallers.{ Employee, JsonSupportSpec }
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-import spray.json.{ JsValue, PrettyPrinter, JsonPrinter, DefaultJsonProtocol }
+import spray.json.{ DefaultJsonProtocol, JsValue, JsonPrinter, PrettyPrinter }
 
 import scala.collection.immutable.ListMap
 

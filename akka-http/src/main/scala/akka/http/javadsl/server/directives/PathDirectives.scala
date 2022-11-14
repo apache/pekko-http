@@ -256,7 +256,7 @@ abstract class PathDirectives extends ParameterDirectives {
     }
   }
 
-  //------ extra java-specific methods
+  // ------ extra java-specific methods
 
   // Java-specific since there's no Java API to create custom PathMatchers. And that's because there's no Path model in Java.
   /**
@@ -298,4 +298,3 @@ abstract class PathDirectives extends ParameterDirectives {
     }
   }
 }
-

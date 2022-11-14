@@ -28,11 +28,13 @@ import scala.collection.immutable.VectorBuilder
 private[http2] object RequestParsing {
 
   @nowarn("msg=use remote-address-attribute instead")
-  def parseRequest(httpHeaderParser: HttpHeaderParser, serverSettings: ServerSettings, streamAttributes: Attributes): Http2SubStream => HttpRequest = {
+  def parseRequest(httpHeaderParser: HttpHeaderParser, serverSettings: ServerSettings, streamAttributes: Attributes)
+      : Http2SubStream => HttpRequest = {
 
     val remoteAddressHeader: Option[`Remote-Address`] =
       if (serverSettings.remoteAddressHeader) {
-        streamAttributes.get[HttpAttributes.RemoteAddress].map(remote => model.headers.`Remote-Address`(RemoteAddress(remote.address)))
+        streamAttributes.get[HttpAttributes.RemoteAddress].map(remote =>
+          model.headers.`Remote-Address`(RemoteAddress(remote.address)))
         // in order to avoid searching all the time for the attribute, we need to guard it with the setting condition
       } else None // no need to emit the remote address header
 
@@ -68,15 +70,14 @@ private[http2] object RequestParsing {
 
     { subStream =>
       def createRequest(
-        method:          HttpMethod,
-        scheme:          String,
-        authority:       Uri.Authority,
-        pathAndRawQuery: (Uri.Path, Option[String]),
-        contentType:     OptionVal[ContentType],
-        contentLength:   Long,
-        cookies:         StringBuilder,
-        headers:         VectorBuilder[HttpHeader]
-      ): HttpRequest = {
+          method: HttpMethod,
+          scheme: String,
+          authority: Uri.Authority,
+          pathAndRawQuery: (Uri.Path, Option[String]),
+          contentType: OptionVal[ContentType],
+          contentLength: Long,
+          cookies: StringBuilder,
+          headers: VectorBuilder[HttpHeader]): HttpRequest = {
         // https://httpwg.org/specs/rfc7540.html#rfc.section.8.1.2.3: these pseudo header fields are mandatory for a request
         checkRequiredPseudoHeader(":scheme", scheme)
         checkRequiredPseudoHeader(":method", method)
@@ -102,19 +103,19 @@ private[http2] object RequestParsing {
 
       @tailrec
       def rec(
-        incomingHeaders:   IndexedSeq[(String, AnyRef)],
-        offset:            Int,
-        method:            HttpMethod                   = null,
-        scheme:            String                       = null,
-        authority:         Uri.Authority                = null,
-        pathAndRawQuery:   (Uri.Path, Option[String])   = null,
-        contentType:       OptionVal[ContentType]       = OptionVal.None,
-        contentLength:     Long                         = -1,
-        cookies:           StringBuilder                = null,
-        seenRegularHeader: Boolean                      = false,
-        headers:           VectorBuilder[HttpHeader]    = new VectorBuilder[HttpHeader]
-      ): HttpRequest =
-        if (offset == incomingHeaders.size) createRequest(method, scheme, authority, pathAndRawQuery, contentType, contentLength, cookies, headers)
+          incomingHeaders: IndexedSeq[(String, AnyRef)],
+          offset: Int,
+          method: HttpMethod = null,
+          scheme: String = null,
+          authority: Uri.Authority = null,
+          pathAndRawQuery: (Uri.Path, Option[String]) = null,
+          contentType: OptionVal[ContentType] = OptionVal.None,
+          contentLength: Long = -1,
+          cookies: StringBuilder = null,
+          seenRegularHeader: Boolean = false,
+          headers: VectorBuilder[HttpHeader] = new VectorBuilder[HttpHeader]): HttpRequest =
+        if (offset == incomingHeaders.size)
+          createRequest(method, scheme, authority, pathAndRawQuery, contentType, contentLength, cookies, headers)
         else {
           import hpack.Http2HeaderParsing._
           val (name, value) = incomingHeaders(offset)
@@ -122,28 +123,33 @@ private[http2] object RequestParsing {
             case ":scheme" =>
               checkUniquePseudoHeader(":scheme", scheme)
               checkNoRegularHeadersBeforePseudoHeader(":scheme", seenRegularHeader)
-              rec(incomingHeaders, offset + 1, method, Scheme.get(value), authority, pathAndRawQuery, contentType, contentLength, cookies, seenRegularHeader, headers)
+              rec(incomingHeaders, offset + 1, method, Scheme.get(value), authority, pathAndRawQuery, contentType,
+                contentLength, cookies, seenRegularHeader, headers)
 
             case ":method" =>
               checkUniquePseudoHeader(":method", method)
               checkNoRegularHeadersBeforePseudoHeader(":method", seenRegularHeader)
 
-              rec(incomingHeaders, offset + 1, Method.get(value), scheme, authority, pathAndRawQuery, contentType, contentLength, cookies, seenRegularHeader, headers)
+              rec(incomingHeaders, offset + 1, Method.get(value), scheme, authority, pathAndRawQuery, contentType,
+                contentLength, cookies, seenRegularHeader, headers)
 
             case ":path" =>
               checkUniquePseudoHeader(":path", pathAndRawQuery)
               checkNoRegularHeadersBeforePseudoHeader(":path", seenRegularHeader)
-              rec(incomingHeaders, offset + 1, method, scheme, authority, PathAndQuery.get(value), contentType, contentLength, cookies, seenRegularHeader, headers)
+              rec(incomingHeaders, offset + 1, method, scheme, authority, PathAndQuery.get(value), contentType,
+                contentLength, cookies, seenRegularHeader, headers)
 
             case ":authority" =>
               checkUniquePseudoHeader(":authority", authority)
               checkNoRegularHeadersBeforePseudoHeader(":authority", seenRegularHeader)
 
-              rec(incomingHeaders, offset + 1, method, scheme, Authority.get(value), pathAndRawQuery, contentType, contentLength, cookies, seenRegularHeader, headers)
+              rec(incomingHeaders, offset + 1, method, scheme, Authority.get(value), pathAndRawQuery, contentType,
+                contentLength, cookies, seenRegularHeader, headers)
 
             case "content-type" =>
               if (contentType.isEmpty)
-                rec(incomingHeaders, offset + 1, method, scheme, authority, pathAndRawQuery, OptionVal.Some(ContentType.get(value)), contentLength, cookies, true, headers)
+                rec(incomingHeaders, offset + 1, method, scheme, authority, pathAndRawQuery,
+                  OptionVal.Some(ContentType.get(value)), contentLength, cookies, true, headers)
               else
                 malformedRequest("HTTP message must not contain more than one content-type header")
 
@@ -153,8 +159,10 @@ private[http2] object RequestParsing {
             case "content-length" =>
               if (contentLength == -1) {
                 val contentLengthValue = ContentLength.get(value).toLong
-                if (contentLengthValue < 0) malformedRequest("HTTP message must not contain a negative content-length header")
-                rec(incomingHeaders, offset + 1, method, scheme, authority, pathAndRawQuery, contentType, contentLengthValue, cookies, true, headers)
+                if (contentLengthValue < 0)
+                  malformedRequest("HTTP message must not contain a negative content-length header")
+                rec(incomingHeaders, offset + 1, method, scheme, authority, pathAndRawQuery, contentType,
+                  contentLengthValue, cookies, true, headers)
               } else malformedRequest("HTTP message must not contain more than one content-length header")
 
             case "cookie" =>
@@ -165,16 +173,19 @@ private[http2] object RequestParsing {
                 cookies.append("; ") // Append octets as required by the spec
               }
               cookiesBuilder.append(Cookie.get(value))
-              rec(incomingHeaders, offset + 1, method, scheme, authority, pathAndRawQuery, contentType, contentLength, cookiesBuilder, true, headers)
+              rec(incomingHeaders, offset + 1, method, scheme, authority, pathAndRawQuery, contentType, contentLength,
+                cookiesBuilder, true, headers)
 
             case _ =>
-              rec(incomingHeaders, offset + 1, method, scheme, authority, pathAndRawQuery, contentType, contentLength, cookies, true, headers += OtherHeader.get(value))
+              rec(incomingHeaders, offset + 1, method, scheme, authority, pathAndRawQuery, contentType, contentLength,
+                cookies, true, headers += OtherHeader.get(value))
           }
         }
 
       val incomingHeaders = subStream.initialHeaders.keyValuePairs.toIndexedSeq
       if (incomingHeaders.size > serverSettings.parserSettings.maxHeaderCount)
-        malformedRequest(s"HTTP message contains more than the configured limit of ${serverSettings.parserSettings.maxHeaderCount} headers")
+        malformedRequest(
+          s"HTTP message contains more than the configured limit of ${serverSettings.parserSettings.maxHeaderCount} headers")
       else rec(incomingHeaders, 0)
     }
   }
@@ -206,7 +217,8 @@ private[http2] object RequestParsing {
       malformedRequest("Header 'Transfer-Encoding' must not be used with HTTP/2")
     case "te" =>
       // https://tools.ietf.org/html/rfc7540#section-8.1.2.2
-      if (httpHeader.value.compareToIgnoreCase("trailers") != 0) malformedRequest(s"Header 'TE' must not contain value other than 'trailers', value was '${httpHeader.value}")
+      if (httpHeader.value.compareToIgnoreCase("trailers") != 0)
+        malformedRequest(s"Header 'TE' must not contain value other than 'trailers', value was '${httpHeader.value}")
     case _ => // ok
   }
 

@@ -13,7 +13,7 @@ import docs.CompileOnlySpec
 class HostDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "extractHost" in {
-    //#extractHost
+    // #extractHost
     val route =
       extractHost { hn =>
         complete(s"Hostname: $hn")
@@ -24,11 +24,11 @@ class HostDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual OK
       responseAs[String] shouldEqual "Hostname: company.com"
     }
-    //#extractHost
+    // #extractHost
   }
 
   "list-of-hosts" in {
-    //#list-of-hosts
+    // #list-of-hosts
     val route =
       host("api.company.com", "rest.company.com") {
         complete("Ok")
@@ -43,12 +43,12 @@ class HostDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get() ~> Host("notallowed.company.com") ~> route ~> check {
       handled shouldBe false
     }
-    //#list-of-hosts
+    // #list-of-hosts
   }
 
   "predicate" in {
-    //#predicate
-    val shortOnly: String => Boolean = (hostname) => hostname.length < 10
+    // #predicate
+    val shortOnly: String => Boolean = hostname => hostname.length < 10
 
     val route =
       host(shortOnly) {
@@ -64,11 +64,11 @@ class HostDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get() ~> Host("verylonghostname.com") ~> route ~> check {
       handled shouldBe false
     }
-    //#predicate
+    // #predicate
   }
 
   "using-regex" in {
-    //#using-regex
+    // #using-regex
     val route =
       concat(
         host("api|rest".r) { prefix =>
@@ -76,8 +76,7 @@ class HostDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
         },
         host("public.(my|your)company.com".r) { captured =>
           complete(s"You came through $captured company")
-        }
-      )
+        })
 
     // tests:
     Get() ~> Host("api.company.com") ~> route ~> check {
@@ -89,17 +88,17 @@ class HostDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual OK
       responseAs[String] shouldEqual "You came through my company"
     }
-    //#using-regex
+    // #using-regex
   }
 
   "failing-regex" in {
-    //#failing-regex
+    // #failing-regex
     an[IllegalArgumentException] should be thrownBy {
       host("server-([0-9]).company.(com|net|org)".r) { target =>
         complete("Will never complete :'(")
       }
     }
-    //#failing-regex
+    // #failing-regex
   }
 
 }

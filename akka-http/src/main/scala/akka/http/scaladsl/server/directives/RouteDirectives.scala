@@ -63,7 +63,8 @@ trait RouteDirectives {
    *
    * @group route
    */
-  def complete[T](status: StatusCode, headers: immutable.Seq[HttpHeader], v: => T)(implicit m: ToEntityMarshaller[T]): StandardRoute =
+  def complete[T](status: StatusCode, headers: immutable.Seq[HttpHeader], v: => T)(
+      implicit m: ToEntityMarshaller[T]): StandardRoute =
     complete((status, headers, v))
 
   /**
@@ -80,16 +81,18 @@ trait RouteDirectives {
    *
    * @group route
    */
-  def handle(handler: HttpRequest => Future[HttpResponse]): StandardRoute =
-    { ctx => handler(ctx.request).fast.map(RouteResult.Complete)(ctx.executionContext) }
+  def handle(handler: HttpRequest => Future[HttpResponse]): StandardRoute = { ctx =>
+    handler(ctx.request).fast.map(RouteResult.Complete)(ctx.executionContext)
+  }
 
   /**
    * Handle the request using a function.
    *
    * @group route
    */
-  def handleSync(handler: HttpRequest => HttpResponse): StandardRoute =
-    { ctx => FastFuture.successful(RouteResult.Complete(handler(ctx.request))) }
+  def handleSync(handler: HttpRequest => HttpResponse): StandardRoute = { ctx =>
+    FastFuture.successful(RouteResult.Complete(handler(ctx.request)))
+  }
 
   /**
    * Handle the request using an asynchronous partial function.
@@ -115,12 +118,12 @@ trait RouteDirectives {
    *
    * @group route
    */
-  def handle(handler: PartialFunction[HttpRequest, Future[HttpResponse]], rejections: Seq[Rejection]): StandardRoute =
-    { ctx =>
-      handler
-        .andThen(_.fast.map(RouteResult.Complete)(ctx.executionContext))
-        .applyOrElse[HttpRequest, Future[RouteResult]](ctx.request, _ => ctx.reject(rejections: _*))
-    }
+  def handle(
+      handler: PartialFunction[HttpRequest, Future[HttpResponse]], rejections: Seq[Rejection]): StandardRoute = { ctx =>
+    handler
+      .andThen(_.fast.map(RouteResult.Complete)(ctx.executionContext))
+      .applyOrElse[HttpRequest, Future[RouteResult]](ctx.request, _ => ctx.reject(rejections: _*))
+  }
 
   /**
    * Handle the request using a synchronous partial function.
@@ -146,12 +149,12 @@ trait RouteDirectives {
    *
    * @group route
    */
-  def handleSync(handler: PartialFunction[HttpRequest, HttpResponse], rejections: Seq[Rejection]): StandardRoute =
-    { ctx =>
-      handler
-        .andThen(res => FastFuture.successful(RouteResult.Complete(res)))
-        .applyOrElse[HttpRequest, Future[RouteResult]](ctx.request, _ => ctx.reject(rejections: _*))
-    }
+  def handleSync(
+      handler: PartialFunction[HttpRequest, HttpResponse], rejections: Seq[Rejection]): StandardRoute = { ctx =>
+    handler
+      .andThen(res => FastFuture.successful(RouteResult.Complete(res)))
+      .applyOrElse[HttpRequest, Future[RouteResult]](ctx.request, _ => ctx.reject(rejections: _*))
+  }
 }
 
 object RouteDirectives extends RouteDirectives {

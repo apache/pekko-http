@@ -16,14 +16,15 @@ object Marshal {
   def apply[T](value: T): Marshal[T] = new Marshal(value)
 
   final case class UnacceptableResponseContentTypeException(supported: Set[ContentNegotiator.Alternative])
-    extends RuntimeException with NoStackTrace
+      extends RuntimeException with NoStackTrace
 
-  private[marshalling] def selectMarshallingForContentType[T](marshallings: Seq[Marshalling[T]], contentType: ContentType): Option[() => T] = {
+  private[marshalling] def selectMarshallingForContentType[T](marshallings: Seq[Marshalling[T]],
+      contentType: ContentType): Option[() => T] = {
     contentType match {
       case _: ContentType.Binary | _: ContentType.WithFixedCharset | _: ContentType.WithMissingCharset =>
-        marshallings collectFirst { case Marshalling.WithFixedContentType(`contentType`, marshal) => marshal }
+        marshallings.collectFirst { case Marshalling.WithFixedContentType(`contentType`, marshal) => marshal }
       case ContentType.WithCharset(mediaType, charset) =>
-        marshallings collectFirst {
+        marshallings.collectFirst {
           case Marshalling.WithFixedContentType(`contentType`, marshal) => marshal
           case Marshalling.WithOpenCharset(`mediaType`, marshal)        => () => marshal(charset)
         }
@@ -32,6 +33,7 @@ object Marshal {
 }
 
 class Marshal[A](val value: A) {
+
   /**
    * Marshals `value` using the first available [[Marshalling]] for `A` and `B` provided by the given [[Marshaller]].
    * If the marshalling is flexible with regard to the used charset `UTF-8` is chosen.
@@ -48,7 +50,8 @@ class Marshal[A](val value: A) {
   /**
    * Marshals `value` to an `HttpResponse` for the given `HttpRequest` with full content-negotiation.
    */
-  def toResponseFor(request: HttpRequest)(implicit m: ToResponseMarshaller[A], ec: ExecutionContext): Future[HttpResponse] = {
+  def toResponseFor(request: HttpRequest)(
+      implicit m: ToResponseMarshaller[A], ec: ExecutionContext): Future[HttpResponse] = {
     import akka.http.scaladsl.marshalling.Marshal._
     val ctn = ContentNegotiator(request.headers)
 
@@ -63,9 +66,9 @@ class Marshal[A](val value: A) {
           ctn.pickContentType(supportedAlternatives)
             .flatMap(selectMarshallingForContentType(marshallings, _))
         } else None
-      } orElse {
-        marshallings collectFirst { case Marshalling.Opaque(marshal) => marshal }
-      } getOrElse {
+      }.orElse {
+        marshallings.collectFirst { case Marshalling.Opaque(marshal) => marshal }
+      }.getOrElse {
         throw UnacceptableResponseContentTypeException(supportedAlternatives.toSet)
       }
       bestMarshal()

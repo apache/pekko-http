@@ -23,7 +23,7 @@ abstract class FramedEntityStreamingDirectives extends TimeoutDirectives {
 
   @CorrespondsTo("asSourceOf")
   def entityAsSourceOf[T](um: Unmarshaller[ByteString, T], support: EntityStreamingSupport,
-                          inner: java.util.function.Function[Source[T, NotUsed], Route]): Route = RouteAdapter {
+      inner: java.util.function.Function[Source[T, NotUsed], Route]): Route = RouteAdapter {
     val umm = D.asSourceOf(um.asScala, support.asScala)
     D.entity(umm) { s: akka.stream.scaladsl.Source[T, NotUsed] =>
       inner(s.asJava).delegate
@@ -32,7 +32,8 @@ abstract class FramedEntityStreamingDirectives extends TimeoutDirectives {
 
   // implicits and multiple parameter lists used internally, Java caller does not benefit or use it
   @CorrespondsTo("complete")
-  def completeWithSource[T, M](source: Source[T, M])(implicit m: Marshaller[T, ByteString], support: EntityStreamingSupport): Route = RouteAdapter {
+  def completeWithSource[T, M](source: Source[T, M])(implicit m: Marshaller[T, ByteString],
+      support: EntityStreamingSupport): Route = RouteAdapter {
     import akka.http.scaladsl.marshalling.PredefinedToResponseMarshallers._
     val mm = m.map(ByteStringAsEntityFn).asScalaCastOutput[akka.http.scaladsl.model.RequestEntity]
     val mmm = fromEntityStreamingSupportAndEntityMarshaller[T, M](support.asScala, mm, null)
@@ -42,10 +43,12 @@ abstract class FramedEntityStreamingDirectives extends TimeoutDirectives {
 
   // implicits and multiple parameter lists used internally, Java caller does not benefit or use it
   @CorrespondsTo("complete")
-  def completeOKWithSource[T, M](source: Source[T, M])(implicit m: Marshaller[T, RequestEntity], support: EntityStreamingSupport): Route = RouteAdapter {
+  def completeOKWithSource[T, M](source: Source[T, M])(implicit m: Marshaller[T, RequestEntity],
+      support: EntityStreamingSupport): Route = RouteAdapter {
     import akka.http.scaladsl.marshalling.PredefinedToResponseMarshallers._
     // don't try this at home:
-    val mm = m.asScalaCastOutput[akka.http.scaladsl.model.RequestEntity].map(_.httpEntity.asInstanceOf[akka.http.scaladsl.model.RequestEntity])
+    val mm = m.asScalaCastOutput[akka.http.scaladsl.model.RequestEntity].map(
+      _.httpEntity.asInstanceOf[akka.http.scaladsl.model.RequestEntity])
     implicit val mmm = fromEntityStreamingSupportAndEntityMarshaller[T, M](support.asScala, mm, null)
     val response = ToResponseMarshallable(source.asScala)
     D.complete(response)

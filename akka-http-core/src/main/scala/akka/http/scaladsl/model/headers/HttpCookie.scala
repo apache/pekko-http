@@ -21,8 +21,8 @@ import scala.compat.java8.OptionConverters._
  * This class is sealed abstract to prevent generation of default apply method in companion
  */
 sealed abstract case class HttpCookiePair private (
-  name:  String,
-  value: String) extends jm.headers.HttpCookiePair with ToStringRenderable {
+    name: String,
+    value: String) extends jm.headers.HttpCookiePair with ToStringRenderable {
 
   def render[R <: Rendering](r: R): r.type = r ~~ name ~~ '=' ~~ value
   def toCookie: HttpCookie = HttpCookie(this.name, this.value)
@@ -43,12 +43,14 @@ object HttpCookiePair {
   private[http] def validate(name: String, value: String): Unit = {
     import HttpCookie._
     require(nameChars.matchesAll(name), s"'${nameChars.firstMismatch(name).get}' not allowed in cookie name ('$name')")
-    require(valueChars.matchesAll(value), s"'${valueChars.firstMismatch(value).get}' not allowed in cookie content ('$value')")
+    require(valueChars.matchesAll(value),
+      s"'${valueChars.firstMismatch(value).get}' not allowed in cookie content ('$value')")
   }
   private[http] def validateRaw(name: String, value: String): Unit = {
     import HttpCookie._
     require(nameChars.matchesAll(name), s"'${nameChars.firstMismatch(name).get}' not allowed in cookie name ('$name')")
-    require(rawValueChars.matchesAll(value), s"'${rawValueChars.firstMismatch(value).get}' not allowed in cookie content ('$value')")
+    require(rawValueChars.matchesAll(value),
+      s"'${rawValueChars.firstMismatch(value).get}' not allowed in cookie content ('$value')")
   }
 }
 
@@ -57,52 +59,55 @@ object HttpCookiePair {
  * http://tools.ietf.org/html/rfc6265
  */
 final class HttpCookie private[http] (
-  name:          String,
-  value:         String,
-  val expires:   Option[DateTime],
-  val maxAge:    Option[Long],
-  val domain:    Option[String],
-  val path:      Option[String],
-  secure:        Boolean,
-  httpOnly:      Boolean,
-  val extension: Option[String],
-  val sameSite:  Option[SameSite]) extends jm.headers.HttpCookie with ToStringRenderable with Product with Serializable with Equals {
+    name: String,
+    value: String,
+    val expires: Option[DateTime],
+    val maxAge: Option[Long],
+    val domain: Option[String],
+    val path: Option[String],
+    secure: Boolean,
+    httpOnly: Boolean,
+    val extension: Option[String],
+    val sameSite: Option[SameSite]) extends jm.headers.HttpCookie with ToStringRenderable with Product with Serializable
+    with Equals {
 
   @deprecated("Please use HttpCookie(name, value).withXxx()", "10.2.0")
   def this(
-    name:      String,
-    value:     String,
-    expires:   Option[DateTime] = None,
-    maxAge:    Option[Long]     = None,
-    domain:    Option[String]   = None,
-    path:      Option[String]   = None,
-    secure:    Boolean          = false,
-    httpOnly:  Boolean          = false,
-    extension: Option[String]   = None) = this(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
+      name: String,
+      value: String,
+      expires: Option[DateTime] = None,
+      maxAge: Option[Long] = None,
+      domain: Option[String] = None,
+      path: Option[String] = None,
+      secure: Boolean = false,
+      httpOnly: Boolean = false,
+      extension: Option[String] = None) =
+    this(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
 
   @deprecated("for binary compatibility", since = "10.2.0")
   private[headers] def copy(
-    name:      String,
-    value:     String,
-    expires:   Option[DateTime],
-    maxAge:    Option[Long],
-    domain:    Option[String],
-    path:      Option[String],
-    secure:    Boolean,
-    httpOnly:  Boolean,
-    extension: Option[String]): HttpCookie = copy(name = name, value = value, expires = expires, maxAge = maxAge, domain = domain, path = path, secure = secure, httpOnly = httpOnly, extension = extension, sameSite = sameSite)
+      name: String,
+      value: String,
+      expires: Option[DateTime],
+      maxAge: Option[Long],
+      domain: Option[String],
+      path: Option[String],
+      secure: Boolean,
+      httpOnly: Boolean,
+      extension: Option[String]): HttpCookie = copy(name = name, value = value, expires = expires, maxAge = maxAge,
+    domain = domain, path = path, secure = secure, httpOnly = httpOnly, extension = extension, sameSite = sameSite)
 
   private[headers] def copy(
-    name:      String           = this.name,
-    value:     String           = this.value,
-    expires:   Option[DateTime] = this.expires,
-    maxAge:    Option[Long]     = this.maxAge,
-    domain:    Option[String]   = this.domain,
-    path:      Option[String]   = this.path,
-    secure:    Boolean          = this.secure,
-    httpOnly:  Boolean          = this.httpOnly,
-    extension: Option[String]   = this.extension,
-    sameSite:  Option[SameSite] = this.sameSite): HttpCookie =
+      name: String = this.name,
+      value: String = this.value,
+      expires: Option[DateTime] = this.expires,
+      maxAge: Option[Long] = this.maxAge,
+      domain: Option[String] = this.domain,
+      path: Option[String] = this.path,
+      secure: Boolean = this.secure,
+      httpOnly: Boolean = this.httpOnly,
+      extension: Option[String] = this.extension,
+      sameSite: Option[SameSite] = this.sameSite): HttpCookie =
     new HttpCookie(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, sameSite)
 
   override def productArity: Int = 9
@@ -124,16 +129,16 @@ final class HttpCookie private[http] (
   override def equals(obj: Any): Boolean = obj match {
     case that: HttpCookie =>
       this.canEqual(that) &&
-        this.name == that.name &&
-        this.value == that.value &&
-        this.expires == that.expires &&
-        this.maxAge == that.maxAge &&
-        this.domain == that.domain &&
-        this.path == that.path &&
-        this.secure == that.secure &&
-        this.httpOnly == that.httpOnly &&
-        this.extension == that.extension &&
-        this.sameSite == that.sameSite
+      this.name == that.name &&
+      this.value == that.value &&
+      this.expires == that.expires &&
+      this.maxAge == that.maxAge &&
+      this.domain == that.domain &&
+      this.path == that.path &&
+      this.secure == that.secure &&
+      this.httpOnly == that.httpOnly &&
+      this.extension == that.extension &&
+      this.sameSite == that.sameSite
     case _ => false
   }
 
@@ -145,9 +150,12 @@ final class HttpCookie private[http] (
   import HttpCookie._
 
   HttpCookiePair.validate(name, value)
-  require(domain.forall(domainChars.matchesAll), s"'${domainChars.firstMismatch(domain.get).get}' not allowed in cookie domain ('${domain.get}')")
-  require(path.forall(pathOrExtChars.matchesAll), s"'${pathOrExtChars.firstMismatch(path.get).get}' not allowed in cookie path ('${path.get}')")
-  require(extension.forall(pathOrExtChars.matchesAll), s"'${pathOrExtChars.firstMismatch(extension.get).get}' not allowed in cookie extension ('${extension.get}')")
+  require(domain.forall(domainChars.matchesAll),
+    s"'${domainChars.firstMismatch(domain.get).get}' not allowed in cookie domain ('${domain.get}')")
+  require(path.forall(pathOrExtChars.matchesAll),
+    s"'${pathOrExtChars.firstMismatch(path.get).get}' not allowed in cookie path ('${path.get}')")
+  require(extension.forall(pathOrExtChars.matchesAll),
+    s"'${pathOrExtChars.firstMismatch(extension.get).get}' not allowed in cookie extension ('${extension.get}')")
 
   def render[R <: Rendering](r: R): r.type = {
     r ~~ name ~~ '=' ~~ value
@@ -169,21 +177,28 @@ final class HttpCookie private[http] (
 
   /** Java API */
   def getSameSite: Optional[jm.headers.SameSite] = sameSite.map(_.asJava).asJava
+
   /** Java API */
   def getExtension: Optional[String] = extension.asJava
+
   /** Java API */
   def getPath: Optional[String] = path.asJava
+
   /** Java API */
   def getDomain: Optional[String] = domain.asJava
+
   /** Java API */
   def getMaxAge: OptionalLong = maxAge.asPrimitive
+
   /** Java API */
   def getExpires: Optional[jm.DateTime] = expires.map(_.asJava).asJava
 
   def withName(name: String): HttpCookie = copy(name = name)
   def withValue(value: String): HttpCookie = copy(value = value)
+
   /** Scala API */
   def withExpires(dateTime: DateTime): HttpCookie = copy(expires = Some(dateTime))
+
   /** Java API */
   def withExpires(dateTime: jm.DateTime): HttpCookie = copy(expires = Some(dateTime.asScala))
 
@@ -196,9 +211,11 @@ final class HttpCookie private[http] (
   /** Scala API */
   def withSameSite(sameSite: SameSite) = copy(sameSite = Some(sameSite))
   def withSameSite(sameSite: Option[SameSite]) = copy(sameSite = sameSite)
+
   /** Java API */
   def withSameSite(sameSite: jm.headers.SameSite): HttpCookie = copy(sameSite = Option(sameSite.asScala()))
-  def withSameSite(sameSite: Optional[jm.headers.SameSite]): HttpCookie = copy(sameSite = sameSite.asScala.map(_.asScala()))
+  def withSameSite(sameSite: Optional[jm.headers.SameSite]): HttpCookie =
+    copy(sameSite = sameSite.asScala.map(_.asScala()))
 
   def withExtension(extension: String): HttpCookie = copy(extension = Some(extension))
 }
@@ -210,18 +227,20 @@ object HttpCookie {
    * 'withXxx' methods to populate other fields.
    */
   def apply(
-    name:      String,
-    value:     String,
-    expires:   Option[DateTime] = None,
-    maxAge:    Option[Long]     = None,
-    domain:    Option[String]   = None,
-    path:      Option[String]   = None,
-    secure:    Boolean          = false,
-    httpOnly:  Boolean          = false,
-    extension: Option[String]   = None
-  ) = new HttpCookie(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
+      name: String,
+      value: String,
+      expires: Option[DateTime] = None,
+      maxAge: Option[Long] = None,
+      domain: Option[String] = None,
+      path: Option[String] = None,
+      secure: Boolean = false,
+      httpOnly: Boolean = false,
+      extension: Option[String] = None) =
+    new HttpCookie(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
 
-  @deprecated("Pattern matching on HttpCookie is deprecated because of the big number of fields and potential future compatibility hazards. Please use other means to check the fields.", since = "10.2.0")
+  @deprecated(
+    "Pattern matching on HttpCookie is deprecated because of the big number of fields and potential future compatibility hazards. Please use other means to check the fields.",
+    since = "10.2.0")
   def unapply(cookie: HttpCookie) = Option((
     cookie.name(),
     cookie.value(),
@@ -231,29 +250,30 @@ object HttpCookie {
     cookie.path,
     cookie.secure(),
     cookie.httpOnly(),
-    cookie.extension
-  ))
+    cookie.extension))
 
   @deprecated("Use HttpCookiePair.toCookie and withXxx methods instead", "10.2.0")
   def fromPair(
-    pair:      HttpCookiePair,
-    expires:   Option[DateTime] = None,
-    maxAge:    Option[Long]     = None,
-    domain:    Option[String]   = None,
-    path:      Option[String]   = None,
-    secure:    Boolean          = false,
-    httpOnly:  Boolean          = false,
-    extension: Option[String]   = None): HttpCookie =
+      pair: HttpCookiePair,
+      expires: Option[DateTime] = None,
+      maxAge: Option[Long] = None,
+      domain: Option[String] = None,
+      path: Option[String] = None,
+      secure: Boolean = false,
+      httpOnly: Boolean = false,
+      extension: Option[String] = None): HttpCookie =
     new HttpCookie(pair.name, pair.value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
 
   import akka.http.impl.model.parser.CharacterClasses._
 
   private[http] def nameChars = tchar
+
   /**
    * http://tools.ietf.org/html/rfc6265#section-4.1.1
    * US-ASCII characters excluding CTLs, whitespace DQUOTE, comma, semicolon, and backslash
    */
-  private[http] val valueChars = CharPredicate('\u0021', '\u0023' to '\u002B', '\u002D' to '\u003A', '\u003C' to '\u005B', '\u005D' to '\u007E')
+  private[http] val valueChars =
+    CharPredicate('\u0021', '\u0023' to '\u002B', '\u002D' to '\u003A', '\u003C' to '\u005B', '\u005D' to '\u007E')
   private[http] val rawValueChars = CharacterClasses.`cookie-octet-raw`
   private[http] val domainChars = ALPHANUM ++ ".-"
   private[http] val pathOrExtChars = VCHAR ++ ' ' -- ';'

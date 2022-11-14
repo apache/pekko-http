@@ -23,7 +23,7 @@ import scala.concurrent.duration.{ Deadline, FiniteDuration }
  */
 @InternalApi
 private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDuration, log: LoggingAdapter)
-  extends GraphStage[FlowShape[FrameOutHandler.Input, FrameStart]] {
+    extends GraphStage[FlowShape[FrameOutHandler.Input, FrameStart]] {
   val in = Inlet[FrameOutHandler.Input]("FrameOutHandler.in")
   val out = Outlet[FrameStart]("FrameOutHandler.out")
 
@@ -39,11 +39,13 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
     private object Idle extends InHandler with ProcotolExceptionHandling {
       override def onPush() =
         grab(in) match {
-          case start: FrameStart   => push(out, start)
-          case DirectAnswer(frame) => push(out, frame)
+          case start: FrameStart                                                     => push(out, start)
+          case DirectAnswer(frame)                                                   => push(out, frame)
           case PeerClosed(code, reason) if !code.exists(Protocol.CloseCodes.isError) =>
             // let user complete it, FIXME: maybe make configurable? immediately, or timeout
-            setHandler(in, new WaitingForUserHandlerClosed(FrameEvent.closeFrame(code.getOrElse(Protocol.CloseCodes.Regular), reason)))
+            setHandler(in,
+              new WaitingForUserHandlerClosed(FrameEvent.closeFrame(code.getOrElse(Protocol.CloseCodes.Regular),
+                reason)))
             pull(in)
           case PeerClosed(code, reason) =>
             val closeFrame = FrameEvent.closeFrame(code.getOrElse(Protocol.CloseCodes.Regular), reason)
@@ -104,12 +106,14 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
     /**
      * we have sent out close frame and wait for peer to sent its close frame
      */
-    private class WaitingForPeerCloseFrame(deadline: Deadline = closeDeadline()) extends InHandler with ProcotolExceptionHandling {
+    private class WaitingForPeerCloseFrame(deadline: Deadline = closeDeadline()) extends InHandler
+        with ProcotolExceptionHandling {
       override def onPush() =
         grab(in) match {
           case Tick =>
             if (deadline.isOverdue()) {
-              if (log.isDebugEnabled) log.debug(s"Peer did not acknowledge CLOSE frame after ${_closeTimeout}, closing underlying connection now.")
+              if (log.isDebugEnabled) log.debug(
+                s"Peer did not acknowledge CLOSE frame after ${_closeTimeout}, closing underlying connection now.")
               completeStage()
             } else pull(in)
           case PeerClosed(code, reason) =>
@@ -125,12 +129,14 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
     /**
      * Both side have sent their close frames, server should close the connection first
      */
-    private class WaitingForTransportClose(deadline: Deadline = closeDeadline()) extends InHandler with ProcotolExceptionHandling {
+    private class WaitingForTransportClose(deadline: Deadline = closeDeadline()) extends InHandler
+        with ProcotolExceptionHandling {
       override def onPush() = {
         grab(in) match {
           case Tick =>
             if (deadline.isOverdue()) {
-              if (log.isDebugEnabled) log.debug(s"Peer did not close TCP connection after sendind CLOSE frame after ${_closeTimeout}, closing underlying connection now.")
+              if (log.isDebugEnabled) log.debug(
+                s"Peer did not close TCP connection after sendind CLOSE frame after ${_closeTimeout}, closing underlying connection now.")
               completeStage()
             } else pull(in)
           case _ => pull(in) // ignore
@@ -139,7 +145,8 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
     }
 
     /** If upstream has already failed we just wait to be able to deliver our close frame and complete */
-    private class SendOutCloseFrameAndComplete(closeFrame: FrameStart) extends InHandler with OutHandler with ProcotolExceptionHandling {
+    private class SendOutCloseFrameAndComplete(closeFrame: FrameStart) extends InHandler with OutHandler
+        with ProcotolExceptionHandling {
       override def onPush() =
         fail(out, new IllegalStateException("Didn't expect push after completion"))
 
@@ -174,9 +181,10 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
     // init handlers
 
     setHandler(in, Idle)
-    setHandler(out, new OutHandler {
-      override def onPull(): Unit = pull(in)
-    })
+    setHandler(out,
+      new OutHandler {
+        override def onPull(): Unit = pull(in)
+      })
 
   }
 }

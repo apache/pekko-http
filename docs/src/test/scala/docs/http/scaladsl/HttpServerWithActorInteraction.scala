@@ -71,8 +71,7 @@ object HttpServerWithActorInteraction {
             // query the actor for the current auction state
             val bids: Future[Bids] = (auction ? GetBids).mapTo[Bids]
             complete(bids)
-          }
-        )
+          })
       }
 
     val bindingFuture = Http().newServerAt("localhost", 8080).bind(route)

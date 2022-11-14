@@ -1,6 +1,6 @@
 /*
 rule = MigrateToServerBuilder
-*/
+ */
 
 package akka.http.fix
 

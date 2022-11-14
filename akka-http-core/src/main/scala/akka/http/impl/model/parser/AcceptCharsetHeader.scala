@@ -19,7 +19,7 @@ private[parser] trait AcceptCharsetHeader { this: Parser with CommonRules with C
     `charset-range-def` ~ optional(weight) ~> { (range, optQ) =>
       optQ match {
         case None    => range
-        case Some(q) => range withQValue q
+        case Some(q) => range.withQValue(q)
       }
     }
   }

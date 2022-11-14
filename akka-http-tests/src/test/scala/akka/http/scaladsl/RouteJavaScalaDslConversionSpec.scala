@@ -14,7 +14,7 @@ class RouteJavaScalaDslConversionSpec extends AnyWordSpec {
   "Routes" must {
 
     "convert JavaDSL to ScalaDSL" in {
-      //#java-to-scala
+      // #java-to-scala
       val javaRoute =
         akka.http.javadsl.server.Directives.get(new Supplier[akka.http.javadsl.server.Route] {
           override def get(): Route = akka.http.javadsl.server.Directives.complete("ok")
@@ -23,11 +23,11 @@ class RouteJavaScalaDslConversionSpec extends AnyWordSpec {
       // Remember that Route in Scala is just a type alias:
       //   type Route = RequestContext => Future[RouteResult]
       val scalaRoute: akka.http.scaladsl.server.Route = javaRoute.asScala
-      //#java-to-scala
+      // #java-to-scala
     }
 
     "convert ScalaDSL to JavaDSL" in {
-      //#scala-to-java
+      // #scala-to-java
       val scalaRoute: akka.http.scaladsl.server.Route =
         akka.http.scaladsl.server.Directives.get {
           akka.http.scaladsl.server.Directives.complete("OK")
@@ -35,7 +35,7 @@ class RouteJavaScalaDslConversionSpec extends AnyWordSpec {
 
       val javaRoute: akka.http.javadsl.server.Route =
         akka.http.javadsl.server.directives.RouteAdapter.asJava(scalaRoute)
-      //#scala-to-java
+      // #scala-to-java
     }
   }
 }

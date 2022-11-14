@@ -5,7 +5,7 @@
 package akka
 
 import scala.language.postfixOps
-import sbt.{Def, _}
+import sbt.{ Def, _ }
 import Keys._
 import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
 
@@ -19,8 +19,7 @@ object NoPublish extends AutoPlugin {
     publish / skip := true,
     publishArtifact := false,
     publish := {},
-    publishLocal := {},
-  )
+    publishLocal := {})
 }
 
 object Publish extends AutoPlugin {
@@ -28,6 +27,5 @@ object Publish extends AutoPlugin {
   override def trigger = AllRequirements
 
   override def projectSettings: Seq[Def.Setting[_]] = Seq(
-    sonatypeProfileName := "com.typesafe",
-  )
+    sonatypeProfileName := "com.typesafe")
 }

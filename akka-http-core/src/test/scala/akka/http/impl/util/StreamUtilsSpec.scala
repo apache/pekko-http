@@ -30,9 +30,9 @@ class StreamUtilsSpec extends AkkaSpec with ScalaFutures {
       "upstream fails" in {
         val ex = new RuntimeException("ex")
         val (newSource, whenCompleted) = StreamUtils.captureTermination(Source.failed[Int](ex))
-        intercept[RuntimeException] {
+        (intercept[RuntimeException] {
           Await.result(newSource.runWith(Sink.head), 3.second.dilated)
-        } should be theSameInstanceAs ex
+        } should be).theSameInstanceAs(ex)
 
         Await.ready(whenCompleted, 3.seconds.dilated).value shouldBe Some(Failure(ex))
       }

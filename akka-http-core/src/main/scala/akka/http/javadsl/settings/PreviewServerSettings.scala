@@ -18,6 +18,7 @@ import com.typesafe.config.Config
  */
 @ApiMayChange @DoNotInherit
 abstract class PreviewServerSettings private[akka] () { self: PreviewServerSettingsImpl =>
+
   /**
    * Configures the Http extension to bind using HTTP/2 if given an
    * [[akka.http.scaladsl.HttpsConnectionContext]]. Otherwise binds as plain HTTP.

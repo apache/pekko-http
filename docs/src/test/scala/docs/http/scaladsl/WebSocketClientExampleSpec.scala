@@ -19,7 +19,7 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
 
     implicit val system = ActorSystem()
 
-    //#half-closed-WebSocket-closing-example
+    // #half-closed-WebSocket-closing-example
 
     // we may expect to be able to to just tail
     // the server websocket output like this
@@ -32,7 +32,7 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
       WebSocketRequest("ws://example.com:8080/some/path"),
       flow)
 
-    //#half-closed-WebSocket-closing-example
+    // #half-closed-WebSocket-closing-example
   }
 
   "half-closed-WebSocket-working-example" in compileOnlySpec {
@@ -45,7 +45,7 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
 
     implicit val system = ActorSystem()
 
-    //#half-closed-WebSocket-working-example
+    // #half-closed-WebSocket-working-example
 
     // using Source.maybe materializes into a promise
     // which will allow us to complete the source later
@@ -61,7 +61,7 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
 
     // at some later time we want to disconnect
     promise.success(None)
-    //#half-closed-WebSocket-working-example
+    // #half-closed-WebSocket-working-example
   }
 
   "half-closed-WebSocket-finite-working-example" in compileOnlySpec {
@@ -74,7 +74,7 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
 
     implicit val system = ActorSystem()
 
-    //#half-closed-WebSocket-finite-working-example
+    // #half-closed-WebSocket-finite-working-example
 
     // using emit "one" and "two" and then keep the connection open
     val flow: Flow[Message, Message, Promise[Option[Message]]] =
@@ -90,7 +90,7 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
 
     // at some later time we want to disconnect
     promise.success(None)
-    //#half-closed-WebSocket-finite-working-example
+    // #half-closed-WebSocket-finite-working-example
   }
 
   "authorized-singleWebSocket-request-example" in compileOnlySpec {
@@ -109,7 +109,7 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
         Sink.foreach(println),
         Source.empty)
 
-    //#authorized-single-WebSocket-request
+    // #authorized-single-WebSocket-request
     val (upgradeResponse, _) =
       Http().singleWebSocketRequest(
         WebSocketRequest(
@@ -117,11 +117,11 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
           extraHeaders = Seq(Authorization(
             BasicHttpCredentials("johan", "correcthorsebatterystaple")))),
         flow)
-    //#authorized-single-WebSocket-request
+    // #authorized-single-WebSocket-request
   }
 
   "https-proxy-singleWebSocket-request-example" in compileOnlySpec {
-    //#https-proxy-singleWebSocket-request-example
+    // #https-proxy-singleWebSocket-request-example
     import java.net.InetSocketAddress
 
     import akka.actor.ActorSystem
@@ -144,8 +144,9 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
     val httpsProxyTransport = ClientTransport.httpsProxy(InetSocketAddress.createUnresolved(proxyHost, proxyPort))
 
     val settings = ClientConnectionSettings(system).withTransport(httpsProxyTransport)
-    Http().singleWebSocketRequest(WebSocketRequest(uri = "wss://example.com:8080/some/path"), clientFlow = flow, settings = settings)
-    //#https-proxy-singleWebSocket-request-example
+    Http().singleWebSocketRequest(WebSocketRequest(uri = "wss://example.com:8080/some/path"), clientFlow = flow,
+      settings = settings)
+    // #https-proxy-singleWebSocket-request-example
   }
 
   "https-proxy-singleWebSocket-request-example with auth" in compileOnlySpec {
@@ -168,7 +169,7 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
     val proxyHost = "localhost"
     val proxyPort = 8888
 
-    //#auth-https-proxy-singleWebSocket-request-example
+    // #auth-https-proxy-singleWebSocket-request-example
     import akka.http.scaladsl.model.headers
 
     val proxyAddress = InetSocketAddress.createUnresolved(proxyHost, proxyPort)
@@ -177,8 +178,9 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
     val httpsProxyTransport = ClientTransport.httpsProxy(proxyAddress, auth)
 
     val settings = ClientConnectionSettings(system).withTransport(httpsProxyTransport)
-    Http().singleWebSocketRequest(WebSocketRequest(uri = "wss://example.com:8080/some/path"), clientFlow = flow, settings = settings)
-    //#auth-https-proxy-singleWebSocket-request-example
+    Http().singleWebSocketRequest(WebSocketRequest(uri = "wss://example.com:8080/some/path"), clientFlow = flow,
+      settings = settings)
+    // #auth-https-proxy-singleWebSocket-request-example
   }
 
 }

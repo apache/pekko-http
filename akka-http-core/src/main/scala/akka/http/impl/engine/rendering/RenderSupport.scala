@@ -113,13 +113,15 @@ private[http] object RenderSupport {
           if (sent <= length) {
             push(out, elem)
           } else {
-            failStage(InvalidContentLengthException(s"HTTP message had declared Content-Length $length but entity data stream amounts to more bytes"))
+            failStage(InvalidContentLengthException(
+              s"HTTP message had declared Content-Length $length but entity data stream amounts to more bytes"))
           }
         }
 
         override def onUpstreamFinish(): Unit = {
           if (sent < length) {
-            failStage(InvalidContentLengthException(s"HTTP message had declared Content-Length $length but entity data stream amounts to ${length - sent} bytes less"))
+            failStage(InvalidContentLengthException(
+              s"HTTP message had declared Content-Length $length but entity data stream amounts to ${length - sent} bytes less"))
           } else {
             completeStage()
           }
@@ -137,9 +139,9 @@ private[http] object RenderSupport {
     import chunk._
     val renderedSize = // buffer space required for rendering (without trailer)
       CharUtils.numberOfHexDigits(data.length) +
-        (if (extension.isEmpty) 0 else extension.length + 1) +
-        data.length +
-        2 + 2
+      (if (extension.isEmpty) 0 else extension.length + 1) +
+      data.length +
+      2 + 2
     val r = new ByteStringRendering(renderedSize)
     r ~~% data.length
     if (extension.nonEmpty) r ~~ ';' ~~ extension
@@ -154,6 +156,6 @@ private[http] object RenderSupport {
   }
 
   def suppressionWarning(log: LoggingAdapter, h: HttpHeader,
-                         msg: String = "the akka-http-core layer sets this header automatically!"): Unit =
+      msg: String = "the akka-http-core layer sets this header automatically!"): Unit =
     log.warning("Explicitly set HTTP header '{}' is ignored, {}", h, msg)
 }

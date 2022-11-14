@@ -19,7 +19,8 @@ class HighLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer {
   "The connection-level client implementation" should {
 
     "be able to handle 100 requests across one connection" in Utils.assertAllStagesStopped {
-      val binding = Http().newServerAt("127.0.0.1", 0).bindSync(r => HttpResponse(entity = r.uri.toString.reverse.takeWhile(Character.isDigit).reverse)).futureValue
+      val binding = Http().newServerAt("127.0.0.1", 0).bindSync(r =>
+        HttpResponse(entity = r.uri.toString.reverse.takeWhile(Character.isDigit).reverse)).futureValue
 
       val N = 100
       val result = Source.fromIterator(() => Iterator.from(1))
@@ -27,14 +28,17 @@ class HighLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer {
         .map(id => HttpRequest(uri = s"/r$id"))
         .via(Http().connectionTo("127.0.0.1").toPort(binding.localAddress.getPort).http())
         .mapAsync(4)(_.entity.toStrict(1.second.dilated))
-        .map { r => val s = r.data.utf8String; log.debug(s); s.toInt }
+        .map { r =>
+          val s = r.data.utf8String; log.debug(s); s.toInt
+        }
         .runFold(0)(_ + _)
       result.futureValue(Timeout(10.seconds.dilated)) should ===(N * (N + 1) / 2)
       binding.unbind()
     }
 
     "be able to handle 100 requests across 4 connections (client-flow is reusable)" in Utils.assertAllStagesStopped {
-      val binding = Http().newServerAt("127.0.0.1", 0).bindSync(r => HttpResponse(entity = r.uri.toString.reverse.takeWhile(Character.isDigit).reverse)).futureValue
+      val binding = Http().newServerAt("127.0.0.1", 0).bindSync(r =>
+        HttpResponse(entity = r.uri.toString.reverse.takeWhile(Character.isDigit).reverse)).futureValue
 
       val connFlow = Http().connectionTo("127.0.0.1").toPort(binding.localAddress.getPort).http()
 
@@ -56,7 +60,9 @@ class HighLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer {
         .map(id => HttpRequest(uri = s"/r$id"))
         .via(doubleConnection)
         .mapAsync(4)(_.entity.toStrict(1.second.dilated))
-        .map { r => val s = r.data.utf8String; log.debug(s); s.toInt }
+        .map { r =>
+          val s = r.data.utf8String; log.debug(s); s.toInt
+        }
         .runFold(0)(_ + _)
 
       result.futureValue(Timeout(10.seconds.dilated)) should ===(C * N * (N + 1) / 2)

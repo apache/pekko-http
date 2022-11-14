@@ -10,7 +10,7 @@ import akka.http.scaladsl.server._
 class CaseClassExtractionExamplesSpec extends RoutingSpec with Inside {
 
   "example-1" in {
-    //#example-1
+    // #example-1
     case class Color(red: Int, green: Int, blue: Int)
 
     val route =
@@ -22,12 +22,12 @@ class CaseClassExtractionExamplesSpec extends RoutingSpec with Inside {
         }
       }
     Get("/color?red=1&green=2&blue=3") ~> route ~> check { responseAs[String] shouldEqual "Color(1,2,3)" } // #hide
-    //#example-1
+    // #example-1
   }
 
   "example-2" in {
     object Color {}
-    //#example-2
+    // #example-2
     case class Color(red: Int, green: Int, blue: Int)
 
     val route =
@@ -38,12 +38,12 @@ class CaseClassExtractionExamplesSpec extends RoutingSpec with Inside {
         }
       }
     Get("/color?red=1&green=2&blue=3") ~> route ~> check { responseAs[String] shouldEqual "Color(1,2,3)" } // #hide
-    //#example-2
+    // #example-2
   }
 
   "example-3" in {
     object Color {}
-    //#example-3
+    // #example-3
     case class Color(name: String, red: Int, green: Int, blue: Int)
 
     val route =
@@ -53,25 +53,25 @@ class CaseClassExtractionExamplesSpec extends RoutingSpec with Inside {
           doSomethingWith(color) // #hide
         }
     Get("/color/abc?r=1&g=2&b=3") ~> route ~> check { responseAs[String] shouldEqual "Color(abc,1,2,3)" } // #hide
-    //#example-3
+    // #example-3
   }
 
-  //#example-4
+  // #example-4
   case class Color(name: String, red: Int, green: Int, blue: Int) {
     require(!name.isEmpty, "color name must not be empty")
     require(0 <= red && red <= 255, "red color component must be between 0 and 255")
     require(0 <= green && green <= 255, "green color component must be between 0 and 255")
     require(0 <= blue && blue <= 255, "blue color component must be between 0 and 255")
   }
-  //#example-4
+  // #example-4
 
   "example 4 test" in {
     val route =
       (path("color" / Segment) &
         parameters("r".as[Int], "g".as[Int], "b".as[Int])).as(Color) { color =>
-          // ... route working with the `color` instance
-          doSomethingWith(color) // #hide
-        }
+        // ... route working with the `color` instance
+        doSomethingWith(color) // #hide
+      }
     Get("/color/abc?r=1&g=2&b=3") ~> route ~> check {
       responseAs[String] shouldEqual "Color(abc,1,2,3)"
     }

@@ -55,8 +55,9 @@ import scala.concurrent.duration._
  */
 @nowarn("msg=DefaultSSLContextCreation in package scaladsl is deprecated")
 @DoNotInherit
-class HttpExt @InternalStableApi /* constructor signature is hardcoded in Telemetry */ private[http] (private val config: Config)(implicit val system: ExtendedActorSystem) extends akka.actor.Extension
-  with DefaultSSLContextCreation {
+class HttpExt @InternalStableApi /* constructor signature is hardcoded in Telemetry */ private[http] (
+    private val config: Config)(implicit val system: ExtendedActorSystem) extends akka.actor.Extension
+    with DefaultSSLContextCreation {
 
   akka.http.Version.check(system.settings.config)
   akka.AkkaVersion.require("akka-http", akka.http.Version.supportedAkkaVersion)
@@ -74,8 +75,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     "akka-http-marshallers-java",
     "akka-http-spray-json",
     "akka-http-xml",
-    "akka-http-jackson"
-  )
+    "akka-http-jackson")
 
   ManifestInfo(system).checkSameVersion("Akka HTTP", allModules, logWarning = true)
 
@@ -99,27 +99,28 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   private type ServerLayerFlow = Flow[ByteString, ByteString, (Future[Done], ServerTerminator)]
 
   private def fuseServerBidiFlow(
-    settings:          ServerSettings,
-    connectionContext: ConnectionContext,
-    log:               LoggingAdapter): ServerLayerBidiFlow = {
+      settings: ServerSettings,
+      connectionContext: ConnectionContext,
+      log: LoggingAdapter): ServerLayerBidiFlow = {
     val httpLayer = serverLayer(settings, None, log, connectionContext.isSecure)
     val tlsStage = sslTlsServerStage(connectionContext)
 
     val serverBidiFlow =
       settings.idleTimeout match {
-        case t: FiniteDuration => httpLayer atop tlsStage atop HttpConnectionIdleTimeoutBidi(t, None)
-        case _                 => httpLayer atop tlsStage
+        case t: FiniteDuration => httpLayer.atop(tlsStage).atop(HttpConnectionIdleTimeoutBidi(t, None))
+        case _                 => httpLayer.atop(tlsStage)
       }
 
-    GracefulTerminatorStage(system, settings) atop serverBidiFlow
+    GracefulTerminatorStage(system, settings).atop(serverBidiFlow)
   }
 
-  private def delayCancellationStage(settings: ServerSettings): BidiFlow[SslTlsOutbound, SslTlsOutbound, SslTlsInbound, SslTlsInbound, NotUsed] =
+  private def delayCancellationStage(
+      settings: ServerSettings): BidiFlow[SslTlsOutbound, SslTlsOutbound, SslTlsInbound, SslTlsInbound, NotUsed] =
     BidiFlow.fromFlows(Flow[SslTlsOutbound], StreamUtils.delayCancellation(settings.lingerTimeout))
 
   private def fuseServerFlow(
-    baseFlow: ServerLayerBidiFlow,
-    handler:  Flow[HttpRequest, HttpResponse, Any]): ServerLayerFlow =
+      baseFlow: ServerLayerBidiFlow,
+      handler: Flow[HttpRequest, HttpResponse, Any]): ServerLayerFlow =
     Flow.fromGraph(
       Flow[HttpRequest]
         .watchTermination()(Keep.right)
@@ -129,10 +130,10 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
           // signals in both directions
           termWatchBefore.flatMap(_ => termWatchAfter)(ExecutionContexts.sameThreadExecutionContext)
         }
-        .joinMat(baseFlow)(Keep.both)
-    )
+        .joinMat(baseFlow)(Keep.both))
 
-  private def tcpBind(interface: String, port: Int, settings: ServerSettings): Source[Tcp.IncomingConnection, Future[Tcp.ServerBinding]] =
+  private def tcpBind(interface: String, port: Int, settings: ServerSettings)
+      : Source[Tcp.IncomingConnection, Future[Tcp.ServerBinding]] =
     Tcp()
       .bind(
         interface,
@@ -177,14 +178,17 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * To configure additional settings for a server started using this method,
    * use the `akka.http.server` config section or pass in a [[akka.http.scaladsl.settings.ServerSettings]] explicitly.
    */
-  @deprecated("Use Http().newServerAt(...)...connectionSource() to create a source that can be materialized to a binding.", since = "10.2.0")
+  @deprecated(
+    "Use Http().newServerAt(...)...connectionSource() to create a source that can be materialized to a binding.",
+    since = "10.2.0")
   @nowarn("msg=deprecated")
   def bind(interface: String, port: Int = DefaultPortForProtocol,
-           connectionContext: ConnectionContext = defaultServerHttpContext,
-           settings:          ServerSettings    = ServerSettings(system),
-           log:               LoggingAdapter    = system.log): Source[Http.IncomingConnection, Future[ServerBinding]] = {
+      connectionContext: ConnectionContext = defaultServerHttpContext,
+      settings: ServerSettings = ServerSettings(system),
+      log: LoggingAdapter = system.log): Source[Http.IncomingConnection, Future[ServerBinding]] = {
     if (settings.previewServerSettings.enableHttp2)
-      log.warning(s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port]")
+      log.warning(
+        s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port]")
 
     val fullLayer: ServerLayerBidiFlow = fuseServerBidiFlow(settings, connectionContext, log)
 
@@ -192,26 +196,26 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
 
     tcpBind(interface, choosePort(port, connectionContext, settings), settings)
       .map(incoming => {
-        val preparedLayer: BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] = fullLayer.addAttributes(prepareAttributes(settings, incoming))
-        val serverFlow: Flow[HttpResponse, HttpRequest, ServerTerminator] = preparedLayer join incoming.flow
+        val preparedLayer: BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] =
+          fullLayer.addAttributes(prepareAttributes(settings, incoming))
+        val serverFlow: Flow[HttpResponse, HttpRequest, ServerTerminator] = preparedLayer.join(incoming.flow)
         IncomingConnection(incoming.localAddress, incoming.remoteAddress, serverFlow)
       })
       .mapMaterializedValue {
         _.map(tcpBinding =>
           ServerBinding(tcpBinding.localAddress)(
             () => tcpBinding.unbind(),
-            timeout => masterTerminator.terminate(timeout)(systemMaterializer.executionContext)
-          )
-        )(systemMaterializer.executionContext)
+            timeout => masterTerminator.terminate(timeout)(systemMaterializer.executionContext)))(
+          systemMaterializer.executionContext)
       }
   }
 
   // forwarder to allow internal code to call deprecated method without warning
   @nowarn("msg=deprecated")
   private[http] def bindImpl(interface: String, port: Int,
-                             connectionContext: ConnectionContext,
-                             settings:          ServerSettings,
-                             log:               LoggingAdapter): Source[Http.IncomingConnection, Future[ServerBinding]] =
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      log: LoggingAdapter): Source[Http.IncomingConnection, Future[ServerBinding]] =
     bind(interface, port, connectionContext, settings, log)
 
   /**
@@ -228,16 +232,16 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   @deprecated("Use Http().newServerAt(...)...bindFlow() to create server bindings.", since = "10.2.0")
   @nowarn("msg=deprecated")
   def bindAndHandle(
-    handler:   Flow[HttpRequest, HttpResponse, Any],
-    interface: String, port: Int = DefaultPortForProtocol,
-    connectionContext: ConnectionContext = defaultServerHttpContext,
-    settings:          ServerSettings    = ServerSettings(system),
-    log:               LoggingAdapter    = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] = {
+      handler: Flow[HttpRequest, HttpResponse, Any],
+      interface: String, port: Int = DefaultPortForProtocol,
+      connectionContext: ConnectionContext = defaultServerHttpContext,
+      settings: ServerSettings = ServerSettings(system),
+      log: LoggingAdapter = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] = {
     if (settings.previewServerSettings.enableHttp2)
-      log.warning(s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port].")
+      log.warning(
+        s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port].")
 
     val fullLayer: Flow[ByteString, ByteString, (Future[Done], ServerTerminator)] =
-
       fuseServerFlow(fuseServerBidiFlow(settings, connectionContext, log), handler)
 
     val masterTerminator = new MasterServerTerminator(log)
@@ -248,9 +252,9 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
           fullLayer
             .watchTermination() {
               case ((done, connectionTerminator), whenTerminates) =>
-                whenTerminates.onComplete({ _ =>
+                whenTerminates.onComplete { _ =>
                   masterTerminator.removeConnection(connectionTerminator)
-                })(fm.executionContext)
+                }(fm.executionContext)
                 (done, connectionTerminator)
             }
             .addAttributes(prepareAttributes(settings, incoming))
@@ -279,10 +283,8 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
         m.map(tcpBinding =>
           ServerBinding(
             tcpBinding.localAddress)(
-              () => tcpBinding.unbind(),
-              timeout => masterTerminator.terminate(timeout)(fm.executionContext)
-            )
-        )(fm.executionContext)
+            () => tcpBinding.unbind(),
+            timeout => masterTerminator.terminate(timeout)(fm.executionContext)))(fm.executionContext)
       }
       .to(Sink.ignore)
       .run()
@@ -291,11 +293,11 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   // forwarder to allow internal code to call deprecated method without warning
   @nowarn("msg=deprecated")
   private[http] def bindAndHandleImpl(
-    handler:   Flow[HttpRequest, HttpResponse, Any],
-    interface: String, port: Int,
-    connectionContext: ConnectionContext,
-    settings:          ServerSettings,
-    log:               LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
+      handler: Flow[HttpRequest, HttpResponse, Any],
+      interface: String, port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
     bindAndHandle(handler, interface, port, connectionContext, settings, log)(fm)
 
   /**
@@ -312,12 +314,13 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   @deprecated("Use Http().newServerAt(...)...bindSync() to create server bindings.", since = "10.2.0")
   @nowarn("msg=deprecated")
   def bindAndHandleSync(
-    handler:   HttpRequest => HttpResponse,
-    interface: String, port: Int = DefaultPortForProtocol,
-    connectionContext: ConnectionContext = defaultServerHttpContext,
-    settings:          ServerSettings    = ServerSettings(system),
-    log:               LoggingAdapter    = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] =
-    bindAndHandleAsync(req => FastFuture.successful(handler(req)), interface, port, connectionContext, settings, parallelism = 0, log)(fm)
+      handler: HttpRequest => HttpResponse,
+      interface: String, port: Int = DefaultPortForProtocol,
+      connectionContext: ConnectionContext = defaultServerHttpContext,
+      settings: ServerSettings = ServerSettings(system),
+      log: LoggingAdapter = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] =
+    bindAndHandleAsync(req => FastFuture.successful(handler(req)), interface, port, connectionContext, settings,
+      parallelism = 0, log)(fm)
 
   /**
    * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
@@ -340,12 +343,12 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   @deprecated("Use Http().newServerAt(...)...bind() to create server bindings.", since = "10.2.0")
   @nowarn("msg=deprecated")
   def bindAndHandleAsync(
-    handler:   HttpRequest => Future[HttpResponse],
-    interface: String, port: Int = DefaultPortForProtocol,
-    connectionContext: ConnectionContext = defaultServerHttpContext,
-    settings:          ServerSettings    = ServerSettings(system),
-    parallelism:       Int               = 0,
-    log:               LoggingAdapter    = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] = {
+      handler: HttpRequest => Future[HttpResponse],
+      interface: String, port: Int = DefaultPortForProtocol,
+      connectionContext: ConnectionContext = defaultServerHttpContext,
+      settings: ServerSettings = ServerSettings(system),
+      parallelism: Int = 0,
+      log: LoggingAdapter = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] = {
     if (settings.previewServerSettings.enableHttp2) {
       log.debug("Binding server using HTTP/2")
 
@@ -359,19 +362,20 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
         if (parallelism > 0) parallelism
         else if (parallelism < 0) throw new IllegalArgumentException("Only positive values allowed for `parallelism`.")
         else settings.pipeliningLimit
-      bindAndHandleImpl(Flow[HttpRequest].mapAsync(definitiveParallelism)(handler), interface, port, connectionContext, settings, log)
+      bindAndHandleImpl(Flow[HttpRequest].mapAsync(definitiveParallelism)(handler), interface, port, connectionContext,
+        settings, log)
     }
   }
 
   // forwarder to allow internal code to call deprecated method without warning
   @nowarn("msg=deprecated")
   private[http] def bindAndHandleAsyncImpl(
-    handler:   HttpRequest => Future[HttpResponse],
-    interface: String, port: Int,
-    connectionContext: ConnectionContext,
-    settings:          ServerSettings,
-    parallelism:       Int,
-    log:               LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
+      handler: HttpRequest => Future[HttpResponse],
+      interface: String, port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      parallelism: Int,
+      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
     bindAndHandleAsync(handler, interface, port, connectionContext, settings, parallelism, log)(fm)
 
   type ServerLayer = Http.ServerLayer
@@ -382,15 +386,15 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * this layer produces if the `akka.http.server.remote-address-header` configuration option is enabled.
    */
   def serverLayer(
-    settings:           ServerSettings            = ServerSettings(system),
-    remoteAddress:      Option[InetSocketAddress] = None,
-    log:                LoggingAdapter            = system.log,
-    isSecureConnection: Boolean                   = false): ServerLayer = {
+      settings: ServerSettings = ServerSettings(system),
+      remoteAddress: Option[InetSocketAddress] = None,
+      log: LoggingAdapter = system.log,
+      isSecureConnection: Boolean = false): ServerLayer = {
     val server = HttpServerBluePrint(settings, log, isSecureConnection, dateHeaderRendering)
       .addAttributes(HttpAttributes.remoteAddress(remoteAddress))
       .addAttributes(cancellationStrategyAttributeForDelay(settings.streamCancellationDelay))
 
-    server atop delayCancellationStage(settings)
+    server.atop(delayCancellationStage(settings))
   }
 
   // ** CLIENT ** //
@@ -417,10 +421,11 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * Prefer [[connectionTo]] over this method.
    */
   def outgoingConnection(host: String, port: Int = 80,
-                         localAddress: Option[InetSocketAddress] = None,
-                         settings:     ClientConnectionSettings  = ClientConnectionSettings(system),
-                         log:          LoggingAdapter            = system.log): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] =
-    _outgoingConnection(host, port, settings.withLocalAddressOverride(localAddress), ConnectionContext.noEncryption(), log)
+      localAddress: Option[InetSocketAddress] = None,
+      settings: ClientConnectionSettings = ClientConnectionSettings(system),
+      log: LoggingAdapter = system.log): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] =
+    _outgoingConnection(host, port, settings.withLocalAddressOverride(localAddress), ConnectionContext.noEncryption(),
+      log)
 
   /**
    * Same as [[#outgoingConnection]] but for encrypted (HTTPS) connections.
@@ -434,10 +439,10 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * Prefer [[connectionTo]] over this method.
    */
   def outgoingConnectionHttps(host: String, port: Int = 443,
-                              connectionContext: HttpsConnectionContext    = defaultClientHttpsContext,
-                              localAddress:      Option[InetSocketAddress] = None,
-                              settings:          ClientConnectionSettings  = ClientConnectionSettings(system),
-                              log:               LoggingAdapter            = system.log): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] =
+      connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
+      localAddress: Option[InetSocketAddress] = None,
+      settings: ClientConnectionSettings = ClientConnectionSettings(system),
+      log: LoggingAdapter = system.log): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] =
     _outgoingConnection(host, port, settings.withLocalAddressOverride(localAddress), connectionContext, log)
 
   /**
@@ -452,19 +457,19 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * Prefer [[connectionTo]] over this method.
    */
   def outgoingConnectionUsingContext(
-    host:              String,
-    port:              Int,
-    connectionContext: ConnectionContext,
-    settings:          ClientConnectionSettings = ClientConnectionSettings(system),
-    log:               LoggingAdapter           = system.log): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] =
+      host: String,
+      port: Int,
+      connectionContext: ConnectionContext,
+      settings: ClientConnectionSettings = ClientConnectionSettings(system),
+      log: LoggingAdapter = system.log): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] =
     _outgoingConnection(host, port, settings, connectionContext, log)
 
   private def _outgoingConnection(
-    host:              String,
-    port:              Int,
-    settings:          ClientConnectionSettings,
-    connectionContext: ConnectionContext,
-    log:               LoggingAdapter): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
+      host: String,
+      port: Int,
+      settings: ClientConnectionSettings,
+      connectionContext: ConnectionContext,
+      log: LoggingAdapter): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
     val hostHeader = port match {
       case 0                                 => Host(host)
       case 80 if !connectionContext.isSecure => Host(host)
@@ -478,8 +483,8 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   }
 
   private def _outgoingTlsConnectionLayer(host: String, port: Int,
-                                          settings: ClientConnectionSettings, connectionContext: ConnectionContext,
-                                          log: LoggingAdapter): Flow[SslTlsOutbound, SslTlsInbound, Future[OutgoingConnection]] = {
+      settings: ClientConnectionSettings, connectionContext: ConnectionContext,
+      log: LoggingAdapter): Flow[SslTlsOutbound, SslTlsInbound, Future[OutgoingConnection]] = {
     val tlsStage = sslTlsClientStage(connectionContext, host, port)
 
     tlsStage.joinMat(settings.transport.connectTo(host, port, settings))(Keep.right)
@@ -498,9 +503,9 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * Constructs a [[akka.http.scaladsl.Http.ClientLayer]] stage using the given [[akka.http.scaladsl.settings.ClientConnectionSettings]].
    */
   def clientLayer(
-    hostHeader: Host,
-    settings:   ClientConnectionSettings,
-    log:        LoggingAdapter           = system.log): ClientLayer =
+      hostHeader: Host,
+      settings: ClientConnectionSettings,
+      log: LoggingAdapter = system.log): ClientLayer =
     OutgoingConnectionBlueprint(hostHeader, settings, log)
       .addAttributes(cancellationStrategyAttributeForDelay(settings.streamCancellationDelay))
 
@@ -524,8 +529,9 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * use the `akka.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
    */
   def newHostConnectionPool[T](host: String, port: Int = 80,
-                               settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
-                               log:      LoggingAdapter         = system.log)(implicit fm: Materializer): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
+      settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
+      log: LoggingAdapter = system.log)(
+      implicit fm: Materializer): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
     val cps = ConnectionPoolSetup(settings.forHost(host), ConnectionContext.noEncryption(), log)
     newHostConnectionPool(HostConnectionPoolSetup(host, port, cps))
   }
@@ -540,9 +546,10 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * use the `akka.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
    */
   def newHostConnectionPoolHttps[T](host: String, port: Int = 443,
-                                    connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
-                                    settings:          ConnectionPoolSettings = defaultConnectionPoolSettings,
-                                    log:               LoggingAdapter         = system.log)(implicit fm: Materializer): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
+      connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
+      settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
+      log: LoggingAdapter = system.log)(
+      implicit fm: Materializer): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
     val cps = ConnectionPoolSetup(settings.forHost(host), connectionContext, log)
     newHostConnectionPool(HostConnectionPoolSetup(host, port, cps))
   }
@@ -552,8 +559,8 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    */
   @InternalApi
   private[akka] def newHostConnectionPool[T](setup: HostConnectionPoolSetup)(
-    implicit
-    fm: Materializer): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
+      implicit
+      fm: Materializer): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
     val poolId = new PoolId(setup, PoolId.newUniquePool())
     poolMaster.startPool(poolId)
     poolClientFlow(poolId)
@@ -580,8 +587,8 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * use the `akka.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
    */
   def cachedHostConnectionPool[T](host: String, port: Int = 80,
-                                  settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
-                                  log:      LoggingAdapter         = system.log): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
+      settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
+      log: LoggingAdapter = system.log): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
     val cps = ConnectionPoolSetup(settings.forHost(host), ConnectionContext.noEncryption(), log)
     val setup = HostConnectionPoolSetup(host, port, cps)
     cachedHostConnectionPool(setup)
@@ -597,9 +604,9 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * use the `akka.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
    */
   def cachedHostConnectionPoolHttps[T](host: String, port: Int = 443,
-                                       connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
-                                       settings:          ConnectionPoolSettings = defaultConnectionPoolSettings,
-                                       log:               LoggingAdapter         = system.log): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
+      connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
+      settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
+      log: LoggingAdapter = system.log): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
     val cps = ConnectionPoolSetup(settings.forHost(host), connectionContext, log)
     val setup = HostConnectionPoolSetup(host, port, cps)
     cachedHostConnectionPool(setup)
@@ -622,7 +629,8 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * In order to allow for easy response-to-request association the flow takes in a custom, opaque context
    * object of type `T` from the application which is emitted together with the corresponding response.
    */
-  private def cachedHostConnectionPool[T](setup: HostConnectionPoolSetup): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
+  private def cachedHostConnectionPool[T](
+      setup: HostConnectionPoolSetup): Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool] = {
     val poolId = sharedPoolId(setup)
     poolMaster.startPool(poolId)
     poolClientFlow(poolId)
@@ -646,10 +654,11 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * use the `akka.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
    */
   def superPool[T](
-    connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
-    settings:          ConnectionPoolSettings = defaultConnectionPoolSettings,
-    log:               LoggingAdapter         = system.log): Flow[(HttpRequest, T), (Try[HttpResponse], T), NotUsed] =
-    clientFlow[T](settings)(request => singleRequest(request, connectionContext, settings.forHost(request.uri.authority.host.toString), log))
+      connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
+      settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
+      log: LoggingAdapter = system.log): Flow[(HttpRequest, T), (Try[HttpResponse], T), NotUsed] =
+    clientFlow[T](settings)(request =>
+      singleRequest(request, connectionContext, settings.forHost(request.uri.authority.host.toString), log))
 
   /**
    * Fires a single [[akka.http.scaladsl.model.HttpRequest]] across the (cached) host connection pool for the request's
@@ -661,11 +670,12 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * Note that the request must have an absolute URI, otherwise the future will be completed with an error.
    */
   def singleRequest(
-    request:           HttpRequest,
-    connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
-    settings:          ConnectionPoolSettings = defaultConnectionPoolSettings,
-    log:               LoggingAdapter         = system.log): Future[HttpResponse] =
-    try poolMaster.dispatchRequest(sharedPoolIdFor(request, settings.forHost(request.uri.authority.host.toString), connectionContext, log), (request))
+      request: HttpRequest,
+      connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
+      settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
+      log: LoggingAdapter = system.log): Future[HttpResponse] =
+    try poolMaster.dispatchRequest(sharedPoolIdFor(request, settings.forHost(request.uri.authority.host.toString),
+        connectionContext, log), request)
     catch {
       case e: IllegalUriException => FastFuture.failed(e)
     }
@@ -677,9 +687,9 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * The layer is not reusable and must only be materialized once.
    */
   def webSocketClientLayer(
-    request:  WebSocketRequest,
-    settings: ClientConnectionSettings = ClientConnectionSettings(system),
-    log:      LoggingAdapter           = system.log): Http.WebSocketClientLayer =
+      request: WebSocketRequest,
+      settings: ClientConnectionSettings = ClientConnectionSettings(system),
+      log: LoggingAdapter = system.log): Http.WebSocketClientLayer =
     WebSocketClientBlueprint(request, settings, log)
       .addAttributes(cancellationStrategyAttributeForDelay(settings.streamCancellationDelay))
 
@@ -689,18 +699,19 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * The layer is not reusable and must only be materialized once.
    */
   def webSocketClientFlow(
-    request:           WebSocketRequest,
-    connectionContext: ConnectionContext         = defaultClientHttpsContext,
-    localAddress:      Option[InetSocketAddress] = None,
-    settings:          ClientConnectionSettings  = ClientConnectionSettings(system),
-    log:               LoggingAdapter            = system.log): Flow[Message, Message, Future[WebSocketUpgradeResponse]] = {
+      request: WebSocketRequest,
+      connectionContext: ConnectionContext = defaultClientHttpsContext,
+      localAddress: Option[InetSocketAddress] = None,
+      settings: ClientConnectionSettings = ClientConnectionSettings(system),
+      log: LoggingAdapter = system.log): Flow[Message, Message, Future[WebSocketUpgradeResponse]] = {
     import request.uri
     require(uri.isAbsolute, s"WebSocket request URI must be absolute but was '$uri'")
 
     val ctx = uri.scheme match {
       case "ws"                                => ConnectionContext.noEncryption()
       case "wss" if connectionContext.isSecure => connectionContext
-      case "wss"                               => throw new IllegalArgumentException("Provided connectionContext is not secure, yet request to secure `wss` endpoint detected!")
+      case "wss" => throw new IllegalArgumentException(
+          "Provided connectionContext is not secure, yet request to secure `wss` endpoint detected!")
       case scheme =>
         throw new IllegalArgumentException(s"Illegal URI scheme '$scheme' in '$uri' for WebSocket request. " +
           s"WebSocket requests must use either 'ws' or 'wss'")
@@ -719,12 +730,12 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * WebSocket conversation.
    */
   def singleWebSocketRequest[T](
-    request:           WebSocketRequest,
-    clientFlow:        Flow[Message, Message, T],
-    connectionContext: ConnectionContext         = defaultClientHttpsContext,
-    localAddress:      Option[InetSocketAddress] = None,
-    settings:          ClientConnectionSettings  = ClientConnectionSettings(system),
-    log:               LoggingAdapter            = system.log)(implicit mat: Materializer): (Future[WebSocketUpgradeResponse], T) =
+      request: WebSocketRequest,
+      clientFlow: Flow[Message, Message, T],
+      connectionContext: ConnectionContext = defaultClientHttpsContext,
+      localAddress: Option[InetSocketAddress] = None,
+      settings: ClientConnectionSettings = ClientConnectionSettings(system),
+      log: LoggingAdapter = system.log)(implicit mat: Materializer): (Future[WebSocketUpgradeResponse], T) =
     webSocketClientFlow(request, connectionContext, localAddress, settings, log)
       .joinMat(clientFlow)(Keep.both).run()
 
@@ -783,15 +794,18 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       _defaultClientHttpsConnectionContext = context
     }
 
-  private def sharedPoolIdFor(request: HttpRequest, settings: ConnectionPoolSettings, connectionContext: ConnectionContext, log: LoggingAdapter): PoolId = {
+  private def sharedPoolIdFor(request: HttpRequest, settings: ConnectionPoolSettings,
+      connectionContext: ConnectionContext, log: LoggingAdapter): PoolId = {
     if (request.uri.scheme.nonEmpty && request.uri.authority.nonEmpty) {
-      val httpsCtx = if (request.uri.scheme.equalsIgnoreCase("https")) connectionContext else ConnectionContext.noEncryption()
+      val httpsCtx =
+        if (request.uri.scheme.equalsIgnoreCase("https")) connectionContext else ConnectionContext.noEncryption()
       val setup = ConnectionPoolSetup(settings, httpsCtx, log)
       val host = request.uri.authority.host.toString()
       val hcps = HostConnectionPoolSetup(host, request.uri.effectivePort, setup)
       sharedPoolId(hcps)
     } else {
-      val msg = s"Cannot determine request scheme and target endpoint as ${request.method} request to ${request.uri} doesn't have an absolute URI"
+      val msg =
+        s"Cannot determine request scheme and target endpoint as ${request.method} request to ${request.uri} doesn't have an absolute URI"
       throw new IllegalUriException(ErrorInfo(msg))
     }
   }
@@ -803,13 +817,15 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     clientFlow[T](poolId.hcps.setup.settings)(request => poolMaster.dispatchRequest(poolId, request))
       .mapMaterializedValue(_ => new HostConnectionPoolImpl(poolId, poolMaster))
 
-  private def clientFlow[T](settings: ConnectionPoolSettings)(poolInterface: HttpRequest => Future[HttpResponse]): Flow[(HttpRequest, T), (Try[HttpResponse], T), NotUsed] = {
+  private def clientFlow[T](settings: ConnectionPoolSettings)(
+      poolInterface: HttpRequest => Future[HttpResponse]): Flow[(HttpRequest, T), (Try[HttpResponse], T), NotUsed] = {
     // a connection pool can never have more than pipeliningLimit * maxConnections requests in flight at any point
     // FIXME: that statement is wrong since this method is used for the superPool as well which can comprise any number of target host pools.
     // The user should keep control over how much parallelism is required.
     val parallelism = settings.pipeliningLimit * settings.maxConnections
     Flow[(HttpRequest, T)].mapAsyncUnordered(parallelism) {
-      case (request, userContext) => poolInterface(request).transform(response => Success(response -> userContext))(ExecutionContexts.sameThreadExecutionContext)
+      case (request, userContext) => poolInterface(request).transform(response => Success(response -> userContext))(
+          ExecutionContexts.sameThreadExecutionContext)
     }
   }
 
@@ -825,7 +841,8 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       case hctx: HttpsConnectionContext =>
         hctx.sslContextData match {
           case Left(ssl) =>
-            TLS(ssl.sslContext, ssl.sslConfig, ssl.firstSession, role, hostInfo = hostInfo, closing = TLSClosing.eagerClose)
+            TLS(ssl.sslContext, ssl.sslConfig, ssl.firstSession, role, hostInfo = hostInfo,
+              closing = TLSClosing.eagerClose)
           case Right(engineCreator) =>
             TLS(() => engineCreator(hostInfo), TLSClosing.eagerClose)
         }
@@ -844,7 +861,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
 
 object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
 
-  //#server-layer
+  // #server-layer
   /**
    * The type of the server-side HTTP layer as a stand-alone BidiFlow
    * that can be put atop the TCP layer to form an HTTP server.
@@ -858,9 +875,9 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
    * }}}
    */
   type ServerLayer = BidiFlow[HttpResponse, SslTlsOutbound, SslTlsInbound, HttpRequest, NotUsed]
-  //#server-layer
+  // #server-layer
 
-  //#client-layer
+  // #client-layer
   /**
    * The type of the client-side HTTP layer as a stand-alone BidiFlow
    * that can be put atop the TCP layer to form an HTTP client.
@@ -874,7 +891,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
    * }}}
    */
   type ClientLayer = BidiFlow[HttpRequest, SslTlsOutbound, SslTlsInbound, HttpResponse, NotUsed]
-  //#client-layer
+  // #client-layer
 
   /**
    * The type of the client-side WebSocket layer as a stand-alone BidiFlow
@@ -888,18 +905,17 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
    *                +------+
    * }}}
    */
-  type WebSocketClientLayer = BidiFlow[Message, SslTlsOutbound, SslTlsInbound, Message, Future[WebSocketUpgradeResponse]]
+  type WebSocketClientLayer =
+    BidiFlow[Message, SslTlsOutbound, SslTlsInbound, Message, Future[WebSocketUpgradeResponse]]
 
   /**
    * Represents a prospective HTTP server binding.
    *
    * @param localAddress  The local address of the endpoint bound by the materialization of the `connections` [[akka.stream.scaladsl.Source]]
-   *
    */
   final case class ServerBinding(localAddress: InetSocketAddress)(
-    private val unbindAction:    () => Future[Unit],
-    private val terminateAction: FiniteDuration => Future[HttpTerminated]
-  ) {
+      private val unbindAction: () => Future[Unit],
+      private val terminateAction: FiniteDuration => Future[HttpTerminated]) {
 
     private val _whenTerminationSignalIssued = Promise[Deadline]()
     private val _whenTerminated = Promise[HttpTerminated]()
@@ -973,7 +989,8 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
       require(hardDeadline > Duration.Zero, "deadline must be greater than 0, was: " + hardDeadline)
 
       _whenTerminationSignalIssued.trySuccess(hardDeadline.fromNow)
-      val terminated = unbindAction().flatMap(_ => terminateAction(hardDeadline))(ExecutionContexts.sameThreadExecutionContext)
+      val terminated =
+        unbindAction().flatMap(_ => terminateAction(hardDeadline))(ExecutionContexts.sameThreadExecutionContext)
       _whenTerminated.completeWith(terminated)
       whenTerminated
     }
@@ -1007,7 +1024,8 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
      *
      * @param hardTerminationDeadline timeout after which all requests and connections shall be forcefully terminated
      */
-    def addToCoordinatedShutdown(hardTerminationDeadline: FiniteDuration)(implicit system: ClassicActorSystemProvider): ServerBinding = {
+    def addToCoordinatedShutdown(hardTerminationDeadline: FiniteDuration)(
+        implicit system: ClassicActorSystemProvider): ServerBinding = {
       val shutdown = CoordinatedShutdown(system)
       shutdown.addTask(CoordinatedShutdown.PhaseServiceUnbind, s"http-unbind-${localAddress}") { () =>
         unbind()
@@ -1030,9 +1048,9 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
    * Represents one accepted incoming HTTP connection.
    */
   final case class IncomingConnection(
-    localAddress:  InetSocketAddress,
-    remoteAddress: InetSocketAddress,
-    _flow:         Flow[HttpResponse, HttpRequest, ServerTerminator]) {
+      localAddress: InetSocketAddress,
+      remoteAddress: InetSocketAddress,
+      _flow: Flow[HttpResponse, HttpRequest, ServerTerminator]) {
 
     def flow: Flow[HttpResponse, HttpRequest, NotUsed] = _flow.mapMaterializedValue(_ => NotUsed)
 
@@ -1052,7 +1070,8 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
     /**
      * Handles the connection with the given handler function.
      */
-    def handleWithAsyncHandler(handler: HttpRequest => Future[HttpResponse], parallelism: Int = 1)(implicit fm: Materializer): Unit =
+    def handleWithAsyncHandler(handler: HttpRequest => Future[HttpResponse], parallelism: Int = 1)(
+        implicit fm: Materializer): Unit =
       handleWith(Flow[HttpRequest].mapAsync(parallelism)(handler))
   }
 
@@ -1069,6 +1088,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
   @DoNotInherit
   sealed abstract class HostConnectionPool extends Product {
     def setup: HostConnectionPoolSetup
+
     /**
      * Asynchronously triggers the shutdown of the host connection pool.
      *
@@ -1096,7 +1116,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
 
     override def equals(obj: Any): Boolean = obj match {
       case i: HostConnectionPoolImpl if i.poolId == poolId => true
-      case _ => false
+      case _                                               => false
     }
   }
 
@@ -1108,12 +1128,13 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
   def lookup() = Http
 
   def createExtension(system: ExtendedActorSystem): HttpExt =
-    new HttpExt(system.settings.config getConfig "akka.http")(system)
+    new HttpExt(system.settings.config.getConfig("akka.http"))(system)
 
   @nowarn("msg=use remote-address-attribute instead")
   @InternalApi
   private[akka] def prepareAttributes(settings: ServerSettings, incoming: Tcp.IncomingConnection) =
-    if (settings.remoteAddressHeader || settings.remoteAddressAttribute) HttpAttributes.remoteAddress(incoming.remoteAddress)
+    if (settings.remoteAddressHeader || settings.remoteAddressAttribute)
+      HttpAttributes.remoteAddress(incoming.remoteAddress)
     else HttpAttributes.empty
 
   @InternalApi

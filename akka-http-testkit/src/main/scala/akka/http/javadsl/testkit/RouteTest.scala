@@ -46,7 +46,8 @@ abstract class RouteTest extends AllDirectives with WSTestRequestBuilding {
     runScalaRoute(route.seal().delegate, request, defaultHostInfo)
 
   def runRouteClientServer(route: Route, request: HttpRequest): TestRouteResult = {
-    val response = scaladsl.testkit.RouteTest.runRouteClientServer(request.asScala, route.delegate, ServerSettings(system))
+    val response =
+      scaladsl.testkit.RouteTest.runRouteClientServer(request.asScala, route.delegate, ServerSettings(system))
     createTestRouteResultAsync(request, response.map(scalaResponse => RouteResults.complete(scalaResponse)))
   }
 
@@ -56,7 +57,8 @@ abstract class RouteTest extends AllDirectives with WSTestRequestBuilding {
   def runRouteUnSealed(route: Route, request: HttpRequest, defaultHostInfo: DefaultHostInfo): TestRouteResult =
     runScalaRoute(route.delegate, request, defaultHostInfo)
 
-  private def runScalaRoute(scalaRoute: ScalaRoute, request: HttpRequest, defaultHostInfo: DefaultHostInfo): TestRouteResult = {
+  private def runScalaRoute(
+      scalaRoute: ScalaRoute, request: HttpRequest, defaultHostInfo: DefaultHostInfo): TestRouteResult = {
     val effectiveRequest = request.asScala
       .withEffectiveUri(
         securedConnection = defaultHostInfo.isSecuredConnection(),
@@ -68,7 +70,8 @@ abstract class RouteTest extends AllDirectives with WSTestRequestBuilding {
     val semiSealedRoute = // sealed for exceptions but not for rejections
       akka.http.scaladsl.server.Directives.handleExceptions(sealedExceptionHandler)(scalaRoute)
 
-    val result = semiSealedRoute(new server.RequestContextImpl(effectiveRequest, system.log, RoutingSettings(system), ParserSettings.forServer(system)))
+    val result = semiSealedRoute(new server.RequestContextImpl(effectiveRequest, system.log, RoutingSettings(system),
+      ParserSettings.forServer(system)))
     createTestRouteResultAsync(request, result)
   }
 

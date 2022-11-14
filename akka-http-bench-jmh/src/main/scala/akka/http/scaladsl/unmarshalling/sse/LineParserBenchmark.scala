@@ -41,8 +41,7 @@ class LineParserBenchmark {
     "1024",
     "2048",
     "4096",
-    "8192"
-  ))
+    "8192"))
   var chunkSize = 0
 
   lazy val line = ByteString("x" * lineSize + "\n")

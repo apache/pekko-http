@@ -38,11 +38,14 @@ object EventStreamUnmarshalling {
     asHttpEntityUnmarshaller(akka.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling.fromEventsStream(settings))
 
   // for binary-compatibility, since 10.1.7
-  @deprecated("Binary compatibility method. Invocations should have an implicit ActorSystem in scope to provide access to configuration", "10.1.8")
+  @deprecated(
+    "Binary compatibility method. Invocations should have an implicit ActorSystem in scope to provide access to configuration",
+    "10.1.8")
   val fromEventStream: Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]] =
     asHttpEntityUnmarshaller(akka.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling.fromEventStream)
 
-  private def asHttpEntityUnmarshaller(value: FromEntityUnmarshaller[scaladsl.Source[sse.ServerSentEvent, NotUsed]]): Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]] = {
+  private def asHttpEntityUnmarshaller(value: FromEntityUnmarshaller[scaladsl.Source[sse.ServerSentEvent, NotUsed]])
+      : Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]] = {
     value
       .map(_.map(_.asInstanceOf[ServerSentEvent]).asJava)
       .asInstanceOf[Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]]]

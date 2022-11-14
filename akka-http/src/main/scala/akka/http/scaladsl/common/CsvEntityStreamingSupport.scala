@@ -12,13 +12,12 @@ import akka.stream.scaladsl.{ Flow, Framing }
 import akka.util.ByteString
 
 final class CsvEntityStreamingSupport private[akka] (
-  maxLineLength:       Int,
-  val supported:       ContentTypeRange,
-  val contentType:     ContentType,
-  val framingRenderer: Flow[ByteString, ByteString, NotUsed],
-  val parallelism:     Int,
-  val unordered:       Boolean
-) extends common.CsvEntityStreamingSupport {
+    maxLineLength: Int,
+    val supported: ContentTypeRange,
+    val contentType: ContentType,
+    val framingRenderer: Flow[ByteString, ByteString, NotUsed],
+    val parallelism: Int,
+    val unordered: Boolean) extends common.CsvEntityStreamingSupport {
   import akka.http.impl.util.JavaMapping.Implicits._
 
   def this(maxObjectSize: Int) =
@@ -32,7 +31,8 @@ final class CsvEntityStreamingSupport private[akka] (
   override val framingDecoder: Flow[ByteString, ByteString, NotUsed] =
     Framing.delimiter(ByteString("\n"), maxLineLength)
 
-  override def withFramingRendererFlow(framingRendererFlow: akka.stream.javadsl.Flow[ByteString, ByteString, NotUsed]): CsvEntityStreamingSupport =
+  override def withFramingRendererFlow(
+      framingRendererFlow: akka.stream.javadsl.Flow[ByteString, ByteString, NotUsed]): CsvEntityStreamingSupport =
     withFramingRenderer(framingRendererFlow.asScala)
   def withFramingRenderer(framingRendererFlow: Flow[ByteString, ByteString, NotUsed]): CsvEntityStreamingSupport =
     new CsvEntityStreamingSupport(maxLineLength, supported, contentType, framingRendererFlow, parallelism, unordered)

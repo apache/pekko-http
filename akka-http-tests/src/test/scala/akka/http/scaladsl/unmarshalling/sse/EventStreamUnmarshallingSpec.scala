@@ -57,7 +57,8 @@ final class EventStreamUnmarshallingSpec extends AsyncWordSpec with Matchers wit
     }
     "receive empty events when enabled" in {
       val allEvents = ServerSentEvent.heartbeat +: events :+ ServerSentEvent.heartbeat
-      implicit val fromEventsStream = EventStreamUnmarshalling.fromEventsStream(ServerSentEventSettings(system).withEmitEmptyEvents(true))
+      implicit val fromEventsStream =
+        EventStreamUnmarshalling.fromEventsStream(ServerSentEventSettings(system).withEmitEmptyEvents(true))
       Unmarshal(streamEntity(allEvents))
         .to[Source[ServerSentEvent, NotUsed]]
         .flatMap(_.runWith(Sink.seq))

@@ -51,7 +51,8 @@ object WebSocketUpgradeResponse {
         new WebSocketUpgradeResponse {
           def isValid: Boolean = false
           def response: HttpResponse = resp
-          def chosenSubprotocol: Optional[String] = throw new UnsupportedOperationException("chosenSubprotocol must not be called for valid response")
+          def chosenSubprotocol: Optional[String] =
+            throw new UnsupportedOperationException("chosenSubprotocol must not be called for valid response")
           def invalidationReason: String = cause
         }
     }

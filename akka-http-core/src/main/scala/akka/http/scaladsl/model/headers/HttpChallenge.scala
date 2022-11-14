@@ -14,7 +14,7 @@ import akka.http.impl.util.JavaMapping.Implicits._
  * compatibility, but it will be parsed and rendered correctly.
  */
 final case class HttpChallenge(scheme: String, realm: String,
-                               params: Map[String, String] = Map.empty) extends jm.headers.HttpChallenge with ValueRenderable {
+    params: Map[String, String] = Map.empty) extends jm.headers.HttpChallenge with ValueRenderable {
 
   def render[R <: Rendering](r: R): r.type = {
     r ~~ scheme

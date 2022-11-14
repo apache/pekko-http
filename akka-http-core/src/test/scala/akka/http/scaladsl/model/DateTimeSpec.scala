@@ -6,7 +6,7 @@ package akka.http.scaladsl.model
 
 import java.util.TimeZone
 import scala.util.Random
-import org.scalatest.matchers.{ Matcher, MatchResult }
+import org.scalatest.matchers.{ MatchResult, Matcher }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
