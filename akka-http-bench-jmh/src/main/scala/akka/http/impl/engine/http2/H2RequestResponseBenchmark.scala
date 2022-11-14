@@ -7,7 +7,15 @@ package akka.http.impl.engine.http2
 import akka.http.impl.engine.http2.FrameEvent.{ DataFrame, HeadersFrame }
 import akka.http.impl.engine.http2.framing.FrameRenderer
 import akka.http.scaladsl.model.HttpEntity.{ Chunk, LastChunk }
-import akka.http.scaladsl.model.{ AttributeKeys, ContentTypes, HttpEntity, HttpMethods, HttpRequest, HttpResponse, Trailer }
+import akka.http.scaladsl.model.{
+  AttributeKeys,
+  ContentTypes,
+  HttpEntity,
+  HttpMethods,
+  HttpRequest,
+  HttpResponse,
+  Trailer
+}
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
@@ -31,7 +39,7 @@ trait H2RequestResponseBenchmark extends HPackEncodingSupport {
     FrameRenderer.render(HeadersFrame(streamId, endStream = true, endHeaders = true, headerBlock(streamId), None))
   private def requestWithSingleFrameBody(streamId: Int): ByteString =
     FrameRenderer.render(HeadersFrame(streamId, endStream = false, endHeaders = true, headerBlock(streamId), None)) ++
-      FrameRenderer.render(DataFrame(streamId, endStream = true, requestBytes))
+    FrameRenderer.render(DataFrame(streamId, endStream = true, requestBytes))
 
   private var firstRequestHeaderBlock: ByteString = _
   // use header compression for subsequent requests
@@ -61,7 +69,8 @@ trait H2RequestResponseBenchmark extends HPackEncodingSupport {
         request = HttpRequest(method = HttpMethods.POST, uri = "http://www.example.com/")
         requestDataCreator = requestWithoutBody _
       case "singleframe" =>
-        request = HttpRequest(method = HttpMethods.POST, uri = "http://www.example.com/", entity = HttpEntity(requestBytes))
+        request =
+          HttpRequest(method = HttpMethods.POST, uri = "http://www.example.com/", entity = HttpEntity(requestBytes))
         requestDataCreator = requestWithSingleFrameBody _
     }
     initRequestHeaderBlocks()
@@ -80,7 +89,8 @@ trait H2RequestResponseBenchmark extends HPackEncodingSupport {
           .addAttribute(AttributeKeys.trailer, Trailer(trailerHeader :: Nil))
       case "chunked" =>
         baseResponse
-          .withEntity(HttpEntity.Chunked(ContentTypes.`text/plain(UTF-8)`, Source(Chunk(responseBody) :: LastChunk(trailer = trailerHeader :: Nil) :: Nil)))
+          .withEntity(HttpEntity.Chunked(ContentTypes.`text/plain(UTF-8)`,
+            Source(Chunk(responseBody) :: LastChunk(trailer = trailerHeader :: Nil) :: Nil)))
       case "strict" =>
         baseResponse
           .withEntity(HttpEntity.Strict(ContentTypes.`text/plain(UTF-8)`, responseBody))

@@ -41,7 +41,8 @@ private[http] object Http2FrameParsing {
     readSettings(Nil)
   }
 
-  def parseFrame(tpe: FrameType, flags: ByteFlag, streamId: Int, payload: ByteReader, log: LoggingAdapter): FrameEvent = {
+  def parseFrame(
+      tpe: FrameType, flags: ByteFlag, streamId: Int, payload: ByteReader, log: LoggingAdapter): FrameEvent = {
     // TODO: add @switch? seems non-trivial for now
     tpe match {
       case FrameType.GOAWAY =>
@@ -55,16 +56,16 @@ private[http] object Http2FrameParsing {
         val priority = Flags.PRIORITY.isSet(flags)
 
         val paddingLength =
-          if (pad) payload.readByte() & 0xff
+          if (pad) payload.readByte() & 0xFF
           else 0
 
         val priorityInfo =
           if (priority) {
             val dependencyAndE = payload.readIntBE()
-            val weight = payload.readByte() & 0xff
+            val weight = payload.readByte() & 0xFF
 
             val exclusiveFlag = (dependencyAndE >>> 31) == 1 // most significant bit for exclusive flag
-            val dependencyId = dependencyAndE & 0x7fffffff // remaining 31 bits for the dependency part
+            val dependencyId = dependencyAndE & 0x7FFFFFFF // remaining 31 bits for the dependency part
             Http2Compliance.requireNoSelfDependency(streamId, dependencyId)
             Some(PriorityFrame(streamId, exclusiveFlag, dependencyId, weight))
           } else
@@ -77,7 +78,7 @@ private[http] object Http2FrameParsing {
         val endStream = Flags.END_STREAM.isSet(flags)
 
         val paddingLength =
-          if (pad) payload.readByte() & 0xff
+          if (pad) payload.readByte() & 0xFF
           else 0
 
         DataFrame(streamId, endStream, payload.take(payload.remainingSize - paddingLength))
@@ -89,12 +90,14 @@ private[http] object Http2FrameParsing {
         if (ack) {
           // validate that payload is empty: (6.5)
           if (payload.hasRemaining)
-            throw new Http2Compliance.IllegalPayloadInSettingsAckFrame(payload.remainingSize, s"SETTINGS ACK frame MUST NOT contain payload (spec 6.5)!")
+            throw new Http2Compliance.IllegalPayloadInSettingsAckFrame(payload.remainingSize,
+              s"SETTINGS ACK frame MUST NOT contain payload (spec 6.5)!")
 
           SettingsAckFrame(Nil) // TODO if we were to send out settings, here would be the spot to include the acks for the ones we've sent out
         } else {
 
-          if (payload.remainingSize % 6 != 0) throw new Http2Compliance.IllegalPayloadLengthInSettingsFrame(payload.remainingSize, "SETTINGS payload MUST be a multiple of multiple of 6 octets")
+          if (payload.remainingSize % 6 != 0) throw new Http2Compliance.IllegalPayloadLengthInSettingsFrame(
+            payload.remainingSize, "SETTINGS payload MUST be a multiple of multiple of 6 octets")
           SettingsFrame(readSettings(payload, log))
         }
 
@@ -127,8 +130,8 @@ private[http] object Http2FrameParsing {
         Http2Compliance.requireFrameSize(payload.remainingSize, 5)
         val streamDependency = payload.readIntBE() // whole word
         val exclusiveFlag = (streamDependency >>> 31) == 1 // most significant bit for exclusive flag
-        val dependencyId = streamDependency & 0x7fffffff // remaining 31 bits for the dependency part
-        val priority = payload.readByte() & 0xff
+        val dependencyId = streamDependency & 0x7FFFFFFF // remaining 31 bits for the dependency part
+        val priority = payload.readByte() & 0xFF
         Http2Compliance.requireNoSelfDependency(streamId, dependencyId)
         PriorityFrame(streamId, exclusiveFlag, dependencyId, priority)
 
@@ -137,7 +140,7 @@ private[http] object Http2FrameParsing {
         val endHeaders = Flags.END_HEADERS.isSet(flags)
 
         val paddingLength =
-          if (pad) payload.readByte() & 0xff
+          if (pad) payload.readByte() & 0xFF
           else 0
 
         val promisedStreamId = payload.readIntBE()
@@ -152,7 +155,8 @@ private[http] object Http2FrameParsing {
 
 /** INTERNAL API */
 @InternalApi
-private[http2] class Http2FrameParsing(shouldReadPreface: Boolean, log: LoggingAdapter) extends ByteStringParser[FrameEvent] {
+private[http2] class Http2FrameParsing(
+    shouldReadPreface: Boolean, log: LoggingAdapter) extends ByteStringParser[FrameEvent] {
   import ByteStringParser._
   import Http2FrameParsing._
 
@@ -195,4 +199,3 @@ private[http2] class Http2FrameParsing(shouldReadPreface: Boolean, log: LoggingA
 
     }
 }
-

@@ -10,7 +10,7 @@ import java.util.concurrent.CompletionStage
 import java.{ lang => jl, util => ju }
 
 import akka.japi.Pair
-import akka.stream.{ FlowShape, Graph, javadsl, scaladsl }
+import akka.stream.{ javadsl, scaladsl, FlowShape, Graph }
 
 import scala.collection.immutable
 import scala.compat.java8.{ FutureConverters, OptionConverters }
@@ -18,7 +18,13 @@ import scala.reflect.ClassTag
 import akka.NotUsed
 import akka.annotation.InternalApi
 import akka.http.impl.model.{ JavaQuery, JavaUri }
-import akka.http.javadsl.{ ConnectionContext, HttpConnectionContext, HttpsConnectionContext, model => jm, settings => js }
+import akka.http.javadsl.{
+  model => jm,
+  settings => js,
+  ConnectionContext,
+  HttpConnectionContext,
+  HttpsConnectionContext
+}
 import akka.http.{ javadsl => jdsl, scaladsl => sdsl }
 import akka.http.scaladsl.{ model => sm }
 
@@ -37,7 +43,8 @@ private[http] trait J2SMapping[J] {
 private[http] object J2SMapping {
   implicit def fromJavaMapping[J](implicit mapping: JavaMapping[J, _]): J2SMapping[J] { type S = mapping.S } = mapping
 
-  implicit def fromJavaSeqMapping[J](implicit mapping: J2SMapping[J]): J2SMapping[Seq[J]] { type S = immutable.Seq[mapping.S] } =
+  implicit def fromJavaSeqMapping[J](
+      implicit mapping: J2SMapping[J]): J2SMapping[Seq[J]] { type S = immutable.Seq[mapping.S] } =
     new J2SMapping[Seq[J]] {
       type S = immutable.Seq[mapping.S]
       def toScala(javaObject: Seq[J]): S = javaObject.map(mapping.toScala(_)).toList
@@ -84,12 +91,14 @@ private[http] object JavaMapping {
     implicit def convertSeqToScala[J](j: Seq[J])(implicit mapping: J2SMapping[J]): immutable.Seq[mapping.S] =
       j.map(mapping.toScala(_)).toList
 
-    implicit def AddAsScala[J](javaObject: J)(implicit mapping: J2SMapping[J]): AsScala[mapping.S] = new AsScala[mapping.S] {
-      def asScala = convertToScala(javaObject)
-    }
-    implicit def AddAsJava[S](scalaObject: S)(implicit mapping: S2JMapping[S]): AsJava[mapping.J] = new AsJava[mapping.J] {
-      def asJava = mapping.toJava(scalaObject)
-    }
+    implicit def AddAsScala[J](javaObject: J)(implicit mapping: J2SMapping[J]): AsScala[mapping.S] =
+      new AsScala[mapping.S] {
+        def asScala = convertToScala(javaObject)
+      }
+    implicit def AddAsJava[S](scalaObject: S)(implicit mapping: S2JMapping[S]): AsJava[mapping.J] =
+      new AsJava[mapping.J] {
+        def asJava = mapping.toJava(scalaObject)
+      }
   }
 
   /** This trivial mapping isn't enabled by default to prevent it from conflicting with the `Inherited` ones */
@@ -99,7 +108,8 @@ private[http] object JavaMapping {
     def toScala(javaObject: Any): Any = javaObject
   }
 
-  implicit def iterableMapping[_J, _S](implicit mapping: JavaMapping[_J, _S]): JavaMapping[jl.Iterable[_J], immutable.Seq[_S]] =
+  implicit def iterableMapping[_J, _S](
+      implicit mapping: JavaMapping[_J, _S]): JavaMapping[jl.Iterable[_J], immutable.Seq[_S]] =
     new JavaMapping[jl.Iterable[_J], immutable.Seq[_S]] {
       import collection.JavaConverters._
 
@@ -119,7 +129,9 @@ private[http] object JavaMapping {
       def toJava(scalaObject: Option[_S]): Optional[_J] = OptionConverters.toJava(scalaObject.map(mapping.toJava))
     }
 
-  implicit def flowMapping[JIn, SIn, JOut, SOut, JM, SM](implicit inMapping: JavaMapping[JIn, SIn], outMapping: JavaMapping[JOut, SOut], matValueMapping: JavaMapping[JM, SM]): JavaMapping[javadsl.Flow[JIn, JOut, JM], scaladsl.Flow[SIn, SOut, SM]] =
+  implicit def flowMapping[JIn, SIn, JOut, SOut, JM, SM](implicit inMapping: JavaMapping[JIn, SIn],
+      outMapping: JavaMapping[JOut, SOut], matValueMapping: JavaMapping[JM, SM])
+      : JavaMapping[javadsl.Flow[JIn, JOut, JM], scaladsl.Flow[SIn, SOut, SM]] =
     new JavaMapping[javadsl.Flow[JIn, JOut, JM], scaladsl.Flow[SIn, SOut, SM]] {
       def toScala(javaObject: javadsl.Flow[JIn, JOut, JM]): S =
         scaladsl.Flow[SIn].map(inMapping.toJava).viaMat(javaObject)(scaladsl.Keep.right).map(outMapping.toScala)
@@ -131,7 +143,9 @@ private[http] object JavaMapping {
         }
     }
 
-  implicit def graphFlowMapping[JIn, SIn, JOut, SOut, M](implicit inMapping: JavaMapping[JIn, SIn], outMapping: JavaMapping[JOut, SOut]): JavaMapping[Graph[FlowShape[JIn, JOut], M], Graph[FlowShape[SIn, SOut], M]] =
+  implicit def graphFlowMapping[JIn, SIn, JOut, SOut, M](implicit inMapping: JavaMapping[JIn, SIn],
+      outMapping: JavaMapping[JOut, SOut])
+      : JavaMapping[Graph[FlowShape[JIn, JOut], M], Graph[FlowShape[SIn, SOut], M]] =
     new JavaMapping[Graph[FlowShape[JIn, JOut], M], Graph[FlowShape[SIn, SOut], M]] {
       def toScala(javaObject: Graph[FlowShape[JIn, JOut], M]): S =
         scaladsl.Flow[SIn].map(inMapping.toJava).viaMat(javaObject)(scaladsl.Keep.right).map(outMapping.toScala)
@@ -145,13 +159,17 @@ private[http] object JavaMapping {
     scaladsl.Flow[S].map(mapping.toJava)
   def javaToScalaAdapterFlow[J, S](implicit mapping: JavaMapping[J, S]): scaladsl.Flow[J, S, NotUsed] =
     scaladsl.Flow[J].map(mapping.toScala)
-  def adapterBidiFlow[JIn, SIn, SOut, JOut](implicit inMapping: JavaMapping[JIn, SIn], outMapping: JavaMapping[JOut, SOut]): scaladsl.BidiFlow[JIn, SIn, SOut, JOut, NotUsed] =
-    scaladsl.BidiFlow.fromFlowsMat(javaToScalaAdapterFlow(inMapping), scalaToJavaAdapterFlow(outMapping))(scaladsl.Keep.none)
+  def adapterBidiFlow[JIn, SIn, SOut, JOut](implicit inMapping: JavaMapping[JIn, SIn],
+      outMapping: JavaMapping[JOut, SOut]): scaladsl.BidiFlow[JIn, SIn, SOut, JOut, NotUsed] =
+    scaladsl.BidiFlow.fromFlowsMat(javaToScalaAdapterFlow(inMapping), scalaToJavaAdapterFlow(outMapping))(
+      scaladsl.Keep.none)
 
-  implicit def pairMapping[J1, J2, S1, S2](implicit _1Mapping: JavaMapping[J1, S1], _2Mapping: JavaMapping[J2, S2]): JavaMapping[Pair[J1, J2], (S1, S2)] =
+  implicit def pairMapping[J1, J2, S1, S2](
+      implicit _1Mapping: JavaMapping[J1, S1], _2Mapping: JavaMapping[J2, S2]): JavaMapping[Pair[J1, J2], (S1, S2)] =
     new JavaMapping[Pair[J1, J2], (S1, S2)] {
       def toJava(scalaObject: (S1, S2)): J = Pair(_1Mapping.toJava(scalaObject._1), _2Mapping.toJava(scalaObject._2))
-      def toScala(javaObject: Pair[J1, J2]): (S1, S2) = (_1Mapping.toScala(javaObject.first), _2Mapping.toScala(javaObject.second))
+      def toScala(javaObject: Pair[J1, J2]): (S1, S2) =
+        (_1Mapping.toScala(javaObject.first), _2Mapping.toScala(javaObject.second))
     }
   implicit def tryMapping[_J, _S](implicit mapping: JavaMapping[_J, _S]): JavaMapping[Try[_J], Try[_S]] =
     new JavaMapping[Try[_J], Try[_S]] {
@@ -159,10 +177,13 @@ private[http] object JavaMapping {
       def toJava(scalaObject: Try[_S]): J = scalaObject.map(mapping.toJava)
     }
 
-  implicit def futureMapping[_J, _S](implicit mapping: JavaMapping[_J, _S], ec: ExecutionContext): JavaMapping[CompletionStage[_J], Future[_S]] =
+  implicit def futureMapping[_J, _S](
+      implicit mapping: JavaMapping[_J, _S], ec: ExecutionContext): JavaMapping[CompletionStage[_J], Future[_S]] =
     new JavaMapping[CompletionStage[_J], Future[_S]] {
-      def toJava(scalaObject: Future[_S]): CompletionStage[_J] = FutureConverters.toJava(scalaObject.map(mapping.toJava))
-      def toScala(javaObject: CompletionStage[_J]): Future[_S] = FutureConverters.toScala(javaObject).map(mapping.toScala)
+      def toJava(scalaObject: Future[_S]): CompletionStage[_J] =
+        FutureConverters.toJava(scalaObject.map(mapping.toJava))
+      def toScala(javaObject: CompletionStage[_J]): Future[_S] =
+        FutureConverters.toScala(javaObject).map(mapping.toScala)
     }
 
   implicit object StringIdentity extends Identity[String]
@@ -185,23 +206,36 @@ private[http] object JavaMapping {
   }
 
   implicit object ConnectionContext extends Inherited[ConnectionContext, akka.http.scaladsl.ConnectionContext]
-  implicit object HttpConnectionContext extends Inherited[HttpConnectionContext, akka.http.scaladsl.HttpConnectionContext]
-  implicit object HttpsConnectionContext extends Inherited[HttpsConnectionContext, akka.http.scaladsl.HttpsConnectionContext]
+  implicit object HttpConnectionContext
+      extends Inherited[HttpConnectionContext, akka.http.scaladsl.HttpConnectionContext]
+  implicit object HttpsConnectionContext
+      extends Inherited[HttpsConnectionContext, akka.http.scaladsl.HttpsConnectionContext]
 
-  implicit object ClientConnectionSettings extends Inherited[js.ClientConnectionSettings, akka.http.scaladsl.settings.ClientConnectionSettings]
-  implicit object ConnectionPoolSettings extends Inherited[js.ConnectionPoolSettings, akka.http.scaladsl.settings.ConnectionPoolSettings]
+  implicit object ClientConnectionSettings
+      extends Inherited[js.ClientConnectionSettings, akka.http.scaladsl.settings.ClientConnectionSettings]
+  implicit object ConnectionPoolSettings
+      extends Inherited[js.ConnectionPoolSettings, akka.http.scaladsl.settings.ConnectionPoolSettings]
   implicit object ParserSettings extends Inherited[js.ParserSettings, akka.http.scaladsl.settings.ParserSettings]
-  implicit object CookieParsingMode extends Inherited[js.ParserSettings.CookieParsingMode, akka.http.scaladsl.settings.ParserSettings.CookieParsingMode]
-  implicit object ErrorLoggingVerbosity extends Inherited[js.ParserSettings.ErrorLoggingVerbosity, akka.http.scaladsl.settings.ParserSettings.ErrorLoggingVerbosity]
+  implicit object CookieParsingMode
+      extends Inherited[js.ParserSettings.CookieParsingMode,
+        akka.http.scaladsl.settings.ParserSettings.CookieParsingMode]
+  implicit object ErrorLoggingVerbosity
+      extends Inherited[js.ParserSettings.ErrorLoggingVerbosity,
+        akka.http.scaladsl.settings.ParserSettings.ErrorLoggingVerbosity]
   implicit object ServerSettings extends Inherited[js.ServerSettings, akka.http.scaladsl.settings.ServerSettings]
-  implicit object PreviewServerSettings extends Inherited[js.PreviewServerSettings, akka.http.scaladsl.settings.PreviewServerSettings]
-  implicit object ServerSettingsT extends Inherited[js.ServerSettings.Timeouts, akka.http.scaladsl.settings.ServerSettings.Timeouts]
-  implicit object Http2ServerSettingT extends Inherited[js.Http2ServerSettings, akka.http.scaladsl.settings.Http2ServerSettings]
-  implicit object WebsocketSettings extends Inherited[js.WebSocketSettings, akka.http.scaladsl.settings.WebSocketSettings]
+  implicit object PreviewServerSettings
+      extends Inherited[js.PreviewServerSettings, akka.http.scaladsl.settings.PreviewServerSettings]
+  implicit object ServerSettingsT
+      extends Inherited[js.ServerSettings.Timeouts, akka.http.scaladsl.settings.ServerSettings.Timeouts]
+  implicit object Http2ServerSettingT
+      extends Inherited[js.Http2ServerSettings, akka.http.scaladsl.settings.Http2ServerSettings]
+  implicit object WebsocketSettings
+      extends Inherited[js.WebSocketSettings, akka.http.scaladsl.settings.WebSocketSettings]
 
   implicit object OutgoingConnection extends JavaMapping[jdsl.OutgoingConnection, sdsl.Http.OutgoingConnection] {
     def toScala(javaObject: jdsl.OutgoingConnection): sdsl.Http.OutgoingConnection = javaObject.delegate
-    def toJava(scalaObject: sdsl.Http.OutgoingConnection): jdsl.OutgoingConnection = new jdsl.OutgoingConnection(scalaObject)
+    def toJava(scalaObject: sdsl.Http.OutgoingConnection): jdsl.OutgoingConnection =
+      new jdsl.OutgoingConnection(scalaObject)
   }
   implicit object ClientTransport extends JavaMapping[jdsl.ClientTransport, sdsl.ClientTransport] {
     def toScala(javaObject: jdsl.ClientTransport): sdsl.ClientTransport = jdsl.ClientTransport.toScala(javaObject)
@@ -219,7 +253,8 @@ private[http] object JavaMapping {
   implicit object ContentType extends Inherited[jm.ContentType, sm.ContentType]
   implicit object ContentTypeBinary extends Inherited[jm.ContentType.Binary, sm.ContentType.Binary]
   implicit object ContentTypeNonBinary extends Inherited[jm.ContentType.NonBinary, sm.ContentType.NonBinary]
-  implicit object ContentTypeWithFixedCharset extends Inherited[jm.ContentType.WithFixedCharset, sm.ContentType.WithFixedCharset]
+  implicit object ContentTypeWithFixedCharset
+      extends Inherited[jm.ContentType.WithFixedCharset, sm.ContentType.WithFixedCharset]
   implicit object ContentTypeWithCharset extends Inherited[jm.ContentType.WithCharset, sm.ContentType.WithCharset]
   implicit object ContentTypeRange extends Inherited[jm.ContentTypeRange, sm.ContentTypeRange]
   implicit object Host extends Inherited[jm.Host, sm.Uri.Host]
@@ -250,7 +285,8 @@ private[http] object JavaMapping {
   implicit object ByteRange extends Inherited[jm.headers.ByteRange, sm.headers.ByteRange]
   implicit object CacheDirective extends Inherited[jm.headers.CacheDirective, sm.headers.CacheDirective]
   implicit object UserAgent extends Inherited[jm.headers.UserAgent, sm.headers.`User-Agent`]
-  implicit object ContentDispositionType extends Inherited[jm.headers.ContentDispositionType, sm.headers.ContentDispositionType]
+  implicit object ContentDispositionType
+      extends Inherited[jm.headers.ContentDispositionType, sm.headers.ContentDispositionType]
   implicit object EntityTag extends Inherited[jm.headers.EntityTag, sm.headers.EntityTag]
   implicit object EntityTagRange extends Inherited[jm.headers.EntityTagRange, sm.headers.EntityTagRange]
   implicit object HttpChallenge extends Inherited[jm.headers.HttpChallenge, sm.headers.HttpChallenge]

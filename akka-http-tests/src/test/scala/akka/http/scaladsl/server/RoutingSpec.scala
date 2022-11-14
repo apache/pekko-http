@@ -22,7 +22,8 @@ trait GenericRoutingSpec extends Matchers with Directives with ScalatestRouteTes
 }
 
 // FIXME: currently cannot use `AkkaSpec` or `AkkaSpecWithMaterializer`, see https://github.com/akka/akka-http/issues/3313
-abstract class RoutingSpec extends AnyWordSpec with GenericRoutingSpec with WithLogCapturing with TestKitBase with ScalaFutures {
+abstract class RoutingSpec extends AnyWordSpec with GenericRoutingSpec with WithLogCapturing with TestKitBase
+    with ScalaFutures {
   override def testConfigSource: String =
     """
        akka.loglevel = DEBUG

@@ -6,7 +6,14 @@ package akka.http.impl.engine.http2
 
 import java.nio.ByteOrder
 
-import akka.http.impl.engine.http2.FrameEvent.{ ContinuationFrame, HeadersFrame, PriorityFrame, Setting, SettingsFrame, WindowUpdateFrame }
+import akka.http.impl.engine.http2.FrameEvent.{
+  ContinuationFrame,
+  HeadersFrame,
+  PriorityFrame,
+  Setting,
+  SettingsFrame,
+  WindowUpdateFrame
+}
 import akka.http.impl.engine.http2.Http2Protocol.{ ErrorCode, Flags, FrameType, SettingIdentifier }
 import akka.http.impl.engine.http2.framing.FrameRenderer
 import akka.util.{ ByteString, ByteStringBuilder }

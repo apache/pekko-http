@@ -14,7 +14,7 @@ import akka.util.ByteString
  */
 @InternalApi
 private[http] final case class UpgradeToOtherProtocolResponseHeader(handler: Flow[ByteString, ByteString, Any])
-  extends InternalCustomHeader("UpgradeToOtherProtocolResponseHeader")
+    extends InternalCustomHeader("UpgradeToOtherProtocolResponseHeader")
 
 /**
  * Internal API

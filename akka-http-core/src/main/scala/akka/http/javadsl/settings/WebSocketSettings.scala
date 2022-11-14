@@ -23,6 +23,7 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
   def getRandomFactory: Supplier[Random]
   def periodicKeepAliveMode: String
   def periodicKeepAliveMaxIdle: Duration
+
   /**
    * The provided supplier will be invoked for each new keep-alive frame that is sent.
    * The ByteString will be included in the Ping or Pong frame sent as heartbeat,

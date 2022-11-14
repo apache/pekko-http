@@ -18,7 +18,7 @@ private[parser] trait AcceptLanguageHeader { this: Parser with CommonRules with 
     `language-range` ~ optional(weight) ~> { (range, optQ) =>
       optQ match {
         case None    => range
-        case Some(q) => range withQValue q
+        case Some(q) => range.withQValue(q)
       }
     }
   }

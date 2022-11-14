@@ -22,7 +22,8 @@ sealed private[akka] trait Collect[T] {
 }
 
 @InternalApi private[akka] object CollectorStage {
-  def resultAfterSourceElements[T, U](source: Source[T, Any], flow: Flow[T, U, Any])(implicit materializer: Materializer): Future[(Seq[U], Boolean)] = {
+  def resultAfterSourceElements[T, U](source: Source[T, Any], flow: Flow[T, U, Any])(
+      implicit materializer: Materializer): Future[(Seq[U], Boolean)] = {
     val collector =
       (source ++ Source.maybe[T] /* Never complete*/ )
         .via(flow)

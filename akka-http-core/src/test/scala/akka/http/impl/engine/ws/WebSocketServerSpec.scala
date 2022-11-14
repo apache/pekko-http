@@ -121,8 +121,7 @@ class WebSocketServerSpec extends AkkaSpecWithMaterializer("akka.http.server.web
             val defaults = super.settings.websocketSettings
             super.settings.withWebsocketSettings(defaults
               .withPeriodicKeepAliveMode("ping")
-              .withPeriodicKeepAliveMaxIdle(100.millis)
-            )
+              .withPeriodicKeepAliveMaxIdle(100.millis))
           }
 
           send(

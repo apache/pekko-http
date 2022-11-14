@@ -26,4 +26,3 @@ object BinaryPolyFunc {
     def apply(a: A, b: B): Out
   }
 }
-

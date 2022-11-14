@@ -11,7 +11,7 @@ import akka.actor.ActorSystem
 import akka.http.impl.util._
 import akka.http.scaladsl.model.HttpEntity._
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{ Connection, HttpEncodings, `Content-Encoding` }
+import akka.http.scaladsl.model.headers.{ `Content-Encoding`, Connection, HttpEncodings }
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.http.scaladsl.settings.{ ConnectionPoolSettings, ServerSettings }
 import akka.stream.scaladsl._
@@ -28,13 +28,13 @@ import scala.concurrent.{ Await, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
 class GracefulTerminationSpec
-  extends AkkaSpecWithMaterializer("""
+    extends AkkaSpecWithMaterializer("""
     windows-connection-abort-workaround-enabled = auto
     akka.http.server.request-timeout = infinite
     akka.http.server.log-unencrypted-network-bytes = 200
     akka.http.client.log-unencrypted-network-bytes = 200
                                                    """)
-  with Tolerance with Eventually {
+    with Tolerance with Eventually {
   implicit lazy val dispatcher = system.dispatcher
 
   implicit override val patience = PatienceConfig(5.seconds.dilated(system), 200.millis)
@@ -79,7 +79,8 @@ class GracefulTerminationSpec
         StreamTestKit.assertAllStagesStopped {
           new TestSetup {
             val r1 =
-              Http()(clientSystem).singleRequest(nextRequest(), connectionContext = clientConnectionContext, settings = basePoolSettings)
+              Http()(clientSystem).singleRequest(nextRequest(), connectionContext = clientConnectionContext,
+                settings = basePoolSettings)
 
             // reply with an infinite entity stream
             val chunks = Source
@@ -109,7 +110,8 @@ class GracefulTerminationSpec
     "fail close delimited response streams" ignore new TestSetup {
       val clientSystem = ActorSystem("client")
       val r1 =
-        Http()(clientSystem).singleRequest(nextRequest(), connectionContext = clientConnectionContext, settings = basePoolSettings)
+        Http()(clientSystem).singleRequest(nextRequest(), connectionContext = clientConnectionContext,
+          settings = basePoolSettings)
 
       // reply with an infinite entity stream
       val chunks = Source
@@ -159,7 +161,7 @@ class GracefulTerminationSpec
 
       Try(r1.futureValue) match {
         // either, the connection manages to get a 503 error code out
-        case Success(r)  => r.status should ===(StatusCodes.ServiceUnavailable)
+        case Success(r) => r.status should ===(StatusCodes.ServiceUnavailable)
         // or, the connection was already torn down in which case we might get an error based on a retry
         case Failure(ex) => ex.getMessage.contains("Connection refused") shouldBe true
       }
@@ -206,8 +208,10 @@ class GracefulTerminationSpec
       override val basePoolSettings: ConnectionPoolSettings =
         super.basePoolSettings
           .withTransport(new ClientTransport {
-            override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] = {
-              ClientTransport.TCP.connectTo(serverBinding.localAddress.getHostName, serverBinding.localAddress.getPort, settings)
+            override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+                implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] = {
+              ClientTransport.TCP.connectTo(serverBinding.localAddress.getHostName, serverBinding.localAddress.getPort,
+                settings)
                 .mapMaterializedValue { conn =>
                   val result = Promise[Http.OutgoingConnection]()
                   conn.onComplete {
@@ -228,7 +232,8 @@ class GracefulTerminationSpec
       ensureServerDeliveredRequest(r1) // we want the request to be in the server user's hands before we cause termination
       serverBinding.terminate(hardDeadline = time)
       Thread.sleep(time.toMillis / 2)
-      reply(_ => HttpResponse(StatusCodes.OK, List(Connection("keep-alive"), `Content-Encoding`(List(HttpEncodings.gzip)))))
+      reply(_ =>
+        HttpResponse(StatusCodes.OK, List(Connection("keep-alive"), `Content-Encoding`(List(HttpEncodings.gzip)))))
 
       val response = r1.futureValue
       response.header[Connection] shouldBe Some(Connection("close"))
@@ -262,7 +267,7 @@ class GracefulTerminationSpec
 
         Try(r1.futureValue) match {
           // either, the connection manages to send out the configured status
-          case Success(r)  => r.status should ===(StatusCodes.ImATeapot) // the injected 503 response
+          case Success(r) => r.status should ===(StatusCodes.ImATeapot) // the injected 503 response
 
           // or, the connection was already torn down in which case we might get an error based on a retry
           case Failure(ex) => ex.getMessage.contains("Connection refused") shouldBe true
@@ -308,7 +313,8 @@ class GracefulTerminationSpec
     val counter = new AtomicInteger()
     var idleTimeoutBaseForUniqueness = 10
 
-    def nextRequest() = HttpRequest(uri = s"https://akka.example.org/${counter.incrementAndGet()}", entity = "hello-from-client")
+    def nextRequest() =
+      HttpRequest(uri = s"https://akka.example.org/${counter.incrementAndGet()}", entity = "hello-from-client")
     val serverConnectionContext = ExampleHttpContexts.exampleServerContext
     val clientConnectionContext = ExampleHttpContexts.exampleClientContext
 
@@ -323,9 +329,10 @@ class GracefulTerminationSpec
 
     def ensureServerDeliveredRequest(clientView: Future[HttpResponse]): HttpRequest = {
       try eventually {
-        // we're trying this until a request sent from client arrives in the "user handler" (in the queue)
-        serverQueue.peek()._1
-      } catch {
+          // we're trying this until a request sent from client arrives in the "user handler" (in the queue)
+          serverQueue.peek()._1
+        }
+      catch {
         case ex: Throwable =>
           // If we didn't see the request at the server, perhaps it failed already at the client:
           clientView.value match {
@@ -354,7 +361,8 @@ class GracefulTerminationSpec
 
     val handlerFlow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest].mapAsync(1)(handler)
     val serverBinding =
-      Http().newServerAt("localhost", 0).enableHttps(serverConnectionContext).withSettings(serverSettings).bindFlow(handlerFlow)
+      Http().newServerAt("localhost", 0).enableHttps(serverConnectionContext).withSettings(serverSettings).bindFlow(
+        handlerFlow)
         .futureValue
 
     def basePoolSettings = ConnectionPoolSettings(system)

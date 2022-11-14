@@ -53,8 +53,7 @@ class HttpEntityBenchmark extends CommonBenchmark {
         HttpEntity.Default(
           ContentTypes.`application/octet-stream`,
           10 * chunk.size,
-          Source.repeat(chunk).take(10)
-        )
+          Source.repeat(chunk).take(10))
     }
   }
 

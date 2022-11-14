@@ -65,9 +65,7 @@ final class ServerSentEventParserSpec extends AsyncWordSpec with Matchers with B
             ServerSentEvent("event 1 line 1\nevent 1 line 2"),
             ServerSentEvent("event 2", Some("event 2 event"), Some("42"), Some(512)),
             ServerSentEvent("event 3", None, Some("")),
-            ServerSentEvent("event 4")
-          )
-        )
+            ServerSentEvent("event 4")))
     }
     "parse ServerSentEvents correctly (and pass empty events)" in {
       val input = """|data: event 1 line 1
@@ -121,9 +119,7 @@ final class ServerSentEventParserSpec extends AsyncWordSpec with Matchers with B
             ServerSentEvent.heartbeat,
             ServerSentEvent.heartbeat,
             ServerSentEvent("event 3", None, Some("")),
-            ServerSentEvent("event 4")
-          )
-        )
+            ServerSentEvent("event 4")))
     }
   }
 }

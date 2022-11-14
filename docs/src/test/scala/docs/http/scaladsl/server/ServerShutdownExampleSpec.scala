@@ -16,7 +16,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 class ServerShutdownExampleSpec extends AnyWordSpec with Matchers
-  with CompileOnlySpec {
+    with CompileOnlySpec {
 
   "mount coordinated shutdown" in compileOnlySpec {
     import akka.http.scaladsl.server.Route

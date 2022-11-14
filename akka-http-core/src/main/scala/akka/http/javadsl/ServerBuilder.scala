@@ -29,6 +29,7 @@ import scala.concurrent.ExecutionContext
  * and then call one of the bind* methods to bind a server.
  */
 trait ServerBuilder {
+
   /** Change interface to bind to */
   def onInterface(interface: String): ServerBuilder
 
@@ -143,14 +144,13 @@ object ServerBuilder {
       SystemMaterializer(system).materializer)
 
   private case class Impl(
-    interface:    String,
-    port:         Int,
-    context:      ConnectionContext,
-    log:          LoggingAdapter,
-    settings:     ServerSettings,
-    system:       ClassicActorSystemProvider,
-    materializer: Materializer
-  ) extends ServerBuilder {
+      interface: String,
+      port: Int,
+      context: ConnectionContext,
+      log: LoggingAdapter,
+      settings: ServerSettings,
+      system: ClassicActorSystemProvider,
+      materializer: Materializer) extends ServerBuilder {
     private implicit def executionContext: ExecutionContext = system.classicSystem.dispatcher
     private def http: scaladsl.HttpExt = scaladsl.Http(system)
 

@@ -16,7 +16,7 @@ sealed abstract class Marshaller[-A, +B] {
   def apply(value: A)(implicit ec: ExecutionContext): Future[List[Marshalling[B]]]
 
   def map[C](f: B => C): Marshaller[A, C] =
-    Marshaller(implicit ec => value => this(value).fast map (_ map (_ map f)))
+    Marshaller(implicit ec => value => this(value).fast.map(_.map(_.map(f))))
 
   /**
    * Reuses this Marshaller's logic to produce a new Marshaller from another type `C` which overrides
@@ -35,24 +35,26 @@ sealed abstract class Marshaller[-A, +B] {
    * charsets it allows the new [[akka.http.scaladsl.model.MediaType]] must be compatible, since akka-http will never recode entities.
    * If the wrapping is illegal the [[scala.concurrent.Future]] produced by the resulting marshaller will contain a [[RuntimeException]].
    */
-  def wrapWithEC[C, D >: B](newMediaType: MediaType)(f: ExecutionContext => C => A)(implicit cto: ContentTypeOverrider[D]): Marshaller[C, D] =
+  def wrapWithEC[C, D >: B](newMediaType: MediaType)(f: ExecutionContext => C => A)(
+      implicit cto: ContentTypeOverrider[D]): Marshaller[C, D] =
     Marshaller { implicit ec => value =>
       import Marshalling._
-      this(f(ec)(value)).fast map {
-        _ map {
+      this(f(ec)(value)).fast.map {
+        _.map {
           (_, newMediaType) match {
             case (WithFixedContentType(_, marshal), newMT: MediaType.Binary) =>
               WithFixedContentType(newMT, () => cto(marshal(), newMT))
             case (WithFixedContentType(oldCT: ContentType.Binary, marshal), newMT: MediaType.WithFixedCharset) =>
               WithFixedContentType(newMT, () => cto(marshal(), newMT))
-            case (WithFixedContentType(oldCT: ContentType.NonBinary, marshal), newMT: MediaType.WithFixedCharset) if oldCT.charset == newMT.charset =>
+            case (WithFixedContentType(oldCT: ContentType.NonBinary, marshal), newMT: MediaType.WithFixedCharset)
+                if oldCT.charset == newMT.charset =>
               WithFixedContentType(newMT, () => cto(marshal(), newMT))
             case (WithFixedContentType(oldCT: ContentType.NonBinary, marshal), newMT: MediaType.WithOpenCharset) =>
-              val newCT = newMT withCharset oldCT.charset
+              val newCT = newMT.withCharset(oldCT.charset)
               WithFixedContentType(newCT, () => cto(marshal(), newCT))
 
             case (WithOpenCharset(oldMT, marshal), newMT: MediaType.WithOpenCharset) =>
-              WithOpenCharset(newMT, cs => cto(marshal(cs), newMT withCharset cs))
+              WithOpenCharset(newMT, cs => cto(marshal(cs), newMT.withCharset(cs)))
             case (WithOpenCharset(oldMT, marshal), newMT: MediaType.WithFixedCharset) =>
               WithFixedContentType(newMT, () => cto(marshal(newMT.charset), newMT))
 
@@ -61,7 +63,8 @@ sealed abstract class Marshaller[-A, +B] {
             case (Opaque(marshal), newMT: MediaType.WithFixedCharset) =>
               WithFixedContentType(newMT, () => cto(marshal(), newMT))
 
-            case x => sys.error(s"Illegal marshaller wrapping. Marshalling `$x` cannot be wrapped with MediaType `$newMediaType`")
+            case x => sys.error(
+                s"Illegal marshaller wrapping. Marshalling `$x` cannot be wrapped with MediaType `$newMediaType`")
           }
         }
       }
@@ -76,10 +79,10 @@ sealed abstract class Marshaller[-A, +B] {
 
 //#marshaller-creation
 object Marshaller
-  extends GenericMarshallers
-  with PredefinedToEntityMarshallers
-  with PredefinedToResponseMarshallers
-  with PredefinedToRequestMarshallers {
+    extends GenericMarshallers
+    with PredefinedToEntityMarshallers
+    with PredefinedToResponseMarshallers
+    with PredefinedToRequestMarshallers {
 
   /**
    * Creates a [[Marshaller]] from the given function.
@@ -119,7 +122,7 @@ object Marshaller
    * changed in later versions of Akka HTTP.
    */
   def oneOf[T, A, B](values: T*)(f: T => Marshaller[A, B]): Marshaller[A, B] =
-    oneOf(values map f: _*)
+    oneOf(values.map(f): _*)
 
   /**
    * Helper for creating a synchronous [[Marshaller]] to content with a fixed charset from the given function.
@@ -128,13 +131,14 @@ object Marshaller
     new Marshaller[A, B] {
       def apply(value: A)(implicit ec: ExecutionContext) =
         try FastFuture.successful {
-          Marshalling.WithFixedContentType(contentType, () => marshal(value)) :: Nil
-        } catch {
+            Marshalling.WithFixedContentType(contentType, () => marshal(value)) :: Nil
+          }
+        catch {
           case NonFatal(e) => FastFuture.failed(e)
         }
 
       override def compose[C](f: C => A): Marshaller[C, B] =
-        Marshaller.withFixedContentType(contentType)(marshal compose f)
+        Marshaller.withFixedContentType(contentType)(marshal.compose(f))
     }
 
   /**
@@ -144,8 +148,9 @@ object Marshaller
     new Marshaller[A, B] {
       def apply(value: A)(implicit ec: ExecutionContext) =
         try FastFuture.successful {
-          Marshalling.WithOpenCharset(mediaType, charset => marshal(value, charset)) :: Nil
-        } catch {
+            Marshalling.WithOpenCharset(mediaType, charset => marshal(value, charset)) :: Nil
+          }
+        catch {
           case NonFatal(e) => FastFuture.failed(e)
         }
 
@@ -189,8 +194,8 @@ object Marshalling {
    * A Marshalling to a specific [[akka.http.scaladsl.model.ContentType]].
    */
   final case class WithFixedContentType[A](
-    contentType: ContentType,
-    marshal:     () => A) extends Marshalling[A] {
+      contentType: ContentType,
+      marshal: () => A) extends Marshalling[A] {
     def map[B](f: A => B): WithFixedContentType[B] = copy(marshal = () => f(marshal()))
     def toOpaque(charset: HttpCharset): Marshalling[A] = Opaque(marshal)
   }
@@ -199,8 +204,8 @@ object Marshalling {
    * A Marshalling to a specific [[akka.http.scaladsl.model.MediaType]] with a flexible charset.
    */
   final case class WithOpenCharset[A](
-    mediaType: MediaType.WithOpenCharset,
-    marshal:   HttpCharset => A) extends Marshalling[A] {
+      mediaType: MediaType.WithOpenCharset,
+      marshal: HttpCharset => A) extends Marshalling[A] {
     def map[B](f: A => B): WithOpenCharset[B] = copy(marshal = cs => f(marshal(cs)))
     def toOpaque(charset: HttpCharset): Marshalling[A] = Opaque(() => marshal(charset))
   }

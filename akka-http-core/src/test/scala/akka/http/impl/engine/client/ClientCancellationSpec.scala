@@ -6,7 +6,7 @@ package akka.http.impl.engine.client
 
 import akka.http.impl.util.{ AkkaSpecWithMaterializer, ExampleHttpContexts }
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ HttpRequest, HttpResponse, headers }
+import akka.http.scaladsl.model.{ headers, HttpRequest, HttpResponse }
 import akka.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
 import akka.stream.scaladsl.{ Flow, Sink, Source }
 import akka.stream.testkit.{ TestPublisher, TestSubscriber, Utils }
@@ -26,8 +26,7 @@ class ClientCancellationSpec extends AkkaSpecWithMaterializer {
         Flow[HttpRequest]
           .map((_, ()))
           .via(Http().cachedHostConnectionPool(address.getHostName, address.getPort))
-          .map(_._1.get)
-      )
+          .map(_._1.get))
     })
 
     "support cancellation in simple outgoing connection with TLS" in Utils.assertAllStagesStopped(new TestSetup {
@@ -36,8 +35,7 @@ class ClientCancellationSpec extends AkkaSpecWithMaterializer {
         Http().connectionTo("akka.example.org")
           .withClientConnectionSettings(settingsWithProxyTransport)
           .withCustomHttpsConnectionContext(ExampleHttpContexts.exampleClientContext)
-          .https()
-      )
+          .https())
     })
 
     "support cancellation in pooled outgoing connection with TLS" in Utils.assertAllStagesStopped(new TestSetup {
@@ -54,15 +52,15 @@ class ClientCancellationSpec extends AkkaSpecWithMaterializer {
 
   class TestSetup {
     lazy val binding = Await.result(
-      Http().newServerAt("localhost", 0).bindSync({ _ => HttpResponse(headers = headers.Connection("close") :: Nil) }),
-      5.seconds
-    )
+      Http().newServerAt("localhost", 0).bindSync { _ => HttpResponse(headers = headers.Connection("close") :: Nil) },
+      5.seconds)
     lazy val address = binding.localAddress
 
     lazy val bindingTls = Await.result(
-      Http().newServerAt("localhost", 0).enableHttps(ExampleHttpContexts.exampleServerContext).bindSync({ _ => HttpResponse() }),
-      5.seconds
-    )
+      Http().newServerAt("localhost", 0).enableHttps(ExampleHttpContexts.exampleServerContext).bindSync { _ =>
+        HttpResponse()
+      },
+      5.seconds)
     lazy val addressTls = bindingTls.localAddress
 
     def testCase(connection: Flow[HttpRequest, HttpResponse, Any]): Unit = {

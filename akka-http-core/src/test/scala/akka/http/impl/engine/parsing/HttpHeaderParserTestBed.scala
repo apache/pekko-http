@@ -6,7 +6,7 @@ package akka.http.impl.engine.parsing
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.settings.ParserSettings
-import com.typesafe.config.{ ConfigFactory, Config }
+import com.typesafe.config.{ Config, ConfigFactory }
 
 object HttpHeaderParserTestBed extends App {
 
@@ -19,7 +19,8 @@ object HttpHeaderParserTestBed extends App {
   val system = ActorSystem("HttpHeaderParserTestBed", testConf)
 
   val parser = HttpHeaderParser.prime {
-    HttpHeaderParser.unprimed(ParserSettings(system), system.log, warnOnIllegalHeader = info => system.log.warning(info.formatPretty))
+    HttpHeaderParser.unprimed(ParserSettings(system), system.log,
+      warnOnIllegalHeader = info => system.log.warning(info.formatPretty))
   }
 
   println {

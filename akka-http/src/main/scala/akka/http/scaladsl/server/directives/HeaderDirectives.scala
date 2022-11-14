@@ -70,7 +70,9 @@ trait HeaderDirectives {
    *
    * @group header
    */
-  @deprecated("Use string argument version or `headerValueByType`, e.g. instead of `headerValueByName('Referer)` use `headerValueByType(Referer)`", since = "10.2.0")
+  @deprecated(
+    "Use string argument version or `headerValueByType`, e.g. instead of `headerValueByName('Referer)` use `headerValueByType(Referer)`",
+    since = "10.2.0")
   def headerValueByName(headerName: Symbol): Directive1[String] = headerValueByName(headerName.name)
 
   /**
@@ -101,12 +103,12 @@ trait HeaderDirectives {
    *
    * @group header
    */
-  //#optionalHeaderValue
+  // #optionalHeaderValue
   def optionalHeaderValue[T](f: HttpHeader => Option[T]): Directive1[Option[T]] =
     headerValue(f).map(Some(_): Option[T]).recoverPF {
       case Nil => provide(None)
     }
-  //#optionalHeaderValue
+  // #optionalHeaderValue
 
   /**
    * Extracts an optional HTTP header value using the given partial function.
@@ -123,7 +125,9 @@ trait HeaderDirectives {
    *
    * @group header
    */
-  @deprecated("Use string argument version or `headerValueByType`, e.g. instead of `optionalHeaderValueByName('Referer)` use `optionalHeaderValueByType(Referer)`", since = "10.2.0")
+  @deprecated(
+    "Use string argument version or `headerValueByType`, e.g. instead of `optionalHeaderValueByName('Referer)` use `optionalHeaderValueByType(Referer)`",
+    since = "10.2.0")
   def optionalHeaderValueByName(headerName: Symbol): Directive1[Option[String]] =
     optionalHeaderValueByName(headerName.name)
 
@@ -175,17 +179,23 @@ object HeaderMagnet extends LowPriorityHeaderMagnetImplicits {
    * If possible we want to apply the special logic for [[ModeledCustomHeader]] to extract custom headers by type,
    * otherwise the default `fromCompanion` is good enough (for headers that the parser emits in the right type already).
    */
-  implicit def fromCompanionForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](companion: ModeledCustomHeaderCompanion[T])(implicit tag: ClassTag[T]): HeaderMagnet[T] =
+  implicit def fromCompanionForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](
+      companion: ModeledCustomHeaderCompanion[T])(implicit tag: ClassTag[T]): HeaderMagnet[T] =
     fromClassTagForModeledCustomHeader[T, H](tag, companion)
 
-  @deprecated("Pass the companion object to headerValueByType as a parameter instead, e.g. `headerValueByType(Origin)` instead of `headerValueByType[Origin](())`", since = "10.2.0")
-  implicit def fromUnitForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](u: Unit)(implicit tag: ClassTag[T], companion: ModeledCustomHeaderCompanion[T]): HeaderMagnet[T] =
+  @deprecated(
+    "Pass the companion object to headerValueByType as a parameter instead, e.g. `headerValueByType(Origin)` instead of `headerValueByType[Origin](())`",
+    since = "10.2.0")
+  implicit def fromUnitForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](
+      u: Unit)(implicit tag: ClassTag[T], companion: ModeledCustomHeaderCompanion[T]): HeaderMagnet[T] =
     fromClassTagForModeledCustomHeader[T, H](tag, companion)
 
-  implicit def fromClassForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](clazz: Class[T], companion: ModeledCustomHeaderCompanion[T]): HeaderMagnet[T] =
+  implicit def fromClassForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](
+      clazz: Class[T], companion: ModeledCustomHeaderCompanion[T]): HeaderMagnet[T] =
     fromClassTagForModeledCustomHeader(ClassTag(clazz), companion)
 
-  implicit def fromClassTagForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](tag: ClassTag[T], companion: ModeledCustomHeaderCompanion[T]): HeaderMagnet[T] =
+  implicit def fromClassTagForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](
+      tag: ClassTag[T], companion: ModeledCustomHeaderCompanion[T]): HeaderMagnet[T] =
     new HeaderMagnet[T] {
       override def classTag: ClassTag[T] = tag
       override def runtimeClass: Class[T] = tag.runtimeClass.asInstanceOf[Class[T]]
@@ -211,10 +221,13 @@ trait LowPriorityHeaderMagnetImplicits {
       }
     }
 
-  implicit def fromCompanionNormalHeader[T <: HttpHeader](companion: ModeledCompanion[T])(implicit tag: ClassTag[T]): HeaderMagnet[T] =
+  implicit def fromCompanionNormalHeader[T <: HttpHeader](companion: ModeledCompanion[T])(
+      implicit tag: ClassTag[T]): HeaderMagnet[T] =
     fromClassTagNormalHeader(tag)
 
-  @deprecated("Pass the companion object to headerValueByType as a parameter instead, e.g. `headerValueByType(Origin)` instead of `headerValueByType[Origin](())`", since = "10.2.0")
+  @deprecated(
+    "Pass the companion object to headerValueByType as a parameter instead, e.g. `headerValueByType(Origin)` instead of `headerValueByType[Origin](())`",
+    since = "10.2.0")
   implicit def fromUnitNormalHeader[T <: HttpHeader](u: Unit)(implicit tag: ClassTag[T]): HeaderMagnet[T] =
     fromClassTagNormalHeader(tag)
 

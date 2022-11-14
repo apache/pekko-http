@@ -16,7 +16,8 @@ import java.io.ByteArrayInputStream
 import scala.collection.immutable.VectorBuilder
 
 /** Helper that allows automatic HPACK encoding/decoding for wire sends / expectations */
-trait Http2FrameHpackSupport extends Http2FrameProbeDelegator with Http2FrameSending with HPackEncodingSupport with ScalaFutures {
+trait Http2FrameHpackSupport extends Http2FrameProbeDelegator with Http2FrameSending with HPackEncodingSupport
+    with ScalaFutures {
   def sendRequestHEADERS(streamId: Int, request: HttpRequest, endStream: Boolean): Unit =
     sendHEADERS(streamId, endStream = endStream, endHeaders = true, encodeRequestHeaders(request))
 
@@ -50,20 +51,23 @@ trait Http2FrameHpackSupport extends Http2FrameProbeDelegator with Http2FrameSen
     val bis = new ByteArrayInputStream(bytes.toArray)
     val hs = new VectorBuilder[(String, String)]()
 
-    decoder.decode(bis, new HeaderListener {
-      def addHeader(name: String, value: String, parsedValue: AnyRef, sensitive: Boolean): AnyRef = {
-        hs += name -> value
-        parsedValue
-      }
-    })
+    decoder.decode(bis,
+      new HeaderListener {
+        def addHeader(name: String, value: String, parsedValue: AnyRef, sensitive: Boolean): AnyRef = {
+          hs += name -> value
+          parsedValue
+        }
+      })
     hs.result()
   }
   def decodeHeadersToResponse(bytes: ByteString): HttpResponse =
-    decodeHeaders(bytes).foldLeft(HttpResponse())((old, header) => header match {
-      case (":status", value)                             => old.withStatus(value.toInt)
-      case ("content-length", value) if value.toLong == 0 => old.withEntity(HttpEntity.Empty)
-      case ("content-length", value)                      => old.withEntity(HttpEntity.Default(old.entity.contentType, value.toLong, Source.empty))
-      case ("content-type", value)                        => old.withEntity(old.entity.withContentType(ContentType.parse(value).right.get))
-      case (name, value)                                  => old.addHeader(RawHeader(name, value)) // FIXME: decode to modeled headers
-    })
+    decodeHeaders(bytes).foldLeft(HttpResponse())((old, header) =>
+      header match {
+        case (":status", value)                             => old.withStatus(value.toInt)
+        case ("content-length", value) if value.toLong == 0 => old.withEntity(HttpEntity.Empty)
+        case ("content-length", value) =>
+          old.withEntity(HttpEntity.Default(old.entity.contentType, value.toLong, Source.empty))
+        case ("content-type", value) => old.withEntity(old.entity.withContentType(ContentType.parse(value).right.get))
+        case (name, value)           => old.addHeader(RawHeader(name, value)) // FIXME: decode to modeled headers
+      })
 }

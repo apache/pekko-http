@@ -15,7 +15,13 @@ import akka.http.impl.engine.client.PoolMasterActor.{ PoolInterfaceRunning, Pool
 import akka.http.impl.engine.server.ServerTerminator
 import akka.http.impl.engine.ws.ByteStringSinkProbe
 import akka.http.impl.util._
-import akka.http.scaladsl.Http.{ HostConnectionPool, HostConnectionPoolImpl, HttpServerTerminated, HttpTerminated, OutgoingConnection }
+import akka.http.scaladsl.Http.{
+  HostConnectionPool,
+  HostConnectionPoolImpl,
+  HttpServerTerminated,
+  HttpTerminated,
+  OutgoingConnection
+}
 import akka.http.scaladsl.model.HttpEntity.{ Chunk, ChunkStreamPart, Chunked, LastChunk }
 import akka.http.scaladsl.model.{ HttpEntity, _ }
 import akka.http.scaladsl.model.headers._
@@ -114,12 +120,12 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
       expectMsgType[Request].handle()
       val r2 = responseOut.expectNext()
 
-      Seq(r1, r2) foreach {
+      Seq(r1, r2).foreach {
         case (Success(x), 42) => requestUri(x) should endWith("/a")
         case (Success(x), 43) => requestUri(x) should endWith("/b")
         case x                => fail(x.toString)
       }
-      Seq(r1, r2).map(t => connNr(t._1.get)) should contain allOf (1, 2)
+      (Seq(r1, r2).map(t => connNr(t._1.get)) should contain).allOf(1, 2)
     }
 
     "open a second connection if the request on the first one is dispatch but not yet completed" in new TestSetup {
@@ -129,8 +135,9 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
 
       override def testServerHandler(connNr: Int): HttpRequest => HttpResponse = {
         case request @ HttpRequest(_, Uri.Path("/a"), _, _, _) =>
-          val entity = HttpEntity.Chunked.fromData(ContentTypes.`text/plain(UTF-8)`, Source.fromPublisher(responseEntityPub))
-          super.testServerHandler(connNr)(request) withEntity entity
+          val entity =
+            HttpEntity.Chunked.fromData(ContentTypes.`text/plain(UTF-8)`, Source.fromPublisher(responseEntityPub))
+          super.testServerHandler(connNr)(request).withEntity(entity)
         case x => super.testServerHandler(connNr)(x)
       }
 
@@ -151,7 +158,8 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
       connNr(r2) shouldEqual 2
     }
 
-    "automatically open a new connection after configured max-connection-lifetime elapsed" in new TestSetup(autoAccept = true) {
+    "automatically open a new connection after configured max-connection-lifetime elapsed" in new TestSetup(
+      autoAccept = true) {
       val (requestIn, responseOut, responseOutSub, _) = cachedHostConnectionPool[Int](
         maxConnections = 1,
         minConnections = 1,
@@ -159,11 +167,11 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
         maxConnectionLifetime = 1.seconds)
 
       awaitCond({
-        requestIn.sendNext(HttpRequest(uri = "/uri") -> 42)
-        responseOutSub.request(1)
-        val (Success(response), 42) = responseOut.expectNext()
-        connNr(response) == 2
-      }, max = 2.seconds)
+          requestIn.sendNext(HttpRequest(uri = "/uri") -> 42)
+          responseOutSub.request(1)
+          val (Success(response), 42) = responseOut.expectNext()
+          connNr(response) == 2
+        }, max = 2.seconds)
     }
 
     "not open a second connection if there is an idle one available" in new TestSetup {
@@ -222,7 +230,8 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
       responses mustContainLike { case (Failure(x), 43) => x.getMessage should include(ConnectionResetByPeerMessage) }
     }
 
-    "surface connection-level and stream-level errors while receiving response entity" in new TestSetup(autoAccept = true) {
+    "surface connection-level and stream-level errors while receiving response entity" in new TestSetup(
+      autoAccept = true) {
 
       val errorOnConnection1 = Promise[ByteString]()
 
@@ -237,7 +246,8 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
       override def asyncTestServerHandler(connNr: Int): HttpRequest => Future[HttpResponse] = { req =>
         req.discardEntityBytes()
         if (req.uri.path.toString contains "a")
-          Future.successful(HttpResponse(200, entity = HttpEntity.CloseDelimited(ContentTypes.`application/octet-stream`, crashingEntity)))
+          Future.successful(HttpResponse(200,
+            entity = HttpEntity.CloseDelimited(ContentTypes.`application/octet-stream`, crashingEntity)))
         else {
           val response = Promise[HttpResponse]()
           laterHandler.success(handler => response.completeWith(handler(req)))
@@ -264,7 +274,9 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
       val handlerSetter = Await.result(laterHandler.future, 1.second.dilated)
 
       // now fail the first one, expecting the server-side error message
-      EventFilter[RuntimeException](message = "Response stream for [GET /a] failed with 'Woops, slipped on a slippery slope.'. Aborting connection.", occurrences = 1) intercept {
+      EventFilter[RuntimeException](message =
+          "Response stream for [GET /a] failed with 'Woops, slipped on a slippery slope.'. Aborting connection.",
+        occurrences = 1).intercept {
         errorOnConnection1.failure(new RuntimeException("Woops, slipped on a slippery slope."))
       }
 
@@ -335,8 +347,9 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
 
       override def testServerHandler(connNr: Int): HttpRequest => HttpResponse = {
         case request @ HttpRequest(_, Uri.Path("/a"), _, _, _) =>
-          val entity = HttpEntity.Chunked.fromData(ContentTypes.`text/plain(UTF-8)`, Source.fromPublisher(responseEntityPub))
-          super.testServerHandler(connNr)(request) withEntity entity
+          val entity =
+            HttpEntity.Chunked.fromData(ContentTypes.`text/plain(UTF-8)`, Source.fromPublisher(responseEntityPub))
+          super.testServerHandler(connNr)(request).withEntity(entity)
         case x => super.testServerHandler(connNr)(x)
       }
       requestIn.sendNext(HttpRequest(uri = "/a") -> 42)
@@ -414,7 +427,8 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
       }
     }
 
-    "never close hot connections when minConnections key is given and >0 (minConnections = 5)" in new TestSetup(autoAccept = true) {
+    "never close hot connections when minConnections key is given and >0 (minConnections = 5)" in new TestSetup(
+      autoAccept = true) {
       val close: HttpHeader = Connection("close")
 
       // for lower bound of five connections
@@ -424,8 +438,8 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
         minConnections = minConnections,
         maxConnections = minConnections + 10)
 
-      (1 to 30) foreach { _ => // run a few requests
-        (0 until minConnections) foreach { i =>
+      (1 to 30).foreach { _ => // run a few requests
+        (0 until minConnections).foreach { i =>
           requestIn.sendNext(HttpRequest(uri = s"/minimumslots/5/$i", headers = immutable.Seq(close)) -> 42)
         }
         responseOutSub.request(minConnections)
@@ -486,7 +500,8 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
       val request = HttpRequest(uri = "/foo")
       val responseFuture = Http().singleRequest(request)
       val thrown = the[IllegalUriException] thrownBy Await.result(responseFuture, 1.second.dilated)
-      thrown should have message "Cannot determine request scheme and target endpoint as HttpMethod(GET) request to /foo doesn't have an absolute URI"
+      (thrown should have).message(
+        "Cannot determine request scheme and target endpoint as HttpMethod(GET) request to /foo doesn't have an absolute URI")
     }
 
     "use the configured ClientTransport" in new ClientTransportTestSetup {
@@ -516,20 +531,23 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
      * In the future we may want to disconnect those and allow the server we connect to to choose how to handle the failure
      * of the request entity.
      */
-    "support receiving a response entity even when the request already failed" ignore new TestSetup(ServerSettings(system).withRawRequestUriHeader(true), autoAccept = true) {
+    "support receiving a response entity even when the request already failed" ignore new TestSetup(
+      ServerSettings(system).withRawRequestUriHeader(true), autoAccept = true) {
       val responseSourceQueuePromise = Promise[SourceQueueWithComplete[ChunkStreamPart]]()
 
       override def testServerHandler(connNr: Int): HttpRequest => HttpResponse = {
         r =>
           HttpResponse(
             headers = responseHeaders(r, connNr),
-            entity = HttpEntity.Chunked(ContentTypes.`application/octet-stream`, Source.queue(8, OverflowStrategy.fail).mapMaterializedValue(responseSourceQueuePromise.success)))
+            entity = HttpEntity.Chunked(ContentTypes.`application/octet-stream`,
+              Source.queue(8, OverflowStrategy.fail).mapMaterializedValue(responseSourceQueuePromise.success)))
       }
 
       val requestSourceQueuePromise = Promise[SourceQueueWithComplete[_]]()
       val requestSource = Source.queue(8, OverflowStrategy.fail).mapMaterializedValue(requestSourceQueuePromise.success)
       val slowRequestEntity = Chunked(ContentTypes.`text/plain(UTF-8)`, requestSource)
-      val request = HttpRequest(uri = s"http://$serverHostName:$serverPort/abc?query#fragment", entity = slowRequestEntity)
+      val request =
+        HttpRequest(uri = s"http://$serverHostName:$serverPort/abc?query#fragment", entity = slowRequestEntity)
       val responseFuture = Http().singleRequest(request)
       val sourceQueue = Await.result(requestSourceQueuePromise.future, 3.seconds)
       val response = Await.result(responseFuture, 1.second.dilated)
@@ -560,7 +578,7 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
       requestIn.sendNext(HttpRequest(uri = s"http://$serverHostName2:$serverPort2/b") -> 43)
 
       responseOutSub.request(2)
-      Seq(responseOut.expectNext(), responseOut.expectNext()) foreach {
+      Seq(responseOut.expectNext(), responseOut.expectNext()).foreach {
         case (Success(x), 42) => requestUri(x) shouldEqual s"http://$serverHostName:$serverPort/a"
         case (Success(x), 43) => requestUri(x) shouldEqual s"http://$serverHostName2:$serverPort2/b"
         case x                => fail(x.toString)
@@ -583,12 +601,13 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
 
     val N = 500
     val requestIds = Source.fromIterator(() => Iterator.from(1)).take(N)
-    val idSum = requestIds.map(id => HttpRequest(uri = s"/r$id").withHeaders(Connection("close")) -> id).via(poolFlow).map {
-      case (Success(response), id) =>
-        requestUri(response) should endWith(s"/r$id")
-        id
-      case x => fail(x.toString)
-    }.runFold(0)(_ + _)
+    val idSum =
+      requestIds.map(id => HttpRequest(uri = s"/r$id").withHeaders(Connection("close")) -> id).via(poolFlow).map {
+        case (Success(response), id) =>
+          requestUri(response) should endWith(s"/r$id")
+          id
+        case x => fail(x.toString)
+      }.runFold(0)(_ + _)
 
     (1 to N).foreach(_ => acceptIncomingConnection())
 
@@ -608,7 +627,8 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
     }
 
     for (pipeliningLimit <- Iterator.from(1).map(math.pow(2, _).toInt).take(4)) {
-      val settings = ConnectionPoolSettings(system).withMaxConnections(4).withPipeliningLimit(pipeliningLimit).withMaxOpenRequests(4 * pipeliningLimit)
+      val settings = ConnectionPoolSettings(system).withMaxConnections(4).withPipeliningLimit(
+        pipeliningLimit).withMaxOpenRequests(4 * pipeliningLimit)
       val poolFlow = Http().cachedHostConnectionPool[Int](serverHostName, serverPort, settings = settings)
 
       def method() =
@@ -639,8 +659,8 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
   }
 
   class TestSetup(
-    serverSettings: ServerSettings = ServerSettings(system),
-    autoAccept:     Boolean        = false) {
+      serverSettings: ServerSettings = ServerSettings(system),
+      autoAccept: Boolean = false) {
 
     def asyncTestServerHandler(connNr: Int): HttpRequest => Future[HttpResponse] = {
       val handler = testServerHandler(connNr)
@@ -652,7 +672,8 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
     }
 
     def responseHeaders(r: HttpRequest, connNr: Int) =
-      ConnNrHeader(connNr) +: RawHeader("Req-Uri", r.uri.toString) +: r.headers.map(h => RawHeader("Req-" + h.name, h.value))
+      ConnNrHeader(connNr) +: RawHeader("Req-Uri", r.uri.toString) +: r.headers.map(h =>
+        RawHeader("Req-" + h.name, h.value))
 
     def mapServerSideOutboundRawBytes(bytes: ByteString): ByteString = bytes
 
@@ -661,16 +682,17 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
     val (incomingConnectionsSub, serverHostName: String, serverPort: Int) = {
       val rawBytesInjection = BidiFlow.fromFlows(
         Flow[SslTlsOutbound].collect[ByteString] { case SendBytes(x) => mapServerSideOutboundRawBytes(x) }
-          .recover({ case NoErrorComplete => ByteString.empty }),
+          .recover { case NoErrorComplete => ByteString.empty },
         Flow[ByteString].map(SessionBytes(null, _)))
-      val sink = if (autoAccept) Sink.foreach[Http.IncomingConnection](handleConnection) else Sink.fromSubscriber(incomingConnections)
+      val sink = if (autoAccept) Sink.foreach[Http.IncomingConnection](handleConnection)
+      else Sink.fromSubscriber(incomingConnections)
 
       val binding =
         Tcp()
           .bind("localhost", 0, idleTimeout = serverSettings.timeouts.idleTimeout)
           .map { c =>
             val layer = Http().serverLayer(serverSettings, log = log)
-            val flow = (layer atop rawBytesInjection join c.flow)
+            val flow = layer.atop(rawBytesInjection).join(c.flow)
               .mapMaterializedValue(_ =>
                 new ServerTerminator {
                   // this is simply a mock, since we do not use termination in these tests anyway
@@ -697,14 +719,14 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
       c.handleWithAsyncHandler(asyncTestServerHandler(incomingConnectionCounter.incrementAndGet()))
 
     def cachedHostConnectionPool[T](
-      maxConnections:        Int                      = 2,
-      minConnections:        Int                      = 0,
-      maxRetries:            Int                      = 2,
-      maxOpenRequests:       Int                      = 8,
-      pipeliningLimit:       Int                      = 1,
-      idleTimeout:           FiniteDuration           = 5.seconds,
-      maxConnectionLifetime: Duration                 = Duration.Inf,
-      ccSettings:            ClientConnectionSettings = ClientConnectionSettings(system)) = {
+        maxConnections: Int = 2,
+        minConnections: Int = 0,
+        maxRetries: Int = 2,
+        maxOpenRequests: Int = 8,
+        pipeliningLimit: Int = 1,
+        idleTimeout: FiniteDuration = 5.seconds,
+        maxConnectionLifetime: Duration = Duration.Inf,
+        ccSettings: ClientConnectionSettings = ClientConnectionSettings(system)) = {
 
       val settings =
         ConnectionPoolSettings(system)
@@ -722,13 +744,13 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
     }
 
     def superPool[T](
-      maxConnections:  Int                      = 2,
-      minConnections:  Int                      = 0,
-      maxRetries:      Int                      = 2,
-      maxOpenRequests: Int                      = 8,
-      pipeliningLimit: Int                      = 1,
-      idleTimeout:     FiniteDuration           = 5.seconds,
-      ccSettings:      ClientConnectionSettings = ClientConnectionSettings(system)) = {
+        maxConnections: Int = 2,
+        minConnections: Int = 0,
+        maxRetries: Int = 2,
+        maxOpenRequests: Int = 8,
+        pipeliningLimit: Int = 1,
+        idleTimeout: FiniteDuration = 5.seconds,
+        ccSettings: ClientConnectionSettings = ClientConnectionSettings(system)) = {
 
       val settings =
         ConnectionPoolSettings(system)
@@ -750,8 +772,8 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
       (requestIn, responseOut, responseOutSub, hcp)
     }
 
-    def connNr(r: HttpResponse): Int = r.headers.find(_ is "conn-nr").get.value.toInt
-    def requestUri(r: HttpResponse): String = r.headers.find(_ is "req-uri").get.value
+    def connNr(r: HttpResponse): Int = r.headers.find(_.is("conn-nr")).get.value.toInt
+    def requestUri(r: HttpResponse): String = r.headers.find(_.is("req-uri")).get.value
 
     /**
      * Makes sure the given condition "f" holds in the timer period of "in".
@@ -779,7 +801,7 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
 
   implicit class MustContain[T](specimen: Seq[T]) {
     def mustContainLike(pf: PartialFunction[T, Unit]): Unit =
-      specimen.collectFirst(pf) getOrElse fail(s"None of [${specimen.mkString(", ")}] matched partial function")
+      specimen.collectFirst(pf).getOrElse(fail(s"None of [${specimen.mkString(", ")}] matched partial function"))
   }
 
   object NoErrorComplete extends SingletonException
@@ -792,10 +814,13 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
       val out = TestPublisher.probe[ByteString]()
       val promise = Promise[(String, Int, ClientConnectionSettings)]()
 
-      def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]] = {
+      def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+          implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]] = {
         promise.success((host, port, settings))
         Flow.fromSinkAndSource(in.sink, Source.fromPublisher(out))
-          .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(InetSocketAddress.createUnresolved("local", 12345), InetSocketAddress.createUnresolved(host, port))))
+          .mapMaterializedValue(_ =>
+            Future.successful(Http.OutgoingConnection(InetSocketAddress.createUnresolved("local", 12345),
+              InetSocketAddress.createUnresolved(host, port))))
       }
     }
 
@@ -806,7 +831,8 @@ class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
     val transport = new CustomTransport
     val poolSettings =
       ConnectionPoolSettings(system)
-        .withConnectionSettings(ClientConnectionSettings(system).withIdleTimeout(CustomIdleTimeout).withTransport(transport))
+        .withConnectionSettings(
+          ClientConnectionSettings(system).withIdleTimeout(CustomIdleTimeout).withTransport(transport))
 
     val responseFuture = issueRequest(HttpRequest(uri = "http://example.org/test"), settings = poolSettings)
 

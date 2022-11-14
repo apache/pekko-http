@@ -22,7 +22,8 @@ class WithPriorKnowledgeSpec extends AkkaSpecWithMaterializer("""
   """) {
 
   "An HTTP server with PriorKnowledge" should {
-    val binding = Http().newServerAt("127.0.0.1", 0).bind(_ => Future.successful(HttpResponse(status = StatusCodes.ImATeapot))).futureValue
+    val binding = Http().newServerAt("127.0.0.1", 0).bind(_ =>
+      Future.successful(HttpResponse(status = StatusCodes.ImATeapot))).futureValue
 
     "respond to cleartext HTTP/1.1 requests with cleartext HTTP/1.1" in {
       val (host, port) = (binding.localAddress.getHostName, binding.localAddress.getPort)
@@ -46,7 +47,8 @@ class WithPriorKnowledgeSpec extends AkkaSpecWithMaterializer("""
 
       // Obtained by converting the input request bytes from curl with --http2-prior-knowledge
       // This includes port 9009 as 'authority', which our server accepts.
-      source.offer("UFJJICogSFRUUC8yLjANCg0KU00NCg0KAAASBAAAAAAAAAMAAABkAARAAAAAAAIAAAAAAAAECAAAAAAAP/8AAQAAHgEFAAAAAYKEhkGKCJ1cC4Fw3HwAf3qIJbZQw6u20uBTAyovKg==").futureValue
+      source.offer(
+        "UFJJICogSFRUUC8yLjANCg0KU00NCg0KAAASBAAAAAAAAAMAAABkAARAAAAAAAIAAAAAAAAECAAAAAAAP/8AAQAAHgEFAAAAAYKEhkGKCJ1cC4Fw3HwAf3qIJbZQw6u20uBTAyovKg==").futureValue
 
       fromServer.expectFrameFlagsAndPayload(Http2Protocol.FrameType.SETTINGS, 0) // don't check data
       fromServer.expectSettingsAck()
@@ -61,7 +63,8 @@ class WithPriorKnowledgeSpec extends AkkaSpecWithMaterializer("""
     }
 
     "respond to cleartext HTTP/2 requests with cleartext HTTP/2 (connection level client API)" in {
-      val connectionFlow = Http().connectionTo(binding.localAddress.getHostName).toPort(binding.localAddress.getPort).http2WithPriorKnowledge()
+      val connectionFlow = Http().connectionTo(binding.localAddress.getHostName).toPort(
+        binding.localAddress.getPort).http2WithPriorKnowledge()
 
       val (queue, headFuture) = Source.queue(1000, OverflowStrategy.fail)
         .via(connectionFlow)

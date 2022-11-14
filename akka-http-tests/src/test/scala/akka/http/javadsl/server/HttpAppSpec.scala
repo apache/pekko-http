@@ -44,7 +44,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
   "HttpApp Java" should {
 
     "start only with host and port" in withMinimal { minimal =>
-
       val server = Future {
         minimal.startServer("localhost", 0)
       }
@@ -62,7 +61,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
     }
 
     "start without ActorSystem" in withMinimal { minimal =>
-
       val server = Future {
         minimal.startServer("localhost", 0, ServerSettings.create(ConfigFactory.load))
       }
@@ -81,7 +79,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
     }
 
     "start providing an ActorSystem" in withMinimal { minimal =>
-
       val server = Future {
         log.debug("Before startServer 1")
         val res = minimal.startServer("localhost", 0, system)
@@ -89,12 +86,13 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
         res
       }(system.dispatchers.lookup("akka.actor.default-blocking-io-dispatcher"))
 
-      val binding = try minimal.bindingPromise.get(2, TimeUnit.SECONDS)
-      catch {
-        case e: TimeoutException =>
-          java.lang.management.ManagementFactory.getThreadMXBean.dumpAllThreads(true, true).foreach(println)
-          throw e
-      }
+      val binding =
+        try minimal.bindingPromise.get(2, TimeUnit.SECONDS)
+        catch {
+          case e: TimeoutException =>
+            java.lang.management.ManagementFactory.getThreadMXBean.dumpAllThreads(true, true).foreach(println)
+            throw e
+        }
 
       // Checking server is up and running
       callAndVerify(binding, "foo")
@@ -109,7 +107,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
     }
 
     "start providing an ActorSystem and Settings" in withMinimal { minimal =>
-
       val server = Future {
         log.debug("Before startServer 2")
         val res = minimal.startServer("localhost", 0, ServerSettings.create(system), system)
@@ -117,12 +114,13 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
         res
       }(system.dispatchers.lookup("akka.actor.default-blocking-io-dispatcher"))
 
-      val binding = try minimal.bindingPromise.get(2, TimeUnit.SECONDS)
-      catch {
-        case e: TimeoutException =>
-          java.lang.management.ManagementFactory.getThreadMXBean.dumpAllThreads(true, true).foreach(println)
-          throw e
-      }
+      val binding =
+        try minimal.bindingPromise.get(2, TimeUnit.SECONDS)
+        catch {
+          case e: TimeoutException =>
+            java.lang.management.ManagementFactory.getThreadMXBean.dumpAllThreads(true, true).foreach(println)
+            throw e
+        }
 
       // Checking server is up and running
       callAndVerify(binding, "foo")
@@ -137,7 +135,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
     }
 
     "provide binding if available" in withMinimal { minimal =>
-
       intercept[IllegalStateException] {
         minimal.binding()
       }
@@ -163,7 +160,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
     "notify" when {
 
       "shutting down" in withSneaky { sneaky =>
-
         val server = Future {
           sneaky.startServer("localhost", 0, ServerSettings.create(ConfigFactory.load))
         }
@@ -186,7 +182,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
       }
 
       "after binding is successful" in withSneaky { sneaky =>
-
         val server = Future {
           sneaky.startServer("localhost", 0, ServerSettings.create(ConfigFactory.load))
         }
@@ -211,7 +206,7 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
         val port = serverSocket.getLocalPort
 
         try {
-          EventFilter[SocketException](pattern = ".*Address already in use.*", occurrences = 1) intercept {
+          EventFilter[SocketException](pattern = ".*Address already in use.*", occurrences = 1).intercept {
             sneaky.startServer("localhost", port, system)
           }
 

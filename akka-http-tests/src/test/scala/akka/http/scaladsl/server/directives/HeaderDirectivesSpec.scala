@@ -30,7 +30,7 @@ class HeaderDirectivesSpec extends RoutingSpec with Inside {
 
     "reject with a MalformedHeaderRejection if the extract function throws an exception" in {
       Get("/abc") ~> addHeader(Connection("close")) ~> {
-        (headerValuePF { case _ => sys.error("Naah!") }) { echoComplete }
+        headerValuePF { case _ => sys.error("Naah!") } { echoComplete }
       } ~> check {
         inside(rejection) { case MalformedHeaderRejection("Connection", "Naah!", _) => }
       }
@@ -225,7 +225,8 @@ class HeaderDirectivesSpec extends RoutingSpec with Inside {
       val classMagnet = HeaderMagnet.fromClassForModeledCustomHeader(classOf[XCustomHeader], XCustomHeader)
       classMagnet.headerName shouldEqual "X-Custom-Header"
 
-      val classTagMagnet = HeaderMagnet.fromClassTagForModeledCustomHeader(ClassTag(classOf[XCustomHeader]), XCustomHeader)
+      val classTagMagnet =
+        HeaderMagnet.fromClassTagForModeledCustomHeader(ClassTag(classOf[XCustomHeader]), XCustomHeader)
       classTagMagnet.headerName shouldEqual "X-Custom-Header"
     }
   }

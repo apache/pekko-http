@@ -20,7 +20,7 @@ import akka.http.scaladsl.settings.{ ParserSettings, WebSocketSettings }
 import akka.http.impl.engine.parsing.ParserOutput._
 import akka.http.impl.settings.WebSocketSettingsImpl
 import akka.http.impl.util._
-import akka.http.scaladsl.model.ContentTypes.{ NoContentType, `text/plain(UTF-8)` }
+import akka.http.scaladsl.model.ContentTypes.{ `text/plain(UTF-8)`, NoContentType }
 import akka.http.scaladsl.model.HttpEntity._
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.HttpProtocols._
@@ -37,7 +37,8 @@ import akka.testkit._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeSpec with Matchers with BeforeAndAfterAll {
+abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeSpec with Matchers
+    with BeforeAndAfterAll {
   val testConf: Config = ConfigFactory.parseString("""
     akka.event-handlers = ["akka.testkit.TestEventListener"]
     akka.loglevel = WARNING
@@ -126,8 +127,9 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           | fancy
           |
           |""" should parseTo {
-          HttpRequest(DELETE, "/abc", List(`User-Agent`("curl/7.19.7 abc xyz"), Accept(MediaRanges.`*/*`),
-            Connection("close", "fancy")), protocol = `HTTP/1.0`)
+          HttpRequest(DELETE, "/abc",
+            List(`User-Agent`("curl/7.19.7 abc xyz"), Accept(MediaRanges.`*/*`),
+              Connection("close", "fancy")), protocol = `HTTP/1.0`)
         }
         closeAfterResponseCompletion shouldEqual Seq(true)
       }
@@ -168,47 +170,55 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
 
       "with several conflicting `Content-Type` headers with conflicting-content-type-header-processing-mode = first" in new Test {
         override def parserSettings: ParserSettings =
-          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(ConflictingContentTypeHeaderProcessingMode.First)
+          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
+            ConflictingContentTypeHeaderProcessingMode.First)
         """GET /data HTTP/1.1
           |Host: x
           |Content-Type: application/pdf
           |Content-Type: text/plain; charset=UTF-8
           |Content-Length: 0
           |
-          |""" should parseTo(HttpRequest(GET, "/data", List(Host("x"), `Content-Type`(`text/plain(UTF-8)`)), HttpEntity.empty(`application/pdf`)))
+          |""" should parseTo(HttpRequest(GET, "/data", List(Host("x"), `Content-Type`(`text/plain(UTF-8)`)),
+          HttpEntity.empty(`application/pdf`)))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
       "with several conflicting `Content-Type` headers with conflicting-content-type-header-processing-mode = last" in new Test {
         override def parserSettings: ParserSettings =
-          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(ConflictingContentTypeHeaderProcessingMode.Last)
+          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
+            ConflictingContentTypeHeaderProcessingMode.Last)
         """GET /data HTTP/1.1
           |Host: x
           |Content-Type: application/pdf
           |Content-Type: text/plain; charset=UTF-8
           |Content-Length: 0
           |
-          |""" should parseTo(HttpRequest(GET, "/data", List(Host("x"), `Content-Type`(`application/pdf`)), HttpEntity.empty(`text/plain(UTF-8)`)))
+          |""" should parseTo(HttpRequest(GET, "/data", List(Host("x"), `Content-Type`(`application/pdf`)),
+          HttpEntity.empty(`text/plain(UTF-8)`)))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
       "with several conflicting `Content-Type` headers with conflicting-content-type-header-processing-mode = no-content-type" in new Test {
         override def parserSettings: ParserSettings =
-          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(ConflictingContentTypeHeaderProcessingMode.NoContentType)
+          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
+            ConflictingContentTypeHeaderProcessingMode.NoContentType)
         """GET /data HTTP/1.1
           |Host: x
           |Content-Type: application/pdf
           |Content-Type: text/plain; charset=UTF-8
           |Content-Length: 0
           |
-          |""" should parseTo(HttpRequest(GET, "/data", List(Host("x"), `Content-Type`(`application/pdf`), `Content-Type`(`text/plain(UTF-8)`)), HttpEntity.empty(NoContentType)))
+          |""" should parseTo(HttpRequest(GET, "/data",
+          List(Host("x"), `Content-Type`(`application/pdf`), `Content-Type`(`text/plain(UTF-8)`)),
+          HttpEntity.empty(NoContentType)))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
       "with a request target starting with a double-slash" in new Test {
         """GET //foo HTTP/1.0
           |
-          |""" should parseTo(HttpRequest(GET, Uri("http://x//foo").toHttpRequestTargetOriginForm, protocol = `HTTP/1.0`))
+          |""" should parseTo(HttpRequest(GET, Uri("http://x//foo").toHttpRequestTargetOriginForm,
+          protocol = `HTTP/1.0`))
         closeAfterResponseCompletion shouldEqual Seq(true)
       }
 
@@ -256,7 +266,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
       "message chunk with and without extension" in new Test {
         Seq(
           start +
-            """3
+          """3
             |abc
             |10;some=stuff;bla
             |0123456789ABCDEF
@@ -270,7 +280,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
             |0
             |
             |""") should generalMultiParseTo(
-            Right(baseRequest.withEntity(Chunked(`application/pdf`, source(
+          Right(baseRequest.withEntity(Chunked(`application/pdf`,
+            source(
               Chunk(ByteString("abc")),
               Chunk(ByteString("0123456789ABCDEF"), "some=stuff;bla"),
               Chunk(ByteString("0123456789ABCDEF"), "foo=bar"),
@@ -285,17 +296,17 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           """0
             |
             |""") should generalMultiParseTo(
-            Right(baseRequest.withEntity(Chunked(`application/pdf`, source(LastChunk)))))
+          Right(baseRequest.withEntity(Chunked(`application/pdf`, source(LastChunk)))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
       "with incorrect but harmless whitespace after chunk size" in new Test {
         Seq(
           start,
-          s"""|0${"  " /* explicit trailing spaces */ }
+          s"""|0${"  " /* explicit trailing spaces */}
               |
               |""") should generalMultiParseTo(
-            Right(baseRequest.withEntity(Chunked(`application/pdf`, source(LastChunk)))))
+          Right(baseRequest.withEntity(Chunked(`application/pdf`, source(LastChunk)))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
@@ -308,9 +319,9 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
             |Bar: xyz
             |
             |""") should generalMultiParseTo(
-            Right(baseRequest.withEntity(Chunked(
-              `application/pdf`,
-              source(LastChunk("nice=true", List(RawHeader("Foo", "pip apo"), RawHeader("Bar", "xyz"))))))))
+          Right(baseRequest.withEntity(Chunked(
+            `application/pdf`,
+            source(LastChunk("nice=true", List(RawHeader("Foo", "pip apo"), RawHeader("Bar", "xyz"))))))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
@@ -336,13 +347,15 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         |
         |0
         |
-        |""" should parseTo(HttpRequest(PATCH, "/data", List(Host("ping")), HttpEntity.Chunked(`application/pdf`, source(LastChunk))))
+        |""" should parseTo(HttpRequest(PATCH, "/data", List(Host("ping")),
+        HttpEntity.Chunked(`application/pdf`, source(LastChunk))))
       closeAfterResponseCompletion shouldEqual Seq(false)
     }
 
     "support `rawRequestUriHeader` setting" in new Test {
       override protected def newParser: HttpRequestParser =
-        new HttpRequestParser(parserSettings, websocketSettings, rawRequestUriHeader = true, headerParser = HttpHeaderParser(parserSettings, system.log))
+        new HttpRequestParser(parserSettings, websocketSettings, rawRequestUriHeader = true,
+          headerParser = HttpHeaderParser(parserSettings, system.log))
 
       """GET /f%6f%6fbar?q=b%61z HTTP/1.1
         |Host: ping
@@ -491,8 +504,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           start,
           """15_;
             |""") should generalMultiParseTo(
-            Right(baseRequest),
-            Left(EntityStreamError(ErrorInfo("Illegal character '_' in chunk start"))))
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("Illegal character '_' in chunk start"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
@@ -515,8 +528,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           start,
           """1a2b3c4d5e
             |""") should generalMultiParseTo(
-            Right(baseRequest),
-            Left(EntityStreamError(ErrorInfo("HTTP chunk size exceeds the configured limit of 1048576 bytes"))))
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("HTTP chunk size exceeds the configured limit of 1048576 bytes"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
@@ -525,8 +538,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           start,
           """3
             |abcde""") should generalMultiParseTo(
-            Right(baseRequest),
-            Left(EntityStreamError(ErrorInfo("Illegal chunk termination"))))
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("Illegal chunk termination"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
@@ -535,8 +548,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           start,
           """0
             |F@oo: pip""") should generalMultiParseTo(
-            Right(baseRequest),
-            Left(EntityStreamError(ErrorInfo("Illegal character '@' in header name"))))
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("Illegal character '@' in header name"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
     }
@@ -549,11 +562,11 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
 
       "a too long HTTP method" in new Test {
         "ABCDEFGHIJKLMNOPQ " should
-          parseToError(
-            BadRequest,
-            ErrorInfo(
-              "Unsupported HTTP method",
-              "HTTP method too long (started with 'ABCDEFGHIJKLMNOP'). Increase `akka.http.server.parsing.max-method-length` to support HTTP methods with more characters."))
+        parseToError(
+          BadRequest,
+          ErrorInfo(
+            "Unsupported HTTP method",
+            "HTTP method too long (started with 'ABCDEFGHIJKLMNOP'). Increase `akka.http.server.parsing.max-method-length` to support HTTP methods with more characters."))
       }
 
       "two Content-Length headers" in new Test {
@@ -620,7 +633,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           |Content-length: 92233720368547758080
           |Host: x
           |
-          |""" should parseToError(400: StatusCode, ErrorInfo("`Content-Length` header value must not exceed 63-bit integer range"))
+          |""" should parseToError(400: StatusCode,
+          ErrorInfo("`Content-Length` header value must not exceed 63-bit integer range"))
       }
 
       "with several conflicting `Content-Type` headers" in new Test {
@@ -630,7 +644,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           |Content-Type: text/plain; charset=UTF-8
           |Content-Length: 0
           |
-          |""" should parseToError(400: StatusCode, ErrorInfo("HTTP message must not contain more than one Content-Type header"))
+          |""" should parseToError(400: StatusCode,
+          ErrorInfo("HTTP message must not contain more than one Content-Type header"))
       }
 
       "with an illegal entity using CONNECT" in new Test {
@@ -724,7 +739,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
       override def equals(other: scala.Any): Boolean = other match {
         case other: StrictEqualHttpRequest =>
           this.req.withEntity(HttpEntity.Empty) == other.req.withEntity(HttpEntity.Empty) &&
-            this.req.entity.toStrict(awaitAtMost).awaitResult(awaitAtMost) ==
+          this.req.entity.toStrict(awaitAtMost).awaitResult(awaitAtMost) ==
             other.req.entity.toStrict(awaitAtMost).awaitResult(awaitAtMost)
       }
 
@@ -739,7 +754,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
 
     def multiParseTo(expected: HttpRequest*): Matcher[Seq[String]] = multiParseTo(newParser, expected: _*)
     def multiParseTo(parser: HttpRequestParser, expected: HttpRequest*): Matcher[Seq[String]] =
-      rawMultiParseTo(parser, expected: _*).compose(_ map prep)
+      rawMultiParseTo(parser, expected: _*).compose(_.map(prep))
 
     def rawMultiParseTo(expected: HttpRequest*): Matcher[Seq[String]] =
       rawMultiParseTo(newParser, expected: _*)
@@ -750,15 +765,15 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
       generalMultiParseTo(Left(MessageStartError(status, info))).compose(_ :: Nil)
 
     def generalMultiParseTo(expected: Either[RequestOutput, HttpRequest]*): Matcher[Seq[String]] =
-      generalRawMultiParseTo(expected: _*).compose(_ map prep)
+      generalRawMultiParseTo(expected: _*).compose(_.map(prep))
 
     def generalRawMultiParseTo(expected: Either[RequestOutput, HttpRequest]*): Matcher[Seq[String]] =
       generalRawMultiParseTo(newParser, expected: _*)
     def generalRawMultiParseTo(
-      parser:   HttpRequestParser,
-      expected: Either[RequestOutput, HttpRequest]*): Matcher[Seq[String]] =
+        parser: HttpRequestParser,
+        expected: Either[RequestOutput, HttpRequest]*): Matcher[Seq[String]] =
       equal(expected.map(strictEqualify))
-        .matcher[Seq[Either[RequestOutput, StrictEqualHttpRequest]]] compose multiParse(parser)
+        .matcher[Seq[Either[RequestOutput, StrictEqualHttpRequest]]].compose(multiParse(parser))
 
     def multiParse(parser: HttpRequestParser)(input: Seq[String]): Seq[Either[RequestOutput, StrictEqualHttpRequest]] =
       Source(input.toList)
@@ -789,7 +804,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
 
     protected def parserSettings: ParserSettings = ParserSettings(system)
     protected def websocketSettings: WebSocketSettings = WebSocketSettingsImpl.serverFromRoot(system.settings.config)
-    protected def newParser = new HttpRequestParser(parserSettings, websocketSettings, false, HttpHeaderParser(parserSettings, system.log))
+    protected def newParser =
+      new HttpRequestParser(parserSettings, websocketSettings, false, HttpHeaderParser(parserSettings, system.log))
 
     private def compactEntity(entity: RequestEntity): Future[RequestEntity] =
       entity match {

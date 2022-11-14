@@ -96,15 +96,17 @@ trait FileAndResourceDirectives {
    *
    * @group fileandresource
    */
-  def getFromResource(resourceName: String, contentType: ContentType, classLoader: ClassLoader = _defaultClassLoader): Route =
+  def getFromResource(
+      resourceName: String, contentType: ContentType, classLoader: ClassLoader = _defaultClassLoader): Route =
     if (!resourceName.endsWith("/"))
       get {
-        Option(classLoader.getResource(resourceName)) flatMap ResourceFile.apply match {
+        Option(classLoader.getResource(resourceName)).flatMap(ResourceFile.apply) match {
           case Some(ResourceFile(url, length, lastModified)) =>
             conditionalFor(length, lastModified) {
               if (length > 0) {
                 withRangeSupportAndPrecompressedMediaTypeSupport {
-                  complete(HttpEntity.Default(contentType, length, StreamConverters.fromInputStream(() => url.openStream())))
+                  complete(HttpEntity.Default(contentType, length,
+                    StreamConverters.fromInputStream(() => url.openStream())))
                 }
               } else complete(HttpEntity.Empty)
             }
@@ -143,7 +145,7 @@ trait FileAndResourceDirectives {
           val remainingPath = ctx.unmatchedPath
           val pathString = withTrailingSlash(safeJoinPaths("/", remainingPath, ctx.log, '/'))
 
-          val dirs = directories flatMap { dir =>
+          val dirs = directories.flatMap { dir =>
             safeDirectoryChildPath(withTrailingSlash(dir), remainingPath, ctx.log) match {
               case "" => None
               case fileName =>
@@ -152,10 +154,12 @@ trait FileAndResourceDirectives {
             }
           }
 
-          implicit val marshaller: ToEntityMarshaller[DirectoryListing] = renderer.marshaller(ctx.settings.renderVanityFooter)
+          implicit val marshaller: ToEntityMarshaller[DirectoryListing] =
+            renderer.marshaller(ctx.settings.renderVanityFooter)
 
           if (dirs.isEmpty) reject
-          else complete(DirectoryListing(prefixPath + pathString, isRoot = pathString == "/", dirs.flatMap(_.listFiles)))
+          else
+            complete(DirectoryListing(prefixPath + pathString, isRoot = pathString == "/", dirs.flatMap(_.listFiles)))
         }
       }
     }
@@ -165,7 +169,8 @@ trait FileAndResourceDirectives {
    *
    * @group fileandresource
    */
-  def getFromBrowseableDirectory(directory: String)(implicit renderer: DirectoryRenderer, resolver: ContentTypeResolver): Route =
+  def getFromBrowseableDirectory(directory: String)(
+      implicit renderer: DirectoryRenderer, resolver: ContentTypeResolver): Route =
     getFromBrowseableDirectories(directory)
 
   /**
@@ -174,7 +179,8 @@ trait FileAndResourceDirectives {
    *
    * @group fileandresource
    */
-  def getFromBrowseableDirectories(directories: String*)(implicit renderer: DirectoryRenderer, resolver: ContentTypeResolver): Route = {
+  def getFromBrowseableDirectories(directories: String*)(implicit renderer: DirectoryRenderer,
+      resolver: ContentTypeResolver): Route = {
     directories.map(getFromDirectory).reduceLeft(_ ~ _) ~ listDirectoryContents(directories: _*)
   }
 
@@ -185,7 +191,8 @@ trait FileAndResourceDirectives {
    *
    * @group fileandresource
    */
-  def getFromResourceDirectory(directoryName: String, classLoader: ClassLoader = _defaultClassLoader)(implicit resolver: ContentTypeResolver): Route = {
+  def getFromResourceDirectory(directoryName: String, classLoader: ClassLoader = _defaultClassLoader)(
+      implicit resolver: ContentTypeResolver): Route = {
     val base = if (directoryName.isEmpty) "" else withTrailingSlash(directoryName)
 
     extractUnmatchedPath { path =>
@@ -204,9 +211,9 @@ trait FileAndResourceDirectives {
 object FileAndResourceDirectives extends FileAndResourceDirectives {
   private val withRangeSupportAndPrecompressedMediaTypeSupport =
     RangeDirectives.withRangeSupport &
-      CodingDirectives.withPrecompressedMediaTypeSupport
+    CodingDirectives.withPrecompressedMediaTypeSupport
 
-  private def withTrailingSlash(path: String): String = if (path endsWith "/") path else path + '/'
+  private def withTrailingSlash(path: String): String = if (path.endsWith("/")) path else path + '/'
 
   /**
    * Given a base directory and a (Uri) path, returns a path to a location contained in the base directory,
@@ -220,7 +227,8 @@ object FileAndResourceDirectives extends FileAndResourceDirectives {
    *    semantics depend on the implementation of `File.getCanonicalPath` that may or may not resolve symbolic links and
    *    similar structures depending on the OS and the JDK implementation of file system accesses.
    */
-  private def safeDirectoryChildPath(basePath: String, path: Uri.Path, log: LoggingAdapter, separator: Char = File.separatorChar): String =
+  private def safeDirectoryChildPath(basePath: String, path: Uri.Path, log: LoggingAdapter,
+      separator: Char = File.separatorChar): String =
     safeJoinPaths(basePath, path, log, separator) match {
       case ""   => ""
       case path => checkIsSafeDescendant(basePath, path, log)
@@ -275,7 +283,7 @@ object FileAndResourceDirectives extends FileAndResourceDirectives {
         try {
           val entry = jar.getEntry(resourcePath)
           if (entry.isDirectory) None
-          else Option(jar.getInputStream(entry)) map { is =>
+          else Option(jar.getInputStream(entry)).map { is =>
             is.close()
             ResourceFile(url, entry.getSize, entry.getTime)
           }
@@ -301,7 +309,8 @@ object FileAndResourceDirectives extends FileAndResourceDirectives {
     def marshaller(renderVanityFooter: Boolean): ToEntityMarshaller[DirectoryListing]
 
     final override def directoryMarshaller(renderVanityFooter: Boolean): marshalling.Marshaller[JDL, JRE] = {
-      val combined = Marshaller.combined[JDL, SDL, SRE](x => JavaMapping.toScala(x)(RoutingJavaMapping.convertDirectoryListing))(marshaller(renderVanityFooter))
+      val combined = Marshaller.combined[JDL, SDL, SRE](x =>
+        JavaMapping.toScala(x)(RoutingJavaMapping.convertDirectoryListing))(marshaller(renderVanityFooter))
         .map(_.asJava)
       marshalling.Marshaller.fromScala(combined)
     }
@@ -342,9 +351,9 @@ object ContentTypeResolver {
         val mediaType = if (lastDotIx >= 0) {
           fileName.substring(lastDotIx + 1) match {
             case "gz" => fileName.lastIndexOf('.', lastDotIx - 1) match {
-              case -1 => MediaTypes.`application/octet-stream`
-              case x  => MediaTypes.forExtension(fileName.substring(x + 1, lastDotIx)).withComp(MediaType.Gzipped)
-            }
+                case -1 => MediaTypes.`application/octet-stream`
+                case x  => MediaTypes.forExtension(fileName.substring(x + 1, lastDotIx)).withComp(MediaType.Gzipped)
+              }
             case ext => MediaTypes.forExtension(ext)
           }
         } else MediaTypes.`application/octet-stream`
@@ -358,7 +367,8 @@ object ContentTypeResolver {
     }
 }
 
-final case class DirectoryListing(path: String, isRoot: Boolean, files: Seq[File]) extends javadsl.server.directives.DirectoryListing {
+final case class DirectoryListing(
+    path: String, isRoot: Boolean, files: Seq[File]) extends javadsl.server.directives.DirectoryListing {
   override def getPath: String = path
   override def getFiles: java.util.List[File] = files.asJava
 }
@@ -379,7 +389,7 @@ object DirectoryListing {
       |</div>$
       |</body>
       |</html>
-      |""".stripMarginWithNewline("\n") split '$'
+      |""".stripMarginWithNewline("\n").split('$')
 
   def directoryMarshaller(renderVanityFooter: Boolean): ToEntityMarshaller[DirectoryListing] =
     Marshaller.StringMarshaller.wrap(MediaTypes.`text/html`) { listing =>
@@ -396,7 +406,7 @@ object DirectoryListing {
       sb.append(html(0)).append(path).append(html(1)).append(path).append(html(2))
       if (!isRoot) {
         val secondToLastSlash = path.lastIndexOf('/', path.lastIndexOf('/', path.length - 1) - 1)
-        sb.append("<a href=\"%s/\">../</a>\n" format path.substring(0, secondToLastSlash))
+        sb.append("<a href=\"%s/\">../</a>\n".format(path.substring(0, secondToLastSlash)))
       }
       def lastModified(file: File) = DateTime(file.lastModified).toIsoLikeDateTimeString
       def start(name: String) =

@@ -19,9 +19,9 @@ import scala.concurrent.Future
 
 class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
-  //#tweet-model
+  // #tweet-model
   case class Tweet(uid: Int, txt: String)
-  //#tweet-model
+  // #tweet-model
 
   val tweets = List(
     Tweet(1, "#Akka rocks!"),
@@ -29,17 +29,17 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Tweet(3, "You cannot enter the same river twice."))
   def getTweets = Source(tweets)
 
-  //#tweet-format
+  // #tweet-format
   object MyTweetJsonProtocol
-    extends akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-    with spray.json.DefaultJsonProtocol {
+      extends akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+      with spray.json.DefaultJsonProtocol {
 
     implicit val tweetFormat = jsonFormat2(Tweet.apply)
   }
-  //#tweet-format
+  // #tweet-format
 
   "spray-json-response-streaming" in {
-    //#spray-json-response-streaming
+    // #spray-json-response-streaming
     // [1] import "my protocol", for marshalling Tweet objects:
     import MyTweetJsonProtocol._
 
@@ -60,11 +60,11 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Get("/tweets").withHeaders(AcceptJson) ~> route ~> check {
       responseAs[String] shouldEqual
-        """[""" +
-        """{"txt":"#Akka rocks!","uid":1},""" +
-        """{"txt":"Streaming is so hot right now!","uid":2},""" +
-        """{"txt":"You cannot enter the same river twice.","uid":3}""" +
-        """]"""
+      """[""" +
+      """{"txt":"#Akka rocks!","uid":1},""" +
+      """{"txt":"Streaming is so hot right now!","uid":2},""" +
+      """{"txt":"You cannot enter the same river twice.","uid":3}""" +
+      """]"""
     }
 
     // endpoint can only marshal Json, so it will *reject* requests for application/xml:
@@ -72,11 +72,11 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
       handled should ===(false)
       rejection should ===(UnacceptedResponseContentTypeRejection(Set(ContentTypes.`application/json`)))
     }
-    //#spray-json-response-streaming
+    // #spray-json-response-streaming
   }
 
   "line-by-line-json-response-streaming" in {
-    //#line-by-line-json-response-streaming
+    // #line-by-line-json-response-streaming
     import MyTweetJsonProtocol._
 
     // Configure the EntityStreamingSupport to render the elements as:
@@ -101,22 +101,23 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Get("/tweets").withHeaders(AcceptJson) ~> route ~> check {
       responseAs[String] shouldEqual
-        """{"txt":"#Akka rocks!","uid":1}""" + "\n" +
-        """{"txt":"Streaming is so hot right now!","uid":2}""" + "\n" +
-        """{"txt":"You cannot enter the same river twice.","uid":3}""" + "\n"
+      """{"txt":"#Akka rocks!","uid":1}""" + "\n" +
+      """{"txt":"Streaming is so hot right now!","uid":2}""" + "\n" +
+      """{"txt":"You cannot enter the same river twice.","uid":3}""" + "\n"
     }
-    //#line-by-line-json-response-streaming
+    // #line-by-line-json-response-streaming
   }
 
   "csv-example" in {
-    //#csv-example
+    // #csv-example
     // [1] provide a marshaller to ByteString
     implicit val tweetAsCsv = Marshaller.strict[Tweet, ByteString] { t =>
-      Marshalling.WithFixedContentType(ContentTypes.`text/csv(UTF-8)`, () => {
-        val txt = t.txt.replaceAll(",", ".")
-        val uid = t.uid
-        ByteString(List(uid, txt).mkString(","))
-      })
+      Marshalling.WithFixedContentType(ContentTypes.`text/csv(UTF-8)`,
+        () => {
+          val txt = t.txt.replaceAll(",", ".")
+          val uid = t.uid
+          ByteString(List(uid, txt).mkString(","))
+        })
     }
 
     // [2] enable csv streaming:
@@ -133,16 +134,16 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Get("/tweets").withHeaders(AcceptCsv) ~> route ~> check {
       responseAs[String] shouldEqual
-        "1,#Akka rocks!" + "\n" +
-        "2,Streaming is so hot right now!" + "\n" +
-        "3,You cannot enter the same river twice." + "\n"
+      "1,#Akka rocks!" + "\n" +
+      "2,Streaming is so hot right now!" + "\n" +
+      "3,You cannot enter the same river twice." + "\n"
     }
-    //#csv-example
+    // #csv-example
   }
 
   "response-streaming-modes" in {
     {
-      //#async-rendering
+      // #async-rendering
       import MyTweetJsonProtocol._
       implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
         EntityStreamingSupport.json()
@@ -152,11 +153,11 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
         val tweets: Source[Tweet, NotUsed] = getTweets
         complete(tweets)
       }
-      //#async-rendering
+      // #async-rendering
     }
 
     {
-      //#async-unordered-rendering
+      // #async-unordered-rendering
       import MyTweetJsonProtocol._
       implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
         EntityStreamingSupport.json()
@@ -166,26 +167,26 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
         val tweets: Source[Tweet, NotUsed] = getTweets
         complete(tweets)
       }
-      //#async-unordered-rendering
+      // #async-unordered-rendering
     }
   }
 
-  //#measurement-model
+  // #measurement-model
   case class Measurement(id: String, value: Int)
 
-  //#measurement-model
+  // #measurement-model
 
-  //#measurement-format
+  // #measurement-format
   object MyMeasurementJsonProtocol
-    extends akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-    with spray.json.DefaultJsonProtocol {
+      extends akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+      with spray.json.DefaultJsonProtocol {
 
     implicit val measurementFormat = jsonFormat2(Measurement.apply)
   }
-  //#measurement-format
+  // #measurement-format
 
   "spray-json-request-streaming" in {
-    //#spray-json-request-streaming
+    // #spray-json-request-streaming
     // [1] import "my protocol", for unmarshalling Measurement objects:
     import MyMeasurementJsonProtocol._
 
@@ -240,7 +241,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
           Set(ContentTypes.`application/json`),
           Some(ContentTypes.`text/xml(UTF-8)`)))
     }
-    //#spray-json-request-streaming
+    // #spray-json-request-streaming
   }
 
 }

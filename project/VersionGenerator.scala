@@ -33,8 +33,7 @@ object VersionGenerator {
          |    }
          |  }
          |}
-         |""")
-  ))
+         |""")))
 
   def generateVersion(dir: SettingKey[File], locate: File => File, template: String) = Def.task[Seq[File]] {
     val file = locate(dir.value)

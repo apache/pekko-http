@@ -13,17 +13,19 @@ import scala.compat.java8.FutureConverters._
 import scala.compat.java8.OptionConverters._
 import akka.http.javadsl.model.headers.HttpChallenge
 import akka.http.javadsl.model.headers.HttpCredentials
-import akka.http.javadsl.server.{ Route, RequestContext }
+import akka.http.javadsl.server.{ RequestContext, Route }
 import akka.http.scaladsl
 import akka.http.scaladsl.server.{ Directives => D }
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 
 object SecurityDirectives {
+
   /**
    * Represents HTTP Basic or OAuth2 authentication credentials supplied with a request.
    */
   case class ProvidedCredentials(private val asScala: scaladsl.server.directives.Credentials.Provided) {
+
     /**
      * The username or token provided with the credentials
      */
@@ -40,7 +42,7 @@ object SecurityDirectives {
 
   private def toJava(cred: scaladsl.server.directives.Credentials): Optional[ProvidedCredentials] = cred match {
     case provided: scaladsl.server.directives.Credentials.Provided => Optional.of(ProvidedCredentials(provided))
-    case _ => Optional.empty()
+    case _                                                         => Optional.empty()
   }
 }
 
@@ -65,7 +67,7 @@ abstract class SecurityDirectives extends SchemeDirectives {
    * Authentication is required in this variant, i.e. the request is rejected if [authenticator] returns Optional.empty.
    */
   def authenticateBasic[T](realm: String, authenticator: JFunction[Optional[ProvidedCredentials], Optional[T]],
-                           inner: JFunction[T, Route]): Route = RouteAdapter {
+      inner: JFunction[T, Route]): Route = RouteAdapter {
     D.authenticateBasic(realm, c => authenticator.apply(toJava(c)).asScala) { t =>
       inner.apply(t).delegate
     }
@@ -79,7 +81,7 @@ abstract class SecurityDirectives extends SchemeDirectives {
    * Authentication is required in this variant, i.e. the request is rejected if [authenticator] returns Optional.empty.
    */
   def authenticateBasicPF[T](realm: String, authenticator: PartialFunction[Optional[ProvidedCredentials], T],
-                             inner: JFunction[T, Route]): Route = RouteAdapter {
+      inner: JFunction[T, Route]): Route = RouteAdapter {
     def pf: PartialFunction[scaladsl.server.directives.Credentials, Option[T]] = {
       case c => Option(authenticator.applyOrElse(toJava(c), (_: Any) => null.asInstanceOf[T]))
     }
@@ -96,12 +98,14 @@ abstract class SecurityDirectives extends SchemeDirectives {
    *
    * Authentication is required in this variant, i.e. the request is rejected if [authenticator] returns Optional.empty.
    */
-  def authenticateBasicPFAsync[T](realm: String, authenticator: PartialFunction[Optional[ProvidedCredentials], CompletionStage[T]],
-                                  inner: JFunction[T, Route]): Route = RouteAdapter {
-    def pf(implicit ec: ExecutionContextExecutor): PartialFunction[scaladsl.server.directives.Credentials, Future[Option[T]]] = {
+  def authenticateBasicPFAsync[T](realm: String,
+      authenticator: PartialFunction[Optional[ProvidedCredentials], CompletionStage[T]],
+      inner: JFunction[T, Route]): Route = RouteAdapter {
+    def pf(implicit ec: ExecutionContextExecutor)
+        : PartialFunction[scaladsl.server.directives.Credentials, Future[Option[T]]] = {
       case credentials =>
         val jCredentials = toJava(credentials)
-        if (authenticator isDefinedAt jCredentials) {
+        if (authenticator.isDefinedAt(jCredentials)) {
           authenticator(jCredentials).toScala.map(Some(_))
         } else {
           Future.successful(None)
@@ -124,7 +128,7 @@ abstract class SecurityDirectives extends SchemeDirectives {
    */
   @CorrespondsTo("authenticateBasic")
   def authenticateBasicOptional[T](realm: String, authenticator: JFunction[Optional[ProvidedCredentials], Optional[T]],
-                                   inner: JFunction[Optional[T], Route]): Route = RouteAdapter {
+      inner: JFunction[Optional[T], Route]): Route = RouteAdapter {
     D.authenticateBasic(realm, c => authenticator.apply(toJava(c)).asScala).optional { t =>
       inner.apply(t.asJava).delegate
     }
@@ -137,8 +141,9 @@ abstract class SecurityDirectives extends SchemeDirectives {
    *
    * Authentication is required in this variant, i.e. the request is rejected if [authenticator] returns Optional.empty.
    */
-  def authenticateBasicAsync[T](realm: String, authenticator: JFunction[Optional[ProvidedCredentials], CompletionStage[Optional[T]]],
-                                inner: JFunction[T, Route]): Route = RouteAdapter {
+  def authenticateBasicAsync[T](realm: String,
+      authenticator: JFunction[Optional[ProvidedCredentials], CompletionStage[Optional[T]]],
+      inner: JFunction[T, Route]): Route = RouteAdapter {
     D.extractExecutionContext { implicit ctx =>
       D.authenticateBasicAsync(realm, c => authenticator.apply(toJava(c)).toScala.map(_.asScala)) { t =>
         inner.apply(t).delegate
@@ -154,8 +159,9 @@ abstract class SecurityDirectives extends SchemeDirectives {
    * Authentication is optional in this variant.
    */
   @CorrespondsTo("authenticateBasicAsync")
-  def authenticateBasicAsyncOptional[T](realm: String, authenticator: JFunction[Optional[ProvidedCredentials], CompletionStage[Optional[T]]],
-                                        inner: JFunction[Optional[T], Route]): Route = RouteAdapter {
+  def authenticateBasicAsyncOptional[T](realm: String,
+      authenticator: JFunction[Optional[ProvidedCredentials], CompletionStage[Optional[T]]],
+      inner: JFunction[Optional[T], Route]): Route = RouteAdapter {
     D.extractExecutionContext { implicit ctx =>
       D.authenticateBasicAsync(realm, c => authenticator.apply(toJava(c)).toScala.map(_.asScala)).optional { t =>
         inner.apply(t.asJava).delegate
@@ -171,7 +177,7 @@ abstract class SecurityDirectives extends SchemeDirectives {
    * Authentication is required in this variant, i.e. the request is rejected if [authenticator] returns Optional.empty.
    */
   def authenticateOAuth2[T](realm: String, authenticator: JFunction[Optional[ProvidedCredentials], Optional[T]],
-                            inner: JFunction[T, Route]): Route = RouteAdapter {
+      inner: JFunction[T, Route]): Route = RouteAdapter {
     D.authenticateOAuth2(realm, c => authenticator.apply(toJava(c)).asScala) { t =>
       inner.apply(t).delegate
     }
@@ -186,7 +192,7 @@ abstract class SecurityDirectives extends SchemeDirectives {
    */
   @CorrespondsTo("authenticateOAuth2")
   def authenticateOAuth2Optional[T](realm: String, authenticator: JFunction[Optional[ProvidedCredentials], Optional[T]],
-                                    inner: JFunction[Optional[T], Route]): Route = RouteAdapter {
+      inner: JFunction[Optional[T], Route]): Route = RouteAdapter {
     D.authenticateOAuth2(realm, c => authenticator.apply(toJava(c)).asScala).optional { t =>
       inner.apply(t.asJava).delegate
     }
@@ -199,8 +205,9 @@ abstract class SecurityDirectives extends SchemeDirectives {
    *
    * Authentication is required in this variant, i.e. the request is rejected if [authenticator] returns Optional.empty.
    */
-  def authenticateOAuth2Async[T](realm: String, authenticator: JFunction[Optional[ProvidedCredentials], CompletionStage[Optional[T]]],
-                                 inner: JFunction[T, Route]): Route = RouteAdapter {
+  def authenticateOAuth2Async[T](realm: String,
+      authenticator: JFunction[Optional[ProvidedCredentials], CompletionStage[Optional[T]]],
+      inner: JFunction[T, Route]): Route = RouteAdapter {
     D.extractExecutionContext { implicit ctx =>
       D.authenticateOAuth2Async(realm, c => authenticator.apply(toJava(c)).toScala.map(_.asScala)) { t =>
         inner.apply(t).delegate
@@ -216,8 +223,9 @@ abstract class SecurityDirectives extends SchemeDirectives {
    * Authentication is optional in this variant.
    */
   @CorrespondsTo("authenticateOAuth2Async")
-  def authenticateOAuth2AsyncOptional[T](realm: String, authenticator: JFunction[Optional[ProvidedCredentials], CompletionStage[Optional[T]]],
-                                         inner: JFunction[Optional[T], Route]): Route = RouteAdapter {
+  def authenticateOAuth2AsyncOptional[T](realm: String,
+      authenticator: JFunction[Optional[ProvidedCredentials], CompletionStage[Optional[T]]],
+      inner: JFunction[Optional[T], Route]): Route = RouteAdapter {
     D.extractExecutionContext { implicit ctx =>
       D.authenticateOAuth2Async(realm, c => authenticator.apply(toJava(c)).toScala.map(_.asScala)).optional { t =>
         inner.apply(t.asJava).delegate
@@ -232,8 +240,8 @@ abstract class SecurityDirectives extends SchemeDirectives {
    * [[akka.http.javadsl.server.AuthenticationFailedRejection]] that contains this challenge to be added to the response.
    */
   def authenticateOrRejectWithChallenge[T](
-    authenticator: JFunction[Optional[HttpCredentials], CompletionStage[Either[HttpChallenge, T]]],
-    inner:         JFunction[T, Route]): Route = RouteAdapter {
+      authenticator: JFunction[Optional[HttpCredentials], CompletionStage[Either[HttpChallenge, T]]],
+      inner: JFunction[T, Route]): Route = RouteAdapter {
     D.extractExecutionContext { implicit ctx =>
       val scalaAuthenticator = { cred: Option[scaladsl.model.headers.HttpCredentials] =>
         authenticator.apply(cred.map(_.asJava).asJava).toScala.map(_.left.map(_.asScala))
@@ -250,12 +258,13 @@ abstract class SecurityDirectives extends SchemeDirectives {
    * but only applies the authenticator function with a certain type of credentials.
    */
   def authenticateOrRejectWithChallenge[C <: HttpCredentials, T](
-    c:             Class[C],
-    authenticator: JFunction[Optional[C], CompletionStage[Either[HttpChallenge, T]]],
-    inner:         JFunction[T, Route]): Route = RouteAdapter {
+      c: Class[C],
+      authenticator: JFunction[Optional[C], CompletionStage[Either[HttpChallenge, T]]],
+      inner: JFunction[T, Route]): Route = RouteAdapter {
     D.extractExecutionContext { implicit ctx =>
       val scalaAuthenticator = { cred: Option[scaladsl.model.headers.HttpCredentials] =>
-        authenticator.apply(cred.filter(c.isInstance).map(_.asJava).asJava.asInstanceOf[Optional[C]]).toScala.map(_.left.map(_.asScala)) // TODO make sure cast is safe
+        authenticator.apply(cred.filter(c.isInstance).map(_.asJava).asJava.asInstanceOf[Optional[C]]).toScala.map(
+          _.left.map(_.asScala)) // TODO make sure cast is safe
       }
 
       D.authenticateOrRejectWithChallenge(scalaAuthenticator) { t =>
@@ -279,7 +288,8 @@ abstract class SecurityDirectives extends SchemeDirectives {
    * If the check fails the route is rejected with an [[akka.http.javadsl.server.AuthorizationFailedRejection]].
    */
   @CorrespondsTo("authorize")
-  def authorizeWithRequestContext(check: akka.japi.function.Function[RequestContext, Boolean], inner: Supplier[Route]): Route = RouteAdapter {
+  def authorizeWithRequestContext(
+      check: akka.japi.function.Function[RequestContext, Boolean], inner: Supplier[Route]): Route = RouteAdapter {
     D.authorize(rc => check(RequestContext.wrap(rc)))(inner.get().delegate)
   }
 
@@ -299,7 +309,8 @@ abstract class SecurityDirectives extends SchemeDirectives {
    * authorization fails and the route is rejected with an [[akka.http.javadsl.server.AuthorizationFailedRejection]].
    */
   @CorrespondsTo("authorizeAsync")
-  def authorizeAsyncWithRequestContext(check: akka.japi.function.Function[RequestContext, CompletionStage[Boolean]], inner: Supplier[Route]): Route = RouteAdapter {
+  def authorizeAsyncWithRequestContext(check: akka.japi.function.Function[RequestContext, CompletionStage[Boolean]],
+      inner: Supplier[Route]): Route = RouteAdapter {
     D.authorizeAsync(rc => check(RequestContext.wrap(rc)).toScala)(inner.get().delegate)
   }
 }

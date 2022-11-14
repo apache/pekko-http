@@ -42,6 +42,7 @@ sealed abstract class ModeledCompanion[T: ClassTag] extends Renderable {
       case res                                         => Left(res.errors)
     }
 }
+
 /** INTERNAL API */
 @InternalApi
 private[akka] object ModeledCompanion {
@@ -107,7 +108,8 @@ abstract class ModeledCustomHeaderCompanion[H <: ModeledCustomHeader[H]] {
   def apply(value: String): H =
     parse(value) match {
       case Success(parsed) => parsed
-      case Failure(ex)     => throw new IllegalArgumentException(s"Unable to construct custom header by parsing: '$value'", ex)
+      case Failure(ex) =>
+        throw new IllegalArgumentException(s"Unable to construct custom header by parsing: '$value'", ex)
     }
 
   def unapply(h: HttpHeader): Option[String] = h match {
@@ -156,11 +158,12 @@ final case class Accept(mediaRanges: immutable.Seq[MediaRange]) extends jm.heade
 
 // https://tools.ietf.org/html/rfc7231#section-5.3.3
 object `Accept-Charset` extends ModeledCompanion[`Accept-Charset`] {
-  def apply(first: HttpCharsetRange, more: HttpCharsetRange*): `Accept-Charset` = apply(immutable.Seq(first +: more: _*))
+  def apply(first: HttpCharsetRange, more: HttpCharsetRange*): `Accept-Charset` =
+    apply(immutable.Seq(first +: more: _*))
   implicit val charsetRangesRenderer = Renderer.defaultSeqRenderer[HttpCharsetRange] // cache
 }
 final case class `Accept-Charset`(charsetRanges: immutable.Seq[HttpCharsetRange]) extends jm.headers.AcceptCharset
-  with RequestHeader {
+    with RequestHeader {
   require(charsetRanges.nonEmpty, "charsetRanges must not be empty")
   import `Accept-Charset`.charsetRangesRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ charsetRanges
@@ -184,7 +187,7 @@ object `Accept-Encoding` extends ModeledCompanion[`Accept-Encoding`] {
   implicit val encodingsRenderer = Renderer.defaultSeqRenderer[HttpEncodingRange] // cache
 }
 final case class `Accept-Encoding`(encodings: immutable.Seq[HttpEncodingRange]) extends jm.headers.AcceptEncoding
-  with RequestHeader {
+    with RequestHeader {
   import `Accept-Encoding`.encodingsRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ encodings
   protected def companion = `Accept-Encoding`
@@ -199,7 +202,7 @@ object `Accept-Language` extends ModeledCompanion[`Accept-Language`] {
   implicit val languagesRenderer = Renderer.defaultSeqRenderer[LanguageRange] // cache
 }
 final case class `Accept-Language`(languages: immutable.Seq[LanguageRange]) extends jm.headers.AcceptLanguage
-  with RequestHeader {
+    with RequestHeader {
   require(languages.nonEmpty, "languages must not be empty")
   import `Accept-Language`.languagesRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ languages
@@ -223,7 +226,7 @@ object `Accept-Ranges` extends ModeledCompanion[`Accept-Ranges`] {
   implicit val rangeUnitsRenderer = Renderer.defaultSeqRenderer[RangeUnit] // cache
 }
 final case class `Accept-Ranges`(rangeUnits: immutable.Seq[RangeUnit]) extends jm.headers.AcceptRanges
-  with ResponseHeader {
+    with ResponseHeader {
   import `Accept-Ranges`.rangeUnitsRenderer
   def renderValue[R <: Rendering](r: R): r.type = if (rangeUnits.isEmpty) r ~~ "none" else r ~~ rangeUnits
   protected def companion = `Accept-Ranges`
@@ -235,7 +238,7 @@ final case class `Accept-Ranges`(rangeUnits: immutable.Seq[RangeUnit]) extends j
 // https://www.w3.org/TR/cors/#access-control-allow-credentials-response-header
 object `Access-Control-Allow-Credentials` extends ModeledCompanion[`Access-Control-Allow-Credentials`]
 final case class `Access-Control-Allow-Credentials`(allow: Boolean)
-  extends jm.headers.AccessControlAllowCredentials with ResponseHeader {
+    extends jm.headers.AccessControlAllowCredentials with ResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ allow.toString
   protected def companion = `Access-Control-Allow-Credentials`
 }
@@ -251,7 +254,7 @@ object `Access-Control-Allow-Headers` extends ModeledCompanion[`Access-Control-A
   implicit val headersRenderer = Renderer.defaultSeqRenderer[String] // cache
 }
 final case class `Access-Control-Allow-Headers`(headers: immutable.Seq[String])
-  extends jm.headers.AccessControlAllowHeaders with ResponseHeader {
+    extends jm.headers.AccessControlAllowHeaders with ResponseHeader {
   import `Access-Control-Allow-Headers`.headersRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ headers
   protected def companion = `Access-Control-Allow-Headers`
@@ -271,7 +274,7 @@ object `Access-Control-Allow-Methods` extends ModeledCompanion[`Access-Control-A
   implicit val methodsRenderer = Renderer.defaultSeqRenderer[HttpMethod] // cache
 }
 final case class `Access-Control-Allow-Methods`(methods: immutable.Seq[HttpMethod])
-  extends jm.headers.AccessControlAllowMethods with ResponseHeader {
+    extends jm.headers.AccessControlAllowMethods with ResponseHeader {
   import `Access-Control-Allow-Methods`.methodsRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ methods
   protected def companion = `Access-Control-Allow-Methods`
@@ -296,7 +299,7 @@ object `Access-Control-Allow-Origin` extends ModeledCompanion[`Access-Control-Al
   def forRange(range: HttpOriginRange) = new `Access-Control-Allow-Origin`(range)
 }
 final case class `Access-Control-Allow-Origin` private (range: HttpOriginRange)
-  extends jm.headers.AccessControlAllowOrigin with ResponseHeader {
+    extends jm.headers.AccessControlAllowOrigin with ResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ range
   protected def companion = `Access-Control-Allow-Origin`
 }
@@ -312,7 +315,7 @@ object `Access-Control-Expose-Headers` extends ModeledCompanion[`Access-Control-
   implicit val headersRenderer = Renderer.defaultSeqRenderer[String] // cache
 }
 final case class `Access-Control-Expose-Headers`(headers: immutable.Seq[String])
-  extends jm.headers.AccessControlExposeHeaders with ResponseHeader {
+    extends jm.headers.AccessControlExposeHeaders with ResponseHeader {
   import `Access-Control-Expose-Headers`.headersRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ headers
   protected def companion = `Access-Control-Expose-Headers`
@@ -324,7 +327,7 @@ final case class `Access-Control-Expose-Headers`(headers: immutable.Seq[String])
 // https://www.w3.org/TR/cors/#access-control-max-age-response-header
 object `Access-Control-Max-Age` extends ModeledCompanion[`Access-Control-Max-Age`]
 final case class `Access-Control-Max-Age`(deltaSeconds: Long) extends jm.headers.AccessControlMaxAge
-  with ResponseHeader {
+    with ResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ deltaSeconds
   protected def companion = `Access-Control-Max-Age`
 }
@@ -340,7 +343,7 @@ object `Access-Control-Request-Headers` extends ModeledCompanion[`Access-Control
   implicit val headersRenderer = Renderer.defaultSeqRenderer[String] // cache
 }
 final case class `Access-Control-Request-Headers`(headers: immutable.Seq[String])
-  extends jm.headers.AccessControlRequestHeaders with RequestHeader {
+    extends jm.headers.AccessControlRequestHeaders with RequestHeader {
   import `Access-Control-Request-Headers`.headersRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ headers
   protected def companion = `Access-Control-Request-Headers`
@@ -352,7 +355,7 @@ final case class `Access-Control-Request-Headers`(headers: immutable.Seq[String]
 // https://www.w3.org/TR/cors/#access-control-request-method-request-header
 object `Access-Control-Request-Method` extends ModeledCompanion[`Access-Control-Request-Method`]
 final case class `Access-Control-Request-Method`(method: HttpMethod) extends jm.headers.AccessControlRequestMethod
-  with RequestHeader {
+    with RequestHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ method
   protected def companion = `Access-Control-Request-Method`
 }
@@ -389,7 +392,7 @@ final case class Allow(methods: immutable.Seq[HttpMethod]) extends jm.headers.Al
 // https://tools.ietf.org/html/rfc7235#section-4.2
 object Authorization extends ModeledCompanion[Authorization]
 final case class Authorization(credentials: HttpCredentials) extends jm.headers.Authorization with RequestHeader
-  with SensitiveHttpHeader {
+    with SensitiveHttpHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ credentials
   protected def companion = Authorization
 }
@@ -400,7 +403,7 @@ object `Cache-Control` extends ModeledCompanion[`Cache-Control`] {
   implicit val directivesRenderer = Renderer.defaultSeqRenderer[CacheDirective] // cache
 }
 final case class `Cache-Control`(directives: immutable.Seq[CacheDirective]) extends jm.headers.CacheControl
-  with RequestResponseHeader {
+    with RequestResponseHeader {
   require(directives.nonEmpty, "directives must not be empty")
   import `Cache-Control`.directivesRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ directives
@@ -416,7 +419,7 @@ object Connection extends ModeledCompanion[Connection] {
   implicit val tokensRenderer = Renderer.defaultSeqRenderer[String] // cache
 }
 final case class Connection(tokens: immutable.Seq[String]) extends jm.headers.Connection
-  with RequestResponseHeader {
+    with RequestResponseHeader {
   require(tokens.nonEmpty, "tokens must not be empty")
   import Connection.tokensRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ tokens
@@ -426,7 +429,7 @@ final case class Connection(tokens: immutable.Seq[String]) extends jm.headers.Co
   def append(tokens: immutable.Seq[String]) = Connection(this.tokens ++ tokens)
   @tailrec private def has(item: String, ix: Int = 0): Boolean =
     if (ix < tokens.length)
-      if (tokens(ix) equalsIgnoreCase item) true
+      if (tokens(ix).equalsIgnoreCase(item)) true
       else has(item, ix + 1)
     else false
   protected def companion = Connection
@@ -437,12 +440,13 @@ final case class Connection(tokens: immutable.Seq[String]) extends jm.headers.Co
 
 // https://tools.ietf.org/html/rfc7230#section-3.3.2
 object `Content-Length` extends ModeledCompanion[`Content-Length`]
+
 /**
  * Instances of this class will only be created transiently during header parsing and will never appear
  * in HttpMessage.header. To access the Content-Length, see subclasses of HttpEntity.
  */
 final case class `Content-Length` private[http] (length: Long) extends jm.headers.ContentLength
-  with RequestResponseHeader {
+    with RequestResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ length
   protected def companion = `Content-Length`
 }
@@ -472,7 +476,7 @@ final case class `Content-Location`(uri: Uri) extends jm.headers.ContentLocation
  */
 object `Content-Disposition` extends ModeledCompanion[`Content-Disposition`]
 final case class `Content-Disposition`(dispositionType: ContentDispositionType, params: Map[String, String] = Map.empty)
-  extends jm.headers.ContentDisposition with RequestResponseHeader {
+    extends jm.headers.ContentDisposition with RequestResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = {
     import Rendering.{ contentDispositionFilenameSafeChars => safeChars }
     r ~~ dispositionType
@@ -487,11 +491,11 @@ final case class `Content-Disposition`(dispositionType: ContentDispositionType, 
       if (withExtParams.contains("filename") && withExtParams.contains("filename*"))
         TreeMap[String, String]() ++ withExtParams
       else withExtParams
-    withExtParamsSorted foreach {
+    withExtParamsSorted.foreach {
       case (k, v) if k == "filename" =>
         r ~~ "; " ~~ k ~~ '=' ~~ '"'
         r.putReplaced(v, keep = safeChars, placeholder = '?') ~~ '"'
-      case (k, v) if k endsWith "*" =>
+      case (k, v) if k.endsWith("*") =>
         r ~~ "; " ~~ k ~~ '=' ~~ "UTF-8''"
         UriRendering.encode(r, v, UTF8, keep = `attr-char`, replaceSpaces = false)
       case (k, v) => r ~~ "; " ~~ k ~~ '=' ~~#! v
@@ -510,7 +514,7 @@ object `Content-Encoding` extends ModeledCompanion[`Content-Encoding`] {
   implicit val encodingsRenderer = Renderer.defaultSeqRenderer[HttpEncoding] // cache
 }
 final case class `Content-Encoding`(encodings: immutable.Seq[HttpEncoding]) extends jm.headers.ContentEncoding
-  with RequestResponseHeader {
+    with RequestResponseHeader {
   require(encodings.nonEmpty, "encodings must not be empty")
   import `Content-Encoding`.encodingsRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ encodings
@@ -525,19 +529,20 @@ object `Content-Range` extends ModeledCompanion[`Content-Range`] {
   def apply(byteContentRange: ByteContentRange): `Content-Range` = apply(RangeUnits.Bytes, byteContentRange)
 }
 final case class `Content-Range`(rangeUnit: RangeUnit, contentRange: ContentRange) extends jm.headers.ContentRange
-  with RequestResponseHeader {
+    with RequestResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ rangeUnit ~~ ' ' ~~ contentRange
   protected def companion = `Content-Range`
 }
 
 // https://tools.ietf.org/html/rfc7231#section-3.1.1.5
 object `Content-Type` extends ModeledCompanion[`Content-Type`]
+
 /**
  * Instances of this class will only be created transiently during header parsing and will never appear
  * in HttpMessage.header. To access the Content-Type, see subclasses of HttpEntity.
  */
 final case class `Content-Type` private[http] (contentType: ContentType) extends jm.headers.ContentType
-  with RequestResponseHeader {
+    with RequestResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ contentType
   protected def companion = `Content-Type`
 }
@@ -553,7 +558,7 @@ object Cookie extends ModeledCompanion[Cookie] {
   implicit val cookiePairsRenderer = Renderer.seqRenderer[HttpCookiePair](separator = "; ") // cache
 }
 final case class Cookie(cookies: immutable.Seq[HttpCookiePair]) extends jm.headers.Cookie with RequestHeader
-  with SensitiveHttpHeader {
+    with SensitiveHttpHeader {
   require(cookies.nonEmpty, "cookies must not be empty")
   import Cookie.cookiePairsRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ cookies
@@ -575,6 +580,7 @@ final case class Date(date: DateTime) extends jm.headers.Date with RequestRespon
  */
 @InternalApi
 private[headers] object EmptyCompanion extends ModeledCompanion[EmptyHeader.type]
+
 /**
  * INTERNAL API
  */
@@ -619,7 +625,7 @@ object Host extends ModeledCompanion[Host] {
   val empty = Host("")
 }
 final case class Host(host: Uri.Host, port: Int = 0) extends jm.headers.Host with RequestHeader
-  with SensitiveHttpHeader {
+    with SensitiveHttpHeader {
   import UriRendering.HostRenderer
   require((port >> 16) == 0, "Illegal port: " + port)
   def isEmpty = host.isEmpty
@@ -694,7 +700,8 @@ final case class `Last-Modified`(date: DateTime) extends jm.headers.LastModified
 
 // https://tools.ietf.org/html/rfc5988#section-5
 object Link extends ModeledCompanion[Link] {
-  def apply(uri: Uri, first: LinkParam, more: LinkParam*): Link = apply(immutable.Seq(LinkValue(uri, first +: more.toList)))
+  def apply(uri: Uri, first: LinkParam, more: LinkParam*): Link =
+    apply(immutable.Seq(LinkValue(uri, first +: more.toList)))
   @pre213
   def apply(values: LinkValue*): Link = apply(immutable.Seq(values: _*))
   @since213
@@ -729,7 +736,7 @@ object Origin extends ModeledCompanion[Origin] {
   def apply(firstOrigin: HttpOrigin, otherOrigins: HttpOrigin*): Origin = apply(firstOrigin +: otherOrigins)
 }
 final case class Origin(origins: immutable.Seq[HttpOrigin]) extends jm.headers.Origin with RequestHeader
-  with SensitiveHttpHeader {
+    with SensitiveHttpHeader {
 
   def renderValue[R <: Rendering](r: R): r.type = if (origins.isEmpty) r ~~ "null" else r ~~ origins
   protected def companion = Origin
@@ -744,7 +751,7 @@ object `Proxy-Authenticate` extends ModeledCompanion[`Proxy-Authenticate`] {
   implicit val challengesRenderer = Renderer.defaultSeqRenderer[HttpChallenge] // cache
 }
 final case class `Proxy-Authenticate`(challenges: immutable.Seq[HttpChallenge]) extends jm.headers.ProxyAuthenticate
-  with ResponseHeader {
+    with ResponseHeader {
   require(challenges.nonEmpty, "challenges must not be empty")
   import `Proxy-Authenticate`.challengesRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ challenges
@@ -757,7 +764,7 @@ final case class `Proxy-Authenticate`(challenges: immutable.Seq[HttpChallenge]) 
 // https://tools.ietf.org/html/rfc7235#section-4.4
 object `Proxy-Authorization` extends ModeledCompanion[`Proxy-Authorization`]
 final case class `Proxy-Authorization`(credentials: HttpCredentials) extends jm.headers.ProxyAuthorization
-  with RequestHeader with SensitiveHttpHeader {
+    with RequestHeader with SensitiveHttpHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ credentials
   protected def companion = `Proxy-Authorization`
 }
@@ -769,7 +776,7 @@ object Range extends ModeledCompanion[Range] {
   implicit val rangesRenderer = Renderer.defaultSeqRenderer[ByteRange] // cache
 }
 final case class Range(rangeUnit: RangeUnit, ranges: immutable.Seq[ByteRange]) extends jm.headers.Range
-  with RequestHeader {
+    with RequestHeader {
   require(ranges.nonEmpty, "ranges must not be empty")
   import Range.rangesRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ rangeUnit ~~ '=' ~~ ranges
@@ -802,7 +809,7 @@ final case class `Raw-Request-URI`(uri: String) extends jm.headers.RawRequestURI
 object `Remote-Address` extends ModeledCompanion[`Remote-Address`]
 @deprecated("use remote-address-attribute instead", since = "10.2.0")
 final case class `Remote-Address`(address: RemoteAddress) extends jm.headers.RemoteAddress with SyntheticHeader
-  with SensitiveHttpHeader {
+    with SensitiveHttpHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ address
   protected def companion = `Remote-Address`
 }
@@ -825,7 +832,8 @@ object `Retry-After` extends ModeledCompanion[`Retry-After`] {
   def apply(timestamp: DateTime): `Retry-After` = apply(RetryAfterDateTime(timestamp))
 }
 
-final case class `Retry-After`(delaySecondsOrDateTime: RetryAfterParameter) extends jm.headers.RetryAfter with ResponseHeader {
+final case class `Retry-After`(delaySecondsOrDateTime: RetryAfterParameter) extends jm.headers.RetryAfter
+    with ResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = delaySecondsOrDateTime match {
     case RetryAfterDuration(delay)    => r ~~ delay
     case RetryAfterDateTime(dateTime) => dateTime.renderRfc1123DateTimeString(r)
@@ -860,6 +868,7 @@ private[http] object `Sec-WebSocket-Accept` extends ModeledCompanion[`Sec-WebSoc
     `Sec-WebSocket-Accept`(acceptKey)
   }
 }
+
 /**
  * INTERNAL API
  */
@@ -878,12 +887,13 @@ private[http] final case class `Sec-WebSocket-Accept`(key: String) extends Respo
 private[http] object `Sec-WebSocket-Extensions` extends ModeledCompanion[`Sec-WebSocket-Extensions`] {
   implicit val extensionsRenderer = Renderer.defaultSeqRenderer[WebSocketExtension]
 }
+
 /**
  * INTERNAL API
  */
 @InternalApi
 private[http] final case class `Sec-WebSocket-Extensions`(extensions: immutable.Seq[WebSocketExtension])
-  extends RequestResponseHeader {
+    extends RequestResponseHeader {
   require(extensions.nonEmpty, "Sec-WebSocket-Extensions.extensions must not be empty")
   import `Sec-WebSocket-Extensions`.extensionsRenderer
   protected[http] def renderValue[R <: Rendering](r: R): r.type = r ~~ extensions
@@ -901,6 +911,7 @@ private[http] object `Sec-WebSocket-Key` extends ModeledCompanion[`Sec-WebSocket
     `Sec-WebSocket-Key`(Base64.rfc2045().encodeToString(keyBytes, false))
   }
 }
+
 /**
  * INTERNAL API
  */
@@ -925,12 +936,13 @@ private[http] final case class `Sec-WebSocket-Key`(key: String) extends RequestH
 private[http] object `Sec-WebSocket-Protocol` extends ModeledCompanion[`Sec-WebSocket-Protocol`] {
   implicit val protocolsRenderer = Renderer.defaultSeqRenderer[String]
 }
+
 /**
  * INTERNAL API
  */
 @InternalApi
 private[http] final case class `Sec-WebSocket-Protocol`(protocols: immutable.Seq[String])
-  extends jm.headers.SecWebSocketProtocol with RequestResponseHeader {
+    extends jm.headers.SecWebSocketProtocol with RequestResponseHeader {
   require(protocols.nonEmpty, "Sec-WebSocket-Protocol.protocols must not be empty")
   import `Sec-WebSocket-Protocol`.protocolsRenderer
   protected[http] def renderValue[R <: Rendering](r: R): r.type = r ~~ protocols
@@ -948,14 +960,16 @@ private[http] final case class `Sec-WebSocket-Protocol`(protocols: immutable.Seq
 private[http] object `Sec-WebSocket-Version` extends ModeledCompanion[`Sec-WebSocket-Version`] {
   implicit val versionsRenderer = Renderer.defaultSeqRenderer[Int]
 }
+
 /**
  * INTERNAL API
  */
 @InternalApi
 private[http] final case class `Sec-WebSocket-Version`(versions: immutable.Seq[Int])
-  extends RequestResponseHeader {
+    extends RequestResponseHeader {
   require(versions.nonEmpty, "Sec-WebSocket-Version.versions must not be empty")
-  require(versions.forall(v => v >= 0 && v <= 255), s"Sec-WebSocket-Version.versions must be in the range 0 <= version <= 255 but were $versions")
+  require(versions.forall(v => v >= 0 && v <= 255),
+    s"Sec-WebSocket-Version.versions must be in the range 0 <= version <= 255 but were $versions")
   import `Sec-WebSocket-Version`.versionsRenderer
   protected[http] def renderValue[R <: Rendering](r: R): r.type = r ~~ versions
   def hasVersion(versionNumber: Int): Boolean = versions contains versionNumber
@@ -980,7 +994,8 @@ final case class Server(products: immutable.Seq[ProductVersion]) extends jm.head
 
 // https://tools.ietf.org/html/rfc6797
 object `Strict-Transport-Security` extends ModeledCompanion[`Strict-Transport-Security`] {
-  def apply(maxAge: Long, includeSubDomains: Option[Boolean]) = new `Strict-Transport-Security`(maxAge, includeSubDomains.getOrElse(false))
+  def apply(maxAge: Long, includeSubDomains: Option[Boolean]) =
+    new `Strict-Transport-Security`(maxAge, includeSubDomains.getOrElse(false))
 
   private val maxAges: PartialFunction[StrictTransportSecurityDirective, MaxAge] = { case m: MaxAge => m }
   private val isIncludeSubDomains: StrictTransportSecurityDirective => Boolean = { _ eq IncludeSubDomains }
@@ -989,12 +1004,14 @@ object `Strict-Transport-Security` extends ModeledCompanion[`Strict-Transport-Se
     if (maxAgeDirectives.size != 1) throw new IllegalArgumentException("exactly one 'max-age' directive required")
 
     val includeSubDomainsDirectivesCount = directives.count(isIncludeSubDomains)
-    if (includeSubDomainsDirectivesCount > 1) throw new IllegalArgumentException("at most one 'includeSubDomains' directive allowed")
+    if (includeSubDomainsDirectivesCount > 1)
+      throw new IllegalArgumentException("at most one 'includeSubDomains' directive allowed")
 
     new `Strict-Transport-Security`(maxAgeDirectives.head.value, includeSubDomainsDirectivesCount == 1)
   }
 }
-final case class `Strict-Transport-Security`(maxAge: Long, includeSubDomains: Boolean = false) extends jm.headers.StrictTransportSecurity with ResponseHeader {
+final case class `Strict-Transport-Security`(
+    maxAge: Long, includeSubDomains: Boolean = false) extends jm.headers.StrictTransportSecurity with ResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = {
     r ~~ "max-age=" ~~ maxAge
     if (includeSubDomains) r ~~ "; includeSubDomains"
@@ -1025,7 +1042,7 @@ final case class TE(acceptableEncodings: immutable.Seq[TransferEncoding]) extend
 
 object `Timeout-Access` extends ModeledCompanion[`Timeout-Access`]
 final case class `Timeout-Access`(timeoutAccess: akka.http.scaladsl.TimeoutAccess)
-  extends jm.headers.TimeoutAccess with SyntheticHeader {
+    extends jm.headers.TimeoutAccess with SyntheticHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ timeoutAccess.toString
   protected def companion = `Timeout-Access`
 }
@@ -1042,7 +1059,7 @@ final case class `Timeout-Access`(timeoutAccess: akka.http.scaladsl.TimeoutAcces
  */
 object `Tls-Session-Info` extends ModeledCompanion[`Tls-Session-Info`]
 final case class `Tls-Session-Info`(session: SSLSession) extends jm.headers.TlsSessionInfo with SyntheticHeader
-  with ScalaSessionAPI {
+    with ScalaSessionAPI {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ session.toString
   protected def companion = `Tls-Session-Info`
 
@@ -1052,15 +1069,17 @@ final case class `Tls-Session-Info`(session: SSLSession) extends jm.headers.TlsS
 
 // https://tools.ietf.org/html/rfc7230#section-3.3.1
 object `Transfer-Encoding` extends ModeledCompanion[`Transfer-Encoding`] {
-  def apply(first: TransferEncoding, more: TransferEncoding*): `Transfer-Encoding` = apply(immutable.Seq(first +: more: _*))
+  def apply(first: TransferEncoding, more: TransferEncoding*): `Transfer-Encoding` =
+    apply(immutable.Seq(first +: more: _*))
   implicit val encodingsRenderer = Renderer.defaultSeqRenderer[TransferEncoding] // cache
 }
 final case class `Transfer-Encoding`(encodings: immutable.Seq[TransferEncoding]) extends jm.headers.TransferEncoding
-  with RequestResponseHeader {
+    with RequestResponseHeader {
   require(encodings.nonEmpty, "encodings must not be empty")
   import `Transfer-Encoding`.encodingsRenderer
   def isChunked: Boolean = encodings.last == TransferEncodings.chunked
-  def withChunked: `Transfer-Encoding` = if (isChunked) this else `Transfer-Encoding`(encodings :+ TransferEncodings.chunked)
+  def withChunked: `Transfer-Encoding` =
+    if (isChunked) this else `Transfer-Encoding`(encodings :+ TransferEncodings.chunked)
   def withChunkedPeeled: Option[`Transfer-Encoding`] =
     if (isChunked) {
       encodings.init match {
@@ -1086,7 +1105,7 @@ final case class Upgrade(protocols: immutable.Seq[UpgradeProtocol]) extends Requ
 
   protected def companion = Upgrade
 
-  def hasWebSocket: Boolean = protocols.exists(_.name equalsIgnoreCase "websocket")
+  def hasWebSocket: Boolean = protocols.exists(_.name.equalsIgnoreCase("websocket"))
 }
 
 // https://tools.ietf.org/html/rfc7231#section-5.5.3
@@ -1111,7 +1130,7 @@ object `WWW-Authenticate` extends ModeledCompanion[`WWW-Authenticate`] {
   implicit val challengesRenderer = Renderer.defaultSeqRenderer[HttpChallenge] // cache
 }
 final case class `WWW-Authenticate`(challenges: immutable.Seq[HttpChallenge]) extends jm.headers.WWWAuthenticate
-  with ResponseHeader {
+    with ResponseHeader {
   require(challenges.nonEmpty, "challenges must not be empty")
   import `WWW-Authenticate`.challengesRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ challenges
@@ -1130,7 +1149,7 @@ object `X-Forwarded-For` extends ModeledCompanion[`X-Forwarded-For`] {
   }
 }
 final case class `X-Forwarded-For`(addresses: immutable.Seq[RemoteAddress]) extends jm.headers.XForwardedFor
-  with RequestHeader with SensitiveHttpHeader {
+    with RequestHeader with SensitiveHttpHeader {
   require(addresses.nonEmpty, "addresses must not be empty")
   import `X-Forwarded-For`.addressesRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ addresses
@@ -1149,7 +1168,7 @@ object `X-Forwarded-Host` extends ModeledCompanion[`X-Forwarded-Host`] {
  */
 @ApiMayChange
 final case class `X-Forwarded-Host`(host: Uri.Host) extends jm.headers.XForwardedHost
-  with RequestHeader with SensitiveHttpHeader {
+    with RequestHeader with SensitiveHttpHeader {
   import `X-Forwarded-Host`.hostRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ host
   protected def companion = `X-Forwarded-Host`
@@ -1165,11 +1184,12 @@ object `X-Forwarded-Proto` extends ModeledCompanion[`X-Forwarded-Proto`]
  */
 @ApiMayChange
 final case class `X-Forwarded-Proto`(protocol: String) extends jm.headers.XForwardedProto
-  with RequestHeader {
+    with RequestHeader {
   require(protocol.nonEmpty, "protocol must not be empty")
   def renderValue[R <: Rendering](r: R): r.type = r ~~ protocol
 
   protected def companion = `X-Forwarded-Proto`
+
   /** Java API */
   def getProtocol: String = protocol
 }
@@ -1178,7 +1198,7 @@ object `X-Real-Ip` extends ModeledCompanion[`X-Real-Ip`] {
   implicit val addressRenderer = RemoteAddress.renderWithoutPort // cache
 }
 final case class `X-Real-Ip`(address: RemoteAddress) extends jm.headers.XRealIp
-  with RequestHeader with SensitiveHttpHeader {
+    with RequestHeader with SensitiveHttpHeader {
   import `X-Real-Ip`.addressRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ address
   protected def companion = `X-Real-Ip`

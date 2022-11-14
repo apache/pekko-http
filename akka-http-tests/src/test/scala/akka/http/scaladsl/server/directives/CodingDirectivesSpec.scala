@@ -54,7 +54,9 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
       } ~> check { rejection shouldEqual UnsupportedRequestEncodingRejection(identity) }
     }
     "decode the request content if no Content-Encoding header is present" in {
-      Post("/", "yes") ~> decodeRequestWith(NoCoding) { echoRequestContent } ~> check { responseAs[String] shouldEqual "yes" }
+      Post("/", "yes") ~> decodeRequestWith(NoCoding) { echoRequestContent } ~> check {
+        responseAs[String] shouldEqual "yes"
+      }
     }
     "leave request without content unchanged" in {
       Post() ~> decodeRequestWith(NoCoding) { completeOk } ~> check { response shouldEqual Ok }
@@ -171,7 +173,9 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
       } ~> check { responseAs[String] shouldEqual "yes" }
     }
     "decode the request content if no Content-Encoding header is present" in {
-      Post("/", "yes") ~> decodeWithGzipOrNoEncoding { echoRequestContent } ~> check { responseAs[String] shouldEqual "yes" }
+      Post("/", "yes") ~> decodeWithGzipOrNoEncoding { echoRequestContent } ~> check {
+        responseAs[String] shouldEqual "yes"
+      }
     }
     "reject requests with content encoded with 'deflate'" in {
       Post("/", "yes") ~> `Content-Encoding`(deflate) ~> {
@@ -257,9 +261,10 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
     "correctly encode the chunk stream produced by a chunked response" in {
       val text = "This is a somewhat lengthy text that is being chunked by the autochunk directive!"
       val textChunks =
-        () => text.grouped(8).map { chars =>
-          Chunk(chars.mkString): ChunkStreamPart
-        }
+        () =>
+          text.grouped(8).map { chars =>
+            Chunk(chars.mkString): ChunkStreamPart
+          }
       val chunkedTextEntity = HttpEntity.Chunked(ContentTypes.`text/plain(UTF-8)`, Source.fromIterator(textChunks))
 
       Post() ~> `Accept-Encoding`(gzip) ~> {
@@ -421,7 +426,7 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
         strictify(responseEntity) shouldEqual HttpEntity(ContentType(`text/plain`, `UTF-8`), yeahGzipped)
       }
 
-      Get("/") ~> `Accept-Encoding`(HttpEncodingRange.`*`, deflate withQValue 0.2) ~> {
+      Get("/") ~> `Accept-Encoding`(HttpEncodingRange.`*`, deflate.withQValue(0.2)) ~> {
         encodeResponseWith(Deflate, Gzip) { yeah }
       } ~> check {
         response should haveContentEncoding(gzip)
@@ -468,12 +473,12 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
       EventFilter[IllegalRequestException](occurrences = 0).intercept {
         EventFilter.warning(start = "Illegal request", occurrences = 1).intercept {
           Post("/", helloGzipped) ~> `Content-Encoding`(deflate) ~>
-            decodeRequest {
-              echoRequestContent
-            } ~> check {
-              status shouldEqual BadRequest
-              responseAs[String] shouldEqual "The request's encoding is corrupt"
-            }
+          decodeRequest {
+            echoRequestContent
+          } ~> check {
+            status shouldEqual BadRequest
+            responseAs[String] shouldEqual "The request's encoding is corrupt"
+          }
         }
       }
     }
@@ -548,16 +553,17 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
     }
   }
 
-  def compress(input: String, encoder: Encoder): ByteString = encoder.encodeAsync(ByteString(input)).awaitResult(3.seconds.dilated)
+  def compress(input: String, encoder: Encoder): ByteString =
+    encoder.encodeAsync(ByteString(input)).awaitResult(3.seconds.dilated)
 
   def hexDump(bytes: Array[Byte]) = bytes.map("%02x" format _).mkString
   def fromHexDump(dump: String) = dump.grouped(2).toArray.map(chars => Integer.parseInt(new String(chars), 16).toByte)
 
-  def haveNoContentEncoding: Matcher[HttpResponse] = be(None) compose { (_: HttpResponse).header[`Content-Encoding`] }
+  def haveNoContentEncoding: Matcher[HttpResponse] = be(None).compose { (_: HttpResponse).header[`Content-Encoding`] }
   def haveContentEncoding(encoding: HttpEncoding): Matcher[HttpResponse] =
-    be(Some(`Content-Encoding`(encoding))) compose { (_: HttpResponse).header[`Content-Encoding`] }
+    be(Some(`Content-Encoding`(encoding))).compose { (_: HttpResponse).header[`Content-Encoding`] }
 
-  def readAs(string: String, charset: String = "UTF8") = be(string) compose { (_: ByteString).decodeString(charset) }
+  def readAs(string: String, charset: String = "UTF8") = be(string).compose { (_: ByteString).decodeString(charset) }
 
   def strictify(entity: HttpEntity) = entity.toStrict(1.second.dilated).awaitResult(1.second.dilated)
 }

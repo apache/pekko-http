@@ -35,18 +35,20 @@ trait SprayJsonSupport {
       .andThen(sprayJsValueByteStringUnmarshaller)
 
   implicit def sprayJsValueByteStringUnmarshaller[T]: FromByteStringUnmarshaller[JsValue] =
-    Unmarshaller.withMaterializer[ByteString, JsValue](_ => _ => { bs =>
-      // .compact so addressing into any address is very fast (also for large chunks)
-      // TODO we could optimise ByteStrings to better handle linear access like this (or provide ByteStrings.linearAccessOptimised)
-      // TODO IF it's worth it.
-      val parserInput = new SprayJsonByteStringParserInput(bs.compact)
-      FastFuture.successful(JsonParser(parserInput))
-    })
+    Unmarshaller.withMaterializer[ByteString, JsValue](_ =>
+      _ => { bs =>
+        // .compact so addressing into any address is very fast (also for large chunks)
+        // TODO we could optimise ByteStrings to better handle linear access like this (or provide ByteStrings.linearAccessOptimised)
+        // TODO IF it's worth it.
+        val parserInput = new SprayJsonByteStringParserInput(bs.compact)
+        FastFuture.successful(JsonParser(parserInput))
+      })
   implicit def sprayJsonByteStringUnmarshaller[T](implicit reader: RootJsonReader[T]): FromByteStringUnmarshaller[T] =
     sprayJsValueByteStringUnmarshaller[T].map(jsonReader[T].read)
 
   // support for as[Source[T, NotUsed]]
-  implicit def sprayJsonSourceReader[T](implicit reader: RootJsonReader[T], support: EntityStreamingSupport): FromEntityUnmarshaller[Source[T, NotUsed]] =
+  implicit def sprayJsonSourceReader[T](
+      implicit reader: RootJsonReader[T], support: EntityStreamingSupport): FromEntityUnmarshaller[Source[T, NotUsed]] =
     Unmarshaller.withMaterializer { implicit ec => implicit mat => e =>
       if (support.supported.matches(e.contentType)) {
         val frames = e.dataBytes.via(support.framingDecoder)
@@ -59,12 +61,14 @@ trait SprayJsonSupport {
       } else FastFuture.failed(UnsupportedContentTypeException(Some(e.contentType), support.supported))
     }
 
-  //#sprayJsonMarshallerConverter
-  implicit def sprayJsonMarshallerConverter[T](writer: RootJsonWriter[T])(implicit printer: JsonPrinter = CompactPrinter): ToEntityMarshaller[T] =
+  // #sprayJsonMarshallerConverter
+  implicit def sprayJsonMarshallerConverter[T](writer: RootJsonWriter[T])(implicit printer: JsonPrinter =
+        CompactPrinter): ToEntityMarshaller[T] =
     sprayJsonMarshaller[T](writer, printer)
-  //#sprayJsonMarshallerConverter
-  implicit def sprayJsonMarshaller[T](implicit writer: RootJsonWriter[T], printer: JsonPrinter = CompactPrinter): ToEntityMarshaller[T] =
-    sprayJsValueMarshaller compose writer.write
+  // #sprayJsonMarshallerConverter
+  implicit def sprayJsonMarshaller[T](
+      implicit writer: RootJsonWriter[T], printer: JsonPrinter = CompactPrinter): ToEntityMarshaller[T] =
+    sprayJsValueMarshaller.compose(writer.write)
   implicit def sprayJsValueMarshaller(implicit printer: JsonPrinter = CompactPrinter): ToEntityMarshaller[JsValue] =
     Marshaller.StringMarshaller.wrap(MediaTypes.`application/json`)(printer)
 }
@@ -106,13 +110,12 @@ object SprayJsonEntityStreamingSupport {
 }
 
 final class JsonEntityStreamingSupport private[akka] (
-  maxObjectSize:       Int,
-  val supported:       ContentTypeRange,
-  val contentType:     ContentType,
-  val framingRenderer: Flow[ByteString, ByteString, NotUsed],
-  val parallelism:     Int,
-  val unordered:       Boolean
-) extends common.JsonEntityStreamingSupport {
+    maxObjectSize: Int,
+    val supported: ContentTypeRange,
+    val contentType: ContentType,
+    val framingRenderer: Flow[ByteString, ByteString, NotUsed],
+    val parallelism: Int,
+    val unordered: Boolean) extends common.JsonEntityStreamingSupport {
   import akka.http.impl.util.JavaMapping.Implicits._
 
   def this(maxObjectSize: Int) =
@@ -126,7 +129,8 @@ final class JsonEntityStreamingSupport private[akka] (
   override val framingDecoder: Flow[ByteString, ByteString, NotUsed] =
     akka.stream.scaladsl.JsonFraming.objectScanner(maxObjectSize)
 
-  override def withFramingRendererFlow(framingRendererFlow: akka.stream.javadsl.Flow[ByteString, ByteString, NotUsed]): JsonEntityStreamingSupport =
+  override def withFramingRendererFlow(
+      framingRendererFlow: akka.stream.javadsl.Flow[ByteString, ByteString, NotUsed]): JsonEntityStreamingSupport =
     withFramingRenderer(framingRendererFlow.asScala)
   def withFramingRenderer(framingRendererFlow: Flow[ByteString, ByteString, NotUsed]): JsonEntityStreamingSupport =
     new JsonEntityStreamingSupport(maxObjectSize, supported, contentType, framingRendererFlow, parallelism, unordered)

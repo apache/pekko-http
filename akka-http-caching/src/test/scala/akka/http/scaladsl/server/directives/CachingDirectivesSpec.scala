@@ -62,7 +62,9 @@ class CachingDirectivesSpec extends AnyWordSpec with Matchers with ScalatestRout
       Get() ~> addHeader(`Cache-Control`(`no-cache`)) ~> countingService ~> check { responseAs[String] shouldEqual "3" }
     }
     "not cache responses for GETs if the request contains a `Cache-Control: max-age=0` header" in {
-      Get() ~> addHeader(`Cache-Control`(`max-age`(0))) ~> countingService ~> check { responseAs[String] shouldEqual "4" }
+      Get() ~> addHeader(`Cache-Control`(`max-age`(0))) ~> countingService ~> check {
+        responseAs[String] shouldEqual "4"
+      }
     }
 
     "be transparent to exceptions thrown from its inner route" in {

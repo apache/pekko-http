@@ -22,11 +22,11 @@ package object parsing {
     case '\t'                           => "\\t"
     case '\r'                           => "\\r"
     case '\n'                           => "\\n"
-    case x if Character.isISOControl(x) => "\\u%04x" format c.toInt
+    case x if Character.isISOControl(x) => "\\u%04x".format(c.toInt)
     case x                              => x.toString
   }
 
-  private[http] def byteChar(input: ByteString, ix: Int): Char = (byteAt(input, ix) & 0xff).toChar
+  private[http] def byteChar(input: ByteString, ix: Int): Char = (byteAt(input, ix) & 0xFF).toChar
 
   private[http] def byteAt(input: ByteString, ix: Int): Byte =
     if (ix < input.length) input(ix) else throw NotEnoughDataException
@@ -38,8 +38,8 @@ package object parsing {
   }
 
   private[http] def logParsingError(info: ErrorInfo, log: LoggingAdapter,
-                                    settings:          ParserSettings.ErrorLoggingVerbosity,
-                                    ignoreHeaderNames: Set[String]                          = Set.empty): Unit =
+      settings: ParserSettings.ErrorLoggingVerbosity,
+      ignoreHeaderNames: Set[String] = Set.empty): Unit =
     settings match {
       case ParserSettings.ErrorLoggingVerbosity.Off => // nothing to do
       case ParserSettings.ErrorLoggingVerbosity.Simple =>
@@ -60,8 +60,8 @@ package parsing {
    */
   @InternalApi
   private[parsing] class ParsingException(
-    val status: StatusCode,
-    val info:   ErrorInfo) extends RuntimeException(info.formatPretty) {
+      val status: StatusCode,
+      val info: ErrorInfo) extends RuntimeException(info.formatPretty) {
     def this(status: StatusCode, summary: String) =
       this(status, ErrorInfo(if (summary.isEmpty) status.defaultMessage else summary))
     def this(summary: String) =
@@ -76,4 +76,3 @@ package parsing {
   @InternalApi
   private[parsing] object NotEnoughDataException extends SingletonException
 }
-

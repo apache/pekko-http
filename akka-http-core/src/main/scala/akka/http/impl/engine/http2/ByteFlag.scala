@@ -16,6 +16,7 @@ private[http] final class ByteFlag(val value: Int) extends AnyVal {
   def ifSet(flag: Boolean): ByteFlag = if (flag) this else ByteFlag.Zero
   override def toString: String = s"ByteFlag(${Integer.toHexString(value)})"
 }
+
 /** INTERNAL API */
 @InternalApi
 private[impl] object ByteFlag {

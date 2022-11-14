@@ -15,7 +15,7 @@ class HttpsExamplesSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
 
   "disable hostname verification for connection" in compileOnlySpec {
     val unsafeHost = "example.com"
-    //#disable-hostname-verification-connection
+    // #disable-hostname-verification-connection
     implicit val system = ActorSystem()
 
     def createInsecureSslEngine(host: String, port: Int): SSLEngine = {
@@ -35,6 +35,6 @@ class HttpsExamplesSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
     }
     val badCtx = ConnectionContext.httpsClient(createInsecureSslEngine _)
     Http().outgoingConnectionHttps(unsafeHost, connectionContext = badCtx)
-    //#disable-hostname-verification-connection
+    // #disable-hostname-verification-connection
   }
 }

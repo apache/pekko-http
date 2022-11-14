@@ -21,18 +21,20 @@ import scala.concurrent.{ ExecutionContextExecutor, Future }
  */
 @InternalApi
 private[http] class RequestContextImpl(
-  val request:          HttpRequest,
-  val unmatchedPath:    Uri.Path,
-  val executionContext: ExecutionContextExecutor,
-  val materializer:     Materializer,
-  val log:              LoggingAdapter,
-  val settings:         RoutingSettings,
-  val parserSettings:   ParserSettings) extends RequestContext {
+    val request: HttpRequest,
+    val unmatchedPath: Uri.Path,
+    val executionContext: ExecutionContextExecutor,
+    val materializer: Materializer,
+    val log: LoggingAdapter,
+    val settings: RoutingSettings,
+    val parserSettings: ParserSettings) extends RequestContext {
 
-  def this(request: HttpRequest, log: LoggingAdapter, settings: RoutingSettings, parserSettings: ParserSettings)(implicit ec: ExecutionContextExecutor, materializer: Materializer) =
+  def this(request: HttpRequest, log: LoggingAdapter, settings: RoutingSettings, parserSettings: ParserSettings)(
+      implicit ec: ExecutionContextExecutor, materializer: Materializer) =
     this(request, request.uri.path, ec, materializer, log, settings, parserSettings)
 
-  def reconfigure(executionContext: ExecutionContextExecutor, materializer: Materializer, log: LoggingAdapter, settings: RoutingSettings): RequestContext =
+  def reconfigure(executionContext: ExecutionContextExecutor, materializer: Materializer, log: LoggingAdapter,
+      settings: RoutingSettings): RequestContext =
     copy(executionContext = executionContext, materializer = materializer, log = log, routingSettings = settings)
 
   override def complete(trm: ToResponseMarshallable): Future[RouteResult] =
@@ -49,15 +51,15 @@ private[http] class RequestContextImpl(
     FastFuture.successful(RouteResult.Rejected(rejections.toList))
 
   override def redirect(uri: Uri, redirectionType: Redirection): Future[RouteResult] = {
-    //#red-impl
+    // #red-impl
     complete(HttpResponse(
       status = redirectionType,
       headers = headers.Location(uri) :: Nil,
       entity = redirectionType.htmlTemplate match {
         case ""       => HttpEntity.Empty
-        case template => HttpEntity(ContentTypes.`text/html(UTF-8)`, template format uri)
+        case template => HttpEntity(ContentTypes.`text/html(UTF-8)`, template.format(uri))
       }))
-    //#red-impl
+    // #red-impl
   }
 
   override def fail(error: Throwable): Future[RouteResult] =
@@ -104,13 +106,13 @@ private[http] class RequestContextImpl(
   }
 
   private def copy(
-    request:          HttpRequest              = request,
-    unmatchedPath:    Uri.Path                 = unmatchedPath,
-    executionContext: ExecutionContextExecutor = executionContext,
-    materializer:     Materializer             = materializer,
-    log:              LoggingAdapter           = log,
-    routingSettings:  RoutingSettings          = settings,
-    parserSettings:   ParserSettings           = parserSettings) =
+      request: HttpRequest = request,
+      unmatchedPath: Uri.Path = unmatchedPath,
+      executionContext: ExecutionContextExecutor = executionContext,
+      materializer: Materializer = materializer,
+      log: LoggingAdapter = log,
+      routingSettings: RoutingSettings = settings,
+      parserSettings: ParserSettings = parserSettings) =
     new RequestContextImpl(request, unmatchedPath, executionContext, materializer, log, routingSettings, parserSettings)
 
   override def toString: String =

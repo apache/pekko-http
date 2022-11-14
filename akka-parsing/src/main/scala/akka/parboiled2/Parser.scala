@@ -24,8 +24,8 @@ import akka.shapeless._
 import akka.parboiled2.support._
 
 abstract class Parser(
-  initialValueStackSize: Int = 16,
-  maxValueStackSize:     Int = 1024) extends RuleDSL {
+    initialValueStackSize: Int = 16,
+    maxValueStackSize: Int = 1024) extends RuleDSL {
   import Parser._
 
   require(maxValueStackSize <= 65536, "`maxValueStackSize` > 2^16 is not supported") // due to current snapshot design
@@ -44,7 +44,8 @@ abstract class Parser(
    * Converts a compile-time only rule definition into the corresponding rule method implementation
    * with an explicitly given name.
    */
-  def namedRule[I <: HList, O <: HList](name: String)(r: Rule[I, O]): Rule[I, O] = macro ParserMacros.namedRuleImpl[I, O]
+  def namedRule[I <: HList, O <: HList](name: String)(r: Rule[I, O]): Rule[I, O] =
+    macro ParserMacros.namedRuleImpl[I, O]
 
   /**
    * The index of the next (yet unmatched) input character.
@@ -178,12 +179,13 @@ abstract class Parser(
 
     @tailrec
     def phase4_collectRuleTraces(reportedErrorIndex: Int, principalErrorIndex: Int, reportQuiet: Boolean)(
-      phase3: CollectingRuleTraces     = new CollectingRuleTraces(reportedErrorIndex, reportQuiet),
-      traces: VectorBuilder[RuleTrace] = new VectorBuilder): ParseError = {
+        phase3: CollectingRuleTraces = new CollectingRuleTraces(reportedErrorIndex, reportQuiet),
+        traces: VectorBuilder[RuleTrace] = new VectorBuilder): ParseError = {
 
       def done = {
         val principalErrorPos = Position(principalErrorIndex, input)
-        val reportedErrorPos = if (reportedErrorIndex != principalErrorIndex) Position(reportedErrorIndex, input) else principalErrorPos
+        val reportedErrorPos =
+          if (reportedErrorIndex != principalErrorIndex) Position(reportedErrorIndex, input) else principalErrorPos
         ParseError(reportedErrorPos, principalErrorPos, traces.result())
       }
       if (phase3.traceNr < errorTraceCollectionLimit) {
@@ -229,7 +231,7 @@ abstract class Parser(
     val c = _cursor
     if (c < _maxLength) {
       _cursor = c + 1
-      _cursorChar = if ((c + 1) == _maxLength) EOI else input charAt (c + 1)
+      _cursorChar = if ((c + 1) == _maxLength) EOI else input.charAt(c + 1)
     }
     true
   }
@@ -393,7 +395,7 @@ abstract class Parser(
         catch {
           case Parser.StartTracingException =>
             import RuleTrace._
-            __bubbleUp(NonTerminal(StringMatch(string), -ix) :: Nil, CharMatch(string charAt ix))
+            __bubbleUp(NonTerminal(StringMatch(string), -ix) :: Nil, CharMatch(string.charAt(ix)))
         }
       }
     else true
@@ -423,7 +425,7 @@ abstract class Parser(
         catch {
           case Parser.StartTracingException =>
             import RuleTrace._
-            __bubbleUp(NonTerminal(IgnoreCaseString(string), -ix) :: Nil, IgnoreCaseChar(string charAt ix))
+            __bubbleUp(NonTerminal(IgnoreCaseString(string), -ix) :: Nil, IgnoreCaseChar(string.charAt(ix)))
         }
       }
     else true
@@ -591,9 +593,9 @@ object Parser {
   // that we are in when mismatching at the principal error index
   // or -1 if no atomic rule fails with a mismatch at the principal error index
   private class EstablishingReportedErrorIndex(
-    private var _principalErrorIndex: Int,
-    var currentAtomicStart:           Int = Int.MinValue,
-    var maxAtomicErrorStart:          Int = Int.MinValue) extends ErrorAnalysisPhase {
+      private var _principalErrorIndex: Int,
+      var currentAtomicStart: Int = Int.MinValue,
+      var maxAtomicErrorStart: Int = Int.MinValue) extends ErrorAnalysisPhase {
     def reportedErrorIndex = if (maxAtomicErrorStart >= 0) maxAtomicErrorStart else _principalErrorIndex
     def applyOffset(offset: Int) = {
       _principalErrorIndex -= offset
@@ -605,8 +607,8 @@ object Parser {
   // determine whether the reported error location can only be reached via quiet rules
   // in which case we need to report them even though they are marked as "quiet"
   private class DetermineReportQuiet(
-    private var _minErrorIndex: Int, // the smallest index at which a mismatch triggers a StartTracingException
-    var inQuiet:                Boolean = false // are we currently in a quiet rule?
+      private var _minErrorIndex: Int, // the smallest index at which a mismatch triggers a StartTracingException
+      var inQuiet: Boolean = false // are we currently in a quiet rule?
   ) extends ErrorAnalysisPhase {
     def minErrorIndex = _minErrorIndex
     def applyOffset(offset: Int) = _minErrorIndex -= offset
@@ -615,10 +617,10 @@ object Parser {
   // collect the traces of all mismatches happening at an index >= minErrorIndex (the reported error index)
   // by throwing a StartTracingException which gets turned into a TracingBubbleException by the terminal rule
   private class CollectingRuleTraces(
-    var minErrorIndex:   Int, // the smallest index at which a mismatch triggers a StartTracingException
-    val reportQuiet:     Boolean, // do we need to trace mismatches from quiet rules?
-    val traceNr:         Int     = 0, // the zero-based index number of the RuleTrace we are currently building
-    var errorMismatches: Int     = 0 // the number of times we have already seen a mismatch at >= minErrorIndex
+      var minErrorIndex: Int, // the smallest index at which a mismatch triggers a StartTracingException
+      val reportQuiet: Boolean, // do we need to trace mismatches from quiet rules?
+      val traceNr: Int = 0, // the zero-based index number of the RuleTrace we are currently building
+      var errorMismatches: Int = 0 // the number of times we have already seen a mismatch at >= minErrorIndex
   ) extends ErrorAnalysisPhase {
     def applyOffset(offset: Int) = minErrorIndex -= offset
   }
@@ -632,16 +634,17 @@ object ParserMacros {
    */
   type RunnableRuleContext[L <: HList] = whitebox.Context { type PrefixType = Rule.Runnable[L] }
 
-  def runImpl[L <: HList: c.WeakTypeTag](c: RunnableRuleContext[L])()(scheme: c.Expr[Parser.DeliveryScheme[L]]): c.Expr[scheme.value.Result] = {
+  def runImpl[L <: HList: c.WeakTypeTag](c: RunnableRuleContext[L])()(
+      scheme: c.Expr[Parser.DeliveryScheme[L]]): c.Expr[scheme.value.Result] = {
     import c.universe._
     val runCall = c.prefix.tree match {
       case q"parboiled2.this.Rule.Runnable[$l]($ruleExpr)" => ruleExpr match {
-        case q"$p.$r" if p.tpe <:< typeOf[Parser] => q"val p = $p; p.__run[$l](p.$r)($scheme)"
-        case q"$p.$r($args)" if p.tpe <:< typeOf[Parser] => q"val p = $p; p.__run[$l](p.$r($args))($scheme)"
-        case q"$p.$r[$t]" if p.tpe <:< typeOf[Parser] => q"val p = $p; p.__run[$l](p.$r[$t])($scheme)"
-        case q"$p.$r[$t]" if p.tpe <:< typeOf[RuleX] => q"__run[$l]($ruleExpr)($scheme)"
-        case x => c.abort(x.pos, "Illegal `.run()` call base: " + x)
-      }
+          case q"$p.$r" if p.tpe <:< typeOf[Parser]        => q"val p = $p; p.__run[$l](p.$r)($scheme)"
+          case q"$p.$r($args)" if p.tpe <:< typeOf[Parser] => q"val p = $p; p.__run[$l](p.$r($args))($scheme)"
+          case q"$p.$r[$t]" if p.tpe <:< typeOf[Parser]    => q"val p = $p; p.__run[$l](p.$r[$t])($scheme)"
+          case q"$p.$r[$t]" if p.tpe <:< typeOf[RuleX]     => q"__run[$l]($ruleExpr)($scheme)"
+          case x                                           => c.abort(x.pos, "Illegal `.run()` call base: " + x)
+        }
       case x => c.abort(x.pos, "Illegal `Runnable.apply` call: " + x)
     }
     c.Expr[scheme.value.Result](runCall)
@@ -652,7 +655,8 @@ object ParserMacros {
    */
   type ParserContext = whitebox.Context { type PrefixType = Parser }
 
-  def ruleImpl[I <: HList: ctx.WeakTypeTag, O <: HList: ctx.WeakTypeTag](ctx: ParserContext)(r: ctx.Expr[Rule[I, O]]): ctx.Expr[Rule[I, O]] = {
+  def ruleImpl[I <: HList: ctx.WeakTypeTag, O <: HList: ctx.WeakTypeTag](ctx: ParserContext)(
+      r: ctx.Expr[Rule[I, O]]): ctx.Expr[Rule[I, O]] = {
     import ctx.universe._
     val ruleName =
       if (ctx.internal.enclosingOwner.isMethod)
@@ -663,7 +667,8 @@ object ParserMacros {
     namedRuleImpl(ctx)(ctx.Expr[String](Literal(Constant(ruleName))))(r)
   }
 
-  def namedRuleImpl[I <: HList: ctx.WeakTypeTag, O <: HList: ctx.WeakTypeTag](ctx: ParserContext)(name: ctx.Expr[String])(r: ctx.Expr[Rule[I, O]]): ctx.Expr[Rule[I, O]] = {
+  def namedRuleImpl[I <: HList: ctx.WeakTypeTag, O <: HList: ctx.WeakTypeTag](ctx: ParserContext)(
+      name: ctx.Expr[String])(r: ctx.Expr[Rule[I, O]]): ctx.Expr[Rule[I, O]] = {
     val opTreeCtx = new OpTreeContext[ctx.type] { val c: ctx.type = ctx }
     val opTree = opTreeCtx.RuleCall(Left(opTreeCtx.OpTree(r.tree)), name.tree)
     import ctx.universe._

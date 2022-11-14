@@ -17,7 +17,8 @@ trait RequestResponseAssociation
 /**
  * An association for completing a future when the response arrives.
  */
-final class ResponseFuture(val future: CompletableFuture[HttpResponse]) extends akka.http.scaladsl.model.RequestResponseAssociation
+final class ResponseFuture(val future: CompletableFuture[HttpResponse])
+    extends akka.http.scaladsl.model.RequestResponseAssociation
 object ResponseFuture {
   val KEY = AttributeKey.create[ResponseFuture]("association-future-handle", classOf[ResponseFuture])
   def apply(promise: CompletableFuture[HttpResponse]): ResponseFuture = new ResponseFuture(promise)

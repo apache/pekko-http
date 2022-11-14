@@ -67,14 +67,20 @@ abstract class ParserSettings private[akka] () extends BodyPartParser.Settings {
   def withMaxChunkSize(newValue: Int): ParserSettings = self.copy(maxChunkSize = newValue)
   def withMaxCommentParsingDepth(newValue: Int): ParserSettings = self.copy(maxCommentParsingDepth = newValue)
   def withUriParsingMode(newValue: Uri.ParsingMode): ParserSettings = self.copy(uriParsingMode = newValue.asScala)
-  def withCookieParsingMode(newValue: ParserSettings.CookieParsingMode): ParserSettings = self.copy(cookieParsingMode = newValue.asScala)
+  def withCookieParsingMode(newValue: ParserSettings.CookieParsingMode): ParserSettings =
+    self.copy(cookieParsingMode = newValue.asScala)
   def withIllegalHeaderWarnings(newValue: Boolean): ParserSettings = self.copy(illegalHeaderWarnings = newValue)
-  def withErrorLoggingVerbosity(newValue: ParserSettings.ErrorLoggingVerbosity): ParserSettings = self.copy(errorLoggingVerbosity = newValue.asScala)
-  def withHeaderValueCacheLimits(newValue: ju.Map[String, Int]): ParserSettings = self.copy(headerValueCacheLimits = newValue.asScala.toMap)
-  def withIncludeTlsSessionInfoHeader(newValue: Boolean): ParserSettings = self.copy(includeTlsSessionInfoHeader = newValue)
-  def withIncludeSslSessionAttribute(newValue: Boolean): ParserSettings = self.copy(includeSslSessionAttribute = newValue)
+  def withErrorLoggingVerbosity(newValue: ParserSettings.ErrorLoggingVerbosity): ParserSettings =
+    self.copy(errorLoggingVerbosity = newValue.asScala)
+  def withHeaderValueCacheLimits(newValue: ju.Map[String, Int]): ParserSettings =
+    self.copy(headerValueCacheLimits = newValue.asScala.toMap)
+  def withIncludeTlsSessionInfoHeader(newValue: Boolean): ParserSettings =
+    self.copy(includeTlsSessionInfoHeader = newValue)
+  def withIncludeSslSessionAttribute(newValue: Boolean): ParserSettings =
+    self.copy(includeSslSessionAttribute = newValue)
   def withModeledHeaderParsing(newValue: Boolean): ParserSettings = self.copy(modeledHeaderParsing = newValue)
-  def withIgnoreIllegalHeaderFor(newValue: List[String]): ParserSettings = self.copy(ignoreIllegalHeaderFor = newValue.map(_.toLowerCase).toSet)
+  def withIgnoreIllegalHeaderFor(newValue: List[String]): ParserSettings =
+    self.copy(ignoreIllegalHeaderFor = newValue.map(_.toLowerCase).toSet)
 
   // special ---
 
@@ -109,12 +115,14 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
   @Deprecated
   @deprecated("Use forServer or forClient instead", since = "10.2.0")
   override def create(config: Config): ParserSettings = ParserSettingsImpl(config)
+
   /**
    * @deprecated Use forServer or forClient instead.
    */
   @Deprecated
   @deprecated("Use forServer or forClient instead", since = "10.2.0")
   override def create(configOverrides: String): ParserSettings = ParserSettingsImpl(configOverrides)
+
   /**
    * @deprecated Use forServer or forClient instead.
    */
@@ -123,6 +131,8 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
   @nowarn("msg=create overrides concrete, non-deprecated symbol")
   override def create(system: ActorSystem): ParserSettings = create(system.settings.config)
 
-  def forServer(system: ClassicActorSystemProvider): ParserSettings = akka.http.scaladsl.settings.ParserSettings.forServer(system)
-  def forClient(system: ClassicActorSystemProvider): ParserSettings = akka.http.scaladsl.settings.ParserSettings.forClient(system)
+  def forServer(system: ClassicActorSystemProvider): ParserSettings =
+    akka.http.scaladsl.settings.ParserSettings.forServer(system)
+  def forClient(system: ClassicActorSystemProvider): ParserSettings =
+    akka.http.scaladsl.settings.ParserSettings.forClient(system)
 }

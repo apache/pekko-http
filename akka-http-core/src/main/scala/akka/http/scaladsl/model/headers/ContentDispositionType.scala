@@ -4,7 +4,7 @@
 
 package akka.http.scaladsl.model.headers
 
-import akka.http.impl.util.{ Rendering, SingletonValueRenderable, Renderable }
+import akka.http.impl.util.{ Renderable, Rendering, SingletonValueRenderable }
 import akka.http.javadsl.{ model => jm }
 
 sealed trait ContentDispositionType extends Renderable with jm.headers.ContentDispositionType

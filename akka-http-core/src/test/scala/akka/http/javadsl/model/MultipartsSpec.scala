@@ -43,8 +43,7 @@ class MultipartsSpec extends AnyWordSpec with Matchers with Inside with BeforeAn
     "create a model from Multiparts.createFormDataFromSourceParts" in {
       val streamed = Multiparts.createFormDataFromSourceParts(Source.from(util.Arrays.asList(
         Multiparts.createFormDataBodyPart("foo", HttpEntities.create("FOO")),
-        Multiparts.createFormDataBodyPart("bar", HttpEntities.create("BAR"))
-      )))
+        Multiparts.createFormDataBodyPart("bar", HttpEntities.create("BAR")))))
       val strictCS = streamed.toStrict(1000, materializer)
       val strict = Await.result(FutureConverters.toScala(strictCS), 1.second.dilated)
       strict shouldEqual akka.http.scaladsl.model.Multipart.FormData(

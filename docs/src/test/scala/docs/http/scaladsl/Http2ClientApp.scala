@@ -30,8 +30,7 @@ object Http2ClientApp extends App {
          # akka.loglevel = debug
          akka.http.client.http2.log-frames = true
          akka.http.client.parsing.max-content-length = 20m
-      """
-    ).withFallback(ConfigFactory.defaultApplication())
+      """).withFallback(ConfigFactory.defaultApplication())
 
   implicit val system = ActorSystem("Http2ClientApp", config)
   implicit val ec = system.dispatcher
@@ -42,22 +41,20 @@ object Http2ClientApp extends App {
   dispatch(
     HttpRequest(
       uri = "https://doc.akka.io/api/akka/current/akka/actor/typed/scaladsl/index.html",
-      headers = headers.`Accept-Encoding`(HttpEncodings.gzip) :: Nil)
-  ).onComplete { res =>
-      println(s"[1] Got index.html: $res")
-      res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [1] $res"))
-    }
+      headers = headers.`Accept-Encoding`(HttpEncodings.gzip) :: Nil)).onComplete { res =>
+    println(s"[1] Got index.html: $res")
+    res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [1] $res"))
+  }
 
   // #response-future-association
 
   dispatch(
     HttpRequest(
       uri = "https://doc.akka.io/api/akka/current/index.js",
-      headers = /*headers.`Accept-Encoding`(HttpEncodings.gzip) ::*/ Nil)
-  ).onComplete { res =>
-      println(s"[2] Got index.js: $res")
-      res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [2] $res"))
-    }
+      headers = /*headers.`Accept-Encoding`(HttpEncodings.gzip) ::*/ Nil)).onComplete { res =>
+    println(s"[2] Got index.js: $res")
+    res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [2] $res"))
+  }
 
   dispatch(HttpRequest(uri = "https://doc.akka.io/api/akka/current/lib/MaterialIcons-Regular.woff"))
     .flatMap(_.toStrict(1.second))
@@ -70,8 +67,9 @@ object Http2ClientApp extends App {
   // OverflowStrategy.dropNew has been deprecated in latest Akka versions
   // FIXME: replace with 2.6 queue when 2.5 support is dropped, see #3069
   @nowarn("msg=Use Source.queue") //
-  //#response-future-association
-  def singleRequest(connection: Flow[HttpRequest, HttpResponse, Any], bufferSize: Int = 100): HttpRequest => Future[HttpResponse] = {
+  // #response-future-association
+  def singleRequest(
+      connection: Flow[HttpRequest, HttpResponse, Any], bufferSize: Int = 100): HttpRequest => Future[HttpResponse] = {
     val queue =
       Source.queue(bufferSize, OverflowStrategy.dropNew)
         .via(connection)
@@ -90,7 +88,6 @@ object Http2ClientApp extends App {
         .flatMap(_ => p.future)
     }
   }
-  //#response-future-association
+  // #response-future-association
 
 }
-

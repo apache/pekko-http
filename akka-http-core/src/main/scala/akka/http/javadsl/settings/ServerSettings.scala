@@ -45,7 +45,8 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def getBacklog: Int
   def getSocketOptions: java.lang.Iterable[SocketOption]
   def getDefaultHostHeader: Host
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.getRandomFactory instead", since = "10.2.0")
+  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.getRandomFactory instead",
+    since = "10.2.0")
   def getWebsocketRandomFactory: java.util.function.Supplier[Random]
   def getWebsocketSettings: WebSocketSettings
   def getParserSettings: ParserSettings
@@ -59,8 +60,10 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
 
   // ---
 
-  def withServerHeader(newValue: Optional[Server]): ServerSettings = self.copy(serverHeader = newValue.asScala.map(_.asScala))
-  def withPreviewServerSettings(newValue: PreviewServerSettings): ServerSettings = self.copy(previewServerSettings = newValue.asScala)
+  def withServerHeader(newValue: Optional[Server]): ServerSettings =
+    self.copy(serverHeader = newValue.asScala.map(_.asScala))
+  def withPreviewServerSettings(newValue: PreviewServerSettings): ServerSettings =
+    self.copy(previewServerSettings = newValue.asScala)
   def withTimeouts(newValue: ServerSettings.Timeouts): ServerSettings = self.copy(timeouts = newValue.asScala)
   def withMaxConnections(newValue: Int): ServerSettings = self.copy(maxConnections = newValue)
   def withPipeliningLimit(newValue: Int): ServerSettings = self.copy(pipeliningLimit = newValue)
@@ -71,22 +74,28 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def withVerboseErrorMessages(newValue: Boolean): ServerSettings = self.copy(verboseErrorMessages = newValue)
   def withResponseHeaderSizeHint(newValue: Int): ServerSettings = self.copy(responseHeaderSizeHint = newValue)
   def withBacklog(newValue: Int): ServerSettings = self.copy(backlog = newValue)
-  def withSocketOptions(newValue: java.lang.Iterable[SocketOption]): ServerSettings = self.copy(socketOptions = newValue.asScala.toList)
+  def withSocketOptions(newValue: java.lang.Iterable[SocketOption]): ServerSettings =
+    self.copy(socketOptions = newValue.asScala.toList)
   def withDefaultHostHeader(newValue: Host): ServerSettings = self.copy(defaultHostHeader = newValue.asScala)
   def withParserSettings(newValue: ParserSettings): ServerSettings = self.copy(parserSettings = newValue.asScala)
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead", since = "10.2.0")
-  def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ServerSettings = self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
-    override def get(): Random = newValue.get()
-  }))
-  def withWebsocketSettings(newValue: WebSocketSettings): ServerSettings = self.copy(websocketSettings = newValue.asScala)
-  def withLogUnencryptedNetworkBytes(newValue: Optional[Int]): ServerSettings = self.copy(logUnencryptedNetworkBytes = OptionConverters.toScala(newValue))
+  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
+    since = "10.2.0")
+  def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ServerSettings =
+    self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
+      override def get(): Random = newValue.get()
+    }))
+  def withWebsocketSettings(newValue: WebSocketSettings): ServerSettings =
+    self.copy(websocketSettings = newValue.asScala)
+  def withLogUnencryptedNetworkBytes(newValue: Optional[Int]): ServerSettings =
+    self.copy(logUnencryptedNetworkBytes = OptionConverters.toScala(newValue))
   def withHttp2Settings(newValue: Http2ServerSettings): ServerSettings = self.copy(http2Settings = newValue.asScala)
   def withDefaultHttpPort(newValue: Int): ServerSettings = self.copy(defaultHttpPort = newValue)
   def withDefaultHttpsPort(newValue: Int): ServerSettings = self.copy(defaultHttpPort = newValue)
   def withTerminationDeadlineExceededResponse(response: akka.http.javadsl.model.HttpResponse): ServerSettings =
     self.copy(terminationDeadlineExceededResponse = response.asScala)
   def withParsingErrorHandler(newValue: String): ServerSettings = self.copy(parsingErrorHandler = parsingErrorHandler)
-  def withStreamCancellationDelay(newValue: FiniteDuration): ServerSettings = self.copy(streamCancellationDelay = newValue)
+  def withStreamCancellationDelay(newValue: FiniteDuration): ServerSettings =
+    self.copy(streamCancellationDelay = newValue)
 }
 
 object ServerSettings extends SettingsCompanion[ServerSettings] {

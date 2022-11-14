@@ -18,6 +18,7 @@ import akka.http.javadsl.server.Route
 import akka.http.scaladsl.server.{ Directives => D }
 
 abstract class CookieDirectives extends CodingDirectives {
+
   /**
    * Extracts the [[HttpCookiePair]] with the given name. If the cookie is not present the
    * request is rejected with a respective [[akka.http.javadsl.server.MissingCookieRejection]].

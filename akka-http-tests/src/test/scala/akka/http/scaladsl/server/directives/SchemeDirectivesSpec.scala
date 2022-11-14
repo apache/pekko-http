@@ -8,7 +8,9 @@ package directives
 class SchemeDirectivesSpec extends RoutingSpec {
   "the extractScheme directive" should {
     "extract the Uri scheme" in {
-      Put("http://localhost/", "Hello") ~> extractScheme { echoComplete } ~> check { responseAs[String] shouldEqual "http" }
+      Put("http://localhost/", "Hello") ~> extractScheme { echoComplete } ~> check {
+        responseAs[String] shouldEqual "http"
+      }
     }
   }
 
@@ -17,12 +19,14 @@ class SchemeDirectivesSpec extends RoutingSpec {
       Put("http://localhost/", "Hello") ~> scheme("http") { completeOk } ~> check { response shouldEqual Ok }
     }
     "reject requests with an https Uri scheme" in {
-      Get("https://localhost/") ~> scheme("http") { completeOk } ~> check { rejections shouldEqual List(SchemeRejection("http")) }
+      Get("https://localhost/") ~> scheme("http") { completeOk } ~> check {
+        rejections shouldEqual List(SchemeRejection("http"))
+      }
     }
     "cancel SchemeRejection if other scheme passed" in {
       val route =
         scheme("https") { completeOk } ~
-          scheme("http") { reject }
+        scheme("http") { reject }
 
       Put("http://localhost/", "Hello") ~> route ~> check {
         rejections should be(Nil)
@@ -35,7 +39,9 @@ class SchemeDirectivesSpec extends RoutingSpec {
       Put("https://localhost/", "Hello") ~> scheme("https") { completeOk } ~> check { response shouldEqual Ok }
     }
     "reject requests with an http Uri scheme" in {
-      Get("http://localhost/") ~> scheme("https") { completeOk } ~> check { rejections shouldEqual List(SchemeRejection("https")) }
+      Get("http://localhost/") ~> scheme("https") { completeOk } ~> check {
+        rejections shouldEqual List(SchemeRejection("https"))
+      }
     }
   }
 }

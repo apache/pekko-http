@@ -9,7 +9,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.stream.scaladsl._
 import akka.util.ByteString
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ HttpEntity, ContentTypes }
+import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
 import akka.http.scaladsl.server.Directives._
 import scala.util.Random
 import scala.io.StdIn
@@ -34,9 +34,7 @@ object HttpServerStreamingRandomNumbers {
             HttpEntity(
               ContentTypes.`text/plain(UTF-8)`,
               // transform each number to a chunk of bytes
-              numbers.map(n => ByteString(s"$n\n"))
-            )
-          )
+              numbers.map(n => ByteString(s"$n\n"))))
         }
       }
 

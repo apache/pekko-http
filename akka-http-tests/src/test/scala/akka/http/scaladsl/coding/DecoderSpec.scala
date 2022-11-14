@@ -26,10 +26,12 @@ class DecoderSpec extends AnyWordSpec with CodecSpecSupport {
       DummyDecoder.decodeMessage(request) shouldEqual request
     }
     "correctly transform the message if it contains a Content-Encoding header" in {
-      val request = HttpRequest(POST, entity = HttpEntity(smallText), headers = List(`Content-Encoding`(DummyDecoder.encoding)))
+      val request =
+        HttpRequest(POST, entity = HttpEntity(smallText), headers = List(`Content-Encoding`(DummyDecoder.encoding)))
       val decoded = DummyDecoder.decodeMessage(request)
       decoded.headers shouldEqual Nil
-      decoded.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated) shouldEqual HttpEntity(dummyDecompress(smallText))
+      decoded.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated) shouldEqual HttpEntity(
+        dummyDecompress(smallText))
     }
   }
 
@@ -41,16 +43,19 @@ class DecoderSpec extends AnyWordSpec with CodecSpecSupport {
     val encoding = HttpEncodings.compress
 
     override def newDecompressorStage(maxBytesPerChunk: Int): () => GraphStage[FlowShape[ByteString, ByteString]] =
-      () => new SimpleLinearGraphStage[ByteString] {
-        override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-          setHandler(in, new InHandler {
-            override def onPush(): Unit = push(out, grab(in) ++ ByteString("compressed"))
-          })
-          setHandler(out, new OutHandler {
-            override def onPull(): Unit = pull(in)
-          })
+      () =>
+        new SimpleLinearGraphStage[ByteString] {
+          override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
+            setHandler(in,
+              new InHandler {
+                override def onPush(): Unit = push(out, grab(in) ++ ByteString("compressed"))
+              })
+            setHandler(out,
+              new OutHandler {
+                override def onPull(): Unit = pull(in)
+              })
+          }
         }
-      }
   }
 
 }

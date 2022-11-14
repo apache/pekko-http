@@ -10,8 +10,7 @@ package object http2 {
   implicit class RichString(val str: String) extends AnyVal {
     def parseHexByteString: ByteString =
       ByteString(
-        str.replaceAll("\\s", "").trim.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray
-      )
+        str.replaceAll("\\s", "").trim.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray)
   }
   implicit class HexInterpolatorString(val sc: StringContext) extends AnyVal {
     def hex(args: Any*): ByteString = {
@@ -19,8 +18,8 @@ package object http2 {
       val expressions = args.iterator
       val buf = new StringBuffer(strings.next())
       while (strings.hasNext) {
-        buf append expressions.next()
-        buf append strings.next()
+        buf.append(expressions.next())
+        buf.append(strings.next())
       }
       buf.toString.parseHexByteString
     }

@@ -76,7 +76,8 @@ private[coding] object DeflateCompressor {
   val DefaultCompressionLevel = 6
 
   @tailrec
-  def drainDeflater(deflater: Deflater, buffer: Array[Byte], result: ByteStringBuilder = new ByteStringBuilder()): ByteString = {
+  def drainDeflater(
+      deflater: Deflater, buffer: Array[Byte], result: ByteStringBuilder = new ByteStringBuilder()): ByteString = {
     val len = deflater.deflate(buffer)
     if (len > 0) {
       result ++= ByteString.fromArray(buffer, 0, len)
@@ -90,9 +91,11 @@ private[coding] object DeflateCompressor {
 
 /** Internal API */
 @InternalApi
-private[coding] class DeflateDecompressor(maxBytesPerChunk: Int = Decoder.MaxBytesPerChunkDefault) extends DeflateDecompressorBase(maxBytesPerChunk) {
+private[coding] class DeflateDecompressor(
+    maxBytesPerChunk: Int = Decoder.MaxBytesPerChunkDefault) extends DeflateDecompressorBase(maxBytesPerChunk) {
 
   override def createLogic(attr: Attributes) = new ParsingLogic {
+
     /** Step that probes if the deflate stream contains a zlib wrapper */
     case object ProbeWrapping extends ParseStep[ByteString] {
       override def onTruncation(): Unit = completeStage()
@@ -129,9 +132,10 @@ private[coding] class DeflateDecompressor(maxBytesPerChunk: Int = Decoder.MaxByt
 /** Internal API */
 @InternalApi
 private[coding] abstract class DeflateDecompressorBase(maxBytesPerChunk: Int = Decoder.MaxBytesPerChunkDefault)
-  extends ByteStringParser[ByteString] {
+    extends ByteStringParser[ByteString] {
 
-  class Inflate(inflater: Inflater, noPostProcessing: Boolean, afterInflate: ParseStep[ByteString]) extends ParseStep[ByteString] {
+  class Inflate(inflater: Inflater, noPostProcessing: Boolean, afterInflate: ParseStep[ByteString])
+      extends ParseStep[ByteString] {
     protected def afterBytesRead(buffer: Array[Byte], offset: Int, length: Int): Unit = {}
 
     override def canWorkWithPartialData = true

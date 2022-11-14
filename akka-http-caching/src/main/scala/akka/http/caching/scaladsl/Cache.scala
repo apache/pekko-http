@@ -89,11 +89,12 @@ abstract class Cache[K, V] extends akka.http.caching.javadsl.Cache[K, V] {
     futureToJava(apply(key, () => futureToScala(genValue.create())))
 
   final override def getOrFulfil(key: K, f: Procedure[CompletableFuture[V]]): CompletionStage[V] =
-    futureToJava(apply(key, promise => {
-      val completableFuture = new CompletableFuture[V]
-      f(completableFuture)
-      promise.completeWith(futureToScala(completableFuture))
-    }))
+    futureToJava(apply(key,
+      promise => {
+        val completableFuture = new CompletableFuture[V]
+        f(completableFuture)
+        promise.completeWith(futureToScala(completableFuture))
+      }))
 
   /**
    * Returns either the cached CompletionStage for the given key or the given value as a CompletionStage

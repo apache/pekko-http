@@ -20,6 +20,7 @@ import scala.compat.java8.FutureConverters._
  */
 @DoNotInherit
 abstract class Message {
+
   /**
    * Is this message a text message? If true, [[asTextMessage]] will return this
    * text message, if false, [[asBinaryMessage]] will return this binary message.
@@ -56,6 +57,7 @@ object Message {
  */
 //#message-model
 abstract class TextMessage extends Message {
+
   /**
    * Returns a source of the text message data.
    */
@@ -65,17 +67,18 @@ abstract class TextMessage extends Message {
    * Returns the strict message text if this message is strict, throws otherwise.
    */
   def getStrictText: String
-  //#message-model
+  // #message-model
   def isText: Boolean = true
   def asTextMessage: TextMessage = this
   def asBinaryMessage: BinaryMessage = throw new ClassCastException("This message is not a binary message.")
   def asScala: sm.ws.TextMessage
   def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.TextMessage.Strict]
-  //#message-model
+  // #message-model
 }
 //#message-model
 
 object TextMessage {
+
   /**
    * Creates a strict text message.
    */
@@ -91,6 +94,7 @@ object TextMessage {
 
       def asScala: sm.ws.TextMessage = sm.ws.TextMessage.Strict(text)
     }
+
   /**
    * Creates a streamed text message.
    */
@@ -119,6 +123,7 @@ object TextMessage {
  * will return a Source streaming the data as it comes in.
  */
 abstract class BinaryMessage extends Message {
+
   /**
    * Returns a source of the binary message data.
    */
@@ -137,6 +142,7 @@ abstract class BinaryMessage extends Message {
 }
 
 object BinaryMessage {
+
   /**
    * Creates a strict binary message.
    */
@@ -146,7 +152,8 @@ object BinaryMessage {
       def getStreamedData: Source[ByteString, _] = Source.single(data)
       def getStrictData: ByteString = data
 
-      def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.BinaryMessage.Strict] = asScala
+      def toStrict(
+          timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.BinaryMessage.Strict] = asScala
         .toStrict(timeoutMillis.millis)(materializer)
         .toJava
 
@@ -162,7 +169,8 @@ object BinaryMessage {
       def getStrictData: ByteString = throw new IllegalStateException("Cannot get strict data for streamed message.")
       def getStreamedData: Source[ByteString, _] = dataStream
 
-      def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.BinaryMessage.Strict] = asScala
+      def toStrict(
+          timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.BinaryMessage.Strict] = asScala
         .toStrict(timeoutMillis.millis)(materializer)
         .toJava
 

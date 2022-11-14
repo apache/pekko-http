@@ -27,13 +27,13 @@ class MigrateToServerBuilder extends SemanticRule("MigrateToServerBuilder") {
           Patch.lint(Diagnostic(
             "custom-materializer-warning",
             "Custom materializers are often not needed any more. You can often remove custom materializers and " +
-              "use the system materializer which is supplied automatically.",
+            "use the system materializer which is supplied automatically.",
             matArg.pos,
-            severity = LintSeverity.Warning
-          ))
+            severity = LintSeverity.Warning))
       }
 
-      val argExps = namedArgMap(args, t.asInstanceOf[Term.Apply].args) ++ materializerAndTarget.map("materializer" -> _._2).toSeq
+      val argExps =
+        namedArgMap(args, t.asInstanceOf[Term.Apply].args) ++ materializerAndTarget.map("materializer" -> _._2).toSeq
       val targetTree = materializerAndTarget.map(_._1).getOrElse(t) // patch parent if materializer arg is found
 
       patchTree(targetTree, http, argExps, targetMethod(argExps("handler"))) + materializerLint
@@ -44,10 +44,10 @@ class MigrateToServerBuilder extends SemanticRule("MigrateToServerBuilder") {
 
     def handlerIsRoute(handler: Term): Boolean =
       handler.symbol.info.exists(_.signature.toString contains "Route") || // doesn't seem to work with synthetics on
-        (handler.synthetics match { // only works with `scalacOptions += "-P:semanticdb:synthetics:on"`
-          case ApplyTree(fun, _) :: Nil => fun.symbol.exists(_.displayName == "routeToFlow") // somewhat inaccurate, but that name should be unique enough for our purposes
-          case _                        => false
-        })
+      (handler.synthetics match { // only works with `scalacOptions += "-P:semanticdb:synthetics:on"`
+        case ApplyTree(fun, _) :: Nil => fun.symbol.exists(_.displayName == "routeToFlow") // somewhat inaccurate, but that name should be unique enough for our purposes
+        case _                        => false
+      })
     def bindAndHandleTargetMethod(handler: Term): String =
       if (handlerIsRoute(handler)) "bind" else "bindFlow"
 
@@ -66,9 +66,9 @@ class MigrateToServerBuilder extends SemanticRule("MigrateToServerBuilder") {
 
       val extraClauses =
         clause("connectionContext", e => s"enableHttps($e)", isNotHttpConnectionContext) +
-          clause("settings", e => s"withSettings($e)") +
-          clause("log", e => s"logTo($e)") +
-          clause("materializer", e => s"withMaterializer($e)")
+        clause("settings", e => s"withSettings($e)") +
+        clause("log", e => s"logTo($e)") +
+        clause("materializer", e => s"withMaterializer($e)")
 
       s"$http.newServerAt(${argExps("interface")}, ${argExps.getOrElse("port", 0)})$extraClauses"
     }
@@ -79,17 +79,16 @@ class MigrateToServerBuilder extends SemanticRule("MigrateToServerBuilder") {
       (positional.zipWithIndex.map {
         case (expr, idx) => names(idx) -> expr
       } ++
-        named.map {
-          case q"$name = $expr" => name.asInstanceOf[Term.Name].value -> expr
-        }
-      ).toMap
+      named.map {
+        case q"$name = $expr" => name.asInstanceOf[Term.Name].value -> expr
+      }).toMap
     }
     // still pretty inaccurate but scala meta doesn't support proper type information of terms in public API, so hard to
     // do it better than this
     def isHttpExt(http: Term): Boolean = http match {
-      case q"Http()" => true
+      case q"Http()"                                                          => true
       case x if x.symbol.info.exists(_.signature.toString contains "HttpExt") => true
-      case _ => false
+      case _                                                                  => false
     }
 
     doc.tree.collect {

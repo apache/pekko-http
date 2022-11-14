@@ -17,12 +17,12 @@ import scala.concurrent.duration.Duration
 /** INTERNAL API */
 @InternalApi
 private[akka] final case class WebSocketSettingsImpl(
-  randomFactory:            () => Random,
-  periodicKeepAliveMode:    String,
-  periodicKeepAliveMaxIdle: Duration,
-  periodicKeepAliveData:    () => ByteString,
-  logFrames:                Boolean)
-  extends akka.http.scaladsl.settings.WebSocketSettings {
+    randomFactory: () => Random,
+    periodicKeepAliveMode: String,
+    periodicKeepAliveMaxIdle: Duration,
+    periodicKeepAliveData: () => ByteString,
+    logFrames: Boolean)
+    extends akka.http.scaladsl.settings.WebSocketSettings {
 
   require(
     WebSocketSettingsImpl.KeepAliveModes contains periodicKeepAliveMode,
@@ -60,9 +60,7 @@ private[akka] object WebSocketSettingsImpl { // on purpose not extending Setting
       c.getString("periodic-keep-alive-mode"), // mode could be extended to be a factory of pings, if we'd need control over the data field
       c.getPotentiallyInfiniteDuration("periodic-keep-alive-max-idle"),
       NoPeriodicKeepAliveData,
-      c.getBoolean("log-frames")
-    )
+      c.getBoolean("log-frames"))
   }
 
 }
-

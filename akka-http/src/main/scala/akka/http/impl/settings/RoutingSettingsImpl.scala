@@ -11,15 +11,17 @@ import com.typesafe.config.Config
 /** INTERNAL API */
 @InternalApi
 private[http] final case class RoutingSettingsImpl(
-  verboseErrorMessages:     Boolean,
-  fileGetConditional:       Boolean,
-  renderVanityFooter:       Boolean,
-  rangeCountLimit:          Int,
-  rangeCoalescingThreshold: Long,
-  decodeMaxBytesPerChunk:   Int,
-  decodeMaxSize:            Long) extends akka.http.scaladsl.settings.RoutingSettings {
+    verboseErrorMessages: Boolean,
+    fileGetConditional: Boolean,
+    renderVanityFooter: Boolean,
+    rangeCountLimit: Int,
+    rangeCoalescingThreshold: Long,
+    decodeMaxBytesPerChunk: Int,
+    decodeMaxSize: Long) extends akka.http.scaladsl.settings.RoutingSettings {
 
-  @deprecated("binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher", since = "10.1.6")
+  @deprecated(
+    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    since = "10.1.6")
   override def fileIODispatcher: String = ""
 
   override def productPrefix = "RoutingSettings"
@@ -33,6 +35,5 @@ object RoutingSettingsImpl extends SettingsCompanionImpl[RoutingSettingsImpl]("a
     c.getInt("range-count-limit"),
     c.getBytes("range-coalescing-threshold"),
     c.getIntBytes("decode-max-bytes-per-chunk"),
-    c.getPossiblyInfiniteBytes("decode-max-size")
-  )
+    c.getPossiblyInfiniteBytes("decode-max-size"))
 }

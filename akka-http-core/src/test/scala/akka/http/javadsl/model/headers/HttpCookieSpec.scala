@@ -34,8 +34,7 @@ class HttpCookieSpec extends AnyFreeSpec with Matchers {
           true, // secure
           true, // httpOnly
           Optional.empty(), // extension
-          Optional.of(SameSite.Lax)
-        ).getSameSite must be(Optional.of(SameSite.Lax))
+          Optional.of(SameSite.Lax)).getSameSite must be(Optional.of(SameSite.Lax))
       }
     }
     "SameSite conversation to Scala" - {

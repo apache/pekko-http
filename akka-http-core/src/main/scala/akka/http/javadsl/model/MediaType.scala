@@ -14,16 +14,17 @@ package akka.http.javadsl.model
 object MediaType {
 
   trait Binary extends MediaType {
+
     /**
      * Turns the media type into a content type.
      */
     def toContentType: ContentType.Binary
   }
 
-  trait NonBinary extends MediaType {
-  }
+  trait NonBinary extends MediaType {}
 
   trait WithFixedCharset extends NonBinary {
+
     /**
      * Turns the media type into a content type with a fixed, known charset.
      */
@@ -31,10 +32,12 @@ object MediaType {
   }
 
   trait WithOpenCharset extends NonBinary {
+
     /**
      * Turns the media type into a content type with the given charset.
      */
     def toContentType(charset: HttpCharset): ContentType.WithCharset
+
     /**
      * Turns the media type into a content type without specifying a charset.
      *
@@ -46,8 +49,7 @@ object MediaType {
     def toContentTypeWithMissingCharset: ContentType.WithMissingCharset
   }
 
-  trait Multipart extends Binary {
-  }
+  trait Multipart extends Binary {}
 
   trait Compressibility {
     def compressible: Boolean
@@ -55,6 +57,7 @@ object MediaType {
 }
 
 trait MediaType {
+
   /**
    * The main-type of this media-type.
    */

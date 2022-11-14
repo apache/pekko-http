@@ -11,7 +11,7 @@ import sbtunidoc.{ GenJavadocPlugin, JavaUnidocPlugin, ScalaUnidocPlugin }
 import sbtunidoc.BaseUnidocPlugin.autoImport.{ unidoc, unidocProjectFilter }
 import sbtunidoc.JavaUnidocPlugin.autoImport.JavaUnidoc
 import sbtunidoc.ScalaUnidocPlugin.autoImport.ScalaUnidoc
-import sbtunidoc.GenJavadocPlugin.autoImport.{ Genjavadoc, unidocGenjavadocVersion }
+import sbtunidoc.GenJavadocPlugin.autoImport.{ unidocGenjavadocVersion, Genjavadoc }
 import Common.isJdk8
 
 object Doc {
@@ -41,10 +41,10 @@ object Scaladoc extends AutoPlugin {
           libraryDependencies.value
             .filter(_.configurations.contains("plugin->default(compile)"))
             // Can we get the from the classpath somehow?
-            .map(module => file(s"~/.ivy2/cache/${module.organization}/${module.name}_${scalaVersion.value}/jars/${module.name}_${scalaVersion.value}-${module.revision}.jar"))
-        ),
-      autoAPIMappings := CliOptions.scaladocAutoAPI.get
-    )) ++
+            .map(module =>
+              file(
+                s"~/.ivy2/cache/${module.organization}/${module.name}_${scalaVersion.value}/jars/${module.name}_${scalaVersion.value}-${module.revision}.jar"))),
+      autoAPIMappings := CliOptions.scaladocAutoAPI.get)) ++
     Seq(Compile / validateDiagrams := true) ++
     CliOptions.scaladocDiagramsEnabled.ifTrue(Compile / doc := {
       val docs = (Compile / doc).value
@@ -53,7 +53,8 @@ object Scaladoc extends AutoPlugin {
       docs
     })
 
-  def scaladocOptions(scalaBinaryVersion: String, ver: String, isSnapshot: Boolean, base: File, plugins: Seq[File]): List[String] = {
+  def scaladocOptions(
+      scalaBinaryVersion: String, ver: String, isSnapshot: Boolean, base: File, plugins: Seq[File]): List[String] = {
     val urlString = GitHub.url(ver, isSnapshot) + "€{FILE_PATH_EXT}#L€{FILE_LINE}"
 
     val opts = List(
@@ -65,8 +66,7 @@ object Scaladoc extends AutoPlugin {
       "-doc-version", ver,
       // Workaround https://issues.scala-lang.org/browse/SI-10028
       "-skip-packages", "akka.pattern:org.specs2",
-      "-doc-canonical-base-url", "https://doc.akka.io/api/akka-http/current/"
-    ) ++
+      "-doc-canonical-base-url", "https://doc.akka.io/api/akka-http/current/") ++
       plugins.map(plugin => "-Xplugin:" + plugin)
     CliOptions.scaladocDiagramsEnabled.ifTrue("-diagrams").toList ::: opts
   }
@@ -79,21 +79,22 @@ object Scaladoc extends AutoPlugin {
         val curr = dirs.head
         val (newDirs, files) = curr.listFiles.partition(_.isDirectory)
         val rest = dirs.tail ++ newDirs
-        val hasDiagram = files exists { f =>
+        val hasDiagram = files.exists { f =>
           val name = f.getName
           if (name.endsWith(".html") && !name.startsWith("index-") &&
-              !name.equals("index.html") && !name.equals("package.html")) {
+            !name.equals("index.html") && !name.equals("package.html")) {
             val source = scala.io.Source.fromFile(f)(scala.io.Codec.UTF8)
-            val hd = try source.getLines().exists(lines =>
-              lines.contains("<div class=\"toggleContainer block diagram-container\" id=\"inheritance-diagram-container\">") ||
-              lines.contains("<svg id=\"graph")
-            )
-            catch {
-              case e: Exception => throw new IllegalStateException("Scaladoc verification failed for file '"+f+"'", e)
-            } finally source.close()
+            val hd =
+              try source.getLines().exists(lines =>
+                  lines.contains(
+                    "<div class=\"toggleContainer block diagram-container\" id=\"inheritance-diagram-container\">") ||
+                  lines.contains("<svg id=\"graph"))
+              catch {
+                case e: Exception =>
+                  throw new IllegalStateException("Scaladoc verification failed for file '" + f + "'", e)
+              } finally source.close()
             hd
-          }
-          else false
+          } else false
         }
         hasDiagram || findHTMLFileWithDiagram(rest)
       }
@@ -116,8 +117,7 @@ object ScaladocNoVerificationOfDiagrams extends AutoPlugin {
   override def requires = Scaladoc
 
   override lazy val projectSettings = Seq(
-    Compile / Scaladoc.validateDiagrams := false
-  )
+    Compile / Scaladoc.validateDiagrams := false)
 }
 
 /**
@@ -135,7 +135,8 @@ object UnidocRoot extends AutoPlugin {
   }
 
   override def trigger = noTrigger
-  override def requires = ScalaUnidocPlugin && CliOptions.genjavadocEnabled.ifTrue(JavaUnidocPlugin).getOrElse(plugins.JvmPlugin)
+  override def requires =
+    ScalaUnidocPlugin && CliOptions.genjavadocEnabled.ifTrue(JavaUnidocPlugin).getOrElse(plugins.JvmPlugin)
 
   val akkaSettings = UnidocRoot.CliOptions.genjavadocEnabled.ifTrue(Seq(
     JavaUnidoc / unidoc / javacOptions ++= (
@@ -145,13 +146,12 @@ object UnidocRoot extends AutoPlugin {
     // fails since 10.0.11 disabled to get the doc gen to pass, see #1584
     // scalacOptions += "-P:genjavadoc:suppressSynthetic=false",
     // FIXME: see https://github.com/akka/akka-http/issues/230
-    JavaUnidoc / unidoc / sources ~= (_.filterNot(_.getPath.contains("Access$minusControl$minusAllow$minusOrigin")))
-  )).getOrElse(Nil)
+    JavaUnidoc / unidoc / sources ~= (_.filterNot(
+      _.getPath.contains("Access$minusControl$minusAllow$minusOrigin"))))).getOrElse(Nil)
 
   val settings = inTask(unidoc)(Seq(
     ScalaUnidoc / unidocProjectFilter := inAnyProject -- inProjects(unidocProjectExcludes.value: _*),
-    JavaUnidoc / unidocProjectFilter := inAnyProject -- inProjects(unidocProjectExcludes.value: _*)
-  ))
+    JavaUnidoc / unidocProjectFilter := inAnyProject -- inProjects(unidocProjectExcludes.value: _*)))
 
   override lazy val projectSettings =
     settings ++
@@ -172,7 +172,5 @@ object BootstrapGenjavadoc extends AutoPlugin {
       test / javacOptions += "-Xdoclint:none",
       doc / javacOptions += "-Xdoclint:none",
       Compile / scalacOptions += "-P:genjavadoc:fabricateParams=true",
-      unidocGenjavadocVersion in Global := "0.18"
-    )
-  ).getOrElse(Seq.empty)
+      unidocGenjavadocVersion in Global := "0.18")).getOrElse(Seq.empty)
 }

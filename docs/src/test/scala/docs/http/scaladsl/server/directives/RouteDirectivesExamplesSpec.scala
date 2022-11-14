@@ -32,7 +32,7 @@ import akka.testkit.EventFilter
 class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "complete-examples" in {
-    //#complete-examples
+    // #complete-examples
     val route =
       concat(
         path("a") {
@@ -56,7 +56,7 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
         path("g") {
           complete(Future { StatusCodes.Created -> "bar" })
         },
-        (path("h") & complete("baz")) // `&` also works with `complete` as the 2nd argument
+        path("h") & complete("baz") // `&` also works with `complete` as the 2nd argument
       )
 
     // tests:
@@ -101,11 +101,11 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.OK
       responseAs[String] shouldEqual "baz"
     }
-    //#complete-examples
+    // #complete-examples
   }
 
   "reject-examples" in {
-    //#reject-examples
+    // #reject-examples
     val route =
       concat(
         path("a") {
@@ -118,8 +118,7 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           // trigger a ValidationRejection explicitly
           // rather than through the `validate` directive
           reject(ValidationRejection("Restricted!"))
-        }
-      )
+        })
 
     // tests:
     Get("/a") ~> route ~> check {
@@ -129,11 +128,11 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/b") ~> route ~> check {
       rejection shouldEqual ValidationRejection("Restricted!")
     }
-    //#reject-examples
+    // #reject-examples
   }
 
   "redirect-examples" in {
-    //#redirect-examples
+    // #redirect-examples
     val route =
       pathPrefix("foo") {
         concat(
@@ -142,8 +141,7 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           },
           pathEnd {
             redirect("/foo/", StatusCodes.PermanentRedirect)
-          }
-        )
+          })
       }
 
     // tests:
@@ -155,14 +153,13 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.PermanentRedirect
       responseAs[String] shouldEqual """The request, and all future requests should be repeated using <a href="/foo/">this URI</a>."""
     }
-    //#redirect-examples
+    // #redirect-examples
   }
 
   "failwith-examples" in EventFilter[RuntimeException](
     start = "Error during processing of request: 'Oops.'. Completing with 500 Internal Server Error response.",
-    occurrences = 1
-  ).intercept {
-    //#failwith-examples
+    occurrences = 1).intercept {
+    // #failwith-examples
     val route =
       path("foo") {
         failWith(new RuntimeException("Oops."))
@@ -173,11 +170,11 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.InternalServerError
       responseAs[String] shouldEqual "There was an internal server error."
     }
-    //#failwith-examples
+    // #failwith-examples
   }
 
   "handle-examples-with-PF" in {
-    //#handle-examples-with-PF
+    // #handle-examples-with-PF
     val handler: PartialFunction[HttpRequest, Future[HttpResponse]] = {
       case HttpRequest(HttpMethods.GET, Uri.Path("/value"), _, _, _) =>
         Future.successful(HttpResponse(entity = "23"))
@@ -186,8 +183,7 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     val route =
       concat(
         handle(handler),
-        complete("fallback")
-      )
+        complete("fallback"))
 
     // tests:
     Get("/value") ~> route ~> check {
@@ -201,11 +197,11 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.OK
       responseAs[String] shouldEqual "fallback"
     }
-    //#handle-examples-with-PF
+    // #handle-examples-with-PF
   }
 
   "handleSync-examples-with-PF" in {
-    //#handleSync-examples-with-PF
+    // #handleSync-examples-with-PF
     val handler: PartialFunction[HttpRequest, HttpResponse] = {
       case HttpRequest(HttpMethods.GET, Uri.Path("/value"), _, _, _) => HttpResponse(entity = "23")
     }
@@ -213,8 +209,7 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     val route =
       concat(
         handleSync(handler),
-        complete("fallback")
-      )
+        complete("fallback"))
 
     // tests:
     Get("/value") ~> route ~> check {
@@ -228,6 +223,6 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.OK
       responseAs[String] shouldEqual "fallback"
     }
-    //#handleSync-examples-with-PF
+    // #handleSync-examples-with-PF
   }
 }

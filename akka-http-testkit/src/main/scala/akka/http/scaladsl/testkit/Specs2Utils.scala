@@ -24,10 +24,12 @@ trait Specs2Utils extends MarshallingTestUtils {
   def haveFailedWith(t: Throwable)(implicit ee: ExecutionEnv): Matcher[Future[_]] =
     throwA(t).await
 
-  def unmarshalToValue[T: FromEntityUnmarshaller](value: T)(implicit ec: ExecutionContext, mat: Materializer): Matcher[HttpEntity] =
+  def unmarshalToValue[T: FromEntityUnmarshaller](value: T)(
+      implicit ec: ExecutionContext, mat: Materializer): Matcher[HttpEntity] =
     beEqualTo(value).^^(unmarshalValue(_: HttpEntity))
 
-  def unmarshalTo[T: FromEntityUnmarshaller](value: Try[T])(implicit ec: ExecutionContext, mat: Materializer): Matcher[HttpEntity] =
+  def unmarshalTo[T: FromEntityUnmarshaller](value: Try[T])(
+      implicit ec: ExecutionContext, mat: Materializer): Matcher[HttpEntity] =
     beEqualTo(value).^^(unmarshal(_: HttpEntity))
 }
 

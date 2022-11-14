@@ -19,13 +19,13 @@ import org.scalatest.wordspec.AnyWordSpec
 
 @nowarn("msg=will not be a runnable program")
 class HttpServerExampleSpec extends AnyWordSpec with Matchers
-  with CompileOnlySpec {
+    with CompileOnlySpec {
 
   // never actually called
   val log: LoggingAdapter = null
 
   "binding-example" in compileOnlySpec {
-    //#binding-example
+    // #binding-example
     import akka.actor.ActorSystem
     import akka.http.scaladsl.Http
     import akka.stream.scaladsl._
@@ -40,7 +40,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
         println("Accepted new connection from " + connection.remoteAddress)
         // ... and then actually handle the connection
       }).run()
-    //#binding-example
+    // #binding-example
   }
 
   // mock values:
@@ -50,7 +50,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
   }
 
   "binding-failure-handling" in compileOnlySpec {
-    //#binding-failure-handling
+    // #binding-failure-handling
     import akka.actor.ActorSystem
     import akka.http.scaladsl.Http
     import akka.http.scaladsl.Http.ServerBinding
@@ -72,7 +72,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     bindingFuture.failed.foreach { ex =>
       log.error(ex, "Failed to bind to {}:{}!", host, port)
     }
-    //#binding-failure-handling
+    // #binding-failure-handling
   }
 
   object MyExampleMonitoringActor {
@@ -80,7 +80,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
   }
 
   "incoming-connections-source-failure-handling" in compileOnlySpec {
-    //#incoming-connections-source-failure-handling
+    // #incoming-connections-source-failure-handling
     import akka.actor.ActorSystem
     import akka.actor.ActorRef
     import akka.http.scaladsl.Http
@@ -96,19 +96,20 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     val failureMonitor: ActorRef = system.actorOf(MyExampleMonitoringActor.props)
 
     val reactToTopLevelFailures = Flow[IncomingConnection]
-      .watchTermination()((_, termination) => termination.failed.foreach {
-        cause => failureMonitor ! cause
-      })
+      .watchTermination()((_, termination) =>
+        termination.failed.foreach {
+          cause => failureMonitor ! cause
+        })
 
     serverSource
       .via(reactToTopLevelFailures)
       .to(handleConnections) // Sink[Http.IncomingConnection, _]
       .run()
-    //#incoming-connections-source-failure-handling
+    // #incoming-connections-source-failure-handling
   }
 
   "connection-stream-failure-handling" in compileOnlySpec {
-    //#connection-stream-failure-handling
+    // #connection-stream-failure-handling
     import akka.actor.ActorSystem
     import akka.http.scaladsl.Http
     import akka.http.scaladsl.model._
@@ -138,11 +139,11 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
       .runForeach { con =>
         con.handleWith(httpEcho)
       }
-    //#connection-stream-failure-handling
+    // #connection-stream-failure-handling
   }
 
   "full-server-example" in compileOnlySpec {
-    //#full-server-example
+    // #full-server-example
     import akka.actor.ActorSystem
     import akka.http.scaladsl.Http
     import akka.http.scaladsl.model.HttpMethods._
@@ -175,15 +176,15 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
       serverSource.to(Sink.foreach { connection =>
         println("Accepted new connection from " + connection.remoteAddress)
 
-        connection handleWithSyncHandler requestHandler
-        // this is equivalent to
-        // connection handleWith { Flow[HttpRequest] map requestHandler }
+        connection.handleWithSyncHandler(requestHandler)
+      // this is equivalent to
+      // connection handleWith { Flow[HttpRequest] map requestHandler }
       }).run()
-    //#full-server-example
+    // #full-server-example
   }
 
   "long-routing-example" in compileOnlySpec {
-    //#long-routing-example
+    // #long-routing-example
     import akka.actor.{ ActorRef, ActorSystem }
     import akka.http.scaladsl.coding.Coders
     import akka.http.scaladsl.marshalling.ToResponseMarshaller
@@ -227,8 +228,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
         pathPrefix("documentation")(documentationRoute),
         path("oldApi" / Remaining) { pathRest =>
           redirect("http://oldapi.example.com/" + pathRest, MovedPermanently)
-        }
-      )
+        })
 
     // For bigger routes, these sub-routes can be moved to separate files
     lazy val ordersRoute: Route =
@@ -253,8 +253,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
                 }
               }
             }
-          }
-        )
+          })
       }
 
     def orderRoute(orderId: Int): Route =
@@ -300,11 +299,11 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
         // serve up static content from a JAR resource
         getFromResourceDirectory("docs")
       }
-    //#long-routing-example
+    // #long-routing-example
   }
 
   "consume entity using entity directive" in compileOnlySpec {
-    //#consume-entity-directive
+    // #consume-entity-directive
     import akka.actor.ActorSystem
     import akka.http.scaladsl.server.Directives._
     import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
@@ -328,11 +327,11 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
           }
         }
       }
-    //#consume-entity-directive
+    // #consume-entity-directive
   }
 
   "consume entity using raw dataBytes to file" in compileOnlySpec {
-    //#consume-raw-dataBytes
+    // #consume-raw-dataBytes
     import akka.actor.ActorSystem
     import akka.stream.scaladsl.FileIO
     import akka.http.scaladsl.server.Directives._
@@ -355,11 +354,11 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
           }
         }
       }
-    //#consume-raw-dataBytes
+    // #consume-raw-dataBytes
   }
 
   "drain entity using request#discardEntityBytes" in compileOnlySpec {
-    //#discard-discardEntityBytes
+    // #discard-discardEntityBytes
     import akka.actor.ActorSystem
     import akka.http.scaladsl.server.Directives._
     import akka.http.scaladsl.model.HttpRequest
@@ -381,11 +380,11 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
           }
         }
       }
-    //#discard-discardEntityBytes
+    // #discard-discardEntityBytes
   }
 
   "discard entity manually" in compileOnlySpec {
-    //#discard-close-connections
+    // #discard-close-connections
     import akka.actor.ActorSystem
     import akka.stream.scaladsl.Sink
     import akka.http.scaladsl.server.Directives._
@@ -411,7 +410,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
           }
         }
       }
-    //#discard-close-connections
+    // #discard-close-connections
   }
 
   "dynamic routing example" in compileOnlySpec {
@@ -424,7 +423,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
     implicit val system = ActorSystem()
 
-    //#dynamic-routing-example
+    // #dynamic-routing-example
     case class MockDefinition(path: String, requests: Seq[JsValue], responses: Seq[JsValue])
     implicit val format = jsonFormat3(MockDefinition)
 
@@ -457,11 +456,11 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     }
 
     val route = fixedRoute ~ dynamicRoute
-    //#dynamic-routing-example
+    // #dynamic-routing-example
   }
 
   "graceful termination" in compileOnlySpec {
-    //#graceful-termination
+    // #graceful-termination
     import akka.actor.ActorSystem
     import akka.http.scaladsl.server.Directives._
     import akka.http.scaladsl.server.Route
@@ -489,6 +488,6 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
       system.terminate()
     }
 
-    //#graceful-termination
+    // #graceful-termination
   }
 }

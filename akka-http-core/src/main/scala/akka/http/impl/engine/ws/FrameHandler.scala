@@ -87,20 +87,22 @@ private[http] object FrameHandler {
 
           override def handleFrameData(data: FrameData): Unit = publish(data)
 
-          def publish(part: FrameEvent): Unit = try {
-            publishMessagePart(createMessagePart(part.data, last = finSeen && part.lastPart))
-          } catch {
-            case NonFatal(e) => closeWithCode(Protocol.CloseCodes.InconsistentData)
-          }
+          def publish(part: FrameEvent): Unit =
+            try {
+              publishMessagePart(createMessagePart(part.data, last = finSeen && part.lastPart))
+            } catch {
+              case NonFatal(e) => closeWithCode(Protocol.CloseCodes.InconsistentData)
+            }
         }
 
         private trait ControlFrameStartHandler extends FrameHandler {
           def handleRegularFrameStart(start: FrameStart): Unit
 
           override def handleFrameStart(start: FrameStart): Unit = start.header match {
-            case h: FrameHeader if h.mask.isDefined && !server                                      => pushProtocolError()
-            case h: FrameHeader if h.rsv1 || h.rsv2 || h.rsv3                                       => pushProtocolError()
-            case FrameHeader(op, _, length, fin, _, _, _) if op.isControl && (length > 125 || !fin) => pushProtocolError()
+            case h: FrameHeader if h.mask.isDefined && !server => pushProtocolError()
+            case h: FrameHeader if h.rsv1 || h.rsv2 || h.rsv3  => pushProtocolError()
+            case FrameHeader(op, _, length, fin, _, _, _) if op.isControl && (length > 125 || !fin) =>
+              pushProtocolError()
             case h: FrameHeader if h.opcode.isControl =>
               if (start.isFullMessage) handleControlFrame(h.opcode, start.data, this)
               else collectControlFrame(start, this)
@@ -111,7 +113,8 @@ private[http] object FrameHandler {
             throw new IllegalStateException("Expected FrameStart")
         }
 
-        private class ControlFrameDataHandler(opcode: Opcode, _data: ByteString, nextHandler: InHandler) extends FrameHandler {
+        private class ControlFrameDataHandler(
+            opcode: Opcode, _data: ByteString, nextHandler: InHandler) extends FrameHandler {
           var data = _data
 
           override def handleFrameData(data: FrameData): Unit = {
@@ -140,8 +143,8 @@ private[http] object FrameHandler {
                 push(out, PeerClosed.parse(data))
               case Opcode.Other(o) => closeWithCode(Protocol.CloseCodes.ProtocolError, "Unsupported opcode")
               case other => failStage(
-                new IllegalStateException(s"unexpected message of type [${other.getClass.getName}] when expecting ControlFrame")
-              )
+                  new IllegalStateException(
+                    s"unexpected message of type [${other.getClass.getName}] when expecting ControlFrame"))
             }
           }
 

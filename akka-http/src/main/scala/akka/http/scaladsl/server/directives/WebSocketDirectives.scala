@@ -85,9 +85,10 @@ trait WebSocketDirectives {
    *
    * @group websocket
    */
-  def handleWebSocketMessagesForOptionalProtocol(handler: Flow[Message, Message, Any], subprotocol: Option[String]): Route =
+  def handleWebSocketMessagesForOptionalProtocol(
+      handler: Flow[Message, Message, Any], subprotocol: Option[String]): Route =
     extractWebSocketUpgrade { upgrade =>
-      if (subprotocol.forall(sub => upgrade.requestedProtocols.exists(_ equalsIgnoreCase sub)))
+      if (subprotocol.forall(sub => upgrade.requestedProtocols.exists(_.equalsIgnoreCase(sub))))
         complete(upgrade.handleMessages(handler, subprotocol))
       else
         reject(UnsupportedWebSocketSubprotocolRejection(subprotocol.get)) // None.forall == true

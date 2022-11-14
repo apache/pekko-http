@@ -11,4 +11,5 @@ import akka.http.javadsl
  * `closeCode` and `closeReason` contain close messages as reported by the peer.
  */
 class PeerClosedConnectionException(val closeCode: Int, val closeReason: String)
-  extends RuntimeException(s"Peer closed connection with code $closeCode '$closeReason'") with javadsl.model.ws.PeerClosedConnectionException
+    extends RuntimeException(s"Peer closed connection with code $closeCode '$closeReason'")
+    with javadsl.model.ws.PeerClosedConnectionException

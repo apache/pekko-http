@@ -55,7 +55,8 @@ trait Route extends HandlerProvider {
   def flow(system: ClassicActorSystemProvider): Flow[HttpRequest, HttpResponse, NotUsed] =
     flow(system.classicSystem, SystemMaterializer(system).materializer)
 
-  def function(system: ClassicActorSystemProvider): Function[HttpRequest, CompletionStage[HttpResponse]] = handler(system)
+  def function(system: ClassicActorSystemProvider): Function[HttpRequest, CompletionStage[HttpResponse]] =
+    handler(system)
   def handler(system: ClassicActorSystemProvider): Function[HttpRequest, CompletionStage[HttpResponse]]
 
   /**
@@ -79,8 +80,8 @@ trait Route extends HandlerProvider {
    *  - Consequently, no route alternatives will be tried that were combined with this route.
    */
   def seal(
-    rejectionHandler: RejectionHandler,
-    exceptionHandler: ExceptionHandler): Route
+      rejectionHandler: RejectionHandler,
+      exceptionHandler: ExceptionHandler): Route
 
   def orElse(alternative: Route): Route
 }

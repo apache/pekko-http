@@ -33,12 +33,10 @@ class HttpResponseDetailedStringExampleSpec extends AkkaSpec {
     // Our custom string representation includes body and headers string representations...
     assert(
       toDetailedString(httpResponseWithHeadersAndBody)
-        .contains(piiHeader.toString)
-    )
+        .contains(piiHeader.toString))
     assert(
       toDetailedString(httpResponseWithHeadersAndBody)
-        .contains(piiBody.toString)
-    )
+        .contains(piiBody.toString))
 
     // ... while default `toString` doesn't.
     assert(!s"$httpResponseWithHeadersAndBody".contains(piiHeader.unsafeToString))

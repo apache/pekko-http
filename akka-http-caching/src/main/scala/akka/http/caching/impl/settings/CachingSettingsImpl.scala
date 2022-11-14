@@ -12,7 +12,7 @@ import com.typesafe.config.Config
 /** INTERNAL API */
 @InternalApi
 private[http] final case class CachingSettingsImpl(lfuCacheSettings: LfuCacheSettings)
-  extends CachingSettings {
+    extends CachingSettings {
   override def productPrefix = "CachingSettings"
 }
 
@@ -21,7 +21,6 @@ private[http] final case class CachingSettingsImpl(lfuCacheSettings: LfuCacheSet
 private[http] object CachingSettingsImpl extends SettingsCompanionImpl[CachingSettingsImpl]("akka.http.caching") {
   def fromSubConfig(root: Config, c: Config): CachingSettingsImpl = {
     new CachingSettingsImpl(
-      LfuCachingSettingsImpl.fromSubConfig(root, c.getConfig("lfu-cache"))
-    )
+      LfuCachingSettingsImpl.fromSubConfig(root, c.getConfig("lfu-cache")))
   }
 }

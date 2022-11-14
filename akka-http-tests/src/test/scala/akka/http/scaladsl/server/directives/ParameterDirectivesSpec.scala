@@ -56,7 +56,8 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
       case class UserId(id: Int)
       case class AnotherUserId(id: Int)
       val UserIdUnmarshaller = Unmarshaller.strict[Int, UserId](UserId)
-      implicit val AnotherUserIdUnmarshaller = Unmarshaller.strict[UserId, AnotherUserId](userId => AnotherUserId(userId.id))
+      implicit val AnotherUserIdUnmarshaller =
+        Unmarshaller.strict[UserId, AnotherUserId](userId => AnotherUserId(userId.id))
       Get("/?id=45") ~> {
         parameter("id".as[Int].as(UserIdUnmarshaller)) { echoComplete }
       } ~> check { responseAs[String] shouldEqual "UserId(45)" }
@@ -100,7 +101,8 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
         parameter("amount".as(HexInt)) { echoComplete }
       } ~> check {
         inside(rejection) {
-          case MalformedQueryParamRejection("amount", "'1x3' is not a valid 32-bit hexadecimal integer value", Some(_)) =>
+          case MalformedQueryParamRejection("amount", "'1x3' is not a valid 32-bit hexadecimal integer value",
+                Some(_)) =>
         }
       }
     }
@@ -125,7 +127,8 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
           parameter("amount".as(HexInt).optional) { echoComplete }
         } ~> check {
           inside(rejection) {
-            case MalformedQueryParamRejection("amount", "'x' is not a valid 32-bit hexadecimal integer value", Some(_)) =>
+            case MalformedQueryParamRejection("amount", "'x' is not a valid 32-bit hexadecimal integer value",
+                  Some(_)) =>
           }
         }
       }
@@ -174,7 +177,9 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
       } ~> check { responseAs[String] shouldEqual "EllenParsons" }
     }
     "correctly extract an optional parameter" in {
-      Get("/?foo=bar") ~> parameters("foo".optional) { echoComplete } ~> check { responseAs[String] shouldEqual "Some(bar)" }
+      Get("/?foo=bar") ~> parameters("foo".optional) { echoComplete } ~> check {
+        responseAs[String] shouldEqual "Some(bar)"
+      }
       Get("/?foo=bar") ~> parameters("baz".optional) { echoComplete } ~> check { responseAs[String] shouldEqual "None" }
     }
     "ignore additional parameters" in {
@@ -193,8 +198,9 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
     }
     "supply the default value if an optional parameter is missing" in {
       Get("/?name=Parsons&FirstName=Ellen") ~> {
-        parameters("name".optional, "FirstName", "age".withDefault("29"), "eyes".optional) { (name, firstName, age, eyes) =>
-          complete(firstName + name + age + eyes)
+        parameters("name".optional, "FirstName", "age".withDefault("29"), "eyes".optional) {
+          (name, firstName, age, eyes) =>
+            complete(firstName + name + age + eyes)
         }
       } ~> check { responseAs[String] shouldEqual "EllenSome(Parsons)29None" }
     }
@@ -219,11 +225,11 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
     "be useable for method tunneling" in {
       val route = {
         (post | parameter("method".requiredValue("post")).tmap(_ => ())) { complete("POST") } ~
-          get { complete("GET") }
+        get { complete("GET") }
       }
       Get("/?method=post") ~> route ~> check { responseAs[String] shouldEqual "POST" }
-      Post() ~> route ~> check { responseAs[String] shouldEqual "POST" }
-      Get() ~> route ~> check { responseAs[String] shouldEqual "GET" }
+      Post()               ~> route ~> check { responseAs[String] shouldEqual "POST" }
+      Get()                ~> route ~> check { responseAs[String] shouldEqual "GET" }
     }
   }
 

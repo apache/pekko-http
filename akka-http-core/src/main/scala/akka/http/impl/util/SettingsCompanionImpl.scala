@@ -34,13 +34,13 @@ private[http] abstract class SettingsCompanionImpl[T](protected val prefix: Stri
     // - cache hits of things another thread has already dropped from the cache,
     //   in these cases we avoid double work, which is nice
     cache.getOrElse(system, {
-      val settings = apply(system.settings.config)
-      val c =
-        if (cache.size < MaxCached) cache
-        else cache.tail // drop the first (and oldest) cache entry
-      cache = c.updated(system, settings)
-      settings
-    })
+        val settings = apply(system.settings.config)
+        val c =
+          if (cache.size < MaxCached) cache
+          else cache.tail // drop the first (and oldest) cache entry
+        cache = c.updated(system, settings)
+        settings
+      })
 
   def apply(configOverrides: String): T =
     apply(parseString(configOverrides)
@@ -48,7 +48,7 @@ private[http] abstract class SettingsCompanionImpl[T](protected val prefix: Stri
       .withFallback(defaultReference(getClass.getClassLoader)))
 
   def apply(config: Config): T =
-    fromSubConfig(config, config getConfig prefix)
+    fromSubConfig(config, config.getConfig(prefix))
 
   def fromSubConfig(root: Config, c: Config): T
 }

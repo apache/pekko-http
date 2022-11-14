@@ -23,8 +23,7 @@ object Common extends AutoPlugin {
       // Silence deprecation notices for changes introduced in Scala 2.12
       // Can be removed when we drop support for Scala 2.12:
       "-Wconf:msg=object JavaConverters in package collection is deprecated:s",
-      "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s",
-    ),
+      "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s"),
     // '-release' parameter is restricted to 'Compile, compile' scope because
     // otherwise `sbt akka-http-xml/compile:doc` fails with it on Scala 2.12.9
     Compile / compile / scalacOptions ++=
@@ -41,10 +40,8 @@ object Common extends AutoPlugin {
     // in test code we often use destructing assignment, which now produces an exhaustiveness warning
     // when the type is asserted
     Test / compile / scalacOptions += "-Wconf:msg=match may not be exhaustive:s",
-
     mimaReportSignatureProblems := true,
-    Global / parallelExecution := sys.props.getOrElse("akka.http.parallelExecution", "true") != "false"
-  )
+    Global / parallelExecution := sys.props.getOrElse("akka.http.parallelExecution", "true") != "false")
 
   val specificationVersion: String = sys.props("java.specification.version")
   def isJdk8: Boolean =

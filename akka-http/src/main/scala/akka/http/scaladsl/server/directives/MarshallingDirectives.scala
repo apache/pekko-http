@@ -34,14 +34,16 @@ trait MarshallingDirectives {
     extractRequestContext.flatMap[Tuple1[T]] { ctx =>
       import ctx.executionContext
       import ctx.materializer
-      onComplete(um(ctx.request)) flatMap {
-        case Success(value)                              => provide(value)
-        case Failure(RejectionError(r))                  => reject(r)
-        case Failure(Unmarshaller.NoContentException)    => reject(RequestEntityExpectedRejection)
-        case Failure(x: UnsupportedContentTypeException) => reject(UnsupportedRequestContentTypeRejection(x.supported, x.actualContentType))
-        case Failure(x: IllegalArgumentException)        => reject(ValidationRejection(x.getMessage.nullAsEmpty, Some(x)))
-        case Failure(x: ExceptionWithErrorInfo)          => reject(MalformedRequestContentRejection(x.info.format(ctx.settings.verboseErrorMessages), x))
-        case Failure(x)                                  => reject(MalformedRequestContentRejection(x.getMessage.nullAsEmpty, x))
+      onComplete(um(ctx.request)).flatMap {
+        case Success(value)                           => provide(value)
+        case Failure(RejectionError(r))               => reject(r)
+        case Failure(Unmarshaller.NoContentException) => reject(RequestEntityExpectedRejection)
+        case Failure(x: UnsupportedContentTypeException) =>
+          reject(UnsupportedRequestContentTypeRejection(x.supported, x.actualContentType))
+        case Failure(x: IllegalArgumentException) => reject(ValidationRejection(x.getMessage.nullAsEmpty, Some(x)))
+        case Failure(x: ExceptionWithErrorInfo) =>
+          reject(MalformedRequestContentRejection(x.info.format(ctx.settings.verboseErrorMessages), x))
+        case Failure(x) => reject(MalformedRequestContentRejection(x.getMessage.nullAsEmpty, x))
       }
     } & cancelRejections(RequestEntityExpectedRejection.getClass, classOf[UnsupportedRequestContentTypeRejection])
 

@@ -12,13 +12,12 @@ import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 
 final class JsonEntityStreamingSupport private[akka] (
-  maxObjectSize:       Int,
-  val supported:       ContentTypeRange,
-  val contentType:     ContentType,
-  val framingRenderer: Flow[ByteString, ByteString, NotUsed],
-  val parallelism:     Int,
-  val unordered:       Boolean
-) extends common.JsonEntityStreamingSupport {
+    maxObjectSize: Int,
+    val supported: ContentTypeRange,
+    val contentType: ContentType,
+    val framingRenderer: Flow[ByteString, ByteString, NotUsed],
+    val parallelism: Int,
+    val unordered: Boolean) extends common.JsonEntityStreamingSupport {
   import akka.http.impl.util.JavaMapping.Implicits._
 
   def this(maxObjectSize: Int) =
@@ -32,7 +31,8 @@ final class JsonEntityStreamingSupport private[akka] (
   override val framingDecoder: Flow[ByteString, ByteString, NotUsed] =
     akka.stream.scaladsl.JsonFraming.objectScanner(maxObjectSize)
 
-  override def withFramingRendererFlow(framingRendererFlow: akka.stream.javadsl.Flow[ByteString, ByteString, NotUsed]): JsonEntityStreamingSupport =
+  override def withFramingRendererFlow(
+      framingRendererFlow: akka.stream.javadsl.Flow[ByteString, ByteString, NotUsed]): JsonEntityStreamingSupport =
     withFramingRenderer(framingRendererFlow.asScala)
   def withFramingRenderer(framingRendererFlow: Flow[ByteString, ByteString, NotUsed]): JsonEntityStreamingSupport =
     new JsonEntityStreamingSupport(maxObjectSize, supported, contentType, framingRendererFlow, parallelism, unordered)

@@ -7,14 +7,19 @@ package akka.http.scaladsl.server.directives
 import akka.util.ByteString
 
 import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.{ Source, Sink, Flow }
+import akka.stream.scaladsl.{ Flow, Sink, Source }
 
 import akka.http.scaladsl.testkit.WSProbe
 
 import akka.http.scaladsl.model.headers.`Sec-WebSocket-Protocol`
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.ws._
-import akka.http.scaladsl.server.{ UnsupportedWebSocketSubprotocolRejection, ExpectedWebSocketRequestRejection, Route, RoutingSpec }
+import akka.http.scaladsl.server.{
+  ExpectedWebSocketRequestRejection,
+  Route,
+  RoutingSpec,
+  UnsupportedWebSocketSubprotocolRejection
+}
 
 class WebSocketDirectivesSpec extends RoutingSpec {
   "the handleWebSocketMessages directive" should {
@@ -22,42 +27,42 @@ class WebSocketDirectivesSpec extends RoutingSpec {
       val wsClient = WSProbe()
 
       WS("http://localhost/", wsClient.flow) ~> websocketRoute ~>
-        check {
-          isWebSocketUpgrade shouldEqual true
-          wsClient.sendMessage("Peter")
-          wsClient.expectMessage("Hello Peter!")
+      check {
+        isWebSocketUpgrade shouldEqual true
+        wsClient.sendMessage("Peter")
+        wsClient.expectMessage("Hello Peter!")
 
-          wsClient.sendMessage(BinaryMessage(ByteString("abcdef")))
-          // wsClient.expectNoMessage() // will be checked implicitly by next expectation
+        wsClient.sendMessage(BinaryMessage(ByteString("abcdef")))
+        // wsClient.expectNoMessage() // will be checked implicitly by next expectation
 
-          wsClient.sendMessage("John")
-          wsClient.expectMessage("Hello John!")
+        wsClient.sendMessage("John")
+        wsClient.expectMessage("Hello John!")
 
-          wsClient.sendCompletion()
-          wsClient.expectCompletion()
-        }
+        wsClient.sendCompletion()
+        wsClient.expectCompletion()
+      }
     }
     "choose subprotocol from offered ones" in {
       val wsClient = WSProbe()
 
       WS("http://localhost/", wsClient.flow, List("other", "echo", "greeter")) ~> websocketMultipleProtocolRoute ~>
-        check {
-          expectWebSocketUpgradeWithProtocol { protocol =>
-            protocol shouldEqual "echo"
+      check {
+        expectWebSocketUpgradeWithProtocol { protocol =>
+          protocol shouldEqual "echo"
 
-            wsClient.sendMessage("Peter")
-            wsClient.expectMessage("Peter")
+          wsClient.sendMessage("Peter")
+          wsClient.expectMessage("Peter")
 
-            wsClient.sendMessage(BinaryMessage(ByteString("abcdef")))
-            wsClient.expectMessage(ByteString("abcdef"))
+          wsClient.sendMessage(BinaryMessage(ByteString("abcdef")))
+          wsClient.expectMessage(ByteString("abcdef"))
 
-            wsClient.sendMessage("John")
-            wsClient.expectMessage("John")
+          wsClient.sendMessage("John")
+          wsClient.expectMessage("John")
 
-            wsClient.sendCompletion()
-            wsClient.expectCompletion()
-          }
+          wsClient.sendCompletion()
+          wsClient.expectCompletion()
         }
+      }
     }
     "reject websocket requests if no subprotocol matches" in {
       WS("http://localhost/", Flow[Message], List("other")) ~> websocketMultipleProtocolRoute ~> check {
@@ -87,7 +92,7 @@ class WebSocketDirectivesSpec extends RoutingSpec {
   def websocketRoute = handleWebSocketMessages(greeter)
   def websocketMultipleProtocolRoute =
     handleWebSocketMessagesForProtocol(echo, "echo") ~
-      handleWebSocketMessagesForProtocol(greeter, "greeter")
+    handleWebSocketMessagesForProtocol(greeter, "greeter")
 
   def greeter: Flow[Message, Message, Any] =
     Flow[Message].mapConcat {

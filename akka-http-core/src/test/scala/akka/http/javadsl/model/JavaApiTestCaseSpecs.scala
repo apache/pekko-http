@@ -42,7 +42,8 @@ class JavaApiTestCaseSpecs extends AnyFreeSpec with Matchers {
     }
     "addAuthentication" in {
       JavaApiTestCases.addAuthentication(model.HttpRequest()) must be(
-        model.HttpRequest(headers = immutable.Seq(model.headers.Authorization(BasicHttpCredentials("username", "password")))))
+        model.HttpRequest(headers = immutable.Seq(model.headers.Authorization(BasicHttpCredentials("username",
+          "password")))))
     }
     "removeCookies" in {
       val testRequest = model.HttpRequest(headers = immutable.Seq(Cookie.create("test", "blub")))
@@ -55,7 +56,8 @@ class JavaApiTestCaseSpecs extends AnyFreeSpec with Matchers {
     }
     "addSessionId" in {
       val orderId = Query.create("orderId=123")
-      Uri.create("/order").query(JavaApiTestCases.addSessionId(orderId)) must be(Uri.create("/order?orderId=123&session=abcdefghijkl"))
+      Uri.create("/order").query(JavaApiTestCases.addSessionId(orderId)) must be(
+        Uri.create("/order?orderId=123&session=abcdefghijkl"))
     }
   }
 }

@@ -4,7 +4,7 @@
 
 package akka.http.javadsl
 
-import java.lang.reflect.{ Modifier, Method }
+import java.lang.reflect.{ Method, Modifier }
 
 import akka.http.javadsl.server.directives.CorrespondsTo
 import org.scalatest.exceptions.TestPendingException
@@ -20,11 +20,11 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
 
   val ignore =
     Set("equals", "hashCode", "notify", "notifyAll", "wait", "toString", "getClass") ++
-      Set("productArity", "canEqual", "productPrefix", "copy", "productIterator", "productElement",
-        "concat", "route") ++ // TODO this fails on jenkins but not locally, no idea why, disabling to get Java DSL in
-        // param extractions in ScalaDSL
-        Set("not", "DoubleNumber", "HexIntNumber", "HexLongNumber", "IntNumber", "JavaUUID", "LongNumber",
-          "Neutral", "PathEnd", "Remaining", "Segment", "Segments", "Slash", "RemainingPath") // TODO do we cover these?
+    Set("productArity", "canEqual", "productPrefix", "copy", "productIterator", "productElement",
+      "concat", "route") ++ // TODO this fails on jenkins but not locally, no idea why, disabling to get Java DSL in
+    // param extractions in ScalaDSL
+    Set("not", "DoubleNumber", "HexIntNumber", "HexLongNumber", "IntNumber", "JavaUUID", "LongNumber",
+      "Neutral", "PathEnd", "Remaining", "Segment", "Segments", "Slash", "RemainingPath") // TODO do we cover these?
 
   def prepareDirectivesList(in: Array[Method]): List[Method] = {
     in.toSet[Method]
@@ -32,7 +32,7 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
       .foldLeft[List[Method]](Nil) {
         (l, s) =>
           {
-            val test = l find { _.getName.toLowerCase == s.getName.toLowerCase }
+            val test = l.find { _.getName.toLowerCase == s.getName.toLowerCase }
             if (test.isEmpty) s :: l else l
           }
       }
@@ -150,7 +150,8 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
 
       if (methods.contains(c.getName + "." + name) && name == alternativeName) ()
       else if (methods.contains(c.getName + "." + alternativeName)) ()
-      else throw new AssertionError(s"Method [$originClazz#$name] was not defined on class: ${c.getName}") with NoStackTrace
+      else throw new AssertionError(s"Method [$originClazz#$name] was not defined on class: ${c.getName}")
+        with NoStackTrace
     } else {
       // allowed missing - we mark as pending, perhaps we'll want that method eventually
       throw new TestPendingException
@@ -171,7 +172,10 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
     for {
       m <- scalaDirectives
       name = m.getName
-      targetName = correspondingJavaMethodName(m) match { case Left(l) => l case Right(r) => r }
+      targetName = correspondingJavaMethodName(m) match {
+        case Left(l)  => l
+        case Right(r) => r
+      }
       text = if (name == targetName) name else s"$name (alias: $targetName)"
     } s"""define Scala directive [$text] for JavaDSL too""" in {
       assertHasMethod(javaDirectivesClazz, name, targetName)
@@ -182,7 +186,10 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
     for {
       m <- javaDirectives
       name = m.getName
-      targetName = correspondingScalaMethodName(m) match { case Left(l) => l case Right(r) => r }
+      targetName = correspondingScalaMethodName(m) match {
+        case Left(l)  => l
+        case Right(r) => r
+      }
       text = if (name == targetName) name else s"$name (alias for: $targetName)"
     } s"""define Java directive [$text] for ScalaDSL too""" in {
       assertHasMethod(scalaDirectivesClazz, name, targetName)

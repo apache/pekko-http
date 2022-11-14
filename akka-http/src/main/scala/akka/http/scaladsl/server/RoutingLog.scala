@@ -5,7 +5,7 @@
 package akka.http.scaladsl.server
 
 import akka.event.LoggingAdapter
-import akka.actor.{ ActorSystem, ActorContext }
+import akka.actor.{ ActorContext, ActorSystem }
 import akka.http.scaladsl.model.HttpRequest
 
 trait RoutingLog {

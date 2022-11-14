@@ -10,6 +10,7 @@ package akka.http.scaladsl.server.util
 sealed trait Tuple[T]
 
 object Tuple {
+
   /**
    * Used to provide "is-Tuple" evidence where we know that a given value must be a tuple.
    */
@@ -30,13 +31,22 @@ object Tuple {
   implicit def forTuple11[A, B, C, D, E, F, G, H, I, J, K]: Tuple[(A, B, C, D, E, F, G, H, I, J, K)] = null
   implicit def forTuple12[A, B, C, D, E, F, G, H, I, J, K, L]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L)] = null
   implicit def forTuple13[A, B, C, D, E, F, G, H, I, J, K, L, M]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M)] = null
-  implicit def forTuple14[A, B, C, D, E, F, G, H, I, J, K, L, M, N]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N)] = null
-  implicit def forTuple15[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O)] = null
-  implicit def forTuple16[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P)] = null
-  implicit def forTuple17[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q)] = null
-  implicit def forTuple18[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R)] = null
-  implicit def forTuple19[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S)] = null
-  implicit def forTuple20[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)] = null
-  implicit def forTuple21[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)] = null
-  implicit def forTuple22[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)] = null
+  implicit def forTuple14[A, B, C, D, E, F, G, H, I, J, K, L, M, N]: Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N)] =
+    null
+  implicit def forTuple15[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O]
+      : Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O)] = null
+  implicit def forTuple16[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P]
+      : Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P)] = null
+  implicit def forTuple17[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q]
+      : Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q)] = null
+  implicit def forTuple18[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R]
+      : Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R)] = null
+  implicit def forTuple19[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S]
+      : Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S)] = null
+  implicit def forTuple20[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T]
+      : Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)] = null
+  implicit def forTuple21[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U]
+      : Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)] = null
+  implicit def forTuple22[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V]
+      : Tuple[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)] = null
 }

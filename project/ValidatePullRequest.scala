@@ -6,7 +6,7 @@ package akka
 
 import java.io._
 
-import akka.MimaWithPrValidation.{MimaResult, NoErrors, Problems}
+import akka.MimaWithPrValidation.{ MimaResult, NoErrors, Problems }
 import net.virtualvoid.sbt.graph.ModuleGraph
 import net.virtualvoid.sbt.graph.backend.SbtUpdateReport
 import org.kohsuke.github.GHIssueComment
@@ -64,15 +64,15 @@ object ValidatePullRequest extends AutoPlugin {
       l.info(s"GitHub PR comment [${c.getUrl}] contains [$phrase], forcing BUILD ALL mode!")
   }
 
-  val ValidatePR = config("pr-validation") extend Test
+  val ValidatePR = config("pr-validation").extend(Test)
 
   override lazy val projectConfigurations = Seq(ValidatePR)
 
   /**
-    * Assumptions:
-    * Env variables set "by Jenkins" are assumed to come from this plugin:
-    * https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin
-    */
+   * Assumptions:
+   * Env variables set "by Jenkins" are assumed to come from this plugin:
+   * https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin
+   */
 
   // settings
   val PullIdEnvVarName = "ghprbPullId" // Set by "GitHub pull request builder plugin"
@@ -86,12 +86,15 @@ object ValidatePullRequest extends AutoPlugin {
   val targetBranch = settingKey[String]("Target branch of this PR, defaults to `main`")
 
   // asking github comments if this PR should be PLS BUILD ALL
-  val gitHubEnforcedBuildAll = taskKey[Option[BuildMode]]("Checks via GitHub API if comments included the PLS BUILD ALL keyword")
-  val buildAllKeyword = taskKey[Regex]("Magic phrase to be used to trigger building of the entire project instead of analysing dependencies")
+  val gitHubEnforcedBuildAll =
+    taskKey[Option[BuildMode]]("Checks via GitHub API if comments included the PLS BUILD ALL keyword")
+  val buildAllKeyword = taskKey[Regex](
+    "Magic phrase to be used to trigger building of the entire project instead of analysing dependencies")
 
   // determining touched dirs and projects
   val changedDirectories = taskKey[immutable.Set[String]]("List of touched modules in this PR branch")
-  val validatePRprojectBuildMode = taskKey[BuildMode]("Determines what will run when this project is affected by the PR and should be rebuilt")
+  val validatePRprojectBuildMode =
+    taskKey[BuildMode]("Determines what will run when this project is affected by the PR and should be rebuilt")
 
   // running validation
   val validatePullRequest = taskKey[Unit]("Validate pull request and report aggregated results")
@@ -101,9 +104,10 @@ object ValidatePullRequest extends AutoPlugin {
   // The set of (top-level) files or directories to watch for build changes.
   val BuildFilesAndDirectories = Set("project", "build.sbt", ".github/workflows")
 
-  def changedDirectoryIsDependency(changedDirs: Set[String], name: String, graphsToTest: Seq[(Configuration, ModuleGraph)])(log: Logger): Boolean = {
+  def changedDirectoryIsDependency(changedDirs: Set[String], name: String,
+      graphsToTest: Seq[(Configuration, ModuleGraph)])(log: Logger): Boolean = {
     val dirsOrExperimental = changedDirs.flatMap(dir => Set(dir, s"$dir-experimental"))
-    graphsToTest exists { case (ivyScope, deps) =>
+    graphsToTest.exists { case (ivyScope, deps) =>
       log.debug(s"Analysing [$ivyScope] scoped dependencies...")
 
       deps.nodes.foreach { m => log.debug(" -> " + m.id) }
@@ -126,11 +130,10 @@ object ValidatePullRequest extends AutoPlugin {
 
   override lazy val buildSettings = Seq(
     ValidatePR / sourceBranch in Global := {
-      sys.env.get(SourceBranchEnvVarName) orElse
-        sys.env.get(SourcePullIdJenkinsEnvVarName).map("pullreq/" + _) getOrElse // Set by "GitHub pull request builder plugin"
-        "HEAD"
+      sys.env.get(SourceBranchEnvVarName).orElse(
+        sys.env.get(SourcePullIdJenkinsEnvVarName).map("pullreq/" + _)).getOrElse( // Set by "GitHub pull request builder plugin"
+        "HEAD")
     },
-
     ValidatePR / targetBranch in Global := {
       (localTargetBranch, jenkinsTargetBranch) match {
         case (Some(local), _)     => local // local override
@@ -138,13 +141,11 @@ object ValidatePullRequest extends AutoPlugin {
         case (None, None)         => "origin/main" // defaulting to diffing with the main branch
       }
     },
-
     ValidatePR / buildAllKeyword in Global := """PLS BUILD ALL""".r,
-
     ValidatePR / gitHubEnforcedBuildAll in Global := {
       val log = streams.value.log
       val buildAllMagicPhrase = (ValidatePR / buildAllKeyword).value
-      sys.env.get(PullIdEnvVarName).map(_.toInt) flatMap { prId =>
+      sys.env.get(PullIdEnvVarName).map(_.toInt).flatMap { prId =>
         log.info("Checking GitHub comments for PR validation options...")
 
         try {
@@ -153,8 +154,9 @@ object ValidatePullRequest extends AutoPlugin {
           val comments = gh.getRepository("akka/akka-http").getIssue(prId).getComments.asScala
 
           def triggersBuildAll(c: GHIssueComment): Boolean = buildAllMagicPhrase.findFirstIn(c.getBody).isDefined
-          comments collectFirst { case c if triggersBuildAll(c) =>
-            BuildCommentForcedAll(buildAllMagicPhrase.toString(), c)
+          comments.collectFirst {
+            case c if triggersBuildAll(c) =>
+              BuildCommentForcedAll(buildAllMagicPhrase.toString(), c)
           }
         } catch {
           case ex: Exception =>
@@ -163,7 +165,6 @@ object ValidatePullRequest extends AutoPlugin {
         }
       }
     },
-
     ValidatePR / changedDirectories in Global := {
       val log = streams.value.log
       val prId = (ValidatePR / sourceBranch).value
@@ -176,9 +177,8 @@ object ValidatePullRequest extends AutoPlugin {
           .map(l => l.trim)
           .filter(l =>
             l.startsWith("akka-") ||
-              l.startsWith("docs") ||
-              BuildFilesAndDirectories.exists(l startsWith)
-          )
+            l.startsWith("docs") ||
+            BuildFilesAndDirectories.exists(l startsWith))
           .map(l => l.takeWhile(_ != '/'))
           .toSet
 
@@ -191,21 +191,21 @@ object ValidatePullRequest extends AutoPlugin {
             .map(_.takeWhile(_ != '/'))
             .filter(dir => dir.startsWith("akka-") || dir.startsWith("docs") || BuildFilesAndDirectories.contains(dir))
             .toSet
-          log.info("Detected uncommitted changes in directories (including in dependency analysis): " + dirtyDirectories.mkString("[", ",", "]"))
+          log.info(
+            "Detected uncommitted changes in directories (including in dependency analysis): " + dirtyDirectories.mkString(
+              "[", ",", "]"))
           dirtyDirectories
         }
 
       val allModuleNames = dirtyModuleNames ++ diffedModuleNames
       log.info("Detected changes in directories: " + allModuleNames.mkString("[", ", ", "]"))
       allModuleNames
-    }
-  )
+    })
 
   override lazy val projectSettings = inConfig(ValidatePR)(Defaults.testTasks) ++ Seq(
     ValidatePR / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-l", "performance"),
     ValidatePR / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-l", "long-running"),
     ValidatePR / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-l", "timing"),
-
     ValidatePR / validatePRprojectBuildMode := {
       val log = streams.value.log
       log.debug(s"Analysing project (for inclusion in PR validation): [${name.value}]")
@@ -231,16 +231,14 @@ object ValidatePullRequest extends AutoPlugin {
 
       if (githubCommandEnforcedBuildAll.isDefined)
         githubCommandEnforcedBuildAll.get
-      else if (changedDirs exists (BuildFilesAndDirectories contains))
+      else if (changedDirs.exists(BuildFilesAndDirectories contains))
         BuildProjectChangedQuick
       else if (isDependency)
         BuildQuick
       else
         BuildSkip
     },
-
     ValidatePR / additionalTasks := Seq.empty,
-
     executePullRequestValidation := Def.taskDyn {
       val log = streams.value.log
       val buildMode = (ValidatePR / validatePRprojectBuildMode).value
@@ -249,7 +247,7 @@ object ValidatePullRequest extends AutoPlugin {
 
       val validationTasks: Seq[TaskKey[Any]] = (buildMode.task.toSeq ++ (buildMode match {
         case BuildSkip => Seq.empty // do not run the additional task if project is skipped during pr validation
-        case _ => (ValidatePR / additionalTasks).value
+        case _         => (ValidatePR / additionalTasks).value
       })).asInstanceOf[Seq[TaskKey[Any]]]
 
       val thisProject = Def.resolvedScoped.value.scope.project.toOption.get
@@ -257,16 +255,18 @@ object ValidatePullRequest extends AutoPlugin {
       // Create a task for every validation task key and
       // then zip all of the tasks together discarding outputs.
       // Task failures are propagated as normal.
-      val zero: Def.Initialize[Seq[Task[KeyValue[Result[Any]]]]] = Def.setting { Seq(task(()).result.map(res => KeyValue(null, res)))}
-      validationTasks.map(taskKey => Def.task { taskKey.value }.result.map(res => KeyValue(thisProject / taskKey, res)) ).foldLeft(zero) { (acc, current) =>
-        acc.zipWith(current) { case (taskSeq, task) =>
-          taskSeq :+ task.asInstanceOf[Task[KeyValue[Result[Any]]]]
-        }
-      } apply { tasks: Seq[Task[KeyValue[Result[Any]]]] =>
+      val zero: Def.Initialize[Seq[Task[KeyValue[Result[Any]]]]] =
+        Def.setting { Seq(task(()).result.map(res => KeyValue(null, res))) }
+      validationTasks.map(taskKey =>
+        Def.task { taskKey.value }.result.map(res => KeyValue(thisProject / taskKey, res))).foldLeft(zero) {
+        (acc, current) =>
+          acc.zipWith(current) { case (taskSeq, task) =>
+            taskSeq :+ task.asInstanceOf[Task[KeyValue[Result[Any]]]]
+          }
+      }.apply { tasks: Seq[Task[KeyValue[Result[Any]]]] =>
         tasks.join
       }
-    }.value
-  )
+    }.value)
 }
 
 object AggregatePRValidation extends AutoPlugin {
@@ -278,29 +278,33 @@ object AggregatePRValidation extends AutoPlugin {
     validatePullRequest := {
       val log = streams.value.log
 
-      val extracted = Project extract state.value
-      val keys = Aggregation.aggregatedKeys(extracted.currentRef / validatePullRequest, extracted.structure.extra, ScopeMask())
+      val extracted = Project.extract(state.value)
+      val keys =
+        Aggregation.aggregatedKeys(extracted.currentRef / validatePullRequest, extracted.structure.extra, ScopeMask())
 
       log.info(s"AGGREGATE KEYS for ${extracted.currentRef}")
       keys.foreach(x => log.info(x.toString))
       log.info("END")
 
-      def timedRun[T](s: State, ts: Seq[sbt.internal.Aggregation.KeyValue[Task[T]]], extra: DummyTaskMap): Complete[Result[T]] = {
+      def timedRun[T](
+          s: State, ts: Seq[sbt.internal.Aggregation.KeyValue[Task[T]]], extra: DummyTaskMap): Complete[Result[T]] = {
         import EvaluateTask._
         import std.TaskExtra._
 
-        val extracted = Project extract s
+        val extracted = Project.extract(s)
         import extracted.structure
-        val toRun: Seq[Task[KeyValue[Result[T]]]] = ts map { case KeyValue(k, t) => t.result.map(v => KeyValue(k, v)) }
-        val joined = Task[Seq[KeyValue[Result[T]]]](Info(), new Join(toRun, { (s: Seq[Result[KeyValue[Result[T]]]]) =>
-          val extracted = s.map {
-            case _: Inc => throw new IllegalStateException("Should not happen") // should not happen because of `result` above
-            case Value(kv) => kv
-          }
-          Right(extracted)
-        }))
+        val toRun: Seq[Task[KeyValue[Result[T]]]] = ts.map { case KeyValue(k, t) => t.result.map(v => KeyValue(k, v)) }
+        val joined = Task[Seq[KeyValue[Result[T]]]](Info(),
+          new Join(toRun,
+            { (s: Seq[Result[KeyValue[Result[T]]]]) =>
+              val extracted = s.map {
+                case _: Inc    => throw new IllegalStateException("Should not happen") // should not happen because of `result` above
+                case Value(kv) => kv
+              }
+              Right(extracted)
+            }))
 
-        val roots = ts map { case KeyValue(k, _) => k }
+        val roots = ts.map { case KeyValue(k, _) => k }
         val config = extractedTaskConfig(extracted, structure, s)
 
         val start = System.currentTimeMillis
@@ -312,7 +316,9 @@ object AggregatePRValidation extends AutoPlugin {
         Complete(start, stop, result, newS)
       }
 
-      def runTasks[T](s: State, structure: BuildStructure, ts: Seq[sbt.internal.Aggregation.KeyValue[Task[T]]], extra: DummyTaskMap, show: ShowConfig)(implicit display: Show[ScopedKey[_]]): (State, Result[Seq[KeyValue[Result[T]]]])  = {
+      def runTasks[T](s: State, structure: BuildStructure, ts: Seq[sbt.internal.Aggregation.KeyValue[Task[T]]],
+          extra: DummyTaskMap, show: ShowConfig)(
+          implicit display: Show[ScopedKey[_]]): (State, Result[Seq[KeyValue[Result[T]]]]) = {
         val complete = timedRun[T](s, ts, extra)
         sbt.access.AggregationShowRun(complete, show)
         val newState =
@@ -324,7 +330,8 @@ object AggregatePRValidation extends AutoPlugin {
         (newState, complete.results)
       }
       def resolve[T](key: ScopedKey[T]): ScopedKey[T] =
-        Project.mapScope(Scope.resolveScope(GlobalScope, extracted.currentRef.build, extracted.rootProject))(key.scopedKey)
+        Project.mapScope(Scope.resolveScope(GlobalScope, extracted.currentRef.build, extracted.rootProject))(
+          key.scopedKey)
 
       def runAggregated[T](key: TaskKey[T], state: State): (State, Result[Seq[KeyValue[Result[T]]]]) = {
         val rkey = resolve(key.scopedKey)
@@ -332,14 +339,15 @@ object AggregatePRValidation extends AutoPlugin {
         val tasks = Act.keyValues(extracted.structure)(keys)
         log.info(s"Tasks to aggregate are: $keys $tasks")
 
-        runTasks[T](state, extracted.structure, tasks, DummyTaskMap(Nil), show = Aggregation.defaultShow(state, false))(extracted.showKey)
+        runTasks[T](state, extracted.structure, tasks, DummyTaskMap(Nil), show = Aggregation.defaultShow(state, false))(
+          extracted.showKey)
       }
 
       val (newState, result) = runAggregated(extracted.currentRef / executePullRequestValidation, state.value)
 
       implicit class AddBetterEitherError[T](val e: Either[sbt.Incomplete, T]) {
         def getSafe: T = e match {
-          case Left(i) => throw new IllegalStateException(s"Was not Right but [$i]", i.directCause.getOrElse(null))
+          case Left(i)  => throw new IllegalStateException(s"Was not Right but [$i]", i.directCause.getOrElse(null))
           case Right(t) => t
         }
       }
@@ -351,16 +359,16 @@ object AggregatePRValidation extends AutoPlugin {
           .filterNot(_.key == null)
           .sortBy(_.key.scope.project.toString)
 
-      val onlyTestResults: Seq[KeyValue[Tests.Output]] = allResults collect {
+      val onlyTestResults: Seq[KeyValue[Tests.Output]] = allResults.collect {
         case KeyValue(key, Value(o: Tests.Output)) => KeyValue(key, o)
       }
       val (passed0, failed) = onlyTestResults.partition(_.value.overall == TestResult.Passed)
 
-      val failedTasks: Seq[KeyValue[Inc]] = allResults collect {
+      val failedTasks: Seq[KeyValue[Inc]] = allResults.collect {
         case KeyValue(key, i: Inc) => KeyValue(key, i)
       }
 
-      val mimaFailures: Seq[KeyValue[MimaResult]] = allResults collect {
+      val mimaFailures: Seq[KeyValue[MimaResult]] = allResults.collect {
         case KeyValue(key, Value(p: Problems)) => KeyValue(key, p)
       }
 
@@ -437,7 +445,7 @@ object AggregatePRValidation extends AutoPlugin {
         if (failedTasks.nonEmpty) {
           write("<details><summary>Other Failed Tasks</summary>")
           write("")
-          failedTasks foreach { case KeyValue(key, Inc(inc: Incomplete)) =>
+          failedTasks.foreach { case KeyValue(key, Inc(inc: Incomplete)) =>
             def parseIncomplete(inc: Incomplete): String =
               "an underlying problem during task execution:\n" +
               Incomplete.linearize(inc).filter(x => x.message.isDefined || x.directCause.isDefined)
@@ -449,7 +457,7 @@ object AggregatePRValidation extends AutoPlugin {
                         .orElse(t.info.attributes.get(taskDefinitionKey).map(showKey))
                         .getOrElse(t.info.toString)
                     case Some(x) => s"<$x>"
-                    case None => "<unknown>"
+                    case None    => "<unknown>"
                   }
 
                   s"  $nodeName: ${message.orElse(directCause.map(_.toString)).getOrElse(s"<unknown: ($i)>")}"
@@ -467,17 +475,18 @@ object AggregatePRValidation extends AutoPlugin {
       log.info(s"Wrote PR validation report to ${outputFile.getAbsolutePath}")
 
       if (failed.nonEmpty) throw new RuntimeException(s"Pull request validation failed! Tests failed: $failed")
-      else if (mimaFailures.nonEmpty) throw new RuntimeException(s"Pull request validation failed! Mima failures: $mimaFailures")
-      else if (failedTasks.nonEmpty) throw new RuntimeException(s"Pull request validation failed! Failed tasks: $failedTasks")
+      else if (mimaFailures.nonEmpty)
+        throw new RuntimeException(s"Pull request validation failed! Mima failures: $mimaFailures")
+      else if (failedTasks.nonEmpty)
+        throw new RuntimeException(s"Pull request validation failed! Failed tasks: $failedTasks")
       ()
-    }
-  )
+    })
 }
 
 /**
-  * This auto plugin adds MiMa binary issue reporting to validatePullRequest task,
-  * when a project has MimaPlugin auto plugin enabled.
-  */
+ * This auto plugin adds MiMa binary issue reporting to validatePullRequest task,
+ * when a project has MimaPlugin auto plugin enabled.
+ */
 object MimaWithPrValidation extends AutoPlugin {
   import ValidatePullRequest._
   import com.typesafe.tools.mima.plugin._
@@ -493,16 +502,15 @@ object MimaWithPrValidation extends AutoPlugin {
   override def requires = ValidatePullRequest && MimaPlugin
   override lazy val projectSettings = Seq(
     ValidatePR / additionalTasks += mimaResult,
-
     mimaResult := {
       import com.typesafe.tools.mima.core
       def reportModuleErrors(module: ModuleID,
-                             backward: List[core.Problem],
-                             forward: List[core.Problem],
-                             filters: Seq[core.ProblemFilter],
-                             backwardFilters: Map[String, Seq[core.ProblemFilter]],
-                             forwardFilters: Map[String, Seq[core.ProblemFilter]],
-                             log: String => Unit, projectName: String): Boolean = {
+          backward: List[core.Problem],
+          forward: List[core.Problem],
+          filters: Seq[core.ProblemFilter],
+          backwardFilters: Map[String, Seq[core.ProblemFilter]],
+          forwardFilters: Map[String, Seq[core.ProblemFilter]],
+          log: String => Unit, projectName: String): Boolean = {
         // filters * found is n-squared, it's fixable in principle by special-casing known
         // filter types or something, not worth it most likely...
 
@@ -513,20 +521,21 @@ object MimaWithPrValidation extends AutoPlugin {
             Try(versionPart.replace("x", Short.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
           Ordering[(Int, Int, Int)].on[String] { case VersionRegex(x, y, z) => (int(x), int(y), int(z)) }
         }
-        def isReported(module: ModuleID, verionedFilters: Map[String, Seq[core.ProblemFilter]])(problem: core.Problem) = (verionedFilters.collect {
+        def isReported(module: ModuleID, verionedFilters: Map[String, Seq[core.ProblemFilter]])(
+            problem: core.Problem) = (verionedFilters.collect {
           // get all filters that apply to given module version or any version after it
           case f @ (version, filters) if versionOrdering.gteq(version, module.revision) => filters
         }.flatten ++ filters).forall { f =>
           if (f(problem)) {
             true
           } else {
-            //log(projectName + ": filtered out: " + problem.description + "\n  filtered by: " + f)
+            // log(projectName + ": filtered out: " + problem.description + "\n  filtered by: " + f)
             false
           }
         }
 
-        val backErrors = backward filter isReported(module, backwardFilters)
-        val forwErrors = forward filter isReported(module, forwardFilters)
+        val backErrors = backward.filter(isReported(module, backwardFilters))
+        val forwErrors = forward.filter(isReported(module, forwardFilters))
 
         val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
         val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
@@ -536,9 +545,10 @@ object MimaWithPrValidation extends AutoPlugin {
           " * " + p.description(affected) + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
         }
 
-        log(s"$projectName: found ${backErrors.size+forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
-        ((backErrors map {p: core.Problem => prettyPrint(p, "current")}) ++
-          (forwErrors map {p: core.Problem => prettyPrint(p, "other")})) foreach { p =>
+        log(
+          s"$projectName: found ${backErrors.size + forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
+        ((backErrors.map { p: core.Problem => prettyPrint(p, "current") }) ++
+        (forwErrors.map { p: core.Problem => prettyPrint(p, "other") })).foreach { p =>
           log(p)
         }
         backErrors.nonEmpty || forwErrors.nonEmpty
@@ -555,7 +565,6 @@ object MimaWithPrValidation extends AutoPlugin {
         (stringWriter.toString, result)
       }
 
-
       val allResults =
         mimaPreviousClassfiles.value.toSeq.map {
           case (moduleId, file) =>
@@ -566,8 +575,7 @@ object MimaWithPrValidation extends AutoPlugin {
               mimaCheckDirection.value,
               scalaVersion.value,
               streams.value.log,
-              Nil
-            )
+              Nil)
 
             val binary = mimaBinaryIssueFilters.value
             val backward = mimaBackwardIssueFilters.value
@@ -591,18 +599,16 @@ object MimaWithPrValidation extends AutoPlugin {
         val erroneous = allResults.filter(_._2)
         Problems(erroneous.map(_._1).mkString("\n"))
       }
-    }
-  )
+    })
 }
 
 /**
-  * This auto plugin adds UniDoc unification to validatePullRequest task.
-  */
+ * This auto plugin adds UniDoc unification to validatePullRequest task.
+ */
 object UniDocWithPrValidation extends AutoPlugin {
   import ValidatePullRequest._
 
   override def trigger = noTrigger
   override lazy val projectSettings = Seq(
-    ValidatePR / additionalTasks += Compile / unidoc
-  )
+    ValidatePR / additionalTasks += Compile / unidoc)
 }

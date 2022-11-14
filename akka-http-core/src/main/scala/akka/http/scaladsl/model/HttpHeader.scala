@@ -44,6 +44,7 @@ abstract class HttpHeader extends jm.HttpHeader with ToStringRenderable {
 }
 
 object HttpHeader {
+
   /**
    * Extract name and value from a header.
    * CAUTION: The name must be matched in *all-lowercase*!.
@@ -73,7 +74,8 @@ object HttpHeader {
    * 3. The header name or value are illegal according to the basic requirements for HTTP headers
    *    (http://tools.ietf.org/html/rfc7230#section-3.2). In this case the method returns a `ParsingResult.Error`.
    */
-  def parse(name: String, value: String, settings: HeaderParser.Settings = HeaderParser.DefaultSettings): ParsingResult =
+  def parse(
+      name: String, value: String, settings: HeaderParser.Settings = HeaderParser.DefaultSettings): ParsingResult =
     if (name.forall(c => CharacterClasses.tchar(c))) {
       import akka.parboiled2.Parser.DeliveryScheme.Try
       val parser = new HeaderParser(value, settings)
@@ -97,7 +99,8 @@ object HttpHeader {
 
   /** INTERNAL API */
   @InternalApi
-  private[akka] def fastFind[T >: Null <: jm.HttpHeader](clazz: Class[T], headers: immutable.Seq[HttpHeader]): OptionVal[T] = {
+  private[akka] def fastFind[T >: Null <: jm.HttpHeader](
+      clazz: Class[T], headers: immutable.Seq[HttpHeader]): OptionVal[T] = {
     val it = headers.iterator
     while (it.hasNext) it.next() match {
       case h if clazz.isInstance(h) => return OptionVal.Some[T](h.asInstanceOf[T])
@@ -111,6 +114,7 @@ object HttpHeader {
   }
 
   object ParsingResult {
+
     /**
      * The parsing run produced a result. If there were parsing errors (which did not prevent the run from
      * completing) they are reported in the given error list.

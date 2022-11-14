@@ -14,10 +14,10 @@ import akka.annotation.InternalApi
  * while the detail can contain additional information from any source (even the request itself).
  */
 final class ErrorInfo(
-  val summary:         String = "",
-  val detail:          String = "",
-  val errorHeaderName: String = ""
-) extends scala.Product with scala.Serializable with scala.Equals with java.io.Serializable {
+    val summary: String = "",
+    val detail: String = "",
+    val errorHeaderName: String = "") extends scala.Product with scala.Serializable with scala.Equals
+    with java.io.Serializable {
   def withSummary(newSummary: String) = copy(summary = newSummary)
   def withSummaryPrepended(prefix: String) = withSummary(if (summary.isEmpty) prefix else prefix + ": " + summary)
   def withErrorHeaderName(headerName: String) = new ErrorInfo(summary, detail, headerName.toLowerCase)
@@ -33,8 +33,9 @@ final class ErrorInfo(
   override def canEqual(that: Any): Boolean = that.isInstanceOf[ErrorInfo]
 
   override def equals(that: Any): Boolean = that match {
-    case that: ErrorInfo => that.canEqual(this) && that.summary == this.summary && that.detail == this.detail && that.errorHeaderName == this.errorHeaderName
-    case _               => false
+    case that: ErrorInfo => that.canEqual(
+        this) && that.summary == this.summary && that.detail == this.detail && that.errorHeaderName == this.errorHeaderName
+    case _ => false
   }
 
   override def productElement(n: Int): Any = n match {
@@ -52,8 +53,10 @@ final class ErrorInfo(
 }
 
 object ErrorInfo {
+
   /** INTERNAL API */
-  @InternalApi private[akka] def apply(summary: String = "", detail: String = ""): ErrorInfo = new ErrorInfo(summary, detail, "")
+  @InternalApi private[akka] def apply(summary: String = "", detail: String = ""): ErrorInfo =
+    new ErrorInfo(summary, detail, "")
 
   def unapply(arg: ErrorInfo): Option[(String, String)] = Some((arg.summary, arg.detail))
 
@@ -69,7 +72,8 @@ object ErrorInfo {
 }
 
 /** Marker for exceptions that provide an ErrorInfo */
-abstract class ExceptionWithErrorInfo(val info: ErrorInfo, cause: Throwable) extends RuntimeException(info.formatPretty, cause) {
+abstract class ExceptionWithErrorInfo(
+    val info: ErrorInfo, cause: Throwable) extends RuntimeException(info.formatPretty, cause) {
   def this(info: ErrorInfo) = this(info, null)
 }
 
@@ -93,11 +97,14 @@ object ParsingException {
   def apply(summary: String, detail: String = ""): ParsingException = apply(ErrorInfo(summary, detail))
 }
 
-case class IllegalRequestException(override val info: ErrorInfo, status: ClientError) extends ExceptionWithErrorInfo(info)
+case class IllegalRequestException(override val info: ErrorInfo, status: ClientError)
+    extends ExceptionWithErrorInfo(info)
 object IllegalRequestException {
   def apply(status: ClientError): IllegalRequestException = apply(ErrorInfo(status.defaultMessage), status)
-  def apply(status: ClientError, info: ErrorInfo): IllegalRequestException = apply(info.withFallbackSummary(status.defaultMessage), status)
-  def apply(status: ClientError, detail: String): IllegalRequestException = apply(ErrorInfo(status.defaultMessage, detail), status)
+  def apply(status: ClientError, info: ErrorInfo): IllegalRequestException =
+    apply(info.withFallbackSummary(status.defaultMessage), status)
+  def apply(status: ClientError, detail: String): IllegalRequestException =
+    apply(ErrorInfo(status.defaultMessage, detail), status)
 }
 
 case class IllegalResponseException(override val info: ErrorInfo) extends ExceptionWithErrorInfo(info)
@@ -124,9 +131,9 @@ final case class EntityStreamSizeException(limit: Long, actualSize: Option[Long]
 
   override def toString = {
     s"EntityStreamSizeException: incoming entity size (${actualSize.getOrElse("while streaming")}) exceeded size limit ($limit bytes)! " +
-      "This may have been a parser limit (set via `akka.http.[server|client].parsing.max-content-length`), " +
-      "a decoder limit (set via `akka.http.routing.decode-max-size`), " +
-      "or a custom limit set with `withSizeLimit`."
+    "This may have been a parser limit (set via `akka.http.[server|client].parsing.max-content-length`), " +
+    "a decoder limit (set via `akka.http.routing.decode-max-size`), " +
+    "or a custom limit set with `withSizeLimit`."
   }
 }
 

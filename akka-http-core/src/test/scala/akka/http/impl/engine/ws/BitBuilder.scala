@@ -5,7 +5,7 @@
 package akka.http.impl.engine.ws
 
 import scala.annotation.tailrec
-import scala.util.{ Try, Failure, Success }
+import scala.util.{ Failure, Success, Try }
 import akka.util.ByteString
 import akka.parboiled2
 import parboiled2._
@@ -42,7 +42,7 @@ final case class Bits(elements: Seq[Bits.BitElement]) {
           val numBits = math.min(8 - bitIdx, bits)
           val remainingBits = bits - numBits
           val highestNBits = value >> remainingBits
-          val lowestNBitMask = (~(0xff << numBits) & 0xff)
+          val lowestNBitMask = ~(0xFF << numBits) & 0xFF
           data(byteIdx) = (data(byteIdx) | (highestNBits & lowestNBitMask)).toByte
 
           if (remainingBits > 0)
@@ -73,9 +73,10 @@ class BitSpecParser(val input: ParserInput) extends parboiled2.Parser {
   import Bits._
   def parseBits(): Try[Bits] =
     bits.run() match {
-      case s: Success[Bits]       => s
-      case Failure(e: ParseError) => Failure(new RuntimeException(formatError(e, new ErrorFormatter(showTraces = true))))
-      case _                      => throw new IllegalStateException()
+      case s: Success[Bits] => s
+      case Failure(e: ParseError) =>
+        Failure(new RuntimeException(formatError(e, new ErrorFormatter(showTraces = true))))
+      case _ => throw new IllegalStateException()
     }
 
   def bits: Rule1[Bits] = rule { zeroOrMore(element) ~ EOI ~> (Bits(_)) }

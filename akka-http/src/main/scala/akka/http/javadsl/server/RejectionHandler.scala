@@ -14,6 +14,7 @@ import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
 
 object RejectionHandler {
+
   /**
    * Creates a new [[RejectionHandler]] builder.
    */
@@ -23,6 +24,7 @@ object RejectionHandler {
 }
 
 final class RejectionHandler(val asScala: server.RejectionHandler) {
+
   /**
    * Creates a new [[RejectionHandler]] which uses the given one as fallback for this one.
    */
@@ -34,9 +36,10 @@ final class RejectionHandler(val asScala: server.RejectionHandler) {
   def seal = new RejectionHandler(asScala.seal)
 
   /** Map any HTTP response which was returned by this RejectionHandler to a different one before rendering it. */
-  def mapRejectionResponse(map: function.UnaryOperator[HttpResponse]): RejectionHandler = new RejectionHandler(asScala.mapRejectionResponse(resp => {
-    JavaMapping.toScala(map.apply(resp))
-  }))
+  def mapRejectionResponse(map: function.UnaryOperator[HttpResponse]): RejectionHandler =
+    new RejectionHandler(asScala.mapRejectionResponse(resp => {
+      JavaMapping.toScala(map.apply(resp))
+    }))
 }
 
 class RejectionHandlerBuilder(asScala: server.RejectionHandler.Builder) {
@@ -54,8 +57,10 @@ class RejectionHandlerBuilder(asScala: server.RejectionHandler.Builder) {
    * Handles several Rejections of the same type at the same time.
    * The list passed to the given function is guaranteed to be non-empty.
    */
-  def handleAll[T <: Rejection](t: Class[T], handler: function.Function[java.util.List[T], Route]): RejectionHandlerBuilder = {
-    asScala.handleAll { rejections: collection.immutable.Seq[T] => handler.apply(rejections.asJava).delegate }(ClassTag(t))
+  def handleAll[T <: Rejection](
+      t: Class[T], handler: function.Function[java.util.List[T], Route]): RejectionHandlerBuilder = {
+    asScala.handleAll { rejections: collection.immutable.Seq[T] => handler.apply(rejections.asJava).delegate }(
+      ClassTag(t))
     this
   }
 
@@ -73,7 +78,8 @@ class RejectionHandlerBuilder(asScala: server.RejectionHandler.Builder) {
    *
    * Use to customise the error response being written instead of the default [[akka.http.javadsl.model.StatusCodes.SERVICE_UNAVAILABLE]] response.
    */
-  def handleCircuitBreakerOpenRejection(handler: function.Function[CircuitBreakerOpenRejection, Route]): RejectionHandlerBuilder = {
+  def handleCircuitBreakerOpenRejection(
+      handler: function.Function[CircuitBreakerOpenRejection, Route]): RejectionHandlerBuilder = {
     asScala.handleCircuitBreakerOpenRejection(t => handler.apply(t).delegate)
     this
   }

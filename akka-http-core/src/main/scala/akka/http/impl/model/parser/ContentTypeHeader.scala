@@ -18,11 +18,11 @@ private[parser] trait ContentTypeHeader { this: Parser with CommonRules with Com
   }
 
   @tailrec private def contentType(
-    main:    String,
-    sub:     String,
-    params:  Seq[(String, String)],
-    charset: Option[HttpCharset]   = None,
-    builder: StringMapBuilder      = null): ContentType =
+      main: String,
+      sub: String,
+      params: Seq[(String, String)],
+      charset: Option[HttpCharset] = None,
+      builder: StringMapBuilder = null): ContentType =
     params match {
       case Nil =>
         val parameters = if (builder eq null) Map.empty[String, String] else builder.result()

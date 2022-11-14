@@ -22,8 +22,9 @@ import akka.stream.scaladsl.Source
  * INTERNAL API
  */
 @InternalApi
-private[http] class HttpResponseParser(protected val settings: ParserSettings, protected val headerParser: HttpHeaderParser)
-  extends HttpMessageParser[ResponseOutput] { self =>
+private[http] class HttpResponseParser(protected val settings: ParserSettings,
+    protected val headerParser: HttpHeaderParser)
+    extends HttpMessageParser[ResponseOutput] { self =>
   import HttpResponseParser._
   import HttpMessageParser._
   import settings._
@@ -77,19 +78,19 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings, p
       statusCode = code match {
         case 200 => StatusCodes.OK
         case code => StatusCodes.getForKey(code) match {
-          case Some(x) => x
-          case None => customStatusCodes(code) getOrElse {
-            // A client must understand the class of any status code, as indicated by the first digit, and
-            // treat an unrecognized status code as being equivalent to the x00 status code of that class
-            // https://tools.ietf.org/html/rfc7231#section-6
-            try {
-              val reason = asciiString(input, reasonStartIdx, reasonEndIdx)
-              StatusCodes.custom(code, reason)
-            } catch {
-              case NonFatal(_) => badStatusCodeSpecific(code)
-            }
+            case Some(x) => x
+            case None => customStatusCodes(code).getOrElse {
+                // A client must understand the class of any status code, as indicated by the first digit, and
+                // treat an unrecognized status code as being equivalent to the x00 status code of that class
+                // https://tools.ietf.org/html/rfc7231#section-6
+                try {
+                  val reason = asciiString(input, reasonStartIdx, reasonEndIdx)
+                  StatusCodes.custom(code, reason)
+                } catch {
+                  case NonFatal(_) => badStatusCodeSpecific(code)
+                }
+              }
           }
-        }
       }
     }
 
@@ -126,13 +127,13 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings, p
 
   // http://tools.ietf.org/html/rfc7230#section-3.3
   protected final def parseEntity(headers: List[HttpHeader], protocol: HttpProtocol, input: ByteString, bodyStart: Int,
-                                  clh: Option[`Content-Length`], cth: Option[`Content-Type`], isChunked: Boolean,
-                                  expect100continue: Boolean, hostHeaderPresent: Boolean, closeAfterResponseCompletion: Boolean,
-                                  sslSession: SSLSession): StateResult = {
+      clh: Option[`Content-Length`], cth: Option[`Content-Type`], isChunked: Boolean,
+      expect100continue: Boolean, hostHeaderPresent: Boolean, closeAfterResponseCompletion: Boolean,
+      sslSession: SSLSession): StateResult = {
 
     def emitResponseStart(
-      createEntity: EntityCreator[ResponseOutput, ResponseEntity],
-      headers:      List[HttpHeader]                              = headers) = {
+        createEntity: EntityCreator[ResponseOutput, ResponseEntity],
+        headers: List[HttpHeader] = headers) = {
 
       val attributes: Map[AttributeKey[_], Any] =
         if (settings.includeSslSessionAttribute) Map(AttributeKeys.sslSession -> SslSessionInfo(sslSession))
@@ -172,15 +173,15 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings, p
     if (statusCode.allowsEntity) {
       contextForCurrentResponse.get.requestMethod match {
         case HttpMethods.HEAD => clh match {
-          case Some(`Content-Length`(contentLength)) if contentLength > 0 =>
-            emitResponseStart {
-              StrictEntityCreator(HttpEntity.Default(contentType(cth), contentLength, Source.empty))
-            }
-            setCompletionHandling(HttpMessageParser.CompletionOk)
-            emit(MessageEnd)
-            startNewMessage(input, bodyStart)
-          case _ => finishEmptyResponse()
-        }
+            case Some(`Content-Length`(contentLength)) if contentLength > 0 =>
+              emitResponseStart {
+                StrictEntityCreator(HttpEntity.Default(contentType(cth), contentLength, Source.empty))
+              }
+              setCompletionHandling(HttpMessageParser.CompletionOk)
+              emit(MessageEnd)
+              startNewMessage(input, bodyStart)
+            case _ => finishEmptyResponse()
+          }
         case HttpMethods.CONNECT =>
           finishEmptyResponse()
         case _ =>
@@ -227,6 +228,7 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings, p
 }
 
 private[http] object HttpResponseParser {
+
   /**
    * @param requestMethod the request's HTTP method
    * @param oneHundredContinueTrigger if the request contains an `Expect: 100-continue` header this option contains
@@ -234,10 +236,10 @@ private[http] object HttpResponseParser {
    *                                  request entity or the closing of the connection (for error completion)
    */
   private[http] final case class ResponseContext(
-    requestMethod:             HttpMethod,
-    oneHundredContinueTrigger: Option[Promise[Unit]])
+      requestMethod: HttpMethod,
+      oneHundredContinueTrigger: Option[Promise[Unit]])
 
   private[http] object OneHundredContinueError
-    extends RuntimeException("Received error response for request with `Expect: 100-continue` header")
-    with NoStackTrace
+      extends RuntimeException("Received error response for request with `Expect: 100-continue` header")
+      with NoStackTrace
 }

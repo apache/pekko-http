@@ -40,7 +40,7 @@ class Http2FramingSpec extends AkkaSpecWithMaterializer {
             xxxxxxxx=63
             xxxxxxxx=64
             xxxxxxxx=65
-         """ should parseTo(DataFrame(0x234223ab, endStream = true, ByteString("abcde")))
+         """ should parseTo(DataFrame(0x234223AB, endStream = true, ByteString("abcde")))
       }
       "with padding" in {
         b"""xxxxxxxx
@@ -64,7 +64,7 @@ class Http2FramingSpec extends AkkaSpecWithMaterializer {
             00000000
             00000000
             00000000
-         """ should parseTo(DataFrame(0x234223ab, endStream = false, ByteString("bcdefg")), checkRendering = false)
+         """ should parseTo(DataFrame(0x234223AB, endStream = false, ByteString("bcdefg")), checkRendering = false)
       }
     }
     "HEADER frames" should {
@@ -105,7 +105,8 @@ class Http2FramingSpec extends AkkaSpecWithMaterializer {
             00000000     # padding
             00000000
             00000000
-         """ should parseTo(HeadersFrame(0x3546, endStream = false, endHeaders = false, ByteString("bcdefg"), None), checkRendering = false)
+         """ should parseTo(HeadersFrame(0x3546, endStream = false, endHeaders = false, ByteString("bcdefg"), None),
+          checkRendering = false)
       }
       "without padding but with priority settings" in {
         b"""xxxxxxxx
@@ -127,7 +128,8 @@ class Http2FramingSpec extends AkkaSpecWithMaterializer {
             xxxxxxxx=64
             xxxxxxxx=65
             xxxxxxxx=66
-         """ should parseTo(HeadersFrame(0x3546, endStream = false, endHeaders = false, ByteString("cdef"), Some(PriorityFrame(0x3546, false, 0xabdef0, 0xbd))))
+         """ should parseTo(HeadersFrame(0x3546, endStream = false, endHeaders = false, ByteString("cdef"),
+          Some(PriorityFrame(0x3546, false, 0xABDEF0, 0xBD))))
       }
       "PUSH_PROMISE frame" should {
         "without padding" in {
@@ -173,7 +175,8 @@ class Http2FramingSpec extends AkkaSpecWithMaterializer {
               xxxxxxxx=65
               00000000    # padding
               00000000
-         """ should parseTo(PushPromiseFrame(0x54321, endHeaders = true, 0x4242, ByteString("abcde")), checkRendering = false)
+         """ should parseTo(PushPromiseFrame(0x54321, endHeaders = true, 0x4242, ByteString("abcde")),
+            checkRendering = false)
         }
       }
       "with padding and priority settings" in {
@@ -202,7 +205,8 @@ class Http2FramingSpec extends AkkaSpecWithMaterializer {
             00000000
             00000000
             00000000
-         """ should parseTo(HeadersFrame(0x348, endStream = false, endHeaders = false, ByteString("cdef"), Some(PriorityFrame(0x348, false, 0xabd, 0xef))), checkRendering = false)
+         """ should parseTo(HeadersFrame(0x348, endStream = false, endHeaders = false, ByteString("cdef"),
+          Some(PriorityFrame(0x348, false, 0xABD, 0xEF))), checkRendering = false)
       }
     }
     "SETTINGS frame" should {
@@ -234,7 +238,8 @@ class Http2FramingSpec extends AkkaSpecWithMaterializer {
             xxxxxxxx
             xxxxxxxx
             xxxxxxxx=20000
-         """ should parseTo(SettingsFrame(List(Http2Protocol.SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE -> 0x20000)))
+         """ should parseTo(
+          SettingsFrame(List(Http2Protocol.SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE -> 0x20000)))
       }
       "with two settings" in {
         b"""xxxxxxxx
@@ -260,8 +265,7 @@ class Http2FramingSpec extends AkkaSpecWithMaterializer {
             xxxxxxxx=123
          """ should parseTo(SettingsFrame(List(
           Http2Protocol.SettingIdentifier.SETTINGS_MAX_FRAME_SIZE -> 0x424242,
-          Http2Protocol.SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS -> 0x123
-        )))
+          Http2Protocol.SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS -> 0x123)))
       }
       // 6.5.3: An endpoint that receives a SETTINGS frame with any unknown or unsupported identifier MUST ignore that setting
       "with an experimental, unknown setting" in {
@@ -390,7 +394,7 @@ class Http2FramingSpec extends AkkaSpecWithMaterializer {
           xxxxxxxx
           xxxxxxxx=100 # stream dependency
           xxxxxxxx=fa  # weight
-         """ should parseTo(PriorityFrame(0x23, exclusiveFlag = true, streamDependency = 0x100, weight = 0xfa))
+         """ should parseTo(PriorityFrame(0x23, exclusiveFlag = true, streamDependency = 0x100, weight = 0xFA))
     }
     "PRIORITY_FRAME2" in {
       b"""xxxxxxxx
@@ -408,7 +412,7 @@ class Http2FramingSpec extends AkkaSpecWithMaterializer {
           xxxxxxxx
           xxxxxxxx=beef # stream dependency
           xxxxxxxx=15   # weight
-         """ should parseTo(PriorityFrame(0xdead, exclusiveFlag = false, streamDependency = 0xbeef, weight = 0x15))
+         """ should parseTo(PriorityFrame(0xDEAD, exclusiveFlag = false, streamDependency = 0xBEEF, weight = 0x15))
     }
     "WINDOW_UPDATE" in {
       b"""xxxxxxxx
@@ -494,7 +498,8 @@ class Http2FramingSpec extends AkkaSpecWithMaterializer {
     }
 
   private def parseToEvents(bytes: Seq[ByteString]): immutable.Seq[FrameEvent] =
-    Source(bytes.toVector).via(new Http2FrameParsing(shouldReadPreface = false, Logging(system, getClass))).runWith(Sink.seq)
+    Source(bytes.toVector).via(new Http2FrameParsing(shouldReadPreface = false, Logging(system, getClass))).runWith(
+      Sink.seq)
       .awaitResult(1.second.dilated)
   private def renderToByteString(events: immutable.Seq[FrameEvent]): ByteString =
     Source(events).map(FrameRenderer.render).runFold(ByteString.empty)(_ ++ _)

@@ -12,7 +12,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 
 trait STMultiNodeSpec extends MultiNodeSpecCallbacks with AnyWordSpecLike with Matchers with BeforeAndAfterAll
-  with ScalaFutures {
+    with ScalaFutures {
 
   def binding: Option[ServerBinding]
 
@@ -20,7 +20,7 @@ trait STMultiNodeSpec extends MultiNodeSpecCallbacks with AnyWordSpecLike with M
     multiNodeSpecBeforeAll()
 
   override def afterAll() = {
-    binding foreach { _.unbind().futureValue }
+    binding.foreach { _.unbind().futureValue }
     multiNodeSpecAfterAll()
   }
 

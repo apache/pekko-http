@@ -22,7 +22,7 @@ class RejectionSpec extends RoutingSpec {
     }
   }
 
-  "RejectionHandler.default" which {
+  "RejectionHandler.default".which {
     import akka.http.scaladsl.model._
 
     implicit def myRejectionHandler: RejectionHandler =
@@ -40,22 +40,20 @@ class RejectionSpec extends RoutingSpec {
         path("hello") {
           complete("Hello there")
         } ~
-          path("unsupported-content-type") {
-            parameters("provide-content-type".as[Boolean], "provide-supported".as[Boolean]) {
-              (provideContentType, provideSupported) =>
+        path("unsupported-content-type") {
+          parameters("provide-content-type".as[Boolean], "provide-supported".as[Boolean]) {
+            (provideContentType, provideSupported) =>
+              val supported =
+                if (provideSupported) Set[ContentTypeRange](MediaTypes.`image/jpeg`, MediaTypes.`image/png`)
+                else Set.empty[ContentTypeRange]
 
-                val supported =
-                  if (provideSupported) Set[ContentTypeRange](MediaTypes.`image/jpeg`, MediaTypes.`image/png`)
-                  else Set.empty[ContentTypeRange]
+              val contentType =
+                if (provideContentType) Some[ContentType](MediaTypes.`image/gif`)
+                else None
 
-                val contentType =
-                  if (provideContentType) Some[ContentType](MediaTypes.`image/gif`)
-                  else None
-
-                reject(UnsupportedRequestContentTypeRejection(supported, contentType))
-            }
+              reject(UnsupportedRequestContentTypeRejection(supported, contentType))
           }
-      )
+        })
 
     "mapRejectionResponse" should {
       "not affect normal responses" in {

@@ -35,13 +35,13 @@ import scala.annotation.tailrec
  * @param traceCutOff the maximum number of (trailing) characters shown for a rule trace
  */
 class ErrorFormatter(
-  showExpected:         Boolean = true,
-  showPosition:         Boolean = true,
-  showLine:             Boolean = true,
-  showTraces:           Boolean = false,
-  showFrameStartOffset: Boolean = true,
-  expandTabs:           Int     = -1,
-  traceCutOff:          Int     = 120) {
+    showExpected: Boolean = true,
+    showPosition: Boolean = true,
+    showLine: Boolean = true,
+    showTraces: Boolean = false,
+    showFrameStartOffset: Boolean = true,
+    expandTabs: Int = -1,
+    traceCutOff: Int = 120) {
 
   /**
    * Formats the given [[ParseError]] into a String using the settings configured for this formatter instance.
@@ -75,7 +75,7 @@ class ErrorFormatter(
     val ix = error.position.index
     if (ix < input.length) {
       val chars = mismatchLength(error)
-      if (chars == 1) sb.append("Invalid input '").append(CharUtils.escape(input charAt ix)).append('\'')
+      if (chars == 1) sb.append("Invalid input '").append(CharUtils.escape(input.charAt(ix))).append('\'')
       else sb.append("Invalid input \"").append(CharUtils.escape(input.sliceString(ix, ix + chars))).append('"')
     } else sb.append("Unexpected end of input")
   }
@@ -92,7 +92,7 @@ class ErrorFormatter(
       import RuleTrace._
       trace.terminal match {
         case NotPredicate(_, x) =>
-          math.max(trace.prefix.collectFirst { case NonTerminal(Atomic, off) => off + x } getOrElse x, len)
+          math.max(trace.prefix.collectFirst { case NonTerminal(Atomic, off) => off + x }.getOrElse(x), len)
         case _ => len
       }
     }
@@ -157,7 +157,7 @@ class ErrorFormatter(
    */
   def formatErrorLine(sb: JStringBuilder, error: ParseError, input: ParserInput): JStringBuilder = {
     import error.position._
-    val (expandedCol, expandedLine) = expandErrorLineTabs(input getLine line, column)
+    val (expandedCol, expandedLine) = expandErrorLineTabs(input.getLine(line), column)
     sb.append(expandedLine).append('\n')
     for (i <- 1 until expandedCol) sb.append(' ')
     sb.append('^')
@@ -201,7 +201,7 @@ class ErrorFormatter(
     val dontSep: String => JStringBuilder = _ => sb
     def render(names: List[String], sep: String = "") = if (names.nonEmpty) names.reverse.mkString("", ":", sep) else ""
     @tailrec def rec(remainingPrefix: List[RuleTrace.NonTerminal], names: List[String],
-                     sep: String => JStringBuilder): JStringBuilder =
+        sep: String => JStringBuilder): JStringBuilder =
       remainingPrefix match {
         case NonTerminal(Named(name), _) :: tail =>
           rec(tail, name :: names, sep)
@@ -227,8 +227,8 @@ class ErrorFormatter(
    * Formats the head element of a [[RuleTrace]] into a String.
    */
   def formatNonTerminal(
-    nonTerminal:          RuleTrace.NonTerminal,
-    showFrameStartOffset: Boolean               = showFrameStartOffset): String = {
+      nonTerminal: RuleTrace.NonTerminal,
+      showFrameStartOffset: Boolean = showFrameStartOffset): String = {
     import RuleTrace._
     import CharUtils.escape
     val keyString = nonTerminal.key match {

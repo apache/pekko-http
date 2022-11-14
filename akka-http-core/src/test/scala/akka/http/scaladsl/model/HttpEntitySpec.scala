@@ -65,25 +65,26 @@ class HttpEntitySpec extends AkkaSpecWithMaterializer {
       }
       "Default" in {
         Default(tpe, 11, source(abc, de, fgh, ijk)) should
-          strictifyTo(Strict(tpe, abc ++ de ++ fgh ++ ijk))
+        strictifyTo(Strict(tpe, abc ++ de ++ fgh ++ ijk))
       }
       "CloseDelimited" in {
         CloseDelimited(tpe, source(abc, de, fgh, ijk)) should
-          strictifyTo(Strict(tpe, abc ++ de ++ fgh ++ ijk))
+        strictifyTo(Strict(tpe, abc ++ de ++ fgh ++ ijk))
       }
       "Chunked w/o LastChunk" in {
         Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk))) should
-          strictifyTo(Strict(tpe, abc ++ fgh ++ ijk))
+        strictifyTo(Strict(tpe, abc ++ fgh ++ ijk))
       }
       "Chunked with LastChunk" in {
         Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)) should
-          strictifyTo(Strict(tpe, abc ++ fgh ++ ijk))
+        strictifyTo(Strict(tpe, abc ++ fgh ++ ijk))
       }
       "Infinite data stream" in {
         val neverCompleted = Promise[ByteString]()
         intercept[TimeoutException] {
           Await.result(Default(tpe, 42, Source.fromFuture(neverCompleted.future)).toStrict(100.millis), awaitAtMost)
-        }.getMessage should be("HttpEntity.toStrict timed out after 100 milliseconds while still waiting for outstanding data")
+        }.getMessage should be(
+          "HttpEntity.toStrict timed out after 100 milliseconds while still waiting for outstanding data")
       }
     }
     "support toStrict with the default max size" should {
@@ -111,12 +112,14 @@ class HttpEntitySpec extends AkkaSpecWithMaterializer {
       }
       "Chunked w/o LastChunk" in {
         intercept[EntityStreamException] {
-          Await.result(Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk))).toStrict(awaitAtMost, maxBytes = 1), awaitAtMost)
+          Await.result(Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk))).toStrict(awaitAtMost, maxBytes = 1),
+            awaitAtMost)
         }.getMessage should be("Request too large: Request was longer than the maximum of 1")
       }
       "Chunked with LastChunk" in {
         intercept[EntityStreamException] {
-          Await.result(Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).toStrict(awaitAtMost, maxBytes = 1), awaitAtMost)
+          Await.result(Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).toStrict(awaitAtMost,
+            maxBytes = 1), awaitAtMost)
         }.getMessage should be("Request too large: Request was longer than the maximum of 1")
       }
       "Infinite data stream" in {
@@ -131,37 +134,39 @@ class HttpEntitySpec extends AkkaSpecWithMaterializer {
       }
       "Default" in {
         Default(tpe, 11, source(abc, de, fgh, ijk)) should
-          transformTo(Strict(tpe, doubleChars("abcdefghijk") ++ trailer))
+        transformTo(Strict(tpe, doubleChars("abcdefghijk") ++ trailer))
       }
       "CloseDelimited" in {
         CloseDelimited(tpe, source(abc, de, fgh, ijk)) should
-          transformTo(Strict(tpe, doubleChars("abcdefghijk") ++ trailer))
+        transformTo(Strict(tpe, doubleChars("abcdefghijk") ++ trailer))
       }
       "Chunked w/o LastChunk" in {
         Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk))) should
-          transformTo(Strict(tpe, doubleChars("abcfghijk") ++ trailer))
+        transformTo(Strict(tpe, doubleChars("abcfghijk") ++ trailer))
       }
       "Chunked with LastChunk" in {
         Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)) should
-          transformTo(Strict(tpe, doubleChars("abcfghijk") ++ trailer))
+        transformTo(Strict(tpe, doubleChars("abcfghijk") ++ trailer))
       }
       "Chunked with extra LastChunk" in {
         Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk, LastChunk)) should
-          transformTo(Strict(tpe, doubleChars("abcfghijk") ++ trailer))
+        transformTo(Strict(tpe, doubleChars("abcfghijk") ++ trailer))
       }
       "Chunked with LastChunk with trailer header" in {
-        Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk("", RawHeader("Foo", "pip apo") :: Nil))) should
-          transformTo(Strict(tpe, doubleChars("abcfghijk") ++ trailer))
+        Chunked(tpe,
+          source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk("", RawHeader("Foo", "pip apo") :: Nil))) should
+        transformTo(Strict(tpe, doubleChars("abcfghijk") ++ trailer))
       }
       "Chunked with LastChunk with trailer header keep header chunk" in {
-        val entity = Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk("", RawHeader("Foo", "pip apo") :: Nil)))
+        val entity =
+          Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk("", RawHeader("Foo", "pip apo") :: Nil)))
         val transformed = entity.transformDataBytes(duplicateBytesTransformer)
         val parts = transformed.chunks.runWith(Sink.seq).awaitResult(100.millis)
 
         parts.map(_.data).reduce(_ ++ _) shouldEqual doubleChars("abcfghijk") ++ trailer
 
         val lastPart = parts.last
-        lastPart.isLastChunk shouldBe (true)
+        lastPart.isLastChunk shouldBe true
         lastPart shouldBe a[LastChunk]
         lastPart.asInstanceOf[LastChunk].trailer shouldEqual (RawHeader("Foo", "pip apo") :: Nil)
       }
@@ -209,20 +214,28 @@ class HttpEntitySpec extends AkkaSpecWithMaterializer {
       }
       "Default" in {
         withReturnType[Default](Default(tpe, 11, source(abc, de, fgh, ijk)).withoutSizeLimit)
-        withReturnType[RequestEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[RequestEntity].withoutSizeLimit)
-        withReturnType[ResponseEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[ResponseEntity].withoutSizeLimit)
-        withReturnType[HttpEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[HttpEntity].withoutSizeLimit)
+        withReturnType[RequestEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[
+          RequestEntity].withoutSizeLimit)
+        withReturnType[ResponseEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[
+          ResponseEntity].withoutSizeLimit)
+        withReturnType[HttpEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[
+          HttpEntity].withoutSizeLimit)
       }
       "CloseDelimited" in {
         withReturnType[CloseDelimited](CloseDelimited(tpe, source(abc, de, fgh, ijk)).withoutSizeLimit)
-        withReturnType[ResponseEntity](CloseDelimited(tpe, source(abc, de, fgh, ijk)).asInstanceOf[ResponseEntity].withoutSizeLimit)
-        withReturnType[HttpEntity](CloseDelimited(tpe, source(abc, de, fgh, ijk)).asInstanceOf[HttpEntity].withoutSizeLimit)
+        withReturnType[ResponseEntity](CloseDelimited(tpe, source(abc, de, fgh, ijk)).asInstanceOf[
+          ResponseEntity].withoutSizeLimit)
+        withReturnType[HttpEntity](CloseDelimited(tpe, source(abc, de, fgh, ijk)).asInstanceOf[
+          HttpEntity].withoutSizeLimit)
       }
       "Chunked" in {
         withReturnType[Chunked](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).withoutSizeLimit)
-        withReturnType[RequestEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[RequestEntity].withoutSizeLimit)
-        withReturnType[ResponseEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[ResponseEntity].withoutSizeLimit)
-        withReturnType[HttpEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[HttpEntity].withoutSizeLimit)
+        withReturnType[RequestEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[
+          RequestEntity].withoutSizeLimit)
+        withReturnType[ResponseEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[
+          ResponseEntity].withoutSizeLimit)
+        withReturnType[HttpEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[
+          HttpEntity].withoutSizeLimit)
       }
     }
     "support withSizeLimit" should {
@@ -235,20 +248,28 @@ class HttpEntitySpec extends AkkaSpecWithMaterializer {
       }
       "Default" in {
         withReturnType[Default](Default(tpe, 11, source(abc, de, fgh, ijk)).withoutSizeLimit)
-        withReturnType[RequestEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[RequestEntity].withSizeLimit(123L))
-        withReturnType[ResponseEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[ResponseEntity].withSizeLimit(123L))
-        withReturnType[HttpEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[HttpEntity].withSizeLimit(123L))
+        withReturnType[RequestEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[
+          RequestEntity].withSizeLimit(123L))
+        withReturnType[ResponseEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[
+          ResponseEntity].withSizeLimit(123L))
+        withReturnType[HttpEntity](Default(tpe, 11, source(abc, de, fgh, ijk)).asInstanceOf[HttpEntity].withSizeLimit(
+          123L))
       }
       "CloseDelimited" in {
         withReturnType[CloseDelimited](CloseDelimited(tpe, source(abc, de, fgh, ijk)).withSizeLimit(123L))
-        withReturnType[ResponseEntity](CloseDelimited(tpe, source(abc, de, fgh, ijk)).asInstanceOf[ResponseEntity].withSizeLimit(123L))
-        withReturnType[HttpEntity](CloseDelimited(tpe, source(abc, de, fgh, ijk)).asInstanceOf[HttpEntity].withSizeLimit(123L))
+        withReturnType[ResponseEntity](CloseDelimited(tpe, source(abc, de, fgh, ijk)).asInstanceOf[
+          ResponseEntity].withSizeLimit(123L))
+        withReturnType[HttpEntity](CloseDelimited(tpe, source(abc, de, fgh, ijk)).asInstanceOf[
+          HttpEntity].withSizeLimit(123L))
       }
       "Chunked" in {
         withReturnType[Chunked](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).withSizeLimit(123L))
-        withReturnType[RequestEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[RequestEntity].withSizeLimit(123L))
-        withReturnType[ResponseEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[ResponseEntity].withSizeLimit(123L))
-        withReturnType[HttpEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[HttpEntity].withSizeLimit(123L))
+        withReturnType[RequestEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[
+          RequestEntity].withSizeLimit(123L))
+        withReturnType[ResponseEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[
+          ResponseEntity].withSizeLimit(123L))
+        withReturnType[HttpEntity](Chunked(tpe, source(Chunk(abc), Chunk(fgh), Chunk(ijk), LastChunk)).asInstanceOf[
+          HttpEntity].withSizeLimit(123L))
       }
     }
   }

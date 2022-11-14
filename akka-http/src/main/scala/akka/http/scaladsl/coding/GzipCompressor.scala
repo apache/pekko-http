@@ -27,7 +27,8 @@ private[coding] class GzipCompressor(compressionLevel: Int) extends DeflateCompr
     header() ++ super.compressWithBuffer(input, buffer)
   }
   override protected def flushWithBuffer(buffer: Array[Byte]): ByteString = header() ++ super.flushWithBuffer(buffer)
-  override protected def finishWithBuffer(buffer: Array[Byte]): ByteString = header() ++ super.finishWithBuffer(buffer) ++ trailer()
+  override protected def finishWithBuffer(buffer: Array[Byte]): ByteString =
+    header() ++ super.finishWithBuffer(buffer) ++ trailer()
 
   private def updateCrc(input: ByteString): Unit = {
     checkSum.update(input.toArray)
@@ -57,7 +58,8 @@ private[coding] object GzipCompressor {
 
 /** Internal API */
 @InternalApi
-private[coding] class GzipDecompressor(maxBytesPerChunk: Int = Decoder.MaxBytesPerChunkDefault) extends DeflateDecompressorBase(maxBytesPerChunk) {
+private[coding] class GzipDecompressor(
+    maxBytesPerChunk: Int = Decoder.MaxBytesPerChunkDefault) extends DeflateDecompressorBase(maxBytesPerChunk) {
   override def createLogic(attr: Attributes) = new ParsingLogic {
     private[this] val inflater = new Inflater(true)
     private[this] var crc32: CRC32 = new CRC32

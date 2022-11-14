@@ -18,6 +18,7 @@ package akka.shapeless
 package ops
 
 object hlist {
+
   /**
    * Type class witnessing that this `HList` is composite and providing access to head and tail.
    *
@@ -73,7 +74,8 @@ object hlist {
           def apply(acc: Out, l: HNil): Out = acc
         }
 
-      implicit def hlistReverse[Acc <: HList, InH, InT <: HList, Out <: HList](implicit rt: Reverse0[InH :: Acc, InT, Out]): Reverse0[Acc, InH :: InT, Out] =
+      implicit def hlistReverse[Acc <: HList, InH, InT <: HList, Out <: HList](
+          implicit rt: Reverse0[InH :: Acc, InT, Out]): Reverse0[Acc, InH :: InT, Out] =
         new Reverse0[Acc, InH :: InT, Out] {
           def apply(acc: Acc, l: InH :: InT): Out = rt(l.head :: acc, l.tail)
         }
@@ -106,7 +108,8 @@ object hlist {
         def apply(prefix: P, suffix: S): S = suffix
       }
 
-    implicit def hlistPrepend[PH, PT <: HList, S <: HList](implicit pt: Prepend[PT, S]): Aux[PH :: PT, S, PH :: pt.Out] =
+    implicit def hlistPrepend[PH, PT <: HList, S <: HList](
+        implicit pt: Prepend[PT, S]): Aux[PH :: PT, S, PH :: pt.Out] =
       new Prepend[PH :: PT, S] {
         type Out = PH :: pt.Out
         def apply(prefix: PH :: PT, suffix: S): Out = prefix.head :: pt(prefix.tail, suffix)
@@ -139,7 +142,8 @@ object hlist {
         def apply(prefix: P, suffix: S) = suffix
       }
 
-    implicit def hlistReversePrepend[PH, PT <: HList, S <: HList](implicit rpt: ReversePrepend[PT, PH :: S]): Aux[PH :: PT, S, rpt.Out] =
+    implicit def hlistReversePrepend[PH, PT <: HList, S <: HList](
+        implicit rpt: ReversePrepend[PT, PH :: S]): Aux[PH :: PT, S, rpt.Out] =
       new ReversePrepend[PH :: PT, S] {
         type Out = rpt.Out
         def apply(prefix: PH :: PT, suffix: S): Out = rpt(prefix.tail, prefix.head :: suffix)

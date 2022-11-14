@@ -11,6 +11,7 @@ import akka.http.javadsl.server.Route
 import akka.http.scaladsl.server.{ Directives => D }
 
 abstract class SchemeDirectives extends RouteDirectives {
+
   /**
    * Extracts the Uri scheme from the request.
    */
