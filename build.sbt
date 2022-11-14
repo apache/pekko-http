@@ -3,7 +3,6 @@ import akka.ValidatePullRequest._
 import AkkaDependency._
 import Dependencies.{h2specExe, h2specName}
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import java.nio.file.Files
 import java.nio.file.attribute.{PosixFileAttributeView, PosixFilePermission}
 
@@ -34,7 +33,6 @@ inThisBuild(Def.settings(
     Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
   ),
   Dependencies.Versions,
-  Formatting.formatSettings,
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
   onLoad in Global := {
@@ -481,7 +479,6 @@ lazy val docs = project("docs")
       "github.base_url" -> GitHub.url(version.value, isSnapshot.value),
     ),
     apidocRootPackage := "akka",
-    Formatting.docFormatSettings,
     ValidatePR / additionalTasks += Compile / paradox,
     ThisBuild / publishRsyncHost := "akkarepo@gustav.akka.io",
     publishRsyncArtifacts := List((Compile / paradox).value -> gustavDir("docs").value),
