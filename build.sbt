@@ -11,22 +11,22 @@ import spray.boilerplate.BoilerplatePlugin
 import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
 inThisBuild(Def.settings(
-  organization := "com.typesafe.akka",
-  organizationName := "Lightbend",
-  organizationHomepage := Some(url("https://www.lightbend.com")),
-  homepage := Some(url("https://akka.io")),
+  organization := "org.apache.pekko",
+  organizationName := "Apache Pekko",
+  organizationHomepage := Some(url("https://www.apache.org/")),
+  homepage := Some(url("https://pekko.apache.org/")),
   apiURL := {
     val apiVersion = if (isSnapshot.value) "current" else version.value
     Some(url(s"https://doc.akka.io/api/akka-http/$apiVersion/"))
   },
   scmInfo := Some(
-    ScmInfo(url("https://github.com/akka/akka-http"), "git@github.com:akka/akka-http.git")),
+    ScmInfo(url("https://github.com/apache/incubator-pekko-http"), "git@github.com:apache/incubator-pekko-http.git")),
   developers := List(
-    Developer("contributors", "Contributors", "info@lightbend.com",
-      url("https://github.com/akka/akka-http/graphs/contributors"))),
-  startYear := Some(2014),
+    Developer("contributors", "Contributors", "dev@pekko.apache.org",
+      url("https://github.com/apache/incubator-pekko-http/graphs/contributors"))),
+  startYear := Some(2022),
   licenses := Seq("Apache-2.0" -> url("https://opensource.org/licenses/Apache-2.0")),
-  description := "Akka Http: Modern, fast, asynchronous, streaming-first HTTP server and client.",
+  description := "Pekko Http: Modern, fast, asynchronous, streaming-first HTTP server and client.",
   testOptions ++= Seq(
     Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
     Tests.Argument(TestFrameworks.ScalaTest, "-oDF")),
@@ -35,7 +35,7 @@ inThisBuild(Def.settings(
   concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
   onLoad in Global := {
     sLog.value.info(
-      s"Building Akka HTTP ${version.value} against Akka ${AkkaDependency.akkaVersion} on Scala ${(httpCore / scalaVersion).value}")
+      s"Building Pekko HTTP ${version.value} against Pekko ${AkkaDependency.akkaVersion} on Scala ${(httpCore / scalaVersion).value}")
     (onLoad in Global).value
   },
   scalafixScalaBinaryVersion := scalaBinaryVersion.value))
@@ -62,7 +62,7 @@ lazy val aggregatedProjects: Seq[ProjectReference] = userProjects ++ List[Projec
   httpJmhBench,
   billOfMaterials)
 lazy val root = Project(
-  id = "akka-http-root",
+  id = "pekko-http-root",
   base = file("."))
   .enablePlugins(UnidocRoot, NoPublish, PublishRsyncPlugin, AggregatePRValidation, NoScala3)
   .disablePlugins(MimaPlugin)
