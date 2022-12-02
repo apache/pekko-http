@@ -1,7 +1,7 @@
 <a id="routes"></a>
 # Routes
 
-The "Route" is the central concept of Akka HTTP's Routing DSL. All the structures you build with the DSL, no matter
+The "Route" is the central concept of Apache Pekko HTTP's Routing DSL. All the structures you build with the DSL, no matter
 whether they consists of a single line or span several hundred lines, are @scala[`type`]@java[`function`] turning a 
 @apidoc[RequestContext] into a @scala[`Future[RouteResult]`]@java[`CompletionStage<RouteResult>`].
 
@@ -93,7 +93,7 @@ HTTP and is extensible with user code.
 
 The last point is achieved with the `concat` method.
 
-@ref[Directives](directives/index.md#directives) deliver most of Akka HTTP's power and flexibility.
+@ref[Directives](directives/index.md#directives) deliver most of Apache Pekko HTTP's power and flexibility.
 
 ## The Routing Tree
 

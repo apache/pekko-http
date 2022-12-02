@@ -6,13 +6,13 @@ differ from the default ones provided by the reference configuration files from 
 
 These are the relevant default configuration values for the Apache Pekko HTTP modules.
 
-akka-http-core
+pekko-http-core
 :  @@snip [reference.conf](/pekko-http-core/src/main/resources/reference.conf)
 
-akka-http
+pekko-http
 :  @@snip [reference.conf](/pekko-http/src/main/resources/reference.conf)
 
-akka-http-caching
+pekko-http-caching
 :  @@snip [reference.conf](/pekko-http-caching/src/main/resources/reference.conf)
 
 The other Apache Pekko HTTP modules do not offer any configuration via [Typesafe Config](https://github.com/lightbend/config).

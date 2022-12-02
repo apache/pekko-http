@@ -23,14 +23,14 @@ However, if your application is not primarily a web application because its core
 
 Apache Pekko HTTP was designed specifically as “not-a-framework”, not because we don’t like frameworks, but for use cases where a framework is not the right choice. Apache Pekko HTTP is made for building integration layers based on HTTP and as such tries to “stay on the sidelines”. Therefore you normally don’t build your application “on top of” Apache Pekko HTTP, but you build your application on top of whatever makes sense and use Apache Pekko HTTP merely for the HTTP integration needs.
 
-On the other hand, if you prefer to build your applications with the guidance of a framework, you should give [Play Framework](https://www.playframework.com/) or [Lagom](https://www.lagomframework.com/) a try, which both use Akka internally. If you
+On the other hand, if you prefer to build your applications with the guidance of a framework, you should give [Play Framework](https://www.playframework.com/) a try, which is planning to use Apache Pekko internally. If you
 come from Play and want to try Apache Pekko HTTP, we collected a @ref[side-by-side comparison](routing-dsl/play-comparison.md) to show how some Play routing features map to the Apache Pekko HTTP routing DSL.
 
 ## Using Apache Pekko HTTP
 
-Apache Pekko HTTP is provided as independent modules from Akka itself under its own release cycle. Apache Pekko HTTP is @ref[compatible](compatibility-guidelines.md)
-with Akka 2.5, Akka 2.6 and  any later 2.x versions released during the lifetime of Apache Pekko HTTP 10.2.x. The modules, however, do *not* depend on `pekko-actor` or `pekko-stream`, so the user is required to
-choose an Akka version to run against and add a manual dependency to `pekko-stream` of the chosen version.
+Apache Pekko HTTP is provided as independent modules from Apache Pekko itself under its own release cycle.
+The modules, however, do *not* depend on `pekko-actor` or `pekko-stream`, so the user is required to
+choose an Pekko version to run against and add a manual dependency to `pekko-stream` of the chosen version.
 
 @@dependency [sbt,Gradle,Maven] {
   symbol1=AkkaVersion
@@ -44,8 +44,8 @@ choose an Akka version to run against and add a manual dependency to `pekko-stre
 }
 
 You may download a packaged version of this project by clicking "Create a project for me!" on the
-@scala[[Lightbend Getting Started page](https://developer.lightbend.com/start/?group=akka&project=pekko-http-quickstart-scala)]
-@java[[Lightbend Getting Started page](https://developer.lightbend.com/start/?group=akka&project=pekko-http-quickstart-java)].
+@scala[[Lightbend Getting Started page](https://developer.lightbend.com/start/?group=akka&project=akka-http-quickstart-scala)]
+@java[[Lightbend Getting Started page](https://developer.lightbend.com/start/?group=akka&project=akka-http-quickstart-java)].
 
 Alternatively, you can bootstrap a new project with Apache Pekko HTTP already configured using the [Giter8](http://www.foundweekends.org/giter8/) template directly via sbt:
 

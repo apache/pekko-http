@@ -18,11 +18,11 @@ time-based entry expiration.
 To use Apache Pekko HTTP Caching, add the module to your project:
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="com.typesafe.akka" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol="AkkaHttpVersion"
   value="$project.version$"
   group="com.typesafe.akka"
-  artifact="akka-http-caching_$scala.binary.version$"
+  artifact="pekko-http-caching_$scala.binary.version$"
   version="AkkaHttpVersion"
 }
 

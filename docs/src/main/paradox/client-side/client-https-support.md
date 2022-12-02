@@ -56,7 +56,7 @@ The pattern of doing so is documented in the following sub-sections.
 
 ### Disabling hostname verification
 
-Hostname verification proves that the Akka HTTP client is actually communicating with the server it intended to
+Hostname verification proves that the Apache Pekko HTTP client is actually communicating with the server it intended to
 communicate with. Without this check a man-in-the-middle attack is possible. In the attack scenario, an alternative
 certificate would be presented which was issued for another host name. Checking the host name in the certificate
 against the host name the connection was opened against is therefore vital.

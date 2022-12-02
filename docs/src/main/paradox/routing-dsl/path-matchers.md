@@ -61,7 +61,7 @@ the raw URI path "foo%2Fbar"**, which is most likely not what you want!
 
 @@@ div { .group-scala }
 A complex `PathMatcher` can be constructed by combining or modifying more basic ones. Here are the basic matchers
-that Akka HTTP already provides for you:
+that Apache Pekko HTTP already provides for you:
 
 String
 : You can use a `String` instance as a `PathMatcher0`. Strings simply match themselves and extract no value.

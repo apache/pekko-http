@@ -1,6 +1,6 @@
 # Routing DSL
 
-Akka HTTP provides a flexible routing DSL for elegantly defining RESTful web services.
+Apache Pekko HTTP provides a flexible routing DSL for elegantly defining RESTful web services.
 It picks up where the @ref[low-level API](../server-side/low-level-api.md) leaves off and offers much of the higher-level
 functionality of typical web servers or frameworks, like deconstruction of URIs, content negotiation or
 static content serving.
@@ -31,7 +31,7 @@ from a background with non-"streaming first" HTTP Servers.
 
 ## Minimal Example
 
-This is a complete, very basic Akka HTTP application relying on the Routing DSL:
+This is a complete, very basic Apache Pekko HTTP application relying on the Routing DSL:
 
 Scala
 :  @@snip [HttpServerRoutingMinimal.scala](/docs/src/test/scala/docs/http/scaladsl/HttpServerRoutingMinimal.scala)
@@ -45,7 +45,7 @@ It starts an HTTP Server on localhost and replies to GET requests to `/hello` wi
 
 ## Longer Example
 
-The following is an Akka HTTP route definition that tries to show off a few features. The resulting service does
+The following is an Apache Pekko HTTP route definition that tries to show off a few features. The resulting service does
 not really do anything useful but its definition should give you a feel for what an actual API definition with
 the Routing DSL will look like:
 
@@ -55,16 +55,16 @@ the Routing DSL will look like:
 
 ## Getting started
 
-The project template in @scala[[Akka HTTP Quickstart for Scala](https://developer.lightbend.com/guides/akka-http-quickstart-scala/)]@java[[Akka HTTP Quickstart for Java](https://developer.lightbend.com/guides/akka-http-quickstart-java/)] will help you to get a working Akka HTTP server running.
+The project template in @scala[[Apache Pekko HTTP Quickstart for Scala](https://developer.lightbend.com/guides/akka-http-quickstart-scala/)]@java[[Apache Pekko HTTP Quickstart for Java](https://developer.lightbend.com/guides/akka-http-quickstart-java/)] will help you to get a working Apache Pekko HTTP server running.
 
 ## Compared with Play framework routes
 
-If you have been using Play framework's routes file notation before this @ref[Play comparison](play-comparison.md) may help you to get started with Akka HTTP routing.
+If you have been using Play framework's routes file notation before this @ref[Play comparison](play-comparison.md) may help you to get started with Apache Pekko HTTP routing.
 
 <a name="interaction-with-akka-typed">
 ## Interaction with Actors
 
-The following example shows how to use Akka HTTP with Akka Actors.
+The following example shows how to use Apache Pekko HTTP with Akka Actors.
 
 We will create a small web server responsible to record build jobs with its state and duration, query jobs by
 id and status, and clear the job history.
@@ -112,7 +112,7 @@ Java
 As the routes are evaluated for each request, it is possible to make changes at runtime. Please note that every access
 may happen on a separated thread, so any shared mutable state must be thread safe.
 
-The following is an Akka HTTP route definition that allows dynamically adding new or updating mock endpoints with
+The following is an Apache Pekko HTTP route definition that allows dynamically adding new or updating mock endpoints with
 associated request-response pairs at runtime.
 
 Scala
@@ -141,7 +141,7 @@ Subsequent POST request to `/test` with body `{"id": 1}` will be responded with 
 
 ## Handling HTTP Server failures in the High-Level API
 
-There are various situations when failure may occur while initialising or running an Akka HTTP server.
+There are various situations when failure may occur while initialising or running an Apache Pekko HTTP server.
 Akka by default will log all these failures, however sometimes one may want to react to failures in addition
 to them just being logged, for example by shutting down the actor system, or notifying some external monitoring
 end-point explicitly.

@@ -16,7 +16,7 @@ For more information and a detailed discussion of these rules and guarantees ple
 The following components and modules don't have the previously mentioned binary compatibility guaranteed within minor or
 patch versions. However, binary compatibility will be attempted to be kept as much as possible.
 
-#### akka-http
+#### pekko-http
 
 Scala
 :   ```scala
@@ -45,7 +45,7 @@ Java
     akka.http.javadsl.OutgoingConnectionBuilder#managedPersistentHttp2
     ```    
 
-#### akka-http-caching
+#### pekko-http-caching
 
 Scala
 :   ```scala
@@ -61,7 +61,7 @@ Java
     akka.http.javadsl.server.directives.CachingDirectives
     ```    
 
-#### akka-http-core
+#### pekko-http-core
 
 Scala
 :   ```scala
@@ -127,16 +127,15 @@ The Apache Pekko HTTP Team currently does not intend to break binary compatibili
 In this section we discuss some of the specific cases of compatibility between versions of Apache Pekko HTTP and Akka itself.
 
 For example, you may be interested in those examples if you encountered the following exception in your system when upgrading parts 
-of your libraries: `Detected java.lang.NoSuchMethodError error, which MAY be caused by incompatible Akka versions on the classpath. Please note that a given Akka version MUST be the same across all modules of Akka that you are using, e.g. if you use akka-actor [2.5.3 (resolved from current classpath)] all other core Apache Pekko modules MUST be of the same version. External projects like Alpakka, Persistence plugins or Apache Pekko HTTP etc. have their own version numbers - please make sure you're using a compatible set of libraries.`
+of your libraries: `Detected java.lang.NoSuchMethodError error, which MAY be caused by incompatible Pekko versions on the classpath. Please note that a given Pekko version MUST be the same across all modules of Pekko that you are using, e.g. if you use pekko-actor [2.5.3 (resolved from current classpath)] all other core Apache Pekko modules MUST be of the same version. External projects like Apache Pekko Connectors, Persistence plugins or Apache Pekko HTTP etc. have their own version numbers - please make sure you're using a compatible set of libraries.`
 
-### Compatibility with Akka
+### Compatibility with Apache Pekko
 
-Apache Pekko HTTP 10.2.x is (binary) compatible with Akka >= $akka.minimum.version25$ and Akka >= $akka.minimum.version26$ and future Akka 2.x versions that are released during the lifetime of Apache Pekko HTTP 10.2.x.
-To facilitate supporting multiple minor versions of Akka we do not depend on `akka-stream`
+To facilitate supporting multiple minor versions of Apache Pekko we do not depend on `pekko-stream`
 explicitly but mark it as a `provided` dependency in our build. That means that you will *always* have to add
-a manual dependency to `akka-stream`.
+a manual dependency to `pekko-stream`.
 
-The same goes for `akka-http-testkit`: If the testkit is used, explicitly declare the dependency on `akka-stream-testkit` of same Akka version as `akka-stream`.
+The same goes for `pekko-http-testkit`: If the testkit is used, explicitly declare the dependency on `pekko-stream-testkit` of same Pekko version as `pekko-stream`.
 
 @@dependency [sbt,Gradle,Maven] {
   symbol1=AkkaVersion

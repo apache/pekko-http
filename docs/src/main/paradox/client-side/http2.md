@@ -1,7 +1,7 @@
 # Client-Side HTTP/2 (Preview)
 
 @@@ warning
-Client-Side HTTP/2 support in akka-http is currently available as a preview.
+Client-Side HTTP/2 support in pekko-http is currently available as a preview.
 This means it is ready to be evaluated, but the APIs and behavior are likely to change.
 @@@
 

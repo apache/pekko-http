@@ -23,7 +23,7 @@ Also, the HTTP layer transparently manages idle shutdown and restarting of conne
 The client flow instances therefore remain valid throughout the lifetime of the application, i.e. they can be
 materialized as often as required and the time between individual materialization is of no importance.
 
-When you request a pool client flow with @scala[`Http().cachedHostConnectionPool(...)`]@java[`Http.get(system).cachedHostConnectionPool(...)`], Akka HTTP will immediately start
+When you request a pool client flow with @scala[`Http().cachedHostConnectionPool(...)`]@java[`Http.get(system).cachedHostConnectionPool(...)`], Apache Pekko HTTP will immediately start
 the pool, even before the first client flow materialization. However, this running pool will not actually open the
 first connection to the target endpoint until the first request has arrived.
 
@@ -31,7 +31,7 @@ first connection to the target endpoint until the first request has arrived.
 
 Apart from the connection-level config settings and socket options there are a number of settings that allow you to
 influence the behavior of the connection pool logic itself.
-Check out the `akka.http.host-connection-pool` section of the Akka HTTP @ref[Configuration](../configuration.md) for
+Check out the `akka.http.host-connection-pool` section of the Apache Pekko HTTP @ref[Configuration](../configuration.md) for
 more information about which settings are available and what they mean.
 
 Note that, if you request pools with different configurations for the same target host you will get *independent* pools.
@@ -81,7 +81,7 @@ In order to prevent unnecessary head-of-line blocking the pool client-flow is al
 they arrive, independently of the request order. Of course this means that there needs to be another way to associate a
 response with its respective request. The way that this is done is by allowing the application to pass along a custom
 "context" object with the request, which is then passed back to the application with the respective response.
-This context object of type `T` is completely opaque to Akka HTTP, i.e. you can pick whatever works best for your
+This context object of type `T` is completely opaque to Apache Pekko HTTP, i.e. you can pick whatever works best for your
 particular application scenario.
 
 @@@ note
@@ -94,7 +94,7 @@ Use the @ref[Connection-Level Client-Side API](connection-level.md) instead.
 
 ## Connection Allocation Logic
 
-This is how Akka HTTP allocates incoming requests to the available connection "slots":
+This is how Apache Pekko HTTP allocates incoming requests to the available connection "slots":
 
  1. If there is a connection alive and currently idle then schedule the request across this connection.
  2. If no connection is idle and there is still an unconnected slot then establish a new connection.
@@ -106,7 +106,7 @@ open requests that only has requests with idempotent methods scheduled to it, if
 
 If the `max-retries` pool config setting is greater than zero the pool retries idempotent requests for which
 a response could not be successfully retrieved. Idempotent requests are those whose HTTP method is defined to be
-idempotent by the HTTP spec, which are all the ones currently modelled by Akka HTTP except for the `POST`, `PATCH`
+idempotent by the HTTP spec, which are all the ones currently modelled by Apache Pekko HTTP except for the `POST`, `PATCH`
 and `CONNECT` methods.
 
 When a response could not be received for a certain request there are essentially three possible error scenarios:
@@ -130,7 +130,7 @@ is currently unavailable, retries are attempted with exponential backoff delay. 
 
 Completing a pool client flow will simply detach the flow from the pool. The connection pool itself will continue to run
 as it may be serving other client flows concurrently or in the future. Only after the configured `idle-timeout` for
-the pool has expired will Akka HTTP automatically terminate the pool and free all its resources.
+the pool has expired will Apache Pekko HTTP automatically terminate the pool and free all its resources.
 
 If a new client flow is requested with @scala[`Http().cachedHostConnectionPool(...)`]@java[`Http.get(system).cachedHostConnectionPool(...)`] or if an already existing client flow is
 re-materialized the respective pool is automatically and transparently restarted.
@@ -144,7 +144,7 @@ It's also possible to trigger the immediate termination of *all* connection pool
 time by calling @scala[`Http().shutdownAllConnectionPools()`]@java[`Http.get(system).shutdownAllConnectionPools()`].
 This call too produces a @scala[`Future[Unit]`]@java[`CompletionStage<Done>`] which is fulfilled when all pools have terminated.
 
-@scala[`Http().addClientPoolsToCoordinatedShutdown()`]@java[`Http.get(system).addClientPoolsToCoordinatedShutdown()`] will add the client connection pool shutdown to Akka's @extref[coordinated shutdown](akka-docs:coordinated-shutdown.html) so it will be called before the actor system disappears.
+@scala[`Http().addClientPoolsToCoordinatedShutdown()`]@java[`Http.get(system).addClientPoolsToCoordinatedShutdown()`] will add the client connection pool shutdown to Apache Pekko's @extref[coordinated shutdown](akka-docs:coordinated-shutdown.html) so it will be called before the actor system disappears.
 
 @@@ note
 When encountering unexpected @apidoc[akka.stream.AbruptTerminationException] exceptions during @apidoc[akka.actor.ActorSystem] **shutdown**
@@ -169,7 +169,7 @@ In many cases, you just want to issue requests to a pool and receive responses w
 you should use the @ref[Request-Level Client-Side API](request-level.md) for this purpose. If you want to use a similar Future-based API
 with the host-level API, here's how to do it.
 
-As explained above, Akka HTTP prevents to build up an unbounded buffer of requests and an unlimited number of connections.
+As explained above, Apache Pekko HTTP prevents to build up an unbounded buffer of requests and an unlimited number of connections.
 Therefore, it guards itself a) by applying backpressure to all request streams connected to the cached pool and b)
 by failing requests with a @apidoc[BufferOverflowException] when the internal buffer overflows when too many materializations
 exist or too many requests have been issued to the pool.

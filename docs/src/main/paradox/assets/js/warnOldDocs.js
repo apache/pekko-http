@@ -139,7 +139,7 @@ jQuery(document).ready(function ($) {
             base = '' + window.location
 
         // strip off leading /docs/
-        path = path.substring(path.indexOf("akka-http"))
+        path = path.substring(path.indexOf("pekko-http"))
         base = base.substring(0, base.indexOf(path))
         var projectEnd = path.indexOf("/")
         var versionEnd = path.indexOf("/", projectEnd + 1)

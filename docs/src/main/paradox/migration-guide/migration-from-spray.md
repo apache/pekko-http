@@ -1,6 +1,6 @@
 # Migration Guide from Spray
 
-Akka HTTP is the successor for spray. With the first non-experimental release of Akka HTTP, spray has reached its
+Apache Pekko HTTP is the successor for spray. With the first non-experimental release of Akka HTTP, spray has reached its
 end-of-life. Akka HTTP is a reimplementation of HTTP based on akka-stream (former spray-can) which adds streaming
 support on all levels. The popular high-level routing DSL (former spray-routing) has mostly been kept but was made
 more consistent and simplified where possible. While underlyings have changed a lot, many of the high-level
@@ -34,11 +34,11 @@ In the implementation, Akka HTTP makes heavy use of streams as well with the occ
 
 The number of modules has been reduced. Here's an approximate mapping from spray modules to new modules:
 
- * spray-util, spray-http, spray-can => akka-http-core
- * spray-routing => akka-http
+ * spray-util, spray-http, spray-can => pekko-http-core
+ * spray-routing => pekko-http
  * spray-client => parts of high-level client support is now provided via `Http().singleRequest`, other is not yet
    implemented (see also [#113](https://github.com/akka/akka-http/issues/113))
- * spray-caching => akka-http-caching (since version 10.0.11, more information here: @ref[Documentation](../common/caching.md))
+ * spray-caching => pekko-http-caching (since version 10.0.11, more information here: @ref[Documentation](../common/caching.md))
 
 ### Package name changes
 
@@ -50,14 +50,14 @@ Classes can now be found in new packages:
 
 ### Routing DSL not based on shapeless any more
 
-To simplify using Akka HTTP together with other libraries that require shapeless, the routing DSL in Akka HTTP does
+To simplify using Pekko HTTP together with other libraries that require shapeless, the routing DSL in Akka HTTP does
 not depend on shapeless any more. Instead, we support a light-weight replacement that models heterogeneous lists with
 tuples. This will not affect you as long as you haven't written any generic directives. The implicit magic in the
 background that powers directives will - in user code - work as before.
 
 Internally, the type aliases for `DirectiveX` have changed:
 
-|                      | spray                         | Akka HTTP                   |
+|                      | spray                         | Pekko HTTP                  |
 |----------------------|-------------------------------|-----------------------------|
 | `Directive0`         | `Directive[HNil]`             | `Directive[Tuple0]`         |
 | `Directive1[T]`      | `Directive[T :: HNil]`        | `Directive[Tuple1[T]]`      |

@@ -86,7 +86,7 @@ to direct the request to.
 
 ## Collecting headers from a server response
 
-Sometimes we would like to get only headers of specific type which are sent from a server. In order to collect headers in a type safe way Akka HTTP API provides a type for each HTTP header. Here is an example for getting all cookies set by a server (`Set-Cookie` header):
+Sometimes we would like to get only headers of specific type which are sent from a server. In order to collect headers in a type safe way Apache Pekko HTTP API provides a type for each HTTP header. Here is an example for getting all cookies set by a server (`Set-Cookie` header):
 
 Scala
 :   @@snip [HttpClientExampleSpec.scala](/docs/src/test/scala/docs/http/scaladsl/HttpClientCollectingHeaders.scala)

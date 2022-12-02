@@ -1,7 +1,7 @@
 # Directives
 
 A "Directive" is a small building block used for creating arbitrarily complex @ref[route structures](../routes.md).
-Akka HTTP already pre-defines a large number of directives and you can easily construct your own:
+Apache Pekko HTTP already pre-defines a large number of directives and you can easily construct your own:
 
 @@toc { depth=1 }
 
@@ -139,7 +139,7 @@ Here, the inner route of the @ref[get](method-directives/get.md) directive is wr
 
 However, as you can see from these examples, building routes with directives rather than "manually" results in code that
 is a lot more concise and as such more readable and maintainable. In addition it provides for better composability (as
-you will see in the coming sections). So, when using Akka HTTP's Routing DSL you should almost never have to fall back
+you will see in the coming sections). So, when using Apache Pekko HTTP's Routing DSL you should almost never have to fall back
 to creating routes via @scala[@scaladoc[Route](akka.http.scaladsl.server.index#Route=akka.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[akka.http.scaladsl.server.RouteResult])]@java[@javadoc[Route](akka.http.javadsl.server.Route)] function literals that directly manipulate the @ref[RequestContext](../routes.md#requestcontext).
 
 @@@
