@@ -71,4 +71,4 @@ Joining the extended team in such form gives you, in addition to street-cred, of
 License
 -------
 
-Pekko HTTP is Open Source and available under the Apache 2 License.
+Apache Pekko HTTP is Open Source and available under the Apache 2 License.
