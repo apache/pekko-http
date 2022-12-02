@@ -12,7 +12,7 @@ Variables to be expanded in this template:
 - VERSION=???
 
 Key links:
-  - akka/akka-http milestone: https://github.com/akka/akka-http/milestone/?
+  - akka/akka-http milestone: https://github.com/apache/incubator-pekko-http/milestone/?
 -->
 
 ### ~ 1 week before the release
@@ -33,17 +33,17 @@ Wind down PR queue. There has to be enough time after the last (non-trivial) PR 
 - [ ] Create a PR to add a release notes entry in docs/src/main/paradox/release-notes/. As a helper run `scripts/commits-for-release-notes.sh <last-version-tag>` which will output a list of commits grouped by submodule, and the closed issues for this milestone
 - [ ] Create a draft PR on https://github.com/akka/akka.io with a news item (using the milestones, release notes and `scripts/authors.scala previousVersion origin/main`) and updating `_config.yml`
 - [ ] Release notes PR has been merged
-- [ ] Create a new milestone for the next version at https://github.com/akka/akka-http/milestones
+- [ ] Create a new milestone for the next version at https://github.com/apache/incubator-pekko-http/milestones
 - [ ] Move all unclosed issues to the newly created milestone (or remove milestone) and close the version you're releasing
 
 ### Cutting the release
 
-- [ ] Wait until [main build finished](https://github.com/akka/akka-http/actions/workflows/publish.yml?query=event%3Apush) after merging the release notes (otherwise, the main
+- [ ] Wait until [main build finished](https://github.com/apache/incubator-pekko-http/actions/workflows/publish.yml?query=event%3Apush) after merging the release notes (otherwise, the main
       build might pick up the tag and start publishing the release uhoh)
 - [ ] Create a tag for the release (e.g. `git tag -s -a v$VERSION$ -m "Release $VERSION$"`) and push it.
-- [ ] Check that the Github Actions [release build](https://github.com/akka/akka-http/actions/workflows/publish.yml?query=event%3Apush) executes successfully
+- [ ] Check that the Github Actions [release build](https://github.com/apache/incubator-pekko-http/actions/workflows/publish.yml?query=event%3Apush) executes successfully
 - [ ] Notify Telemetry / Play team to check against staged artifacts
-- [ ] Run a test against the staging repository to make sure the release went well, for example by using https://github.com/akka/akka-http-quickstart-scala.g8 and adding the sonatype staging repo with `resolvers += "Staging Repo" at "https://oss.sonatype.org/content/repositories/staging"`
+- [ ] Run a test against the staging repository to make sure the release went well, for example by using https://github.com/apache/incubator-pekko-http-quickstart-scala.g8 and adding the sonatype staging repo with `resolvers += "Staging Repo" at "https://oss.sonatype.org/content/repositories/staging"`
 - [ ] Release the staging repository to Maven Central.
 
 ### Check availability
@@ -74,7 +74,7 @@ Wind down PR queue. There has to be enough time after the last (non-trivial) PR 
          ```
   - [ ] Merge draft news item at https://github.com/akka/akka.io/pulls
   - [ ] Wait until the release page is published
-  - [ ] Create the GitHub [release](https://github.com/akka/akka-http/releases/tag/v$VERSION$) with the tag, title and release description linking to announcement, release notes and milestone.
+  - [ ] Create the GitHub [release](https://github.com/apache/incubator-pekko-http/releases/tag/v$VERSION$) with the tag, title and release description linking to announcement, release notes and milestone.
 
 ### Announcements
 - [ ] Send a release notification to https://discuss.akka.io

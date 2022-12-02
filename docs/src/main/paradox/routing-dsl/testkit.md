@@ -254,4 +254,4 @@ a server and bind to a port so use it only when necessary.
 ## Examples
 
 A great pool of examples are the tests for all the predefined directives in Akka HTTP.
-They can be found @scala[@github[here](/akka-http-tests/src/test/scala/akka/http/scaladsl/server/directives/)]@java[@github[here](/akka-http-tests/src/test/java/akka/http/javadsl/server/directives/)].
+They can be found @scala[@github[here](/pekko-http-tests/src/test/scala/akka/http/scaladsl/server/directives/)]@java[@github[here](/pekko-http-tests/src/test/java/akka/http/javadsl/server/directives/)].

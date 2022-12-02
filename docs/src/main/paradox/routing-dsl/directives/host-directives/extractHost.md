@@ -7,7 +7,7 @@ to its inner route.
 
 ## Signature
 
-@@signature [HostDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/HostDirectives.scala) { #extractHost }
+@@signature [HostDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/HostDirectives.scala) { #extractHost }
 
 @@@
 

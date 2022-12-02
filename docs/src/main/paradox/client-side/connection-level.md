@@ -1,6 +1,6 @@
 # Connection-Level Client-Side API
 
-The connection-level API is the lowest-level client-side API Akka HTTP provides. It gives you full control over when
+The connection-level API is the lowest-level client-side API Apache Pekko HTTP provides. It gives you full control over when
 HTTP connections are opened and closed and how requests are to be sent across which connection. As such it offers the
 highest flexibility at the cost of providing the least convenience.
 
@@ -79,7 +79,7 @@ On the client-side the stand-alone HTTP layer forms a `BidiStage` stage that "up
 It is defined like this:
 
 @@@ div { .group-scala }
-@@snip [Http.scala](/akka-http-core/src/main/scala/akka/http/scaladsl/Http.scala) { #client-layer }
+@@snip [Http.scala](/pekko-http-core/src/main/scala/akka/http/scaladsl/Http.scala) { #client-layer }
 @@@
 @@@ div { .group-java }
 ```java

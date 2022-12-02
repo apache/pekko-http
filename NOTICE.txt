@@ -1,7 +1,7 @@
-Akka HTTP
-=========
+Apache Pekko HTTP
+=================
 
-The source code is Akka HTTP is hosted at https://github.com/akka/akka-http.
+The source code for Apache Pekko HTTP is hosted at https://github.com/apache/incubator-pekko-http.
 
 This software is licensed under the Apache 2 license, quoted below.
 

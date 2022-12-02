@@ -25,7 +25,7 @@ object Common extends AutoPlugin {
       "-Wconf:msg=object JavaConverters in package collection is deprecated:s",
       "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s"),
     // '-release' parameter is restricted to 'Compile, compile' scope because
-    // otherwise `sbt akka-http-xml/compile:doc` fails with it on Scala 2.12.9
+    // otherwise `sbt pekko-http-xml/compile:doc` fails with it on Scala 2.12.9
     Compile / compile / scalacOptions ++=
       onlyAfterScala212(onlyAfterJdk8("-release", "8")).value,
     javacOptions ++=

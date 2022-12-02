@@ -18,7 +18,7 @@ Basic client settings can be overridden in multiple ways:
  * by putting custom @apidoc[ClientConnectionSettings] into @apidoc[ConnectionPoolSettings] and passing those to APIs in `Http`
  * by using [per-host overrides](#per-host-overrides)
 
-@@snip [reference.conf](/akka-http-core/src/main/resources/reference.conf) { #client-settings }
+@@snip [reference.conf](/pekko-http-core/src/main/resources/reference.conf) { #client-settings }
 
 ## Pool Settings
 
@@ -31,7 +31,7 @@ when used in the context of a pool.
 
 Pool settings can be overridden on a [per-target-host](#per-host-overrides) basis.
 
-@@snip [reference.conf](/akka-http-core/src/main/resources/reference.conf) { #pool-settings }
+@@snip [reference.conf](/pekko-http-core/src/main/resources/reference.conf) { #pool-settings }
 
 ## Per Host Overrides
 
@@ -40,7 +40,7 @@ in the `akka.http.host-connection-pool.per-host-override` setting.
 
 Note that only the first matching entry is selected and used even if multiple entries would match.
 
-@@snip [reference.conf](/akka-http-core/src/main/resources/reference.conf) { #per-host-overrides }
+@@snip [reference.conf](/pekko-http-core/src/main/resources/reference.conf) { #per-host-overrides }
 
 ## Precedence of settings
 

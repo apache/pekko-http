@@ -3,7 +3,7 @@
 The [HTTP spec](https://tools.ietf.org/html/rfc7231#section-3.1.2.1) defines a `Content-Encoding` header, which signifies whether the entity body of an HTTP message is
 "encoded" and, if so, by which algorithm. The only commonly used content encodings are compression algorithms.
 
-Currently, Akka HTTP supports the compression and decompression of HTTP requests and responses with the `gzip` or
+Currently, Apache Pekko HTTP supports the compression and decompression of HTTP requests and responses with the `gzip` or
 `deflate` encodings.
 The core logic for this lives in the @scala[@scaladoc[akka.http.scaladsl.coding](akka.http.scaladsl.coding.index) package.]@java[@javadoc[akka.http.javadsl.coding.Coder](akka.http.javadsl.coding.Coder) enum class.]
 

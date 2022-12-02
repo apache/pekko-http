@@ -5,10 +5,10 @@ transport is represented by an instance of
 @scala[@scaladoc[akka.http.scaladsl.ClientTransport](akka.http.scaladsl.ClientTransport)]@java[@javadoc[akka.http.javadsl.ClientTransport](akka.http.javadsl.ClientTransport)]:
 
 Scala
-:  @@snip [ClientTransport.scala](/akka-http-core/src/main/scala/akka/http/scaladsl/ClientTransport.scala) { #client-transport-definition }
+:  @@snip [ClientTransport.scala](/pekko-http-core/src/main/scala/akka/http/scaladsl/ClientTransport.scala) { #client-transport-definition }
 
 Java
-:  @@snip [ClientTransport.scala](/akka-http-core/src/main/scala/akka/http/javadsl/ClientTransport.scala) { #client-transport-definition }
+:  @@snip [ClientTransport.scala](/pekko-http-core/src/main/scala/akka/http/javadsl/ClientTransport.scala) { #client-transport-definition }
 
 A transport implementation defines how the client infrastructure should communicate with a given host.
 

@@ -1,6 +1,6 @@
 # Implications of the streaming nature of Request/Response Entities
 
-Akka HTTP is streaming *all the way through*, which means that the back-pressure mechanisms enabled by Akka Streams
+Apache Pekko HTTP is streaming *all the way through*, which means that the back-pressure mechanisms enabled by Akka Streams
 are exposed through all layers–from the TCP layer, through the HTTP server, all the way up to the user-facing @apidoc[HttpRequest]
 and @apidoc[HttpResponse] and their @apidoc[HttpEntity] APIs.
 
@@ -9,7 +9,7 @@ Specifically it means that: "*lack of consumption of the HTTP Entity, is signale
 side of the connection*". This is a feature, as it allows one only to consume the entity, and back-pressure servers/clients
 from overwhelming our application, possibly causing unnecessary buffering of the entity in memory.
 
-Put another way: Streaming *all the way through* is a feature of Akka HTTP that allows consuming 
+Put another way: Streaming *all the way through* is a feature of Apache Pekko HTTP that allows consuming 
 entities (and pulling them through the network) in a streaming fashion, and only *on demand* when the client is 
 ready to consume the bytes. Therefore, you have to explicitly consume or discard the entity. 
 
@@ -20,7 +20,7 @@ On a client, for example, if the application doesn't subscribe to the response e
 @@@ warning
 
 Consuming (or discarding) the Entity of a request is mandatory!
-If *accidentally* left neither consumed or discarded Akka HTTP will
+If *accidentally* left neither consumed or discarded Apache Pekko HTTP will
 assume the incoming data should remain back-pressured, and will stall the incoming data via TCP back-pressure mechanisms.
 A client should consume the Entity regardless of the status of the @apidoc[HttpResponse].
 
@@ -49,7 +49,7 @@ Java
 :   @@snip [HttpClientExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/HttpClientExampleDocTest.java) { #manual-entity-consume-example-1 }
 
 However, sometimes the need may arise to consume the entire entity as `Strict` entity (which means that it is
-completely loaded into memory). Akka HTTP provides a special @scala[`toStrict(timeout)`]@java[`toStrict(timeout, materializer)`] method which can be used to
+completely loaded into memory). Apache Pekko HTTP provides a special @scala[`toStrict(timeout)`]@java[`toStrict(timeout, materializer)`] method which can be used to
 eagerly consume the entity and make it available in memory. Once in memory, data can be consumed as a `ByteString` or as a `Source`:
 
 Scala
@@ -60,8 +60,8 @@ Java
 
 ### Integrating with Akka Streams
 
-In some cases, it is necessary to process the results of a series of Akka HTTP calls as Akka Streams. In order
-to ensure that the HTTP Response Entity is consumed in a timely manner, the Akka HTTP stream for each request must
+In some cases, it is necessary to process the results of a series of Apache Pekko HTTP calls as Akka Streams. In order
+to ensure that the HTTP Response Entity is consumed in a timely manner, the Apache Pekko HTTP stream for each request must
 be executed and completely consumed, then sent along for further processing.
 
 Failing to account for this behavior can result in seemingly non-deterministic failures due to complex interactions
@@ -152,7 +152,7 @@ Scala
 Java
 :   @@snip [HttpServerExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/server/HttpServerExampleDocTest.java) { #discard-discardEntityBytes }
 
-A related concept is *cancelling* the incoming @scala[`entity.dataBytes`]@java[`entity.getDataBytes()`] stream. Cancellation results in Akka HTTP
+A related concept is *cancelling* the incoming @scala[`entity.dataBytes`]@java[`entity.getDataBytes()`] stream. Cancellation results in Apache Pekko HTTP
 *abruptly closing the connection from the Client*. This may be useful when you detect that the given user should not be allowed to make any
 uploads at all, and you want to drop the connection (instead of reading and ignoring the incoming data).
 This can be done by attaching the incoming @scala[`entity.dataBytes`]@java[`entity.getDataBytes()`] to a `Sink.cancelled()` which will cancel
@@ -176,7 +176,7 @@ note and issues for further discussion and ideas.
 
 @@@ note
 
-An advanced feature code named "auto draining" has been discussed and proposed for Akka HTTP, and we're hoping
+An advanced feature code named "auto draining" has been discussed and proposed for Apache Pekko HTTP, and we're hoping
 to implement or help the community implement it.
 
 You can read more about it in [issue #183](https://github.com/akka/akka-http/issues/183)

@@ -1,6 +1,6 @@
 # Request-Level Client-Side API
 
-The request-level API is the recommended and most convenient way of using Akka HTTP's client-side functionality. It internally builds upon the
+The request-level API is the recommended and most convenient way of using Apache Pekko HTTP's client-side functionality. It internally builds upon the
 @ref[Host-Level Client-Side API](host-level.md) to provide you with a simple and easy-to-use way of retrieving HTTP responses from remote servers.
 Depending on your preference you can pick the [Future-based variant](#future-based-variant) or [Flow-based variant](#flow-based-variant).
 
@@ -22,7 +22,7 @@ or an extra pool just for the long-running connection instead.
 Most often, your HTTP client needs are very basic. You need the HTTP response for a certain request and don't
 want to bother with setting up a full-blown streaming infrastructure.
 
-For these cases Akka HTTP offers the @scala[`Http().singleRequest(...)`]@java[`Http.get(system).singleRequest(...)`] method, which turns an @apidoc[HttpRequest] instance
+For these cases Apache Pekko HTTP offers the @scala[`Http().singleRequest(...)`]@java[`Http.get(system).singleRequest(...)`] method, which turns an @apidoc[HttpRequest] instance
 into @scala[`Future[HttpResponse]`]@java[`CompletionStage<HttpResponse>`]. Internally the request is dispatched across the (cached) host connection pool for the
 request's effective URI.
 
