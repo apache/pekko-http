@@ -13,7 +13,7 @@ import docs.CompileOnlySpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-// OverflowStrategy.dropNew has been deprecated in latest Akka versions
+// OverflowStrategy.dropNew has been deprecated in latest Pekko versions
 // FIXME: replace with 2.6 queue when 2.5 support is dropped, see #3069
 @nowarn("msg=will not be a runnable program|Use Source.queue")
 class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpec {

@@ -1,4 +1,4 @@
-# Handling blocking operations in Akka HTTP
+# Handling blocking operations in Apache Pekko HTTP
 
 Sometimes it is difficult to avoid performing the blocking operations and there
 are good chances that the blocking is done inside a Future execution, which may

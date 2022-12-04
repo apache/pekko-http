@@ -65,7 +65,7 @@ object Http2ClientApp extends App {
     .flatMap(_.toStrict(1.second))
     .onComplete(res => println(s"[4] Got favicon: $res"))
 
-  // OverflowStrategy.dropNew has been deprecated in latest Akka versions
+  // OverflowStrategy.dropNew has been deprecated in latest Pekko versions
   // FIXME: replace with 2.6 queue when 2.5 support is dropped, see #3069
   @nowarn("msg=Use Source.queue") //
   // #response-future-association

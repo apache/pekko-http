@@ -24,7 +24,7 @@ after a reconnect.
 
 ## Model
 
-Akka HTTP represents event streams as @apidoc[Source[ServerSentEvent, \_]] where @apidoc[ServerSentEvent] is a
+Apache Pekko HTTP represents event streams as @apidoc[Source[ServerSentEvent, \_]] where @apidoc[ServerSentEvent] is a
 @scala[case] class with the following read-only properties:
 
 - @scala[`data: String`]@java[`String data`] – the actual payload, may span multiple lines
@@ -32,7 +32,7 @@ Akka HTTP represents event streams as @apidoc[Source[ServerSentEvent, \_]] where
 - @scala[`id: Option[String]`]@java[`Optional<String> id`] – optional identifier
 - @scala[`retry: Option[Int]`]@java[`OptionalInt retry`] – optional reconnection delay in milliseconds
 
-In accordance to the SSE specification Akka HTTP also provides the @scala[`Last-Event-ID`]@java[`LastEventId`] header and the
+In accordance to the SSE specification Apache Pekko HTTP also provides the @scala[`Last-Event-ID`]@java[`LastEventId`] header and the
 @scala[`text/event-stream`]@java[`TEXT_EVENT_STREAM`] media type.
 
 ## Server-side usage: marshalling
@@ -44,7 +44,7 @@ Scala
 :  @@snip [ServerSentEventsExampleSpec.scala](/docs/src/test/scala/docs/http/scaladsl/ServerSentEventsExampleSpec.scala) { #event-stream-marshalling-example }
 
 Java
-:  @@snip [EventStreamMarshallingTest.java](/akka-http-tests/src/test/java/akka/http/javadsl/marshalling/sse/EventStreamMarshallingTest.java) { #event-stream-marshalling-example }
+:  @@snip [EventStreamMarshallingTest.java](/pekko-http-tests/src/test/java/akka/http/javadsl/marshalling/sse/EventStreamMarshallingTest.java) { #event-stream-marshalling-example }
 
 ## Client-side usage: unmarshalling
 
@@ -54,8 +54,8 @@ Scala
 :  @@snip [ServerSentEventsExampleSpec.scala](/docs/src/test/scala/docs/http/scaladsl/ServerSentEventsExampleSpec.scala) { #event-stream-unmarshalling-example }
 
 Java
-:  @@snip [EventStreamMarshallingTest.java](/akka-http-tests/src/test/java/akka/http/javadsl/unmarshalling/sse/EventStreamUnmarshallingTest.java) { #event-stream-unmarshalling-example }
+:  @@snip [EventStreamMarshallingTest.java](/pekko-http-tests/src/test/java/akka/http/javadsl/unmarshalling/sse/EventStreamUnmarshallingTest.java) { #event-stream-unmarshalling-example }
 
 Notice that if you are looking for a resilient way to permanently subscribe to an event stream,
-Alpakka provides the [EventSource](https://doc.akka.io/docs/alpakka/current/sse.html)
+Apache Pekko Connectors provides the [EventSource](https://doc.akka.io/docs/alpakka/current/sse.html)
 connector which reconnects automatically with the id of the last seen event.

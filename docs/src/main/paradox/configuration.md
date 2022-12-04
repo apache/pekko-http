@@ -1,18 +1,18 @@
 # Configuration
 
-Just like any other Akka module, Akka HTTP is configured via [Typesafe Config](https://github.com/lightbend/config).
+Just like any other Apache Pekko module, Apache Pekko HTTP is configured via [Typesafe Config](https://github.com/lightbend/config).
 Usually this means that you provide an `application.conf` which contains all the application-specific settings that
-differ from the default ones provided by the reference configuration files from the individual Akka modules.
+differ from the default ones provided by the reference configuration files from the individual Apache Pekko modules.
 
-These are the relevant default configuration values for the Akka HTTP modules.
+These are the relevant default configuration values for the Apache Pekko HTTP modules.
 
-akka-http-core
-:  @@snip [reference.conf](/akka-http-core/src/main/resources/reference.conf)
+pekko-http-core
+:  @@snip [reference.conf](/pekko-http-core/src/main/resources/reference.conf)
 
-akka-http
-:  @@snip [reference.conf](/akka-http/src/main/resources/reference.conf)
+pekko-http
+:  @@snip [reference.conf](/pekko-http/src/main/resources/reference.conf)
 
-akka-http-caching
-:  @@snip [reference.conf](/akka-http-caching/src/main/resources/reference.conf)
+pekko-http-caching
+:  @@snip [reference.conf](/pekko-http-caching/src/main/resources/reference.conf)
 
-The other Akka HTTP modules do not offer any configuration via [Typesafe Config](https://github.com/lightbend/config).
+The other Apache Pekko HTTP modules do not offer any configuration via [Typesafe Config](https://github.com/lightbend/config).

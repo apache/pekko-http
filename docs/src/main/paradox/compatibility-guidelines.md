@@ -2,7 +2,7 @@
 
 ## Binary Compatibility Rules
 
-Akka HTTP follows the same binary compatibility rules as Akka itself.
+Apache Pekko HTTP follows the same binary compatibility rules as Akka itself.
 In short it means that the versioning scheme should be read as `major.minor.patch`,
 wherein all versions with the same `major` version are backwards binary-compatible,
 with the exception of `@ApiMayChange`, `@InternalApi` or `@DoNotInherit` marked APIs 
@@ -16,7 +16,7 @@ For more information and a detailed discussion of these rules and guarantees ple
 The following components and modules don't have the previously mentioned binary compatibility guaranteed within minor or
 patch versions. However, binary compatibility will be attempted to be kept as much as possible.
 
-#### akka-http
+#### pekko-http
 
 Scala
 :   ```scala
@@ -45,7 +45,7 @@ Java
     akka.http.javadsl.OutgoingConnectionBuilder#managedPersistentHttp2
     ```    
 
-#### akka-http-caching
+#### pekko-http-caching
 
 Scala
 :   ```scala
@@ -61,7 +61,7 @@ Java
     akka.http.javadsl.server.directives.CachingDirectives
     ```    
 
-#### akka-http-core
+#### pekko-http-core
 
 Scala
 :   ```scala
@@ -113,41 +113,40 @@ Java
 ## Versioning and Compatibility
 
 Starting from version 10.1.0, there will be two active release branches:
-- The "current" release line (in `main`), where we will basically continue to evolve Akka HTTP in the same way as currently. New features will be introduced here incrementally.
+- The "current" release line (in `main`), where we will basically continue to evolve Apache Pekko HTTP in the same way as currently. New features will be introduced here incrementally.
 - The "previous" release line (in a release-10.x branch), where the focus is on stability. We will continue to maintain the previous release by fixing serious bugs but it will not see new features. Previous releases will see less frequent releases over time.
 
 It is planned to rotate versions in an annual fashion. Meaning a new minor version will be created every year.
 Whenever a new minor version is created, it will move the at that point current minor version release series over into maintenance mode, making it the "previous".
 The former "previous" release has reached its end of life at this point. This way every release line is supported for two years.
 
-The Akka HTTP Team currently does not intend to break binary compatibility, i.e. no binary incompatible 11.x.y release is currently planned.
+The Apache Pekko HTTP Team currently does not intend to break binary compatibility, i.e. no binary incompatible 11.x.y release is currently planned.
     
 ## Specific versions inter-op discussion
 
-In this section we discuss some of the specific cases of compatibility between versions of Akka HTTP and Akka itself.
+In this section we discuss some of the specific cases of compatibility between versions of Apache Pekko HTTP and Akka itself.
 
 For example, you may be interested in those examples if you encountered the following exception in your system when upgrading parts 
-of your libraries: `Detected java.lang.NoSuchMethodError error, which MAY be caused by incompatible Akka versions on the classpath. Please note that a given Akka version MUST be the same across all modules of Akka that you are using, e.g. if you use akka-actor [2.5.3 (resolved from current classpath)] all other core Akka modules MUST be of the same version. External projects like Alpakka, Persistence plugins or Akka HTTP etc. have their own version numbers - please make sure you're using a compatible set of libraries.`
+of your libraries: `Detected java.lang.NoSuchMethodError error, which MAY be caused by incompatible Pekko versions on the classpath. Please note that a given Pekko version MUST be the same across all modules of Pekko that you are using, e.g. if you use pekko-actor [2.5.3 (resolved from current classpath)] all other core Apache Pekko modules MUST be of the same version. External projects like Apache Pekko Connectors, Persistence plugins or Apache Pekko HTTP etc. have their own version numbers - please make sure you're using a compatible set of libraries.`
 
-### Compatibility with Akka
+### Compatibility with Apache Pekko
 
-Akka HTTP 10.2.x is (binary) compatible with Akka >= $akka.minimum.version25$ and Akka >= $akka.minimum.version26$ and future Akka 2.x versions that are released during the lifetime of Akka HTTP 10.2.x.
-To facilitate supporting multiple minor versions of Akka we do not depend on `akka-stream`
+To facilitate supporting multiple minor versions of Apache Pekko we do not depend on `pekko-stream`
 explicitly but mark it as a `provided` dependency in our build. That means that you will *always* have to add
-a manual dependency to `akka-stream`.
+a manual dependency to `pekko-stream`.
 
-The same goes for `akka-http-testkit`: If the testkit is used, explicitly declare the dependency on `akka-stream-testkit` of same Akka version as `akka-stream`.
+The same goes for `pekko-http-testkit`: If the testkit is used, explicitly declare the dependency on `pekko-stream-testkit` of same Pekko version as `pekko-stream`.
 
 @@dependency [sbt,Gradle,Maven] {
   symbol1=AkkaVersion
   value1=$akka.version$
-  bomGroup2=com.typesafe.akka
-  bomArtifact2=akka-http-bom_$scala.binary.version$
+  bomGroup2=org.apache.pekko
+  bomArtifact2=pekko-http-bom_$scala.binary.version$
   bomVersionSymbols2=AkkaHttpVersion
   symbol2="AkkaHttpVersion"
   value2="$project.version$"
-  group1="com.typesafe.akka" artifact1="akka-http_$scala.binary.version$" version1="AkkaHttpVersion"
-  group2="com.typesafe.akka" artifact2="akka-stream_$scala.binary.version$" version2=AkkaVersion
-  group3="com.typesafe.akka" artifact3="akka-http-testkit_$scala.binary.version$" version3=AkkaHttpVersion scope3=Test
-  group4="com.typesafe.akka" artifact4="akka-stream-testkit_$scala.binary.version$" version4=AkkaVersion scope4=Test
+  group1="org.apache.pekko" artifact1="pekko-http_$scala.binary.version$" version1="AkkaHttpVersion"
+  group2="org.apache.pekko" artifact2="pekko-stream_$scala.binary.version$" version2=AkkaVersion
+  group3="org.apache.pekko" artifact3="pekko-http-testkit_$scala.binary.version$" version3=AkkaHttpVersion scope3=Test
+  group4="org.apache.pekko" artifact4="pekko-stream-testkit_$scala.binary.version$" version4=AkkaVersion scope4=Test
 }

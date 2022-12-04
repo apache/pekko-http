@@ -1,13 +1,13 @@
 # Caching
 
-Akka HTTP's caching support provides a lightweight and fast in-memory caching
+Apache Pekko HTTP's caching support provides a lightweight and fast in-memory caching
 functionality based on futures. The primary use-case is the "wrapping" of an
 expensive operation with a caching layer that, based on a certain key of type
 `K`, runs the wrapped operation only once and returns the cached value for
 all future accesses for the same key (as long as the respective entry has not
 expired).
 
-Akka HTTP comes with one implementation of the @apidoc[Cache] API built on [Caffeine]
+Apache Pekko HTTP comes with one implementation of the @apidoc[Cache] API built on [Caffeine]
 featuring frequency-biased cache eviction semantics with support for
 time-based entry expiration.
 
@@ -15,14 +15,14 @@ time-based entry expiration.
 
 ## Dependency
 
-To use Akka HTTP Caching, add the module to your project:
+To use Apache Pekko HTTP Caching, add the module to your project:
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol="AkkaHttpVersion"
   value="$project.version$"
-  group="com.typesafe.akka"
-  artifact="akka-http-caching_$scala.binary.version$"
+  group="org.apache.pekko"
+  artifact="pekko-http-caching_$scala.binary.version$"
   version="AkkaHttpVersion"
 }
 
@@ -36,13 +36,13 @@ requests to a particular cache key (e.g. a resource URI) arrive before the first
 one could be completed. Normally (without special guarding techniques, like
 so-called "cowboy" entries) this can cause many requests to compete for system
 resources while trying to compute the same result thereby greatly reducing
-overall system performance. When you use an Akka HTTP cache the very first
+overall system performance. When you use an Apache Pekko HTTP cache the very first
 request that arrives for a certain cache key causes a future to be put into the
 cache which all later requests then "hook into". As soon as the first request
 completes all other ones complete as well. This minimizes processing time and
 server load for all requests.
 
-All Akka HTTP cache implementations adheres to the @apidoc[Cache]
+All Apache Pekko HTTP cache implementations adheres to the @apidoc[Cache]
 @java[interface]@scala[class], which allows you to interact with the
 cache.
 

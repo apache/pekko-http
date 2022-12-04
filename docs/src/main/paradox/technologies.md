@@ -1,12 +1,12 @@
 # 7. Supported Technologies
 
-This page gives an overview over the technologies that Akka HTTP implements, supports, and integrates with. The page is
+This page gives an overview over the technologies that Apache Pekko HTTP implements, supports, and integrates with. The page is
 still quite new. If you are looking for support of some technology and found information somewhere else, please help us fill
 out this page using the link at the bottom.
 
 ## HTTP
 
-Akka HTTP implements HTTP/1.1 including these features (non-exclusive list):
+Apache Pekko HTTP implements HTTP/1.1 including these features (non-exclusive list):
 
  * Persistent connections
  * HTTP Pipelining (currently not supported on the client-side)
@@ -20,22 +20,22 @@ and @ref[Client HTTPS Support](client-side/client-https-support.md) for more inf
 
 ## WebSocket
 
-Akka HTTP implements WebSocket on both the server side and the client side. See @ref[Server Websocket Support](server-side/websocket-support.md)
+Apache Pekko HTTP implements WebSocket on both the server side and the client side. See @ref[Server Websocket Support](server-side/websocket-support.md)
 and @ref[Client Websocket Support](client-side/websocket-support.md) for more information.
 
 ## HTTP/2
 
-Akka HTTP provides server-side HTTP/2 support currently in a preview version. See @ref[Server HTTP/2 Support](server-side/http2.md)
+Apache Pekko HTTP provides server-side HTTP/2 support currently in a preview version. See @ref[Server HTTP/2 Support](server-side/http2.md)
 for more information.
 
 ## DNS
 
-Akka HTTP provides a pluggable client transport which can be used to @ref[customize host name resolution](client-side/client-transport.md#custom-host-name-resolution-transport)
+Apache Pekko HTTP provides a pluggable client transport which can be used to @ref[customize host name resolution](client-side/client-transport.md#custom-host-name-resolution-transport)
 on the client side.
 
 ## Multipart
 
-Akka HTTP has modeled multipart/* payloads. It provides streaming multipart parsers and renderers e.g. for parsing
+Apache Pekko HTTP has modeled multipart/* payloads. It provides streaming multipart parsers and renderers e.g. for parsing
 file uploads and provides a typed model to access details of such a payload.
 
 ## Server-sent Events (SSE)

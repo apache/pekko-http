@@ -90,7 +90,7 @@ The returned layer forms a @scala[@apidoc[BidiFlow[Message, SslTlsOutbound, SslT
 <a id="half-closed-client-websockets"></a>
 ## Half-Closed WebSockets
 
-The Akka HTTP WebSocket API does not support half-closed connections which means that if either stream completes the
+The Apache Pekko HTTP WebSocket API does not support half-closed connections which means that if either stream completes the
 entire connection is closed (after a "Closing Handshake" has been exchanged or a timeout of 3 seconds has passed).
 This may lead to unexpected behavior, for example if we are trying to only consume messages coming from the server,
 like this:
@@ -140,7 +140,7 @@ it is possible to configure the client-side to perform automatic keep-alive usin
 
 This is supported in a transparent way via configuration by setting the: 
 `akka.http.client.websocket.periodic-keep-alive-max-idle = 1 second` to a specified max idle timeout. The keep-alive triggers
-when no other messages are in-flight during the such configured period. Akka HTTP will then automatically send
+when no other messages are in-flight during the such configured period. Apache Pekko HTTP will then automatically send
 a [`Ping` frame](https://tools.ietf.org/html/rfc6455#section-5.5.2) for each of such idle intervals.
 
 By default, the automatic keep-alive feature is disabled.

@@ -1,12 +1,12 @@
 # XML Support
 
-Akka HTTP's @ref[marshalling](marshalling.md) and @ref[unmarshalling](unmarshalling.md)
+Apache Pekko HTTP's @ref[marshalling](marshalling.md) and @ref[unmarshalling](unmarshalling.md)
 infrastructure makes it rather easy to seamlessly support specific wire representations of your data objects, like JSON,
 XML or even binary encodings.
 
 @@@ div { .group-java }
 
-Akka HTTP does not currently provide a Java API for XML support. If you need to
+Apache Pekko HTTP does not currently provide a Java API for XML support. If you need to
 produce and consume XML, you can write a @ref[custom marshaller](marshalling.md#custom-marshallers)
 using [Jackson], which is also the library used for providing @ref[JSON support](json-support.md#jackson-support).
 
@@ -24,8 +24,8 @@ The custom XML (un)marshalling code shown above requires that you depend on the 
 
 @@@ div { .group-scala }
 
-For XML Akka HTTP currently provides support for [Scala XML][scala-xml] right out of the box through it's
-`akka-http-xml` module.
+For XML Apache Pekko HTTP currently provides support for [Scala XML][scala-xml] right out of the box through it's
+`pekko-http-xml` module.
 
 ## Scala XML Support
 
@@ -36,11 +36,11 @@ In order to enable support for (un)marshalling from and to XML with [Scala XML][
 the following dependency:
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol="AkkaHttpVersion"
   value="$project.version$"
-  group="com.typesafe.akka"
-  artifact="akka-http-xml_$scala.binary.version$"
+  group="org.apache.pekko"
+  artifact="pekko-http-xml_$scala.binary.version$"
   version="AkkaHttpVersion"
 }
 

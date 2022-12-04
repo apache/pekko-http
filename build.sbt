@@ -78,7 +78,7 @@ lazy val root = Project(
       val unidocArtifacts = (Compile / unidoc).value
       // unidoc returns a Seq[File] which contains directories of generated API docs, one for
       // Java, one for Scala. It's not specified which is which, though.
-      // We currently expect the java documentation at akka-http/target/javaunidoc, so
+      // We currently expect the java documentation at pekko-http/target/javaunidoc, so
       // the following heuristic is hopefully good enough to determine which one is the Java and
       // which one the Scala version.
 
@@ -123,9 +123,9 @@ val scalaMacroSupport = Seq(
     case _ => Seq.empty
   }))
 
-lazy val parsing = project("akka-parsing")
+lazy val parsing = project("pekko-parsing")
   .settings(commonSettings)
-  .settings(AutomaticModuleName.settings("akka.http.parsing"))
+  .settings(AutomaticModuleName.settings("pekko.http.parsing"))
   .addAkkaModuleDependency("akka-actor", "provided")
   .settings(Dependencies.parsing)
   .settings(
@@ -136,9 +136,9 @@ lazy val parsing = project("akka-parsing")
   .enablePlugins(ReproducibleBuildsPlugin)
   .disablePlugins(MimaPlugin)
 
-lazy val httpCore = project("akka-http-core")
+lazy val httpCore = project("pekko-http-core")
   .settings(commonSettings)
-  .settings(AutomaticModuleName.settings("akka.http.core"))
+  .settings(AutomaticModuleName.settings("pekko.http.core"))
   .dependsOn(parsing /*, httpScalafixRules % ScalafixConfig*/ )
   .addAkkaModuleDependency("akka-stream", "provided")
   .addAkkaModuleDependency(
@@ -157,9 +157,9 @@ lazy val httpCore = project("akka-http-core")
       "headers.scala", "HttpMessage.scala", "LanguageRange.scala", "CacheDirective.scala", "LinkValue.scala"))
   .disablePlugins(ScalafixPlugin)
 
-lazy val http = project("akka-http")
+lazy val http = project("pekko-http")
   .settings(commonSettings)
-  .settings(AutomaticModuleName.settings("akka.http"))
+  .settings(AutomaticModuleName.settings("pekko.http"))
   .dependsOn(httpCore)
   .addAkkaModuleDependency("akka-stream", "provided")
   .settings(Dependencies.http)
@@ -179,9 +179,9 @@ def gustavDir(kind: String) = Def.task {
   s"www/$kind/akka-http/$ver"
 }
 
-lazy val http2Support = project("akka-http2-support")
+lazy val http2Support = project("pekko-http2-support")
   .settings(commonSettings)
-  .settings(AutomaticModuleName.settings("akka.http.http2"))
+  .settings(AutomaticModuleName.settings("pekko.http.http2"))
   .dependsOn(httpCore, httpTestkit % "test", httpCore % "test->test")
   .addAkkaModuleDependency("akka-stream", "provided")
   .addAkkaModuleDependency("akka-stream-testkit", "test")
@@ -220,9 +220,9 @@ lazy val http2Support = project("akka-http2-support")
   .enablePlugins(ReproducibleBuildsPlugin)
   .disablePlugins(MimaPlugin) // experimental module still
 
-lazy val httpTestkit = project("akka-http-testkit")
+lazy val httpTestkit = project("pekko-http-testkit")
   .settings(commonSettings)
-  .settings(AutomaticModuleName.settings("akka.http.testkit"))
+  .settings(AutomaticModuleName.settings("pekko.http.testkit"))
   .dependsOn(http)
   .addAkkaModuleDependency("akka-stream-testkit", "provided")
   .addAkkaModuleDependency("akka-testkit", "provided")
@@ -236,7 +236,7 @@ lazy val httpTestkit = project("akka-http-testkit")
   .enablePlugins(ReproducibleBuildsPlugin)
   .disablePlugins(MimaPlugin) // testkit, no bin compat guaranteed
 
-lazy val httpTests = project("akka-http-tests")
+lazy val httpTests = project("pekko-http-tests")
   .settings(commonSettings)
   .settings(Dependencies.httpTests)
   .dependsOn(httpSprayJson, httpXml, httpJackson,
@@ -265,7 +265,7 @@ lazy val httpTests = project("akka-http-tests")
       targetFile
     })
 
-lazy val httpJmhBench = project("akka-http-bench-jmh")
+lazy val httpJmhBench = project("pekko-http-bench-jmh")
   .settings(commonSettings)
   .dependsOn(http, http2Support % "compile->compile,test")
   .addAkkaModuleDependency("akka-stream")
@@ -273,7 +273,7 @@ lazy val httpJmhBench = project("akka-http-bench-jmh")
   .enablePlugins(NoPublish) // don't release benchs
   .disablePlugins(MimaPlugin)
 
-lazy val httpMarshallersScala = project("akka-http-marshallers-scala")
+lazy val httpMarshallersScala = project("pekko-http-marshallers-scala")
   .settings(commonSettings)
   .enablePlugins(NoPublish /*, AggregatePRValidation*/ )
   .disablePlugins(MimaPlugin)
@@ -281,17 +281,17 @@ lazy val httpMarshallersScala = project("akka-http-marshallers-scala")
 
 lazy val httpXml =
   httpMarshallersScalaSubproject("xml")
-    .settings(AutomaticModuleName.settings("akka.http.marshallers.scalaxml"))
+    .settings(AutomaticModuleName.settings("pekko.http.marshallers.scalaxml"))
     .addAkkaModuleDependency("akka-stream", "provided")
     .settings(Dependencies.httpXml)
 
 lazy val httpSprayJson =
   httpMarshallersScalaSubproject("spray-json")
-    .settings(AutomaticModuleName.settings("akka.http.marshallers.sprayjson"))
+    .settings(AutomaticModuleName.settings("pekko.http.marshallers.sprayjson"))
     .addAkkaModuleDependency("akka-stream", "provided")
     .settings(Dependencies.httpSprayJson)
 
-lazy val httpMarshallersJava = project("akka-http-marshallers-java")
+lazy val httpMarshallersJava = project("pekko-http-marshallers-java")
   .settings(commonSettings)
   .enablePlugins(NoPublish /*, AggregatePRValidation*/ )
   .disablePlugins(MimaPlugin)
@@ -299,16 +299,16 @@ lazy val httpMarshallersJava = project("akka-http-marshallers-java")
 
 lazy val httpJackson =
   httpMarshallersJavaSubproject("jackson")
-    .settings(AutomaticModuleName.settings("akka.http.marshallers.jackson"))
+    .settings(AutomaticModuleName.settings("pekko.http.marshallers.jackson"))
     .addAkkaModuleDependency("akka-stream", "provided")
     .addAkkaModuleDependency("akka-stream-testkit", "test")
     .dependsOn(httpTestkit % "test")
     .settings(Dependencies.httpJackson)
     .enablePlugins(ScaladocNoVerificationOfDiagrams)
 
-lazy val httpCaching = project("akka-http-caching")
+lazy val httpCaching = project("pekko-http-caching")
   .settings(commonSettings)
-  .settings(AutomaticModuleName.settings("akka.http.caching"))
+  .settings(AutomaticModuleName.settings("pekko.http.caching"))
   .addAkkaModuleDependency("akka-stream", "provided")
   .addAkkaModuleDependency("akka-stream-testkit", "provided")
   .settings(Dependencies.httpCaching)
@@ -320,8 +320,8 @@ def project(name: String) =
 
 def httpMarshallersScalaSubproject(name: String) =
   Project(
-    id = s"akka-http-$name",
-    base = file(s"akka-http-marshallers-scala/akka-http-$name"))
+    id = s"pekko-http-$name",
+    base = file(s"pekko-http-marshallers-scala/pekko-http-$name"))
     .dependsOn(http)
     .settings(commonSettings)
     .enablePlugins(BootstrapGenjavadoc)
@@ -329,27 +329,27 @@ def httpMarshallersScalaSubproject(name: String) =
 
 def httpMarshallersJavaSubproject(name: String) =
   Project(
-    id = s"akka-http-$name",
-    base = file(s"akka-http-marshallers-java/akka-http-$name"))
+    id = s"pekko-http-$name",
+    base = file(s"pekko-http-marshallers-java/pekko-http-$name"))
     .dependsOn(http)
     .settings(commonSettings)
     .enablePlugins(BootstrapGenjavadoc)
     .enablePlugins(ReproducibleBuildsPlugin)
 
-lazy val httpScalafix = project("akka-http-scalafix")
+lazy val httpScalafix = project("pekko-http-scalafix")
   .enablePlugins(NoPublish, NoScala3)
   .disablePlugins(MimaPlugin)
   .aggregate(httpScalafixRules, httpScalafixTestInput, httpScalafixTestOutput, httpScalafixTests)
 
 lazy val httpScalafixRules =
-  Project(id = "akka-http-scalafix-rules", base = file("akka-http-scalafix/scalafix-rules"))
+  Project(id = "pekko-http-scalafix-rules", base = file("pekko-http-scalafix/scalafix-rules"))
     .settings(
       libraryDependencies += Dependencies.Compile.scalafix)
     .enablePlugins(NoScala3)
     .disablePlugins(MimaPlugin) // tooling, no bin compat guaranteed
 
 lazy val httpScalafixTestInput =
-  Project(id = "akka-http-scalafix-test-input", base = file("akka-http-scalafix/scalafix-test-input"))
+  Project(id = "pekko-http-scalafix-test-input", base = file("pekko-http-scalafix/scalafix-test-input"))
     .dependsOn(http)
     .addAkkaModuleDependency("akka-stream")
     .enablePlugins(NoPublish, NoScala3)
@@ -363,14 +363,14 @@ lazy val httpScalafixTestInput =
     )
 
 lazy val httpScalafixTestOutput =
-  Project(id = "akka-http-scalafix-test-output", base = file("akka-http-scalafix/scalafix-test-output"))
+  Project(id = "pekko-http-scalafix-test-output", base = file("pekko-http-scalafix/scalafix-test-output"))
     .dependsOn(http)
     .addAkkaModuleDependency("akka-stream")
     .enablePlugins(NoPublish, NoScala3)
     .disablePlugins(MimaPlugin, HeaderPlugin /* because it gets confused about metaheader required for tests */ )
 
 lazy val httpScalafixTests =
-  Project(id = "akka-http-scalafix-tests", base = file("akka-http-scalafix/scalafix-tests"))
+  Project(id = "pekko-http-scalafix-tests", base = file("pekko-http-scalafix/scalafix-tests"))
     .enablePlugins(NoPublish, NoScala3)
     .disablePlugins(MimaPlugin)
     .settings(
@@ -401,7 +401,7 @@ lazy val docs = project("docs")
     httpTests % "compile;test->test", httpTestkit % "compile;test->test", httpScalafixRules % ScalafixConfig)
   .settings(Dependencies.docs)
   .settings(
-    name := "akka-http-docs",
+    name := "pekko-http-docs",
     resolvers += Resolver.jcenterRepo,
     scalacOptions ++= Seq(
       // Make sure we don't accidentally keep documenting deprecated calls
@@ -429,7 +429,7 @@ lazy val docs = project("docs")
     },
     paradoxGroups := Map("Language" -> Seq("Scala", "Java")),
     Compile / paradoxProperties ++= Map(
-      "project.name" -> "Akka HTTP",
+      "project.name" -> "Pekko HTTP",
       "canonical.base_url" -> "https://doc.akka.io/docs/akka-http/current",
       "akka.version" -> AkkaDependency.docs.version,
       "akka.minimum.version25" -> AkkaDependency.minimumExpectedAkkaVersion,
@@ -460,13 +460,13 @@ lazy val docs = project("docs")
   .settings(ParadoxSupport.paradoxWithCustomDirectives)
 
 /*
-lazy val compatibilityTests = Project("akka-http-compatibility-tests", file("akka-http-compatibility-tests"))
+lazy val compatibilityTests = Project("pekko-http-compatibility-tests", file("pekko-http-compatibility-tests"))
   .enablePlugins(NoPublish, NoScala3)
   .disablePlugins(MimaPlugin)
   .addAkkaModuleDependency("akka-stream", "provided")
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http" % MiMa.latest101Version % "provided",
+      "org.apache.pekko" %% "pekko-http" % MiMa.latest101Version % "provided",
     ),
     (Test / dependencyClasspath) := {
       // HACK: We'd like to use `dependsOn(http % "test->compile")` to upgrade the explicit dependency above to the
@@ -477,11 +477,11 @@ lazy val compatibilityTests = Project("akka-http-compatibility-tests", file("akk
   )
  */
 
-lazy val billOfMaterials = Project("bill-of-materials", file("akka-http-bill-of-materials"))
+lazy val billOfMaterials = Project("bill-of-materials", file("pekko-http-bill-of-materials"))
   .enablePlugins(BillOfMaterialsPlugin)
   .disablePlugins(MimaPlugin)
   .settings(
-    name := "akka-http-bom",
+    name := "pekko-http-bom",
     bomIncludeProjects := userProjects)
 
 def hasCommitsAfterTag(description: Option[GitDescribeOutput]): Boolean = description.get.commitSuffix.distance > 0

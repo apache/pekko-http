@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [SecurityDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/SecurityDirectives.scala) { #extractCredentials }
+@@signature [SecurityDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/SecurityDirectives.scala) { #extractCredentials }
 
 @@@
 

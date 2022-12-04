@@ -1,6 +1,6 @@
 # Connection-Level Client-Side API
 
-The connection-level API is the lowest-level client-side API Akka HTTP provides. It gives you full control over when
+The connection-level API is the lowest-level client-side API Apache Pekko HTTP provides. It gives you full control over when
 HTTP connections are opened and closed and how requests are to be sent across which connection. As such it offers the
 highest flexibility at the cost of providing the least convenience.
 
@@ -45,7 +45,7 @@ canceling the request source).
 
 ## Closing Connections
 
-Akka HTTP actively closes an established connection upon reception of a response containing `Connection: close` header.
+Apache Pekko HTTP actively closes an established connection upon reception of a response containing `Connection: close` header.
 The connection can also be closed by the server.
 
 An application can actively trigger the closing of the connection by completing the request stream. In this case the
@@ -57,19 +57,19 @@ explicitly drained by attaching it to `Sink.ignore()`.
 
 ## Timeouts
 
-Currently Akka HTTP doesn't implement client-side request timeout checking itself as this functionality can be regarded
+Currently Apache Pekko HTTP doesn't implement client-side request timeout checking itself as this functionality can be regarded
 as a more general purpose streaming infrastructure feature.
 
 It should be noted that Akka Streams provide various timeout functionality so any API that uses streams can benefit
 from the stream stages such as `idleTimeout`, `backpressureTimeout`, `completionTimeout`, `initialTimeout`
 and `throttle`. To learn more about these refer to their documentation in Akka Streams.
 
-For more details about timeout support in Akka HTTP in general refer to @ref[Akka HTTP Timeouts](../common/timeouts.md).
+For more details about timeout support in Apache Pekko HTTP in general refer to @ref[Apache Pekko HTTP Timeouts](../common/timeouts.md).
 
 <a id="http-client-layer"></a>
 ## Stand-Alone HTTP Layer Usage
 
-Due to its Reactive-Streams-based nature the Akka HTTP layer is fully detachable from the underlying TCP
+Due to its Reactive-Streams-based nature the Apache Pekko HTTP layer is fully detachable from the underlying TCP
 interface. While in most applications this "feature" will not be crucial it can be useful in certain cases to be able
 to "run" the HTTP layer (and, potentially, higher-layers) against data that do not come from the network but rather
 some other source. Potential scenarios where this might be useful include tests, debugging or low-level event-sourcing
@@ -79,7 +79,7 @@ On the client-side the stand-alone HTTP layer forms a `BidiStage` stage that "up
 It is defined like this:
 
 @@@ div { .group-scala }
-@@snip [Http.scala](/akka-http-core/src/main/scala/akka/http/scaladsl/Http.scala) { #client-layer }
+@@snip [Http.scala](/pekko-http-core/src/main/scala/akka/http/scaladsl/Http.scala) { #client-layer }
 @@@
 @@@ div { .group-java }
 ```java

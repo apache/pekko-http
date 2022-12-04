@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [MarshallingDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/MarshallingDirectives.scala) { #handleWith }
+@@signature [MarshallingDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/MarshallingDirectives.scala) { #handleWith }
 
 @@@
 
@@ -19,15 +19,15 @@ The `handleWith` directive is used when you want to handle a route with a given 
 type @scala[A => B]@java[Function<A,B>].  `handleWith` will use both an in-scope unmarshaller to convert a request into 
 type A and an in-scope marshaller to convert type B into a response. This is helpful when your 
 core business logic resides in some other class or you want your business logic to be independent
-of the REST interface written with akka-http. You can use `handleWith` to "hand off" processing
-to a given function without requiring any akka-http-specific functionality.
+of the REST interface written with pekko-http. You can use `handleWith` to "hand off" processing
+to a given function without requiring any pekko-http-specific functionality.
 
 `handleWith` is similar to `produce`.  The main difference is `handleWith` automatically
 calls `complete` when the function passed to `handleWith` returns. Using `produce` you
 must explicitly call the completion function passed from the `produce` function.
 
 See @ref[marshalling](../../../common/marshalling.md) and @ref[unmarshalling](../../../common/unmarshalling.md) for guidance
-on marshalling entities with akka-http.
+on marshalling entities with pekko-http.
 
 ## Examples
 

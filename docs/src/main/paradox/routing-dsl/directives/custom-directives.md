@@ -1,6 +1,6 @@
 # Custom Directives
 
-Part of the power of akka-http directives comes from the ease with which it’s possible to define
+Part of the power of pekko-http directives comes from the ease with which it’s possible to define
 custom directives at differing levels of abstraction.
 
 There are essentially three ways of creating custom directives:
@@ -12,7 +12,7 @@ There are essentially three ways of creating custom directives:
 ## Configuration Labeling
 
 The easiest way to create a custom directive is to simply assign a new name for a certain configuration
-of one or more existing directives. In fact, most of the predefined akka-http directives can be considered
+of one or more existing directives. In fact, most of the predefined pekko-http directives can be considered
 named configurations of more low-level directives.
 
 The basic technique is explained in the chapter about Composing Directives, where, for example, a new directive
@@ -58,7 +58,7 @@ for simple transformations:
 
 @@snip [CustomDirectivesExamplesSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/directives/CustomDirectivesExamplesSpec.scala) { #map-0 }
 
-One example of a predefined directive relying on `map` is the @github[optionalHeaderValue](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/HeaderDirectives.scala) { #optionalHeaderValue } directive.
+One example of a predefined directive relying on `map` is the @github[optionalHeaderValue](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/HeaderDirectives.scala) { #optionalHeaderValue } directive.
 
 The tmap modifier has this signature (somewhat simplified):
 
@@ -102,7 +102,7 @@ from the RequestContext with the extract directive and then flatMap with
 some kind of filtering logic. For example, this is the implementation
 of the method directive:
 
-@@snip [MethodDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/MethodDirectives.scala) { #method }
+@@snip [MethodDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/MethodDirectives.scala) { #method }
 
 The explicit type parameter `[Unit]` on the flatMap is needed in this case
 because the result of the flatMap is directly concatenated with the
@@ -124,7 +124,7 @@ def require(predicate: T => Boolean, rejections: Rejection*): Directive0
 
 One example of a predefined directive relying on require is the first overload of the host directive:
 
-@@snip[HostDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/HostDirectives.scala) { #require-host }
+@@snip[HostDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/HostDirectives.scala) { #require-host }
 
 You can only call require on single-extraction directives. The trequire modifier is the
 more general variant, which takes a predicate of type `Tuple => Boolean`.
@@ -152,7 +152,7 @@ def recoverPF[R >: L: Tuple](
 
 One example of a predefined directive relying `recoverPF` is the `optionalHeaderValue` directive:
 
-@@signature [HeaderDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/HeaderDirectives.scala) { #optionalHeaderValue }
+@@signature [HeaderDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/HeaderDirectives.scala) { #optionalHeaderValue }
 
 ### collect and tcollect
 
@@ -172,7 +172,7 @@ The third option for creating custom directives is to do it “from scratch”,
 either by using `Directive.apply` or by subclassing `Directive` class directly. The `Directive` is defined like this
 (leaving away operators and modifiers):
 
-@@snip [Directive.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/Directive.scala) { #basic }
+@@snip [Directive.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/Directive.scala) { #basic }
 
 It only has one abstract member that you need to implement, the `tapply` method, which creates
 the Route the directives presents to the outside from its inner Route building function
@@ -181,7 +181,7 @@ the Route the directives presents to the outside from its inner Route building f
 Extractions are kept as a Tuple. Here are a few examples:
 
 A `Directive[Unit]` extracts nothing (like the get directive).
-Because this type is used quite frequently akka-http defines a type alias for it:
+Because this type is used quite frequently pekko-http defines a type alias for it:
 
 ```scala
 type Directive0 = Directive[Unit]

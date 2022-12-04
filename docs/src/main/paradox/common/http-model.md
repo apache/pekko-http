@@ -1,12 +1,12 @@
 # HTTP Model
 
-Akka HTTP model contains a deeply structured, fully immutable, case-class based model of all the major HTTP data
+Apache Pekko HTTP model contains a deeply structured, fully immutable, case-class based model of all the major HTTP data
 structures, like HTTP requests, responses and common headers.
-It lives in the *akka-http-core* module and forms the basis for most of Akka HTTP's APIs.
+It lives in the *pekko-http-core* module and forms the basis for most of Apache Pekko HTTP's APIs.
 
 ## Overview
 
-Since akka-http-core provides the central HTTP data structures you will find the following import in quite a
+Since pekko-http-core provides the central HTTP data structures you will find the following import in quite a
 few places around the code base (and probably your own code as well):
 
 Scala
@@ -90,7 +90,7 @@ In some cases it may be necessary to deviate from fully RFC-Compliant behavior. 
 the `+` character in the path part of the URL as a space, even though the RFC specifies that this behavior should
 be limited exclusively to the query portion of the URI.
 
-In order to work around these types of edge cases, Akka HTTP provides for the ability to provide extra,
+In order to work around these types of edge cases, Apache Pekko HTTP provides for the ability to provide extra,
 non-standard information to the request via synthetic headers. These headers are not passed to the client
 but are instead consumed by the request engine and used to override default behavior.
 
@@ -121,7 +121,7 @@ Java
 :   @@snip [ModelDocTest.java](/docs/src/test/java/docs/http/javadsl/ModelDocTest.java) { #construct-response }
 
 In addition to the simple @scala[@apidoc[HttpEntity] constructors]@java[`HttpEntities.create` methods] which create an entity from a fixed `String` or @apidoc[akka.util.ByteString]
-as shown here the Akka HTTP model defines a number of subclasses of @apidoc[HttpEntity] which allow body data to be specified as a
+as shown here the Apache Pekko HTTP model defines a number of subclasses of @apidoc[HttpEntity] which allow body data to be specified as a
 stream of bytes. @java[All of these types can be created using the method on `HttpEntites`.]
 
 @@@ note { title='String representation' }
@@ -144,7 +144,7 @@ Java
 ## HttpEntity
 
 An @apidoc[HttpEntity] carries the data bytes of a message together with its Content-Type and, if known, its Content-Length.
-In Akka HTTP there are five different kinds of entities which model the various ways that message content can be
+In Apache Pekko HTTP there are five different kinds of entities which model the various ways that message content can be
 received or sent:
 
 @scala[HttpEntity.Strict]@java[HttpEntityStrict]
@@ -218,7 +218,7 @@ interested in it!
 
 ### Limiting message entity length
 
-All message entities that Akka HTTP reads from the network automatically get a length verification check attached to
+All message entities that Apache Pekko HTTP reads from the network automatically get a length verification check attached to
 them. This check makes sure that the total entity size is less than or equal to the configured
 `max-content-length` <a id="^1" href="#1">[1]</a>, which is an important defense against certain Denial-of-Service attacks.
 However, a single global limit for all requests (or responses) is often too inflexible for applications that need to
@@ -255,7 +255,7 @@ Generally this behavior should be in line with your expectations.
 
 [RFC 7230](https://tools.ietf.org/html/rfc7230#section-3.3.3) defines very clear rules for the entity length of HTTP messages.
 
-Especially this rule requires special treatment in Akka HTTP:
+Especially this rule requires special treatment in Apache Pekko HTTP:
 
 >
 Any response to a HEAD request and any response with a 1xx
@@ -268,14 +268,14 @@ Responses to HEAD requests introduce the complexity that *Content-Length* or *Tr
 can be present but the entity is empty. This is modeled by allowing @scala[*HttpEntity.Default*]@java[*HttpEntityDefault*] and @scala[*HttpEntity.Chunked*]@java[*HttpEntityChunked*]
 to be used for HEAD responses with an empty data stream.
 
-Also, when a HEAD response has an @scala[*HttpEntity.CloseDelimited*]@java[*HttpEntityCloseDelimited*] entity the Akka HTTP implementation will *not* close the
+Also, when a HEAD response has an @scala[*HttpEntity.CloseDelimited*]@java[*HttpEntityCloseDelimited*] entity the Apache Pekko HTTP implementation will *not* close the
 connection after the response has been sent. This allows the sending of HEAD responses without *Content-Length*
 header across persistent HTTP connections.
 
 <a id="header-model"></a>
 ## Header Model
 
-Akka HTTP contains a rich model of the most common HTTP headers. Parsing and rendering is done automatically so that
+Apache Pekko HTTP contains a rich model of the most common HTTP headers. Parsing and rendering is done automatically so that
 applications don't need to care for the actual syntax of headers. Headers not modelled explicitly are represented
 as a @apidoc[RawHeader], which is essentially a String/String name/value pair.
 
@@ -289,7 +289,7 @@ Java
 
 ## HTTP Headers
 
-When the Akka HTTP server receives an HTTP request it tries to parse all its headers into their respective
+When the Apache Pekko HTTP server receives an HTTP request it tries to parse all its headers into their respective
 model classes. Independently of whether this succeeds or not, the HTTP layer will
 always pass on all received headers to the application. Unknown headers as well as ones with invalid syntax (according
 to the header parser) will be made available as @apidoc[RawHeader] instances. For the ones exhibiting parsing errors a
@@ -330,11 +330,11 @@ Date
 : The @apidoc[Date] response header is added automatically but can be overridden by supplying it manually.
 
 Connection
-: On the server-side Akka HTTP watches for explicitly added `Connection: close` response headers and as such honors
+: On the server-side Apache Pekko HTTP watches for explicitly added `Connection: close` response headers and as such honors
 the potential wish of the application to close the connection after the respective response has been sent out.
 The actual logic for determining whether to close the connection is quite involved. It takes into account the
 request's method, protocol and potential @apidoc[Connection] header as well as the response's protocol, entity and
-potential @apidoc[Connection] header. See @github[this test](/akka-http-core/src/test/scala/akka/http/impl/engine/rendering/ResponseRendererSpec.scala) { #connection-header-table } for a full table of what happens when.
+potential @apidoc[Connection] header. See @github[this test](/pekko-http-core/src/test/scala/akka/http/impl/engine/rendering/ResponseRendererSpec.scala) { #connection-header-table } for a full table of what happens when.
 
 Strict-Transport-Security
 : HTTP Strict Transport Security (HSTS) is a web security policy mechanism which is communicated by the
@@ -352,11 +352,11 @@ Sometimes you may need to model a custom header type which is not part of HTTP a
 as convenient as is possible with the built-in types.
 
 Because of the number of ways one may interact with headers (i.e. try to @scala[match]@java[convert] a @apidoc[CustomHeader] @scala[against]@java[to] a @apidoc[RawHeader]
-or the other way around etc), a helper @scala[trait]@java[classes] for custom Header types @scala[and their companions classes ]are provided by Akka HTTP.
+or the other way around etc), a helper @scala[trait]@java[classes] for custom Header types @scala[and their companions classes ]are provided by Apache Pekko HTTP.
 Thanks to extending @apidoc[ModeledCustomHeader] instead of the plain @apidoc[CustomHeader] @scala[such header can be matched]@java[the following methods are at your disposal]:
 
 Scala
-:   @@snip [ModeledCustomHeaderSpec.scala](/akka-http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #modeled-api-key-custom-header }
+:   @@snip [ModeledCustomHeaderSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #modeled-api-key-custom-header }
 
 Java
 :   @@snip [CustomHeaderExampleTest.java](/docs/src/test/java/docs/http/javadsl/CustomHeaderExampleTest.java) { #modeled-api-key-custom-header }
@@ -364,7 +364,7 @@ Java
 Which allows this @scala[CustomHeader]@java[modeled custom header] to be used in the following scenarios:
 
 Scala
-:   @@snip [ModeledCustomHeaderSpec.scala](/akka-http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #matching-examples }
+:   @@snip [ModeledCustomHeaderSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #matching-examples }
 
 Java
 :   @@snip [CustomHeaderExampleTest.java](/docs/src/test/java/docs/http/javadsl/CustomHeaderExampleTest.java) { #conversion-creation-custom-header }
@@ -372,7 +372,7 @@ Java
 Including usage within the header directives like in the following @ref[headerValuePF](../routing-dsl/directives/header-directives/headerValuePF.md) example:
 
 Scala
-:   @@snip [ModeledCustomHeaderSpec.scala](/akka-http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #matching-in-routes }
+:   @@snip [ModeledCustomHeaderSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #matching-in-routes }
 
 Java
 :   @@snip [CustomHeaderExampleTest.java](/docs/src/test/java/docs/http/javadsl/CustomHeaderExampleTest.java) { #header-value-pf }
@@ -380,7 +380,7 @@ Java
 @@@ note { .group-scala }
 When defining custom headers, it is better to extend @apidoc[ModeledCustomHeader] instead of its parent @apidoc[CustomHeader].
 Custom headers that extend @apidoc[ModeledCustomHeader] automatically comply with the pattern matching semantics that usually apply to built-in
-types (such as matching a custom header against a @apidoc[RawHeader] in routing layers of Akka HTTP applications).
+types (such as matching a custom header against a @apidoc[RawHeader] in routing layers of Apache Pekko HTTP applications).
 @@@
 
 @@@ note { .group-java }
@@ -426,13 +426,13 @@ or @scala[`Http().superPool`]@java[`Http.get(sys).superPool`], usually need the 
 <a id="registeringcustommediatypes"></a>
 ## Registering Custom Media Types
 
-Akka HTTP @scala[@scaladoc[predefines](akka.http.scaladsl.model.MediaTypes$)]@java[@javadoc[predefines](akka.http.javadsl.model.MediaTypes)] most commonly encountered media types and emits them in their well-typed form while parsing http messages.
+Apache Pekko HTTP @scala[@scaladoc[predefines](akka.http.scaladsl.model.MediaTypes$)]@java[@javadoc[predefines](akka.http.javadsl.model.MediaTypes)] most commonly encountered media types and emits them in their well-typed form while parsing http messages.
 Sometimes you may want to define a custom media type and inform the parser infrastructure about how to handle these custom
 media types, e.g. that `application/custom` is to be treated as `NonBinary` with `WithFixedCharset`. To achieve this you
 need to register the custom media type in the server's settings by configuring @apidoc[ParserSettings] like this:
 
 Scala
-:   @@snip [CustomMediaTypesSpec.scala](/akka-http-tests/src/test/scala/akka/http/scaladsl/CustomMediaTypesSpec.scala) { #application-custom }
+:   @@snip [CustomMediaTypesSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/CustomMediaTypesSpec.scala) { #application-custom }
 
 Java
 :   @@snip [CustomMediaTypesExampleTest.java](/docs/src/test/java/docs/http/javadsl/CustomMediaTypesExampleTest.java) { #application-custom-java }
@@ -443,12 +443,12 @@ in the right style / place.
 <a id="registeringcustomstatuscodes"></a>
 ## Registering Custom Status Codes
 
-Similarly to media types, Akka HTTP @scala[@scaladoc:[predefines](akka.http.scaladsl.model.StatusCodes$)]@java[@javadoc:[predefines](akka.http.javadsl.model.StatusCodes)]
+Similarly to media types, Apache Pekko HTTP @scala[@scaladoc:[predefines](akka.http.scaladsl.model.StatusCodes$)]@java[@javadoc:[predefines](akka.http.javadsl.model.StatusCodes)]
 well-known status codes, however sometimes you may need to use a custom one (or are forced to use an API which returns custom status codes).
 Similarly to the media types registration, you can register custom status codes by configuring @apidoc[ParserSettings] like this:
 
 Scala
-:   @@snip [CustomStatusCodesSpec.scala](/akka-http-tests/src/test/scala/akka/http/scaladsl/CustomStatusCodesSpec.scala) { #application-custom }
+:   @@snip [CustomStatusCodesSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/CustomStatusCodesSpec.scala) { #application-custom }
 
 Java
 :   @@snip [CustomStatusCodesExampleTest.java](/docs/src/test/java/docs/http/javadsl/CustomStatusCodesExampleTest.java) { #application-custom-java }
@@ -456,7 +456,7 @@ Java
 <a id="registeringcustommethod"></a>
 ## Registering Custom HTTP Method
 
-Akka HTTP also allows you to define custom HTTP methods, other than the well-known methods @scala[@scaladoc[predefined](akka.http.scaladsl.model.HttpMethods$)]@java[@javadoc[predefined](akka.http.javadsl.model.HttpMethods)] in Akka HTTP.
+Apache Pekko HTTP also allows you to define custom HTTP methods, other than the well-known methods @scala[@scaladoc[predefined](akka.http.scaladsl.model.HttpMethods$)]@java[@javadoc[predefined](akka.http.javadsl.model.HttpMethods)] in Apache Pekko HTTP.
 To use a custom HTTP method, you need to define it, and then add it to parser settings like below:
 
 Scala

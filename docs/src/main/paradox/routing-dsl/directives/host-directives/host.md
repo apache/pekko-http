@@ -7,7 +7,7 @@ in the request.
 
 ## Signature
 
-@@signature [HostDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/HostDirectives.scala) { #host }
+@@signature [HostDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/HostDirectives.scala) { #host }
 
 @@@
 
