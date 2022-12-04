@@ -6,9 +6,10 @@ package docs.http.scaladsl.server.directives
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
+import akka.util.ByteString
 import headers._
-import java.net.InetAddress
 
+import java.net.InetAddress
 import docs.CompileOnlySpec
 
 class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
@@ -121,7 +122,7 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // tests:
     def entityOfSize(size: Int) =
-      HttpEntity(ContentTypes.`text/plain(UTF-8)`, "0" * size)
+      HttpEntity(ContentTypes.`text/plain(UTF-8)`, List.fill(size)('0').mkString)
 
     Post("/abc", entityOfSize(500)) ~> route ~> check {
       status shouldEqual StatusCodes.OK
@@ -142,7 +143,7 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // tests:
     def entityOfSize(size: Int) =
-      HttpEntity(ContentTypes.`text/plain(UTF-8)`, "0" * size)
+      HttpEntity(ContentTypes.`text/plain(UTF-8)`, List.fill(size)('0').mkString)
 
     Post("/abc", entityOfSize(500)) ~> route ~> check {
       status shouldEqual StatusCodes.OK
@@ -167,7 +168,7 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // tests:
     def entityOfSize(size: Int) =
-      HttpEntity(ContentTypes.`text/plain(UTF-8)`, "0" * size)
+      HttpEntity(ContentTypes.`text/plain(UTF-8)`, List.fill(size)('0').mkString)
     Post("/abc", entityOfSize(800)) ~> route ~> check {
       status shouldEqual StatusCodes.OK
     }
@@ -189,7 +190,7 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // tests:
     def entityOfSize(size: Int) =
-      HttpEntity(ContentTypes.`text/plain(UTF-8)`, "0" * size)
+      HttpEntity(ContentTypes.`text/plain(UTF-8)`, List.fill(size)('0').mkString)
 
     // will work even if you have configured akka.http.parsing.max-content-length = 500
     Post("/abc", entityOfSize(501)) ~> route ~> check {
