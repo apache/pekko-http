@@ -29,7 +29,7 @@ It is possible to release a revised documentation to the already existing releas
 1. Make or cherry-pick updates to the docs
 1. Build documentation locally with:
     ```sh
-    sbt akka-docs/paradoxBrowse
+    sbt docs/paradoxBrowse
     ```
 1. Don't forget to commit and push
 1. Upload the docs:

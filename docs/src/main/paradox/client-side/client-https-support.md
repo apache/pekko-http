@@ -1,15 +1,15 @@
 # Client-Side HTTPS Support
 
-Akka HTTP supports TLS encryption on the client-side as well as on the @ref[server-side](../server-side/server-https-support.md).
+Apache Pekko HTTP supports TLS encryption on the client-side as well as on the @ref[server-side](../server-side/server-https-support.md).
 
 The central vehicle for configuring encryption is the @apidoc[HttpsConnectionContext], which can be created using
 the static methods on @apidoc[ConnectionContext]:
 
 Scala
-:  @@snip[ConnectionContext.scala](/akka-http-core/src/main/scala/akka/http/scaladsl/ConnectionContext.scala) { #https-client-context-creation }
+:  @@snip[ConnectionContext.scala](/pekko-http-core/src/main/scala/akka/http/scaladsl/ConnectionContext.scala) { #https-client-context-creation }
 
 Java
-:  @@snip [ConnectionContext.scala](/akka-http-core/src/main/scala/akka/http/javadsl/ConnectionContext.scala) { #https-client-context-creation }
+:  @@snip [ConnectionContext.scala](/pekko-http-core/src/main/scala/akka/http/javadsl/ConnectionContext.scala) { #https-client-context-creation }
 
 In addition to the `outgoingConnection`, `newHostConnectionPool` and `cachedHostConnectionPool` methods the
 @scala[@scaladoc[akka.http.scaladsl.Http](akka.http.scaladsl.Http$)]@java[@javadoc[akka.http.javadsl.Http](akka.http.javadsl.Http)]
@@ -56,7 +56,7 @@ The pattern of doing so is documented in the following sub-sections.
 
 ### Disabling hostname verification
 
-Hostname verification proves that the Akka HTTP client is actually communicating with the server it intended to
+Hostname verification proves that the Apache Pekko HTTP client is actually communicating with the server it intended to
 communicate with. Without this check a man-in-the-middle attack is possible. In the attack scenario, an alternative
 certificate would be presented which was issued for another host name. Checking the host name in the certificate
 against the host name the connection was opened against is therefore vital.

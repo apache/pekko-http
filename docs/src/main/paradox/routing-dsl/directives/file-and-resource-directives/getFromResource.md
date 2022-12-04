@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [FileAndResourceDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/FileAndResourceDirectives.scala) { #getFromResource }
+@@signature [FileAndResourceDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/FileAndResourceDirectives.scala) { #getFromResource }
 
 @@@
 

@@ -46,7 +46,7 @@ there are multiple such requests going on at the same time it will lead to starv
 progress anymore. Make sure to run a long-running request on a dedicated connection (using the
 @ref[Connection-Level Client-Side API](connection-level.md)) to prevent such a situation.
 
-## Why does this happen only with Akka Http and not with [insert other client]
+## Why does this happen only with Apache Pekko Http and not with [insert other client]
 
 Many Java HTTP clients don't set limits by default for some of the resources used. E.g. some clients will never queue a
 request but will just open another connection to the server if all the pooled connections are currently busy. However,

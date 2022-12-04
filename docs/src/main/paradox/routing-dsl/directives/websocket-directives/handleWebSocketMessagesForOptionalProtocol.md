@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [WebSocketDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/WebSocketDirectives.scala) { #handleWebSocketMessagesForOptionalProtocol }
+@@signature [WebSocketDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/WebSocketDirectives.scala) { #handleWebSocketMessagesForOptionalProtocol }
 
 @@@
 

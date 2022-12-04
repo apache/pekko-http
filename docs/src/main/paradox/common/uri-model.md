@@ -1,13 +1,13 @@
 ## The URI model
 
-Akka HTTP offers its own specialised @apidoc[Uri] model class which is tuned for both performance and idiomatic usage within
+Apache Pekko HTTP offers its own specialised @apidoc[Uri] model class which is tuned for both performance and idiomatic usage within
 other types of the HTTP model. For example, an @apidoc[HttpRequest]'s target URI is parsed into this type, where all character
 escaping and other URI specific semantics are applied.
 
 ### Parsing a URI string
 
 We follow [RFC 3986](https://tools.ietf.org/html/rfc3986#section-1.1.2) to implement the URI parsing rules.
-When you try to parse a URI string, Akka HTTP internally creates an instance of the @apidoc[Uri] class, which holds the modeled URI components inside.
+When you try to parse a URI string, Apache Pekko HTTP internally creates an instance of the @apidoc[Uri] class, which holds the modeled URI components inside.
 
 For example, the following creates an instance of a simple valid URI:
 
@@ -28,10 +28,10 @@ Below are some more examples of valid URI strings, and how you can construct a @
 @scala[,using `Uri.from()` method by passing `scheme`, `host`, `path` and `query` parameters].
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #valid-uri-examples }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #valid-uri-examples }
 
 Java
-:   @@snip [UriTest.scala](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #valid-uri-examples }
+:   @@snip [UriTest.scala](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #valid-uri-examples }
 
 For exact definitions of the parts of a URI, like `scheme`, `path` and `query` refer to [RFC 3986](https://tools.ietf.org/html/rfc3986#section-1.1.2).
 Here's a little overview:
@@ -50,10 +50,10 @@ For "special" characters in URI, you typically use percent encoding like below.
 Percent encoding is discussed in more detail in the @ref[Query String in URI](#query-string-in-uri) section.
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #dont-double-decode }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #dont-double-decode }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #dont-double-decode }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #dont-double-decode }
 
 
 #### Invalid URI strings and IllegalUriException
@@ -61,10 +61,10 @@ Java
 When an invalid URI string is passed to `Uri()` as below, an `IllegalUriException` is thrown.
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #illegal-cases-immediate-exception }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #illegal-cases-immediate-exception }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #illegal-scheme #illegal-userinfo #illegal-percent-encoding #illegal-path #illegal-path-with-control-char }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #illegal-scheme #illegal-userinfo #illegal-percent-encoding #illegal-path #illegal-path-with-control-char }
 
 #### Directives to extract URI components
 
@@ -96,10 +96,10 @@ Then, when you call the `query()` method, the query string is parsed from the ra
 You can add query parameters with @apidoc[Uri] class's @scala[`withQuery()` method]@java[`Uri::query()` method]
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #create-uri-with-query }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #create-uri-with-query }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #create-uri-with-query }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #create-uri-with-query }
 
 The below code illustrates how valid query strings are parsed.
 Especially, you can check how percent encoding is used and how special characters like `+` and `;` are parsed.
@@ -109,17 +109,17 @@ The `mode` parameter to `Query()` and `Uri.query()` is discussed in @ref[Strict 
 @@@
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-definition }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-definition }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-definition }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-definition }
 
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-mode }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-mode }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-mode }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-mode }
 
 Note that:
 
@@ -141,25 +141,25 @@ some special characters like "/" and "?" are allowed inside a query string, with
 "/" and "?" are commonly used when you have a URI whose query parameter has another URI.
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-without-percent-encode }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-without-percent-encode }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-without-percent-encode }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-without-percent-encode }
 
 However, some other special characters can cause `IllegalUriException` without percent encoding as follows.
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-mode-exception-1 }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-mode-exception-1 }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-mode-exception-1 }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-mode-exception-1 }
 
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-mode-exception-2 }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-mode-exception-2 }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-mode-exception-2 }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-mode-exception-2 }
 
 #### Strict and Relaxed Mode
 
@@ -167,34 +167,34 @@ The `Uri.query()` method and `Query()` take a parameter `mode`, which is either 
 Switching the mode gives different behavior on parsing some special characters in URI.
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-relaxed-mode }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-relaxed-mode }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-relaxed-definition }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-relaxed-definition }
 
 The below two cases threw `IllegalUriException` when you specified the `Strict` mode,
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-mode-exception-1 }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-strict-mode-exception-1 }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-mode-exception-1 #query-strict-mode-exception-2 }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-strict-mode-exception-1 #query-strict-mode-exception-2 }
 
 but the `Relaxed` mode parses them as they are.
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-relaxed-mode-success }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-relaxed-mode-success }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-relaxed-mode-success }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-relaxed-mode-success }
 
 However, even with the `Relaxed` mode, there are still invalid special characters which require percent encoding.
 
 Scala
-:   @@snip [UriSpec.scala](/akka-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-relaxed-mode-exception }
+:   @@snip [UriSpec.scala](/pekko-http-core/src/test/scala/akka/http/scaladsl/model/UriSpec.scala) { #query-relaxed-mode-exception }
 
 Java
-:   @@snip [UriTest.java](/akka-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-relaxed-mode-exception-1 }
+:   @@snip [UriTest.java](/pekko-http-core/src/test/java/akka/http/javadsl/model/UriTest.java) { #query-relaxed-mode-exception-1 }
 
 Other than specifying the `mode` in the parameters, like when using directives, you can specify the `mode` in your configuration as follows.
 

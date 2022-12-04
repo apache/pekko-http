@@ -1,6 +1,6 @@
 # Routing DSL style guide
 
-Akka HTTP's routing DSL is at the center of most Akka HTTP-based servers. It's where the incoming requests diverge into the different parts of the implemented services.
+Apache Pekko HTTP's routing DSL is at the center of most Apache Pekko HTTP-based servers. It's where the incoming requests diverge into the different parts of the implemented services.
 
 Keeping all routing in one big structure will easily become hard to grasp and maintain. This page gives a few hints for how you may want to break down the routing logic.
 

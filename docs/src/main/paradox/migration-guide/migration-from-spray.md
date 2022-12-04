@@ -1,7 +1,7 @@
 # Migration Guide from Spray
 
-Akka HTTP is the successor for spray. With the first non-experimental release of Akka HTTP, spray has reached its
-end-of-life. Akka HTTP is a reimplementation of HTTP based on akka-stream (former spray-can) which adds streaming
+Apache Pekko HTTP is the successor for spray. With the first non-experimental release of Apache Pekko HTTP, spray has reached its
+end-of-life. Apache Pekko HTTP is a reimplementation of HTTP based on pekko-stream (former spray-can) which adds streaming
 support on all levels. The popular high-level routing DSL (former spray-routing) has mostly been kept but was made
 more consistent and simplified where possible. While underlyings have changed a lot, many of the high-level
 features and syntax of the routing DSL have only changed superficially so that code can hopefully be converted with
@@ -11,7 +11,7 @@ little effort.
 
 ### Streams everywhere
 
-Akka HTTP offers an API based on streams where spray offered an API based on actor messaging. This has important consequences.
+Apache Pekko HTTP offers an API based on streams where spray offered an API based on actor messaging. This has important consequences.
 
 Streaming support is needed to handle request and response entities (or bodies) in a streaming fashion, i.e. being
 able to access the incoming bytes while they come in from the network without having to buffer a potentially big request
@@ -23,22 +23,22 @@ In spray, you could configure spray-can to send out `HttpRequestPart` and `HttpR
 or a response in a streaming fashion. The default case was for spray to collect the full entity in memory and send it out
 as a @apidoc[akka.util.ByteString] as part of the request or response entity object.
 
-In Akka HTTP, handling streaming data is mandatory. When you receive a @apidoc[HttpRequest] on the server-side or an @apidoc[HttpResponse],
+In Apache Pekko HTTP, handling streaming data is mandatory. When you receive a @apidoc[HttpRequest] on the server-side or an @apidoc[HttpResponse],
 in the default case it will contain a streamed entity as the `entity` field *which you are required to consume*.
 Otherwise, a connection might be stuck (at least until timeouts kick in).
 See @ref[Implications of the streaming nature of Request/Response Entities](../implications-of-streaming-http-entity.md).
 
-In the implementation, Akka HTTP makes heavy use of streams as well with the occasional fallback to actors.
+In the implementation, Apache Pekko HTTP makes heavy use of streams as well with the occasional fallback to actors.
 
 ### New module structure
 
 The number of modules has been reduced. Here's an approximate mapping from spray modules to new modules:
 
- * spray-util, spray-http, spray-can => akka-http-core
- * spray-routing => akka-http
+ * spray-util, spray-http, spray-can => pekko-http-core
+ * spray-routing => pekko-http
  * spray-client => parts of high-level client support is now provided via `Http().singleRequest`, other is not yet
    implemented (see also [#113](https://github.com/akka/akka-http/issues/113))
- * spray-caching => akka-http-caching (since version 10.0.11, more information here: @ref[Documentation](../common/caching.md))
+ * spray-caching => pekko-http-caching (since version 10.0.11, more information here: @ref[Documentation](../common/caching.md))
 
 ### Package name changes
 
@@ -50,14 +50,14 @@ Classes can now be found in new packages:
 
 ### Routing DSL not based on shapeless any more
 
-To simplify using Akka HTTP together with other libraries that require shapeless, the routing DSL in Akka HTTP does
+To simplify using Pekko HTTP together with other libraries that require shapeless, the routing DSL in Apache Pekko HTTP does
 not depend on shapeless any more. Instead, we support a light-weight replacement that models heterogeneous lists with
 tuples. This will not affect you as long as you haven't written any generic directives. The implicit magic in the
 background that powers directives will - in user code - work as before.
 
 Internally, the type aliases for `DirectiveX` have changed:
 
-|                      | spray                         | Akka HTTP                   |
+|                      | spray                         | Pekko HTTP                  |
 |----------------------|-------------------------------|-----------------------------|
 | `Directive0`         | `Directive[HNil]`             | `Directive[Tuple0]`         |
 | `Directive1[T]`      | `Directive[T :: HNil]`        | `Directive[Tuple1[T]]`      |
@@ -76,9 +76,9 @@ Route type has changed from `Route = RequestContext => Unit` to `Route = Request
 Which means that now we must complete the Request inside the controller and we can't simply pass the request to another Actor and complete it there. This has been done intentionally, because in Spray it was easy to forget to `complete` requests but the code would still compile.
 
 The following article mentions a few ways for us to complete the request based on processing outside the controller:
-[CodeMonkey blog - Actor per Request with Akka HTTP](https://markatta.com/codemonkey/blog/2016/08/03/actor-per-request-with-akka-http/)
+[CodeMonkey blog - Actor per Request with Apache Pekko HTTP](https://markatta.com/codemonkey/blog/2016/08/03/actor-per-request-with-akka-http/)
 
-This article was written by Johan Andrén, a member of the akka-http team.
+This article was written by Johan Andrén, a member of the Lightbend team.
 
 ### Changes in Marshalling
 
@@ -100,7 +100,7 @@ Marshaller.withFixedContentType(`application/json`) { obj =>
 }
 ```
 
-Akka HTTP marshallers support content negotiation, now it's not necessary to specify content type
+Apache Pekko HTTP marshallers support content negotiation, now it's not necessary to specify content type
 when creating one “super” marshaller from other marshallers:
 
 Before:
@@ -126,7 +126,7 @@ Marshaller.oneOf(
 
 ### Changes in Unmarshalling
 
-Akka Http contains a set of predefined unmarshallers. This means that scala code like this:
+Apache Pekko HTTP contains a set of predefined unmarshallers. This means that scala code like this:
 
 ```scala
 Unmarshaller[Entity](`application/json`) {
@@ -273,10 +273,10 @@ Http().newServerAt("0.0.0.0", port = 8080).bind(routes)
 
 ### Other removed features
 
- * `respondWithStatus` also known as `overrideStatusCode` has not been forward ported to Akka HTTP,
+ * `respondWithStatus` also known as `overrideStatusCode` has not been forward ported to Apache Pekko HTTP,
 as it has been seen mostly as an anti-pattern. More information here: <https://github.com/akka/akka/issues/18626>
- * `respondWithMediaType` was considered an anti-pattern in spray and is not ported to Akka HTTP.
-Instead users should rely on content type negotiation as Akka HTTP implements it.
+ * `respondWithMediaType` was considered an anti-pattern in spray and is not ported to Apache Pekko HTTP.
+Instead users should rely on content type negotiation as Apache Pekko HTTP implements it.
 More information here: [#190](https://github.com/akka/akka-http/issues/190)
  * @ref[Registering Custom Media Types](../common/http-model.md#registeringcustommediatypes) changed from Spray in order not to rely on global state.
  * HTTP Client proxy support, see [#115 Client proxy support for HTTP](https://github.com/akka/akka-http/issues/115) and [#192 Client proxy support for HTTPS](https://github.com/akka/akka-http/issues/192) tickets for details.

@@ -151,7 +151,7 @@ object ValidatePullRequest extends AutoPlugin {
         try {
           import scala.collection.JavaConverters._
           val gh = GitHubBuilder.fromEnvironment().withOAuthToken(GitHub.envTokenOrThrow).build()
-          val comments = gh.getRepository("akka/akka-http").getIssue(prId).getComments.asScala
+          val comments = gh.getRepository("apache/incubator-pekko-http").getIssue(prId).getComments.asScala
 
           def triggersBuildAll(c: GHIssueComment): Boolean = buildAllMagicPhrase.findFirstIn(c.getBody).isDefined
           comments.collectFirst {
@@ -176,7 +176,7 @@ object ValidatePullRequest extends AutoPlugin {
         diffOutput
           .map(l => l.trim)
           .filter(l =>
-            l.startsWith("akka-") ||
+            l.startsWith("pekko-") ||
             l.startsWith("docs") ||
             BuildFilesAndDirectories.exists(l startsWith))
           .map(l => l.takeWhile(_ != '/'))
@@ -189,7 +189,7 @@ object ValidatePullRequest extends AutoPlugin {
           val dirtyDirectories = statusOutput
             .map(l => l.trim.dropWhile(_ != ' ').drop(1))
             .map(_.takeWhile(_ != '/'))
-            .filter(dir => dir.startsWith("akka-") || dir.startsWith("docs") || BuildFilesAndDirectories.contains(dir))
+            .filter(dir => dir.startsWith("pekko-") || dir.startsWith("docs") || BuildFilesAndDirectories.contains(dir))
             .toSet
           log.info(
             "Detected uncommitted changes in directories (including in dependency analysis): " + dirtyDirectories.mkString(

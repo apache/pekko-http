@@ -2,7 +2,7 @@
 
 In the chapter about constructing @ref[Routes](routes.md) the @scala[`~` operator]@java[`RouteDirectives.route()` method] was introduced, which connects two or more routes in a way
 that allows the next specified route to get a go at a request if the first route "rejected" it. The concept of "rejections" is
-used by Akka HTTP for maintaining a more functional overall architecture and in order to be able to properly
+used by Apache Pekko HTTP for maintaining a more functional overall architecture and in order to be able to properly
 handle all kinds of error scenarios.
 
 When a filtering directive, like the @ref[get](directives/method-directives/get.md) directive, cannot let the request pass through to its inner route because
@@ -22,7 +22,7 @@ and handle any rejection.
 ## Predefined Rejections
 
 A rejection encapsulates a specific reason why a route was not able to handle a request. It is modeled as an object of
-type @apidoc[Rejection]. Akka HTTP comes with a set of @scala[@scaladoc[predefined rejections](akka.http.scaladsl.server.Rejection)]@java[@javadoc[predefined rejections](akka.http.javadsl.server.Rejections)], which are used by the many
+type @apidoc[Rejection]. Apache Pekko HTTP comes with a set of @scala[@scaladoc[predefined rejections](akka.http.scaladsl.server.Rejection)]@java[@javadoc[predefined rejections](akka.http.javadsl.server.Rejections)], which are used by the many
 @ref[predefined directives](directives/alphabetically.md).
 
 Rejections are gathered up over the course of a Route evaluation and finally converted to @apidoc[HttpResponse] replies by
@@ -78,7 +78,7 @@ So, for the example above the `RejectionHandler` will be presented with only one
 
 Internally rejections are stored in an immutable list, so you might ask yourself what the semantics of
 an empty rejection list are. In fact, empty rejection lists have well defined semantics. They signal that a request was
-not handled because the respective resource could not be found. Akka HTTP reserves the special status of "empty
+not handled because the respective resource could not be found. Apache Pekko HTTP reserves the special status of "empty
 rejection" to this most common failure a service is likely to produce.
 
 So, for example, if the @ref[path](directives/path-directives/path.md) directive rejects a request it does so with an empty rejection list. The
@@ -95,7 +95,7 @@ Scala
 Java
 :  @@snip [RejectionHandlerExamplesTest.java](/docs/src/test/java/docs/http/javadsl/server/RejectionHandlerExamplesTest.java) { #custom-handler-example-java }
 
-The easiest way to construct a `RejectionHandler` is with `RejectionHandler.newBuilder()` that Akka HTTP provides.
+The easiest way to construct a `RejectionHandler` is with `RejectionHandler.newBuilder()` that Apache Pekko HTTP provides.
 After having created a new `Builder` instance
 you can attach handling logic for certain types of rejections through three helper methods:
 

@@ -1,7 +1,7 @@
 # Client-Side HTTP/2 (Preview)
 
 @@@ warning
-Client-Side HTTP/2 support in akka-http is currently available as a preview.
+Client-Side HTTP/2 support in pekko-http is currently available as a preview.
 This means it is ready to be evaluated, but the APIs and behavior are likely to change.
 @@@
 
@@ -14,12 +14,12 @@ unexpected when coming from a background with non-"streaming first" HTTP Clients
 
 ## Create the client 
 
-There are three mechanisms for a client to establish an HTTP/2 connection. Akka HTTP supports:
+There are three mechanisms for a client to establish an HTTP/2 connection. Apache Pekko HTTP supports:
 
  - HTTP/2 over TLS 
  - HTTP/2 over a plain TCP connection ("h2c with prior knowledge")
 
-Akka HTTP doesn't support:
+Apache Pekko HTTP doesn't support:
 
  - HTTP `Upgrade` mechanism
 
@@ -37,7 +37,7 @@ HTTP/2 over TLS needs [Application-Layer Protocol Negotiation (ALPN)](https://en
 to negotiate whether both client and server support HTTP/2. The JVM provides ALPN support starting from JDK 8u252.
 Make sure to use at least that version.
 
-Akka HTTP does not currently support protocol negotiation to fall back to HTTP/1.1 for this API. When the server does not support HTTP/2, the stream will fail.
+Apache Pekko HTTP does not currently support protocol negotiation to fall back to HTTP/1.1 for this API. When the server does not support HTTP/2, the stream will fail.
 ### h2c with prior knowledge
 
 The other option is to connect and start communicating in HTTP/2 immediately. You must know beforehand the target server
@@ -54,14 +54,14 @@ Java
 
 ### HTTP Upgrade mechanism
 
-The Akka HTTP client doesn't support HTTP/1 to HTTP/2 negotiation over plaintext using the `Upgrade` mechanism.
+The Apache Pekko HTTP client doesn't support HTTP/1 to HTTP/2 negotiation over plaintext using the `Upgrade` mechanism.
 
 ## Request-response ordering
 
 For HTTP/2 connections the responses are not guaranteed to arrive in the same order that the requests were emitted to
 the server, for example a request with a quickly available response may outrun a previous request that the server is
 slower to respond to. For HTTP/2 it is therefore important to have a way to correlate the response with the request
-it was made for. This can be achieved through a @apidoc[RequestResponseAssociation] set on the request, Akka HTTP will pass
+it was made for. This can be achieved through a @apidoc[RequestResponseAssociation] set on the request, Apache Pekko HTTP will pass
 such association objects on to the response.
 
 In this sample the built-in @scala[`akka.http.scaladsl.model.ResponsePromise`]@java[`akka.http.javadsl.model.ResponseFuture`] `RequestResponseAssociation`  is used to return

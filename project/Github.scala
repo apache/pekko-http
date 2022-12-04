@@ -12,6 +12,6 @@ object GitHub {
 
   def url(v: String, isSnapshot: Boolean): String = {
     val branch = if (isSnapshot) "main" else "v" + v
-    "https://github.com/akka/akka-http/tree/" + branch
+    "https://github.com/apache/incubator-pekko-http/tree/" + branch
   }
 }

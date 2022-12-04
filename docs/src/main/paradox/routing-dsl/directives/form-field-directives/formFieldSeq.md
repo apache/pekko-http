@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [FormFieldDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/FormFieldDirectives.scala) { #formFieldSeq }
+@@signature [FormFieldDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/FormFieldDirectives.scala) { #formFieldSeq }
 
 @@@
 

@@ -46,7 +46,7 @@ If you have questions about the contribution process or discuss specific issues,
 [stackoverflow-badge]: https://img.shields.io/badge/stackoverflow%3A-akka--http-blue.svg?style=flat-square
 [stackoverflow]:       https://stackoverflow.com/questions/tagged/akka-http
 [github-issues-badge]: https://img.shields.io/badge/github%3A-issues-blue.svg?style=flat-square
-[github-issues]:       https://github.com/akka/akka-http/issues
+[github-issues]:       https://github.com/apache/incubator-pekko-http/issues
 [scaladex-badge]:      https://index.scala-lang.org/count.svg?q=dependencies:akka/akka-http*&subject=scaladex:&color=blue&style=flat-square
 [scaladex-projects]:   https://index.scala-lang.org/search?q=dependencies:akka/akka-http*
 -->
@@ -71,4 +71,4 @@ Joining the extended team in such form gives you, in addition to street-cred, of
 License
 -------
 
-Pekko HTTP is Open Source and available under the Apache 2 License.
+Apache Pekko HTTP is Open Source and available under the Apache 2 License.

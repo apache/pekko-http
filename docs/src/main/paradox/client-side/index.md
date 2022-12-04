@@ -1,7 +1,7 @@
 # 5. Client API
 
-All client-side functionality of Akka HTTP, for consuming HTTP-based services offered by other endpoints, is currently
-provided by the `akka-http-core` module.
+All client-side functionality of Apache Pekko HTTP, for consuming HTTP-based services offered by other endpoints, is currently
+provided by the `pekko-http-core` module.
 
 It is recommended to first read the @ref[Implications of the streaming nature of Request/Response Entities](../implications-of-streaming-http-entity.md) section,
 as it explains the underlying full-stack streaming concepts, which may be unexpected when coming
@@ -12,10 +12,10 @@ All of the APIs deal with @ref[`HttpRequest` and `HttpResponse`](request-and-res
 Depending on your application's specific needs you can choose from three different API levels:
 
 @ref[Request-Level Client-Side API](request-level.md)
-: for letting Akka HTTP perform all connection management. Recommended for most usages.
+: for letting Apache Pekko HTTP perform all connection management. Recommended for most usages.
 
 @ref[Host-Level Client-Side API](host-level.md)
-: for letting Akka HTTP manage a connection-pool to *one specific* host/port endpoint. Recommended when
+: for letting Apache Pekko HTTP manage a connection-pool to *one specific* host/port endpoint. Recommended when
   the user can supply a @apidoc[Source[HttpRequest, \_]] with requests to run against a single host
   over multiple pooled connections.
 
@@ -24,7 +24,7 @@ Depending on your application's specific needs you can choose from three differe
   recommended for particular use cases.
 
 You can interact with different API levels at the same time and, independently of which API level you choose,
-Akka HTTP will happily handle many thousand concurrent connections to a single or many different hosts.
+Apache Pekko HTTP will happily handle many thousand concurrent connections to a single or many different hosts.
 
 @@toc { depth=3 }
 
