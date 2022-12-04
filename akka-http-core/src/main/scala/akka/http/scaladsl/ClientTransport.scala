@@ -26,7 +26,8 @@ import scala.concurrent.{ ExecutionContext, Future }
 // #client-transport-definition
 @ApiMayChange
 trait ClientTransport {
-  def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]]
+  def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+      implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]]
 }
 // #client-transport-definition
 
@@ -38,7 +39,8 @@ object ClientTransport {
   val TCP: ClientTransport = TCPTransport
 
   private case object TCPTransport extends ClientTransport {
-    def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]] =
+    def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+        implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]] =
       // The InetSocketAddress representing the remote address must be created unresolved because akka.io.TcpOutgoingConnection will
       // not attempt DNS resolution if the InetSocketAddress is already resolved. That behavior is problematic when it comes to
       // connection pools since it means that new connections opened by the pool in the future can end up using a stale IP address.
@@ -46,10 +48,12 @@ object ClientTransport {
       connectToAddress(InetSocketAddress.createUnresolved(host, port), settings)
   }
 
-  private def connectToAddress(address: InetSocketAddress, settings: ClientConnectionSettings)(implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]] = {
+  private def connectToAddress(address: InetSocketAddress, settings: ClientConnectionSettings)(
+      implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]] = {
     Tcp(system.classicSystem).outgoingConnection(address, settings.localAddress,
       settings.socketOptions, halfClose = true, settings.connectingTimeout, settings.idleTimeout)
-      .mapMaterializedValue(_.map(tcpConn => OutgoingConnection(tcpConn.localAddress, tcpConn.remoteAddress))(system.dispatcher))
+      .mapMaterializedValue(_.map(tcpConn => OutgoingConnection(tcpConn.localAddress, tcpConn.remoteAddress))(
+        system.dispatcher))
   }
 
   /**
@@ -106,18 +110,24 @@ object ClientTransport {
   def withCustomResolver(lookup: (String, Int) => Future[InetSocketAddress]): ClientTransport =
     ClientTransportWithCustomResolver(lookup)
 
-  private case class HttpsProxyTransport(proxyAddress: InetSocketAddress, underlyingTransport: ClientTransport = TCP, proxyCredentials: Option[HttpCredentials] = None) extends ClientTransport {
-    def this(proxyAddress: InetSocketAddress, underlyingTransport: ClientTransport) = this(proxyAddress, underlyingTransport, None)
+  private case class HttpsProxyTransport(proxyAddress: InetSocketAddress, underlyingTransport: ClientTransport = TCP,
+      proxyCredentials: Option[HttpCredentials] = None) extends ClientTransport {
+    def this(proxyAddress: InetSocketAddress, underlyingTransport: ClientTransport) =
+      this(proxyAddress, underlyingTransport, None)
 
-    def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]] =
+    def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+        implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]] =
       HttpsProxyGraphStage(host, port, settings, proxyCredentials)
         .joinMat(underlyingTransport.connectTo(proxyAddress.getHostString, proxyAddress.getPort, settings))(Keep.right)
         // on the HTTP level we want to see the final remote address in the `OutgoingConnection`
-        .mapMaterializedValue(_.map(_.copy(remoteAddress = InetSocketAddress.createUnresolved(host, port)))(system.dispatcher))
+        .mapMaterializedValue(_.map(_.copy(remoteAddress = InetSocketAddress.createUnresolved(host, port)))(
+          system.dispatcher))
   }
 
-  private case class ClientTransportWithCustomResolver(lookup: (String, Int) => Future[InetSocketAddress]) extends ClientTransport {
-    override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] = {
+  private case class ClientTransportWithCustomResolver(
+      lookup: (String, Int) => Future[InetSocketAddress]) extends ClientTransport {
+    override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+        implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] = {
       implicit val ec: ExecutionContext = system.dispatcher
 
       initFutureFlow { () =>
@@ -128,14 +138,14 @@ object ClientTransport {
     }
 
     // TODO: replace with lazyFutureFlow when support for Akka 2.5.x is dropped
-    private def initFutureFlow[M](flowFactory: () => Future[Flow[ByteString, ByteString, M]])(implicit ec: ExecutionContext): Flow[ByteString, ByteString, Future[M]] = {
+    private def initFutureFlow[M](flowFactory: () => Future[Flow[ByteString, ByteString, M]])(
+        implicit ec: ExecutionContext): Flow[ByteString, ByteString, Future[M]] = {
       Flow[ByteString].prepend(Source.single(ByteString()))
         .viaMat(
           Flow.lazyInitAsync(flowFactory)
             .mapMaterializedValue(_.map(_.get))
             // buffer needed because HTTP client expects demand before it does request (which is reasonable for buffered TCP connections)
-            .buffer(1, OverflowStrategy.backpressure)
-        )(Keep.right)
+            .buffer(1, OverflowStrategy.backpressure))(Keep.right)
     }
   }
 }

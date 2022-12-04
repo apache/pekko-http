@@ -4,7 +4,7 @@
 
 package akka.http.javadsl.marshalling
 
-import java.util.{ Optional, function }
+import java.util.{ function, Optional }
 
 import akka.annotation.InternalApi
 import akka.http.impl.util.JavaMapping
@@ -22,7 +22,8 @@ object Marshaller {
 
   import JavaMapping.Implicits._
 
-  def fromScala[A, B](scalaMarshaller: marshalling.Marshaller[A, B]): Marshaller[A, B] = new Marshaller()(scalaMarshaller)
+  def fromScala[A, B](scalaMarshaller: marshalling.Marshaller[A, B]): Marshaller[A, B] =
+    new Marshaller()(scalaMarshaller)
 
   def toOption[T](opt: Optional[T]): Option[T] = if (opt.isPresent) Some(opt.get()) else None
 
@@ -40,7 +41,8 @@ object Marshaller {
    * Marshaller is covariant in B, i.e. if B2 is a subclass of B1,
    * then Marshaller[X,B2] is OK to use where Marshaller[X,B1] is expected.
    */
-  def downcast[A, B1, B2 <: B1](m: Marshaller[A, B2], target: Class[B1]): Marshaller[A, B1] = m.asInstanceOf[Marshaller[A, B1]]
+  def downcast[A, B1, B2 <: B1](m: Marshaller[A, B2], target: Class[B1]): Marshaller[A, B1] =
+    m.asInstanceOf[Marshaller[A, B1]]
 
   def stringToEntity: Marshaller[String, RequestEntity] = fromScala(marshalling.Marshaller.StringMarshaller)
 
@@ -64,12 +66,15 @@ object Marshaller {
   }
 
   // TODO make sure these are actually usable in a sane way
-  def wrapEntity[A, C](f: function.BiFunction[ExecutionContext, C, A], m: Marshaller[A, RequestEntity], mediaType: MediaType): Marshaller[C, RequestEntity] = {
+  def wrapEntity[A, C](f: function.BiFunction[ExecutionContext, C, A], m: Marshaller[A, RequestEntity],
+      mediaType: MediaType): Marshaller[C, RequestEntity] = {
     val scalaMarshaller = m.asScalaCastOutput
-    fromScala(scalaMarshaller.wrapWithEC(mediaType.asScala) { ctx => (c: C) => f(ctx, c) }(ContentTypeOverrider.forEntity))
+    fromScala(scalaMarshaller.wrapWithEC(mediaType.asScala) { ctx => (c: C) => f(ctx, c) }(
+      ContentTypeOverrider.forEntity))
   }
 
-  def wrapEntity[A, C, E <: RequestEntity](f: function.Function[C, A], m: Marshaller[A, E], mediaType: MediaType): Marshaller[C, RequestEntity] = {
+  def wrapEntity[A, C, E <: RequestEntity](
+      f: function.Function[C, A], m: Marshaller[A, E], mediaType: MediaType): Marshaller[C, RequestEntity] = {
     val scalaMarshaller = m.asScalaCastOutput
     fromScala(scalaMarshaller.wrap(mediaType.asScala)((in: C) => f.apply(in))(ContentTypeOverrider.forEntity))
   }
@@ -82,11 +87,13 @@ object Marshaller {
     fromScala(marshalling.Marshaller.fromToEntityMarshaller[A](status.asScala)(m.asScalaCastOutput))
   }
 
-  def entityToResponse[A](status: StatusCode, headers: java.lang.Iterable[HttpHeader], m: Marshaller[A, _ <: RequestEntity]): Marshaller[A, HttpResponse] = {
+  def entityToResponse[A](status: StatusCode, headers: java.lang.Iterable[HttpHeader],
+      m: Marshaller[A, _ <: RequestEntity]): Marshaller[A, HttpResponse] = {
     fromScala(marshalling.Marshaller.fromToEntityMarshaller[A](status.asScala, headers.asScala)(m.asScalaCastOutput))
   }
 
-  def entityToOKResponse[A](headers: java.lang.Iterable[HttpHeader], m: Marshaller[A, _ <: RequestEntity]): Marshaller[A, HttpResponse] = {
+  def entityToOKResponse[A](
+      headers: java.lang.Iterable[HttpHeader], m: Marshaller[A, _ <: RequestEntity]): Marshaller[A, HttpResponse] = {
     fromScala(marshalling.Marshaller.fromToEntityMarshaller[A](headers = headers.asScala)(m.asScalaCastOutput))
   }
 
@@ -140,7 +147,8 @@ object Marshaller {
    * however in ticket as discussed in ticket https://github.com/akka/akka-http/issues/243 it MAY be
    * changed in later versions of Akka HTTP.
    */
-  def oneOf[A, B](m1: Marshaller[A, B], m2: Marshaller[A, B], m3: Marshaller[A, B], m4: Marshaller[A, B]): Marshaller[A, B] = {
+  def oneOf[A, B](
+      m1: Marshaller[A, B], m2: Marshaller[A, B], m3: Marshaller[A, B], m4: Marshaller[A, B]): Marshaller[A, B] = {
     fromScala(marshalling.Marshaller.oneOf(m1.asScala, m2.asScala, m3.asScala, m4.asScala))
   }
 
@@ -153,7 +161,8 @@ object Marshaller {
    * however in ticket as discussed in ticket https://github.com/akka/akka-http/issues/243 it MAY be
    * changed in later versions of Akka HTTP.
    */
-  def oneOf[A, B](m1: Marshaller[A, B], m2: Marshaller[A, B], m3: Marshaller[A, B], m4: Marshaller[A, B], m5: Marshaller[A, B]): Marshaller[A, B] = {
+  def oneOf[A, B](m1: Marshaller[A, B], m2: Marshaller[A, B], m3: Marshaller[A, B], m4: Marshaller[A, B],
+      m5: Marshaller[A, B]): Marshaller[A, B] = {
     fromScala(marshalling.Marshaller.oneOf(m1.asScala, m2.asScala, m3.asScala, m4.asScala, m5.asScala))
   }
 
@@ -166,7 +175,8 @@ object Marshaller {
   /**
    * Helper for creating a synchronous [[Marshaller]] to content with a negotiable charset from the given function.
    */
-  def withOpenCharset[A, B](mediaType: MediaType.WithOpenCharset, f: java.util.function.BiFunction[A, HttpCharset, B]): Marshaller[A, B] =
+  def withOpenCharset[A, B](
+      mediaType: MediaType.WithOpenCharset, f: java.util.function.BiFunction[A, HttpCharset, B]): Marshaller[A, B] =
     fromScala(marshalling.Marshaller.withOpenCharset(mediaType.asScala)(f.apply))
 
   /**
@@ -175,10 +185,12 @@ object Marshaller {
   def opaque[A, B](f: function.Function[A, B]): Marshaller[A, B] =
     fromScala(scaladsl.marshalling.Marshaller.opaque[A, B] { a => f.apply(a) })
 
-  implicit def asScalaToResponseMarshaller[T](m: Marshaller[T, akka.http.javadsl.model.HttpResponse]): ToResponseMarshaller[T] =
+  implicit def asScalaToResponseMarshaller[T](
+      m: Marshaller[T, akka.http.javadsl.model.HttpResponse]): ToResponseMarshaller[T] =
     m.asScala.map(_.asScala)
 
-  implicit def asScalaEntityMarshaller[T](m: Marshaller[T, akka.http.javadsl.model.RequestEntity]): akka.http.scaladsl.marshalling.Marshaller[T, akka.http.scaladsl.model.RequestEntity] =
+  implicit def asScalaEntityMarshaller[T](m: Marshaller[T, akka.http.javadsl.model.RequestEntity])
+      : akka.http.scaladsl.marshalling.Marshaller[T, akka.http.scaladsl.model.RequestEntity] =
     m.asScala.map(_.asScala)
 }
 
@@ -188,7 +200,8 @@ class Marshaller[-A, +B] private (implicit val asScala: marshalling.Marshaller[A
   /** INTERNAL API: involves unsafe cast (however is very fast) */
   // TODO would be nice to not need this special case
   @InternalApi
-  private[akka] def asScalaCastOutput[C]: marshalling.Marshaller[A, C] = asScala.asInstanceOf[marshalling.Marshaller[A, C]]
+  private[akka] def asScalaCastOutput[C]: marshalling.Marshaller[A, C] =
+    asScala.asInstanceOf[marshalling.Marshaller[A, C]]
 
   def map[C](f: function.Function[B @uncheckedVariance, C]): Marshaller[A, C] = fromScala(asScala.map(f.apply))
 

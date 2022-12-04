@@ -34,12 +34,13 @@ object Http2Spec {
   implicit val system: ActorSystem = ActorSystem()
 
   {
-    val asyncHandler: HttpRequest => Future[HttpResponse] = _ => Future.successful(HttpResponse(status = StatusCodes.ImATeapot))
+    val asyncHandler: HttpRequest => Future[HttpResponse] =
+      _ => Future.successful(HttpResponse(status = StatusCodes.ImATeapot))
     val httpsServerContext: HttpsConnectionContext = ExampleHttpContexts.exampleServerContext
 
-    //#bindAndHandleSecure
+    // #bindAndHandleSecure
     Http().newServerAt(interface = "localhost", port = 8443).enableHttps(httpsServerContext).bind(asyncHandler)
-    //#bindAndHandleSecure
+    // #bindAndHandleSecure
   }
 
   {
@@ -48,22 +49,22 @@ object Http2Spec {
 
     val handler: HttpRequest => Future[HttpResponse] =
       Route.toFunction(complete(StatusCodes.ImATeapot))
-    //#bindAndHandlePlain
+    // #bindAndHandlePlain
     Http().newServerAt("localhost", 8080).bind(handler)
-    //#bindAndHandlePlain
+    // #bindAndHandlePlain
   }
 
   {
-    //#http2Client
+    // #http2Client
     Http().connectionTo("localhost").toPort(8443).http2()
-    //#http2Client
-    //#http2ClientWithPriorKnowledge
+    // #http2Client
+    // #http2ClientWithPriorKnowledge
     Http().connectionTo("localhost").toPort(8080).http2WithPriorKnowledge()
-    //#http2ClientWithPriorKnowledge
+    // #http2ClientWithPriorKnowledge
   }
 
   {
-    //#trailingHeaders
+    // #trailingHeaders
     import akka.http.scaladsl.model.ContentTypes
     import akka.http.scaladsl.model.HttpEntity
     import akka.http.scaladsl.model.Trailer
@@ -73,6 +74,6 @@ object Http2Spec {
 
     HttpResponse(StatusCodes.OK, entity = HttpEntity.Strict(ContentTypes.`text/plain(UTF-8)`, ByteString("Tralala")))
       .addAttribute(trailer, Trailer(RawHeader("name", "value")))
-    //#trailingHeaders
+    // #trailingHeaders
   }
 }

@@ -19,7 +19,8 @@ class ConnectionPoolSettingsSpec extends AkkaSpec {
           akka.http.client.user-agent-header = "serva/0.0"
         """)
 
-      settings.connectionSettings.userAgentHeader shouldEqual Some(`User-Agent`.parseFromValueString("serva/0.0").right.get)
+      settings.connectionSettings.userAgentHeader shouldEqual Some(
+        `User-Agent`.parseFromValueString("serva/0.0").right.get)
     }
     "allow overriding client settings with akka.http.host-connection-pool.client" in {
       val settings = config(
@@ -29,7 +30,8 @@ class ConnectionPoolSettingsSpec extends AkkaSpec {
           akka.http.host-connection-pool.client.user-agent-header = "serva/5.7"
         """)
 
-      settings.connectionSettings.userAgentHeader shouldEqual Some(`User-Agent`.parseFromValueString("serva/5.7").right.get)
+      settings.connectionSettings.userAgentHeader shouldEqual Some(
+        `User-Agent`.parseFromValueString("serva/5.7").right.get)
       settings.connectionSettings.requestHeaderSizeHint shouldEqual 1024 // still fall back
     }
     "allow max-open-requests = 1" in {
@@ -103,7 +105,8 @@ class ConnectionPoolSettingsSpec extends AkkaSpec {
           |}
         """.stripMargin
 
-      val settings = ConnectionPoolSettings(ConfigFactory.parseString(settingsString).withFallback(ConfigFactory.defaultReference(getClass.getClassLoader)))
+      val settings = ConnectionPoolSettings(
+        ConfigFactory.parseString(settingsString).withFallback(ConfigFactory.defaultReference(getClass.getClassLoader)))
       settings.forHost("akka.io").maxConnections shouldEqual 47
       settings.maxConnections shouldEqual 7
 
@@ -135,7 +138,8 @@ class ConnectionPoolSettingsSpec extends AkkaSpec {
           |}
         """.stripMargin
 
-      val settings = ConnectionPoolSettings(ConfigFactory.parseString(settingsString).withFallback(ConfigFactory.defaultReference(getClass.getClassLoader)))
+      val settings = ConnectionPoolSettings(
+        ConfigFactory.parseString(settingsString).withFallback(ConfigFactory.defaultReference(getClass.getClassLoader)))
       settings.forHost("akka.io").maxConnections shouldEqual 27
       settings.forHost("other.io").maxConnections shouldEqual 47
       settings.forHost("akka.com").maxConnections shouldEqual 7

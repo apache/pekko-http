@@ -23,6 +23,7 @@ import akka.stream.javadsl.Flow
  */
 @DoNotInherit
 trait OutgoingConnectionBuilder {
+
   /**
    * Change which host flows built with this builder connects to
    */

@@ -38,13 +38,13 @@ private[parser] trait WebSocketHeaders { this: Parser with CommonRules with Comm
   private def `base64-data` = rule { 4.times(`base64-character`) }
   private def `base64-padding` = rule {
     2.times(`base64-character`) ~ "==" |
-      3.times(`base64-character`) ~ "="
+    3.times(`base64-character`) ~ "="
   }
   private def `base64-character` = rfc2045Alphabet
 
   private def extension = rule {
     `extension-token` ~ zeroOrMore(ws(";") ~ `extension-param`) ~>
-      ((name, params) => WebSocketExtension(name, Map(params: _*)))
+    ((name, params) => WebSocketExtension(name, Map(params: _*)))
   }
   private def `extension-token`: Rule1[String] = token
   private def `extension-param`: Rule1[(String, String)] =
@@ -55,7 +55,7 @@ private[parser] trait WebSocketHeaders { this: Parser with CommonRules with Comm
   private def version = rule {
     capture(
       NZDIGIT ~ optional(DIGIT ~ optional(DIGIT)) |
-        DIGIT) ~> (_.toInt)
+      DIGIT) ~> (_.toInt)
   }
   private def NZDIGIT = DIGIT19
 }

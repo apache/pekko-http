@@ -17,6 +17,7 @@ import scala.collection.immutable
 private[http2] sealed trait FrameEvent { self: Product =>
   def frameTypeName: String = productPrefix
 }
+
 /** INTERNAL API */
 @InternalApi
 private[http] object FrameEvent {
@@ -25,13 +26,15 @@ private[http] object FrameEvent {
     def streamId: Int
   }
 
-  final case class GoAwayFrame(lastStreamId: Int, errorCode: ErrorCode, debug: ByteString = ByteString.empty) extends FrameEvent {
+  final case class GoAwayFrame(
+      lastStreamId: Int, errorCode: ErrorCode, debug: ByteString = ByteString.empty) extends FrameEvent {
     override def toString: String = s"GoAwayFrame($lastStreamId,$errorCode,debug:<hidden>)"
   }
   final case class DataFrame(
-    streamId:  Int,
-    endStream: Boolean,
-    payload:   ByteString) extends StreamFrameEvent {
+      streamId: Int,
+      endStream: Boolean,
+      payload: ByteString) extends StreamFrameEvent {
+
     /**
      * The amount of bytes this frame consumes of a window. According to RFC 7540, 6.9.1:
      *
@@ -48,20 +51,20 @@ private[http] object FrameEvent {
    * HeadersFrame will be parsed into a logical ParsedHeadersFrame.
    */
   final case class HeadersFrame(
-    streamId:            Int,
-    endStream:           Boolean,
-    endHeaders:          Boolean,
-    headerBlockFragment: ByteString,
-    priorityInfo:        Option[PriorityFrame]) extends StreamFrameEvent
+      streamId: Int,
+      endStream: Boolean,
+      endHeaders: Boolean,
+      headerBlockFragment: ByteString,
+      priorityInfo: Option[PriorityFrame]) extends StreamFrameEvent
   final case class ContinuationFrame(
-    streamId:   Int,
-    endHeaders: Boolean,
-    payload:    ByteString) extends StreamFrameEvent
+      streamId: Int,
+      endHeaders: Boolean,
+      payload: ByteString) extends StreamFrameEvent
   case class PushPromiseFrame(
-    streamId:            Int,
-    endHeaders:          Boolean,
-    promisedStreamId:    Int,
-    headerBlockFragment: ByteString) extends StreamFrameEvent
+      streamId: Int,
+      endHeaders: Boolean,
+      promisedStreamId: Int,
+      headerBlockFragment: ByteString) extends StreamFrameEvent
 
   final case class RstStreamFrame(streamId: Int, errorCode: ErrorCode) extends StreamFrameEvent
   final case class SettingsFrame(settings: immutable.Seq[Setting]) extends FrameEvent
@@ -71,18 +74,18 @@ private[http] object FrameEvent {
     require(data.size == 8, s"PingFrame payload must be of size 8 but was ${data.size}")
   }
   final case class WindowUpdateFrame(
-    streamId:            Int,
-    windowSizeIncrement: Int) extends StreamFrameEvent
+      streamId: Int,
+      windowSizeIncrement: Int) extends StreamFrameEvent
 
   final case class PriorityFrame(
-    streamId:         Int,
-    exclusiveFlag:    Boolean,
-    streamDependency: Int,
-    weight:           Int) extends StreamFrameEvent
+      streamId: Int,
+      exclusiveFlag: Boolean,
+      streamDependency: Int,
+      weight: Int) extends StreamFrameEvent
 
   final case class Setting(
-    identifier: SettingIdentifier,
-    value:      Int)
+      identifier: SettingIdentifier,
+      value: Int)
 
   object Setting {
     implicit def autoConvertFromTuple(tuple: (SettingIdentifier, Int)): Setting =
@@ -91,20 +94,19 @@ private[http] object FrameEvent {
 
   /** Dummy event for all unknown frames */
   final case class UnknownFrameEvent(
-    tpe:      FrameType,
-    flags:    ByteFlag,
-    streamId: Int,
-    payload:  ByteString) extends StreamFrameEvent
+      tpe: FrameType,
+      flags: ByteFlag,
+      streamId: Int,
+      payload: ByteString) extends StreamFrameEvent
 
   /**
    * Convenience (logical) representation of a parsed HEADERS frame with zero, one or
    * many CONTINUATIONS Frames into a single, decompressed object.
    */
   final case class ParsedHeadersFrame(
-    streamId:      Int,
-    endStream:     Boolean,
-    keyValuePairs: Seq[(String, AnyRef)],
-    priorityInfo:  Option[PriorityFrame]
-  ) extends StreamFrameEvent
+      streamId: Int,
+      endStream: Boolean,
+      keyValuePairs: Seq[(String, AnyRef)],
+      priorityInfo: Option[PriorityFrame]) extends StreamFrameEvent
 
 }

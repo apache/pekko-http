@@ -76,14 +76,14 @@ private[http] object Utf8Decoder extends StreamingCharsetDecoder {
           val chClass = characterClasses(byte)
           currentCodePoint =
             if (currentState == Utf8Accept) // first byte
-              (0xff >> chClass) & byte // take as much bits as the characterClass says
+              (0xFF >> chClass) & byte // take as much bits as the characterClass says
             else // continuation byte
-              (0x3f & byte) | (currentCodePoint << 6) // take 6 bits
+              (0x3F & byte) | (currentCodePoint << 6) // take 6 bits
           currentState = states(currentState + chClass)
 
           currentState match {
             case Utf8Accept =>
-              if (currentCodePoint <= 0xffff)
+              if (currentCodePoint <= 0xFFFF)
                 // fits in single UTF-16 char
                 result.append(currentCodePoint.toChar)
               else {
@@ -98,7 +98,7 @@ private[http] object Utf8Decoder extends StreamingCharsetDecoder {
 
         var offset = 0
         while (offset < length) {
-          step(bytes(offset) & 0xff)
+          step(bytes(offset) & 0xFF)
           offset += 1
         }
 

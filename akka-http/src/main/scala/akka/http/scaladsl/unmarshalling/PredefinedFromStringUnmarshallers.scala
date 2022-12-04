@@ -12,7 +12,8 @@ import akka.util.ByteString
 
 trait PredefinedFromStringUnmarshallers {
 
-  implicit def _fromStringUnmarshallerFromByteStringUnmarshaller[T](implicit bsum: FromByteStringUnmarshaller[T]): Unmarshaller[String, T] = {
+  implicit def _fromStringUnmarshallerFromByteStringUnmarshaller[T](
+      implicit bsum: FromByteStringUnmarshaller[T]): Unmarshaller[String, T] = {
     val bs = Unmarshaller.strict[String, ByteString](s => ByteString(s))
     bs.flatMap(implicit ec => implicit mat => bsum(_))
   }
@@ -60,7 +61,7 @@ trait PredefinedFromStringUnmarshallers {
   implicit def CsvSeq[T](implicit unmarshaller: Unmarshaller[String, T]): Unmarshaller[String, immutable.Seq[T]] =
     Unmarshaller.strict[String, immutable.Seq[String]] { string =>
       string.split(",", -1).toList
-    } flatMap { implicit ec => implicit mat => strings =>
+    }.flatMap { implicit ec => implicit mat => strings =>
       FastFuture.sequence(strings.map(unmarshaller(_)))
     }
 
@@ -84,7 +85,8 @@ trait PredefinedFromStringUnmarshallers {
 
   private def numberFormatError(value: String, target: String): PartialFunction[Throwable, Nothing] = {
     case e: NumberFormatException =>
-      throw if (value.isEmpty) Unmarshaller.NoContentException else new IllegalArgumentException(s"'$value' is not a valid $target value", e)
+      throw if (value.isEmpty) Unmarshaller.NoContentException
+      else new IllegalArgumentException(s"'$value' is not a valid $target value", e)
   }
 }
 

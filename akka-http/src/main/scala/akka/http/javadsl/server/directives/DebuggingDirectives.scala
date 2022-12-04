@@ -4,8 +4,8 @@
 
 package akka.http.javadsl.server.directives
 
-import java.util.function.{ BiFunction, Supplier, Function => JFunction }
-import java.util.{ Optional, List => JList }
+import java.util.function.{ BiFunction, Function => JFunction, Supplier }
+import java.util.{ List => JList, Optional }
 
 import akka.event.Logging
 import akka.event.Logging.LogLevel
@@ -13,7 +13,7 @@ import akka.http.javadsl.model.{ HttpRequest, HttpResponse }
 import akka.http.javadsl.server.{ Rejection, Route, RoutingJavaMapping }
 import akka.http.scaladsl
 import akka.http.scaladsl.server.directives.LoggingMagnet
-import akka.http.scaladsl.server.{ RouteResult, Directives => D }
+import akka.http.scaladsl.server.{ Directives => D, RouteResult }
 
 import scala.collection.JavaConverters._
 
@@ -67,9 +67,9 @@ abstract class DebuggingDirectives extends CookieDirectives {
    * @param showRejection Function invoked when the route yielded a rejection
    */
   def logResult(
-    showSuccess:   JFunction[HttpResponse, LogEntry],
-    showRejection: JFunction[JList[Rejection], LogEntry],
-    inner:         Supplier[Route]) = RouteAdapter {
+      showSuccess: JFunction[HttpResponse, LogEntry],
+      showRejection: JFunction[JList[Rejection], LogEntry],
+      inner: Supplier[Route]) = RouteAdapter {
     D.logResult(LoggingMagnet.forMessageFromFullShow {
       case RouteResult.Complete(response)   => showSuccess.apply(response).asScala
       case RouteResult.Rejected(rejections) => showRejection.apply(rejections.map(_.asJava).asJava).asScala
@@ -85,12 +85,13 @@ abstract class DebuggingDirectives extends CookieDirectives {
    * @param showRejection Function invoked when the route yielded a rejection
    */
   def logRequestResult(
-    showSuccess:   BiFunction[HttpRequest, HttpResponse, LogEntry],
-    showRejection: BiFunction[HttpRequest, JList[Rejection], LogEntry],
-    inner:         Supplier[Route]) = RouteAdapter {
+      showSuccess: BiFunction[HttpRequest, HttpResponse, LogEntry],
+      showRejection: BiFunction[HttpRequest, JList[Rejection], LogEntry],
+      inner: Supplier[Route]) = RouteAdapter {
     D.logRequestResult(LoggingMagnet.forRequestResponseFromFullShow(request => {
-      case RouteResult.Complete(response)   => Some(showSuccess.apply(request, response).asScala)
-      case RouteResult.Rejected(rejections) => Some(showRejection.apply(request, rejections.map(_.asJava).asJava).asScala)
+      case RouteResult.Complete(response) => Some(showSuccess.apply(request, response).asScala)
+      case RouteResult.Rejected(rejections) =>
+        Some(showRejection.apply(request, rejections.map(_.asJava).asJava).asScala)
     })) {
       inner.get.delegate
     }
@@ -104,9 +105,9 @@ abstract class DebuggingDirectives extends CookieDirectives {
    */
   @CorrespondsTo("logRequestResult")
   def logRequestResultOptional(
-    showSuccess:   BiFunction[HttpRequest, HttpResponse, Optional[LogEntry]],
-    showRejection: BiFunction[HttpRequest, JList[Rejection], Optional[LogEntry]],
-    inner:         Supplier[Route]) = RouteAdapter {
+      showSuccess: BiFunction[HttpRequest, HttpResponse, Optional[LogEntry]],
+      showRejection: BiFunction[HttpRequest, JList[Rejection], Optional[LogEntry]],
+      inner: Supplier[Route]) = RouteAdapter {
     D.logRequestResult(LoggingMagnet.forRequestResponseFromFullShow(request => {
       case RouteResult.Complete(response)   => showSuccess.apply(request, response).asScala
       case RouteResult.Rejected(rejections) => showRejection.apply(request, rejections.map(_.asJava).asJava).asScala

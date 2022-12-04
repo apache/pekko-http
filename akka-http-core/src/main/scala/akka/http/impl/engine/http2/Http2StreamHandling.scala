@@ -35,7 +35,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def multiplexer: Http2Multiplexer
   def settings: Http2CommonSettings
   def pushGOAWAY(errorCode: ErrorCode, debug: String): Unit
-  def dispatchSubstream(initialHeaders: ParsedHeadersFrame, data: Either[ByteString, Source[Any, Any]], correlationAttributes: Map[AttributeKey[_], _]): Unit
+  def dispatchSubstream(initialHeaders: ParsedHeadersFrame, data: Either[ByteString, Source[Any, Any]],
+      correlationAttributes: Map[AttributeKey[_], _]): Unit
   def isUpgraded: Boolean
 
   def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart]
@@ -56,6 +57,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   private var largestIncomingStreamId = 0
   private var outstandingConnectionLevelWindow = Http2Protocol.InitialWindowSize
   private var totalBufferedData = 0
+
   /**
    * The "last peer-initiated stream that was or might be processed on the sending endpoint in this connection"
    *
@@ -65,6 +67,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
   private var maxConcurrentStreams = Http2Protocol.InitialMaxConcurrentStreams
   def setMaxConcurrentStreams(newValue: Int): Unit = maxConcurrentStreams = newValue
+
   /**
    * @return true if the number of outgoing Active streams (Active includes Open
    *         and any variant of HalfClosedXxx) doesn't exceed MaxConcurrentStreams
@@ -110,10 +113,12 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       multiplexer.pushControlFrame(stream.initialHeaders)
 
       if (stream.initialHeaders.endStream) {
-        updateState(stream.streamId, _.handleOutgoingCreatedAndFinished(stream.correlationAttributes), "handleOutgoingCreatedAndFinished")
+        updateState(stream.streamId, _.handleOutgoingCreatedAndFinished(stream.correlationAttributes),
+          "handleOutgoingCreatedAndFinished")
       } else {
         val outStream = OutStream(stream)
-        updateState(stream.streamId, _.handleOutgoingCreated(outStream, stream.correlationAttributes), "handleOutgoingCreated")
+        updateState(stream.streamId, _.handleOutgoingCreated(outStream, stream.correlationAttributes),
+          "handleOutgoingCreated")
       }
     } else
       // stream was cancelled by peer before our response was ready
@@ -131,9 +136,9 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   /** Called by multiplexer to distribute changes from INITIAL_WINDOW_SIZE to all streams */
   def distributeWindowDeltaToAllStreams(delta: Int): Unit =
     updateAllStates({
-      case s: Sending => s.increaseWindow(delta)
-      case x          => x
-    }, "distributeWindowDeltaToAllStreams")
+        case s: Sending => s.increaseWindow(delta)
+        case x          => x
+      }, "distributeWindowDeltaToAllStreams")
 
   /** Called by the multiplexer if ready to send a data frame */
   def pullNextFrame(streamId: Int, maxSize: Int): PullFrameResult =
@@ -146,10 +151,12 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   private def updateAllStates(handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit =
     streamStates.keys.foreach(streamId => updateState(streamId.toInt, handle, event, eventArg))
 
-  private def updateState(streamId: Int, handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit =
+  private def updateState(
+      streamId: Int, handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit =
     updateStateAndReturn(streamId, x => (handle(x), ()), event, eventArg)
 
-  private def updateStateAndReturn[R](streamId: Int, handle: StreamState => (StreamState, R), event: String, eventArg: AnyRef = null): R = {
+  private def updateStateAndReturn[R](streamId: Int, handle: StreamState => (StreamState, R), event: String,
+      eventArg: AnyRef = null): R = {
     val oldState = streamFor(streamId)
 
     val (newState, ret) = handle(oldState)
@@ -161,9 +168,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       case newState => streamStates.put(streamId, newState)
     }
 
-    debug(s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne null) s"($eventArg)" else ""}]")
+    debug(
+      s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne null) s"($eventArg)" else ""}]")
     ret
   }
+
   /** Called to cleanup any state when the connection is torn down */
   def shutdownStreamHandling(): Unit = updateAllStates({ id => id.shutdown(); Closed }, "shutdownStreamHandling")
 
@@ -219,34 +228,40 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
     /** Called when we receive a user-created stream (that is open for more data) */
     def handleOutgoingCreated(outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
-      warning(s"handleOutgoingCreated received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+      warning(
+        s"handleOutgoingCreated received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
       this
     }
+
     /** Called when we receive a user-created stream that is already closed */
     def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
-      warning(s"handleOutgoingCreatedAndFinished received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+      warning(
+        s"handleOutgoingCreatedAndFinished received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
       this
     }
     def handleOutgoingEnded(): StreamState = {
-      warning(s"handleOutgoingEnded received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+      warning(
+        s"handleOutgoingEnded received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
       this
     }
     def handleOutgoingFailed(cause: Throwable): StreamState = {
-      warning(s"handleOutgoingFailed received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+      warning(
+        s"handleOutgoingFailed received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
       this
     }
     def receivedUnexpectedFrame(e: StreamFrameEvent): StreamState = {
       debug(s"Received unexpected frame of type ${e.frameTypeName} for stream ${e.streamId} in state $stateName")
-      pushGOAWAY(ErrorCode.PROTOCOL_ERROR, s"Received unexpected frame of type ${e.frameTypeName} for stream ${e.streamId} in state $stateName")
+      pushGOAWAY(ErrorCode.PROTOCOL_ERROR,
+        s"Received unexpected frame of type ${e.frameTypeName} for stream ${e.streamId} in state $stateName")
       shutdown()
       Closed
     }
 
     protected def expectIncomingStream(
-      event:                 StreamFrameEvent,
-      nextStateEmpty:        StreamState,
-      nextStateStream:       IncomingStreamBuffer => StreamState,
-      correlationAttributes: Map[AttributeKey[_], _]             = Map.empty): StreamState =
+        event: StreamFrameEvent,
+        nextStateEmpty: StreamState,
+        nextStateStream: IncomingStreamBuffer => StreamState,
+        correlationAttributes: Map[AttributeKey[_], _] = Map.empty): StreamState =
       event match {
         case frame @ ParsedHeadersFrame(streamId, endStream, _, _) =>
           if (endStream) {
@@ -261,11 +276,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       }
 
     protected def dispatchStream(
-      streamId:              Int,
-      headers:               ParsedHeadersFrame,
-      initialData:           ByteString,
-      correlationAttributes: Map[AttributeKey[_], _],
-      nextStateStream:       IncomingStreamBuffer => StreamState): StreamState = {
+        streamId: Int,
+        headers: ParsedHeadersFrame,
+        initialData: ByteString,
+        correlationAttributes: Map[AttributeKey[_], _],
+        nextStateStream: IncomingStreamBuffer => StreamState): StreamState = {
       val subSource = new SubSourceOutlet[Any](s"substream-out-$streamId")
       val buffer = new IncomingStreamBuffer(streamId, subSource)
       if (initialData.nonEmpty) buffer.onDataFrame(DataFrame(streamId, endStream = false, initialData)) // fabricate frame
@@ -273,8 +288,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       nextStateStream(buffer)
     }
 
-    def pullNextFrame(maxSize: Int): (StreamState, PullFrameResult) = throw new IllegalStateException(s"pullNextFrame not supported in state $stateName")
-    def incomingStreamPulled(): StreamState = throw new IllegalStateException(s"incomingStreamPulled not supported in state $stateName")
+    def pullNextFrame(maxSize: Int): (StreamState, PullFrameResult) =
+      throw new IllegalStateException(s"pullNextFrame not supported in state $stateName")
+    def incomingStreamPulled(): StreamState =
+      throw new IllegalStateException(s"incomingStreamPulled not supported in state $stateName")
 
     /** Called to cleanup any state when the connection is torn down */
     def shutdown(): Unit = ()
@@ -290,15 +307,19 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       } else
         expectIncomingStream(event, HalfClosedRemoteWaitingForOutgoingStream(0), OpenReceivingDataFirst(_, 0))
 
-    override def handleOutgoingCreated(outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = OpenSendingData(outStream, correlationAttributes)
-    override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState = HalfClosedLocalWaitingForPeerStream(correlationAttributes)
+    override def handleOutgoingCreated(
+        outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState =
+      OpenSendingData(outStream, correlationAttributes)
+    override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState =
+      HalfClosedLocalWaitingForPeerStream(correlationAttributes)
   }
+
   /** Special state that allows collecting some incoming data before dispatching it either as strict or streamed entity */
   case class CollectingIncomingData(
-    headers:               ParsedHeadersFrame,
-    correlationAttributes: Map[AttributeKey[_], _],
-    collectedData:         ByteString,
-    extraInitialWindow:    Int) extends ReceivingData {
+      headers: ParsedHeadersFrame,
+      correlationAttributes: Map[AttributeKey[_], _],
+      collectedData: ByteString,
+      extraInitialWindow: Int) extends ReceivingData {
 
     override protected def onDataFrame(dataFrame: DataFrame): StreamState = {
       val newData = collectedData ++ dataFrame.payload
@@ -308,21 +329,26 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         dispatchSubstream(headers, Left(newData), correlationAttributes)
         HalfClosedRemoteWaitingForOutgoingStream(extraInitialWindow)
       } else if (newData.length >= settings.minCollectStrictEntitySize)
-        dispatchStream(dataFrame.streamId, headers, newData, correlationAttributes, OpenReceivingDataFirst(_, extraInitialWindow))
+        dispatchStream(dataFrame.streamId, headers, newData, correlationAttributes,
+          OpenReceivingDataFirst(_, extraInitialWindow))
       else
         copy(collectedData = newData)
     }
 
     override protected def onTrailer(parsedHeadersFrame: ParsedHeadersFrame): StreamState = this // trailing headers not supported for requests right now
-    override protected def incrementWindow(delta: Int): StreamState = copy(extraInitialWindow = extraInitialWindow + delta)
+    override protected def incrementWindow(delta: Int): StreamState =
+      copy(extraInitialWindow = extraInitialWindow + delta)
     override protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit = {} // nothing to do here
   }
-  case class OpenReceivingDataFirst(buffer: IncomingStreamBuffer, extraInitialWindow: Int = 0) extends ReceivingDataWithBuffer(HalfClosedRemoteWaitingForOutgoingStream(extraInitialWindow)) {
-    override def handleOutgoingCreated(outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
+  case class OpenReceivingDataFirst(buffer: IncomingStreamBuffer, extraInitialWindow: Int = 0)
+      extends ReceivingDataWithBuffer(HalfClosedRemoteWaitingForOutgoingStream(extraInitialWindow)) {
+    override def handleOutgoingCreated(
+        outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
       outStream.increaseWindow(extraInitialWindow)
       Open(buffer, outStream)
     }
-    override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState = HalfClosedLocal(buffer)
+    override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState =
+      HalfClosedLocal(buffer)
     override def handleOutgoingEnded(): StreamState = Closed
 
     override def incrementWindow(delta: Int): StreamState = copy(extraInitialWindow = extraInitialWindow + delta)
@@ -348,7 +374,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       (nextState, res)
     }
 
-    def handleWindowUpdate(windowUpdate: WindowUpdateFrame): StreamState = increaseWindow(windowUpdate.windowSizeIncrement)
+    def handleWindowUpdate(windowUpdate: WindowUpdateFrame): StreamState =
+      increaseWindow(windowUpdate.windowSizeIncrement)
 
     override def handleOutgoingFailed(cause: Throwable): StreamState = Closed
 
@@ -363,7 +390,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
   }
 
-  case class OpenSendingData(outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]) extends StreamState with Sending {
+  case class OpenSendingData(outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]) extends StreamState
+      with Sending {
     override def handle(event: StreamFrameEvent): StreamState = event match {
       case _: ParsedHeadersFrame =>
         expectIncomingStream(event, HalfClosedRemoteSendingData(outStream), Open(_, outStream), correlationAttributes)
@@ -401,7 +429,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         } else {
           val nextState = onDataFrame(d)
 
-          val windowSizeIncrement = flowController.onConnectionDataReceived(outstandingConnectionLevelWindow, totalBufferedData)
+          val windowSizeIncrement =
+            flowController.onConnectionDataReceived(outstandingConnectionLevelWindow, totalBufferedData)
           if (windowSizeIncrement > 0) {
             multiplexer.pushControlFrame(WindowUpdateFrame(Http2Protocol.NoStreamId, windowSizeIncrement))
             outstandingConnectionLevelWindow += windowSizeIncrement
@@ -425,7 +454,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     protected def incrementWindow(delta: Int): StreamState
     protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit
   }
-  sealed abstract class ReceivingDataWithBuffer(afterEndStreamReceived: StreamState) extends ReceivingData { self: Product =>
+  sealed abstract class ReceivingDataWithBuffer(afterEndStreamReceived: StreamState) extends ReceivingData {
+    self: Product =>
     protected def buffer: IncomingStreamBuffer
 
     override protected def onDataFrame(dataFrame: DataFrame): StreamState = {
@@ -437,7 +467,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       afterBufferEvent
     }
 
-    override protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit = buffer.onRstStreamFrame(rstStreamFrame)
+    override protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit =
+      buffer.onRstStreamFrame(rstStreamFrame)
 
     override def incomingStreamPulled(): StreamState = {
       buffer.dispatchNextChunk()
@@ -455,7 +486,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
 
   // on the incoming side there's (almost) no difference between Open and HalfClosedLocal
-  case class Open(buffer: IncomingStreamBuffer, outStream: OutStream) extends ReceivingDataWithBuffer(HalfClosedRemoteSendingData(outStream)) with Sending {
+  case class Open(buffer: IncomingStreamBuffer, outStream: OutStream)
+      extends ReceivingDataWithBuffer(HalfClosedRemoteSendingData(outStream)) with Sending {
     override def handleOutgoingEnded(): StreamState = HalfClosedLocal(buffer)
 
     override protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit = {
@@ -467,6 +499,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       this
     }
   }
+
   /**
    * We have closed the outgoing stream, but the incoming stream is still going.
    */
@@ -482,12 +515,14 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       case _                    => receivedUnexpectedFrame(event)
     }
 
-    override def handleOutgoingCreated(outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
+    override def handleOutgoingCreated(
+        outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
       outStream.increaseWindow(extraInitialWindow)
       HalfClosedRemoteSendingData(outStream)
     }
     override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState = Closed
   }
+
   /**
    * They have closed the incoming stream, but the outgoing stream is still going.
    */
@@ -557,7 +592,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
           multiplexer.closeStream(streamId)
         } else {
           buffer ++= data.payload
-          debug(s"Received DATA ${data.sizeInWindow} for stream [$streamId], remaining window space now $outstandingStreamWindow, buffered: ${buffer.length}")
+          debug(
+            s"Received DATA ${data.sizeInWindow} for stream [$streamId], remaining window space now $outstandingStreamWindow, buffered: ${buffer.length}")
           dispatchNextChunk()
         }
       }
@@ -584,7 +620,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
         totalBufferedData -= dataSize
 
-        debug(s"Dispatched chunk of $dataSize for stream [$streamId], remaining window space now $outstandingStreamWindow, buffered: ${buffer.length}")
+        debug(
+          s"Dispatched chunk of $dataSize for stream [$streamId], remaining window space now $outstandingStreamWindow, buffered: ${buffer.length}")
         updateWindows()
       }
       if (buffer.isEmpty && wasClosed) {
@@ -618,8 +655,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
       debug(
         s"adjusting con-level window by $connectionLevel, stream-level window by $streamLevel, " +
-          s"remaining window space now $outstandingStreamWindow, buffered: ${buffer.length}, " +
-          s"remaining connection window space now $outstandingConnectionLevelWindow, total buffered: $totalBufferedData")
+        s"remaining window space now $outstandingStreamWindow, buffered: ${buffer.length}, " +
+        s"remaining connection window space now $outstandingConnectionLevelWindow, total buffered: $totalBufferedData")
     }
 
     def shutdown(): Unit =
@@ -649,11 +686,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
   }
   final class OutStreamImpl(
-    val streamId:           Int,
-    private var maybeInlet: OptionVal[SubSinkInlet[_]],
-    var outboundWindowLeft: Int,
-    var trailer:            OptionVal[ParsedHeadersFrame]
-  ) extends InHandler with OutStream {
+      val streamId: Int,
+      private var maybeInlet: OptionVal[SubSinkInlet[_]],
+      var outboundWindowLeft: Int,
+      var trailer: OptionVal[ParsedHeadersFrame]) extends InHandler with OutStream {
     private def inlet: SubSinkInlet[_] = maybeInlet.get
 
     private var buffer: ByteString = ByteString.empty
@@ -699,7 +735,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       } else
         maybePull()
 
-      debug(s"[$streamId] sending ${toSend.length} bytes, endStream = $endStream, remaining buffer [${buffer.length}], remaining stream-level WINDOW [$outboundWindowLeft]")
+      debug(
+        s"[$streamId] sending ${toSend.length} bytes, endStream = $endStream, remaining buffer [${buffer.length}], remaining stream-level WINDOW [$outboundWindowLeft]")
 
       // Multiplexer will enqueue for us if we report more data being available
       // We cannot call `multiplexer.enqueueOutStream` from here because this is called from the multiplexer.
@@ -722,7 +759,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       // TODO: Check that buffer is not too much over the limit (which we might warn the user about)
       //       The problem here is that backpressure will only work properly if batch elements like
       //       ByteString have a reasonable size.
-      if (!upstreamClosed && buffer.length < multiplexer.maxBytesToBufferPerSubstream && !inlet.hasBeenPulled && !inlet.isClosed) inlet.pull()
+      if (!upstreamClosed && buffer.length < multiplexer.maxBytesToBufferPerSubstream && !inlet.hasBeenPulled && !inlet.isClosed)
+        inlet.pull()
 
     /** Cleans up internal state (but not external) */
     private def cleanupStream(): Unit = {
@@ -754,8 +792,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         case HttpEntity.Chunk(newData, _) => buffer ++= newData
         case HttpEntity.LastChunk(_, headers) =>
           if (headers.nonEmpty && !trailer.isEmpty)
-            log.warning("Found both an attribute with trailing headers, and headers in the `LastChunk`. This is not supported.")
-          trailer = OptionVal.Some(ParsedHeadersFrame(streamId, endStream = true, HttpMessageRendering.renderHeaders(headers, log, isServer, shouldRenderAutoHeaders = false, dateHeaderRendering = DateHeaderRendering.Unavailable), None))
+            log.warning(
+              "Found both an attribute with trailing headers, and headers in the `LastChunk`. This is not supported.")
+          trailer = OptionVal.Some(ParsedHeadersFrame(streamId, endStream = true,
+            HttpMessageRendering.renderHeaders(headers, log, isServer, shouldRenderAutoHeaders = false,
+              dateHeaderRendering = DateHeaderRendering.Unavailable), None))
       }
 
       maybePull()
@@ -782,9 +823,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
   }
   // needed once PUSH_PROMISE support was added
-  //case object ReservedLocal extends IncomingStreamState
-  //case object ReservedRemote extends IncomingStreamState
+  // case object ReservedLocal extends IncomingStreamState
+  // case object ReservedRemote extends IncomingStreamState
 }
 private[http2] object Http2StreamHandling {
-  val ConnectionWasAbortedException = new IllegalStateException("The HTTP/2 connection was shut down while the request was still ongoing") with NoStackTrace
+  val ConnectionWasAbortedException =
+    new IllegalStateException("The HTTP/2 connection was shut down while the request was still ongoing")
+      with NoStackTrace
 }

@@ -10,14 +10,12 @@ import com.typesafe.config.Config
 
 @InternalApi
 private[http] final case class PreviewServerSettingsImpl(
-  enableHttp2: Boolean
-) extends akka.http.scaladsl.settings.PreviewServerSettings {
+    enableHttp2: Boolean) extends akka.http.scaladsl.settings.PreviewServerSettings {
 
   override def productPrefix: String = "PreviewServerSettings"
 }
 
 object PreviewServerSettingsImpl extends SettingsCompanionImpl[PreviewServerSettingsImpl]("akka.http.server.preview") {
   def fromSubConfig(root: Config, c: Config) = PreviewServerSettingsImpl(
-    c.getBoolean("enable-http2")
-  )
+    c.getBoolean("enable-http2"))
 }

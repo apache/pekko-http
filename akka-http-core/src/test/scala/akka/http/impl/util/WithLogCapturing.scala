@@ -74,8 +74,8 @@ trait WithLogCapturing extends SuiteMixin { this: TestSuite =>
       flushLog()
 
       Failed(new AssertionError(
-        s"No severe log messages should be emitted during test run but got [${stats(Logging.WarningLevel)}] warnings and [${stats(Logging.ErrorLevel)}] errors (see marked lines above)"
-      ))
+        s"No severe log messages should be emitted during test run but got [${stats(
+            Logging.WarningLevel)}] warnings and [${stats(Logging.ErrorLevel)}] errors (see marked lines above)"))
     } else res
 
   }

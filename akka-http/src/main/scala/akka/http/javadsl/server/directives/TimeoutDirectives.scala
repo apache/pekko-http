@@ -26,9 +26,10 @@ abstract class TimeoutDirectives extends WebSocketDirectives {
    * Due to the inherent raciness it is not guaranteed that the update will be applied before
    * the previously set timeout has expired!
    */
-  def withRequestTimeout(timeout: scala.concurrent.duration.Duration, inner: Supplier[Route]): RouteAdapter = RouteAdapter {
-    D.withRequestTimeout(timeout) { inner.get.delegate }
-  }
+  def withRequestTimeout(timeout: scala.concurrent.duration.Duration, inner: Supplier[Route]): RouteAdapter =
+    RouteAdapter {
+      D.withRequestTimeout(timeout) { inner.get.delegate }
+    }
 
   /**
    * Tries to set a new request timeout and handler (if provided) at the same time.
@@ -36,8 +37,9 @@ abstract class TimeoutDirectives extends WebSocketDirectives {
    * Due to the inherent raciness it is not guaranteed that the update will be applied before
    * the previously set timeout has expired!
    */
-  def withRequestTimeout(timeout: scala.concurrent.duration.Duration, timeoutHandler: JFunction[HttpRequest, HttpResponse],
-                         inner: Supplier[Route]): RouteAdapter = RouteAdapter {
+  def withRequestTimeout(timeout: scala.concurrent.duration.Duration,
+      timeoutHandler: JFunction[HttpRequest, HttpResponse],
+      inner: Supplier[Route]): RouteAdapter = RouteAdapter {
     D.withRequestTimeout(timeout, in => timeoutHandler(in.asJava).asScala) { inner.get.delegate }
   }
 
@@ -52,7 +54,8 @@ abstract class TimeoutDirectives extends WebSocketDirectives {
    * Due to the inherent raciness it is not guaranteed that the update will be applied before
    * the previously set timeout has expired!
    */
-  def withRequestTimeoutResponse(timeoutHandler: JFunction[HttpRequest, HttpResponse], inner: Supplier[Route]): RouteAdapter = RouteAdapter {
+  def withRequestTimeoutResponse(
+      timeoutHandler: JFunction[HttpRequest, HttpResponse], inner: Supplier[Route]): RouteAdapter = RouteAdapter {
     D.withRequestTimeoutResponse(in => timeoutHandler(in.asJava).asScala) { inner.get.delegate }
   }
 

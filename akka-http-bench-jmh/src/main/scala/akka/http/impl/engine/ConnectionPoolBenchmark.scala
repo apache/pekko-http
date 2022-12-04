@@ -75,13 +75,13 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
         |Date: Wed, 01 Jul 2020 13:26:33 GMT
         |Content-Length: 0
         |
-        |""".stripMarginWithNewline("\r\n")
-    )
+        |""".stripMarginWithNewline("\r\n"))
     val endOfRequest = ByteString("\r\n\r\n")
     // a transport that implements a complete HTTP server (yes, really, see below)
     val clientTransport =
       new ClientTransport {
-        override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] =
+        override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+            implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] =
           Flow[ByteString]
             // currently not needed because request will be sent in single chunk
             // .via(Framing.delimiter(ByteString("\r\n\r\n"), 1000))
@@ -99,8 +99,7 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
       }
     poolSettings =
       ConnectionPoolSettings(system).withConnectionSettings(
-        ClientConnectionSettings(system).withTransport(clientTransport)
-      )
+        ClientConnectionSettings(system).withTransport(clientTransport))
   }
 
   @TearDown

@@ -25,12 +25,11 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
 
     /** Helper to test parsing */
     def parse(
-      keyValuePairs:  Seq[(String, String)],
-      data:           Source[ByteString, Any] = Source.empty,
-      attributes:     Attributes              = Attributes(),
-      uriParsingMode: Uri.ParsingMode         = Uri.ParsingMode.Relaxed,
-      settings:       ServerSettings          = ServerSettings(system)
-    ): HttpRequest = {
+        keyValuePairs: Seq[(String, String)],
+        data: Source[ByteString, Any] = Source.empty,
+        attributes: Attributes = Attributes(),
+        uriParsingMode: Uri.ParsingMode = Uri.ParsingMode.Relaxed,
+        settings: ServerSettings = ServerSettings(system)): HttpRequest = {
       val (serverSettings, parserSettings) = {
         val ps = settings.parserSettings.withUriParsingMode(uriParsingMode)
         (settings.withParserSettings(ps), ps)
@@ -38,25 +37,25 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
       val headerParser = HttpHeaderParser(parserSettings, log)
 
       val encoder = new HPackEncodingSupport {}
-      val frame = HeadersFrame(1, data == Source.empty, endHeaders = true, encoder.encodeHeaderPairs(keyValuePairs), None)
+      val frame =
+        HeadersFrame(1, data == Source.empty, endHeaders = true, encoder.encodeHeaderPairs(keyValuePairs), None)
 
       val parseRequest: Http2SubStream => HttpRequest =
         RequestParsing.parseRequest(headerParser, serverSettings, attributes)
 
       try Source.single(frame)
-        .via(new HeaderDecompression(headerParser, parserSettings))
-        .map { // emulate demux
-          case headers: ParsedHeadersFrame =>
-            Http2SubStream(
-              initialHeaders = headers,
-              trailingHeaders = OptionVal.None,
-              data = Right(data),
-              correlationAttributes = Map.empty
-            )
-        }
-        .map(parseRequest)
-        .runWith(Sink.head)
-        .futureValue
+          .via(new HeaderDecompression(headerParser, parserSettings))
+          .map { // emulate demux
+            case headers: ParsedHeadersFrame =>
+              Http2SubStream(
+                initialHeaders = headers,
+                trailingHeaders = OptionVal.None,
+                data = Right(data),
+                correlationAttributes = Map.empty)
+          }
+          .map(parseRequest)
+          .runWith(Sink.head)
+          .futureValue
       catch { case ex => throw ex.getCause } // unpack futureValue exceptions
     }
 
@@ -79,9 +78,9 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
             ":scheme" -> "https",
             ":method" -> "GET",
             ":path" -> "/",
-            ":status" -> "200"
-          )))
-        thrown.getMessage should ===("Malformed request: Pseudo-header ':status' is for responses only; it cannot appear in a request")
+            ":status" -> "200")))
+        thrown.getMessage should ===(
+          "Malformed request: Pseudo-header ':status' is for responses only; it cannot appear in a request")
       }
 
       // All pseudo-header fields MUST appear in the header block before
@@ -93,8 +92,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
         val pseudoHeaders = Vector(
           ":method" -> "GET",
           ":scheme" -> "https",
-          ":path" -> "/"
-        )
+          ":path" -> "/")
         forAll(pseudoHeaders.indices: Seq[Int]) { (insertPoint: Int) =>
           // Insert the Foo header so it occurs before at least one pseudo-header
           val (before, after) = pseudoHeaders.splitAt(insertPoint)
@@ -116,8 +114,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
             ":scheme" -> "https",
             ":path" -> "/",
             "Connection" -> "foo",
-            "Foo" -> "bar"
-          ))
+            "Foo" -> "bar"))
         }
       }
 
@@ -130,8 +127,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
             ":method" -> "GET",
             ":scheme" -> "https",
             ":path" -> "/",
-            "TE" -> "chunked",
-          ))
+            "TE" -> "chunked"))
         }
       }
 
@@ -140,8 +136,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
           ":method" -> "GET",
           ":scheme" -> "https",
           ":path" -> "/",
-          "TE" -> "trailers",
-        ))
+          "TE" -> "trailers"))
       }
 
       // 8.1.2.3.  Request Pseudo-Header Fields
@@ -156,8 +151,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
             keyValuePairs = Vector(
               ":method" -> method,
               ":scheme" -> "https",
-              ":path" -> "/"
-            ))
+              ":path" -> "/"))
           request.method.value should ===(method)
         }
       }
@@ -179,8 +173,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
             keyValuePairs = Vector(
               ":method" -> "POST",
               ":scheme" -> scheme,
-              ":path" -> "/"
-            ))
+              ":path" -> "/"))
           request.uri.scheme should ===(scheme)
         }
       }
@@ -198,8 +191,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
             ("www.ietf.org", "www.ietf.org", None),
             ("[2001:db8::7]", "2001:db8::7", None),
             ("192.0.2.16:80", "192.0.2.16", Some(80)),
-            ("example.com:8042", "example.com", Some(8042))
-          )
+            ("example.com:8042", "example.com", Some(8042)))
           forAll(authorities) {
             case (authority, host, optPort) =>
               val request: HttpRequest = parse(
@@ -207,8 +199,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
                   ":method" -> "POST",
                   ":scheme" -> "https",
                   ":authority" -> authority,
-                  ":path" -> "/"
-                ))
+                  ":path" -> "/"))
               request.uri.authority.host.address should ===(host)
               request.uri.authority.port should ===(optPort.getOrElse(0))
           }
@@ -223,8 +214,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
                 ":method" -> "POST",
                 ":scheme" -> "https",
                 ":authority" -> authority,
-                ":path" -> "/"
-              )))
+                ":path" -> "/")))
             thrown.getMessage should include("http2-authority-pseudo-header")
           }
         }
@@ -242,8 +232,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
         val authorities = Seq(
           "@localhost",
           "John.Doe@example.com",
-          "cnn.example.com&story=breaking_news@10.0.0.1"
-        )
+          "cnn.example.com&story=breaking_news@10.0.0.1")
         val schemes = Seq("http", "https")
         forAll(schemes) { (scheme: String) =>
           forAll(authorities) { (authority: String) =>
@@ -252,8 +241,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
                 ":method" -> "POST",
                 ":scheme" -> scheme,
                 ":authority" -> authority,
-                ":path" -> "/"
-              )))
+                ":path" -> "/")))
             exception.getMessage should startWith("Illegal http2-authority-pseudo-header")
           }
         }
@@ -311,11 +299,10 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
           "/" -> "/",
           "/foo" -> "/foo", "/foo/" -> "/foo/", "/foo//" -> "/foo//", "/foo///" -> "/foo///",
           "/foo/bar" -> "/foo/bar", "/foo//bar" -> "/foo//bar", "/foo//bar/" -> "/foo//bar/",
-          "/a=b" -> "/a=b", "/%2f" -> "/%2F", "/x:0/y:1" -> "/x:0/y:1"
-        ) ++ pchar.map {
-            case '.' => "/." -> "/"
-            case c   => ("/" + c) -> ("/" + c)
-          }
+          "/a=b" -> "/a=b", "/%2f" -> "/%2F", "/x:0/y:1" -> "/x:0/y:1") ++ pchar.map {
+          case '.' => "/." -> "/"
+          case c   => ("/" + c) -> ("/" + c)
+        }
 
         "parse a ':path' containing a 'path-absolute'" in {
           forAll(absolutePaths) {
@@ -330,8 +317,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
           val invalidAbsolutePaths = Seq(
             "/ ", "x", "1", "%2f", "-", ".", "_", "~",
             "?", "&", "=", "#", ":", "?", "#", "[", "]", "@", " ",
-            "http://localhost/foo"
-          )
+            "http://localhost/foo")
           forAll(invalidAbsolutePaths) { (absPath: String) =>
             val exception = the[ParsingException] thrownBy (parsePath(absPath))
             exception.getMessage should include("http2-path-pseudo-header")
@@ -341,8 +327,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
         "reject a ':path' that doesn't start with a 'path-absolute' (not planning to fix)" in pendingUntilFixed {
           val invalidAbsolutePaths = Seq(
             // Illegal for path-absolute in RFC3986 to start with multiple slashes
-            "//", "//x"
-          )
+            "//", "//x")
           forAll(invalidAbsolutePaths) { (absPath: String) =>
             val exception = the[ParsingException] thrownBy (parsePath(absPath, uriParsingMode = Uri.ParsingMode.Strict))
             exception.getMessage should include("http2-path-pseudo-header")
@@ -358,11 +343,13 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
             "" -> None,
             "name=ferret" -> Some(Uri.Query("name" -> "ferret")),
             "name=ferret&color=purple" -> Some(Uri.Query("name" -> "ferret", "color" -> "purple")),
-            "field1=value1&field2=value2&field3=value3" -> Some(Uri.Query("field1" -> "value1", "field2" -> "value2", "field3" -> "value3")),
-            "field1=value1&field1=value2&field2=value3" -> Some(Uri.Query("field1" -> "value1", "field1" -> "value2", "field2" -> "value3")),
-            "first=this+is+a+field&second=was+it+clear+%28already%29%3F" -> Some(Uri.Query("first" -> "this is a field", "second" -> "was it clear (already)?")),
-            "e0a72cb2a2c7" -> None
-          ) ++ queryChar.map((c: Char) => (c.toString -> None))
+            "field1=value1&field2=value2&field3=value3" -> Some(Uri.Query("field1" -> "value1", "field2" -> "value2",
+              "field3" -> "value3")),
+            "field1=value1&field1=value2&field2=value3" -> Some(Uri.Query("field1" -> "value1", "field1" -> "value2",
+              "field2" -> "value3")),
+            "first=this+is+a+field&second=was+it+clear+%28already%29%3F" -> Some(Uri.Query("first" -> "this is a field",
+              "second" -> "was it clear (already)?")),
+            "e0a72cb2a2c7" -> None) ++ queryChar.map((c: Char) => c.toString -> None)
 
           forAll(absolutePaths.take(3)) {
             case (inputPath, expectedOutputPath) =>
@@ -376,7 +363,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
                   // but lets do a quick sanity check to ensure that form-encoded query strings are correctly
                   // parsed into values further up the parsing stack.
                   optParsedQuery.foreach { (expectedParsedQuery: Uri.Query) =>
-                    uri.query() should contain theSameElementsAs (expectedParsedQuery)
+                    uri.query() should contain theSameElementsAs expectedParsedQuery
                   }
               }
           }
@@ -384,8 +371,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
 
         "reject a ':path' containing an invalid 'query'" in pendingUntilFixed {
           val invalidQueries: Seq[String] = Seq(
-            ":", "/", "?", "#", "[", "]", "@", " "
-          )
+            ":", "/", "?", "#", "[", "]", "@", " ")
           forAll(absolutePaths.take(3)) {
             case (inputPath, _) =>
               forAll(invalidQueries) { (query: String) =>
@@ -404,8 +390,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
           keyValuePairs = Vector(
             ":method" -> "OPTIONS",
             ":scheme" -> "http",
-            ":path" -> "*"
-          ))
+            ":path" -> "*"))
         request.uri.toString should ===("*") // FIXME: Compare in a better way
       }
 
@@ -419,8 +404,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
             keyValuePairs = Vector(
               ":method" -> "POST",
               ":scheme" -> scheme,
-              ":path" -> ""
-            )))
+              ":path" -> "")))
         }
       }
 
@@ -445,14 +429,14 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
             keyValuePairs = Vector(
               ":scheme" -> "https",
               ":method" -> "GET",
-              ":path" -> "/"
-            ).filter(_._1 != name)))
+              ":path" -> "/").filter(_._1 != name)))
           thrown.getMessage should ===(s"Malformed request: Mandatory pseudo-header '$name' missing")
         }
       }
 
       "reject requests with more than one pseudo-header" in {
-        val pseudoHeaders = Seq(":method" -> "POST", ":scheme" -> "http", ":path" -> "/other", ":authority" -> "example.org")
+        val pseudoHeaders =
+          Seq(":method" -> "POST", ":scheme" -> "http", ":path" -> "/other", ":authority" -> "example.org")
         forAll(pseudoHeaders) {
           case (name: String, alternative: String) =>
             val thrown = shouldThrowMalformedRequest(parse(
@@ -460,8 +444,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
                 ":scheme" -> "https",
                 ":method" -> "GET",
                 ":authority" -> "akka.io",
-                ":path" -> "/"
-              ) :+ (name -> alternative)))
+                ":path" -> "/") :+ (name -> alternative)))
             thrown.getMessage should ===(s"Malformed request: Pseudo-header '$name' must not occur more than once")
         }
       }
@@ -479,8 +462,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
           Seq("a=b", "c=d") -> "a=b; c=d",
           Seq("a=b", "c=d", "e=f") -> "a=b; c=d; e=f",
           Seq("a=b; c=d", "e=f") -> "a=b; c=d; e=f",
-          Seq("a=b", "c=d; e=f") -> "a=b; c=d; e=f"
-        )
+          Seq("a=b", "c=d; e=f") -> "a=b; c=d; e=f")
         forAll(cookieHeaders) {
           case (inValues, outValue) =>
             val httpRequest: HttpRequest = parse(
@@ -488,9 +470,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
                 ":method" -> "GET",
                 ":scheme" -> "https",
                 ":authority" -> "localhost:8000",
-                ":path" -> "/"
-              ) ++ inValues.map("cookie" -> _)
-            )
+                ":path" -> "/") ++ inValues.map("cookie" -> _))
             val receivedCookieValues: Seq[String] = httpRequest.headers.collect {
               case c @ Cookie(_) => c.value
             }
@@ -507,8 +487,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
             ":scheme" -> "https",
             ":path" -> "/resource",
             "host" -> "example.org",
-            "accept" -> "image/jpeg"
-          ))
+            "accept" -> "image/jpeg"))
 
         request.method should ===(HttpMethods.GET)
         request.uri.scheme should ===("https")
@@ -519,8 +498,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
         request.attribute(Http2.streamId) should be(Some(1))
         request.headers should contain theSameElementsAs Vector(
           Host(Uri.Host("example.org")),
-          Accept(MediaRange(MediaTypes.`image/jpeg`))
-        )
+          Accept(MediaRange(MediaTypes.`image/jpeg`)))
         request.entity should ===(HttpEntity.Empty)
         request.protocol should ===(HttpProtocols.`HTTP/2.0`)
       }
@@ -533,10 +511,8 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
             ":path" -> "/resource",
             "content-type" -> "image/jpeg",
             "host" -> "example.org",
-            "content-length" -> "123"
-          ),
-          data = Source(Vector(ByteString(Array.fill(123)(0x00.toByte))))
-        )
+            "content-length" -> "123"),
+          data = Source(Vector(ByteString(Array.fill(123)(0x00.toByte)))))
 
         request.method should ===(HttpMethods.POST)
         request.uri.scheme should ===("https")
@@ -546,8 +522,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
         request.uri.authority.userinfo should ===("")
         request.attribute(Http2.streamId) should be(Some(1))
         request.headers should contain theSameElementsAs Vector(
-          Host(Uri.Host("example.org"))
-        )
+          Host(Uri.Host("example.org")))
         inside(request.entity) {
           case entity: HttpEntity =>
             // FIXME: contentLength is not reported in all cases with HTTP/2
@@ -568,8 +543,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
           ":method" -> "GET",
           ":scheme" -> "https",
           ":authority" -> "localhost:8000",
-          ":path" -> "/"
-        ))
+          ":path" -> "/"))
 
       request.method should ===(HttpMethods.GET)
       request.uri.scheme should ===("https")
@@ -590,9 +564,9 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
           ":authority" -> "localhost:8000",
           ":path" -> "/",
           "content-length" -> "123",
-          "content-length" -> "124",
-        )))
-      thrown.getMessage should ===(s"Malformed request: HTTP message must not contain more than one content-length header")
+          "content-length" -> "124")))
+      thrown.getMessage should ===(
+        s"Malformed request: HTTP message must not contain more than one content-length header")
     }
 
     "reject requests with multiple content type headers" in {
@@ -603,15 +577,17 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
           ":authority" -> "localhost:8000",
           ":path" -> "/",
           "content-type" -> "text/json",
-          "content-type" -> "text/json",
-        )))
-      thrown.getMessage should ===(s"Malformed request: HTTP message must not contain more than one content-type header")
+          "content-type" -> "text/json")))
+      thrown.getMessage should ===(
+        s"Malformed request: HTTP message must not contain more than one content-type header")
     }
 
     "reject requests with too many headers" in {
       val maxHeaderCount = ServerSettings(system).parserSettings.maxHeaderCount
-      val thrown = shouldThrowMalformedRequest(parse((0 to (maxHeaderCount + 1)).map(n => s"x-my-header-$n" -> n.toString).toVector))
-      thrown.getMessage should ===(s"Malformed request: HTTP message contains more than the configured limit of $maxHeaderCount headers")
+      val thrown = shouldThrowMalformedRequest(
+        parse((0 to (maxHeaderCount + 1)).map(n => s"x-my-header-$n" -> n.toString).toVector))
+      thrown.getMessage should ===(
+        s"Malformed request: HTTP message contains more than the configured limit of $maxHeaderCount headers")
     }
 
     "add remote address request attribute if enabled" in {
@@ -621,10 +597,8 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
           ":method" -> "GET",
           ":scheme" -> "https",
           ":authority" -> "localhost:8000",
-          ":path" -> "/"
-        ), settings = ServerSettings(system).withRemoteAddressAttribute(true),
-        attributes = HttpAttributes.remoteAddress(new InetSocketAddress(theAddress, 8080))
-      )
+          ":path" -> "/"), settings = ServerSettings(system).withRemoteAddressAttribute(true),
+        attributes = HttpAttributes.remoteAddress(new InetSocketAddress(theAddress, 8080)))
       request.attributes(AttributeKeys.remoteAddress) should equal(RemoteAddress(theAddress, Some(8080)))
     }
   }

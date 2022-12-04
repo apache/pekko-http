@@ -16,21 +16,23 @@ trait GenericUnmarshallers extends LowerPriorityGenericUnmarshallers {
   implicit def liftToTargetOptionUnmarshaller[A, B](um: Unmarshaller[A, B]): Unmarshaller[A, Option[B]] =
     targetOptionUnmarshaller(um)
   implicit def targetOptionUnmarshaller[A, B](implicit um: Unmarshaller[A, B]): Unmarshaller[A, Option[B]] =
-    um map (Some(_)) withDefaultValue None
+    um.map(Some(_)).withDefaultValue(None)
 }
 
 sealed trait LowerPriorityGenericUnmarshallers {
 
-  implicit def messageUnmarshallerFromEntityUnmarshaller[T](implicit um: FromEntityUnmarshaller[T]): FromMessageUnmarshaller[T] =
+  implicit def messageUnmarshallerFromEntityUnmarshaller[T](
+      implicit um: FromEntityUnmarshaller[T]): FromMessageUnmarshaller[T] =
     Unmarshaller.withMaterializer { implicit ec => implicit mat => request => um(request.entity) }
 
   implicit def liftToSourceOptionUnmarshaller[A, B](um: Unmarshaller[A, B]): Unmarshaller[Option[A], B] =
     sourceOptionUnmarshaller(um)
   implicit def sourceOptionUnmarshaller[A, B](implicit um: Unmarshaller[A, B]): Unmarshaller[Option[A], B] =
-    Unmarshaller.withMaterializer(implicit ec => implicit mat => {
-      case Some(a) => um(a)
-      case None    => FastFuture.failed(Unmarshaller.NoContentException)
-    })
+    Unmarshaller.withMaterializer(implicit ec =>
+      implicit mat => {
+        case Some(a) => um(a)
+        case None    => FastFuture.failed(Unmarshaller.NoContentException)
+      })
 
   /**
    * Enables using [[Either]] to encode the following unmarshalling logic:
@@ -43,7 +45,7 @@ sealed trait LowerPriorityGenericUnmarshallers {
    * Note that the Either's "R" type will be attempted first (as Left is often considered as the "failed case" in Either).
    */
   implicit def eitherUnmarshaller[L, R](implicit ua: FromEntityUnmarshaller[L], rightTag: ClassTag[R],
-                                        ub: FromEntityUnmarshaller[R], leftTag: ClassTag[L]): FromEntityUnmarshaller[Either[L, R]] =
+      ub: FromEntityUnmarshaller[R], leftTag: ClassTag[L]): FromEntityUnmarshaller[Either[L, R]] =
     Unmarshaller.withMaterializer { implicit ex => implicit mat => entity =>
       if (!entity.isStrict) LowerPriorityGenericUnmarshallers.needsStrictEntityFailure
       else {
@@ -61,9 +63,7 @@ sealed trait LowerPriorityGenericUnmarshallers {
                 Future.failed(
                   new EitherUnmarshallingException(
                     rightClass = rightTag.runtimeClass, right = rightFirstEx,
-                    leftClass = leftTag.runtimeClass, left = leftSecondEx
-                  )
-                )
+                    leftClass = leftTag.runtimeClass, left = leftSecondEx))
             }
         }
 
@@ -78,6 +78,5 @@ sealed trait LowerPriorityGenericUnmarshallers {
 @InternalApi
 private[unmarshalling] object LowerPriorityGenericUnmarshallers {
   val needsStrictEntityFailure = Future.failed(new IllegalArgumentException(
-    "eitherUnmarshaller only works with strict entities, so make sure to wrap routes that want to use it with `toStrictEntity`"
-  ))
+    "eitherUnmarshaller only works with strict entities, so make sure to wrap routes that want to use it with `toStrictEntity`"))
 }

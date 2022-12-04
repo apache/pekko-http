@@ -92,7 +92,8 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
           header[`Content-Range`] shouldEqual None
           mediaType.withParams(Map.empty) shouldEqual `multipart/byteranges`
 
-          val parts = responseAs[Multipart.ByteRanges].toStrict(1.second.dilated).awaitResult(3.seconds.dilated).strictParts
+          val parts =
+            responseAs[Multipart.ByteRanges].toStrict(1.second.dilated).awaitResult(3.seconds.dilated).strictParts
           parts.map(_.entity.data.utf8String) should contain theSameElementsAs List("BCDEFGHIJK", "QRSTUVWXYZ")
         }
       } finally file.delete
@@ -155,8 +156,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
         try {
           EventFilter.warning(
             start = "File-system path for base",
-            occurrences = warnings
-          ).intercept {
+            occurrences = warnings).intercept {
             Get() ~> route(prefix + "fileA.txt") ~> check {
               handled shouldEqual false
             }
@@ -260,7 +260,8 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     "return the resource content from an archive" in {
       Get() ~> getFromResource("com/typesafe/config/Config.class") ~> check {
         mediaType shouldEqual `application/octet-stream`
-        responseEntity.toStrict(1.second.dilated).awaitResult(1.second.dilated).data.asByteBuffer.getInt shouldEqual 0xCAFEBABE
+        responseEntity.toStrict(1.second.dilated).awaitResult(
+          1.second.dilated).data.asByteBuffer.getInt shouldEqual 0xCAFEBABE
       }
     }
     "return the file content with MediaType 'application/octet-stream' on unknown file extensions" in {
@@ -297,7 +298,8 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     "return the resource content from an archive" in {
       Get("Config.class") ~> getFromResourceDirectory("com/typesafe/config") ~> check {
         mediaType shouldEqual `application/octet-stream`
-        responseEntity.toStrict(1.second.dilated).awaitResult(1.second.dilated).data.asByteBuffer.getInt shouldEqual 0xCAFEBABE
+        responseEntity.toStrict(1.second.dilated).awaitResult(
+          1.second.dilated).data.asByteBuffer.getInt shouldEqual 0xCAFEBABE
       }
     }
     "reject requests to directory resources" in {
@@ -447,7 +449,8 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       }
     }
     "properly render a sub directory with a path prefix" in {
-      Get("/files/sub/") ~> withSettings(settings)(pathPrefix("files")(listDirectoryContents(base + "/someDir"))) ~> check {
+      Get("/files/sub/") ~> withSettings(settings)(
+        pathPrefix("files")(listDirectoryContents(base + "/someDir"))) ~> check {
         eraseDateTime(responseAs[String]) shouldEqual prep {
           """<html>
             |<head><title>Index of /files/sub/</title></head>
@@ -466,7 +469,8 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       }
     }
     "properly render an empty top-level directory with a path prefix" in {
-      Get("/files/") ~> withSettings(settings)(pathPrefix("files")(listDirectoryContents(base + "/subDirectory/emptySub"))) ~> check {
+      Get("/files/") ~> withSettings(settings)(
+        pathPrefix("files")(listDirectoryContents(base + "/subDirectory/emptySub"))) ~> check {
         eraseDateTime(responseAs[String]) shouldEqual prep {
           """<html>
             |<head><title>Index of /files/</title></head>
@@ -488,7 +492,8 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     }
 
     "reject path traversal attempts" in {
-      def _listDirectoryContents(directory: String) = listDirectoryContents(new File(testRoot, directory).getCanonicalPath)
+      def _listDirectoryContents(directory: String) =
+        listDirectoryContents(new File(testRoot, directory).getCanonicalPath)
       def route(uri: String) =
         mapRequestContext(_.withUnmatchedPath(Path("/" + uri)).mapRequest(_.withUri("/" + uri))) {
           _listDirectoryContents("someDir/sub")

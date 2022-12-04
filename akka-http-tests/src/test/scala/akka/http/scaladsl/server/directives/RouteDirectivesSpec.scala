@@ -28,8 +28,10 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
       var i = 0
       Put() ~> {
         get { complete { i += 1; "get" } } ~
-          put { complete { i += 1; "put" } } ~
-          (post & complete { i += 1; "post" })
+        put {
+          complete { i += 1; "put" }
+        } ~
+        (post & complete { i += 1; "post" })
       } ~> check {
         responseAs[String] shouldEqual "put"
         i shouldEqual 1
@@ -39,8 +41,10 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
       var i = 0
       Put() ~> {
         get { complete(OK, { i += 1; "get" }) } ~
-          put { complete(OK, { i += 1; "put" }) } ~
-          (post & complete(OK, { i += 1; "post" }))
+        put {
+          complete(OK, { i += 1; "put" })
+        } ~
+        (post & complete(OK, { i += 1; "post" }))
       } ~> check {
         responseAs[String] shouldEqual "put"
         i shouldEqual 1
@@ -58,19 +62,18 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
       object TestException extends RuntimeException("Boom")
       "for failed futures and marshalling" in EventFilter[TestException.type](
         occurrences = 1,
-        message = BasicRouteSpecs.defaultExnHandler500Error("Boom")
-      ).intercept {
-          Get() ~> complete(Promise.failed[String](TestException).future) ~>
-            check {
-              status shouldEqual StatusCodes.InternalServerError
-              responseAs[String] shouldEqual "There was an internal server error."
-            }
+        message = BasicRouteSpecs.defaultExnHandler500Error("Boom")).intercept {
+        Get() ~> complete(Promise.failed[String](TestException).future) ~>
+        check {
+          status shouldEqual StatusCodes.InternalServerError
+          responseAs[String] shouldEqual "There was an internal server error."
         }
+      }
       "for futures failed with a RejectionError" in {
         Get() ~> complete(Promise.failed[String](RejectionError(AuthorizationFailedRejection)).future) ~>
-          check {
-            rejection shouldEqual AuthorizationFailedRejection
-          }
+        check {
+          rejection shouldEqual AuthorizationFailedRejection
+        }
       }
     }
     "allow easy handling of futured ToResponseMarshallers" in {
@@ -121,7 +124,7 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
       import akka.http.scaladsl.model.headers.Accept
       Get().withHeaders(Accept(MediaTypes.`application/json`)) ~> route ~> check {
         responseAs[String] shouldEqual
-          """{"age":83,"name":"Ida"}"""
+        """{"age":83,"name":"Ida"}"""
       }
       Get().withHeaders(Accept(MediaTypes.`text/xml`)) ~> route ~> check {
         responseAs[xml.NodeSeq] shouldEqual <data><name>Ida</name><age>83</age></data>
@@ -187,16 +190,14 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
       Get(Uri("https://akka.io/foo")) ~> {
         concat(
           handle(req => Future.failed(new IllegalStateException("Some error"))),
-          complete(ImATeapot)
-        )
+          complete(ImATeapot))
       } ~> check { response shouldEqual HttpResponse(500, entity = "There was an internal server error.") }
     }
     "fail the request when the function throws" in {
       Get(Uri("https://akka.io/foo")) ~> {
         concat(
           handle(req => throw new IllegalStateException("Some error")),
-          complete(ImATeapot)
-        )
+          complete(ImATeapot))
       } ~> check { response shouldEqual HttpResponse(500, entity = "There was an internal server error.") }
     }
   }
@@ -276,7 +277,7 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
     val jsonMarshaller: ToEntityMarshaller[Data] = jsonFormat2(Data.apply)
 
     val xmlMarshaller: ToEntityMarshaller[Data] = Marshaller.combined { (data: Data) =>
-      <data><name>{ data.name }</name><age>{ data.age }</age></data>
+      <data><name>{data.name}</name><age>{data.age}</age></data>
     }
 
     implicit val dataMarshaller: ToResponseMarshaller[Data] =

@@ -19,37 +19,37 @@ private[parser] trait CommonActions {
   type StringMapBuilder = scala.collection.mutable.Builder[(String, String), Map[String, String]]
 
   def getMediaType(mainType: String, subType: String, charsetDefined: Boolean,
-                   params: Map[String, String]): MediaType = {
+      params: Map[String, String]): MediaType = {
     import MediaTypes._
     val subLower = subType.toRootLowerCase
     mainType.toRootLowerCase match {
       case "multipart" => subLower match {
-        case "mixed"       => multipart.mixed(params)
-        case "alternative" => multipart.alternative(params)
-        case "related"     => multipart.related(params)
-        case "form-data"   => multipart.`form-data`(params)
-        case "signed"      => multipart.signed(params)
-        case "encrypted"   => multipart.encrypted(params)
-        case custom        => MediaType.customMultipart(custom, params)
-      }
+          case "mixed"       => multipart.mixed(params)
+          case "alternative" => multipart.alternative(params)
+          case "related"     => multipart.related(params)
+          case "form-data"   => multipart.`form-data`(params)
+          case "signed"      => multipart.signed(params)
+          case "encrypted"   => multipart.encrypted(params)
+          case custom        => MediaType.customMultipart(custom, params)
+        }
       case mainLower =>
-
         // Faster version of MediaType.withParams for the common case of empty params
         def withParams(mt: MediaType): MediaType = if (params.isEmpty) mt else mt.withParams(params)
 
         // Try user-defined function to get a MediaType
         customMediaTypes(mainLower, subLower) match {
           case Some(customMediaType) => withParams(customMediaType)
-          case None =>
+          case None                  =>
             // User-defined function didn't get a MediaType, check for a predefined value
             MediaTypes.getForKey((mainLower, subLower)) match {
               case Some(registered) => withParams(registered)
-              case None =>
+              case None             =>
                 // No predefined value, create custom MediaType
                 if (charsetDefined)
                   MediaType.customWithOpenCharset(mainLower, subLower, params = params, allowArbitrarySubtypes = true)
                 else
-                  MediaType.customBinary(mainLower, subLower, MediaType.Compressible, params = params, allowArbitrarySubtypes = true)
+                  MediaType.customBinary(mainLower, subLower, MediaType.Compressible, params = params,
+                    allowArbitrarySubtypes = true)
             }
         }
     }
@@ -70,8 +70,8 @@ private[parser] trait CommonActions {
         val char2 = str2.charAt(at)
 
         (char1 | char2) < 0x80 &&
-          Character.toLowerCase(char1) == Character.toLowerCase(char2) &&
-          stringEquals(at + 1, length)
+        Character.toLowerCase(char1) == Character.toLowerCase(char2) &&
+        stringEquals(at + 1, length)
       } else true
 
     str1.length == str2.length && stringEquals(0, str1.length)

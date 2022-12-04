@@ -27,18 +27,19 @@ import scala.collection.mutable.ListBuffer
  */
 @InternalApi
 private[http] final class BodyPartParser(
-  defaultContentType: ContentType,
-  boundary:           String,
-  log:                LoggingAdapter,
-  settings:           BodyPartParser.Settings)
-  extends GraphStage[FlowShape[ByteString, BodyPartParser.Output]] {
+    defaultContentType: ContentType,
+    boundary: String,
+    log: LoggingAdapter,
+    settings: BodyPartParser.Settings)
+    extends GraphStage[FlowShape[ByteString, BodyPartParser.Output]] {
   import BodyPartParser._
   import settings._
 
   require(boundary.nonEmpty, "'boundary' parameter of multipart Content-Type must be non-empty")
-  require(boundary.charAt(boundary.length - 1) != ' ', "'boundary' parameter of multipart Content-Type must not end with a space char")
+  require(boundary.charAt(boundary.length - 1) != ' ',
+    "'boundary' parameter of multipart Content-Type must not end with a space char")
   require(
-    boundaryChar matchesAll boundary,
+    boundaryChar.matchesAll(boundary),
     s"'boundary' parameter of multipart Content-Type contains illegal character '${boundaryChar.firstMismatch(boundary).get}'")
 
   sealed trait StateResult // phantom type for ensuring soundness of our parsing method setup
@@ -65,7 +66,7 @@ private[http] final class BodyPartParser(
           val elem = grab(in)
           try run(elem)
           catch {
-            case e: ParsingException => fail(e.info)
+            case e: ParsingException    => fail(e.info)
             case NotEnoughDataException =>
               // we are missing a try/catch{continue} wrapper somewhere
               throw new IllegalStateException("unexpected NotEnoughDataException", NotEnoughDataException)
@@ -130,7 +131,8 @@ private[http] final class BodyPartParser(
         try {
           @tailrec def rec(index: Int): StateResult = {
             val needleEnd = eolConfiguration.boyerMoore.nextIndex(input, index) + eolConfiguration.needle.length
-            if (eolConfiguration.isEndOfLine(input, needleEnd)) parseHeaderLines(input, needleEnd + eolConfiguration.eolLength)
+            if (eolConfiguration.isEndOfLine(input, needleEnd))
+              parseHeaderLines(input, needleEnd + eolConfiguration.eolLength)
             else if (doubleDash(input, needleEnd)) setShouldTerminate()
             else rec(needleEnd)
           }
@@ -140,8 +142,9 @@ private[http] final class BodyPartParser(
           case NotEnoughDataException => continue(input, 0)((newInput, _) => parsePreamble(newInput))
         }
 
-      @tailrec def parseHeaderLines(input: ByteString, lineStart: Int, headers: ListBuffer[HttpHeader] = ListBuffer[HttpHeader](),
-                                    headerCount: Int = 0, cth: Option[`Content-Type`] = None): StateResult = {
+      @tailrec def parseHeaderLines(input: ByteString, lineStart: Int,
+          headers: ListBuffer[HttpHeader] = ListBuffer[HttpHeader](),
+          headerCount: Int = 0, cth: Option[`Content-Type`] = None): StateResult = {
         def contentType =
           cth match {
             case Some(x) => x.contentType
@@ -164,7 +167,8 @@ private[http] final class BodyPartParser(
           case BoundaryHeader =>
             emit(BodyPartStart(headers.toList, _ => HttpEntity.empty(contentType)))
             val ix = lineStart + eolConfiguration.boundaryLength
-            if (eolConfiguration.isEndOfLine(input, ix)) parseHeaderLines(input, ix + eolConfiguration.eolLength, headers, headerCount, None)
+            if (eolConfiguration.isEndOfLine(input, ix))
+              parseHeaderLines(input, ix + eolConfiguration.eolLength, headers, headerCount, None)
             else if (doubleDash(input, ix)) setShouldTerminate()
             else fail("Illegal multipart boundary in message content")
 
@@ -184,24 +188,27 @@ private[http] final class BodyPartParser(
 
       // work-around for compiler complaining about non-tail-recursion if we inline this method
       def parseHeaderLinesAux(headers: ListBuffer[HttpHeader], headerCount: Int,
-                              cth: Option[`Content-Type`])(input: ByteString, lineStart: Int): StateResult =
+          cth: Option[`Content-Type`])(input: ByteString, lineStart: Int): StateResult =
         parseHeaderLines(input, lineStart, headers, headerCount, cth)
 
       def parseEntity(headers: List[HttpHeader], contentType: ContentType,
-                      emitPartChunk: (List[HttpHeader], ContentType, ByteString) => Unit = {
-                        (headers, ct, bytes) =>
-                          emit(BodyPartStart(headers, entityParts => HttpEntity.IndefiniteLength(
-                            ct,
-                            entityParts.collect { case EntityPart(data) => data })))
-                          emit(bytes)
-                      },
-                      emitFinalPartChunk: (List[HttpHeader], ContentType, ByteString) => Unit = {
-                        (headers, ct, bytes) =>
-                          emit(BodyPartStart(headers, { rest =>
-                            StreamUtils.cancelSource(rest)(materializer)
-                            HttpEntity.Strict(ct, bytes)
-                          }))
-                      })(input: ByteString, offset: Int): StateResult =
+          emitPartChunk: (List[HttpHeader], ContentType, ByteString) => Unit = {
+            (headers, ct, bytes) =>
+              emit(BodyPartStart(headers,
+                entityParts =>
+                  HttpEntity.IndefiniteLength(
+                    ct,
+                    entityParts.collect { case EntityPart(data) => data })))
+              emit(bytes)
+          },
+          emitFinalPartChunk: (List[HttpHeader], ContentType, ByteString) => Unit = {
+            (headers, ct, bytes) =>
+              emit(BodyPartStart(headers,
+                { rest =>
+                  StreamUtils.cancelSource(rest)(materializer)
+                  HttpEntity.Strict(ct, bytes)
+                }))
+          })(input: ByteString, offset: Int): StateResult =
         try {
           @tailrec def rec(index: Int): StateResult = {
             val currentPartEnd = eolConfiguration.boyerMoore.nextIndex(input, index)
@@ -226,7 +233,7 @@ private[http] final class BodyPartParser(
             if (emitEnd > offset) {
               emitPartChunk(headers, contentType, input.slice(offset, emitEnd))
               val simpleEmit: (List[HttpHeader], ContentType, ByteString) => Unit = (_, _, bytes) => emit(bytes)
-              continue(input drop emitEnd, 0)(parseEntity(null, null, simpleEmit, simpleEmit))
+              continue(input.drop(emitEnd), 0)(parseEntity(null, null, simpleEmit, simpleEmit))
             } else continue(input, offset)(parseEntity(headers, contentType, emitPartChunk, emitFinalPartChunk))
         }
 
@@ -244,8 +251,8 @@ private[http] final class BodyPartParser(
         state =
           math.signum(offset - input.length) match {
             case -1 => more => next(input ++ more, offset)
-            case 0 => next(_, 0)
-            case 1 => throw new IllegalStateException
+            case 0  => next(_, 0)
+            case 1  => throw new IllegalStateException
           }
         done()
       }
@@ -285,7 +292,8 @@ private[http] object BodyPartParser {
 
   sealed trait Output
   sealed trait PartStart extends Output
-  final case class BodyPartStart(headers: List[HttpHeader], createEntity: Source[Output, NotUsed] => BodyPartEntity) extends PartStart
+  final case class BodyPartStart(headers: List[HttpHeader], createEntity: Source[Output, NotUsed] => BodyPartEntity)
+      extends PartStart
   final case class EntityPart(data: ByteString) extends Output
   final case class ParseError(info: ErrorInfo) extends PartStart
 
@@ -318,7 +326,8 @@ private[http] object BodyPartParser {
 
     def isBoundary(input: ByteString, offset: Int, ix: Int = eolLength): Boolean = {
       @tailrec def process(input: ByteString, offset: Int, ix: Int): Boolean =
-        (ix == needle.length) || (byteAt(input, offset + ix - eol.length) == needle(ix)) && process(input, offset, ix + 1)
+        (ix == needle.length) || (byteAt(input, offset + ix - eol.length) == needle(ix)) && process(input, offset,
+          ix + 1)
 
       process(input, offset, ix)
     }

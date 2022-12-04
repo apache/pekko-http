@@ -184,7 +184,8 @@ class HttpsProxyGraphStageSpec extends AkkaSpecWithMaterializer {
     type SubscriberProbe = TestSubscriber.Probe[ByteString]
     type ProxyAuth = BasicHttpCredentials
 
-    def testCase(proxyAuth: Option[HttpCredentials] = None)(fn: (PublisherProbe, SubscriberProbe, PublisherProbe, SubscriberProbe) => Unit): Unit = {
+    def testCase(proxyAuth: Option[HttpCredentials] = None)(
+        fn: (PublisherProbe, SubscriberProbe, PublisherProbe, SubscriberProbe) => Unit): Unit = {
       Utils.assertAllStagesStopped {
         val proxyGraphStage = HttpsProxyGraphStage(targetHostName, targetPort, clientSettings, proxyAuth)
 

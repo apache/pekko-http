@@ -55,7 +55,8 @@ abstract class FutureDirectives extends FormFieldDirectives {
    *
    * @group future
    */
-  def onCompleteWithBreaker[T](breaker: CircuitBreaker, f: Supplier[CompletionStage[T]], inner: JFunction[Try[T], Route]) = RouteAdapter {
+  def onCompleteWithBreaker[T](breaker: CircuitBreaker, f: Supplier[CompletionStage[T]],
+      inner: JFunction[Try[T], Route]) = RouteAdapter {
     D.onCompleteWithBreaker(breaker)(f.get.toScala.recover(unwrapCompletionException)) { value =>
       inner(value).delegate
     }
@@ -98,7 +99,8 @@ abstract class FutureDirectives extends FormFieldDirectives {
    *
    * @group future
    */
-  def completeOrRecoverWith[T](f: Supplier[CompletionStage[T]], marshaller: Marshaller[T, RequestEntity], inner: JFunction[Throwable, Route]): Route = RouteAdapter {
+  def completeOrRecoverWith[T](f: Supplier[CompletionStage[T]], marshaller: Marshaller[T, RequestEntity],
+      inner: JFunction[Throwable, Route]): Route = RouteAdapter {
     val magnet = CompleteOrRecoverWithMagnet(f.get.toScala)(Marshaller.asScalaEntityMarshaller(marshaller))
     D.completeOrRecoverWith(magnet) { ex => inner(ex).delegate }
   }

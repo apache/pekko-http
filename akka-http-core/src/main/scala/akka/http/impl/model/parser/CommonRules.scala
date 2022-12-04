@@ -55,10 +55,14 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
   }
 
   def `nested-comment`(maxNesting: Int) =
-    if (maxNesting == 0) throw new ParsingException(ErrorInfo("Illegal header value", "Header comment nested too deeply"))
+    if (maxNesting == 0)
+      throw new ParsingException(ErrorInfo("Illegal header value", "Header comment nested too deeply"))
     else {
       var saved: String = null
-      rule { &('(') ~ run { saved = sb.toString } ~ (comment(maxNesting - 1) ~ prependSB(saved + " (") ~ appendSB(')') | setSB(saved) ~ test(false)) }
+      rule {
+        &('(') ~ run { saved = sb.toString } ~ (comment(maxNesting - 1) ~ prependSB(saved + " (") ~ appendSB(
+          ')') | setSB(saved) ~ test(false))
+      }
     }
 
   def ctext = rule { (`ctext-base` | `obs-text`) ~ appendSB() }
@@ -89,15 +93,17 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
   }
 
   def `day-name` = rule(
-    "Sun" ~ push(0) | "Mon" ~ push(1) | "Tue" ~ push(2) | "Wed" ~ push(3) | "Thu" ~ push(4) | "Fri" ~ push(5) | "Sat" ~ push(6))
+    "Sun" ~ push(0) | "Mon" ~ push(1) | "Tue" ~ push(2) | "Wed" ~ push(3) | "Thu" ~ push(4) | "Fri" ~ push(
+      5) | "Sat" ~ push(6))
 
   def date1 = rule { day ~ `date-sep` ~ month ~ `date-sep` ~ year }
 
   def day = rule { digit2 | digit }
 
   def month = rule(
-    "Jan" ~ push(1) | "Feb" ~ push(2) | "Mar" ~ push(3) | "Apr" ~ push(4) | "May" ~ push(5) | "Jun" ~ push(6) | "Jul" ~ push(7) |
-      "Aug" ~ push(8) | "Sep" ~ push(9) | "Oct" ~ push(10) | "Nov" ~ push(11) | "Dec" ~ push(12))
+    "Jan" ~ push(1) | "Feb" ~ push(2) | "Mar" ~ push(3) | "Apr" ~ push(4) | "May" ~ push(5) | "Jun" ~ push(
+      6) | "Jul" ~ push(7) |
+    "Aug" ~ push(8) | "Sep" ~ push(9) | "Oct" ~ push(10) | "Nov" ~ push(11) | "Dec" ~ push(12))
 
   def year = rule { digit4 | digit2 ~> (y => if (y <= 69) y + 2000 else y + 1900) }
 
@@ -115,7 +121,7 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
 
   def `day-name-l` = rule(
     "Sunday" ~ push(0) | "Monday" ~ push(1) | "Tuesday" ~ push(2) | "Wednesday" ~ push(3) | "Thursday" ~ push(4) |
-      "Friday" ~ push(5) | "Saturday" ~ push(6))
+    "Friday" ~ push(5) | "Saturday" ~ push(6))
 
   def `asctime-date` = rule {
     `day-name` ~ ' ' ~ date3 ~ ' ' ~ `time-of-day` ~ ' ' ~ year ~> {
@@ -182,7 +188,7 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
         case ("", Nil)    => HttpChallenge(scheme, None)
         case (token, Nil) => HttpChallenge(scheme, None, Map("" -> token))
         case (_, params) => {
-          val (realms, otherParams) = params.partition(_._1 equalsIgnoreCase "realm")
+          val (realms, otherParams) = params.partition(_._1.equalsIgnoreCase("realm"))
           HttpChallenge(scheme, realms.headOption.map(_._2), TreeMap(otherParams: _*))
         }
       }
@@ -192,7 +198,7 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
   def `challenge-or-credentials`: Rule2[String, (String, Seq[(String, String)])] = rule {
     `auth-scheme` ~ (
       oneOrMore(`auth-param` ~> (_ -> _)).separatedBy(listSep) ~> (x => ("", x))
-      | `token68` ~> (x => (x, Nil))
+      | `token68`                                              ~> (x => (x, Nil))
       | push(("", Nil)))
   }
 
@@ -243,8 +249,8 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
    */
   def `optional-cookie-pair`: Rule1[Option[HttpCookiePair]] = rule {
     (`cookie-pair` ~ &(`cookie-separator`) ~> (Some(_: HttpCookiePair))) |
-      // fallback that parses and discards everything until the next semicolon
-      (zeroOrMore(!`cookie-separator` ~ ANY) ~ &(`cookie-separator`) ~ push(None))
+    // fallback that parses and discards everything until the next semicolon
+    (zeroOrMore(!`cookie-separator` ~ ANY) ~ &(`cookie-separator`) ~ push(None))
   }
 
   def `cookie-pair`: Rule1[HttpCookiePair] = rule {
@@ -277,7 +283,9 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
   }
 
   def `max-age-av` = rule {
-    ignoreCase("max-age=") ~ OWS ~ longNumberCappedAtIntMaxValue ~> { (c: HttpCookie, seconds: Long) => c.withMaxAge(seconds) }
+    ignoreCase("max-age=") ~ OWS ~ longNumberCappedAtIntMaxValue ~> { (c: HttpCookie, seconds: Long) =>
+      c.withMaxAge(seconds)
+    }
   }
 
   def `domain-av` = rule {
@@ -300,7 +308,9 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
   }
 
   def `same-site-av` = rule {
-    ignoreCase("samesite=") ~ OWS ~ `same-site-value` ~> { (c: HttpCookie, sameSiteValue: String) => c.withSameSite(sameSite = SameSite(sameSiteValue)) }
+    ignoreCase("samesite=") ~ OWS ~ `same-site-value` ~> { (c: HttpCookie, sameSiteValue: String) =>
+      c.withSameSite(sameSite = SameSite(sameSiteValue))
+    }
   }
 
   def `same-site-value` = rule {
@@ -318,13 +328,13 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
   // http://www.rfc-editor.org/errata_search.php?rfc=6265
   def `extension-av` = rule {
     !(ignoreCase("expires=")
-      | ignoreCase("max-age=")
-      | ignoreCase("domain=")
-      | ignoreCase("path=")
-      | ignoreCase("samesite=")
-      | ignoreCase("secure")
-      | ignoreCase("httponly")) ~
-      capture(zeroOrMore(`av-octet`)) ~ OWS ~> { (c: HttpCookie, s: String) => c.withExtension(s) }
+    | ignoreCase("max-age=")
+    | ignoreCase("domain=")
+    | ignoreCase("path=")
+    | ignoreCase("samesite=")
+    | ignoreCase("secure")
+    | ignoreCase("httponly")) ~
+    capture(zeroOrMore(`av-octet`)) ~ OWS ~> { (c: HttpCookie, s: String) => c.withExtension(s) }
   }
 
   // ******************************************************************************************
@@ -398,8 +408,8 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
 
   def `product-or-comment` = rule(
     product ~ comment() ~> (ProductVersion(_, _, sb.toString))
-      | product ~> (ProductVersion(_, _))
-      | comment() ~ push(ProductVersion("", "", sb.toString)))
+    | product           ~> (ProductVersion(_, _))
+    | comment() ~ push(ProductVersion("", "", sb.toString)))
 
   def products = rule {
     `product-or-comment` ~ zeroOrMore(`product-or-comment`) ~> (_ +: _)
@@ -411,11 +421,11 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
 
   def `transfer-coding` = rule(
     ignoreCase("chunked") ~ OWS ~ push(TransferEncodings.chunked)
-      | ignoreCase("gzip") ~ OWS ~ push(TransferEncodings.gzip)
-      | ignoreCase("deflate") ~ OWS ~ push(TransferEncodings.deflate)
-      | ignoreCase("compress") ~ OWS ~ push(TransferEncodings.compress)
-      | ignoreCase("trailers") ~ OWS ~ push(TransferEncodings.trailers)
-      | `transfer-extension`)
+    | ignoreCase("gzip") ~ OWS ~ push(TransferEncodings.gzip)
+    | ignoreCase("deflate") ~ OWS ~ push(TransferEncodings.deflate)
+    | ignoreCase("compress") ~ OWS ~ push(TransferEncodings.compress)
+    | ignoreCase("trailers") ~ OWS ~ push(TransferEncodings.trailers)
+    | `transfer-extension`)
 
   def `transfer-extension` = rule {
     token ~ zeroOrMore(ws(';') ~ `transfer-parameter`) ~> (p => TreeMap(p: _*)) ~> (TransferEncodings.Extension(_, _))
@@ -435,7 +445,8 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
   def digit2 = rule { DIGIT ~ DIGIT ~ push(digitInt(charAt(-2)) * 10 + digitInt(lastChar)) }
 
   def digit4 = rule {
-    DIGIT ~ DIGIT ~ DIGIT ~ DIGIT ~ push(digitInt(charAt(-4)) * 1000 + digitInt(charAt(-3)) * 100 + digitInt(charAt(-2)) * 10 + digitInt(lastChar))
+    DIGIT ~ DIGIT ~ DIGIT ~ DIGIT ~ push(
+      digitInt(charAt(-4)) * 1000 + digitInt(charAt(-3)) * 100 + digitInt(charAt(-2)) * 10 + digitInt(lastChar))
   }
 
   def ws(c: Char) = rule { c ~ OWS }
@@ -449,7 +460,7 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
   // parses a potentially long series of digits and extracts its Long value capping at 999,999,999,999,999,999 in case of overflows
   def longNumberCapped = rule(
     (capture((1 to 18).times(DIGIT)) ~ !DIGIT ~> (_.toLong)
-      | oneOrMore(DIGIT) ~ push(999999999999999999L)) ~ OWS)
+    | oneOrMore(DIGIT) ~ push(999999999999999999L)) ~ OWS)
 
   private def digitInt(c: Char): Int = c - '0'
 
@@ -473,4 +484,3 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
   def newUriParser(input: ParserInput): UriParser
   def uriReference: Rule1[Uri] = rule { runSubParser(newUriParser(_).`URI-reference-pushed`) }
 }
-

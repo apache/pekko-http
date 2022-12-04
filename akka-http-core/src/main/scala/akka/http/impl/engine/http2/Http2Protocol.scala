@@ -251,6 +251,7 @@ private[http] object Http2Protocol {
 
   sealed abstract class ErrorCode(val id: Int) extends Product
   object ErrorCode {
+
     /**
      * NO_ERROR (0x0):  The associated condition is not a result of an
      *    error.  For example, a GOAWAY might include this code to indicate
@@ -319,25 +320,25 @@ private[http] object Http2Protocol {
      * CONNECT_ERROR (0xa):  The connection established in response to a
      *    CONNECT request (Section 8.3) was reset or abnormally closed.
      */
-    case object CONNECT_ERROR extends ErrorCode(0xa)
+    case object CONNECT_ERROR extends ErrorCode(0xA)
 
     /**
      * ENHANCE_YOUR_CALM (0xb):  The endpoint detected that its peer is
      *    exhibiting a behavior that might be generating excessive load.
      */
-    case object ENHANCE_YOUR_CALM extends ErrorCode(0xb)
+    case object ENHANCE_YOUR_CALM extends ErrorCode(0xB)
 
     /**
      * INADEQUATE_SECURITY (0xc):  The underlying transport has properties
      *    that do not meet minimum security requirements (see Section 9.2).
      */
-    case object INADEQUATE_SECURITY extends ErrorCode(0xc)
+    case object INADEQUATE_SECURITY extends ErrorCode(0xC)
 
     /**
      * HTTP_1_1_REQUIRED (0xd):  The endpoint requires that HTTP/1.1 be used
      *    instead of HTTP/2.
      */
-    case object HTTP_1_1_REQUIRED extends ErrorCode(0xd)
+    case object HTTP_1_1_REQUIRED extends ErrorCode(0xD)
 
     case class Unknown private[ErrorCode] (override val id: Int) extends ErrorCode(id)
 
@@ -356,8 +357,7 @@ private[http] object Http2Protocol {
         CONNECT_ERROR,
         ENHANCE_YOUR_CALM,
         INADEQUATE_SECURITY,
-        HTTP_1_1_REQUIRED
-      ).toSeq
+        HTTP_1_1_REQUIRED).toSeq
 
     // make sure that lookup works and `All` ordering isn't broken
     All.foreach(f => require(f == byId(f.id), s"ErrorCode $f with id ${f.id} must be found"))

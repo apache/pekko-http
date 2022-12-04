@@ -23,11 +23,11 @@ trait PredefinedToResponseMarshallers extends LowPriorityToResponseMarshallerImp
   private type TRM[T] = ToResponseMarshaller[T] // brevity alias
 
   def fromToEntityMarshaller[T](
-    status:  StatusCode                = StatusCodes.OK,
-    headers: immutable.Seq[HttpHeader] = Nil)(
-    implicit
-    m: ToEntityMarshaller[T]): ToResponseMarshaller[T] =
-    fromStatusCodeAndHeadersAndValue compose (t => (status, headers, t))
+      status: StatusCode = StatusCodes.OK,
+      headers: immutable.Seq[HttpHeader] = Nil)(
+      implicit
+      m: ToEntityMarshaller[T]): ToResponseMarshaller[T] =
+    fromStatusCodeAndHeadersAndValue.compose(t => (status, headers, t))
 
   implicit val fromResponse: TRM[HttpResponse] = Marshaller.opaque(ConstantFun.scalaIdentityFunction)
 
@@ -48,16 +48,18 @@ trait PredefinedToResponseMarshallers extends LowPriorityToResponseMarshallerImp
     Marshaller.opaque { case (status, headers) => statusCodeResponse(status, headers) }
 
   implicit def fromStatusCodeAndValue[S, T](implicit sConv: S => StatusCode, mt: ToEntityMarshaller[T]): TRM[(S, T)] =
-    fromStatusCodeAndHeadersAndValue[T] compose { case (status, value) => (sConv(status), Nil, value) }
+    fromStatusCodeAndHeadersAndValue[T].compose { case (status, value) => (sConv(status), Nil, value) }
 
-  implicit def fromStatusCodeConvertibleAndHeadersAndT[S, T](implicit sConv: S => StatusCode, mt: ToEntityMarshaller[T]): TRM[(S, immutable.Seq[HttpHeader], T)] =
-    fromStatusCodeAndHeadersAndValue[T] compose { case (status, headers, value) => (sConv(status), headers, value) }
+  implicit def fromStatusCodeConvertibleAndHeadersAndT[S, T](
+      implicit sConv: S => StatusCode, mt: ToEntityMarshaller[T]): TRM[(S, immutable.Seq[HttpHeader], T)] =
+    fromStatusCodeAndHeadersAndValue[T].compose { case (status, headers, value) => (sConv(status), headers, value) }
 
-  implicit def fromStatusCodeAndHeadersAndValue[T](implicit mt: ToEntityMarshaller[T]): TRM[(StatusCode, immutable.Seq[HttpHeader], T)] =
+  implicit def fromStatusCodeAndHeadersAndValue[T](
+      implicit mt: ToEntityMarshaller[T]): TRM[(StatusCode, immutable.Seq[HttpHeader], T)] =
     Marshaller(implicit ec => {
       case (status, headers, value) =>
-        mt(value).fast map { marshallings =>
-          val mappedMarshallings = marshallings map (_ map (statusCodeAndEntityResponse(status, headers, _)))
+        mt(value).fast.map { marshallings =>
+          val mappedMarshallings = marshallings.map(_.map(statusCodeAndEntityResponse(status, headers, _)))
           if (status.isSuccess)
             // for 2xx status codes delegate content-type negotiation to the value marshaller
             mappedMarshallings
@@ -80,7 +82,8 @@ trait PredefinedToResponseMarshallers extends LowPriorityToResponseMarshallerImp
         }
     })
 
-  implicit def fromEntityStreamingSupportAndByteStringMarshaller[T: ClassTag, M](implicit s: EntityStreamingSupport, m: ToByteStringMarshaller[T]): ToResponseMarshaller[Source[T, M]] =
+  implicit def fromEntityStreamingSupportAndByteStringMarshaller[T: ClassTag, M](implicit s: EntityStreamingSupport,
+      m: ToByteStringMarshaller[T]): ToResponseMarshaller[Source[T, M]] =
     fromEntityStreamingSupportAndByteStringSourceMarshaller(s, m.map(Source.single))
 }
 
@@ -90,40 +93,45 @@ trait LowPriorityToResponseMarshallerImplicits {
   implicit def liftMarshaller[T](implicit m: ToEntityMarshaller[T]): ToResponseMarshaller[T] =
     PredefinedToResponseMarshallers.fromToEntityMarshaller()
 
-  implicit def fromEntityStreamingSupportAndEntityMarshaller[T, M](implicit s: EntityStreamingSupport, m: ToEntityMarshaller[T], tag: ClassTag[T]): ToResponseMarshaller[Source[T, M]] =
+  implicit def fromEntityStreamingSupportAndEntityMarshaller[T, M](implicit s: EntityStreamingSupport,
+      m: ToEntityMarshaller[T], tag: ClassTag[T]): ToResponseMarshaller[Source[T, M]] =
     fromEntityStreamingSupportAndByteStringSourceMarshaller[T, M](s, m.map(_.dataBytes))
 
-  private[marshalling] def fromEntityStreamingSupportAndByteStringSourceMarshaller[T: ClassTag, M](s: EntityStreamingSupport, m: Marshaller[T, Source[ByteString, _]]): ToResponseMarshaller[Source[T, M]] = {
+  private[marshalling] def fromEntityStreamingSupportAndByteStringSourceMarshaller[T: ClassTag, M](
+      s: EntityStreamingSupport, m: Marshaller[T, Source[ByteString, _]]): ToResponseMarshaller[Source[T, M]] = {
     Marshaller[Source[T, M], HttpResponse] { implicit ec => source =>
-      FastFuture successful {
-        Marshalling.WithFixedContentType(s.contentType, () => {
-          val availableMarshallingsPerElement = source.mapAsync(1) { t => m(t)(ec) }
+      FastFuture.successful {
+        Marshalling.WithFixedContentType(s.contentType,
+          () => {
+            val availableMarshallingsPerElement = source.mapAsync(1) { t => m(t)(ec) }
 
-          val bestMarshallingPerElement = availableMarshallingsPerElement map { marshallings =>
-            // pick the Marshalling that matches our EntityStreamingSupport
-            // TODO we could either special case for certain known types,
-            // or extend the entity support to be more advanced such that it would negotiate the element content type it
-            // is able to render.
-            selectMarshallingForContentType(marshallings, s.contentType)
-              .orElse {
-                marshallings collectFirst { case Marshalling.Opaque(marshal) => marshal }
-              }
-              .getOrElse(throw new NoStrictlyCompatibleElementMarshallingAvailableException[T](s.contentType, marshallings))
-          }
+            val bestMarshallingPerElement = availableMarshallingsPerElement.map { marshallings =>
+              // pick the Marshalling that matches our EntityStreamingSupport
+              // TODO we could either special case for certain known types,
+              // or extend the entity support to be more advanced such that it would negotiate the element content type it
+              // is able to render.
+              selectMarshallingForContentType(marshallings, s.contentType)
+                .orElse {
+                  marshallings.collectFirst { case Marshalling.Opaque(marshal) => marshal }
+                }
+                .getOrElse(throw new NoStrictlyCompatibleElementMarshallingAvailableException[T](s.contentType,
+                  marshallings))
+            }
 
-          val marshalledElements: Source[ByteString, M] =
-            bestMarshallingPerElement
-              .flatMapConcat(_.apply()) // marshal!
-              .via(s.framingRenderer)
+            val marshalledElements: Source[ByteString, M] =
+              bestMarshallingPerElement
+                .flatMapConcat(_.apply()) // marshal!
+                .via(s.framingRenderer)
 
-          HttpResponse(entity = HttpEntity(s.contentType, marshalledElements))
-        }) :: Nil
+            HttpResponse(entity = HttpEntity(s.contentType, marshalledElements))
+          }) :: Nil
       }
     }
   }
 }
 
 object PredefinedToResponseMarshallers extends PredefinedToResponseMarshallers {
+
   /** INTERNAL API */
   @InternalApi
   private def statusCodeResponse(statusCode: StatusCode, headers: immutable.Seq[HttpHeader] = Nil): HttpResponse = {
@@ -134,17 +142,18 @@ object PredefinedToResponseMarshallers extends PredefinedToResponseMarshallers {
     HttpResponse(status = statusCode, headers = headers, entity = entity)
   }
 
-  private def statusCodeAndEntityResponse(statusCode: StatusCode, headers: immutable.Seq[HttpHeader], entity: ResponseEntity): HttpResponse = {
+  private def statusCodeAndEntityResponse(statusCode: StatusCode, headers: immutable.Seq[HttpHeader],
+      entity: ResponseEntity): HttpResponse = {
     if (statusCode.allowsEntity) HttpResponse(statusCode, headers, entity)
     else HttpResponse(statusCode, headers, HttpEntity.Empty)
   }
 }
 
 final class NoStrictlyCompatibleElementMarshallingAvailableException[T](
-  streamContentType:     ContentType,
-  availableMarshallings: List[Marshalling[_]])(implicit tag: ClassTag[T])
-  extends RuntimeException(
-    s"None of the available marshallings ($availableMarshallings) directly " +
+    streamContentType: ContentType,
+    availableMarshallings: List[Marshalling[_]])(implicit tag: ClassTag[T])
+    extends RuntimeException(
+      s"None of the available marshallings ($availableMarshallings) directly " +
       s"match the ContentType requested by the top-level streamed entity ($streamContentType). " +
       s"Please provide an implicit `Marshaller[${if (tag == null) "T" else tag.runtimeClass.getName}, HttpEntity]` " +
       s"that can render ${if (tag == null) "" else tag.runtimeClass.getName + " "}" +

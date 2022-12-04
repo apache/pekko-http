@@ -26,7 +26,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import akka.event.LogSource
 
 abstract class DontLeakActorsOnFailingConnectionSpecs(poolImplementation: String)
-  extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with WithLogCapturing {
+    extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with WithLogCapturing {
 
   val config = ConfigFactory.parseString(s"""
     akka {

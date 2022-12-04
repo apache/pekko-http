@@ -22,7 +22,8 @@ class ConnectionContextSpec extends AnyWordSpec with Matchers {
       val clientAuth = Optional.of(TLSClientAuth.need)
       val parameters = Optional.of(sslContext.getDefaultSSLParameters)
 
-      val httpsContext = akka.http.javadsl.ConnectionContext.https(sslContext, ciphers, protocols, clientAuth, parameters)
+      val httpsContext =
+        akka.http.javadsl.ConnectionContext.https(sslContext, ciphers, protocols, clientAuth, parameters)
       httpsContext.getSslContext should ===(sslContext)
       httpsContext.getEnabledCipherSuites.get.toArray.toList shouldBe (ciphers.get.toArray.toList)
       httpsContext.getEnabledProtocols.get.toArray.toList shouldBe (protocols.get.toArray.toList)

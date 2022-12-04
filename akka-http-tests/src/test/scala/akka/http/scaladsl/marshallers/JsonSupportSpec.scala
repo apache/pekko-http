@@ -49,7 +49,7 @@ abstract class JsonSupportSpec extends AnyWordSpec with Matchers with ScalatestR
       val marshalled = marshal(Employee.simple)
 
       marshalled.data.utf8String shouldEqual
-        """{
+      """{
           |  "age": 42,
           |  "boardMember": false,
           |  "fname": "Frank",

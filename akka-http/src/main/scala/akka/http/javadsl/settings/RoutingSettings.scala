@@ -20,18 +20,27 @@ abstract class RoutingSettings private[akka] () { self: RoutingSettingsImpl =>
   def getRangeCountLimit: Int
   def getRangeCoalescingThreshold: Long
   def getDecodeMaxBytesPerChunk: Int
-  @deprecated("binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher", since = "10.1.6")
+  @deprecated(
+    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    since = "10.1.6")
   @Deprecated
   def getFileIODispatcher: String
 
-  def withVerboseErrorMessages(verboseErrorMessages: Boolean): RoutingSettings = self.copy(verboseErrorMessages = verboseErrorMessages)
-  def withFileGetConditional(fileGetConditional: Boolean): RoutingSettings = self.copy(fileGetConditional = fileGetConditional)
-  def withRenderVanityFooter(renderVanityFooter: Boolean): RoutingSettings = self.copy(renderVanityFooter = renderVanityFooter)
+  def withVerboseErrorMessages(verboseErrorMessages: Boolean): RoutingSettings =
+    self.copy(verboseErrorMessages = verboseErrorMessages)
+  def withFileGetConditional(fileGetConditional: Boolean): RoutingSettings =
+    self.copy(fileGetConditional = fileGetConditional)
+  def withRenderVanityFooter(renderVanityFooter: Boolean): RoutingSettings =
+    self.copy(renderVanityFooter = renderVanityFooter)
   def withRangeCountLimit(rangeCountLimit: Int): RoutingSettings = self.copy(rangeCountLimit = rangeCountLimit)
-  def withRangeCoalescingThreshold(rangeCoalescingThreshold: Long): RoutingSettings = self.copy(rangeCoalescingThreshold = rangeCoalescingThreshold)
-  def withDecodeMaxBytesPerChunk(decodeMaxBytesPerChunk: Int): RoutingSettings = self.copy(decodeMaxBytesPerChunk = decodeMaxBytesPerChunk)
+  def withRangeCoalescingThreshold(rangeCoalescingThreshold: Long): RoutingSettings =
+    self.copy(rangeCoalescingThreshold = rangeCoalescingThreshold)
+  def withDecodeMaxBytesPerChunk(decodeMaxBytesPerChunk: Int): RoutingSettings =
+    self.copy(decodeMaxBytesPerChunk = decodeMaxBytesPerChunk)
   def withDecodeMaxSize(decodeMaxSize: Long): RoutingSettings = self.copy(decodeMaxSize = decodeMaxSize)
-  @deprecated("binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher", since = "10.1.6")
+  @deprecated(
+    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    since = "10.1.6")
   @Deprecated
   def withFileIODispatcher(fileIODispatcher: String): RoutingSettings = self
 }

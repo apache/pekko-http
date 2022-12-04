@@ -20,6 +20,7 @@ import akka.actor.ClassicActorSystemProvider
  * Represents a prospective HTTP server binding.
  */
 class ServerBinding private[http] (delegate: akka.http.scaladsl.Http.ServerBinding) {
+
   /**
    * The local address of the endpoint bound by the materialization of the `connections` [[akka.stream.javadsl.Source]].
    */
@@ -118,7 +119,8 @@ class ServerBinding private[http] (delegate: akka.http.scaladsl.Http.ServerBindi
    *
    * @param hardTerminationDeadline timeout after which all requests and connections shall be forcefully terminated
    */
-  def addToCoordinatedShutdown(hardTerminationDeadline: java.time.Duration, system: ClassicActorSystemProvider): ServerBinding = {
+  def addToCoordinatedShutdown(
+      hardTerminationDeadline: java.time.Duration, system: ClassicActorSystemProvider): ServerBinding = {
     import akka.util.JavaDurationConverters._
     delegate.addToCoordinatedShutdown(hardTerminationDeadline.asScala)(system)
     this

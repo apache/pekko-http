@@ -29,7 +29,8 @@ import scala.language.implicitConversions
  * Public API but not intended for subclassing
  */
 @DoNotInherit
-abstract class ServerSettings private[akka] () extends akka.http.javadsl.settings.ServerSettings { self: ServerSettingsImpl =>
+abstract class ServerSettings private[akka] () extends akka.http.javadsl.settings.ServerSettings {
+  self: ServerSettingsImpl =>
   def serverHeader: Option[Server]
   def previewServerSettings: PreviewServerSettings
   def timeouts: ServerSettings.Timeouts
@@ -45,7 +46,8 @@ abstract class ServerSettings private[akka] () extends akka.http.javadsl.setting
   def backlog: Int
   def socketOptions: immutable.Seq[SocketOption]
   def defaultHostHeader: Host
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.randomFactory instead", since = "10.1.1")
+  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.randomFactory instead",
+    since = "10.1.1")
   def websocketRandomFactory: () => Random
   def websocketSettings: WebSocketSettings
   def parserSettings: ParserSettings
@@ -75,7 +77,8 @@ abstract class ServerSettings private[akka] () extends akka.http.javadsl.setting
   override def getRemoteAddressHeader = this.remoteAddressHeader
   override def getRemoteAddressAttribute: Boolean = this.remoteAddressAttribute
   override def getLogUnencryptedNetworkBytes = OptionConverters.toJava(this.logUnencryptedNetworkBytes)
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.getRandomFactory instead", since = "10.2.0")
+  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.getRandomFactory instead",
+    since = "10.2.0")
   override def getWebsocketRandomFactory = new Supplier[Random] {
     override def get(): Random = self.websocketRandomFactory()
   }
@@ -88,49 +91,64 @@ abstract class ServerSettings private[akka] () extends akka.http.javadsl.setting
   // ---
 
   // override for more specific return type
-  def withPreviewServerSettings(newValue: PreviewServerSettings): ServerSettings = self.copy(previewServerSettings = newValue)
+  def withPreviewServerSettings(newValue: PreviewServerSettings): ServerSettings =
+    self.copy(previewServerSettings = newValue)
   override def withMaxConnections(newValue: Int): ServerSettings = self.copy(maxConnections = newValue)
   override def withPipeliningLimit(newValue: Int): ServerSettings = self.copy(pipeliningLimit = newValue)
   override def withRemoteAddressHeader(newValue: Boolean): ServerSettings = self.copy(remoteAddressHeader = newValue)
-  override def withRemoteAddressAttribute(newValue: Boolean): ServerSettings = self.copy(remoteAddressAttribute = newValue)
+  override def withRemoteAddressAttribute(newValue: Boolean): ServerSettings =
+    self.copy(remoteAddressAttribute = newValue)
   override def withRawRequestUriHeader(newValue: Boolean): ServerSettings = self.copy(rawRequestUriHeader = newValue)
-  override def withTransparentHeadRequests(newValue: Boolean): ServerSettings = self.copy(transparentHeadRequests = newValue)
+  override def withTransparentHeadRequests(newValue: Boolean): ServerSettings =
+    self.copy(transparentHeadRequests = newValue)
   override def withVerboseErrorMessages(newValue: Boolean): ServerSettings = self.copy(verboseErrorMessages = newValue)
   override def withResponseHeaderSizeHint(newValue: Int): ServerSettings = self.copy(responseHeaderSizeHint = newValue)
   override def withBacklog(newValue: Int): ServerSettings = self.copy(backlog = newValue)
-  override def withSocketOptions(newValue: java.lang.Iterable[SocketOption]): ServerSettings = self.copy(socketOptions = newValue.asScala.toList)
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead", since = "10.2.0")
-  override def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ServerSettings = self.copy(websocketSettings = this.websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
-    override def get(): Random = newValue.get()
-  }))
+  override def withSocketOptions(newValue: java.lang.Iterable[SocketOption]): ServerSettings =
+    self.copy(socketOptions = newValue.asScala.toList)
+  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
+    since = "10.2.0")
+  override def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ServerSettings =
+    self.copy(websocketSettings = this.websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
+      override def get(): Random = newValue.get()
+    }))
   override def getWebsocketSettings: WebSocketSettings = self.websocketSettings
   override def withDefaultHttpPort(newValue: Int): ServerSettings = self.copy(defaultHttpPort = newValue)
   override def withDefaultHttpsPort(newValue: Int): ServerSettings = self.copy(defaultHttpsPort = newValue)
   override def withTerminationDeadlineExceededResponse(response: akka.http.javadsl.model.HttpResponse): ServerSettings =
     self.copy(terminationDeadlineExceededResponse = response.asScala)
   override def withParsingErrorHandler(newValue: String): ServerSettings = self.copy(parsingErrorHandler = newValue)
-  override def withStreamCancellationDelay(newValue: FiniteDuration): ServerSettings = self.copy(streamCancellationDelay = newValue)
+  override def withStreamCancellationDelay(newValue: FiniteDuration): ServerSettings =
+    self.copy(streamCancellationDelay = newValue)
 
   // overloads for Scala idiomatic use
   def withTimeouts(newValue: ServerSettings.Timeouts): ServerSettings = self.copy(timeouts = newValue)
   def withServerHeader(newValue: Option[Server]): ServerSettings = self.copy(serverHeader = newValue)
-  def withLogUnencryptedNetworkBytes(newValue: Option[Int]): ServerSettings = self.copy(logUnencryptedNetworkBytes = newValue)
+  def withLogUnencryptedNetworkBytes(newValue: Option[Int]): ServerSettings =
+    self.copy(logUnencryptedNetworkBytes = newValue)
   def withDefaultHostHeader(newValue: Host): ServerSettings = self.copy(defaultHostHeader = newValue)
   def withParserSettings(newValue: ParserSettings): ServerSettings = self.copy(parserSettings = newValue)
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead", since = "10.2.0")
-  def withWebsocketRandomFactory(newValue: () => Random): ServerSettings = self.copy(websocketSettings = this.websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
-    override def get(): Random = newValue()
-  }))
+  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
+    since = "10.2.0")
+  def withWebsocketRandomFactory(newValue: () => Random): ServerSettings =
+    self.copy(websocketSettings = this.websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
+      override def get(): Random = newValue()
+    }))
   def withWebsocketSettings(newValue: WebSocketSettings): ServerSettings = self.copy(websocketSettings = newValue)
   def withSocketOptions(newValue: immutable.Seq[SocketOption]): ServerSettings = self.copy(socketOptions = newValue)
   def withHttp2Settings(newValue: Http2ServerSettings): ServerSettings = copy(http2Settings = newValue)
 
   // Scala-only lenses
-  def mapHttp2Settings(f: Http2ServerSettings => Http2ServerSettings): ServerSettings = withHttp2Settings(f(this.http2Settings))
-  def mapParserSettings(f: ParserSettings => ParserSettings): ServerSettings = withParserSettings(f(this.parserSettings))
-  def mapPreviewServerSettings(f: PreviewServerSettings => PreviewServerSettings): ServerSettings = withPreviewServerSettings(f(this.previewServerSettings))
-  def mapWebsocketSettings(f: WebSocketSettings => WebSocketSettings): ServerSettings = withWebsocketSettings(f(this.websocketSettings))
-  def mapTimeouts(f: ServerSettings.Timeouts => ServerSettings.Timeouts): ServerSettings = withTimeouts(f(this.timeouts))
+  def mapHttp2Settings(f: Http2ServerSettings => Http2ServerSettings): ServerSettings =
+    withHttp2Settings(f(this.http2Settings))
+  def mapParserSettings(f: ParserSettings => ParserSettings): ServerSettings =
+    withParserSettings(f(this.parserSettings))
+  def mapPreviewServerSettings(f: PreviewServerSettings => PreviewServerSettings): ServerSettings =
+    withPreviewServerSettings(f(this.previewServerSettings))
+  def mapWebsocketSettings(f: WebSocketSettings => WebSocketSettings): ServerSettings =
+    withWebsocketSettings(f(this.websocketSettings))
+  def mapTimeouts(f: ServerSettings.Timeouts => ServerSettings.Timeouts): ServerSettings =
+    withTimeouts(f(this.timeouts))
 
   /**
    * INTERNAL API

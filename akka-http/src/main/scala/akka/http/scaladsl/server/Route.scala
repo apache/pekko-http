@@ -34,10 +34,11 @@ object Route {
    *    using the ``~`` on routes or the [[Directive.|]] operator on directives.
    */
   def seal(route: Route)(implicit
-    routingSettings: RoutingSettings = null,
-                         @deprecated("For binary compatibility. parserSettings is never used", since = "10.1.8") parserSettings:ParserSettings = null,
-                         rejectionHandler:                                                                                    RejectionHandler = RejectionHandler.default,
-                         exceptionHandler:                                                                                    ExceptionHandler = null): Route = {
+      routingSettings: RoutingSettings = null,
+      @deprecated("For binary compatibility. parserSettings is never used",
+        since = "10.1.8") parserSettings: ParserSettings = null,
+      rejectionHandler: RejectionHandler = RejectionHandler.default,
+      exceptionHandler: ExceptionHandler = null): Route = {
     import directives.ExecutionDirectives._
     // optimized as this is the root handler for all akka-http applications
     BasicDirectives.extractSettings { theSettings =>
@@ -64,13 +65,13 @@ object Route {
    */
   @deprecated("Replaced by `toFlow` that takes an implicit ActorSystem.", "10.2.0")
   def handlerFlow(route: Route)(implicit
-    routingSettings: RoutingSettings,
-                                parserSettings:   ParserSettings,
-                                materializer:     Materializer,
-                                routingLog:       RoutingLog,
-                                executionContext: ExecutionContextExecutor = null,
-                                rejectionHandler: RejectionHandler         = RejectionHandler.default,
-                                exceptionHandler: ExceptionHandler         = null): Flow[HttpRequest, HttpResponse, NotUsed] =
+      routingSettings: RoutingSettings,
+      parserSettings: ParserSettings,
+      materializer: Materializer,
+      routingLog: RoutingLog,
+      executionContext: ExecutionContextExecutor = null,
+      rejectionHandler: RejectionHandler = RejectionHandler.default,
+      exceptionHandler: ExceptionHandler = null): Flow[HttpRequest, HttpResponse, NotUsed] =
     Flow[HttpRequest].mapAsync(1)(asyncHandler(route))
 
   def toFunction(route: Route)(implicit system: ClassicActorSystemProvider): HttpRequest => Future[HttpResponse] = {
@@ -85,32 +86,39 @@ object Route {
         .tapply(_ => route)
     }
 
-    createAsyncHandler(sealedRoute, routingLog, routingSettings, parserSettings)(system.classicSystem.dispatcher, SystemMaterializer(system).materializer)
+    createAsyncHandler(sealedRoute, routingLog, routingSettings, parserSettings)(system.classicSystem.dispatcher,
+      SystemMaterializer(system).materializer)
   }
 
   /**
    * Turns a `Route` into an async handler function.
    */
-  @deprecated("Use `toFunction` instead, which only requires an implicit ActorSystem and no rejection/exception handlers. Use directives to specify custom exceptions or rejection handlers", "10.2.0")
+  @deprecated(
+    "Use `toFunction` instead, which only requires an implicit ActorSystem and no rejection/exception handlers. Use directives to specify custom exceptions or rejection handlers",
+    "10.2.0")
   def asyncHandler(route: Route)(implicit
-    routingSettings: RoutingSettings,
-                                 parserSettings:   ParserSettings,
-                                 materializer:     Materializer,
-                                 routingLog:       RoutingLog,
-                                 executionContext: ExecutionContextExecutor = null,
-                                 rejectionHandler: RejectionHandler         = RejectionHandler.default,
-                                 exceptionHandler: ExceptionHandler         = null): HttpRequest => Future[HttpResponse] = {
+      routingSettings: RoutingSettings,
+      parserSettings: ParserSettings,
+      materializer: Materializer,
+      routingLog: RoutingLog,
+      executionContext: ExecutionContextExecutor = null,
+      rejectionHandler: RejectionHandler = RejectionHandler.default,
+      exceptionHandler: ExceptionHandler = null): HttpRequest => Future[HttpResponse] = {
     val effectiveEC = if (executionContext ne null) executionContext else materializer.executionContext
-    val effectiveParserSettings = if (parserSettings ne null) parserSettings else ParserSettings(ActorMaterializerHelper.downcast(materializer).system)
+    val effectiveParserSettings = if (parserSettings ne null) parserSettings
+    else ParserSettings(ActorMaterializerHelper.downcast(materializer).system)
     createAsyncHandler(seal(route), routingLog, routingSettings, effectiveParserSettings)(effectiveEC, materializer)
   }
 
-  private def createAsyncHandler(sealedRoute: Route, routingLog: RoutingLog, routingSettings: RoutingSettings, parserSettings: ParserSettings)(implicit ec: ExecutionContextExecutor, mat: Materializer): HttpRequest => Future[HttpResponse] = {
+  private def createAsyncHandler(sealedRoute: Route, routingLog: RoutingLog, routingSettings: RoutingSettings,
+      parserSettings: ParserSettings)(
+      implicit ec: ExecutionContextExecutor, mat: Materializer): HttpRequest => Future[HttpResponse] = {
     request =>
       sealedRoute(new RequestContextImpl(request, routingLog.requestLog(request), routingSettings, parserSettings)).fast
         .map {
           case RouteResult.Complete(response) => response
-          case RouteResult.Rejected(rejected) => throw new IllegalStateException(s"Unhandled rejections '$rejected', unsealed RejectionHandler?!")
+          case RouteResult.Rejected(rejected) =>
+            throw new IllegalStateException(s"Unhandled rejections '$rejected', unsealed RejectionHandler?!")
         }
   }
 }

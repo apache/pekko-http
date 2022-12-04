@@ -24,6 +24,7 @@ import scala.concurrent.Future
  * and then call one of the bind* methods to bind a server.
  */
 trait ServerBuilder {
+
   /** Change interface to bind to */
   def onInterface(interface: String): ServerBuilder
 
@@ -119,18 +120,16 @@ private[http] object ServerBuilder {
       system.classicSystem.log,
       ServerSettings(system.classicSystem),
       system,
-      SystemMaterializer(system).materializer
-    )
+      SystemMaterializer(system).materializer)
 
   private case class Impl(
-    interface:    String,
-    port:         Int,
-    context:      ConnectionContext,
-    log:          LoggingAdapter,
-    settings:     ServerSettings,
-    system:       ClassicActorSystemProvider,
-    materializer: Materializer
-  ) extends ServerBuilder {
+      interface: String,
+      port: Int,
+      context: ConnectionContext,
+      log: LoggingAdapter,
+      settings: ServerSettings,
+      system: ClassicActorSystemProvider,
+      materializer: Materializer) extends ServerBuilder {
     private val http: scaladsl.HttpExt = scaladsl.Http(system.classicSystem)
 
     def onInterface(newInterface: String): ServerBuilder = copy(interface = newInterface)

@@ -40,7 +40,9 @@ class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers {
     if (missing.isEmpty) {
       succeed
     } else {
-      fail(s"Please add the following missing $typeOfUsage annotated with @ApiMayChange to docs/src/main/paradox/compatibility-guidelines.md:\n${missing.map(miss => s"* $miss").mkString("\n")}")
+      fail(
+        s"Please add the following missing $typeOfUsage annotated with @ApiMayChange to docs/src/main/paradox/compatibility-guidelines.md:\n${missing.map(
+            miss => s"* $miss").mkString("\n")}")
     }
   }
 

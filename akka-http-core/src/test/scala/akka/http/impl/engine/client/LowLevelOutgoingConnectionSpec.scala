@@ -31,7 +31,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
 
   "The connection-level client implementation" should {
 
-    "handle a request/response round-trip" which {
+    "handle a request/response round-trip".which {
 
       "has a request with empty entity" in new TestSetup {
         sendStandardRequest()
@@ -51,7 +51,8 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
 
       "has a request with default entity" in new TestSetup {
         val probe = TestPublisher.manualProbe[ByteString]()
-        requestsSub.sendNext(HttpRequest(PUT, entity = HttpEntity(ContentTypes.`application/octet-stream`, 8, Source.fromPublisher(probe))))
+        requestsSub.sendNext(HttpRequest(PUT,
+          entity = HttpEntity(ContentTypes.`application/octet-stream`, 8, Source.fromPublisher(probe))))
         expectWireData(
           """PUT / HTTP/1.1
             |Host: example.com
@@ -151,8 +152,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
       "has a request with a chunked entity and Connection: close" in new TestSetup {
         requestsSub.sendNext(HttpRequest(
           entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, Source(List("ABC", "DEFX").map(ByteString(_)))),
-          headers = List(Connection("close"))
-        ))
+          headers = List(Connection("close"))))
 
         expectWireData(
           """GET / HTTP/1.1
@@ -322,7 +322,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
       }
     }
 
-    "handle several requests on one persistent connection" which {
+    "handle several requests on one persistent connection".which {
       "has a first response that was chunked" in new TestSetup {
         requestsSub.sendNext(HttpRequest())
         expectWireData(
@@ -379,10 +379,10 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
       }
     }
 
-    "process the illegal response header value properly" which {
+    "process the illegal response header value properly".which {
 
       val illegalChar = '\u0001'
-      val escapeChar = "\\u%04x" format illegalChar.toInt
+      val escapeChar = "\\u%04x".format(illegalChar.toInt)
 
       "catch illegal response header value by default" in new TestSetup {
         sendStandardRequest()
@@ -423,7 +423,8 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         """
           akka.http.parsing.illegal-response-header-name-processing-mode = ignore
         """
-      "ignore illegal response header name if setting the config to ignore" in new TestSetup(config = ignoreNameConfig) {
+      "ignore illegal response header name if setting the config to ignore" in new TestSetup(
+        config = ignoreNameConfig) {
         sendStandardRequest()
         sendWireData(
           s"""HTTP/1.1 200 OK
@@ -441,7 +442,8 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         """
           akka.http.parsing.illegal-response-header-value-processing-mode = warn
         """
-      "ignore illegal response header value and log a warning message if setting the config to warn" in new TestSetup(config = warnConfig) {
+      "ignore illegal response header value and log a warning message if setting the config to warn" in new TestSetup(
+        config = warnConfig) {
         sendStandardRequest()
         sendWireData(
           s"""HTTP/1.1 200 OK
@@ -460,7 +462,8 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
       """
           akka.http.parsing.illegal-response-header-name-processing-mode = warn
         """
-    "ignore illegal response header name and log a warning message if setting the config to warn" in new TestSetup(config = warnNameConfig) {
+    "ignore illegal response header name and log a warning message if setting the config to warn" in new TestSetup(
+      config = warnNameConfig) {
       sendStandardRequest()
       sendWireData(
         s"""HTTP/1.1 200 OK
@@ -474,11 +477,12 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
       headerStr shouldEqual "Some Header: value1,Other-Header: value2"
     }
 
-    "produce proper errors" which {
+    "produce proper errors".which {
 
       "catch the request entity stream being shorter than the Content-Length" in new TestSetup {
         val probe = TestPublisher.manualProbe[ByteString]()
-        requestsSub.sendNext(HttpRequest(PUT, entity = HttpEntity(ContentTypes.`application/octet-stream`, 8, Source.fromPublisher(probe))))
+        requestsSub.sendNext(HttpRequest(PUT,
+          entity = HttpEntity(ContentTypes.`application/octet-stream`, 8, Source.fromPublisher(probe))))
         expectWireData(
           """PUT / HTTP/1.1
             |Host: example.com
@@ -500,14 +504,16 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         netInSub.sendComplete()
         responsesSub.request(1)
         responses.expectError().getMessage should (
-          equal("HTTP message had declared Content-Length 8 but entity data stream amounts to 2 bytes less") or // with Akka 2.6
-          equal("The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests") // with Akka 2.5
+          equal("HTTP message had declared Content-Length 8 but entity data stream amounts to 2 bytes less").or( // with Akka 2.6
+            equal(
+              "The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests")) // with Akka 2.5
         )
       }
 
       "catch the request entity stream being longer than the Content-Length" in new TestSetup {
         val probe = TestPublisher.manualProbe[ByteString]()
-        requestsSub.sendNext(HttpRequest(PUT, entity = HttpEntity(ContentTypes.`application/octet-stream`, 8, Source.fromPublisher(probe))))
+        requestsSub.sendNext(HttpRequest(PUT,
+          entity = HttpEntity(ContentTypes.`application/octet-stream`, 8, Source.fromPublisher(probe))))
         expectWireData(
           """PUT / HTTP/1.1
             |Host: example.com
@@ -529,8 +535,9 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         netInSub.sendComplete()
         responsesSub.request(1)
         responses.expectError().getMessage should (
-          equal("HTTP message had declared Content-Length 8 but entity data stream amounts to more bytes") or // with Akka 2.6
-          equal("The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests") // with Akka 2.5
+          equal("HTTP message had declared Content-Length 8 but entity data stream amounts to more bytes").or( // with Akka 2.6
+            equal(
+              "The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests")) // with Akka 2.5
         )
       }
 
@@ -571,7 +578,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
 
         sendWireData("4\nDEFXX")
         sub.request(1)
-        val _@ EntityStreamException(info) = probe.expectError()
+        val _ @EntityStreamException(info) = probe.expectError()
         info.summary shouldEqual "Illegal chunk termination"
 
         responses.expectComplete()
@@ -594,7 +601,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
     }
 
     def isDefinedVia = afterWord("is defined via")
-    "support response length verification" which isDefinedVia {
+    "support response length verification".which(isDefinedVia {
       import HttpEntity._
 
       class LengthVerificationTest(maxContentLength: Int) extends TestSetup(maxContentLength) {
@@ -605,13 +612,13 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
             s"""HTTP/1.1 200 OK
                |Content-Length: $bytes
                |
-               |${entityBase take bytes}""")
+               |${entityBase.take(bytes)}""")
         def sendDefaultResponseWithLength(bytes: Int) = {
           sendWireData(
             s"""HTTP/1.1 200 OK
                |Content-Length: $bytes
                |
-               |${entityBase take 3}""")
+               |${entityBase.take(3)}""")
           sendWireData(entityBase.slice(3, 7))
           sendWireData(entityBase.slice(7, bytes))
         }
@@ -621,7 +628,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
                |Transfer-Encoding: chunked
                |
                |3
-               |${entityBase take 3}
+               |${entityBase.take(3)}
                |4
                |${entityBase.slice(3, 7)}
                |${bytes - 7}
@@ -633,7 +640,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
           sendWireData(
             s"""HTTP/1.1 200 OK
                |
-               |${entityBase take 3}""")
+               |${entityBase.take(3)}""")
           sendWireData(entityBase.slice(3, 7))
           sendWireData(entityBase.slice(7, bytes))
           netInSub.sendComplete()
@@ -644,19 +651,21 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
 
           def expectStrictEntityWithLength(bytes: Int) =
             response shouldEqual HttpResponse(
-              entity = Strict(ContentTypes.`application/octet-stream`, ByteString(entityBase take bytes)))
+              entity = Strict(ContentTypes.`application/octet-stream`, ByteString(entityBase.take(bytes))))
 
           def expectEntity[T <: HttpEntity: ClassTag](bytes: Int) =
             inside(response) {
               case HttpResponse(_, _, entity: T, _) =>
-                entity.toStrict(100.millis.dilated).awaitResult(timeout).data.utf8String shouldEqual entityBase.take(bytes)
+                entity.toStrict(100.millis.dilated).awaitResult(timeout).data.utf8String shouldEqual entityBase.take(
+                  bytes)
             }
 
           def expectSizeErrorInEntityOfType[T <: HttpEntity: ClassTag](limit: Int, actualSize: Option[Long] = None) =
             inside(response) {
               case HttpResponse(_, _, entity: T, _) =>
                 def gatherBytes = entity.dataBytes.runFold(ByteString.empty)(_ ++ _).awaitResult(timeout)
-                (the[RuntimeException] thrownBy gatherBytes).getCause shouldEqual EntityStreamSizeException(limit, actualSize)
+                (the[RuntimeException] thrownBy gatherBytes).getCause shouldEqual EntityStreamSizeException(limit,
+                  actualSize)
             }
         }
       }
@@ -709,47 +718,47 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
       "a smaller programmatically-set limit (strict entity)" in new LengthVerificationTest(maxContentLength = 12) {
         sendStandardRequest()
         sendStrictResponseWithLength(10)
-        expectResponse().mapEntity(_ withSizeLimit 10).expectStrictEntityWithLength(10)
+        expectResponse().mapEntity(_.withSizeLimit(10)).expectStrictEntityWithLength(10)
 
         // entities that would be strict but have a Content-Length > the configured maximum are delivered
         // as single element Default entities!
         sendStandardRequest()
         sendStrictResponseWithLength(11)
-        expectResponse().mapEntity(_ withSizeLimit 10)
+        expectResponse().mapEntity(_.withSizeLimit(10))
           .expectSizeErrorInEntityOfType[Default](limit = 10, actualSize = Some(11))
       }
 
       "a smaller programmatically-set limit (default entity)" in new LengthVerificationTest(maxContentLength = 12) {
         sendStandardRequest()
         sendDefaultResponseWithLength(10)
-        expectResponse().mapEntity(_ withSizeLimit 10).expectEntity[Default](10)
+        expectResponse().mapEntity(_.withSizeLimit(10)).expectEntity[Default](10)
 
         sendStandardRequest()
         sendDefaultResponseWithLength(11)
-        expectResponse().mapEntity(_ withSizeLimit 10)
+        expectResponse().mapEntity(_.withSizeLimit(10))
           .expectSizeErrorInEntityOfType[Default](limit = 10, actualSize = Some(11))
       }
 
       "a smaller programmatically-set limit (chunked entity)" in new LengthVerificationTest(maxContentLength = 12) {
         sendStandardRequest()
         sendChunkedResponseWithLength(10)
-        expectResponse().mapEntity(_ withSizeLimit 10).expectEntity[Chunked](10)
+        expectResponse().mapEntity(_.withSizeLimit(10)).expectEntity[Chunked](10)
 
         sendStandardRequest()
         sendChunkedResponseWithLength(11)
-        expectResponse().mapEntity(_ withSizeLimit 10).expectSizeErrorInEntityOfType[Chunked](limit = 10)
+        expectResponse().mapEntity(_.withSizeLimit(10)).expectSizeErrorInEntityOfType[Chunked](limit = 10)
       }
 
       "a smaller programmatically-set limit (close-delimited entity)" in {
         new LengthVerificationTest(maxContentLength = 12) {
           sendStandardRequest()
           sendCloseDelimitedResponseWithLength(10)
-          expectResponse().mapEntity(_ withSizeLimit 10).expectEntity[CloseDelimited](10)
+          expectResponse().mapEntity(_.withSizeLimit(10)).expectEntity[CloseDelimited](10)
         }
         new LengthVerificationTest(maxContentLength = 12) {
           sendStandardRequest()
           sendCloseDelimitedResponseWithLength(11)
-          expectResponse().mapEntity(_ withSizeLimit 10).expectSizeErrorInEntityOfType[CloseDelimited](limit = 10)
+          expectResponse().mapEntity(_.withSizeLimit(10)).expectSizeErrorInEntityOfType[CloseDelimited](limit = 10)
         }
       }
 
@@ -758,33 +767,33 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         // as single element Default entities!
         sendStandardRequest()
         sendStrictResponseWithLength(10)
-        expectResponse().mapEntity(_ withSizeLimit 10).expectEntity[Default](10)
+        expectResponse().mapEntity(_.withSizeLimit(10)).expectEntity[Default](10)
 
         sendStandardRequest()
         sendStrictResponseWithLength(11)
-        expectResponse().mapEntity(_ withSizeLimit 10)
+        expectResponse().mapEntity(_.withSizeLimit(10))
           .expectSizeErrorInEntityOfType[Default](limit = 10, actualSize = Some(11))
       }
 
       "a larger programmatically-set limit (default entity)" in new LengthVerificationTest(maxContentLength = 8) {
         sendStandardRequest()
         sendDefaultResponseWithLength(10)
-        expectResponse().mapEntity(_ withSizeLimit 10).expectEntity[Default](10)
+        expectResponse().mapEntity(_.withSizeLimit(10)).expectEntity[Default](10)
 
         sendStandardRequest()
         sendDefaultResponseWithLength(11)
-        expectResponse().mapEntity(_ withSizeLimit 10)
+        expectResponse().mapEntity(_.withSizeLimit(10))
           .expectSizeErrorInEntityOfType[Default](limit = 10, actualSize = Some(11))
       }
 
       "a larger programmatically-set limit (chunked entity)" in new LengthVerificationTest(maxContentLength = 8) {
         sendStandardRequest()
         sendChunkedResponseWithLength(10)
-        expectResponse().mapEntity(_ withSizeLimit 10).expectEntity[Chunked](10)
+        expectResponse().mapEntity(_.withSizeLimit(10)).expectEntity[Chunked](10)
 
         sendStandardRequest()
         sendChunkedResponseWithLength(11)
-        expectResponse().mapEntity(_ withSizeLimit 10)
+        expectResponse().mapEntity(_.withSizeLimit(10))
           .expectSizeErrorInEntityOfType[Chunked](limit = 10)
       }
 
@@ -792,17 +801,17 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         new LengthVerificationTest(maxContentLength = 8) {
           sendStandardRequest()
           sendCloseDelimitedResponseWithLength(10)
-          expectResponse().mapEntity(_ withSizeLimit 10).expectEntity[CloseDelimited](10)
+          expectResponse().mapEntity(_.withSizeLimit(10)).expectEntity[CloseDelimited](10)
         }
         new LengthVerificationTest(maxContentLength = 8) {
           sendStandardRequest()
           sendCloseDelimitedResponseWithLength(11)
-          expectResponse().mapEntity(_ withSizeLimit 10).expectSizeErrorInEntityOfType[CloseDelimited](limit = 10)
+          expectResponse().mapEntity(_.withSizeLimit(10)).expectSizeErrorInEntityOfType[CloseDelimited](limit = 10)
         }
       }
-    }
+    })
 
-    "support requests with an `Expect: 100-continue` headers" which {
+    "support requests with an `Expect: 100-continue` headers".which {
 
       "have a strict entity and receive a `100 Continue` response" in new TestSetup {
         requestsSub.sendNext(HttpRequest(POST, headers = List(Expect.`100-continue`), entity = "ABCDEF"))
@@ -996,8 +1005,8 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
 
     def settings = {
       val s = ClientConnectionSettings(
-        ConfigFactory.parseString(config).withFallback(system.settings.config)
-      ).withUserAgentHeader(Some(`User-Agent`(List(ProductVersion("akka-http", "test")))))
+        ConfigFactory.parseString(config).withFallback(system.settings.config)).withUserAgentHeader(
+        Some(`User-Agent`(List(ProductVersion("akka-http", "test")))))
       if (maxResponseContentLength < 0) s
       else s.withParserSettings(s.parserSettings.withMaxContentLength(maxResponseContentLength))
     }
@@ -1006,12 +1015,13 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
       val netOut = TestSubscriber.manualProbe[ByteString]()
       val netIn = TestPublisher.manualProbe[ByteString]()
 
-      RunnableGraph.fromGraph(GraphDSL.createGraph(OutgoingConnectionBlueprint(Host("example.com"), settings, NoLogging)) { implicit b => client =>
+      RunnableGraph.fromGraph(GraphDSL.createGraph(OutgoingConnectionBlueprint(Host("example.com"), settings,
+        NoLogging)) { implicit b => client =>
         import GraphDSL.Implicits._
-        Source.fromPublisher(netIn) ~> Flow[ByteString].map(SessionBytes(null, _)) ~> client.in2
-        client.out1 ~> Flow[SslTlsOutbound].collect { case SendBytes(x) => x } ~> Sink.fromSubscriber(netOut)
+        Source.fromPublisher(netIn)    ~> Flow[ByteString].map(SessionBytes(null, _))             ~> client.in2
+        client.out1                    ~> Flow[SslTlsOutbound].collect { case SendBytes(x) => x } ~> Sink.fromSubscriber(netOut)
         Source.fromPublisher(requests) ~> client.in1
-        client.out2 ~> Sink.fromSubscriber(responses)
+        client.out2                    ~> Sink.fromSubscriber(responses)
         ClosedShape
       }).run()
 

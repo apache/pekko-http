@@ -26,12 +26,12 @@ class One2OneBidiFlowSpec extends AkkaSpec with Eventually {
       Source(List(1, 2, 3)).via(flow).grouped(10).runWith(Sink.head)
 
     "be fully transparent for valid one-to-one streams" in assertAllStagesStopped {
-      val f = One2OneBidiFlow[Int, Int](-1) join Flow[Int].map(_ * 2)
+      val f = One2OneBidiFlow[Int, Int](-1).join(Flow[Int].map(_ * 2))
       Await.result(test(f), 1.second.dilated) should ===(Seq(2, 4, 6))
     }
 
     "be fully transparent to errors" in {
-      val f = One2OneBidiFlow[Int, Int](-1) join Flow[Int].map(x => 10 / (x - 2))
+      val f = One2OneBidiFlow[Int, Int](-1).join(Flow[Int].map(x => 10 / (x - 2)))
       an[ArithmeticException] should be thrownBy Await.result(test(f), 1.second.dilated)
     }
 
@@ -39,9 +39,9 @@ class One2OneBidiFlowSpec extends AkkaSpec with Eventually {
       val flowInProbe = TestSubscriber.probe[Int]()
       val flowOutProbe = TestPublisher.probe[Int]()
 
-      val testSetup = One2OneBidiFlow[Int, Int](-1) join Flow.fromSinkAndSource(
+      val testSetup = One2OneBidiFlow[Int, Int](-1).join(Flow.fromSinkAndSource(
         Sink.fromSubscriber(flowInProbe),
-        Source.fromPublisher(flowOutProbe))
+        Source.fromPublisher(flowOutProbe)))
 
       val upstreamProbe = TestPublisher.probe[Int]()
       val downstreamProbe = TestSubscriber.probe[Int]()
@@ -106,7 +106,8 @@ class One2OneBidiFlowSpec extends AkkaSpec with Eventually {
 
       Source(1 to 1000)
         .log("", seen.set) // strange syntax to execute side-effects for every element that flows through
-        .via(One2OneBidiFlow[Int, Int](MAX_PENDING) join Flow.fromSinkAndSourceMat(Sink.ignore, Source.fromPublisher(out))(Keep.left))
+        .via(One2OneBidiFlow[Int, Int](MAX_PENDING).join(Flow.fromSinkAndSourceMat(Sink.ignore,
+          Source.fromPublisher(out))(Keep.left)))
         .runWith(Sink.ignore)
 
       // wait for pending elements to be filled
@@ -117,7 +118,7 @@ class One2OneBidiFlowSpec extends AkkaSpec with Eventually {
       }
 
       // now respond to a few input elements
-      (1 to EMIT_ELEMENTS) foreach out.sendNext
+      (1 to EMIT_ELEMENTS).foreach(out.sendNext)
 
       // then make sure that again only as many elements are pulled in
       // as were resolved before so that again only MAX_PENDING elements
@@ -136,10 +137,9 @@ class One2OneBidiFlowSpec extends AkkaSpec with Eventually {
       val wrappedOut = TestPublisher.probe[Int]()
 
       Source.fromPublisher(in).via(
-        One2OneBidiFlow(maxPending = 1) join Flow.fromSinkAndSource(
+        One2OneBidiFlow(maxPending = 1).join(Flow.fromSinkAndSource(
           Sink.fromSubscriber(wrappedIn),
-          Source.fromPublisher(wrappedOut))
-      ).runWith(Sink.fromSubscriber(out))
+          Source.fromPublisher(wrappedOut)))).runWith(Sink.fromSubscriber(out))
 
       out.request(2)
       wrappedOut.expectRequest()
@@ -164,6 +164,8 @@ class One2OneBidiFlowSpec extends AkkaSpec with Eventually {
     val outIn = TestPublisher.probe[Int]()
     val outOut = TestSubscriber.probe[Int]()
 
-    Source.fromPublisher(inIn).via(One2OneBidiFlow[Int, Int](maxPending) join Flow.fromSinkAndSourceMat(Sink.fromSubscriber(inOut), Source.fromPublisher(outIn))(Keep.left)).runWith(Sink.fromSubscriber(outOut))
+    Source.fromPublisher(inIn).via(One2OneBidiFlow[Int, Int](maxPending).join(
+      Flow.fromSinkAndSourceMat(Sink.fromSubscriber(inOut), Source.fromPublisher(outIn))(Keep.left))).runWith(
+      Sink.fromSubscriber(outOut))
   }
 }

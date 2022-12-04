@@ -7,7 +7,21 @@ package akka.http.impl.engine.http2
 import akka.http.impl.engine.HttpIdleTimeoutException
 import akka.http.impl.engine.ws.ByteStringSinkProbe
 import akka.http.impl.util.{ AkkaSpecWithMaterializer, ExampleHttpContexts }
-import akka.http.scaladsl.model.{ AttributeKey, ContentTypes, HttpEntity, HttpHeader, HttpMethod, HttpMethods, HttpRequest, HttpResponse, RequestResponseAssociation, StatusCode, StatusCodes, Uri, headers }
+import akka.http.scaladsl.model.{
+  headers,
+  AttributeKey,
+  ContentTypes,
+  HttpEntity,
+  HttpHeader,
+  HttpMethod,
+  HttpMethods,
+  HttpRequest,
+  HttpResponse,
+  RequestResponseAssociation,
+  StatusCode,
+  StatusCodes,
+  Uri
+}
 import akka.http.scaladsl.model.headers.HttpEncodings
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.http.scaladsl.unmarshalling.Unmarshal
@@ -25,7 +39,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Future, Promise }
 
 class Http2ClientServerSpec extends AkkaSpecWithMaterializer(
-  """akka.http.server.remote-address-header = on
+      """akka.http.server.remote-address-header = on
      akka.http.server.http2.log-frames = on
      akka.http.server.log-unencrypted-network-bytes = 100
      akka.http.server.preview.enable-http2 = on
@@ -44,10 +58,8 @@ class Http2ClientServerSpec extends AkkaSpecWithMaterializer(
         HttpRequest(
           method = HttpMethods.POST,
           entity = "ping",
-          headers = headers.`Accept-Encoding`(HttpEncodings.gzip) :: Nil
-        )
-          .addAttribute(requestIdAttr, RequestId("request-1"))
-      )
+          headers = headers.`Accept-Encoding`(HttpEncodings.gzip) :: Nil)
+          .addAttribute(requestIdAttr, RequestId("request-1")))
 
       val serverRequest = expectServerRequest()
       serverRequest.request.attribute(Http2.streamId) shouldBe Symbol("nonEmpty")
@@ -118,10 +130,11 @@ class Http2ClientServerSpec extends AkkaSpecWithMaterializer(
       promise.success(response.addAttribute(Http2.streamId, request.attribute(Http2.streamId).get))
 
     def sendResponseWithEntityStream(
-      status:  StatusCode                = StatusCodes.OK,
-      headers: immutable.Seq[HttpHeader] = Nil): TestPublisher.Probe[ByteString] = {
+        status: StatusCode = StatusCodes.OK,
+        headers: immutable.Seq[HttpHeader] = Nil): TestPublisher.Probe[ByteString] = {
       val probe = TestPublisher.probe[ByteString]()
-      sendResponse(HttpResponse(status, headers, HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(probe))))
+      sendResponse(HttpResponse(status, headers,
+        HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(probe))))
       probe
     }
 
@@ -148,7 +161,8 @@ class Http2ClientServerSpec extends AkkaSpecWithMaterializer(
     lazy val clientFlow =
       Http().connectionTo("akka.example.org")
         .withCustomHttpsConnectionContext(ExampleHttpContexts.exampleClientContext)
-        .withClientConnectionSettings(clientSettings.withTransport(ExampleHttpContexts.proxyTransport(binding.localAddress)))
+        .withClientConnectionSettings(
+          clientSettings.withTransport(ExampleHttpContexts.proxyTransport(binding.localAddress)))
         .http2()
     lazy val clientRequestsOut = TestPublisher.probe[HttpRequest]()
     lazy val clientResponsesIn = TestSubscriber.probe[HttpResponse]()
@@ -158,15 +172,15 @@ class Http2ClientServerSpec extends AkkaSpecWithMaterializer(
 
     // client-side
     def sendClientRequestWithEntityStream(
-      requestId: String,
-      method:    HttpMethod                = HttpMethods.POST,
-      uri:       Uri                       = Uri./,
-      headers:   immutable.Seq[HttpHeader] = Nil): TestPublisher.Probe[ByteString] = {
+        requestId: String,
+        method: HttpMethod = HttpMethods.POST,
+        uri: Uri = Uri./,
+        headers: immutable.Seq[HttpHeader] = Nil): TestPublisher.Probe[ByteString] = {
       val probe = TestPublisher.probe[ByteString]()
       sendClientRequest(
-        HttpRequest(method, uri, headers, HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(probe)))
-          .addAttribute(requestIdAttr, RequestId(requestId))
-      )
+        HttpRequest(method, uri, headers,
+          HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(probe)))
+          .addAttribute(requestIdAttr, RequestId(requestId)))
       probe
     }
     def sendClientRequest(request: HttpRequest = HttpRequest()): Unit = clientRequestsOut.sendNext(request)

@@ -15,7 +15,6 @@ import spray.json.ParserInput.IndexedBytesParserInput
  *
  * ParserInput reading directly off a ByteString. (Based on the ByteArrayBasedParserInput)
  * that avoids a separate decoding step.
- *
  */
 @InternalApi
 private[sprayjson] final class SprayJsonByteStringParserInput(bytes: ByteString) extends IndexedBytesParserInput {

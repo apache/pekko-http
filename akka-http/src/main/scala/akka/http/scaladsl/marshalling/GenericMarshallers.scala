@@ -5,7 +5,7 @@
 package akka.http.scaladsl.marshalling
 
 import scala.concurrent.Future
-import scala.util.{ Try, Failure, Success }
+import scala.util.{ Failure, Success, Try }
 import akka.http.scaladsl.util.FastFuture
 import FastFuture._
 
@@ -21,7 +21,8 @@ trait GenericMarshallers extends LowPriorityToResponseMarshallerImplicits {
       }
     }
 
-  implicit def eitherMarshaller[A1, A2, B](implicit m1: Marshaller[A1, B], m2: Marshaller[A2, B]): Marshaller[Either[A1, A2], B] =
+  implicit def eitherMarshaller[A1, A2, B](
+      implicit m1: Marshaller[A1, B], m2: Marshaller[A2, B]): Marshaller[Either[A1, A2], B] =
     Marshaller { implicit ec =>
       {
         case Left(a1)  => m1(a1)

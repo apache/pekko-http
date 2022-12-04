@@ -24,8 +24,7 @@ class FullTestKitExampleSpec extends AnyWordSpec with Matchers with ScalatestRou
         },
         path("ping") {
           complete("PONG!")
-        }
-      )
+        })
     }
 
   "The service" should {

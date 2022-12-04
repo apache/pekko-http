@@ -11,7 +11,7 @@ import akka.http.impl.util._
 import akka.http.scaladsl.util.FastFuture
 import akka.http.scaladsl.util.FastFuture._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.AuthenticationFailedRejection.{ CredentialsRejected, CredentialsMissing }
+import akka.http.scaladsl.server.AuthenticationFailedRejection.{ CredentialsMissing, CredentialsRejected }
 
 import scala.util.Success
 
@@ -32,7 +32,7 @@ trait SecurityDirectives {
   import FutureDirectives._
   import RouteDirectives._
 
-  //#authentication-result
+  // #authentication-result
   /**
    * The result of an HTTP authentication attempt is either the user object or
    * an HttpChallenge to present to the browser.
@@ -40,32 +40,32 @@ trait SecurityDirectives {
    * @group security
    */
   type AuthenticationResult[+T] = Either[HttpChallenge, T]
-  //#authentication-result
+  // #authentication-result
 
-  //#authenticator
+  // #authenticator
   /**
    * @group security
    */
   type Authenticator[T] = Credentials => Option[T]
-  //#authenticator
-  //#async-authenticator
+  // #authenticator
+  // #async-authenticator
   /**
    * @group security
    */
   type AsyncAuthenticator[T] = Credentials => Future[Option[T]]
-  //#async-authenticator
-  //#authenticator-pf
+  // #async-authenticator
+  // #authenticator-pf
   /**
    * @group security
    */
   type AuthenticatorPF[T] = PartialFunction[Credentials, T]
-  //#authenticator-pf
-  //#async-authenticator-pf
+  // #authenticator-pf
+  // #async-authenticator-pf
   /**
    * @group security
    */
   type AsyncAuthenticatorPF[T] = PartialFunction[Credentials, Future[T]]
-  //#async-authenticator-pf
+  // #async-authenticator-pf
 
   /**
    * Extracts the potentially present [[HttpCredentials]] provided with the request's [[Authorization]] header.
@@ -121,9 +121,10 @@ trait SecurityDirectives {
    */
   def authenticateBasicPFAsync[T](realm: String, authenticator: AsyncAuthenticatorPF[T]): AuthenticationDirective[T] =
     extractExecutionContext.flatMap { implicit ec =>
-      authenticateBasicAsync(realm, credentials =>
-        if (authenticator isDefinedAt credentials) authenticator(credentials).fast.map(Some(_))
-        else FastFuture.successful(None))
+      authenticateBasicAsync(realm,
+        credentials =>
+          if (authenticator.isDefinedAt(credentials)) authenticator(credentials).fast.map(Some(_))
+          else FastFuture.successful(None))
     }
 
   /**
@@ -155,12 +156,13 @@ trait SecurityDirectives {
           case _                          => extractAccessTokenParameterAsBearerToken
         }
 
-      extractCredentialsAndAuthenticateOrRejectWithChallenge[OAuth2BearerToken, T](extractCreds, { cred =>
-        authenticator(Credentials(cred)).fast.map {
-          case Some(t) => AuthenticationResult.success(t)
-          case None    => AuthenticationResult.failWithChallenge(HttpChallenges.oAuth2(realm))
-        }
-      })
+      extractCredentialsAndAuthenticateOrRejectWithChallenge[OAuth2BearerToken, T](extractCreds,
+        { cred =>
+          authenticator(Credentials(cred)).fast.map {
+            case Some(t) => AuthenticationResult.success(t)
+            case None    => AuthenticationResult.failWithChallenge(HttpChallenges.oAuth2(realm))
+          }
+        })
     }
 
   /**
@@ -182,9 +184,10 @@ trait SecurityDirectives {
    */
   def authenticateOAuth2PFAsync[T](realm: String, authenticator: AsyncAuthenticatorPF[T]): AuthenticationDirective[T] =
     extractExecutionContext.flatMap { implicit ec =>
-      authenticateOAuth2Async(realm, credentials =>
-        if (authenticator isDefinedAt credentials) authenticator(credentials).fast.map(Some(_))
-        else FastFuture.successful(None))
+      authenticateOAuth2Async(realm,
+        credentials =>
+          if (authenticator.isDefinedAt(credentials)) authenticator(credentials).fast.map(Some(_))
+          else FastFuture.successful(None))
     }
 
   /**
@@ -198,8 +201,8 @@ trait SecurityDirectives {
    * @group security
    */
   private def extractCredentialsAndAuthenticateOrRejectWithChallenge[C <: HttpCredentials, T](
-    extractCredentials: Directive1[Option[C]],
-    authenticator:      Option[C] => Future[AuthenticationResult[T]]): AuthenticationDirective[T] =
+      extractCredentials: Directive1[Option[C]],
+      authenticator: Option[C] => Future[AuthenticationResult[T]]): AuthenticationDirective[T] =
     extractCredentials.flatMap { cred =>
       onSuccess(authenticator(cred)).flatMap {
         case Right(user) => provide(user)
@@ -217,7 +220,8 @@ trait SecurityDirectives {
    *
    * @group security
    */
-  def authenticateOrRejectWithChallenge[T](authenticator: Option[HttpCredentials] => Future[AuthenticationResult[T]]): AuthenticationDirective[T] =
+  def authenticateOrRejectWithChallenge[T](
+      authenticator: Option[HttpCredentials] => Future[AuthenticationResult[T]]): AuthenticationDirective[T] =
     extractCredentialsAndAuthenticateOrRejectWithChallenge(extractCredentials, authenticator)
 
   /**
@@ -227,8 +231,9 @@ trait SecurityDirectives {
    * @group security
    */
   def authenticateOrRejectWithChallenge[C <: HttpCredentials: ClassTag, T](
-    authenticator: Option[C] => Future[AuthenticationResult[T]]): AuthenticationDirective[T] =
-    extractCredentialsAndAuthenticateOrRejectWithChallenge(extractCredentials.map(_ collect { case c: C => c }), authenticator)
+      authenticator: Option[C] => Future[AuthenticationResult[T]]): AuthenticationDirective[T] =
+    extractCredentialsAndAuthenticateOrRejectWithChallenge(extractCredentials.map(_.collect { case c: C => c }),
+      authenticator)
 
   /**
    * Applies the given authorization check to the request.
@@ -308,11 +313,11 @@ object Credentials {
     cred match {
       case Some(BasicHttpCredentials(username, receivedSecret)) =>
         new Credentials.Provided(username) {
-          def verify(secret: String, hasher: String => String): Boolean = secret secure_== hasher(receivedSecret)
+          def verify(secret: String, hasher: String => String): Boolean = secret.secure_==(hasher(receivedSecret))
         }
       case Some(OAuth2BearerToken(token)) =>
         new Credentials.Provided(token) {
-          def verify(secret: String, hasher: String => String): Boolean = secret secure_== hasher(token)
+          def verify(secret: String, hasher: String => String): Boolean = secret.secure_==(hasher(token))
         }
       case Some(c) =>
         throw new UnsupportedOperationException(s"Credentials does not support scheme '${c.scheme}'.")
@@ -337,16 +342,16 @@ trait AuthenticationDirective[T] extends Directive1[T] {
    * were supplied and otherwise `None`.
    */
   def optional: Directive1[Option[T]] =
-    this.map(Some(_): Option[T]) recover {
+    this.map(Some(_): Option[T]).recover {
       case AuthenticationFailedRejection(CredentialsMissing, _) +: _ => provide(None)
-      case rejs => reject(rejs: _*)
+      case rejs                                                      => reject(rejs: _*)
     }
 
   /**
    * Returns a copy of this [[AuthenticationDirective]] that uses the given object as the
    * anonymous user which will be used if no credentials were supplied in the request.
    */
-  def withAnonymousUser(anonymous: T): Directive1[T] = optional map (_ getOrElse anonymous)
+  def withAnonymousUser(anonymous: T): Directive1[T] = optional.map(_.getOrElse(anonymous))
 }
 object AuthenticationDirective {
   implicit def apply[T](other: Directive1[T]): AuthenticationDirective[T] =

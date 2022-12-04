@@ -17,13 +17,13 @@ trait WSTestSetupBase extends Matchers {
   def expectBytes(bytes: ByteString): Unit
 
   def sendWSFrame(
-    opcode: Opcode,
-    data:   ByteString,
-    fin:    Boolean,
-    mask:   Boolean    = false,
-    rsv1:   Boolean    = false,
-    rsv2:   Boolean    = false,
-    rsv3:   Boolean    = false): Unit = {
+      opcode: Opcode,
+      data: ByteString,
+      fin: Boolean,
+      mask: Boolean = false,
+      rsv1: Boolean = false,
+      rsv2: Boolean = false,
+      rsv3: Boolean = false): Unit = {
     val (theMask, theData) =
       if (mask) {
         val m = Random.nextInt()
@@ -36,13 +36,13 @@ trait WSTestSetupBase extends Matchers {
     send(closeFrame(closeCode, mask))
 
   def expectWSFrame(
-    opcode: Opcode,
-    data:   ByteString,
-    fin:    Boolean,
-    mask:   Option[Int] = None,
-    rsv1:   Boolean     = false,
-    rsv2:   Boolean     = false,
-    rsv3:   Boolean     = false): Unit =
+      opcode: Opcode,
+      data: ByteString,
+      fin: Boolean,
+      mask: Option[Int] = None,
+      rsv1: Boolean = false,
+      rsv2: Boolean = false,
+      rsv3: Boolean = false): Unit =
     expectBytes(frameHeader(opcode, data.length, fin, mask, rsv1, rsv2, rsv3) ++ data)
 
   def expectWSCloseFrame(closeCode: Int, mask: Boolean = false): Unit =
@@ -83,27 +83,27 @@ trait WSTestSetupBase extends Matchers {
     val length: Long = length7 match {
       case 126 =>
         val length16Bytes = expectNetworkData(2)
-        (length16Bytes(0) & 0xff) << 8 | (length16Bytes(1) & 0xff) << 0
+        (length16Bytes(0) & 0xFF) << 8 | (length16Bytes(1) & 0xFF) << 0
       case 127 =>
         val length64Bytes = expectNetworkData(8)
-        (length64Bytes(0) & 0xff).toLong << 56 |
-          (length64Bytes(1) & 0xff).toLong << 48 |
-          (length64Bytes(2) & 0xff).toLong << 40 |
-          (length64Bytes(3) & 0xff).toLong << 32 |
-          (length64Bytes(4) & 0xff).toLong << 24 |
-          (length64Bytes(5) & 0xff).toLong << 16 |
-          (length64Bytes(6) & 0xff).toLong << 8 |
-          (length64Bytes(7) & 0xff).toLong << 0
+        (length64Bytes(0) & 0xFF).toLong << 56 |
+        (length64Bytes(1) & 0xFF).toLong << 48 |
+        (length64Bytes(2) & 0xFF).toLong << 40 |
+        (length64Bytes(3) & 0xFF).toLong << 32 |
+        (length64Bytes(4) & 0xFF).toLong << 24 |
+        (length64Bytes(5) & 0xFF).toLong << 16 |
+        (length64Bytes(6) & 0xFF).toLong << 8 |
+        (length64Bytes(7) & 0xFF).toLong << 0
       case x => x
     }
     val mask =
       if (hasMask) {
         val maskBytes = expectNetworkData(4)
         val mask =
-          (maskBytes(0) & 0xff) << 24 |
-            (maskBytes(1) & 0xff) << 16 |
-            (maskBytes(2) & 0xff) << 8 |
-            (maskBytes(3) & 0xff) << 0
+          (maskBytes(0) & 0xFF) << 24 |
+          (maskBytes(1) & 0xFF) << 16 |
+          (maskBytes(2) & 0xFF) << 8 |
+          (maskBytes(3) & 0xFF) << 0
         Some(mask)
       } else None
 

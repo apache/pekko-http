@@ -16,9 +16,10 @@ abstract class ParsingErrorHandler {
 object DefaultParsingErrorHandler extends ParsingErrorHandler {
   import akka.http.impl.engine.parsing.logParsingError
 
-  override def handle(status: StatusCode, info: ErrorInfo, log: LoggingAdapter, settings: ServerSettings): HttpResponse = {
+  override def handle(
+      status: StatusCode, info: ErrorInfo, log: LoggingAdapter, settings: ServerSettings): HttpResponse = {
     logParsingError(
-      info withSummaryPrepended s"Illegal request, responding with status '$status'",
+      info.withSummaryPrepended(s"Illegal request, responding with status '$status'"),
       log, settings.parserSettings.errorLoggingVerbosity)
     val msg = if (settings.verboseErrorMessages) info.formatPretty else info.summary
     HttpResponse(status, entity = msg)

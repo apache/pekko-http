@@ -5,4 +5,3 @@
 package akka.http.impl.settings
 
 final case class HostConnectionPoolSetup(host: String, port: Int, setup: ConnectionPoolSetup)
-

@@ -39,7 +39,7 @@ class BasicRouteSpecs extends RoutingSpec {
     "clear rejections that have already been 'overcome' by previous directives" in {
       Put() ~> {
         put { parameter("yeah") { echoComplete } } ~
-          get { completeOk }
+        get { completeOk }
       } ~> check { rejection shouldEqual MissingQueryParamRejection("yeah") }
     }
   }
@@ -193,32 +193,29 @@ class BasicRouteSpecs extends RoutingSpec {
   "Route sealing" should {
     "catch route execution exceptions" in EventFilter[MyException.type](
       occurrences = 1,
-      message = BasicRouteSpecs.defaultExnHandler500Error("Boom")
-    ).intercept {
-        Get("/abc") ~> Route.seal {
-          get { ctx =>
-            throw MyException
-          }
-        } ~> check {
-          status shouldEqual StatusCodes.InternalServerError
+      message = BasicRouteSpecs.defaultExnHandler500Error("Boom")).intercept {
+      Get("/abc") ~> Route.seal {
+        get { ctx =>
+          throw MyException
         }
+      } ~> check {
+        status shouldEqual StatusCodes.InternalServerError
       }
+    }
     "catch route building exceptions" in EventFilter[MyException.type](
       occurrences = 1,
-      message = BasicRouteSpecs.defaultExnHandler500Error("Boom")
-    ).intercept {
-        Get("/abc") ~> Route.seal {
-          get {
-            throw MyException
-          }
-        } ~> check {
-          status shouldEqual StatusCodes.InternalServerError
+      message = BasicRouteSpecs.defaultExnHandler500Error("Boom")).intercept {
+      Get("/abc") ~> Route.seal {
+        get {
+          throw MyException
         }
+      } ~> check {
+        status shouldEqual StatusCodes.InternalServerError
       }
+    }
     "convert all rejections to responses" in EventFilter[RuntimeException](
       occurrences = 1,
-      start = "Error during processing of request: 'Unhandled rejection:"
-    ).intercept {
+      start = "Error during processing of request: 'Unhandled rejection:").intercept {
       object MyRejection extends Rejection
       Get("/abc") ~> Route.seal {
         get {
@@ -231,7 +228,7 @@ class BasicRouteSpecs extends RoutingSpec {
     "always prioritize MethodRejections over AuthorizationFailedRejections" in {
       Get("/abc") ~> Route.seal {
         post { completeOk } ~
-          authorize(false) { completeOk }
+        authorize(false) { completeOk }
       } ~> check {
         status shouldEqual StatusCodes.MethodNotAllowed
         responseAs[String] shouldEqual "HTTP method not allowed, supported methods: POST"
@@ -239,7 +236,7 @@ class BasicRouteSpecs extends RoutingSpec {
 
       Get("/abc") ~> Route.seal {
         authorize(false) { completeOk } ~
-          post { completeOk }
+        post { completeOk }
       } ~> check { status shouldEqual StatusCodes.MethodNotAllowed }
     }
   }

@@ -29,7 +29,8 @@ import scala.concurrent.duration.FiniteDuration
 class ProtocolSwitchSpec extends AkkaSpec {
   implicit val mat: Materializer = ActorMaterializer()
 
-  override implicit val patience: PatienceConfig = PatienceConfig(timeout = Span(2, Seconds), interval = Span(50, Milliseconds))
+  override implicit val patience: PatienceConfig =
+    PatienceConfig(timeout = Span(2, Seconds), interval = Span(50, Milliseconds))
 
   "The ProtocolSwitch" should {
     "switch to http2 when the connection preface arrives separately from the payload" in {
@@ -43,12 +44,12 @@ class ProtocolSwitchSpec extends AkkaSpec {
             .mapMaterializedValue(_ => { http1flowMaterialized.success(Done); DummyTerminator }),
           Flow[SslTlsInbound]
             .collect { case SessionBytes(_, bytes) => SendBytes(bytes) }
-            .mapMaterializedValue(_ => { http2flowMaterialized.success(Done); DummyTerminator })
-        ))(Keep.left)
+            .mapMaterializedValue(_ => { http2flowMaterialized.success(Done); DummyTerminator })))(Keep.left)
         .toMat(Sink.queue())(Keep.both)
         .run()
 
-      in.offer(SessionBytes(TLSPlacebo.dummySession, Http2Protocol.ClientConnectionPreface)).futureValue should be(Enqueued)
+      in.offer(SessionBytes(TLSPlacebo.dummySession, Http2Protocol.ClientConnectionPreface)).futureValue should be(
+        Enqueued)
       in.offer(SessionBytes(TLSPlacebo.dummySession, payload)).futureValue should be(Enqueued)
 
       assertThrows[TestFailedException] {
@@ -71,12 +72,12 @@ class ProtocolSwitchSpec extends AkkaSpec {
             .mapMaterializedValue(_ => { http1flowMaterialized.success(Done); DummyTerminator }),
           Flow[SslTlsInbound]
             .collect { case SessionBytes(_, bytes) => SendBytes(bytes) }
-            .mapMaterializedValue(_ => { http2flowMaterialized.success(Done); DummyTerminator })
-        ))(Keep.left)
+            .mapMaterializedValue(_ => { http2flowMaterialized.success(Done); DummyTerminator })))(Keep.left)
         .toMat(Sink.queue())(Keep.both)
         .run()
 
-      in.offer(SessionBytes(TLSPlacebo.dummySession, Http2Protocol.ClientConnectionPreface ++ payload)).futureValue should be(Enqueued)
+      in.offer(SessionBytes(TLSPlacebo.dummySession,
+        Http2Protocol.ClientConnectionPreface ++ payload)).futureValue should be(Enqueued)
 
       assertThrows[TestFailedException] {
         http1flowMaterialized.future.futureValue
@@ -101,8 +102,10 @@ class ProtocolSwitchSpec extends AkkaSpec {
         .toMat(Sink.queue())(Keep.both)
         .run()
 
-      in.offer(SessionBytes(TLSPlacebo.dummySession, Http2Protocol.ClientConnectionPreface.take(15))).futureValue should be(Enqueued)
-      in.offer(SessionBytes(TLSPlacebo.dummySession, Http2Protocol.ClientConnectionPreface.drop(15))).futureValue should be(Enqueued)
+      in.offer(SessionBytes(TLSPlacebo.dummySession,
+        Http2Protocol.ClientConnectionPreface.take(15))).futureValue should be(Enqueued)
+      in.offer(SessionBytes(TLSPlacebo.dummySession,
+        Http2Protocol.ClientConnectionPreface.drop(15))).futureValue should be(Enqueued)
       in.offer(SessionBytes(TLSPlacebo.dummySession, payload)).futureValue should be(Enqueued)
 
       assertThrows[TestFailedException] {

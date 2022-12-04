@@ -19,7 +19,8 @@ import org.scalatest.OptionValues
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future, Promise }
 
-class ClientTransportWithCustomResolverSpec extends AkkaSpecWithMaterializer("akka.http.server.request-timeout = infinite") with OptionValues {
+class ClientTransportWithCustomResolverSpec
+    extends AkkaSpecWithMaterializer("akka.http.server.request-timeout = infinite") with OptionValues {
   "A custom resolver" should {
 
     "change to the desired destination" in {
@@ -38,7 +39,8 @@ class ClientTransportWithCustomResolverSpec extends AkkaSpecWithMaterializer("ak
         ConnectionPoolSettings(system)
           .withConnectionSettings(ClientConnectionSettings(system).withTransport(otherHostAndPortTransport))
 
-      val respFuture = Http().singleRequest(HttpRequest(POST, s"http://$hostnameToFind:$portToFind/"), settings = customResolverPool)
+      val respFuture =
+        Http().singleRequest(HttpRequest(POST, s"http://$hostnameToFind:$portToFind/"), settings = customResolverPool)
       val resp = Await.result(respFuture, 3.seconds.dilated)
       resp.status shouldBe StatusCodes.OK
 

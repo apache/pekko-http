@@ -22,7 +22,8 @@ class FormFieldDirectivesSpec extends RoutingSpec {
 
   val nodeSeq: xml.NodeSeq = <b>yes</b>
   val urlEncodedForm = FormData(Map("firstName" -> "Mike", "age" -> "42"))
-  val urlEncodedFormWithVip = FormData(Map("firstName" -> "Mike", "age" -> "42", "VIP" -> "true", "super" -> "<b>no</b>"))
+  val urlEncodedFormWithVip =
+    FormData(Map("firstName" -> "Mike", "age" -> "42", "VIP" -> "true", "super" -> "<b>no</b>"))
   val multipartForm = Multipart.FormData {
     Map(
       "firstName" -> HttpEntity("Mike"),
@@ -50,8 +51,9 @@ class FormFieldDirectivesSpec extends RoutingSpec {
     }
     "properly extract the value of www-urlencoded form fields when an explicit unmarshaller is given" in {
       Post("/", urlEncodedForm) ~> {
-        formFields("firstName", "age".as(HexInt), "sex".optional, "VIP".withDefault(false)) { (firstName, age, sex, vip) =>
-          complete(firstName + age + sex + vip)
+        formFields("firstName", "age".as(HexInt), "sex".optional, "VIP".withDefault(false)) {
+          (firstName, age, sex, vip) =>
+            complete(firstName + age + sex + vip)
         }
       } ~> check { responseAs[String] shouldEqual "Mike66Nonefalse" }
     }
@@ -78,15 +80,15 @@ class FormFieldDirectivesSpec extends RoutingSpec {
       } ~> check { rejection shouldEqual MissingFormFieldRejection("sex") }
     }
     "properly extract the value if only a urlencoded deserializer is available for a multipart field that comes without a" +
-      "Content-Type (or text/plain)" in {
-        Post("/", multipartForm) ~> {
-          formFields("firstName", "age", "sex".optional, "VIPBoolean".withDefault(false)) { (firstName, age, sex, vip) =>
-            complete(firstName + age + sex + vip)
-          }
-        } ~> check {
-          responseAs[String] shouldEqual "Mike<int>42</int>Nonetrue"
+    "Content-Type (or text/plain)" in {
+      Post("/", multipartForm) ~> {
+        formFields("firstName", "age", "sex".optional, "VIPBoolean".withDefault(false)) { (firstName, age, sex, vip) =>
+          complete(firstName + age + sex + vip)
         }
+      } ~> check {
+        responseAs[String] shouldEqual "Mike<int>42</int>Nonetrue"
       }
+    }
     "work even if only a FromStringUnmarshaller is available for a multipart field with custom Content-Type" in {
       Post("/", multipartFormWithTextHtml) ~> {
         formFields("firstName", "age", "super".withDefault(false)) { (firstName, age, vip) =>
@@ -161,8 +163,7 @@ class FormFieldDirectivesSpec extends RoutingSpec {
                 complete(firstName + age + sex + vip)
               }
             }
-          }
-        )
+          })
       } ~> check { responseAs[String] shouldEqual "Mike42Nonefalse" }
     }
   }
@@ -282,10 +283,10 @@ class FormFieldDirectivesSpec extends RoutingSpec {
     "reject with MalformedRequestContentRejection if request entity fails" in {
       val failedSource = Source.failed(new IllegalStateException("Form was stapled wrongly"))
       Post("/", HttpEntity(`application/x-www-form-urlencoded`, failedSource)) ~>
-        formFieldSeq { echoComplete } ~>
-        check {
-          rejection shouldBe a[MalformedRequestContentRejection]
-        }
+      formFieldSeq { echoComplete } ~>
+      check {
+        rejection shouldBe a[MalformedRequestContentRejection]
+      }
     }
   }
 

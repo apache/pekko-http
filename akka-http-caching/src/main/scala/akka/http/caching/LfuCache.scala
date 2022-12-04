@@ -38,7 +38,8 @@ object LfuCache {
     require(settings.maxCapacity >= 0, "maxCapacity must not be negative")
     require(settings.initialCapacity <= settings.maxCapacity, "initialCapacity must be <= maxCapacity")
 
-    if (settings.timeToLive.isFinite || settings.timeToIdle.isFinite) expiringLfuCache(settings.maxCapacity, settings.initialCapacity, settings.timeToLive, settings.timeToIdle)
+    if (settings.timeToLive.isFinite || settings.timeToIdle.isFinite)
+      expiringLfuCache(settings.maxCapacity, settings.initialCapacity, settings.timeToLive, settings.timeToIdle)
     else simpleLfuCache(settings.maxCapacity, settings.initialCapacity)
   }
 
@@ -67,7 +68,7 @@ object LfuCache {
   }
 
   private def expiringLfuCache[K, V](maxCapacity: Long, initialCapacity: Int,
-                                     timeToLive: Duration, timeToIdle: Duration): LfuCache[K, V] = {
+      timeToLive: Duration, timeToIdle: Duration): LfuCache[K, V] = {
     require(
       !timeToLive.isFinite || !timeToIdle.isFinite || timeToLive >= timeToIdle,
       s"timeToLive($timeToLive) must be >= than timeToIdle($timeToIdle)")
@@ -86,7 +87,7 @@ object LfuCache {
       .initialCapacity(initialCapacity)
       .maximumSize(maxCapacity)
 
-    val store = (ttl andThen tti)(builder).buildAsync[K, V]
+    val store = ttl.andThen(tti)(builder).buildAsync[K, V]
     new LfuCache[K, V](store)
   }
 
@@ -103,7 +104,8 @@ private[caching] class LfuCache[K, V](val store: AsyncCache[K, V]) extends Cache
 
   def get(key: K): Option[Future[V]] = Option(store.getIfPresent(key)).map(_.toScala)
 
-  def apply(key: K, genValue: () => Future[V]): Future[V] = store.get(key, toJavaMappingFunction[K, V](genValue)).toScala
+  def apply(key: K, genValue: () => Future[V]): Future[V] =
+    store.get(key, toJavaMappingFunction[K, V](genValue)).toScala
 
   /**
    * Multiple call to put method for the same key may result in a race condition,
@@ -117,13 +119,14 @@ private[caching] class LfuCache[K, V](val store: AsyncCache[K, V]) extends Cache
         store.put(key, toJava(mayBeValue).toCompletableFuture)
         mayBeValue
       case _ => mayBeValue.map { value =>
-        store.put(key, toJava(Future.successful(value)).toCompletableFuture)
-        value
-      }
+          store.put(key, toJava(Future.successful(value)).toCompletableFuture)
+          value
+        }
     }
   }
 
-  def getOrLoad(key: K, loadValue: K => Future[V]): Future[V] = store.get(key, toJavaMappingFunction[K, V](loadValue)).toScala
+  def getOrLoad(key: K, loadValue: K => Future[V]): Future[V] =
+    store.get(key, toJavaMappingFunction[K, V](loadValue)).toScala
 
   def remove(key: K): Unit = store.synchronous().invalidate(key)
 

@@ -55,7 +55,8 @@ trait WindowTracking extends Http2FrameProbeDelegator with Http2FrameSending {
   private var windowsForIncomingData: Map[Int, Int] = Map.empty.withDefaultValue(Http2Protocol.InitialWindowSize)
   private var windowForIncomingDataOnConnection = Http2Protocol.InitialWindowSize
   def remainingWindowForIncomingDataOnConnection: Int = windowForIncomingDataOnConnection
-  def remainingWindowForIncomingData(streamId: Int): Int = windowsForIncomingData(streamId) min remainingWindowForIncomingDataOnConnection
+  def remainingWindowForIncomingData(streamId: Int): Int =
+    windowsForIncomingData(streamId) min remainingWindowForIncomingDataOnConnection
 
   def updateWindowMap(streamId: Int, update: Int => Int): Map[Int, Int] => Map[Int, Int] =
     map => map.updated(streamId, update(map(streamId)))

@@ -34,11 +34,10 @@ private[http2] object FrameLogger {
 
   def logEvent(frameEvent: FrameEvent): String = {
     case class LogEntry(
-      streamId:       Int,
-      shortFrameType: String,
-      extraInfo:      String,
-      flags:          Option[String]*
-    )
+        streamId: Int,
+        shortFrameType: String,
+        extraInfo: String,
+        flags: Option[String]*)
 
     def flag(value: Boolean, name: String): Option[String] = if (value) Some(name) else None
     def hex(bytes: ByteString): String = {

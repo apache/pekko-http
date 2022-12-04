@@ -117,10 +117,10 @@ private[http] object FrameEventParser extends ByteStringParser[FrameEvent] {
     }
 
   def mask(bytes: ByteString, mask: Int): (ByteString, Int) = {
-    val m0 = ((mask >> 24) & 0xff).toByte
-    val m1 = ((mask >> 16) & 0xff).toByte
-    val m2 = ((mask >> 8) & 0xff).toByte
-    val m3 = ((mask >> 0) & 0xff).toByte
+    val m0 = ((mask >> 24) & 0xFF).toByte
+    val m1 = ((mask >> 16) & 0xFF).toByte
+    val m2 = ((mask >> 8) & 0xFF).toByte
+    val m3 = ((mask >> 0) & 0xFF).toByte
 
     @tailrec def rec(bytes: Array[Byte], offset: Int, last: Int): Unit =
       if (offset < last) {
@@ -157,7 +157,7 @@ private[http] object FrameEventParser extends ByteStringParser[FrameEvent] {
     def invalid(reason: String) = Some((Protocol.CloseCodes.ProtocolError, s"Peer sent illegal close frame ($reason)."))
 
     if (data.length >= 2) {
-      val code = ((data(0) & 0xff) << 8) | (data(1) & 0xff)
+      val code = ((data(0) & 0xFF) << 8) | (data(1) & 0xFF)
       val message = Utf8Decoder.decode(data.drop(2))
       if (!Protocol.CloseCodes.isValid(code)) invalid(s"invalid close code '$code'")
       else if (message.isFailure) invalid("close reason message is invalid UTF8")

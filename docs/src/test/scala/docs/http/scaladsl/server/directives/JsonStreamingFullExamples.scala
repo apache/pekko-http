@@ -10,7 +10,7 @@ class JsonStreamingFullExamples extends AnyWordSpec {
 
   "compile only spec" in {}
 
-  //#custom-content-type
+  // #custom-content-type
   import akka.NotUsed
   import akka.actor.ActorSystem
   import akka.http.scaladsl.Http
@@ -55,10 +55,11 @@ class JsonStreamingFullExamples extends AnyWordSpec {
     // (fake) async database query api
     def dummyUser(id: String) = User(s"User $id", id.toString)
 
-    def fetchUsers(): Source[User, NotUsed] = Source.fromIterator(() => Iterator.fill(10000) {
-      val id = Random.nextInt()
-      dummyUser(id.toString)
-    })
+    def fetchUsers(): Source[User, NotUsed] = Source.fromIterator(() =>
+      Iterator.fill(10000) {
+        val id = Random.nextInt()
+        dummyUser(id.toString)
+      })
 
     val route =
       pathPrefix("users") {
@@ -74,5 +75,5 @@ class JsonStreamingFullExamples extends AnyWordSpec {
     bindingFuture.flatMap(_.unbind()).onComplete(_ => system.terminate())
   }
 
-  //#custom-content-type
+  // #custom-content-type
 }

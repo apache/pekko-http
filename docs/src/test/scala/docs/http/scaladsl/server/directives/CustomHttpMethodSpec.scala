@@ -15,14 +15,14 @@ import org.scalatest.concurrent.ScalaFutures
 import scala.concurrent.duration._
 
 class CustomHttpMethodSpec extends AkkaSpec with ScalaFutures
-  with Directives {
+    with Directives {
 
   "Http" should {
     "allow registering custom method" in {
       import system.dispatcher
       val host = "localhost"
       var port = 0
-      //#application-custom
+      // #application-custom
       import akka.http.scaladsl.settings.{ ParserSettings, ServerSettings }
 
       // define custom method type:
@@ -38,12 +38,12 @@ class CustomHttpMethodSpec extends AkkaSpec with ScalaFutures
       }
       val binding = Http().newServerAt(host, port).withSettings(serverSettings).bind(routes)
 
-      //#application-custom
+      // #application-custom
       // Make sure we're bound
       port = binding.futureValue.localAddress.getPort
-      //#application-custom
+      // #application-custom
       val request = HttpRequest(BOLT, s"http://$host:$port/", protocol = `HTTP/1.1`)
-      //#application-custom
+      // #application-custom
 
       // Check response
       val response = Http().singleRequest(request).futureValue
@@ -54,4 +54,3 @@ class CustomHttpMethodSpec extends AkkaSpec with ScalaFutures
     }
   }
 }
-

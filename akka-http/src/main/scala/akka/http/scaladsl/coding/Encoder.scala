@@ -25,7 +25,8 @@ trait Encoder {
 
   def encodeMessage(message: HttpMessage): message.Self =
     if (messageFilter(message) && !message.headers.exists(Encoder.isContentEncodingHeader))
-      message.transformEntityDataBytes(singleUseEncoderFlow()).withHeaders(`Content-Encoding`(encoding) +: message.headers)
+      message.transformEntityDataBytes(singleUseEncoderFlow()).withHeaders(
+        `Content-Encoding`(encoding) +: message.headers)
     else message.self
 
   def encodeData[T](t: T)(implicit mapper: DataMapper[T]): T =
@@ -36,7 +37,9 @@ trait Encoder {
       .mapMaterializedValue(_ => NotUsed)
 
   @InternalApi
-  @deprecated("synchronous compression with `encode` is not supported in the future any more, use `encodeAsync` instead", since = "10.2.0")
+  @deprecated(
+    "synchronous compression with `encode` is not supported in the future any more, use `encodeAsync` instead",
+    since = "10.2.0")
   def encode(input: ByteString): ByteString = newCompressor.compressAndFinish(input)
 
   def encodeAsync(input: ByteString)(implicit mat: Materializer): Future[ByteString] =
@@ -76,6 +79,7 @@ object Encoder {
 @InternalApi
 @deprecated("Compressor is internal API and will be moved or removed in the future.", since = "10.2.0")
 abstract class Compressor {
+
   /**
    * Compresses the given input and returns compressed data. The implementation
    * can and will choose to buffer output data to improve compression. Use
@@ -97,6 +101,7 @@ abstract class Compressor {
 
   /** Combines `compress` + `flush` */
   def compressAndFlush(input: ByteString): ByteString
+
   /** Combines `compress` + `finish` */
   def compressAndFinish(input: ByteString): ByteString
 }

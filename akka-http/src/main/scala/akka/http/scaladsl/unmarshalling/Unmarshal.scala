@@ -13,6 +13,7 @@ object Unmarshal {
 }
 
 class Unmarshal[A](val value: A) {
+
   /**
    * Unmarshals the value to the given Type using the in-scope Unmarshaller.
    *

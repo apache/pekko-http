@@ -8,7 +8,7 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl._
-import akka.stream.{ OverflowStrategy, ActorMaterializer }
+import akka.stream.{ ActorMaterializer, OverflowStrategy }
 import com.typesafe.config.{ Config, ConfigFactory }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
@@ -35,7 +35,8 @@ class TightRequestTimeoutSpec extends AnyWordSpec with Matchers with BeforeAndAf
   "Tight request timeout" should {
 
     "not cause double push error caused by the late response attempting to push" in {
-      val slowHandler = Flow[HttpRequest].map(_ => HttpResponse()).delay(500.millis.dilated, OverflowStrategy.backpressure)
+      val slowHandler =
+        Flow[HttpRequest].map(_ => HttpResponse()).delay(500.millis.dilated, OverflowStrategy.backpressure)
       val binding = Http().newServerAt("localhost", 0).bindFlow(slowHandler).futureValue
       val (hostname, port) = (binding.localAddress.getHostString, binding.localAddress.getPort)
 

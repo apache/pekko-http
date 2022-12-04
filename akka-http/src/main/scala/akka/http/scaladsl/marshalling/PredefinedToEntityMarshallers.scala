@@ -23,7 +23,9 @@ trait PredefinedToEntityMarshallers extends MultipartMarshallers {
 
   implicit val CharArrayMarshaller: ToEntityMarshaller[Array[Char]] = charArrayMarshaller(`text/plain`)
   def charArrayMarshaller(mediaType: MediaType.WithOpenCharset): ToEntityMarshaller[Array[Char]] =
-    Marshaller.withOpenCharset(mediaType) { (value, charset) => marshalCharArray(value, mediaType withCharset charset) }
+    Marshaller.withOpenCharset(mediaType) { (value, charset) =>
+      marshalCharArray(value, mediaType.withCharset(charset))
+    }
   def charArrayMarshaller(mediaType: MediaType.WithFixedCharset): ToEntityMarshaller[Array[Char]] =
     Marshaller.withFixedContentType(mediaType) { value => marshalCharArray(value, mediaType) }
 
@@ -43,7 +45,7 @@ trait PredefinedToEntityMarshallers extends MultipartMarshallers {
 
   implicit val StringMarshaller: ToEntityMarshaller[String] = stringMarshaller(`text/plain`)
   def stringMarshaller(mediaType: MediaType.WithOpenCharset): ToEntityMarshaller[String] =
-    Marshaller.withOpenCharset(mediaType) { (s, cs) => HttpEntity(mediaType withCharset cs, s) }
+    Marshaller.withOpenCharset(mediaType) { (s, cs) => HttpEntity(mediaType.withCharset(cs), s) }
   def stringMarshaller(mediaType: MediaType.WithFixedCharset): ToEntityMarshaller[String] =
     Marshaller.withFixedContentType(mediaType) { s => HttpEntity(mediaType, s) }
 
@@ -51,8 +53,7 @@ trait PredefinedToEntityMarshallers extends MultipartMarshallers {
     Marshaller.withFixedContentType(`application/x-www-form-urlencoded`)(_.toEntity)
 
   implicit val MessageEntityMarshaller: ToEntityMarshaller[MessageEntity] =
-    Marshaller strict { value => Marshalling.WithFixedContentType(value.contentType, () => value) }
+    Marshaller.strict { value => Marshalling.WithFixedContentType(value.contentType, () => value) }
 }
 
 object PredefinedToEntityMarshallers extends PredefinedToEntityMarshallers
-

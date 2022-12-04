@@ -39,9 +39,10 @@ abstract class HttpServerTestSetupBase {
     RunnableGraph.fromGraph(GraphDSL.createGraph(modifyServer(Http().serverLayer(settings))) { implicit b => server =>
       import GraphDSL.Implicits._
       Source.fromPublisher(netIn) ~> Flow[ByteString].map(SessionBytes(null, _)) ~> server.in2
-      server.out1 ~> Flow[SslTlsOutbound].collect { case SendBytes(x) => x }.buffer(1, OverflowStrategy.backpressure) ~> netOut.sink
-      server.out2 ~> Sink.fromSubscriber(requests)
-      Source.fromPublisher(responses) ~> server.in1
+      server.out1                      ~> Flow[SslTlsOutbound].collect { case SendBytes(x) => x }.buffer(1,
+        OverflowStrategy.backpressure) ~> netOut.sink
+      server.out2                      ~> Sink.fromSubscriber(requests)
+      Source.fromPublisher(responses)  ~> server.in1
       ClosedShape
     }).run()
 
@@ -81,8 +82,7 @@ abstract class HttpServerTestSetupBase {
         |Date: XXXX
         |Content-Length: 0
         |
-        |"""
-    )
+        |""")
   }
 
   def shutdownBlueprint(): Unit = {

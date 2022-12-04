@@ -12,7 +12,8 @@ import com.typesafe.config.Config
  * Public API but not intended for subclassing
  */
 @DoNotInherit
-abstract class RoutingSettings private[akka] () extends akka.http.javadsl.settings.RoutingSettings { self: RoutingSettingsImpl =>
+abstract class RoutingSettings private[akka] () extends akka.http.javadsl.settings.RoutingSettings {
+  self: RoutingSettingsImpl =>
   def verboseErrorMessages: Boolean
   def fileGetConditional: Boolean
   def renderVanityFooter: Boolean
@@ -20,7 +21,9 @@ abstract class RoutingSettings private[akka] () extends akka.http.javadsl.settin
   def rangeCoalescingThreshold: Long
   def decodeMaxBytesPerChunk: Int
   def decodeMaxSize: Long
-  @deprecated("binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher", since = "10.1.6")
+  @deprecated(
+    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    since = "10.1.6")
   def fileIODispatcher: String
 
   /* Java APIs */
@@ -31,18 +34,27 @@ abstract class RoutingSettings private[akka] () extends akka.http.javadsl.settin
   def getRangeCoalescingThreshold: Long = this.rangeCoalescingThreshold
   def getDecodeMaxBytesPerChunk: Int = this.decodeMaxBytesPerChunk
   def getDecodeMaxSize: Long = this.decodeMaxSize
-  @deprecated("binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher", since = "10.1.6")
+  @deprecated(
+    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    since = "10.1.6")
   @Deprecated
   def getFileIODispatcher: String = this.fileIODispatcher
 
-  override def withVerboseErrorMessages(verboseErrorMessages: Boolean): RoutingSettings = self.copy(verboseErrorMessages = verboseErrorMessages)
-  override def withFileGetConditional(fileGetConditional: Boolean): RoutingSettings = self.copy(fileGetConditional = fileGetConditional)
-  override def withRenderVanityFooter(renderVanityFooter: Boolean): RoutingSettings = self.copy(renderVanityFooter = renderVanityFooter)
+  override def withVerboseErrorMessages(verboseErrorMessages: Boolean): RoutingSettings =
+    self.copy(verboseErrorMessages = verboseErrorMessages)
+  override def withFileGetConditional(fileGetConditional: Boolean): RoutingSettings =
+    self.copy(fileGetConditional = fileGetConditional)
+  override def withRenderVanityFooter(renderVanityFooter: Boolean): RoutingSettings =
+    self.copy(renderVanityFooter = renderVanityFooter)
   override def withRangeCountLimit(rangeCountLimit: Int): RoutingSettings = self.copy(rangeCountLimit = rangeCountLimit)
-  override def withRangeCoalescingThreshold(rangeCoalescingThreshold: Long): RoutingSettings = self.copy(rangeCoalescingThreshold = rangeCoalescingThreshold)
-  override def withDecodeMaxBytesPerChunk(decodeMaxBytesPerChunk: Int): RoutingSettings = self.copy(decodeMaxBytesPerChunk = decodeMaxBytesPerChunk)
+  override def withRangeCoalescingThreshold(rangeCoalescingThreshold: Long): RoutingSettings =
+    self.copy(rangeCoalescingThreshold = rangeCoalescingThreshold)
+  override def withDecodeMaxBytesPerChunk(decodeMaxBytesPerChunk: Int): RoutingSettings =
+    self.copy(decodeMaxBytesPerChunk = decodeMaxBytesPerChunk)
   override def withDecodeMaxSize(decodeMaxSize: Long): RoutingSettings = self.copy(decodeMaxSize = decodeMaxSize)
-  @deprecated("binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher", since = "10.1.6")
+  @deprecated(
+    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    since = "10.1.6")
   @Deprecated
   override def withFileIODispatcher(fileIODispatcher: String): RoutingSettings = self
 }

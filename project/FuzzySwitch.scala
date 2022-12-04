@@ -12,8 +12,7 @@ object FuzzySwitch extends AutoPlugin {
   override def trigger: PluginTrigger = allRequirements
 
   override val projectSettings = Seq(
-    commands += fuzzySwitch
-  )
+    commands += fuzzySwitch)
 
   // So we can `sbt "+~ 3 clean compile"`
   //
@@ -22,7 +21,7 @@ object FuzzySwitch extends AutoPlugin {
   // * When subprojects need to be excluded, ++ needs to be specified for each command
   //
   // So the `++` equivalent of the above example is `sbt "++ 3.1.1-RC1 clean" "++ 3.1.1-RC1 compile"`
-  val fuzzySwitch: Command = Command.args("+~", "<version> <args>")({ (initialState: State, args: Seq[String]) =>
+  val fuzzySwitch: Command = Command.args("+~", "<version> <args>") { (initialState: State, args: Seq[String]) =>
     {
       val requestedVersionPrefix = args.head
       val requestedVersion = Dependencies.allScalaVersions.filter(_.startsWith(requestedVersionPrefix)).head
@@ -39,6 +38,6 @@ object FuzzySwitch extends AutoPlugin {
       val commands = args.tail
       commands.foldLeft(initialState)(run)
     }
-  })
+  }
 
 }

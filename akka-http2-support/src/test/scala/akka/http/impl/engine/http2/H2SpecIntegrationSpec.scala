@@ -20,7 +20,7 @@ import scala.concurrent.duration._
 import scala.sys.process._
 
 class H2SpecIntegrationSpec extends AkkaSpec(
-  """
+      """
      akka {
        loglevel = DEBUG
        loggers = ["akka.http.impl.util.SilenceAllTestEventListener"]
@@ -107,8 +107,7 @@ class H2SpecIntegrationSpec extends AkkaSpec(
       "8.1.2",
       "8.1.2.1",
       "8.1.2.2",
-      "8.1.2.6"
-    )
+      "8.1.2.6")
 
     /**
      * Cases that are known to fail because the TCK's expectations are
@@ -125,21 +124,24 @@ class H2SpecIntegrationSpec extends AkkaSpec(
       "pass the entire h2spec, producing junit test report" in {
         runSpec(junitOutput = new File("target/test-reports/h2spec-junit.xml"))
       }
-    } else*/ {
+    } else*/
+    {
       val testNamesWithSectionNumbers =
         testCases.zip(testCases.map(_.trim).filterNot(_.isEmpty)
           .map(l => l.take(l.lastIndexOf('.'))))
 
-      testNamesWithSectionNumbers foreach {
+      testNamesWithSectionNumbers.foreach {
         case (name, sectionNr) =>
           if (!disabledTestCases.contains(sectionNr))
             if (pendingTestCases.contains(sectionNr))
               s"pass rule: $name" ignore {
-                runSpec(specSectionNumber = Some(sectionNr), junitOutput = new File(s"target/test-reports/h2spec-junit-$sectionNr.xml"))
+                runSpec(specSectionNumber = Some(sectionNr),
+                  junitOutput = new File(s"target/test-reports/h2spec-junit-$sectionNr.xml"))
               }
             else
               s"pass rule: $name" in {
-                runSpec(specSectionNumber = Some(sectionNr), junitOutput = new File(s"target/test-reports/h2spec-junit-$sectionNr.xml"))
+                runSpec(specSectionNumber = Some(sectionNr),
+                  junitOutput = new File(s"target/test-reports/h2spec-junit-$sectionNr.xml"))
               }
       }
     }
@@ -158,8 +160,7 @@ class H2SpecIntegrationSpec extends AkkaSpec(
         executable,
         "-k", "-t",
         "-p", port.toString,
-        "-j", junitOutput.getPath
-      ) ++
+        "-j", junitOutput.getPath) ++
         specSectionNumber.toList.flatMap(number => Seq("-s", number))
 
       log.debug(s"Executing h2spec: $command")
@@ -170,8 +171,7 @@ class H2SpecIntegrationSpec extends AkkaSpec(
           else if (out.contains("===========================================")) keepAccumulating.set(false)
           else if (keepAccumulating.get) stdout.append(out + Console.RESET + "\n  ")
         },
-        err => stderr.append(err)
-      )
+        err => stderr.append(err))
 
       // p.exitValue blocks until the process is terminated
       val p = command.run(aggregateTckLogs)

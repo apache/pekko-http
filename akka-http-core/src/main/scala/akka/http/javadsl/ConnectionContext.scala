@@ -4,7 +4,7 @@
 
 package akka.http.javadsl
 
-import java.util.{ Optional, Collection => JCollection }
+import java.util.{ Collection => JCollection, Optional }
 
 import akka.annotation.{ ApiMayChange, DoNotInherit }
 import akka.http.scaladsl
@@ -16,12 +16,12 @@ import javax.net.ssl.{ SSLContext, SSLEngine, SSLParameters }
 import scala.compat.java8.OptionConverters
 
 object ConnectionContext {
-  //#https-server-context-creation
+  // #https-server-context-creation
   /**
    * Creates an HttpsConnectionContext for server-side use from the given SSLContext.
    */
   def httpsServer(sslContext: SSLContext): HttpsConnectionContext = // ...
-    //#https-server-context-creation
+    // #https-server-context-creation
     scaladsl.ConnectionContext.httpsServer(sslContext)
 
   /**
@@ -31,12 +31,12 @@ object ConnectionContext {
   def httpsServer(createEngine: akka.japi.function.Creator[SSLEngine]): HttpsConnectionContext =
     scaladsl.ConnectionContext.httpsServer(() => createEngine.create())
 
-  //#https-client-context-creation
+  // #https-client-context-creation
   /**
    * Creates an HttpsConnectionContext for client-side use from the given SSLContext.
    */
   def httpsClient(sslContext: SSLContext): HttpsConnectionContext = // ...
-    //#https-client-context-creation
+    // #https-client-context-creation
     scaladsl.ConnectionContext.httpsClient(sslContext)
 
   /**
@@ -53,19 +53,19 @@ object ConnectionContext {
   /** Used to serve HTTPS traffic. */
   @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory", since = "10.2.0")
   def https(sslContext: SSLContext): HttpsConnectionContext = // ...
-    //#https-context-creation
+    // #https-context-creation
     scaladsl.ConnectionContext.https(sslContext)
 
   /** Used to serve HTTPS traffic. */
   @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory", since = "10.2.0")
   def https(
-    sslContext:          SSLContext,
-    sslConfig:           Optional[AkkaSSLConfig],
-    enabledCipherSuites: Optional[JCollection[String]],
-    enabledProtocols:    Optional[JCollection[String]],
-    clientAuth:          Optional[TLSClientAuth],
-    sslParameters:       Optional[SSLParameters]) = // ...
-    //#https-context-creation
+      sslContext: SSLContext,
+      sslConfig: Optional[AkkaSSLConfig],
+      enabledCipherSuites: Optional[JCollection[String]],
+      enabledProtocols: Optional[JCollection[String]],
+      clientAuth: Optional[TLSClientAuth],
+      sslParameters: Optional[SSLParameters]) = // ...
+    // #https-context-creation
     scaladsl.ConnectionContext.https(
       sslContext,
       OptionConverters.toScala(sslConfig),
@@ -77,11 +77,11 @@ object ConnectionContext {
   /** Used to serve HTTPS traffic. */
   @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory", since = "10.2.0")
   def https(
-    sslContext:          SSLContext,
-    enabledCipherSuites: Optional[JCollection[String]],
-    enabledProtocols:    Optional[JCollection[String]],
-    clientAuth:          Optional[TLSClientAuth],
-    sslParameters:       Optional[SSLParameters]) =
+      sslContext: SSLContext,
+      enabledCipherSuites: Optional[JCollection[String]],
+      enabledProtocols: Optional[JCollection[String]],
+      clientAuth: Optional[TLSClientAuth],
+      sslParameters: Optional[SSLParameters]) =
     scaladsl.ConnectionContext.https(
       sslContext,
       None,
@@ -116,9 +116,11 @@ abstract class HttpsConnectionContext extends akka.http.javadsl.ConnectionContex
   /** Java API */
   @Deprecated @deprecated("here for binary compatibility", since = "10.2.0")
   def getEnabledCipherSuites: Optional[JCollection[String]]
+
   /** Java API */
   @Deprecated @deprecated("here for binary compatibility", since = "10.2.0")
   def getEnabledProtocols: Optional[JCollection[String]]
+
   /** Java API */
   @Deprecated @deprecated("here for binary compatibility", since = "10.2.0")
   def getClientAuth: Optional[TLSClientAuth]
@@ -126,6 +128,7 @@ abstract class HttpsConnectionContext extends akka.http.javadsl.ConnectionContex
   /** Java API */
   @Deprecated @deprecated("here for binary compatibility, not always available", since = "10.2.0")
   def getSslContext: SSLContext
+
   /** Java API */
   @Deprecated @deprecated("here for binary compatibility", since = "10.2.0")
   def getSslParameters: Optional[SSLParameters]

@@ -48,7 +48,7 @@ trait BasicDirectives {
    * @group basic
    */
   def mapRequest(f: HttpRequest => HttpRequest): Directive0 =
-    mapRequestContext(_ mapRequest f)
+    mapRequestContext(_.mapRequest(f))
 
   /**
    * @group basic
@@ -57,7 +57,9 @@ trait BasicDirectives {
     Directive { inner => ctx =>
       // Convert any exceptions that happened in the inner route to failed futures so the handler
       // can handle those as well.
-      val innerResult = try inner(())(ctx) catch { case NonFatal(ex) => FastFuture.failed(ex) }
+      val innerResult =
+        try inner(())(ctx)
+        catch { case NonFatal(ex) => FastFuture.failed(ex) }
       f(innerResult)
     }
 
@@ -113,13 +115,13 @@ trait BasicDirectives {
    * @group basic
    */
   def mapResponseEntity(f: ResponseEntity => ResponseEntity): Directive0 =
-    mapResponse(_ mapEntity f)
+    mapResponse(_.mapEntity(f))
 
   /**
    * @group basic
    */
   def mapResponseHeaders(f: immutable.Seq[HttpHeader] => immutable.Seq[HttpHeader]): Directive0 =
-    mapResponse(_ mapHeaders f)
+    mapResponse(_.mapHeaders(f))
 
   /**
    * A Directive0 that always passes the request on to its inner route
@@ -176,7 +178,7 @@ trait BasicDirectives {
    * @group basic
    */
   def cancelRejections(classes: Class[_]*): Directive0 =
-    cancelRejections(r => classes.exists(_ isInstance r))
+    cancelRejections(r => classes.exists(_.isInstance(r)))
 
   /**
    * Adds a TransformationRejection cancelling all rejections for which the given filter function returns true
@@ -185,7 +187,7 @@ trait BasicDirectives {
    * @group basic
    */
   def cancelRejections(cancelFilter: Rejection => Boolean): Directive0 =
-    mapRejections(_ :+ TransformationRejection(_ filterNot cancelFilter))
+    mapRejections(_ :+ TransformationRejection(_.filterNot(cancelFilter)))
 
   /**
    * Transforms the unmatchedPath of the RequestContext using the given function.
@@ -193,7 +195,7 @@ trait BasicDirectives {
    * @group basic
    */
   def mapUnmatchedPath(f: Uri.Path => Uri.Path): Directive0 =
-    mapRequestContext(_ mapUnmatchedPath f)
+    mapRequestContext(_.mapUnmatchedPath(f))
 
   /**
    * Extracts the yet unmatched path from the RequestContext.
@@ -229,7 +231,7 @@ trait BasicDirectives {
    * @group basic
    */
   def withExecutionContext(ec: ExecutionContextExecutor): Directive0 =
-    mapRequestContext(_ withExecutionContext ec)
+    mapRequestContext(_.withExecutionContext(ec))
 
   /**
    * Extracts the [[scala.concurrent.ExecutionContextExecutor]] from the [[akka.http.scaladsl.server.RequestContext]].
@@ -244,7 +246,7 @@ trait BasicDirectives {
    * @group basic
    */
   def withMaterializer(materializer: Materializer): Directive0 =
-    mapRequestContext(_ withMaterializer materializer)
+    mapRequestContext(_.withMaterializer(materializer))
 
   /**
    * Extracts the [[akka.stream.Materializer]] from the [[akka.http.scaladsl.server.RequestContext]].
@@ -269,7 +271,7 @@ trait BasicDirectives {
    * @group basic
    */
   def withLog(log: LoggingAdapter): Directive0 =
-    mapRequestContext(_ withLog log)
+    mapRequestContext(_.withLog(log))
 
   /**
    * Extracts the [[akka.event.LoggingAdapter]] from the [[akka.http.scaladsl.server.RequestContext]].
@@ -285,7 +287,7 @@ trait BasicDirectives {
    * @group basic
    */
   def withSettings(settings: RoutingSettings): Directive0 =
-    mapRequestContext(_ withRoutingSettings settings)
+    mapRequestContext(_.withRoutingSettings(settings))
 
   /**
    * Runs the inner route with settings mapped by the given function.
@@ -377,7 +379,7 @@ trait BasicDirectives {
    * @group basic
    */
   def toStrictEntity(timeout: FiniteDuration): Directive0 =
-    extractParserSettings flatMap { settings =>
+    extractParserSettings.flatMap { settings =>
       toStrictEntity(timeout, settings.maxToStrictBytes)
     }
 
@@ -401,7 +403,8 @@ trait BasicDirectives {
         case _: TimeoutException =>
           throw IllegalRequestException(
             StatusCodes.RequestTimeout,
-            ErrorInfo(s"Request timed out after $timeout while waiting for entity data", "Consider increasing the timeout for toStrict"))
+            ErrorInfo(s"Request timed out after $timeout while waiting for entity data",
+              "Consider increasing the timeout for toStrict"))
       }.flatMap { strictEntity =>
         val newCtx = ctx.mapRequest(_.withEntity(strictEntity))
         inner(())(newCtx)
@@ -430,9 +433,8 @@ object BasicDirectives extends BasicDirectives {
     require(
       fullPath.endsWith(unmatchedPath),
       s"Unmatched path '$unmatchedPath' wasn't a suffix of full path '$fullPath'. " +
-        "This usually means that ctx.unmatchedPath was manipulated inconsistently " +
-        "with ctx.request.uri.path"
-    )
+      "This usually means that ctx.unmatchedPath was manipulated inconsistently " +
+      "with ctx.request.uri.path")
 
     Path(fullPath.substring(0, fullPath.length - unmatchedPath.length))
   }

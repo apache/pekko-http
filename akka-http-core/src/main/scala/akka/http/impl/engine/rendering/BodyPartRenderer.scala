@@ -28,9 +28,9 @@ import akka.annotation.InternalApi
 private[http] object BodyPartRenderer {
 
   def streamed(
-    boundary:            String,
-    partHeadersSizeHint: Int,
-    _log:                LoggingAdapter): GraphStage[FlowShape[Multipart.BodyPart, Source[ChunkStreamPart, Any]]] =
+      boundary: String,
+      partHeadersSizeHint: Int,
+      _log: LoggingAdapter): GraphStage[FlowShape[Multipart.BodyPart, Source[ChunkStreamPart, Any]]] =
     new GraphStage[FlowShape[Multipart.BodyPart, Source[ChunkStreamPart, Any]]] {
       var firstBoundaryRendered = false
 
@@ -47,7 +47,7 @@ private[http] object BodyPartRenderer {
 
             def bodyPartChunks(data: Source[ByteString, Any]): Source[ChunkStreamPart, Any] = {
               val entityChunks = data.map[ChunkStreamPart](Chunk(_))
-              (chunkStream(r.get) ++ entityChunks).mapMaterializedValue((_) => ())
+              (chunkStream(r.get) ++ entityChunks).mapMaterializedValue(_ => ())
             }
 
             def completePartRendering(entity: HttpEntity): Source[ChunkStreamPart, Any] =
@@ -93,7 +93,7 @@ private[http] object BodyPartRenderer {
     }
 
   def strict(parts: immutable.Seq[Multipart.BodyPart.Strict], boundary: String,
-             partHeadersSizeHint: Int, log: LoggingAdapter): ByteString = {
+      partHeadersSizeHint: Int, log: LoggingAdapter): ByteString = {
     val r = new ByteStringRendering(partHeadersSizeHint)
     if (parts.nonEmpty) {
       for (part <- parts) {
@@ -116,18 +116,20 @@ private[http] object BodyPartRenderer {
     r ~~ CrLf ~~ '-' ~~ '-' ~~ boundary ~~ '-' ~~ '-'
 
   private def renderHeaders(r: Rendering, headers: immutable.Seq[HttpHeader], log: LoggingAdapter): Unit = {
-    headers foreach renderHeader(r, log)
+    headers.foreach(renderHeader(r, log))
     r ~~ CrLf
   }
 
   private def renderHeader(r: Rendering, log: LoggingAdapter): HttpHeader => Unit = {
     case x: `Content-Length` =>
-      suppressionWarning(log, x, "explicit `Content-Length` header is not allowed. Use the appropriate HttpEntity subtype.")
+      suppressionWarning(log, x,
+        "explicit `Content-Length` header is not allowed. Use the appropriate HttpEntity subtype.")
 
     case x: `Content-Type` =>
-      suppressionWarning(log, x, "explicit `Content-Type` header is not allowed. Set `HttpRequest.entity.contentType` instead.")
+      suppressionWarning(log, x,
+        "explicit `Content-Type` header is not allowed. Set `HttpRequest.entity.contentType` instead.")
 
-    case x: RawHeader if (x is "content-type") || (x is "content-length") =>
+    case x: RawHeader if (x.is("content-type")) || (x.is("content-length")) =>
       suppressionWarning(log, x, "illegal RawHeader")
 
     case x => r ~~ x

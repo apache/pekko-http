@@ -29,7 +29,7 @@ import Uri._
  */
 @DoNotInherit
 sealed abstract case class Uri(scheme: String, authority: Authority, path: Path, rawQueryString: Option[String],
-                               fragment: Option[String]) {
+    fragment: Option[String]) {
 
   def isAbsolute: Boolean = !isRelative
   def isRelative: Boolean = scheme.isEmpty
@@ -63,7 +63,7 @@ sealed abstract case class Uri(scheme: String, authority: Authority, path: Path,
    * recommend using [[Uri#withRawQueryString()]] instead.
    */
   def copy(scheme: String = scheme, authority: Authority = authority, path: Path = path,
-           rawQueryString: Option[String] = rawQueryString, fragment: Option[String] = fragment): Uri =
+      rawQueryString: Option[String] = rawQueryString, fragment: Option[String] = fragment): Uri =
     Uri(scheme, authority, path, rawQueryString, fragment)
 
   /**
@@ -83,7 +83,8 @@ sealed abstract case class Uri(scheme: String, authority: Authority, path: Path,
   /**
    * Returns a copy of this Uri with a Authority created using the given host, port and userinfo.
    */
-  def withAuthority(host: Host, port: Int, userinfo: String = ""): Uri = copy(authority = Authority(host, port, userinfo))
+  def withAuthority(host: Host, port: Int, userinfo: String = ""): Uri =
+    copy(authority = Authority(host, port, userinfo))
 
   /**
    * Returns a copy of this Uri with a Authority created using the given host and port.
@@ -168,7 +169,7 @@ sealed abstract case class Uri(scheme: String, authority: Authority, path: Path,
    * http://tools.ietf.org/html/rfc7230#section-5.5
    */
   def toEffectiveHttpRequestUri(hostHeaderHost: Host, hostHeaderPort: Int, securedConnection: Boolean = false,
-                                defaultAuthority: Authority = Authority.Empty): Uri =
+      defaultAuthority: Authority = Authority.Empty): Uri =
     toEffectiveRequestUri(hostHeaderHost, hostHeaderPort, httpScheme(securedConnection), defaultAuthority)
 
   /**
@@ -176,7 +177,7 @@ sealed abstract case class Uri(scheme: String, authority: Authority, path: Path,
    * http://tools.ietf.org/html/rfc7230#section-5.5
    */
   def toEffectiveRequestUri(hostHeaderHost: Host, hostHeaderPort: Int, defaultScheme: String,
-                            defaultAuthority: Authority = Authority.Empty): Uri =
+      defaultAuthority: Authority = Authority.Empty): Uri =
     effectiveRequestUri(scheme, authority.host, authority.port, path, rawQueryString, fragment, defaultScheme,
       hostHeaderHost, hostHeaderPort, defaultAuthority)
 
@@ -262,7 +263,7 @@ object Uri {
    *                    are automatically percent-encoded
    */
   def apply(scheme: String = "", authority: Authority = Authority.Empty, path: Path = Path.Empty,
-            queryString: Option[String] = None, fragment: Option[String] = None): Uri = {
+      queryString: Option[String] = None, fragment: Option[String] = None): Uri = {
     val p = verifyPath(path, scheme, authority.host)
     create(
       scheme = normalizeScheme(scheme),
@@ -279,9 +280,10 @@ object Uri {
    * http://tools.ietf.org/html/rfc3986 the method throws an `IllegalUriException`.
    */
   def from(scheme: String = "", userinfo: String = "", host: String = "", port: Int = 0, path: String = "",
-           queryString: Option[String] = None, fragment: Option[String] = None,
-           mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): Uri =
-    apply(scheme, Authority(Host(host, UTF8, mode), normalizePort(port, scheme), userinfo), Path(path), queryString, fragment)
+      queryString: Option[String] = None, fragment: Option[String] = None,
+      mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): Uri =
+    apply(scheme, Authority(Host(host, UTF8, mode), normalizePort(port, scheme), userinfo), Path(path), queryString,
+      fragment)
 
   /**
    * Parses a string into a normalized absolute URI as defined by http://tools.ietf.org/html/rfc3986#section-4.3.
@@ -303,7 +305,7 @@ object Uri {
    * @param mode if `Relaxed`, accepts unencoded visible 7-bit ASCII characters in addition to the RFC.
    */
   def parseAndResolve(string: ParserInput, base: Uri, charset: Charset = UTF8,
-                      mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): Uri =
+      mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): Uri =
     new UriParser(string, charset, mode).parseAndResolveUriReference(base)
 
   /**
@@ -314,7 +316,7 @@ object Uri {
    * @param mode if `Relaxed`, accepts unencoded visible 7-bit ASCII characters in addition to the RFC.
    */
   def parseHttpRequestTarget(requestTarget: ParserInput, charset: Charset = UTF8,
-                             mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): Uri =
+      mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): Uri =
     new UriParser(requestTarget, charset, mode).parseHttpRequestTarget()
 
   /**
@@ -328,7 +330,7 @@ object Uri {
    *         are already automatically percent-encoded here
    */
   private[http] def parseHttp2PathPseudoHeader(headerValue: ParserInput, charset: Charset = UTF8,
-                                               mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): (Uri.Path, Option[String]) =
+      mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): (Uri.Path, Option[String]) =
     new UriParser(headerValue, charset, mode).parseHttp2PathPseudoHeader()
 
   /**
@@ -340,7 +342,7 @@ object Uri {
    * @param mode if `Relaxed`, accepts unencoded visible 7-bit ASCII characters in addition to the RFC.
    */
   private[http] def parseHttp2AuthorityPseudoHeader(headerValue: ParserInput, charset: Charset = UTF8,
-                                                    mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): Uri.Authority =
+      mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): Uri.Authority =
     new UriParser(headerValue, charset, mode).parseHttp2AuthorityPseudoHeader()
 
   /**
@@ -364,9 +366,10 @@ object Uri {
    * Converts a set of URI components to an "effective HTTP request URI" as defined by
    * http://tools.ietf.org/html/rfc7230#section-5.5.
    */
-  def effectiveHttpRequestUri(scheme: String, host: Host, port: Int, path: Path, query: Option[String], fragment: Option[String],
-                              securedConnection: Boolean, hostHeaderHost: Host, hostHeaderPort: Int,
-                              defaultAuthority: Authority = Authority.Empty): Uri =
+  def effectiveHttpRequestUri(scheme: String, host: Host, port: Int, path: Path, query: Option[String],
+      fragment: Option[String],
+      securedConnection: Boolean, hostHeaderHost: Host, hostHeaderPort: Int,
+      defaultAuthority: Authority = Authority.Empty): Uri =
     effectiveRequestUri(scheme, host, port, path, query, fragment, httpScheme(securedConnection), hostHeaderHost,
       hostHeaderPort, defaultAuthority)
 
@@ -374,9 +377,10 @@ object Uri {
    * Converts a set of URI components to an "effective request URI" as defined by
    * http://tools.ietf.org/html/rfc7230#section-5.5.
    */
-  def effectiveRequestUri(scheme: String, host: Host, port: Int, path: Path, query: Option[String], fragment: Option[String],
-                          defaultScheme: String, hostHeaderHost: Host, hostHeaderPort: Int,
-                          defaultAuthority: Authority = Authority.Empty): Uri = {
+  def effectiveRequestUri(scheme: String, host: Host, port: Int, path: Path, query: Option[String],
+      fragment: Option[String],
+      defaultScheme: String, hostHeaderHost: Host, hostHeaderPort: Int,
+      defaultAuthority: Authority = Authority.Empty): Uri = {
     var _scheme = scheme
     var _host = host
     var _port = port
@@ -397,7 +401,7 @@ object Uri {
 
   def httpScheme(securedConnection: Boolean = false) = if (securedConnection) "https" else "http"
 
-  def websocketScheme(securedConnection: Boolean = false) = (if (securedConnection) "wss" else "ws")
+  def websocketScheme(securedConnection: Boolean = false) = if (securedConnection) "wss" else "ws"
 
   /**
    * @param port A port number that may be `0` to signal the default port of for scheme.
@@ -422,7 +426,8 @@ object Uri {
     val Empty = Authority(Host.Empty)
 
     // FIXME: add test for this method
-    def parse(authorityString: ParserInput, charset: Charset = UTF8, mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): Authority =
+    def parse(authorityString: ParserInput, charset: Charset = UTF8, mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed)
+        : Authority =
       new UriParser(authorityString, charset, mode).parseAuthority()
   }
 
@@ -461,7 +466,8 @@ object Uri {
     def apply(address: InetAddress): Host = address match {
       case ipv4: Inet4Address => apply(ipv4)
       case ipv6: Inet6Address => apply(ipv6)
-      case _                  => throw new IllegalArgumentException(s"Unexpected address type(${address.getClass.getSimpleName}): $address")
+      case _ =>
+        throw new IllegalArgumentException(s"Unexpected address type(${address.getClass.getSimpleName}): $address")
     }
     def apply(address: Inet4Address): IPv4Host = IPv4Host(address.getAddress, address.getHostAddress)
     def apply(address: Inet6Address): IPv6Host = IPv6Host(address.getAddress, address.getHostAddress)
@@ -513,7 +519,7 @@ object Uri {
   }
   final case class NamedHost(address: String) extends NonEmptyHost {
     def equalsIgnoreCase(other: Host): Boolean = other match {
-      case NamedHost(otherAddress) => address equalsIgnoreCase otherAddress
+      case NamedHost(otherAddress) => address.equalsIgnoreCase(otherAddress)
       case _                       => false
     }
 
@@ -584,7 +590,8 @@ object Uri {
             else build(Slash(decode(string.substring(ix + 1, segmentEnd), charset) :: path), ix - 1, 0)
           else if (segmentEnd == 0) build(path, ix - 1, ix + 1)
           else build(path, ix - 1, segmentEnd)
-        else if (segmentEnd == 0) path else decode(string.substring(0, segmentEnd), charset) :: path
+        else if (segmentEnd == 0) path
+        else decode(string.substring(0, segmentEnd), charset) :: path
       build()
     }
     def unapply(path: Path): Option[String] = Some(path.toString)
@@ -692,6 +699,7 @@ object Uri {
     override def toString = UriRendering.QueryRenderer.render(new StringRendering, this).get
   }
   object Query {
+
     /** A special empty String value which will be rendered without a '=' after the key. */
     val EmptyValue: String = new String(Array.empty[Char])
 
@@ -737,7 +745,8 @@ object Uri {
 
   private val defaultPorts: Map[String, Int] =
     Map("ftp" -> 21, "ssh" -> 22, "telnet" -> 23, "smtp" -> 25, "domain" -> 53, "tftp" -> 69, "http" -> 80, "ws" -> 80,
-      "pop3" -> 110, "nntp" -> 119, "imap" -> 143, "snmp" -> 161, "ldap" -> 389, "https" -> 443, "wss" -> 443, "imaps" -> 993,
+      "pop3" -> 110, "nntp" -> 119, "imap" -> 143, "snmp" -> 161, "ldap" -> 389, "https" -> 443, "wss" -> 443,
+      "imaps" -> 993,
       "nfs" -> 2049).withDefaultValue(-1)
 
   sealed trait ParsingMode extends akka.http.javadsl.model.Uri.ParsingMode
@@ -762,8 +771,9 @@ object Uri {
    *                    not to contain invalid percent-encodings or characters not allowed by
    *                    the RFC.
    */
-  private[http] def resolveUnsafe(scheme: String, userinfo: String, host: Host, port: Int, path: Path, query: Option[String],
-                                  fragment: Option[String], base: Uri): Uri = {
+  private[http] def resolveUnsafe(scheme: String, userinfo: String, host: Host, port: Int, path: Path,
+      query: Option[String],
+      fragment: Option[String], base: Uri): Uri = {
     require(base.isAbsolute, "Resolution base Uri must be absolute")
     if (scheme.isEmpty)
       if (host.isEmpty)
@@ -795,7 +805,8 @@ object Uri {
   }
 
   @tailrec
-  private[http] def decode(string: String, charset: Charset, ix: Int)(sb: JStringBuilder = new JStringBuilder(string.length).append(string, 0, ix)): String =
+  private[http] def decode(string: String, charset: Charset, ix: Int)(
+      sb: JStringBuilder = new JStringBuilder(string.length).append(string, 0, ix)): String =
     if (ix < string.length) string.charAt(ix) match {
       case '%' =>
         def intValueOfHexWord(i: Int) = {
@@ -843,11 +854,12 @@ object Uri {
       if (ix < scheme.length) {
         val c = scheme.charAt(ix)
         if (allowed(c)) verify(ix + 1, `scheme-char`, allLower && !UPPER_ALPHA(c)) else ix
-      } else if (allLower) -1 else -2
+      } else if (allLower) -1
+      else -2
     verify() match {
       case -2 => scheme.toLowerCase
       case -1 => scheme
-      case ix => fail(s"Invalid URI scheme, unexpected character at pos $ix ('${scheme charAt ix}')")
+      case ix => fail(s"Invalid URI scheme, unexpected character at pos $ix ('${scheme.charAt(ix)}')")
     }
   }
 
@@ -867,9 +879,9 @@ object Uri {
 
   private[http] def collapseDotSegments(path: Path): Path = {
     @tailrec def hasDotOrDotDotSegment(p: Path): Boolean = p match {
-      case Path.Empty => false
+      case Path.Empty                                   => false
       case Path.Segment(".", _) | Path.Segment("..", _) => true
-      case _ => hasDotOrDotDotSegment(p.tail)
+      case _                                            => hasDotOrDotDotSegment(p.tail)
     }
     // http://tools.ietf.org/html/rfc3986#section-5.2.4
     @tailrec def process(input: Path, output: Path = Path.Empty): Path = {
@@ -879,11 +891,11 @@ object Uri {
         case Segment("." | "..", Slash(tail)) => process(tail, output)
         case Slash(Segment(".", tail))        => process(if (tail.isEmpty) Path./ else tail, output)
         case Slash(Segment("..", tail)) => process(
-          input = if (tail.isEmpty) Path./ else tail,
-          output =
-            if (output.startsWithSegment)
-              if (output.tail.startsWithSlash) output.tail.tail else tail
-            else output)
+            input = if (tail.isEmpty) Path./ else tail,
+            output =
+              if (output.startsWithSegment)
+                if (output.tail.startsWithSlash) output.tail.tail else tail
+              else output)
         case Segment("." | "..", tail) => process(tail, output)
         case Slash(tail)               => process(tail, Slash(output))
         case Segment(string, tail)     => process(tail, string :: output)
@@ -899,8 +911,9 @@ object Uri {
    *                    encountered that are outside of the RFC3986 range they
    *                    are automatically percent-encoded
    */
-  private[http] def create(scheme: String, userinfo: String, host: Host, port: Int, path: Path, queryString: Option[String],
-                           fragment: Option[String]): Uri =
+  private[http] def create(scheme: String, userinfo: String, host: Host, port: Int, path: Path,
+      queryString: Option[String],
+      fragment: Option[String]): Uri =
     create(scheme, Authority(host, port, userinfo), path, queryString, fragment)
 
   /**
@@ -909,7 +922,7 @@ object Uri {
    *                    are automatically percent-encoded
    */
   private[http] def create(scheme: String, authority: Authority, path: Path, queryString: Option[String],
-                           fragment: Option[String]): Uri =
+      fragment: Option[String]): Uri =
     createUnsafe(scheme, authority, path, queryString.map(new UriParser(_).parseRawQueryString()), fragment)
 
   /**
@@ -920,7 +933,7 @@ object Uri {
    *                    the RFC.
    */
   private[http] def createUnsafe(scheme: String, authority: Authority, path: Path, queryString: Option[String],
-                                 fragment: Option[String]): Uri =
+      fragment: Option[String]): Uri =
     if (path.isEmpty && scheme.isEmpty && authority.isEmpty && queryString.isEmpty && fragment.isEmpty) Empty
     else new Uri(scheme, authority, path, queryString, fragment) { def isEmpty = false }
 }
@@ -979,7 +992,8 @@ object UriRendering {
   def renderAuthority[R <: Rendering](r: R, authority: Authority, scheme: String, charset: Charset): r.type =
     renderAuthority(r, authority, Path.Empty, scheme, charset)
 
-  def renderAuthority[R <: Rendering](r: R, authority: Authority, path: Path, scheme: String, charset: Charset): r.type =
+  def renderAuthority[R <: Rendering](
+      r: R, authority: Authority, path: Path, scheme: String, charset: Charset): r.type =
     if (authority.nonEmpty) {
       import authority._
       if (!userinfo.isEmpty) encode(r, userinfo, charset, `userinfo-char`) ~~ '@'
@@ -991,7 +1005,8 @@ object UriRendering {
     }
 
   @tailrec
-  def renderPath[R <: Rendering](r: R, path: Path, charset: Charset, encodeFirstSegmentColons: Boolean = false): r.type =
+  def renderPath[R <: Rendering](
+      r: R, path: Path, charset: Charset, encodeFirstSegmentColons: Boolean = false): r.type =
     path match {
       case Path.Empty       => r
       case Path.Slash(tail) => renderPath(r ~~ '/', tail, charset, false)
@@ -1001,7 +1016,7 @@ object UriRendering {
     }
 
   def renderQuery[R <: Rendering](r: R, query: Query, charset: Charset,
-                                  keep: CharPredicate = `strict-query-char-np`): r.type = {
+      keep: CharPredicate = `strict-query-char-np`): r.type = {
     def enc(s: String): Unit = encode(r, s, charset, keep, replaceSpaces = true)
     @tailrec def append(q: Query): r.type =
       q match {
@@ -1017,10 +1032,11 @@ object UriRendering {
   }
 
   private[http] def encode(r: Rendering, string: String, charset: Charset, keep: CharPredicate,
-                           replaceSpaces: Boolean = false): r.type = {
+      replaceSpaces: Boolean = false): r.type = {
     val asciiCompatible = isAsciiCompatible(charset)
     @tailrec def rec(ix: Int): r.type = {
-      def appendEncoded(byte: Byte): Unit = r ~~ '%' ~~ CharUtils.upperHexDigit(byte >>> 4) ~~ CharUtils.upperHexDigit(byte)
+      def appendEncoded(byte: Byte): Unit =
+        r ~~ '%' ~~ CharUtils.upperHexDigit(byte >>> 4) ~~ CharUtils.upperHexDigit(byte)
       if (ix < string.length) {
         val charSize = string.charAt(ix) match {
           case c if keep(c)                     => { r ~~ c; 1 }
@@ -1028,7 +1044,7 @@ object UriRendering {
           case c if c <= 127 && asciiCompatible => { appendEncoded(c.toByte); 1 }
           case c =>
             def append(s: String) = s.getBytes(charset).foreach(appendEncoded)
-            if (Character.isHighSurrogate(c)) { append(new String(Array(string codePointAt ix), 0, 1)); 2 }
+            if (Character.isHighSurrogate(c)) { append(new String(Array(string.codePointAt(ix)), 0, 1)); 2 }
             else { append(c.toString); 1 }
         }
         rec(ix + charSize)

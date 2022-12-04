@@ -38,6 +38,7 @@ import scala.util.{ Failure, Success, Try }
  * The pool interface is a push style interface to a pool of connections against a single host.
  */
 private[http] trait PoolInterface {
+
   /**
    * Submit request to pool. After completion the pool will complete the promise with the response.
    * If the queue in front of the pool is full, the promise will be failed with a BufferOverflowException.
@@ -82,14 +83,16 @@ private[http] object PoolInterface {
 
   private val IdleTimeout = "idle-timeout"
 
-  class PoolInterfaceStage(poolId: PoolId, master: PoolMaster, log: LoggingAdapter) extends GraphStageWithMaterializedValue[FlowShape[ResponseContext, RequestContext], PoolInterface] {
+  class PoolInterfaceStage(poolId: PoolId, master: PoolMaster, log: LoggingAdapter)
+      extends GraphStageWithMaterializedValue[FlowShape[ResponseContext, RequestContext], PoolInterface] {
     private val requestOut = Outlet[RequestContext]("PoolInterface.requestOut")
     private val responseIn = Inlet[ResponseContext]("PoolInterface.responseIn")
     override def shape = FlowShape(responseIn, requestOut)
 
     override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, PoolInterface) =
       throw new IllegalStateException("Should not be called")
-    override def createLogicAndMaterializedValue(inheritedAttributes: Attributes, _materializer: Materializer): (GraphStageLogic, PoolInterface) = {
+    override def createLogicAndMaterializedValue(
+        inheritedAttributes: Attributes, _materializer: Materializer): (GraphStageLogic, PoolInterface) = {
       import _materializer.executionContext
       val logic = new Logic(poolId, shape, master, requestOut, responseIn, log)
       (logic, logic)
@@ -97,13 +100,15 @@ private[http] object PoolInterface {
   }
 
   @InternalStableApi // name `Logic` and annotated methods
-  private class Logic(poolId: PoolId, shape: FlowShape[ResponseContext, RequestContext], master: PoolMaster, requestOut: Outlet[RequestContext], responseIn: Inlet[ResponseContext],
-                      log: LoggingAdapter)(implicit executionContext: ExecutionContext) extends TimerGraphStageLogic(shape) with PoolInterface with InHandler with OutHandler {
+  private class Logic(poolId: PoolId, shape: FlowShape[ResponseContext, RequestContext], master: PoolMaster,
+      requestOut: Outlet[RequestContext], responseIn: Inlet[ResponseContext],
+      log: LoggingAdapter)(implicit executionContext: ExecutionContext) extends TimerGraphStageLogic(shape)
+      with PoolInterface with InHandler with OutHandler {
     private[this] val PoolOverflowException = new BufferOverflowException( // stack trace cannot be prevented here because `BufferOverflowException` is final
       s"Exceeded configured max-open-requests value of [${poolId.hcps.setup.settings.maxOpenRequests}]. This means that the request queue of this pool (${poolId.hcps}) " +
-        s"has completely filled up because the pool currently does not process requests fast enough to handle the incoming request load. " +
-        "Please retry the request later. See https://doc.akka.io/docs/akka-http/current/scala/http/client-side/pool-overflow.html for " +
-        "more information.")
+      s"has completely filled up because the pool currently does not process requests fast enough to handle the incoming request load. " +
+      "Please retry the request later. See https://doc.akka.io/docs/akka-http/current/scala/http/client-side/pool-overflow.html for " +
+      "more information.")
 
     val hcps = poolId.hcps
     val idleTimeout = hcps.setup.settings.idleTimeout
@@ -162,8 +167,7 @@ private[http] object PoolInterface {
             onDispatch(
               request
                 .withUri(request.uri.toHttpRequestTargetOriginForm)
-                .withDefaultHeaders(hostHeader)
-            )
+                .withDefaultHeaders(hostHeader))
           val retries = if (request.method.isIdempotent) hcps.setup.settings.maxRetries else 0
           remainingRequested += 1
           resetIdleTimer()
@@ -208,7 +212,8 @@ private[http] object PoolInterface {
     // PoolInterface implementations
     override def request(request: HttpRequest, responsePromise: Promise[HttpResponse]): Unit =
       requestCallback.invokeWithFeedback((request, responsePromise)).failed.foreach { _ =>
-        log.debug("Request was sent to pool which was already closed, retrying through the master to create new pool instance")
+        log.debug(
+          "Request was sent to pool which was already closed, retrying through the master to create new pool instance")
         responsePromise.tryCompleteWith(master.dispatchRequest(poolId, request)(materializer))
       }
     override def shutdown()(implicit ec: ExecutionContext): Future[ShutdownReason] = {

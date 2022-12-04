@@ -40,77 +40,78 @@ trait RejectionWithOptionalCause extends Rejection {
  * Signals that the request was rejected because the HTTP method is unsupported.
  */
 final case class MethodRejection(supported: HttpMethod)
-  extends jserver.MethodRejection with Rejection
+    extends jserver.MethodRejection with Rejection
 
 /**
  * Rejection created by scheme filters.
  * Signals that the request was rejected because the Uri scheme is unsupported.
  */
 final case class SchemeRejection(supported: String)
-  extends jserver.SchemeRejection with Rejection
+    extends jserver.SchemeRejection with Rejection
 
 /**
  * Rejection created by parameter filters.
  * Signals that the request was rejected because a query parameter was not found.
  */
 final case class MissingQueryParamRejection(parameterName: String)
-  extends jserver.MissingQueryParamRejection with Rejection
+    extends jserver.MissingQueryParamRejection with Rejection
 
 /**
  * Rejection created by parameter filters.
  * Signals that the request was rejected because a query parameter value was not equal to required one.
  */
-final case class InvalidRequiredValueForQueryParamRejection(parameterName: String, expectedValue: String, actualValue: String)
-  extends jserver.InvalidRequiredValueForQueryParamRejection with Rejection
+final case class InvalidRequiredValueForQueryParamRejection(parameterName: String, expectedValue: String,
+    actualValue: String)
+    extends jserver.InvalidRequiredValueForQueryParamRejection with Rejection
 
 /**
  * Rejection created by parameter filters.
  * Signals that the request was rejected because a query parameter could not be interpreted.
  */
 final case class MalformedQueryParamRejection(parameterName: String, errorMsg: String, cause: Option[Throwable] = None)
-  extends jserver.MalformedQueryParamRejection with RejectionWithOptionalCause
+    extends jserver.MalformedQueryParamRejection with RejectionWithOptionalCause
 
 /**
  * Rejection created by form field filters.
  * Signals that the request was rejected because a form field was not found.
  */
 final case class MissingFormFieldRejection(fieldName: String)
-  extends jserver.MissingFormFieldRejection with Rejection
+    extends jserver.MissingFormFieldRejection with Rejection
 
 /**
  * Rejection created by form field filters.
  * Signals that the request was rejected because a form field could not be interpreted.
  */
 final case class MalformedFormFieldRejection(fieldName: String, errorMsg: String, cause: Option[Throwable] = None)
-  extends jserver.MalformedFormFieldRejection with RejectionWithOptionalCause
+    extends jserver.MalformedFormFieldRejection with RejectionWithOptionalCause
 
 /**
  * Rejection created by header directives.
  * Signals that the request was rejected because a required header could not be found.
  */
 final case class MissingHeaderRejection(headerName: String)
-  extends jserver.MissingHeaderRejection with Rejection
+    extends jserver.MissingHeaderRejection with Rejection
 
 /**
  * Rejection created by attribute directives.
  * Signals that the request was rejected because a required request attribute could not be found.
  */
 final case class MissingAttributeRejection[T](key: AttributeKey[T])
-  extends jserver.MissingAttributeRejection[T] with Rejection
+    extends jserver.MissingAttributeRejection[T] with Rejection
 
 /**
  * Rejection created by header directives.
  * Signals that the request was rejected because a header value is malformed.
  */
 final case class MalformedHeaderRejection(headerName: String, errorMsg: String, cause: Option[Throwable] = None)
-  extends jserver.MalformedHeaderRejection with RejectionWithOptionalCause
+    extends jserver.MalformedHeaderRejection with RejectionWithOptionalCause
 
 /**
  * Rejection created by [[akka.http.scaladsl.server.directives.HeaderDirectives.checkSameOrigin]].
  * Signals that the request was rejected because `Origin` header value is invalid.
  */
 final case class InvalidOriginRejection(allowedOrigins: immutable.Seq[SHttpOrigin])
-  extends jserver.InvalidOriginRejection with Rejection {
+    extends jserver.InvalidOriginRejection with Rejection {
   override def getAllowedOrigins: java.util.List[JHttpOrigin] = allowedOrigins.map(_.asJava).asJava
 }
 
@@ -119,10 +120,10 @@ final case class InvalidOriginRejection(allowedOrigins: immutable.Seq[SHttpOrigi
  * Signals that the request was rejected because the requests content-type is unsupported.
  */
 final class UnsupportedRequestContentTypeRejection(
-  val supported:   Set[ContentTypeRange],
-  val contentType: Option[ContentType]   = None)
-  extends jserver.UnsupportedRequestContentTypeRejection
-  with Rejection with Product with Serializable {
+    val supported: Set[ContentTypeRange],
+    val contentType: Option[ContentType] = None)
+    extends jserver.UnsupportedRequestContentTypeRejection
+    with Rejection with Product with Serializable {
 
   override def getSupported: java.util.Set[model.ContentTypeRange] =
     scala.collection.mutable.Set(supported.map(_.asJava).toVector: _*).asJava // TODO optimise
@@ -140,14 +141,15 @@ final class UnsupportedRequestContentTypeRejection(
 
   @deprecated("for binary compatibility", since = "10.1.9")
   def copy(
-    supported:   Set[ContentTypeRange] = this.supported,
-    contentType: Option[ContentType]   = this.contentType) =
+      supported: Set[ContentTypeRange] = this.supported,
+      contentType: Option[ContentType] = this.contentType) =
     UnsupportedRequestContentTypeRejection(supported, contentType)
 
   override def canEqual(that: Any): Boolean = that.isInstanceOf[UnsupportedRequestContentTypeRejection]
 
   override def equals(that: Any): Boolean = that match {
-    case that: UnsupportedRequestContentTypeRejection => that.canEqual(this) && that.supported == this.supported && that.contentType == this.contentType
+    case that: UnsupportedRequestContentTypeRejection =>
+      that.canEqual(this) && that.supported == this.supported && that.contentType == this.contentType
     case _ => false
   }
 
@@ -156,9 +158,10 @@ final class UnsupportedRequestContentTypeRejection(
 }
 
 object UnsupportedRequestContentTypeRejection
-  extends AbstractFunction1[Set[ContentTypeRange], UnsupportedRequestContentTypeRejection] {
+    extends AbstractFunction1[Set[ContentTypeRange], UnsupportedRequestContentTypeRejection] {
 
-  def apply(supported: Set[ContentTypeRange], contentType: Option[ContentType]): UnsupportedRequestContentTypeRejection =
+  def apply(
+      supported: Set[ContentTypeRange], contentType: Option[ContentType]): UnsupportedRequestContentTypeRejection =
     new UnsupportedRequestContentTypeRejection(supported, contentType)
 
   @deprecated("for binary compatibility", since = "10.1.9")
@@ -174,7 +177,7 @@ object UnsupportedRequestContentTypeRejection
  * Signals that the request was rejected because the requests content encoding is unsupported.
  */
 final case class UnsupportedRequestEncodingRejection(supported: HttpEncoding)
-  extends jserver.UnsupportedRequestEncodingRejection with Rejection
+    extends jserver.UnsupportedRequestEncodingRejection with Rejection
 
 /**
  * Rejection created by range directives.
@@ -182,7 +185,7 @@ final case class UnsupportedRequestEncodingRejection(supported: HttpEncoding)
  * The actualEntityLength gives the client a hint to create satisfiable ByteRanges.
  */
 final case class UnsatisfiableRangeRejection(unsatisfiableRanges: immutable.Seq[ByteRange], actualEntityLength: Long)
-  extends jserver.UnsatisfiableRangeRejection with Rejection {
+    extends jserver.UnsatisfiableRangeRejection with Rejection {
   override def getUnsatisfiableRanges: Iterable[model.headers.ByteRange] = unsatisfiableRanges.map(_.asJava).asJava
 }
 
@@ -192,7 +195,7 @@ final case class UnsatisfiableRangeRejection(unsatisfiableRanges: immutable.Seq[
  * indicates a broken client or a denial of service attack.
  */
 final case class TooManyRangesRejection(maxRanges: Int)
-  extends jserver.TooManyRangesRejection with Rejection
+    extends jserver.TooManyRangesRejection with Rejection
 
 /**
  * Rejection created by unmarshallers.
@@ -202,14 +205,14 @@ final case class TooManyRangesRejection(maxRanges: Int)
  * will usually trigger a `ValidationRejection` instead.
  */
 final case class MalformedRequestContentRejection(message: String, cause: Throwable)
-  extends jserver.MalformedRequestContentRejection with Rejection { override def getCause: Throwable = cause }
+    extends jserver.MalformedRequestContentRejection with Rejection { override def getCause: Throwable = cause }
 
 /**
  * Rejection created by unmarshallers.
  * Signals that the request was rejected because an message body entity was expected but not supplied.
  */
 case object RequestEntityExpectedRejection
-  extends jserver.RequestEntityExpectedRejection with Rejection
+    extends jserver.RequestEntityExpectedRejection with Rejection
 
 /**
  * Rejection created by marshallers.
@@ -217,7 +220,7 @@ case object RequestEntityExpectedRejection
  * content type is accepted by the client
  */
 final case class UnacceptedResponseContentTypeRejection(supported: Set[ContentNegotiator.Alternative])
-  extends jserver.UnacceptedResponseContentTypeRejection with Rejection
+    extends jserver.UnacceptedResponseContentTypeRejection with Rejection
 
 /**
  * Rejection created by encoding filters.
@@ -225,11 +228,12 @@ final case class UnacceptedResponseContentTypeRejection(supported: Set[ContentNe
  * content encoding is accepted by the client
  */
 final case class UnacceptedResponseEncodingRejection(supported: Set[HttpEncoding])
-  extends jserver.UnacceptedResponseEncodingRejection with Rejection {
+    extends jserver.UnacceptedResponseEncodingRejection with Rejection {
   override def getSupported: java.util.Set[model.headers.HttpEncoding] = supported.map(_.asJava).asJava
 }
 object UnacceptedResponseEncodingRejection {
-  def apply(supported: HttpEncoding): UnacceptedResponseEncodingRejection = UnacceptedResponseEncodingRejection(Set(supported))
+  def apply(supported: HttpEncoding): UnacceptedResponseEncodingRejection =
+    UnacceptedResponseEncodingRejection(Set(supported))
 }
 
 /**
@@ -238,9 +242,10 @@ object UnacceptedResponseEncodingRejection {
  * specified in the cause.
  */
 final case class AuthenticationFailedRejection(cause: AuthenticationFailedRejection.Cause, challenge: HttpChallenge)
-  extends jserver.AuthenticationFailedRejection with Rejection
+    extends jserver.AuthenticationFailedRejection with Rejection
 
 object AuthenticationFailedRejection {
+
   /**
    * Signals the cause of the failed authentication.
    */
@@ -264,27 +269,27 @@ object AuthenticationFailedRejection {
  * Signals that the request was rejected because the user is not authorized.
  */
 case object AuthorizationFailedRejection
-  extends jserver.AuthorizationFailedRejection with Rejection
+    extends jserver.AuthorizationFailedRejection with Rejection
 
 /**
  * Rejection created by the `cookie` directive.
  * Signals that the request was rejected because a cookie was not found.
  */
 final case class MissingCookieRejection(cookieName: String)
-  extends jserver.MissingCookieRejection with Rejection
+    extends jserver.MissingCookieRejection with Rejection
 
 /**
  * Rejection created when a websocket request was expected but none was found.
  */
 case object ExpectedWebSocketRequestRejection
-  extends jserver.ExpectedWebSocketRequestRejection with Rejection
+    extends jserver.ExpectedWebSocketRequestRejection with Rejection
 
 /**
  * Rejection created when a websocket request was not handled because none of the given subprotocols
  * was supported.
  */
 final case class UnsupportedWebSocketSubprotocolRejection(supportedProtocol: String)
-  extends jserver.UnsupportedWebSocketSubprotocolRejection with Rejection
+    extends jserver.UnsupportedWebSocketSubprotocolRejection with Rejection
 
 /**
  * Rejection created by the `validation` directive as well as for `IllegalArgumentExceptions`
@@ -292,7 +297,7 @@ final case class UnsupportedWebSocketSubprotocolRejection(supportedProtocol: Str
  * It signals that an expected value was semantically invalid.
  */
 final case class ValidationRejection(message: String, cause: Option[Throwable] = None)
-  extends jserver.ValidationRejection with RejectionWithOptionalCause
+    extends jserver.ValidationRejection with RejectionWithOptionalCause
 
 /**
  * A special Rejection that serves as a container for a transformation function on rejections.
@@ -315,11 +320,12 @@ final case class ValidationRejection(message: String, cause: Option[Throwable] =
  * did indeed match eventually).
  */
 final case class TransformationRejection(transform: immutable.Seq[Rejection] => immutable.Seq[Rejection])
-  extends jserver.TransformationRejection with Rejection {
+    extends jserver.TransformationRejection with Rejection {
   override def getTransform = new Function[Iterable[jserver.Rejection], Iterable[jserver.Rejection]] {
     override def apply(t: Iterable[jserver.Rejection]): Iterable[jserver.Rejection] = {
       // explicit collects assignment is because of unidoc failing compilation on .asScala and .asJava here
-      val transformed: Seq[jserver.Rejection] = transform(Util.immutableSeq(t).collect { case r: Rejection => r }).collect { case j: jserver.Rejection => j }
+      val transformed: Seq[jserver.Rejection] =
+        transform(Util.immutableSeq(t).collect { case r: Rejection => r }).collect { case j: jserver.Rejection => j }
       transformed.asJava // TODO "asJavaDeep" and optimise?
     }
   }
@@ -330,7 +336,7 @@ final case class TransformationRejection(transform: immutable.Seq[Rejection] => 
  * Signals that the request was rejected because the supplied circuit breaker is open and requests are failing fast.
  */
 final case class CircuitBreakerOpenRejection(cause: CircuitBreakerOpenException)
-  extends jserver.CircuitBreakerOpenRejection with Rejection
+    extends jserver.CircuitBreakerOpenRejection with Rejection
 
 /**
  * A Throwable wrapping a Rejection.

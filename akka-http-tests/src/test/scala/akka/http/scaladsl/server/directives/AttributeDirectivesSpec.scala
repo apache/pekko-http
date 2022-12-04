@@ -58,4 +58,3 @@ class AttributeDirectivesSpec extends RoutingSpec {
     }
   }
 }
-

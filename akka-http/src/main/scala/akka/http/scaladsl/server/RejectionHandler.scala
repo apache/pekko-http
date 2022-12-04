@@ -40,11 +40,11 @@ trait RejectionHandler extends (immutable.Seq[Rejection] => Option[Route]) { sel
     (this, that) match {
       case (a: BuiltRejectionHandler, _) if a.isDefault => this // the default handler already handles everything
       case (a: BuiltRejectionHandler, b: BuiltRejectionHandler) =>
-        new BuiltRejectionHandler(a.cases ++ b.cases, a.notFound orElse b.notFound, b.isDefault)
+        new BuiltRejectionHandler(a.cases ++ b.cases, a.notFound.orElse(b.notFound), b.isDefault)
       case _ => new RejectionHandler {
-        def apply(rejections: immutable.Seq[Rejection]): Option[Route] =
-          self(rejections) orElse that(rejections)
-      }
+          def apply(rejections: immutable.Seq[Rejection]): Option[Route] =
+            self(rejections).orElse(that(rejections))
+        }
     }
 
   /**
@@ -116,8 +116,8 @@ object RejectionHandler {
     }
   }
   private final case class TypeHandler[T <: Rejection](
-    runtimeClass: Class[_], f: immutable.Seq[T] => Route) extends Handler with PartialFunction[Rejection, T] {
-    def isDefinedAt(rejection: Rejection): Boolean = runtimeClass isInstance rejection
+      runtimeClass: Class[_], f: immutable.Seq[T] => Route) extends Handler with PartialFunction[Rejection, T] {
+    def isDefinedAt(rejection: Rejection): Boolean = runtimeClass.isInstance(rejection)
     def apply(rejection: Rejection): T = rejection.asInstanceOf[T]
 
     override def mapResponse(map: HttpResponse => HttpResponse): TypeHandler[T] = {
@@ -126,19 +126,19 @@ object RejectionHandler {
   }
 
   private class BuiltRejectionHandler(
-    val cases:     Vector[Handler],
-    val notFound:  Option[Route],
-    val isDefault: Boolean) extends RejectionHandler {
+      val cases: Vector[Handler],
+      val notFound: Option[Route],
+      val isDefault: Boolean) extends RejectionHandler {
     def apply(rejections: immutable.Seq[Rejection]): Option[Route] =
       if (rejections.nonEmpty) {
         @tailrec def rec(ix: Int): Option[Route] =
           if (ix < cases.length) {
             cases(ix) match {
               case CaseHandler(pf) =>
-                val route = rejections collectFirst pf
+                val route = rejections.collectFirst(pf)
                 if (route.isEmpty) rec(ix + 1) else route
               case x @ TypeHandler(_, f) =>
-                val rejs = rejections collect x
+                val rejs = rejections.collect(x)
                 if (rejs.isEmpty) rec(ix + 1) else Some(f(rejs))
             }
           } else None
@@ -168,11 +168,13 @@ object RejectionHandler {
       }
       .handleAll[MethodRejection] { rejections =>
         val (methods, names) = rejections.map(r => r.supported -> r.supported.name).unzip
-        rejectRequestEntityAndComplete((MethodNotAllowed, List(Allow(methods)), "HTTP method not allowed, supported methods: " + names.mkString(", ")))
+        rejectRequestEntityAndComplete((MethodNotAllowed, List(Allow(methods)),
+          "HTTP method not allowed, supported methods: " + names.mkString(", ")))
       }
       .handle {
         case AuthorizationFailedRejection =>
-          rejectRequestEntityAndComplete((Forbidden, "The supplied authentication is not authorized to access this resource"))
+          rejectRequestEntityAndComplete((Forbidden,
+            "The supplied authentication is not authorized to access this resource"))
       }
       .handle {
         case MalformedFormFieldRejection(name, msg, _) =>
@@ -213,7 +215,8 @@ object RejectionHandler {
       }
       .handle {
         case InvalidOriginRejection(allowedOrigins) =>
-          rejectRequestEntityAndComplete((Forbidden, s"Allowed `Origin` header values: ${allowedOrigins.mkString(", ")}"))
+          rejectRequestEntityAndComplete((Forbidden,
+            s"Allowed `Origin` header values: ${allowedOrigins.mkString(", ")}"))
       }
       .handle {
         case MissingQueryParamRejection(paramName) =>
@@ -221,7 +224,8 @@ object RejectionHandler {
       }
       .handle {
         case InvalidRequiredValueForQueryParamRejection(paramName, requiredValue, _) =>
-          rejectRequestEntityAndComplete((NotFound, s"Request is missing required value '$requiredValue' for query parameter '$paramName'"))
+          rejectRequestEntityAndComplete((NotFound,
+            s"Request is missing required value '$requiredValue' for query parameter '$paramName'"))
       }
       .handle {
         case RequestEntityExpectedRejection =>
@@ -237,7 +241,8 @@ object RejectionHandler {
       }
       .handle {
         case UnsatisfiableRangeRejection(unsatisfiableRanges, actualEntityLength) =>
-          rejectRequestEntityAndComplete((RangeNotSatisfiable, List(`Content-Range`(ContentRange.Unsatisfiable(actualEntityLength))),
+          rejectRequestEntityAndComplete((RangeNotSatisfiable,
+            List(`Content-Range`(ContentRange.Unsatisfiable(actualEntityLength))),
             unsatisfiableRanges.mkString("None of the following requested Ranges were satisfiable:\n", "\n", "")))
       }
       .handleAll[AuthenticationFailedRejection] { rejections =>
@@ -256,12 +261,14 @@ object RejectionHandler {
       }
       .handleAll[UnacceptedResponseContentTypeRejection] { rejections =>
         val supported = rejections.flatMap(_.supported)
-        val msg = supported.map(_.format).mkString("Resource representation is only available with these types:\n", "\n", "")
+        val msg =
+          supported.map(_.format).mkString("Resource representation is only available with these types:\n", "\n", "")
         rejectRequestEntityAndComplete((NotAcceptable, msg))
       }
       .handleAll[UnacceptedResponseEncodingRejection] { rejections =>
         val supported = rejections.flatMap(_.supported)
-        rejectRequestEntityAndComplete((NotAcceptable, "Resource representation is only available with these Content-Encodings:\n" +
+        rejectRequestEntityAndComplete((NotAcceptable,
+          "Resource representation is only available with these Content-Encodings:\n" +
           supported.map(_.value).mkString("\n")))
       }
       .handleAll[UnsupportedRequestContentTypeRejection] { rejections =>
@@ -271,18 +278,24 @@ object RejectionHandler {
           if (supported.isEmpty) ""
           else " Expected:\n" + supported
 
-        rejectRequestEntityAndComplete((UnsupportedMediaType, s"The request's Content-Type$unsupported is not supported.$expected"))
+        rejectRequestEntityAndComplete((UnsupportedMediaType,
+          s"The request's Content-Type$unsupported is not supported.$expected"))
       }
       .handleAll[UnsupportedRequestEncodingRejection] { rejections =>
         val supported = rejections.map(_.supported.value).mkString(" or ")
-        rejectRequestEntityAndComplete((BadRequest, "The request's Content-Encoding is not supported. Expected:\n" + supported))
+        rejectRequestEntityAndComplete((BadRequest,
+          "The request's Content-Encoding is not supported. Expected:\n" + supported))
       }
-      .handle { case ExpectedWebSocketRequestRejection => rejectRequestEntityAndComplete((BadRequest, "Expected WebSocket Upgrade request")) }
+      .handle { case ExpectedWebSocketRequestRejection =>
+        rejectRequestEntityAndComplete((BadRequest, "Expected WebSocket Upgrade request"))
+      }
       .handleAll[UnsupportedWebSocketSubprotocolRejection] { rejections =>
         val supported = rejections.map(_.supportedProtocol)
         rejectRequestEntityAndComplete(HttpResponse(
           BadRequest,
-          entity = s"None of the websocket subprotocols offered in the request are supported. Supported are ${supported.map("'" + _ + "'").mkString(",")}.",
+          entity =
+            s"None of the websocket subprotocols offered in the request are supported. Supported are ${supported.map(
+                "'" + _ + "'").mkString(",")}.",
           headers = `Sec-WebSocket-Protocol`(supported) :: Nil))
       }
       .handle { case ValidationRejection(msg, _) => rejectRequestEntityAndComplete((BadRequest, msg)) }

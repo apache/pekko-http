@@ -42,10 +42,11 @@ class RequestContext private (val delegate: scaladsl.server.RequestContext) {
   def getParserSettings: ParserSettings = delegate.parserSettings
 
   def reconfigure(
-    executionContext: ExecutionContextExecutor,
-    materializer:     Materializer,
-    log:              LoggingAdapter,
-    settings:         RoutingSettings): RequestContext = wrap(delegate.reconfigure(executionContext, materializer, log, settings.asScala))
+      executionContext: ExecutionContextExecutor,
+      materializer: Materializer,
+      log: LoggingAdapter,
+      settings: RoutingSettings): RequestContext =
+    wrap(delegate.reconfigure(executionContext, materializer, log, settings.asScala))
 
   def complete[T](value: T, marshaller: Marshaller[T, HttpResponse]): CompletionStage[RouteResult] = {
     delegate.complete(ToResponseMarshallable(value)(marshaller))
@@ -75,16 +76,20 @@ class RequestContext private (val delegate: scaladsl.server.RequestContext) {
   def withExecutionContext(ec: ExecutionContextExecutor): RequestContext = wrap(delegate.withExecutionContext(ec))
   def withMaterializer(materializer: Materializer): RequestContext = wrap(delegate.withMaterializer(materializer))
   def withLog(log: LoggingAdapter): RequestContext = wrap(delegate.withLog(log))
-  def withRoutingSettings(settings: RoutingSettings): RequestContext = wrap(delegate.withRoutingSettings(settings.asScala))
+  def withRoutingSettings(settings: RoutingSettings): RequestContext =
+    wrap(delegate.withRoutingSettings(settings.asScala))
   def withParserSettings(settings: ParserSettings): RequestContext = wrap(delegate.withParserSettings(settings.asScala))
 
-  def mapRequest(f: JFunction[HttpRequest, HttpRequest]): RequestContext = wrap(delegate.mapRequest(r => f.apply(r.asJava).asScala))
+  def mapRequest(f: JFunction[HttpRequest, HttpRequest]): RequestContext =
+    wrap(delegate.mapRequest(r => f.apply(r.asJava).asScala))
   def withUnmatchedPath(path: String): RequestContext = wrap(delegate.withUnmatchedPath(Path(path)))
-  def mapUnmatchedPath(f: JFunction[String, String]): RequestContext = wrap(delegate.mapUnmatchedPath(p => Path(f.apply(p.toString()))))
+  def mapUnmatchedPath(f: JFunction[String, String]): RequestContext =
+    wrap(delegate.mapUnmatchedPath(p => Path(f.apply(p.toString()))))
   def withAcceptAll: RequestContext = wrap(delegate.withAcceptAll)
 }
 
 object RequestContext {
+
   /** INTERNAL API */
   @InternalApi
   private[http] def wrap(delegate: scaladsl.server.RequestContext) = new RequestContext(delegate)

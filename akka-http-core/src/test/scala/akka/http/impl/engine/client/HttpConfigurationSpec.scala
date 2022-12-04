@@ -5,7 +5,13 @@
 package akka.http.impl.engine.client
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings, HttpsProxySettings, ParserSettings, ServerSettings }
+import akka.http.scaladsl.settings.{
+  ClientConnectionSettings,
+  ConnectionPoolSettings,
+  HttpsProxySettings,
+  ParserSettings,
+  ServerSettings
+}
 import akka.testkit.AkkaSpec
 import com.typesafe.config.ConfigFactory
 
@@ -17,11 +23,13 @@ class HttpConfigurationSpec extends AkkaSpec {
   "Reference configurations" should {
     "have default server `parsing` settings" in {
       // max-content-length defined specially for server
-      ServerSettings(system).parserSettings.toString shouldEqual ParserSettings(system).withMaxContentLength(8 * 1024 * 1024).toString
+      ServerSettings(system).parserSettings.toString shouldEqual ParserSettings(system).withMaxContentLength(
+        8 * 1024 * 1024).toString
     }
     "have default client `parsing` settings" in {
       // max-content-length defined specially for client
-      ClientConnectionSettings(system).parserSettings.toString shouldEqual ParserSettings(system).withMaxContentLength(Long.MaxValue).toString
+      ClientConnectionSettings(system).parserSettings.toString shouldEqual ParserSettings(system).withMaxContentLength(
+        Long.MaxValue).toString
     }
     "have default client and pool `client` settings" in {
       ClientConnectionSettings(system).toString should ===(ConnectionPoolSettings(system).connectionSettings.toString)
@@ -143,14 +151,12 @@ class HttpConfigurationSpec extends AkkaSpec {
           akka.http.host-connection-pool.min-connections = 42
           akka.http.host-connection-pool.max-connections = 43
         """.stripMargin) { sys =>
-
-          val pool = ConnectionPoolSettings(sys)
-          pool.getMinConnections should ===(42)
-          pool.getMaxConnections should ===(43)
-        }
+        val pool = ConnectionPoolSettings(sys)
+        pool.getMinConnections should ===(42)
+        pool.getMaxConnections should ===(43)
+      }
 
       configuredSystem(""" """) { sys =>
-
         val pool = ConnectionPoolSettings(sys)
         pool.minConnections should ===(0)
       }
@@ -160,9 +166,8 @@ class HttpConfigurationSpec extends AkkaSpec {
           akka.http.host-connection-pool.min-connections = 101
           akka.http.host-connection-pool.max-connections = 1
         """.stripMargin) { sys =>
-
-          intercept[IllegalArgumentException] { ConnectionPoolSettings(sys) }
-        }
+        intercept[IllegalArgumentException] { ConnectionPoolSettings(sys) }
+      }
     }
 
     "set `akka.http.client.proxy.https.host` only in" in {
@@ -170,10 +175,10 @@ class HttpConfigurationSpec extends AkkaSpec {
         """
           akka.http.client.proxy.https.host = ""
         """) { sys =>
-          assertThrows[IllegalArgumentException] {
-            HttpsProxySettings(sys)
-          }
+        assertThrows[IllegalArgumentException] {
+          HttpsProxySettings(sys)
         }
+      }
     }
 
     "set `akka.http.client.proxy.https.port` only in" in {
@@ -181,10 +186,10 @@ class HttpConfigurationSpec extends AkkaSpec {
         """
           akka.http.client.proxy.https.port = 8080
         """) { sys =>
-          assertThrows[IllegalArgumentException] {
-            HttpsProxySettings(sys)
-          }
+        assertThrows[IllegalArgumentException] {
+          HttpsProxySettings(sys)
         }
+      }
     }
 
     "set `akka.http.client.proxy.https.port` and `akka.http.client.proxy.https.host` in" in {
@@ -193,10 +198,10 @@ class HttpConfigurationSpec extends AkkaSpec {
           akka.http.client.proxy.https.host = localhost
           akka.http.client.proxy.https.port = 8080
         """.stripMargin) { sys =>
-          val settings = HttpsProxySettings(sys)
-          settings.host should ===("localhost")
-          settings.port should ===(8080)
-        }
+        val settings = HttpsProxySettings(sys)
+        settings.host should ===("localhost")
+        settings.port should ===(8080)
+      }
     }
   }
 
@@ -204,7 +209,8 @@ class HttpConfigurationSpec extends AkkaSpec {
     val config = ConfigFactory.parseString(overrides).withFallback(ConfigFactory.load())
     // we go via ActorSystem in order to hit the settings caching infrastructure
     val sys = ActorSystem("config-testing", config)
-    try block(sys) finally sys.terminate()
+    try block(sys)
+    finally sys.terminate()
   }
 
 }

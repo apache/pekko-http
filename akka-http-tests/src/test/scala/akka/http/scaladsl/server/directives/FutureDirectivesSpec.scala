@@ -26,7 +26,8 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
 
   trait TestWithCircuitBreaker {
     val breakerResetTimeout = 500.millis.dilated
-    val breaker = new CircuitBreaker(system.scheduler, maxFailures = 1, callTimeout = 10.seconds.dilated, breakerResetTimeout)
+    val breaker =
+      new CircuitBreaker(system.scheduler, maxFailures = 1, callTimeout = 10.seconds.dilated, breakerResetTimeout)
     def openBreaker() = breaker.withCircuitBreaker(Future.failed(new Exception("boom")))
   }
 
@@ -54,7 +55,8 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
       }
     }
     "catch an exception in the failure case" in {
-      Get() ~> showEx(onComplete(Future.failed[String](new RuntimeException("no"))) { throwTestException("EX when ") }) ~> check {
+      Get() ~> showEx(
+        onComplete(Future.failed[String](new RuntimeException("no"))) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         responseAs[String] shouldEqual s"Oops. akka.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Failure(java.lang.RuntimeException: no)"
       }
@@ -74,7 +76,9 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
       }
     }
     "unwrap a Future in the failure case" in new TestWithCircuitBreaker {
-      Get() ~> onCompleteWithBreaker(breaker)(Future.failed[String](new RuntimeException("no"))) { echoComplete } ~> check {
+      Get() ~> onCompleteWithBreaker(breaker)(Future.failed[String](new RuntimeException("no"))) {
+        echoComplete
+      } ~> check {
         responseAs[String] shouldEqual "Failure(java.lang.RuntimeException: no)"
       }
     }
@@ -94,19 +98,22 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
       awaitAssert(breaker.isOpen should ===(true))
       // since this is timing sensitive, try a few times to observe the breaker closed
       awaitAssert({
-        Get() ~> onCompleteWithBreaker(breaker)(Future.successful(1)) { echoComplete } ~> check {
-          responseAs[String] shouldEqual "Success(1)"
-        }
-      }, breakerResetTimeout + 1.second)
+          Get() ~> onCompleteWithBreaker(breaker)(Future.successful(1)) { echoComplete } ~> check {
+            responseAs[String] shouldEqual "Success(1)"
+          }
+        }, breakerResetTimeout + 1.second)
     }
     "catch an exception in the success case" in new TestWithCircuitBreaker {
-      Get() ~> showEx(onCompleteWithBreaker(breaker)(Future.successful("ok")) { throwTestException("EX when ") }) ~> check {
+      Get() ~> showEx(
+        onCompleteWithBreaker(breaker)(Future.successful("ok")) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         responseAs[String] shouldEqual s"Oops. akka.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Success(ok)"
       }
     }
     "catch an exception in the failure case" in new TestWithCircuitBreaker {
-      Get() ~> showEx(onCompleteWithBreaker(breaker)(Future.failed[String](new RuntimeException("no"))) { throwTestException("EX when ") }) ~> check {
+      Get() ~> showEx(onCompleteWithBreaker(breaker)(Future.failed[String](new RuntimeException("no"))) {
+        throwTestException("EX when ")
+      }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         responseAs[String] shouldEqual s"Oops. akka.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Failure(java.lang.RuntimeException: no)"
       }
@@ -121,12 +128,11 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
     }
     "propagate the exception in the failure case" in EventFilter[TestException.type](
       occurrences = 1,
-      message = BasicRouteSpecs.defaultExnHandler500Error("XXX")
-    ).intercept {
-        Get() ~> onSuccess(Future.failed[Int](TestException)) { echoComplete } ~> check {
-          status shouldEqual StatusCodes.InternalServerError
-        }
+      message = BasicRouteSpecs.defaultExnHandler500Error("XXX")).intercept {
+      Get() ~> onSuccess(Future.failed[Int](TestException)) { echoComplete } ~> check {
+        status shouldEqual StatusCodes.InternalServerError
       }
+    }
     "catch an exception in the success case" in {
       Get() ~> showEx(onSuccess(Future.successful("ok")) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
@@ -135,13 +141,12 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
     }
     "catch an exception in the failure case" in EventFilter[TestException.type](
       occurrences = 1,
-      message = BasicRouteSpecs.defaultExnHandler500Error("XXX")
-    ).intercept {
-        Get() ~> onSuccess(Future.failed[Unit](TestException)) { throwTestException("EX when ") } ~> check {
-          status shouldEqual StatusCodes.InternalServerError
-          responseAs[String] shouldEqual "There was an internal server error."
-        }
+      message = BasicRouteSpecs.defaultExnHandler500Error("XXX")).intercept {
+      Get() ~> onSuccess(Future.failed[Unit](TestException)) { throwTestException("EX when ") } ~> check {
+        status shouldEqual StatusCodes.InternalServerError
+        responseAs[String] shouldEqual "There was an internal server error."
       }
+    }
   }
 
   "The `completeOrRecoverWith` directive" should {
@@ -166,7 +171,8 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
       }
     }
     "catch an exception during recovery" in {
-      Get() ~> showEx(completeOrRecoverWith(Future.failed[String](TestException)) { throwTestException("EX when ") }) ~> check {
+      Get() ~> showEx(
+        completeOrRecoverWith(Future.failed[String](TestException)) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         responseAs[String] shouldEqual s"Oops. akka.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when akka.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException$$: XXX"
       }

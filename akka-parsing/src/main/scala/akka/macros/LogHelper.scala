@@ -23,4 +23,3 @@ private[akka] trait LogHelper extends LogHelperMacro {
   /** Override to prefix every log message with a user-defined context string */
   def prefixString: String = ""
 }
-

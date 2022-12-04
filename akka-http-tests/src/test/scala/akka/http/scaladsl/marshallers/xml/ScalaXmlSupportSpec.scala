@@ -29,14 +29,16 @@ class ScalaXmlSupportSpec extends AnyFreeSpec with Matchers with ScalatestRouteT
   "NodeSeqMarshaller should" - {
     "marshal xml snippets to `text/xml` content in UTF-8" in {
       marshal(<employee><nr>Ha“llo</nr></employee>) shouldEqual
-        HttpEntity(ContentTypes.`text/xml(UTF-8)`, "<employee><nr>Ha“llo</nr></employee>")
+      HttpEntity(ContentTypes.`text/xml(UTF-8)`, "<employee><nr>Ha“llo</nr></employee>")
     }
     "unmarshal `text/xml` content in UTF-8 to NodeSeqs" in {
-      Unmarshal(HttpEntity(ContentTypes.`text/xml(UTF-8)`, "<int>Hällö</int>")).to[NodeSeq].map(_.text) should evaluateTo("Hällö")
+      Unmarshal(HttpEntity(ContentTypes.`text/xml(UTF-8)`, "<int>Hällö</int>")).to[NodeSeq].map(
+        _.text) should evaluateTo("Hällö")
     }
     "reject `application/octet-stream`" in {
       Unmarshal(HttpEntity(`application/octet-stream`, ByteString("<int>Hällö</int>"))).to[NodeSeq].map(_.text) should
-        haveFailedWith(UnsupportedContentTypeException(Some(ContentTypes.`application/octet-stream`), nodeSeqContentTypeRanges: _*))
+      haveFailedWith(UnsupportedContentTypeException(Some(ContentTypes.`application/octet-stream`),
+        nodeSeqContentTypeRanges: _*))
     }
 
     "don't be vulnerable to XXE attacks" - {
@@ -62,12 +64,14 @@ class ScalaXmlSupportSpec extends AnyFreeSpec with Matchers with ScalatestRouteT
                        |   %xpe;
                        |   %pe;
                        |   ]><foo>hello&xxe;</foo>""".stripMargin
-            shouldHaveFailedWithSAXParseException(Unmarshal(HttpEntity(ContentTypes.`text/xml(UTF-8)`, xml)).to[NodeSeq])
+            shouldHaveFailedWithSAXParseException(Unmarshal(HttpEntity(ContentTypes.`text/xml(UTF-8)`, xml)).to[
+              NodeSeq])
           }
         }
       }
       "gracefully fail when there are too many nested entities" in {
-        val nested = for (x <- 1 to 30) yield "<!ENTITY laugh" + x + " \"&laugh" + (x - 1) + ";&laugh" + (x - 1) + ";\">"
+        val nested = for (x <- 1 to 30)
+          yield "<!ENTITY laugh" + x + " \"&laugh" + (x - 1) + ";&laugh" + (x - 1) + ";\">"
         val xml =
           s"""<?xml version="1.0"?>
            | <!DOCTYPE billion [

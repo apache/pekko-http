@@ -74,7 +74,7 @@ class DebuggingDirectivesSpec extends RoutingSpec {
       Get("/hello") ~> route ~> check {
         response shouldEqual Ok
         normalizedDebugMsg() shouldEqual
-          """|3: Response for
+        """|3: Response for
              |  Request : HttpRequest(HttpMethod(GET),http://example.com/hello,List(),HttpEntity.Strict(none/none,0 bytes total),HttpProtocol(HTTP/1.1))
              |  Response: Complete(HttpResponse(200 OK,List(),HttpEntity.Strict(none/none,0 bytes total),HttpProtocol(HTTP/1.1)))
              |""".stripMarginWithNewline("\n")
@@ -82,8 +82,9 @@ class DebuggingDirectivesSpec extends RoutingSpec {
     }
     "be able to log only rejections" in {
       val rejectionLogger: HttpRequest => RouteResult => Option[LogEntry] = req => {
-        case Rejected(rejections) => Some(LogEntry(s"Request: $req\nwas rejected with rejections:\n$rejections", Logging.DebugLevel))
-        case _                    => None
+        case Rejected(rejections) =>
+          Some(LogEntry(s"Request: $req\nwas rejected with rejections:\n$rejections", Logging.DebugLevel))
+        case _ => None
       }
 
       val route =
@@ -95,7 +96,7 @@ class DebuggingDirectivesSpec extends RoutingSpec {
       Get("/hello") ~> route ~> check {
         handled shouldBe false
         normalizedDebugMsg() shouldEqual
-          """Request: HttpRequest(HttpMethod(GET),http://example.com/hello,List(),HttpEntity.Strict(none/none,0 bytes total),HttpProtocol(HTTP/1.1))
+        """Request: HttpRequest(HttpMethod(GET),http://example.com/hello,List(),HttpEntity.Strict(none/none,0 bytes total),HttpProtocol(HTTP/1.1))
             |was rejected with rejections:
             |List(ValidationRejection(The request could not be validated,None))
             |""".stripMargin

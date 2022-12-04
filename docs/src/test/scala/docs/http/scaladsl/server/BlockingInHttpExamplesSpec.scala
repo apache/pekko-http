@@ -12,12 +12,12 @@ import scala.concurrent.Future
 import org.scalatest.wordspec.AnyWordSpec
 
 class BlockingInHttpExamplesSpec extends AnyWordSpec with CompileOnlySpec
-  with Directives {
+    with Directives {
 
   compileOnlySpec {
     val system: ActorSystem = ActorSystem()
 
-    //#blocking-example-in-default-dispatcher
+    // #blocking-example-in-default-dispatcher
     // BAD (due to blocking in Future, on default dispatcher)
     implicit val defaultDispatcher = system.dispatcher
 
@@ -29,13 +29,13 @@ class BlockingInHttpExamplesSpec extends AnyWordSpec with CompileOnlySpec
         }
       }
     }
-    //#blocking-example-in-default-dispatcher
+    // #blocking-example-in-default-dispatcher
   }
 
   compileOnlySpec {
     val system: ActorSystem = ActorSystem()
 
-    //#blocking-example-in-dedicated-dispatcher
+    // #blocking-example-in-dedicated-dispatcher
     // GOOD (the blocking is now isolated onto a dedicated dispatcher):
     implicit val blockingDispatcher = system.dispatchers.lookup("my-blocking-dispatcher")
 
@@ -48,7 +48,7 @@ class BlockingInHttpExamplesSpec extends AnyWordSpec with CompileOnlySpec
         }
       }
     }
-    //#blocking-example-in-dedicated-dispatcher
+    // #blocking-example-in-dedicated-dispatcher
   }
 
 }

@@ -11,6 +11,7 @@ import RoutingJavaMapping._
 import akka.annotation.InternalApi
 
 object ExceptionHandler {
+
   /**
    * Creates a new builder DSL for creating an ExceptionHandler
    */
@@ -31,6 +32,7 @@ object ExceptionHandler {
  * </pre>
  */
 final class ExceptionHandler private (val asScala: server.ExceptionHandler) {
+
   /**
    * Creates a new [[ExceptionHandler]] which uses the given one as fallback for this one.
    */

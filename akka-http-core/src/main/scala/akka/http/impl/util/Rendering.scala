@@ -11,7 +11,7 @@ import java.util.Locale
 import akka.annotation.InternalApi
 
 import scala.annotation.tailrec
-import scala.collection.{ LinearSeq, immutable }
+import scala.collection.{ immutable, LinearSeq }
 import akka.parboiled2.{ CharPredicate, CharUtils }
 import akka.http.impl.model.parser.CharacterClasses
 import akka.http.scaladsl.model.HttpHeader
@@ -110,7 +110,8 @@ private[http] object Renderer {
   }
   implicit def renderableRenderer[T <: Renderable]: Renderer[T] = RenderableRenderer
 
-  def optionRenderer[D, T](defaultValue: D)(implicit sRenderer: Renderer[D], tRenderer: Renderer[T]): Renderer[Option[T]] =
+  def optionRenderer[D, T](defaultValue: D)(
+      implicit sRenderer: Renderer[D], tRenderer: Renderer[T]): Renderer[Option[T]] =
     new Renderer[Option[T]] {
       def render[R <: Rendering](r: R, value: Option[T]): r.type =
         if (value.isEmpty) sRenderer.render(r, defaultValue) else tRenderer.render(r, value.get)
@@ -120,7 +121,8 @@ private[http] object Renderer {
     genericSeqRenderer[Renderable, T](Rendering.`, `, Rendering.Empty)
   def seqRenderer[T: Renderer](separator: String = ", ", empty: String = ""): Renderer[immutable.Iterable[T]] =
     genericSeqRenderer[String, T](separator, empty)
-  def genericSeqRenderer[S, T](separator: S, empty: S)(implicit sRenderer: Renderer[S], tRenderer: Renderer[T]): Renderer[immutable.Iterable[T]] =
+  def genericSeqRenderer[S, T](separator: S, empty: S)(
+      implicit sRenderer: Renderer[S], tRenderer: Renderer[T]): Renderer[immutable.Iterable[T]] =
     new Renderer[immutable.Iterable[T]] {
       def render[R <: Rendering](r: R, value: immutable.Iterable[T]): r.type = {
         @tailrec def recI(values: IndexedSeq[T], ix: Int = 0): r.type =
@@ -183,18 +185,21 @@ private[http] trait Rendering {
 
   def ~~(string: String): this.type = {
     @tailrec def rec(ix: Int = 0): this.type =
-      if (ix < string.length) { this ~~ string.charAt(ix); rec(ix + 1) } else this
+      if (ix < string.length) { this ~~ string.charAt(ix); rec(ix + 1) }
+      else this
     rec()
   }
 
   def ~~(chars: Array[Char]): this.type = {
     @tailrec def rec(ix: Int = 0): this.type =
-      if (ix < chars.length) { this ~~ chars(ix); rec(ix + 1) } else this
+      if (ix < chars.length) { this ~~ chars(ix); rec(ix + 1) }
+      else this
     rec()
   }
 
   protected def mark: Int
   protected def check(mark: Int): Boolean
+
   /**
    * Renders a header safely, i.e. checking that it does not contain any CR of LF characters. If it does
    * the header should be discarded.
@@ -270,7 +275,8 @@ private[http] class StringRendering extends Rendering {
   def ~~(ch: Char): this.type = { sb.append(ch); this }
   def ~~(bytes: Array[Byte]): this.type = {
     @tailrec def rec(ix: Int = 0): this.type =
-      if (ix < bytes.length) { this ~~ bytes(ix).asInstanceOf[Char]; rec(ix + 1) } else this
+      if (ix < bytes.length) { this ~~ bytes(ix).asInstanceOf[Char]; rec(ix + 1) }
+      else this
     rec()
   }
   def ~~(bytes: ByteString): this.type = this ~~ bytes.toArray[Byte]
@@ -354,7 +360,8 @@ private[http] class ByteArrayRendering(sizeHint: Int, logDiscardedHeader: String
     @tailrec def rec(mark: Int): Boolean =
       if (mark < size) {
         if (array(mark) == '\r' || array(mark) == '\n') {
-          logDiscardedHeader("Invalid outgoing header was discarded. " + LogByteStringTools.printByteString(ByteString.fromArray(array, origMark, size - origMark)))
+          logDiscardedHeader("Invalid outgoing header was discarded. " + LogByteStringTools.printByteString(
+            ByteString.fromArray(array, origMark, size - origMark)))
           size = origMark
           false
         } else rec(mark + 1)
@@ -400,7 +407,8 @@ private[http] class ByteStringRendering(sizeHint: Int, logDiscardedHeader: Strin
       if (mark < builder.length) {
         val ch = contents(mark)
         if (ch == '\r' || ch == '\n') {
-          logDiscardedHeader("Invalid outgoing header was discarded. " + LogByteStringTools.printByteString(contents.drop(origMark)))
+          logDiscardedHeader(
+            "Invalid outgoing header was discarded. " + LogByteStringTools.printByteString(contents.drop(origMark)))
           builder.clear()
           builder.append(contents.take(origMark))
           false

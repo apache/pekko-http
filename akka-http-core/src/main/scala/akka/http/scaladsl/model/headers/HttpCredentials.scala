@@ -51,20 +51,21 @@ final case class OAuth2BearerToken(token: String) extends jm.headers.OAuth2Beare
 }
 
 final case class GenericHttpCredentials(scheme: String, token: String,
-                                        params: Map[String, String] = Map.empty) extends HttpCredentials {
+    params: Map[String, String] = Map.empty) extends HttpCredentials {
   def render[R <: Rendering](r: R): r.type = {
     r ~~ scheme
     if (!token.isEmpty) r ~~ ' ' ~~ token
     if (params.nonEmpty)
-      params foreach new (((String, String)) => Unit) {
+      params.foreach(new (((String, String)) => Unit) {
         var first = true
         def apply(kvp: (String, String)): Unit = {
           val (k, v) = kvp
-          if (first) { r ~~ ' '; first = false } else r ~~ ','
+          if (first) { r ~~ ' '; first = false }
+          else r ~~ ','
           if (!k.isEmpty) r ~~ k ~~ '='
           r ~~# v
         }
-      }
+      })
     r
   }
 }

@@ -12,45 +12,40 @@ class PriorityTreeSpec extends AnyWordSpec with Matchers {
   "PriorityTree" should {
     "contain only the root node if empty" in {
       PriorityTree() should printLike(
-        """0 [weight: 16]"""
-      )
+        """0 [weight: 16]""")
     }
 
     "insert a single non-exclusive node under the root node" in {
       PriorityTree()
         .insertOrUpdate(1, 0, 50, exclusive = false) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
             |  +-1 [weight: 50]
-            |""".stripMargin
-        )
+            |""".stripMargin)
     }
     "insert an exclusive node under the empty root node" in {
       PriorityTree()
         .insertOrUpdate(1, 0, 50, exclusive = true) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
             |  +-1 [weight: 50]
-            |""".stripMargin
-        )
+            |""".stripMargin)
     }
     "insert a node with an dependency" in {
       PriorityTree()
         .insertOrUpdate(1, 0, 50, exclusive = false)
         .insertOrUpdate(3, 1, 42, exclusive = false) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
             |  +-1 [weight: 50]
             |    +-3 [weight: 42]
-            |""".stripMargin
-        )
+            |""".stripMargin)
     }
     "insert an exclusive node under the root node with one existing sibling" in {
       PriorityTree()
         .insertOrUpdate(1, 0, 30, exclusive = false)
         .insertOrUpdate(3, 0, 50, exclusive = true) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
             |  +-3 [weight: 50]
             |    +-1 [weight: 30]
-            |""".stripMargin
-        )
+            |""".stripMargin)
     }
 
     "update the priority of a node" in {
@@ -58,33 +53,30 @@ class PriorityTreeSpec extends AnyWordSpec with Matchers {
         .insertOrUpdate(1, 0, 50, exclusive = false)
         .insertOrUpdate(3, 0, 25, exclusive = false)
         .insertOrUpdate(1, 0, 133, exclusive = false) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
             |  +-1 [weight: 133]
             |  +-3 [weight: 25]
-            |""".stripMargin
-        )
+            |""".stripMargin)
     }
     "update a node setting exclusivity for a node" in {
       PriorityTree()
         .insertOrUpdate(1, 0, 50, exclusive = false)
         .insertOrUpdate(3, 0, 25, exclusive = false)
         .insertOrUpdate(1, 0, 133, exclusive = true) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
           |  +-1 [weight: 133]
           |    +-3 [weight: 25]
-          |""".stripMargin
-        )
+          |""".stripMargin)
     }
     "update the dependency of a non-exclusive node" in {
       PriorityTree()
         .insertOrUpdate(1, 0, 50, exclusive = false)
         .insertOrUpdate(3, 0, 25, exclusive = false)
         .insertOrUpdate(1, 3, 133, exclusive = false) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
           |  +-3 [weight: 25]
           |    +-1 [weight: 133]
-          |""".stripMargin
-        )
+          |""".stripMargin)
     }
     "update the dependency of a non-exclusive node that had siblings" in {
       val origin =
@@ -98,18 +90,16 @@ class PriorityTreeSpec extends AnyWordSpec with Matchers {
           |  +-1 [weight: 50]
           |  +-3 [weight: 25]
           |  +-5 [weight: 100]
-        """.stripMargin
-      )
+        """.stripMargin)
 
       origin
         .insertOrUpdate(1, 3, 133, exclusive = false) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
             |  +-3 [weight: 25]
             |  | +-1 [weight: 133]
             |  |
             |  +-5 [weight: 100]
-            |""".stripMargin
-        )
+            |""".stripMargin)
     }
     "update the dependency of an exclusive node" in {
       val origin =
@@ -121,16 +111,14 @@ class PriorityTreeSpec extends AnyWordSpec with Matchers {
         """0 [weight: 16]
           |  +-1 [weight: 50]
           |    +-3 [weight: 25]
-        """.stripMargin
-      )
+        """.stripMargin)
 
       origin // now moving up to be exclusive children of 0
         .insertOrUpdate(3, 0, 133, exclusive = true) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
             |  +-3 [weight: 133]
             |    +-1 [weight: 50]
-            |""".stripMargin
-        )
+            |""".stripMargin)
     }
     "update the dependency of a node with children non-exclusively" in {
       val origin =
@@ -145,17 +133,15 @@ class PriorityTreeSpec extends AnyWordSpec with Matchers {
           |  | +-3 [weight: 25]
           |  |
           |  +-5 [weight: 100]
-        """.stripMargin
-      )
+        """.stripMargin)
 
       origin
         .insertOrUpdate(1, 5, 23, exclusive = false) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
             |  +-5 [weight: 100]
             |    +-1 [weight: 23]
             |      +-3 [weight: 25]
-            |""".stripMargin
-        )
+            |""".stripMargin)
     }
     "update the dependency of a node with children exclusively" in {
       val origin =
@@ -172,18 +158,16 @@ class PriorityTreeSpec extends AnyWordSpec with Matchers {
           |  |
           |  +-5 [weight: 100]
           |    +-7 [weight: 42]
-        """.stripMargin
-      )
+        """.stripMargin)
 
       origin
         .insertOrUpdate(1, 5, 23, exclusive = true) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
             |  +-5 [weight: 100]
             |    +-1 [weight: 23]
             |      +-3 [weight: 25]
             |      +-7 [weight: 42]
-            |""".stripMargin
-        )
+            |""".stripMargin)
     }
     "update the dependency to a former children" in {
       pending // a bit tricky
@@ -201,19 +185,17 @@ class PriorityTreeSpec extends AnyWordSpec with Matchers {
           |  | +-7 [weight: 33]
           |  |
           |  +-5 [weight: 100]
-        """.stripMargin
-      )
+        """.stripMargin)
 
       origin
         .insertOrUpdate(1, 3, 23, exclusive = false) should printLike(
-          """0 [weight: 16]
+        """0 [weight: 16]
             |  +-3 [weight: 133]
             |  | +-1 [weight: 50]
             |  |   +-7 [weight: 33]
             |  |
             |  +-5 [weight: 100]
-            |""".stripMargin
-        )
+            |""".stripMargin)
     }
 
     "spec example 5.3.1" in pending
@@ -243,7 +225,6 @@ class PriorityTreeSpec extends AnyWordSpec with Matchers {
       MatchResult(
         candidate === expected,
         s"Does not render as\n$expected\nbut as\n$candidate",
-        "XXX"
-      )
+        "XXX")
     }
 }

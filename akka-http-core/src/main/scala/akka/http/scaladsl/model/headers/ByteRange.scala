@@ -10,12 +10,16 @@ import akka.http.impl.util.{ Rendering, ValueRenderable }
 import akka.http.javadsl.{ model => jm }
 
 sealed abstract class ByteRange extends jm.headers.ByteRange with ValueRenderable {
+
   /** Java API */
   def getSliceFirst: OptionalLong = OptionalLong.empty
+
   /** Java API */
   def getSliceLast: OptionalLong = OptionalLong.empty
+
   /** Java API */
   def getOffset: OptionalLong = OptionalLong.empty
+
   /** Java API */
   def getSuffixLength: OptionalLong = OptionalLong.empty
 
@@ -40,8 +44,10 @@ object ByteRange {
 
     /** Java API */
     override def isSlice: Boolean = true
+
     /** Java API */
     override def getSliceFirst: OptionalLong = OptionalLong.of(first)
+
     /** Java API */
     override def getSliceLast: OptionalLong = OptionalLong.of(last)
   }
@@ -52,6 +58,7 @@ object ByteRange {
 
     /** Java API */
     override def isFromOffset: Boolean = true
+
     /** Java API */
     override def getOffset: OptionalLong = OptionalLong.of(offset)
   }
@@ -62,6 +69,7 @@ object ByteRange {
 
     /** Java API */
     override def isSuffix: Boolean = true
+
     /** Java API */
     override def getSuffixLength: OptionalLong = OptionalLong.of(length)
   }

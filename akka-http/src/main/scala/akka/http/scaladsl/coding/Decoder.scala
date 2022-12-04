@@ -19,10 +19,10 @@ trait Decoder {
   def encoding: HttpEncoding
 
   def decodeMessage(message: HttpMessage): message.Self =
-    if (message.headers exists Encoder.isContentEncodingHeader)
+    if (message.headers.exists(Encoder.isContentEncodingHeader))
       message
         .transformEntityDataBytes(decoderFlow)
-        .withHeaders(message.headers filterNot Encoder.isContentEncodingHeader)
+        .withHeaders(message.headers.filterNot(Encoder.isContentEncodingHeader))
     else message.self
 
   def decodeData[T](t: T)(implicit mapper: DataMapper[T]): T = mapper.transformDataBytes(t, decoderFlow)

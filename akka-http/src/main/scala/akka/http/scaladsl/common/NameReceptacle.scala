@@ -4,16 +4,18 @@
 
 package akka.http.scaladsl.common
 
-import akka.http.scaladsl.unmarshalling.{ Unmarshaller, FromStringUnmarshaller => FSU }
+import akka.http.scaladsl.unmarshalling.{ FromStringUnmarshaller => FSU, Unmarshaller }
 
 private[http] trait ToNameReceptacleEnhancements {
   implicit def _symbol2NR(symbol: Symbol): NameReceptacle[String] = new NameReceptacle[String](symbol.name)
-  @annotation.implicitAmbiguous("Akka HTTP's `*` decorator conflicts with Scala's String.`*` method. Use `.repeated` instead.")
+  @annotation.implicitAmbiguous(
+    "Akka HTTP's `*` decorator conflicts with Scala's String.`*` method. Use `.repeated` instead.")
   implicit def _string2NR(string: String): NameReceptacle[String] = new NameReceptacle[String](string)
 }
 object ToNameReceptacleEnhancements extends ToNameReceptacleEnhancements
 
 class NameReceptacle[T](val name: String) {
+
   /**
    * Extract the value as the specified type.
    * You need a matching [[akka.http.scaladsl.unmarshalling.Unmarshaller]] in scope for that to work.
@@ -24,7 +26,8 @@ class NameReceptacle[T](val name: String) {
    * Extract the value as the specified type with the given [[akka.http.scaladsl.unmarshalling.Unmarshaller]].
    */
   def as[B](unmarshaller: Unmarshaller[T, B])(implicit fsu: FSU[T]) =
-    new NameUnmarshallerReceptacle(name, fsu.transform[B](implicit ec => implicit mat => { _ flatMap unmarshaller.apply }))
+    new NameUnmarshallerReceptacle(name,
+      fsu.transform[B](implicit ec => implicit mat => { _.flatMap(unmarshaller.apply) }))
 
   /**
    * Extract the optional value as `Option[String]`.
@@ -74,12 +77,14 @@ class NameReceptacle[T](val name: String) {
 }
 
 class NameUnmarshallerReceptacle[T](val name: String, val um: FSU[T]) {
+
   /**
    * Extract the value as the specified type.
    * You need a matching [[akka.http.scaladsl.unmarshalling.Unmarshaller]] in scope for that to work.
    */
   def as[B](implicit unmarshaller: Unmarshaller[T, B]) =
-    new NameUnmarshallerReceptacle(name, um.transform[B](implicit ec => implicit mat => { _ flatMap unmarshaller.apply }))
+    new NameUnmarshallerReceptacle(name,
+      um.transform[B](implicit ec => implicit mat => { _.flatMap(unmarshaller.apply) }))
 
   /**
    * Extract the optional value as `Option[T]`.

@@ -13,7 +13,8 @@ package akka.http
 object HashCodeCollider {
   val visibleChars = (33 until 127).filterNot(c => c == '\\' || c == '"')
   def asciiChars: Iterator[Int] = visibleChars.toIterator
-  def asciiCharsAndHash(previousHash: Int): Iterator[(Int, Int)] = visibleChars.toIterator.map(c => c -> (previousHash + c) * 31)
+  def asciiCharsAndHash(previousHash: Int): Iterator[(Int, Int)] =
+    visibleChars.toIterator.map(c => c -> (previousHash + c) * 31)
 
   /** Creates an iterator of Strings that all have hashCode == 0 */
   def zeroHashCodeIterator(): Iterator[String] =

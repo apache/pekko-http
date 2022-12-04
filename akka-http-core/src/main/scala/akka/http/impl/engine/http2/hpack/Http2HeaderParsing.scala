@@ -61,8 +61,8 @@ private[akka] object Http2HeaderParsing {
 
   val Parsers: Map[String, HeaderParser[AnyRef]] =
     Seq(
-      Method, Scheme, Authority, PathAndQuery, ContentType, Status, ContentLength, Cookie
-    ).map(p => p.headerName -> p).toMap
+      Method, Scheme, Authority, PathAndQuery, ContentType, Status, ContentLength, Cookie).map(p =>
+      p.headerName -> p).toMap
 
   def parse(name: String, value: String, parserSettings: ParserSettings): (String, AnyRef) = {
     name -> Parsers.getOrElse(name, Modeled).parse(name, value, parserSettings)

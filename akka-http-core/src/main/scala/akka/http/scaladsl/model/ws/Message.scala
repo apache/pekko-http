@@ -6,7 +6,7 @@ package akka.http.scaladsl.model.ws
 
 import java.util.concurrent.CompletionStage
 
-import akka.stream.{ Materializer, javadsl }
+import akka.stream.{ javadsl, Materializer }
 import akka.stream.scaladsl.Source
 import akka.util.{ ByteString, ByteStringBuilder }
 
@@ -26,6 +26,7 @@ sealed trait Message extends akka.http.javadsl.model.ws.Message
  * will return a Source streaming the data as it comes in.
  */
 sealed trait TextMessage extends akka.http.javadsl.model.ws.TextMessage with Message {
+
   /**
    * The contents of this message as a stream.
    */
@@ -39,16 +40,17 @@ sealed trait TextMessage extends akka.http.javadsl.model.ws.TextMessage with Mes
     this match {
       case TextMessage.Strict(text) => Future.successful(TextMessage.Strict(text))
       case TextMessage.Streamed(textStream) => textStream
-        .completionTimeout(timeout)
-        .runFold(new StringBuilder())((b, s) => b.append(s))
-        .map(b => b.toString)(fm.executionContext)
-        .map(text => TextMessage.Strict(text))(fm.executionContext)
+          .completionTimeout(timeout)
+          .runFold(new StringBuilder())((b, s) => b.append(s))
+          .map(b => b.toString)(fm.executionContext)
+          .map(text => TextMessage.Strict(text))(fm.executionContext)
     }
 
   /** Java API */
   override def getStreamedText: javadsl.Source[String, _] = textStream.asJava
   override def asScala: TextMessage = this
-  override def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[TextMessage.Strict] = toStrict(timeoutMillis.millis)(materializer).toJava
+  override def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[TextMessage.Strict] =
+    toStrict(timeoutMillis.millis)(materializer).toJava
 }
 //#message-model
 object TextMessage {
@@ -84,6 +86,7 @@ object TextMessage {
  */
 //#message-model
 sealed trait BinaryMessage extends akka.http.javadsl.model.ws.BinaryMessage with Message {
+
   /**
    * The contents of this message as a stream.
    */
@@ -97,16 +100,17 @@ sealed trait BinaryMessage extends akka.http.javadsl.model.ws.BinaryMessage with
     this match {
       case BinaryMessage.Strict(binary) => Future.successful(BinaryMessage.Strict(binary))
       case BinaryMessage.Streamed(binaryStream) => binaryStream
-        .completionTimeout(timeout)
-        .runFold(new ByteStringBuilder())((b, e) => b.append(e))
-        .map(b => b.result())(fm.executionContext)
-        .map(binary => BinaryMessage.Strict(binary))(fm.executionContext)
+          .completionTimeout(timeout)
+          .runFold(new ByteStringBuilder())((b, e) => b.append(e))
+          .map(b => b.result())(fm.executionContext)
+          .map(binary => BinaryMessage.Strict(binary))(fm.executionContext)
     }
 
   /** Java API */
   override def getStreamedData: javadsl.Source[ByteString, _] = dataStream.asJava
   override def asScala: BinaryMessage = this
-  override def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[BinaryMessage.Strict] = toStrict(timeoutMillis.millis)(materializer).toJava
+  override def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[BinaryMessage.Strict] =
+    toStrict(timeoutMillis.millis)(materializer).toJava
 }
 //#message-model
 object BinaryMessage {
@@ -129,7 +133,8 @@ object BinaryMessage {
     override def toString: String = s"BinaryMessage.Streamed($dataStream)"
 
     /** Java API */
-    override def getStrictData: ByteString = throw new IllegalStateException("Cannot get strict data for streamed message.")
+    override def getStrictData: ByteString =
+      throw new IllegalStateException("Cannot get strict data for streamed message.")
     override def isStrict: Boolean = false
   }
 }

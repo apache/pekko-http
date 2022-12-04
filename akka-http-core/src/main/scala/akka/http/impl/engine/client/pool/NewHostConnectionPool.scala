@@ -16,7 +16,7 @@ import akka.http.impl.engine.client.PoolFlow.{ RequestContext, ResponseContext }
 import akka.http.impl.engine.client.pool.SlotState._
 import akka.http.impl.util.{ RichHttpRequest, StageLoggingWithOverride, StreamUtils }
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ HttpEntity, HttpRequest, HttpResponse, headers }
+import akka.http.scaladsl.model.{ headers, HttpEntity, HttpRequest, HttpResponse }
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.stream._
 import akka.stream.scaladsl.{ Flow, Keep, Sink, Source }
@@ -49,14 +49,14 @@ import scala.util.{ Failure, Random, Success, Try }
 @InternalApi
 private[client] object NewHostConnectionPool {
   def apply(
-    connectionFlow: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]],
-    settings:       ConnectionPoolSettings, log: LoggingAdapter): Flow[RequestContext, ResponseContext, NotUsed] =
+      connectionFlow: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]],
+      settings: ConnectionPoolSettings, log: LoggingAdapter): Flow[RequestContext, ResponseContext, NotUsed] =
     Flow.fromGraph(new HostConnectionPoolStage(connectionFlow, settings, log))
 
   private final class HostConnectionPoolStage(
-    connectionFlow: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]],
-    _settings:      ConnectionPoolSettings, _log: LoggingAdapter
-  ) extends GraphStage[FlowShape[RequestContext, ResponseContext]] {
+      connectionFlow: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]],
+      _settings: ConnectionPoolSettings, _log: LoggingAdapter)
+      extends GraphStage[FlowShape[RequestContext, ResponseContext]] {
     val requestsIn = Inlet[RequestContext]("HostConnectionPoolStage.requestsIn")
     val responsesOut = Outlet[ResponseContext]("HostConnectionPoolStage.responsesOut")
 
@@ -151,7 +151,8 @@ private[client] object NewHostConnectionPool {
             // don't increase if the embargo level has already changed since the start of the connection attempt
           }
           if (_connectionEmbargo != oldValue) {
-            log.debug(s"Connection attempt failed. Backing off new connection attempts for at least ${_connectionEmbargo}.")
+            log.debug(
+              s"Connection attempt failed. Backing off new connection attempts for at least ${_connectionEmbargo}.")
             slots.foreach(_.onNewConnectionEmbargo(_connectionEmbargo))
           }
         }
@@ -164,8 +165,10 @@ private[client] object NewHostConnectionPool {
         }
         object Event {
           val onPreConnect = event0("onPreConnect", _.onPreConnect(_))
-          val onConnectionAttemptSucceeded = event[Http.OutgoingConnection]("onConnectionAttemptSucceeded", _.onConnectionAttemptSucceeded(_, _))
-          val onConnectionAttemptFailed = event[Throwable]("onConnectionAttemptFailed", _.onConnectionAttemptFailed(_, _))
+          val onConnectionAttemptSucceeded =
+            event[Http.OutgoingConnection]("onConnectionAttemptSucceeded", _.onConnectionAttemptSucceeded(_, _))
+          val onConnectionAttemptFailed =
+            event[Throwable]("onConnectionAttemptFailed", _.onConnectionAttemptFailed(_, _))
 
           val onNewConnectionEmbargo = event[FiniteDuration]("onNewConnectionEmbargo", _.onNewConnectionEmbargo(_, _))
 
@@ -186,8 +189,10 @@ private[client] object NewHostConnectionPool {
 
           val onTimeout = event0("onTimeout", _.onTimeout(_))
 
-          private def event0(name: String, transition: (SlotState, Slot) => SlotState): Event[Unit] = new Event(name, (state, slot, _) => transition(state, slot))
-          private def event[T](name: String, transition: (SlotState, Slot, T) => SlotState): Event[T] = new Event[T](name, transition)
+          private def event0(name: String, transition: (SlotState, Slot) => SlotState): Event[Unit] =
+            new Event(name, (state, slot, _) => transition(state, slot))
+          private def event[T](name: String, transition: (SlotState, Slot, T) => SlotState): Event[T] =
+            new Event[T](name, transition)
         }
 
         protected trait StateHandling {
@@ -283,12 +288,13 @@ private[client] object NewHostConnectionPool {
                     val myTimeoutId = createNewTimeoutId()
                     currentTimeoutId = myTimeoutId
                     currentTimeout =
-                      materializer.scheduleOnce(d, safeRunnable {
-                        if (myTimeoutId == currentTimeoutId) { // timeout may race with state changes, ignore if timeout isn't current any more
-                          debug(s"Slot timeout after $d")
-                          updateState(Event.onTimeout)
-                        }
-                      })
+                      materializer.scheduleOnce(d,
+                        safeRunnable {
+                          if (myTimeoutId == currentTimeoutId) { // timeout may race with state changes, ignore if timeout isn't current any more
+                            debug(s"Slot timeout after $d")
+                            updateState(Event.onTimeout)
+                          }
+                        })
                   case _ => // no timeout set, nothing to do
                 }
 
@@ -329,7 +335,8 @@ private[client] object NewHostConnectionPool {
                   case Unconnected if currentEmbargo != Duration.Zero =>
                     OptionVal.Some(Event.onNewConnectionEmbargo.preApply(currentEmbargo))
                   // numConnectedSlots might be slow for big numbers of connections, so avoid calling if minConnections feature is disabled
-                  case s if !s.isConnected && s.isIdle && settings.minConnections > 0 && numConnectedSlots < settings.minConnections =>
+                  case s
+                      if !s.isConnected && s.isIdle && settings.minConnections > 0 && numConnectedSlots < settings.minConnections =>
                     debug(s"Preconnecting because number of connected slots fell down to $numConnectedSlots")
                     OptionVal.Some(Event.onPreConnect)
                   case _ => OptionVal.None
@@ -368,7 +375,7 @@ private[client] object NewHostConnectionPool {
               else
                 throw new IllegalStateException(
                   "State transition loop exceeded maximum number of loops. The pool will shutdown itself. " +
-                    "That's probably a bug. Please file a bug at https://github.com/akka/akka-http/issues. ")
+                  "That's probably a bug. Please file a bug at https://github.com/akka/akka-http/issues. ")
 
             loop(event, arg, 10)
           }
@@ -388,11 +395,13 @@ private[client] object NewHostConnectionPool {
             () => random.nextLong() % max
           }
           def openConnection(): Unit = {
-            if (connection ne null) throw new IllegalStateException("Cannot open connection when slot still has an open connection")
+            if (connection ne null)
+              throw new IllegalStateException("Cannot open connection when slot still has an open connection")
 
             connection = logic.openConnection(this)
             if (settings.maxConnectionLifetime.isFinite) {
-              disconnectAt = Instant.now().toEpochMilli + settings.maxConnectionLifetime.toMillis + keepAliveDurationFuzziness()
+              disconnectAt =
+                Instant.now().toEpochMilli + settings.maxConnectionLifetime.toMillis + keepAliveDurationFuzziness()
             }
           }
 
@@ -404,7 +413,8 @@ private[client] object NewHostConnectionPool {
           def isCurrentConnection(conn: SlotConnection): Boolean = connection eq conn
           def isConnectionClosed: Boolean = (connection eq null) || connection.isClosed
 
-          def dispatchResponseResult(req: RequestContext, result: Try[HttpResponse]): Unit = logic.dispatchResponseResult(req, result)
+          def dispatchResponseResult(req: RequestContext, result: Try[HttpResponse]): Unit =
+            logic.dispatchResponseResult(req, result)
 
           def willCloseAfter(res: HttpResponse): Boolean = {
             logic.willClose(res) || keepAliveTimeApplies()
@@ -429,10 +439,9 @@ private[client] object NewHostConnectionPool {
           }
 
         final class SlotConnection(
-          _slot:      Slot,
-          requestOut: SubSourceOutlet[HttpRequest],
-          responseIn: SubSinkInlet[HttpResponse]
-        ) extends InHandler with OutHandler { connection =>
+            _slot: Slot,
+            requestOut: SubSourceOutlet[HttpRequest],
+            responseIn: SubSinkInlet[HttpResponse]) extends InHandler with OutHandler { connection =>
           var ongoingResponseEntity: Option[HttpEntity] = None
           var ongoingResponseEntityKillSwitch: Option[KillSwitch] = None
           var connectionEstablished: Boolean = false
@@ -471,7 +480,8 @@ private[client] object NewHostConnectionPool {
 
             responseIn.cancel()
 
-            val exception = failure.getOrElse(new IllegalStateException("Connection was closed while response was still in-flight"))
+            val exception =
+              failure.getOrElse(new IllegalStateException("Connection was closed while response was still in-flight"))
             ongoingResponseEntity.foreach(_.dataBytes.runWith(Sink.cancelled)(subFusingMaterializer))
             ongoingResponseEntityKillSwitch.foreach(_.abort(exception))
           }
@@ -525,8 +535,8 @@ private[client] object NewHostConnectionPool {
                 slot.debug("Connection failed")
                 slot.onConnectionFailed(ex)
               }
-              // otherwise, rely on connection.onComplete to fail below
-              // (connection error is sent through matValue future and through the stream)
+            // otherwise, rely on connection.onComplete to fail below
+            // (connection error is sent through matValue future and through the stream)
             }
 
           def onPull(): Unit = () // emitRequests makes sure not to push too early
@@ -537,7 +547,8 @@ private[client] object NewHostConnectionPool {
               // Let's use StreamTcpException for now.
               // FIXME: after moving to Akka 2.6.x only, we can use cancelation cause propagation which would probably also report
               // a StreamTcpException here
-              slot.onConnectionFailed(new StreamTcpException("Connection was cancelled (caused by a failure of the underlying HTTP connection)"))
+              slot.onConnectionFailed(new StreamTcpException(
+                "Connection was cancelled (caused by a failure of the underlying HTTP connection)"))
               responseIn.cancel()
             }
 

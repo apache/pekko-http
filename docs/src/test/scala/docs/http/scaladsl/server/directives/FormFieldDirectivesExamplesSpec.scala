@@ -11,7 +11,7 @@ import docs.CompileOnlySpec
 
 class FormFieldDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "formFields" in {
-    //#formFields
+    // #formFields
     val route =
       formFields("color", "age".as[Int], "direction" ! "up") { (color, age, _) =>
         complete(s"The color is '$color' and the age ten years ago was ${age - 10}")
@@ -26,10 +26,10 @@ class FormFieldDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.BadRequest
       responseAs[String] shouldEqual "Request is missing required form field 'color'"
     }
-    //#formFields
+    // #formFields
   }
   "formField" in {
-    //#formField
+    // #formField
     val route =
       concat(
         formField("color") { color =>
@@ -37,8 +37,7 @@ class FormFieldDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
         },
         formField("id".as[Int]) { id =>
           complete(s"The id is '$id'")
-        }
-      )
+        })
 
     // tests:
     Post("/", FormData("color" -> "blue")) ~> route ~> check {
@@ -49,10 +48,10 @@ class FormFieldDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.BadRequest
       responseAs[String] shouldEqual "Request is missing required form field 'color'"
     }
-    //#formField
+    // #formField
   }
   "formFieldMap" in {
-    //#formFieldMap
+    // #formFieldMap
     val route =
       formFieldMap { fields =>
         def formFieldString(formField: (String, String)): String =
@@ -67,10 +66,10 @@ class FormFieldDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Post("/", FormData("x" -> "1", "x" -> "5")) ~> route ~> check {
       responseAs[String] shouldEqual "The form fields are x = '5'"
     }
-    //#formFieldMap
+    // #formFieldMap
   }
   "formFieldMultiMap" in {
-    //#formFieldMultiMap
+    // #formFieldMultiMap
     val route =
       formFieldMultiMap { fields =>
         complete("There are " +
@@ -84,10 +83,10 @@ class FormFieldDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Post("/", FormData("x" -> "23", "x" -> "4", "x" -> "89")) ~> route ~> check {
       responseAs[String] shouldEqual "There are form fields x -> 3"
     }
-    //#formFieldMultiMap
+    // #formFieldMultiMap
   }
   "formFieldSeq" in {
-    //#formFieldSeq
+    // #formFieldSeq
     val route =
       formFieldSeq { fields =>
         def formFieldString(formField: (String, String)): String =
@@ -102,7 +101,7 @@ class FormFieldDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Post("/", FormData("x" -> "23", "x" -> "4", "x" -> "89")) ~> route ~> check {
       responseAs[String] shouldEqual "The form fields are x = '23', x = '4', x = '89'"
     }
-    //#formFieldSeq
+    // #formFieldSeq
   }
 
 }

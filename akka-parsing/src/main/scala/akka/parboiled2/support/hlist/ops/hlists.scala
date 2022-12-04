@@ -60,7 +60,8 @@ object hlist {
           def apply(acc: Out, l: HNil): Out = acc
         }
 
-      implicit def hlistReverse[Acc <: HList, InH, InT <: HList, Out <: HList](implicit rt: Reverse0[InH :: Acc, InT, Out]): Reverse0[Acc, InH :: InT, Out] =
+      implicit def hlistReverse[Acc <: HList, InH, InT <: HList, Out <: HList](
+          implicit rt: Reverse0[InH :: Acc, InT, Out]): Reverse0[Acc, InH :: InT, Out] =
         new Reverse0[Acc, InH :: InT, Out] {
           def apply(acc: Acc, l: InH :: InT): Out = rt(l.head :: acc, l.tail)
         }
@@ -79,7 +80,8 @@ object hlist {
   trait LowestPriorityPrepend {
     type Aux[P <: HList, S <: HList, Out0 <: HList] = Prepend[P, S] { type Out = Out0 }
 
-    implicit def hlistPrepend[PH, PT <: HList, S <: HList, PtOut <: HList](implicit pt: Prepend.Aux[PT, S, PtOut]): Prepend.Aux[PH :: PT, S, PH :: PtOut] =
+    implicit def hlistPrepend[PH, PT <: HList, S <: HList, PtOut <: HList](
+        implicit pt: Prepend.Aux[PT, S, PtOut]): Prepend.Aux[PH :: PT, S, PH :: PtOut] =
       new Prepend[PH :: PT, S] {
         type Out = PH :: PtOut
         def apply(prefix: PH :: PT, suffix: S): Out = prefix.head :: pt(prefix.tail, suffix)
@@ -132,7 +134,8 @@ object hlist {
         def apply(prefix: P, suffix: S) = suffix
       }
 
-    implicit def hlistReversePrepend[PH, PT <: HList, S <: HList](implicit rpt: ReversePrepend[PT, PH :: S]): Aux[PH :: PT, S, rpt.Out] =
+    implicit def hlistReversePrepend[PH, PT <: HList, S <: HList](
+        implicit rpt: ReversePrepend[PT, PH :: S]): Aux[PH :: PT, S, rpt.Out] =
       new ReversePrepend[PH :: PT, S] {
         type Out = rpt.Out
         def apply(prefix: PH :: PT, suffix: S): Out = rpt(prefix.tail, prefix.head :: suffix)

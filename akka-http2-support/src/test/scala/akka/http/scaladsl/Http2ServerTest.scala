@@ -47,9 +47,11 @@ object Http2ServerTest extends App {
     case HttpRequest(GET, Uri.Path("/ping"), _, _, _)       => HttpResponse(entity = "PONG!")
     case HttpRequest(GET, Uri.Path("/image-page"), _, _, _) => imagePage
     case HttpRequest(GET, Uri(_, _, p, _, _), _, _, _) if p.toString.startsWith("/image1") =>
-      HttpResponse(entity = HttpEntity(MediaTypes.`image/jpeg`, FileIO.fromPath(Paths.get("bigimage.jpg"), 100000).mapAsync(1)(slowDown(1))))
+      HttpResponse(entity = HttpEntity(MediaTypes.`image/jpeg`,
+        FileIO.fromPath(Paths.get("bigimage.jpg"), 100000).mapAsync(1)(slowDown(1))))
     case HttpRequest(GET, Uri(_, _, p, _, _), _, _, _) if p.toString.startsWith("/image2") =>
-      HttpResponse(entity = HttpEntity(MediaTypes.`image/jpeg`, FileIO.fromPath(Paths.get("bigimage2.jpg"), 150000).mapAsync(1)(slowDown(2))))
+      HttpResponse(entity = HttpEntity(MediaTypes.`image/jpeg`,
+        FileIO.fromPath(Paths.get("bigimage2.jpg"), 150000).mapAsync(1)(slowDown(2))))
     case HttpRequest(GET, Uri.Path("/crash"), _, _, _) => sys.error("BOOM!")
     case _: HttpRequest                                => HttpResponse(404, entity = "Unknown resource!")
   }
@@ -60,7 +62,8 @@ object Http2ServerTest extends App {
         .flatMap { formData =>
           formData.parts.runFoldAsync("") { (msg, part) =>
             part.entity.dataBytes.runFold(0)(_ + _.size)
-              .map(dataSize => msg + s"${part.name} ${part.filename} $dataSize ${part.entity.contentType} ${part.additionalDispositionParams}\n")
+              .map(dataSize =>
+                msg + s"${part.name} ${part.filename} $dataSize ${part.entity.contentType} ${part.additionalDispositionParams}\n")
           }
         }
         .map { msg =>
@@ -72,7 +75,8 @@ object Http2ServerTest extends App {
   try {
     val bindings =
       for {
-        httpsBinding <- Http().newServerAt(interface = "localhost", port = 9000).enableHttps(ExampleHttpContexts.exampleServerContext).bind(asyncHandler)
+        httpsBinding <- Http().newServerAt(interface = "localhost", port = 9000).enableHttps(
+          ExampleHttpContexts.exampleServerContext).bind(asyncHandler)
         plainBinding <- Http().newServerAt(interface = "localhost", port = 9002).bind(asyncHandler)
       } yield (httpsBinding, plainBinding)
 

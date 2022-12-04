@@ -177,9 +177,9 @@ class Base64(alphabet: String) {
     val sepCnt =
       if (sLen > 76)
         (if (sArr(76) == '\r')
-          cCnt / 78
-        else
-          0) << 1
+           cCnt / 78
+         else
+           0) << 1
       else
         0
 
@@ -277,9 +277,9 @@ class Base64(alphabet: String) {
 
     // Length of returned array
     val dLen = cCnt + (if (lineSep == true)
-      (cCnt - 1) / 76 << 1
-    else
-      0)
+                         (cCnt - 1) / 76 << 1
+                       else
+                         0)
 
     val dArr = Array.ofDim[Char](dLen)
 
@@ -289,21 +289,21 @@ class Base64(alphabet: String) {
     var cc = 0
     while (s < eLen) {
       // Copy next three bytes into lower 24 bits of int, paying attension to sign.
-      var i = (sArr(s) & 0xff) << 16
+      var i = (sArr(s) & 0xFF) << 16
       s += 1
-      i = i | ((sArr(s) & 0xff) << 8)
+      i = i | ((sArr(s) & 0xFF) << 8)
       s += 1
-      i = i | (sArr(s) & 0xff)
+      i = i | (sArr(s) & 0xFF)
       s += 1
 
       // Encode the int into four chars
-      dArr(d) = CA((i >>> 18) & 0x3f)
+      dArr(d) = CA((i >>> 18) & 0x3F)
       d += 1
-      dArr(d) = CA((i >>> 12) & 0x3f)
+      dArr(d) = CA((i >>> 12) & 0x3F)
       d += 1
-      dArr(d) = CA((i >>> 6) & 0x3f)
+      dArr(d) = CA((i >>> 6) & 0x3F)
       d += 1
-      dArr(d) = CA(i & 0x3f)
+      dArr(d) = CA(i & 0x3F)
       d += 1
 
       // Add optional line separator
@@ -321,17 +321,17 @@ class Base64(alphabet: String) {
     val left = sLen - eLen; // 0 - 2.
     if (left > 0) {
       // Prepare the int
-      val i = ((sArr(eLen) & 0xff) << 10) | (if (left == 2)
-        (sArr(sLen - 1) & 0xff) << 2
-      else
-        0)
+      val i = ((sArr(eLen) & 0xFF) << 10) | (if (left == 2)
+                                               (sArr(sLen - 1) & 0xFF) << 2
+                                             else
+                                               0)
 
       // Set last four chars
       dArr(dLen - 4) = CA(i >> 12)
-      dArr(dLen - 3) = CA((i >>> 6) & 0x3f)
+      dArr(dLen - 3) = CA((i >>> 6) & 0x3F)
       dArr(dLen - 2) =
         if (left == 2)
-          CA(i & 0x3f)
+          CA(i & 0x3F)
         else
           fillChar
       dArr(dLen - 1) = fillChar
