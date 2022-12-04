@@ -1,18 +1,18 @@
 # Compared with Play routes
 
-If you have been using @scala[[Play's routes file syntax](https://www.playframework.com/documentation/2.8.x/ScalaRouting#The-routes-file-syntax)]@java[[Play's routes file syntax](https://www.playframework.com/documentation/2.8.x/JavaRouting#The-routes-file-syntax)] earlier, this page may help you to use the Akka HTTP routing DSL.
+If you have been using @scala[[Play's routes file syntax](https://www.playframework.com/documentation/2.8.x/ScalaRouting#The-routes-file-syntax)]@java[[Play's routes file syntax](https://www.playframework.com/documentation/2.8.x/JavaRouting#The-routes-file-syntax)] earlier, this page may help you to use the Apache Pekko HTTP routing DSL.
 
 ## Conceptual differences
 
-The most apparent difference is Play's use of special purpose syntax implemented as an [external DSL](https://en.wikipedia.org/wiki/Domain-specific_language#External_and_Embedded_Domain_Specific_Languages), whereas Akka HTTP routes are described in @scala[Scala source code]@java[Java source code] with regular methods and values (as "embedded DSL"). Both are crafted to make the reader "grasp the code's intention".
+The most apparent difference is Play's use of special purpose syntax implemented as an [external DSL](https://en.wikipedia.org/wiki/Domain-specific_language#External_and_Embedded_Domain_Specific_Languages), whereas Apache Pekko HTTP routes are described in @scala[Scala source code]@java[Java source code] with regular methods and values (as "embedded DSL"). Both are crafted to make the reader "grasp the code's intention".
 
-The Akka HTTP DSL uses @ref[Directives](directives/index.md) to describe how incoming requests translate to functionality in the server. Play allows splitting the routes definitions in multiple routes files. The Akka HTTP DSL is very flexible and allows for composition so that different concerns can be properly split and organized as other source code would be.
+The Apache Pekko HTTP DSL uses @ref[Directives](directives/index.md) to describe how incoming requests translate to functionality in the server. Play allows splitting the routes definitions in multiple routes files. The Apache Pekko HTTP DSL is very flexible and allows for composition so that different concerns can be properly split and organized as other source code would be.
 
-Both Play and Akka HTTP choose the first matching route within the routes file/routes definition. In Play routes are listed with one route per line, in Akka HTTP multiple routes must be concatenated with the `concat` method.
+Both Play and Apache Pekko HTTP choose the first matching route within the routes file/routes definition. In Play routes are listed with one route per line, in Apache Pekko HTTP multiple routes must be concatenated with the `concat` method.
 
 ## Side-by-side
 
-These examples are a non-comprehensive list of how Play routes could be written in Akka HTTP. They try to mimic the structure which Play uses, to aid understanding, even though it might not be the most Akka HTTP-idiomatic notation. 
+These examples are a non-comprehensive list of how Play routes could be written in Apache Pekko HTTP. They try to mimic the structure which Play uses, to aid understanding, even though it might not be the most Apache Pekko HTTP-idiomatic notation. 
 
 ### Static path
 
@@ -22,7 +22,7 @@ For example, to exactly match incoming `GET /clients/all` requests, you can defi
 GET   /clients/all          controllers.Clients.list()
 ```
 
-In Akka HTTP every path segment is specified as a separate `String` @scala[concatenated with the `/` method]@java[concatenated by the `slash` method on `segment`].
+In Apache Pekko HTTP every path segment is specified as a separate `String` @scala[concatenated with the `/` method]@java[concatenated by the `slash` method on `segment`].
 
 Scala
 :   @@snip [snip](/docs/src/test/scala/docs/http/scaladsl/server/PlayRoutesComparisonSpec.scala) { #fixed }
@@ -45,7 +45,7 @@ If you want to define a route that retrieves a client by ID, you’ll need to ad
 GET   /clients/:id          controllers.Clients.show(id: Long)
 ```
 
-Akka HTTP uses @ref[path matchers](path-matchers.md#basic-pathmatchers) which match certain data types and pass their data on.
+Apache Pekko HTTP uses @ref[path matchers](path-matchers.md#basic-pathmatchers) which match certain data types and pass their data on.
 
 Scala
 :   @@snip [snip](/docs/src/test/scala/docs/http/scaladsl/server/PlayRoutesComparisonSpec.scala) { #long }
@@ -68,7 +68,7 @@ You may want to capture a dynamic part of more than one URI path segment, separa
 GET   /files/*name          controllers.Application.download(name)
 ```
 
-The Akka HTTP directive @scala[`Remaining`]@java[remaining()] makes a list of the segments to be passed. (See @ref[Path Matchers](path-matchers.md#basic-pathmatchers) for other ways to extract the path.)
+The Apache Pekko HTTP directive @scala[`Remaining`]@java[remaining()] makes a list of the segments to be passed. (See @ref[Path Matchers](path-matchers.md#basic-pathmatchers) for other ways to extract the path.)
 
 Scala
 :   @@snip [snip](/docs/src/test/scala/docs/http/scaladsl/server/PlayRoutesComparisonSpec.scala) { #remaining }
@@ -89,7 +89,7 @@ The @ref[Parameter directives](directives/parameter-directives/index.md) give ac
 
 #### Mandatory parameters
 
-By default parameters are expected to be of type `String`. To make Akka HTTP convert a parameter to a different type, specify an @ref[unmarshaller](directives/parameter-directives/parameters.md#deserialized-parameter).
+By default parameters are expected to be of type `String`. To make Apache Pekko HTTP convert a parameter to a different type, specify an @ref[unmarshaller](directives/parameter-directives/parameters.md#deserialized-parameter).
 
 ```
 # Extract the page parameter from the query string.
@@ -151,7 +151,7 @@ GET   /api/list-items      controllers.Api.listItems(item: List[String])
 ```
 
 @@@ div { .group-scala }
-Decorating the parameter name with a `.repeated` makes Akka HTTP pass all values of that parameter as an `Iterable[String]`].
+Decorating the parameter name with a `.repeated` makes Apache Pekko HTTP pass all values of that parameter as an `Iterable[String]`].
 @@@
 @@@ div { .group-java }
 The `parameterList` directive may take a parameter name to specify a single parameter name to pass on as a `List<String>`.]

@@ -1,19 +1,19 @@
 # 1. Introduction
 
-@@project-info{ projectId="akka-http" }
+@@project-info{ projectId="pekko-http" }
 
-The Akka HTTP modules implement a full server- and client-side HTTP stack on top of *akka-actor* and *akka-stream*. It's
+The Apache Pekko HTTP modules implement a full server- and client-side HTTP stack on top of *pekko-actor* and *pekko-stream*. It's
 not a web-framework but rather a more general toolkit for providing and consuming HTTP-based services. While interaction
-with a browser is of course also in scope it is not the primary focus of Akka HTTP.
+with a browser is of course also in scope it is not the primary focus of Apache Pekko HTTP.
 
-Akka HTTP follows a rather open design and many times offers several different API levels for "doing the same thing".
+Apache Pekko HTTP follows a rather open design and many times offers several different API levels for "doing the same thing".
 You get to pick the API level of abstraction that is most suitable for your application.
 This means that, if you have trouble achieving something using a high-level API, there's a good chance that you can get
 it done with a low-level API, which offers more flexibility but might require you to write more application code.
 
 ## Philosophy
 
-Akka HTTP has been driven with a clear focus on providing tools for building integration layers rather than application cores. As such it regards itself as a suite of libraries rather than a framework.
+Apache Pekko HTTP has been driven with a clear focus on providing tools for building integration layers rather than application cores. As such it regards itself as a suite of libraries rather than a framework.
 
 A framework, as we’d like to think of the term, gives you a “frame”, in which you build your application. It comes with a lot of decisions already pre-made and provides a foundation including support structures that lets you get started and deliver results quickly. In a way a framework is like a skeleton onto which you put the “flesh” of your application in order to have it come alive. As such frameworks work best if you choose them before you start application development and try to stick to the framework's “way of doing things” as you go along.
 
@@ -21,55 +21,55 @@ For example, if you are building a browser-facing web application it makes sense
 
 However, if your application is not primarily a web application because its core is not browser-interaction but some specialized maybe complex business service and you are merely trying to connect it to the world via a REST/HTTP interface a web-framework might not be what you need. In this case the application architecture should be dictated by what makes sense for the core not the interface layer. Also, you probably won’t benefit from the possibly existing browser-specific framework components like view templating, asset management, JavaScript- and CSS generation/manipulation/minification, localization support, AJAX support, etc.
 
-Akka HTTP was designed specifically as “not-a-framework”, not because we don’t like frameworks, but for use cases where a framework is not the right choice. Akka HTTP is made for building integration layers based on HTTP and as such tries to “stay on the sidelines”. Therefore you normally don’t build your application “on top of” Akka HTTP, but you build your application on top of whatever makes sense and use Akka HTTP merely for the HTTP integration needs.
+Apache Pekko HTTP was designed specifically as “not-a-framework”, not because we don’t like frameworks, but for use cases where a framework is not the right choice. Apache Pekko HTTP is made for building integration layers based on HTTP and as such tries to “stay on the sidelines”. Therefore you normally don’t build your application “on top of” Apache Pekko HTTP, but you build your application on top of whatever makes sense and use Apache Pekko HTTP merely for the HTTP integration needs.
 
-On the other hand, if you prefer to build your applications with the guidance of a framework, you should give [Play Framework](https://www.playframework.com/) or [Lagom](https://www.lagomframework.com/) a try, which both use Akka internally. If you
-come from Play and want to try Akka HTTP, we collected a @ref[side-by-side comparison](routing-dsl/play-comparison.md) to show how some Play routing features map to the Akka HTTP routing DSL.
+On the other hand, if you prefer to build your applications with the guidance of a framework, you should give [Play Framework](https://www.playframework.com/) a try, which is planning to use Apache Pekko internally. If you
+come from Play and want to try Apache Pekko HTTP, we collected a @ref[side-by-side comparison](routing-dsl/play-comparison.md) to show how some Play routing features map to the Apache Pekko HTTP routing DSL.
 
-## Using Akka HTTP
+## Using Apache Pekko HTTP
 
-Akka HTTP is provided as independent modules from Akka itself under its own release cycle. Akka HTTP is @ref[compatible](compatibility-guidelines.md)
-with Akka 2.5, Akka 2.6 and  any later 2.x versions released during the lifetime of Akka HTTP 10.2.x. The modules, however, do *not* depend on `akka-actor` or `akka-stream`, so the user is required to
-choose an Akka version to run against and add a manual dependency to `akka-stream` of the chosen version.
+Apache Pekko HTTP is provided as independent modules from Apache Pekko itself under its own release cycle.
+The modules, however, do *not* depend on `pekko-actor` or `pekko-stream`, so the user is required to
+choose an Pekko version to run against and add a manual dependency to `pekko-stream` of the chosen version.
 
 @@dependency [sbt,Gradle,Maven] {
   symbol1=AkkaVersion
   value1=$akka.version$
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol2="AkkaHttpVersion"
   value2="$project.version$"
-  group1="com.typesafe.akka" artifact1="akka-actor-typed_$scala.binary.version$" version1=AkkaVersion
-  group2="com.typesafe.akka" artifact2="akka-stream_$scala.binary.version$" version2=AkkaVersion
-  group3="com.typesafe.akka" artifact3="akka-http_$scala.binary.version$" version3="AkkaHttpVersion"
+  group1="org.apache.pekko" artifact1="pekko-actor-typed_$scala.binary.version$" version1=AkkaVersion
+  group2="org.apache.pekko" artifact2="pekko-stream_$scala.binary.version$" version2=AkkaVersion
+  group3="org.apache.pekko" artifact3="pekko-http_$scala.binary.version$" version3="AkkaHttpVersion"
 }
 
 You may download a packaged version of this project by clicking "Create a project for me!" on the
 @scala[[Lightbend Getting Started page](https://developer.lightbend.com/start/?group=akka&project=akka-http-quickstart-scala)]
 @java[[Lightbend Getting Started page](https://developer.lightbend.com/start/?group=akka&project=akka-http-quickstart-java)].
 
-Alternatively, you can bootstrap a new project with Akka HTTP already configured using the [Giter8](http://www.foundweekends.org/giter8/) template directly via sbt:
+Alternatively, you can bootstrap a new project with Apache Pekko HTTP already configured using the [Giter8](http://www.foundweekends.org/giter8/) template directly via sbt:
 
 @@@ div { .group-scala }
 For Scala (sbt)
 :  ```sh
-    sbt new akka/akka-http-quickstart-scala.g8
+    sbt new akka/pekko-http-quickstart-scala.g8
     ```
 @@@
 @@@ div { .group-java }
 For Java (Maven or Gradle)
 :  ```sh
-    sbt new akka/akka-http-quickstart-java.g8
+    sbt new akka/pekko-http-quickstart-java.g8
     ```
 From there on the prepared project can be built using Gradle or Maven.
 @@@
 
 More instructions can be found on the @scala[[template
-project](https://github.com/akka/akka-http-quickstart-scala.g8)]@java[[template
-project](https://github.com/akka/akka-http-quickstart-java.g8)].
+project](https://github.com/akka/pekko-http-quickstart-scala.g8)]@java[[template
+project](https://github.com/akka/pekko-http-quickstart-java.g8)].
 
 ## Routing DSL for HTTP servers
 
-The high-level, routing API of Akka HTTP provides a DSL to describe HTTP "routes" and how they should be handled.
+The high-level, routing API of Apache Pekko HTTP provides a DSL to describe HTTP "routes" and how they should be handled.
 Each route is composed of one or more level of @apidoc[Directives] that narrows down to handling one specific type of
 request.
 
@@ -104,25 +104,25 @@ for JSON. An additional module provides JSON serialization using the spray-json 
 for details):
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol="AkkaHttpVersion"
   value="$project.version$"
-  group="com.typesafe.akka"
-  artifact="akka-http-spray-json_$scala.binary.version$"
+  group="org.apache.pekko"
+  artifact="pekko-http-spray-json_$scala.binary.version$"
   version="AkkaHttpVersion"
 }
 
 @@@
 @@@ div { .group-java }
-JSON support is possible in `akka-http` by the use of Jackson, an external artifact (see @ref[JSON Support](common/json-support.md#jackson-support)
+JSON support is possible in `pekko-http` by the use of Jackson, an external artifact (see @ref[JSON Support](common/json-support.md#jackson-support)
 for details):
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol="AkkaHttpVersion"
   value="$project.version$"
-  group="com.typesafe.akka"
-  artifact="akka-http-jackson_$scala.binary.version$"
+  group="org.apache.pekko"
+  artifact="pekko-http-jackson_$scala.binary.version$"
   version="AkkaHttpVersion"
 }
 
@@ -148,7 +148,7 @@ with this library.
 
 ## Streaming
 
-One of the strengths of Akka HTTP is that streaming data is at its heart meaning that both request and response bodies
+One of the strengths of Apache Pekko HTTP is that streaming data is at its heart meaning that both request and response bodies
 can be streamed through the server achieving constant memory usage even for very large requests or responses. Streaming
 responses will be backpressured by the remote client so that the server will not push data faster than the client can
 handle, streaming requests means that the server decides how fast the remote client can push the data of the request
@@ -166,7 +166,7 @@ Connecting to this service with a slow HTTP client would backpressure so that th
 demand with constant memory usage on the server. This can be seen using curl and limiting the rate
 `curl --limit-rate 50b 127.0.0.1:8080/random`
 
-Akka HTTP routes easily interact with actors. In this example one route allows for placing bids in a fire-and-forget
+Apache Pekko HTTP routes easily interact with actors. In this example one route allows for placing bids in a fire-and-forget
 style while the second route contains a request-response interaction with an actor. The resulting response is rendered
 as JSON and returned when the response arrives from the actor.
 
@@ -184,9 +184,9 @@ Read more about the details of the high level APIs in the section @ref[High-leve
 
 ## Low-level HTTP server APIs
 
-The low-level Akka HTTP server APIs allows for handling connections or individual requests by accepting
-@apidoc[HttpRequest] s and answering them by producing @apidoc[HttpResponse] s. This is provided by the `akka-http-core` module,
-which is included automatically when you depend on `akka-http` but can also be used on its own.
+The low-level Apache Pekko HTTP server APIs allows for handling connections or individual requests by accepting
+@apidoc[HttpRequest] s and answering them by producing @apidoc[HttpResponse] s. This is provided by the `pekko-http-core` module,
+which is included automatically when you depend on `pekko-http` but can also be used on its own.
 APIs for handling such request-responses as function calls and as a @apidoc[Flow[HttpRequest, HttpResponse, \_]] are available.
 
 Scala
@@ -200,7 +200,7 @@ Read more details about the low level APIs in the section @ref[Core Server API](
 ## HTTP Client API
 
 The client APIs provide methods for calling an HTTP server using the same @apidoc[HttpRequest] and @apidoc[HttpResponse] abstractions
-that Akka HTTP server uses but adds the concept of connection pools to allow multiple requests to the same server to be
+that Apache Pekko HTTP server uses but adds the concept of connection pools to allow multiple requests to the same server to be
 handled more performantly by re-using TCP connections to the server.
 
 Example simple request:
@@ -213,38 +213,38 @@ Java
 
 Read more about the details of the client APIs in the section @ref[Consuming HTTP-based Services (Client-Side)](client-side/index.md).
 
-## The modules that make up Akka HTTP
+## The modules that make up Apache Pekko HTTP
 
-Akka HTTP is structured into several modules:
+Apache Pekko HTTP is structured into several modules:
 
-akka-http
+pekko-http
 : Higher-level functionality, like (un)marshalling, (de)compression as well as a powerful DSL
 for defining HTTP-based APIs on the server-side, this is the recommended way to write HTTP servers
-with Akka HTTP. Details can be found in the section @ref[High-level Server-Side API](routing-dsl/index.md)
+with Apache Pekko HTTP. Details can be found in the section @ref[High-level Server-Side API](routing-dsl/index.md)
 
-akka-http-core
+pekko-http-core
 : A complete, mostly low-level, server- and client-side implementation of HTTP (incl. WebSockets)
 Details can be found in sections @ref[Core Server API](server-side/low-level-api.md) and @ref[Consuming HTTP-based Services (Client-Side)](client-side/index.md)
 
-akka-http-testkit
+pekko-http-testkit
 : A test harness and set of utilities for verifying server-side service implementations
 
-akka-http2-support
+pekko-http2-support
 : The HTTP/2 implementation to be included only if @ref[HTTP/2 support](server-side/http2.md) is needed.
 
 
 @@@ div { .group-scala }
-akka-http-spray-json
+pekko-http-spray-json
 : Predefined glue-code for (de)serializing custom types from/to JSON with [spray-json](https://github.com/spray/spray-json)
 Details can be found here: @ref[JSON Support](common/json-support.md)
 @@@
 
 @@@ div { .group-scala }
-akka-http-xml
+pekko-http-xml
 : Predefined glue-code for (de)serializing custom types from/to XML with [scala-xml](https://github.com/scala/scala-xml)
 Details can be found here: @ref[XML Support](common/xml-support.md)
 @@@
 @@@ div { .group-java }
-akka-http-jackson
+pekko-http-jackson
 : Predefined glue-code for (de)serializing custom types from/to JSON with [jackson](https://github.com/FasterXML/jackson)
 @@@

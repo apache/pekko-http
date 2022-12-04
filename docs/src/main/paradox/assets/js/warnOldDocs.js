@@ -89,7 +89,7 @@ jQuery(document).ready(function ($) {
                 site,
                 version,
                 '<h3 class="callout-title">Old Version</h3>' +
-                '<p><span style="font-weight: bold">This version of Akka HTTP (' + version + ') is outdated and not supported! </span></p>' +
+                '<p><span style="font-weight: bold">This version of Apache Pekko HTTP (' + version + ') is outdated and not supported! </span></p>' +
                 '<p>Please upgrade to version <a href="' + insteadSeries + '">' + instead.latest + '</a> as soon as possible.</p>' +
                 '<p id="samePageLink"></p>')
 
@@ -105,7 +105,7 @@ jQuery(document).ready(function ($) {
                 site,
                 version,
                 '<h3 class="callout-title">Outdated version</h3>' +
-                '<p>You are browsing the docs for Akka HTTP ' + version + ', however the latest release in this series is: ' +
+                '<p>You are browsing the docs for Apache Pekko HTTP ' + version + ', however the latest release in this series is: ' +
                 '<a href="' + targetUrl(true, site, seriesInfo) + '">' + seriesInfo.latest + '</a>. <br/></p>');
         }
     }
@@ -139,7 +139,7 @@ jQuery(document).ready(function ($) {
             base = '' + window.location
 
         // strip off leading /docs/
-        path = path.substring(path.indexOf("akka-http"))
+        path = path.substring(path.indexOf("pekko-http"))
         base = base.substring(0, base.indexOf(path))
         var projectEnd = path.indexOf("/")
         var versionEnd = path.indexOf("/", projectEnd + 1)

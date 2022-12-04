@@ -13,7 +13,6 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.util.Timeout
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
 
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
@@ -45,8 +44,8 @@ object HttpServerWithActorInteraction {
   }
 
   // these are from spray-json
-  implicit val bidFormat: RootJsonFormat[Auction.Bid] = jsonFormat2(Auction.Bid.apply)
-  implicit val bidsFormat: RootJsonFormat[Auction.Bids] = jsonFormat1(Auction.Bids.apply)
+  implicit val bidFormat = jsonFormat2(Auction.Bid)
+  implicit val bidsFormat = jsonFormat1(Auction.Bids)
 
   def main(args: Array[String]): Unit = {
     implicit val system: ActorSystem[Auction.Message] = ActorSystem(Auction.apply, "auction")
@@ -70,7 +69,7 @@ object HttpServerWithActorInteraction {
             implicit val timeout: Timeout = 5.seconds
 
             // query the actor for the current auction state
-            val bids: Future[Bids] = auction.ask(GetBids(_))
+            val bids: Future[Bids] = (auction ? GetBids).mapTo[Bids]
             complete(bids)
           })
       }

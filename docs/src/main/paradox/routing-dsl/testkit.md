@@ -1,21 +1,21 @@
 # Route TestKit
 
-One of Akka HTTP's design goals is good testability of the created services.
-For services built with the Routing DSL Akka HTTP provides a dedicated testkit that makes efficient testing of
-route logic easy and convenient. This "route test DSL" is made available with the *akka-http-testkit* module.
+One of Apache Pekko HTTP's design goals is good testability of the created services.
+For services built with the Routing DSL Apache Pekko HTTP provides a dedicated testkit that makes efficient testing of
+route logic easy and convenient. This "route test DSL" is made available with the *pekko-http-testkit* module.
 
 ## Dependency
 
-To use Akka HTTP TestKit, add the module to your project:
+To use Apache Pekko HTTP TestKit, add the module to your project:
 
 @@dependency [sbt,Gradle,Maven] {
   symbol1=AkkaVersion
   value1=$akka.version$
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol2="AkkaHttpVersion"
   value2="$project.version$"
-  group1="com.typesafe.akka" artifact1="akka-stream-testkit_$scala.binary.version$" version1=AkkaVersion
-  group2="com.typesafe.akka" artifact2="akka-http-testkit_$scala.binary.version$" version2="AkkaHttpVersion"
+  group1="org.apache.pekko" artifact1="pekko-stream-testkit_$scala.binary.version$" version1=AkkaVersion
+  group2="org.apache.pekko" artifact2="pekko-http-testkit_$scala.binary.version$" version2="AkkaHttpVersion"
 }
 
 ## Usage
@@ -84,7 +84,7 @@ The following inspectors are defined:
 |`trailer: Seq[HttpHeader]`                   | Returns the list of trailer headers the route produced with its last chunk. If the response entity is unchunked returns `Nil`.                                      |
 
 > <a id="1" href="#^1">[1]</a> If the request URI is relative it will be made absolute using an implicitly available instance of
-`DefaultHostInfo` whose value is "[http://example.com](http://example.com)" by default. This mirrors the behavior of akka-http-core
+`DefaultHostInfo` whose value is "[http://example.com](http://example.com)" by default. This mirrors the behavior of pekko-http-core
 which always produces absolute URIs for incoming request based on the request URI and the `Host`-header of
 the request. You can customize this behavior by bringing a custom instance of `DefaultHostInfo` into scope.
 
@@ -94,7 +94,7 @@ the request. You can customize this behavior by bringing a custom instance of `D
 
 To use the testkit you need to take these steps:
 
- * add a dependency to the `akka-http-testkit` module
+ * add a dependency to the `pekko-http-testkit` module
  * derive the test class from `JUnitRouteTest`
  * wrap the route under test with `RouteTest.testRoute` to create a `TestRoute`
  * run requests against the route using `TestRoute.run(request)` which will return
@@ -253,5 +253,5 @@ a server and bind to a port so use it only when necessary.
 
 ## Examples
 
-A great pool of examples are the tests for all the predefined directives in Akka HTTP.
-They can be found @scala[@github[here](/akka-http-tests/src/test/scala/akka/http/scaladsl/server/directives/)]@java[@github[here](/akka-http-tests/src/test/java/akka/http/javadsl/server/directives/)].
+A great pool of examples are the tests for all the predefined directives in Apache Pekko HTTP.
+They can be found @scala[@github[here](/pekko-http-tests/src/test/scala/akka/http/scaladsl/server/directives/)]@java[@github[here](/pekko-http-tests/src/test/java/akka/http/javadsl/server/directives/)].

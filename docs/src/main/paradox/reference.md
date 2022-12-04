@@ -12,4 +12,4 @@
 
 ## Books
 
- * [Start Building RESTful Microservices using Akka HTTP with Scala](https://www.amazon.com/dp/1976762545/), by Ayush Kumar Mishra, Knoldus Software LLP, ISBN: 9781976762543, December 2017
+ * [Start Building RESTful Microservices using Apache Pekko HTTP with Scala](https://www.amazon.com/dp/1976762545/), by Ayush Kumar Mishra, Knoldus Software LLP, ISBN: 9781976762543, December 2017

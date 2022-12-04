@@ -52,7 +52,7 @@ The fixed versions are **binary-compatible** with each of the affected versions,
 Following best security practices it is furthermore recommended to run the web server 
 process with user credentials with as few permissions as possible to prevent unintended file access.  
 
-Furthermore, we suggest using Linux servers and/or containers for hosting Akka HTTP applications, 
+Furthermore, we suggest using Linux servers and/or containers for hosting Apache Pekko HTTP applications, 
 as these OSes receive more scrutiny than any other OS just because of the overwhelming number of 
 installations running on Linux.
 

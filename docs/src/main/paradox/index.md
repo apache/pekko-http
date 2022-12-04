@@ -1,4 +1,4 @@
-# Akka HTTP
+# Apache Pekko HTTP
 
 @@toc { depth=2 }
 

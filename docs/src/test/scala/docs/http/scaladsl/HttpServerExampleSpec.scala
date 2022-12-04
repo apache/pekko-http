@@ -7,11 +7,8 @@ package docs.http.scaladsl
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.{ Directive, Route }
-import akka.http.scaladsl.server.directives.FormFieldDirectives.FieldSpec
-import akka.http.scaladsl.server.util.ConstructFromTuple
+import akka.http.scaladsl.server.Route
 import akka.testkit.TestActors
-
 import scala.annotation.nowarn
 import docs.CompileOnlySpec
 
@@ -264,7 +261,8 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
         pathEnd {
           concat(
             put {
-              formFields("email", "total".as[Money]).as(Order.apply _) { (order: Order) =>
+              // form extraction from multipart or www-url-encoded forms
+              formFields("email", "total".as[Money]).as(Order) { order =>
                 complete {
                   // complete with serialized Future result
                   (myDbActor ? Update(order)).mapTo[TransactionResult]
@@ -286,7 +284,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
           get {
             // parameters to case class extraction
             parameters("size".as[Int], "color".optional, "dangerous".withDefault("no"))
-              .as(OrderItem.apply _) { (orderItem: OrderItem) =>
+              .as(OrderItem) { orderItem =>
                 // ... route using case class instance created from
                 // required and optional query parameters
                 complete("") // #hide
@@ -310,21 +308,20 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     import akka.http.scaladsl.server.Directives._
     import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
     import spray.json.DefaultJsonProtocol._
-    import spray.json.RootJsonFormat
 
-    implicit val system: ActorSystem = ActorSystem()
+    implicit val system = ActorSystem()
     // needed for the future flatMap/onComplete in the end
-    implicit val executionContext: ExecutionContext = system.dispatcher
+    implicit val executionContext = system.dispatcher
 
     final case class Bid(userId: String, bid: Int)
 
     // these are from spray-json
-    implicit val bidFormat: RootJsonFormat[Bid] = jsonFormat2(Bid.apply)
+    implicit val bidFormat = jsonFormat2(Bid)
 
     val route =
       path("bid") {
         put {
-          entity(as[Bid]) { (bid: Bid) =>
+          entity(as[Bid]) { bid =>
             // incoming entity is fully consumed and converted into a Bid
             complete("The bid was: " + bid)
           }
@@ -373,7 +370,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     val route =
       (put & path("lines")) {
         withoutSizeLimit {
-          extractRequest { (r: HttpRequest) =>
+          extractRequest { r: HttpRequest =>
             val finishedWriting = r.discardEntityBytes().future
 
             // we only want to respond once the incoming data has been handled:
@@ -424,11 +421,11 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     import spray.json.DefaultJsonProtocol._
     import spray.json._
 
-    implicit val system: ActorSystem = ActorSystem()
+    implicit val system = ActorSystem()
 
     // #dynamic-routing-example
     case class MockDefinition(path: String, requests: Seq[JsValue], responses: Seq[JsValue])
-    implicit val format: RootJsonFormat[MockDefinition] = jsonFormat3(MockDefinition.apply)
+    implicit val format = jsonFormat3(MockDefinition)
 
     @volatile var state = Map.empty[String, Map[JsValue, JsValue]]
 

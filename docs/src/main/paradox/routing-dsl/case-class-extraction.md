@@ -18,7 +18,7 @@ instance of the `Color` case class. So far so good. However, if the model classe
 than just a few parameters the overhead introduced by capturing the arguments as extractions only to feed them into the
 model class constructor directly afterwards can somewhat clutter up your route definitions.
 
-If your model classes are case classes, as in our example, Akka HTTP supports an even shorter and more concise
+If your model classes are case classes, as in our example, Apache Pekko HTTP supports an even shorter and more concise
 syntax. You can also write the example above like this:
 
 @@snip [CaseClassExtractionExamplesSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/CaseClassExtractionExamplesSpec.scala) { #example-2 }
@@ -61,7 +61,7 @@ should be:
 
 @@snip [CaseClassExtractionExamplesSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/CaseClassExtractionExamplesSpec.scala) { #example-4 }
 
-If you write your validations like this Akka HTTP's case class extraction logic will properly pick up all error
+If you write your validations like this Apache Pekko HTTP's case class extraction logic will properly pick up all error
 messages and generate a @apidoc[ValidationRejection] if something goes wrong. By default, `ValidationRejections` are
 converted into `400 Bad Request` error response by the default @ref[RejectionHandler](rejections.md#the-rejectionhandler), if no
 subsequent route successfully handles the request.

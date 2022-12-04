@@ -57,13 +57,13 @@ object Dependencies {
       }
     }
 
-    // For akka-http spray-json support
+    // For pekko-http spray-json support
     val sprayJson = "io.spray" %% "spray-json" % "1.3.6" // ApacheV2
 
-    // For akka-http-jackson support
+    // For pekko-http-jackson support
     val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion // ApacheV2
 
-    // For akka-http-testkit-java
+    // For pekko-http-testkit-java
     val junit = "junit" % "junit" % junitVersion // Common Public License 1.0
 
     val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % "2.9.3"

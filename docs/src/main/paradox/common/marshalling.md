@@ -5,7 +5,7 @@
 Marshalling is the process of converting a higher-level (object) structure into some kind of lower-level
 representation, often a "wire format". Other popular names for marshalling are "serialization" or "pickling".
 
-In Akka HTTP, marshalling means the conversion of an object of type `T` into a lower-level target type,
+In Apache Pekko HTTP, marshalling means the conversion of an object of type `T` into a lower-level target type,
 e.g. a `MessageEntity` (which forms the "entity body" of an HTTP request or response) or a full @apidoc[HttpRequest] or
 @apidoc[HttpResponse].
 
@@ -41,17 +41,17 @@ delaying the actual construction of the marshalling target instance to the very 
 
 This is how `Marshalling` is defined:
 
-@@snip [Marshaller.scala](/akka-http/src/main/scala/akka/http/scaladsl/marshalling/Marshaller.scala) { #marshalling }
+@@snip [Marshaller.scala](/pekko-http/src/main/scala/akka/http/scaladsl/marshalling/Marshaller.scala) { #marshalling }
 
-Akka HTTP also defines a number of helpful aliases for the types of marshallers that you'll likely work with most:
+Apache Pekko HTTP also defines a number of helpful aliases for the types of marshallers that you'll likely work with most:
 
-@@snip [package.scala](/akka-http/src/main/scala/akka/http/scaladsl/marshalling/package.scala) { #marshaller-aliases }
+@@snip [package.scala](/pekko-http/src/main/scala/akka/http/scaladsl/marshalling/package.scala) { #marshaller-aliases }
 
 @@@
 
 ## Predefined Marshallers
 
-Akka HTTP already predefines a number of marshallers for the most common types.
+Apache Pekko HTTP already predefines a number of marshallers for the most common types.
 Specifically these are:
 
 @@@ div { .group-scala }
@@ -108,10 +108,10 @@ All marshallers can be found in @apidoc[Marshaller].
 
 ## Implicit Resolution
 
-The marshalling infrastructure of Akka HTTP relies on a type-class based approach, which means that @apidoc[Marshaller]
+The marshalling infrastructure of Apache Pekko HTTP relies on a type-class based approach, which means that @apidoc[Marshaller]
 instances from a certain type `A` to a certain type `B` have to be available implicitly.
 
-The implicits for most of the predefined marshallers in Akka HTTP are provided through the companion object of the
+The implicits for most of the predefined marshallers in Apache Pekko HTTP are provided through the companion object of the
 @apidoc[Marshaller] trait. This means that they are always available and never need to be explicitly imported.
 Additionally, you can simply "override" them by bringing your own custom version into local scope.
 
@@ -119,7 +119,7 @@ Additionally, you can simply "override" them by bringing your own custom version
 
 ## Custom Marshallers
 
-Akka HTTP gives you a few convenience tools for constructing marshallers for your own types.
+Apache Pekko HTTP gives you a few convenience tools for constructing marshallers for your own types.
 Before you do that you need to think about what kind of marshaller you want to create.
 If all your marshaller needs to produce is a `MessageEntity` then you should probably provide a
 @scala[`ToEntityMarshaller[T]`]@java[@apidoc[Marshaller[T, MessageEntity]]]. The advantage here is that it will work on both the client- as well as the server-side since
@@ -137,7 +137,7 @@ For writing your own marshallers you won't have to "manually" implement the @api
 Rather, it should be possible to use one of the convenience construction helpers defined on the @apidoc[Marshaller]
 companion:
 
-@@snip [Marshaller.scala](/akka-http/src/main/scala/akka/http/scaladsl/marshalling/Marshaller.scala) { #marshaller-creation }
+@@snip [Marshaller.scala](/pekko-http/src/main/scala/akka/http/scaladsl/marshalling/Marshaller.scala) { #marshaller-creation }
 
 @@@
 
@@ -166,7 +166,7 @@ depend on one being available implicitly at the usage site.
 
 ## Using Marshallers
 
-In many places throughout Akka HTTP, marshallers are used implicitly, e.g. when you define how to @ref[complete](../routing-dsl/directives/route-directives/complete.md) a
+In many places throughout Apache Pekko HTTP, marshallers are used implicitly, e.g. when you define how to @ref[complete](../routing-dsl/directives/route-directives/complete.md) a
 request using the @ref[Routing DSL](../routing-dsl/index.md).
 
 @@@ div { .group-scala }
@@ -182,6 +182,6 @@ The best entry point for this is the @scaladoc[Marshal](akka.http.scaladsl.marsh
 
 However, many directives dealing with @ref[marshalling](../routing-dsl/directives/marshalling-directives/index.md) also  require that you pass a marshaller explicitly. The following example shows how to marshal Java bean classes to JSON using the @ref:[Jackson JSON support](json-support.md#jackson-support):
 
-@@snip [PetStoreExample.java](/akka-http-tests/src/main/java/akka/http/javadsl/server/examples/petstore/PetStoreExample.java) { #imports #marshall }
+@@snip [PetStoreExample.java](/pekko-http-tests/src/main/java/akka/http/javadsl/server/examples/petstore/PetStoreExample.java) { #imports #marshall }
 
 @@@

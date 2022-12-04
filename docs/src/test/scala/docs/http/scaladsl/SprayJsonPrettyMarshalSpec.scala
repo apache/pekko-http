@@ -20,8 +20,8 @@ class SprayJsonPrettyMarshalSpec extends RoutingSpec with CompileOnlySpec {
 
     object PrettyJsonFormatSupport {
       import DefaultJsonProtocol._
-      implicit val printer: JsonPrinter = PrettyPrinter
-      implicit val prettyPrintedItemFormat: RootJsonFormat[PrettyPrintedItem] = jsonFormat2(PrettyPrintedItem.apply)
+      implicit val printer = PrettyPrinter
+      implicit val prettyPrintedItemFormat = jsonFormat2(PrettyPrintedItem)
     }
 
     // use it wherever json (un)marshalling is needed

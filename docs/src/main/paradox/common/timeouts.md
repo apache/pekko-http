@@ -1,6 +1,6 @@
 # Timeouts
 
-Akka HTTP comes with a variety of built-in timeout mechanisms to protect your servers from malicious attacks or
+Apache Pekko HTTP comes with a variety of built-in timeout mechanisms to protect your servers from malicious attacks or
 programming mistakes. Some of these are simply configuration options (which may be overridden in code) while others
 are left to the streaming APIs and are easily implementable as patterns in user-code directly.
 
@@ -35,7 +35,7 @@ never sending the real response otherwise).
 
 The default @apidoc[HttpResponse] that is written when a request timeout is exceeded looks like this:
 
-@@snip [HttpServerBluePrint.scala](/akka-http-core/src/main/scala/akka/http/impl/engine/server/HttpServerBluePrint.scala) { #default-request-timeout-httpresponse }
+@@snip [HttpServerBluePrint.scala](/pekko-http-core/src/main/scala/akka/http/impl/engine/server/HttpServerBluePrint.scala) { #default-request-timeout-httpresponse }
 
 A default request timeout is applied globally to all routes and can be configured using the
 `akka.http.server.request-timeout` setting (which defaults to 20 seconds).

@@ -41,7 +41,7 @@ object MyRejectionHandler {
         .handleNotFound { complete((NotFound, "Not here!")) }
         .result()
 
-    implicit val system: ActorSystem = ActorSystem()
+    implicit val system = ActorSystem()
 
     val route: Route = handleRejections(myRejectionHandler) {
       // ... some route structure
@@ -60,7 +60,7 @@ object HandleNotFoundWithThePath {
   import akka.http.scaladsl.server._
   import Directives._
 
-  implicit def myRejectionHandler: RejectionHandler =
+  implicit def myRejectionHandler =
     RejectionHandler.newBuilder()
       .handleNotFound {
         extractUnmatchedPath { p =>
@@ -97,7 +97,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
     import akka.http.scaladsl.model._
     import akka.http.scaladsl.server.RejectionHandler
 
-    implicit def myRejectionHandler: RejectionHandler =
+    implicit def myRejectionHandler =
       RejectionHandler.default
         .mapRejectionResponse {
           case res @ HttpResponse(_, _, ent: HttpEntity.Strict, _) =>
@@ -130,7 +130,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
     import akka.http.scaladsl.model._
     import akka.http.scaladsl.server.RejectionHandler
 
-    implicit def myRejectionHandler: RejectionHandler =
+    implicit def myRejectionHandler =
       RejectionHandler.default
         .mapRejectionResponse {
           case res @ HttpResponse(_, _, ent: HttpEntity.Strict, _) =>
@@ -165,7 +165,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
     import akka.http.scaladsl.server._
     import akka.http.scaladsl.model.StatusCodes.BadRequest
 
-    implicit def myRejectionHandler: RejectionHandler = RejectionHandler.newBuilder().handle {
+    implicit def myRejectionHandler = RejectionHandler.newBuilder().handle {
       case MissingCookieRejection(_) => complete(HttpResponse(BadRequest, entity = "No cookies, no service!!!"))
     }.result()
 

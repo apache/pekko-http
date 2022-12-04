@@ -4,7 +4,7 @@
 @@@ div { .group-scala }
 ## Signature
 
-@@signature [FileUploadDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/FileUploadDirectives.scala) { #fileUploadAll }
+@@signature [FileUploadDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/FileUploadDirectives.scala) { #fileUploadAll }
 
 @@@
 
@@ -16,7 +16,7 @@ about each upload.
 If there is no field with the given name the request will be rejected.
 
 @@@ note
-This directive buffers all files to temporary files on disk in files prefixed `akka-http-upload`. This is
+This directive buffers all files to temporary files on disk in files prefixed `pekko-http-upload`. This is
 to work around limitations of the HTTP multipart format. To upload only one file it may be preferred to
 use the @ref[fileUpload](fileUpload.md#fileupload) directive, as it streams the file directly without
 buffering.

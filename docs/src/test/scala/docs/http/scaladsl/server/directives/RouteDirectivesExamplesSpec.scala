@@ -17,7 +17,7 @@ import akka.http.scaladsl.model._
 
 //#complete-examples
 import akka.http.scaladsl.model.ContentTypes._
-import akka.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
+import akka.http.scaladsl.model.headers.`Content-Type`
 
 //#complete-examples
 
@@ -48,10 +48,10 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           complete(201 -> "bar")
         },
         path("e") {
-          complete(StatusCodes.Created, List(`Access-Control-Allow-Origin`.`*`), "bar")
+          complete(StatusCodes.Created, List(`Content-Type`(`text/plain(UTF-8)`)), "bar")
         },
         path("f") {
-          complete(201, List(`Access-Control-Allow-Origin`.`*`), "bar")
+          complete(201, List(`Content-Type`(`text/plain(UTF-8)`)), "bar")
         },
         path("g") {
           complete(Future { StatusCodes.Created -> "bar" })
@@ -82,13 +82,13 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Get("/e") ~> route ~> check {
       status shouldEqual StatusCodes.Created
-      header[`Access-Control-Allow-Origin`] shouldEqual Some(`Access-Control-Allow-Origin`.`*`)
+      header[`Content-Type`] shouldEqual Some(`Content-Type`(`text/plain(UTF-8)`))
       responseAs[String] shouldEqual "bar"
     }
 
     Get("/f") ~> route ~> check {
       status shouldEqual StatusCodes.Created
-      header[`Access-Control-Allow-Origin`] shouldEqual Some(`Access-Control-Allow-Origin`.`*`)
+      header[`Content-Type`] shouldEqual Some(`Content-Type`(`text/plain(UTF-8)`))
       responseAs[String] shouldEqual "bar"
     }
 

@@ -102,16 +102,16 @@ The Pekko-http build includes a special task called `validatePullRequest` which 
 (uncommitted changes) in your local working directory and figures out which projects are impacted by those changes,
 then running tests only on those projects.
 
-For example changing something in `akka-http-core` would cause tests to be run in all projects which depend on it
-(e.g. `akka-http-tests`, `akka-http-marshallers-*`, `docs` etc.).
+For example, changing something in `pekko-http-core` would cause tests to be run in all projects which depend on it
+(e.g. `pekko-http-tests`, `pekko-http-marshallers-*`, `docs` etc.).
 
 To use the task simply type, and the output should include entries like shown below:
 
 ```
 > validatePullRequest
 [info] Diffing [HEAD] to determine changed modules in PR...
-[info] Detected uncommitted changes in directories (including in dependency analysis): [akka-protobuf,project]
-[info] Detected changes in directories: [docs, project, akka-http-tests, akka-protobuf, akka-http-testkit, akka-http, akka-http-core, akka-stream]
+[info] Detected uncommitted changes in directories (including in dependency analysis): [pekko-protobuf,project]
+[info] Detected changes in directories: [docs, project, pekko-http-tests, pekko-protobuf, pekko-http-testkit, pekko-http, pekko-http-core, pekko-stream]
 ```
 
 By default changes are diffed with the `main` branch when working locally, if you want to validate against a different
@@ -140,7 +140,7 @@ validate binary compatibility of incoming Pull Requests. If your PR fails due to
 an error like this:
 
 ```
-[info] akka-stream: found 1 potential binary incompatibilities while checking against com.typesafe.akka:akka-stream_2.11:2.4.2  (filtered 222)
+[info] pekko-stream: found 1 potential binary incompatibilities while checking against org.apache.pekko:pekko-stream_2.11:2.4.2  (filtered 222)
 [error]  * method foldAsync(java.lang.Object,scala.Function2)akka.stream.scaladsl.FlowOps in trait akka.stream.scaladsl.FlowOps is present only in current version
 [error]    filter with: ProblemFilters.exclude[ReversedMissingMethodProblem]("akka.stream.scaladsl.FlowOps.foldAsync")
 ```
@@ -271,8 +271,8 @@ Pekko-http uses Github Actions to validate PRs. It builds it, runs the tests and
 
 In order to speed up PR validation times, the Pekko-http build contains a special sbt task called `validatePullRequest`,
 which is smart enough to figure out which projects should be built if a PR only has changes in some parts of the project.
-For example, if your PR only touches `akka-http-testkit`, no `akka-parsing` tests need to be run, however the task
-will validate all projects that depend on `akka-http-testkit` (including samples).
+For example, if your PR only touches `pekko-http-testkit`, no `pekko-parsing` tests need to be run, however the task
+will validate all projects that depend on `pekko-http-testkit` (including samples).
 Also, tests tagged as `PerformanceTest` and the likes of it are excluded from PR validation.
 
 In order to force the `validatePullRequest` task to build the entire project, regardless of dependency analysis of a PRs
@@ -307,18 +307,17 @@ There is a number of ways timeouts can be defined in Pekko tests. The following 
 
 Special care should be given `expectNoMessage` calls, which indeed will wait the entire timeout before continuing, therefore a shorter timeout should be used in those, for example `200` or `300.millis`.
 
-You can read up on remaining and friends in [TestKit.scala](https://github.com/akka/akka/blob/main/akka-testkit/src/main/scala/akka/testkit/TestKit.scala)
+You can read up on remaining and friends in [TestKit.scala](https://github.com/apache/incubator-pekko/blob/main/akka-testkit/src/main/scala/org/apache/pekko/testkit/TestKit.scala)
 
 # Supporting infrastructure
 
 ## Continuous Integration
 
-akka-http currently uses Github Actions for continuous integration and release automation.
+pekko-http currently uses Github Actions for continuous integration and release automation.
 
 ## Snapshots
 
-Snapshots are published to a snapshot repository. See the latest information about how to use snapshots in the
-[documentation](https://doc.akka.io/docs/akka-http/snapshot/contributing.html#snapshots).
+We do not yet publish snapshots.
 
 ## Related links
 

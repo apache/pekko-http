@@ -1,7 +1,7 @@
 # Directives
 
 A "Directive" is a small building block used for creating arbitrarily complex @ref[route structures](../routes.md).
-Akka HTTP already pre-defines a large number of directives and you can easily construct your own:
+Apache Pekko HTTP already pre-defines a large number of directives and you can easily construct your own:
 
 @@toc { depth=1 }
 
@@ -139,7 +139,7 @@ Here, the inner route of the @ref[get](method-directives/get.md) directive is wr
 
 However, as you can see from these examples, building routes with directives rather than "manually" results in code that
 is a lot more concise and as such more readable and maintainable. In addition it provides for better composability (as
-you will see in the coming sections). So, when using Akka HTTP's Routing DSL you should almost never have to fall back
+you will see in the coming sections). So, when using Apache Pekko HTTP's Routing DSL you should almost never have to fall back
 to creating routes via @scala[@scaladoc[Route](akka.http.scaladsl.server.index#Route=akka.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[akka.http.scaladsl.server.RouteResult])]@java[@javadoc[Route](akka.http.javadsl.server.Route)] function literals that directly manipulate the @ref[RequestContext](../routes.md#requestcontext).
 
 @@@
@@ -368,7 +368,7 @@ Java
 anyOf(this::extractClientIP, this::extractMethod, routeProvider) // doesn't compile
 anyOf(bindParameter(this::parameter, "foo"), bindParameter(this::parameter, "bar"), routeProvider) // ok
 ```
-In this previous example we make use of the `bindParameter` function located in `akka-http/akka.http.javadsl.common.PartialApplication`.
+In this previous example we make use of the `bindParameter` function located in `pekko-http/akka.http.javadsl.common.PartialApplication`.
 In order to be able to call `anyOf`, we need to convert our directive that takes 2 parameters to a function that takes only 1.
 In this particular case we want to use the `parameter` directive that takes a `String` and a function from `String` to @scala[@scaladoc[Route](akka.http.scaladsl.server.index#Route=akka.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[akka.http.scaladsl.server.RouteResult])]@java[@javadoc[Route](akka.http.javadsl.server.Route)],
 so to be able to use it in combination with `anyOf`, we need to bind the first parameter to `foo` and to `bar` in the second one. `bindParameter(this::parameter, "foo")` is equivalent 

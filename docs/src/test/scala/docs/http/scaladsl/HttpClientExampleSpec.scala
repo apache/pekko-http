@@ -13,7 +13,7 @@ import docs.CompileOnlySpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-// OverflowStrategy.dropNew has been deprecated in latest Akka versions
+// OverflowStrategy.dropNew has been deprecated in latest Pekko versions
 // FIXME: replace with 2.6 queue when 2.5 support is dropped, see #3069
 @nowarn("msg=will not be a runnable program|Use Source.queue")
 class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
@@ -27,7 +27,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import akka.stream.scaladsl.{ FileIO, Framing }
     import akka.util.ByteString
 
-    implicit val system: ActorSystem = ActorSystem()
+    implicit val system = ActorSystem()
 
     val response: HttpResponse = ???
 
@@ -43,7 +43,6 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "manual-entity-consume-example-2" in compileOnlySpec {
     // #manual-entity-consume-example-2
-    import scala.concurrent.ExecutionContext
     import scala.concurrent.Future
     import scala.concurrent.duration._
 
@@ -51,8 +50,8 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import akka.http.scaladsl.model._
     import akka.util.ByteString
 
-    implicit val system: ActorSystem = ActorSystem()
-    implicit val dispatcher: ExecutionContext = system.dispatcher
+    implicit val system = ActorSystem()
+    implicit val dispatcher = system.dispatcher
 
     case class ExamplePerson(name: String)
     def parse(line: ByteString): ExamplePerson = ???
@@ -79,7 +78,6 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "manual-entity-consume-example-3" in compileOnlySpec {
     // #manual-entity-consume-example-3
-    import scala.concurrent.ExecutionContext
     import scala.concurrent.Future
 
     import akka.NotUsed
@@ -89,13 +87,13 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import akka.util.ByteString
     import akka.stream.scaladsl.{ Flow, Sink, Source }
 
-    implicit val system: ActorSystem = ActorSystem()
-    implicit val dispatcher: ExecutionContext = system.dispatcher
+    implicit val system = ActorSystem()
+    implicit val dispatcher = system.dispatcher
 
     case class ExamplePerson(name: String)
 
     def parse(line: ByteString): Option[ExamplePerson] =
-      line.utf8String.split(" ").headOption.map(ExamplePerson.apply)
+      line.utf8String.split(" ").headOption.map(ExamplePerson)
 
     val requests: Source[HttpRequest, NotUsed] = Source
       .fromIterator(() =>
@@ -127,14 +125,12 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "manual-entity-discard-example-1" in compileOnlySpec {
     // #manual-entity-discard-example-1
-    import scala.concurrent.ExecutionContext
-
     import akka.actor.ActorSystem
     import akka.http.scaladsl.model.HttpMessage.DiscardedEntity
     import akka.http.scaladsl.model._
 
-    implicit val system: ActorSystem = ActorSystem()
-    implicit val dispatcher: ExecutionContext = system.dispatcher
+    implicit val system = ActorSystem()
+    implicit val dispatcher = system.dispatcher
 
     val response1: HttpResponse = ??? // obtained from an HTTP call (see examples below)
 
@@ -144,7 +140,6 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     // #manual-entity-discard-example-1
   }
   "manual-entity-discard-example-2" in compileOnlySpec {
-    import scala.concurrent.ExecutionContext
     import scala.concurrent.Future
 
     import akka.Done
@@ -152,8 +147,8 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import akka.http.scaladsl.model._
     import akka.stream.scaladsl.Sink
 
-    implicit val system: ActorSystem = ActorSystem()
-    implicit val dispatcher: ExecutionContext = system.dispatcher
+    implicit val system = ActorSystem()
+    implicit val dispatcher = system.dispatcher
 
     // #manual-entity-discard-example-2
     val response1: HttpResponse = ??? // obtained from an HTTP call (see examples below)
@@ -175,7 +170,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
     import akka.stream.{ OverflowStrategy, QueueOfferResult }
 
-    implicit val system: ActorSystem = ActorSystem()
+    implicit val system = ActorSystem()
     import system.dispatcher // to get an implicit ExecutionContext into scope
 
     val QueueSize = 10
@@ -223,7 +218,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import akka.http.scaladsl.model.Multipart.FormData
     import akka.http.scaladsl.marshalling.Marshal
 
-    implicit val system: ActorSystem = ActorSystem()
+    implicit val system = ActorSystem()
     import system.dispatcher // to get an implicit ExecutionContext into scope
 
     case class FileToUpload(name: String, location: Path)
@@ -306,10 +301,9 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import akka.http.scaladsl.unmarshalling.Unmarshal
     import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
     import spray.json.DefaultJsonProtocol._
-    import spray.json.RootJsonFormat
 
     case class Pet(name: String)
-    implicit val petFormat: RootJsonFormat[Pet] = jsonFormat1(Pet.apply)
+    implicit val petFormat = jsonFormat1(Pet)
 
     val pet: Future[Pet] = Unmarshal(response).to[Pet]
     // #unmarshal-response-body
@@ -317,7 +311,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "single-request-in-actor-example" in compileOnlySpec {
     // #single-request-in-actor-example
-    import akka.actor.{ Actor, ActorLogging, ActorSystem }
+    import akka.actor.{ Actor, ActorLogging }
     import akka.http.scaladsl.Http
     import akka.http.scaladsl.model._
     import akka.util.ByteString
@@ -328,7 +322,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       import akka.pattern.pipe
       import context.dispatcher
 
-      implicit val system: ActorSystem = context.system
+      implicit val system = context.system
       val http = Http(system)
 
       override def preStart() = {

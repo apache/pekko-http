@@ -1,9 +1,9 @@
 # JSON Support
 
-Akka HTTP's @ref[marshalling](marshalling.md) and @ref[unmarshalling](unmarshalling.md) infrastructure makes it rather easy to seamlessly convert application-domain objects from and to JSON.
-Integration with @scala[[spray-json]]@java[[Jackson]] is provided out of the box through the @scala[`akka-http-spray-json`]@java[`akka-http-jackson`] module.
+Apache Pekko HTTP's @ref[marshalling](marshalling.md) and @ref[unmarshalling](unmarshalling.md) infrastructure makes it rather easy to seamlessly convert application-domain objects from and to JSON.
+Integration with @scala[[spray-json]]@java[[Jackson]] is provided out of the box through the @scala[`pekko-http-spray-json`]@java[`pekko-http-jackson`] module.
 Integration with other JSON libraries are supported by the community.
-See [the list of current community extensions for Akka HTTP](https://akka.io/community/#extensions-to-akka-http).
+See [the list of current community extensions for Apache Pekko HTTP](https://akka.io/community/#extensions-to-akka-http).
 
 @@@ div { .group-java }
 
@@ -12,25 +12,25 @@ See [the list of current community extensions for Akka HTTP](https://akka.io/com
 To make use of the support module for (un)marshalling from and to JSON with [Jackson], add a library dependency onto:
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol="AkkaHttpVersion"
   value="$project.version$"
-  group="com.typesafe.akka"
-  artifact="akka-http-jackson_$scala.binary.version$"
+  group="org.apache.pekko"
+  artifact="pekko-http-jackson_$scala.binary.version$"
   version="AkkaHttpVersion"
 }
 
 Use `akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller(T.class)` to create an @apidoc[Unmarshaller[HttpEntity,T]] which expects the request
 body (HttpEntity) to be of type `application/json` and converts it to `T` using Jackson.
 
-@@snip [PetStoreExample.java](/akka-http-tests/src/main/java/akka/http/javadsl/server/examples/petstore/PetStoreExample.java) { #imports #unmarshall }
+@@snip [PetStoreExample.java](/pekko-http-tests/src/main/java/akka/http/javadsl/server/examples/petstore/PetStoreExample.java) { #imports #unmarshall }
 
 Use `akka.http.javadsl.marshallers.jackson.Jackson.marshaller(T.class)` to create a @apidoc[Marshaller[T,RequestEntity]] which can be used with
 `RequestContext.complete` or `RouteDirectives.complete` to convert a POJO to an HttpResponse.
 
-@@snip [PetStoreExample.java](/akka-http-tests/src/main/java/akka/http/javadsl/server/examples/petstore/PetStoreExample.java) { #imports #marshall }
+@@snip [PetStoreExample.java](/pekko-http-tests/src/main/java/akka/http/javadsl/server/examples/petstore/PetStoreExample.java) { #imports #marshall }
 
-Refer to @github[this file](/akka-http-tests/src/main/java/akka/http/javadsl/server/examples/petstore/PetStoreExample.java) in the sources for the complete example.
+Refer to @github[this file](/pekko-http-tests/src/main/java/akka/http/javadsl/server/examples/petstore/PetStoreExample.java) in the sources for the complete example.
 
 @@@
 
@@ -45,11 +45,11 @@ that an implicit `spray.json.RootJsonReader` and/or `spray.json.RootJsonWriter` 
 To enable automatic support for (un)marshalling from and to JSON with [spray-json], add a library dependency onto:
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol="AkkaHttpVersion"
   value="$project.version$"
-  group="com.typesafe.akka"
-  artifact="akka-http-spray-json_$scala.binary.version$"
+  group="org.apache.pekko"
+  artifact="pekko-http-spray-json_$scala.binary.version$"
   version="AkkaHttpVersion"
 }
 
@@ -74,7 +74,7 @@ you may have to apply a different framing mechanism, but the general idea remain
 and applying a framing to it, such that the single objects can be easily deserialized using the usual marshalling infrastructure:
 
 Scala
-:   @@snip [EntityStreamingSpec.scala](/akka-http-tests/src/test/scala/akka/http/scaladsl/server/EntityStreamingSpec.scala) { #json-streaming-client-example }
+:   @@snip [EntityStreamingSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/server/EntityStreamingSpec.scala) { #json-streaming-client-example }
  
 Java
 :   @@snip [HttpClientExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/server/JsonStreamingExamplesTest.java) { #json-streaming-client-example-raw }
@@ -85,7 +85,7 @@ In the above example the marshalling is handled by the implicitly provided `Json
 You can also achieve the same more explicitly, by manually connecting the entity byte stream through a framing and then deserialization stage: 
 
 Scala
-:   @@snip [EntityStreamingSpec.scala](/akka-http-tests/src/test/scala/akka/http/scaladsl/server/EntityStreamingSpec.scala) { #json-streaming-client-example-raw }
+:   @@snip [EntityStreamingSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/server/EntityStreamingSpec.scala) { #json-streaming-client-example-raw }
  
 @@@
 
@@ -106,7 +106,7 @@ and often good enough rather than writing a fully streaming JSON parser (which a
 
 By default, spray-json marshals your types to compact printed JSON by implicit conversion using `CompactPrinter`, as defined in:
 
-@@snip [SprayJsonSupport.scala](/akka-http-marshallers-scala/akka-http-spray-json/src/main/scala/akka/http/scaladsl/marshallers/sprayjson/SprayJsonSupport.scala) { #sprayJsonMarshallerConverter }
+@@snip [SprayJsonSupport.scala](/pekko-http-marshallers-scala/pekko-http-spray-json/src/main/scala/akka/http/scaladsl/marshallers/sprayjson/SprayJsonSupport.scala) { #sprayJsonMarshallerConverter }
 
 Alternatively to marshal your types to pretty printed JSON, bring a `PrettyPrinter` in scope to perform implicit conversion.
 

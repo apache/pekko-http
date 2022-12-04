@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [FutureDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/FutureDirectives.scala) { #onComplete }
+@@signature [FutureDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/FutureDirectives.scala) { #onComplete }
 
 @@@
 
@@ -32,5 +32,5 @@ Using the `onComplete` directive means that you'll have to explicitly and manual
 @@@
 
 @@@ note { .group-scala }
-The identically named `onComplete` method of Scala's `Future` (from the standard library) does not work at all in this context since it's just a method that returns `Unit` - whereas Akka HTTP's `onComplete` is a `Directive` that creates a @scaladoc[Route](akka.http.scaladsl.server.index#Route=akka.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[akka.http.scaladsl.server.RouteResult]).
+The identically named `onComplete` method of Scala's `Future` (from the standard library) does not work at all in this context since it's just a method that returns `Unit` - whereas Apache Pekko HTTP's `onComplete` is a `Directive` that creates a @scaladoc[Route](akka.http.scaladsl.server.index#Route=akka.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[akka.http.scaladsl.server.RouteResult]).
 @@@
