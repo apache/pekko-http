@@ -140,13 +140,13 @@ The same goes for `pekko-http-testkit`: If the testkit is used, explicitly decla
 @@dependency [sbt,Gradle,Maven] {
   symbol1=AkkaVersion
   value1=$akka.version$
-  bomGroup2=com.typesafe.akka
-  bomArtifact2=akka-http-bom_$scala.binary.version$
+  bomGroup2=org.apache.pekko
+  bomArtifact2=pekko-http-bom_$scala.binary.version$
   bomVersionSymbols2=AkkaHttpVersion
   symbol2="AkkaHttpVersion"
   value2="$project.version$"
-  group1="com.typesafe.akka" artifact1="akka-http_$scala.binary.version$" version1="AkkaHttpVersion"
-  group2="com.typesafe.akka" artifact2="akka-stream_$scala.binary.version$" version2=AkkaVersion
-  group3="com.typesafe.akka" artifact3="akka-http-testkit_$scala.binary.version$" version3=AkkaHttpVersion scope3=Test
-  group4="com.typesafe.akka" artifact4="akka-stream-testkit_$scala.binary.version$" version4=AkkaVersion scope4=Test
+  group1="org.apache.pekko" artifact1="pekko-http_$scala.binary.version$" version1="AkkaHttpVersion"
+  group2="org.apache.pekko" artifact2="pekko-stream_$scala.binary.version$" version2=AkkaVersion
+  group3="org.apache.pekko" artifact3="pekko-http-testkit_$scala.binary.version$" version3=AkkaHttpVersion scope3=Test
+  group4="org.apache.pekko" artifact4="pekko-stream-testkit_$scala.binary.version$" version4=AkkaVersion scope4=Test
 }

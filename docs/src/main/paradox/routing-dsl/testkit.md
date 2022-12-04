@@ -11,11 +11,11 @@ To use Apache Pekko HTTP TestKit, add the module to your project:
 @@dependency [sbt,Gradle,Maven] {
   symbol1=AkkaVersion
   value1=$akka.version$
-  bomGroup2="com.typesafe.akka" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol2="AkkaHttpVersion"
   value2="$project.version$"
-  group1="com.typesafe.akka" artifact1="pekko-stream-testkit_$scala.binary.version$" version1=AkkaVersion
-  group2="com.typesafe.akka" artifact2="pekko-http-testkit_$scala.binary.version$" version2="AkkaHttpVersion"
+  group1="org.apache.pekko" artifact1="pekko-stream-testkit_$scala.binary.version$" version1=AkkaVersion
+  group2="org.apache.pekko" artifact2="pekko-http-testkit_$scala.binary.version$" version2="AkkaHttpVersion"
 }
 
 ## Usage

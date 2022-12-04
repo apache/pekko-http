@@ -49,7 +49,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.duration._
 
 /**
- * Akka extension for HTTP which serves as the main entry point into akka-http.
+ * Akka extension for HTTP which serves as the main entry point into pekko-http.
  *
  * Use as `Http().bindAndHandle` etc. with an implicit [[ActorSystem]] in scope.
  */
@@ -60,22 +60,22 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     with DefaultSSLContextCreation {
 
   akka.http.Version.check(system.settings.config)
-  akka.AkkaVersion.require("akka-http", akka.http.Version.supportedAkkaVersion)
+  akka.AkkaVersion.require("pekko-http", akka.http.Version.supportedAkkaVersion)
 
   // Used for ManifestInfo.checkSameVersion
   private def allModules: List[String] = List(
-    "akka-parsing",
-    "akka-http-core",
-    "akka-http2-support",
-    "akka-http",
-    "akka-http-caching",
-    "akka-http-testkit",
-    "akka-http-tests",
-    "akka-http-marshallers-scala",
-    "akka-http-marshallers-java",
-    "akka-http-spray-json",
-    "akka-http-xml",
-    "akka-http-jackson")
+    "pekko-parsing",
+    "pekko-http-core",
+    "pekko-http2-support",
+    "pekko-http",
+    "pekko-http-caching",
+    "pekko-http-testkit",
+    "pekko-http-tests",
+    "pekko-http-marshallers-scala",
+    "pekko-http-marshallers-java",
+    "pekko-http-spray-json",
+    "pekko-http-xml",
+    "pekko-http-jackson")
 
   ManifestInfo(system).checkSameVersion("Akka HTTP", allModules, logWarning = true)
 

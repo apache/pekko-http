@@ -1,6 +1,6 @@
 # Custom Directives
 
-Part of the power of akka-http directives comes from the ease with which it’s possible to define
+Part of the power of pekko-http directives comes from the ease with which it’s possible to define
 custom directives at differing levels of abstraction.
 
 There are essentially three ways of creating custom directives:
@@ -12,7 +12,7 @@ There are essentially three ways of creating custom directives:
 ## Configuration Labeling
 
 The easiest way to create a custom directive is to simply assign a new name for a certain configuration
-of one or more existing directives. In fact, most of the predefined akka-http directives can be considered
+of one or more existing directives. In fact, most of the predefined pekko-http directives can be considered
 named configurations of more low-level directives.
 
 The basic technique is explained in the chapter about Composing Directives, where, for example, a new directive
@@ -181,7 +181,7 @@ the Route the directives presents to the outside from its inner Route building f
 Extractions are kept as a Tuple. Here are a few examples:
 
 A `Directive[Unit]` extracts nothing (like the get directive).
-Because this type is used quite frequently akka-http defines a type alias for it:
+Because this type is used quite frequently pekko-http defines a type alias for it:
 
 ```scala
 type Directive0 = Directive[Unit]

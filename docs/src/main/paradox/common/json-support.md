@@ -1,7 +1,7 @@
 # JSON Support
 
 Apache Pekko HTTP's @ref[marshalling](marshalling.md) and @ref[unmarshalling](unmarshalling.md) infrastructure makes it rather easy to seamlessly convert application-domain objects from and to JSON.
-Integration with @scala[[spray-json]]@java[[Jackson]] is provided out of the box through the @scala[`akka-http-spray-json`]@java[`pekko-http-jackson`] module.
+Integration with @scala[[spray-json]]@java[[Jackson]] is provided out of the box through the @scala[`pekko-http-spray-json`]@java[`pekko-http-jackson`] module.
 Integration with other JSON libraries are supported by the community.
 See [the list of current community extensions for Apache Pekko HTTP](https://akka.io/community/#extensions-to-akka-http).
 
@@ -12,10 +12,10 @@ See [the list of current community extensions for Apache Pekko HTTP](https://akk
 To make use of the support module for (un)marshalling from and to JSON with [Jackson], add a library dependency onto:
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="com.typesafe.akka" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol="AkkaHttpVersion"
   value="$project.version$"
-  group="com.typesafe.akka"
+  group="org.apache.pekko"
   artifact="pekko-http-jackson_$scala.binary.version$"
   version="AkkaHttpVersion"
 }
@@ -45,11 +45,11 @@ that an implicit `spray.json.RootJsonReader` and/or `spray.json.RootJsonWriter` 
 To enable automatic support for (un)marshalling from and to JSON with [spray-json], add a library dependency onto:
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
   symbol="AkkaHttpVersion"
   value="$project.version$"
-  group="com.typesafe.akka"
-  artifact="akka-http-spray-json_$scala.binary.version$"
+  group="org.apache.pekko"
+  artifact="pekko-http-spray-json_$scala.binary.version$"
   version="AkkaHttpVersion"
 }
 
