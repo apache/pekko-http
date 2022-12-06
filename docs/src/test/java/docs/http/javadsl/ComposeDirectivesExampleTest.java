@@ -54,7 +54,7 @@ public class ComposeDirectivesExampleTest extends AllDirectives {
       //anyOf examples
       path("hello", () ->
         anyOf(this::get, this::put, () ->
-          complete("<h1>Say hello to akka-http</h1>"))),
+          complete("<h1>Say hello to pekko-http</h1>"))),
       path("foo", () ->
         anyOf(bindParameter(this::parameter, "foo"), bindParameter(this::parameter, "bar"), (String param) ->
           complete("param is " + param))
