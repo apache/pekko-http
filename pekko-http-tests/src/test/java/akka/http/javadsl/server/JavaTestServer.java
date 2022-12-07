@@ -120,7 +120,7 @@ public class JavaTestServer {
   private String index() {
     return "    <html>\n" +
       "      <body>\n" +
-      "        <h1>Say hello to <i>akka-http-core</i>!</h1>\n" +
+      "        <h1>Say hello to <i>pekko-http-core</i>!</h1>\n" +
       "        <p>Defined resources:</p>\n" +
       "        <ul>\n" +
       "          <li><a href=\"/ping\">/ping</a></li>\n" +
