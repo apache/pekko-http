@@ -29,7 +29,7 @@ import scala.collection.immutable
 import scala.reflect.{ classTag, ClassTag }
 import pekko.Done
 import pekko.actor.ClassicActorSystemProvider
-import pekko.parboiled2.CharUtils
+import org.parboiled2.CharUtils
 import pekko.util.{ ByteString, HashCode, OptionVal }
 import pekko.http.ccompat.{ pre213, since213 }
 import pekko.http.impl.util._

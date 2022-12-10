@@ -20,7 +20,7 @@ import pekko.stream.TLSProtocol._
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
-import pekko.parboiled2.CharUtils
+import org.parboiled2.CharUtils
 import pekko.util.ByteString
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.scaladsl.settings.ParserSettings

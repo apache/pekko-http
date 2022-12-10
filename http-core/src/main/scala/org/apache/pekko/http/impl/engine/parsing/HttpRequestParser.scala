@@ -30,7 +30,7 @@ import ParserOutput._
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util.ByteStringParserInput
-import pekko.parboiled2.ParserInput
+import org.parboiled2.ParserInput
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.TLSProtocol.SessionBytes
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }

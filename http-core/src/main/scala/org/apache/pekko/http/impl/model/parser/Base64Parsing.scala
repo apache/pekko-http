@@ -18,8 +18,8 @@ package org.apache.pekko.http.impl.model.parser
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.parboiled2.util.Base64
-import pekko.parboiled2._
+import org.parboiled2.util.Base64
+import org.parboiled2._
 
 /**
  * INTERNAL API

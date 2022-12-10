@@ -15,7 +15,7 @@ package org.apache.pekko.http.impl.model.parser
 
 import org.apache.pekko
 import pekko.http.scaladsl.model.headers._
-import pekko.parboiled2._
+import org.parboiled2._
 
 // see grammar at http://tools.ietf.org/html/rfc6455#section-4.3
 private[parser] trait WebSocketHeaders { this: Parser with CommonRules with CommonActions =>

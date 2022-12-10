@@ -15,7 +15,7 @@ package org.apache.pekko.http.scaladsl.model.headers
 
 import org.apache.pekko
 import pekko.http.impl.model.parser.CharacterClasses
-import pekko.parboiled2.CharPredicate
+import org.parboiled2.CharPredicate
 import java.util.{ Optional, OptionalLong }
 
 import pekko.http.scaladsl.model.DateTime

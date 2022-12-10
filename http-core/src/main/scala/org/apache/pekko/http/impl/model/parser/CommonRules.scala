@@ -19,8 +19,8 @@ import scala.collection.immutable.TreeMap
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
-import pekko.parboiled2._
-import pekko.shapeless._
+import org.parboiled2._
+import org.parboiled2.support.hlist._
 
 private[parser] trait CommonRules { this: HeaderParser with Parser with StringBuilding =>
   import CharacterClasses._

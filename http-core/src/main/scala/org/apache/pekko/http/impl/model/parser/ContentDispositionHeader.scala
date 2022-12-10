@@ -16,7 +16,7 @@ package org.apache.pekko.http.impl.model.parser
 import scala.collection.immutable.TreeMap
 
 import org.apache.pekko
-import pekko.parboiled2.Parser
+import org.parboiled2.Parser
 import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util.ISO88591
 import pekko.http.impl.util.UTF8
