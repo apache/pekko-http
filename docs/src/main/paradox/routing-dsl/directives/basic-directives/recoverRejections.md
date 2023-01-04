@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [BasicDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/BasicDirectives.scala) { #recoverRejections }
+@@signature [BasicDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/BasicDirectives.scala) { #recoverRejections }
 
 @@@
 

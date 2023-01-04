@@ -1,6 +1,6 @@
 # 1. Introduction
 
-@@project-info{ projectId="pekko-http" }
+@@project-info{ projectId="http" }
 
 The Apache Pekko HTTP modules implement a full server- and client-side HTTP stack on top of *pekko-actor* and *pekko-stream*. It's
 not a web-framework but rather a more general toolkit for providing and consuming HTTP-based services. While interaction

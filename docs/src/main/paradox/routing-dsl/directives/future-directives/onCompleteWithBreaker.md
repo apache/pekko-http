@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [FutureDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/FutureDirectives.scala) { #onCompleteWithBreaker }
+@@signature [FutureDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/FutureDirectives.scala) { #onCompleteWithBreaker }
 
 @@@
 
