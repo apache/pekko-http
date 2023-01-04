@@ -27,7 +27,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
 
   // need to serve from the src directory, when sbt copies the resource directory over to the
   // target directory it will resolve symlinks in the process
-  val testRoot = new File("pekko-http-tests/src/test/resources")
+  val testRoot = new File("http-tests/src/test/resources")
   require(testRoot.exists(), s"testRoot was not found at ${testRoot.getAbsolutePath}")
 
   override def testConfigSource = super.testConfigSource ++ """

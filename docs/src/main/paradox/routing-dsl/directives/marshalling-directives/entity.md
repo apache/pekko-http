@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [MarshallingDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/MarshallingDirectives.scala) { #entity }
+@@signature [MarshallingDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/MarshallingDirectives.scala) { #entity }
 
 @@@
 

@@ -334,7 +334,7 @@ Connection
 the potential wish of the application to close the connection after the respective response has been sent out.
 The actual logic for determining whether to close the connection is quite involved. It takes into account the
 request's method, protocol and potential @apidoc[Connection] header as well as the response's protocol, entity and
-potential @apidoc[Connection] header. See @github[this test](/pekko-http-core/src/test/scala/akka/http/impl/engine/rendering/ResponseRendererSpec.scala) { #connection-header-table } for a full table of what happens when.
+potential @apidoc[Connection] header. See @github[this test](/http-core/src/test/scala/akka/http/impl/engine/rendering/ResponseRendererSpec.scala) { #connection-header-table } for a full table of what happens when.
 
 Strict-Transport-Security
 : HTTP Strict Transport Security (HSTS) is a web security policy mechanism which is communicated by the
@@ -356,7 +356,7 @@ or the other way around etc), a helper @scala[trait]@java[classes] for custom He
 Thanks to extending @apidoc[ModeledCustomHeader] instead of the plain @apidoc[CustomHeader] @scala[such header can be matched]@java[the following methods are at your disposal]:
 
 Scala
-:   @@snip [ModeledCustomHeaderSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #modeled-api-key-custom-header }
+:   @@snip [ModeledCustomHeaderSpec.scala](/http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #modeled-api-key-custom-header }
 
 Java
 :   @@snip [CustomHeaderExampleTest.java](/docs/src/test/java/docs/http/javadsl/CustomHeaderExampleTest.java) { #modeled-api-key-custom-header }
@@ -364,7 +364,7 @@ Java
 Which allows this @scala[CustomHeader]@java[modeled custom header] to be used in the following scenarios:
 
 Scala
-:   @@snip [ModeledCustomHeaderSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #matching-examples }
+:   @@snip [ModeledCustomHeaderSpec.scala](/http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #matching-examples }
 
 Java
 :   @@snip [CustomHeaderExampleTest.java](/docs/src/test/java/docs/http/javadsl/CustomHeaderExampleTest.java) { #conversion-creation-custom-header }
@@ -372,7 +372,7 @@ Java
 Including usage within the header directives like in the following @ref[headerValuePF](../routing-dsl/directives/header-directives/headerValuePF.md) example:
 
 Scala
-:   @@snip [ModeledCustomHeaderSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #matching-in-routes }
+:   @@snip [ModeledCustomHeaderSpec.scala](/http-tests/src/test/scala/akka/http/scaladsl/server/ModeledCustomHeaderSpec.scala) { #matching-in-routes }
 
 Java
 :   @@snip [CustomHeaderExampleTest.java](/docs/src/test/java/docs/http/javadsl/CustomHeaderExampleTest.java) { #header-value-pf }
@@ -432,7 +432,7 @@ media types, e.g. that `application/custom` is to be treated as `NonBinary` with
 need to register the custom media type in the server's settings by configuring @apidoc[ParserSettings] like this:
 
 Scala
-:   @@snip [CustomMediaTypesSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/CustomMediaTypesSpec.scala) { #application-custom }
+:   @@snip [CustomMediaTypesSpec.scala](/http-tests/src/test/scala/akka/http/scaladsl/CustomMediaTypesSpec.scala) { #application-custom }
 
 Java
 :   @@snip [CustomMediaTypesExampleTest.java](/docs/src/test/java/docs/http/javadsl/CustomMediaTypesExampleTest.java) { #application-custom-java }
@@ -448,7 +448,7 @@ well-known status codes, however sometimes you may need to use a custom one (or 
 Similarly to the media types registration, you can register custom status codes by configuring @apidoc[ParserSettings] like this:
 
 Scala
-:   @@snip [CustomStatusCodesSpec.scala](/pekko-http-tests/src/test/scala/akka/http/scaladsl/CustomStatusCodesSpec.scala) { #application-custom }
+:   @@snip [CustomStatusCodesSpec.scala](/http-tests/src/test/scala/akka/http/scaladsl/CustomStatusCodesSpec.scala) { #application-custom }
 
 Java
 :   @@snip [CustomStatusCodesExampleTest.java](/docs/src/test/java/docs/http/javadsl/CustomStatusCodesExampleTest.java) { #application-custom-java }

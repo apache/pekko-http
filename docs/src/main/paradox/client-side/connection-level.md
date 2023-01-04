@@ -79,7 +79,7 @@ On the client-side the stand-alone HTTP layer forms a `BidiStage` stage that "up
 It is defined like this:
 
 @@@ div { .group-scala }
-@@snip [Http.scala](/pekko-http-core/src/main/scala/akka/http/scaladsl/Http.scala) { #client-layer }
+@@snip [Http.scala](/http-core/src/main/scala/akka/http/scaladsl/Http.scala) { #client-layer }
 @@@
 @@@ div { .group-java }
 ```java
