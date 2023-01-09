@@ -11,6 +11,8 @@ general toolkit for providing and consuming HTTP-based services. While
 interaction with a browser is of course also in scope it is not the primary
 focus of Pekko HTTP.
 
+Pekko HTTP is a fork of [Akka HTTP](https://github.com/akka/akka-http) 10.2.x release, prior to the Akka project's adoption of the Business Source License.
+
 Pekko HTTP follows a rather open design and many times offers several different
 API levels for "doing the same thing". You get to pick the API level of
 abstraction that is most suitable for your application. This means that, if you
