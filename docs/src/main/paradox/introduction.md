@@ -30,17 +30,17 @@ come from Play and want to try Apache Pekko HTTP, we collected a @ref[side-by-si
 
 Apache Pekko HTTP is provided as independent modules from Apache Pekko itself under its own release cycle.
 The modules, however, do *not* depend on `pekko-actor` or `pekko-stream`, so the user is required to
-choose an Pekko version to run against and add a manual dependency to `pekko-stream` of the chosen version.
+choose an Apache Pekko version to run against and add a manual dependency to `pekko-stream` of the chosen version.
 
 @@dependency [sbt,Gradle,Maven] {
-  symbol1=AkkaVersion
+  symbol1=PekkoVersion
   value1=$akka.version$
-  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
-  symbol2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
+  symbol2="PekkoHttpVersion"
   value2="$project.version$"
-  group1="org.apache.pekko" artifact1="pekko-actor-typed_$scala.binary.version$" version1=AkkaVersion
-  group2="org.apache.pekko" artifact2="pekko-stream_$scala.binary.version$" version2=AkkaVersion
-  group3="org.apache.pekko" artifact3="pekko-http_$scala.binary.version$" version3="AkkaHttpVersion"
+  group1="org.apache.pekko" artifact1="pekko-actor-typed_$scala.binary.version$" version1=PekkoVersion
+  group2="org.apache.pekko" artifact2="pekko-stream_$scala.binary.version$" version2=PekkoVersion
+  group3="org.apache.pekko" artifact3="pekko-http_$scala.binary.version$" version3="PekkoHttpVersion"
 }
 
 You may download a packaged version of this project by clicking "Create a project for me!" on the
@@ -104,12 +104,12 @@ for JSON. An additional module provides JSON serialization using the spray-json 
 for details):
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
-  symbol="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
+  symbol="PekkoHttpVersion"
   value="$project.version$"
   group="org.apache.pekko"
   artifact="pekko-http-spray-json_$scala.binary.version$"
-  version="AkkaHttpVersion"
+  version="PekkoHttpVersion"
 }
 
 @@@
@@ -118,12 +118,12 @@ JSON support is possible in `pekko-http` by the use of Jackson, an external arti
 for details):
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
-  symbol="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
+  symbol="PekkoHttpVersion"
   value="$project.version$"
   group="org.apache.pekko"
   artifact="pekko-http-jackson_$scala.binary.version$"
-  version="AkkaHttpVersion"
+  version="PekkoHttpVersion"
 }
 
 @@@

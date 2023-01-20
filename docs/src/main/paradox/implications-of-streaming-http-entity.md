@@ -1,6 +1,6 @@
 # Implications of the streaming nature of Request/Response Entities
 
-Apache Pekko HTTP is streaming *all the way through*, which means that the back-pressure mechanisms enabled by Akka Streams
+Apache Pekko HTTP is streaming *all the way through*, which means that the back-pressure mechanisms enabled by Apache Pekko Streams
 are exposed through all layers–from the TCP layer, through the HTTP server, all the way up to the user-facing @apidoc[HttpRequest]
 and @apidoc[HttpResponse] and their @apidoc[HttpEntity] APIs.
 
@@ -40,7 +40,7 @@ which can be done via running the underlying `dataBytes` Source.
 
 It is encouraged to use various streaming techniques to utilise the underlying infrastructure to its fullest,
 for example by framing the incoming chunks, parsing them line-by-line and then connecting the flow into another
-destination Sink, such as a File or other Akka Streams connector:
+destination Sink, such as a File or other Apache Pekko Streams connector:
 
 Scala
 :   @@snip [HttpClientExampleSpec.scala](/docs/src/test/scala/docs/http/scaladsl/HttpClientExampleSpec.scala) { #manual-entity-consume-example-1 }
@@ -58,9 +58,9 @@ Scala
 Java
 :   @@snip [HttpClientExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/HttpClientExampleDocTest.java) { #manual-entity-consume-example-2 }
 
-### Integrating with Akka Streams
+### Integrating with Apache Pekko Streams
 
-In some cases, it is necessary to process the results of a series of Apache Pekko HTTP calls as Akka Streams. In order
+In some cases, it is necessary to process the results of a series of Apache Pekko HTTP calls as Apache Pekko Streams. In order
 to ensure that the HTTP Response Entity is consumed in a timely manner, the Apache Pekko HTTP stream for each request must
 be executed and completely consumed, then sent along for further processing.
 

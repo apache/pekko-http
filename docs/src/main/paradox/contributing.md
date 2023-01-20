@@ -25,8 +25,8 @@ Maven
     ...
       <repositories>
         <repository>
-          <id>akka-http-snapshots</id>
-          <name>Akka HTTP Snapshots</name>
+          <id>pekko-http-snapshots</id>
+          <name>Pekko HTTP Snapshots</name>
           <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </repository>
       </repositories>

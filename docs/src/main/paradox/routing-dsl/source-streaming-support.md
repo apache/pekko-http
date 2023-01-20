@@ -1,6 +1,6 @@
 # Source Streaming
 
-Apache Pekko HTTP supports completing a request with an Akka @apidoc[Source[T, \_]], which makes it possible to easily build
+Apache Pekko HTTP supports completing a request with an Apache Pekko @apidoc[Source[T, \_]], which makes it possible to easily build
 and consume streaming end-to-end APIs which apply back pressure throughout the entire stack.
 
 It is possible to complete requests with raw @apidoc[Source[ByteString, \_]], however often it is more convenient to
@@ -42,7 +42,7 @@ In this example we implement an API representing an infinite stream of tweets, v
 @@@ div { .group-scala }
 
 Firstly, we'll need to get some additional marshalling infrastructure set up, that is able to marshal to and from an
-Akka Streams @apidoc[Source[T, \_]]. One such trait, containing the needed marshallers is `SprayJsonSupport`, which uses
+Apache Pekko Streams @apidoc[Source[T, \_]]. One such trait, containing the needed marshallers is `SprayJsonSupport`, which uses
 `spray-json` (a high performance JSON parser library), and is shipped as part of Apache Pekko HTTP in the
 `pekko-http-spray-json` module.
 
@@ -56,7 +56,7 @@ like to stream a different content type (for example plists or protobuf).
 @@@ div { .group-java }
 
 Firstly, we'll need to get some additional marshalling infrastructure set up, that is able to marshal to and from an
-Akka Streams @apidoc[Source[T, ?]]. Here we'll use the `Jackson` helper class from `pekko-http-jackson` (a separate library
+Apache Pekko Streams @apidoc[Source[T, ?]]. Here we'll use the `Jackson` helper class from `pekko-http-jackson` (a separate library
 that you should add as a dependency if you want to use Jackson with Apache Pekko HTTP).
 
 First we enable JSON Streaming by making an implicit @apidoc[EntityStreamingSupport] instance available (Step 1).
@@ -94,7 +94,7 @@ For example, in case of JSON Streaming, there isn't really one standard about re
 to render multiple JSON objects in a line-by-line fashion (Twitter's streaming APIs for example), while others simply return
 very large arrays, which could be streamed as well.
 
-Akka defaults to the second one (streaming a JSON Array), as it is correct JSON and clients not expecting
+Apache Pekko defaults to the second one (streaming a JSON Array), as it is correct JSON and clients not expecting
 a streaming API would still be able to consume it in a naive way if they'd want to.
 
 The line-by-line approach however is also pretty popular even though it is not valid JSON. Its simplicity for
@@ -132,7 +132,7 @@ the server and is feeding it with one line of measurement data.
 
 In this example, we want to consume this data in a streaming fashion from the request entity and also apply
 back pressure to the underlying TCP connection should the server be unable to cope with the rate of incoming data. Back pressure
-is automatically applied thanks to @extref[Akka Streams](akka-docs:stream/index.html).
+is automatically applied thanks to @extref[Apache Pekko Streams](akka-docs:stream/index.html).
 
 Scala
 :   @@snip [JsonStreamingExamplesSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/directives/JsonStreamingExamplesSpec.scala) { #measurement-model #measurement-format }

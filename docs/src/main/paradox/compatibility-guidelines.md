@@ -2,7 +2,7 @@
 
 ## Binary Compatibility Rules
 
-Apache Pekko HTTP follows the same binary compatibility rules as Akka itself.
+Apache Pekko HTTP follows the same binary compatibility rules as Apache Pekko itself.
 In short it means that the versioning scheme should be read as `major.minor.patch`,
 wherein all versions with the same `major` version are backwards binary-compatible,
 with the exception of `@ApiMayChange`, `@InternalApi` or `@DoNotInherit` marked APIs 
@@ -124,10 +124,10 @@ The Apache Pekko HTTP Team currently does not intend to break binary compatibili
     
 ## Specific versions inter-op discussion
 
-In this section we discuss some of the specific cases of compatibility between versions of Apache Pekko HTTP and Akka itself.
+In this section we discuss some of the specific cases of compatibility between versions of Apache Pekko HTTP and Apache Pekko itself.
 
 For example, you may be interested in those examples if you encountered the following exception in your system when upgrading parts 
-of your libraries: `Detected java.lang.NoSuchMethodError error, which MAY be caused by incompatible Pekko versions on the classpath. Please note that a given Pekko version MUST be the same across all modules of Pekko that you are using, e.g. if you use pekko-actor [2.5.3 (resolved from current classpath)] all other core Apache Pekko modules MUST be of the same version. External projects like Apache Pekko Connectors, Persistence plugins or Apache Pekko HTTP etc. have their own version numbers - please make sure you're using a compatible set of libraries.`
+of your libraries: `Detected java.lang.NoSuchMethodError error, which MAY be caused by incompatible Pekko versions on the classpath. Please note that a given Pekko version MUST be the same across all modules of Apache Pekko that you are using, e.g. if you use pekko-actor [2.5.3 (resolved from current classpath)] all other core Apache Pekko modules MUST be of the same version. External projects like Apache Pekko Connectors, Persistence plugins or Apache Pekko HTTP etc. have their own version numbers - please make sure you're using a compatible set of libraries.`
 
 ### Compatibility with Apache Pekko
 
@@ -138,15 +138,15 @@ a manual dependency to `pekko-stream`.
 The same goes for `pekko-http-testkit`: If the testkit is used, explicitly declare the dependency on `pekko-stream-testkit` of same Pekko version as `pekko-stream`.
 
 @@dependency [sbt,Gradle,Maven] {
-  symbol1=AkkaVersion
+  symbol1=PekkoVersion
   value1=$akka.version$
   bomGroup2=org.apache.pekko
   bomArtifact2=pekko-http-bom_$scala.binary.version$
-  bomVersionSymbols2=AkkaHttpVersion
-  symbol2="AkkaHttpVersion"
+  bomVersionSymbols2=PekkoHttpVersion
+  symbol2="PekkoHttpVersion"
   value2="$project.version$"
-  group1="org.apache.pekko" artifact1="pekko-http_$scala.binary.version$" version1="AkkaHttpVersion"
-  group2="org.apache.pekko" artifact2="pekko-stream_$scala.binary.version$" version2=AkkaVersion
-  group3="org.apache.pekko" artifact3="pekko-http-testkit_$scala.binary.version$" version3=AkkaHttpVersion scope3=Test
-  group4="org.apache.pekko" artifact4="pekko-stream-testkit_$scala.binary.version$" version4=AkkaVersion scope4=Test
+  group1="org.apache.pekko" artifact1="pekko-http_$scala.binary.version$" version1="PekkoHttpVersion"
+  group2="org.apache.pekko" artifact2="pekko-stream_$scala.binary.version$" version2=PekkoVersion
+  group3="org.apache.pekko" artifact3="pekko-http-testkit_$scala.binary.version$" version3=PekkoHttpVersion scope3=Test
+  group4="org.apache.pekko" artifact4="pekko-stream-testkit_$scala.binary.version$" version4=PekkoVersion scope4=Test
 }

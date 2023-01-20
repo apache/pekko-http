@@ -12,12 +12,12 @@ See [the list of current community extensions for Apache Pekko HTTP](https://akk
 To make use of the support module for (un)marshalling from and to JSON with [Jackson], add a library dependency onto:
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
-  symbol="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
+  symbol="PekkoHttpVersion"
   value="$project.version$"
   group="org.apache.pekko"
   artifact="pekko-http-jackson_$scala.binary.version$"
-  version="AkkaHttpVersion"
+  version="PekkoHttpVersion"
 }
 
 Use `akka.http.javadsl.marshallers.jackson.Jackson.unmarshaller(T.class)` to create an @apidoc[Unmarshaller[HttpEntity,T]] which expects the request
@@ -45,12 +45,12 @@ that an implicit `spray.json.RootJsonReader` and/or `spray.json.RootJsonWriter` 
 To enable automatic support for (un)marshalling from and to JSON with [spray-json], add a library dependency onto:
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
-  symbol="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
+  symbol="PekkoHttpVersion"
   value="$project.version$"
   group="org.apache.pekko"
   artifact="pekko-http-spray-json_$scala.binary.version$"
-  version="AkkaHttpVersion"
+  version="PekkoHttpVersion"
 }
 
 Next, provide a `RootJsonFormat[T]` for your type and bring it into scope. Check out the [spray-json] documentation for more info on how to do this.

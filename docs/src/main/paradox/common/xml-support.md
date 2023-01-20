@@ -36,12 +36,12 @@ In order to enable support for (un)marshalling from and to XML with [Scala XML][
 the following dependency:
 
 @@dependency [sbt,Gradle,Maven] {
-  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
-  symbol="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
+  symbol="PekkoHttpVersion"
   value="$project.version$"
   group="org.apache.pekko"
   artifact="pekko-http-xml_$scala.binary.version$"
-  version="AkkaHttpVersion"
+  version="PekkoHttpVersion"
 }
 
 Once you have done this (un)marshalling between XML and `NodeSeq` instances should work nicely and transparently,

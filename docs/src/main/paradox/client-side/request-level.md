@@ -39,7 +39,7 @@ Java
 
 ### Using the Future-Based API in Actors
 
-When using the @scala[`Future`]@java[`CompletionStage`] based API from inside a classic Akka @apidoc[Actor], all the usual caveats apply to how one should deal
+When using the @scala[`Future`]@java[`CompletionStage`] based API from inside a classic Apache Pekko @apidoc[Actor], all the usual caveats apply to how one should deal
 with the futures completion. For example, you should not access the actor's state from within the @scala[`Future`]@java[`CompletionStage`]'s callbacks
 (such as `map`, `onComplete`, ...) and, instead, you should use the @scala[`pipeTo`]@java[`pipe`] pattern to pipe the result back
 to the actor as a message:
