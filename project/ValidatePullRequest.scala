@@ -176,7 +176,8 @@ object ValidatePullRequest extends AutoPlugin {
         diffOutput
           .map(l => l.trim)
           .filter(l =>
-            l.startsWith("pekko-") ||
+            l.startsWith("http") ||
+            l.startsWith("parsing") ||
             l.startsWith("docs") ||
             BuildFilesAndDirectories.exists(l startsWith))
           .map(l => l.takeWhile(_ != '/'))
@@ -189,7 +190,8 @@ object ValidatePullRequest extends AutoPlugin {
           val dirtyDirectories = statusOutput
             .map(l => l.trim.dropWhile(_ != ' ').drop(1))
             .map(_.takeWhile(_ != '/'))
-            .filter(dir => dir.startsWith("pekko-") || dir.startsWith("docs") || BuildFilesAndDirectories.contains(dir))
+            .filter(dir => dir.startsWith("http") || dir.startsWith("parsing") || dir.startsWith("docs") ||
+              BuildFilesAndDirectories.contains(dir))
             .toSet
           log.info(
             "Detected uncommitted changes in directories (including in dependency analysis): " + dirtyDirectories.mkString(
