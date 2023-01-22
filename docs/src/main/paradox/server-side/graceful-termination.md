@@ -2,7 +2,7 @@
 
 ## Pekko Coordinated Shutdown
 
-@extref[Coordinated shutdown](akka-docs:coordinated-shutdown.html) is Apache Pekko's managed way of shutting down multiple modules / sub-systems (persistence, cluster, http etc)
+@extref[Coordinated shutdown](pekko-docs:coordinated-shutdown.html) is Apache Pekko's managed way of shutting down multiple modules / sub-systems (persistence, cluster, http etc)
 in a predictable and ordered fashion. For example, in a typical Apache Pekko application you will want to stop accepting new HTTP connections, and then shut down the cluster etc.
 
 The recommended Apache Pekko HTTP server shutdown consists of three steps:
@@ -56,7 +56,7 @@ Immediately the
 @scala[@scaladoc[ServerBinding#whenTerminationSignalIssued](akka.http.scaladsl.Http$$ServerBinding#whenTerminationSignalIssued:Future[Deadline]) `Future`]
 is completed.
 This can be used to signal parts of the application that the HTTP server is shutting down and they should clean up as well.
-Note also that for more advanced shut down scenarios you may want to use the @extref[Coordinated Shutdown](akka-docs:/actors.html#coordinated-shutdown) capabilities of Apache Pekko.
+Note also that for more advanced shut down scenarios you may want to use the @extref[Coordinated Shutdown](pekko-docs:/actors.html#coordinated-shutdown) capabilities of Apache Pekko.
 
 Next, all in flight requests will be handled. If a request is "in-flight" (being handled by user code), it is given `hardDeadline` time to complete.
 

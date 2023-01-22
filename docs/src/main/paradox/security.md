@@ -18,6 +18,6 @@ report with the Lightbend Akka team.
 
 @@@ index
 
- * [Akka HTTP security fixes](https://doc.akka.io/docs/akka-http/current/security.html)
+ * @link:[Akka HTTP security fixes](https://doc.akka.io/docs/akka-http/10.2/security.html)
 
 @@@

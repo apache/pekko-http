@@ -20,10 +20,10 @@ from a background with non-"streaming first" HTTP Servers.
 
 ## Streams and HTTP
 
-The Apache Pekko HTTP server is implemented on top of @extref[Streams](akka-docs:stream/index.html) and makes heavy use of it - in its
+The Apache Pekko HTTP server is implemented on top of @extref[Streams](pekko-docs:stream/index.html) and makes heavy use of it - in its
 implementation as well as on all levels of its API.
 
-On the connection level, Apache Pekko HTTP offers basically the same kind of interface as @extref[Working with streaming IO](akka-docs:stream/stream-io.html):
+On the connection level, Apache Pekko HTTP offers basically the same kind of interface as @extref[Working with streaming IO](pekko-docs:stream/stream-io.html):
 A socket binding is represented as a stream of incoming connections. The application pulls connections from this stream
 source and, for each of them, provides a @apidoc[Flow[HttpRequest, HttpResponse, \_]] to "translate" requests into responses.
 
@@ -205,7 +205,7 @@ through the stream starting from the stage which failed, all the way downstream 
 #### Connections Source failures
 
 In the example below we add a custom @apidoc[GraphStage] in order to react to the
-stream's failure. See @extref[Custom stream processing](akka-docs:stream/stream-customize.html) for more on custom stages. We signal a `failureMonitor` actor with the cause why the stream is going down, and let the Actor
+stream's failure. See @extref[Custom stream processing](pekko-docs:stream/stream-customize.html) for more on custom stages. We signal a `failureMonitor` actor with the cause why the stream is going down, and let the Actor
 handle the rest – maybe it'll decide to restart the server or shutdown the ActorSystem, that however is not our concern anymore.
 
 Scala

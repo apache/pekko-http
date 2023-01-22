@@ -132,7 +132,7 @@ the server and is feeding it with one line of measurement data.
 
 In this example, we want to consume this data in a streaming fashion from the request entity and also apply
 back pressure to the underlying TCP connection should the server be unable to cope with the rate of incoming data. Back pressure
-is automatically applied thanks to @extref[Apache Pekko Streams](akka-docs:stream/index.html).
+is automatically applied thanks to @extref[Apache Pekko Streams](pekko-docs:stream/index.html).
 
 Scala
 :   @@snip [JsonStreamingExamplesSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/directives/JsonStreamingExamplesSpec.scala) { #measurement-model #measurement-format }

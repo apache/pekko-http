@@ -206,7 +206,7 @@ Java
 The timeouts you consciously defined on your lightning fast development environment might be too tight for your, most
 probably, high-loaded Continuous Integration server, invariably causing spurious failures. To account for such
 situations, timeout durations can be scaled by a given factor on such environments. Check the
-@extref[Apache Pekko Docs](akka-docs:testing.html#accounting-for-slow-test-systems)
+@extref[Apache Pekko Docs](pekko-docs:testing.html#accounting-for-slow-test-systems)
 for further information.
 
 
