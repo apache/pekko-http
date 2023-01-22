@@ -1,6 +1,6 @@
 resolvers += Classpaths.sbtPluginReleases
 resolvers += Classpaths.typesafeReleases
-resolvers += Resolver.sonatypeRepo("releases") // to more quickly obtain paradox rigth after release
+resolvers ++= Resolver.sonatypeOssRepos("releases") // to more quickly obtain paradox right after release
 
 // need this to resolve https://jcenter.bintray.com/org/jenkins-ci/jenkins/1.26/
 // which is used by plugin "org.kohsuke" % "github-api" % "1.68"
@@ -17,7 +17,11 @@ addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1") // for 
 addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.1")
 addSbtPlugin("com.lightbend.sbt" % "sbt-publish-rsync" % "0.2")
 addSbtPlugin("com.lightbend.sbt" % "sbt-bill-of-materials" % "1.0.2")
-addSbtPlugin("com.lightbend.akka" % "sbt-paradox-akka" % "0.44")
+// We have to deliberately use older versions of sbt-paradox because current Pekko sbt build
+// only loads on JDK 1.8 so we need to bring in older versions of parboiled which support JDK 1.8
+addSbtPlugin("com.lightbend.paradox" % "sbt-paradox" % "0.9.2")
+addSbtPlugin("com.lightbend.paradox" % "sbt-paradox-apidoc" % "0.10.1")
+addSbtPlugin("com.lightbend.paradox" % "sbt-paradox-project-info" % "2.0.0")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.30")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.10.0")

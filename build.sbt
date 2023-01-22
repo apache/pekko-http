@@ -400,7 +400,7 @@ lazy val httpScalafixTests =
     .enablePlugins(ScalafixTestkitPlugin)
 
 lazy val docs = project("docs")
-  .enablePlugins(AkkaParadoxPlugin, NoPublish, PublishRsyncPlugin)
+  .enablePlugins(ParadoxPlugin, NoPublish, PublishRsyncPlugin)
   .disablePlugins(MimaPlugin)
   .addAkkaModuleDependency("akka-stream", "provided", AkkaDependency.docs)
   .addAkkaModuleDependency("akka-actor-typed", "provided", AkkaDependency.docs)
