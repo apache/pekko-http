@@ -190,7 +190,8 @@ object ValidatePullRequest extends AutoPlugin {
           val dirtyDirectories = statusOutput
             .map(l => l.trim.dropWhile(_ != ' ').drop(1))
             .map(_.takeWhile(_ != '/'))
-            .filter(dir => dir.startsWith("http") || dir.startsWith("parsing") || dir.startsWith("docs") ||
+            .filter(dir =>
+              dir.startsWith("http") || dir.startsWith("parsing") || dir.startsWith("docs") ||
               BuildFilesAndDirectories.contains(dir))
             .toSet
           log.info(
