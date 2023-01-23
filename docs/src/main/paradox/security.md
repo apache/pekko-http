@@ -16,8 +16,6 @@ Please follow the [guidelines](https://www.apache.org/security/) laid down by th
 Ideally, any issues affecting Apache Pekko and Pekko should be reported to Apache team first. We will share the
 report with the Lightbend Akka team.
 
-@@@ index
+## References
 
- * @link:[Akka HTTP security fixes](https://doc.akka.io/docs/akka-http/10.2/security.html)
-
-@@@
+ * [Akka HTTP security fixes](https://doc.akka.io/docs/akka-http/10.2/security.html)
