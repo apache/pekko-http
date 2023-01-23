@@ -144,7 +144,7 @@ It's also possible to trigger the immediate termination of *all* connection pool
 time by calling @scala[`Http().shutdownAllConnectionPools()`]@java[`Http.get(system).shutdownAllConnectionPools()`].
 This call too produces a @scala[`Future[Unit]`]@java[`CompletionStage<Done>`] which is fulfilled when all pools have terminated.
 
-@scala[`Http().addClientPoolsToCoordinatedShutdown()`]@java[`Http.get(system).addClientPoolsToCoordinatedShutdown()`] will add the client connection pool shutdown to Apache Pekko's @extref[coordinated shutdown](akka-docs:coordinated-shutdown.html) so it will be called before the actor system disappears.
+@scala[`Http().addClientPoolsToCoordinatedShutdown()`]@java[`Http.get(system).addClientPoolsToCoordinatedShutdown()`] will add the client connection pool shutdown to Apache Pekko's @extref[coordinated shutdown](pekko-docs:coordinated-shutdown.html) so it will be called before the actor system disappears.
 
 @@@ note
 When encountering unexpected @apidoc[akka.stream.AbruptTerminationException] exceptions during @apidoc[akka.actor.ActorSystem] **shutdown**

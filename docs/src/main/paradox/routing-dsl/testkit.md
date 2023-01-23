@@ -9,13 +9,13 @@ route logic easy and convenient. This "route test DSL" is made available with th
 To use Apache Pekko HTTP TestKit, add the module to your project:
 
 @@dependency [sbt,Gradle,Maven] {
-  symbol1=AkkaVersion
+  symbol1=PekkoVersion
   value1=$akka.version$
-  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
-  symbol2="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
+  symbol2="PekkoHttpVersion"
   value2="$project.version$"
-  group1="org.apache.pekko" artifact1="pekko-stream-testkit_$scala.binary.version$" version1=AkkaVersion
-  group2="org.apache.pekko" artifact2="pekko-http-testkit_$scala.binary.version$" version2="AkkaHttpVersion"
+  group1="org.apache.pekko" artifact1="pekko-stream-testkit_$scala.binary.version$" version1=PekkoVersion
+  group2="org.apache.pekko" artifact2="pekko-http-testkit_$scala.binary.version$" version2="PekkoHttpVersion"
 }
 
 ## Usage
@@ -206,7 +206,7 @@ Java
 The timeouts you consciously defined on your lightning fast development environment might be too tight for your, most
 probably, high-loaded Continuous Integration server, invariably causing spurious failures. To account for such
 situations, timeout durations can be scaled by a given factor on such environments. Check the
-@extref[Akka Docs](akka-docs:testing.html#accounting-for-slow-test-systems)
+@extref[Apache Pekko Docs](pekko-docs:testing.html#accounting-for-slow-test-systems)
 for further information.
 
 

@@ -88,7 +88,7 @@ of either the incoming request, the outgoing response or both
  * Route filtering, which only lets requests satisfying a given filter condition pass and rejects all others
  * Route chaining, which tries a second route if a given first one was rejected
 
-The first two points are provided by so-called @ref[Directives](directives/index.md#directives) of which a large number is already predefined by Akka
+The first two points are provided by so-called @ref[Directives](directives/index.md#directives) of which a large number is already predefined by Apache Pekko
 HTTP and is extensible with user code.
 
 The last point is achieved with the `concat` method.

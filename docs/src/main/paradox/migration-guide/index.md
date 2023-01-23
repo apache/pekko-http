@@ -2,13 +2,5 @@
 
 @@toc { depth=3 }
 
-@@@ index
-
-* [migration-guide-10.2.x](migration-guide-10.2.x.md)
-* [migration-guide-10.1.x](migration-guide-10.1.x.md)
-* [migration-guide-10.0.x](migration-guide-10.0.x.md)
-* [migration-guide-2.4.x-10.0.x](migration-guide-2.4.x-10.0.x.md)
-* [migration-from-spray](migration-from-spray.md)
-* [migration-from-old-http-javadsl](migration-from-old-http-javadsl.md)
-
-@@@
+* If you are currently using an old version of Akka HTTP or Spray, you should first follow the [Akka HTTP migration guide](https://doc.akka.io/docs/akka-http/10.2/migration-guide/index.html)
+* We will soon provide a guide for migrating from Akka HTTP v10.2 to Apache Pekko HTTP

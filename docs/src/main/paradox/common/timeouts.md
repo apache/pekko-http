@@ -51,11 +51,11 @@ It can be configured using the `akka.http.server.bind-timeout` setting.
 
 The linger timeout is the time period the HTTP server implementation will keep a connection open after
 all data has been delivered to the network layer. This setting is similar to the SO_LINGER socket option
-but does not only include the OS-level socket but also covers the Akka IO / Akka Streams network stack.
+but does not only include the OS-level socket but also covers the Appache Pekko IO and Streams network stack.
 The setting is an extra precaution that prevents clients from keeping open a connection that is
 already considered completed from the server side.
 
-If the network level buffers (including the Akka Stream / Akka IO networking stack buffers)
+If the network level buffers (including the Appache Pekko IO and Streams networking stack buffers)
 contains more data than can be transferred to the client in the given time when the server-side considers
 to be finished with this connection, the client may encounter a connection reset.
 

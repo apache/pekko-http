@@ -436,14 +436,14 @@ lazy val docs = project("docs")
     },
     paradoxGroups := Map("Language" -> Seq("Scala", "Java")),
     Compile / paradoxProperties ++= Map(
-      "project.name" -> "Pekko HTTP",
-      "canonical.base_url" -> "https://doc.akka.io/docs/akka-http/current",
+      "project.name" -> "Apache Pekko HTTP",
+      "canonical.base_url" -> "https://pekko.apache.org/docs/akka-http/current",
       "akka.version" -> AkkaDependency.docs.version,
       "akka.minimum.version25" -> AkkaDependency.minimumExpectedAkkaVersion,
       "akka.minimum.version26" -> AkkaDependency.minimumExpectedAkka26Version,
       "jackson.xml.version" -> Dependencies.jacksonXmlVersion,
       "scalafix.version" -> _root_.scalafix.sbt.BuildInfo.scalafixVersion, // grab from scalafix plugin directly
-      "extref.akka-docs.base_url" -> s"https://doc.akka.io/docs/akka/${AkkaDependency.docs.link}/%s",
+      "extref.pekko-docs.base_url" -> s"https://pekko.apache.org/docs/pekko/current/%s",
       "javadoc.akka.http.base_url" -> {
         val v = if (isSnapshot.value) "current" else version.value
         s"https://doc.akka.io/japi/akka-http/$v"

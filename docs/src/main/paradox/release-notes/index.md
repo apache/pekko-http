@@ -2,10 +2,4 @@
 
 @@toc { depth=2 }
 
-@@@ index
-
-* [10.2.x](10.2.x.md)
-* [10.1.x](10.1.x.md)
-* [10.0.x](10.0.x.md)
-
-@@@
+* [Akka HTTP releases](https://doc.akka.io/docs/akka-http/10.2/release-notes/index.html)

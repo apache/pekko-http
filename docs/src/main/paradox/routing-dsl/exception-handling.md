@@ -79,7 +79,7 @@ This is because exceptions are known to have a negative performance impact for c
 when the depth of the call stack is significant (stack trace construction cost)
 and when the handler is located far from the place of the throwable instantiation (stack unwinding costs).
 
-In a typical Akka application both these conditions are frequently true,
+In a typical Apache Pekko application both these conditions are frequently true,
 so as a rule of thumb, you should try to minimize the number of `Throwable` instances
 reaching the exception handler.
 

@@ -23,7 +23,7 @@ Often when integrating with existing libraries or systems it is not possible to
 avoid blocking APIs. The following solution explains how to handle blocking
 operations properly.
 
-Note that the same hints apply to managing blocking operations anywhere in Akka,
+Note that the same hints apply to managing blocking operations anywhere in Apache Pekko,
 including in Actors etc.
 
 @@@
@@ -62,7 +62,7 @@ default pool which is the _global_ `ForkJoinPool.commonPool()`. With Scala Futur
 provided dispatcher would be used. Both these dispatchers are ForkJoin pools by default, and are 
 not best suited for blocking operations.
 @@@
-For example, the above screenshot shows an Akka FJP dispatchers threads,
+For example, the above screenshot shows an Apache Pekko FJP dispatchers threads,
 named "`default-akka.default-dispatcher2,3,4`" going into the blocking state, after having been idle. 
 It can be observed that the number of new threads increases, "`default-akka.actor.default-dispatcher 18,19,20,...`" 
 however they go to sleep state immediately, thus wasting the resources.
@@ -93,7 +93,7 @@ my-blocking-dispatcher {
 }
 ```
 
-There are many dispatcher options available which can be found in @extref[Dispatchers](akka-docs:dispatchers.html).
+There are many dispatcher options available which can be found in @extref[Dispatchers](pekko-docs:dispatchers.html).
 
 Here `thread-pool-executor` is used, which has a hardcoded limit of threads. It keeps a set number of threads
 available that allow for safe isolation of the blocking operations. The size settings should depend on the app's
@@ -131,5 +131,5 @@ This is the recommended way of dealing with any kind of blocking in reactive
 applications. It is referred to as "bulkheading" or "isolating" the bad behaving
 parts of an app. In this case, bad behaviour of blocking operations.
 
-There is good documentation available in Akka docs section,
-@extref[Blocking needs careful management](akka-docs:dispatchers.html#blocking-needs-careful-management).
+There is good documentation available in Apache Pekko docs section,
+@extref[Blocking needs careful management](pekko-docs:dispatchers.html#blocking-needs-careful-management).

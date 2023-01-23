@@ -64,7 +64,7 @@ If you have been using Play framework's routes file notation before this @ref[Pl
 <a name="interaction-with-akka-typed">
 ## Interaction with Actors
 
-The following example shows how to use Apache Pekko HTTP with Akka Actors.
+The following example shows how to use Apache Pekko HTTP with Apache Pekko Actors.
 
 We will create a small web server responsible to record build jobs with its state and duration, query jobs by
 id and status, and clear the job history.
@@ -142,7 +142,7 @@ Subsequent POST request to `/test` with body `{"id": 1}` will be responded with 
 ## Handling HTTP Server failures in the High-Level API
 
 There are various situations when failure may occur while initialising or running an Apache Pekko HTTP server.
-Akka by default will log all these failures, however sometimes one may want to react to failures in addition
+Apache Pekko by default will log all these failures, however sometimes one may want to react to failures in addition
 to them just being logged, for example by shutting down the actor system, or notifying some external monitoring
 end-point explicitly.
 

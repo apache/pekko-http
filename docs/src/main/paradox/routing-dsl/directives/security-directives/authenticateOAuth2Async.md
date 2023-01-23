@@ -34,4 +34,4 @@ For more information on how OAuth2 works see [RFC 6750](https://tools.ietf.org/h
 ## Example
 
 Usage in code is exactly the same as @ref[authenticateBasicAsync](authenticateBasicAsync.md),
-with the difference that one must validate the token as OAuth2 dictates (which is currently not part of Akka HTTP itself).
+with the difference that one must validate the token as OAuth2 dictates (which is currently not part of Apache Pekko HTTP itself).

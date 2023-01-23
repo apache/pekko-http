@@ -8,7 +8,7 @@ The core Server API is scoped with a clear focus on the essential functionality 
  * Response ordering (for transparent pipelining support)
 
 All non-core features of typical HTTP servers (like request routing, file serving, compression, etc.) are left to
-the @ref[higher layers](../routing-dsl/index.md), they are not implemented by the `akka-http-core`-level server itself.
+the @ref[higher layers](../routing-dsl/index.md), they are not implemented by the `pekko-http-core`-level server itself.
 Apart from general focus this design keeps the server core small and light-weight as well as easy to understand and
 maintain.
 
@@ -20,21 +20,21 @@ from a background with non-"streaming first" HTTP Servers.
 
 ## Streams and HTTP
 
-The Akka HTTP server is implemented on top of @extref[Streams](akka-docs:stream/index.html) and makes heavy use of it - in its
+The Apache Pekko HTTP server is implemented on top of @extref[Streams](pekko-docs:stream/index.html) and makes heavy use of it - in its
 implementation as well as on all levels of its API.
 
-On the connection level Akka HTTP offers basically the same kind of interface as @extref[Working with streaming IO](akka-docs:stream/stream-io.html):
+On the connection level, Apache Pekko HTTP offers basically the same kind of interface as @extref[Working with streaming IO](pekko-docs:stream/stream-io.html):
 A socket binding is represented as a stream of incoming connections. The application pulls connections from this stream
 source and, for each of them, provides a @apidoc[Flow[HttpRequest, HttpResponse, \_]] to "translate" requests into responses.
 
 Apart from regarding a socket bound on the server-side as a @apidoc[Source[IncomingConnection, \_]] and each connection as a
 @apidoc[Source[HttpRequest, \_]] with a @apidoc[Sink[HttpResponse, \_]] the stream abstraction is also present inside a single HTTP
 message: The entities of HTTP requests and responses are generally modeled as a @apidoc[Source[ByteString, \_]]. See also
-the @ref[HTTP Model](../common/http-model.md) for more information on how HTTP messages are represented in Akka HTTP.
+the @ref[HTTP Model](../common/http-model.md) for more information on how HTTP messages are represented in Apache Pekko HTTP.
 
 ## Starting and Stopping
 
-On the most basic level an Akka HTTP server is bound by invoking the `bind` method of the @scala[@scaladoc[akka.http.scaladsl.Http](akka.http.scaladsl.Http$)]@java[@javadoc[akka.http.javadsl.Http](akka.http.javadsl.Http)]
+On the most basic level an Apache Pekko HTTP server is bound by invoking the `bind` method of the @scala[@scaladoc[akka.http.scaladsl.Http](akka.http.scaladsl.Http$)]@java[@javadoc[akka.http.javadsl.Http](akka.http.javadsl.Http)]
 extension:
 
 Scala
@@ -81,8 +81,8 @@ Java
 :   @@snip [HttpServerExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/server/HttpServerExampleDocTest.java) { #full-server-example }
 
 In this example, a request is handled by transforming the request stream with a function @scala[`HttpRequest => HttpResponse`]@java[`Function<HttpRequest, HttpResponse>`]
-using `handleWithSyncHandler` (or equivalently, Akka Stream's `map` operator). Depending on the use case many
-other ways of providing a request handler are conceivable using Akka Stream's combinators.
+using `handleWithSyncHandler` (or equivalently, Apache Pekko Stream's `map` operator). Depending on the use case many
+other ways of providing a request handler are conceivable using Apache Pekko Stream's combinators.
 If the application provides a @apidoc[Flow] it is also the responsibility of the application to generate exactly one response
 for every request and that the ordering of responses matches the ordering of the associated requests (which is relevant
 if HTTP pipelining is enabled where processing of multiple incoming requests may overlap). When relying on
@@ -98,7 +98,7 @@ to deal with streamed entities when receiving a request as well as, in many case
 See @ref[HttpEntity](../common/http-model.md#httpentity) for a description of the alternatives.
 
 If you rely on the @ref[Marshalling](../common/marshalling.md) and/or @ref[Unmarshalling](../common/unmarshalling.md) facilities provided by
-Akka HTTP then the conversion of custom types to and from streamed entities can be quite convenient.
+Apache Pekko HTTP then the conversion of custom types to and from streamed entities can be quite convenient.
 
 <a id="http-closing-connection-low-level"></a>
 ### Closing a connection
@@ -119,7 +119,7 @@ For detailed documentation about configuring and using HTTPS on the server-side 
 <a id="http-server-layer"></a>
 ## Stand-Alone HTTP Layer Usage
 
-Due to its Reactive-Streams-based nature the Akka HTTP layer is fully detachable from the underlying TCP
+Due to its Reactive-Streams-based nature, the Apache Pekko HTTP layer is fully detachable from the underlying TCP
 interface. While in most applications this "feature" will not be crucial it can be useful in certain cases to be able
 to "run" the HTTP layer (and, potentially, higher-layers) against data that do not come from the network but rather
 some other source. Potential scenarios where this might be useful include tests, debugging or low-level event-sourcing
@@ -146,31 +146,31 @@ be materialized once.
 
 Request handling can be parallelized on two axes, by handling several connections in parallel and by
 relying on HTTP pipelining to send several requests on one connection without waiting for a response first. In both
-cases the client controls the number of ongoing requests. To prevent being overloaded by too many requests, Akka HTTP
+cases the client controls the number of ongoing requests. To prevent being overloaded by too many requests, Apache Pekko HTTP
 can limit the number of requests it handles in parallel.
 
 To limit the number of simultaneously open connections, use the `akka.http.server.max-connections` setting. This setting
 applies to all of `Http.bindAndHandle*` methods. If you use `Http.bind`, incoming connections are represented by
-a @apidoc[Source[IncomingConnection, ...]]. Use Akka Stream's combinators to apply backpressure to control the flow of
+a @apidoc[Source[IncomingConnection, ...]]. Use Apache Pekko Stream's combinators to apply backpressure to control the flow of
 incoming connections, e.g. by using `throttle` or `mapAsync`.
 
 HTTP pipelining is generally discouraged (and [disabled by most browsers](https://en.wikipedia.org/w/index.php?title=HTTP_pipelining&oldid=700966692#Implementation_in_web_browsers)) but
-is nevertheless fully supported in Akka HTTP. The limit is applied on two levels. First, there's the
+is nevertheless fully supported in Apache Pekko HTTP. The limit is applied on two levels. First, there's the
 `akka.http.server.pipelining-limit` config setting which prevents that more than the given number of outstanding requests
 is ever given to the user-supplied handler-flow. On the other hand, the handler flow itself can apply any kind of throttling
 itself. If you use the `Http.bindAndHandleAsync`
 entry-point, you can specify the `parallelism` argument (which defaults to `1`, which means that pipelining is disabled) to control the
 number of concurrent requests per connection. If you use `Http.bindAndHandle` or `Http.bind`, the user-supplied handler
 flow has full control over how many request it accepts simultaneously by applying backpressure. In this case, you can
-e.g. use Akka Stream's `mapAsync` combinator with a given parallelism to limit the number of concurrently handled requests.
+e.g. use Apache Pekko Stream's `mapAsync` combinator with a given parallelism to limit the number of concurrently handled requests.
 Effectively, the more constraining one of these two measures, config setting and manual flow shaping, will determine
 how parallel requests on one connection are handled.
 
 <a id="handling-http-server-failures-low-level"></a>
 ## Handling HTTP Server failures in the Low-Level API
 
-There are various situations when failure may occur while initialising or running an Akka HTTP server.
-Akka by default will log all these failures, however sometimes one may want to react to failures in addition to them
+There are various situations when failure may occur while initialising or running an Apache Pekko HTTP server.
+Apache Pekko by default will log all these failures, however sometimes one may want to react to failures in addition to them
 just being logged, for example by shutting down the actor system, or notifying some external monitoring end-point explicitly.
 
 There are multiple things that can fail when creating and materializing an HTTP Server (similarly, the same applied to
@@ -199,13 +199,13 @@ Java
 Once the server has successfully bound to a port, the @apidoc[Source[IncomingConnection, \_]] starts running and emitting
 new incoming connections. This source technically can signal a failure as well, however this should only happen in very
 dramatic situations such as running out of file descriptors or memory available to the system, such that it's not able
-to accept a new incoming connection. Handling failures in Akka Streams is pretty straight forward, as failures are signaled
+to accept a new incoming connection. Handling failures in Apache Pekko Streams is pretty straight forward, as failures are signaled
 through the stream starting from the stage which failed, all the way downstream to the final stages.
 
 #### Connections Source failures
 
 In the example below we add a custom @apidoc[GraphStage] in order to react to the
-stream's failure. See @extref[Custom stream processing](akka-docs:stream/stream-customize.html) for more on custom stages. We signal a `failureMonitor` actor with the cause why the stream is going down, and let the Actor
+stream's failure. See @extref[Custom stream processing](pekko-docs:stream/stream-customize.html) for more on custom stages. We signal a `failureMonitor` actor with the cause why the stream is going down, and let the Actor
 handle the rest – maybe it'll decide to restart the server or shutdown the ActorSystem, that however is not our concern anymore.
 
 Scala
@@ -234,7 +234,7 @@ a network failure, it will not be seen as this kind of stream failure. It will i
 
 
 These failures can be described more or less infrastructure related, they are failing bindings or connections.
-Most of the time you won't need to dive into those very deeply, as Akka will simply log errors of this kind
+Most of the time you won't need to dive into those very deeply, as Apache Pekko will simply log errors of this kind
 anyway, which is a reasonable default for such problems.
 
 In order to learn more about handling exceptions in the actual routing layer, which is where your application code
