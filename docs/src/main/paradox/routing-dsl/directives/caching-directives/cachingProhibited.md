@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [CachingDirectives.scala](/http-caching/src/main/scala/akka/http/scaladsl/server/directives/CachingDirectives.scala) { #cachingProhibited }
+@@signature [CachingDirectives.scala](/http-caching/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/CachingDirectives.scala) { #cachingProhibited }
 
 @@@
 

@@ -5,8 +5,9 @@
 package docs.http.scaladsl.server
 
 //#source-quote
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
+import org.apache.pekko
+import pekko.http.scaladsl.server.Directives._
+import pekko.http.scaladsl.server.Route
 
 object RouteFragment {
   val route: Route = pathEnd {

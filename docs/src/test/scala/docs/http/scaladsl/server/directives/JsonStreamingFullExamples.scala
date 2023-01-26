@@ -11,15 +11,16 @@ class JsonStreamingFullExamples extends AnyWordSpec {
   "compile only spec" in {}
 
   // #custom-content-type
-  import akka.NotUsed
-  import akka.actor.ActorSystem
-  import akka.http.scaladsl.Http
-  import akka.http.scaladsl.common.{ EntityStreamingSupport, JsonEntityStreamingSupport }
-  import akka.http.scaladsl.model.{ HttpEntity, _ }
-  import akka.http.scaladsl.server.Directives._
-  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-  import akka.http.scaladsl.marshalling.{ Marshaller, ToEntityMarshaller }
-  import akka.stream.scaladsl.Source
+  import org.apache.pekko
+  import pekko.NotUsed
+  import pekko.actor.ActorSystem
+  import pekko.http.scaladsl.Http
+  import pekko.http.scaladsl.common.{ EntityStreamingSupport, JsonEntityStreamingSupport }
+  import pekko.http.scaladsl.model.{ HttpEntity, _ }
+  import pekko.http.scaladsl.server.Directives._
+  import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  import pekko.http.scaladsl.marshalling.{ Marshaller, ToEntityMarshaller }
+  import pekko.stream.scaladsl.Source
   import spray.json.DefaultJsonProtocol
 
   import scala.io.StdIn

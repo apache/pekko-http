@@ -5,12 +5,13 @@
 package docs.http.scaladsl.server.directives
 
 import scala.concurrent.duration._
-import akka.util.ByteString
-import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.{ Flow, Sink, Source }
-import akka.http.scaladsl.model.ws.{ BinaryMessage, Message, TextMessage }
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.testkit.WSProbe
+import org.apache.pekko
+import pekko.util.ByteString
+import pekko.stream.OverflowStrategy
+import pekko.stream.scaladsl.{ Flow, Sink, Source }
+import pekko.http.scaladsl.model.ws.{ BinaryMessage, Message, TextMessage }
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.testkit.WSProbe
 import docs.CompileOnlySpec
 
 class WebSocketDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
@@ -107,7 +108,7 @@ class WebSocketDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "extractWebSocketUpgrade" in {
     // #extractWebSocketUpgrade
-    import akka.http.scaladsl.model.AttributeKeys.webSocketUpgrade
+    import org.apache.pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 
     def echoService: Flow[Message, Message, Any] =
       Flow[Message]

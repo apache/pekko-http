@@ -4,8 +4,9 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server._
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server._
 import headers._
 import java.net.InetAddress
 

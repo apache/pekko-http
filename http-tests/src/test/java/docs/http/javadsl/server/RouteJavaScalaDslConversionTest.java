@@ -4,12 +4,12 @@
 
 package docs.http.javadsl.server;
 
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.Directives;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.server.directives.RouteAdapter;
-import akka.http.scaladsl.server.RequestContext;
-import akka.http.scaladsl.server.RouteResult;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.Directives;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.directives.RouteAdapter;
+import org.apache.pekko.http.scaladsl.server.RequestContext;
+import org.apache.pekko.http.scaladsl.server.RouteResult;
 import scala.Function1;
 import scala.concurrent.Future;
 
@@ -18,10 +18,10 @@ public class RouteJavaScalaDslConversionTest {
   void scalaToJava() {
     //#scala-to-java
     scala.Function1<
-        akka.http.scaladsl.server.RequestContext,
-        scala.concurrent.Future<akka.http.scaladsl.server.RouteResult>> scalaRoute = someRoute();
+        org.apache.pekko.http.scaladsl.server.RequestContext,
+        scala.concurrent.Future<org.apache.pekko.http.scaladsl.server.RouteResult>> scalaRoute = someRoute();
 
-    akka.http.javadsl.server.Route javaRoute =
+    org.apache.pekko.http.javadsl.server.Route javaRoute =
         RouteAdapter.asJava(scalaRoute);
     //#scala-to-java
   }

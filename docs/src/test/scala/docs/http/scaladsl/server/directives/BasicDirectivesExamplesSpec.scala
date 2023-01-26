@@ -4,16 +4,17 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.actor.ActorSystem
-import akka.event.Logging
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{ RawHeader, Server }
-import akka.http.scaladsl.server.RouteResult.{ Complete, Rejected }
-import akka.http.scaladsl.server._
-import akka.http.scaladsl.settings.RoutingSettings
-import akka.stream.{ Materializer, SystemMaterializer }
-import akka.stream.scaladsl.{ Sink, Source }
-import akka.util.ByteString
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.event.Logging
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.{ RawHeader, Server }
+import pekko.http.scaladsl.server.RouteResult.{ Complete, Rejected }
+import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.settings.RoutingSettings
+import pekko.stream.{ Materializer, SystemMaterializer }
+import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.util.ByteString
 import docs.CompileOnlySpec
 
 import scala.concurrent.Future
@@ -857,6 +858,7 @@ class BasicDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "extractStrictEntity-example" in {
     // #extractStrictEntity-example
     import scala.concurrent.duration._
+
     val route = extractStrictEntity(3.seconds) { entity =>
       complete(entity.data.utf8String)
     }
@@ -871,6 +873,7 @@ class BasicDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "toStrictEntity-example" in {
     // #toStrictEntity-example
     import scala.concurrent.duration._
+
     val route = toStrictEntity(3.seconds) {
       extractRequest { req =>
         req.entity match {

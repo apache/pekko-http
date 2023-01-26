@@ -4,13 +4,13 @@
 
 package docs.http.javadsl.server;
 
-import akka.actor.typed.javadsl.Behaviors;
-import akka.http.javadsl.ConnectHttp;
-import akka.http.javadsl.Http;
-import static akka.http.javadsl.server.Directives.*;
-import akka.http.javadsl.server.Route;
-import akka.stream.ActorMaterializer;
-import akka.stream.Materializer;
+import org.apache.pekko.actor.typed.javadsl.Behaviors;
+import org.apache.pekko.http.javadsl.ConnectHttp;
+import org.apache.pekko.http.javadsl.Http;
+import static org.apache.pekko.http.javadsl.server.Directives.*;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.stream.ActorMaterializer;
+import org.apache.pekko.stream.Materializer;
 
 @SuppressWarnings("deprecation")
 public class AkkaHttp1020MigrationExample {
@@ -18,7 +18,7 @@ public class AkkaHttp1020MigrationExample {
         {
             //#old-binding
             // only worked with classic actor system
-            akka.actor.ActorSystem system = akka.actor.ActorSystem.create("TheSystem");
+            org.apache.pekko.actor.ActorSystem system = org.apache.pekko.actor.ActorSystem.create("TheSystem");
             Materializer mat = ActorMaterializer.create(system);
             Route route = get(() -> complete("Hello World!"));
             Http.get(system).bindAndHandle(route.flow(system), ConnectHttp.toHost("localhost", 8080), mat);
@@ -28,9 +28,9 @@ public class AkkaHttp1020MigrationExample {
         {
             //#new-binding
             // works with classic or typed actor system
-            akka.actor.typed.ActorSystem system = akka.actor.typed.ActorSystem.create(Behaviors.empty(), "TheSystem");
+            org.apache.pekko.actor.typed.ActorSystem system = org.apache.pekko.actor.typed.ActorSystem.create(Behaviors.empty(), "TheSystem");
             // or
-            // akka.actor.ActorSystem system = akka.actor.ActorSystem.create("TheSystem");
+            // org.apache.pekko.actor.ActorSystem system = org.apache.pekko.actor.ActorSystem.create("TheSystem");
 
             // materializer not needed any more
 

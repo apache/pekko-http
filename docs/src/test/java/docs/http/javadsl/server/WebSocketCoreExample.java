@@ -13,33 +13,33 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import akka.NotUsed;
-import akka.http.impl.util.JavaMapping;
-import akka.http.javadsl.ConnectHttp;
-import akka.http.javadsl.ConnectionContext;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.ws.WebSocketRequest;
-import akka.http.javadsl.settings.ClientConnectionSettings;
-import akka.http.javadsl.settings.ServerSettings;
-import akka.http.javadsl.settings.WebSocketSettings;
-import akka.http.scaladsl.model.AttributeKeys;
-import akka.japi.JavaPartialFunction;
-import akka.japi.function.Function;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.http.impl.util.JavaMapping;
+import org.apache.pekko.http.javadsl.ConnectHttp;
+import org.apache.pekko.http.javadsl.ConnectionContext;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.ws.WebSocketRequest;
+import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
+import org.apache.pekko.http.javadsl.settings.ServerSettings;
+import org.apache.pekko.http.javadsl.settings.WebSocketSettings;
+import org.apache.pekko.http.scaladsl.model.AttributeKeys;
+import org.apache.pekko.japi.JavaPartialFunction;
+import org.apache.pekko.japi.function.Function;
 
-import akka.stream.ActorMaterializer;
-import akka.stream.Materializer;
-import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.Source;
+import org.apache.pekko.stream.ActorMaterializer;
+import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.stream.javadsl.Flow;
+import org.apache.pekko.stream.javadsl.Source;
 
-import akka.actor.ActorSystem;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.ServerBinding;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.ws.Message;
-import akka.http.javadsl.model.ws.TextMessage;
-import akka.http.javadsl.model.ws.WebSocket;
-import akka.util.ByteString;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.ServerBinding;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.javadsl.model.ws.Message;
+import org.apache.pekko.http.javadsl.model.ws.TextMessage;
+import org.apache.pekko.http.javadsl.model.ws.WebSocket;
+import org.apache.pekko.util.ByteString;
 
 @SuppressWarnings({"Convert2MethodRef", "ConstantConditions"})
 public class WebSocketCoreExample {

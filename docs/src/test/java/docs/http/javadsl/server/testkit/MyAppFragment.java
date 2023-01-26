@@ -4,8 +4,8 @@
 
 package docs.http.javadsl.server.testkit;
 //#source-quote
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.Route;
 
 public class MyAppFragment extends AllDirectives {
 

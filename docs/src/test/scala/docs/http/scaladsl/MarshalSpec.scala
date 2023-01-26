@@ -4,7 +4,7 @@
 
 package docs.http.scaladsl
 
-import akka.testkit.AkkaSpec
+import org.apache.pekko.testkit.AkkaSpec
 
 class MarshalSpec extends AkkaSpec {
 
@@ -12,8 +12,10 @@ class MarshalSpec extends AkkaSpec {
     // #use-marshal
     import scala.concurrent.Await
     import scala.concurrent.duration._
-    import akka.http.scaladsl.marshalling.Marshal
-    import akka.http.scaladsl.model._
+
+    import org.apache.pekko
+    import pekko.http.scaladsl.marshalling.Marshal
+    import pekko.http.scaladsl.model._
 
     import system.dispatcher // ExecutionContext
 

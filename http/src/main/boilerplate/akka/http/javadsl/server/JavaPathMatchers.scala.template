@@ -1,11 +1,12 @@
 /*
  * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
  */
-package akka.http.javadsl.server
+package org.apache.pekko.http.javadsl.server
 
-import akka.annotation.InternalApi
-import akka.http.scaladsl.server.{ PathMatcher => SPathMatcher }
-import akka.http.scaladsl.server.{ PathMatchers => SPathMatchers }
+import org.apache.pekko
+import pekko.annotation.InternalApi
+import pekko.http.scaladsl.server.{ PathMatcher => SPathMatcher }
+import pekko.http.scaladsl.server.{ PathMatchers => SPathMatchers }
 import java.util.{ List => JList }
 import java.util.function.{ Function => JFunction }
 import scala.collection.JavaConverters._

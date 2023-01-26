@@ -4,14 +4,14 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.model.headers.ContentType;
-import akka.http.javadsl.model.headers.Location;
-import akka.http.javadsl.server.Rejections;
-import akka.http.javadsl.server.RequestContext;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.server.RouteResult;
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.model.headers.ContentType;
+import org.apache.pekko.http.javadsl.model.headers.Location;
+import org.apache.pekko.http.javadsl.server.Rejections;
+import org.apache.pekko.http.javadsl.server.RequestContext;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.RouteResult;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -19,28 +19,28 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 //#complete
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#complete
 
 //#reject
-import akka.http.javadsl.server.Directives;
+import org.apache.pekko.http.javadsl.server.Directives;
 
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.reject;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.reject;
 //#reject
 //#redirect
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.pathEnd;
-import static akka.http.javadsl.server.Directives.pathPrefix;
-import static akka.http.javadsl.server.Directives.pathSingleSlash;
-import static akka.http.javadsl.server.Directives.redirect;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.pathEnd;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.pathSingleSlash;
+import static org.apache.pekko.http.javadsl.server.Directives.redirect;
 //#redirect
 //#failWith
-import static akka.http.javadsl.server.Directives.failWith;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.failWith;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#failWith
 

@@ -4,11 +4,12 @@
 
 package docs.http.scaladsl
 
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives._
+import org.apache.pekko
+import pekko.actor.typed.ActorSystem
+import pekko.actor.typed.scaladsl.Behaviors
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.Directives._
 import scala.io.StdIn
 
 object HttpServerRoutingMinimal {

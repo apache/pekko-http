@@ -8,12 +8,13 @@ package docs.http.scaladsl.server
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 
-import akka.actor.testkit.typed.scaladsl.TestProbe
-import akka.actor.typed.{ ActorRef, Scheduler }
-import akka.actor.typed.scaladsl.AskPattern._
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.util.Timeout
+import org.apache.pekko
+import pekko.actor.testkit.typed.scaladsl.TestProbe
+import pekko.actor.typed.{ ActorRef, Scheduler }
+import pekko.actor.typed.scaladsl.AskPattern._
+import pekko.http.scaladsl.server.Directives._
+import pekko.http.scaladsl.testkit.ScalatestRouteTest
+import pekko.util.Timeout
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -34,7 +35,7 @@ class TestKitWithActorSpec extends AnyWordSpec with Matchers with ScalatestRoute
 
   // This test does not use the classic APIs,
   // so it needs to adapt the system:
-  import akka.actor.typed.scaladsl.adapter._
+  import pekko.actor.typed.scaladsl.adapter._
   implicit val typedSystem = system.toTyped
   implicit val timeout = Timeout(500.milliseconds)
   implicit val scheduler = system.scheduler

@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [ExecutionDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/ExecutionDirectives.scala) { #handleExceptions }
+@@signature [ExecutionDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/ExecutionDirectives.scala) { #handleExceptions }
 
 @@@
 

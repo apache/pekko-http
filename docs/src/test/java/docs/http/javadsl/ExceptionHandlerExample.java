@@ -6,18 +6,18 @@ package docs.http.javadsl;
 
 //#explicit-handler-example
 
-import akka.actor.ActorSystem;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.ServerBinding;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.ExceptionHandler;
-import akka.http.javadsl.server.PathMatchers;
-import akka.http.javadsl.server.Route;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.ServerBinding;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.ExceptionHandler;
+import org.apache.pekko.http.javadsl.server.PathMatchers;
+import org.apache.pekko.http.javadsl.server.Route;
 
 import java.util.concurrent.CompletionStage;
 
-import static akka.http.javadsl.server.PathMatchers.integerSegment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
 
 public class ExceptionHandlerExample extends AllDirectives {
   public static void main(String[] args) {

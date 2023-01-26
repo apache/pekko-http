@@ -45,8 +45,8 @@ the following dependency:
 }
 
 Once you have done this (un)marshalling between XML and `NodeSeq` instances should work nicely and transparently,
-by either using `import akka.http.scaladsl.marshallers.xml.ScalaXmlSupport._` or mixing in the
-`akka.http.scaladsl.marshallers.xml.ScalaXmlSupport` trait.
+by either using `import org.apache.pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport._` or mixing in the
+`org.apache.pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport` trait.
 
 @@@
 

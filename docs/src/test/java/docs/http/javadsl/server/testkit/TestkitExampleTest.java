@@ -5,10 +5,10 @@
 package docs.http.javadsl.server.testkit;
 
 //#simple-app-testing
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.testkit.TestRoute;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.junit.Test;
 
 public class TestkitExampleTest extends JUnitRouteTest {

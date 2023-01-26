@@ -9,72 +9,72 @@ import java.util.function.Function;
 
 import org.junit.Test;
 
-import akka.http.javadsl.model.HttpHeader;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.headers.Host;
-import akka.http.javadsl.model.headers.HttpOrigin;
-import akka.http.javadsl.model.headers.HttpOriginRange;
-import akka.http.javadsl.model.headers.Origin;
-import akka.http.javadsl.model.headers.RawHeader;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.japi.JavaPartialFunction;
-import akka.http.javadsl.testkit.TestRoute;
+import org.apache.pekko.http.javadsl.model.HttpHeader;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.Host;
+import org.apache.pekko.http.javadsl.model.headers.HttpOrigin;
+import org.apache.pekko.http.javadsl.model.headers.HttpOriginRange;
+import org.apache.pekko.http.javadsl.model.headers.Origin;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.japi.JavaPartialFunction;
+import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import scala.PartialFunction;
 
 
-import static akka.http.javadsl.common.PartialApplication.*;
+import static org.apache.pekko.http.javadsl.common.PartialApplication.*;
 
 //#headerValue
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.headerValue;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.headerValue;
 
 //#headerValue
 //#headerValue-with-default
-import akka.http.javadsl.server.Directives;
+import org.apache.pekko.http.javadsl.server.Directives;
 
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.anyOf;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.anyOf;
 //#headerValue-with-default
 //#headerValueByName
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.headerValueByName;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.headerValueByName;
 
 //#headerValueByName
 //#headerValueByType
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.headerValueByType;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.headerValueByType;
 
 //#headerValueByType
 //#headerValuePF
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.headerValuePF;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.headerValuePF;
 
 //#headerValuePF
 //#optionalHeaderValue
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.optionalHeaderValue;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValue;
 
 //#optionalHeaderValue
 //#optionalHeaderValueByName
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.optionalHeaderValueByName;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValueByName;
 
 //#optionalHeaderValueByName
 //#optionalHeaderValueByType
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.optionalHeaderValueByType;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValueByType;
 
 //#optionalHeaderValueByType
 //#optionalHeaderValuePF
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.optionalHeaderValuePF;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValuePF;
 
 //#optionalHeaderValuePF
 //#checkSameOrigin
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.checkSameOrigin;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.checkSameOrigin;
 
 //#checkSameOrigin
 

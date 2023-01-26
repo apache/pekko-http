@@ -4,19 +4,19 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.NotUsed;
-import akka.actor.ActorSystem;
-import akka.event.LoggingAdapter;
-import akka.event.NoLogging;
-import akka.http.javadsl.ConnectHttp;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.ServerBinding;
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.settings.ParserSettings;
-import akka.http.javadsl.settings.ServerSettings;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.stream.javadsl.Flow;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.event.LoggingAdapter;
+import org.apache.pekko.event.NoLogging;
+import org.apache.pekko.http.javadsl.ConnectHttp;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.ServerBinding;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.settings.ParserSettings;
+import org.apache.pekko.http.javadsl.settings.ServerSettings;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.stream.javadsl.Flow;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
@@ -25,12 +25,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static akka.http.javadsl.model.HttpProtocols.HTTP_1_1;
-import static akka.http.javadsl.model.RequestEntityAcceptances.Expected;
+import static org.apache.pekko.http.javadsl.model.HttpProtocols.HTTP_1_1;
+import static org.apache.pekko.http.javadsl.model.RequestEntityAcceptances.Expected;
 
 //#customHttpMethod
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.extractMethod;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractMethod;
 
 //#customHttpMethod
 public class CustomHttpMethodExamplesTest extends JUnitRouteTest {

@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [MiscDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/MiscDirectives.scala) { #requestEntityEmpty }
+@@signature [MiscDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/MiscDirectives.scala) { #requestEntityEmpty }
 
 @@@
 

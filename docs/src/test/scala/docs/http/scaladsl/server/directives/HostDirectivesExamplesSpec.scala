@@ -4,10 +4,11 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model._
+import org.apache.pekko
+import pekko.http.scaladsl.model._
 import headers._
 import StatusCodes._
-import akka.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 class HostDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {

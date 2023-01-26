@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [CodingDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/CodingDirectives.scala) { #responseEncodingAccepted }
+@@signature [CodingDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/CodingDirectives.scala) { #responseEncodingAccepted }
 
 @@@
 

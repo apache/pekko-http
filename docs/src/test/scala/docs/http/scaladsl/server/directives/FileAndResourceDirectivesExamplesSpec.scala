@@ -4,17 +4,18 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.server.directives.DirectoryListing
-import akka.http.scaladsl.server.directives.FileAndResourceDirectives.DirectoryRenderer
+import org.apache.pekko
+import pekko.http.scaladsl.marshalling.ToEntityMarshaller
+import pekko.http.scaladsl.model.StatusCodes
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.server.directives.DirectoryListing
+import pekko.http.scaladsl.server.directives.FileAndResourceDirectives.DirectoryRenderer
 import docs.CompileOnlySpec
 
 class FileAndResourceDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "getFromFile-examples" in compileOnlySpec {
     // #getFromFile-examples
-    import akka.http.scaladsl.server.directives._
+    import org.apache.pekko.http.scaladsl.server.directives._
     import ContentTypeResolver.Default
 
     val route =
@@ -30,7 +31,7 @@ class FileAndResourceDirectivesExamplesSpec extends RoutingSpec with CompileOnly
   }
   "getFromResource-examples" in compileOnlySpec {
     // #getFromResource-examples
-    import akka.http.scaladsl.server.directives._
+    import org.apache.pekko.http.scaladsl.server.directives._
     import ContentTypeResolver.Default
 
     val route =

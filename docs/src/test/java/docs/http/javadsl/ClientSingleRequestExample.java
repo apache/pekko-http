@@ -5,17 +5,17 @@
 package docs.http.javadsl;
 
 //#unmarshall-response-body
-import akka.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 
 //#unmarshall-response-body
 
 //#single-request-example
-import akka.actor.typed.ActorSystem;
-import akka.actor.typed.javadsl.Behaviors;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.server.examples.petstore.Pet;
-import akka.stream.SystemMaterializer;
+import org.apache.pekko.actor.typed.ActorSystem;
+import org.apache.pekko.actor.typed.javadsl.Behaviors;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.server.examples.petstore.Pet;
+import org.apache.pekko.stream.SystemMaterializer;
 
 import java.util.concurrent.CompletionStage;
 

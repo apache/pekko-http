@@ -4,13 +4,13 @@
 
 package docs.http.javadsl;
 
-import akka.util.ByteString;
+import org.apache.pekko.util.ByteString;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 //#import-model
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.model.headers.*;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.model.headers.*;
 
 import java.util.Optional;
 

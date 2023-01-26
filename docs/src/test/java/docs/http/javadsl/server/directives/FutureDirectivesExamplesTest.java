@@ -8,41 +8,41 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.marshalling.Marshaller;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.scaladsl.model.StatusCodes;
-import akka.japi.pf.PFBuilder;
-import akka.pattern.CircuitBreaker;
-import akka.testkit.javadsl.TestKit;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.marshalling.Marshaller;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.scaladsl.model.StatusCodes;
+import org.apache.pekko.japi.pf.PFBuilder;
+import org.apache.pekko.pattern.CircuitBreaker;
+import org.apache.pekko.testkit.javadsl.TestKit;
 import org.junit.Ignore;
 import org.junit.Test;
 import scala.concurrent.duration.FiniteDuration;
 
-import static akka.http.javadsl.server.PathMatchers.*;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 import static scala.compat.java8.JFunction.func;
 
 //#onComplete
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.onComplete;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.onComplete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#onComplete
 //#onSuccess
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.onSuccess;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#onSuccess
 //#completeOrRecoverWith
-import static akka.http.javadsl.server.Directives.completeOrRecoverWith;
-import static akka.http.javadsl.server.Directives.failWith;
+import static org.apache.pekko.http.javadsl.server.Directives.completeOrRecoverWith;
+import static org.apache.pekko.http.javadsl.server.Directives.failWith;
 
 //#completeOrRecoverWith
 //#onCompleteWithBreaker
-import static akka.http.javadsl.server.Directives.onCompleteWithBreaker;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.onCompleteWithBreaker;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#onCompleteWithBreaker
 

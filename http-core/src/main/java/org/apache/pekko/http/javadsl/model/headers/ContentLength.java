@@ -1,0 +1,13 @@
+/*
+ * Copyright (C) 2017-2022 Lightbend Inc. <https://www.lightbend.com>
+ */
+
+package org.apache.pekko.http.javadsl.model.headers;
+
+/**
+ *  Model for the `Content-Length` header.
+ *  Specification: https://tools.ietf.org/html/draft-ietf-httpbis-p1-messaging-26#section-3.3.2
+ */
+public abstract class ContentLength extends org.apache.pekko.http.scaladsl.model.HttpHeader {
+    public abstract long length();
+}

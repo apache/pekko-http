@@ -4,11 +4,11 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.unmarshalling.StringUnmarshallers;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.junit.Test;
 
 import java.util.Map.Entry;
@@ -16,44 +16,44 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 //#parameter
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.parameter;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
 
 //#parameter
 //#parameters
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.parameter;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
 
 //#parameters
 //#optional
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.parameter;
-import static akka.http.javadsl.server.Directives.parameterOptional;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
+import static org.apache.pekko.http.javadsl.server.Directives.parameterOptional;
 
 //#optional
 //#required-value
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.parameterRequiredValue;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameterRequiredValue;
 
 //#required-value
 //#mapped-value
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.parameter;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
 
 //#mapped-value
 //#parameterMap
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.parameterMap;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameterMap;
 
 //#parameterMap
 //#parameterMultiMap
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.parameterMultiMap;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameterMultiMap;
 
 //#parameterMultiMap
 //#parameterSeq
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.parameterList;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameterList;
 
 //#parameterSeq
 

@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [MarshallingDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/MarshallingDirectives.scala) { #completeWith }
+@@signature [MarshallingDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/MarshallingDirectives.scala) { #completeWith }
 
 @@@
 

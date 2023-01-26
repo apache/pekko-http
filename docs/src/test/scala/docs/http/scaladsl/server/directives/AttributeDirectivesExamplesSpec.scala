@@ -4,10 +4,11 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.{ InvalidOriginRejection, MissingHeaderRejection, Route, RoutingSpec }
+import org.apache.pekko
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.server.{ InvalidOriginRejection, MissingHeaderRejection, Route, RoutingSpec }
 import docs.CompileOnlySpec
 import org.scalatest.Inside
 

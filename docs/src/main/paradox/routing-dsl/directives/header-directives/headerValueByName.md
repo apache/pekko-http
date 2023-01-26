@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [HeaderDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/HeaderDirectives.scala) { #headerValueByName }
+@@signature [HeaderDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/HeaderDirectives.scala) { #headerValueByName }
 
 @@@
 

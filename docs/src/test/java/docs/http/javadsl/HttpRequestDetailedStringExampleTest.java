@@ -4,8 +4,8 @@
 
 package docs.http.javadsl;
 
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.model.headers.Authorization;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.model.headers.Authorization;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

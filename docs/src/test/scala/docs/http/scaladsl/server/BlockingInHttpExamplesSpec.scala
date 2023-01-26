@@ -4,8 +4,9 @@
 
 package docs.http.scaladsl.server
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.server.{ Directives, Route }
+import org.apache.pekko
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.server.{ Directives, Route }
 import docs.CompileOnlySpec
 
 import scala.concurrent.Future

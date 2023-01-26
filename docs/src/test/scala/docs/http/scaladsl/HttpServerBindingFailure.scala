@@ -4,10 +4,11 @@
 
 package docs.http.scaladsl
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl.server.Directives._
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.Http.ServerBinding
+import pekko.http.scaladsl.server.Directives._
 
 import scala.concurrent.Future
 

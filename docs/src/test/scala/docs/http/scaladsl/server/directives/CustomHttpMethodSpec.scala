@@ -4,12 +4,13 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.HttpProtocols._
-import akka.http.scaladsl.model.RequestEntityAcceptance.Expected
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives
-import akka.testkit.{ AkkaSpec, SocketUtil }
+import org.apache.pekko
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.model.HttpProtocols._
+import pekko.http.scaladsl.model.RequestEntityAcceptance.Expected
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.Directives
+import pekko.testkit.{ AkkaSpec, SocketUtil }
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
@@ -23,7 +24,7 @@ class CustomHttpMethodSpec extends AkkaSpec with ScalaFutures
       val host = "localhost"
       var port = 0
       // #application-custom
-      import akka.http.scaladsl.settings.{ ParserSettings, ServerSettings }
+      import org.apache.pekko.http.scaladsl.settings.{ ParserSettings, ServerSettings }
 
       // define custom method type:
       val BOLT = HttpMethod.custom("BOLT", safe = false,

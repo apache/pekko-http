@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [RouteDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/RouteDirectives.scala) { #handle }
+@@signature [RouteDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/RouteDirectives.scala) { #handle }
 
 @@@
 

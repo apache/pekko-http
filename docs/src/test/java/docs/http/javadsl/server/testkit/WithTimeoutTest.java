@@ -4,7 +4,7 @@
 
 package docs.http.javadsl.server.testkit;
 
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.junit.Test;
 import scala.concurrent.duration.FiniteDuration;
 

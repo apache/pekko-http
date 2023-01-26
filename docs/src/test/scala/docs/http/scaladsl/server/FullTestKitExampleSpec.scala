@@ -5,9 +5,10 @@
 package docs.http.scaladsl.server
 
 //#source-quote
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.http.scaladsl.server._
+import org.apache.pekko
+import pekko.http.scaladsl.model.StatusCodes
+import pekko.http.scaladsl.testkit.ScalatestRouteTest
+import pekko.http.scaladsl.server._
 import Directives._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

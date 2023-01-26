@@ -1,6 +1,6 @@
 import akka._
 import akka.ValidatePullRequest._
-import AkkaDependency._
+import PekkoDependency._
 import Dependencies.{ h2specExe, h2specName }
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 import java.nio.file.Files
@@ -35,7 +35,7 @@ inThisBuild(Def.settings(
   concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
   onLoad in Global := {
     sLog.value.info(
-      s"Building Pekko HTTP ${version.value} against Pekko ${AkkaDependency.akkaVersion} on Scala ${(httpCore / scalaVersion).value}")
+      s"Building Pekko HTTP ${version.value} against Pekko ${PekkoDependency.pekkoVersion} on Scala ${(httpCore / scalaVersion).value}")
     (onLoad in Global).value
   },
   scalafixScalaBinaryVersion := scalaBinaryVersion.value))
@@ -128,7 +128,7 @@ lazy val parsing = project("parsing")
   .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.parsing"))
   .settings(MetaInfLicenseNoticeCopy.settings)
-  .addAkkaModuleDependency("akka-actor", "provided")
+  .addPekkoModuleDependency("pekko-actor", "provided")
   .settings(Dependencies.parsing)
   .settings(
     scalacOptions --= Seq("-Xfatal-warnings", "-Xlint", "-Ywarn-dead-code"), // disable warnings for parboiled code
@@ -143,13 +143,13 @@ lazy val httpCore = project("http-core")
   .settings(AutomaticModuleName.settings("pekko.http.core"))
   .settings(MetaInfLicenseNoticeCopy.settings)
   .dependsOn(parsing, httpScalafixRules % ScalafixConfig)
-  .addAkkaModuleDependency("akka-stream", "provided")
-  .addAkkaModuleDependency(
-    "akka-stream-testkit",
+  .addPekkoModuleDependency("pekko-stream", "provided")
+  .addPekkoModuleDependency(
+    "pekko-stream-testkit",
     "test",
-    akka =
-      if (System.getProperty("akka.http.test-against-akka-main", "false") == "true") AkkaDependency.masterSnapshot
-      else AkkaDependency.default)
+    pekko =
+      if (System.getProperty("pekko.http.test-against-pekko-main", "false") == "true") PekkoDependency.masterSnapshot
+      else PekkoDependency.default)
   .settings(Dependencies.httpCore)
   .settings(VersionGenerator.versionSettings)
   .settings(scalaMacroSupport)
@@ -161,7 +161,7 @@ lazy val http = project("http")
   .settings(AutomaticModuleName.settings("pekko.http"))
   .settings(MetaInfLicenseNoticeCopy.settings)
   .dependsOn(httpCore)
-  .addAkkaModuleDependency("akka-stream", "provided")
+  .addPekkoModuleDependency("pekko-stream", "provided")
   .settings(Dependencies.http)
   .settings(
     Compile / scalacOptions += "-language:_")
@@ -181,8 +181,8 @@ lazy val http2Support = project("http2-support")
   .settings(AutomaticModuleName.settings("pekko.http.http2"))
   .settings(MetaInfLicenseNoticeCopy.settings)
   .dependsOn(httpCore, httpTestkit % "test", httpCore % "test->test")
-  .addAkkaModuleDependency("akka-stream", "provided")
-  .addAkkaModuleDependency("akka-stream-testkit", "test")
+  .addPekkoModuleDependency("pekko-stream", "provided")
+  .addPekkoModuleDependency("pekko-stream-testkit", "test")
   .settings(Dependencies.http2)
   .settings(Dependencies.http2Support)
   .settings {
@@ -223,14 +223,14 @@ lazy val httpTestkit = project("http-testkit")
   .settings(AutomaticModuleName.settings("pekko.http.testkit"))
   .settings(MetaInfLicenseNoticeCopy.settings)
   .dependsOn(http)
-  .addAkkaModuleDependency("akka-stream-testkit", "provided")
-  .addAkkaModuleDependency("akka-testkit", "provided")
+  .addPekkoModuleDependency("pekko-stream-testkit", "provided")
+  .addPekkoModuleDependency("pekko-testkit", "provided")
   .settings(Dependencies.httpTestkit)
   .settings(
     // don't ignore Suites which is the default for the junit-interface
     testOptions += Tests.Argument(TestFrameworks.JUnit, "--ignore-runners="),
     Compile / scalacOptions ++= Seq("-language:_"),
-    Test / run / mainClass := Some("akka.http.javadsl.SimpleServerApp"))
+    Test / run / mainClass := Some("org.apache.pekko.http.javadsl.SimpleServerApp"))
   .enablePlugins(BootstrapGenjavadoc, MultiNodeScalaTest, ScaladocNoVerificationOfDiagrams)
   .enablePlugins(ReproducibleBuildsPlugin)
   .disablePlugins(MimaPlugin) // testkit, no bin compat guaranteed
@@ -247,8 +247,8 @@ lazy val httpTests = project("http-tests")
   .configs(MultiJvm)
   .settings(headerSettings(MultiJvm))
   .settings(ValidatePR / additionalTasks += MultiJvm / headerCheck)
-  .addAkkaModuleDependency("akka-stream", "provided")
-  .addAkkaModuleDependency("akka-multi-node-testkit", "test")
+  .addPekkoModuleDependency("pekko-stream", "provided")
+  .addPekkoModuleDependency("pekko-multi-node-testkit", "test")
   .settings(
     // Fix to reenable scala-steward, see https://gitter.im/scala-steward-org/scala-steward?at=6183bb66d78911028a1b7cd8
     // Putting that jar file with the complicated name into the git tree directly breaks if something in the environment
@@ -267,7 +267,7 @@ lazy val httpTests = project("http-tests")
 lazy val httpJmhBench = project("http-bench-jmh")
   .settings(commonSettings)
   .dependsOn(http, http2Support % "compile->compile,test")
-  .addAkkaModuleDependency("akka-stream")
+  .addPekkoModuleDependency("pekko-stream")
   .enablePlugins(JmhPlugin)
   .enablePlugins(NoPublish) // don't release benchs
   .disablePlugins(MimaPlugin)
@@ -282,14 +282,14 @@ lazy val httpXml =
   httpMarshallersScalaSubproject("xml")
     .settings(AutomaticModuleName.settings("pekko.http.marshallers.scalaxml"))
     .settings(MetaInfLicenseNoticeCopy.settings)
-    .addAkkaModuleDependency("akka-stream", "provided")
+    .addPekkoModuleDependency("pekko-stream", "provided")
     .settings(Dependencies.httpXml)
 
 lazy val httpSprayJson =
   httpMarshallersScalaSubproject("spray-json")
     .settings(AutomaticModuleName.settings("pekko.http.marshallers.sprayjson"))
     .settings(MetaInfLicenseNoticeCopy.settings)
-    .addAkkaModuleDependency("akka-stream", "provided")
+    .addPekkoModuleDependency("pekko-stream", "provided")
     .settings(Dependencies.httpSprayJson)
 
 lazy val httpMarshallersJava = project("http-marshallers-java")
@@ -302,8 +302,8 @@ lazy val httpJackson =
   httpMarshallersJavaSubproject("jackson")
     .settings(AutomaticModuleName.settings("pekko.http.marshallers.jackson"))
     .settings(MetaInfLicenseNoticeCopy.settings)
-    .addAkkaModuleDependency("akka-stream", "provided")
-    .addAkkaModuleDependency("akka-stream-testkit", "test")
+    .addPekkoModuleDependency("pekko-stream", "provided")
+    .addPekkoModuleDependency("pekko-stream-testkit", "test")
     .dependsOn(httpTestkit % "test")
     .settings(Dependencies.httpJackson)
     .enablePlugins(ScaladocNoVerificationOfDiagrams)
@@ -314,8 +314,8 @@ lazy val httpCaching = project("http-caching")
   .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.caching"))
   .settings(MetaInfLicenseNoticeCopy.settings)
-  .addAkkaModuleDependency("akka-stream", "provided")
-  .addAkkaModuleDependency("akka-stream-testkit", "provided")
+  .addPekkoModuleDependency("pekko-stream", "provided")
+  .addPekkoModuleDependency("pekko-stream-testkit", "provided")
   .settings(Dependencies.httpCaching)
   .dependsOn(http, httpCore, httpTestkit % "test")
   .enablePlugins(BootstrapGenjavadoc)
@@ -361,7 +361,7 @@ lazy val httpScalafixRules =
 lazy val httpScalafixTestInput =
   Project(id = "http-scalafix-test-input", base = file("http-scalafix/scalafix-test-input"))
     .dependsOn(http)
-    .addAkkaModuleDependency("akka-stream")
+    .addPekkoModuleDependency("pekko-stream")
     .enablePlugins(NoPublish)
     .disablePlugins(MimaPlugin, HeaderPlugin /* because it gets confused about metaheader required for tests */ )
     .settings(
@@ -375,7 +375,7 @@ lazy val httpScalafixTestInput =
 lazy val httpScalafixTestOutput =
   Project(id = "http-scalafix-test-output", base = file("http-scalafix/scalafix-test-output"))
     .dependsOn(http)
-    .addAkkaModuleDependency("akka-stream")
+    .addPekkoModuleDependency("pekko-stream")
     .enablePlugins(NoPublish)
     .disablePlugins(MimaPlugin, HeaderPlugin /* because it gets confused about metaheader required for tests */ )
 
@@ -402,11 +402,11 @@ lazy val httpScalafixTests =
 lazy val docs = project("docs")
   .enablePlugins(ParadoxPlugin, NoPublish, PublishRsyncPlugin)
   .disablePlugins(MimaPlugin)
-  .addAkkaModuleDependency("akka-stream", "provided", AkkaDependency.docs)
-  .addAkkaModuleDependency("akka-actor-typed", "provided", AkkaDependency.docs)
-  .addAkkaModuleDependency("akka-multi-node-testkit", "provided", AkkaDependency.docs)
-  .addAkkaModuleDependency("akka-stream-testkit", "provided", AkkaDependency.docs)
-  .addAkkaModuleDependency("akka-actor-testkit-typed", "provided", AkkaDependency.docs)
+  .addPekkoModuleDependency("pekko-stream", "provided", PekkoDependency.docs)
+  .addPekkoModuleDependency("pekko-actor-typed", "provided", PekkoDependency.docs)
+  .addPekkoModuleDependency("pekko-multi-node-testkit", "provided", PekkoDependency.docs)
+  .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoDependency.docs)
+  .addPekkoModuleDependency("pekko-actor-testkit-typed", "provided", PekkoDependency.docs)
   .dependsOn(
     httpCore, http, httpXml, http2Support, httpMarshallersJava, httpMarshallersScala, httpCaching,
     httpTests % "compile;test->test", httpTestkit % "compile;test->test", httpScalafixRules % ScalafixConfig)
@@ -438,9 +438,9 @@ lazy val docs = project("docs")
     Compile / paradoxProperties ++= Map(
       "project.name" -> "Apache Pekko HTTP",
       "canonical.base_url" -> "https://pekko.apache.org/docs/akka-http/current",
-      "akka.version" -> AkkaDependency.docs.version,
-      "akka.minimum.version25" -> AkkaDependency.minimumExpectedAkkaVersion,
-      "akka.minimum.version26" -> AkkaDependency.minimumExpectedAkka26Version,
+      "akka.version" -> PekkoDependency.docs.version,
+      "akka.minimum.version25" -> PekkoDependency.minimumExpectedPekkoVersion,
+      "akka.minimum.version26" -> PekkoDependency.minimumExpectedPekko26Version,
       "jackson.xml.version" -> Dependencies.jacksonXmlVersion,
       "scalafix.version" -> _root_.scalafix.sbt.BuildInfo.scalafixVersion, // grab from scalafix plugin directly
       "extref.pekko-docs.base_url" -> s"https://pekko.apache.org/docs/pekko/current/%s",
@@ -448,19 +448,19 @@ lazy val docs = project("docs")
         val v = if (isSnapshot.value) "current" else version.value
         s"https://doc.akka.io/japi/akka-http/$v"
       },
-      "javadoc.akka.base_url" -> s"https://doc.akka.io/japi/akka/${AkkaDependency.docs.link}",
+      "javadoc.akka.base_url" -> s"https://doc.akka.io/japi/akka/${PekkoDependency.docs.link}",
       "javadoc.akka.link_style" -> "direct",
       "scaladoc.akka.http.base_url" -> {
         val v = if (isSnapshot.value) "current" else version.value
         s"https://doc.akka.io/api/akka-http/$v"
       },
-      "scaladoc.akka.base_url" -> s"https://doc.akka.io/api/akka/${AkkaDependency.docs.link}",
+      "scaladoc.akka.base_url" -> s"https://doc.akka.io/api/akka/${PekkoDependency.docs.link}",
       "algolia.docsearch.api_key" -> "0ccbb8bf5148554a406fbf07df0a93b9",
       "algolia.docsearch.index_name" -> "akka-http",
       "google.analytics.account" -> "UA-21117439-1",
       "google.analytics.domain.name" -> "akka.io",
       "github.base_url" -> GitHub.url(version.value, isSnapshot.value)),
-    apidocRootPackage := "akka",
+    apidocRootPackage := "org.apache.pekko",
     ValidatePR / additionalTasks += Compile / paradox,
     ThisBuild / publishRsyncHost := "akkarepo@gustav.akka.io",
     publishRsyncArtifacts := List((Compile / paradox).value -> gustavDir("docs").value))
@@ -470,7 +470,7 @@ lazy val docs = project("docs")
 lazy val compatibilityTests = Project("http-compatibility-tests", file("http-compatibility-tests"))
   .enablePlugins(NoPublish)
   .disablePlugins(MimaPlugin)
-  .addAkkaModuleDependency("akka-stream", "provided")
+  .addPekkoModuleDependency("pekko-stream", "provided")
   .settings(
     libraryDependencies ++= Seq(
       "org.apache.pekko" %% "pekko-http" % MiMa.latest101Version % "provided",

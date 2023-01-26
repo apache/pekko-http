@@ -4,11 +4,11 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.AttributeKey;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.model.AttributeKey;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.junit.Test;
 
 public class AttributeDirectivesExamplesTest extends JUnitRouteTest {

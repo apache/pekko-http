@@ -41,7 +41,7 @@ REQUEST ~> ROUTE ~> check {
 
 In this template *REQUEST* is an expression evaluating to an @apidoc[HttpRequest] instance.
 In most cases your test will, in one way or another, extend from @apidoc[RouteTest] which itself mixes in the
-`akka.http.scaladsl.client.RequestBuilding` trait, which gives you a concise and convenient way of constructing
+`org.apache.pekko.http.scaladsl.client.RequestBuilding` trait, which gives you a concise and convenient way of constructing
 test requests. <a id="^1" href="#1">[1]</a>
 
 *ROUTE* is an expression evaluating to a @ref[Route](routes.md). You can specify one inline or simply refer to the
@@ -120,7 +120,7 @@ Java
 
 The testkit supports a fluent DSL to write compact assertions on the response by chaining assertions
 using "dot-syntax". To simplify working with streamed responses the entity of the response is first "strictified", i.e.
-entity data is collected into a single @apidoc[akka.util.ByteString] and provided the entity is supplied as an `HttpEntityStrict`. This
+entity data is collected into a single @apidoc[org.apache.pekko.util.ByteString] and provided the entity is supplied as an `HttpEntityStrict`. This
 allows to write several assertions against the same entity data which wouldn't (necessarily) be possible for the
 streamed version.
 
@@ -148,7 +148,7 @@ entity data.
 ## Supporting Custom Test Frameworks
 
 Adding support for a custom test framework is achieved by creating new superclass analogous to
-`JUnitRouteTest` for writing tests with the custom test framework deriving from `akka.http.javadsl.testkit.RouteTest`
+`JUnitRouteTest` for writing tests with the custom test framework deriving from `org.apache.pekko.http.javadsl.testkit.RouteTest`
 and implementing its abstract methods. This will allow users of the test framework to use `testRoute` and
 to write assertions using the assertion methods defined on `TestResponse`.
 
@@ -225,7 +225,7 @@ Remember to configure the timeout using `dilated` if you want to account for slo
 
 ## Testing Actor integration
 
-The @scala[`ScalatestRouteTest`]@java[`JUnitRouteTest`] still provides a Classic @apidoc[akka.actor.ActorSystem],
+The @scala[`ScalatestRouteTest`]@java[`JUnitRouteTest`] still provides a Classic @apidoc[org.apache.pekko.actor.ActorSystem],
 so if you are not using the Classic API you will need to adapt it:
 
 Scala

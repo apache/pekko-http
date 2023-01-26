@@ -132,7 +132,7 @@ val route =
 @@@ div { .group-java }
 
 ```java
-import static akka.http.javadsl.server.Directives.*;
+import static org.apache.http.javadsl.server.Directives.*;
 
 Route route =
   directiveA(concat(() ->
@@ -203,7 +203,7 @@ their Java and Scala DSL representations. You can do so using the `asScala` meth
 Converting Scala DSL routes to Java DSL:
 
 Scala
-:   @@snip [RouteJavaScalaDslConversionSpec.scala](/http-tests/src/test/scala/akka/http/scaladsl/RouteJavaScalaDslConversionSpec.scala) { #scala-to-java }
+:   @@snip [RouteJavaScalaDslConversionSpec.scala](/http-tests/src/test/scala/org/apache/pekko/http/scaladsl/RouteJavaScalaDslConversionSpec.scala) { #scala-to-java }
 
 Java
 :   @@snip [RouteSealExample.java](/http-tests/src/test/java/docs/http/javadsl/server/RouteJavaScalaDslConversionTest.java) { #scala-to-java }
@@ -211,7 +211,7 @@ Java
 Converting Java DSL routes to Scala DSL:
 
 Scala
-:   @@snip [RouteJavaScalaDslConversionSpec.scala](/http-tests/src/test/scala/akka/http/scaladsl/RouteJavaScalaDslConversionSpec.scala) { #java-to-scala }
+:   @@snip [RouteJavaScalaDslConversionSpec.scala](/http-tests/src/test/scala/org/apache/pekko/http/scaladsl/RouteJavaScalaDslConversionSpec.scala) { #java-to-scala }
 
 Java
 :   @@snip [RouteSealExample.java](/http-tests/src/test/java/docs/http/javadsl/server/RouteJavaScalaDslConversionTest.java) { #java-to-scala }

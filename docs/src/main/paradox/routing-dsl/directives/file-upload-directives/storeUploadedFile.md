@@ -4,7 +4,7 @@
 @@@ div { .group-scala }
 ## Signature
 
-@@signature [FileUploadDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/FileUploadDirectives.scala) { #storeUploadedFile }
+@@signature [FileUploadDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/FileUploadDirectives.scala) { #storeUploadedFile }
 
 @@@
 

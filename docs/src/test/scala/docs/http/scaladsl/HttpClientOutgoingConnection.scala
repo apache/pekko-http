@@ -4,10 +4,11 @@
 
 package docs.http.scaladsl
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.stream.scaladsl._
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.model._
+import pekko.stream.scaladsl._
 
 import scala.concurrent.Future
 import scala.util.{ Failure, Success }

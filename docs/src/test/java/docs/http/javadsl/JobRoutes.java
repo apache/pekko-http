@@ -9,16 +9,16 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
-import akka.actor.typed.ActorRef;
-import akka.actor.typed.ActorSystem;
-import akka.actor.typed.javadsl.AskPattern;
+import org.apache.pekko.actor.typed.ActorRef;
+import org.apache.pekko.actor.typed.ActorSystem;
+import org.apache.pekko.actor.typed.javadsl.AskPattern;
 
-import akka.http.javadsl.marshallers.jackson.Jackson;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Route;
 
-import static akka.http.javadsl.server.Directives.*;
-import static akka.http.javadsl.unmarshalling.StringUnmarshallers.LONG;
+import static org.apache.pekko.http.javadsl.server.Directives.*;
+import static org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers.LONG;
 
 /**
  * Routes for use with the HttpServerWithActorsSample

@@ -25,7 +25,7 @@ Scala
 
 Java
 :   ```java
-    package akka.http.javadsl.server;
+    package org.apache.pekko.http.javadsl.server;
     class PathMatcher0
     class PathMatcher1<T1>
     class PathMatcher2<T1, T2>

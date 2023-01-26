@@ -11,9 +11,9 @@ import java.util.Arrays;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.marshalling.Marshaller;
-import akka.http.javadsl.unmarshalling.Unmarshaller;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.marshalling.Marshaller;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 
 public class JacksonXmlSupport {
   private static final ObjectMapper DEFAULT_XML_MAPPER =

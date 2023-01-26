@@ -4,8 +4,9 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 class RespondWithDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {

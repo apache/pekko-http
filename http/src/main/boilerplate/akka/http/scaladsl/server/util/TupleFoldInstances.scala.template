@@ -2,7 +2,7 @@
  * Copyright (C) 2009-2020 Lightbend Inc. <http://www.lightbend.com>
  */
 
-package akka.http.scaladsl.server.util
+package org.apache.pekko.http.scaladsl.server.util
 
 import TupleOps.FoldLeft
 import BinaryPolyFunc.Case
