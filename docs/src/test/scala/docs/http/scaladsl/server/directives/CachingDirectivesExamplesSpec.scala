@@ -4,25 +4,27 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 //#caching-directives-import
 //#always-cache
 //#cache
-import akka.http.scaladsl.server.directives.CachingDirectives._
+import org.apache.pekko
+import pekko.http.scaladsl.server.directives.CachingDirectives._
 //#caching-directives-import
 //#always-cache
 //#cache
-import akka.http.scaladsl.model.HttpMethods.GET
+import pekko.http.scaladsl.model.HttpMethods.GET
 
 class CachingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "cache" in {
     // #cache
-    import akka.http.scaladsl.server.RequestContext
-    import akka.http.scaladsl.model.Uri
-    import akka.http.scaladsl.model.headers.{ Authorization, `Cache-Control` }
-    import akka.http.scaladsl.model.headers.CacheDirectives.`no-cache`
+    import pekko.http.scaladsl.server.RequestContext
+    import pekko.http.scaladsl.model.Uri
+    import pekko.http.scaladsl.model.headers.{ Authorization, `Cache-Control` }
+    import pekko.http.scaladsl.model.headers.CacheDirectives.`no-cache`
 
     // Example keyer for non-authenticated GET requests
     val simpleKeyer: PartialFunction[RequestContext, Uri] = {
@@ -65,10 +67,10 @@ class CachingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   }
   "alwaysCache" in {
     // #always-cache
-    import akka.http.scaladsl.server.RequestContext
-    import akka.http.scaladsl.model.Uri
-    import akka.http.scaladsl.model.headers.{ Authorization, `Cache-Control` }
-    import akka.http.scaladsl.model.headers.CacheDirectives.`no-cache`
+    import pekko.http.scaladsl.server.RequestContext
+    import pekko.http.scaladsl.model.Uri
+    import pekko.http.scaladsl.model.headers.{ Authorization, `Cache-Control` }
+    import pekko.http.scaladsl.model.headers.CacheDirectives.`no-cache`
 
     // Example keyer for non-authenticated GET requests
     val simpleKeyer: PartialFunction[RequestContext, Uri] = {
@@ -110,8 +112,9 @@ class CachingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   }
   "cachingProhibited" in {
     // #caching-prohibited
-    import akka.http.scaladsl.model.headers.`Cache-Control`
-    import akka.http.scaladsl.model.headers.CacheDirectives.`no-cache`
+    import org.apache.pekko
+    import pekko.http.scaladsl.model.headers.`Cache-Control`
+    import pekko.http.scaladsl.model.headers.CacheDirectives.`no-cache`
 
     val route =
       cachingProhibited {
@@ -129,13 +132,14 @@ class CachingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "createCache" in {
     // #keyer-function
-    import akka.http.caching.scaladsl.Cache
-    import akka.http.caching.scaladsl.CachingSettings
-    import akka.http.caching.LfuCache
-    import akka.http.scaladsl.server.RequestContext
-    import akka.http.scaladsl.server.RouteResult
-    import akka.http.scaladsl.model.Uri
-    import akka.http.scaladsl.server.directives.CachingDirectives._
+    import org.apache.pekko
+    import pekko.http.caching.scaladsl.Cache
+    import pekko.http.caching.scaladsl.CachingSettings
+    import pekko.http.caching.LfuCache
+    import pekko.http.scaladsl.server.RequestContext
+    import pekko.http.scaladsl.server.RouteResult
+    import pekko.http.scaladsl.model.Uri
+    import pekko.http.scaladsl.server.directives.CachingDirectives._
     import scala.concurrent.duration._
 
     // Use the request's URI as the cache's key

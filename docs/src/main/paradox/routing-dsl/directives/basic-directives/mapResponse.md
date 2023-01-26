@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [BasicDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/BasicDirectives.scala) { #mapResponse }
+@@signature [BasicDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/BasicDirectives.scala) { #mapResponse }
 
 @@@
 

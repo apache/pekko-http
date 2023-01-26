@@ -6,10 +6,10 @@ package docs.http.javadsl.server;
 
 //#binding-failure-high-level-example
 
-import akka.actor.ActorSystem;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.ServerBinding;
-import akka.http.javadsl.server.Route;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.ServerBinding;
+import org.apache.pekko.http.javadsl.server.Route;
 
 import java.io.IOException;
 import java.util.concurrent.CompletionStage;

@@ -65,7 +65,7 @@ object Scaladoc extends AutoPlugin {
       "-doc-title", "Akka HTTP",
       "-doc-version", ver,
       // Workaround https://issues.scala-lang.org/browse/SI-10028
-      "-skip-packages", "akka.pattern:org.specs2",
+      "-skip-packages", "org.apache.pekko.pattern:org.specs2",
       "-doc-canonical-base-url", "https://doc.akka.io/api/akka-http/current/") ++
       plugins.map(plugin => "-Xplugin:" + plugin)
     CliOptions.scaladocDiagramsEnabled.ifTrue("-diagrams").toList ::: opts

@@ -4,9 +4,10 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.server._
-import akka.http.scaladsl.model.headers.{ `Set-Cookie`, Cookie, HttpCookie }
-import akka.http.scaladsl.model.DateTime
+import org.apache.pekko
+import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.model.headers.{ `Set-Cookie`, Cookie, HttpCookie }
+import pekko.http.scaladsl.model.DateTime
 import docs.CompileOnlySpec
 
 class CookieDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {

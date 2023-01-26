@@ -4,19 +4,19 @@
 
 package docs.http.javadsl.server;
 
-import akka.Done;
-import akka.NotUsed;
-import akka.actor.ActorRef;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.unmarshalling.Unmarshaller;
-import akka.japi.Pair;
-import akka.stream.Materializer;
-import akka.stream.javadsl.FileIO;
-import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.Framing;
-import akka.stream.javadsl.Sink;
-import akka.util.ByteString;
+import org.apache.pekko.Done;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.actor.ActorRef;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
+import org.apache.pekko.japi.Pair;
+import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.stream.javadsl.FileIO;
+import org.apache.pekko.stream.javadsl.Flow;
+import org.apache.pekko.stream.javadsl.Framing;
+import org.apache.pekko.stream.javadsl.Sink;
+import org.apache.pekko.util.ByteString;
 import org.junit.Test;
 
 import java.io.File;
@@ -27,22 +27,22 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import static akka.http.javadsl.server.PathMatchers.longSegment;
-import static akka.http.javadsl.server.PathMatchers.segment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.longSegment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
 
 //#simple-upload
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.entity;
-import static akka.http.javadsl.server.Directives.onSuccess;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#simple-upload
 
 //#stream-csv-upload
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.entity;
-import static akka.http.javadsl.server.Directives.onComplete;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.onComplete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#stream-csv-upload
 

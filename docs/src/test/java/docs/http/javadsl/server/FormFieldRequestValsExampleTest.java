@@ -7,23 +7,23 @@ package docs.http.javadsl.server;
 
 import org.junit.Test;
 
-import akka.http.javadsl.model.FormData;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.unmarshalling.StringUnmarshallers;
-import akka.http.javadsl.unmarshalling.StringUnmarshaller;
-import akka.http.javadsl.unmarshalling.Unmarshaller;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.japi.Pair;
+import org.apache.pekko.http.javadsl.model.FormData;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshaller;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.japi.Pair;
 
 //#simple
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.formField;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.formField;
 
 //#simple
 //#custom-unmarshal
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.formField;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.formField;
 
 //#custom-unmarshal
 

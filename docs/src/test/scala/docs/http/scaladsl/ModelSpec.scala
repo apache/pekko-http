@@ -4,13 +4,14 @@
 
 package docs.http.scaladsl
 
+import org.apache.pekko
 //#import-model
-import akka.http.scaladsl.model._
+import org.apache.pekko.http.scaladsl.model._
 //#import-model
 
-import akka.testkit.AkkaSpec
-import akka.util.ByteString
-import akka.http.scaladsl.model.headers.BasicHttpCredentials
+import pekko.testkit.AkkaSpec
+import pekko.util.ByteString
+import pekko.http.scaladsl.model.headers.BasicHttpCredentials
 
 class ModelSpec extends AkkaSpec {
   "construct request" in {
@@ -65,7 +66,7 @@ class ModelSpec extends AkkaSpec {
 
   "deal with headers" in {
     // #headers
-    import akka.http.scaladsl.model.headers._
+    import org.apache.pekko.http.scaladsl.model.headers._
 
     // create a ``Location`` header
     val loc = Location("http://example.com/other")
@@ -118,7 +119,7 @@ class ModelSpec extends AkkaSpec {
 
   "Synthetic-header-s3" in {
     // #synthetic-header-s3
-    import akka.http.scaladsl.model.headers.`Raw-Request-URI`
+    import org.apache.pekko.http.scaladsl.model.headers.`Raw-Request-URI`
     val req = HttpRequest(uri = "/ignored", headers = List(`Raw-Request-URI`("/a/b%2Bc")))
     // #synthetic-header-s3
   }

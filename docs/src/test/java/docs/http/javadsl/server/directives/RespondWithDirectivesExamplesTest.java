@@ -4,48 +4,48 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.HttpHeader;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.headers.HttpOrigin;
-import akka.http.javadsl.model.headers.Origin;
-import akka.http.javadsl.model.headers.RawHeader;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.model.HttpHeader;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.headers.HttpOrigin;
+import org.apache.pekko.http.javadsl.model.headers.Origin;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
 //#multiple-headers
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.respondWithDefaultHeaders;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeaders;
 
 //#multiple-headers
 //#respondWithHeader
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.respondWithDefaultHeader;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeader;
 
 //#respondWithHeader
 //#respondWithDefaultHeader
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.respondWithDefaultHeader;
-import static akka.http.javadsl.server.Directives.respondWithHeader;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeader;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeader;
 
 //#respondWithDefaultHeader
 //#respondWithHeaders
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.respondWithDefaultHeaders;
-import static akka.http.javadsl.server.Directives.respondWithHeaders;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeaders;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeaders;
 
 //#respondWithHeaders
 //#respondWithDefaultHeaders
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.respondWithDefaultHeaders;
-import static akka.http.javadsl.server.Directives.respondWithHeader;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeaders;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeader;
 
 //#respondWithDefaultHeaders
 public class RespondWithDirectivesExamplesTest extends JUnitRouteTest {

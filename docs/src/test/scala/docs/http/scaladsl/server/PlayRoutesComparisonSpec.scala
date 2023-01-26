@@ -4,9 +4,10 @@
 
 package docs.http.scaladsl.server
 
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server._
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko
+import pekko.http.scaladsl.server.Directives._
+import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

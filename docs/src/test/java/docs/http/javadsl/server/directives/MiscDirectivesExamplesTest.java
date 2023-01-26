@@ -4,13 +4,13 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.headers.*;
-import akka.http.javadsl.server.PathMatchers;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.unmarshalling.Unmarshaller;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.*;
+import org.apache.pekko.http.javadsl.server.PathMatchers;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.junit.Test;
 
 import java.net.InetAddress;
@@ -19,48 +19,48 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 //#withSizeLimitExample
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.entity;
-import static akka.http.javadsl.server.Directives.withSizeLimit;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.withSizeLimit;
 
 //#withSizeLimitExample
 //#withSizeLimitExampleNested
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.entity;
-import static akka.http.javadsl.server.Directives.withSizeLimit;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.withSizeLimit;
 
 //#withSizeLimitExampleNested
 //#withoutSizeLimitExample
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.entity;
-import static akka.http.javadsl.server.Directives.withoutSizeLimit;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.withoutSizeLimit;
 
 //#withoutSizeLimitExample
 //#extractClientIP
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.extractClientIP;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractClientIP;
 
 //#extractClientIP
 //#requestEntity-empty-present-example
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.requestEntityEmpty;
-import static akka.http.javadsl.server.Directives.requestEntityPresent;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.requestEntityEmpty;
+import static org.apache.pekko.http.javadsl.server.Directives.requestEntityPresent;
 
 //#requestEntity-empty-present-example
 //#selectPreferredLanguage
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.selectPreferredLanguage;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.selectPreferredLanguage;
 
 //#selectPreferredLanguage
 //#validate-example
-import static akka.http.javadsl.server.Directives.extractUri;
-import static akka.http.javadsl.server.Directives.validate;
+import static org.apache.pekko.http.javadsl.server.Directives.extractUri;
+import static org.apache.pekko.http.javadsl.server.Directives.validate;
 
 //#validate-example
 //#rejectEmptyResponse-example
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.rejectEmptyResponse;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.rejectEmptyResponse;
 
 //#rejectEmptyResponse-example
 
@@ -147,8 +147,8 @@ public class MiscDirectivesExamplesTest extends JUnitRouteTest {
 
     // tests:
     final String ip = "192.168.1.2";
-    final akka.http.javadsl.model.RemoteAddress remoteAddress =
-      akka.http.javadsl.model.RemoteAddress.create(InetAddress.getByName(ip));
+    final org.apache.pekko.http.javadsl.model.RemoteAddress remoteAddress =
+      org.apache.pekko.http.javadsl.model.RemoteAddress.create(InetAddress.getByName(ip));
     
     final HttpRequest request = HttpRequest.GET("/")
       .addHeader(XForwardedFor.create(remoteAddress)); //

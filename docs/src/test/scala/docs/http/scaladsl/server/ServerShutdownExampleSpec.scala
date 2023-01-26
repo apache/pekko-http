@@ -4,10 +4,11 @@
 
 package docs.http.scaladsl.server
 
-import akka.actor.CoordinatedShutdown
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
-import akka.http.scaladsl.Http
+import org.apache.pekko
+import pekko.actor.CoordinatedShutdown
+import pekko.actor.typed.ActorSystem
+import pekko.actor.typed.scaladsl.Behaviors
+import pekko.http.scaladsl.Http
 import docs.CompileOnlySpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -19,7 +20,7 @@ class ServerShutdownExampleSpec extends AnyWordSpec with Matchers
     with CompileOnlySpec {
 
   "mount coordinated shutdown" in compileOnlySpec {
-    import akka.http.scaladsl.server.Route
+    import org.apache.pekko.http.scaladsl.server.Route
 
     implicit val system = ActorSystem(Behaviors.empty, "http-server")
     implicit val ec: ExecutionContext = system.executionContext

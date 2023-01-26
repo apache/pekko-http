@@ -8,15 +8,16 @@ import docs.CompileOnlySpec
 import org.scalatest.concurrent.ScalaFutures
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import akka.testkit.AkkaSpec
+import org.apache.pekko.testkit.AkkaSpec
 
 class HttpClientDecodingExampleSpec extends AkkaSpec with CompileOnlySpec with ScalaFutures {
   "single-request-decoding-example" in compileOnlySpec {
     // #single-request-decoding-example
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.coding.Coders
-    import akka.http.scaladsl.model._, headers.HttpEncodings
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.coding.Coders
+    import pekko.http.scaladsl.model._, headers.HttpEncodings
 
     import scala.concurrent.Future
 

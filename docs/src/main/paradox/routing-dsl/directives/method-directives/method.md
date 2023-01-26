@@ -6,7 +6,7 @@ Matches HTTP requests based on their method.
 
 ## Signature
 
-@@signature [MethodDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/MethodDirectives.scala) { #method }
+@@signature [MethodDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/MethodDirectives.scala) { #method }
 
 @@@
 

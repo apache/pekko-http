@@ -4,10 +4,11 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.Route
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers
 import docs.CompileOnlySpec
 
 class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with PredefinedFromStringUnmarshallers {

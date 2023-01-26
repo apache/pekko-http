@@ -3,7 +3,7 @@
 @@@ div { .group-scala }
 ## Signature
 
-@@signature [ParameterDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/ParameterDirectives.scala) { #parameterMap }
+@@signature [ParameterDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/ParameterDirectives.scala) { #parameterMap }
 
 @@@
 

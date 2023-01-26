@@ -16,7 +16,7 @@ The best way to get a hold of a connection pool to a given target endpoint is th
 method, which returns a @apidoc[Flow] that can be "baked" into an application-level stream setup. This flow is also called
 a "pool client flow".
 
-The connection pool underlying a pool client flow is cached. For every @apidoc[akka.actor.ActorSystem], target endpoint and pool
+The connection pool underlying a pool client flow is cached. For every @apidoc[org.apache.pekko.actor.ActorSystem], target endpoint and pool
 configuration there will never be more than a single pool live at any time.
 
 Also, the HTTP layer transparently manages idle shutdown and restarting of connection pools as configured.
@@ -140,14 +140,14 @@ shutdown of a specific pool by calling `shutdown()` on the `HostConnectionPool` 
 flow materializes into. This `shutdown()` call produces a @scala[`Future[Unit]`]@java[`CompletionStage<Done>`] which is fulfilled when the pool
 termination has been completed.
 
-It's also possible to trigger the immediate termination of *all* connection pools in the @apidoc[akka.actor.ActorSystem] at the same
+It's also possible to trigger the immediate termination of *all* connection pools in the @apidoc[org.apache.pekko.actor.ActorSystem] at the same
 time by calling @scala[`Http().shutdownAllConnectionPools()`]@java[`Http.get(system).shutdownAllConnectionPools()`].
 This call too produces a @scala[`Future[Unit]`]@java[`CompletionStage<Done>`] which is fulfilled when all pools have terminated.
 
 @scala[`Http().addClientPoolsToCoordinatedShutdown()`]@java[`Http.get(system).addClientPoolsToCoordinatedShutdown()`] will add the client connection pool shutdown to Apache Pekko's @extref[coordinated shutdown](pekko-docs:coordinated-shutdown.html) so it will be called before the actor system disappears.
 
 @@@ note
-When encountering unexpected @apidoc[akka.stream.AbruptTerminationException] exceptions during @apidoc[akka.actor.ActorSystem] **shutdown**
+When encountering unexpected @apidoc[org.apache.pekko.stream.AbruptTerminationException] exceptions during @apidoc[org.apache.pekko.actor.ActorSystem] **shutdown**
 please make sure that active connections are shut down before shutting down the entire system, this can be done by
 calling the @scala[`Http().shutdownAllConnectionPools()`]@java[`Http.get(system).shutdownAllConnectionPools()`] method,
 and only once its @scala[`Future`]@java[`CompletionStage`] completes, shutting down the actor system.

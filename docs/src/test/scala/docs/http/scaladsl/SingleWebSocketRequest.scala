@@ -4,12 +4,13 @@
 
 package docs.http.scaladsl
 
-import akka.actor.ActorSystem
-import akka.{ Done, NotUsed }
-import akka.http.scaladsl.Http
-import akka.stream.scaladsl._
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.ws._
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.{ Done, NotUsed }
+import pekko.http.scaladsl.Http
+import pekko.stream.scaladsl._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.ws._
 
 import scala.concurrent.Future
 

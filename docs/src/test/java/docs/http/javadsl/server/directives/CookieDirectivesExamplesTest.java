@@ -4,38 +4,38 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.HttpHeader;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.headers.Cookie;
-import akka.http.javadsl.model.headers.HttpCookie;
-import akka.http.javadsl.model.headers.SetCookie;
-import akka.http.javadsl.server.Rejections;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.scaladsl.model.DateTime;
+import org.apache.pekko.http.javadsl.model.HttpHeader;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.headers.Cookie;
+import org.apache.pekko.http.javadsl.model.headers.HttpCookie;
+import org.apache.pekko.http.javadsl.model.headers.SetCookie;
+import org.apache.pekko.http.javadsl.server.Rejections;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.scaladsl.model.DateTime;
 import org.junit.Test;
 
 import java.util.Optional;
 import java.util.OptionalLong;
 
 //#cookie
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.cookie;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.cookie;
 
 //#cookie
 //#optionalCookie
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.optionalCookie;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.optionalCookie;
 
 //#optionalCookie
 //#deleteCookie
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.deleteCookie;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.deleteCookie;
 
 //#deleteCookie
 //#setCookie
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.setCookie;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.setCookie;
 
 //#setCookie
 public class CookieDirectivesExamplesTest extends JUnitRouteTest {

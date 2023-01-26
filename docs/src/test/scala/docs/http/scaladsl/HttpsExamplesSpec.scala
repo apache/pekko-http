@@ -4,8 +4,9 @@
 
 package docs.http.scaladsl
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.{ ConnectionContext, Http }
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.{ ConnectionContext, Http }
 import docs.CompileOnlySpec
 import javax.net.ssl.{ SSLContext, SSLEngine }
 import org.scalatest.matchers.should.Matchers

@@ -4,14 +4,14 @@
 
 package docs.http.javadsl.server;
 
-import akka.NotUsed;
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.Route;
-import akka.japi.JavaPartialFunction;
-import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.Source;
-import akka.http.javadsl.model.ws.Message;
-import akka.http.javadsl.model.ws.TextMessage;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.japi.JavaPartialFunction;
+import org.apache.pekko.stream.javadsl.Flow;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.http.javadsl.model.ws.Message;
+import org.apache.pekko.http.javadsl.model.ws.TextMessage;
 
 public class WebSocketRoutingExample extends AllDirectives {
 

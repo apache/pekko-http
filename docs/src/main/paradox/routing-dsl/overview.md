@@ -18,7 +18,7 @@ service definition as [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yoursel
 As an alternative Apache Pekko HTTP provides a flexible DSL for expressing your service behavior as a structure of
 composable elements (called @ref[Directives](directives/index.md)) in a concise and readable way. Directives are assembled into a so called
 *route structure* which, at its top-level, can be used to create a handler @apidoc[Flow] or async handler function that
-can be directly supplied to a `bind` call. @scala[The conversion from @scaladoc[Route](akka.http.scaladsl.server.index#Route=akka.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[akka.http.scaladsl.server.RouteResult]) to flow can either be invoked explicitly
+can be directly supplied to a `bind` call. @scala[The conversion from @scaladoc[Route](org.apache.pekko.http.scaladsl.server.index#Route=org.apache.pekko.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[org.apache.pekko.http.scaladsl.server.RouteResult]) to flow can either be invoked explicitly
 using `Route.toFlow` or, otherwise, the conversion is also provided implicitly by
 `RouteResult.routeToFlow` <a id="^1" href="#1">[1]</a>.]
 
@@ -34,17 +34,17 @@ The core of the Routing DSL becomes available with a single import:
 
 Scala
 :   ```scala
-import akka.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.server.Directives._
 ```
 
 Java
 :   ```java
-import static akka.http.javadsl.server.Directives.*;
+import static org.apache.pekko.http.javadsl.server.Directives.*;
 ```
 
 @@@ div { .group-java }
 
-Or by extending the `akka.http.javadsl.server.AllDirectives` class which brings together all directives into a single class
+Or by extending the `org.apache.pekko.http.javadsl.server.AllDirectives` class which brings together all directives into a single class
 for easier access:
 
 ```java
@@ -60,7 +60,7 @@ Of course it is possible to directly import only the directives you need (i.e. @
 This example also relies on the pre-defined support for Scala XML with:
 
 ```scala
-import akka.http.scaladsl.marshallers.xml.ScalaXmlSupport._
+import org.apache.pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport._
 ```
 
 @@@

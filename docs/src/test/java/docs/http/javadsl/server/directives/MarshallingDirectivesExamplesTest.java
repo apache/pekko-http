@@ -4,29 +4,29 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.marshallers.jackson.Jackson;
-import akka.http.javadsl.marshalling.Marshaller;
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.testkit.TestRouteResult;
-import akka.http.javadsl.unmarshalling.Unmarshaller;
+import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.marshalling.Marshaller;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.junit.Test;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 //#example-entity-with-json
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
 
 //#example-entity-with-json
 //#example-completeWith-with-json
-import static akka.http.javadsl.server.Directives.completeWith;
+import static org.apache.pekko.http.javadsl.server.Directives.completeWith;
 
 //#example-completeWith-with-json
 //#example-handleWith-with-json
-import static akka.http.javadsl.server.Directives.handleWith;
+import static org.apache.pekko.http.javadsl.server.Directives.handleWith;
 
 //#example-handleWith-with-json
 

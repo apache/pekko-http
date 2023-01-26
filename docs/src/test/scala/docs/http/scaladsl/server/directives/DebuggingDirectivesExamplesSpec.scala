@@ -4,13 +4,14 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.event.{ Logging, LoggingAdapter }
-import akka.event.Logging.LogLevel
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.server.RouteResult
-import akka.http.scaladsl.server.RouteResult.{ Complete, Rejected }
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.server.directives.{ DebuggingDirectives, LogEntry, LoggingMagnet }
+import org.apache.pekko
+import pekko.event.{ Logging, LoggingAdapter }
+import pekko.event.Logging.LogLevel
+import pekko.http.scaladsl.model.HttpRequest
+import pekko.http.scaladsl.server.RouteResult
+import pekko.http.scaladsl.server.RouteResult.{ Complete, Rejected }
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.server.directives.{ DebuggingDirectives, LogEntry, LoggingMagnet }
 import docs.CompileOnlySpec
 
 class DebuggingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {

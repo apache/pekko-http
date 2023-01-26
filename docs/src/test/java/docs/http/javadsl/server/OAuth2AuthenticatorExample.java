@@ -4,21 +4,21 @@
 
 package docs.http.javadsl.server;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.headers.Host;
-import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.scaladsl.model.headers.Authorization;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.headers.Host;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.scaladsl.model.headers.Authorization;
 
 import java.util.Optional;
 
 import org.junit.Test;
 
 //#oauth2-authenticator-java
-import akka.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.Route;
 
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.authenticateOAuth2;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateOAuth2;
 
 //#oauth2-authenticator-java
 

@@ -4,7 +4,7 @@
 
 package docs.http.javadsl.server;
 
-import static akka.http.javadsl.server.PathMatchers.*;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -14,38 +14,38 @@ import java.util.function.Function;
 
 import org.junit.Test;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.unmarshalling.StringUnmarshallers;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.testkit.TestRoute;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.TestRoute;
 
 //#simple-handler-example-full
-import static akka.http.javadsl.server.Directives.get;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.post;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.post;
 //#simple-handler
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.extractMethod;
-import static akka.http.javadsl.server.Directives.extractUri;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractMethod;
+import static org.apache.pekko.http.javadsl.server.Directives.extractUri;
 
 //#simple-handler
 //#simple-handler-example-full
 
 //#handler2-example-full
-import static akka.http.javadsl.server.Directives.get;
-import static akka.http.javadsl.server.Directives.parameter;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 
 //#handler2-example-full
 
 //#async-handler-1
-import static akka.http.javadsl.server.Directives.extractExecutionContext;
-import static akka.http.javadsl.server.Directives.onSuccess;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.extractExecutionContext;
+import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#async-handler-1
 

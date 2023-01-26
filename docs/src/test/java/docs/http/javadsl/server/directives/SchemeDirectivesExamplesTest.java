@@ -6,22 +6,22 @@ package docs.http.javadsl.server.directives;
 
 import org.junit.Test;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.model.headers.Location;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.model.headers.Location;
 
 //#extractScheme
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.extractScheme;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractScheme;
 
 //#extractScheme
 //#scheme
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.extract;
-import static akka.http.javadsl.server.Directives.redirect;
-import static akka.http.javadsl.server.Directives.scheme;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extract;
+import static org.apache.pekko.http.javadsl.server.Directives.redirect;
+import static org.apache.pekko.http.javadsl.server.Directives.scheme;
 
 //#scheme
 

@@ -4,10 +4,11 @@
 
 package docs.http.scaladsl
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
-import akka.http.scaladsl.server.Directives._
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity }
+import pekko.http.scaladsl.server.Directives._
 import scala.io.StdIn
 
 object HttpServerHighLevel {

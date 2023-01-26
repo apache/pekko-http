@@ -34,7 +34,7 @@ the @ref[HTTP Model](../common/http-model.md) for more information on how HTTP m
 
 ## Starting and Stopping
 
-On the most basic level an Apache Pekko HTTP server is bound by invoking the `bind` method of the @scala[@scaladoc[akka.http.scaladsl.Http](akka.http.scaladsl.Http$)]@java[@javadoc[akka.http.javadsl.Http](akka.http.javadsl.Http)]
+On the most basic level an Apache Pekko HTTP server is bound by invoking the `bind` method of the @scala[@scaladoc[org.apache.pekko.http.scaladsl.Http](akka.http.scaladsl.Http$)]@java[@javadoc[org.apache.pekko.http.javadsl.Http](akka.http.javadsl.Http)]
 extension:
 
 Scala
@@ -128,7 +128,7 @@ some other source. Potential scenarios where this might be useful include tests,
 @@@ div { .group-scala }
 On the server-side the stand-alone HTTP layer forms a @apidoc[BidiFlow] that is defined like this:
 
-@@snip [Http.scala](/http-core/src/main/scala/akka/http/scaladsl/Http.scala) { #server-layer }
+@@snip [Http.scala](/http-core/src/main/scala/org/apache/pekko/http/scaladsl/Http.scala) { #server-layer }
 
 You create an instance of `Http.ServerLayer` by calling one of the two overloads of the `Http().serverLayer` method,
 which also allows for varying degrees of configuration.

@@ -7,8 +7,9 @@ package docs.http.scaladsl
 object HttpServerWithActorsSample {
 
   // #akka-typed-behavior
-  import akka.actor.typed.{ ActorRef, Behavior }
-  import akka.actor.typed.scaladsl.Behaviors
+  import org.apache.pekko
+  import pekko.actor.typed.{ ActorRef, Behavior }
+  import pekko.actor.typed.scaladsl.Behaviors
 
   object JobRepository {
 
@@ -50,7 +51,7 @@ object HttpServerWithActorsSample {
   // #akka-typed-behavior
 
   // #akka-typed-json
-  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+  import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
   import spray.json.DefaultJsonProtocol
   import spray.json.DeserializationException
   import spray.json.JsString
@@ -80,12 +81,13 @@ object HttpServerWithActorsSample {
   // #akka-typed-json
 
   // #akka-typed-route
-  import akka.actor.typed.ActorSystem
-  import akka.util.Timeout
+  import org.apache.pekko
+  import pekko.actor.typed.ActorSystem
+  import pekko.util.Timeout
 
-  import akka.http.scaladsl.server.Directives._
-  import akka.http.scaladsl.model.StatusCodes
-  import akka.http.scaladsl.server.Route
+  import pekko.http.scaladsl.server.Directives._
+  import pekko.http.scaladsl.model.StatusCodes
+  import pekko.http.scaladsl.server.Route
 
   import scala.concurrent.duration._
   import scala.concurrent.Future
@@ -93,8 +95,8 @@ object HttpServerWithActorsSample {
   class JobRoutes(buildJobRepository: ActorRef[JobRepository.Command])(
       implicit system: ActorSystem[_]) extends JsonSupport {
 
-    import akka.actor.typed.scaladsl.AskPattern.schedulerFromActorSystem
-    import akka.actor.typed.scaladsl.AskPattern.Askable
+    import pekko.actor.typed.scaladsl.AskPattern.schedulerFromActorSystem
+    import pekko.actor.typed.scaladsl.AskPattern.Askable
 
     // asking someone requires a timeout and a scheduler, if the timeout hits without response
     // the ask is failed with a TimeoutException
@@ -136,9 +138,10 @@ object HttpServerWithActorsSample {
   // #akka-typed-route
 
   // #akka-typed-bootstrap
-  import akka.actor.typed.PostStop
-  import akka.http.scaladsl.Http.ServerBinding
-  import akka.http.scaladsl.Http
+  import org.apache.pekko
+  import pekko.actor.typed.PostStop
+  import pekko.http.scaladsl.Http.ServerBinding
+  import pekko.http.scaladsl.Http
 
   import scala.util.{ Failure, Success }
 

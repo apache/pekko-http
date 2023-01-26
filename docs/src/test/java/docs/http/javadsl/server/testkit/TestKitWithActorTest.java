@@ -5,14 +5,14 @@
 package docs.http.javadsl.server.testkit;
 
 //#testkit-actor-integration
-import akka.actor.testkit.typed.javadsl.TestProbe;
-import akka.actor.typed.ActorSystem;
-import akka.actor.typed.javadsl.Adapter;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.actor.testkit.typed.javadsl.TestProbe;
+import org.apache.pekko.actor.typed.ActorSystem;
+import org.apache.pekko.actor.typed.javadsl.Adapter;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 
-import akka.http.javadsl.testkit.TestRoute;
-import akka.http.javadsl.testkit.TestRouteResult;
+import org.apache.pekko.http.javadsl.testkit.TestRoute;
+import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
 import org.junit.Test;
 
 public class TestKitWithActorTest extends JUnitRouteTest {

@@ -4,31 +4,39 @@
 
 package docs.http.scaladsl
 
-import akka.http.impl.util.ExampleHttpContexts
-import akka.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes }
+import org.apache.pekko
+import pekko.http.impl.util.ExampleHttpContexts
+import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes }
 
 //#bindAndHandleSecure
 import scala.concurrent.Future
 
-import akka.http.scaladsl.HttpsConnectionContext
 //#bindAndHandleSecure
 
-//#http2ClientWithPriorKnowledge
-//#http2Client
 //#bindAndHandleSecure
 //#bindAndHandlePlain
-import akka.http.scaladsl.Http
+import org.apache.pekko
+import pekko.http.scaladsl.Http
 //#bindAndHandlePlain
 //#bindAndHandleSecure
-//#http2Client
-//#http2ClientWithPriorKnowledge
+
+//#bindAndHandleSecure
+import pekko.http.scaladsl.HttpsConnectionContext
+//#bindAndHandleSecure
+
+// #http2ClientWithPriorKnowledge
+// #http2Client
+import org.apache.pekko.http.scaladsl.Http
+
+// #http2Client
+// #http2ClientWithPriorKnowledge
 
 //#bindAndHandlePlain
-import akka.http.scaladsl.HttpConnectionContext
+import pekko.http.scaladsl.HttpConnectionContext
 
 //#bindAndHandlePlain
 
-import akka.actor.ActorSystem
+import pekko.actor.ActorSystem
 
 object Http2Spec {
   implicit val system: ActorSystem = ActorSystem()
@@ -44,8 +52,8 @@ object Http2Spec {
   }
 
   {
-    import akka.http.scaladsl.server.Route
-    import akka.http.scaladsl.server.directives.RouteDirectives.complete
+    import pekko.http.scaladsl.server.Route
+    import pekko.http.scaladsl.server.directives.RouteDirectives.complete
 
     val handler: HttpRequest => Future[HttpResponse] =
       Route.toFunction(complete(StatusCodes.ImATeapot))
@@ -65,12 +73,13 @@ object Http2Spec {
 
   {
     // #trailingHeaders
-    import akka.http.scaladsl.model.ContentTypes
-    import akka.http.scaladsl.model.HttpEntity
-    import akka.http.scaladsl.model.Trailer
-    import akka.http.scaladsl.model.AttributeKeys.trailer
-    import akka.http.scaladsl.model.headers.RawHeader
-    import akka.util.ByteString
+    import org.apache.pekko
+    import pekko.http.scaladsl.model.ContentTypes
+    import pekko.http.scaladsl.model.HttpEntity
+    import pekko.http.scaladsl.model.Trailer
+    import pekko.http.scaladsl.model.AttributeKeys.trailer
+    import pekko.http.scaladsl.model.headers.RawHeader
+    import pekko.util.ByteString
 
     HttpResponse(StatusCodes.OK, entity = HttpEntity.Strict(ContentTypes.`text/plain(UTF-8)`, ByteString("Tralala")))
       .addAttribute(trailer, Trailer(RawHeader("name", "value")))

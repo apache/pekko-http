@@ -141,8 +141,8 @@ an error like this:
 
 ```
 [info] pekko-stream: found 1 potential binary incompatibilities while checking against org.apache.pekko:pekko-stream_2.11:2.4.2  (filtered 222)
-[error]  * method foldAsync(java.lang.Object,scala.Function2)akka.stream.scaladsl.FlowOps in trait akka.stream.scaladsl.FlowOps is present only in current version
-[error]    filter with: ProblemFilters.exclude[ReversedMissingMethodProblem]("akka.stream.scaladsl.FlowOps.foldAsync")
+[error]  * method foldAsync(java.lang.Object,scala.Function2)org.apache.pekko.stream.scaladsl.FlowOps in trait org.apache.pekko.stream.scaladsl.FlowOps is present only in current version
+[error]    filter with: ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.stream.scaladsl.FlowOps.foldAsync")
 ```
 
 In such situations it's good to consult with a core team member if the violation can be safely ignored (by adding the above snippet to the project's
@@ -150,7 +150,7 @@ In such situations it's good to consult with a core team member if the violation
 
 Situations when it may be fine to ignore a MiMa issued warning include:
 
-- if it is touching any class marked as `private[akka]`, `/** INTERNAL API*/` or similar markers
+- if it is touching any class marked as `private[pekko]`, `/** INTERNAL API*/` or similar markers
 - if it is concerning internal classes (often recognizable by package names like `dungeon`, `impl`, `internal` etc.)
 - if it is adding API to classes / traits which are only meant for extension by Pekko itself, i.e. should not be extended by end-users
 - if it is touching any class marked with the `@InternalApi`, `@DoNotInherit`, and `@ApiMayChange`. See [API stability annotations and comments](https://doc.akka.io/docs/akka/current/common/binary-compatibility-rules.html#api-stability-annotations-and-comments)

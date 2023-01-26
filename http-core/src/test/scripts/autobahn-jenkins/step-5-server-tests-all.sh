@@ -32,7 +32,7 @@ fi
 # we need to wait for the server to start (compilation may happen etc, it may take time)
 set +x
 echo "Awaiting server startup before running tests"
-while [ "$(grep 'akka.http.impl.engine.ws.WSServerAutobahnTest' output | wc -l)" == "0" ];
+while [ "$(grep 'org.apache.pekko.http.impl.engine.ws.WSServerAutobahnTest' output | wc -l)" == "0" ];
 do
   sleep 5
   echo -n '.';

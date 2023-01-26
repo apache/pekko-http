@@ -4,7 +4,7 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.server._
+import org.apache.pekko.http.scaladsl.server._
 import docs.CompileOnlySpec
 
 class StyleGuideExamplesSpec extends RoutingSpec with CompileOnlySpec {
@@ -121,7 +121,7 @@ class StyleGuideExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
       // prefer
       val getOrPost: Directive0 = get | post
-      val withCustomerId: Directive1[(Long)] =
+      val withCustomerId: Directive1[Long] =
         parameter("customerId".as[Long])
 
       val prefer: Route =

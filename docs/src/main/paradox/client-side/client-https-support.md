@@ -6,13 +6,13 @@ The central vehicle for configuring encryption is the @apidoc[HttpsConnectionCon
 the static methods on @apidoc[ConnectionContext]:
 
 Scala
-:  @@snip[ConnectionContext.scala](/http-core/src/main/scala/akka/http/scaladsl/ConnectionContext.scala) { #https-client-context-creation }
+:  @@snip[ConnectionContext.scala](/http-core/src/main/scala/org/apache/pekko/http/scaladsl/ConnectionContext.scala) { #https-client-context-creation }
 
 Java
-:  @@snip [ConnectionContext.scala](/http-core/src/main/scala/akka/http/javadsl/ConnectionContext.scala) { #https-client-context-creation }
+:  @@snip [ConnectionContext.scala](/http-core/src/main/scala/org/apache/pekko/http/javadsl/ConnectionContext.scala) { #https-client-context-creation }
 
 In addition to the `outgoingConnection`, `newHostConnectionPool` and `cachedHostConnectionPool` methods the
-@scala[@scaladoc[akka.http.scaladsl.Http](akka.http.scaladsl.Http$)]@java[@javadoc[akka.http.javadsl.Http](akka.http.javadsl.Http)]
+@scala[@scaladoc[org.apache.pekko.http.scaladsl.Http](akka.http.scaladsl.Http$)]@java[@javadoc[org.apache.pekko.http.javadsl.Http](akka.http.javadsl.Http)]
 extension also defines `outgoingConnectionHttps`, `newHostConnectionPoolHttps` and
 `cachedHostConnectionPoolHttps`. These methods work identically to their counterparts without the `-Https` suffix,
 with the exception that all connections will always be encrypted.

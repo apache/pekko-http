@@ -4,22 +4,22 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.NotUsed;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.Uri;
-import akka.http.javadsl.model.headers.SecWebSocketProtocol;
-import akka.http.javadsl.model.ws.BinaryMessage;
-import akka.http.javadsl.model.ws.Message;
-import akka.http.javadsl.model.ws.TextMessage;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.testkit.WSProbe;
-import akka.stream.OverflowStrategy;
-import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.Sink;
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.Uri;
+import org.apache.pekko.http.javadsl.model.headers.SecWebSocketProtocol;
+import org.apache.pekko.http.javadsl.model.ws.BinaryMessage;
+import org.apache.pekko.http.javadsl.model.ws.Message;
+import org.apache.pekko.http.javadsl.model.ws.TextMessage;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.WSProbe;
+import org.apache.pekko.stream.OverflowStrategy;
+import org.apache.pekko.stream.javadsl.Flow;
+import org.apache.pekko.stream.javadsl.Sink;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.util.ByteString;
 import org.junit.Test;
 import scala.concurrent.duration.FiniteDuration;
 
@@ -28,23 +28,23 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 //#handleWebSocketMessages
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.handleWebSocketMessages;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessages;
 
 //#handleWebSocketMessages
 //#handleWebSocketMessagesForProtocol
-import static akka.http.javadsl.server.Directives.handleWebSocketMessagesForProtocol;
+import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessagesForProtocol;
 
 //#handleWebSocketMessagesForProtocol
 //#extractUpgradeToWebSocket
-import akka.http.javadsl.model.AttributeKeys;
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.extractUpgradeToWebSocket;
+import org.apache.pekko.http.javadsl.model.AttributeKeys;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractUpgradeToWebSocket;
 
 //#extractUpgradeToWebSocket
 //#extractOfferedWsProtocols
-import static akka.http.javadsl.server.Directives.extractOfferedWsProtocols;
-import static akka.http.javadsl.server.Directives.handleWebSocketMessagesForOptionalProtocol;
+import static org.apache.pekko.http.javadsl.server.Directives.extractOfferedWsProtocols;
+import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessagesForOptionalProtocol;
 
 //#extractOfferedWsProtocols
 public class WebSocketDirectivesExamplesTest extends JUnitRouteTest {
