@@ -265,6 +265,16 @@ Example:
     * Details 2
     * Details 3
 
+### Ignoring formatting commits in git blame
+
+Throughout the history of the codebase various formatting commits have been applied as the scalafmt style has evolved over time, if desired
+one can setup git blame to ignore these commits. The hashes for these specific are stored in [this file](.git-blame-ignore-revs) so to configure
+git blame to ignore these commits you can execute the following.
+
+```shell
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
 ## Pull request validation workflow details
 
 Pekko-http uses Github Actions to validate PRs. It builds it, runs the tests and comments on the Pull Request in GitHub.
