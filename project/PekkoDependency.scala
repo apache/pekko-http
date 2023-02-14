@@ -30,7 +30,7 @@ object PekkoDependency {
         Sources(pekkoSources)
       case None =>
         Option(System.getProperty("pekko.http.build.pekko.version")) match {
-          case Some("master")      => masterSnapshot
+          case Some("main")        => mainSnapshot
           case Some("release-1.0") =>
             // Don't 'downgrade' building even if pekko.sources asks for it
             // (typically for the docs that require 2.6)
@@ -40,7 +40,7 @@ object PekkoDependency {
           case Some(other)     => Artifact(other, true)
           case None            =>
             // TODO: Revert to Artifact(defaultVersion) when release of Pekko is made
-            Artifact(determineLatestSnapshot("0.0.0"), true)
+            mainSnapshot
         }
     }
   }
@@ -51,7 +51,7 @@ object PekkoDependency {
   val minimumExpectedPekko26Version = "1.0.0"
   val docs = pekkoDependency(defaultVersion = minimumExpectedPekko26Version)
 
-  lazy val masterSnapshot = Artifact(determineLatestSnapshot(), true)
+  lazy val mainSnapshot = Artifact(determineLatestSnapshot("0.0.0"), true)
 
   val pekkoVersion: String = default match {
     case Artifact(version, _) => version

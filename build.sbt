@@ -148,7 +148,7 @@ lazy val httpCore = project("http-core")
     "pekko-stream-testkit",
     "test",
     pekko =
-      if (System.getProperty("pekko.http.test-against-pekko-main", "false") == "true") PekkoDependency.masterSnapshot
+      if (System.getProperty("pekko.http.test-against-pekko-main", "false") == "true") PekkoDependency.mainSnapshot
       else PekkoDependency.default)
   .settings(Dependencies.httpCore)
   .settings(VersionGenerator.versionSettings)
