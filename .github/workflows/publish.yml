@@ -9,6 +9,7 @@ jobs:
   publish-artifacts:
     name: Publish artifacts to Sonatype
     runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-pekko-http'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -37,6 +38,7 @@ jobs:
   publish-docs:
     name: Publish documentation
     runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-pekko-http'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
