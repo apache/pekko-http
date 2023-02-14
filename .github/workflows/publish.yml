@@ -3,7 +3,6 @@ name: Publish
 on:
   push:
     branches: [ main ]
-    tags: [ v* ]
 
 jobs:
   publish-artifacts:
@@ -26,13 +25,11 @@ jobs:
       - name: Install graphviz
         run: sudo apt-get install -y graphviz
 
-      - name: Publish Artifacts to Sonatype / Maven
-        run: sbt -jvm-opts .jvmopts-ghactions ci-release
+      - name: Publish to Apache Maven repo
+        run: sbt -jvm-opts .jvmopts-ghactions +publish
         env:
-          CI_SONATYPE_RELEASE: "; sonatypePrepare; sonatypeBundleUpload; sonatypeClose"
-          PGP_SECRET: ${{ secrets.PGP_SECRET }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          NEXUS_USER: ${{ secrets.NEXUS_USER }}
+          NEXUS_PW: ${{ secrets.NEXUS_PW }}
 
   publish-docs:
     name: Publish documentation

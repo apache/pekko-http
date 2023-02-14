@@ -12,19 +12,12 @@ import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
 inThisBuild(Def.settings(
   organization := "org.apache.pekko",
-  organizationName := "Apache Pekko",
-  organizationHomepage := Some(url("https://www.apache.org/")),
-  homepage := Some(url("https://pekko.apache.org/")),
   apiURL := {
     val apiVersion = if (isSnapshot.value) "current" else version.value
     Some(url(s"https://doc.akka.io/api/akka-http/$apiVersion/"))
   },
   scmInfo := Some(
     ScmInfo(url("https://github.com/apache/incubator-pekko-http"), "git@github.com:apache/incubator-pekko-http.git")),
-  developers := List(
-    Developer("contributors", "Contributors", "dev@pekko.apache.org",
-      url("https://github.com/apache/incubator-pekko-http/graphs/contributors"))),
-  startYear := Some(2022),
   licenses := Seq("Apache-2.0" -> url("https://opensource.org/licenses/Apache-2.0")),
   description := "Pekko Http: Modern, fast, asynchronous, streaming-first HTTP server and client.",
   testOptions ++= Seq(
@@ -38,7 +31,8 @@ inThisBuild(Def.settings(
       s"Building Pekko HTTP ${version.value} against Pekko ${PekkoDependency.pekkoVersion} on Scala ${(httpCore / scalaVersion).value}")
     (onLoad in Global).value
   },
-  scalafixScalaBinaryVersion := scalaBinaryVersion.value))
+  scalafixScalaBinaryVersion := scalaBinaryVersion.value,
+  apacheSonatypeProjectProfile := "pekko"))
 
 // When this is updated the set of modules in Http.allModules should also be updated
 lazy val userProjects: Seq[ProjectReference] = List[ProjectReference](
