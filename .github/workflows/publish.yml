@@ -1,12 +1,13 @@
-name: Publish
+name: Publish nightly snapshots and documentation
 
 on:
-  push:
-    branches: [ main ]
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
 
 jobs:
   publish-artifacts:
-    name: Publish artifacts to Sonatype
+    name: Publish artifacts to Apache Nexus
     runs-on: ubuntu-latest
     if: github.repository == 'apache/incubator-pekko-http'
     steps:
@@ -33,7 +34,7 @@ jobs:
           NEXUS_PW: ${{ secrets.NEXUS_PW }}
 
   publish-docs:
-    name: Publish documentation
+    name: Publish documentation to nightlies.apache.org
     runs-on: ubuntu-latest
     if: github.repository == 'apache/incubator-pekko-http'
     steps:
