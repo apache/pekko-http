@@ -54,7 +54,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         expectWireData(
           """PUT / HTTP/1.1
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |Content-Type: application/octet-stream
             |Content-Length: 8
             |
@@ -156,7 +156,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
           """GET / HTTP/1.1
             |Connection: close
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |Transfer-Encoding: chunked
             |Content-Type: text/plain; charset=UTF-8
             |
@@ -180,11 +180,11 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
       }
 
       "has a request with a overridden User-Agent RawHeader" in new TestSetup {
-        val request = HttpRequest().addHeader(RawHeader("User-Agent", "akka-http/test-overridden"))
+        val request = HttpRequest().addHeader(RawHeader("User-Agent", "pekko-http/test-overridden"))
         requestsSub.sendNext(request)
         expectWireData(
           """GET / HTTP/1.1
-            |User-Agent: akka-http/test-overridden
+            |User-Agent: pekko-http/test-overridden
             |Host: example.com
             |
             |""")
@@ -209,7 +209,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         expectWireData(
           """GET / HTTP/1.1
             |Host: testhost.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |
             |""")
 
@@ -233,7 +233,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         expectWireData(
           """GET / HTTP/1.1
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |
             |""")
 
@@ -261,7 +261,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
       expectWireData(
         """GET / HTTP/1.1
           |Host: example.com
-          |User-Agent: akka-http/test
+          |User-Agent: pekko-http/test
           |
           |""")
 
@@ -301,7 +301,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         expectWireData(
           """GET / HTTP/1.1
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |
             |""")
 
@@ -326,7 +326,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         expectWireData(
           """GET / HTTP/1.1
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |
             |""")
 
@@ -365,7 +365,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         expectWireData(
           """GET / HTTP/1.1
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |
             |""")
         requestsSub.sendComplete()
@@ -484,7 +484,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         expectWireData(
           """PUT / HTTP/1.1
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |Content-Type: application/octet-stream
             |Content-Length: 8
             |
@@ -515,7 +515,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
         expectWireData(
           """PUT / HTTP/1.1
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |Content-Type: application/octet-stream
             |Content-Length: 8
             |
@@ -817,7 +817,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
           """POST / HTTP/1.1
             |Expect: 100-continue
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |Content-Type: text/plain; charset=UTF-8
             |Content-Length: 6
             |
@@ -854,7 +854,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
           """POST / HTTP/1.1
             |Expect: 100-continue
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |Content-Type: application/octet-stream
             |Content-Length: 8
             |
@@ -891,7 +891,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
           """POST / HTTP/1.1
             |Expect: 100-continue
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |Content-Type: text/plain; charset=UTF-8
             |Content-Length: 6
             |
@@ -922,7 +922,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
           """POST / HTTP/1.1
             |Expect: 100-continue
             |Host: example.com
-            |User-Agent: akka-http/test
+            |User-Agent: pekko-http/test
             |Content-Type: text/plain; charset=UTF-8
             |Content-Length: 6
             |
@@ -975,7 +975,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
       expectWireData(
         """HEAD / HTTP/1.1
           |Host: example.com
-          |User-Agent: akka-http/test
+          |User-Agent: pekko-http/test
           |
           |""")
       sendWireData(
@@ -1004,7 +1004,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
     def settings = {
       val s = ClientConnectionSettings(
         ConfigFactory.parseString(config).withFallback(system.settings.config)).withUserAgentHeader(
-        Some(`User-Agent`(List(ProductVersion("akka-http", "test")))))
+        Some(`User-Agent`(List(ProductVersion("pekko-http", "test")))))
       if (maxResponseContentLength < 0) s
       else s.withParserSettings(s.parserSettings.withMaxContentLength(maxResponseContentLength))
     }
@@ -1055,7 +1055,7 @@ class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Insid
       expectWireData(
         """GET / HTTP/1.1
           |Host: example.com
-          |User-Agent: akka-http/test
+          |User-Agent: pekko-http/test
           |
           |""")
     }

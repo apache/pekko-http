@@ -41,7 +41,7 @@ class HttpServerBug21008Spec extends AkkaSpecWithMaterializer(
 
             expectResponseWithWipedDate(
               """HTTP/1.1 100 Continue
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |
               |""")
@@ -73,7 +73,7 @@ class HttpServerBug21008Spec extends AkkaSpecWithMaterializer(
             // and the client should still get that ok
             expectResponseWithWipedDate(
               """HTTP/1.1 200 OK
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Connection: close
               |Content-Type: text/plain; charset=UTF-8

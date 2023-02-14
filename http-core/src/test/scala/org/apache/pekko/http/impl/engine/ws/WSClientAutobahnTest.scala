@@ -22,7 +22,7 @@ object WSClientAutobahnTest extends App {
   import system.dispatcher
   implicit val materializer = ActorMaterializer()
 
-  val Agent = "akka-http"
+  val Agent = "pekko-http"
   val Parallelism = 4
 
   val getCaseCountUri: Uri =

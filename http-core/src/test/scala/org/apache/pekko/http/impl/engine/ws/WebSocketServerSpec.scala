@@ -46,7 +46,7 @@ class WebSocketServerSpec extends AkkaSpecWithMaterializer("akka.http.server.web
             """HTTP/1.1 101 Switching Protocols
               |Upgrade: websocket
               |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Connection: upgrade
               |
@@ -89,7 +89,7 @@ class WebSocketServerSpec extends AkkaSpecWithMaterializer("akka.http.server.web
             """HTTP/1.1 101 Switching Protocols
               |Upgrade: websocket
               |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Connection: upgrade
               |
@@ -149,7 +149,7 @@ class WebSocketServerSpec extends AkkaSpecWithMaterializer("akka.http.server.web
             """HTTP/1.1 101 Switching Protocols
               |Upgrade: websocket
               |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Connection: upgrade
               |
