@@ -131,7 +131,7 @@ object UnidocRoot extends AutoPlugin {
   import autoImport._
 
   object CliOptions {
-    val genjavadocEnabled = CliOption("akka.genjavadoc.enabled", false)
+    val genjavadocEnabled = CliOption("pekko.genjavadoc.enabled", false)
   }
 
   override def trigger = noTrigger
