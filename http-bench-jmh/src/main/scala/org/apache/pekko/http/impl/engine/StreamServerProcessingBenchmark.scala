@@ -99,7 +99,7 @@ class StreamServerProcessingBenchmark extends CommonBenchmark {
     }
 
     val response = HttpResponse(
-      headers = headers.Server("akka-http-bench") :: Nil,
+      headers = headers.Server("pekko-http-bench") :: Nil,
       entity = entity)
 
     httpFlow =

@@ -22,7 +22,7 @@ class ConfigSpec extends AkkaSpec(ConfigFactory.defaultReference(ActorSystem.fin
 
       config.getString("pekko.http.version") should ===(Version.current)
 
-      val versionString = "akka-http/" + Version.current
+      val versionString = "pekko-http/" + Version.current
       val serverSettings = ServerSettings(system)
       serverSettings.serverHeader should ===(Some(Server(versionString)))
 
