@@ -36,8 +36,9 @@ object PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
         stream.materializer.debug.fuzzing-mode = off
 
         testconductor.barrier-timeout = 30m
-
-        test.AkkaHttpServerLatencySpec {
+      }
+      pekko {
+        test.PekkoHttpServerLatencySpec {
           enable = off
 
           rate = 10000
@@ -146,13 +147,13 @@ class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerL
       })
   }
 
-  val enableSpec = system.settings.config.getBoolean("org.apache.pekko.test.AkkaHttpServerLatencySpec.enable")
+  val enableSpec = system.settings.config.getBoolean("pekko.test.PekkoHttpServerLatencySpec.enable")
   val totalRequestsFactor =
-    system.settings.config.getDouble("org.apache.pekko.test.AkkaHttpServerLatencySpec.totalRequestsFactor")
+    system.settings.config.getDouble("pekko.test.PekkoHttpServerLatencySpec.totalRequestsFactor")
   val requests = Math.round(10000 * totalRequestsFactor)
-  val rate = system.settings.config.getInt("org.apache.pekko.test.AkkaHttpServerLatencySpec.rate")
+  val rate = system.settings.config.getInt("pekko.test.PekkoHttpServerLatencySpec.rate")
   val testDuration =
-    system.settings.config.getDuration("org.apache.pekko.test.AkkaHttpServerLatencySpec.duration", TimeUnit.SECONDS)
+    system.settings.config.getDuration("pekko.test.PekkoHttpServerLatencySpec.duration", TimeUnit.SECONDS)
   val connections: Long = 10
 
   override def binding = _binding
@@ -169,8 +170,8 @@ class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerL
   // ---
 
   if (enableSpec) {
-    "Akka HTTP" must {
-      "start Akka HTTP" taggedAs LongRunningTest in {
+    "Pekko HTTP" must {
+      "start Pekko HTTP" taggedAs LongRunningTest in {
         enterBarrier("startup")
 
         runOn(loadGenerator) {
@@ -180,7 +181,7 @@ class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerL
 
         runOn(server) {
           val port = 0
-          info(s"Binding Akka HTTP Server to port: $port @ ${myself}")
+          info(s"Binding Pekko HTTP Server to port: $port @ ${myself}")
           val binding = Http().newServerAt("0.0.0.0", port).bind(routes).futureValue
 
           _binding = Some(binding)
@@ -237,8 +238,8 @@ class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerL
       }
     }
   } else {
-    "Akka HTTP" must {
-      "enable these performance tests by running with -Dakka.test.AkkaHttpServerLatencySpec.enable=on" in pending
+    "Pekko HTTP" must {
+      "enable these performance tests by running with -Dpekko.test.PekkoHttpServerLatencySpec.enable=on" in pending
     }
   }
 
