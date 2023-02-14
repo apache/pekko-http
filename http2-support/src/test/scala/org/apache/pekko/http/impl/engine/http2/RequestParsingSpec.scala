@@ -16,12 +16,12 @@ import org.scalatest.{ Inside, Inspectors }
 import FrameEvent._
 import pekko.http.impl.engine.http2.hpack.HeaderDecompression
 import pekko.http.impl.engine.server.HttpAttributes
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 
 import java.net.InetAddress
 import java.net.InetSocketAddress
 
-class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspectors {
+class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Inspectors {
   "RequestParsing" should {
 
     /** Helper to test parsing */

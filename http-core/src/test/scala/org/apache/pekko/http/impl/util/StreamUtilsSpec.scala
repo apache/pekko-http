@@ -15,7 +15,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Failure
 
-class StreamUtilsSpec extends AkkaSpec with ScalaFutures {
+class StreamUtilsSpec extends PekkoSpec with ScalaFutures {
   implicit val materializer = ActorMaterializer()
 
   "captureTermination" should {

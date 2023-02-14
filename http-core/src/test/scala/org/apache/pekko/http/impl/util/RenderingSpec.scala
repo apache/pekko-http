@@ -13,7 +13,7 @@ import org.scalatest.matchers.should.Matchers
 import java.nio.charset.Charset
 import scala.reflect.{ classTag, ClassTag }
 
-class RenderingSpec extends AkkaSpecWithMaterializer with Matchers {
+class RenderingSpec extends PekkoSpecWithMaterializer with Matchers {
   override protected def failOnSevereMessages: Boolean = true
 
   "The StringRendering should" should {

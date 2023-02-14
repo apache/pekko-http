@@ -31,7 +31,7 @@ import pekko.http.scaladsl.settings.ParserSettings.ConflictingContentTypeHeaderP
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import pekko.testkit._
 
-abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpecWithMaterializer(
+abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSpecWithMaterializer(
       """
      akka.http.parsing.max-response-reason-length = 21
   """) {

@@ -13,7 +13,7 @@ import org.apache.pekko.stream.ActorMaterializer;
 import org.apache.pekko.stream.Materializer;
 
 @SuppressWarnings("deprecation")
-public class AkkaHttp1020MigrationExample {
+public class PekkoHttp1020MigrationExample {
     public static void main(String[] args) {
         {
             //#old-binding

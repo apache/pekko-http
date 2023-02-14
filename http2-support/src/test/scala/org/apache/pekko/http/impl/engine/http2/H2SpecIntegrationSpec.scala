@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.sys.process._
 
-class H2SpecIntegrationSpec extends AkkaSpec(
+class H2SpecIntegrationSpec extends PekkoSpec(
       """
      pekko {
        loglevel = DEBUG

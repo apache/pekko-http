@@ -7,7 +7,7 @@ package org.apache.pekko.http.impl.engine.http2
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.impl.util.ExampleHttpContexts
 import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.Http
@@ -54,7 +54,7 @@ class TestTelemetryImpl(system: ActorSystem) extends TelemetrySpi {
 class TelemetrySpiPlaintextSpec extends TelemetrySpiSpec(false)
 class TelemetrySpiCypherSpec extends TelemetrySpiSpec(true)
 
-abstract class TelemetrySpiSpec(useTls: Boolean) extends AkkaSpecWithMaterializer(
+abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializer(
       """
      akka.http.server.preview.enable-http2 = on
      pekko.actor.serialize-messages = false

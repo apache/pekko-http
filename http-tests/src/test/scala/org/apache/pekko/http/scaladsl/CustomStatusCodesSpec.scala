@@ -5,14 +5,14 @@
 package org.apache.pekko.http.scaladsl
 
 import org.apache.pekko
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.client.RequestBuilding
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.server.Directives
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
 import org.scalatest.concurrent.ScalaFutures
 
-class CustomStatusCodesSpec extends AkkaSpecWithMaterializer with ScalaFutures
+class CustomStatusCodesSpec extends PekkoSpecWithMaterializer with ScalaFutures
     with Directives with RequestBuilding {
 
   "Http" should {

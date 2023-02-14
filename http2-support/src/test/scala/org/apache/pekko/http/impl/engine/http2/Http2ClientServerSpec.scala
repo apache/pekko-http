@@ -7,7 +7,7 @@ package org.apache.pekko.http.impl.engine.http2
 import org.apache.pekko
 import pekko.http.impl.engine.HttpIdleTimeoutException
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
-import pekko.http.impl.util.{ AkkaSpecWithMaterializer, ExampleHttpContexts }
+import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
 import pekko.http.scaladsl.model.{
   headers,
   AttributeKey,
@@ -39,7 +39,7 @@ import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.concurrent.{ Future, Promise }
 
-class Http2ClientServerSpec extends AkkaSpecWithMaterializer(
+class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       """akka.http.server.remote-address-header = on
      akka.http.server.http2.log-frames = on
      akka.http.server.log-unencrypted-network-bytes = 100

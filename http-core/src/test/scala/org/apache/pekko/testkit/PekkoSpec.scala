@@ -21,7 +21,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
-object AkkaSpec {
+object PekkoSpec {
   val testConf: Config = ConfigFactory.parseString("""
       pekko {
         loggers = ["org.apache.pekko.testkit.TestEventListener"]
@@ -57,21 +57,21 @@ object AkkaSpec {
 
 }
 
-abstract class AkkaSpec(_system: ActorSystem)
+abstract class PekkoSpec(_system: ActorSystem)
     extends TestKit(_system) with AnyWordSpecLike with Matchers with BeforeAndAfterAll with WatchedByCoroner
     with TypeCheckedTripleEquals with ScalaFutures {
 
   implicit val patience = PatienceConfig(testKitSettings.DefaultTimeout.duration)
 
   def this(config: Config) = this(ActorSystem(
-    AkkaSpec.getCallerName(getClass),
-    ConfigFactory.load(config.withFallback(AkkaSpec.testConf))))
+    PekkoSpec.getCallerName(getClass),
+    ConfigFactory.load(config.withFallback(PekkoSpec.testConf))))
 
   def this(s: String) = this(ConfigFactory.parseString(s))
 
-  def this(configMap: Map[String, _]) = this(AkkaSpec.mapToConfig(configMap))
+  def this(configMap: Map[String, _]) = this(PekkoSpec.mapToConfig(configMap))
 
-  def this() = this(ActorSystem(AkkaSpec.getCallerName(getClass), AkkaSpec.testConf))
+  def this() = this(ActorSystem(PekkoSpec.getCallerName(getClass), PekkoSpec.testConf))
 
   val log: LoggingAdapter = Logging(system, this.getClass)
 

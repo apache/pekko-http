@@ -44,7 +44,7 @@ object TestParsingErrorHandler extends ParsingErrorHandler {
     HttpResponse(StatusCodes.ImATeapot, entity = HttpEntity("Tea hea"))
 }
 
-class HttpServerSpec extends AkkaSpec(
+class HttpServerSpec extends PekkoSpec(
       """pekko.loggers = ["org.apache.pekko.http.impl.util.SilenceAllTestEventListener"]
      pekko.loglevel = DEBUG
      akka.http.server.log-unencrypted-network-bytes = 100

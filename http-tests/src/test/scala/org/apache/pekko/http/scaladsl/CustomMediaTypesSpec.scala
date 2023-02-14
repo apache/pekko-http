@@ -15,7 +15,7 @@ import pekko.util.ByteString
 import org.scalatest.concurrent.ScalaFutures
 import scala.concurrent.duration._
 
-class CustomMediaTypesSpec extends AkkaSpec with ScalaFutures
+class CustomMediaTypesSpec extends PekkoSpec with ScalaFutures
     with Directives with RequestBuilding {
 
   implicit val mat = ActorMaterializer()

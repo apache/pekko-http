@@ -14,7 +14,7 @@ import pekko.http.impl.util._
 import pekko.testkit._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class Utf8CodingSpecs extends AkkaSpecWithMaterializer with ScalaCheckPropertyChecks {
+class Utf8CodingSpecs extends PekkoSpecWithMaterializer with ScalaCheckPropertyChecks {
   "Utf8 decoding/encoding" should {
     "work for all codepoints" in {
       def isSurrogate(cp: Int): Boolean =

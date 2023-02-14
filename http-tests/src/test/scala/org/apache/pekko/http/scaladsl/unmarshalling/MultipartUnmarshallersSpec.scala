@@ -18,7 +18,7 @@ import org.scalatest.matchers.Matcher
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, ExecutionContext, Future }
 
-trait MultipartUnmarshallersSpec extends AkkaSpecWithMaterializer {
+trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
   implicit val ec: ExecutionContext = system.dispatcher
 
   def lineFeed: String

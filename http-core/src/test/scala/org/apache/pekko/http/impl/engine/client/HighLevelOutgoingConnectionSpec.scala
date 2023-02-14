@@ -5,7 +5,7 @@
 package org.apache.pekko.http.impl.engine.client
 
 import org.apache.pekko
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 
 import scala.concurrent.duration._
 import pekko.stream.FlowShape
@@ -16,7 +16,7 @@ import pekko.http.scaladsl.model._
 import pekko.stream.testkit.Utils
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 
-class HighLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer {
+class HighLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer {
   "The connection-level client implementation" should {
 
     "be able to handle 100 requests across one connection" in Utils.assertAllStagesStopped {

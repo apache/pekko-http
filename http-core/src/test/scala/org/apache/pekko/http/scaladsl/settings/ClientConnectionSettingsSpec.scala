@@ -4,9 +4,9 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
-import org.apache.pekko.testkit.AkkaSpec
+import org.apache.pekko.testkit.PekkoSpec
 
-class ClientConnectionSettingsSpec extends AkkaSpec {
+class ClientConnectionSettingsSpec extends PekkoSpec {
   "ClientConnectionSettings" should {
     "fail early when creating ClientConnectionSettings with incomplete ParserSettings" in {
       // This creates 'generic' parserSettings, without client-specific (or server-specific) values.

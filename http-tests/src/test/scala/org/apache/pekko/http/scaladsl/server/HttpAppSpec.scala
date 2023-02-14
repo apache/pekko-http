@@ -13,7 +13,7 @@ import java.net.SocketException
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.ActorSystem
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.Http.ServerBinding
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding
@@ -27,7 +27,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{ Await, ExecutionContext, Future, Promise }
 import scala.util.Try
 
-class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eventually {
+class HttpAppSpec extends PekkoSpecWithMaterializer with RequestBuilding with Eventually {
   import system.dispatcher
 
   class MinimalApp extends HttpApp {
