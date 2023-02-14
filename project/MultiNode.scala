@@ -51,6 +51,7 @@ object MultiNode extends AutoPlugin {
 
   private val multiJvmSettings =
     SbtMultiJvm.multiJvmSettings ++
+    inConfig(MultiJvm)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings) ++
     inConfig(MultiJvm)(Seq(
       MultiJvm / jvmOptions := defaultMultiJvmOptions,
       MultiJvm / scalacOptions := (Test / scalacOptions).value,
