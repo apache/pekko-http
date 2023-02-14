@@ -67,11 +67,9 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   private def allModules: List[String] = List(
     "pekko-parsing",
     "pekko-http-core",
-    "pekko-http2-support",
     "pekko-http",
     "pekko-http-caching",
     "pekko-http-testkit",
-    "pekko-http-tests",
     "pekko-http-marshallers-scala",
     "pekko-http-marshallers-java",
     "pekko-http-spray-json",
