@@ -173,7 +173,6 @@ def gustavDir(kind: String) = Def.task {
 lazy val http2Support = project("http2-support")
   .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.http2"))
-  .settings(MetaInfLicenseNoticeCopy.settings)
   .dependsOn(httpCore, httpTestkit % "test", httpCore % "test->test")
   .addPekkoModuleDependency("pekko-stream", "provided")
   .addPekkoModuleDependency("pekko-stream-testkit", "test")
@@ -208,8 +207,7 @@ lazy val http2Support = project("http2-support")
         Seq(h2spec)
       })
   }
-  .enablePlugins(BootstrapGenjavadoc)
-  .enablePlugins(ReproducibleBuildsPlugin)
+  .enablePlugins(NoPublish) // only contains tests these days
   .disablePlugins(MimaPlugin) // experimental module still
 
 lazy val httpTestkit = project("http-testkit")
