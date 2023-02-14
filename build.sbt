@@ -77,7 +77,7 @@ lazy val root = Project(
       // the following heuristic is hopefully good enough to determine which one is the Java and
       // which one the Scala version.
 
-      // This will fail with a MatchError when -Dakka.genjavadoc.enabled is not set
+      // This will fail with a MatchError when -Dpekko.genjavadoc.enabled is not set
       val (Seq(java), Seq(scala)) = unidocArtifacts.partition(_.getName contains "java")
 
       Seq(
