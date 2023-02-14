@@ -43,7 +43,7 @@ import scala.concurrent.duration._
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
 
-class NewConnectionPoolSpec extends AkkaSpecWithMaterializer("""
+class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
     pekko.io.tcp.windows-connection-abort-workaround-enabled = auto
     pekko.io.tcp.trace-logging = off
     pekko.test.single-expect-default = 5000 # timeout for checks, adjust as necessary, set here to 5s

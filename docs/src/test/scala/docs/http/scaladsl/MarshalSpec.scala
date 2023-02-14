@@ -4,9 +4,9 @@
 
 package docs.http.scaladsl
 
-import org.apache.pekko.testkit.AkkaSpec
+import org.apache.pekko.testkit.PekkoSpec
 
-class MarshalSpec extends AkkaSpec {
+class MarshalSpec extends PekkoSpec {
 
   "use marshal" in {
     // #use-marshal

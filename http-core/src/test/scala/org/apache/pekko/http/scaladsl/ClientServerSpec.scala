@@ -49,7 +49,7 @@ class ClientServerSpec extends ClientServerSpecBase(http2 = false)
 // is tested as well.
 class ClientServerHttp2EnabledSpec extends ClientServerSpecBase(http2 = true)
 
-abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterializer(
+abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMaterializer(
       s"""
      akka.http.server.preview.enable-http2 = $http2
      akka.http.server.request-timeout = infinite

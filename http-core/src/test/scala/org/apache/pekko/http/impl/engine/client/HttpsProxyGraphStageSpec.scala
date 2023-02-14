@@ -5,7 +5,7 @@
 package org.apache.pekko.http.impl.engine.client
 
 import org.apache.pekko
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.impl.util.EnhancedString
 import pekko.http.scaladsl.model.headers.{ BasicHttpCredentials, HttpCredentials }
 import pekko.http.scaladsl.settings.ClientConnectionSettings
@@ -16,7 +16,7 @@ import pekko.util.ByteString
 
 import scala.concurrent.duration._
 
-class HttpsProxyGraphStageSpec extends AkkaSpecWithMaterializer {
+class HttpsProxyGraphStageSpec extends PekkoSpecWithMaterializer {
 
   "A ProxyGraphStage" should {
     "send CONNECT message and then forward incoming messages" in new Context {

@@ -11,7 +11,7 @@ import org.apache.pekko.stream.{ ActorMaterializer, Materializer }
 import scala.annotation.nowarn
 
 @nowarn("msg=is deprecated")
-class AkkaHttp1020MigrationSpec {
+class PekkoHttp1020MigrationSpec {
   import org.apache.pekko.http.scaladsl.server.Directives._
 
   {

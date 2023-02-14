@@ -7,11 +7,11 @@ package docs.http.scaladsl
 import org.apache.pekko
 import pekko.http.scaladsl.model.{ HttpEntity, HttpResponse }
 import pekko.http.scaladsl.model.headers.{ Authorization, BasicHttpCredentials }
-import pekko.testkit.AkkaSpec
+import pekko.testkit.PekkoSpec
 
 import scala.collection.immutable
 
-class HttpResponseDetailedStringExampleSpec extends AkkaSpec {
+class HttpResponseDetailedStringExampleSpec extends PekkoSpec {
 
   // Custom string representation which includes headers
   def toDetailedString(response: HttpResponse): String = {

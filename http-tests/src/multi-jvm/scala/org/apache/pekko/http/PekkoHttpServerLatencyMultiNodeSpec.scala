@@ -25,7 +25,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Await, Promise }
 import scala.util.Try
 
-object AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
+object PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
 
   commonConfig(ConfigFactory.parseString(
     """
@@ -106,13 +106,14 @@ object AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
   }
 }
 
-class AkkaHttpServerLatencyMultiNodeSpecMultiJvmNode1 extends AkkaHttpServerLatencyMultiNodeSpec
-class AkkaHttpServerLatencyMultiNodeSpecMultiJvmNode2 extends AkkaHttpServerLatencyMultiNodeSpec
+class PekkoHttpServerLatencyMultiNodeSpecMultiJvmNode1 extends PekkoHttpServerLatencyMultiNodeSpec
+class PekkoHttpServerLatencyMultiNodeSpecMultiJvmNode2 extends PekkoHttpServerLatencyMultiNodeSpec
 
-class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLatencyMultiNodeSpec) with STMultiNodeSpec
+class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerLatencyMultiNodeSpec)
+    with STMultiNodeSpec
     with ScalaFutures with ImplicitSender {
 
-  import AkkaHttpServerLatencyMultiNodeSpec._
+  import PekkoHttpServerLatencyMultiNodeSpec._
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(10.seconds, interval = 300.millis)
 

@@ -117,7 +117,7 @@ class DebuggingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "logRequestResultWithResponseTime" in {
     // #logRequestResultWithResponseTime
 
-    def akkaResponseTimeLoggingFunction(
+    def pekkoResponseTimeLoggingFunction(
         loggingAdapter: LoggingAdapter,
         requestTimestamp: Long,
         level: LogLevel = Logging.InfoLevel)(req: HttpRequest)(res: RouteResult): Unit = {
@@ -134,7 +134,7 @@ class DebuggingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     }
     def printResponseTime(log: LoggingAdapter) = {
       val requestTimestamp = System.nanoTime
-      akkaResponseTimeLoggingFunction(log, requestTimestamp) _
+      pekkoResponseTimeLoggingFunction(log, requestTimestamp) _
     }
 
     val logResponseTime = DebuggingDirectives.logRequestResult(LoggingMagnet(printResponseTime))

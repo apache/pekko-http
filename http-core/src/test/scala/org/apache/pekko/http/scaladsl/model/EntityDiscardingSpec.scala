@@ -6,7 +6,7 @@ package org.apache.pekko.http.scaladsl.model
 
 import org.apache.pekko
 import pekko.Done
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.Http
 import pekko.stream.scaladsl._
 import pekko.testkit._
@@ -16,7 +16,7 @@ import pekko.util.ByteString
 
 import scala.concurrent.{ Await, Promise }
 
-class EntityDiscardingSpec extends AkkaSpecWithMaterializer {
+class EntityDiscardingSpec extends PekkoSpecWithMaterializer {
   val testData = Vector.tabulate(200)(i => ByteString(s"row-$i"))
 
   "HttpRequest" should {

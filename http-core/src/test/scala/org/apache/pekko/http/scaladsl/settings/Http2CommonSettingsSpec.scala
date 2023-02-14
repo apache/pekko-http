@@ -4,11 +4,11 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
-import org.apache.pekko.testkit.AkkaSpec
+import org.apache.pekko.testkit.PekkoSpec
 
 import scala.concurrent.duration._
 
-class Http2CommonSettingsSpec extends AkkaSpec {
+class Http2CommonSettingsSpec extends PekkoSpec {
 
   "Validation of HTTP2 settings" should {
 

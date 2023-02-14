@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 import pekko.testkit._
 import org.scalatest.concurrent.Eventually
 
-class One2OneBidiFlowSpec extends AkkaSpec with Eventually {
+class One2OneBidiFlowSpec extends PekkoSpec with Eventually {
   implicit val materializer = ActorMaterializer()
 
   "A One2OneBidiFlow" must {

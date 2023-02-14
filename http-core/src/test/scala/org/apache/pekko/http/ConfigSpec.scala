@@ -6,14 +6,14 @@ package org.apache.pekko.http
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.testkit.AkkaSpec
+import pekko.testkit.PekkoSpec
 import org.scalatest.Assertions
 import com.typesafe.config.ConfigFactory
 import pekko.http.scaladsl.model.headers.`User-Agent`
 import pekko.http.scaladsl.model.headers.Server
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
 
-class ConfigSpec extends AkkaSpec(ConfigFactory.defaultReference(ActorSystem.findClassLoader())) with Assertions {
+class ConfigSpec extends PekkoSpec(ConfigFactory.defaultReference(ActorSystem.findClassLoader())) with Assertions {
 
   "The default configuration file (i.e. reference.conf)" must {
     "include the generated version file (i.e. pekko-http-version.conf)" in {

@@ -13,10 +13,10 @@ import pekko.http.scaladsl.settings.{
   ParserSettings,
   ServerSettings
 }
-import pekko.testkit.AkkaSpec
+import pekko.testkit.PekkoSpec
 import com.typesafe.config.ConfigFactory
 
-class HttpConfigurationSpec extends AkkaSpec {
+class HttpConfigurationSpec extends PekkoSpec {
 
   val On = true
   val Off = false

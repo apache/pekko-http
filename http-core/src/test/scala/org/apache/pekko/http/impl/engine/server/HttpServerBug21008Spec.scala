@@ -5,7 +5,7 @@
 package org.apache.pekko.http.impl.engine.server
 
 import org.apache.pekko
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.model.HttpEntity.Chunked
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.{ ContentType, HttpRequest, HttpResponse }
@@ -18,7 +18,7 @@ import org.scalatest.Inside
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class HttpServerBug21008Spec extends AkkaSpecWithMaterializer(
+class HttpServerBug21008Spec extends PekkoSpecWithMaterializer(
       """
    akka.http.server.request-timeout = infinite
    pekko.test.filter-leeway=1s""") with Inside { spec =>

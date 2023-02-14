@@ -9,9 +9,9 @@ import pekko.stream.ActorMaterializer
 import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.http.scaladsl.marshalling.Marshal
 import pekko.http.scaladsl.model._
-import pekko.testkit.AkkaSpec
+import pekko.testkit.PekkoSpec
 
-class FormDataSpec extends AkkaSpec {
+class FormDataSpec extends PekkoSpec {
   implicit val materializer = ActorMaterializer()
   import system.dispatcher
 

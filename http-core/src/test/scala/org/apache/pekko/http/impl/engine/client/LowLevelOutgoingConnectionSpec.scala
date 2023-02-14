@@ -24,7 +24,7 @@ import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util._
 import pekko.testkit._
 
-class LowLevelOutgoingConnectionSpec extends AkkaSpecWithMaterializer with Inside {
+class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Inside {
   implicit val dispatcher = system.dispatcher
 
   "The connection-level client implementation" should {

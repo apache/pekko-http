@@ -19,9 +19,9 @@ import pekko.stream.{ ActorMaterializer, Attributes }
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.util.ByteString
-import pekko.testkit.AkkaSpec
+import pekko.testkit.PekkoSpec
 
-class PrepareResponseSpec extends AkkaSpec {
+class PrepareResponseSpec extends PekkoSpec {
 
   val parserSettings = ParserSettings.forServer(system)
 

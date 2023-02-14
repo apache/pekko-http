@@ -5,9 +5,9 @@
 package docs.http.scaladsl
 
 import org.apache.pekko
-import pekko.testkit.AkkaSpec
+import pekko.testkit.PekkoSpec
 
-class UnmarshalSpec extends AkkaSpec {
+class UnmarshalSpec extends PekkoSpec {
 
   "use unmarshal" in {
     // #use-unmarshal

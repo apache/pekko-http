@@ -8,20 +8,20 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.Http
 import pekko.stream.{ ActorMaterializer, SystemMaterializer }
-import pekko.testkit.AkkaSpec
+import pekko.testkit.PekkoSpec
 import pekko.testkit.EventFilter
 import com.typesafe.config.ConfigFactory
 
-abstract class AkkaSpecWithMaterializer(configOverrides: String)
-    extends AkkaSpec(
+abstract class PekkoSpecWithMaterializer(configOverrides: String)
+    extends PekkoSpec(
       ActorSystem(
-        AkkaSpecWithMaterializer.callerName(),
+        PekkoSpecWithMaterializer.callerName(),
         ConfigFactory.load(ConfigFactory.parseString(
           configOverrides +
           """
             pekko.loglevel = DEBUG
             pekko.loggers = ["org.apache.pekko.http.impl.util.SilenceAllTestEventListener"]
-          """).withFallback(AkkaSpec.testConf)))) with WithLogCapturing {
+          """).withFallback(PekkoSpec.testConf)))) with WithLogCapturing {
 
   def this() = this("")
 
@@ -39,7 +39,7 @@ abstract class AkkaSpecWithMaterializer(configOverrides: String)
       Thread.sleep(10)
     }
 }
-object AkkaSpecWithMaterializer {
+object PekkoSpecWithMaterializer {
   // adapted version of AkkaSpec.getCallerName that also works for `AkkaSpecWithMaterializer`
   def callerName(): String =
     Thread.currentThread.getStackTrace.map(_.getClassName).drop(1)

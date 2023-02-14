@@ -5,7 +5,7 @@
 package org.apache.pekko.http.impl.engine.client
 
 import org.apache.pekko
-import pekko.http.impl.util.{ AkkaSpecWithMaterializer, ExampleHttpContexts }
+import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{ headers, HttpRequest, HttpResponse }
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
@@ -15,7 +15,7 @@ import pekko.stream.testkit.{ TestPublisher, TestSubscriber, Utils }
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class ClientCancellationSpec extends AkkaSpecWithMaterializer {
+class ClientCancellationSpec extends PekkoSpecWithMaterializer {
   "Http client connections" must {
     "support cancellation in simple outgoing connection" in Utils.assertAllStagesStopped(new TestSetup {
       testCase(

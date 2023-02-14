@@ -19,7 +19,7 @@ import org.scalatest.matchers.{ MatchResult, Matcher }
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Promise }
 
-class HttpEntitySpec extends AkkaSpecWithMaterializer {
+class HttpEntitySpec extends PekkoSpecWithMaterializer {
   val tpe: ContentType = ContentTypes.`application/octet-stream`
   val abc = ByteString("abc")
   val de = ByteString("de")

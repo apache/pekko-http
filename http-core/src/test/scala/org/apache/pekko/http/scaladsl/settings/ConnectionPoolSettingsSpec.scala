@@ -8,11 +8,11 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 import org.apache.pekko
-import pekko.testkit.AkkaSpec
+import pekko.testkit.PekkoSpec
 import pekko.http.scaladsl.model.headers.`User-Agent`
 import com.typesafe.config.ConfigFactory
 
-class ConnectionPoolSettingsSpec extends AkkaSpec {
+class ConnectionPoolSettingsSpec extends PekkoSpec {
   "ConnectionPoolSettings" should {
     "use akka.http.client settings by default" in {
       val settings = config(
