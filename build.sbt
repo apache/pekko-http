@@ -10,6 +10,7 @@ import sbtdynver.GitDescribeOutput
 import spray.boilerplate.BoilerplatePlugin
 import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
+sourceDistName := "incubator-pekko-http"
 inThisBuild(Def.settings(
   organization := "org.apache.pekko",
   apiURL := {
