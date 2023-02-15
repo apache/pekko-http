@@ -26,7 +26,7 @@ addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.30")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.10.0")
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.10")
-addSbtPlugin("org.mdedetrich" % "sbt-apache-sonatype" % "0.1.0")
+addSbtPlugin("org.mdedetrich" % "sbt-apache-sonatype" % "0.1.1")
 
 // used in ValidatePullRequest to check github PR comments whether to build all subprojects
 libraryDependencies += "org.kohsuke" % "github-api" % "1.306"
