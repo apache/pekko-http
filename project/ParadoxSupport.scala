@@ -10,6 +10,7 @@ import sbt._
 import Keys._
 import com.lightbend.paradox.markdown._
 import com.lightbend.paradox.sbt.ParadoxPlugin.autoImport._
+import org.apache.pekko.PekkoParadoxPlugin.autoImport._
 import org.pegdown.Printer
 import org.pegdown.ast.{ DirectiveNode, HtmlBlockNode, VerbatimNode, Visitor }
 
@@ -19,7 +20,9 @@ import scala.io.{ Codec, Source }
 object ParadoxSupport {
   val paradoxWithCustomDirectives = Seq(
     paradoxDirectives += ((context: Writer.Context) =>
-      new SignatureDirective(context.location.tree.label, context.properties, context)))
+      new SignatureDirective(context.location.tree.label, context.properties, context)),
+    resolvers += "Apache Nexus Snapshots".at("https://repository.apache.org/content/repositories/snapshots/"),
+    pekkoParadoxGithub := "https://github.com/apache/incubator-pekko-http")
 
   class SignatureDirective(
       page: Page, variables: Map[String, String], ctx: Writer.Context) extends LeafBlockDirective("signature") {
