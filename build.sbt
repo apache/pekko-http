@@ -135,6 +135,7 @@ lazy val parsing = project("parsing")
 lazy val httpCore = project("http-core")
   .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.core"))
+  .settings(AddMetaInfLicenseFiles.httpCoreSettings)
   .dependsOn(parsing, httpScalafixRules % ScalafixConfig)
   .addPekkoModuleDependency("pekko-stream", "provided")
   .addPekkoModuleDependency(

@@ -17,8 +17,17 @@ import org.mdedetrich.apache.sonatype.SonatypeApachePlugin.autoImport._
  */
 object AddMetaInfLicenseFiles extends AutoPlugin {
 
+  private lazy val baseDir = LocalRootProject / baseDirectory
+
   override lazy val projectSettings = Seq(
+    apacheSonatypeLicenseFile := baseDir.value / "legal" / "StandardLicense.txt",
     apacheSonatypeDisclaimerFile := Some((LocalRootProject / baseDirectory).value / "DISCLAIMER"))
+
+  /**
+   * Settings specific for Pekko http-core subproject which require a different license file.
+   */
+  lazy val httpCoreSettings = Seq(
+    apacheSonatypeLicenseFile := baseDir.value / "LICENSE")
 
   override def trigger = allRequirements
 
