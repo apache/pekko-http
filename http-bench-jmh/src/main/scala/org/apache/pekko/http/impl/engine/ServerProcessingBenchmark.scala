@@ -49,7 +49,7 @@ class ServerProcessingBenchmark extends CommonBenchmark {
       ConfigFactory.parseString(
         """
            pekko.actor.default-dispatcher.fork-join-executor.parallelism-max = 1
-           akka.http.server.server-header = "pekko-http-bench"
+           pekko.http.server.server-header = "pekko-http-bench"
         """)
         .withFallback(ConfigFactory.load())
     system = ActorSystem("AkkaHttpBenchmarkSystem", config)

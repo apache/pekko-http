@@ -28,8 +28,8 @@ import scala.concurrent.Await
 
 class MessageSpec extends PekkoSpecWithMaterializer(
       """
-     akka.http.server.websocket.log-frames = on
-     akka.http.client.websocket.log-frames = on
+     pekko.http.server.websocket.log-frames = on
+     pekko.http.client.websocket.log-frames = on
   """) with Eventually {
 
   import WSTestUtils._

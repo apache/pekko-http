@@ -22,7 +22,7 @@ abstract class RoutingSettings private[pekko] () { self: RoutingSettingsImpl =>
   def getRangeCoalescingThreshold: Long
   def getDecodeMaxBytesPerChunk: Int
   @deprecated(
-    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    "binary compatibility method. Use `pekko.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
     since = "Akka HTTP 10.1.6")
   @Deprecated
   def getFileIODispatcher: String
@@ -40,7 +40,7 @@ abstract class RoutingSettings private[pekko] () { self: RoutingSettingsImpl =>
     self.copy(decodeMaxBytesPerChunk = decodeMaxBytesPerChunk)
   def withDecodeMaxSize(decodeMaxSize: Long): RoutingSettings = self.copy(decodeMaxSize = decodeMaxSize)
   @deprecated(
-    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    "binary compatibility method. Use `pekko.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
     since = "Akka HTTP 10.1.6")
   @Deprecated
   def withFileIODispatcher(fileIODispatcher: String): RoutingSettings = self

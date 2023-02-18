@@ -26,19 +26,19 @@ class TimeoutDirectivesExamplesSpec extends RoutingSpec
 
   implicit val timeout: RouteTestTimeout = RouteTestTimeout(3.seconds)
   override def testConfigSource: String =
-    "akka.http.server.request-timeout = infinite\n" +
+    "pekko.http.server.request-timeout = infinite\n" +
     super.testConfigSource
 
   def slowFuture(): Future[String] = Future.never
   // #testSetup
 
-  // demonstrates that timeout is correctly set despite infinite initial value of akka.http.server.request-timeout
+  // demonstrates that timeout is correctly set despite infinite initial value of pekko.http.server.request-timeout
   "Request Timeout" should {
     "be configurable in routing layer despite infinite initial value of request-timeout" in {
       // #withRequestTimeout-plain
       val route =
         path("timeout") {
-          withRequestTimeout(1.seconds) { // modifies the global akka.http.server.request-timeout for this request
+          withRequestTimeout(1.seconds) { // modifies the global pekko.http.server.request-timeout for this request
             val response: Future[String] = slowFuture() // very slow
             complete(response)
           }
@@ -143,12 +143,12 @@ class TimeoutDirectivesFiniteTimeoutExamplesSpec extends RoutingSpec
     with ScalaFutures with CompileOnlySpec {
   implicit val timeout: RouteTestTimeout = RouteTestTimeout(3.seconds)
   override def testConfigSource: String =
-    "akka.http.server.request-timeout = 1000s\n" +
+    "pekko.http.server.request-timeout = 1000s\n" +
     super.testConfigSource
 
   def slowFuture(): Future[String] = Future.never
 
-  // demonstrates that timeout is correctly modified for finite initial values of akka.http.server.request-timeout
+  // demonstrates that timeout is correctly modified for finite initial values of pekko.http.server.request-timeout
   "Request Timeout" should {
     "be configurable in routing layer for finite initial value of request-timeout" in {
       val route =

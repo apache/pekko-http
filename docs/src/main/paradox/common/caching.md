@@ -73,7 +73,7 @@ for longer than expected.
 @@@
 
 For simple cases, configure the capacity and expiration settings in your
-`application.conf` file via the settings under `akka.http.caching` and use
+`application.conf` file via the settings under `pekko.http.caching` and use
 @java[`LfuCache.create()`]@scala[`LfuCache.apply()`] to create the cache.
 For more advanced usage you can create an @apidoc[LfuCache$] with settings
 specialized for your use case:

@@ -131,7 +131,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
   }
 
   private[http] object Http2ServerSettingsImpl
-      extends pekko.http.impl.util.SettingsCompanionImpl[Http2ServerSettingsImpl]("akka.http.server.http2") {
+      extends pekko.http.impl.util.SettingsCompanionImpl[Http2ServerSettingsImpl]("pekko.http.server.http2") {
     def fromSubConfig(root: Config, c: Config): Http2ServerSettingsImpl = Http2ServerSettingsImpl(
       maxConcurrentStreams = c.getInt("max-concurrent-streams"),
       requestEntityChunkSize = c.getIntBytes("request-entity-chunk-size"),
@@ -238,7 +238,7 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
   }
 
   private[http] object Http2ClientSettingsImpl
-      extends pekko.http.impl.util.SettingsCompanionImpl[Http2ClientSettingsImpl]("akka.http.client.http2") {
+      extends pekko.http.impl.util.SettingsCompanionImpl[Http2ClientSettingsImpl]("pekko.http.client.http2") {
     def fromSubConfig(root: Config, c: Config): Http2ClientSettingsImpl = Http2ClientSettingsImpl(
       maxConcurrentStreams = c.getInt("max-concurrent-streams"),
       requestEntityChunkSize = c.getIntBytes("request-entity-chunk-size"),

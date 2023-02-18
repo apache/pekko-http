@@ -25,7 +25,7 @@ class TightRequestTimeoutSpec extends AnyWordSpec with Matchers with BeforeAndAf
     pekko.stdout-loglevel = ERROR
     windows-connection-abort-workaround-enabled = auto
     pekko.log-dead-letters = OFF
-    akka.http.server.request-timeout = 10ms""")
+    pekko.http.server.request-timeout = 10ms""")
 
   implicit val system = ActorSystem(getClass.getSimpleName, testConf)
   implicit val materializer = ActorMaterializer()

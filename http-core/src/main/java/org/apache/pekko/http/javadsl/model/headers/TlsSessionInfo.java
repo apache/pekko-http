@@ -11,7 +11,7 @@ import javax.net.ssl.SSLSession;
  * the message carrying this header was received with.
  *
  * This header will only be added if it enabled in the configuration by setting
- * <code>akka.http.[client|server].parsing.tls-session-info-header = on</code>.
+ * <code>pekko.http.[client|server].parsing.tls-session-info-header = on</code>.
  */
 public abstract class TlsSessionInfo extends CustomHeader {
     /**

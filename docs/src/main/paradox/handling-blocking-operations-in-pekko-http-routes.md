@@ -46,7 +46,7 @@ Java
 :   @@snip [BlockingInHttpExamples.java](/docs/src/test/java/docs/http/javadsl/server/BlockingInHttpExamples.java) { #blocking-example-in-default-dispatcher }
 
 Here the app is exposed to a load of continuous GET requests and large numbers
-of akka.actor.default-dispatcher threads are handling requests. The orange
+of pekko.actor.default-dispatcher threads are handling requests. The orange
 portion of the thread shows that it is idle. Idle threads are fine -
 they're ready to accept new work. However, large amounts of Turquoise (sleeping) threads are very bad!
 

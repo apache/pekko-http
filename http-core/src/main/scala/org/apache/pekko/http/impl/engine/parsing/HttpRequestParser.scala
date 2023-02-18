@@ -111,7 +111,7 @@ private[http] final class HttpRequestParser(
               BadRequest,
               ErrorInfo("Unsupported HTTP method",
                 s"HTTP method too long (started with '${sb.toString}')$remoteAddressStr. " +
-                "Increase `akka.http.server.parsing.max-method-length` to support HTTP methods with more characters."))
+                "Increase `pekko.http.server.parsing.max-method-length` to support HTTP methods with more characters."))
 
         @tailrec def parseMethod(meth: HttpMethod, ix: Int = 1): Int =
           if (ix == meth.value.length)

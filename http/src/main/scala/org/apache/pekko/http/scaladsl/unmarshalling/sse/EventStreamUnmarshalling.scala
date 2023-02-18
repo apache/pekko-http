@@ -23,8 +23,8 @@ import pekko.stream.scaladsl.{ Keep, Source }
  * unmarshalled to a source of [[ServerSentEvent]]s.
  *
  * The maximum size for parsing server-sent events is 8KiB. The maximum size for parsing lines of a server-sent event
- * is 4KiB. If you need to customize any of these, set the `akka.http.sse.max-event-size` and
- * `akka.http.sse.max-line-size` properties respectively.
+ * is 4KiB. If you need to customize any of these, set the `pekko.http.sse.max-event-size` and
+ * `pekko.http.sse.max-line-size` properties respectively.
  */
 @ApiMayChange
 object EventStreamUnmarshalling extends EventStreamUnmarshalling
@@ -34,8 +34,8 @@ object EventStreamUnmarshalling extends EventStreamUnmarshalling
  * [[ServerSentEvent]]s.
  *
  * The maximum size for parsing server-sent events is 8KiB by default and can be customized by configuring
- * `akka.http.sse.max-event-size`. The maximum size for parsing lines of a server-sent event is 4KiB by
- * default and can be customized by configuring `akka.http.sse.max-line-size`.
+ * `pekko.http.sse.max-event-size`. The maximum size for parsing lines of a server-sent event is 4KiB by
+ * default and can be customized by configuring `pekko.http.sse.max-line-size`.
  */
 @ApiMayChange
 trait EventStreamUnmarshalling {
@@ -44,7 +44,7 @@ trait EventStreamUnmarshalling {
    * The maximum size for parsing lines of a server-sent event; 4KiB by default.
    */
   @deprecated(
-    "Set this property in configuration as `akka.http.sse.max-line-size` before calling fromEventsStream(implicit ActorSystem)",
+    "Set this property in configuration as `pekko.http.sse.max-line-size` before calling fromEventsStream(implicit ActorSystem)",
     "Akka HTTP 10.1.8")
   protected def maxLineSize: Int = 4096
 
@@ -52,7 +52,7 @@ trait EventStreamUnmarshalling {
    * The maximum size for parsing server-sent events; 8KiB by default.
    */
   @deprecated(
-    "Set this property in configuration as `akka.http.sse.max-event-size` before calling fromEventsStream(implicit ActorSystem)",
+    "Set this property in configuration as `pekko.http.sse.max-event-size` before calling fromEventsStream(implicit ActorSystem)",
     "Akka HTTP 10.1.8")
   protected def maxEventSize: Int = 8192
 

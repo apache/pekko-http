@@ -19,8 +19,8 @@ import scala.collection.immutable.Seq
  * low-level tests testing Http2ServerDemux in isolation
  */
 class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
-    akka.http.server.remote-address-header = on
-    akka.http.server.http2.log-frames = on
+    pekko.http.server.remote-address-header = on
+    pekko.http.server.http2.log-frames = on
     pekko.stream.materializer.debug.fuzzing-mode = on
   """) {
   "Http2ServerDemux" should {

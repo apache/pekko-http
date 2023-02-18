@@ -25,7 +25,7 @@ import java.net.InetSocketAddress
  */
 @InternalApi
 private[http] object TelemetrySpi {
-  private val ConfigKey = "akka.http.http2-telemetry-class"
+  private val ConfigKey = "pekko.http.http2-telemetry-class"
   def create(system: ActorSystem): TelemetrySpi = {
     if (!system.settings.config.hasPath(ConfigKey)) NoOpTelemetry
     else {

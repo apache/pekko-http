@@ -1055,7 +1055,7 @@ final case class `Timeout-Access`(timeoutAccess: pekko.http.scaladsl.TimeoutAcce
  * This header will only be added if it enabled in the configuration by setting
  *
  * ```
- * akka.http.[client|server].parsing.tls-session-info-header = on
+ * pekko.http.[client|server].parsing.tls-session-info-header = on
  * ```
  */
 object `Tls-Session-Info` extends ModeledCompanion[`Tls-Session-Info`]

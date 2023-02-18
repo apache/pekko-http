@@ -14,21 +14,21 @@ import com.typesafe.config.ConfigFactory
 
 class ConnectionPoolSettingsSpec extends PekkoSpec {
   "ConnectionPoolSettings" should {
-    "use akka.http.client settings by default" in {
+    "use pekko.http.client settings by default" in {
       val settings = config(
         """
-          akka.http.client.user-agent-header = "serva/0.0"
+          pekko.http.client.user-agent-header = "serva/0.0"
         """)
 
       settings.connectionSettings.userAgentHeader shouldEqual Some(
         `User-Agent`.parseFromValueString("serva/0.0").right.get)
     }
-    "allow overriding client settings with akka.http.host-connection-pool.client" in {
+    "allow overriding client settings with pekko.http.host-connection-pool.client" in {
       val settings = config(
         """
-          akka.http.client.request-header-size-hint = 1024
-          akka.http.client.user-agent-header = "serva/0.0"
-          akka.http.host-connection-pool.client.user-agent-header = "serva/5.7"
+          pekko.http.client.request-header-size-hint = 1024
+          pekko.http.client.user-agent-header = "serva/0.0"
+          pekko.http.host-connection-pool.client.user-agent-header = "serva/5.7"
         """)
 
       settings.connectionSettings.userAgentHeader shouldEqual Some(
@@ -36,16 +36,16 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
       settings.connectionSettings.requestHeaderSizeHint shouldEqual 1024 // still fall back
     }
     "allow max-open-requests = 1" in {
-      config("akka.http.host-connection-pool.max-open-requests = 1").maxOpenRequests should be(1)
+      config("pekko.http.host-connection-pool.max-open-requests = 1").maxOpenRequests should be(1)
     }
     "allow max-open-requests = 42" in {
-      config("akka.http.host-connection-pool.max-open-requests = 42").maxOpenRequests should be(42)
+      config("pekko.http.host-connection-pool.max-open-requests = 42").maxOpenRequests should be(42)
     }
     "allow per host overrides" in {
 
       val settingsString =
         """
-          |akka.http.host-connection-pool {
+          |pekko.http.host-connection-pool {
           |  max-connections = 7
           |
           |  per-host-override : [
@@ -93,7 +93,7 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
     "allow overriding values from code" in {
       val settingsString =
         """
-          |akka.http.host-connection-pool {
+          |pekko.http.host-connection-pool {
           |  max-connections = 7
           |
           |  per-host-override = [
@@ -119,7 +119,7 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
     "choose the first matching override when there are multiple" in {
       val settingsString =
         """
-          |akka.http.host-connection-pool {
+          |pekko.http.host-connection-pool {
           |  min-connections = 2
           |  max-connections = 7
           |

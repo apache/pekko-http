@@ -401,7 +401,7 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
 
       val ignoreConfig =
         """
-          akka.http.parsing.illegal-response-header-value-processing-mode = ignore
+          pekko.http.parsing.illegal-response-header-value-processing-mode = ignore
         """
       "ignore illegal response header value if setting the config to ignore" in new TestSetup(config = ignoreConfig) {
         sendStandardRequest()
@@ -419,7 +419,7 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
 
       val ignoreNameConfig =
         """
-          akka.http.parsing.illegal-response-header-name-processing-mode = ignore
+          pekko.http.parsing.illegal-response-header-name-processing-mode = ignore
         """
       "ignore illegal response header name if setting the config to ignore" in new TestSetup(
         config = ignoreNameConfig) {
@@ -438,7 +438,7 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
 
       val warnConfig =
         """
-          akka.http.parsing.illegal-response-header-value-processing-mode = warn
+          pekko.http.parsing.illegal-response-header-value-processing-mode = warn
         """
       "ignore illegal response header value and log a warning message if setting the config to warn" in new TestSetup(
         config = warnConfig) {
@@ -458,7 +458,7 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
 
     val warnNameConfig =
       """
-          akka.http.parsing.illegal-response-header-name-processing-mode = warn
+          pekko.http.parsing.illegal-response-header-name-processing-mode = warn
         """
     "ignore illegal response header name and log a warning message if setting the config to warn" in new TestSetup(
       config = warnNameConfig) {

@@ -37,7 +37,7 @@ trait FramedEntityStreamingDirectives extends MarshallingDirectives {
    * Cancelling extracted [[pekko.stream.scaladsl.Source]] closes the connection abruptly (same as cancelling the `entity.dataBytes`).
    *
    * See also [[MiscDirectives.withoutSizeLimit]] as you may want to allow streaming infinite streams of data in this route.
-   * By default the uploaded data is limited by the `akka.http.parsing.max-content-length`.
+   * By default the uploaded data is limited by the `pekko.http.parsing.max-content-length`.
    */
   final def asSourceOf[T](
       implicit um: FromByteStringUnmarshaller[T], support: EntityStreamingSupport): RequestToSourceUnmarshaller[T] =
@@ -56,7 +56,7 @@ trait FramedEntityStreamingDirectives extends MarshallingDirectives {
    * Cancelling extracted [[pekko.stream.scaladsl.Source]] closes the connection abruptly (same as cancelling the `entity.dataBytes`).
    *
    * See also [[MiscDirectives.withoutSizeLimit]] as you may want to allow streaming infinite streams of data in this route.
-   * By default the uploaded data is limited by the `akka.http.parsing.max-content-length`.
+   * By default the uploaded data is limited by the `pekko.http.parsing.max-content-length`.
    */
   final def asSourceOf[T](support: EntityStreamingSupport)(
       implicit um: FromByteStringUnmarshaller[T]): RequestToSourceUnmarshaller[T] =

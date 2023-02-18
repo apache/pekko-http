@@ -25,15 +25,15 @@ class H2SpecIntegrationSpec extends PekkoSpec(
      pekko {
        loglevel = DEBUG
        loggers = ["org.apache.pekko.http.impl.util.SilenceAllTestEventListener"]
+       http.server.log-unencrypted-network-bytes = 100
+       http.server.preview.enable-http2 = on
+       http.server.http2.log-frames = on
 
        actor.serialize-creators = off
        actor.serialize-messages = off
 
        stream.materializer.debug.fuzzing-mode = off
      }
-     akka.http.server.log-unencrypted-network-bytes = 100
-     akka.http.server.preview.enable-http2 = on
-     akka.http.server.http2.log-frames = on
   """) with Directives with ScalaFutures with WithLogCapturing {
 
   implicit val ec: ExecutionContext = system.dispatcher

@@ -33,10 +33,11 @@ abstract class DontLeakActorsOnFailingConnectionSpecs(poolImplementation: String
       # disable logs (very noisy tests - 100 expected errors)
       loglevel = DEBUG
       loggers = ["org.apache.pekko.http.impl.util.SilenceAllTestEventListener"]
-    }
-    akka.http.host-connection-pool.pool-implementation = $poolImplementation
-    akka.http.host-connection-pool.base-connection-backoff = 0 ms
-    """).withFallback(ConfigFactory.load())
+
+      http.host-connection-pool.pool-implementation = $poolImplementation
+
+      http.host-connection-pool.base-connection-backoff = 0 ms
+    }""").withFallback(ConfigFactory.load())
   implicit val system = ActorSystem("DontLeakActorsOnFailingConnectionSpecs-" + poolImplementation, config)
   implicit val materializer = ActorMaterializer()
 

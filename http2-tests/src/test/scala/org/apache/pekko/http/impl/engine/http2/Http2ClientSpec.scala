@@ -63,9 +63,9 @@ import scala.concurrent.duration._
  * * validate the produced application-level responses
  */
 class Http2ClientSpec extends PekkoSpecWithMaterializer("""
-    akka.http.client.remote-address-header = on
-    akka.http.client.http2.log-frames = on
-    akka.http.client.http2.completion-timeout = 500ms
+    pekko.http.client.remote-address-header = on
+    pekko.http.client.http2.log-frames = on
+    pekko.http.client.http2.completion-timeout = 500ms
   """)
     with WithInPendingUntilFixed with Eventually {
 
@@ -916,7 +916,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         user.requestOut.sendComplete()
 
         // The streams is on hold until stream '3' finishes...
-        // 400 millis is slightly less than the value of "akka.http.client.http2.completion-timeout"
+        // 400 millis is slightly less than the value of "pekko.http.client.http2.completion-timeout"
         user.responseIn.expectNoMessage(400.millis)
 
         // Eventually, completion happens after a timeout

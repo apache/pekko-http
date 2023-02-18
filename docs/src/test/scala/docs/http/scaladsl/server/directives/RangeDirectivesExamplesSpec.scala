@@ -17,7 +17,7 @@ import scala.concurrent.duration._
 class RangeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   override def testConfig: Config =
-    ConfigFactory.parseString("akka.http.routing.range-coalescing-threshold=2").withFallback(super.testConfig)
+    ConfigFactory.parseString("pekko.http.routing.range-coalescing-threshold=2").withFallback(super.testConfig)
 
   "withRangeSupport" in {
     // #withRangeSupport
@@ -32,7 +32,7 @@ class RangeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       responseAs[String] shouldEqual "DE"
     }
 
-    // we set "akka.http.routing.range-coalescing-threshold = 2"
+    // we set "pekko.http.routing.range-coalescing-threshold = 2"
     // above to make sure we get two BodyParts
     Get() ~> addHeader(Range(ByteRange(0, 1), ByteRange(1, 2), ByteRange(6, 7))) ~> route ~> check {
       headers.collectFirst { case `Content-Range`(_, _) => true } shouldBe None

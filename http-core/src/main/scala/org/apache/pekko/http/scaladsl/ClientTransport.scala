@@ -42,7 +42,7 @@ object ClientTransport {
   private case object TCPTransport extends ClientTransport {
     def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
         implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]] =
-      // The InetSocketAddress representing the remote address must be created unresolved because akka.io.TcpOutgoingConnection will
+      // The InetSocketAddress representing the remote address must be created unresolved because org.apache.pekko.io.TcpOutgoingConnection will
       // not attempt DNS resolution if the InetSocketAddress is already resolved. That behavior is problematic when it comes to
       // connection pools since it means that new connections opened by the pool in the future can end up using a stale IP address.
       // By passing an unresolved InetSocketAddress instead, we ensure that DNS resolution is performed for every new connection.
@@ -73,7 +73,7 @@ object ClientTransport {
    * Returns a [[ClientTransport]] that runs all connection through the given HTTP(S) proxy using the
    * HTTP CONNECT method.
    *
-   * Pulls the host/port pair from the application.conf: akka.client.proxy.https.{host, port}
+   * Pulls the host/port pair from the application.conf: pekko.client.proxy.https.{host, port}
    */
   def httpsProxy()(implicit system: ActorSystem): ClientTransport = {
     val settings = HttpsProxySettings(system.settings.config)
@@ -96,7 +96,7 @@ object ClientTransport {
    * Returns a [[ClientTransport]] that runs all connection through the given HTTP(S) proxy using the
    * HTTP CONNECT method. This method also takes [[HttpCredentials]] in order to pass along to the proxy.
    *
-   * Pulls the host/port pair from the application.conf: akka.client.proxy.https.{host, port}
+   * Pulls the host/port pair from the application.conf: pekko.client.proxy.https.{host, port}
    */
   def httpsProxy(proxyCredentials: HttpCredentials)(implicit system: ActorSystem): ClientTransport = {
     val settings = HttpsProxySettings(system.settings.config)

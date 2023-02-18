@@ -39,8 +39,8 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
     pekko.loggers = ["org.apache.pekko.testkit.TestEventListener"]
     pekko.loglevel = ERROR
     pekko.stdout-loglevel = ERROR
-    akka.http.server.parsing.max-content-length = $maxContentLength
-    akka.http.routing.decode-max-size = $decodeMaxSize
+    pekko.http.server.parsing.max-content-length = $maxContentLength
+    pekko.http.routing.decode-max-size = $decodeMaxSize
     """)
   implicit val system = ActorSystem(getClass.getSimpleName, testConf)
   import system.dispatcher
@@ -65,7 +65,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
         .futureValue.status shouldEqual StatusCodes.OK
     }
 
-    "not accept entities bigger than configured with akka.http.parsing.max-content-length" in {
+    "not accept entities bigger than configured with pekko.http.parsing.max-content-length" in {
       Http().singleRequest(Post(s"http:/${binding.localAddress}/noDirective", entityOfSize(maxContentLength + 1)))
         .futureValue.status shouldEqual StatusCodes.PayloadTooLarge
     }
@@ -225,7 +225,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
 
     val binding = Http().newServerAt("localhost", port = 0).bind(route).futureValue
 
-    "accept entities bigger than configured with akka.http.parsing.max-content-length" in {
+    "accept entities bigger than configured with pekko.http.parsing.max-content-length" in {
       Http().singleRequest(Post(s"http:/${binding.localAddress}/withoutSizeLimit", entityOfSize(maxContentLength + 1)))
         .futureValue.status shouldEqual StatusCodes.OK
     }

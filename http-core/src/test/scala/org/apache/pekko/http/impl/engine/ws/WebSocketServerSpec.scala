@@ -15,7 +15,7 @@ import pekko.http.impl.util.PekkoSpecWithMaterializer
 
 import scala.concurrent.duration._
 
-class WebSocketServerSpec extends PekkoSpecWithMaterializer("akka.http.server.websocket.log-frames = on") { spec =>
+class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.websocket.log-frames = on") { spec =>
 
   "The server-side WebSocket integration should" should {
     "establish a websocket connection when the user requests it" should {

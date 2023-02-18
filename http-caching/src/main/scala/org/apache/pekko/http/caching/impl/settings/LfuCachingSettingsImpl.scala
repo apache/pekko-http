@@ -27,7 +27,7 @@ private[http] final case class LfuCachingSettingsImpl(
 /** INTERNAL API */
 @InternalApi
 private[http] object LfuCachingSettingsImpl
-    extends SettingsCompanionImpl[LfuCachingSettingsImpl]("akka.http.caching.lfu-cache") {
+    extends SettingsCompanionImpl[LfuCachingSettingsImpl]("pekko.http.caching.lfu-cache") {
   def fromSubConfig(root: Config, inner: Config): LfuCachingSettingsImpl = {
     val c = inner.withFallback(root.getConfig(prefix))
     new LfuCachingSettingsImpl(
