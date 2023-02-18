@@ -144,12 +144,12 @@ Java
 ## HttpEntity
 
 An @apidoc[HttpEntity] carries the data bytes of a message together with its Content-Type and, if known, its Content-Length.
-In Apache Pekko HTTP there are five different kinds of entities which model the various ways that message content can be
+In Apache Pekko HTTP, there are five different kinds of entities which model the various ways that message content can be
 received or sent:
 
 @scala[HttpEntity.Strict]@java[HttpEntityStrict]
 : The simplest entity, which is used when all the entity are already available in memory.
-It wraps a plain @apidoc[org.apache.pekko.util.ByteString] and  represents a standard, unchunked entity with a known `Content-Length`.
+It wraps a plain @apidoc[org.apache.pekko.util.ByteString] and represents a standard, unchunked entity with a known `Content-Length`.
 
 @scala[HttpEntity.Default]@java[HttpEntityDefault]
 : The general, unchunked HTTP/1.1 message entity.

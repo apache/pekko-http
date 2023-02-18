@@ -298,7 +298,7 @@ Again, instead of extracting own combined directives to its own method, we can m
 
 @@snip [DirectiveExamplesTest.java](/docs/src/test/java/docs/http/javadsl/server/DirectiveExamplesTest.java) { #composeNestingAllOf }
 
-In this previous example, the the inner route function provided to `allOf` will be called when the request is a `GET` and with the extracted client IP obtained from the second directive.
+In this previous example, the inner route function provided to `allOf` will be called when the request is a `GET` and with the extracted client IP obtained from the second directive.
 
 As you have already seen in the previous section, you can also use the `concat` method defined in @apidoc[RouteDirectives] as an alternative to `orElse` chaining. Here you can see the first example again, rewritten using `concat`:
 
@@ -327,7 +327,7 @@ use their power to define your web service behavior at the level of abstraction 
 
 @@@ note { .group-scala }
 Gotcha: forgetting the `~` (tilde) character in between directives can result in perfectly valid
-Scala code that compiles but does not work as expected. What would be intended as a single expression would actually be multiple expressions, and only the final one would be used as the result of the parent directive. Because of this, the recommended way to compose routes is with the the `concat` combinator.
+Scala code that compiles but does not work as expected. What would be intended as a single expression would actually be multiple expressions, and only the final one would be used as the result of the parent directive. Because of this, the recommended way to compose routes is with the `concat` combinator.
 @@@
 
 @@@ div { .group-scala }

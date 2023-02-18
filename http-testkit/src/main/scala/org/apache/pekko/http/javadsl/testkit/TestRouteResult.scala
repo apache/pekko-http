@@ -66,7 +66,7 @@ abstract class TestRouteResult(_result: Future[RouteResult], awaitAtMost: Finite
   def contentTypeString: String = contentType.toString
 
   /**
-   * Returns the media-type of the the response's content-type
+   * Returns the media-type of the response's content-type
    */
   def mediaType: MediaType = contentType.mediaType
 
