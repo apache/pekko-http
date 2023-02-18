@@ -114,7 +114,7 @@ To use the task simply type, and the output should include entries like shown be
 [info] Detected changes in directories: [docs, project, pekko-http-tests, pekko-protobuf, pekko-http-testkit, pekko-http, pekko-http-core, pekko-stream]
 ```
 
-By default changes are diffed with the `main` branch when working locally, if you want to validate against a different
+By default, changes are diffed with the `main` branch when working locally, if you want to validate against a different
 target PR branch you can do so by setting the PR_TARGET_BRANCH environment variable for SBT:
 
 ```
@@ -127,7 +127,7 @@ Pekko HTTP codebase is currently built with snapshot versions of the Pekko core 
 
 Since Pekko HTTP is released separately to Pekko "core", yet some features require changes in Pekko itself, it is sometimes very useful
 to be able to develop Pekko HTTP with Pekko's sources used directly instead of the binary dependency. You can check out the Pekko 
-repository and run sbt with `-Dakka.sources=$HOME/akka` to develop Pekko HTTP with Pekko as a source dependency instead of a binary one.
+repository and run sbt with `-Dpekko.sources=$HOME/akka` to develop Pekko HTTP with Pekko as a source dependency instead of a binary one.
 
 This allows simple and fast iterations on changes that would need to be introduced in Pekko to develop a feature in HTTP that would require those.
 
@@ -145,10 +145,10 @@ an error like this:
 [error]    filter with: ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.stream.scaladsl.FlowOps.foldAsync")
 ```
 
-In such situations it's good to consult with a core team member if the violation can be safely ignored (by adding the above snippet to the project's
+In such situations, it's good to consult with a core team member if the violation can be safely ignored (by adding the above snippet to the project's
 `src/main/mima-filters`), or if it would indeed break binary compatibility.
 
-Situations when it may be fine to ignore a MiMa issued warning include:
+Situations where it may be fine to ignore a MiMa issued warning include:
 
 - if it is touching any class marked as `private[pekko]`, `/** INTERNAL API*/` or similar markers
 - if it is concerning internal classes (often recognizable by package names like `dungeon`, `impl`, `internal` etc.)
@@ -163,7 +163,7 @@ incompatibility has been successfully ignored after adding it to the filter file
 
 ## Pull Request Requirements
 
-For a Pull Request to be considered at all it has to meet these requirements:
+For a Pull Request to be considered at all, it has to meet these requirements:
 
 1. Regardless if the code introduces new features or fixes bugs or regressions, it must have comprehensive tests.
 1. The code must be well documented in the Lightbend's standard documentation format (see the ‘Documentation’ section below).
