@@ -192,7 +192,7 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     def entityOfSize(size: Int) =
       HttpEntity(ContentTypes.`text/plain(UTF-8)`, "0" * size)
 
-    // will work even if you have configured akka.http.parsing.max-content-length = 500
+    // will work even if you have configured pekko.http.parsing.max-content-length = 500
     Post("/abc", entityOfSize(501)) ~> route ~> check {
       status shouldEqual StatusCodes.OK
     }

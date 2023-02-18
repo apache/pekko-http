@@ -36,7 +36,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.withRangeSupport;
 public class RangeDirectivesExamplesTest extends JUnitRouteTest {
     @Override
     public Config additionalConfig() {
-        return ConfigFactory.parseString("akka.http.routing.range-coalescing-threshold=2");
+        return ConfigFactory.parseString("pekko.http.routing.range-coalescing-threshold=2");
     }
 
     @Test
@@ -60,7 +60,7 @@ public class RangeDirectivesExamplesTest extends JUnitRouteTest {
                 .assertStatusCode(StatusCodes.PARTIAL_CONTENT)
                 .assertEntity("DE");
 
-        // we set "akka.http.routing.range-coalescing-threshold = 2"
+        // we set "pekko.http.routing.range-coalescing-threshold = 2"
         // above to make sure we get two BodyParts
         final TestRouteResult response = testRoute(route).run(HttpRequest.GET("/")
                 .addHeader(Range.create(RangeUnits.BYTES,

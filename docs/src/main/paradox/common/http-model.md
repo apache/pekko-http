@@ -246,10 +246,10 @@ content-length. If the entity is transformed in a way that changes the content-l
 then the previous limit will be applied against the previous content-length.
 Generally this behavior should be in line with your expectations.
 
-> <a id="1" href="#^1">[1]</a> *akka.http.parsing.max-content-length* (applying to server- as well as client-side),
-*akka.http.server.parsing.max-content-length* (server-side only),
-*akka.http.client.parsing.max-content-length* (client-side only) or
-*akka.http.host-connection-pool.client.parsing.max-content-length* (only host-connection-pools)
+> <a id="1" href="#^1">[1]</a> *pekko.http.parsing.max-content-length* (applying to server- as well as client-side),
+*pekko.http.server.parsing.max-content-length* (server-side only),
+*pekko.http.client.parsing.max-content-length* (client-side only) or
+*pekko.http.host-connection-pool.client.parsing.max-content-length* (only host-connection-pools)
 
 ### Special processing for HEAD requests
 
@@ -318,12 +318,12 @@ response will not be rendered onto the wire and trigger a warning being logged i
 
 Server
 : A `Server` header is usually added automatically to any response and its value can be configured via the
-`akka.http.server.server-header` setting. Additionally an application can override the configured header with a
+`pekko.http.server.server-header` setting. Additionally an application can override the configured header with a
 custom one by adding it to the response's `header` sequence.
 
 User-Agent
 : A `User-Agent` header is usually added automatically to any request and its value can be configured via the
-`akka.http.client.user-agent-header` setting. Additionally an application can override the configured header with a
+`pekko.http.client.user-agent-header` setting. Additionally an application can override the configured header with a
 custom one by adding it to the request's `header` sequence.
 
 Date
@@ -408,16 +408,16 @@ Parsing and rendering of HTTP data structures is heavily optimized and for most 
 provided to parse (or render to) Strings or byte arrays.
 
 @@@ note
-Various parsing and rendering settings are available to tweak in the configuration under `akka.http.client[.parsing]`,
-`akka.http.server[.parsing]` and `akka.http.host-connection-pool[.client.parsing]`, with defaults for all of these
-being defined in the `akka.http.parsing` configuration section.
+Various parsing and rendering settings are available to tweak in the configuration under `pekko.http.client[.parsing]`,
+`pekko.http.server[.parsing]` and `pekko.http.host-connection-pool[.client.parsing]`, with defaults for all of these
+being defined in the `pekko.http.parsing` configuration section.
 
-For example, if you want to change a parsing setting for all components, you can set the `akka.http.parsing.illegal-header-warnings = off`
-value. However this setting can be still overridden by the more specific sections, like for example `akka.http.server.parsing.illegal-header-warnings = on`.
+For example, if you want to change a parsing setting for all components, you can set the `pekko.http.parsing.illegal-header-warnings = off`
+value. However this setting can be still overridden by the more specific sections, like for example `pekko.http.server.parsing.illegal-header-warnings = on`.
 
 In this case both `client` and `host-connection-pool` APIs will see the setting `off`, however the server will see `on`.
 
-In the case of `akka.http.host-connection-pool.client` settings, they default to settings set in `akka.http.client`,
+In the case of `pekko.http.host-connection-pool.client` settings, they default to settings set in `pekko.http.client`,
 and can override them if needed. This is useful, since both `client` and `host-connection-pool` APIs,
 such as the Client API @scala[`Http().outgoingConnection`]@java[`Http.get(sys).outgoingConnection`] or the Host Connection Pool APIs @scala[`Http().singleRequest`]@java[`Http.get(sys).singleRequest`]
 or @scala[`Http().superPool`]@java[`Http.get(sys).superPool`], usually need the same settings, however the `server` most likely has a very different set of settings.

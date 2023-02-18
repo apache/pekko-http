@@ -40,12 +40,12 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Future, Promise }
 
 class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
-      """akka.http.server.remote-address-header = on
-     akka.http.server.http2.log-frames = on
-     akka.http.server.log-unencrypted-network-bytes = 100
-     akka.http.server.preview.enable-http2 = on
-     akka.http.client.http2.log-frames = on
-     akka.http.client.log-unencrypted-network-bytes = 100
+      """pekko.http.server.remote-address-header = on
+     pekko.http.server.http2.log-frames = on
+     pekko.http.server.log-unencrypted-network-bytes = 100
+     pekko.http.server.preview.enable-http2 = on
+     pekko.http.client.http2.log-frames = on
+     pekko.http.client.log-unencrypted-network-bytes = 100
      pekko.actor.serialize-messages = false
   """) with ScalaFutures {
   override protected def failOnSevereMessages: Boolean = true

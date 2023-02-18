@@ -12,7 +12,7 @@ This means it is ready to be evaluated, but the APIs and behavior are likely to 
 HTTP/2 can then be enabled through configuration:
 
 ```
-akka.http.server.preview.enable-http2 = on
+pekko.http.server.preview.enable-http2 = on
 ```
 
 ## Use `newServerAt(...).bind()` and HTTPS

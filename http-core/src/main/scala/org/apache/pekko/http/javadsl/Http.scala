@@ -67,7 +67,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
   /**
    * Constructs a server layer stage using the given [[pekko.http.javadsl.settings.ServerSettings]]. The returned [[pekko.stream.javadsl.BidiFlow]] isn't reusable and
    * can only be materialized once. The `remoteAddress`, if provided, will be added as a header to each [[HttpRequest]]
-   * this layer produces if the `akka.http.server.remote-address-header` configuration option is enabled.
+   * this layer produces if the `pekko.http.server.remote-address-header` configuration option is enabled.
    */
   def serverLayer(
       settings: ServerSettings,
@@ -78,7 +78,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
   /**
    * Constructs a server layer stage using the given [[ServerSettings]]. The returned [[pekko.stream.javadsl.BidiFlow]] isn't reusable and
    * can only be materialized once. The remoteAddress, if provided, will be added as a header to each [[HttpRequest]]
-   * this layer produces if the `akka.http.server.remote-address-header` configuration option is enabled.
+   * this layer produces if the `pekko.http.server.remote-address-header` configuration option is enabled.
    */
   def serverLayer(
       settings: ServerSettings,
@@ -183,7 +183,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * [[pekko.stream.javadsl.Flow]] for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    *
    * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
@@ -209,7 +209,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * [[pekko.stream.javadsl.Flow]] for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    *
    * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
@@ -237,7 +237,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * function for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    *
    * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
@@ -261,7 +261,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * function for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    *
    * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
@@ -289,7 +289,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * function for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    *
    * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
@@ -313,7 +313,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * function for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    *
    * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
@@ -533,7 +533,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * object of type `T` from the application which is emitted together with the corresponding response.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `akka.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
    */
   def cachedHostConnectionPool[T](
       to: ConnectHttp,
@@ -673,7 +673,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
 
   /**
    * Constructs a WebSocket [[pekko.stream.javadsl.BidiFlow]] using the configured default [[ClientConnectionSettings]],
-   * configured using the `akka.http.client` config section.
+   * configured using the `pekko.http.client` config section.
    *
    * The layer is not reusable and must only be materialized once.
    */
@@ -685,7 +685,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
 
   /**
    * Constructs a WebSocket [[pekko.stream.javadsl.BidiFlow]] using the configured default [[ClientConnectionSettings]],
-   * configured using the `akka.http.client` config section.
+   * configured using the `pekko.http.client` config section.
    *
    * The layer is not reusable and must only be materialized once.
    */

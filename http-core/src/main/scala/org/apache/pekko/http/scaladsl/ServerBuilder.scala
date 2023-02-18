@@ -60,7 +60,7 @@ trait ServerBuilder {
    * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    *
    * Supports HTTP/2 on the same port if http2 support is enabled.
@@ -72,7 +72,7 @@ trait ServerBuilder {
    * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    *
    * Supports HTTP/2 on the same port if http2 support is enabled.
@@ -84,7 +84,7 @@ trait ServerBuilder {
    * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    */
   def bindFlow(handlerFlow: Flow[HttpRequest, HttpResponse, _]): Future[ServerBinding]

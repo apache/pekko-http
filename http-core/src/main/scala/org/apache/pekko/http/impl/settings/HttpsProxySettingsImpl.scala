@@ -20,7 +20,7 @@ private[http] final case class HttpsProxySettingsImpl(
   override def productPrefix = "HttpsProxySettings"
 }
 
-object HttpsProxySettingsImpl extends SettingsCompanionImpl[HttpsProxySettingsImpl]("akka.http.client.proxy.https") {
+object HttpsProxySettingsImpl extends SettingsCompanionImpl[HttpsProxySettingsImpl]("pekko.http.client.proxy.https") {
   override def fromSubConfig(root: Config, c: Config): HttpsProxySettingsImpl = {
     new HttpsProxySettingsImpl(
       c.getString("host"),

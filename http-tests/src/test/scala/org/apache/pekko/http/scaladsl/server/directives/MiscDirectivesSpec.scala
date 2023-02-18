@@ -128,8 +128,8 @@ class MiscDirectivesSpec extends RoutingSpec {
         responseAs[String] shouldEqual "The request content was malformed:\n" +
         "EntityStreamSizeException: incoming entity size (134) " +
         "exceeded size limit (64 bytes)! " +
-        "This may have been a parser limit (set via `akka.http.[server|client].parsing.max-content-length`), " +
-        "a decoder limit (set via `akka.http.routing.decode-max-size`), " +
+        "This may have been a parser limit (set via `pekko.http.[server|client].parsing.max-content-length`), " +
+        "a decoder limit (set via `pekko.http.routing.decode-max-size`), " +
         "or a custom limit set with `withSizeLimit`."
       }
     }

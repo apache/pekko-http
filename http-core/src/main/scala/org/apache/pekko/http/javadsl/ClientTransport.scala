@@ -55,7 +55,7 @@ object ClientTransport {
    * Returns a [[ClientTransport]] that runs all connection through the given HTTP(S) proxy using the
    * HTTP CONNECT method.
    *
-   * Pulls the host/port pair from the application.conf: akka.client.proxy.https.{host, port}
+   * Pulls the host/port pair from the application.conf: pekko.client.proxy.https.{host, port}
    */
   def httpsProxy(implicit system: ActorSystem): ClientTransport =
     scaladsl.ClientTransport.httpsProxy().asJava
@@ -77,7 +77,7 @@ object ClientTransport {
    * Returns a [[ClientTransport]] that runs all connection through the given HTTP(S) proxy using the
    * HTTP CONNECT method. This method also takes [[HttpCredentials]] in order to pass along to the proxy.
    *
-   * Pulls the host/port pair from the application.conf: akka.client.proxy.https.{host, port}
+   * Pulls the host/port pair from the application.conf: pekko.client.proxy.https.{host, port}
    */
   def httpsProxy(proxyCredentials: HttpCredentials, system: ActorSystem): ClientTransport =
     scaladsl.ClientTransport.httpsProxy(proxyCredentials.asScala)(system).asJava

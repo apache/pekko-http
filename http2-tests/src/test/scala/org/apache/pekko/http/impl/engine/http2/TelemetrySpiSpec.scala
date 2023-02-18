@@ -56,9 +56,9 @@ class TelemetrySpiCypherSpec extends TelemetrySpiSpec(true)
 
 abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializer(
       """
-     akka.http.server.preview.enable-http2 = on
+     pekko.http.server.preview.enable-http2 = on
      pekko.actor.serialize-messages = false
-     akka.http.http2-telemetry-class = "org.apache.pekko.http.impl.engine.http2.TestTelemetryImpl"
+     pekko.http.http2-telemetry-class = "org.apache.pekko.http.impl.engine.http2.TestTelemetryImpl"
   """) with ScalaFutures with BeforeAndAfterAll {
 
   case class RequestId(id: String) extends RequestResponseAssociation
@@ -239,7 +239,7 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializ
       val system = ActorSystem(s"${getClass.getSimpleName}-noImplFound",
         ConfigFactory.parseString(
           s"""
-            akka.http.http2-telemetry-class = no.such.Clazz
+            pekko.http.http2-telemetry-class = no.such.Clazz
           """))
       try {
         TelemetrySpi.create(system) should ===(NoOpTelemetry)

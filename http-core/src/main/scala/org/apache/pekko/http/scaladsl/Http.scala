@@ -175,7 +175,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * which is 80 for HTTP and 443 for HTTPS.
    *
    * To configure additional settings for a server started using this method,
-   * use the `akka.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
+   * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    */
   @deprecated(
     "Use Http().newServerAt(...)...connectionSource() to create a source that can be materialized to a binding.",
@@ -222,11 +222,11 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    *
    * To configure additional settings for a server started using this method,
-   * use the `akka.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
+   * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    */
   @deprecated("Use Http().newServerAt(...)...bindFlow() to create server bindings.", since = "10.2.0")
   @nowarn("msg=deprecated")
@@ -304,11 +304,11 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    *
    * To configure additional settings for a server started using this method,
-   * use the `akka.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
+   * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    */
   @deprecated("Use Http().newServerAt(...)...bindSync() to create server bindings.", since = "10.2.0")
   @nowarn("msg=deprecated")
@@ -326,16 +326,16 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
    *
    * The number of concurrently accepted connections can be configured by overriding
-   * the `akka.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
+   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    *
    * To configure additional settings for a server started using this method,
-   * use the `akka.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
+   * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    *
    * Parameter `parallelism` specifies how many requests are attempted to be handled concurrently per connection. In HTTP/1
    * this makes only sense if HTTP pipelining is enabled (which is not recommended). The default value of `0` means that
-   * the value is taken from the `akka.http.server.pipelining-limit` setting from the configuration. In HTTP/2,
-   * the default value is taken from `akka.http.server.http2.max-concurrent-streams`.
+   * the value is taken from the `pekko.http.server.pipelining-limit` setting from the configuration. In HTTP/2,
+   * the default value is taken from `pekko.http.server.http2.max-concurrent-streams`.
    *
    * Any other value for `parallelism` overrides the setting.
    */
@@ -382,7 +382,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   /**
    * Constructs a [[pekko.http.scaladsl.Http.ServerLayer]] stage using the given [[pekko.http.scaladsl.settings.ServerSettings]]. The returned [[pekko.stream.scaladsl.BidiFlow]] isn't reusable and
    * can only be materialized once. The `remoteAddress`, if provided, will be added as a header to each [[pekko.http.scaladsl.model.HttpRequest]]
-   * this layer produces if the `akka.http.server.remote-address-header` configuration option is enabled.
+   * this layer produces if the `pekko.http.server.remote-address-header` configuration option is enabled.
    */
   def serverLayer(
       settings: ServerSettings = ServerSettings(system),
@@ -415,7 +415,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * Every materialization of the produced flow will attempt to establish a new outgoing connection.
    *
    * To configure additional settings for requests made using this method,
-   * use the `akka.http.client` config section or pass in a [[pekko.http.scaladsl.settings.ClientConnectionSettings]] explicitly.
+   * use the `pekko.http.client` config section or pass in a [[pekko.http.scaladsl.settings.ClientConnectionSettings]] explicitly.
    *
    * Prefer [[connectionTo]] over this method.
    */
@@ -433,7 +433,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * for encryption on the connection.
    *
    * To configure additional settings for requests made using this method,
-   * use the `akka.http.client` config section or pass in a [[pekko.http.scaladsl.settings.ClientConnectionSettings]] explicitly.
+   * use the `pekko.http.client` config section or pass in a [[pekko.http.scaladsl.settings.ClientConnectionSettings]] explicitly.
    *
    * Prefer [[connectionTo]] over this method.
    */
@@ -451,7 +451,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * implementation
    *
    * To configure additional settings for requests made using this method,
-   * use the `akka.http.client` config section or pass in a [[pekko.http.scaladsl.settings.ClientConnectionSettings]] explicitly.
+   * use the `pekko.http.client` config section or pass in a [[pekko.http.scaladsl.settings.ClientConnectionSettings]] explicitly.
    *
    * Prefer [[connectionTo]] over this method.
    */
@@ -493,7 +493,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
 
   /**
    * Constructs a [[pekko.http.scaladsl.Http.ClientLayer]] stage using the configured default [[pekko.http.scaladsl.settings.ClientConnectionSettings]],
-   * configured using the `akka.http.client` config section.
+   * configured using the `pekko.http.client` config section.
    */
   def clientLayer(hostHeader: Host): ClientLayer =
     clientLayer(hostHeader, ClientConnectionSettings(system))
@@ -525,7 +525,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * object of type `T` from the application which is emitted together with the corresponding response.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `akka.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
    */
   def newHostConnectionPool[T](host: String, port: Int = 80,
       settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
@@ -542,7 +542,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * for encryption on the connections.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `akka.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
    */
   def newHostConnectionPoolHttps[T](host: String, port: Int = 443,
       connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
@@ -583,7 +583,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * object of type `T` from the application which is emitted together with the corresponding response.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `akka.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
    */
   def cachedHostConnectionPool[T](host: String, port: Int = 80,
       settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
@@ -600,7 +600,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * for encryption on the connections.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `akka.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
    */
   def cachedHostConnectionPoolHttps[T](host: String, port: Int = 443,
       connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
@@ -650,7 +650,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * object of type `T` from the application which is emitted together with the corresponding response.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `akka.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
    */
   def superPool[T](
       connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
@@ -681,7 +681,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
 
   /**
    * Constructs a [[pekko.http.scaladsl.Http.WebSocketClientLayer]] stage using the configured default [[pekko.http.scaladsl.settings.ClientConnectionSettings]],
-   * configured using the `akka.http.client` config section.
+   * configured using the `pekko.http.client` config section.
    *
    * The layer is not reusable and must only be materialized once.
    */
@@ -1127,7 +1127,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
   def lookup() = Http
 
   def createExtension(system: ExtendedActorSystem): HttpExt =
-    new HttpExt(system.settings.config.getConfig("akka.http"))(system)
+    new HttpExt(system.settings.config.getConfig("pekko.http"))(system)
 
   @nowarn("msg=use remote-address-attribute instead")
   @InternalApi

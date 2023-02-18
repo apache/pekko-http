@@ -42,4 +42,4 @@ and renders a listing which looks like this:
 Example page rendered by the `defaultDirectoryRenderer`.
 
 It's possible to turn off rendering the footer stating which version of Apache Pekko HTTP is rendering this page by configuring
-the `akka.http.routing.render-vanity-footer` configuration option to `off`.
+the `pekko.http.routing.render-vanity-footer` configuration option to `off`.

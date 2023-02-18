@@ -21,7 +21,7 @@ private[http] final case class ServerSentEventSettingsImpl(
 
 }
 
-object ServerSentEventSettingsImpl extends SettingsCompanionImpl[ServerSentEventSettingsImpl]("akka.http.sse") {
+object ServerSentEventSettingsImpl extends SettingsCompanionImpl[ServerSentEventSettingsImpl]("pekko.http.sse") {
   def fromSubConfig(root: Config, c: Config) = ServerSentEventSettingsImpl(
     c.getInt("max-event-size"),
     c.getInt("max-line-size"),

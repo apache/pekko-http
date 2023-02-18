@@ -57,10 +57,10 @@ trait H2RequestResponseBenchmark extends HPackEncodingSupport {
     ConfigFactory.parseString(
       s"""
            pekko.actor.default-dispatcher.fork-join-executor.parallelism-max = 1
-           akka.http.server.http2.max-concurrent-streams = $numRequests # needs to be >= `numRequests`
-           akka.http.server.http2.min-collect-strict-entity-size = $minStrictEntitySize
+           pekko.http.server.http2.max-concurrent-streams = $numRequests # needs to be >= `numRequests`
+           pekko.http.server.http2.min-collect-strict-entity-size = $minStrictEntitySize
            #pekko.loglevel = debug
-           #akka.http.server.log-unencrypted-network-bytes = 100
+           #pekko.http.server.log-unencrypted-network-bytes = 100
          """)
       .withFallback(ConfigFactory.load())
 

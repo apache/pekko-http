@@ -21,7 +21,7 @@ import org.scalatest.time.{ Seconds, Span }
 import scala.concurrent.Future
 
 class TlsEndpointVerificationSpec extends PekkoSpecWithMaterializer("""
-    akka.http.parsing.ssl-session-attribute = on
+    pekko.http.parsing.ssl-session-attribute = on
   """) {
   /*
    * Useful when debugging against "what if we hit a real website"

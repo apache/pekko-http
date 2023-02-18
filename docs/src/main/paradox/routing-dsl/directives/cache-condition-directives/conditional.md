@@ -28,4 +28,4 @@ it is usually used quite deep down in the route structure (i.e. close to the lea
 targeted by the request has already been established and the respective ETag/Last-Modified values can be determined.
 
 The @ref[FileAndResourceDirectives](../file-and-resource-directives/index.md) internally use the `conditional` directive for ETag and Last-Modified support
-(if the `akka.http.routing.file-get-conditional` setting is enabled).
+(if the `pekko.http.routing.file-get-conditional` setting is enabled).

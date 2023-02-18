@@ -50,14 +50,14 @@ class Http2PersistentClientPlaintextSpec extends Http2PersistentClientSpec(false
 abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMaterializer(
       // FIXME: would rather use remote-address-attribute, but that doesn't work with HTTP/2
       // see https://github.com/apache/incubator-pekko-http/issues/3707
-      """akka.http.server.remote-address-attribute = on
-     akka.http.server.preview.enable-http2 = on
-     akka.http.client.http2.log-frames = on
-     akka.http.client.http2.max-persistent-attempts = 5
-     akka.http.client.log-unencrypted-network-bytes = 100
+      """pekko.http.server.remote-address-attribute = on
+     pekko.http.server.preview.enable-http2 = on
+     pekko.http.client.http2.log-frames = on
+     pekko.http.client.http2.max-persistent-attempts = 5
+     pekko.http.client.log-unencrypted-network-bytes = 100
      pekko.actor.serialize-messages = false
-     akka.http.server.http2.completion-timeout=100ms
-     akka.http.client.http2.completion-timeout=100ms
+     pekko.http.server.http2.completion-timeout=100ms
+     pekko.http.client.http2.completion-timeout=100ms
   """) with ScalaFutures {
   override def failOnSevereMessages: Boolean = true
   private val notSevere = Set("ChannelReadable", "WriteAck")

@@ -482,7 +482,7 @@ object HttpRequest {
       def fail(detail: String) =
         throw IllegalUriException(
           s"Cannot establish effective URI of request to `$uri`, request has a relative URI and $detail",
-          "consider setting `akka.http.server.default-host-header`")
+          "consider setting `pekko.http.server.default-host-header`")
       val Host(hostHeaderHost, hostHeaderPort) = hostHeader match {
         case OptionVal.None => if (defaultHostHeader.isEmpty) fail("is missing a `Host` header") else defaultHostHeader
         case OptionVal.Some(x) if x.isEmpty =>

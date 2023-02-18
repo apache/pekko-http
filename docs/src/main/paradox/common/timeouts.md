@@ -18,9 +18,9 @@ an indefinite time.
 The setting works the same way for server and client connections and it is configurable independently using the following keys:
 
 ```
-akka.http.server.idle-timeout
-akka.http.client.idle-timeout
-akka.http.host-connection-pool.client.idle-timeout
+pekko.http.server.idle-timeout
+pekko.http.client.idle-timeout
+pekko.http.host-connection-pool.client.idle-timeout
 ```
 
 ## Server timeouts
@@ -38,14 +38,14 @@ The default @apidoc[HttpResponse] that is written when a request timeout is exce
 @@snip [HttpServerBluePrint.scala](/http-core/src/main/scala/org/apache/pekko/http/impl/engine/server/HttpServerBluePrint.scala) { #default-request-timeout-httpresponse }
 
 A default request timeout is applied globally to all routes and can be configured using the
-`akka.http.server.request-timeout` setting (which defaults to 20 seconds).
+`pekko.http.server.request-timeout` setting (which defaults to 20 seconds).
 
 The request timeout can be configured at run-time for a given route using the any of the @ref[TimeoutDirectives](../routing-dsl/directives/timeout-directives/index.md).
 
 ### Bind timeout
 
 The bind timeout is the time period within which the TCP binding process must be completed (using any of the `Http().bind*` methods).
-It can be configured using the `akka.http.server.bind-timeout` setting.
+It can be configured using the `pekko.http.server.bind-timeout` setting.
 
 ### Linger timeout
 
@@ -69,14 +69,14 @@ The connecting timeout is the time period within which the TCP connecting proces
 Tweaking it should rarely be required, but it allows erroring out the connection in case a connection
 is unable to be established for a given amount of time.
 
-It can be configured using the `akka.http.client.connecting-timeout` setting.
+It can be configured using the `pekko.http.client.connecting-timeout` setting.
 
 ## Client pool timeouts
 
 ### Keep-alive timeout
 
 HTTP connections are commonly used for multiple requests, that is, they are kept alive between requests. The
-`akka.http.host-connection-pool.keep-alive-timeout` setting configures how long a pool keeps a connection alive between
+`pekko.http.host-connection-pool.keep-alive-timeout` setting configures how long a pool keeps a connection alive between
 requests before it closes the connection (and eventually reestablishes it).
 
 A common scenario where this setting is useful is to prevent a race-condition inherent in HTTP: in most cases, a server
@@ -97,11 +97,11 @@ Set to `infinite` to allow the connection to remain open indefinitely (or be clo
 This timeout configures a maximum amount of time, while the connection can be kept open. This is useful, when you reach
 the server through a load balancer and client reconnecting helps the process of rebalancing between service instances.
 
-It can be configured using the `akka.http.host-connection-pool.max-connection-lifetime` setting.
+It can be configured using the `pekko.http.host-connection-pool.max-connection-lifetime` setting.
 
 ### Pool Idle timeout
 
-A connection pool to a target host will be shut down after the timeout given as `akka.http.host-connection-pool.idle-timeout`. This frees
+A connection pool to a target host will be shut down after the timeout given as `pekko.http.host-connection-pool.idle-timeout`. This frees
 resources like open but idle pool connections and management structures.
 
 If the application connects to only a limited set of target hosts over its lifetime and resource usage for the pool is of no concern, the

@@ -48,7 +48,7 @@ The proxy transport can also be setup using `ClientTransport.httpsProxy()` or `C
 In order to define the transport as such, you will need to set the proxy host / port in your `conf` file like the following.
 
 ```
-akka.http.client.proxy {
+pekko.http.client.proxy {
  https {
    host = ""
    port = 443

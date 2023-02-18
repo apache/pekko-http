@@ -19,7 +19,7 @@ by the default @ref[RejectionHandler](../../rejections.md#the-rejectionhandler).
 
 @@@ note
 Apache Pekko HTTP can handle HEAD requests transparently by dispatching a GET request to the handler and
-stripping off the result body. See the `akka.http.server.transparent-head-requests` setting for how to enable
+stripping off the result body. See the `pekko.http.server.transparent-head-requests` setting for how to enable
 this behavior.
 @@@
 

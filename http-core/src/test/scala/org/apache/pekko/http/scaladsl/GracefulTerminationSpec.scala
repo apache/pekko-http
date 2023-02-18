@@ -31,9 +31,9 @@ import scala.util.{ Failure, Success, Try }
 class GracefulTerminationSpec
     extends PekkoSpecWithMaterializer("""
     windows-connection-abort-workaround-enabled = auto
-    akka.http.server.request-timeout = infinite
-    akka.http.server.log-unencrypted-network-bytes = 200
-    akka.http.client.log-unencrypted-network-bytes = 200
+    pekko.http.server.request-timeout = infinite
+    pekko.http.server.log-unencrypted-network-bytes = 200
+    pekko.http.client.log-unencrypted-network-bytes = 200
                                                    """)
     with Tolerance with Eventually {
   implicit lazy val dispatcher = system.dispatcher
@@ -252,7 +252,7 @@ class GracefulTerminationSpec
 
         override def serverSettings: ServerSettings =
           ServerSettings(
-            """akka.http.server {
+            """pekko.http.server {
                  termination-deadline-exceeded-response.status = 418 # I'm a teapot
                }""")
 

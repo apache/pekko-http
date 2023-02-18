@@ -41,8 +41,8 @@ class HttpConfigurationSpec extends PekkoSpec {
       }
     }
 
-    "override value from `akka.http.parsing` by setting `akka.http.client.parsing`" in {
-      configuredSystem("""akka.http.client.parsing.illegal-header-warnings = off""") { sys =>
+    "override value from `pekko.http.parsing` by setting `pekko.http.client.parsing`" in {
+      configuredSystem("""pekko.http.client.parsing.illegal-header-warnings = off""") { sys =>
         val client = ClientConnectionSettings(sys)
         client.parserSettings.illegalHeaderWarnings should ===(Off)
 
@@ -54,8 +54,8 @@ class HttpConfigurationSpec extends PekkoSpec {
       }
     }
 
-    "override `akka.http.parsing` by setting `akka.http.host-connection-pool.client.parsing` setting" in {
-      configuredSystem("""akka.http.host-connection-pool.client.parsing.illegal-header-warnings = off""") { sys =>
+    "override `pekko.http.parsing` by setting `pekko.http.host-connection-pool.client.parsing` setting" in {
+      configuredSystem("""pekko.http.host-connection-pool.client.parsing.illegal-header-warnings = off""") { sys =>
         val client = ClientConnectionSettings(sys)
         client.parserSettings.illegalHeaderWarnings should ===(On)
 
@@ -67,8 +67,8 @@ class HttpConfigurationSpec extends PekkoSpec {
       }
     }
 
-    "set `akka.http.host-connection-pool.client.idle-timeout` only" in {
-      configuredSystem("""akka.http.host-connection-pool.client.idle-timeout = 1337s""") { sys =>
+    "set `pekko.http.host-connection-pool.client.idle-timeout` only" in {
+      configuredSystem("""pekko.http.host-connection-pool.client.idle-timeout = 1337s""") { sys =>
         import scala.concurrent.duration._
 
         val client = ClientConnectionSettings(sys)
@@ -78,11 +78,11 @@ class HttpConfigurationSpec extends PekkoSpec {
         pool.connectionSettings.idleTimeout should ===(1337.seconds)
 
         val server = ServerSettings(sys)
-        server.idleTimeout should ===(60.seconds) // no change, default akka.http.server.idle-timeout
+        server.idleTimeout should ===(60.seconds) // no change, default pekko.http.server.idle-timeout
       }
     }
-    "set `akka.http.server.idle-timeout` only" in {
-      configuredSystem("""akka.http.server.idle-timeout = 1337s""") { sys =>
+    "set `pekko.http.server.idle-timeout` only" in {
+      configuredSystem("""pekko.http.server.idle-timeout = 1337s""") { sys =>
         import scala.concurrent.duration._
 
         val client = ClientConnectionSettings(sys)
@@ -96,8 +96,8 @@ class HttpConfigurationSpec extends PekkoSpec {
       }
     }
 
-    "change parser settings for all by setting `akka.http.parsing`" in {
-      configuredSystem("""akka.http.parsing.illegal-header-warnings = off""") { sys =>
+    "change parser settings for all by setting `pekko.http.parsing`" in {
+      configuredSystem("""pekko.http.parsing.illegal-header-warnings = off""") { sys =>
         val client = ClientConnectionSettings(sys)
         client.parserSettings.illegalHeaderWarnings should ===(Off)
 
@@ -109,9 +109,9 @@ class HttpConfigurationSpec extends PekkoSpec {
       }
     }
 
-    "change parser settings for all by setting `akka.http.parsing`, unless client/server override it" in {
+    "change parser settings for all by setting `pekko.http.parsing`, unless client/server override it" in {
       configuredSystem("""
-        akka.http {
+        pekko.http {
           parsing.illegal-header-warnings = off
           server.parsing.illegal-header-warnings = on
           client.parsing.illegal-header-warnings = on // also affects host-connection-pool.client
@@ -127,9 +127,9 @@ class HttpConfigurationSpec extends PekkoSpec {
       }
     }
 
-    "change parser settings for all by setting `akka.http.parsing`, unless all override it" in {
+    "change parser settings for all by setting `pekko.http.parsing`, unless all override it" in {
       configuredSystem("""
-        akka.http {
+        pekko.http {
           parsing.illegal-header-warnings = off
           server.parsing.illegal-header-warnings = on
           client.parsing.illegal-header-warnings = on
@@ -146,11 +146,11 @@ class HttpConfigurationSpec extends PekkoSpec {
       }
     }
 
-    "set `akka.http.host-connection-pool.min-connections` only" in {
+    "set `pekko.http.host-connection-pool.min-connections` only" in {
       configuredSystem(
         """
-          akka.http.host-connection-pool.min-connections = 42
-          akka.http.host-connection-pool.max-connections = 43
+          pekko.http.host-connection-pool.min-connections = 42
+          pekko.http.host-connection-pool.max-connections = 43
         """.stripMargin) { sys =>
         val pool = ConnectionPoolSettings(sys)
         pool.getMinConnections should ===(42)
@@ -164,17 +164,17 @@ class HttpConfigurationSpec extends PekkoSpec {
 
       configuredSystem(
         """
-          akka.http.host-connection-pool.min-connections = 101
-          akka.http.host-connection-pool.max-connections = 1
+          pekko.http.host-connection-pool.min-connections = 101
+          pekko.http.host-connection-pool.max-connections = 1
         """.stripMargin) { sys =>
         intercept[IllegalArgumentException] { ConnectionPoolSettings(sys) }
       }
     }
 
-    "set `akka.http.client.proxy.https.host` only in" in {
+    "set `pekko.http.client.proxy.https.host` only in" in {
       configuredSystem(
         """
-          akka.http.client.proxy.https.host = ""
+          pekko.http.client.proxy.https.host = ""
         """) { sys =>
         assertThrows[IllegalArgumentException] {
           HttpsProxySettings(sys)
@@ -182,10 +182,10 @@ class HttpConfigurationSpec extends PekkoSpec {
       }
     }
 
-    "set `akka.http.client.proxy.https.port` only in" in {
+    "set `pekko.http.client.proxy.https.port` only in" in {
       configuredSystem(
         """
-          akka.http.client.proxy.https.port = 8080
+          pekko.http.client.proxy.https.port = 8080
         """) { sys =>
         assertThrows[IllegalArgumentException] {
           HttpsProxySettings(sys)
@@ -193,11 +193,11 @@ class HttpConfigurationSpec extends PekkoSpec {
       }
     }
 
-    "set `akka.http.client.proxy.https.port` and `akka.http.client.proxy.https.host` in" in {
+    "set `pekko.http.client.proxy.https.port` and `pekko.http.client.proxy.https.host` in" in {
       configuredSystem(
         """
-          akka.http.client.proxy.https.host = localhost
-          akka.http.client.proxy.https.port = 8080
+          pekko.http.client.proxy.https.host = localhost
+          pekko.http.client.proxy.https.port = 8080
         """.stripMargin) { sys =>
         val settings = HttpsProxySettings(sys)
         settings.host should ===("localhost")

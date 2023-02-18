@@ -36,8 +36,8 @@ public class Http2ClientApp {
     Config config =
         ConfigFactory.parseString(
             "#pekko.loglevel = debug\n" +
-               "akka.http.client.http2.log-frames = true\n" +
-               "akka.http.client.parsing.max-content-length = 20m"
+               "pekko.http.client.http2.log-frames = true\n" +
+               "pekko.http.client.parsing.max-content-length = 20m"
         ).withFallback(ConfigFactory.load());
 
     ActorSystem system = ActorSystem.create("Http2ClientApp", config);

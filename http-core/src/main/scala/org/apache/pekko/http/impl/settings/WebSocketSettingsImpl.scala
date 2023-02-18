@@ -45,12 +45,12 @@ private[pekko] object WebSocketSettingsImpl { // on purpose not extending Settin
     settings.asInstanceOf[WebSocketSettingsImpl].periodicKeepAliveData eq NoPeriodicKeepAliveData
 
   def serverFromRoot(root: Config): WebSocketSettingsImpl =
-    server(root.getConfig("akka.http.server.websocket"))
+    server(root.getConfig("pekko.http.server.websocket"))
   def server(config: Config): WebSocketSettingsImpl =
     fromConfig(config)
 
   def clientFromRoot(root: Config): WebSocketSettingsImpl =
-    client(root.getConfig("akka.http.client.websocket"))
+    client(root.getConfig("pekko.http.client.websocket"))
   def client(config: Config): WebSocketSettingsImpl =
     fromConfig(config)
 

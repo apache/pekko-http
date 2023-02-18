@@ -236,5 +236,5 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
     ParserSettingsImpl.forServer(system.classicSystem.settings.config)
   def forClient(implicit system: ClassicActorSystemProvider): ParserSettings =
     ParserSettingsImpl.fromSubConfig(system.classicSystem.settings.config,
-      system.classicSystem.settings.config.getConfig("akka.http.client.parsing"))
+      system.classicSystem.settings.config.getConfig("pekko.http.client.parsing"))
 }

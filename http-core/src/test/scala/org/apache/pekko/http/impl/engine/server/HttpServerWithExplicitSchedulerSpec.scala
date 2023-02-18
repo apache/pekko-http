@@ -17,8 +17,8 @@ import scala.concurrent.duration._
 /** Tests similar to HttpServerSpec that need ExplicitlyTriggeredScheduler */
 class HttpServerWithExplicitSchedulerSpec extends PekkoSpecWithMaterializer(
       """
-     akka.http.server.log-unencrypted-network-bytes = 100
-     akka.http.server.request-timeout = infinite
+     pekko.http.server.log-unencrypted-network-bytes = 100
+     pekko.http.server.request-timeout = infinite
      pekko.scheduler.implementation = "org.apache.pekko.testkit.ExplicitlyTriggeredScheduler"
   """) with Inside { spec =>
   "The server implementation" should {

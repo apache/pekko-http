@@ -21,7 +21,7 @@ object ConnectionTestApp {
     pekko.loglevel = debug
     pekko.log-dead-letters = off
 
-    akka.http {
+    pekko.http {
       client {
         idle-timeout = 10s
       }

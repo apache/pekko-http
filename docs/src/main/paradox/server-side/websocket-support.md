@@ -159,7 +159,7 @@ connection remains usable even after no data frames are communicated over a long
 initiated by either side of the connection, and the choice which side performs the heart beating is use-case dependent. 
 
 This is supported in a transparent way via configuration in Apache Pekko HTTP, and you can enable it by setting the: 
-`akka.http.server.websocket.periodic-keep-alive-max-idle = 1 second` to a specified max idle timeout. The keep alive triggers
+`pekko.http.server.websocket.periodic-keep-alive-max-idle = 1 second` to a specified max idle timeout. The keep alive triggers
 when no other messages are in-flight during the such configured period. Apache Pekko HTTP will then automatically send
 a [`Ping` frame](https://tools.ietf.org/html/rfc6455#section-5.5.2) for each of such idle intervals.
 
@@ -184,4 +184,4 @@ A Ping response will always be replied to by the client-side with an appropriate
 It is also possible to configure the keep-alive mechanism to send `Pong` frames instead of `Ping` frames, 
 which enables an [uni-directional heartbeat](https://tools.ietf.org/html/rfc6455#section-5.5.3) mechanism (in which case 
 the client side will *not* reply to such heartbeat). You can configure this mode by setting: 
-`akka.http.server.websocket.periodic-keep-alive-mode = pong`.
+`pekko.http.server.websocket.periodic-keep-alive-mode = pong`.
