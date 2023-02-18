@@ -52,7 +52,7 @@ class LineParserBenchmark {
 
   @Setup
   def setup(): Unit = {
-    tempFile = Files.createTempFile("akka-http-linear-bench", s"-$lineSize")
+    tempFile = Files.createTempFile("http-linear-bench", s"-$lineSize")
     val makeSampleFile = Source.single(line)
       .runWith(FileIO.toPath(tempFile))
 

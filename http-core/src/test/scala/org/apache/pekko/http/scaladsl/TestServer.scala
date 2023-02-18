@@ -70,7 +70,7 @@ object TestServer extends App {
       ContentTypes.`text/html(UTF-8)`,
       """|<html>
          | <body>
-         |    <h1>Say hello to <i>akka-http-core</i>!</h1>
+         |    <h1>Say hello to <i>pekko-http-core</i>!</h1>
          |    <p>Defined resources:</p>
          |    <ul>
          |      <li><a href="/ping">/ping</a></li>

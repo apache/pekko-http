@@ -145,7 +145,7 @@ public class RespondWithDirectivesExamplesTest extends JUnitRouteTest {
         final RawHeader elTonno = RawHeader.create("X-Fish-Name", "El Tonno");
 
         // format: OFF
-        // by default always include the Blippy and Akka headers,
+        // by default always include the Blippy and Pekko headers,
         // unless a more specific X-Fish-Name is given by the inner route
         final Route route =
                 respondWithDefaultHeaders(defaultHeaders, () ->            // blippy and akka

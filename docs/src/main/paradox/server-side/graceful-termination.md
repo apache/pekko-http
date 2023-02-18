@@ -7,11 +7,11 @@ in a predictable and ordered fashion. For example, in a typical Apache Pekko app
 
 The recommended Apache Pekko HTTP server shutdown consists of three steps:
 
-1. stop accepting new connections (@scala[@scaladoc[ServerBinding.unbind](akka.http.scaladsl.Http.ServerBinding)]@java[@javadoc[ServerBinding.unbind](akka.http.javadsl.ServerBinding)])
+1. stop accepting new connections (@scala[@scaladoc[ServerBinding.unbind](org.apache.pekko.http.scaladsl.Http.ServerBinding)]@java[@javadoc[ServerBinding.unbind](org.apache.pekko.http.javadsl.ServerBinding)])
 1. try to finish handling of ongoing requests until the `hardTerminationDeadline` hits (see below for details)
-1. close open connections (@scala[@scaladoc[ServerBinding.terminate](akka.http.scaladsl.Http.ServerBinding)]@java[@javadoc[ServerBinding.terminate](akka.http.javadsl.ServerBinding)])
+1. close open connections (@scala[@scaladoc[ServerBinding.terminate](org.apache.pekko.http.scaladsl.Http.ServerBinding)]@java[@javadoc[ServerBinding.terminate](org.apache.pekko.http.javadsl.ServerBinding)])
 
-This recommended sequence can be added to Pekko's coordinated shutdown via @scala[@scaladoc[ServerBinding.addToCoordinatedShutdown](akka.http.scaladsl.Http.ServerBinding)]@java[@javadoc[ServerBinding.addToCoordinatedShutdown](akka.http.javadsl.ServerBinding)] like this:
+This recommended sequence can be added to Pekko's coordinated shutdown via @scala[@scaladoc[ServerBinding.addToCoordinatedShutdown](org.apache.pekko.http.scaladsl.Http.ServerBinding)]@java[@javadoc[ServerBinding.addToCoordinatedShutdown](org.apache.pekko.http.javadsl.ServerBinding)] like this:
 
 Scala
 : @@snip[snip](/docs/src/test/scala/docs/http/scaladsl/server/ServerShutdownExampleSpec.scala) { #suggested }
@@ -31,10 +31,10 @@ Java
 ## Graceful termination using `ServerTerminator`
 
 Apache Pekko HTTP provides two APIs to "stop" the server, either of them are available via the
-@java[@javadoc[ServerBinding](akka.http.javadsl.ServerBinding)]
-@scala[@scaladoc[ServerBinding](akka.http.scaladsl.Http$$ServerBinding)]
+@java[@javadoc[ServerBinding](org.apache.pekko.http.javadsl.ServerBinding)]
+@scala[@scaladoc[ServerBinding](org.apache.pekko.http.scaladsl.Http$$ServerBinding)]
 obtained from starting the server (by using any of the `bind...` methods on the
-@java[@javadoc[Http](akka.http.javadsl.Http)]@scala[@scaladoc[Http](akka.http.scaladsl.HttpExt)] extension).
+@java[@javadoc[Http](org.apache.pekko.http.javadsl.Http)]@scala[@scaladoc[Http](org.apache.pekko.http.scaladsl.HttpExt)] extension).
 
 The first method, called `unbind()` causes the server to *stop accepting new connections*, however any existing
 connections that are still being used will remain active until the client chooses to close them.
@@ -43,8 +43,8 @@ responses that might be still in flight and eventually terminate the entire syst
 connections, this does mean that these can delay the termination of your system indefinitely.
 
 A better and more graceful solution to terminate an Apache Pekko HTTP server is to use the
-@java[@javadoc[ServerBinding.terminate(Duration)](akka.http.javadsl.ServerBinding#terminate-java.time.Duration-)]
-@scala[@scaladoc[ServerBinding.terminate(FiniteDuration)](akka.http.scaladsl.Http$$ServerBinding#terminate%28FiniteDuration%29:Future[HttpTerminated])]
+@java[@javadoc[ServerBinding.terminate(Duration)](org.apache.pekko.http.javadsl.ServerBinding#terminate-java.time.Duration-)]
+@scala[@scaladoc[ServerBinding.terminate(FiniteDuration)](org.apache.pekko.http.scaladsl.Http$$ServerBinding#terminate%28FiniteDuration%29:Future[HttpTerminated])]
 method, which not only performs the unbinding, but also
 handles replying to new incoming requests with (configurable) "terminating" HTTP responses.
 It also allows setting a deadline after which any connections that are still alive will be shut down forcefully.
@@ -52,8 +52,8 @@ More precisely, termination works by following these steps:
 
 First, the server port is unbound and no new connections will be accepted (same as invoking `unbind()`).
 Immediately the 
-@java[@javadoc[ServerBinding#whenTerminationSignalIssued](akka.http.javadsl.ServerBinding#whenTerminationSignalIssued--) `CompletionStage`]
-@scala[@scaladoc[ServerBinding#whenTerminationSignalIssued](akka.http.scaladsl.Http$$ServerBinding#whenTerminationSignalIssued:Future[Deadline]) `Future`]
+@java[@javadoc[ServerBinding#whenTerminationSignalIssued](org.apache.pekko.http.javadsl.ServerBinding#whenTerminationSignalIssued--) `CompletionStage`]
+@scala[@scaladoc[ServerBinding#whenTerminationSignalIssued](org.apache.pekko.http.scaladsl.Http$$ServerBinding#whenTerminationSignalIssued:Future[Deadline]) `Future`]
 is completed.
 This can be used to signal parts of the application that the HTTP server is shutting down and they should clean up as well.
 Note also that for more advanced shut down scenarios you may want to use the @extref[Coordinated Shutdown](pekko-docs:/actors.html#coordinated-shutdown) capabilities of Apache Pekko.

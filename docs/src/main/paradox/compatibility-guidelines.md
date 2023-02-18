@@ -139,7 +139,7 @@ The same goes for `pekko-http-testkit`: If the testkit is used, explicitly decla
 
 @@dependency [sbt,Gradle,Maven] {
   symbol1=PekkoVersion
-  value1=$akka.version$
+  value1=$pekko.version$
   bomGroup2=org.apache.pekko
   bomArtifact2=pekko-http-bom_$scala.binary.version$
   bomVersionSymbols2=PekkoHttpVersion

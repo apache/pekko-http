@@ -34,7 +34,7 @@ choose an Apache Pekko version to run against and add a manual dependency to `pe
 
 @@dependency [sbt,Gradle,Maven] {
   symbol1=PekkoVersion
-  value1=$akka.version$
+  value1=$pekko.version$
   bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
   symbol2="PekkoHttpVersion"
   value2="$project.version$"
@@ -52,20 +52,20 @@ Alternatively, you can bootstrap a new project with Apache Pekko HTTP already co
 @@@ div { .group-scala }
 For Scala (sbt)
 :  ```sh
-    sbt new akka/pekko-http-quickstart-scala.g8
+    sbt new akka/akka-http-quickstart-scala.g8
     ```
 @@@
 @@@ div { .group-java }
 For Java (Maven or Gradle)
 :  ```sh
-    sbt new akka/pekko-http-quickstart-java.g8
+    sbt new akka/akka-http-quickstart-java.g8
     ```
 From there on the prepared project can be built using Gradle or Maven.
 @@@
 
 More instructions can be found on the @scala[[template
-project](https://github.com/akka/pekko-http-quickstart-scala.g8)]@java[[template
-project](https://github.com/akka/pekko-http-quickstart-java.g8)].
+project](https://github.com/akka/akka-http-quickstart-scala.g8)]@java[[template
+project](https://github.com/akka/akka-http-quickstart-java.g8)].
 
 ## Routing DSL for HTTP servers
 
@@ -78,8 +78,8 @@ narrowing it down to only handle HTTP `get` requests and then `complete` those w
 will be sent back as an HTTP OK with the string as response body.
 
 The
-@scala[@scaladoc[Route](akka.http.scaladsl.server.index#Route=akka.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[akka.http.scaladsl.server.RouteResult])]
-@java[@javadoc[Route](akka.http.javadsl.server.Route)]
+@scala[@scaladoc[Route](org.apache.pekko.http.scaladsl.server.index#Route=org.apache.pekko.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[org.apache.pekko.http.scaladsl.server.RouteResult])]
+@java[@javadoc[Route](org.apache.pekko.http.javadsl.server.Route)]
 created using the Route DSL is then "bound" to a port to start serving HTTP requests:
 
 Scala

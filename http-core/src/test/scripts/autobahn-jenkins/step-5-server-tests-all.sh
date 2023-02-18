@@ -10,7 +10,7 @@ SBT_OPTS="-Dsbt.ivy.home=/localhome/jenkinsakka/.ivy2 -Dsbt.override.repos=false
 # and only thanks to that, will it not be forced into [Stopped] state, as bash thinks sbt is awaiting on some input
 # and then decides to stop it (instead of keep it running). Keeping it in a sub shell, keeps it running.
 TEST_CLASS=akka.http.impl.engine.ws.WSServerAutobahnTest
-(java $SBT_OPTS -Dakka.ws-mode=sleep -Dakka.ws-host=127.0.0.1 -jar $SBT_JAR "akka-http-core-experimental/test:run-main $TEST_CLASS" | tee output &)
+(java $SBT_OPTS -Dakka.ws-mode=sleep -Dakka.ws-host=127.0.0.1 -jar $SBT_JAR "pekko-http-core-experimental/test:run-main $TEST_CLASS" | tee output &)
 
 # because of the sub-shell $! is not reported, we need to find the PID some other way:
 SUB_PID=$(jps -mlV | grep $TEST_CLASS | awk '{print $1}') # the PID of JVM

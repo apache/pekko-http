@@ -11,7 +11,7 @@
 
 ## Description
 
-Wraps the inner route with Http Basic authentication support using a given @scala[@scaladoc[AsyncAuthenticatorPF[T]](akka.http.scaladsl.server.Directives#AsyncAuthenticatorPF[T]=PartialFunction[akka.http.scaladsl.server.directives.Credentials,scala.concurrent.Future[T]])]@java[`AsyncAuthenticatorPF<T>` - Partial function from `Optional<ProvidedCredentials>` to `CompletionStage<User>`].
+Wraps the inner route with Http Basic authentication support using a given @scala[@scaladoc[AsyncAuthenticatorPF[T]](org.apache.pekko.http.scaladsl.server.Directives#AsyncAuthenticatorPF[T]=PartialFunction[org.apache.pekko.http.scaladsl.server.directives.Credentials,scala.concurrent.Future[T]])]@java[`AsyncAuthenticatorPF<T>` - Partial function from `Optional<ProvidedCredentials>` to `CompletionStage<User>`].
 
 Provides support for handling [HTTP Basic Authentication](https://en.wikipedia.org/wiki/Basic_auth).
 

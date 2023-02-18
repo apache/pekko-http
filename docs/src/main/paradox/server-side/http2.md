@@ -20,7 +20,7 @@ akka.http.server.preview.enable-http2 = on
 HTTP/2 is primarily used over a secure HTTPS connection which takes care of protocol negotiation and falling back to HTTP/1.1 over TLS when the client does not support HTTP/2.
 See the @ref[HTTPS section](server-https-support.md) for how to set up HTTPS.
 
-You can use @scala[@scaladoc[Http().newServerAt(...).bind()](akka.http.scaladsl.ServerBuilder)]@java[@javadoc[Http().get(system).newServerAt(...).bind()](akka.http.javadsl.ServerBuilder)] as long as you followed the above steps:
+You can use @scala[@scaladoc[Http().newServerAt(...).bind()](org.apache.pekko.http.scaladsl.ServerBuilder)]@java[@javadoc[Http().get(system).newServerAt(...).bind()](org.apache.pekko.http.javadsl.ServerBuilder)] as long as you followed the above steps:
 
 Scala
 :   @@snip[Http2Spec.scala](/docs/src/test/scala/docs/http/scaladsl/Http2Spec.scala) { #bindAndHandleSecure }
@@ -80,8 +80,8 @@ support.
 Like in the [HTTP/1.1 'Chunked' transfer encoding](https://datatracker.ietf.org/doc/html/rfc7230#section-4.1.2),
 HTTP/2 supports a [trailer part](https://httpwg.org/specs/rfc7540.html#rfc.section.8.1) containing headers
 after the body. Apache Pekko HTTP currently doesn't expose the trailing headers of the request. For the response, you
-can either model the trailing headers as the @scala[@scaladoc[HttpEntity.LastChunk](akka.http.scaladsl.model.HttpEntity.LastChunk)]@java[last chunk]
-of a @scala[@scaladoc[HttpEntity.Chunked](akka.http.scaladsl.model.HttpEntity.Chunked)]@java[chunked] response entity, or use the
+can either model the trailing headers as the @scala[@scaladoc[HttpEntity.LastChunk](org.apache.pekko.http.scaladsl.model.HttpEntity.LastChunk)]@java[last chunk]
+of a @scala[@scaladoc[HttpEntity.Chunked](org.apache.pekko.http.scaladsl.model.HttpEntity.Chunked)]@java[chunked] response entity, or use the
 @apidoc[trailer](AttributeKeys$) attribute:
 
 Scala

@@ -39,7 +39,7 @@ together in the @ref[BasicDirectives](basic-directives/index.md) trait.
 ## Transforming Directives
 
 The second option for creating new directives is to transform an existing one using one of the
-“transformation methods”, which are defined on the @scaladoc[Directive](akka.http.scaladsl.server.Directive) class, the base class of all “regular” directives.
+“transformation methods”, which are defined on the @scaladoc[Directive](org.apache.pekko.http.scaladsl.server.Directive) class, the base class of all “regular” directives.
 
 Apart from the combinator operators (`|` and `&`) and the case-class extractor (`as[T]`)
 the following transformations are also defined on all `Directive` instances:
