@@ -27,7 +27,7 @@ trait WebSocketDirectives {
    *
    * @group websocket
    */
-  @deprecated("use `extractWebSocketUpgrade` instead", since = "10.2.0")
+  @deprecated("use `extractWebSocketUpgrade` instead", since = "Akka HTTP 10.2.0")
   def extractUpgradeToWebSocket: Directive1[UpgradeToWebSocket] =
     optionalHeaderValueByType(classOf[UpgradeToWebSocket]).flatMap {
       case Some(upgrade) => provide(upgrade)

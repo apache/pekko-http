@@ -160,18 +160,18 @@ object Unmarshaller
       extends RuntimeException(supported.mkString(
         s"Unsupported Content-Type [$actualContentType], supported: ", ", ", "")) with Product with Serializable {
 
-    @deprecated("for binary compatibility", since = "10.1.9")
+    @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
     def this(supported: Set[ContentTypeRange]) = this(supported, None)
 
-    @deprecated("for binary compatibility", since = "10.1.9")
+    @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
     def copy(supported: Set[ContentTypeRange]): UnsupportedContentTypeException =
       new UnsupportedContentTypeException(supported, this.actualContentType)
 
-    @deprecated("for binary compatibility", since = "10.1.9")
+    @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
     def copy$default$1(supported: Set[ContentTypeRange]): UnsupportedContentTypeException =
       new UnsupportedContentTypeException(supported, this.actualContentType)
 
-    @deprecated("for binary compatibility", since = "10.1.9")
+    @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
     def copy(
         supported: Set[ContentTypeRange] = this.supported,
         contentType: Option[ContentType] = this.actualContentType): UnsupportedContentTypeException =

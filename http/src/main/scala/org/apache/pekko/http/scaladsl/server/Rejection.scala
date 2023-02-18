@@ -129,18 +129,18 @@ final class UnsupportedRequestContentTypeRejection(
   override def getSupported: java.util.Set[model.ContentTypeRange] =
     scala.collection.mutable.Set(supported.map(_.asJava).toVector: _*).asJava // TODO optimise
 
-  @deprecated("for binary compatibility", since = "10.1.9")
+  @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
   def this(supported: Set[ContentTypeRange]) = this(supported, None)
 
-  @deprecated("for binary compatibility", since = "10.1.9")
+  @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
   def copy(supported: Set[ContentTypeRange]) =
     new UnsupportedRequestContentTypeRejection(supported, this.contentType)
 
-  @deprecated("for binary compatibility", since = "10.1.9")
+  @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
   def copy$default$1(supported: Set[ContentTypeRange]) =
     new UnsupportedRequestContentTypeRejection(supported, this.contentType)
 
-  @deprecated("for binary compatibility", since = "10.1.9")
+  @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
   def copy(
       supported: Set[ContentTypeRange] = this.supported,
       contentType: Option[ContentType] = this.contentType) =
@@ -165,7 +165,7 @@ object UnsupportedRequestContentTypeRejection
       supported: Set[ContentTypeRange], contentType: Option[ContentType]): UnsupportedRequestContentTypeRejection =
     new UnsupportedRequestContentTypeRejection(supported, contentType)
 
-  @deprecated("for binary compatibility", since = "10.1.9")
+  @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
   def apply(supported: Set[ContentTypeRange]): UnsupportedRequestContentTypeRejection =
     new UnsupportedRequestContentTypeRejection(supported, None)
 

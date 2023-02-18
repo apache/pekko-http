@@ -17,7 +17,7 @@ import headers.HttpEncodings
  * An encoder and decoder for the HTTP 'identity' encoding.
  */
 @InternalApi
-@deprecated("Actual implementation of NoCoding is internal API, use Coders.NoCoding instead", since = "10.2.0")
+@deprecated("Actual implementation of NoCoding is internal API, use Coders.NoCoding instead", since = "Akka HTTP 10.2.0")
 object NoCoding extends Coder with StreamDecoder {
   val encoding = HttpEncodings.identity
 
@@ -34,7 +34,7 @@ object NoCoding extends Coder with StreamDecoder {
 
 /** Internal API */
 @InternalApi
-@deprecated("NoCodingCompressor is internal API and will be moved or removed in the future", since = "10.2.0")
+@deprecated("NoCodingCompressor is internal API and will be moved or removed in the future", since = "Akka HTTP 10.2.0")
 object NoCodingCompressor extends Compressor {
   def compress(input: ByteString): ByteString = input
   def flush() = ByteString.empty

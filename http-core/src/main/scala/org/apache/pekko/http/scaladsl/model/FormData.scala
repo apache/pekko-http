@@ -18,7 +18,7 @@ final case class FormData(fields: Uri.Query) {
 
   @deprecated(
     "FormData always uses charset UTF-8 without appending the charset to 'Content-Type: application/x-www-form-urlencoded', use toEntity instead.",
-    "10.1.7")
+    "Akka HTTP 10.1.7")
   def toEntity(charset: HttpCharset): pekko.http.scaladsl.model.RequestEntity =
     toEntityWithCharset(charset)
 

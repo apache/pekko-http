@@ -626,14 +626,14 @@ object HttpEntity {
   /**
    * Deprecated: no-op, not explicitly needed any more.
    */
-  @deprecated("Not needed explicitly any more. ", "10.1.5")
+  @deprecated("Not needed explicitly any more. ", "Akka HTTP 10.1.5")
   def limitableByteSource[Mat](source: Source[ByteString, Mat]): Source[ByteString, Mat] =
     source
 
   /**
    * Deprecated: no-op, not explicitly needed any more.
    */
-  @deprecated("Not needed explicitly any more. ", "10.1.5")
+  @deprecated("Not needed explicitly any more. ", "Akka HTTP 10.1.5")
   def limitableChunkSource[Mat](source: Source[ChunkStreamPart, Mat]): Source[ChunkStreamPart, Mat] =
     source
 
