@@ -4,7 +4,7 @@ The setup of the scalafix module roughly follows the example in https://github.c
 
  * Add before/after test file in scalafix-test-input / scalafix-test-output
  * Add rule in scalafix-rules
- * run test in `akka-http-scalafix-tests`
+ * run test in `http-scalafix-tests`
 
 ## Applying locally defined rules to docs examples
 

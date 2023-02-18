@@ -47,7 +47,7 @@ Wind down PR queue. There has to be enough time after the last (non-trivial) PR 
 - [ ] Release the staging repository to Maven Central.
 
 ### Check availability
-- [ ] Check the release on maven central: https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-core_2.13/$VERSION$/
+- [ ] Check the release on maven central: https://repo1.maven.org/maven2/org/apache/pekko/akka-http-core_2.13/$VERSION$/
 
 ### When everything is on maven central
 

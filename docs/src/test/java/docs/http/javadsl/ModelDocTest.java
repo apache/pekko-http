@@ -127,7 +127,7 @@ public class ModelDocTest {
   @Test
   public void syntheticHeaderS3() {
     //#synthetic-header-s3
-    // imports akka.http.javadsl.model.headers.RawRequestURI
+    // imports org.apache.pekko.http.javadsl.model.headers.RawRequestURI
     HttpRequest.create("/ignored").addHeader(RawRequestURI.create("/a/b%2Bc"));
     //#synthetic-header-s3
   }

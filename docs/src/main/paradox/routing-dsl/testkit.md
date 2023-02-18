@@ -10,7 +10,7 @@ To use Apache Pekko HTTP TestKit, add the module to your project:
 
 @@dependency [sbt,Gradle,Maven] {
   symbol1=PekkoVersion
-  value1=$akka.version$
+  value1=$pekko.version$
   bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
   symbol2="PekkoHttpVersion"
   value2="$project.version$"

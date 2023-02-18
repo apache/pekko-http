@@ -28,9 +28,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 /** A small example app that shows how to use the HTTP/2 client API currently against actual internet servers
- * Mirroring the akka.https.scaladsl counterpart
- *
- * NOTE requires Akka > 2.5.31 to run on JDK 11
+ * Mirroring the scaladsl counterpart
  */
 public class Http2ClientApp {
 

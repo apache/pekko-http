@@ -2,8 +2,8 @@
 
 ## API Documentation
 
- * @scaladoc:[Scaladoc](akka.http.scaladsl.index)
- * @javadoc:[Javadoc](akka.http.javadsl.package-summary)
+ * @scaladoc:[Scaladoc](org.apache.pekko.http.scaladsl.index)
+ * @javadoc:[Javadoc](org.apache.pekko.http.javadsl.package-summary)
 
 ## Directives
 

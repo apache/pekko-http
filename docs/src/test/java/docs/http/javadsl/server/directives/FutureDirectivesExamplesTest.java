@@ -52,7 +52,7 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
     public void testOnComplete() {
         //#onComplete
         // import static scala.compat.java8.JFunction.func;
-        // import static akka.http.javadsl.server.PathMatchers.*;
+        // import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
         final Route route = path(segment("divide").slash(integerSegment()).slash(integerSegment()),
                 (a, b) -> onComplete(
@@ -134,7 +134,7 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
     public void testOnCompleteWithBreaker() throws InterruptedException {
         //#onCompleteWithBreaker
         // import static scala.compat.java8.JFunction.func;
-        // import static akka.http.javadsl.server.PathMatchers.*;
+        // import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
         final int maxFailures = 1;
         final FiniteDuration callTimeout = FiniteDuration.create(5, TimeUnit.SECONDS);

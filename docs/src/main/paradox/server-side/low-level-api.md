@@ -34,7 +34,7 @@ the @ref[HTTP Model](../common/http-model.md) for more information on how HTTP m
 
 ## Starting and Stopping
 
-On the most basic level an Apache Pekko HTTP server is bound by invoking the `bind` method of the @scala[@scaladoc[org.apache.pekko.http.scaladsl.Http](akka.http.scaladsl.Http$)]@java[@javadoc[org.apache.pekko.http.javadsl.Http](akka.http.javadsl.Http)]
+On the most basic level an Apache Pekko HTTP server is bound by invoking the `bind` method of the @scala[@scaladoc[org.apache.pekko.http.scaladsl.Http](org.apache.pekko.http.scaladsl.Http$)]@java[@javadoc[org.apache.pekko.http.javadsl.Http](org.apache.pekko.http.javadsl.Http)]
 extension:
 
 Scala

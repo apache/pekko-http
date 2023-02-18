@@ -384,7 +384,7 @@ types (such as matching a custom header against a @apidoc[RawHeader] in routing 
 @@@
 
 @@@ note { .group-java }
-Implement @apidoc[ModeledCustomHeader] and @java[@javadoc[ModeledCustomHeaderFactory](akka.http.javadsl.model.headers.ModeledCustomHeaderFactory)] instead of @apidoc[CustomHeader] to be
+Implement @apidoc[ModeledCustomHeader] and @java[@javadoc[ModeledCustomHeaderFactory](org.apache.pekko.http.javadsl.model.headers.ModeledCustomHeaderFactory)] instead of @apidoc[CustomHeader] to be
 able to use the convenience methods that allow parsing the custom user-defined header from @apidoc[HttpHeader].
 @@@
 
@@ -426,7 +426,7 @@ or @scala[`Http().superPool`]@java[`Http.get(sys).superPool`], usually need the 
 <a id="registeringcustommediatypes"></a>
 ## Registering Custom Media Types
 
-Apache Pekko HTTP @scala[@scaladoc[predefines](akka.http.scaladsl.model.MediaTypes$)]@java[@javadoc[predefines](akka.http.javadsl.model.MediaTypes)] most commonly encountered media types and emits them in their well-typed form while parsing http messages.
+Apache Pekko HTTP @scala[@scaladoc[predefines](org.apache.pekko.http.scaladsl.model.MediaTypes$)]@java[@javadoc[predefines](org.apache.pekko.http.javadsl.model.MediaTypes)] most commonly encountered media types and emits them in their well-typed form while parsing http messages.
 Sometimes you may want to define a custom media type and inform the parser infrastructure about how to handle these custom
 media types, e.g. that `application/custom` is to be treated as `NonBinary` with `WithFixedCharset`. To achieve this you
 need to register the custom media type in the server's settings by configuring @apidoc[ParserSettings] like this:
@@ -443,7 +443,7 @@ in the right style / place.
 <a id="registeringcustomstatuscodes"></a>
 ## Registering Custom Status Codes
 
-Similarly to media types, Apache Pekko HTTP @scala[@scaladoc:[predefines](akka.http.scaladsl.model.StatusCodes$)]@java[@javadoc:[predefines](akka.http.javadsl.model.StatusCodes)]
+Similarly to media types, Apache Pekko HTTP @scala[@scaladoc:[predefines](org.apache.pekko.http.scaladsl.model.StatusCodes$)]@java[@javadoc:[predefines](org.apache.pekko.http.javadsl.model.StatusCodes)]
 well-known status codes, however sometimes you may need to use a custom one (or are forced to use an API which returns custom status codes).
 Similarly to the media types registration, you can register custom status codes by configuring @apidoc[ParserSettings] like this:
 
@@ -456,7 +456,7 @@ Java
 <a id="registeringcustommethod"></a>
 ## Registering Custom HTTP Method
 
-Apache Pekko HTTP also allows you to define custom HTTP methods, other than the well-known methods @scala[@scaladoc[predefined](akka.http.scaladsl.model.HttpMethods$)]@java[@javadoc[predefined](akka.http.javadsl.model.HttpMethods)] in Apache Pekko HTTP.
+Apache Pekko HTTP also allows you to define custom HTTP methods, other than the well-known methods @scala[@scaladoc[predefined](org.apache.pekko.http.scaladsl.model.HttpMethods$)]@java[@javadoc[predefined](org.apache.pekko.http.javadsl.model.HttpMethods)] in Apache Pekko HTTP.
 To use a custom HTTP method, you need to define it, and then add it to parser settings like below:
 
 Scala

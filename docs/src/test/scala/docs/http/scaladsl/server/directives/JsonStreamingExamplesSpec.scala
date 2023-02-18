@@ -25,7 +25,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
   // #tweet-model
 
   val tweets = List(
-    Tweet(1, "#Akka rocks!"),
+    Tweet(1, "#Pekko rocks!"),
     Tweet(2, "Streaming is so hot right now!"),
     Tweet(3, "You cannot enter the same river twice."))
   def getTweets = Source(tweets)
@@ -62,7 +62,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/tweets").withHeaders(AcceptJson) ~> route ~> check {
       responseAs[String] shouldEqual
       """[""" +
-      """{"txt":"#Akka rocks!","uid":1},""" +
+      """{"txt":"#Pekko rocks!","uid":1},""" +
       """{"txt":"Streaming is so hot right now!","uid":2},""" +
       """{"txt":"You cannot enter the same river twice.","uid":3}""" +
       """]"""
@@ -102,7 +102,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Get("/tweets").withHeaders(AcceptJson) ~> route ~> check {
       responseAs[String] shouldEqual
-      """{"txt":"#Akka rocks!","uid":1}""" + "\n" +
+      """{"txt":"#Pekko rocks!","uid":1}""" + "\n" +
       """{"txt":"Streaming is so hot right now!","uid":2}""" + "\n" +
       """{"txt":"You cannot enter the same river twice.","uid":3}""" + "\n"
     }
@@ -135,7 +135,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Get("/tweets").withHeaders(AcceptCsv) ~> route ~> check {
       responseAs[String] shouldEqual
-      "1,#Akka rocks!" + "\n" +
+      "1,#Pekko rocks!" + "\n" +
       "2,Streaming is so hot right now!" + "\n" +
       "3,You cannot enter the same river twice." + "\n"
     }

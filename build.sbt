@@ -421,8 +421,8 @@ lazy val docs = project("docs")
     paradoxGroups := Map("Language" -> Seq("Scala", "Java")),
     Compile / paradoxProperties ++= Map(
       "project.name" -> "Apache Pekko HTTP",
-      "canonical.base_url" -> "https://pekko.apache.org/docs/akka-http/current",
-      "akka.version" -> PekkoDependency.docs.version,
+      "canonical.base_url" -> "https://pekko.apache.org/docs/pekko-http/current",
+      "pekko.version" -> PekkoDependency.docs.version,
       "akka.minimum.version25" -> PekkoDependency.minimumExpectedPekkoVersion,
       "akka.minimum.version26" -> PekkoDependency.minimumExpectedPekko26Version,
       "jackson.xml.version" -> Dependencies.jacksonXmlVersion,

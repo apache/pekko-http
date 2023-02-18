@@ -32,8 +32,8 @@ For the client side, see @ref[Processing Responses](../client-side/request-and-r
 Apache Pekko HTTP already predefines a number of unmarshallers for the most common types.
 Specifically these are:
 
- * @scala[@scaladoc[PredefinedFromStringUnmarshallers](akka.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers)]
-   @java[@javadoc[StringUnmarshallers](akka.http.javadsl.unmarshalling.StringUnmarshallers)]
+ * @scala[@scaladoc[PredefinedFromStringUnmarshallers](org.apache.pekko.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers)]
+   @java[@javadoc[StringUnmarshallers](org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers)]
     * `Byte`
     * `Short`
     * @scala[`Int`]@java[`Integer`]
@@ -41,7 +41,7 @@ Specifically these are:
     * `Float`
     * `Double`
     * `Boolean`
- * @scala[@scaladoc[PredefinedFromEntityUnmarshallers](akka.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers)]
+ * @scala[@scaladoc[PredefinedFromEntityUnmarshallers](org.apache.pekko.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers)]
    @java[@apidoc[Unmarshaller]]
     * @scala[`Array[Byte]`]@java[`byte[]`]
     * @apidoc[org.apache.pekko.util.ByteString]
@@ -50,7 +50,7 @@ Specifically these are:
     * @scala[`org.apache.pekko.http.scaladsl.model.FormData`]@java[`org.apache.pekko.http.javadsl.model.FormData`]
 
 @@@ div { .group-scala }
- * @scaladoc[GenericUnmarshallers](akka.http.scaladsl.unmarshalling.GenericUnmarshallers)
+ * @scaladoc[GenericUnmarshallers](org.apache.pekko.http.scaladsl.unmarshalling.GenericUnmarshallers)
     * @apidoc[Unmarshaller[T, T]](Unmarshaller) (identity unmarshaller)
     * @apidoc[Unmarshaller[Option[A], B]], if an @apidoc[Unmarshaller[A, B]] is available
     * @apidoc[Unmarshaller[A, Option[B]]], if an @apidoc[Unmarshaller[A, B]] is available

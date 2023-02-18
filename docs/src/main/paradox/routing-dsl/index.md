@@ -88,8 +88,8 @@ Scala
 @@@
 
 Next step is to define the
-@scala[@scaladoc[Route](akka.http.scaladsl.server.index#Route=akka.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[akka.http.scaladsl.server.RouteResult])]
-@java[@javadoc[Route](akka.http.javadsl.server.Route)]
+@scala[@scaladoc[Route](org.apache.pekko.http.scaladsl.server.index#Route=org.apache.pekko.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[org.apache.pekko.http.scaladsl.server.RouteResult])]
+@java[@javadoc[Route](org.apache.pekko.http.javadsl.server.Route)]
 that will communicate with the previously defined behavior
 and handle all its possible responses:
 
