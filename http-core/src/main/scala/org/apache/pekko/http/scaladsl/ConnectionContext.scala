@@ -128,12 +128,14 @@ final class HttpsConnectionContext private[http] (
       sslParameters: Option[SSLParameters] = None) = this(Left(DeprecatedSslContextParameters(sslContext, sslConfig,
     enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)))
 
-  @deprecated("not always available", "Akka HTTP 10.2.0") def sslContext: SSLContext = sslContextData.left.get.sslContext
+  @deprecated("not always available", "Akka HTTP 10.2.0") def sslContext: SSLContext =
+    sslContextData.left.get.sslContext
   @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def sslConfig: Option[PekkoSSLConfig] =
     sslContextData.left.get.sslConfig
   @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def enabledCipherSuites
       : Option[immutable.Seq[String]] = sslContextData.left.get.enabledCipherSuites
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def enabledProtocols: Option[immutable.Seq[String]] =
+  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def enabledProtocols
+      : Option[immutable.Seq[String]] =
     sslContextData.left.get.enabledProtocols
   @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def clientAuth: Option[TLSClientAuth] =
     sslContextData.left.get.clientAuth

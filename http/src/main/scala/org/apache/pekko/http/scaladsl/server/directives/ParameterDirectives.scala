@@ -46,7 +46,8 @@ trait ParameterDirectives extends ParameterDirectivesInstances with ToNameRecept
    *
    * @group param
    */
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility", "Akka HTTP 10.2.0")
+  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
+    "Akka HTTP 10.2.0")
   private[http] def parameter(pdm: ParamMagnet): pdm.Out = pdm()
 
   /**
@@ -55,7 +56,8 @@ trait ParameterDirectives extends ParameterDirectivesInstances with ToNameRecept
    *
    * @group param
    */
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility", "Akka HTTP 10.2.0")
+  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
+    "Akka HTTP 10.2.0")
   private[http] def parameters(pdm: ParamMagnet): pdm.Out = pdm()
 }
 
@@ -119,12 +121,14 @@ object ParameterDirectives extends ParameterDirectives {
       ParamSpec(requiredFilter(name, fsu, requiredValue).tmap(_ => Tuple1(())))
   }
 
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility", "Akka HTTP 10.2.0")
+  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
+    "Akka HTTP 10.2.0")
   sealed trait ParamMagnet {
     type Out
     def apply(): Out
   }
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility", "Akka HTTP 10.2.0")
+  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
+    "Akka HTTP 10.2.0")
   object ParamMagnet {
     def apply[T](value: T)(implicit pdef: ParamDef[T]): ParamMagnet { type Out = pdef.Out } =
       new ParamMagnet {
@@ -133,14 +137,17 @@ object ParameterDirectives extends ParameterDirectives {
       }
   }
 
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility", "Akka HTTP 10.2.0")
+  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
+    "Akka HTTP 10.2.0")
   type ParamDefAux[T, U] = ParamDef[T] { type Out = U }
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility", "Akka HTTP 10.2.0")
+  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
+    "Akka HTTP 10.2.0")
   sealed trait ParamDef[T] {
     type Out
     def apply(value: T): Out
   }
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility", "Akka HTTP 10.2.0")
+  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
+    "Akka HTTP 10.2.0")
   object ParamDef {
     import Impl._
     import pekko.http.scaladsl.unmarshalling.{ FromStringUnmarshaller => FSU }

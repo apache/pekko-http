@@ -17,7 +17,8 @@ import headers.HttpEncodings
  * An encoder and decoder for the HTTP 'identity' encoding.
  */
 @InternalApi
-@deprecated("Actual implementation of NoCoding is internal API, use Coders.NoCoding instead", since = "Akka HTTP 10.2.0")
+@deprecated("Actual implementation of NoCoding is internal API, use Coders.NoCoding instead",
+  since = "Akka HTTP 10.2.0")
 object NoCoding extends Coder with StreamDecoder {
   val encoding = HttpEncodings.identity
 
