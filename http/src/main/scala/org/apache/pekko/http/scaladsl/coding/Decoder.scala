@@ -45,7 +45,7 @@ object Decoder {
  * A decoder that is implemented in terms of a [[Stage]]
  */
 @InternalApi
-@deprecated("StreamDecoder is internal API and will be moved or removed in the future", since = "10.2.0")
+@deprecated("StreamDecoder is internal API and will be moved or removed in the future", since = "Akka HTTP 10.2.0")
 trait StreamDecoder extends Decoder { outer =>
   protected def newDecompressorStage(maxBytesPerChunk: Int): () => GraphStage[FlowShape[ByteString, ByteString]]
 

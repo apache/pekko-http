@@ -45,7 +45,7 @@ trait EventStreamUnmarshalling {
    */
   @deprecated(
     "Set this property in configuration as `akka.http.sse.max-line-size` before calling fromEventsStream(implicit ActorSystem)",
-    "10.1.8")
+    "Akka HTTP 10.1.8")
   protected def maxLineSize: Int = 4096
 
   /**
@@ -53,12 +53,12 @@ trait EventStreamUnmarshalling {
    */
   @deprecated(
     "Set this property in configuration as `akka.http.sse.max-event-size` before calling fromEventsStream(implicit ActorSystem)",
-    "10.1.8")
+    "Akka HTTP 10.1.8")
   protected def maxEventSize: Int = 8192
 
   @deprecated(
     "Binary compatibility method. Invocations should have an implicit ActorSystem in scope to provide access to configuration",
-    "10.1.8")
+    "Akka HTTP 10.1.8")
   final val fromEventStream: FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] =
     fromEventsStream(maxEventSize, maxLineSize, emitEmptyEvents = false)
 

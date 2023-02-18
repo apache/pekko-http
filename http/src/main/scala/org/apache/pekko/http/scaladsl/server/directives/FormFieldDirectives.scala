@@ -56,7 +56,8 @@ trait FormFieldDirectives extends FormFieldDirectivesInstances with ToNameRecept
    * @group form
    */
   @pre213
-  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility", "10.2.0")
+  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
+    "Akka HTTP 10.2.0")
   private[http] def formField(pdm: FieldMagnet): pdm.Out = formFields(pdm)
 
   /**
@@ -66,7 +67,8 @@ trait FormFieldDirectives extends FormFieldDirectivesInstances with ToNameRecept
    * @group form
    */
   @since213
-  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility", "10.2.0")
+  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
+    "Akka HTTP 10.2.0")
   private[http] def formField(pdm: FieldMagnet): Directive[pdm.U] = formFields(pdm)
 
   /**
@@ -76,7 +78,8 @@ trait FormFieldDirectives extends FormFieldDirectivesInstances with ToNameRecept
    * @group form
    */
   @pre213
-  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility", "10.2.0")
+  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
+    "Akka HTTP 10.2.0")
   private[http] def formFields(pdm: FieldMagnet): pdm.Out =
     pdm.convert(toStrictEntity(StrictForm.toStrictTimeout).wrap { pdm() })
 
@@ -87,7 +90,8 @@ trait FormFieldDirectives extends FormFieldDirectivesInstances with ToNameRecept
    * @group form
    */
   @since213
-  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility", "10.2.0")
+  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
+    "Akka HTTP 10.2.0")
   private[http] def formFields(pdm: FieldMagnet): Directive[pdm.U] =
     toStrictEntity(StrictForm.toStrictTimeout).wrap { pdm() }
 }
@@ -191,7 +195,7 @@ object FormFieldDirectives extends FormFieldDirectives {
   }
 
   @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   sealed trait FieldMagnet {
     type U
     def apply(): Directive[U]
@@ -205,7 +209,7 @@ object FormFieldDirectives extends FormFieldDirectives {
   }
 
   @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   object FieldMagnet {
     implicit def apply[T](value: T)(
         implicit fdef: FieldDef[T]): FieldMagnet { type U = fdef.U; type Out = Directive[fdef.U] } =
@@ -219,17 +223,17 @@ object FormFieldDirectives extends FormFieldDirectives {
   }
 
   @deprecated("Use new `formFields` overloads with FieldSpec parameters. Kept for binary compatibility",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   type FieldDefAux[A, B] = FieldDef[A] { type U = B }
 
   @deprecated("Use new `formFields` overloads with FieldSpec parameters. Kept for binary compatibility",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   sealed trait FieldDef[T] {
     type U
     def apply(value: T): Directive[U]
   }
   @deprecated("Use new `formFields` overloads with FieldSpec parameters. Kept for binary compatibility",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   object FieldDef {
     protected def fieldDef[A, B](f: A => Directive[B]): FieldDefAux[A, B] =
       new FieldDef[A] {

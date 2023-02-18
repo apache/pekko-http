@@ -10,7 +10,7 @@ import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.HttpEncodings
 
 @InternalApi
-@deprecated("Actual implementation of Gzip is internal, use Coders.Gzip instead", since = "10.2.0")
+@deprecated("Actual implementation of Gzip is internal, use Coders.Gzip instead", since = "Akka HTTP 10.2.0")
 class Gzip private[http] (compressionLevel: Int, val messageFilter: HttpMessage => Boolean) extends Coder
     with StreamDecoder {
   def this(messageFilter: HttpMessage => Boolean) = {
@@ -21,7 +21,7 @@ class Gzip private[http] (compressionLevel: Int, val messageFilter: HttpMessage 
   def newCompressor = new GzipCompressor(compressionLevel)
   def newDecompressorStage(maxBytesPerChunk: Int) = () => new GzipDecompressor(maxBytesPerChunk)
 
-  @deprecated("Use Coders.Gzip(compressionLevel = ...) instead", since = "10.2.0")
+  @deprecated("Use Coders.Gzip(compressionLevel = ...) instead", since = "Akka HTTP 10.2.0")
   def withLevel(level: Int): Gzip = new Gzip(level, messageFilter)
 }
 
@@ -29,7 +29,7 @@ class Gzip private[http] (compressionLevel: Int, val messageFilter: HttpMessage 
  * An encoder and decoder for the HTTP 'gzip' encoding.
  */
 @InternalApi
-@deprecated("Actual implementation of Gzip is internal API, use Coders.Gzip instead", since = "10.2.0")
+@deprecated("Actual implementation of Gzip is internal API, use Coders.Gzip instead", since = "Akka HTTP 10.2.0")
 object Gzip extends Gzip(Encoder.DefaultFilter) {
   def apply(messageFilter: HttpMessage => Boolean) = new Gzip(messageFilter)
 }

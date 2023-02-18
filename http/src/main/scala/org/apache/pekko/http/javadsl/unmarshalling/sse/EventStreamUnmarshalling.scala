@@ -38,10 +38,10 @@ object EventStreamUnmarshalling {
   def fromEventsStream(settings: ServerSentEventSettings): Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]] =
     asHttpEntityUnmarshaller(pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling.fromEventsStream(settings))
 
-  // for binary-compatibility, since 10.1.7
+  // for binary-compatibility, since Akka HTTP 10.1.7
   @deprecated(
     "Binary compatibility method. Invocations should have an implicit ActorSystem in scope to provide access to configuration",
-    "10.1.8")
+    "Akka HTTP 10.1.8")
   val fromEventStream: Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]] =
     asHttpEntityUnmarshaller(pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling.fromEventStream)
 

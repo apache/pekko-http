@@ -52,13 +52,15 @@ object ConnectionContext {
 
   // ConnectionContext
   /** Used to serve HTTPS traffic. */
-  @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory", since = "10.2.0")
+  @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory",
+    since = "Akka HTTP 10.2.0")
   def https(sslContext: SSLContext): HttpsConnectionContext = // ...
     // #https-context-creation
     scaladsl.ConnectionContext.https(sslContext)
 
   /** Used to serve HTTPS traffic. */
-  @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory", since = "10.2.0")
+  @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory",
+    since = "Akka HTTP 10.2.0")
   def https(
       sslContext: SSLContext,
       sslConfig: Optional[PekkoSSLConfig],
@@ -76,7 +78,8 @@ object ConnectionContext {
       OptionConverters.toScala(sslParameters))
 
   /** Used to serve HTTPS traffic. */
-  @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory", since = "10.2.0")
+  @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory",
+    since = "Akka HTTP 10.2.0")
   def https(
       sslContext: SSLContext,
       enabledCipherSuites: Optional[JCollection[String]],
@@ -100,7 +103,7 @@ object ConnectionContext {
 abstract class ConnectionContext {
   def isSecure: Boolean
   @Deprecated
-  @deprecated("Not always available", since = "10.2.0")
+  @deprecated("Not always available", since = "Akka HTTP 10.2.0")
   def sslConfig: Option[PekkoSSLConfig]
 }
 
@@ -115,22 +118,22 @@ abstract class HttpsConnectionContext extends pekko.http.javadsl.ConnectionConte
   override final def isSecure = true
 
   /** Java API */
-  @Deprecated @deprecated("here for binary compatibility", since = "10.2.0")
+  @Deprecated @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
   def getEnabledCipherSuites: Optional[JCollection[String]]
 
   /** Java API */
-  @Deprecated @deprecated("here for binary compatibility", since = "10.2.0")
+  @Deprecated @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
   def getEnabledProtocols: Optional[JCollection[String]]
 
   /** Java API */
-  @Deprecated @deprecated("here for binary compatibility", since = "10.2.0")
+  @Deprecated @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
   def getClientAuth: Optional[TLSClientAuth]
 
   /** Java API */
-  @Deprecated @deprecated("here for binary compatibility, not always available", since = "10.2.0")
+  @Deprecated @deprecated("here for binary compatibility, not always available", since = "Akka HTTP 10.2.0")
   def getSslContext: SSLContext
 
   /** Java API */
-  @Deprecated @deprecated("here for binary compatibility", since = "10.2.0")
+  @Deprecated @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
   def getSslParameters: Optional[SSLParameters]
 }

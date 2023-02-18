@@ -40,18 +40,18 @@ trait Encoder {
   @InternalApi
   @deprecated(
     "synchronous compression with `encode` is not supported in the future any more, use `encodeAsync` instead",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   def encode(input: ByteString): ByteString = newCompressor.compressAndFinish(input)
 
   def encodeAsync(input: ByteString)(implicit mat: Materializer): Future[ByteString] =
     Source.single(input).via(singleUseEncoderFlow()).runWith(Sink.fold(ByteString.empty)(_ ++ _))
 
   @InternalApi
-  @deprecated("newCompressor is internal API", since = "10.2.0")
+  @deprecated("newCompressor is internal API", since = "Akka HTTP 10.2.0")
   def newCompressor: Compressor
 
   @InternalApi
-  @deprecated("newEncodeTransformer is internal API", since = "10.2.0")
+  @deprecated("newEncodeTransformer is internal API", since = "Akka HTTP 10.2.0")
   def newEncodeTransformer(): GraphStage[FlowShape[ByteString, ByteString]] = singleUseEncoderFlow()
 
   private def singleUseEncoderFlow(): GraphStage[FlowShape[ByteString, ByteString]] = {
@@ -78,7 +78,7 @@ object Encoder {
 
 /** A stateful object representing ongoing compression. */
 @InternalApi
-@deprecated("Compressor is internal API and will be moved or removed in the future.", since = "10.2.0")
+@deprecated("Compressor is internal API and will be moved or removed in the future.", since = "Akka HTTP 10.2.0")
 abstract class Compressor {
 
   /**

@@ -342,7 +342,7 @@ final class HttpRequest(
   override def isRequest = true
   override def isResponse = false
 
-  @deprecated("use the constructor that includes an attributes parameter instead", "10.2.0")
+  @deprecated("use the constructor that includes an attributes parameter instead", "Akka HTTP 10.2.0")
   private[model] def this(method: HttpMethod, uri: Uri, headers: immutable.Seq[HttpHeader], entity: RequestEntity,
       protocol: HttpProtocol) =
     this(method, uri, headers, Map.empty, entity, protocol)
@@ -407,7 +407,7 @@ final class HttpRequest(
 
   /* Manual Case Class things, to easen bin-compat */
 
-  @deprecated("Use the `withXYZ` methods instead. Kept for binary compatibility", "10.2.0")
+  @deprecated("Use the `withXYZ` methods instead. Kept for binary compatibility", "Akka HTTP 10.2.0")
   def copy(
       method: HttpMethod = method,
       uri: Uri = uri,
@@ -554,7 +554,7 @@ final class HttpResponse(
   override def isRequest = false
   override def isResponse = true
 
-  @deprecated("use the constructor that includes an attributes parameter instead", "10.2.0")
+  @deprecated("use the constructor that includes an attributes parameter instead", "Akka HTTP 10.2.0")
   private[model] def this(status: StatusCode, headers: immutable.Seq[HttpHeader], entity: ResponseEntity,
       protocol: HttpProtocol) =
     this(status, headers, Map.empty, entity, protocol)
@@ -587,7 +587,7 @@ final class HttpResponse(
     copyImpl(entity = entity.transformDataBytes(Flow.fromGraph(transformer)))
 
   /* Manual Case Class things, to ease bin-compat */
-  @deprecated("Use the `withXYZ` methods instead", "10.2.0")
+  @deprecated("Use the `withXYZ` methods instead", "Akka HTTP 10.2.0")
   def copy(
       status: StatusCode = status,
       headers: immutable.Seq[HttpHeader] = headers,
