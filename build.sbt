@@ -1,5 +1,6 @@
-import akka._
-import akka.ValidatePullRequest._
+import org.apache.pekko
+import pekko._
+import pekko.ValidatePullRequest._
 import PekkoDependency._
 import Dependencies.{ h2specExe, h2specName }
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm

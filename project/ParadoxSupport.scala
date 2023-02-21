@@ -11,7 +11,7 @@
  * Copyright (C) 2016-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package akka
+package org.apache.pekko
 
 import java.io.{ File, FileNotFoundException }
 

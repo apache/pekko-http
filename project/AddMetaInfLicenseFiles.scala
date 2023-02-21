@@ -7,6 +7,8 @@
  * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
+package org.apache.pekko
+
 import sbt.Keys._
 import sbt._
 import org.mdedetrich.apache.sonatype.SonatypeApachePlugin

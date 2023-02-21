@@ -11,7 +11,7 @@
  * Copyright (C) 2018-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package akka
+package org.apache.pekko
 
 import sbt._, Keys._
 import de.heikoseeberger.sbtheader.{ CommentCreator, HeaderPlugin, NewLine }

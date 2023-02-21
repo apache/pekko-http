@@ -11,7 +11,7 @@
  * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package akka
+package org.apache.pekko
 
 import sbt._
 import sbt.Keys._
