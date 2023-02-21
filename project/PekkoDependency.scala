@@ -48,7 +48,7 @@ object PekkoDependency {
           case Some("default") | None =>
             // TODO: Revert to Artifact(defaultVersion) when release of Pekko is made
             mainSnapshot
-          case Some(other)            => Artifact(other, true)
+          case Some(other) => Artifact(other, true)
         }
     }
   }
