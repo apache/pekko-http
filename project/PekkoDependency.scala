@@ -45,9 +45,8 @@ object PekkoDependency {
             // (typically for the docs that require 2.6)
             if (defaultVersion.startsWith("1.0")) Artifact(determineLatestSnapshot("0.0.0"), true)
             else Artifact(defaultVersion)
-          case Some("default") => Artifact(defaultVersion)
-          case Some(other)     => Artifact(other, true)
-          case None            =>
+          case Some(other)            => Artifact(other, true)
+          case Some("default") | None =>
             // TODO: Revert to Artifact(defaultVersion) when release of Pekko is made
             mainSnapshot
         }
