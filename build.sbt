@@ -236,7 +236,6 @@ lazy val httpTests = project("http-tests")
   .disablePlugins(MimaPlugin) // this is only tests
   .configs(MultiJvm)
   .settings(headerSettings(MultiJvm))
-  .settings(ValidatePR / additionalTasks += MultiJvm / headerCheck)
   .addPekkoModuleDependency("pekko-stream", "provided")
   .addPekkoModuleDependency("pekko-multi-node-testkit", "test")
   .settings(
