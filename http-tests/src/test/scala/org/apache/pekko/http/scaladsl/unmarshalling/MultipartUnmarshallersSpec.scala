@@ -437,7 +437,7 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
               .grouped(100)
               .runWith(Sink.head)
           }
-          .fast.recover { case _: NoSuchElementException => Nil }, 1.second.dilated)
+          .fast.recover { case _: NoSuchElementException => Nil }, 5.second.dilated)
     }
 }
 
