@@ -6,7 +6,7 @@ ROOT_DIR=$(dirname $(readlink -f $0))/..
 
 LAST_VERSION=$1
 
-REPLACEMENT="perl -pe s|(.*?)(\(?#(\d+)\)?(\s\(#\d+\))?)?$|\*\1\[#\3\]\(https://github.com/akka/akka-http/pull/\3\)|"
+REPLACEMENT="perl -pe s|(.*?)(\(?#(\d+)\)?(\s\(#\d+\))?)?$|\*\1\[#\3\]\(https://github.com/apache/incubator-pekko-http/pull/\3\)|"
 
 echo "#### pekko-http-core"
 echo
