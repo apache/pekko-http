@@ -125,7 +125,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
       Marshalling.WithFixedContentType(ContentTypes.`text/csv(UTF-8)`,
         () => {
           val txt = t.txt.replaceAll(",", ".")
-          val uid = t.uid
+          val uid = t.uid.toString
           ByteString(List(uid, txt).mkString(","))
         })
     }

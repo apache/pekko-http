@@ -25,18 +25,16 @@ object Common extends AutoPlugin {
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding", "UTF-8", // yes, this is 2 args
-      "-target:jvm-1.8",
       "-unchecked",
       "-Xlint",
       "-Ywarn-dead-code",
       // Silence deprecation notices for changes introduced in Scala 2.12
       // Can be removed when we drop support for Scala 2.12:
       "-Wconf:msg=object JavaConverters in package collection is deprecated:s",
-      "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s"),
-    // '-release' parameter is restricted to 'Compile, compile' scope because
-    // otherwise `sbt pekko-http-xml/compile:doc` fails with it on Scala 2.12.9
-    Compile / compile / scalacOptions ++=
-      onlyAfterScala212(onlyAfterJdk8("-release", "8")).value,
+      "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s") ++
+    (if (isJdk8) Seq.empty
+     else if (scalaBinaryVersion.value == "2.12") Seq("-target:jvm-1.8")
+     else Seq("-release", "8")),
     javacOptions ++=
       Seq("-encoding", "UTF-8") ++ onlyOnJdk8("-source", "1.8") ++ onlyAfterJdk8("--release", "8"),
     // restrict to 'compile' scope because otherwise it is also passed to
