@@ -100,7 +100,7 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
   protected final def doPull(): Output =
     result match {
       case null => if (terminated) StreamEnd else NeedMoreData
-      case buffer: ListBuffer[Output] =>
+      case buffer: ListBuffer[Output] @unchecked =>
         val head = buffer.head
         buffer.remove(0) // faster than `ListBuffer::drop`
         if (buffer.isEmpty) result = null
@@ -326,8 +326,8 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
   }
 
   protected def emit(output: Output): Unit = result match {
-    case null                       => result = output
-    case buffer: ListBuffer[Output] => buffer += output
+    case null                                  => result = output
+    case buffer: ListBuffer[Output] @unchecked => buffer += output
     case old: Output @unchecked =>
       val buffer = new ListBuffer[Output]
       buffer += old
