@@ -13,7 +13,7 @@
 
 package org.apache.pekko.http.impl.model.parser
 
-import org.apache.pekko.parboiled2._
+import org.parboiled2._
 
 private[parser] trait IpAddressParsing { this: Parser =>
   import CharacterClasses._

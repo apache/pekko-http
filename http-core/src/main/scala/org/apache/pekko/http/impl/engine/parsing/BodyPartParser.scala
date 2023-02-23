@@ -19,7 +19,7 @@ import pekko.annotation.InternalApi
 
 import scala.annotation.tailrec
 import pekko.event.LoggingAdapter
-import pekko.parboiled2.CharPredicate
+import org.parboiled2.CharPredicate
 import pekko.stream.scaladsl.Source
 import pekko.stream.stage._
 import pekko.util.ByteString

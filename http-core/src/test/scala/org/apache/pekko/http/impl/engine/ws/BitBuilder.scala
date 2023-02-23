@@ -17,7 +17,7 @@ import scala.annotation.tailrec
 import scala.util.{ Failure, Success, Try }
 import org.apache.pekko
 import pekko.util.ByteString
-import pekko.parboiled2
+import org.parboiled2
 import parboiled2._
 
 object BitBuilder {

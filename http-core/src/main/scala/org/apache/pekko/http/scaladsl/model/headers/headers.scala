@@ -28,7 +28,7 @@ import scala.reflect.ClassTag
 import scala.util.{ Failure, Success, Try }
 import scala.annotation.tailrec
 import scala.collection.immutable
-import pekko.parboiled2.util.Base64
+import org.parboiled2.util.Base64
 import pekko.event.Logging
 import pekko.http.ccompat.{ pre213, since213 }
 import pekko.http.impl.util._
@@ -935,7 +935,7 @@ private[http] final case class `Sec-WebSocket-Key`(key: String) extends RequestH
    * Checks if the key value is valid according to the WebSocket specification, i.e.
    * if the String is a Base64 representation of 16 bytes.
    */
-  def isValid: Boolean = Try(Base64.rfc2045().decode(key)).toOption.exists(_.length == 16)
+  def isValid: Boolean = Try(Base64.rfc2045().decode(key.toCharArray)).toOption.exists(_.length == 16)
 }
 
 // https://tools.ietf.org/html/rfc6455#section-4.3

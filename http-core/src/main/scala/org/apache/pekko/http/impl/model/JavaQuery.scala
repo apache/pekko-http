@@ -25,7 +25,7 @@ import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.UriRendering
 import pekko.http.scaladsl.{ model => sm }
 import pekko.japi.Pair
-import pekko.parboiled2.CharPredicate
+import org.parboiled2.CharPredicate
 
 import scala.collection.JavaConverters._
 import pekko.http.impl.util.JavaMapping.Implicits._

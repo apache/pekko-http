@@ -22,7 +22,7 @@ import scala.annotation.tailrec
 import scala.collection.{ immutable, mutable }
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
-import pekko.parboiled2.{ CharPredicate, CharUtils, ParserInput }
+import org.parboiled2.{ CharPredicate, CharUtils, ParserInput }
 import pekko.http.ccompat.{ Builder, QuerySeqOptimized }
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.model.parser.UriParser

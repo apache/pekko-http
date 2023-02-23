@@ -18,7 +18,7 @@ import scala.collection.immutable
 import scala.collection.immutable.TreeMap
 
 import org.apache.pekko
-import pekko.parboiled2.Parser
+import org.parboiled2.Parser
 import pekko.http.scaladsl.model.{ IllegalUriException, ParsingException }
 import pekko.http.scaladsl.model.headers._
 

@@ -15,7 +15,7 @@ package org.apache.pekko.http.scaladsl.model.headers
 
 import scala.collection.immutable
 import org.apache.pekko
-import pekko.parboiled2.CharPredicate
+import org.parboiled2.CharPredicate
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.javadsl.{ model => jm }

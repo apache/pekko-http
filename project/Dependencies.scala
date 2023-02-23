@@ -64,6 +64,8 @@ object Dependencies {
 
     val scalafix = "ch.epfl.scala" %% "scalafix-core" % Dependencies.scalafixVersion // grab from plugin
 
+    val parboiled = "org.parboiled" %% "parboiled" % "2.4.1" // ApacheV2
+
     object Docs {
       val sprayJson = Compile.sprayJson % "test"
       val gson = "com.google.code.gson" % "gson" % "2.9.0" % "test"
@@ -96,6 +98,7 @@ object Dependencies {
       Dependencies.Provided.scalaReflect))
 
   lazy val httpCore = l ++= Seq(
+    parboiled,
     Test.sprayJson, // for WS Autobahn test metadata
     Test.scalatest, Test.scalatestplusScalacheck, Test.scalatestplusJUnit, Test.junit)
 

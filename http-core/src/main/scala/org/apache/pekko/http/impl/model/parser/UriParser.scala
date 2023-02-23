@@ -16,7 +16,7 @@ package org.apache.pekko.http.impl.model.parser
 import java.nio.charset.Charset
 
 import org.apache.pekko
-import pekko.parboiled2._
+import org.parboiled2._
 import pekko.http.impl.util.{ enhanceString_, StringRendering }
 import pekko.http.scaladsl.model.{ Uri, UriRendering }
 import pekko.http.scaladsl.model.headers.HttpOrigin

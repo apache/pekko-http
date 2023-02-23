@@ -14,7 +14,7 @@
 package org.apache.pekko.http.scaladsl.model.headers
 
 import org.apache.pekko
-import pekko.parboiled2.util.Base64
+import org.parboiled2.util.Base64
 import pekko.http.scaladsl.model.HttpCharsets._
 import pekko.http.impl.util.{ Rendering, ValueRenderable }
 import pekko.http.javadsl.{ model => jm }
@@ -44,7 +44,7 @@ final case class BasicHttpCredentials(username: String, password: String) extend
 
 object BasicHttpCredentials {
   def apply(credentials: String): BasicHttpCredentials = {
-    val bytes = Base64.rfc2045.decodeFast(credentials)
+    val bytes = Base64.rfc2045.decodeFast(credentials.toCharArray)
     val userPass = new String(bytes, `UTF-8`.nioCharset)
     userPass.indexOf(':') match {
       case -1 => apply(userPass, "")
