@@ -20,7 +20,6 @@ inThisBuild(Def.settings(
   },
   scmInfo := Some(
     ScmInfo(url("https://github.com/apache/incubator-pekko-http"), "git@github.com:apache/incubator-pekko-http.git")),
-  licenses := Seq("Apache-2.0" -> url("https://opensource.org/licenses/Apache-2.0")),
   description := "Apache Pekko Http: Modern, fast, asynchronous, streaming-first HTTP server and client.",
   testOptions ++= Seq(
     Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
