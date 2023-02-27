@@ -31,7 +31,17 @@ object Common extends AutoPlugin {
       // Silence deprecation notices for changes introduced in Scala 2.12
       // Can be removed when we drop support for Scala 2.12:
       "-Wconf:msg=object JavaConverters in package collection is deprecated:s",
-      "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s") ++
+      "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s",
+      "-Wconf:cat=unused-imports&origin=org.apache.pekko.http.ccompat.*:s",
+      // tolerate deprecations from Akka 2.6.0 until 1.1.x where we clean up
+      "-Wconf:cat=deprecation&msg=since Akka 2\\.6\\.:s",
+      // tolerate deprecations from Akka HTTP 10.2.0 until 1.1.x where we clean up
+      "-Wconf:cat=deprecation&msg=since Akka HTTP 10\\.2\\.:s",
+      // Exhaustivity checking is only useful for simple sealed hierarchies and matches without filters.
+      // In all other cases, the warning is non-actionable: you get spurious warnings that need to be suppressed
+      // verbosely. So, opt out of those in general.
+      "-Wconf:cat=other-match-analysis&msg=match may not be exhaustive:s",
+      "-Wconf:msg=reached max recursion depth:s") ++
     (if (isJdk8) Seq.empty
      else if (scalaBinaryVersion.value == "2.12") Seq("-target:jvm-1.8")
      else Seq("-release", "8")),
@@ -43,10 +53,6 @@ object Common extends AutoPlugin {
     Compile / compile / javacOptions ++=
       // From jdk9 onwards this is covered by the '-release' flag above
       onlyOnJdk8("-target", "1.8"),
-
-    // in test code we often use destructing assignment, which now produces an exhaustiveness warning
-    // when the type is asserted
-    Test / compile / scalacOptions += "-Wconf:msg=match may not be exhaustive:s",
     mimaReportSignatureProblems := true,
     Global / parallelExecution := sys.props.getOrElse("akka.http.parallelExecution", "true") != "false")
 
