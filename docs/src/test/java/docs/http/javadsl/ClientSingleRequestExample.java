@@ -35,7 +35,7 @@ public class ClientSingleRequestExample {
 
     final CompletionStage<HttpResponse> responseFuture =
       Http.get(system)
-        .singleRequest(HttpRequest.create("https://akka.io"));
+        .singleRequest(HttpRequest.create("https://pekko.apache.org"));
   }
 }
 //#single-request-example
@@ -43,10 +43,10 @@ public class ClientSingleRequestExample {
 class OtherRequestResponseExamples {
   public void request() {
     //#create-simple-request
-    HttpRequest.create("https://akka.io");
+    HttpRequest.create("https://pekko.apache.org");
 
     // with query params
-    HttpRequest.create("https://akka.io?foo=bar");
+    HttpRequest.create("https://pekko.apache.org?foo=bar");
     //#create-simple-request
     //#create-post-request
     HttpRequest.POST("https://userservice.example/users")

@@ -58,15 +58,15 @@ public class OAuth2AuthenticatorExample extends JUnitRouteTest {
         // tests:
         final HttpRequest okRequest =
             HttpRequest
-                .GET("http://akka.io/")
-                .addHeader(Host.create("akka.io"))
+                .GET("http://pekko.apache.org/")
+                .addHeader(Host.create("pekko.apache.org"))
                 .addHeader(Authorization.oauth2("token"));
         testRoute(route).run(okRequest).assertEntity("The secret token is: token");
 
         final HttpRequest badRequest =
                 HttpRequest
-                        .GET("http://akka.io/")
-                        .addHeader(Host.create("akka.io"))
+                        .GET("http://pekko.apache.org/")
+                        .addHeader(Host.create("pekko.apache.org"))
                         .addHeader(Authorization.oauth2("wrong"));
         testRoute(route).run(badRequest).assertStatusCode(401);
 

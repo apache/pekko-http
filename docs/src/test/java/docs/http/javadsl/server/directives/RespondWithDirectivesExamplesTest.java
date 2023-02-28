@@ -63,7 +63,7 @@ public class RespondWithDirectivesExamplesTest extends JUnitRouteTest {
     public void testMultipleHeaders() {
         //#multiple-headers
         final List<HttpHeader> headers = Arrays.asList(
-                Origin.create(HttpOrigin.parse("http://akka.io")),
+                Origin.create(HttpOrigin.parse("http://pekko.apache.org")),
                 RawHeader.create("X-Fish-Name", "Blippy"));
         respondWithDefaultHeaders(headers, () ->
                 /*...*/
@@ -128,7 +128,7 @@ public class RespondWithDirectivesExamplesTest extends JUnitRouteTest {
     public void testRespondWithHeaders() {
         //#respondWithHeaders
         final HttpHeader gonzo = RawHeader.create("Funky-Muppet", "gonzo");
-        final HttpHeader akka = Origin.create(HttpOrigin.parse("http://akka.io"));
+        final HttpHeader akka = Origin.create(HttpOrigin.parse("http://pekko.apache.org"));
 
         final Route route = path("foo", () ->
                 respondWithHeaders(Arrays.asList(gonzo, akka), () ->
@@ -138,7 +138,7 @@ public class RespondWithDirectivesExamplesTest extends JUnitRouteTest {
 
         testRoute(route).run(HttpRequest.GET("/foo"))
                 .assertHeaderExists("Funky-Muppet", "gonzo")
-                .assertHeaderExists("Origin", "http://akka.io")
+                .assertHeaderExists("Origin", "http://pekko.apache.org")
                 .assertEntity("beep");
 
         //#respondWithHeaders
@@ -149,7 +149,7 @@ public class RespondWithDirectivesExamplesTest extends JUnitRouteTest {
         //#respondWithDefaultHeaders
         //custom headers
         final RawHeader blippy = RawHeader.create("X-Fish-Name", "Blippy");
-        final HttpHeader akka = Origin.create(HttpOrigin.parse("http://akka.io"));
+        final HttpHeader akka = Origin.create(HttpOrigin.parse("http://pekko.apache.org"));
         final List<HttpHeader> defaultHeaders = Arrays.asList(blippy, akka);
         final RawHeader elTonno = RawHeader.create("X-Fish-Name", "El Tonno");
 
@@ -174,7 +174,7 @@ public class RespondWithDirectivesExamplesTest extends JUnitRouteTest {
 
         testRoute(route).run(HttpRequest.GET("/"))
                 .assertHeaderExists("X-Fish-Name", "Blippy")
-                .assertHeaderExists("Origin", "http://akka.io")
+                .assertHeaderExists("Origin", "http://pekko.apache.org")
                 .assertEntity("Blip!");
 
         testRoute(route).run(HttpRequest.GET("/el-tonno"))

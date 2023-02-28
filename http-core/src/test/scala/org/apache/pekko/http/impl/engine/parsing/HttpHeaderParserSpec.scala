@@ -147,12 +147,12 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
     }
 
     "parse and cache an X-Forwarded-For with a hostname in it as a RawHeader" in new TestSetup() {
-      parseAndCache(s"X-Forwarded-For: 1.2.3.4, akka.io${newLine}x")() shouldEqual RawHeader("x-forwarded-for",
-        "1.2.3.4, akka.io")
+      parseAndCache(s"X-Forwarded-For: 1.2.3.4, pekko.apache.org${newLine}x")() shouldEqual RawHeader("x-forwarded-for",
+        "1.2.3.4, pekko.apache.org")
     }
 
     "parse and cache an X-Real-Ip with a hostname as it's value as a RawHeader" in new TestSetup() {
-      parseAndCache(s"X-Real-Ip: akka.io${newLine}x")() shouldEqual RawHeader("x-real-ip", "akka.io")
+      parseAndCache(s"X-Real-Ip: pekko.apache.org${newLine}x")() shouldEqual RawHeader("x-real-ip", "pekko.apache.org")
     }
 
     "parse and cache a raw header" in new TestSetup(testSetupMode = TestSetupMode.Unprimed) {

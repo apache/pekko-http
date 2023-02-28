@@ -27,7 +27,7 @@ class HttpClientCollectingHeaders {
     implicit val system: ActorSystem = ActorSystem()
     implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
-    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = "http://akka.io"))
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = "http://pekko.apache.org"))
 
     responseFuture.map {
       case response @ HttpResponse(StatusCodes.OK, _, _, _) =>

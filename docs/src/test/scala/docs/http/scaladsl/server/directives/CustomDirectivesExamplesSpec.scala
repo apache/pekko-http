@@ -123,9 +123,9 @@ class CustomDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       (hostname, port) => complete(s"The hostname is $hostname and the port is $port")
     }
 
-    Get() ~> Host("akka.io", 8080) ~> route ~> check {
+    Get() ~> Host("pekko.apache.org", 8080) ~> route ~> check {
       status shouldEqual OK
-      responseAs[String] shouldEqual "The hostname is akka.io and the port is 8080"
+      responseAs[String] shouldEqual "The hostname is pekko.apache.org and the port is 8080"
     }
     // #scratch-1
   }
@@ -144,9 +144,9 @@ class CustomDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       (hostname, port) => complete(s"The hostname is $hostname and the port is $port")
     }
 
-    Get() ~> Host("akka.io", 8080) ~> route ~> check {
+    Get() ~> Host("pekko.apache.org", 8080) ~> route ~> check {
       status shouldEqual OK
-      responseAs[String] shouldEqual "The hostname is akka.io and the port is 8080"
+      responseAs[String] shouldEqual "The hostname is pekko.apache.org and the port is 8080"
     }
     // #scratch-2
   }

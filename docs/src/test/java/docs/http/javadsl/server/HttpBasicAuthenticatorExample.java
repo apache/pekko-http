@@ -53,15 +53,15 @@ public class HttpBasicAuthenticatorExample extends JUnitRouteTest {
         // tests:
         final HttpRequest okRequest =
             HttpRequest
-                .GET("http://akka.io/")
-                .addHeader(Host.create("akka.io"))
+                .GET("http://pekko.apache.org/")
+                .addHeader(Host.create("pekko.apache.org"))
                 .addHeader(Authorization.basic("randal", "correcthorsebatterystaple"));
         testRoute(route).run(okRequest).assertEntity("Hello randal!");
 
         final HttpRequest badRequest =
                 HttpRequest
-                        .GET("http://akka.io/")
-                        .addHeader(Host.create("akka.io"))
+                        .GET("http://pekko.apache.org/")
+                        .addHeader(Host.create("pekko.apache.org"))
                         .addHeader(Authorization.basic("randal", "123abc"));
         testRoute(route).run(badRequest).assertStatusCode(401);
 

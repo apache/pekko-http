@@ -592,7 +592,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
       "two Host headers" in new Test {
         """GET / HTTP/1.1
           |Host: api.example.com
-          |Host: akka.io
+          |Host: pekko.apache.org
           |
           |foo""" should parseToError(
           BadRequest,

@@ -28,7 +28,7 @@ object HttpClientOutgoingConnection {
     implicit val executionContext = system.dispatcher
 
     val connectionFlow: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] =
-      Http().connectionTo("akka.io").http()
+      Http().connectionTo("pekko.apache.org").http()
 
     def dispatchRequest(request: HttpRequest): Future[HttpResponse] =
       // This is actually a bad idea in general. Even if the `connectionFlow` was instantiated only once above,

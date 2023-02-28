@@ -58,7 +58,7 @@ public class RouteDirectivesExamplesTest extends JUnitRouteTest {
   @Test
   public void testShowRedirectOnCompleteWithTerms() {
     final StatusCode redirectionType = StatusCodes.FOUND;
-    final Uri uri = Uri.create("http://akka.io");
+    final Uri uri = Uri.create("http://pekko.apache.org");
     final Function<RequestContext, CompletionStage<RouteResult>> route = rc ->
             //#red-impl
             rc.completeWith(HttpResponse.create()

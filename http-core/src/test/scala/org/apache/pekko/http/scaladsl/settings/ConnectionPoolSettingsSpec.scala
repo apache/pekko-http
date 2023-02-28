@@ -59,7 +59,7 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
           |
           |  per-host-override : [
           |    {
-          |      host-pattern = "akka.io"
+          |      host-pattern = "pekko.apache.org"
           |      # can use same things as in global `host-connection-pool` section
           |      max-connections = 47
           |    },
@@ -84,8 +84,8 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
         ConfigFactory.parseString(settingsString)
           .withFallback(ConfigFactory.defaultReference(getClass.getClassLoader)))
 
-      settings.forHost("akka.io").maxConnections shouldEqual 47
-      settings.forHost("test.akka.io").maxConnections shouldEqual 7
+      settings.forHost("pekko.apache.org").maxConnections shouldEqual 47
+      settings.forHost("test.pekko.apache.org").maxConnections shouldEqual 7
       settings.forHost("example.com").maxConnections shouldEqual 34
       settings.forHost("www.example.com").maxConnections shouldEqual 34
       settings.forHost("example2.com").maxConnections shouldEqual 39
@@ -107,7 +107,7 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
           |
           |  per-host-override = [
           |    {
-          |      host-pattern = "akka.io"
+          |      host-pattern = "pekko.apache.org"
           |      # can use same things as in global `host-connection-pool` section
           |      max-connections = 47
           |    }
@@ -117,11 +117,11 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
 
       val settings = ConnectionPoolSettings(
         ConfigFactory.parseString(settingsString).withFallback(ConfigFactory.defaultReference(getClass.getClassLoader)))
-      settings.forHost("akka.io").maxConnections shouldEqual 47
+      settings.forHost("pekko.apache.org").maxConnections shouldEqual 47
       settings.maxConnections shouldEqual 7
 
       val settingsWithCodeOverrides = settings.withMaxConnections(42)
-      settingsWithCodeOverrides.forHost("akka.io").maxConnections shouldEqual 42
+      settingsWithCodeOverrides.forHost("pekko.apache.org").maxConnections shouldEqual 42
       settingsWithCodeOverrides.maxConnections shouldEqual 42
     }
 
@@ -134,7 +134,7 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
           |
           |  per-host-override = [
           |    {
-          |      host-pattern = "akka.io"
+          |      host-pattern = "pekko.apache.org"
           |      # can use same things as in global `host-connection-pool` section
           |      max-connections = 27
           |    },
@@ -150,13 +150,13 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
 
       val settings = ConnectionPoolSettings(
         ConfigFactory.parseString(settingsString).withFallback(ConfigFactory.defaultReference(getClass.getClassLoader)))
-      settings.forHost("akka.io").maxConnections shouldEqual 27
+      settings.forHost("pekko.apache.org").maxConnections shouldEqual 27
       settings.forHost("other.io").maxConnections shouldEqual 47
       settings.forHost("akka.com").maxConnections shouldEqual 7
       settings.maxConnections shouldEqual 7
 
-      // the '*.io' overrides are not selected, because akka.io occurs earlier:
-      settings.forHost("akka.io").minConnections shouldEqual 2
+      // the '*.io' overrides are not selected, because pekko.apache.org occurs earlier:
+      settings.forHost("pekko.apache.org").minConnections shouldEqual 2
       settings.forHost("other.io").minConnections shouldEqual 22
       settings.forHost("akka.com").minConnections shouldEqual 2
       settings.minConnections shouldEqual 2
