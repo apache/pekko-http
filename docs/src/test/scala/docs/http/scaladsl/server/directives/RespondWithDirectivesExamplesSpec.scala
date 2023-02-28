@@ -23,7 +23,7 @@ class RespondWithDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec
   "multiple-headers" in {
     // #multiple-headers
     respondWithDefaultHeaders(
-      Origin(HttpOrigin("http://akka.io")),
+      Origin(HttpOrigin("http://pekko.apache.org")),
       RawHeader("X-Fish-Name", "Blippy")) { ??? }
     // #multiple-headers
   }
@@ -91,7 +91,7 @@ class RespondWithDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec
     // #respondWithHeaders-0
     val route =
       path("foo") {
-        respondWithHeaders(RawHeader("Funky-Muppet", "gonzo"), Origin(HttpOrigin("http://akka.io"))) {
+        respondWithHeaders(RawHeader("Funky-Muppet", "gonzo"), Origin(HttpOrigin("http://pekko.apache.org"))) {
           complete("beep")
         }
       }
@@ -99,7 +99,7 @@ class RespondWithDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec
     // tests:
     Get("/foo") ~> route ~> check {
       header("Funky-Muppet") shouldEqual Some(RawHeader("Funky-Muppet", "gonzo"))
-      header[Origin] shouldEqual Some(Origin(HttpOrigin("http://akka.io")))
+      header[Origin] shouldEqual Some(Origin(HttpOrigin("http://pekko.apache.org")))
       responseAs[String] shouldEqual "beep"
     }
     // #respondWithHeaders-0

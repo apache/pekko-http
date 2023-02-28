@@ -41,7 +41,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
   require(testRoot.exists(), s"testRoot was not found at ${testRoot.getAbsolutePath}")
 
   override def testConfigSource = super.testConfigSource ++ """
-    pekko.http.routing.range-coalescing-threshold = 1
+    akka.http.routing.range-coalescing-threshold = 1
   """
 
   def writeAllText(text: String, file: File): Unit =
@@ -412,7 +412,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
             |</pre>
             |<hr>
             |<div style="width:100%;text-align:right;color:gray">
-            |<small>rendered by <a href="https://akka.io">Akka Http</a> on xxxx-xx-xx xx:xx:xx</small>
+            |<small>rendered by <a href="https://pekko.apache.org">Akka Http</a> on xxxx-xx-xx xx:xx:xx</small>
             |</div>
             |</body>
             |</html>

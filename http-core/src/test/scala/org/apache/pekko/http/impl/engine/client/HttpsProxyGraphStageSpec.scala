@@ -186,7 +186,7 @@ class HttpsProxyGraphStageSpec extends PekkoSpecWithMaterializer {
   trait Context {
     val clientSettings = ClientConnectionSettings(system)
 
-    val targetHostName = "akka.io"
+    val targetHostName = "pekko.apache.org"
     val targetPort = 443
     val basicProxyAuth: BasicHttpCredentials = BasicHttpCredentials("testUsername", "testPassword")
 

@@ -89,8 +89,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Access-Control-Allow-Origin: *" =!= `Access-Control-Allow-Origin`.`*`
       "Access-Control-Allow-Origin: null" =!= `Access-Control-Allow-Origin`.`null`
       "Access-Control-Allow-Origin: http://spray.io" =!= `Access-Control-Allow-Origin`("http://spray.io")
-      "Access-Control-Allow-Origin: http://akka.io http://spray.io" =!=
-        `Access-Control-Allow-Origin`.forRange(HttpOriginRange("http://akka.io", "http://spray.io"))
+      "Access-Control-Allow-Origin: http://pekko.apache.org http://spray.io" =!=
+        `Access-Control-Allow-Origin`.forRange(HttpOriginRange("http://pekko.apache.org", "http://spray.io"))
     }
 
     "Access-Control-Expose-Headers" in {
@@ -251,7 +251,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     "Content-Location" in {
       "Content-Location: https://spray.io/secure" =!= `Content-Location`(Uri("https://spray.io/secure"))
       "Content-Location: /en-us/default.aspx?foo=bar" =!= `Content-Location`(Uri("/en-us/default.aspx?foo=bar"))
-      "Content-Location: https://akka.io/#sec" =!= ErrorInfo(
+      "Content-Location: https://pekko.apache.org/#sec" =!= ErrorInfo(
         "Illegal HTTP header 'Content-Location': requirement failed",
         "Content-Location header URI must not contain a fragment")
     }
@@ -484,7 +484,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     "Referer" in {
       "Referer: https://spray.io/secure" =!= Referer(Uri("https://spray.io/secure"))
       "Referer: /en-us/default.aspx?foo=bar" =!= Referer(Uri("/en-us/default.aspx?foo=bar"))
-      "Referer: https://akka.io/#sec" =!= ErrorInfo(
+      "Referer: https://pekko.apache.org/#sec" =!= ErrorInfo(
         "Illegal HTTP header 'Referer': requirement failed",
         "Referer header URI must not contain a fragment")
     }
@@ -757,10 +757,10 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "X-Forwarded-For: 1:2:3:4:5::7:8" =!=> "1:2:3:4:5:0:7:8"
       "X-Forwarded-For: 1:2:3:4:5:6::8" =!=> "1:2:3:4:5:6:0:8"
       "X-Forwarded-For: ::" =!=> "0:0:0:0:0:0:0:0"
-      "X-Forwarded-For: 1.2.3.4, akka.io" =!=
+      "X-Forwarded-For: 1.2.3.4, pekko.apache.org" =!=
         ErrorInfo(
           "Illegal HTTP header 'X-Forwarded-For': Invalid input 'k', expected HEXDIG, h8, ':', cc or ch16o (line 1, column 11)",
-          "1.2.3.4, akka.io\n          ^")
+          "1.2.3.4, pekko.apache.org\n          ^")
     }
 
     "X-Forwarded-Host" in {
@@ -770,7 +770,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         Uri.Host("1234:5678:9abc:def1:2345:6789:abcd:ef00"))
       "X-Forwarded-Host: [1234:567:9a:d:2:67:abc:ef00]" =!= `X-Forwarded-Host`(Uri.Host("1234:567:9a:d:2:67:abc:ef00"))
       "X-Forwarded-Host: [1:2:3:4:5:6:7:8]" =!= `X-Forwarded-Host`(Uri.Host("1:2:3:4:5:6:7:8"))
-      "X-Forwarded-Host: akka.io" =!= `X-Forwarded-Host`(Uri.Host("akka.io"))
+      "X-Forwarded-Host: pekko.apache.org" =!= `X-Forwarded-Host`(Uri.Host("pekko.apache.org"))
       "X-Forwarded-Host: [1:2:3:4::6:7:8]" =!= `X-Forwarded-Host`(Uri.Host("1:2:3:4::6:7:8"))
     }
 
@@ -811,10 +811,10 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "X-Real-Ip: 1:2:3:4:5::7:8" =!=> "1:2:3:4:5:0:7:8"
       "X-Real-Ip: 1:2:3:4:5:6::8" =!=> "1:2:3:4:5:6:0:8"
       "X-Real-Ip: ::" =!=> "0:0:0:0:0:0:0:0"
-      "X-Real-Ip: akka.io" =!=
+      "X-Real-Ip: pekko.apache.org" =!=
         ErrorInfo(
           "Illegal HTTP header 'X-Real-Ip': Invalid input 'k', expected HEXDIG, h8, ':', cc or ch16o (line 1, column 2)",
-          "akka.io\n ^")
+          "pekko.apache.org\n ^")
     }
 
     "RawHeader" in {

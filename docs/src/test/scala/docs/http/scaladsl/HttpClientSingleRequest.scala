@@ -28,7 +28,7 @@ object HttpClientSingleRequest {
     // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.executionContext
 
-    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = "http://akka.io"))
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = "http://pekko.apache.org"))
 
     responseFuture
       .onComplete {
