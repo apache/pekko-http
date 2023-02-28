@@ -1,7 +1,8 @@
 ---
 name: "❓ Question"
-about: Please use https://discuss.akka.io for questions
+about: Please use the Pekko User mailing list for questions: https://lists.apache.org/list.html?users@pekko.apache.org
 
 ---
 
-Please use https://discuss.akka.io or https://gitter.im/akka/akka for questions instead of posting them to the issue tracker.
+Please use the Pekko User mailing list for questions: https://lists.apache.org/list.html?users@pekko.apache.org instead
+of the Github issue tracker for questions.
