@@ -13,7 +13,6 @@ import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
 sourceDistName := "incubator-pekko-http"
 inThisBuild(Def.settings(
-  organization := "org.apache.pekko",
   apiURL := {
     val apiVersion = if (isSnapshot.value) "current" else version.value
     Some(url(s"https://pekko.apache.org/api/pekko-http/$apiVersion/"))
