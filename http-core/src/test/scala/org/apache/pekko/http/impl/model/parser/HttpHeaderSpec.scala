@@ -759,8 +759,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "X-Forwarded-For: ::" =!=> "0:0:0:0:0:0:0:0"
       "X-Forwarded-For: 1.2.3.4, pekko.apache.org" =!=
         ErrorInfo(
-          "Illegal HTTP header 'X-Forwarded-For': Invalid input 'k', expected HEXDIG, h8, ':', cc or ch16o (line 1, column 11)",
-          "1.2.3.4, pekko.apache.org\n          ^")
+          "Illegal HTTP header 'X-Forwarded-For': Invalid input 'p', expected WSP, CRLF or addr (line 1, column 10)",
+          "1.2.3.4, pekko.apache.org\n         ^")
     }
 
     "X-Forwarded-Host" in {
@@ -813,8 +813,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "X-Real-Ip: ::" =!=> "0:0:0:0:0:0:0:0"
       "X-Real-Ip: pekko.apache.org" =!=
         ErrorInfo(
-          "Illegal HTTP header 'X-Real-Ip': Invalid input 'k', expected HEXDIG, h8, ':', cc or ch16o (line 1, column 2)",
-          "pekko.apache.org\n ^")
+          "Illegal HTTP header 'X-Real-Ip': Invalid input 'p', expected ip-v4-address or ip-v6-address (line 1, column 1)",
+          "pekko.apache.org\n^")
     }
 
     "RawHeader" in {
