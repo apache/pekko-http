@@ -31,7 +31,7 @@ object ParadoxSupport {
     paradoxDirectives += ((context: Writer.Context) =>
       new SignatureDirective(context.location.tree.label, context.properties, context)),
     resolvers += "Apache Nexus Snapshots".at("https://repository.apache.org/content/repositories/snapshots/"),
-    pekkoParadoxGithub := "https://github.com/apache/incubator-pekko-http")
+    pekkoParadoxGithub := Some("https://github.com/apache/incubator-pekko-http"))
 
   class SignatureDirective(
       page: Page, variables: Map[String, String], ctx: Writer.Context) extends LeafBlockDirective("signature") {
