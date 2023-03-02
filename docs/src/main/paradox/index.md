@@ -11,7 +11,7 @@
 * [common/index](common/index.md)
 * [server-side/index](server-side/index.md)
 * [client-side/index](client-side/index.md)
-* [extensions](extensions.md)
+* [examples and extensions](examples-and-extensions.md)
 * [technologies](technologies.md)
 * [tips](tipsandtricks.md)
 * [contributing](contributing.md)
