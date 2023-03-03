@@ -405,6 +405,8 @@ lazy val docs = project("docs")
       "jackson.xml.version" -> Dependencies.jacksonXmlVersion,
       "scalafix.version" -> _root_.scalafix.sbt.BuildInfo.scalafixVersion, // grab from scalafix plugin directly
       "extref.pekko-docs.base_url" -> s"https://pekko.apache.org/docs/pekko/current/%s",
+      "javadoc.java.base_url" -> "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/",
+      "javadoc.java.link_style" -> "direct",
       "javadoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/japi/pekko/${PekkoDependency.docs.link}",
       "javadoc.org.apache.pekko.link_style" -> "direct",
       "scaladoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/api/pekko/${PekkoDependency.docs.link}",
