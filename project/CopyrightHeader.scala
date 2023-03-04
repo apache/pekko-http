@@ -24,7 +24,7 @@ object CopyrightHeader extends AutoPlugin {
   override def requires = HeaderPlugin
   override def trigger = allRequirements
 
-  private def headerMappingSettings = Def.settings(
+  override def projectSettings = Def.settings(
     Seq(Compile, Test).flatMap { config =>
       inConfig(config)(
         Seq(
@@ -32,20 +32,9 @@ object CopyrightHeader extends AutoPlugin {
           headerMappings := headerMappings.value ++ Map(
             HeaderFileType.scala -> cStyleComment,
             HeaderFileType.java -> cStyleComment,
+            HeaderFileType.conf -> hashLineComment,
             HeaderFileType("template") -> cStyleComment)))
     })
-
-  private def confHeaderMappingSettings: Seq[Def.Setting[_]] =
-    Seq(Compile, Test).flatMap { config =>
-      inConfig(config)(
-        Seq(
-          headerLicense := Some(HeaderLicense.Custom(apacheSpdxHeader)),
-          headerMappings := headerMappings.value ++ Map(
-            HeaderFileType.conf -> hashLineComment)))
-    }
-
-  override def projectSettings: Seq[Def.Setting[_]] =
-    Def.settings(headerMappingSettings, confHeaderMappingSettings)
 
   val apacheHeader: String =
     """Licensed to the Apache Software Foundation (ASF) under one or more
@@ -77,14 +66,15 @@ object CopyrightHeader extends AutoPlugin {
 
   val hashLineComment = HeaderCommentStyle.hashLineComment.copy(commentCreator = new CommentCreator() {
 
+    // deliberately hardcode use of apacheSpdxHeader and ignore input text
     override def apply(text: String, existingText: Option[String]): String = {
       val formatted = existingText match {
         case Some(currentText) if isApacheCopyrighted(currentText) =>
           currentText
         case Some(currentText) =>
-          HeaderCommentStyle.hashLineComment.commentCreator(text, existingText) + NewLine * 2 + currentText
+          HeaderCommentStyle.hashLineComment.commentCreator(apacheSpdxHeader, existingText) + NewLine * 2 + currentText
         case None =>
-          HeaderCommentStyle.hashLineComment.commentCreator(text, existingText)
+          HeaderCommentStyle.hashLineComment.commentCreator(apacheSpdxHeader, existingText)
       }
       formatted.trim
     }
