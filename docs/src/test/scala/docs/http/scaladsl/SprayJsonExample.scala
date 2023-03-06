@@ -22,7 +22,7 @@ import pekko.http.scaladsl.server.Route
 import pekko.http.scaladsl.server.Directives._
 import pekko.http.scaladsl.model.StatusCodes
 // for JSON serialization/deserialization following dependency is required:
-// "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.7"
+// "org.apache.pekko" %% "pekko-http-spray-json" % "<latest version>"
 import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
 

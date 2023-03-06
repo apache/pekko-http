@@ -32,7 +32,7 @@ sealed abstract class Marshaller[-A, +B] {
    * Reuses this Marshaller's logic to produce a new Marshaller from another type `C` which overrides
    * the [[pekko.http.scaladsl.model.MediaType]] of the marshalling result with the given one.
    * Note that not all wrappings are legal. f the underlying [[pekko.http.scaladsl.model.MediaType]] has constraints with regard to the
-   * charsets it allows the new [[pekko.http.scaladsl.model.MediaType]] must be compatible, since akka-http will never recode entities.
+   * charsets it allows the new [[pekko.http.scaladsl.model.MediaType]] must be compatible, since pekko-http will never recode entities.
    * If the wrapping is illegal the [[scala.concurrent.Future]] produced by the resulting marshaller will contain a [[RuntimeException]].
    */
   def wrap[C, D >: B](newMediaType: MediaType)(f: C => A)(implicit mto: ContentTypeOverrider[D]): Marshaller[C, D] =
@@ -42,7 +42,7 @@ sealed abstract class Marshaller[-A, +B] {
    * Reuses this Marshaller's logic to produce a new Marshaller from another type `C` which overrides
    * the [[pekko.http.scaladsl.model.MediaType]] of the marshalling result with the given one.
    * Note that not all wrappings are legal. f the underlying [[pekko.http.scaladsl.model.MediaType]] has constraints with regard to the
-   * charsets it allows the new [[pekko.http.scaladsl.model.MediaType]] must be compatible, since akka-http will never recode entities.
+   * charsets it allows the new [[pekko.http.scaladsl.model.MediaType]] must be compatible, since pekko-http will never recode entities.
    * If the wrapping is illegal the [[scala.concurrent.Future]] produced by the resulting marshaller will contain a [[RuntimeException]].
    */
   def wrapWithEC[C, D >: B](newMediaType: MediaType)(f: ExecutionContext => C => A)(

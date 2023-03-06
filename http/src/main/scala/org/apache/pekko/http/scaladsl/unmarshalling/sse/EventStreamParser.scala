@@ -26,7 +26,7 @@ import pekko.util.ByteString
 /**
  * Flow that converts raw byte string input into [[ServerSentEvent]]s.
  *
- * This API is made for use in non-akka-http clients, like Play's WSClient.
+ * This API is made for use in non-pekko-http clients, like Play's WSClient.
  */
 @ApiMayChange
 object EventStreamParser {
@@ -34,7 +34,7 @@ object EventStreamParser {
   /**
    * Flow that converts raw byte string input into [[ServerSentEvent]]s.
    *
-   * This API is made for use in non-akka-http clients, like Play's WSClient.
+   * This API is made for use in non-pekko-http clients, like Play's WSClient.
    *
    * @param maxLineSize The maximum size of a line for the event Stream parser
    * @param maxEventSize The maximum size of a server-sent event for the event Stream parser
@@ -45,7 +45,7 @@ object EventStreamParser {
   /**
    * Flow that converts raw byte string input into [[ServerSentEvent]]s.
    *
-   * This API is made for use in non-akka-http clients, like Play's WSClient.
+   * This API is made for use in non-pekko-http clients, like Play's WSClient.
    *
    * @param maxLineSize The maximum size of a line for the event Stream parser
    * @param maxEventSize The maximum size of a server-sent event for the event Stream parser

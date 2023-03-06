@@ -108,7 +108,7 @@ trait RouteDirectives {
    * Handle the request using an asynchronous partial function.
    *
    * This directive can be used to include external components request processing components defined as PartialFunction
-   * (like those provided by akka-grpc) into a routing tree defined as routes.
+   * (like those provided by pekko-grpc) into a routing tree defined as routes.
    *
    * When the partial function is not defined for a request, the request is rejected with an empty list of rejections
    * which is equivalent to a "Not Found" rejection.
@@ -122,7 +122,7 @@ trait RouteDirectives {
    * Handle the request using an asynchronous partial function.
    *
    * This directive can be used to include external components request processing components defined as PartialFunction
-   * (like those provided by akka-grpc) into a routing tree defined as routes.
+   * (like those provided by pekko-grpc) into a routing tree defined as routes.
    *
    * @param rejections The list of rejections to reject with if the handler is not defined for a request.
    *
@@ -139,7 +139,7 @@ trait RouteDirectives {
    * Handle the request using a synchronous partial function.
    *
    * This directive can be used to include external components request processing components defined as PartialFunction
-   * (like those provided by akka-grpc) into a routing tree defined as routes.
+   * (like those provided by pekko-grpc) into a routing tree defined as routes.
    *
    * When the partial function is not defined for a request, the request is rejected with an empty list of rejections
    * which is equivalent to a "Not Found" rejection.
@@ -153,7 +153,7 @@ trait RouteDirectives {
    * Handle the request using a synchronous partial function.
    *
    * This directive can be used to include external components request processing components defined as PartialFunction
-   * (like those provided by akka-grpc) into a routing tree defined as routes.
+   * (like those provided by pekko-grpc) into a routing tree defined as routes.
    *
    * @param rejections The list of rejections to reject with if the handler is not defined for a request.
    *

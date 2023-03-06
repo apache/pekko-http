@@ -32,7 +32,7 @@ import scala.util.{ Failure, Success, Try }
 /**
  * DEPRECATED, consider https://developer.lightbend.com/guides/akka-http-quickstart-scala/ instead
  *
- * Bootstrap trait for Http Server. It helps booting up an akka-http server by only defining the desired routes.
+ * Bootstrap trait for Http Server. It helps booting up an pekko-http server by only defining the desired routes.
  * It offers additional hooks to modify the default behavior.
  */
 @deprecated("HttpApp this doesn't reflect the latest Akka APIs", "Akka HTTP 10.2.0")
