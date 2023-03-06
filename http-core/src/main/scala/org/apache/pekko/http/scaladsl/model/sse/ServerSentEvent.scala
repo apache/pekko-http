@@ -76,7 +76,7 @@ object ServerSentEvent {
 }
 
 /**
- * Representation of a server-sent event. By default akka-http uses events with an empty data field as a heartbeat that is
+ * Representation of a server-sent event. By default Pekko HTTP uses events with an empty data field as a heartbeat that is
  * ignored on reception. Set `pekko.http.sse.emit-empty-events` can be used to change that default behavior.
  *
  * @param data data, may span multiple lines

@@ -28,7 +28,7 @@ import scala.concurrent.{ ExecutionContext, Future, Promise }
 /**
  * API MAY CHANGE
  *
- * General interface implemented by all akka-http cache implementations.
+ * General interface implemented by all cache implementations.
  */
 @ApiMayChange
 @DoNotInherit
