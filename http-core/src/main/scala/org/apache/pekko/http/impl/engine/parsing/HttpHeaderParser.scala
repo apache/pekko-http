@@ -28,7 +28,6 @@ import pekko.http.scaladsl.settings.ParserSettings.ErrorLoggingVerbosity
 import pekko.http.scaladsl.settings.ParserSettings
 
 import scala.annotation.tailrec
-import org.parboiled2.CharUtils
 import pekko.util.ByteString
 import pekko.http.ccompat._
 import pekko.http.impl.util._
@@ -147,7 +146,7 @@ private[engine] final class HttpHeaderParser private (
           case EmptyHeader                    => resultHeader = EmptyHeader; cursor
         }
       case nodeChar =>
-        val char = CharUtils.toLowerCase(byteChar(input, cursor))
+        val char = toLowerCase(byteChar(input, cursor))
         if (char == node) // fast match, advance and descend
           parseHeaderLine(input, lineStart)(cursor + 1, nodeIx + 1)
         else node >>> 8 match {
@@ -243,7 +242,7 @@ private[engine] final class HttpHeaderParser private (
   private def insert(input: ByteString, value: AnyRef)(cursor: Int = 0, endIx: Int = input.length, nodeIx: Int = 0,
       colonIx: Int = 0): Unit = {
     val char =
-      if (cursor < colonIx) CharUtils.toLowerCase((input(cursor) & 0xFF).toChar)
+      if (cursor < colonIx) toLowerCase((input(cursor) & 0xFF).toChar)
       else if (cursor < endIx) (input(cursor) & 0xFF).toChar
       else '\u0000'
     val node = nodes(nodeIx)
@@ -292,7 +291,7 @@ private[engine] final class HttpHeaderParser private (
     val newNodeIx = newNodeIndex
     if (cursor < endIx) {
       val c = (input(cursor) & 0xFF).toChar
-      val char = if (cursor < colonIx) CharUtils.toLowerCase(c) else c
+      val char = if (cursor < colonIx) toLowerCase(c) else c
       nodes(newNodeIx) = char
       insertRemainingCharsAsNewNodes(input, value)(cursor + 1, endIx, valueIx, colonIx)
     } else {
@@ -683,4 +682,11 @@ private[http] object HttpHeaderParser {
     def withValueCountIncreased = copy(valueCount = valueCount + 1)
     def spaceLeft = valueCount < parser.maxValueCount
   }
+
+  /**
+   * Efficiently lower-cases the given character.
+   * Note: only works for 7-bit ASCII letters (which is enough for header names)
+   */
+  private[HttpHeaderParser] def toLowerCase(c: Char): Char =
+    if (c >= 'A' && c <= 'Z') (c + 0x20 /* - 'A' + 'a' */ ).toChar else c
 }
