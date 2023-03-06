@@ -53,8 +53,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        SCALA_VERSION: [2.13]
-        JDK: [8]
+        SCALA_VERSION: [2.12, 2.13]
+        JDK: [8, 11]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
