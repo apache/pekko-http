@@ -27,7 +27,7 @@ jobs:
           java-version: 8
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6.2
+        uses: coursier/cache-action@v6
 
       - name: Cache Build Target
         uses: actions/cache@v2
@@ -68,7 +68,7 @@ jobs:
           java-version: ${{ matrix.JDK }}
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6.2
+        uses: coursier/cache-action@v6
 
       - name: Cache Build Target
         uses: actions/cache@v2

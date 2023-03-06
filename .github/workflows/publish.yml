@@ -23,7 +23,7 @@ jobs:
           java-version: 8
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6.2
+        uses: coursier/cache-action@v6
 
       - name: Install graphviz
         run: sudo apt-get install -y graphviz
@@ -54,7 +54,7 @@ jobs:
           java-version: 8
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6.2
+        uses: coursier/cache-action@v6
 
       - name: Enable jvm-opts
         run: cp .jvmopts-ci .jvmopts
