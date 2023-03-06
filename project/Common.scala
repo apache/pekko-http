@@ -54,7 +54,7 @@ object Common extends AutoPlugin {
       // From jdk9 onwards this is covered by the '-release' flag above
       onlyOnJdk8("-target", "1.8"),
     mimaReportSignatureProblems := true,
-    Global / parallelExecution := sys.props.getOrElse("akka.http.parallelExecution", "true") != "false")
+    Global / parallelExecution := sys.props.getOrElse("pekko.http.parallelExecution", "true") != "false")
 
   val specificationVersion: String = sys.props("java.specification.version")
   def isJdk8: Boolean =
