@@ -745,7 +745,7 @@ Host: example.com
         Http().newServerAt("localhost", 0).enableHttps(serverConnectionContext).bindFlow(handlerFlow)
           .futureValue
 
-      // Disable hostname verification as ExampleHttpContexts.exampleClientContext sets hostname as akka.example.org
+      // Disable hostname verification as ExampleHttpContexts.exampleClientContext sets hostname as pekko.example.org
       val sslConfigSettings = SSLConfigSettings().withLoose(SSLLooseConfig().withDisableHostnameVerification(true))
       val sslConfig = PekkoSSLConfig().withSettings(sslConfigSettings)
       val sslContext = {
@@ -779,7 +779,7 @@ Host: example.com
     "complete a request/response over https when request has `Connection: close` set" in Utils.assertAllStagesStopped {
       // akka/akka-http#1219
       val serverToClientNetworkBufferSize = 1000
-      val request = HttpRequest(uri = s"https://akka.example.org", headers = headers.Connection("close") :: Nil)
+      val request = HttpRequest(uri = s"https://pekko.example.org", headers = headers.Connection("close") :: Nil)
 
       // settings adapting network buffer sizes
       val serverSettings =
@@ -828,7 +828,7 @@ Host: example.com
           Source.fromPublisher(source)))
 
       val serverSideTls = Http().sslTlsServerStage(ExampleHttpContexts.exampleServerContext)
-      val clientSideTls = Http().sslTlsClientStage(ExampleHttpContexts.exampleClientContext, "akka.example.org", 8080)
+      val clientSideTls = Http().sslTlsClientStage(ExampleHttpContexts.exampleClientContext, "pekko.example.org", 8080)
 
       val server: Flow[ByteString, ByteString, Any] =
         Http().serverLayer()
@@ -837,7 +837,7 @@ Host: example.com
           .join(Flow[HttpRequest].map(handler))
 
       val client =
-        Http().clientLayer(Host("akka.example.org", 8080))
+        Http().clientLayer(Host("pekko.example.org", 8080))
           .atop(clientSideTls)
 
       val killSwitch = KillSwitches.shared("kill-transport")

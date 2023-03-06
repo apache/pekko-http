@@ -25,7 +25,7 @@ import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, Connection, HttpE
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.{ ConnectionPoolSettings, ServerSettings }
 import pekko.stream.scaladsl._
-import pekko.stream.testkit.TestSubscriber.{ OnComplete, OnError }
+import pekko.stream.testkit.TestSubscriber.OnError
 import pekko.stream.testkit.scaladsl.{ StreamTestKit, TestSink }
 import pekko.stream.{ Server => _, _ }
 import pekko.testkit._
@@ -324,7 +324,7 @@ class GracefulTerminationSpec
     var idleTimeoutBaseForUniqueness = 10
 
     def nextRequest() =
-      HttpRequest(uri = s"https://akka.example.org/${counter.incrementAndGet()}", entity = "hello-from-client")
+      HttpRequest(uri = s"https://pekko.example.org/${counter.incrementAndGet()}", entity = "hello-from-client")
     val serverConnectionContext = ExampleHttpContexts.exampleServerContext
     val clientConnectionContext = ExampleHttpContexts.exampleClientContext
 
