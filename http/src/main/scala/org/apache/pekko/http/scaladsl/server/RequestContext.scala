@@ -28,7 +28,7 @@ import pekko.http.scaladsl.settings.{ ParserSettings, RoutingSettings }
  * This class is not meant to be extended by user code.
  *
  * Immutable object encapsulating the context of an [[pekko.http.scaladsl.model.HttpRequest]]
- * as it flows through a akka-http Route structure.
+ * as it flows through a pekko-http Route structure.
  */
 @DoNotInherit
 trait RequestContext {

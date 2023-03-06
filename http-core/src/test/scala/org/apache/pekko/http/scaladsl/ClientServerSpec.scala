@@ -873,7 +873,7 @@ Host: example.com
     "complete a request/response over https when server closes connection without close_notify" in Utils.assertAllStagesStopped {
       new CloseDelimitedTLSSetup {
         killSwitch.shutdown() // simulate FIN in server -> client direction
-        // akka-http is currently lenient wrt TLS truncation which is *not* reported to the user
+        // pekko-http is currently lenient wrt TLS truncation which is *not* reported to the user
         // FIXME: if https://github.com/apache/incubator-pekko-http/issues/235 is ever fixed, expect an error here
         sinkProbe.expectComplete()
       }

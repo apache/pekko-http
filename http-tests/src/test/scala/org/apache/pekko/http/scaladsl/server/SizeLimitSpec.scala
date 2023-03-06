@@ -62,7 +62,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
     val route = path("noDirective") {
       post {
         entity(as[String]) { _ =>
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to Pekko HTTP</h1>"))
         }
       }
     }
@@ -226,7 +226,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
       post {
         withoutSizeLimit {
           entity(as[String]) { _ =>
-            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
+            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to Pekko HTTP</h1>"))
           }
         }
       }
