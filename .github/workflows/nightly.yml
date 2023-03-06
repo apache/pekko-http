@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         SCALA_VERSION: [2.12, 2.13]
-        JABBA_JDK: [8, 11, 17]
+        JDK: [8, 11, 17]
         PEKKO_VERSION: [default]
     steps:
       - name: Checkout
@@ -22,12 +22,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK ${{ matrix.JABBA_JDK }}
-        uses: olafurpg/setup-scala@v10
-        env:
-          JABBA_INDEX: 'https://github.com/typelevel/jdk-index/raw/main/index.json'
+      - name: Set up JDK ${{ matrix.JDK }}
+        uses: actions/setup-java@v3
         with:
-          java-version: temurin@${{ matrix.JABBA_JDK }}
+          distribution: temurin
+          java-version: ${{ matrix.JDK }}
 
       - name: Cache Coursier cache
         uses: coursier/cache-action@v6.2
@@ -38,15 +37,18 @@ jobs:
           path: project/**/target
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
 
+      - name: Enable jvm-opts
+        run: cp .jvmopts-ci .jvmopts
+
       - name: Compile everything
         run: sbt -Dpekko.http.build.pekko.version=${{ matrix.PEKKO_VERSION }} ++${{ matrix.SCALA_VERSION }} Test/compile
 
-      - name: Run all tests JDK ${{ matrix.JABBA_JDK }}, Scala ${{ matrix.SCALA_VERSION }}, Akka ${{ matrix.PEKKO_VERSION }}
+      - name: Run all tests JDK ${{ matrix.JDK }}, Scala ${{ matrix.SCALA_VERSION }}, Akka ${{ matrix.PEKKO_VERSION }}
         run: sbt -Dpekko.http.parallelExecution=false -Dakka.test.timefactor=2 -Dpekko.http.build.pekko.version=${{ matrix.PEKKO_VERSION }} ++${{ matrix.SCALA_VERSION }} mimaReportBinaryIssues test
 
       - name: Upload test results
         uses: actions/upload-artifact@v2  # upload test results
         if: success() || failure()        # run this step even if previous step failed
         with:
-          name: test-results-${{ matrix.JABBA_JDK }}-${{ matrix.SCALA_VERSION }}-${{ matrix.PEKKO_VERSION }}
+          name: test-results-${{ matrix.JDK }}-${{ matrix.SCALA_VERSION }}-${{ matrix.PEKKO_VERSION }}
           path: '**/target/test-reports/*.xml'

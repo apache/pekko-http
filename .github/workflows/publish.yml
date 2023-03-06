@@ -17,9 +17,10 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 8
-        uses: olafurpg/setup-scala@v10
+        uses: actions/setup-java@v3
         with:
-          java-version: adopt@1.8
+          distribution: temurin
+          java-version: 8
 
       - name: Cache Coursier cache
         uses: coursier/cache-action@v6.2
@@ -27,8 +28,11 @@ jobs:
       - name: Install graphviz
         run: sudo apt-get install -y graphviz
 
+      - name: Enable jvm-opts
+        run: cp .jvmopts-ci .jvmopts
+
       - name: Publish to Apache Maven repo
-        run: sbt -jvm-opts .jvmopts-ghactions +publish
+        run: sbt +publish
         env:
           NEXUS_USER: ${{ secrets.NEXUS_USER }}
           NEXUS_PW: ${{ secrets.NEXUS_PW }}
@@ -44,12 +48,16 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 8
-        uses: olafurpg/setup-scala@v10
+        uses: actions/setup-java@v3
         with:
-          java-version: adopt@1.8
+          distribution: temurin
+          java-version: 8
 
       - name: Cache Coursier cache
         uses: coursier/cache-action@v6.2
+
+      - name: Enable jvm-opts
+        run: cp .jvmopts-ci .jvmopts
 
       - name: Build Documentation
         run: |-
