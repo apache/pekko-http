@@ -1022,7 +1022,8 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
       val netOut = TestSubscriber.manualProbe[ByteString]()
       val netIn = TestPublisher.manualProbe[ByteString]()
 
-      RunnableGraph.fromGraph(GraphDSL.create(OutgoingConnectionBlueprint(Host("example.com"), settings, NoLogging)) {
+      RunnableGraph.fromGraph(GraphDSL.createGraph(OutgoingConnectionBlueprint(Host("example.com"), settings,
+        NoLogging)) {
         implicit b => client =>
           import GraphDSL.Implicits._
           Source.fromPublisher(netIn)    ~> Flow[ByteString].map(SessionBytes(null, _))             ~> client.in2

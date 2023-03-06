@@ -886,7 +886,7 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
       //   2. when client connection was established, grab server connection as well and attach to proxies
       //      (cannot be implemented with just mapMaterializedValue because there's no transposing constructor for BidiFlow)
       BidiFlow.fromGraph(
-        GraphDSL.create(Sink.asPublisher[HttpResponse](fanout = false), Source.asSubscriber[HttpRequest],
+        GraphDSL.createGraph(Sink.asPublisher[HttpResponse](fanout = false), Source.asSubscriber[HttpRequest],
           clientConnectionFlow(serverBinding, connectionKillSwitch))((_, _, _)) {
           implicit builder => (resIn, reqOut, client) =>
             import GraphDSL.Implicits._

@@ -13,9 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 import org.apache.pekko
 import pekko.testkit.PekkoSpec
 import pekko.http.scaladsl.model.headers.`User-Agent`
@@ -160,11 +157,6 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
       settings.forHost("other.io").minConnections shouldEqual 22
       settings.forHost("akka.com").minConnections shouldEqual 2
       settings.minConnections shouldEqual 2
-    }
-
-    def expectError(configString: String): String = Try(config(configString)) match {
-      case Failure(cause) => cause.getMessage
-      case Success(_)     => fail("Expected a failure when max-open-requests is not a power of 2")
     }
   }
 

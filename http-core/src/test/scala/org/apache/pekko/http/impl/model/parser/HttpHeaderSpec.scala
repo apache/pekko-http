@@ -13,10 +13,14 @@
 
 package org.apache.pekko.http.impl.model.parser
 
+import org.scalatest.exceptions.TestFailedException
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.matchers.{ MatchResult, Matcher }
+
 import org.apache.pekko
 import pekko.http.scaladsl.settings.ParserSettings.CookieParsingMode
 import pekko.http.impl.model.parser.HeaderParser.Settings
-import org.scalatest.matchers.{ MatchResult, Matcher }
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model.{ HttpHeader, _ }
 import headers._
@@ -29,9 +33,6 @@ import HttpMethods._
 
 import java.net.InetAddress
 import pekko.http.scaladsl.model.MediaType.WithOpenCharset
-import org.scalatest.exceptions.TestFailedException
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.should.Matchers
 
 class HttpHeaderSpec extends AnyFreeSpec with Matchers {
   val `application/vnd.spray` = MediaType.applicationBinary("vnd.spray", MediaType.Compressible)
@@ -56,7 +57,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
           MediaRange.custom("text", Map("foo" -> "bar")),
           MediaType.customBinary("custom", "custom", MediaType.Compressible, params = Map("bar" -> "b>az")))
       "Accept: application/*+xml; version=2" =!=
-        Accept(MediaType.customBinary("application", "*+xml", MediaType.Compressible, params = Map("version" -> "2")))
+        Accept(MediaType.customBinary("application", "*+xml", MediaType.Compressible,
+          params = Map("version" -> "2")): MediaRange)
     }
 
     "Accept-Charset" in {

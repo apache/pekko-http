@@ -43,7 +43,7 @@ import pekko.stream.scaladsl.Keep
 object Http extends ExtensionId[Http] with ExtensionIdProvider {
   override def get(system: ActorSystem): Http = super.get(system)
   override def get(system: ClassicActorSystemProvider): Http = super.get(system)
-  def lookup() = Http
+  def lookup = Http
   def createExtension(system: ExtendedActorSystem): Http = new Http(system)
 }
 

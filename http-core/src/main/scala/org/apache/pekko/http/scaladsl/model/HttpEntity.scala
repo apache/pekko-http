@@ -14,12 +14,10 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.util.OptionalLong
-
 import language.implicitConversions
 import java.io.File
 import java.nio.file.{ Files, Path }
 import java.lang.{ Iterable => JIterable }
-
 import scala.util.control.NonFatal
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -38,10 +36,10 @@ import pekko.http.impl.util.JavaMapping.Implicits._
 import scala.compat.java8.OptionConverters._
 import scala.compat.java8.FutureConverters._
 import java.util.concurrent.CompletionStage
-
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.{ DoNotInherit, InternalApi }
 
+import scala.annotation.nowarn
 import scala.compat.java8.FutureConverters
 
 /**
@@ -664,6 +662,7 @@ object HttpEntity {
         private var maxBytes = -1L
         private var bytesLeft = Long.MaxValue
 
+        @nowarn("msg=getFirst in class Attributes is deprecated") // there's no valid alternative right now
         override def preStart(): Unit = {
           attributes.getFirst[SizeLimit] match {
             case Some(limit: SizeLimit) if limit.isDisabled =>

@@ -45,6 +45,9 @@ object Common extends AutoPlugin {
     (if (isJdk8) Seq.empty
      else if (scalaBinaryVersion.value == "2.12") Seq("-target:jvm-1.8")
      else Seq("-release", "8")),
+    Test / scalacOptions ++= Seq(
+      // we sometimes use pattern definitions in tests just for the side-effects and don't care about the extra member
+      "-Wconf:msg=Pattern definition introduces Unit-valued member:s"),
     javacOptions ++=
       Seq("-encoding", "UTF-8") ++ onlyOnJdk8("-source", "1.8") ++ onlyAfterJdk8("--release", "8"),
     // restrict to 'compile' scope because otherwise it is also passed to

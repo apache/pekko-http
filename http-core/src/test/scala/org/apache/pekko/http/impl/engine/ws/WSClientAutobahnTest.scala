@@ -50,7 +50,7 @@ object WSClientAutobahnTest extends App {
     s"ws://localhost:9001/updateReports?agent=$agent"
 
   def runCase(caseIndex: Int, agent: String = Agent): Future[CaseStatus] =
-    runWs(runCaseUri(caseIndex, agent), echo).recover { case _ => () }.flatMap { _ =>
+    runWs(runCaseUri(caseIndex, agent), echo).recover { case _ => (): Any }.flatMap { _ =>
       getCaseStatus(caseIndex, agent)
     }
 
