@@ -56,6 +56,9 @@ jobs:
       - name: Cache Coursier cache
         uses: coursier/cache-action@v6.2
 
+      - name: Enable jvm-opts
+        run: cp .jvmopts-ci .jvmopts
+
       - name: Build Documentation
         run: |-
           sbt -Dpekko.genjavadoc.enabled=true docs/paradox unidoc

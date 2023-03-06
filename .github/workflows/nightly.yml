@@ -37,6 +37,9 @@ jobs:
           path: project/**/target
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
 
+      - name: Enable jvm-opts
+        run: cp .jvmopts-ci .jvmopts
+
       - name: Compile everything
         run: sbt -Dpekko.http.build.pekko.version=${{ matrix.PEKKO_VERSION }} ++${{ matrix.SCALA_VERSION }} Test/compile
 
