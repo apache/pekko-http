@@ -80,7 +80,7 @@ jobs:
         run: cp .jvmopts-ci .jvmopts
 
       - name: Compile everything
-        run: sbt -v ++${{ matrix.SCALA_VERSION }} Test/compile
+        run: sbt ++${{ matrix.SCALA_VERSION }} Test/compile
 
       # Quick testing for PR validation
       - name: Validate pull request for JDK ${{ matrix.JDK }}, Scala ${{ matrix.SCALA_VERSION }}
