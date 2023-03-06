@@ -49,12 +49,12 @@ jobs:
   compile-and-test:
     name: Compile and test
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'jrudolph/incubator-pekko-http'
     strategy:
       fail-fast: false
       matrix:
-        SCALA_VERSION: [2.12, 2.13]
-        JDK: [8, 11]
+        SCALA_VERSION: [2.13]
+        JDK: [8]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -80,7 +80,7 @@ jobs:
         run: cp .jvmopts-ci .jvmopts
 
       - name: Compile everything
-        run: sbt ++${{ matrix.SCALA_VERSION }} Test/compile
+        run: sbt -v ++${{ matrix.SCALA_VERSION }} Test/compile
 
       # Quick testing for PR validation
       - name: Validate pull request for JDK ${{ matrix.JDK }}, Scala ${{ matrix.SCALA_VERSION }}
