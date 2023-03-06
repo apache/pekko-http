@@ -146,13 +146,6 @@ lazy val http = project("http")
   .enablePlugins(BootstrapGenjavadoc, BoilerplatePlugin)
   .enablePlugins(ReproducibleBuildsPlugin)
 
-def gustavDir(kind: String) = Def.task {
-  val ver =
-    if (isSnapshot.value) "snapshot"
-    else version.value
-  s"www/$kind/akka-http/$ver"
-}
-
 lazy val http2Tests = project("http2-tests")
   .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.http2"))
