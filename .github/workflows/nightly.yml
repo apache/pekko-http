@@ -23,10 +23,11 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK ${{ matrix.JABBA_JDK }}
-        uses: actions/setup-java@v3
+        uses: olafurpg/setup-scala@v10
+        env:
+          JABBA_INDEX: 'https://github.com/typelevel/jdk-index/raw/main/index.json'
         with:
-          distribution: temurin
-          java-version: ${{ matrix.JABBA_JDK }}
+          java-version: temurin@${{ matrix.JABBA_JDK }}
 
       - name: Cache Coursier cache
         uses: coursier/cache-action@v6.2
