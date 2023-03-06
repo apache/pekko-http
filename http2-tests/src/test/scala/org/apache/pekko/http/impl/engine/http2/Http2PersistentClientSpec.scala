@@ -404,7 +404,7 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
     object client {
 
       lazy val clientFlow = {
-        val builder = Http().connectionTo("akka.example.org")
+        val builder = Http().connectionTo("pekko.example.org")
           .withCustomHttpsConnectionContext(ExampleHttpContexts.exampleClientContext)
           .withClientConnectionSettings(clientSettings)
 

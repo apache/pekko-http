@@ -77,7 +77,7 @@ object ExampleHttpContexts {
 
   /**
    * A client transport that will rewrite the target address to a fixed address. This can be used
-   * to pretend to connect to akka.example.org which is required to connect to the example server certificate.
+   * to pretend to connect to pekko.example.org which is required to connect to the example server certificate.
    */
   def proxyTransport(realAddress: InetSocketAddress): ClientTransport =
     new ClientTransport {
