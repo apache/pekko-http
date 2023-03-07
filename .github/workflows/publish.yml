@@ -28,11 +28,8 @@ jobs:
       - name: Install graphviz
         run: sudo apt-get install -y graphviz
 
-      - name: Enable jvm-opts
-        run: cp .jvmopts-ci .jvmopts
-
       - name: Publish to Apache Maven repo
-        run: sbt +publish
+        run: sbt -jvm-opts .jvmopts-ci +publish
         env:
           NEXUS_USER: ${{ secrets.NEXUS_USER }}
           NEXUS_PW: ${{ secrets.NEXUS_PW }}
@@ -56,12 +53,9 @@ jobs:
       - name: Cache Coursier cache
         uses: coursier/cache-action@v6
 
-      - name: Enable jvm-opts
-        run: cp .jvmopts-ci .jvmopts
-
       - name: Build Documentation
         run: |-
-          sbt -Dpekko.genjavadoc.enabled=true docs/paradox unidoc
+          sbt -jvm-opts .jvmopts-ci -Dpekko.genjavadoc.enabled=true docs/paradox unidoc
 
       # Create directory structure upfront since rsync does not create intermediate directories otherwise
       - name: Create nightly directory structure
