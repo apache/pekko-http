@@ -207,3 +207,10 @@ pekko-http-core contains the sources of Twitter HPACK runtime support,
 moved into the source package `org.apache.pekko.http.shaded.com.twitter.hpack`
 so as to avoid version conflicts. This code is under an Apache 2.0 license.
 Copyright 2014 Twitter, Inc.
+
+---------------
+
+pekko-http-core contains code from scala-collection-compat in the `org.apache.pekko.http.ccompat` package
+which has written by the Scala-Lang team under an Apache 2.0 license.
+Copyright (c) 2002-2023 EPFL
+Copyright (c) 2011-2023 Lightbend, Inc.
