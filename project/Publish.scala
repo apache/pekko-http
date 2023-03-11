@@ -16,14 +16,15 @@ package org.apache.pekko
 import scala.language.postfixOps
 import sbt.{ Def, _ }
 import Keys._
-import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
 import org.mdedetrich.apache.sonatype.SonatypeApachePlugin
+import sbtdynver.DynVerPlugin
+import sbtdynver.DynVerPlugin.autoImport.dynverSonatypeSnapshots
 
 /**
  * For projects that are not published.
  */
 object NoPublish extends AutoPlugin {
-  override def requires = plugins.JvmPlugin
+  override def requires = plugins.JvmPlugin && DynVerPlugin
 
   override def projectSettings = Seq(
     publish / skip := true,
@@ -44,4 +45,7 @@ object Publish extends AutoPlugin {
         "Apache Pekko HTTP Contributors",
         "dev@pekko.apache.org",
         url("https://github.com/apache/incubator-pekko-http/graphs/contributors"))))
+
+  override lazy val buildSettings = Seq(
+    dynverSonatypeSnapshots := true)
 }
