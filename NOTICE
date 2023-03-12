@@ -12,8 +12,7 @@ Apache License, Version 2.0 License.
 
 ---------------
 
-pekko-http-core contains code from scala-collection-compat which has changes made by the Scala-Lang team
-under an Apache 2.0 license.
+pekko-http-core contains code from scala-collection-compat distributed under the Apache 2.0 license.
 
 scala-collection-compat
 Copyright (c) 2002-2023 EPFL
