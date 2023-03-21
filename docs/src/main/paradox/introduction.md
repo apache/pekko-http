@@ -54,16 +54,14 @@ For Scala (sbt)
 @@@ div { .group-java }
 For Java (Maven or Gradle)
 :  ```sh
-    sbt new akka/akka-http-quickstart-java.g8
+    sbt new theiterators/pekko-http-quickstart-java.g8
     ```
 From there on the prepared project can be built using Gradle or Maven.
-Unfortunately, we do not yet have a Java template but it should be easy to migrate an Akka project to use
-Pekko instead.
 @@@
 
 More instructions can be found on the @scala[[template
 project](https://github.com/theiterators/pekko-http-quickstart-scala.g8)]@java[[template
-project](https://github.com/akka/akka-http-quickstart-java.g8)].
+project](https://github.com/theiterators/pekko-http-quickstart-java.g8)].
 
 ## Routing DSL for HTTP servers
 
