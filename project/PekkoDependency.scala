@@ -59,7 +59,8 @@ object PekkoDependency {
   val minimumExpectedPekko26Version = "1.0.0"
   val docs = pekkoDependency(defaultVersion = minimumExpectedPekko26Version)
 
-  lazy val mainSnapshot = Artifact(determineLatestSnapshot("0.0.0"), true)
+  // TODO: Revert to Artifact(determineLatestSnapshot(...), true) when Pekko has its first release
+  lazy val mainSnapshot = Artifact("0.0.0+26623-85c2a469-SNAPSHOT", true)
 
   val pekkoVersion: String = default match {
     case Artifact(version, _) => version
