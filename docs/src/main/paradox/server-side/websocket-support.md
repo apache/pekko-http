@@ -3,7 +3,7 @@
 WebSocket is a protocol that provides a bi-directional channel between browser and webserver usually run over an
 upgraded HTTP(S) connection. Data is exchanged in messages whereby a message can either be binary data or Unicode text.
 
-Akka HTTP provides a stream-based implementation of the WebSocket protocol that hides the low-level details of the
+Apache Pekko HTTP provides a stream-based implementation of the WebSocket protocol that hides the low-level details of the
 underlying binary framing wire-protocol and provides a simple API to implement services using WebSocket.
 
 ## Model
@@ -44,7 +44,7 @@ against remote peers where data is received over a physical network connection.)
 
 For sending data, you can use @scala[`TextMessage.apply(text: String)`]@java[`TextMessage.create(String)`] to create a strict message if the
 complete message has already been assembled. Otherwise, use @scala[`TextMessage.apply(textStream: Source[String, \_])`]@java[`TextMessage.create(Source<String, ?>)`]
-to create a streaming message from an Akka Stream source.
+to create a streaming message from an Apache Pekko Stream source.
 
 ## Routing support
 
@@ -82,10 +82,10 @@ To handle websocket requests, you can either use the @apidoc[WebSocketUpgrade] a
 use the more high-level @ref[Routing Support](#routing-support) described above.
 
 The entrypoint for the WebSocket API is the @apidoc[WebSocketUpgrade] attribute which is added to a request
-if Akka HTTP encounters a WebSocket upgrade request.
+if Apache Pekko HTTP encounters a WebSocket upgrade request.
 
 The WebSocket specification mandates that details of the WebSocket connection are negotiated by placing special-purpose
-HTTP headers into request and response of the HTTP upgrade. In Akka HTTP these HTTP-level details of the WebSocket
+HTTP headers into request and response of the HTTP upgrade. In Apache Pekko HTTP these HTTP-level details of the WebSocket
 handshake are hidden from the application and don't need to be managed manually.
 
 Instead, the @apidoc[WebSocketUpgrade] attribute represents a valid WebSocket upgrade request. An application can detect
@@ -158,9 +158,9 @@ Those are often used as a way to keep otherwise idle connections from being clos
 connection remains usable even after no data frames are communicated over a longer period of time. Such heartbeat may be 
 initiated by either side of the connection, and the choice which side performs the heart beating is use-case dependent. 
 
-This is supported in a transparent way via configuration in Akka HTTP, and you can enable it by setting the: 
+This is supported in a transparent way via configuration in Apache Pekko HTTP, and you can enable it by setting the: 
 `akka.http.server.websocket.periodic-keep-alive-max-idle = 1 second` to a specified max idle timeout. The keep alive triggers
-when no other messages are in-flight during the such configured period. Akka HTTP will then automatically send
+when no other messages are in-flight during the such configured period. Apache Pekko HTTP will then automatically send
 a [`Ping` frame](https://tools.ietf.org/html/rfc6455#section-5.5.2) for each of such idle intervals.
 
 By default, the automatic keep-alive feature is disabled.

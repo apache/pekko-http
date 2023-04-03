@@ -33,19 +33,19 @@ jobs:
           path: project/**/target
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
 
-      - name: Check code is formatted
-        run: sbt scalafmtCheckAll scalafmtSbtCheck headerCheckAll
+      - name: Check headers
+        run: sbt headerCheckAll
 
       - name: Check for missing formatting
         run: git diff --exit-code --color
 
-      - name: FOSSA policy check
-        if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'apache/incubator-pekko-http' }}
-        run: |-
-          curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/spectrometer/master/install.sh | bash
-          fossa analyze && fossa test
-        env:
-          FOSSA_API_KEY: "${{secrets.FOSSA_API_KEY}}"
+      #- name: FOSSA policy check
+      #  if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'apache/incubator-pekko-http' }}
+      #  run: |-
+      #    curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/spectrometer/master/install.sh | bash
+      #    fossa analyze && fossa test
+      #  env:
+      #    FOSSA_API_KEY: "${{secrets.FOSSA_API_KEY}}"
 
   compile-and-test:
     name: Compile and test

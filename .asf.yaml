@@ -25,11 +25,6 @@ github:
   enabled_merge_buttons:
     squash:  true
     merge:   false
-    rebase:  true  
-
-  enabled_merge_buttons:
-    squash:  true
-    merge:   false
     rebase:  true
 
   protected_branches:

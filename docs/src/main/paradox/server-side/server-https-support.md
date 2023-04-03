@@ -1,6 +1,6 @@
 # Server HTTPS Support
 
-Akka HTTP supports TLS encryption on the server-side as well as on the @ref[client-side](../client-side/client-https-support.md).
+Apache Pekko HTTP supports TLS encryption on the server-side as well as on the @ref[client-side](../client-side/client-https-support.md).
 
 The central vehicle for configuring encryption is the @apidoc[HttpsConnectionContext], which can be created using
 the static method `ConnectionContext.httpsServer` which is defined like this:
@@ -86,7 +86,7 @@ Oracle in reaction to various security updates and known issues.
 
 We also recommend having a look at the [Play documentation about securing your app](https://www.playframework.com/documentation/2.5.x/ConfiguringHttps#ssl-certificates),
 as well as the techniques described in the Play documentation about setting up a [reverse proxy to terminate TLS in
-front of your application](https://www.playframework.com/documentation/2.5.x/HTTPServer) instead of terminating TLS inside the JVM, and therefore Akka HTTP, itself.
+front of your application](https://www.playframework.com/documentation/2.5.x/HTTPServer) instead of terminating TLS inside the JVM, and therefore Apache Pekko HTTP, itself.
 
 Other excellent articles on the subject:
 

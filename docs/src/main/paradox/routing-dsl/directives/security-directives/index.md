@@ -48,12 +48,12 @@ authentication information. The general mechanism is defined in [RFC 7235](https
 The "HTTP Authentication Scheme Registry" defines the namespace for the authentication schemes in challenges and
 credentials. You can see the currently registered schemes at [IANA HTTP Authentication Scheme Registry](https://www.iana.org/assignments/http-authschemes/http-authschemes.xhtml).
 
-At this point Akka HTTP only implements the "'Basic' HTTP Authentication Scheme" whose most current specification can be
+At this point, Apache Pekko HTTP only implements the "'Basic' HTTP Authentication Scheme" whose most current specification can be
 found here: <https://datatracker.ietf.org/doc/rfc7617/>.
 
 ## Low-level OAuth2 "Bearer Token" directives
 
-The OAuth2 directives currently provided in Akka HTTP are not a full OAuth2 protocol implementation,
+The OAuth2 directives currently provided in Apache Pekko HTTP are not a full OAuth2 protocol implementation,
 they are only a means of extracting the so called `Bearer Token` from the @apidoc[Authorization] HTTP Header,
 as defined in [RFC 6750](https://tools.ietf.org/html/rfc6750), and allow users to validate and complete the protocol.
 

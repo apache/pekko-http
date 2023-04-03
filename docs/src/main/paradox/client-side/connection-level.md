@@ -60,9 +60,9 @@ explicitly drained by attaching it to `Sink.ignore()`.
 Currently Apache Pekko HTTP doesn't implement client-side request timeout checking itself as this functionality can be regarded
 as a more general purpose streaming infrastructure feature.
 
-It should be noted that Akka Streams provide various timeout functionality so any API that uses streams can benefit
+It should be noted that Apache Pekko Streams provide various timeout functionality so any API that uses streams can benefit
 from the stream stages such as `idleTimeout`, `backpressureTimeout`, `completionTimeout`, `initialTimeout`
-and `throttle`. To learn more about these refer to their documentation in Akka Streams.
+and `throttle`. To learn more about these refer to their documentation in Apache Pekko Streams.
 
 For more details about timeout support in Apache Pekko HTTP in general refer to @ref[Apache Pekko HTTP Timeouts](../common/timeouts.md).
 
