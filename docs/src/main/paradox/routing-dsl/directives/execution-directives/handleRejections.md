@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [ExecutionDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/ExecutionDirectives.scala) { #handleRejections }
+@@signature [ExecutionDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/ExecutionDirectives.scala) { #handleRejections }
 
 @@@
 

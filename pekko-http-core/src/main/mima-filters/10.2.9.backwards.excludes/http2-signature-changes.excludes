@@ -1,2 +1,0 @@
-# Changes to internal signatures
-ProblemFilters.exclude[Problem]("akka.http.impl.engine.http2.*")

@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [MethodDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/MethodDirectives.scala) { #extractMethod }
+@@signature [MethodDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/MethodDirectives.scala) { #extractMethod }
 
 @@@
 

@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [RespondWithDirectives.scala](/pekko-http/src/main/scala/akka/http/scaladsl/server/directives/RespondWithDirectives.scala) { #respondWithDefaultHeader }
+@@signature [RespondWithDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/RespondWithDirectives.scala) { #respondWithDefaultHeader }
 
 @@@
 
