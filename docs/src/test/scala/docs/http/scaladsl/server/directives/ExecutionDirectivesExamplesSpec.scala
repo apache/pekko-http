@@ -10,7 +10,7 @@ import docs.CompileOnlySpec
 
 class ExecutionDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "handleExceptions" in {
-    //#handleExceptions
+    // #handleExceptions
     val divByZeroHandler = ExceptionHandler {
       case _: ArithmeticException => complete(StatusCodes.BadRequest, "You've got your arithmetic wrong, fool!")
     }
@@ -29,10 +29,10 @@ class ExecutionDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.BadRequest
       responseAs[String] shouldEqual "You've got your arithmetic wrong, fool!"
     }
-    //#handleExceptions
+    // #handleExceptions
   }
   "handleRejections" in {
-    //#handleRejections
+    // #handleRejections
     val totallyMissingHandler = RejectionHandler.newBuilder()
       .handleNotFound { complete(StatusCodes.NotFound, "Oh man, what you are looking for is long gone.") }
       .handle { case ValidationRejection(msg, _) => complete(StatusCodes.InternalServerError, msg) }
@@ -41,7 +41,7 @@ class ExecutionDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       pathPrefix("handled") {
         handleRejections(totallyMissingHandler) {
           path("existing")(complete("This path exists")) ~
-            path("boom")(reject(new ValidationRejection("This didn't work.")))
+          path("boom")(reject(new ValidationRejection("This didn't work.")))
         }
       }
 
@@ -61,6 +61,6 @@ class ExecutionDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.InternalServerError
       responseAs[String] shouldEqual "This didn't work."
     }
-    //#handleRejections
+    // #handleRejections
   }
 }

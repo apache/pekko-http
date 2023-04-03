@@ -50,19 +50,19 @@ class MiscDirectivesSpec extends RoutingSpec {
   }
 
   "the selectPreferredLanguage directive" should {
-    "Accept-Language: de, en" test { selectFrom =>
+    "Accept-Language: de, en".test { selectFrom =>
       selectFrom("de", "en") shouldEqual "de"
       selectFrom("en", "de") shouldEqual "en"
     }
-    "Accept-Language: en, de;q=.5" test { selectFrom =>
+    "Accept-Language: en, de;q=.5".test { selectFrom =>
       selectFrom("de", "en") shouldEqual "en"
       selectFrom("en", "de") shouldEqual "en"
     }
-    "Accept-Language: en;q=.5, de" test { selectFrom =>
+    "Accept-Language: en;q=.5, de".test { selectFrom =>
       selectFrom("de", "en") shouldEqual "de"
       selectFrom("en", "de") shouldEqual "de"
     }
-    "Accept-Language: en-US, en;q=.7, *;q=.1, de;q=.5" test { selectFrom =>
+    "Accept-Language: en-US, en;q=.7, *;q=.1, de;q=.5".test { selectFrom =>
       selectFrom("en", "en-US") shouldEqual "en-US"
       selectFrom("de", "en") shouldEqual "en"
       selectFrom("de", "hu") shouldEqual "de"
@@ -70,12 +70,12 @@ class MiscDirectivesSpec extends RoutingSpec {
       selectFrom("hu", "es") shouldEqual "hu"
       selectFrom("es", "hu") shouldEqual "es"
     }
-    "Accept-Language: en, *;q=.5, de;q=0" test { selectFrom =>
+    "Accept-Language: en, *;q=.5, de;q=0".test { selectFrom =>
       selectFrom("es", "de") shouldEqual "es"
       selectFrom("de", "es") shouldEqual "es"
       selectFrom("es", "en") shouldEqual "en"
     }
-    "Accept-Language: en, *;q=0" test { selectFrom =>
+    "Accept-Language: en, *;q=0".test { selectFrom =>
       selectFrom("es", "de") shouldEqual "es"
       selectFrom("de", "es") shouldEqual "de"
       selectFrom("es", "en") shouldEqual "en"
@@ -127,11 +127,11 @@ class MiscDirectivesSpec extends RoutingSpec {
       Post("/abc", formDataOfSize(128)) ~> Route.seal(route) ~> check {
         status shouldEqual StatusCodes.PayloadTooLarge
         responseAs[String] shouldEqual "The request content was malformed:\n" +
-          "EntityStreamSizeException: incoming entity size (134) " +
-          "exceeded size limit (64 bytes)! " +
-          "This may have been a parser limit (set via `akka.http.[server|client].parsing.max-content-length`), " +
-          "a decoder limit (set via `akka.http.routing.decode-max-size`), " +
-          "or a custom limit set with `withSizeLimit`."
+        "EntityStreamSizeException: incoming entity size (134) " +
+        "exceeded size limit (64 bytes)! " +
+        "This may have been a parser limit (set via `akka.http.[server|client].parsing.max-content-length`), " +
+        "a decoder limit (set via `akka.http.routing.decode-max-size`), " +
+        "or a custom limit set with `withSizeLimit`."
       }
     }
 
@@ -197,7 +197,7 @@ class MiscDirectivesSpec extends RoutingSpec {
         val Array(name, value) = acceptLanguageHeaderString.split(':')
         val acceptLanguageHeader = HttpHeader.parse(name.trim, value) match {
           case HttpHeader.ParsingResult.Ok(h: `Accept-Language`, Nil) => h
-          case result => fail(result.toString)
+          case result                                                 => fail(result.toString)
         }
         body { availableLangs =>
           val selected = Promise[String]()

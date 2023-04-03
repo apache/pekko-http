@@ -20,11 +20,20 @@ final class PathMatchers
 object PathMatchers {
   import JavaPathMatchers._
 
-  private[this] val IntegerSegment: PathMatcher1[java.lang.Integer] = fromScala1(SPathMatchers.IntNumber.map { i => i: java.lang.Integer })
-  private[this] val LongSegment: PathMatcher1[java.lang.Long] = fromScala1(SPathMatchers.LongNumber.map { i => i: java.lang.Long })
-  private[this] val HexIntegerSegment: PathMatcher1[java.lang.Integer] = fromScala1(SPathMatchers.HexIntNumber.map { i => i: java.lang.Integer })
-  private[this] val HexLongSegment: PathMatcher1[java.lang.Long] = fromScala1(SPathMatchers.HexLongNumber.map { i => i: java.lang.Long })
-  private[this] val DoubleSegment: PathMatcher1[java.lang.Double] = fromScala1(SPathMatchers.DoubleNumber.map { i => i: java.lang.Double })
+  private[this] val IntegerSegment: PathMatcher1[java.lang.Integer] = fromScala1(SPathMatchers.IntNumber.map { i =>
+    i: java.lang.Integer
+  })
+  private[this] val LongSegment: PathMatcher1[java.lang.Long] = fromScala1(SPathMatchers.LongNumber.map { i =>
+    i: java.lang.Long
+  })
+  private[this] val HexIntegerSegment: PathMatcher1[java.lang.Integer] =
+    fromScala1(SPathMatchers.HexIntNumber.map { i => i: java.lang.Integer })
+  private[this] val HexLongSegment: PathMatcher1[java.lang.Long] = fromScala1(SPathMatchers.HexLongNumber.map { i =>
+    i: java.lang.Long
+  })
+  private[this] val DoubleSegment: PathMatcher1[java.lang.Double] = fromScala1(SPathMatchers.DoubleNumber.map { i =>
+    i: java.lang.Double
+  })
   private[this] val UUIDSegment: PathMatcher1[UUID] = fromScala1(SPathMatchers.JavaUUID)
 
   private[this] val Neutral = fromScala0(SPathMatchers.Neutral)
@@ -59,14 +68,16 @@ object PathMatchers {
    * the capture group (if the regex contains exactly one).
    * If the regex contains more than one capture group the method throws an IllegalArgumentException.
    */
-  def segment(regex: Pattern): PathMatcher1[String] = new PathMatcher1[String](SPathMatcher[Tuple1[String]](toScala(regex)))
+  def segment(regex: Pattern): PathMatcher1[String] =
+    new PathMatcher1[String](SPathMatcher[Tuple1[String]](toScala(regex)))
 
   /**
    * A PathMatcher that matches between `min` and `max` (both inclusively) path segments (separated by slashes)
    * as a List[String]. If there are more than `count` segments present the remaining ones will be left unmatched.
    * If the path has a trailing slash this slash will *not* be matched.
    */
-  def segments(min: Int, max: Int): PathMatcher1[java.util.List[String]] = new PathMatcher1[java.util.List[String]](SPathMatchers.Segments(min, max).map(_.asJava))
+  def segments(min: Int, max: Int): PathMatcher1[java.util.List[String]] =
+    new PathMatcher1[java.util.List[String]](SPathMatchers.Segments(min, max).map(_.asJava))
 
   /**
    * A PathMatcher that matches the given number of path segments (separated by slashes) as a List[String].
@@ -151,4 +162,3 @@ object PathMatchers {
   def segments: PathMatcher1[java.util.List[String]] = Segments
 
 }
-

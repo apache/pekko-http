@@ -23,13 +23,12 @@ import akka.stream.testkit.TestSubscriber
 import scala.util.Try
 
 class HttpExtensionApiSpec extends AkkaSpecWithMaterializer(
-  """
+      """
     akka.http.server.log-unencrypted-network-bytes = 100
     akka.http.client.log-unencrypted-network-bytes = 100
     akka.http.server.request-timeout = infinite
     akka.io.tcp.trace-logging = true
-  """
-) {
+  """) {
 
   // tries to cover all surface area of javadsl.Http
 
@@ -135,7 +134,8 @@ class HttpExtensionApiSpec extends AkkaSpecWithMaterializer(
     }
 
     "properly bind and handle a server with a synchronous (with settings and log)" in new TestSetup {
-      def bind() = http.newServerAt("127.0.0.1", 0).withSettings(serverSettings).logTo(loggingAdapter).bindSync(httpSuccessFunction)
+      def bind() = http.newServerAt("127.0.0.1", 0).withSettings(serverSettings).logTo(loggingAdapter).bindSync(
+        httpSuccessFunction)
     }
 
     "properly bind and handle a server with an asynchronous function (simple)" in new TestSetup {
@@ -143,7 +143,8 @@ class HttpExtensionApiSpec extends AkkaSpecWithMaterializer(
     }
 
     "properly bind and handle a server with an asynchronous function (with settings and log)" in new TestSetup {
-      def bind() = http.newServerAt("127.0.0.1", 0).withSettings(serverSettings).logTo(loggingAdapter).bind(asyncHttpSuccessFunction)
+      def bind() = http.newServerAt("127.0.0.1", 0).withSettings(serverSettings).logTo(loggingAdapter).bind(
+        asyncHttpSuccessFunction)
     }
 
     "have serverLayer methods" in {
@@ -341,7 +342,8 @@ class HttpExtensionApiSpec extends AkkaSpecWithMaterializer(
 
     "allow a single request (with five parameters)" in {
       val (host, port, binding) = runServer()
-      val response = http.singleRequest(HttpRequest.GET(s"http://$host:$port/"), http.defaultClientHttpsContext, poolSettings, loggingAdapter)
+      val response = http.singleRequest(HttpRequest.GET(s"http://$host:$port/"), http.defaultClientHttpsContext,
+        poolSettings, loggingAdapter)
 
       waitFor(response).status() should be(StatusCodes.OK)
       waitFor(binding.unbind())
@@ -362,7 +364,8 @@ class HttpExtensionApiSpec extends AkkaSpecWithMaterializer(
 
     "interact with a websocket through a flow (with five parameters)" in {
       val (host, port, binding) = runWebsocketServer()
-      val flow = http.webSocketClientFlow(WebSocketRequest.create(s"ws://$host:$port"), connectionContext, Optional.empty(), ClientConnectionSettings.create(system), loggingAdapter)
+      val flow = http.webSocketClientFlow(WebSocketRequest.create(s"ws://$host:$port"), connectionContext,
+        Optional.empty(), ClientConnectionSettings.create(system), loggingAdapter)
       val pair = Source.single(TextMessage.create("hello"))
         .viaMat(flow, Keep.right[NotUsed, CompletionStage[WebSocketUpgradeResponse]])
         .toMat(Sink.head[Message](), Keep.both[CompletionStage[WebSocketUpgradeResponse], CompletionStage[Message]])
@@ -386,8 +389,7 @@ class HttpExtensionApiSpec extends AkkaSpecWithMaterializer(
 
   def runWebsocketServer(): (Host, Port, ServerBinding) = {
     val server = http.newServerAt("127.0.0.1", 0).bindSync(request =>
-      WebSocket.handleWebSocketRequestWith(request, Flow.create[Message]())
-    )
+      WebSocket.handleWebSocketRequestWith(request, Flow.create[Message]()))
 
     val binding = waitFor(server)
     (binding.localAddress.getHostString, binding.localAddress.getPort, binding)

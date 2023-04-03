@@ -19,6 +19,7 @@ import akka.http.scaladsl.model
  */
 @InternalApi
 private[http] object JavaAccessors {
+
   /** INTERNAL API */
   def HttpRequest(): HttpRequest = model.HttpRequest()
 

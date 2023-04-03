@@ -21,13 +21,14 @@ class DiscardEntityDefaultExceptionHandlerSpec extends RoutingSpec with ScalaFut
   private val route = concat(
     path("crash") {
       throw new RuntimeException("BOOM!")
-    }, path("crashAfterConsuming") {
+    },
+    path("crashAfterConsuming") {
       extractRequestEntity { entity =>
-        val future: Future[String] = entity.dataBytes.runFold(ByteString.empty)(_ ++ _).map(_ => throw new RuntimeException("KABOOM!"))
+        val future: Future[String] =
+          entity.dataBytes.runFold(ByteString.empty)(_ ++ _).map(_ => throw new RuntimeException("KABOOM!"))
         complete(future)
       }
-    }
-  )
+    })
 
   trait Fixture {
     @volatile
@@ -42,7 +43,8 @@ class DiscardEntityDefaultExceptionHandlerSpec extends RoutingSpec with ScalaFut
   "Default ExceptionHandler" should {
     "rejectEntity by default" in new Fixture {
       streamConsumed shouldBe false
-      Get("/crash", HttpEntity(`text/plain(UTF-8)`, Source[ByteString](thousandElements))) ~> Route.seal(route) ~> check {
+      Get("/crash", HttpEntity(`text/plain(UTF-8)`, Source[ByteString](thousandElements))) ~> Route.seal(
+        route) ~> check {
         status shouldBe InternalServerError
         eventually { // Stream will be eventually consumed, once all the stream bytes are successfully discarded
           streamConsumed shouldBe true
@@ -52,7 +54,8 @@ class DiscardEntityDefaultExceptionHandlerSpec extends RoutingSpec with ScalaFut
 
     "rejectEntity by default even if consumed already" in new Fixture {
       streamConsumed shouldBe false
-      Get("/crashAfterConsuming", HttpEntity(`text/plain(UTF-8)`, Source[ByteString](thousandElements))) ~> Route.seal(route) ~> check {
+      Get("/crashAfterConsuming", HttpEntity(`text/plain(UTF-8)`, Source[ByteString](thousandElements))) ~> Route.seal(
+        route) ~> check {
         // Stream should be consumed immediately after the request finishes
         streamConsumed shouldBe true
         status shouldBe InternalServerError

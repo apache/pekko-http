@@ -18,9 +18,11 @@ import akka.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 private[http] object One2OneBidiFlow {
 
   case class UnexpectedOutputException(element: Any)
-    extends RuntimeException(s"Inner flow produced unexpected result element '$element' when no element was outstanding")
+      extends RuntimeException(
+        s"Inner flow produced unexpected result element '$element' when no element was outstanding")
   case class OutputTruncationException(missingOutputElements: Int)
-    extends RuntimeException(s"Inner flow was completed without producing result elements for $missingOutputElements outstanding elements")
+      extends RuntimeException(
+        s"Inner flow was completed without producing result elements for $missingOutputElements outstanding elements")
 
   /**
    * Creates a generic ``BidiFlow`` which verifies that another flow produces exactly one output element per
@@ -36,9 +38,9 @@ private[http] object One2OneBidiFlow {
    *    which is given via the ``maxPending`` parameter. You can use -1 to disable this feature.
    */
   def apply[I, O](
-    maxPending:                Int,
-    outputTruncationException: Int => Throwable = OutputTruncationException(_),
-    unexpectedOutputException: Any => Throwable = UnexpectedOutputException(_)): BidiFlow[I, I, O, O, NotUsed] =
+      maxPending: Int,
+      outputTruncationException: Int => Throwable = OutputTruncationException(_),
+      unexpectedOutputException: Any => Throwable = UnexpectedOutputException(_)): BidiFlow[I, I, O, O, NotUsed] =
     BidiFlow.fromGraph(new One2OneBidi[I, O](maxPending, outputTruncationException, unexpectedOutputException))
 
   /*
@@ -49,9 +51,9 @@ private[http] object One2OneBidiFlow {
    *    +--------------------+
    */
   class One2OneBidi[I, O](
-    maxPending:                Int,
-    outputTruncationException: Int => Throwable,
-    unexpectedOutputException: Any => Throwable) extends GraphStage[BidiShape[I, I, O, O]] {
+      maxPending: Int,
+      outputTruncationException: Int => Throwable,
+      unexpectedOutputException: Any => Throwable) extends GraphStage[BidiShape[I, I, O, O]] {
     val in = Inlet[I]("One2OneBidi.in")
     val out = Outlet[O]("One2OneBidi.out")
     val toWrapped = Outlet[I]("One2OneBidi.toWrapped")
@@ -66,43 +68,47 @@ private[http] object One2OneBidiFlow {
       private var insideWrappedFlow = 0
       private var pullSuppressed = false
 
-      setHandler(in, new InHandler {
-        override def onPush(): Unit = {
-          insideWrappedFlow += 1
-          push(toWrapped, grab(in))
-        }
-        override def onUpstreamFinish(): Unit = complete(toWrapped)
-      })
+      setHandler(in,
+        new InHandler {
+          override def onPush(): Unit = {
+            insideWrappedFlow += 1
+            push(toWrapped, grab(in))
+          }
+          override def onUpstreamFinish(): Unit = complete(toWrapped)
+        })
 
-      setHandler(toWrapped, new OutHandler {
-        override def onPull(): Unit =
-          if (insideWrappedFlow < maxPending || maxPending == -1) pull(in)
-          else pullSuppressed = true
-        override def onDownstreamFinish(): Unit = cancel(in)
-      })
+      setHandler(toWrapped,
+        new OutHandler {
+          override def onPull(): Unit =
+            if (insideWrappedFlow < maxPending || maxPending == -1) pull(in)
+            else pullSuppressed = true
+          override def onDownstreamFinish(): Unit = cancel(in)
+        })
 
-      setHandler(fromWrapped, new InHandler {
-        override def onPush(): Unit = {
-          val element = grab(fromWrapped)
-          if (insideWrappedFlow > 0) {
-            insideWrappedFlow -= 1
-            push(out, element)
-            if (pullSuppressed) {
-              pullSuppressed = false
-              if (!isClosed(in)) pull(in)
-            }
-          } else failStage(unexpectedOutputException(element))
-        }
-        override def onUpstreamFinish(): Unit = {
-          if (insideWrappedFlow > 0) failStage(outputTruncationException(insideWrappedFlow))
-          else completeStage()
-        }
-      })
+      setHandler(fromWrapped,
+        new InHandler {
+          override def onPush(): Unit = {
+            val element = grab(fromWrapped)
+            if (insideWrappedFlow > 0) {
+              insideWrappedFlow -= 1
+              push(out, element)
+              if (pullSuppressed) {
+                pullSuppressed = false
+                if (!isClosed(in)) pull(in)
+              }
+            } else failStage(unexpectedOutputException(element))
+          }
+          override def onUpstreamFinish(): Unit = {
+            if (insideWrappedFlow > 0) failStage(outputTruncationException(insideWrappedFlow))
+            else completeStage()
+          }
+        })
 
-      setHandler(out, new OutHandler {
-        override def onPull(): Unit = pull(fromWrapped)
-        override def onDownstreamFinish(): Unit = cancel(fromWrapped)
-      })
+      setHandler(out,
+        new OutHandler {
+          override def onPull(): Unit = pull(fromWrapped)
+          override def onDownstreamFinish(): Unit = cancel(fromWrapped)
+        })
     }
   }
 }

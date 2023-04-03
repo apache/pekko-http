@@ -30,4 +30,3 @@ object ResponsePromise {
   val Key = AttributeKey[ResponsePromise]("association-future-handle")
   def apply(promise: Promise[HttpResponse]): ResponsePromise = new ResponsePromise(promise)
 }
-

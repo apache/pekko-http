@@ -27,7 +27,7 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.HttpEntity._
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{ Accept, Age, Date, Host, Server, `User-Agent` }
+import akka.http.scaladsl.model.headers.{ `User-Agent`, Accept, Age, Date, Host, Server }
 import akka.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings, ServerSettings }
 import akka.io.Tcp.SO
 import akka.stream.scaladsl._
@@ -49,13 +49,12 @@ class ClientServerSpec extends ClientServerSpecBase(http2 = false)
 class ClientServerHttp2EnabledSpec extends ClientServerSpecBase(http2 = true)
 
 abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterializer(
-  s"""
+      s"""
      akka.http.server.preview.enable-http2 = $http2
      akka.http.server.request-timeout = infinite
      akka.http.server.log-unencrypted-network-bytes = 200
      akka.http.client.log-unencrypted-network-bytes = 200
-  """
-) with ScalaFutures {
+  """) with ScalaFutures {
   import system.dispatcher
 
   val testConf2: Config =
@@ -78,11 +77,12 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
       val probe = TestSubscriber.manualProbe[Http.IncomingConnection]()
       // not really testing anything here, problem is that it is hard to find an unused port otherwise
       val settings = ServerSettings(system).withDefaultHttpPort(0)
-      val bindingF = Http().newServerAt("0.0.0.0", 0).withSettings(settings).connectionSource().to(Sink.fromSubscriber(probe)).run()
+      val bindingF =
+        Http().newServerAt("0.0.0.0", 0).withSettings(settings).connectionSource().to(Sink.fromSubscriber(probe)).run()
       val sub = probe.expectSubscription() // if we get it we are bound
       val binding = Await.result(bindingF, 1.second.dilated)
       // though, that wouldn't probably happen because binding ports < 1024 is restricted in most environments
-      binding.localAddress.getPort should not be (80)
+      binding.localAddress.getPort should not be 80
       binding.unbind()
       sub.cancel()
     }
@@ -96,11 +96,15 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
       probe1.expectSubscription()
 
       val probe2 = TestSubscriber.manualProbe[Http.IncomingConnection]()
-      an[BindFailedException] shouldBe thrownBy { Await.result(binding.to(Sink.fromSubscriber(probe2)).run(), 3.seconds.dilated) }
+      an[BindFailedException] shouldBe thrownBy {
+        Await.result(binding.to(Sink.fromSubscriber(probe2)).run(), 3.seconds.dilated)
+      }
       probe2.expectSubscriptionAndError()
 
       val probe3 = TestSubscriber.manualProbe[Http.IncomingConnection]()
-      an[BindFailedException] shouldBe thrownBy { Await.result(binding.to(Sink.fromSubscriber(probe3)).run(), 3.seconds.dilated) }
+      an[BindFailedException] shouldBe thrownBy {
+        Await.result(binding.to(Sink.fromSubscriber(probe3)).run(), 3.seconds.dilated)
+      }
       probe3.expectSubscriptionAndError()
 
       // Now unbind the first
@@ -121,7 +125,8 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
     "properly terminate client when server is not running" in Utils.assertAllStagesStopped {
       for (i <- 1 to 10)
         withClue(s"iterator $i: ") {
-          Source.single(HttpRequest(HttpMethods.POST, "/test", List.empty, HttpEntity(MediaTypes.`text/plain`.withCharset(HttpCharsets.`UTF-8`), "buh")))
+          Source.single(HttpRequest(HttpMethods.POST, "/test", List.empty,
+            HttpEntity(MediaTypes.`text/plain`.withCharset(HttpCharsets.`UTF-8`), "buh")))
             .via(Http(actorSystem).connectionTo("localhost").toPort(7777).http())
             .runWith(Sink.head)
             .failed
@@ -278,12 +283,14 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
           val clientIdleTimeout = 345.millis.dilated
           val clientSettings = ClientConnectionSettings(system).withIdleTimeout(clientIdleTimeout)
 
-          val (receivedRequest: Promise[Long], binding: ServerBinding) = bindServer("localhost", port = 0, serverIdleTimeout)
+          val (receivedRequest: Promise[Long], binding: ServerBinding) =
+            bindServer("localhost", port = 0, serverIdleTimeout)
 
           try {
             def runRequest(uri: Uri): Future[HttpResponse] = {
               val itNeverSends = Chunked.fromData(ContentTypes.`text/plain(UTF-8)`, Source.maybe[ByteString])
-              Http().outgoingConnection(binding.localAddress.getHostName, binding.localAddress.getPort, settings = clientSettings)
+              Http().outgoingConnection(binding.localAddress.getHostName, binding.localAddress.getPort,
+                settings = clientSettings)
                 .runWith(Source.single(HttpRequest(POST, uri, entity = itNeverSends)), Sink.head)
                 ._2
             }
@@ -377,7 +384,8 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
           val clientSettings = ConnectionPoolSettings(system)
             .withUpdatedConnectionSettings(
               _.withTransport(new ClientTransport {
-                override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] =
+                override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+                    implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] =
                   Flow[ByteString]
                     .delay(200.millis, OverflowStrategy.backpressure) // delay request sending enough to make race-condition more likely
                     .viaMat(ClientTransport.TCP.connectTo(host, port, settings))(Keep.right)
@@ -411,7 +419,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
       }
     }
 
-    "log materialization errors in `bindFlow`" which {
+    "log materialization errors in `bindFlow`".which {
       "are triggered in `mapMaterialized`" in Utils.assertAllStagesStopped {
         // FIXME racy feature, needs https://github.com/akka/akka/issues/17849 to be fixed
         pending
@@ -421,7 +429,8 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
 
         EventFilter[RuntimeException](message = "BOOM", occurrences = 1).intercept {
           val (_, responseFuture) =
-            Http(system2).outgoingConnection("localhost", b1.localAddress.getPort).runWith(Source.single(HttpRequest()), Sink.head)(materializer2)
+            Http(system2).outgoingConnection("localhost", b1.localAddress.getPort).runWith(Source.single(HttpRequest()),
+              Sink.head)(materializer2)
           try Await.result(responseFuture, 5.seconds.dilated).status should ===(StatusCodes.InternalServerError)
           catch {
             case _: StreamTcpException =>
@@ -434,21 +443,23 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
 
       "stop stages on failure" in Utils.assertAllStagesStopped {
         val stageCounter = new AtomicLong(0)
-        val stage: GraphStage[FlowShape[HttpRequest, HttpResponse]] = new GraphStage[FlowShape[HttpRequest, HttpResponse]] {
-          val in = Inlet[HttpRequest]("request.in")
-          val out = Outlet[HttpResponse]("response.out")
+        val stage: GraphStage[FlowShape[HttpRequest, HttpResponse]] =
+          new GraphStage[FlowShape[HttpRequest, HttpResponse]] {
+            val in = Inlet[HttpRequest]("request.in")
+            val out = Outlet[HttpResponse]("response.out")
 
-          override def shape: FlowShape[HttpRequest, HttpResponse] = FlowShape.of(in, out)
+            override def shape: FlowShape[HttpRequest, HttpResponse] = FlowShape.of(in, out)
 
-          override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) with InHandler with OutHandler {
-            override def preStart(): Unit = stageCounter.incrementAndGet()
-            override def postStop(): Unit = stageCounter.decrementAndGet()
-            override def onPush(): Unit = push(out, HttpResponse(entity = stageCounter.get().toString))
-            override def onPull(): Unit = pull(in)
+            override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+              new GraphStageLogic(shape) with InHandler with OutHandler {
+                override def preStart(): Unit = stageCounter.incrementAndGet()
+                override def postStop(): Unit = stageCounter.decrementAndGet()
+                override def onPush(): Unit = push(out, HttpResponse(entity = stageCounter.get().toString))
+                override def onPull(): Unit = pull(in)
 
-            setHandlers(in, out, this)
+                setHandlers(in, out, this)
+              }
           }
-        }
 
         val hostname = "127.0.0.1"
         val bind = Await.result(Http().newServerAt("127.0.0.1", 0).bindFlow(Flow.fromGraph(stage)), 1.seconds.dilated)
@@ -464,7 +475,8 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
           socket.close()
         }
 
-        def performValidRequest() = Http().outgoingConnection(hostname, port).runWith(Source.single(HttpRequest()), Sink.ignore)
+        def performValidRequest() =
+          Http().outgoingConnection(hostname, port).runWith(Source.single(HttpRequest()), Sink.ignore)
 
         def assertCounters(stage: Int) =
           eventually(timeout(3.second.dilated)) {
@@ -474,7 +486,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
         performValidRequest()
         assertCounters(0)
 
-        EventFilter.warning(pattern = "Illegal HTTP message start", occurrences = 1) intercept {
+        EventFilter.warning(pattern = "Illegal HTTP message start", occurrences = 1).intercept {
           performFaultyRequest()
           assertCounters(0)
         }
@@ -592,7 +604,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
         val (serverIn, serverOut) = acceptConnection()
 
         val chunks = List(Chunk("abc"), Chunk("defg"), Chunk("hijkl"), LastChunk)
-        val chunkedContentType: ContentType = MediaTypes.`application/base64` withCharset HttpCharsets.`UTF-8`
+        val chunkedContentType: ContentType = MediaTypes.`application/base64`.withCharset(HttpCharsets.`UTF-8`)
         val chunkedEntity = HttpEntity.Chunked(chunkedContentType, Source(chunks))
 
         val clientOutSub = clientOut.expectSubscription()
@@ -601,7 +613,8 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
         val serverInSub = serverIn.expectSubscription()
         serverInSub.request(1)
         private val HttpRequest(POST, uri, List(Accept(Seq(MediaRanges.`*/*`)), Host(_, _), `User-Agent`(_)),
-          Chunked(`chunkedContentType`, chunkStream), HttpProtocols.`HTTP/1.1`) = serverIn.expectNext() mapHeaders (_.filterNot(_.is("timeout-access")))
+          Chunked(`chunkedContentType`, chunkStream), HttpProtocols.`HTTP/1.1`) =
+          serverIn.expectNext().mapHeaders(_.filterNot(_.is("timeout-access")))
         uri shouldEqual Uri(s"http://$hostname:$port/chunked")
         Await.result(chunkStream.limit(5).runWith(Sink.seq), 1000.millis.dilated) shouldEqual chunks
 
@@ -651,14 +664,18 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
       val responseSize = 200000
 
       // settings adapting network buffer sizes
-      val serverSettings = ServerSettings(system).withSocketOptions(SO.SendBufferSize(serverToClientNetworkBufferSize) :: Nil)
-      val clientSettings = ConnectionPoolSettings(system).withConnectionSettings(ClientConnectionSettings(system).withSocketOptions(SO.ReceiveBufferSize(serverToClientNetworkBufferSize) :: Nil))
+      val serverSettings =
+        ServerSettings(system).withSocketOptions(SO.SendBufferSize(serverToClientNetworkBufferSize) :: Nil)
+      val clientSettings = ConnectionPoolSettings(system).withConnectionSettings(ClientConnectionSettings(
+        system).withSocketOptions(SO.ReceiveBufferSize(serverToClientNetworkBufferSize) :: Nil))
 
-      def response(req: HttpRequest) = HttpResponse(entity = HttpEntity.Strict(ContentTypes.`text/plain(UTF-8)`, ByteString(req.uri.path.toString.takeRight(1) * responseSize)))
+      def response(req: HttpRequest) = HttpResponse(entity = HttpEntity.Strict(ContentTypes.`text/plain(UTF-8)`,
+        ByteString(req.uri.path.toString.takeRight(1) * responseSize)))
 
       val server = Http().newServerAt("localhost", 0).withSettings(serverSettings).bindSync(response)
 
-      def request(i: Int) = HttpRequest(uri = s"http://localhost:${server.futureValue.localAddress.getPort}/$i", headers = headers.Connection("close") :: Nil)
+      def request(i: Int) = HttpRequest(uri = s"http://localhost:${server.futureValue.localAddress.getPort}/$i",
+        headers = headers.Connection("close") :: Nil)
 
       def runOnce(i: Int) =
         Http().singleRequest(request(i), settings = clientSettings).futureValue
@@ -687,7 +704,8 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
       // settings adapting network buffer sizes
       val serverSettings = ServerSettings(system)
 
-      val server = Http().newServerAt(hostname, port).withSettings(serverSettings).bind(_ => responsePromise.future).futureValue
+      val server =
+        Http().newServerAt(hostname, port).withSettings(serverSettings).bind(_ => responsePromise.future).futureValue
 
       try {
         val result = Source.single(ByteString(
@@ -710,7 +728,9 @@ Host: example.com
 
     "complete a request/response over https, disabling hostname verification with SSLConfigSettings" in Utils.assertAllStagesStopped {
       val serverConnectionContext = ExampleHttpContexts.exampleServerContext
-      val handlerFlow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest].map { _ => HttpResponse(entity = "Okay") }
+      val handlerFlow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest].map { _ =>
+        HttpResponse(entity = "Okay")
+      }
       val serverBinding =
         Http().newServerAt("localhost", 0).enableHttps(serverConnectionContext).bindFlow(handlerFlow)
           .futureValue
@@ -759,17 +779,19 @@ Host: example.com
       val serverConnectionContext = ExampleHttpContexts.exampleServerContext
 
       val entity = Array.fill[Char](999999)('0').mkString + "x"
-      val handlerFlow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest].map { _ => HttpResponse(entity = entity) }
+      val handlerFlow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest].map { _ =>
+        HttpResponse(entity = entity)
+      }
       val serverBinding =
-        Http().newServerAt("localhost", 0).enableHttps(serverConnectionContext).withSettings(serverSettings).bindFlow(handlerFlow)
+        Http().newServerAt("localhost", 0).enableHttps(serverConnectionContext).withSettings(serverSettings).bindFlow(
+          handlerFlow)
           .futureValue
 
       // settings adapting network buffer sizes, and connecting to the spun-up server regardless of the URI address
       val clientSettings = ConnectionPoolSettings(system)
         .withConnectionSettings(
           ClientConnectionSettings(system)
-            .withSocketOptions(SO.ReceiveBufferSize(serverToClientNetworkBufferSize) :: Nil)
-        )
+            .withSocketOptions(SO.ReceiveBufferSize(serverToClientNetworkBufferSize) :: Nil))
         .withTransport(ExampleHttpContexts.proxyTransport(serverBinding.localAddress))
 
       val clientConnectionContext = ExampleHttpContexts.exampleClientContext
@@ -792,7 +814,8 @@ Host: example.com
       val source = TestPublisher.probe[ByteString]()
 
       def handler(req: HttpRequest): HttpResponse =
-        HttpResponse(entity = HttpEntity.CloseDelimited(ContentTypes.`application/octet-stream`, Source.fromPublisher(source)))
+        HttpResponse(entity = HttpEntity.CloseDelimited(ContentTypes.`application/octet-stream`,
+          Source.fromPublisher(source)))
 
       val serverSideTls = Http().sslTlsServerStage(ExampleHttpContexts.exampleServerContext)
       val clientSideTls = Http().sslTlsClientStage(ExampleHttpContexts.exampleClientContext, "akka.example.org", 8080)
@@ -954,9 +977,11 @@ Host: example.com
       val binding = Http().newServerAt("127.0.0.1", 0).bindFlow(dummyFlow).futureValue
       val uri = "https://" + binding.localAddress.getHostString + ":" + binding.localAddress.getPort
 
-      EventFilter.warning(pattern = "Perhaps this was an HTTPS request sent to an HTTP endpoint", occurrences = 1) intercept {
+      EventFilter.warning(pattern = "Perhaps this was an HTTPS request sent to an HTTP endpoint",
+        occurrences = 1).intercept {
         // Test with a POST so auto-retry isn't triggered:
-        Await.ready(Http().singleRequest(HttpRequest(uri = uri, method = HttpMethods.POST), settings = settings), 30.seconds)
+        Await.ready(Http().singleRequest(HttpRequest(uri = uri, method = HttpMethods.POST), settings = settings),
+          30.seconds)
       }
 
       Await.result(binding.unbind(), 10.seconds)
@@ -966,10 +991,12 @@ Host: example.com
     "produce a useful error message when connecting to an endpoint speaking wrong protocol" in Utils.assertAllStagesStopped {
       val settings = ConnectionPoolSettings(system).withUpdatedConnectionSettings(_.withIdleTimeout(100.millis))
 
-      val binding = Tcp(system).bindAndHandle(Flow[ByteString].map(_ => ByteString("hello world!")), "127.0.0.1", 0).futureValue
+      val binding =
+        Tcp(system).bindAndHandle(Flow[ByteString].map(_ => ByteString("hello world!")), "127.0.0.1", 0).futureValue
       val uri = "http://" + binding.localAddress.getHostString + ":" + binding.localAddress.getPort
 
-      val ex = the[IllegalResponseException] thrownBy Await.result(Http().singleRequest(HttpRequest(uri = uri, method = HttpMethods.POST), settings = settings), 30.seconds)
+      val ex = the[IllegalResponseException] thrownBy Await.result(Http().singleRequest(HttpRequest(uri = uri,
+        method = HttpMethods.POST), settings = settings), 30.seconds)
       ex.info.formatPretty shouldEqual "The server-side protocol or HTTP version is not supported: start of response: [68 65 6C 6C 6F 20 77 6F 72 6C 64 21              | hello world!]"
 
       Await.result(binding.unbind(), 10.seconds)
@@ -989,7 +1016,8 @@ Host: example.com
       val uri = "http://" + binding.localAddress.getHostString + ":" + binding.localAddress.getPort
 
       val dataOutProbe = TestPublisher.probe[ByteString]()
-      Http().singleRequest(HttpRequest(uri = uri, entity = HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(dataOutProbe))))
+      Http().singleRequest(HttpRequest(uri = uri,
+        entity = HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(dataOutProbe))))
 
       dataProbe.ensureSubscription()
       dataOutProbe.sendNext(ByteString("test"))
@@ -1061,7 +1089,9 @@ Host: example.com
       writer
     }
 
-    def readAll(socket: Socket)(reader: BufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream))): (String, BufferedReader) = {
+    def readAll(socket: Socket)(
+        reader: BufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream)))
+        : (String, BufferedReader) = {
       val sb = new java.lang.StringBuilder
       val cbuf = new Array[Char](256)
       @tailrec def drain(): (String, BufferedReader) = reader.read(cbuf) match {
@@ -1072,5 +1102,6 @@ Host: example.com
     }
   }
 
-  def toStrict(entity: HttpEntity): HttpEntity.Strict = Await.result(entity.toStrict(500.millis.dilated), 1.second.dilated)
+  def toStrict(entity: HttpEntity): HttpEntity.Strict =
+    Await.result(entity.toStrict(500.millis.dilated), 1.second.dilated)
 }

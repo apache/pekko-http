@@ -6,7 +6,7 @@ package akka.http.impl.engine.server
 
 import akka.http.impl.util._
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{ Connection, `Timeout-Access` }
+import akka.http.scaladsl.model.headers.{ `Timeout-Access`, Connection }
 import akka.stream.testkit.Utils.assertAllStagesStopped
 import akka.testkit.ExplicitlyTriggeredScheduler
 import org.scalatest.Inside
@@ -15,14 +15,13 @@ import scala.concurrent.duration._
 
 /** Tests similar to HttpServerSpec that need ExplicitlyTriggeredScheduler */
 class HttpServerWithExplicitSchedulerSpec extends AkkaSpecWithMaterializer(
-  """
+      """
      akka.http.server.log-unencrypted-network-bytes = 100
      akka.http.server.request-timeout = infinite
      akka.scheduler.implementation = "akka.testkit.ExplicitlyTriggeredScheduler"
-  """
-) with Inside { spec =>
+  """) with Inside { spec =>
   "The server implementation" should {
-    "support request timeouts" which {
+    "support request timeouts".which {
 
       "are defined via the config" in assertAllStagesStopped(new RequestTimeoutTestSetup(10.millis) {
         send("GET / HTTP/1.1\r\nHost: example.com\r\n\r\n")
@@ -137,7 +136,8 @@ class HttpServerWithExplicitSchedulerSpec extends AkkaSpecWithMaterializer(
       "have a programmatically set timeout handler" in assertAllStagesStopped(new RequestTimeoutTestSetup(400.millis) {
         send("GET / HTTP/1.1\r\nHost: example.com\r\n\r\n")
         val timeoutResponse = HttpResponse(StatusCodes.InternalServerError, entity = "OOPS!")
-        expectRequest().header[`Timeout-Access`].foreach(_.timeoutAccess.updateHandler((_: HttpRequest) => timeoutResponse))
+        expectRequest().header[`Timeout-Access`].foreach(
+          _.timeoutAccess.updateHandler((_: HttpRequest) => timeoutResponse))
 
         scheduler.timePasses(500.millis)
         expectResponseWithWipedDate(

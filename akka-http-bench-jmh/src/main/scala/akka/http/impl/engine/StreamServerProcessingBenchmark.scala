@@ -58,7 +58,8 @@ class StreamServerProcessingBenchmark extends CommonBenchmark {
       .runWith(Sink.fold(0L)(_ + _.size))
       .onComplete { res =>
         latch.countDown()
-        require(res.filter(_ >= totalExpectedBytes).isSuccess, s"Expected at least $totalExpectedBytes but only got $res")
+        require(res.filter(_ >= totalExpectedBytes).isSuccess,
+          s"Expected at least $totalExpectedBytes but only got $res")
       }(system.dispatcher)
 
     latch.await()
@@ -83,29 +84,27 @@ class StreamServerProcessingBenchmark extends CommonBenchmark {
 
     val entity = entityType match {
       case "strict" =>
-        HttpEntity.Strict(ContentTypes.`application/octet-stream`, ByteString(new Array[Byte](bytesPerChunk.toInt * numChunks.toInt)))
+        HttpEntity.Strict(ContentTypes.`application/octet-stream`,
+          ByteString(new Array[Byte](bytesPerChunk.toInt * numChunks.toInt)))
       case "chunked" =>
         HttpEntity.Chunked.fromData(
           ContentTypes.`application/octet-stream`,
-          streamedBytes
-        )
+          streamedBytes)
       case "default" =>
         HttpEntity.Default(
           ContentTypes.`application/octet-stream`,
           bytesPerChunk.toInt * numChunks.toInt,
-          streamedBytes
-        )
+          streamedBytes)
     }
 
     val response = HttpResponse(
       headers = headers.Server("akka-http-bench") :: Nil,
-      entity = entity
-    )
+      entity = entity)
 
     httpFlow =
-      Flow[HttpRequest].map(_ => response) join
-        (HttpServerBluePrint(ServerSettings(system), NoLogging, false, Http().dateHeaderRendering) atop
-          TLSPlacebo())
+      Flow[HttpRequest].map(_ => response).join(
+        HttpServerBluePrint(ServerSettings(system), NoLogging, false, Http().dateHeaderRendering).atop(
+          TLSPlacebo()))
   }
 
   @TearDown

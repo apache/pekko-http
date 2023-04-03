@@ -13,7 +13,8 @@ import akka.http.impl.util.JavaMapping.Implicits._
 import UriRendering.UriRenderer
 import akka.http.ccompat.{ pre213, since213 }
 
-final case class LinkValue(uri: Uri, params: immutable.Seq[LinkParam]) extends jm.headers.LinkValue with ValueRenderable {
+final case class LinkValue(uri: Uri, params: immutable.Seq[LinkParam]) extends jm.headers.LinkValue
+    with ValueRenderable {
   def render[R <: Rendering](r: R): r.type = {
     r ~~ '<' ~~ uri ~~ '>'
     if (params.nonEmpty) r ~~ "; " ~~ params
@@ -58,7 +59,7 @@ object LinkParams {
   final case class rel(value: String) extends LinkParam {
     def render[R <: Rendering](r: R): r.type = {
       r ~~ "rel="
-      if (reserved matchesAny value) r ~~ '"' ~~ value ~~ '"' else r ~~ value
+      if (reserved.matchesAny(value)) r ~~ '"' ~~ value ~~ '"' else r ~~ value
     }
   }
 
@@ -81,7 +82,7 @@ object LinkParams {
   final case class rev(value: String) extends LinkParam {
     def render[R <: Rendering](r: R): r.type = {
       r ~~ "rev="
-      if (reserved matchesAny value) r ~~ '"' ~~ value ~~ '"' else r ~~ value
+      if (reserved.matchesAny(value)) r ~~ '"' ~~ value ~~ '"' else r ~~ value
     }
   }
 
@@ -104,7 +105,7 @@ object LinkParams {
 
     def render[R <: Rendering](r: R): r.type = {
       r ~~ "media="
-      if (reserved matchesAny desc) r ~~ '"' ~~ desc ~~ '"' else r ~~ desc
+      if (reserved.matchesAny(desc)) r ~~ '"' ~~ desc ~~ '"' else r ~~ desc
     }
   }
 
@@ -127,7 +128,7 @@ object LinkParams {
 
     def render[R <: Rendering](r: R): r.type = {
       r ~~ "title*="
-      if (reserved matchesAny title) r ~~ '"' ~~ title ~~ '"' else r ~~ title
+      if (reserved.matchesAny(title)) r ~~ '"' ~~ title ~~ '"' else r ~~ title
     }
   }
 
@@ -140,7 +141,7 @@ object LinkParams {
 
     def render[R <: Rendering](r: R): r.type = {
       r ~~ "type="
-      if (reserved matchesAny mediaType.value) r ~~ '"' ~~ mediaType.value ~~ '"' else r ~~ mediaType.value
+      if (reserved.matchesAny(mediaType.value)) r ~~ '"' ~~ mediaType.value ~~ '"' else r ~~ mediaType.value
     }
   }
 }

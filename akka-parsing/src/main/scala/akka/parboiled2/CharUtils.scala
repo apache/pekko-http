@@ -26,7 +26,7 @@ object CharUtils {
    * Note: this implementation is very fast (since it's branchless) and therefore
    * does not perform ANY range checks!
    */
-  def hexValue(c: Char): Int = (c & 0x1f) + ((c >> 6) * 0x19) - 0x10
+  def hexValue(c: Char): Int = (c & 0x1F) + ((c >> 6) * 0x19) - 0x10
 
   /**
    * Computes the number of hex digits required to represent the given integer.
@@ -38,13 +38,13 @@ object CharUtils {
    * Returns the lower-case hex digit corresponding to the last 4 bits of the given Long.
    * (fast branchless implementation)
    */
-  def lowerHexDigit(long: Long): Char = lowerHexDigit_internal((long & 0x0fL).toInt)
+  def lowerHexDigit(long: Long): Char = lowerHexDigit_internal((long & 0x0FL).toInt)
 
   /**
    * Returns the lower-case hex digit corresponding to the last 4 bits of the given Int.
    * (fast branchless implementation)
    */
-  def lowerHexDigit(int: Int): Char = lowerHexDigit_internal(int & 0x0f)
+  def lowerHexDigit(int: Int): Char = lowerHexDigit_internal(int & 0x0F)
 
   private def lowerHexDigit_internal(i: Int) = (48 + i + (39 & ((9 - i) >> 31))).toChar
 
@@ -52,13 +52,13 @@ object CharUtils {
    * Returns the upper-case hex digit corresponding to the last 4 bits of the given Long.
    * (fast branchless implementation)
    */
-  def upperHexDigit(long: Long): Char = upperHexDigit_internal((long & 0x0fL).toInt)
+  def upperHexDigit(long: Long): Char = upperHexDigit_internal((long & 0x0FL).toInt)
 
   /**
    * Returns the upper-case hex digit corresponding to the last 4 bits of the given Int.
    * (fast branchless implementation)
    */
-  def upperHexDigit(int: Int): Char = upperHexDigit_internal(int & 0x0f)
+  def upperHexDigit(int: Int): Char = upperHexDigit_internal(int & 0x0F)
 
   private def upperHexDigit_internal(i: Int) = (48 + i + (7 & ((9 - i) >> 31))).toChar
 
@@ -77,7 +77,7 @@ object CharUtils {
         sb.append(upperHexDigit(long >>> shift))
         if (shift > 0) putChar(shift - 4) else sb
       }
-      putChar((63 - java.lang.Long.numberOfLeadingZeros(long)) & 0xfc)
+      putChar((63 - java.lang.Long.numberOfLeadingZeros(long)) & 0xFC)
     } else sb.append('0')
 
   /**
@@ -95,7 +95,7 @@ object CharUtils {
         sb.append(lowerHexDigit(long >>> shift))
         if (shift > 0) putChar(shift - 4) else sb
       }
-      putChar((63 - java.lang.Long.numberOfLeadingZeros(long)) & 0xfc)
+      putChar((63 - java.lang.Long.numberOfLeadingZeros(long)) & 0xFC)
     } else sb.append('0')
 
   /**
@@ -185,7 +185,7 @@ object CharUtils {
       case '\r'                           => "\\r"
       case '\n'                           => "\\n"
       case EOI                            => "EOI"
-      case x if Character.isISOControl(x) => "\\u%04x" format c.toInt
+      case x if Character.isISOControl(x) => "\\u%04x".format(c.toInt)
       case x                              => x.toString
     }
 

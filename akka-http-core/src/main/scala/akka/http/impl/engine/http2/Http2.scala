@@ -4,12 +4,24 @@
 
 package akka.http.impl.engine.http2
 
-import akka.actor.{ ActorSystem, ClassicActorSystemProvider, ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider }
+import akka.actor.{
+  ActorSystem,
+  ClassicActorSystemProvider,
+  ExtendedActorSystem,
+  Extension,
+  ExtensionId,
+  ExtensionIdProvider
+}
 import akka.annotation.InternalApi
 import akka.dispatch.ExecutionContexts
 import akka.event.LoggingAdapter
 import akka.http.impl.engine.HttpConnectionIdleTimeoutBidi
-import akka.http.impl.engine.server.{ GracefulTerminatorStage, MasterServerTerminator, ServerTerminator, UpgradeToOtherProtocolResponseHeader }
+import akka.http.impl.engine.server.{
+  GracefulTerminatorStage,
+  MasterServerTerminator,
+  ServerTerminator,
+  UpgradeToOtherProtocolResponseHeader
+}
 import akka.http.impl.util.LogByteStringTools
 import akka.http.scaladsl.Http.OutgoingConnection
 import akka.http.scaladsl.{ ConnectionContext, Http, HttpsConnectionContext }
@@ -42,7 +54,7 @@ import scala.util.{ Failure, Success }
  */
 @InternalApi
 private[http] final class Http2Ext(implicit val system: ActorSystem)
-  extends akka.actor.Extension {
+    extends akka.actor.Extension {
   // FIXME: won't having the same package as top-level break osgi?
 
   import Http2._
@@ -54,11 +66,11 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 
   // TODO: split up similarly to what `Http` does into `serverLayer`, `bindAndHandle`, etc.
   def bindAndHandleAsync(
-    handler:   HttpRequest => Future[HttpResponse],
-    interface: String, port: Int = DefaultPortForProtocol,
-    connectionContext: ConnectionContext,
-    settings:          ServerSettings    = ServerSettings(system),
-    log:               LoggingAdapter    = system.log)(implicit fm: Materializer): Future[ServerBinding] = {
+      handler: HttpRequest => Future[HttpResponse],
+      interface: String, port: Int = DefaultPortForProtocol,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings = ServerSettings(system),
+      log: LoggingAdapter = system.log)(implicit fm: Materializer): Future[ServerBinding] = {
 
     val httpPlusSwitching: HttpPlusSwitching =
       if (connectionContext.isSecure) httpsWithAlpn(connectionContext.asInstanceOf[HttpsConnectionContext])
@@ -71,14 +83,15 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 
     val http1: HttpImplementation =
       Flow[HttpRequest].mapAsync(settings.pipeliningLimit)(handleUpgradeRequests(handler, settings, log))
-        .joinMat(GracefulTerminatorStage(system, settings) atop http.serverLayer(settings, log = log))(Keep.right)
+        .joinMat(GracefulTerminatorStage(system, settings).atop(http.serverLayer(settings, log = log)))(Keep.right)
     val http2: HttpImplementation =
       Http2Blueprint.handleWithStreamIdHeader(settings.http2Settings.maxConcurrentStreams)(handler)(system.dispatcher)
         .joinMat(Http2Blueprint.serverStackTls(settings, log, telemetry, Http().dateHeaderRendering))(Keep.right)
 
     val masterTerminator = new MasterServerTerminator(log)
 
-    Tcp(system).bind(interface, effectivePort, settings.backlog, settings.socketOptions, halfClose = false, Duration.Inf) // we knowingly disable idle-timeout on TCP level, as we handle it explicitly in Akka HTTP itself
+    Tcp(system).bind(interface, effectivePort, settings.backlog, settings.socketOptions, halfClose = false,
+      Duration.Inf) // we knowingly disable idle-timeout on TCP level, as we handle it explicitly in Akka HTTP itself
       .via(if (telemetry == NoOpTelemetry) Flow[Tcp.IncomingConnection] else telemetry.serverBinding)
       .mapAsyncUnordered(settings.maxConnections) {
         (incoming: Tcp.IncomingConnection) =>
@@ -92,7 +105,8 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
                   }(fm.executionContext)
                   future // drop the terminator matValue, we already registered is which is all we need to do here
               }
-              .join(HttpConnectionIdleTimeoutBidi(settings.idleTimeout, Some(incoming.remoteAddress)) join incoming.flow)
+              .join(HttpConnectionIdleTimeoutBidi(settings.idleTimeout, Some(incoming.remoteAddress)).join(
+                incoming.flow))
               .addAttributes(Http.cancellationStrategyAttributeForDelay(settings.streamCancellationDelay))
               .run().recover {
                 // Ignore incoming errors from the connection as they will cancel the binding.
@@ -108,10 +122,10 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
               throw e
           }
       }.mapMaterializedValue {
-        _.map(tcpBinding => ServerBinding(tcpBinding.localAddress)(
-          () => tcpBinding.unbind(),
-          timeout => masterTerminator.terminate(timeout)(fm.executionContext)
-        ))(fm.executionContext)
+        _.map(tcpBinding =>
+          ServerBinding(tcpBinding.localAddress)(
+            () => tcpBinding.unbind(),
+            timeout => masterTerminator.terminate(timeout)(fm.executionContext)))(fm.executionContext)
       }.to(Sink.ignore).run()
   }
 
@@ -125,13 +139,11 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
   }
 
   private def handleUpgradeRequests(
-    handler:  HttpRequest => Future[HttpResponse],
-    settings: ServerSettings,
-    log:      LoggingAdapter
-  ): HttpRequest => Future[HttpResponse] = { req =>
+      handler: HttpRequest => Future[HttpResponse],
+      settings: ServerSettings,
+      log: LoggingAdapter): HttpRequest => Future[HttpResponse] = { req =>
     req.header[Upgrade] match {
-      case Some(upgrade) if upgrade.protocols.exists(_.name equalsIgnoreCase "h2c") =>
-
+      case Some(upgrade) if upgrade.protocols.exists(_.name.equalsIgnoreCase("h2c")) =>
         log.debug("Got h2c upgrade request from HTTP/1.1 to HTTP2")
 
         // https://http2.github.io/http2-spec/#Http2SettingsHeader 3.2.1 HTTP2-Settings Header Field
@@ -151,9 +163,11 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
               Flow[HttpRequest]
                 .watchTermination()(Keep.right)
                 .prepend(injectedRequest)
-                .via(Http2Blueprint.handleWithStreamIdHeader(settings.http2Settings.maxConcurrentStreams)(handler)(system.dispatcher))
+                .via(Http2Blueprint.handleWithStreamIdHeader(settings.http2Settings.maxConcurrentStreams)(handler)(
+                  system.dispatcher))
                 // the settings from the header are injected into the blueprint as initial demuxer settings
-                .joinMat(Http2Blueprint.serverStack(settings, log, settingsFromHeader, true, telemetry, Http().dateHeaderRendering))(Keep.left))
+                .joinMat(Http2Blueprint.serverStack(settings, log, settingsFromHeader, true, telemetry,
+                  Http().dateHeaderRendering))(Keep.left))
 
             Future.successful(
               HttpResponse(
@@ -161,10 +175,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
                 immutable.Seq[HttpHeader](
                   ConnectionUpgradeHeader,
                   UpgradeHeader,
-                  UpgradeToOtherProtocolResponseHeader(serverLayer)
-                )
-              )
-            )
+                  UpgradeToOtherProtocolResponseHeader(serverLayer))))
           case immutable.Seq(Failure(e)) =>
             log.warning("Failed to parse http2-settings header in upgrade [{}], continuing with HTTP/1.1", e.getMessage)
             handler(req)
@@ -182,7 +193,8 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
   val ConnectionUpgradeHeader = Connection(List("upgrade"))
   val UpgradeHeader = Upgrade(List(UpgradeProtocol("h2c")))
 
-  def httpsWithAlpn(httpsContext: HttpsConnectionContext)(http1: HttpImplementation, http2: HttpImplementation): Flow[ByteString, ByteString, Future[ServerTerminator]] = {
+  def httpsWithAlpn(httpsContext: HttpsConnectionContext)(
+      http1: HttpImplementation, http2: HttpImplementation): Flow[ByteString, ByteString, Future[ServerTerminator]] = {
     // Mutable cell to transport the chosen protocol from the SSLEngine to
     // the switch stage.
     // Doesn't need to be volatile because there's a happens-before relationship (enforced by memory barriers)
@@ -209,11 +221,13 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
     }
     val tls = TLS(() => createEngine(), _ => Success(()), IgnoreComplete)
 
-    ProtocolSwitch(_ => getChosenProtocol(), http1, http2) join
-      tls
+    ProtocolSwitch(_ => getChosenProtocol(), http1, http2).join(
+      tls)
   }
 
-  def outgoingConnection(host: String, port: Int, connectionContext: HttpsConnectionContext, clientConnectionSettings: ClientConnectionSettings, log: LoggingAdapter): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
+  def outgoingConnection(host: String, port: Int, connectionContext: HttpsConnectionContext,
+      clientConnectionSettings: ClientConnectionSettings, log: LoggingAdapter)
+      : Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
     def createEngine(): SSLEngine = {
       val engine = connectionContext.sslContextData match {
         // TODO FIXME configure hostname verification for this case
@@ -228,22 +242,29 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       engine
     }
 
-    val stack = Http2Blueprint.clientStack(clientConnectionSettings, log, telemetry).addAttributes(prepareClientAttributes(host, port)) atop
-      Http2Blueprint.unwrapTls atop
-      LogByteStringTools.logTLSBidiBySetting("client-plain-text", clientConnectionSettings.logUnencryptedNetworkBytes) atop
-      TLS(createEngine _, closing = TLSClosing.eagerClose)
+    val stack = Http2Blueprint.clientStack(clientConnectionSettings, log, telemetry).addAttributes(
+      prepareClientAttributes(host, port)).atop(
+      Http2Blueprint.unwrapTls).atop(
+      LogByteStringTools.logTLSBidiBySetting("client-plain-text",
+        clientConnectionSettings.logUnencryptedNetworkBytes)).atop(
+      TLS(createEngine _, closing = TLSClosing.eagerClose))
 
-    stack.joinMat(clientConnectionSettings.transport.connectTo(host, port, clientConnectionSettings)(system.classicSystem))(Keep.right)
+    stack.joinMat(clientConnectionSettings.transport.connectTo(host, port, clientConnectionSettings)(
+      system.classicSystem))(Keep.right)
       .addAttributes(Http.cancellationStrategyAttributeForDelay(clientConnectionSettings.streamCancellationDelay))
   }
 
-  def outgoingConnectionPriorKnowledge(host: String, port: Int, clientConnectionSettings: ClientConnectionSettings, log: LoggingAdapter): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
-    val stack = Http2Blueprint.clientStack(clientConnectionSettings, log, telemetry).addAttributes(prepareClientAttributes(host, port)) atop
-      Http2Blueprint.unwrapTls atop
-      LogByteStringTools.logTLSBidiBySetting("client-plain-text", clientConnectionSettings.logUnencryptedNetworkBytes) atop
-      TLSPlacebo()
+  def outgoingConnectionPriorKnowledge(host: String, port: Int, clientConnectionSettings: ClientConnectionSettings,
+      log: LoggingAdapter): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
+    val stack = Http2Blueprint.clientStack(clientConnectionSettings, log, telemetry).addAttributes(
+      prepareClientAttributes(host, port)).atop(
+      Http2Blueprint.unwrapTls).atop(
+      LogByteStringTools.logTLSBidiBySetting("client-plain-text",
+        clientConnectionSettings.logUnencryptedNetworkBytes)).atop(
+      TLSPlacebo())
 
-    stack.joinMat(clientConnectionSettings.transport.connectTo(host, port, clientConnectionSettings)(system.classicSystem))(Keep.right)
+    stack.joinMat(clientConnectionSettings.transport.connectTo(host, port, clientConnectionSettings)(
+      system.classicSystem))(Keep.right)
       .addAttributes(Http.cancellationStrategyAttributeForDelay(clientConnectionSettings.streamCancellationDelay))
   }
 
@@ -267,10 +288,11 @@ private[http] object Http2 extends ExtensionId[Http2Ext] with ExtensionIdProvide
   def createExtension(system: ExtendedActorSystem): Http2Ext = new Http2Ext()(system)
 
   private[http] type HttpImplementation = Flow[SslTlsInbound, SslTlsOutbound, ServerTerminator]
-  private[http] type HttpPlusSwitching = (HttpImplementation, HttpImplementation) => Flow[ByteString, ByteString, Future[ServerTerminator]]
+  private[http] type HttpPlusSwitching =
+    (HttpImplementation, HttpImplementation) => Flow[ByteString, ByteString, Future[ServerTerminator]]
 
-  private[http] def priorKnowledge(http1: HttpImplementation, http2: HttpImplementation): Flow[ByteString, ByteString, Future[ServerTerminator]] =
+  private[http] def priorKnowledge(
+      http1: HttpImplementation, http2: HttpImplementation): Flow[ByteString, ByteString, Future[ServerTerminator]] =
     TLSPlacebo().reversed.joinMat(
-      ProtocolSwitch.byPreface(http1, http2)
-    )(Keep.right)
+      ProtocolSwitch.byPreface(http1, http2))(Keep.right)
 }

@@ -136,7 +136,8 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
       private val controlFrameBuffer: mutable.Queue[FrameEvent] = new mutable.Queue[FrameEvent]
       private val sendableOutstreams: mutable.Queue[Int] = new mutable.Queue[Int]
       private def enqueueStream(streamId: Int): Unit = {
-        if (isDebugEnabled) require(!sendableOutstreams.contains(streamId), s"Stream [$streamId] was enqueued multiple times.") // requires expensive scanning -> avoid in production
+        if (isDebugEnabled)
+          require(!sendableOutstreams.contains(streamId), s"Stream [$streamId] was enqueued multiple times.") // requires expensive scanning -> avoid in production
         sendableOutstreams.enqueue(streamId)
       }
       private def dequeueStream(streamId: Int): Unit =
@@ -293,7 +294,8 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
 
       /** Pulled and data is pending but no connection-level window available */
       case object WaitingForConnectionWindow extends WithSendableOutStreams {
-        def onPull(): MultiplexerState = throw new IllegalStateException(s"pull unexpected while waiting for connection window")
+        def onPull(): MultiplexerState =
+          throw new IllegalStateException(s"pull unexpected while waiting for connection window")
         def pushControlFrame(frame: FrameEvent): MultiplexerState = {
           pushFrameOut(frame)
           WaitingForNetworkToSendData
@@ -323,7 +325,7 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
       s"Changing state from $oldState to $newState"
     }
 
-    /** Logs DEBUG level timing data for the output side of the multiplexer*/
+    /** Logs DEBUG level timing data for the output side of the multiplexer */
     def reportTimings(): Unit = debug {
       val timingsReport = timings.toSeq.sortBy(_._1).map {
         case (name, nanos) => f"${nanos / 1000000}%5d ms $name"

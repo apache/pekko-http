@@ -28,7 +28,7 @@ import akka.testkit._
 import scala.util.{ Failure, Success }
 
 class WebSocketIntegrationSpec extends AkkaSpecWithMaterializer(
-  """
+      """
      akka {
        stream.materializer.debug.fuzzing-mode=off
        http.server.websocket.log-frames = on
@@ -40,9 +40,10 @@ class WebSocketIntegrationSpec extends AkkaSpecWithMaterializer(
 
     "not reset the connection when no data are flowing" in Utils.assertAllStagesStopped {
       val source = TestPublisher.probe[Message]()
-      val bindingFuture = Http().newServerAt("localhost", 0).bindSync({
-        _.attribute(webSocketUpgrade).get.handleMessages(Flow.fromSinkAndSource(Sink.ignore, Source.fromPublisher(source)), None)
-      })
+      val bindingFuture = Http().newServerAt("localhost", 0).bindSync {
+        _.attribute(webSocketUpgrade).get.handleMessages(Flow.fromSinkAndSource(Sink.ignore,
+          Source.fromPublisher(source)), None)
+      }
       val binding = Await.result(bindingFuture, 3.seconds.dilated)
       val myPort = binding.localAddress.getPort
 
@@ -67,9 +68,10 @@ class WebSocketIntegrationSpec extends AkkaSpecWithMaterializer(
 
     "not reset the connection when no data are flowing and the connection is closed from the client" in Utils.assertAllStagesStopped {
       val source = TestPublisher.probe[Message]()
-      val bindingFuture = Http().newServerAt("localhost", 0).bindSync({
-        _.attribute(webSocketUpgrade).get.handleMessages(Flow.fromSinkAndSource(Sink.ignore, Source.fromPublisher(source)), None)
-      })
+      val bindingFuture = Http().newServerAt("localhost", 0).bindSync {
+        _.attribute(webSocketUpgrade).get.handleMessages(Flow.fromSinkAndSource(Sink.ignore,
+          Source.fromPublisher(source)), None)
+      }
       val binding = Await.result(bindingFuture, 3.seconds.dilated)
       val myPort = binding.localAddress.getPort
 
@@ -78,7 +80,8 @@ class WebSocketIntegrationSpec extends AkkaSpecWithMaterializer(
           override val shape: FlowShape[ByteString, ByteString] =
             FlowShape(Inlet("completeOnlySwitch.in"), Outlet("completeOnlySwitch.out"))
 
-          override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, Promise[Done]) = {
+          override def createLogicAndMaterializedValue(
+              inheritedAttributes: Attributes): (GraphStageLogic, Promise[Done]) = {
             val promise = Promise[Done]()
 
             val logic = new GraphStageLogic(shape) with InHandler with OutHandler {
@@ -86,7 +89,8 @@ class WebSocketIntegrationSpec extends AkkaSpecWithMaterializer(
               override def onPull(): Unit = pull(shape.in)
 
               override def preStart(): Unit = {
-                promise.future.foreach(_ => getAsyncCallback[Done](_ => complete(shape.out)).invoke(Done))(akka.dispatch.ExecutionContexts.sameThreadExecutionContext)
+                promise.future.foreach(_ => getAsyncCallback[Done](_ => complete(shape.out)).invoke(Done))(
+                  akka.dispatch.ExecutionContexts.sameThreadExecutionContext)
               }
 
               setHandlers(shape.in, shape.out, this)
@@ -102,7 +106,8 @@ class WebSocketIntegrationSpec extends AkkaSpecWithMaterializer(
             Http().webSocketClientLayer(WebSocketRequest("ws://localhost:" + myPort))
               .atop(TLSPlacebo())
               .joinMat(completeOnlySwitch.via(
-                Tcp(system).outgoingConnection(new InetSocketAddress("localhost", myPort), halfClose = true)))(Keep.both)
+                Tcp(system).outgoingConnection(new InetSocketAddress("localhost", myPort), halfClose = true)))(
+                Keep.both)
           }(Keep.right)
           .toMat(TestSink.probe[Message])(Keep.both)
           .run()
@@ -126,15 +131,15 @@ class WebSocketIntegrationSpec extends AkkaSpecWithMaterializer(
 
     "echo 100 elements and then shut down without error" in Utils.assertAllStagesStopped {
 
-      val bindingFuture = Http().newServerAt("localhost", 0).bindSync({
+      val bindingFuture = Http().newServerAt("localhost", 0).bindSync {
         _.attribute(webSocketUpgrade).get.handleMessages(Flow.apply, None)
-      })
+      }
       val binding = Await.result(bindingFuture, 3.seconds.dilated)
       val myPort = binding.localAddress.getPort
 
       val N = 100
 
-      EventFilter.warning(pattern = "HTTP header .* is not allowed in responses", occurrences = 0) intercept {
+      EventFilter.warning(pattern = "HTTP header .* is not allowed in responses", occurrences = 0).intercept {
         val (response, count) = Http().singleWebSocketRequest(
           WebSocketRequest("ws://127.0.0.1:" + myPort),
           Flow.fromSinkAndSourceMat(
@@ -165,9 +170,9 @@ class WebSocketIntegrationSpec extends AkkaSpecWithMaterializer(
         FlowShape(mapMsgToInt.in, mapIntToMsg.out)
       })
 
-      val bindingFuture = Http().newServerAt("localhost", 0).bindSync({
+      val bindingFuture = Http().newServerAt("localhost", 0).bindSync {
         _.attribute(webSocketUpgrade).get.handleMessages(handler, None)
-      })
+      }
       val binding = Await.result(bindingFuture, 3.seconds.dilated)
       val myPort = binding.localAddress.getPort
 
@@ -199,7 +204,8 @@ class WebSocketIntegrationSpec extends AkkaSpecWithMaterializer(
         .mapMaterializedValue(handlerTermination.completeWith(_))
         .map(m => TextMessage.Strict(s"Echo [${m.asTextMessage.getStrictText}]"))
 
-      val bindingFuture = Http().newServerAt("localhost", 0).bindSync(_.attribute(webSocketUpgrade).get.handleMessages(handler, None))
+      val bindingFuture =
+        Http().newServerAt("localhost", 0).bindSync(_.attribute(webSocketUpgrade).get.handleMessages(handler, None))
       val binding = Await.result(bindingFuture, 3.seconds.dilated)
       val myPort = binding.localAddress.getPort
 

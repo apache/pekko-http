@@ -17,7 +17,8 @@ object CachingDirectives {
 
   import akka.http.scaladsl.server.directives.{ CachingDirectives => D }
 
-  private implicit def routeResultCacheMapping[K]: JavaMapping[Cache[K, RouteResult], akka.http.caching.scaladsl.Cache[K, akka.http.scaladsl.server.RouteResult]] =
+  private implicit def routeResultCacheMapping[K]
+      : JavaMapping[Cache[K, RouteResult], akka.http.caching.scaladsl.Cache[K, akka.http.scaladsl.server.RouteResult]] =
     CacheJavaMapping.cacheMapping[K, RouteResult, K, akka.http.scaladsl.server.RouteResult]
 
   /**
@@ -26,14 +27,15 @@ object CachingDirectives {
    *
    * Use [[akka.japi.JavaPartialFunction]] to build the `keyer`.
    */
-  def cache[K](cache: Cache[K, RouteResult], keyer: PartialFunction[RequestContext, K], inner: Supplier[Route]) = RouteAdapter {
-    D.cache(
-      JavaMapping.toScala(cache),
-      toScalaKeyer(keyer)
-    ) { inner.get.delegate }
-  }
+  def cache[K](cache: Cache[K, RouteResult], keyer: PartialFunction[RequestContext, K], inner: Supplier[Route]) =
+    RouteAdapter {
+      D.cache(
+        JavaMapping.toScala(cache),
+        toScalaKeyer(keyer)) { inner.get.delegate }
+    }
 
-  private def toScalaKeyer[K](keyer: PartialFunction[RequestContext, K]): PartialFunction[akka.http.scaladsl.server.RequestContext, K] = {
+  private def toScalaKeyer[K](
+      keyer: PartialFunction[RequestContext, K]): PartialFunction[akka.http.scaladsl.server.RequestContext, K] = {
     case scalaRequestContext: akka.http.scaladsl.server.RequestContext => {
       val javaRequestContext = akka.http.javadsl.server.RoutingJavaMapping.RequestContext.toJava(scalaRequestContext)
       keyer(javaRequestContext)
@@ -52,12 +54,12 @@ object CachingDirectives {
    * Wraps its inner Route with caching support using the given [[Cache]] implementation and
    * keyer function. Note that routes producing streaming responses cannot be wrapped with this directive.
    */
-  def alwaysCache[K](cache: Cache[K, RouteResult], keyer: PartialFunction[RequestContext, K], inner: Supplier[Route]) = RouteAdapter {
-    D.alwaysCache(
-      JavaMapping.toScala(cache),
-      toScalaKeyer(keyer)
-    ) { inner.get.delegate }
-  }
+  def alwaysCache[K](cache: Cache[K, RouteResult], keyer: PartialFunction[RequestContext, K], inner: Supplier[Route]) =
+    RouteAdapter {
+      D.alwaysCache(
+        JavaMapping.toScala(cache),
+        toScalaKeyer(keyer)) { inner.get.delegate }
+    }
 
   /**
    * Creates an [[LfuCache]]

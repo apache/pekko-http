@@ -111,9 +111,10 @@ abstract class FileAndResourceDirectives extends ExecutionDirectives {
    *
    * If the requested resource is itself a directory or cannot be found or read the Route rejects the request.
    */
-  def getFromResourceDirectory(directoryName: String, resolver: ContentTypeResolver, classLoader: ClassLoader): Route = RouteAdapter {
-    D.getFromResourceDirectory(directoryName, classLoader)(resolver.asScala)
-  }
+  def getFromResourceDirectory(directoryName: String, resolver: ContentTypeResolver, classLoader: ClassLoader): Route =
+    RouteAdapter {
+      D.getFromResourceDirectory(directoryName, classLoader)(resolver.asScala)
+    }
 
   /**
    * Completes GET requests with the content of the given file, resolving the content type using the default resolver.
@@ -174,9 +175,10 @@ abstract class FileAndResourceDirectives extends ExecutionDirectives {
   /**
    * Same as `getFromBrowseableDirectories` with only one directory.
    */
-  def getFromBrowseableDirectory(directory: String, renderer: DirectoryRenderer, resolver: ContentTypeResolver): Route = RouteAdapter {
-    D.getFromBrowseableDirectory(directory)(renderer.asScala, resolver.asScala)
-  }
+  def getFromBrowseableDirectory(directory: String, renderer: DirectoryRenderer, resolver: ContentTypeResolver): Route =
+    RouteAdapter {
+      D.getFromBrowseableDirectory(directory)(renderer.asScala, resolver.asScala)
+    }
 
   /**
    * Same as `getFromBrowseableDirectories` with only one directory.
@@ -203,7 +205,8 @@ abstract class FileAndResourceDirectives extends ExecutionDirectives {
    * Serves the content of the given directories as a file system browser, i.e. files are sent and directories
    * served as browseable listings.
    */
-  def getFromBrowseableDirectories(directories: java.lang.Iterable[String], renderer: DirectoryRenderer, resolver: ContentTypeResolver): Route = RouteAdapter {
+  def getFromBrowseableDirectories(directories: java.lang.Iterable[String], renderer: DirectoryRenderer,
+      resolver: ContentTypeResolver): Route = RouteAdapter {
     D.getFromBrowseableDirectories(directories.asScala.toSeq: _*)(renderer.asScala, resolver.asScala)
   }
 
@@ -211,17 +214,20 @@ abstract class FileAndResourceDirectives extends ExecutionDirectives {
    * Serves the content of the given directories as a file system browser, i.e. files are sent and directories
    * served as browseable listings.
    */
-  def getFromBrowseableDirectories(directories: java.lang.Iterable[String], renderer: DirectoryRenderer): Route = RouteAdapter {
-    D.getFromBrowseableDirectories(directories.asScala.toSeq: _*)(renderer.asScala, defaultContentTypeResolver.asScala)
-  }
+  def getFromBrowseableDirectories(directories: java.lang.Iterable[String], renderer: DirectoryRenderer): Route =
+    RouteAdapter {
+      D.getFromBrowseableDirectories(directories.asScala.toSeq: _*)(renderer.asScala,
+        defaultContentTypeResolver.asScala)
+    }
 
   /**
    * Serves the content of the given directories as a file system browser, i.e. files are sent and directories
    * served as browseable listings.
    */
-  def getFromBrowseableDirectories(directories: java.lang.Iterable[String], resolver: ContentTypeResolver): Route = RouteAdapter {
-    D.getFromBrowseableDirectories(directories.asScala.toSeq: _*)(defaultDirectoryRenderer.asScala, resolver.asScala)
-  }
+  def getFromBrowseableDirectories(directories: java.lang.Iterable[String], resolver: ContentTypeResolver): Route =
+    RouteAdapter {
+      D.getFromBrowseableDirectories(directories.asScala.toSeq: _*)(defaultDirectoryRenderer.asScala, resolver.asScala)
+    }
 
   /**
    * Serves the content of the given directories as a file system browser, i.e. files are sent and directories
@@ -238,6 +244,7 @@ abstract class FileAndResourceDirectives extends ExecutionDirectives {
   @varargs def listDirectoryContents(directories: String*): Route = RouteAdapter {
     D.listDirectoryContents(directories: _*)(defaultDirectoryRenderer.asScala)
   }
+
   /**
    * Completes GET requests with a unified listing of the contents of all given directories.
    * The actual rendering of the directory contents is performed by the in-scope `Marshaller[DirectoryListing]`.

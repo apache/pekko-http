@@ -10,7 +10,7 @@ import docs.CompileOnlySpec
 
 class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
-  //#path-matcher
+  // #path-matcher
   val matcher: PathMatcher1[Option[Int]] =
     "foo" / "bar" / "X" ~ IntNumber.? / ("edit" | "create")
 
@@ -18,9 +18,9 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     path(matcher) { (i: Option[Int]) =>
       complete(s"Matched X${i.getOrElse("")}")
     }
-  //#path-matcher
+  // #path-matcher
 
-  //#path-dsl
+  // #path-dsl
   // matches /foo/
   path("foo"./)
 
@@ -53,18 +53,18 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   // matches anything starting with "/foo" except for /foobar
   pathPrefix("foo" ~ not("bar"))
-  //#path-dsl
+  // #path-dsl
 
-  //#completeWithUnmatchedPath
+  // #completeWithUnmatchedPath
   val completeWithUnmatchedPath =
     extractUnmatchedPath { p =>
       complete(p.toString)
     }
 
-  //#completeWithUnmatchedPath
+  // #completeWithUnmatchedPath
 
   "path-example" in {
-    //#path-example
+    // #path-example
     val route =
       concat(
         path("foo") {
@@ -80,10 +80,8 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
             },
             path(IntNumber) { int =>
               complete(if (int % 2 == 0) "even ball" else "odd ball")
-            }
-          )
-        }
-      )
+            })
+        })
 
     // tests:
     Get("/") ~> route ~> check {
@@ -101,11 +99,11 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/ball/1337") ~> route ~> check {
       responseAs[String] shouldEqual "odd ball"
     }
-    //#path-example
+    // #path-example
   }
 
   "pathEnd-" in {
-    //#pathEnd-
+    // #pathEnd-
     val route =
       pathPrefix("foo") {
         concat(
@@ -114,8 +112,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           },
           path("bar") {
             complete("/foo/bar")
-          }
-        )
+          })
       }
 
     // tests:
@@ -130,11 +127,11 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/foo/bar") ~> route ~> check {
       responseAs[String] shouldEqual "/foo/bar"
     }
-    //#pathEnd-
+    // #pathEnd-
   }
 
   "pathEndOrSingleSlash-" in {
-    //#pathEndOrSingleSlash-
+    // #pathEndOrSingleSlash-
     val route =
       pathPrefix("foo") {
         concat(
@@ -143,8 +140,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           },
           path("bar") {
             complete("/foo/bar")
-          }
-        )
+          })
       }
 
     // tests:
@@ -159,11 +155,11 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/foo/bar") ~> route ~> check {
       responseAs[String] shouldEqual "/foo/bar"
     }
-    //#pathEndOrSingleSlash-
+    // #pathEndOrSingleSlash-
   }
 
   "pathPrefix-" in {
-    //#pathPrefix-
+    // #pathPrefix-
     val route =
       pathPrefix("ball") {
         concat(
@@ -172,8 +168,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           },
           path(IntNumber) { int =>
             complete(if (int % 2 == 0) "even ball" else "odd ball")
-          }
-        )
+          })
       }
 
     // tests:
@@ -188,17 +183,16 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/ball/1337") ~> route ~> check {
       responseAs[String] shouldEqual "odd ball"
     }
-    //#pathPrefix-
+    // #pathPrefix-
   }
 
   "pathPrefixTest-" in {
-    //#pathPrefixTest-
+    // #pathPrefixTest-
     val route =
       pathPrefixTest("foo" | "bar") {
         concat(
           pathPrefix("foo") { completeWithUnmatchedPath },
-          pathPrefix("bar") { completeWithUnmatchedPath }
-        )
+          pathPrefix("bar") { completeWithUnmatchedPath })
       }
 
     // tests:
@@ -209,11 +203,11 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/bar/yes") ~> route ~> check {
       responseAs[String] shouldEqual "/yes"
     }
-    //#pathPrefixTest-
+    // #pathPrefixTest-
   }
 
   "pathSingleSlash-" in {
-    //#pathSingleSlash-
+    // #pathSingleSlash-
     val route =
       concat(
         pathSingleSlash {
@@ -226,10 +220,8 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
             },
             path(IntNumber) { int =>
               complete(if (int % 2 == 0) "even ball" else "odd ball")
-            }
-          )
-        }
-      )
+            })
+        })
 
     // tests:
     Get("/") ~> route ~> check {
@@ -247,11 +239,11 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/ball/1337") ~> route ~> check {
       responseAs[String] shouldEqual "odd ball"
     }
-    //#pathSingleSlash-
+    // #pathSingleSlash-
   }
 
   "pathSuffix-" in {
-    //#pathSuffix-
+    // #pathSuffix-
     val route =
       pathPrefix("start") {
         concat(
@@ -260,8 +252,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           },
           pathSuffix("foo" / "bar" ~ "baz") {
             completeWithUnmatchedPath
-          }
-        )
+          })
       }
 
     // tests:
@@ -272,18 +263,17 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/start/something/barbaz/foo") ~> route ~> check {
       responseAs[String] shouldEqual "/something/"
     }
-    //#pathSuffix-
+    // #pathSuffix-
   }
 
   "pathSuffixTest-" in {
-    //#pathSuffixTest-
+    // #pathSuffixTest-
     val route =
       concat(
         pathSuffixTest(Slash) {
           complete("slashed")
         },
-        complete("unslashed")
-      )
+        complete("unslashed"))
 
     // tests:
     Get("/foo/") ~> route ~> check {
@@ -292,17 +282,16 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/foo") ~> route ~> check {
       responseAs[String] shouldEqual "unslashed"
     }
-    //#pathSuffixTest-
+    // #pathSuffixTest-
   }
 
   "rawPathPrefix-" in {
-    //#rawPathPrefix-
+    // #rawPathPrefix-
     val route =
       pathPrefix("foo") {
         concat(
           rawPathPrefix("bar") { completeWithUnmatchedPath },
-          rawPathPrefix("doo") { completeWithUnmatchedPath }
-        )
+          rawPathPrefix("doo") { completeWithUnmatchedPath })
       }
 
     // tests:
@@ -313,11 +302,11 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/foodoo/baz") ~> route ~> check {
       responseAs[String] shouldEqual "/baz"
     }
-    //#rawPathPrefix-
+    // #rawPathPrefix-
   }
 
   "rawPathPrefixTest-" in {
-    //#rawPathPrefixTest-
+    // #rawPathPrefixTest-
     val route =
       pathPrefix("foo") {
         rawPathPrefixTest("bar") {
@@ -333,11 +322,11 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/foobaz") ~> route ~> check {
       handled shouldEqual false
     }
-    //#rawPathPrefixTest-
+    // #rawPathPrefixTest-
   }
 
   "redirectToTrailingSlashIfMissing-0" in {
-    //#redirectToTrailingSlashIfMissing-0
+    // #redirectToTrailingSlashIfMissing-0
     import akka.http.scaladsl.model.StatusCodes
 
     val route =
@@ -358,8 +347,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
             // / should be explicit as path element separator and not *in* the path element
             // So it should be: "bad-2" /
             ???
-          }
-        )
+          })
       }
 
     // tests:
@@ -371,7 +359,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       // in case the redirect can't be followed automatically:
       responseAs[String] shouldEqual {
         "This and all future requests should be directed to " +
-          "<a href=\"http://example.com/foo/\">this URI</a>."
+        "<a href=\"http://example.com/foo/\">this URI</a>."
       }
     }
 
@@ -390,11 +378,11 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/bad-2/") ~> route ~> check {
       handled shouldEqual false
     }
-    //#redirectToTrailingSlashIfMissing-0
+    // #redirectToTrailingSlashIfMissing-0
   }
 
   "redirectToNoTrailingSlashIfPresent-0" in {
-    //#redirectToNoTrailingSlashIfPresent-0
+    // #redirectToNoTrailingSlashIfPresent-0
     import akka.http.scaladsl.model.StatusCodes
 
     val route =
@@ -412,8 +400,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
             //
             // It should be `path("bad")` instead.
             ???
-          }
-        )
+          })
       }
 
     // tests:
@@ -425,7 +412,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       // in case the redirect can't be followed automatically:
       responseAs[String] shouldEqual {
         "This and all future requests should be directed to " +
-          "<a href=\"http://example.com/foo\">this URI</a>."
+        "<a href=\"http://example.com/foo\">this URI</a>."
       }
     }
 
@@ -439,11 +426,11 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/bad") ~> route ~> check {
       handled shouldEqual false
     }
-    //#redirectToNoTrailingSlashIfPresent-0
+    // #redirectToNoTrailingSlashIfPresent-0
   }
 
   "ignoreTrailingSlash" in {
-    //#ignoreTrailingSlash
+    // #ignoreTrailingSlash
     val route = ignoreTrailingSlash {
       concat(
         path("foo") {
@@ -453,8 +440,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
         path("bar"./) {
           // Thanks to `ignoreTrailingSlash` it will serve both `/bar` and `/bar/`.
           complete("OK")
-        }
-      )
+        })
     }
 
     // tests:
@@ -477,6 +463,6 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.OK
       responseAs[String] shouldEqual "OK"
     }
-    //#ignoreTrailingSlash
+    // #ignoreTrailingSlash
   }
 }

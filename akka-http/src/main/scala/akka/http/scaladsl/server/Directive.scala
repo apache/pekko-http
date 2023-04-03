@@ -26,7 +26,7 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
    * which is added by an implicit conversion (see `Directive.addDirectiveApply`).
    */
   def tapply(f: L => Route): Route
-  //#basic
+  // #basic
   /**
    * Joins two directives into one which runs the second directive if the first one rejects.
    *
@@ -63,11 +63,12 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
       Directive[tupler.Out] { inner =>
         tapply { values => ctx =>
           def futureRouteResult(): Future[RouteResult] = {
-            val r: R = try f(values)
-            catch {
-              case e: IllegalArgumentException =>
-                return ctx.reject(ValidationRejection(e.getMessage.nullAsEmpty, Some(e)))
-            }
+            val r: R =
+              try f(values)
+              catch {
+                case e: IllegalArgumentException =>
+                  return ctx.reject(ValidationRejection(e.getMessage.nullAsEmpty, Some(e)))
+              }
             inner(tupler(r))(ctx)
           }
           futureRouteResult()
@@ -88,7 +89,7 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
    * Flatmaps this directive using the given function.
    */
   def tflatMap[R: Tuple](f: L => Directive[R]): Directive[R] =
-    Directive[R] { inner => tapply { values => f(values) tapply inner } }
+    Directive[R] { inner => tapply { values => f(values).tapply(inner) } }
 
   /**
    * Creates a new [[akka.http.scaladsl.server.Directive0]], which passes if the given predicate matches the current
@@ -102,16 +103,21 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
    * extractions or rejects with the given rejections.
    */
   def tfilter(predicate: L => Boolean, rejections: Rejection*): Directive[L] =
-    Directive[L] { inner => tapply { values => ctx => if (predicate(values)) inner(values)(ctx) else ctx.reject(rejections: _*) } }
+    Directive[L] { inner =>
+      tapply { values => ctx => if (predicate(values)) inner(values)(ctx) else ctx.reject(rejections: _*) }
+    }
 
   /**
    * If the given [[scala.PartialFunction]] is defined for the input, maps this directive with the given function,
    * which can produce either a tuple or any other value.
    * If it is not defined however, the returned directive will reject with the given rejections.
    */
-  def tcollect[R](pf: PartialFunction[L, R], rejections: Rejection*)(implicit tupler: Tupler[R]): Directive[tupler.Out] =
+  def tcollect[R](pf: PartialFunction[L, R], rejections: Rejection*)(
+      implicit tupler: Tupler[R]): Directive[tupler.Out] =
     Directive[tupler.Out] { inner =>
-      tapply { values => ctx => { if (pf.isDefinedAt(values)) inner(tupler(pf(values)))(ctx) else ctx.reject(rejections: _*) } }
+      tapply { values => ctx =>
+        { if (pf.isDefinedAt(values)) inner(tupler(pf(values)))(ctx) else ctx.reject(rejections: _*) }
+      }
     }(tupler.OutIsTuple)
 
   /**
@@ -122,9 +128,9 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
     Directive[R] { inner => ctx =>
       import ctx.executionContext
       @volatile var rejectedFromInnerRoute = false
-      tapply({ list => c => rejectedFromInnerRoute = true; inner(list)(c) })(ctx).fast.flatMap {
+      tapply { list => c => rejectedFromInnerRoute = true; inner(list)(c) }(ctx).fast.flatMap {
         case RouteResult.Rejected(rejections) if !rejectedFromInnerRoute => recovery(rejections).tapply(inner)(ctx)
-        case x => FastFuture.successful(x)
+        case x                                                           => FastFuture.successful(x)
       }
     }
 
@@ -132,9 +138,11 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
    * Variant of `recover` that only recovers from rejections handled by the given PartialFunction.
    */
   def recoverPF[R >: L: Tuple](recovery: PartialFunction[immutable.Seq[Rejection], Directive[R]]): Directive[R] =
-    recover { rejections => recovery.applyOrElse(rejections, (rejs: Seq[Rejection]) => RouteDirectives.reject(rejs: _*)) }
+    recover { rejections =>
+      recovery.applyOrElse(rejections, (rejs: Seq[Rejection]) => RouteDirectives.reject(rejs: _*))
+    }
 
-  //#basic
+  // #basic
 }
 //#basic
 
@@ -193,7 +201,8 @@ object Directive {
     def filter(predicate: T => Boolean, rejections: Rejection*): Directive1[T] =
       underlying.tfilter({ case Tuple1(value) => predicate(value) }, rejections: _*)
 
-    def collect[R](pf: PartialFunction[T, R], rejections: Rejection*)(implicit tupler: Tupler[R]): Directive[tupler.Out] =
+    def collect[R](pf: PartialFunction[T, R], rejections: Rejection*)(
+        implicit tupler: Tupler[R]): Directive[tupler.Out] =
       underlying.tcollect({ case Tuple1(value) if pf.isDefinedAt(value) => pf(value) }, rejections: _*)
   }
 
@@ -215,7 +224,8 @@ object Directive {
       underlying.require(predicate, rejections: _*)
     def filter(predicate: T => Boolean, rejections: Rejection*): Directive1[T] =
       underlying.filter(predicate, rejections: _*)
-    def collect[R](pf: PartialFunction[T, R], rejections: Rejection*)(implicit tupler: Tupler[R]): Directive[tupler.Out] =
+    def collect[R](pf: PartialFunction[T, R], rejections: Rejection*)(
+        implicit tupler: Tupler[R]): Directive[tupler.Out] =
       underlying.collect(pf, rejections: _*)
   }
 }
@@ -226,7 +236,8 @@ trait ConjunctionMagnet[L] {
 }
 
 object ConjunctionMagnet {
-  implicit def fromDirective[L, R](other: Directive[R])(implicit join: TupleOps.Join[L, R]): ConjunctionMagnet[L] { type Out = Directive[join.Out] } =
+  implicit def fromDirective[L, R](other: Directive[R])(
+      implicit join: TupleOps.Join[L, R]): ConjunctionMagnet[L] { type Out = Directive[join.Out] } =
     new ConjunctionMagnet[L] {
       type Out = Directive[join.Out]
       def apply(underlying: Directive[L]) =
@@ -241,7 +252,8 @@ object ConjunctionMagnet {
       def apply(underlying: Directive[L]) = StandardRoute(underlying.tapply(_ => route))
     }
 
-  implicit def fromRouteGenerator[T, R <: Route](generator: T => R): ConjunctionMagnet[Unit] { type Out = RouteGenerator[T] } =
+  implicit def fromRouteGenerator[T, R <: Route](
+      generator: T => R): ConjunctionMagnet[Unit] { type Out = RouteGenerator[T] } =
     new ConjunctionMagnet[Unit] {
       type Out = RouteGenerator[T]
       def apply(underlying: Directive0) = value => underlying.tapply(_ => generator(value))

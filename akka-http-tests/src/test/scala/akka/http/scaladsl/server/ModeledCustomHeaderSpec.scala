@@ -11,7 +11,7 @@ import scala.util.{ Failure, Success, Try }
 
 object ModeledCustomHeaderSpec {
 
-  //#modeled-api-key-custom-header
+  // #modeled-api-key-custom-header
   final class ApiTokenHeader(token: String) extends ModeledCustomHeader[ApiTokenHeader] {
     override def renderInRequests = true
     override def renderInResponses = true
@@ -22,7 +22,7 @@ object ModeledCustomHeaderSpec {
     override val name = "apiKey"
     override def parse(value: String) = Try(new ApiTokenHeader(value))
   }
-  //#modeled-api-key-custom-header
+  // #modeled-api-key-custom-header
 
   final class DifferentHeader(token: String) extends ModeledCustomHeader[DifferentHeader] {
     override def renderInRequests = false
@@ -45,7 +45,7 @@ class ModeledCustomHeaderSpec extends RoutingSpec {
   "CustomHeader" should {
 
     "be able to be extracted using expected syntax" in {
-      //#matching-examples
+      // #matching-examples
       val ApiTokenHeader(t1) = ApiTokenHeader("token")
       t1 should ===("token")
 
@@ -71,7 +71,7 @@ class ModeledCustomHeaderSpec extends RoutingSpec {
         // won't match, different header name
         val ApiTokenHeader(v6) = RawHeader("different", "token")
       }
-      //#matching-examples
+      // #matching-examples
     }
 
     "be able to be extracted using response.header[...] syntax" in {
@@ -82,7 +82,7 @@ class ModeledCustomHeaderSpec extends RoutingSpec {
 
     "be able to match from RawHeader" in {
 
-      //#matching-in-routes
+      // #matching-in-routes
       def extractFromCustomHeader = headerValuePF {
         case t @ ApiTokenHeader(token) => s"extracted> $t"
         case raw: RawHeader            => s"raw> $raw"
@@ -106,7 +106,7 @@ class ModeledCustomHeaderSpec extends RoutingSpec {
         status should ===(StatusCodes.OK)
         responseAs[String] should ===("extracted> apiKey: TheKey")
       }
-      //#matching-in-routes
+      // #matching-in-routes
     }
 
     "be able to extract in routing DSL via headerValueByType" in {

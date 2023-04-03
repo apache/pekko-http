@@ -16,7 +16,8 @@ import akka.http.impl.util._
  * A charset range as encountered in `Accept-Charset`. Can either be a single charset, or `*`
  * if all charsets are supported and optionally a qValue for selecting this choice.
  */
-sealed abstract class HttpCharsetRange extends jm.HttpCharsetRange with ValueRenderable with WithQValue[HttpCharsetRange] {
+sealed abstract class HttpCharsetRange extends jm.HttpCharsetRange with ValueRenderable
+    with WithQValue[HttpCharsetRange] {
   def qValue: Float
   def matches(charset: HttpCharset): Boolean
 
@@ -49,7 +50,7 @@ object HttpCharsetRange {
 }
 
 final case class HttpCharset private[http] (override val value: String)(val aliases: immutable.Seq[String])
-  extends jm.HttpCharset with SingletonValueRenderable with WithQValue[HttpCharsetRange] {
+    extends jm.HttpCharset with SingletonValueRenderable with WithQValue[HttpCharsetRange] {
   @transient private[this] var _nioCharset: Try[Charset] = HttpCharset.findNioCharset(value)
 
   /** Returns the Charset for this charset if available or throws an exception otherwise */

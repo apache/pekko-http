@@ -60,7 +60,9 @@ class TlsEndpointVerificationSpec extends AkkaSpecWithMaterializer("""
         val certStore = KeyStore.getInstance(KeyStore.getDefaultType)
         certStore.load(null, null)
         // only do this if you want to accept a custom root CA. Understand what you are doing!
-        certStore.setCertificateEntry("ca", CertificateFactory.getInstance("X.509").generateCertificate(getClass.getClassLoader.getResourceAsStream("keys/rootCA.crt")))
+        certStore.setCertificateEntry("ca",
+          CertificateFactory.getInstance("X.509").generateCertificate(
+            getClass.getClassLoader.getResourceAsStream("keys/rootCA.crt")))
 
         val certManagerFactory = TrustManagerFactory.getInstance("SunX509")
         certManagerFactory.init(certStore)

@@ -34,10 +34,10 @@ trait CachingDirectives {
   def cachingProhibited: Directive0 =
     extract(_.request.headers.exists {
       case x: `Cache-Control` => x.directives.exists {
-        case `no-cache`   => true
-        case `max-age`(0) => true
-        case _            => false
-      }
+          case `no-cache`   => true
+          case `max-age`(0) => true
+          case _            => false
+        }
       case _ => false
     }).flatMap(if (_) pass else reject)
 

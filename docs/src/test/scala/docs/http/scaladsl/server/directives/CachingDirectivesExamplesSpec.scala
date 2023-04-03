@@ -18,13 +18,13 @@ import akka.http.scaladsl.model.HttpMethods.GET
 class CachingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "cache" in {
-    //#cache
+    // #cache
     import akka.http.scaladsl.server.RequestContext
     import akka.http.scaladsl.model.Uri
     import akka.http.scaladsl.model.headers.{ Authorization, `Cache-Control` }
     import akka.http.scaladsl.model.headers.CacheDirectives.`no-cache`
 
-    //Example keyer for non-authenticated GET requests
+    // Example keyer for non-authenticated GET requests
     val simpleKeyer: PartialFunction[RequestContext, Uri] = {
       val isGet: RequestContext => Boolean = _.request.method == GET
       val isAuthorized: RequestContext => Boolean =
@@ -61,16 +61,16 @@ class CachingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/cached") ~> `Cache-Control`(`no-cache`) ~> route ~> check {
       responseAs[String] shouldEqual "2"
     }
-    //#cache
+    // #cache
   }
   "alwaysCache" in {
-    //#always-cache
+    // #always-cache
     import akka.http.scaladsl.server.RequestContext
     import akka.http.scaladsl.model.Uri
     import akka.http.scaladsl.model.headers.{ Authorization, `Cache-Control` }
     import akka.http.scaladsl.model.headers.CacheDirectives.`no-cache`
 
-    //Example keyer for non-authenticated GET requests
+    // Example keyer for non-authenticated GET requests
     val simpleKeyer: PartialFunction[RequestContext, Uri] = {
       val isGet: RequestContext => Boolean = _.request.method == GET
       val isAuthorized: RequestContext => Boolean =
@@ -106,10 +106,10 @@ class CachingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/cached") ~> `Cache-Control`(`no-cache`) ~> route ~> check {
       responseAs[String] shouldEqual "1"
     }
-    //#always-cache
+    // #always-cache
   }
   "cachingProhibited" in {
-    //#caching-prohibited
+    // #caching-prohibited
     import akka.http.scaladsl.model.headers.`Cache-Control`
     import akka.http.scaladsl.model.headers.CacheDirectives.`no-cache`
 
@@ -124,11 +124,11 @@ class CachingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/") ~> `Cache-Control`(`no-cache`) ~> route ~> check {
       responseAs[String] shouldEqual "abc"
     }
-    //#caching-prohibited
+    // #caching-prohibited
   }
 
   "createCache" in {
-    //#keyer-function
+    // #keyer-function
     import akka.http.caching.scaladsl.Cache
     import akka.http.caching.scaladsl.CachingSettings
     import akka.http.caching.LfuCache
@@ -142,7 +142,7 @@ class CachingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     val keyerFunction: PartialFunction[RequestContext, Uri] = {
       case r: RequestContext => r.request.uri
     }
-    //#keyer-function
+    // #keyer-function
 
     var count = 0
     val innerRoute = extractUri { uri =>
@@ -150,7 +150,7 @@ class CachingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       complete(s"Request for $uri @ count $count")
     }
 
-    //#create-cache
+    // #create-cache
     val defaultCachingSettings = CachingSettings(system)
     val lfuCacheSettings =
       defaultCachingSettings.lfuCacheSettings
@@ -164,7 +164,7 @@ class CachingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // Create the route
     val route = cache(lfuCache, keyerFunction)(innerRoute)
-    //#create-cache
+    // #create-cache
 
     // We don't test the eviction settings here. Deterministic testing of eviction is hard because
     // caffeine's LFU is probabilistic.

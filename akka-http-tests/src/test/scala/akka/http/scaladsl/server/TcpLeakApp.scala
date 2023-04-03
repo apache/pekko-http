@@ -30,16 +30,19 @@ object TcpLeakApp extends App {
     .fill(100)(
       Source
         .single(ByteString("FOO"))
-        .log("outerFlow-beforeTcpFlow").withAttributes(ActorAttributes.logLevels(Logging.DebugLevel, Logging.ErrorLevel, Logging.ErrorLevel))
+        .log("outerFlow-beforeTcpFlow").withAttributes(ActorAttributes.logLevels(Logging.DebugLevel, Logging.ErrorLevel,
+          Logging.ErrorLevel))
         .via(tcpFlow)
-        .log("outerFlow-afterTcpFlow").withAttributes(ActorAttributes.logLevels(Logging.DebugLevel, Logging.ErrorLevel, Logging.ErrorLevel))
+        .log("outerFlow-afterTcpFlow").withAttributes(ActorAttributes.logLevels(Logging.DebugLevel, Logging.ErrorLevel,
+          Logging.ErrorLevel))
         .toMat(Sink.head)(Keep.right).run())
     .last
     .onComplete {
       result =>
         println(s"Result: $result")
         Thread.sleep(10000)
-        println("===================== \n\n" + system.asInstanceOf[ActorSystemImpl].printTree + "\n\n========================")
+        println("===================== \n\n" + system.asInstanceOf[
+          ActorSystemImpl].printTree + "\n\n========================")
     }
 
   Thread.sleep(11000)

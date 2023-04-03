@@ -28,7 +28,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   implicit val responseTimeout: Timeout = Timeout(2, TimeUnit.SECONDS)
 
   "onComplete" in {
-    //#onComplete
+    // #onComplete
     def divide(a: Int, b: Int): Future[Int] = Future {
       a / b
     }
@@ -50,7 +50,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual InternalServerError
       responseAs[String] shouldEqual "An error occurred: / by zero"
     }
-    //#onComplete
+    // #onComplete
   }
 
   "onCompleteWithBreaker" in {
@@ -58,7 +58,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // between triggering and reporting errors for ongoing calls. This test fails a lot so disabling for now.
     pending
 
-    //#onCompleteWithBreaker
+    // #onCompleteWithBreaker
     def divide(a: Int, b: Int): Future[Int] = Future {
       a / b
     }
@@ -68,8 +68,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       system.scheduler,
       maxFailures = 1,
       callTimeout = 5.seconds,
-      resetTimeout
-    )
+      resetTimeout)
 
     val route =
       path("divide" / IntNumber / IntNumber) { (a, b) =>
@@ -95,7 +94,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Thread.sleep(resetTimeout.toMillis + 200)
 
-    //#onCompleteWithBreaker
+    // #onCompleteWithBreaker
     // retry to make test more stable, since breaker reset is timer based, hidden from docs
     // format: OFF
     awaitAssert({
@@ -109,7 +108,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   }
 
   "onSuccess" in {
-    //#onSuccess
+    // #onSuccess
     val route =
       concat(
         path("success") {
@@ -121,8 +120,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           onSuccess(Future.failed[String](TestException)) { extraction =>
             complete(extraction)
           }
-        }
-      )
+        })
 
     // tests:
     Get("/success") ~> route ~> check {
@@ -133,11 +131,11 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual InternalServerError
       responseAs[String] shouldEqual "Unsuccessful future!"
     }
-    //#onSuccess
+    // #onSuccess
   }
 
   "completeOrRecoverWith" in {
-    //#completeOrRecoverWith
+    // #completeOrRecoverWith
     val route =
       concat(
         path("success") {
@@ -149,8 +147,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           completeOrRecoverWith(Future.failed[String](TestException)) { extraction =>
             failWith(extraction)
           }
-        }
-      )
+        })
 
     // tests:
     Get("/success") ~> route ~> check {
@@ -161,6 +158,6 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual InternalServerError
       responseAs[String] shouldEqual "Unsuccessful future!"
     }
-    //#completeOrRecoverWith
+    // #completeOrRecoverWith
   }
 }

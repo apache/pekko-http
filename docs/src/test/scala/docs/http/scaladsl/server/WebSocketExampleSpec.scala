@@ -21,7 +21,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class WebSocketExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
   "core-example" in compileOnlySpec {
-    //#websocket-example-using-core
+    // #websocket-example-using-core
     import akka.actor.ActorSystem
     import akka.stream.scaladsl.{ Source, Flow }
     import akka.http.scaladsl.Http
@@ -32,7 +32,7 @@ class WebSocketExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpe
 
     implicit val system = ActorSystem()
 
-    //#websocket-handler
+    // #websocket-handler
     // The Greeter WebSocket Service expects a "name" per message and
     // returns a greeting message for that name
     val greeterWebSocketService =
@@ -42,15 +42,15 @@ class WebSocketExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpe
           // rather we simply stream it back as the tail of the response
           // this means we might start sending the response even before the
           // end of the incoming message has been received
-          case tm: TextMessage => TextMessage(Source.single("Hello ") ++ tm.textStream) :: Nil
+          case tm: TextMessage   => TextMessage(Source.single("Hello ") ++ tm.textStream) :: Nil
           case bm: BinaryMessage =>
             // ignore binary messages but drain content to avoid the stream being clogged
             bm.dataStream.runWith(Sink.ignore)
             Nil
         }
-    //#websocket-handler
+    // #websocket-handler
 
-    //#websocket-request-handling
+    // #websocket-request-handling
     val requestHandler: HttpRequest => HttpResponse = {
       case req @ HttpRequest(GET, Uri.Path("/greeter"), _, _, _) =>
         req.attribute(AttributeKeys.webSocketUpgrade) match {
@@ -61,7 +61,7 @@ class WebSocketExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpe
         r.discardEntityBytes() // important to drain incoming HTTP Entity stream
         HttpResponse(404, entity = "Unknown resource!")
     }
-    //#websocket-request-handling
+    // #websocket-request-handling
 
     val bindingFuture =
       Http().newServerAt("localhost", 8080).bindSync(requestHandler)
@@ -95,14 +95,14 @@ class WebSocketExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpe
           // TODO #20096 in case a Streamed message comes in, we should runWith(Sink.ignore) its data
         }
 
-    //#websocket-routing
+    // #websocket-routing
     val route =
       path("greeter") {
         get {
           handleWebSocketMessages(greeterWebSocketService)
         }
       }
-    //#websocket-routing
+    // #websocket-routing
 
     val bindingFuture = Http().newServerAt("localhost", port = 8080).bind(route)
 
@@ -118,20 +118,21 @@ class WebSocketExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpe
   "ping-server-example" in compileOnlySpec {
     implicit val system: ActorSystem = null
     val route = null
-    //#websocket-ping-payload-server
+    // #websocket-ping-payload-server
     val defaultSettings = ServerSettings(system)
 
     val pingCounter = new AtomicInteger()
 
     Http().newServerAt("127.0.0.1", 0)
-      .adaptSettings(_.mapWebsocketSettings(_.withPeriodicKeepAliveData(() => ByteString(s"debug-${pingCounter.incrementAndGet()}"))))
+      .adaptSettings(_.mapWebsocketSettings(
+        _.withPeriodicKeepAliveData(() => ByteString(s"debug-${pingCounter.incrementAndGet()}"))))
       .bind(route)
-    //#websocket-ping-payload-server
+    // #websocket-ping-payload-server
   }
 
   "ping-example" in compileOnlySpec {
     implicit val system: ActorSystem = null
-    //#websocket-client-ping-payload
+    // #websocket-client-ping-payload
     val defaultSettings = ClientConnectionSettings(system)
 
     val pingCounter = new AtomicInteger()
@@ -150,8 +151,7 @@ class WebSocketExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpe
       Http().defaultClientHttpsContext,
       None,
       customSettings,
-      system.log
-    )
-    //#websocket-client-ping-payload
+      system.log)
+    // #websocket-client-ping-payload
   }
 }

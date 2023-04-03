@@ -11,7 +11,7 @@ import java.util.zip._
 import akka.http.scaladsl.model.HttpMethods.POST
 import akka.http.scaladsl.model.{ HttpEntity, HttpRequest }
 import akka.http.impl.util._
-import akka.http.scaladsl.model.headers.{ HttpEncodings, `Content-Encoding` }
+import akka.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncodings }
 import akka.testkit._
 import scala.annotation.nowarn
 
@@ -35,17 +35,20 @@ class DeflateSpec extends CoderSpec {
     }
     "properly round-trip encode/decode an HttpRequest using no-wrap and best compression" in {
       val request = HttpRequest(POST, entity = HttpEntity(largeText))
-      Coders.Deflate.decodeMessage(encodeMessage(request, Deflater.BEST_COMPRESSION, noWrap = true)).toStrict(3.seconds.dilated)
+      Coders.Deflate.decodeMessage(encodeMessage(request, Deflater.BEST_COMPRESSION, noWrap = true)).toStrict(
+        3.seconds.dilated)
         .awaitResult(3.seconds.dilated) should equal(request)
     }
     "properly round-trip encode/decode an HttpRequest using no-wrap and no compression" in {
       val request = HttpRequest(POST, entity = HttpEntity(largeText))
-      Coders.Deflate.decodeMessage(encodeMessage(request, Deflater.NO_COMPRESSION, noWrap = true)).toStrict(3.seconds.dilated)
+      Coders.Deflate.decodeMessage(encodeMessage(request, Deflater.NO_COMPRESSION, noWrap = true)).toStrict(
+        3.seconds.dilated)
         .awaitResult(3.seconds.dilated) should equal(request)
     }
     "properly round-trip encode/decode an HttpRequest with wrapping and no compression" in {
       val request = HttpRequest(POST, entity = HttpEntity(largeText))
-      Coders.Deflate.decodeMessage(encodeMessage(request, Deflater.NO_COMPRESSION, noWrap = false)).toStrict(3.seconds.dilated)
+      Coders.Deflate.decodeMessage(encodeMessage(request, Deflater.NO_COMPRESSION, noWrap = false)).toStrict(
+        3.seconds.dilated)
         .awaitResult(3.seconds.dilated) should equal(request)
     }
   }

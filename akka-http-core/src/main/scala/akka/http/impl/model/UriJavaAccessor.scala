@@ -14,6 +14,7 @@ import java.nio.charset.Charset
  */
 @InternalApi
 private[http] abstract class UriJavaAccessor
+
 /**
  * INTERNAL API.
  */

@@ -21,7 +21,8 @@ object MultiNode extends AutoPlugin {
     val targetDirName = seqWithProperty("akka.test.multi-node.targetDirName")
   }
 
-  val multiExecuteTests = CliOptions.multiNode.ifTrue(MultiJvm / multiNodeExecuteTests).getOrElse(MultiJvm / executeTests)
+  val multiExecuteTests =
+    CliOptions.multiNode.ifTrue(MultiJvm / multiNodeExecuteTests).getOrElse(MultiJvm / executeTests)
   val multiTest = CliOptions.multiNode.ifTrue(MultiJvm / multiNodeTest).getOrElse(MultiJvm / test)
 
   override def trigger = noTrigger
@@ -37,12 +38,13 @@ object MultiNode extends AutoPlugin {
     // -DMultiJvm.akka.cluster.Stress.nrOfNodes=15
     val MultinodeJvmArgs = "multinode\\.(D|X)(.*)".r
     val knownPrefix = Set("multnode.", "akka.", "MultiJvm.")
-    val akkaProperties = System.getProperties.propertyNames.asInstanceOf[java.util.Enumeration[String]].asScala.toList.collect {
-      case MultinodeJvmArgs(a, b) =>
-        val value = System.getProperty("multinode." + a + b)
-        "-" + a + b + (if (value == "") "" else "=" + value)
-      case key: String if knownPrefix.exists(pre => key.startsWith(pre)) => "-D" + key + "=" + System.getProperty(key)
-    }
+    val akkaProperties =
+      System.getProperties.propertyNames.asInstanceOf[java.util.Enumeration[String]].asScala.toList.collect {
+        case MultinodeJvmArgs(a, b) =>
+          val value = System.getProperty("multinode." + a + b)
+          "-" + a + b + (if (value == "") "" else "=" + value)
+        case key: String if knownPrefix.exists(pre => key.startsWith(pre)) => "-D" + key + "=" + System.getProperty(key)
+      }
 
     "-Xmx256m" :: akkaProperties ::: CliOptions.sbtLogNoFormat.ifTrue("-Dakka.test.nocolor=true").toList
   }
@@ -52,8 +54,7 @@ object MultiNode extends AutoPlugin {
     inConfig(MultiJvm)(Seq(
       MultiJvm / jvmOptions := defaultMultiJvmOptions,
       MultiJvm / scalacOptions := (Test / scalacOptions).value,
-      MultiJvm / compile := ((MultiJvm / compile) triggeredBy (Test / compile)).value
-    )) ++
+      MultiJvm / compile := (MultiJvm / compile).triggeredBy(Test / compile).value)) ++
     CliOptions.hostsFileName.map(MultiJvm / multiNodeHostsFileName := _) ++
     CliOptions.javaName.map(MultiJvm / multiNodeJavaName := _) ++
     CliOptions.targetDirName.map(MultiJvm / multiNodeTargetDirName := _) ++
@@ -95,6 +96,5 @@ object MultiNodeScalaTest extends AutoPlugin {
     },
     MultiJvm / scalatestOptions := {
       Seq("-C", "org.scalatest.extra.QuietReporter")
-    }
-  )
+    })
 }

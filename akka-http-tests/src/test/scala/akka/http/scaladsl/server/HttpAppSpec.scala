@@ -64,7 +64,8 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
       bindingPromise.success(binding)
     }
 
-    override protected def postServerShutdown(attempt: Try[Done], system: ActorSystem): Unit = postShutdownCalled.set(true)
+    override protected def postServerShutdown(attempt: Try[Done], system: ActorSystem): Unit =
+      postShutdownCalled.set(true)
   }
 
   def withMinimal(testCode: MinimalApp => Any): Unit = {
@@ -102,7 +103,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
     }
 
     "start without ActorSystem" in withMinimal { minimal =>
-
       val server = Future {
         minimal.startServer("localhost", 0, ServerSettings(ConfigFactory.load))
       }
@@ -120,7 +120,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
     }
 
     "start providing an ActorSystem" in withMinimal { minimal =>
-
       val server = Future {
         minimal.startServer("localhost", 0, system)
       }
@@ -139,7 +138,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
     }
 
     "start providing an ActorSystem and Settings" in withMinimal { minimal =>
-
       val server = Future {
         minimal.startServer("localhost", 0, ServerSettings(system), system)
       }
@@ -158,7 +156,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
     }
 
     "provide binding if available" in withMinimal { minimal =>
-
       minimal.binding().isFailure should ===(true)
 
       val server = Future {
@@ -183,7 +180,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
     "notify" when {
 
       "shutting down" in withSneaky { sneaky =>
-
         val server = Future {
           sneaky.startServer("localhost", 0, ServerSettings(ConfigFactory.load))
         }
@@ -206,7 +202,6 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
       }
 
       "after binding is successful" in withSneaky { sneaky =>
-
         val server = Future {
           sneaky.startServer("localhost", 0, ServerSettings(ConfigFactory.load))
         }
@@ -231,7 +226,7 @@ class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eve
         val port = serverSocket.getLocalPort
 
         try {
-          EventFilter[SocketException](pattern = ".*Address already in use.*", occurrences = 1) intercept {
+          EventFilter[SocketException](pattern = ".*Address already in use.*", occurrences = 1).intercept {
             sneaky.startServer("localhost", port, system)
           }
 

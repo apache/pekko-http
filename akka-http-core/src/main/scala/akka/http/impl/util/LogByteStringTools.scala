@@ -25,18 +25,18 @@ private[akka] object LogByteStringTools {
 
   private val LogFailuresOnDebugAttributes = Attributes.logLevels(onFailure = Logging.DebugLevel)
 
-  def logByteStringBidi(name: String, maxBytes: Int = MaxBytesPrinted): BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] =
+  def logByteStringBidi(name: String, maxBytes: Int = MaxBytesPrinted)
+      : BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] =
     BidiFlow.fromFlows(
       logByteString(s"$name DOWN", maxBytes),
-      logByteString(s"$name UP  ", maxBytes)
-    )
+      logByteString(s"$name UP  ", maxBytes))
 
-  def logToStringBidi[A: ClassTag, B: ClassTag](name: String, maxBytes: Int = MaxBytesPrinted): BidiFlow[A, A, B, B, NotUsed] = {
+  def logToStringBidi[A: ClassTag, B: ClassTag](
+      name: String, maxBytes: Int = MaxBytesPrinted): BidiFlow[A, A, B, B, NotUsed] = {
     def limitedName[T](implicit tag: ClassTag[T]): String = Logging.simpleName(tag.runtimeClass).take(20).mkString
     BidiFlow.fromFlows(
       logToString(s"$name ${limitedName[A]}", maxBytes),
-      logToString(s"$name ${limitedName[B]}", maxBytes)
-    )
+      logToString(s"$name ${limitedName[B]}", maxBytes))
   }
 
   def logByteString(name: String, maxBytes: Int = MaxBytesPrinted): Flow[ByteString, ByteString, NotUsed] =
@@ -45,26 +45,30 @@ private[akka] object LogByteStringTools {
   def logToString[A](name: String, maxBytes: Int = MaxBytesPrinted): Flow[A, A, NotUsed] =
     Flow[A].log(name, _.toString().take(maxBytes)).addAttributes(LogFailuresOnDebugAttributes)
 
-  def logTLSBidi(name: String, maxBytes: Int = MaxBytesPrinted): BidiFlow[SslTlsOutbound, SslTlsOutbound, SslTlsInbound, SslTlsInbound, NotUsed] =
+  def logTLSBidi(name: String, maxBytes: Int = MaxBytesPrinted)
+      : BidiFlow[SslTlsOutbound, SslTlsOutbound, SslTlsInbound, SslTlsInbound, NotUsed] =
     BidiFlow.fromFlows(
       logTlsOutbound(s"$name ToNet  ", maxBytes),
       logTlsInbound(s"$name FromNet", maxBytes))
 
   def logTlsOutbound(name: String, maxBytes: Int = MaxBytesPrinted): Flow[SslTlsOutbound, SslTlsOutbound, NotUsed] =
-    Flow[SslTlsOutbound].log(name, {
-      case SendBytes(bytes)       => "SendBytes " + printByteString(bytes, maxBytes)
-      case n: NegotiateNewSession => n.toString
-    }).addAttributes(LogFailuresOnDebugAttributes)
+    Flow[SslTlsOutbound].log(name,
+      {
+        case SendBytes(bytes)       => "SendBytes " + printByteString(bytes, maxBytes)
+        case n: NegotiateNewSession => n.toString
+      }).addAttributes(LogFailuresOnDebugAttributes)
 
   def logTlsInbound(name: String, maxBytes: Int = MaxBytesPrinted): Flow[SslTlsInbound, SslTlsInbound, NotUsed] =
-    Flow[SslTlsInbound].log(name, {
-      case s: SessionTruncated          => s
-      case SessionBytes(session, bytes) => "SessionBytes " + printByteString(bytes, maxBytes)
-    }).addAttributes(LogFailuresOnDebugAttributes)
+    Flow[SslTlsInbound].log(name,
+      {
+        case s: SessionTruncated          => s
+        case SessionBytes(session, bytes) => "SessionBytes " + printByteString(bytes, maxBytes)
+      }).addAttributes(LogFailuresOnDebugAttributes)
 
-  def printByteString(bytes: ByteString, maxBytes: Int = MaxBytesPrinted, addPrefix: Boolean = true, indent: String = " "): String = {
+  def printByteString(bytes: ByteString, maxBytes: Int = MaxBytesPrinted, addPrefix: Boolean = true,
+      indent: String = " "): String = {
     def formatBytes(bs: ByteString): Iterator[String] = {
-      def asHex(b: Byte): String = "%02X" format b
+      def asHex(b: Byte): String = "%02X".format(b)
 
       def formatLine(bs: ByteString): String = {
         val hex = bs.map(asHex).mkString(" ")
@@ -88,11 +92,11 @@ private[akka] object LogByteStringTools {
     formatBytes(bytes).mkString("")
   }
   def asASCII(b: Byte): Char =
-    if (b >= 0x20 && b < 0x7f) b.toChar
+    if (b >= 0x20 && b < 0x7F) b.toChar
     else '.'
 
-  def logTLSBidiBySetting(tag: String, maxBytesSetting: Option[Int]): BidiFlow[SslTlsOutbound, SslTlsOutbound, SslTlsInbound, SslTlsInbound, Any] =
+  def logTLSBidiBySetting(tag: String, maxBytesSetting: Option[Int])
+      : BidiFlow[SslTlsOutbound, SslTlsOutbound, SslTlsInbound, SslTlsInbound, Any] =
     maxBytesSetting
-      .map(logTLSBidi(tag, _)).
-      getOrElse(BidiFlow.identity)
+      .map(logTLSBidi(tag, _)).getOrElse(BidiFlow.identity)
 }

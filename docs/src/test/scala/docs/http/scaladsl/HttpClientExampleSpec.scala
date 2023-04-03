@@ -19,7 +19,7 @@ import org.scalatest.wordspec.AnyWordSpec
 class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
 
   "manual-entity-consume-example-1" in compileOnlySpec {
-    //#manual-entity-consume-example-1
+    // #manual-entity-consume-example-1
     import java.io.File
 
     import akka.actor.ActorSystem
@@ -38,11 +38,11 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
     def transformEachLine(line: ByteString): ByteString = ???
 
-    //#manual-entity-consume-example-1
+    // #manual-entity-consume-example-1
   }
 
   "manual-entity-consume-example-2" in compileOnlySpec {
-    //#manual-entity-consume-example-2
+    // #manual-entity-consume-example-2
     import scala.concurrent.ExecutionContext
     import scala.concurrent.Future
     import scala.concurrent.duration._
@@ -68,17 +68,17 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     // Though it is also still possible to use the streaming API to consume dataBytes,
     // even though now they're in memory:
     val person2: Future[ExamplePerson] =
-      strictEntity flatMap { e =>
+      strictEntity.flatMap { e =>
         e.dataBytes
           .runFold(ByteString.empty) { case (acc, b) => acc ++ b }
           .map(parse)
       }
 
-    //#manual-entity-consume-example-2
+    // #manual-entity-consume-example-2
   }
 
   "manual-entity-consume-example-3" in compileOnlySpec {
-    //#manual-entity-consume-example-3
+    // #manual-entity-consume-example-3
     import scala.concurrent.ExecutionContext
     import scala.concurrent.Future
 
@@ -99,8 +99,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
     val requests: Source[HttpRequest, NotUsed] = Source
       .fromIterator(() =>
-        Range(0, 10).map(i => HttpRequest(uri = Uri(s"https://localhost/people/$i"))).iterator
-      )
+        Range(0, 10).map(i => HttpRequest(uri = Uri(s"https://localhost/people/$i"))).iterator)
 
     val processorFlow: Flow[Option[ExamplePerson], Int, NotUsed] =
       Flow[Option[ExamplePerson]].map(_.map(_.name.length).getOrElse(0))
@@ -123,11 +122,11 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       .via(processorFlow)
       .runWith(Sink.ignore)
 
-    //#manual-entity-consume-example-3
+    // #manual-entity-consume-example-3
   }
 
   "manual-entity-discard-example-1" in compileOnlySpec {
-    //#manual-entity-discard-example-1
+    // #manual-entity-discard-example-1
     import scala.concurrent.ExecutionContext
 
     import akka.actor.ActorSystem
@@ -142,7 +141,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     val discarded: DiscardedEntity = response1.discardEntityBytes()
     discarded.future.onComplete { done => println("Entity discarded completely!") }
 
-    //#manual-entity-discard-example-1
+    // #manual-entity-discard-example-1
   }
   "manual-entity-discard-example-2" in compileOnlySpec {
     import scala.concurrent.ExecutionContext
@@ -156,16 +155,16 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
 
-    //#manual-entity-discard-example-2
+    // #manual-entity-discard-example-2
     val response1: HttpResponse = ??? // obtained from an HTTP call (see examples below)
 
     val discardingComplete: Future[Done] = response1.entity.dataBytes.runWith(Sink.ignore)
     discardingComplete.onComplete(done => println("Entity discarded completely!"))
-    //#manual-entity-discard-example-2
+    // #manual-entity-discard-example-2
   }
 
   "host-level-queue-example" in compileOnlySpec {
-    //#host-level-queue-example
+    // #host-level-queue-example
     import scala.util.{ Failure, Success }
     import scala.concurrent.{ Future, Promise }
 
@@ -187,10 +186,10 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     val queue =
       Source.queue[(HttpRequest, Promise[HttpResponse])](QueueSize, OverflowStrategy.dropNew)
         .via(poolClientFlow)
-        .to(Sink.foreach({
+        .to(Sink.foreach {
           case ((Success(resp), p)) => p.success(resp)
           case ((Failure(e), p))    => p.failure(e)
-        }))
+        })
         .run()
 
     def queueRequest(request: HttpRequest): Future[HttpResponse] = {
@@ -199,16 +198,17 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
         case QueueOfferResult.Enqueued    => responsePromise.future
         case QueueOfferResult.Dropped     => Future.failed(new RuntimeException("Queue overflowed. Try again later."))
         case QueueOfferResult.Failure(ex) => Future.failed(ex)
-        case QueueOfferResult.QueueClosed => Future.failed(new RuntimeException("Queue was closed (pool shut down) while running the request. Try again later."))
+        case QueueOfferResult.QueueClosed => Future.failed(
+            new RuntimeException("Queue was closed (pool shut down) while running the request. Try again later."))
       }
     }
 
     val responseFuture: Future[HttpResponse] = queueRequest(HttpRequest(uri = "/"))
-    //#host-level-queue-example
+    // #host-level-queue-example
   }
 
   "host-level-streamed-example" in compileOnlySpec {
-    //#host-level-streamed-example
+    // #host-level-streamed-example
     import java.nio.file.{ Path, Paths }
 
     import scala.util.{ Failure, Success }
@@ -233,8 +233,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       Source(List(
         FileToUpload("foo.txt", Paths.get("./foo.txt")),
         FileToUpload("bar.txt", Paths.get("./bar.txt")),
-        FileToUpload("baz.txt", Paths.get("./baz.txt"))
-      ))
+        FileToUpload("baz.txt", Paths.get("./baz.txt"))))
 
     val poolClientFlow =
       Http().cachedHostConnectionPool[FileToUpload]("akka.io")
@@ -270,14 +269,14 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
         case (Failure(ex), fileToUpload) =>
           println(s"Uploading file $fileToUpload failed with $ex")
       }
-    //#host-level-streamed-example
+    // #host-level-streamed-example
   }
 
   "single-request-example" in compileOnlySpec {
     import scala.concurrent.Future
     import akka.actor.ActorSystem
     import akka.http.scaladsl.model._
-    //#create-simple-request
+    // #create-simple-request
     HttpRequest(uri = "https://akka.io")
 
     // or:
@@ -287,24 +286,23 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     // with query params
     Get("https://akka.io?foo=bar")
 
-    //#create-simple-request
+    // #create-simple-request
 
     implicit val ec: ExecutionContext = null
-    //#create-post-request
+    // #create-post-request
     HttpRequest(
       method = HttpMethods.POST,
       uri = "https://userservice.example/users",
-      entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "data")
-    )
+      entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "data"))
 
     // or:
     import akka.http.scaladsl.client.RequestBuilding.Post
     Post("https://userservice.example/users", "data")
-    //#create-post-request
+    // #create-post-request
 
     implicit val system: ActorSystem = null
     val response: HttpResponse = null
-    //#unmarshal-response-body
+    // #unmarshal-response-body
     import akka.http.scaladsl.unmarshalling.Unmarshal
     import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
     import spray.json.DefaultJsonProtocol._
@@ -314,18 +312,18 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     implicit val petFormat: RootJsonFormat[Pet] = jsonFormat1(Pet.apply)
 
     val pet: Future[Pet] = Unmarshal(response).to[Pet]
-    //#unmarshal-response-body
+    // #unmarshal-response-body
   }
 
   "single-request-in-actor-example" in compileOnlySpec {
-    //#single-request-in-actor-example
+    // #single-request-in-actor-example
     import akka.actor.{ Actor, ActorLogging, ActorSystem }
     import akka.http.scaladsl.Http
     import akka.http.scaladsl.model._
     import akka.util.ByteString
 
     class Myself extends Actor
-      with ActorLogging {
+        with ActorLogging {
 
       import akka.pattern.pipe
       import context.dispatcher
@@ -349,11 +347,11 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       }
 
     }
-    //#single-request-in-actor-example
+    // #single-request-in-actor-example
   }
 
   "https-proxy-example-single-request" in compileOnlySpec {
-    //#https-proxy-example-single-request
+    // #https-proxy-example-single-request
     import java.net.InetSocketAddress
 
     import akka.actor.ActorSystem
@@ -370,7 +368,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       .withConnectionSettings(ClientConnectionSettings(system)
         .withTransport(httpsProxyTransport))
     Http().singleRequest(HttpRequest(uri = "https://google.com"), settings = settings)
-    //#https-proxy-example-single-request
+    // #https-proxy-example-single-request
   }
 
   "https-proxy-example-single-request with auth" in compileOnlySpec {
@@ -384,7 +382,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     val proxyHost = "localhost"
     val proxyPort = 8888
 
-    //#auth-https-proxy-example-single-request
+    // #auth-https-proxy-example-single-request
     import akka.http.scaladsl.model.headers
 
     val proxyAddress = InetSocketAddress.createUnresolved(proxyHost, proxyPort)
@@ -396,7 +394,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       .withConnectionSettings(ClientConnectionSettings(system)
         .withTransport(httpsProxyTransport))
     Http().singleRequest(HttpRequest(uri = "http://akka.io"), settings = settings)
-    //#auth-https-proxy-example-single-request
+    // #auth-https-proxy-example-single-request
   }
 
 }

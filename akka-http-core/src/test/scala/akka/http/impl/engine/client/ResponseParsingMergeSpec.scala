@@ -40,13 +40,12 @@ class ResponseParsingMergeSpec extends AkkaSpec {
           import GraphDSL.Implicits._
           val parsingMerge = b.add(responseParsingMerge)
 
-          Source.fromPublisher(inBypassProbe) ~> parsingMerge.in1
+          Source.fromPublisher(inBypassProbe)       ~> parsingMerge.in1
           Source.fromPublisher(inSessionBytesProbe) ~> parsingMerge.in0
-          parsingMerge.out ~> Sink.fromSubscriber(responseProbe)
+          parsingMerge.out                          ~> Sink.fromSubscriber(responseProbe)
 
           ClosedShape
-        }.withAttributes(Attributes.inputBuffer(1, 8))
-      ).run()
+        }.withAttributes(Attributes.inputBuffer(1, 8))).run()
 
       val inSessionBytesSub = inSessionBytesProbe.expectSubscription()
       val inBypassSub = inBypassProbe.expectSubscription()
@@ -56,8 +55,9 @@ class ResponseParsingMergeSpec extends AkkaSpec {
       inSessionBytesSub.expectRequest()
       inBypassSub.sendNext(ResponseContext(HttpMethods.GET, None))
 
-      inSessionBytesSub.sendNext(SessionBytes(null, ByteString(
-        """HTTP/1.1 200 OK
+      inSessionBytesSub.sendNext(SessionBytes(null,
+        ByteString(
+          """HTTP/1.1 200 OK
           |Transfer-Encoding: chunked
           |Connection: lalelu
           |Content-Type: application/pdf
@@ -72,11 +72,11 @@ class ResponseParsingMergeSpec extends AkkaSpec {
           |4
           |0123
           |5
-          |01234""".stripMargin
-      )))
+          |01234""".stripMargin)))
 
-      inSessionBytesSub.sendNext(SessionBytes(null, ByteString(
-        """
+      inSessionBytesSub.sendNext(SessionBytes(null,
+        ByteString(
+          """
           |6
           |012345
           |7
@@ -84,8 +84,7 @@ class ResponseParsingMergeSpec extends AkkaSpec {
           |8
           |01234567
           |9
-          |012345678""".stripMargin
-      )))
+          |012345678""".stripMargin)))
 
       inSessionBytesSub.sendComplete()
 
@@ -94,7 +93,8 @@ class ResponseParsingMergeSpec extends AkkaSpec {
       responseProbe.expectComplete()
 
       responseChunks.last shouldBe an[EntityStreamError]
-      responseChunks.last shouldEqual EntityStreamError(ErrorInfo("Entity stream truncation. The HTTP parser was receiving an entity when the underlying connection was closed unexpectedly."))
+      responseChunks.last shouldEqual EntityStreamError(ErrorInfo(
+        "Entity stream truncation. The HTTP parser was receiving an entity when the underlying connection was closed unexpectedly."))
     }
 
   }

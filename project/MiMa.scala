@@ -17,7 +17,7 @@ object MiMa extends AutoPlugin {
   override def requires = MimaPlugin
   override def trigger = allRequirements
 
-  //lazy val latestVersion = post213Versions.max(versionOrdering)
+  // lazy val latestVersion = post213Versions.max(versionOrdering)
 
   override val projectSettings = Seq(
     mimaPreviousArtifacts := {
@@ -43,8 +43,7 @@ object MiMa extends AutoPlugin {
       }
 
       Map.empty
-    }
-  )
+    })
 
   def latestForkVersion(fork: String, allVersions: Seq[String]): String =
     allVersions
@@ -56,7 +55,8 @@ object MiMa extends AutoPlugin {
   private lazy val versionOrdering = Ordering[(Int, Int, Int)].on { version: String =>
     val ModuleVersion = """(\d+)\.?(\d+)?\.?(.*)?""".r
     val ModuleVersion(epoch, major, minor) = version
-    val toNumeric = (revision: String) => Try(revision.replace("x", Short.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
+    val toNumeric =
+      (revision: String) => Try(revision.replace("x", Short.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
     (toNumeric(epoch), toNumeric(major), toNumeric(minor))
   }
 }

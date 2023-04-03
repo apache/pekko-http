@@ -5,7 +5,7 @@
 package akka.http.scaladsl.server
 package directives
 
-import akka.http.scaladsl.model.{ StatusCodes, HttpMethod }
+import akka.http.scaladsl.model.{ HttpMethod, StatusCodes }
 import akka.http.scaladsl.model.HttpMethods._
 
 /**
@@ -79,13 +79,13 @@ trait MethodDirectives {
    *
    * @group method
    */
-  //#method
+  // #method
   def method(httpMethod: HttpMethod): Directive0 =
     extractMethod.flatMap[Unit] {
       case `httpMethod` => pass
       case _            => reject(MethodRejection(httpMethod))
     } & cancelRejections(classOf[MethodRejection])
-  //#method
+  // #method
 
   /**
    * Changes the HTTP method of the request to the value of the specified query string parameter. If the query string
@@ -99,7 +99,7 @@ trait MethodDirectives {
    * @group method
    */
   def overrideMethodWithParameter(paramName: String): Directive0 =
-    parameter(paramName.optional) flatMap {
+    parameter(paramName.optional).flatMap {
       case Some(method) =>
         getForKey(method.toUpperCase) match {
           case Some(m) => mapRequest(_.withMethod(m))

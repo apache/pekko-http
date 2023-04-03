@@ -9,6 +9,7 @@ import java.net.InetSocketAddress
 import akka.http.scaladsl
 
 class OutgoingConnection private[http] (val delegate: scaladsl.Http.OutgoingConnection) {
+
   /**
    * The local address of this connection.
    */

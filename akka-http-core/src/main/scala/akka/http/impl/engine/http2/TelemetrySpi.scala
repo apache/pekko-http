@@ -35,7 +35,9 @@ private[http] object TelemetrySpi {
           .get
       } catch {
         case ex: Throwable =>
-          system.log.debug("{} references a class that could not be instantiated ({}) falling back to no-op implementation", fqcn, ex.toString)
+          system.log.debug(
+            "{} references a class that could not be instantiated ({}) falling back to no-op implementation", fqcn,
+            ex.toString)
           NoOpTelemetry
       }
     }
@@ -57,6 +59,7 @@ object TelemetryAttributes {
  */
 @InternalStableApi
 trait TelemetrySpi {
+
   /**
    * Flow to intercept server connections. When run the flow will have the ClientMeta attribute set.
    */
@@ -79,7 +82,8 @@ trait TelemetrySpi {
 @InternalApi
 private[http] object NoOpTelemetry extends TelemetrySpi {
   override def client: BidiFlow[HttpRequest, HttpRequest, HttpResponse, HttpResponse, NotUsed] = BidiFlow.identity
-  override def serverBinding: Flow[Tcp.IncomingConnection, Tcp.IncomingConnection, NotUsed] = Flow[Tcp.IncomingConnection]
-  override def serverConnection: BidiFlow[HttpResponse, HttpResponse, HttpRequest, HttpRequest, NotUsed] = BidiFlow.identity
+  override def serverBinding: Flow[Tcp.IncomingConnection, Tcp.IncomingConnection, NotUsed] =
+    Flow[Tcp.IncomingConnection]
+  override def serverConnection: BidiFlow[HttpResponse, HttpResponse, HttpRequest, HttpRequest, NotUsed] =
+    BidiFlow.identity
 }
-

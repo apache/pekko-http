@@ -11,7 +11,7 @@ import docs.CompileOnlySpec
 
 object MyRejectionHandler {
 
-  //#custom-handler-example
+  // #custom-handler-example
   import akka.actor.ActorSystem
   import akka.http.scaladsl.Http
   import akka.http.scaladsl.model._
@@ -36,7 +36,7 @@ object MyRejectionHandler {
         }
         .handleAll[MethodRejection] { methodRejections =>
           val names = methodRejections.map(_.supported.name)
-          complete(MethodNotAllowed, s"Can't do that! Supported: ${names mkString " or "}!")
+          complete(MethodNotAllowed, s"Can't do that! Supported: ${names.mkString(" or ")}!")
         }
         .handleNotFound { complete((NotFound, "Not here!")) }
         .result()
@@ -50,12 +50,12 @@ object MyRejectionHandler {
 
     Http().newServerAt("localhost", 8080).bind(route)
   }
-  //#custom-handler-example
+  // #custom-handler-example
 }
 
 object HandleNotFoundWithThePath {
 
-  //#not-found-with-path
+  // #not-found-with-path
   import akka.http.scaladsl.model.StatusCodes._
   import akka.http.scaladsl.server._
   import Directives._
@@ -68,13 +68,13 @@ object HandleNotFoundWithThePath {
         }
       }
       .result()
-  //#not-found-with-path
+  // #not-found-with-path
 }
 
 class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "example-1" in {
-    //#example-1
+    // #example-1
     import akka.http.scaladsl.coding.Coders
 
     val route =
@@ -87,14 +87,13 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
             decodeRequestWith(Coders.Gzip) {
               complete("Received compressed POST")
             }
-          }
-        )
+          })
       }
-    //#example-1
+    // #example-1
   }
 
   "example-2-all-exceptions-json" in {
-    //#example-json
+    // #example-json
     import akka.http.scaladsl.model._
     import akka.http.scaladsl.server.RejectionHandler
 
@@ -116,8 +115,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
       Route.seal(
         path("hello") {
           complete("Hello there")
-        }
-      )
+        })
 
     // tests:
     Get("/nope") ~> route ~> check {
@@ -125,7 +123,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
       contentType shouldEqual ContentTypes.`application/json`
       responseAs[String] shouldEqual """{"rejection": "The requested resource could not be found."}"""
     }
-    //#example-json
+    // #example-json
   }
 
   "example-3-custom-rejection-http-response" in {
@@ -146,14 +144,13 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
           case x => x // pass through all other types of responses
         }
 
-    //#example-json
+    // #example-json
 
     val anotherRoute =
       Route.seal(
         validate(check = false, "Whoops, bad request!") {
           complete("Hello there")
-        }
-      )
+        })
 
     // tests:
     Get("/hello") ~> anotherRoute ~> check {
@@ -161,7 +158,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
       contentType shouldEqual ContentTypes.`application/json`
       responseAs[String] shouldEqual """{"rejection": "Whoops, bad request!"}"""
     }
-    //#example-json
+    // #example-json
   }
 
   "test custom handler example" in {

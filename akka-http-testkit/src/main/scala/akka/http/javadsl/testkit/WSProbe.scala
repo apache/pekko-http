@@ -100,7 +100,8 @@ object WSProbe {
    * @param maxChunks The maximum number of chunks to collect for streamed messages.
    * @param maxChunkCollectionMills The maximum time in milliseconds to collect chunks for streamed messages.
    */
-  def create(system: ActorSystem, materializer: Materializer, maxChunks: Int, maxChunkCollectionMills: Long): WSProbe = {
+  def create(
+      system: ActorSystem, materializer: Materializer, maxChunks: Int, maxChunkCollectionMills: Long): WSProbe = {
     val delegate = st.WSProbe(maxChunks, maxChunkCollectionMills)(system, materializer)
     new WSProbe(delegate)
   }

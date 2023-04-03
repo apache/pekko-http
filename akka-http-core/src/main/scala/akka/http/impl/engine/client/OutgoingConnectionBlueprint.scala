@@ -52,20 +52,20 @@ private[http] object OutgoingConnectionBlueprint {
     <------------+----------------|  Parsing   |                                            |
                                   |  Merge     |<------------------------------------------ V
                                   +------------+
-  */
+   */
   def apply(
-    hostHeader: headers.Host,
-    settings:   ClientConnectionSettings,
-    log:        LoggingAdapter): Http.ClientLayer = {
+      hostHeader: headers.Host,
+      settings: ClientConnectionSettings,
+      log: LoggingAdapter): Http.ClientLayer = {
     import settings._
 
     val core = BidiFlow.fromGraph(GraphDSL.create() { implicit b =>
       import GraphDSL.Implicits._
 
       val renderingContextCreation = b.add {
-        Flow[HttpRequest] map { request =>
+        Flow[HttpRequest].map { request =>
           val sendEntityTrigger =
-            request.headers collectFirst { case headers.Expect.`100-continue` => Promise[NotUsed]().future }
+            request.headers.collectFirst { case headers.Expect.`100-continue` => Promise[NotUsed]().future }
           RequestRenderingContext(request, hostHeader, sendEntityTrigger)
         }
       }
@@ -79,7 +79,7 @@ private[http] object OutgoingConnectionBlueprint {
         Flow[RequestRenderingContext].flatMapConcat(requestRendererFactory.renderToSource).named("renderer")
       }
 
-      val bypass = Flow[RequestRenderingContext] map { ctx =>
+      val bypass = Flow[RequestRenderingContext].map { ctx =>
         HttpResponseParser.ResponseContext(ctx.request.method, ctx.sendEntityTrigger.map(_.asInstanceOf[Promise[Unit]]))
       }
 
@@ -96,14 +96,16 @@ private[http] object OutgoingConnectionBlueprint {
 
       val terminationFanout = b.add(Broadcast[HttpResponse](2))
 
-      val logger = b.add(Flow[ByteString].mapError { case t => log.debug(s"Outgoing request stream error {}", t); t }.named("errorLogger"))
+      val logger =
+        b.add(Flow[ByteString].mapError { case t => log.debug(s"Outgoing request stream error {}", t); t }.named(
+          "errorLogger"))
       val wrapTls = b.add(Flow[ByteString].map(SendBytes(_)))
 
       val collectSessionBytes = b.add(Flow[SslTlsInbound].collect { case s: SessionBytes => s })
 
       renderingContextCreation.out ~> bypassFanout.in
-      bypassFanout.out(0) ~> terminationMerge.in0
-      terminationMerge.out ~> requestRendering ~> logger ~> wrapTls
+      bypassFanout.out(0)          ~> terminationMerge.in0
+      terminationMerge.out         ~> requestRendering ~> logger ~> wrapTls
 
       bypassFanout.out(1) ~> bypass ~> responseParsingMerge.in1
       collectSessionBytes ~> responseParsingMerge.in0
@@ -120,15 +122,15 @@ private[http] object OutgoingConnectionBlueprint {
 
     One2OneBidiFlow[HttpRequest, HttpResponse](
       -1,
-      outputTruncationException = new UnexpectedConnectionClosureException(_)
-    ) atop
-      core atop
-      logTLSBidiBySetting("client-plain-text", settings.logUnencryptedNetworkBytes)
+      outputTruncationException = new UnexpectedConnectionClosureException(_)).atop(
+      core).atop(
+      logTLSBidiBySetting("client-plain-text", settings.logUnencryptedNetworkBytes))
   }
 
   // a simple merge stage that simply forwards its first input and ignores its second input
   // (the terminationBackchannelInput), but applies a special completion handling
-  private object TerminationMerge extends GraphStage[FanInShape2[RequestRenderingContext, HttpResponse, RequestRenderingContext]] {
+  private object TerminationMerge
+      extends GraphStage[FanInShape2[RequestRenderingContext, HttpResponse, RequestRenderingContext]] {
     private val requestIn = Inlet[RequestRenderingContext]("TerminationMerge.requestIn")
     private val responseOut = Inlet[HttpResponse]("TerminationMerge.responseOut")
     private val requestContextOut = Outlet[RequestRenderingContext]("TerminationMerge.requestContextOut")
@@ -141,9 +143,10 @@ private[http] object OutgoingConnectionBlueprint {
       passAlong(requestIn, requestContextOut, doFinish = false, doFail = true)
       setHandler(requestContextOut, eagerTerminateOutput)
 
-      setHandler(responseOut, new InHandler {
-        override def onPush(): Unit = pull(responseOut)
-      })
+      setHandler(responseOut,
+        new InHandler {
+          override def onPush(): Unit = pull(responseOut)
+        })
 
       override def preStart(): Unit = {
         pull(requestIn)
@@ -163,115 +166,116 @@ private[http] object OutgoingConnectionBlueprint {
    * of downstream until end of chunks has been reached.
    */
   private[client] final class PrepareResponse(parserSettings: ParserSettings)
-    extends GraphStage[FlowShape[ResponseOutput, HttpResponse]] {
+      extends GraphStage[FlowShape[ResponseOutput, HttpResponse]] {
 
     private val responseOutputIn = Inlet[ResponseOutput]("PrepareResponse.responseOutputIn")
     private val httpResponseOut = Outlet[HttpResponse]("PrepareResponse.httpResponseOut")
 
     val shape = new FlowShape(responseOutputIn, httpResponseOut)
 
-    override def createLogic(effectiveAttributes: Attributes) = new GraphStageLogic(shape) with InHandler with OutHandler {
-      private var entitySource: SubSourceOutlet[ResponseOutput] = _
-      private def entitySubstreamStarted = entitySource ne null
-      private def idle = this
-      private var completionDeferred = false
-      private var completeOnMessageEnd = false
+    override def createLogic(effectiveAttributes: Attributes) =
+      new GraphStageLogic(shape) with InHandler with OutHandler {
+        private var entitySource: SubSourceOutlet[ResponseOutput] = _
+        private def entitySubstreamStarted = entitySource ne null
+        private def idle = this
+        private var completionDeferred = false
+        private var completeOnMessageEnd = false
 
-      def setIdleHandlers(): Unit =
-        if (completeOnMessageEnd || completionDeferred) completeStage()
-        else setHandlers(responseOutputIn, httpResponseOut, idle)
+        def setIdleHandlers(): Unit =
+          if (completeOnMessageEnd || completionDeferred) completeStage()
+          else setHandlers(responseOutputIn, httpResponseOut, idle)
 
-      def onPush(): Unit = grab(responseOutputIn) match {
-        case ResponseStart(statusCode, protocol, attributes, headers, entityCreator, closeRequested) =>
-          val entity = createEntity(entityCreator) withSizeLimit parserSettings.maxContentLength
-          push(httpResponseOut, new HttpResponse(statusCode, headers, attributes, entity, protocol))
-          completeOnMessageEnd = closeRequested
-
-        case MessageStartError(_, info) =>
-          throw IllegalResponseException(info)
-
-        case other =>
-          throw new IllegalStateException(s"ResponseStart expected but $other received.")
-      }
-
-      def onPull(): Unit = {
-        if (!entitySubstreamStarted) pull(responseOutputIn)
-      }
-
-      override def onDownstreamFinish(): Unit = {
-        // if downstream cancels while streaming entity,
-        // make sure we also cancel the entity source, but
-        // after being done with streaming the entity
-        if (entitySubstreamStarted) {
-          completionDeferred = true
-        } else {
-          completeStage()
-        }
-      }
-
-      setIdleHandlers()
-
-      // with a strict message there still is a MessageEnd to wait for
-      lazy val waitForMessageEnd = new InHandler with OutHandler {
         def onPush(): Unit = grab(responseOutputIn) match {
-          case MessageEnd =>
-            if (isAvailable(httpResponseOut)) pull(responseOutputIn)
-            setIdleHandlers()
-          case other => throw new IllegalStateException(s"MessageEnd expected but $other received.")
+          case ResponseStart(statusCode, protocol, attributes, headers, entityCreator, closeRequested) =>
+            val entity = createEntity(entityCreator).withSizeLimit(parserSettings.maxContentLength)
+            push(httpResponseOut, new HttpResponse(statusCode, headers, attributes, entity, protocol))
+            completeOnMessageEnd = closeRequested
+
+          case MessageStartError(_, info) =>
+            throw IllegalResponseException(info)
+
+          case other =>
+            throw new IllegalStateException(s"ResponseStart expected but $other received.")
         }
 
-        override def onPull(): Unit = {
-          // ignore pull as we will anyways pull when we get MessageEnd
+        def onPull(): Unit = {
+          if (!entitySubstreamStarted) pull(responseOutputIn)
         }
-      }
 
-      // with a streamed entity we push the chunks into the substream
-      // until we reach MessageEnd
-      private lazy val substreamHandler = new InHandler with OutHandler {
-        override def onPush(): Unit = grab(responseOutputIn) match {
-          case MessageEnd =>
+        override def onDownstreamFinish(): Unit = {
+          // if downstream cancels while streaming entity,
+          // make sure we also cancel the entity source, but
+          // after being done with streaming the entity
+          if (entitySubstreamStarted) {
+            completionDeferred = true
+          } else {
+            completeStage()
+          }
+        }
+
+        setIdleHandlers()
+
+        // with a strict message there still is a MessageEnd to wait for
+        lazy val waitForMessageEnd = new InHandler with OutHandler {
+          def onPush(): Unit = grab(responseOutputIn) match {
+            case MessageEnd =>
+              if (isAvailable(httpResponseOut)) pull(responseOutputIn)
+              setIdleHandlers()
+            case other => throw new IllegalStateException(s"MessageEnd expected but $other received.")
+          }
+
+          override def onPull(): Unit = {
+            // ignore pull as we will anyways pull when we get MessageEnd
+          }
+        }
+
+        // with a streamed entity we push the chunks into the substream
+        // until we reach MessageEnd
+        private lazy val substreamHandler = new InHandler with OutHandler {
+          override def onPush(): Unit = grab(responseOutputIn) match {
+            case MessageEnd =>
+              entitySource.complete()
+              entitySource = null
+              // there was a deferred pull from upstream
+              // while we were streaming the entity
+              if (isAvailable(httpResponseOut)) pull(responseOutputIn)
+              setIdleHandlers()
+
+            case messagePart =>
+              entitySource.push(messagePart)
+          }
+
+          override def onPull(): Unit = pull(responseOutputIn)
+
+          override def onUpstreamFinish(): Unit = {
             entitySource.complete()
-            entitySource = null
-            // there was a deferred pull from upstream
-            // while we were streaming the entity
-            if (isAvailable(httpResponseOut)) pull(responseOutputIn)
-            setIdleHandlers()
+            completeStage()
+          }
 
-          case messagePart =>
-            entitySource.push(messagePart)
+          override def onUpstreamFailure(reason: Throwable): Unit = {
+            entitySource.fail(reason)
+            failStage(reason)
+          }
         }
 
-        override def onPull(): Unit = pull(responseOutputIn)
+        private def createEntity(creator: EntityCreator[ResponseOutput, ResponseEntity]): ResponseEntity = {
+          creator match {
+            case StrictEntityCreator(entity) =>
+              // upstream demanded one element, which it just got
+              // but we want MessageEnd as well
+              pull(responseOutputIn)
+              setHandler(responseOutputIn, waitForMessageEnd)
+              setHandler(httpResponseOut, waitForMessageEnd)
+              entity
 
-        override def onUpstreamFinish(): Unit = {
-          entitySource.complete()
-          completeStage()
-        }
-
-        override def onUpstreamFailure(reason: Throwable): Unit = {
-          entitySource.fail(reason)
-          failStage(reason)
-        }
-      }
-
-      private def createEntity(creator: EntityCreator[ResponseOutput, ResponseEntity]): ResponseEntity = {
-        creator match {
-          case StrictEntityCreator(entity) =>
-            // upstream demanded one element, which it just got
-            // but we want MessageEnd as well
-            pull(responseOutputIn)
-            setHandler(responseOutputIn, waitForMessageEnd)
-            setHandler(httpResponseOut, waitForMessageEnd)
-            entity
-
-          case StreamedEntityCreator(creator) =>
-            entitySource = new SubSourceOutlet[ResponseOutput]("EntitySource")
-            entitySource.setHandler(substreamHandler)
-            setHandler(responseOutputIn, substreamHandler)
-            creator(Source.fromGraph(entitySource.source))
+            case StreamedEntityCreator(creator) =>
+              entitySource = new SubSourceOutlet[ResponseOutput]("EntitySource")
+              entitySource.setHandler(substreamHandler)
+              setHandler(responseOutputIn, substreamHandler)
+              creator(Source.fromGraph(entitySource.source))
+          }
         }
       }
-    }
   }
 
   /**
@@ -281,7 +285,7 @@ private[http] object OutgoingConnectionBlueprint {
    * 3. Go back to 1.
    */
   private[client] final class ResponseParsingMerge(rootParser: HttpResponseParser)
-    extends GraphStage[FanInShape2[SessionBytes, BypassData, List[ResponseOutput]]] {
+      extends GraphStage[FanInShape2[SessionBytes, BypassData, List[ResponseOutput]]] {
     private val dataIn = Inlet[SessionBytes]("ResponseParsingMerge.dataIn")
     private val bypassIn = Inlet[BypassData]("ResponseParsingMerge.bypassIn")
     private val responseOut = Outlet[List[ResponseOutput]]("ResponseParsingMerge.responseOut")
@@ -297,34 +301,36 @@ private[http] object OutgoingConnectionBlueprint {
       var waitingForMethod = true
       var completeStagePending = false
 
-      setHandler(bypassIn, new InHandler {
-        override def onPush(): Unit = {
-          val responseContext = grab(bypassIn)
-          parser.setContextForNextResponse(responseContext)
-          val output = parser.parseBytes(ByteString.empty)
-          drainParser(output)
-        }
-        override def onUpstreamFinish(): Unit =
-          if (waitingForMethod) completeStage()
-      })
-
-      setHandler(dataIn, new InHandler {
-        override def onPush(): Unit = {
-          val bytes = grab(dataIn)
-          val output = parser.parseSessionBytes(bytes)
-          drainParser(output)
-        }
-        override def onUpstreamFinish(): Unit =
-          if (waitingForMethod) completeStage()
-          else {
-            if (parser.onUpstreamFinish()) {
-              completeStage()
-            } else {
-              completeStagePending = true
-              emit(responseOut, parser.onPull() :: Nil, () => completeStage())
-            }
+      setHandler(bypassIn,
+        new InHandler {
+          override def onPush(): Unit = {
+            val responseContext = grab(bypassIn)
+            parser.setContextForNextResponse(responseContext)
+            val output = parser.parseBytes(ByteString.empty)
+            drainParser(output)
           }
-      })
+          override def onUpstreamFinish(): Unit =
+            if (waitingForMethod) completeStage()
+        })
+
+      setHandler(dataIn,
+        new InHandler {
+          override def onPush(): Unit = {
+            val bytes = grab(dataIn)
+            val output = parser.parseSessionBytes(bytes)
+            drainParser(output)
+          }
+          override def onUpstreamFinish(): Unit =
+            if (waitingForMethod) completeStage()
+            else {
+              if (parser.onUpstreamFinish()) {
+                completeStage()
+              } else {
+                completeStagePending = true
+                emit(responseOut, parser.onPull() :: Nil, () => completeStage())
+              }
+            }
+        })
 
       setHandler(responseOut, eagerTerminateOutput)
 
@@ -359,5 +365,6 @@ private[http] object OutgoingConnectionBlueprint {
   }
 
   class UnexpectedConnectionClosureException(outstandingResponses: Int)
-    extends RuntimeException(s"The http server closed the connection unexpectedly before delivering responses for $outstandingResponses outstanding requests")
+      extends RuntimeException(
+        s"The http server closed the connection unexpectedly before delivering responses for $outstandingResponses outstanding requests")
 }

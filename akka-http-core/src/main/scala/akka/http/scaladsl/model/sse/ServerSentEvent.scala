@@ -75,11 +75,11 @@ object ServerSentEvent {
  * @param retry optional reconnection delay in milliseconds
  */
 final case class ServerSentEvent(
-  data:      String,
-  eventType: Option[String] = None,
-  id:        Option[String] = None,
-  retry:     Option[Int]    = None)
-  extends model.sse.ServerSentEvent {
+    data: String,
+    eventType: Option[String] = None,
+    id: Option[String] = None,
+    retry: Option[Int] = None)
+    extends model.sse.ServerSentEvent {
   import ServerSentEvent._
 
   require(eventType.forall(noNewLine), "eventType must not contain \\n or \\r!")
@@ -96,9 +96,7 @@ final case class ServerSentEvent(
       val builder =
         new StringBuilder(
           nextPowerOfTwoBiggerThan(
-            8 + data.length + eventType.fold(0)(_.length + 7) + id.fold(0)(_.length + 4) + retry.fold(0)(_ => 17)
-          )
-        )
+            8 + data.length + eventType.fold(0)(_.length + 7) + id.fold(0)(_.length + 4) + retry.fold(0)(_ => 17)))
       @tailrec def appendData(s: String, index: Int = 0): Unit = {
         @tailrec def addLine(index: Int): Int =
           if (index >= s.length)

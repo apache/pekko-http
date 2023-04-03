@@ -47,13 +47,13 @@ class TimeoutDirectivesSpec extends RoutingSpec {
           }
         }
       } ~
-        path("equivalent") {
-          // updates timeout and handler at
-          withRequestTimeout(1.second.dilated, request => timeoutResponse) {
-            val response: Future[String] = slowFuture() // very slow
-            complete(response)
-          }
+      path("equivalent") {
+        // updates timeout and handler at
+        withRequestTimeout(1.second.dilated, request => timeoutResponse) {
+          val response: Future[String] = slowFuture() // very slow
+          complete(response)
         }
+      }
 
     Get("/timeout") ~!> route ~> check {
       status should ===(StatusCodes.EnhanceYourCalm)

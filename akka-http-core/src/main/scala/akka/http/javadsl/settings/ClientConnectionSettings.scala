@@ -57,15 +57,22 @@ abstract class ClientConnectionSettings private[akka] () { self: ClientConnectio
 
   // Java API versions of mutators
 
-  def withUserAgentHeader(newValue: Optional[UserAgent]): ClientConnectionSettings = self.copy(userAgentHeader = newValue.asScala.map(_.asScala))
-  def withLogUnencryptedNetworkBytes(newValue: Optional[Int]): ClientConnectionSettings = self.copy(logUnencryptedNetworkBytes = OptionConverters.toScala(newValue))
-  def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ClientConnectionSettings = self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
-    override def get(): Random = newValue.get()
-  }))
-  def withWebsocketSettings(newValue: WebSocketSettings): ClientConnectionSettings = self.copy(websocketSettings = newValue.asScala)
-  def withSocketOptions(newValue: java.lang.Iterable[SocketOption]): ClientConnectionSettings = self.copy(socketOptions = newValue.asScala.toList)
-  def withParserSettings(newValue: ParserSettings): ClientConnectionSettings = self.copy(parserSettings = newValue.asScala)
-  def withLocalAddress(newValue: Optional[InetSocketAddress]): ClientConnectionSettings = self.copy(localAddress = OptionConverters.toScala(newValue))
+  def withUserAgentHeader(newValue: Optional[UserAgent]): ClientConnectionSettings =
+    self.copy(userAgentHeader = newValue.asScala.map(_.asScala))
+  def withLogUnencryptedNetworkBytes(newValue: Optional[Int]): ClientConnectionSettings =
+    self.copy(logUnencryptedNetworkBytes = OptionConverters.toScala(newValue))
+  def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ClientConnectionSettings =
+    self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
+      override def get(): Random = newValue.get()
+    }))
+  def withWebsocketSettings(newValue: WebSocketSettings): ClientConnectionSettings =
+    self.copy(websocketSettings = newValue.asScala)
+  def withSocketOptions(newValue: java.lang.Iterable[SocketOption]): ClientConnectionSettings =
+    self.copy(socketOptions = newValue.asScala.toList)
+  def withParserSettings(newValue: ParserSettings): ClientConnectionSettings =
+    self.copy(parserSettings = newValue.asScala)
+  def withLocalAddress(newValue: Optional[InetSocketAddress]): ClientConnectionSettings =
+    self.copy(localAddress = OptionConverters.toScala(newValue))
 
   @ApiMayChange
   def withTransport(newValue: ClientTransport): ClientConnectionSettings = self.copy(transport = newValue.asScala)

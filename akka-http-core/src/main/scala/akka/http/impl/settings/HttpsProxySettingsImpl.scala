@@ -11,9 +11,8 @@ import com.typesafe.config.Config
 /** INTERNAL API */
 @InternalApi
 private[http] final case class HttpsProxySettingsImpl(
-  host: String,
-  port: Int
-) extends akka.http.scaladsl.settings.HttpsProxySettings {
+    host: String,
+    port: Int) extends akka.http.scaladsl.settings.HttpsProxySettings {
   require(host != "", "host must not be left empty")
   require(port > 0, "port must be greater than 0")
 
@@ -24,7 +23,6 @@ object HttpsProxySettingsImpl extends SettingsCompanionImpl[HttpsProxySettingsIm
   override def fromSubConfig(root: Config, c: Config): HttpsProxySettingsImpl = {
     new HttpsProxySettingsImpl(
       c.getString("host"),
-      c.getInt("port")
-    )
+      c.getInt("port"))
   }
 }

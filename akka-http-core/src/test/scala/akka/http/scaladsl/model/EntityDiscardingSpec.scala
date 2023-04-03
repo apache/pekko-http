@@ -60,7 +60,8 @@ class EntityDiscardingSpec extends AkkaSpecWithMaterializer {
 
       try {
 
-        val response = Http().singleRequest(HttpRequest(uri = s"http://localhost:${bound.localAddress.getPort}/")).futureValue
+        val response =
+          Http().singleRequest(HttpRequest(uri = s"http://localhost:${bound.localAddress.getPort}/")).futureValue
 
         val de = response.discardEntityBytes()
         de.future.futureValue should ===(Done)

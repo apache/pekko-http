@@ -10,7 +10,7 @@ import akka.testkit.EventFilter
 import org.scalatest.matchers.should.Matchers
 
 import java.nio.charset.Charset
-import scala.reflect.{ ClassTag, classTag }
+import scala.reflect.{ classTag, ClassTag }
 
 class RenderingSpec extends AkkaSpecWithMaterializer with Matchers {
   override protected def failOnSevereMessages: Boolean = true
@@ -60,8 +60,7 @@ class RenderingSpec extends AkkaSpecWithMaterializer with Matchers {
       setup(new StringRendering)(_.get),
       setup(new ByteArrayRendering(1000, Logging(system, "test").warning))(r => new String(r.get)),
       setup(new ByteStringRendering(1000, Logging(system, "test").warning))(_.get.utf8String),
-      setup(new CustomCharsetByteStringRendering(Charset.forName("ISO-8859-1"), 1000))(_.get.utf8String)
-    )
+      setup(new CustomCharsetByteStringRendering(Charset.forName("ISO-8859-1"), 1000))(_.get.utf8String))
 
     renderings.foreach { setup =>
       setup.tag should {

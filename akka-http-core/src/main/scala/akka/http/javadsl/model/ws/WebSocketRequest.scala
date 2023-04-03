@@ -4,7 +4,7 @@
 
 package akka.http.javadsl.model.ws
 
-import akka.http.javadsl.model.{ Uri, HttpHeader }
+import akka.http.javadsl.model.{ HttpHeader, Uri }
 import akka.http.scaladsl.model.ws.{ WebSocketRequest => ScalaWebSocketRequest }
 
 /**
@@ -13,6 +13,7 @@ import akka.http.scaladsl.model.ws.{ WebSocketRequest => ScalaWebSocketRequest }
  * details.
  */
 abstract class WebSocketRequest {
+
   /**
    * Return a copy of this request that contains the given additional header.
    */

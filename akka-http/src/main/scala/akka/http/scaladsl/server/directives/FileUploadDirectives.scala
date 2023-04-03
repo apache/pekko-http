@@ -47,7 +47,6 @@ trait FileUploadDirectives {
 
       fileUpload(fieldName).flatMap {
         case (fileInfo, bytes) =>
-
           val dest = destFn(fileInfo)
           val uploadedF: Future[(FileInfo, File)] =
             bytes
@@ -194,7 +193,8 @@ object FileUploadDirectives extends FileUploadDirectives
  * @param fileName User specified name of the uploaded file
  * @param contentType Content type of the file
  */
-final case class FileInfo(fieldName: String, fileName: String, contentType: ContentType) extends javadsl.server.directives.FileInfo {
+final case class FileInfo(
+    fieldName: String, fileName: String, contentType: ContentType) extends javadsl.server.directives.FileInfo {
   override def getFieldName = fieldName
   override def getFileName = fileName
   override def getContentType = contentType

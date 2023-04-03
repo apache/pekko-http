@@ -4,7 +4,7 @@
 
 package akka.http.javadsl.server.directives
 
-import java.util.{ Map => JMap, List => JList }
+import java.util.{ List => JList, Map => JMap }
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.Optional
 import java.util.function.{ Function => JFunction }

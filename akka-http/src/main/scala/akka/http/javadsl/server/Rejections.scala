@@ -8,7 +8,7 @@ import akka.http.impl.util.JavaMapping
 import akka.http.scaladsl.server.ContentNegotiator.Alternative
 import akka.http.scaladsl.server._
 import akka.http.javadsl.model._
-import akka.http.javadsl.model.headers.{ ByteRange, HttpEncoding, HttpChallenge }
+import akka.http.javadsl.model.headers.{ ByteRange, HttpChallenge, HttpEncoding }
 import java.util.Optional
 import java.util.function.{ Function => JFunction }
 import java.lang.{ Iterable => JIterable }
@@ -239,6 +239,7 @@ trait AuthenticationFailedRejection extends Rejection {
 }
 
 object AuthenticationFailedRejection {
+
   /**
    * Signals the cause of the failed authentication.
    */
@@ -361,12 +362,14 @@ object Rejections {
   def missingQueryParam(parameterName: String): MissingQueryParamRejection =
     s.MissingQueryParamRejection(parameterName)
 
-  def invalidRequiredValueForQueryParam(parameterName: String, requiredValue: String, actualValue: String): InvalidRequiredValueForQueryParamRejection =
+  def invalidRequiredValueForQueryParam(
+      parameterName: String, requiredValue: String, actualValue: String): InvalidRequiredValueForQueryParamRejection =
     s.InvalidRequiredValueForQueryParamRejection(parameterName, requiredValue, actualValue)
 
   def malformedQueryParam(parameterName: String, errorMsg: String): MalformedQueryParamRejection =
     s.MalformedQueryParamRejection(parameterName, errorMsg)
-  def malformedQueryParam(parameterName: String, errorMsg: String, cause: Optional[Throwable]): MalformedQueryParamRejection =
+  def malformedQueryParam(
+      parameterName: String, errorMsg: String, cause: Optional[Throwable]): MalformedQueryParamRejection =
     s.MalformedQueryParamRejection(parameterName, errorMsg, cause.asScala)
 
   def missingFormField(fieldName: String): MissingFormFieldRejection =
@@ -374,7 +377,8 @@ object Rejections {
 
   def malformedFormField(fieldName: String, errorMsg: String): MalformedFormFieldRejection =
     s.MalformedFormFieldRejection(fieldName, errorMsg)
-  def malformedFormField(fieldName: String, errorMsg: String, cause: Optional[Throwable]): s.MalformedFormFieldRejection =
+  def malformedFormField(
+      fieldName: String, errorMsg: String, cause: Optional[Throwable]): s.MalformedFormFieldRejection =
     s.MalformedFormFieldRejection(fieldName, errorMsg, cause.asScala)
 
   def missingHeader(headerName: String): MissingHeaderRejection =
@@ -386,8 +390,8 @@ object Rejections {
     s.MalformedHeaderRejection(headerName, errorMsg, cause.asScala)
 
   def unsupportedRequestContentType(
-    supported:   java.lang.Iterable[MediaType],
-    contentType: Optional[ContentType]): UnsupportedRequestContentTypeRejection =
+      supported: java.lang.Iterable[MediaType],
+      contentType: Optional[ContentType]): UnsupportedRequestContentTypeRejection =
     s.UnsupportedRequestContentTypeRejection(
       supported = supported.asScala.map((m: MediaType) => scaladsl.model.ContentTypeRange(m.asScala)).toSet,
       contentType = contentType.asScala.map((c: ContentType) => c.asScala))
@@ -412,10 +416,12 @@ object Rejections {
   def requestEntityExpected = RequestEntityExpectedRejection
 
   def unacceptedResponseContentType(
-    supportedContentTypes: java.lang.Iterable[ContentType],
-    supportedMediaTypes:   java.lang.Iterable[MediaType]): UnacceptedResponseContentTypeRejection = {
-    val s1: Set[Alternative] = supportedContentTypes.asScala.map((c: ContentType) => c.asScala).map(ct => ContentNegotiator.Alternative(ct)).toSet
-    val s2: Set[Alternative] = supportedMediaTypes.asScala.map((m: MediaType) => m.asScala).map(mt => ContentNegotiator.Alternative(mt)).toSet
+      supportedContentTypes: java.lang.Iterable[ContentType],
+      supportedMediaTypes: java.lang.Iterable[MediaType]): UnacceptedResponseContentTypeRejection = {
+    val s1: Set[Alternative] = supportedContentTypes.asScala.map((c: ContentType) => c.asScala).map(ct =>
+      ContentNegotiator.Alternative(ct)).toSet
+    val s2: Set[Alternative] =
+      supportedMediaTypes.asScala.map((m: MediaType) => m.asScala).map(mt => ContentNegotiator.Alternative(mt)).toSet
     s.UnacceptedResponseContentTypeRejection(s1 ++ s2)
   }
 

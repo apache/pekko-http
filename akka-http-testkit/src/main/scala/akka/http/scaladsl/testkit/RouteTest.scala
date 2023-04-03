@@ -9,7 +9,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{ Host, Upgrade, `Sec-WebSocket-Protocol` }
+import akka.http.scaladsl.model.headers.{ `Sec-WebSocket-Protocol`, Host, Upgrade }
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.settings.ParserSettings
 import akka.http.scaladsl.settings.RoutingSettings
@@ -28,7 +28,8 @@ import scala.concurrent.{ Await, ExecutionContext, ExecutionContextExecutor, Fut
 import scala.reflect.ClassTag
 import scala.util.DynamicVariable
 
-trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTestResultComponent with MarshallingTestUtils {
+trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTestResultComponent
+    with MarshallingTestUtils {
   this: TestFrameworkInterface =>
 
   /** Override to supply a custom ActorSystem */
@@ -69,17 +70,19 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
   def chunks: immutable.Seq[HttpEntity.ChunkStreamPart] = result.chunks
   def chunksStream: Source[ChunkStreamPart, Any] = result.chunksStream
   def entityAs[T: FromEntityUnmarshaller: ClassTag](implicit timeout: Duration = 1.second): T = {
-    def msg(e: Throwable) = s"Could not unmarshal entity to type '${implicitly[ClassTag[T]]}' for `entityAs` assertion: $e\n\nResponse was: $responseSafe"
+    def msg(e: Throwable) =
+      s"Could not unmarshal entity to type '${implicitly[ClassTag[T]]}' for `entityAs` assertion: $e\n\nResponse was: $responseSafe"
     Await.result(Unmarshal(responseEntity).to[T].fast.recover[T] { case error => failTest(msg(error)) }, timeout)
   }
   def responseAs[T: FromResponseUnmarshaller: ClassTag](implicit timeout: Duration = 1.second): T = {
-    def msg(e: Throwable) = s"Could not unmarshal response to type '${implicitly[ClassTag[T]]}' for `responseAs` assertion: $e\n\nResponse was: $responseSafe"
+    def msg(e: Throwable) =
+      s"Could not unmarshal response to type '${implicitly[ClassTag[T]]}' for `responseAs` assertion: $e\n\nResponse was: $responseSafe"
     Await.result(Unmarshal(response).to[T].fast.recover[T] { case error => failTest(msg(error)) }, timeout)
   }
   def contentType: ContentType = rawResponse.entity.contentType
   def mediaType: MediaType = contentType.mediaType
   def charsetOption: Option[HttpCharset] = contentType.charsetOption
-  def charset: HttpCharset = charsetOption getOrElse sys.error("Binary entity does not have charset")
+  def charset: HttpCharset = charsetOption.getOrElse(sys.error("Binary entity does not have charset"))
   def headers: immutable.Seq[HttpHeader] = rawResponse.headers
   def header[T >: Null <: HttpHeader: ClassTag]: Option[T] = rawResponse.header[T](implicitly[ClassTag[T]])
   def header(name: String): Option[HttpHeader] = rawResponse.headers.find(_.is(name.toLowerCase))
@@ -111,7 +114,7 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
     if (!isWebSocketUpgrade) failTest("Response was no WebSocket Upgrade response")
     header[`Sec-WebSocket-Protocol`] match {
       case Some(`Sec-WebSocket-Protocol`(Seq(protocol))) => body(protocol)
-      case _ => failTest("No WebSocket protocol found in response.")
+      case _                                             => failTest("No WebSocket protocol found in response.")
     }
   }
 
@@ -125,6 +128,7 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
   // there is already an implicit class WithTransformation in scope (inherited from akka.http.scaladsl.testkit.TransformerPipelineSupport)
   // however, this one takes precedence
   implicit class WithTransformation2(request: HttpRequest) {
+
     /**
      * Apply request to given routes for further inspection in `check { }` block.
      */
@@ -155,12 +159,14 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
       type Out = HttpRequest
       def apply(request: HttpRequest, f: HttpRequest => HttpRequest) = f(request)
     }
-    implicit def injectIntoRoute(implicit timeout: RouteTestTimeout, defaultHostInfo: DefaultHostInfo): TildeArrow[RequestContext, Future[RouteResult]] { type Out = RouteTestResult } =
+    implicit def injectIntoRoute(implicit timeout: RouteTestTimeout, defaultHostInfo: DefaultHostInfo)
+        : TildeArrow[RequestContext, Future[RouteResult]] { type Out = RouteTestResult } =
       new TildeArrow[RequestContext, Future[RouteResult]] {
         type Out = RouteTestResult
         def apply(request: HttpRequest, route: Route): Out = {
           if (request.method == HttpMethods.HEAD && ServerSettings(system).transparentHeadRequests)
-            failTest("`akka.http.server.transparent-head-requests = on` not supported in RouteTest using `~>`. Use `~!>` instead " +
+            failTest(
+              "`akka.http.server.transparent-head-requests = on` not supported in RouteTest using `~>`. Use `~!>` instead " +
               "for a full-stack test, e.g. `req ~!> route ~> check {...}`")
 
           implicit val executionContext: ExecutionContext = system.classicSystem.dispatcher
@@ -173,7 +179,8 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
               securedConnection = defaultHostInfo.securedConnection,
               defaultHostHeader = defaultHostInfo.host)
           val parserSettings = ParserSettings.forServer(system)
-          val ctx = new RequestContextImpl(effectiveRequest, routingLog.requestLog(effectiveRequest), routingSettings, parserSettings)
+          val ctx = new RequestContextImpl(effectiveRequest, routingLog.requestLog(effectiveRequest), routingSettings,
+            parserSettings)
 
           val sealedExceptionHandler = ExceptionHandler.seal(testExceptionHandler)
 
@@ -192,7 +199,8 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
   }
 
   object TildeBangArrow {
-    implicit def injectIntoRoute(implicit timeout: RouteTestTimeout, serverSettings: ServerSettings): TildeBangArrow[RequestContext, Future[RouteResult]] { type Out = RouteTestResult } =
+    implicit def injectIntoRoute(implicit timeout: RouteTestTimeout, serverSettings: ServerSettings)
+        : TildeBangArrow[RequestContext, Future[RouteResult]] { type Out = RouteTestResult } =
       new TildeBangArrow[RequestContext, Future[RouteResult]] {
         type Out = RouteTestResult
         def apply(request: HttpRequest, route: Route): Out = {
@@ -206,7 +214,8 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
   }
 }
 private[http] object RouteTest {
-  def runRouteClientServer(request: HttpRequest, route: Route, serverSettings: ServerSettings)(implicit system: ActorSystem): Future[HttpResponse] = {
+  def runRouteClientServer(request: HttpRequest, route: Route, serverSettings: ServerSettings)(
+      implicit system: ActorSystem): Future[HttpResponse] = {
     import system.dispatcher
     for {
       binding <- Http().newServerAt("127.0.0.1", 0).withSettings(settings = serverSettings).bind(route)

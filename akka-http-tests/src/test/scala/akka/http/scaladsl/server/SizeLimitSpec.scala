@@ -11,7 +11,7 @@ import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.coding.{ Coders, Decoder }
 import akka.http.scaladsl.model.HttpEntity.Chunk
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{ HttpEncoding, HttpEncodings, `Content-Encoding` }
+import akka.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncoding, HttpEncodings }
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{ Flow, Source }
@@ -86,9 +86,11 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
     val binding = Http().newServerAt("localhost", port = 0).bind(route).futureValue
 
     "accept a small request" in {
-      val response = Http().singleRequest(Post(s"http:/${binding.localAddress}/noDirective", entityOfSize(maxContentLength))).futureValue
+      val response = Http().singleRequest(Post(s"http:/${binding.localAddress}/noDirective",
+        entityOfSize(maxContentLength))).futureValue
       response.status shouldEqual StatusCodes.OK
-      response.entity.dataBytes.runReduce(_ ++ _).futureValue.utf8String shouldEqual (s"Got request with entity of $maxContentLength characters")
+      response.entity.dataBytes.runReduce(
+        _ ++ _).futureValue.utf8String shouldEqual s"Got request with entity of $maxContentLength characters"
     }
 
     "reject a small request that decodes into a large entity" in {
@@ -124,7 +126,8 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
     val binding = Http().newServerAt("localhost", port = 0).bind(route).futureValue
 
     "reject a small request that decodes into a large chunked entity" in {
-      val request = Post(s"http:/${binding.localAddress}/noDirective", "x").withHeaders(`Content-Encoding`(HttpEncoding("custom")))
+      val request =
+        Post(s"http:/${binding.localAddress}/noDirective", "x").withHeaders(`Content-Encoding`(HttpEncoding("custom")))
       val response = Http().singleRequest(request).futureValue
       response.status shouldEqual StatusCodes.PayloadTooLarge
     }
@@ -146,7 +149,8 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
     val binding = Http().newServerAt("localhost", port = 0).bind(route).futureValue
 
     "reject a small request that decodes into a large non-chunked streaming entity" in {
-      val request = Post(s"http:/${binding.localAddress}/noDirective", "x").withHeaders(`Content-Encoding`(HttpEncoding("custom")))
+      val request =
+        Post(s"http:/${binding.localAddress}/noDirective", "x").withHeaders(`Content-Encoding`(HttpEncoding("custom")))
       val response = Http().singleRequest(request).futureValue
       response.status shouldEqual StatusCodes.PayloadTooLarge
     }
@@ -158,7 +162,8 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
         withoutSizeLimit {
           post {
             entity(as[String]) { e =>
-              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"Got request with entity of ${e.length} characters"))
+              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,
+                s"Got request with entity of ${e.length} characters"))
             }
           }
         }
@@ -186,7 +191,8 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
 
       val response = Http().singleRequest(request).futureValue
       response.status shouldEqual StatusCodes.OK
-      response.entity.dataBytes.runReduce(_ ++ _).futureValue.utf8String shouldEqual (s"Got request with entity of ${decodeMaxSize + 1} characters")
+      response.entity.dataBytes.runReduce(
+        _ ++ _).futureValue.utf8String shouldEqual s"Got request with entity of ${decodeMaxSize + 1} characters"
     }
 
     "accept a large request that decodes into a large entity" in {
@@ -228,10 +234,13 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
 
   override def afterAll() = TestKit.shutdownActorSystem(system)
 
-  private def byteSource(size: Int): Source[ByteString, Any] = Source(Array.fill[ByteString](size)(ByteString("0")).toVector)
+  private def byteSource(size: Int): Source[ByteString, Any] =
+    Source(Array.fill[ByteString](size)(ByteString("0")).toVector)
 
-  private def chunkedEntityOfSize(size: Int) = HttpEntity.Chunked(ContentTypes.`text/plain(UTF-8)`, byteSource(size).map(Chunk(_)))
-  private def nonChunkedEntityOfSize(size: Int): MessageEntity = HttpEntity.Default(ContentTypes.`text/plain(UTF-8)`, size, byteSource(size))
+  private def chunkedEntityOfSize(size: Int) =
+    HttpEntity.Chunked(ContentTypes.`text/plain(UTF-8)`, byteSource(size).map(Chunk(_)))
+  private def nonChunkedEntityOfSize(size: Int): MessageEntity =
+    HttpEntity.Default(ContentTypes.`text/plain(UTF-8)`, size, byteSource(size))
   private def entityOfSize(size: Int) = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "0" * size)
 
   private def decodeTo(result: MessageEntity): Decoder = new Decoder {

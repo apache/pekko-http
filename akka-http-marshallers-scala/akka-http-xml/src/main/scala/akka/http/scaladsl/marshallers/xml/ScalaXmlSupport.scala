@@ -5,9 +5,9 @@
 package akka.http.scaladsl.marshallers.xml
 
 import java.io.{ ByteArrayInputStream, InputStreamReader }
-import javax.xml.parsers.{ SAXParserFactory, SAXParser }
+import javax.xml.parsers.{ SAXParser, SAXParserFactory }
 import scala.collection.immutable
-import scala.xml.{ XML, NodeSeq }
+import scala.xml.{ NodeSeq, XML }
 import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model._
@@ -38,7 +38,8 @@ trait ScalaXmlSupport {
   protected def createSAXParser(): SAXParser = ScalaXmlSupport.createSaferSAXParser()
 }
 object ScalaXmlSupport extends ScalaXmlSupport {
-  val nodeSeqMediaTypes: immutable.Seq[MediaType.NonBinary] = List(`text/xml`, `application/xml`, `text/html`, `application/xhtml+xml`)
+  val nodeSeqMediaTypes: immutable.Seq[MediaType.NonBinary] =
+    List(`text/xml`, `application/xml`, `text/html`, `application/xhtml+xml`)
   val nodeSeqContentTypeRanges: immutable.Seq[ContentTypeRange] = nodeSeqMediaTypes.map(ContentTypeRange(_))
 
   /** Creates a safer SAXParser. */

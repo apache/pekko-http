@@ -28,7 +28,7 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
   implicit val routeTimeout: RouteTestTimeout = RouteTestTimeout(7.seconds.dilated)
 
   "storeUploadedFile" in {
-    //#storeUploadedFile
+    // #storeUploadedFile
 
     def tempDestination(fileInfo: FileInfo): File =
       File.createTempFile(fileInfo.fileName, ".tmp")
@@ -53,11 +53,11 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
       status shouldEqual StatusCodes.OK
     }
 
-    //#storeUploadedFile
+    // #storeUploadedFile
   }
 
   "storeUploadedFiles" in {
-    //#storeUploadedFiles
+    // #storeUploadedFiles
 
     def tempDestination(fileInfo: FileInfo): File =
       File.createTempFile(fileInfo.fileName, ".tmp")
@@ -90,11 +90,11 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
       status shouldEqual StatusCodes.OK
     }
 
-    //#storeUploadedFiles
+    // #storeUploadedFiles
   }
 
   "fileUpload" in {
-    //#fileUpload
+    // #fileUpload
 
     // adding integers as a service
     val route =
@@ -103,7 +103,6 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
 
         fileUpload("csv") {
           case (metadata, byteSource) =>
-
             val sumF: Future[Int] =
               // sum the numbers as they arrive so that we can
               // accept any size of file
@@ -128,11 +127,11 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
       responseAs[String] shouldEqual "Sum: 178"
     }
 
-    //#fileUpload
+    // #fileUpload
   }
 
   "fileUploadAll" in {
-    //#fileUploadAll
+    // #fileUploadAll
 
     // adding integers as a service
     val route =
@@ -174,7 +173,7 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
       responseAs[String] shouldEqual "Sum: 855"
     }
 
-    //#fileUploadAll
+    // #fileUploadAll
   }
 
 }

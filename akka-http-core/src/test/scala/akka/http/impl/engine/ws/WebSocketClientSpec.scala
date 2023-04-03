@@ -14,7 +14,7 @@ import akka.stream.TLSProtocol._
 import scala.concurrent.duration._
 import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.headers.{ ProductVersion, `User-Agent` }
+import akka.http.scaladsl.model.headers.{ `User-Agent`, ProductVersion }
 import akka.http.scaladsl.model.ws._
 import akka.http.scaladsl.model.Uri
 import akka.stream.scaladsl._
@@ -70,7 +70,8 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
             |""")
 
         expectNetworkAbort()
-        expectInvalidUpgradeResponseCause("WebSocket server at ws://example.org/ws returned unexpected status code: 404 Not Found")
+        expectInvalidUpgradeResponseCause(
+          "WebSocket server at ws://example.org/ws returned unexpected status code: 404 Not Found")
       }
       "missing Sec-WebSocket-Accept hash" in new TestSetup with ClientEchoes {
         expectWireData(UpgradeRequestBytes)
@@ -85,7 +86,8 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
             |""")
 
         expectNetworkAbort()
-        expectInvalidUpgradeResponseCause("WebSocket server at ws://example.org/ws returned response that was missing required `Sec-WebSocket-Accept` header.")
+        expectInvalidUpgradeResponseCause(
+          "WebSocket server at ws://example.org/ws returned response that was missing required `Sec-WebSocket-Accept` header.")
       }
       "wrong Sec-WebSocket-Accept hash" in new TestSetup with ClientEchoes {
         expectWireData(UpgradeRequestBytes)
@@ -101,7 +103,8 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
             |""")
 
         expectNetworkAbort()
-        expectInvalidUpgradeResponseCause("WebSocket server at ws://example.org/ws returned response with invalid `Sec-WebSocket-Accept` header.")
+        expectInvalidUpgradeResponseCause(
+          "WebSocket server at ws://example.org/ws returned response with invalid `Sec-WebSocket-Accept` header.")
       }
       "missing `Upgrade` header" in new TestSetup with ClientEchoes {
         expectWireData(UpgradeRequestBytes)
@@ -116,7 +119,8 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
             |""")
 
         expectNetworkAbort()
-        expectInvalidUpgradeResponseCause("WebSocket server at ws://example.org/ws returned response that was missing required `Upgrade` header.")
+        expectInvalidUpgradeResponseCause(
+          "WebSocket server at ws://example.org/ws returned response that was missing required `Upgrade` header.")
       }
       "missing `Connection: upgrade` header" in new TestSetup with ClientEchoes {
         expectWireData(UpgradeRequestBytes)
@@ -131,7 +135,8 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
             |""")
 
         expectNetworkAbort()
-        expectInvalidUpgradeResponseCause("WebSocket server at ws://example.org/ws returned response that was missing required `Connection` header.")
+        expectInvalidUpgradeResponseCause(
+          "WebSocket server at ws://example.org/ws returned response that was missing required `Connection` header.")
       }
     }
 
@@ -360,9 +365,9 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
       val graph =
         RunnableGraph.fromGraph(GraphDSL.createGraph(clientLayer) { implicit b => client =>
           import GraphDSL.Implicits._
-          Source.fromPublisher(netIn) ~> Flow[ByteString].map(SessionBytes(null, _)) ~> client.in2
-          client.out1 ~> Flow[SslTlsOutbound].collect { case SendBytes(x) => x } ~> netOut.sink
-          client.out2 ~> clientImplementation ~> client.in1
+          Source.fromPublisher(netIn) ~> Flow[ByteString].map(SessionBytes(null, _))             ~> client.in2
+          client.out1                 ~> Flow[SslTlsOutbound].collect { case SendBytes(x) => x } ~> netOut.sink
+          client.out2                 ~> clientImplementation                                    ~> client.in1
           ClosedShape
         })
 

@@ -24,7 +24,8 @@ import scala.compat.java8.OptionConverters
  * Public API but not intended for subclassing
  */
 @DoNotInherit
-abstract class ParserSettings private[akka] () extends akka.http.javadsl.settings.ParserSettings { self: ParserSettingsImpl =>
+abstract class ParserSettings private[akka] () extends akka.http.javadsl.settings.ParserSettings {
+  self: ParserSettingsImpl =>
   def maxUriLength: Int
   def maxMethodLength: Int
   def maxResponseReasonLength: Int
@@ -82,36 +83,46 @@ abstract class ParserSettings private[akka] () extends akka.http.javadsl.setting
   override def getCustomStatusCodes = new Function[Int, Optional[akka.http.javadsl.model.StatusCode]] {
     override def apply(t: Int) = OptionConverters.toJava(self.customStatusCodes(t))
   }
-  override def getCustomMediaTypes = new akka.japi.function.Function2[String, String, Optional[akka.http.javadsl.model.MediaType]] {
-    override def apply(mainType: String, subType: String): Optional[model.MediaType] =
-      OptionConverters.toJava(self.customMediaTypes(mainType, subType))
-  }
+  override def getCustomMediaTypes =
+    new akka.japi.function.Function2[String, String, Optional[akka.http.javadsl.model.MediaType]] {
+      override def apply(mainType: String, subType: String): Optional[model.MediaType] =
+        OptionConverters.toJava(self.customMediaTypes(mainType, subType))
+    }
   def getModeledHeaderParsing: Boolean = this.modeledHeaderParsing
 
   // override for more specific return type
   override def withMaxUriLength(newValue: Int): ParserSettings = self.copy(maxUriLength = newValue)
   override def withMaxMethodLength(newValue: Int): ParserSettings = self.copy(maxMethodLength = newValue)
-  override def withMaxResponseReasonLength(newValue: Int): ParserSettings = self.copy(maxResponseReasonLength = newValue)
+  override def withMaxResponseReasonLength(newValue: Int): ParserSettings =
+    self.copy(maxResponseReasonLength = newValue)
   override def withMaxHeaderNameLength(newValue: Int): ParserSettings = self.copy(maxHeaderNameLength = newValue)
   override def withMaxHeaderValueLength(newValue: Int): ParserSettings = self.copy(maxHeaderValueLength = newValue)
   override def withMaxHeaderCount(newValue: Int): ParserSettings = self.copy(maxHeaderCount = newValue)
-  override def withMaxContentLength(newValue: Long): ParserSettings = self.copy(maxContentLengthSetting = Some(newValue))
+  override def withMaxContentLength(newValue: Long): ParserSettings =
+    self.copy(maxContentLengthSetting = Some(newValue))
   def withMaxContentLength(newValue: Option[Long]): ParserSettings = self.copy(maxContentLengthSetting = newValue)
   override def withMaxToStrictBytes(newValue: Long): ParserSettings = self.copy(maxToStrictBytes = newValue)
   override def withMaxChunkExtLength(newValue: Int): ParserSettings = self.copy(maxChunkExtLength = newValue)
   override def withMaxChunkSize(newValue: Int): ParserSettings = self.copy(maxChunkSize = newValue)
   override def withMaxCommentParsingDepth(newValue: Int): ParserSettings = self.copy(maxCommentParsingDepth = newValue)
-  override def withIllegalHeaderWarnings(newValue: Boolean): ParserSettings = self.copy(illegalHeaderWarnings = newValue)
-  override def withIncludeTlsSessionInfoHeader(newValue: Boolean): ParserSettings = self.copy(includeTlsSessionInfoHeader = newValue)
-  override def withIncludeSslSessionAttribute(newValue: Boolean): ParserSettings = self.copy(includeSslSessionAttribute = newValue)
+  override def withIllegalHeaderWarnings(newValue: Boolean): ParserSettings =
+    self.copy(illegalHeaderWarnings = newValue)
+  override def withIncludeTlsSessionInfoHeader(newValue: Boolean): ParserSettings =
+    self.copy(includeTlsSessionInfoHeader = newValue)
+  override def withIncludeSslSessionAttribute(newValue: Boolean): ParserSettings =
+    self.copy(includeSslSessionAttribute = newValue)
   override def withModeledHeaderParsing(newValue: Boolean): ParserSettings = self.copy(modeledHeaderParsing = newValue)
-  override def withIgnoreIllegalHeaderFor(newValue: List[String]): ParserSettings = self.copy(ignoreIllegalHeaderFor = newValue.map(_.toLowerCase).toSet)
+  override def withIgnoreIllegalHeaderFor(newValue: List[String]): ParserSettings =
+    self.copy(ignoreIllegalHeaderFor = newValue.map(_.toLowerCase).toSet)
 
   // overloads for idiomatic Scala use
   def withUriParsingMode(newValue: Uri.ParsingMode): ParserSettings = self.copy(uriParsingMode = newValue)
-  def withCookieParsingMode(newValue: ParserSettings.CookieParsingMode): ParserSettings = self.copy(cookieParsingMode = newValue)
-  def withErrorLoggingVerbosity(newValue: ParserSettings.ErrorLoggingVerbosity): ParserSettings = self.copy(errorLoggingVerbosity = newValue)
-  def withHeaderValueCacheLimits(newValue: Map[String, Int]): ParserSettings = self.copy(headerValueCacheLimits = newValue)
+  def withCookieParsingMode(newValue: ParserSettings.CookieParsingMode): ParserSettings =
+    self.copy(cookieParsingMode = newValue)
+  def withErrorLoggingVerbosity(newValue: ParserSettings.ErrorLoggingVerbosity): ParserSettings =
+    self.copy(errorLoggingVerbosity = newValue)
+  def withHeaderValueCacheLimits(newValue: Map[String, Int]): ParserSettings =
+    self.copy(headerValueCacheLimits = newValue)
   def withCustomMethods(methods: HttpMethod*): ParserSettings = {
     val map = methods.map(m => m.name -> m).toMap
     self.copy(customMethods = map.get)
@@ -124,11 +135,14 @@ abstract class ParserSettings private[akka] () extends akka.http.javadsl.setting
     val map = types.map(c => (c.mainType, c.subType) -> c).toMap
     self.copy(customMediaTypes = (main, sub) => map.get((main, sub)))
   }
-  def withIllegalResponseHeaderNameProcessingMode(newValue: ParserSettings.IllegalResponseHeaderNameProcessingMode): ParserSettings =
+  def withIllegalResponseHeaderNameProcessingMode(
+      newValue: ParserSettings.IllegalResponseHeaderNameProcessingMode): ParserSettings =
     self.copy(illegalResponseHeaderNameProcessingMode = newValue)
-  def withIllegalResponseHeaderValueProcessingMode(newValue: ParserSettings.IllegalResponseHeaderValueProcessingMode): ParserSettings =
+  def withIllegalResponseHeaderValueProcessingMode(
+      newValue: ParserSettings.IllegalResponseHeaderValueProcessingMode): ParserSettings =
     self.copy(illegalResponseHeaderValueProcessingMode = newValue)
-  def withConflictingContentTypeHeaderProcessingMode(newValue: ParserSettings.ConflictingContentTypeHeaderProcessingMode): ParserSettings =
+  def withConflictingContentTypeHeaderProcessingMode(
+      newValue: ParserSettings.ConflictingContentTypeHeaderProcessingMode): ParserSettings =
     self.copy(conflictingContentTypeHeaderProcessingMode = newValue)
 }
 
@@ -159,7 +173,8 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
       }
   }
 
-  sealed trait IllegalResponseHeaderValueProcessingMode extends akka.http.javadsl.settings.ParserSettings.IllegalResponseHeaderValueProcessingMode
+  sealed trait IllegalResponseHeaderValueProcessingMode
+      extends akka.http.javadsl.settings.ParserSettings.IllegalResponseHeaderValueProcessingMode
   object IllegalResponseHeaderValueProcessingMode {
     case object Error extends IllegalResponseHeaderValueProcessingMode
     case object Warn extends IllegalResponseHeaderValueProcessingMode
@@ -170,11 +185,13 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
         case "error"  => Error
         case "warn"   => Warn
         case "ignore" => Ignore
-        case x        => throw new IllegalArgumentException(s"[$x] is not a legal `illegal-response-header-value-processing-mode` setting")
+        case x => throw new IllegalArgumentException(
+            s"[$x] is not a legal `illegal-response-header-value-processing-mode` setting")
       }
   }
 
-  sealed trait IllegalResponseHeaderNameProcessingMode extends akka.http.javadsl.settings.ParserSettings.IllegalResponseHeaderNameProcessingMode
+  sealed trait IllegalResponseHeaderNameProcessingMode
+      extends akka.http.javadsl.settings.ParserSettings.IllegalResponseHeaderNameProcessingMode
   object IllegalResponseHeaderNameProcessingMode {
     case object Error extends IllegalResponseHeaderNameProcessingMode
     case object Warn extends IllegalResponseHeaderNameProcessingMode
@@ -185,11 +202,13 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
         case "error"  => Error
         case "warn"   => Warn
         case "ignore" => Ignore
-        case x        => throw new IllegalArgumentException(s"[$x] is not a legal `illegal-response-header-name-processing-mode` setting")
+        case x => throw new IllegalArgumentException(
+            s"[$x] is not a legal `illegal-response-header-name-processing-mode` setting")
       }
   }
 
-  sealed trait ConflictingContentTypeHeaderProcessingMode extends akka.http.javadsl.settings.ParserSettings.ConflictingContentTypeHeaderProcessingMode
+  sealed trait ConflictingContentTypeHeaderProcessingMode
+      extends akka.http.javadsl.settings.ParserSettings.ConflictingContentTypeHeaderProcessingMode
   object ConflictingContentTypeHeaderProcessingMode {
     case object Error extends ConflictingContentTypeHeaderProcessingMode
     case object First extends ConflictingContentTypeHeaderProcessingMode
@@ -202,7 +221,8 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
         case "first"           => First
         case "last"            => Last
         case "no-content-type" => NoContentType
-        case x                 => throw new IllegalArgumentException(s"[$x] is not a legal `conflicting-content-type-header-processing-mode` setting")
+        case x => throw new IllegalArgumentException(
+            s"[$x] is not a legal `conflicting-content-type-header-processing-mode` setting")
       }
   }
 
@@ -214,5 +234,6 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
   def forServer(implicit system: ClassicActorSystemProvider): ParserSettings =
     ParserSettingsImpl.forServer(system.classicSystem.settings.config)
   def forClient(implicit system: ClassicActorSystemProvider): ParserSettings =
-    ParserSettingsImpl.fromSubConfig(system.classicSystem.settings.config, system.classicSystem.settings.config.getConfig("akka.http.client.parsing"))
+    ParserSettingsImpl.fromSubConfig(system.classicSystem.settings.config,
+      system.classicSystem.settings.config.getConfig("akka.http.client.parsing"))
 }

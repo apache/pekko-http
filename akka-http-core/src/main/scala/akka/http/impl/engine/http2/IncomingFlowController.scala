@@ -13,7 +13,7 @@ private[http2] trait IncomingFlowController {
   def onConnectionDataReceived(outstandingConnectionLevelWindow: Int, totalBufferedData: Int): Int
 
   def onStreamDataDispatched(outstandingConnectionLevelWindow: Int, totalBufferedData: Int,
-                             outstandingStreamLevelWindow: Int, streamBufferedData: Int): IncomingFlowController.WindowIncrements
+      outstandingStreamLevelWindow: Int, streamBufferedData: Int): IncomingFlowController.WindowIncrements
 }
 
 /** INTERNAL API */
@@ -36,11 +36,11 @@ private[http2] object IncomingFlowController {
       def onConnectionDataReceived(outstandingConnectionLevelWindow: Int, totalBufferedData: Int): Int =
         ifMoreThanHalfUsed(maximumConnectionLevelWindow, outstandingConnectionLevelWindow, totalBufferedData)
 
-      def onStreamDataDispatched(outstandingConnectionLevelWindow: Int, totalBufferedData: Int, outstandingStreamLevelWindow: Int, streamBufferedData: Int): WindowIncrements =
+      def onStreamDataDispatched(outstandingConnectionLevelWindow: Int, totalBufferedData: Int,
+          outstandingStreamLevelWindow: Int, streamBufferedData: Int): WindowIncrements =
         WindowIncrements(
           onConnectionDataReceived(outstandingConnectionLevelWindow, totalBufferedData),
-          ifMoreThanHalfUsed(maximumStreamLevelWindow, outstandingStreamLevelWindow, streamBufferedData)
-        )
+          ifMoreThanHalfUsed(maximumStreamLevelWindow, outstandingStreamLevelWindow, streamBufferedData))
 
       private def ifMoreThanHalfUsed(max: Int, outstanding: Int, buffered: Int): Int = {
         val totalReservedSpace = outstanding + buffered

@@ -14,6 +14,7 @@ import akka.http.javadsl.model.headers.HttpEncoding
 import akka.http.scaladsl.server.{ Directives => D }
 
 abstract class CodingDirectives extends CacheConditionDirectives {
+
   /**
    * Rejects the request with an UnacceptedResponseEncodingRejection
    * if the given response encoding is not accepted by the client.

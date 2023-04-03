@@ -14,7 +14,7 @@ class SprayJsonExampleSpec extends AnyWordSpec with Matchers {
   def compileOnlySpec(body: => Unit) = ()
 
   "spray-json example" in compileOnlySpec {
-    //#minimal-spray-json-example
+    // #minimal-spray-json-example
     import akka.http.scaladsl.server.Directives
     import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
     import spray.json._
@@ -45,9 +45,8 @@ class SprayJsonExampleSpec extends AnyWordSpec with Matchers {
               val itemNames = order.items.map(_.name).mkString(", ")
               complete(s"Ordered $itemsCount items: $itemNames")
             }
-          }
-        )
+          })
     }
-    //#minimal-spray-json-example
+    // #minimal-spray-json-example
   }
 }

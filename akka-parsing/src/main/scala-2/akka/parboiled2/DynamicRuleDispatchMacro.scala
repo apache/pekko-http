@@ -30,11 +30,13 @@ trait DynamicRuleDispatchMacro { _: DynamicRuleDispatch.type =>
    * Note that there is no reflection involved and compilation will fail, if one of the given rule names
    * does not constitute a method of parser type `P` or has a type different from `RuleN[L]`.
    */
-  def apply[P <: Parser, L <: HList](ruleNames: String*): (DynamicRuleDispatch[P, L], immutable.Seq[String]) = macro DynamicRuleDispatch.__create[P, L]
+  def apply[P <: Parser, L <: HList](ruleNames: String*): (DynamicRuleDispatch[P, L], immutable.Seq[String]) =
+    macro DynamicRuleDispatch.__create[P, L]
 
   ///////////////////// INTERNAL ////////////////////////
 
-  def __create[P <: Parser, L <: HList](c: whitebox.Context)(ruleNames: c.Expr[String]*)(implicit P: c.WeakTypeTag[P], L: c.WeakTypeTag[L]): c.Expr[(DynamicRuleDispatch[P, L], immutable.Seq[String])] = {
+  def __create[P <: Parser, L <: HList](c: whitebox.Context)(ruleNames: c.Expr[String]*)(implicit P: c.WeakTypeTag[P],
+      L: c.WeakTypeTag[L]): c.Expr[(DynamicRuleDispatch[P, L], immutable.Seq[String])] = {
     import c.universe._
     val names = ruleNames.map {
       _.tree match {

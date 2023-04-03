@@ -20,15 +20,15 @@ class HttpMessageSpec extends AnyWordSpec with Matchers {
 
   def fail(uri: String, hostHeader: Host) =
     an[IllegalUriException] should be thrownBy
-      HttpRequest.effectiveUri(Uri(uri), List(hostHeader), securedConnection = false, null)
+    HttpRequest.effectiveUri(Uri(uri), List(hostHeader), securedConnection = false, null)
 
   def failWithNoHostHeader(hostHeader: Option[Host], details: String) = {
     val thrown = the[IllegalUriException] thrownBy
       HttpRequest.effectiveUri(Uri("/relative"), hostHeader.toList, securedConnection = false, Host(""))
 
-    thrown should have message
+    (thrown should have).message(
       s"Cannot establish effective URI of request to `/relative`, request has a relative URI and $details: " +
-      "consider setting `akka.http.server.default-host-header`"
+      "consider setting `akka.http.server.default-host-header`")
   }
 
   "HttpRequest" should {
@@ -55,20 +55,20 @@ class HttpMessageSpec extends AnyWordSpec with Matchers {
 
     "throw IllegalUriException for an invalid URI schema" in {
       an[IllegalUriException] should be thrownBy
-        HttpRequest(uri = Uri("htp://example.com"))
+      HttpRequest(uri = Uri("htp://example.com"))
     }
 
     "throw IllegalUriException for empty URI" in {
       an[IllegalUriException] should be thrownBy
-        HttpRequest(uri = Uri())
+      HttpRequest(uri = Uri())
     }
 
     "take attributes into account for hashCode calculation" in {
       val orig = HttpRequest()
       val changed = orig.addAttribute(AttributeKeys.remoteAddress, RemoteAddress(InetAddress.getLocalHost))
 
-      orig should not equal (changed)
-      orig.hashCode() should not equal (changed.hashCode())
+      (orig should not).equal(changed)
+      (orig.hashCode() should not).equal(changed.hashCode())
     }
   }
   "HttpResponse" should {
@@ -76,15 +76,16 @@ class HttpMessageSpec extends AnyWordSpec with Matchers {
       val orig = HttpResponse()
       val changed = orig.addAttribute(AttributeKeys.remoteAddress, RemoteAddress(InetAddress.getLocalHost))
 
-      orig should not equal (changed)
-      orig.hashCode() should not equal (changed.hashCode())
+      (orig should not).equal(changed)
+      (orig.hashCode() should not).equal(changed.hashCode())
     }
   }
 
   "HttpMessage" should {
     "not throw a ClassCastException on header[`Content-Type`]" in {
       val entity = HttpEntity.Strict(ContentTypes.`text/plain(UTF-8)`, ByteString.fromString("hello akka"))
-      HttpResponse(entity = entity).header[`Content-Type`] shouldBe Some(`Content-Type`(ContentTypes.`text/plain(UTF-8)`))
+      HttpResponse(entity = entity).header[`Content-Type`] shouldBe Some(
+        `Content-Type`(ContentTypes.`text/plain(UTF-8)`))
     }
     "retrieve all headers of a given class when calling headers[...]" in {
       val oneCookieHeader = `Set-Cookie`(HttpCookie("foo", "bar"))

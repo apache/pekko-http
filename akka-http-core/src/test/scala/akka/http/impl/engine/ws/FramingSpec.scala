@@ -110,7 +110,7 @@ class FramingSpec extends AkkaSpecWithMaterializer {
             xxxxxxxx
             xxxxxxxx
             xxxxxxxx=a1b2c3d4
-          """ should parseTo(FrameHeader(Opcode.Continuation, Some(0xa1b2c3d4), 0, fin = false))
+          """ should parseTo(FrameHeader(Opcode.Continuation, Some(0xA1B2C3D4), 0, fin = false))
       }
       "read length" should {
         "< 126" in {
@@ -145,7 +145,7 @@ class FramingSpec extends AkkaSpecWithMaterializer {
                xxxxxxx=7e   # length
               xxxxxxxx
               xxxxxxxx=d28e # length16
-          """ should parseTo(FrameHeader(Opcode.Continuation, None, 0xd28e, fin = false))
+          """ should parseTo(FrameHeader(Opcode.Continuation, None, 0xD28E, fin = false))
         }
         "65535" in {
           b"""0000          # flags
@@ -154,7 +154,7 @@ class FramingSpec extends AkkaSpecWithMaterializer {
                xxxxxxx=7e   # length
               xxxxxxxx
               xxxxxxxx=ffff # length16
-          """ should parseTo(FrameHeader(Opcode.Continuation, None, 0xffff, fin = false))
+          """ should parseTo(FrameHeader(Opcode.Continuation, None, 0xFFFF, fin = false))
         }
         "65536" in {
           b"""0000          # flags

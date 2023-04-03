@@ -54,9 +54,9 @@ class ServerProcessingBenchmark extends CommonBenchmark {
     system = ActorSystem("AkkaHttpBenchmarkSystem", config)
     mat = ActorMaterializer()
     httpFlow =
-      Flow[HttpRequest].map(_ => response) join
-        (HttpServerBluePrint(ServerSettings(system), NoLogging, false, Http().dateHeaderRendering) atop
-          TLSPlacebo())
+      Flow[HttpRequest].map(_ => response).join(
+        HttpServerBluePrint(ServerSettings(system), NoLogging, false, Http().dateHeaderRendering).atop(
+          TLSPlacebo()))
   }
 
   @TearDown

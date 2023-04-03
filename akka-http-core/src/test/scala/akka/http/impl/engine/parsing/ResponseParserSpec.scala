@@ -31,10 +31,9 @@ import akka.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import akka.testkit._
 
 abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpecWithMaterializer(
-  """
+      """
      akka.http.parsing.max-response-reason-length = 21
-  """
-) {
+  """) {
   import system.dispatcher
 
   val ServerOnTheMove = StatusCodes.custom(331, "Server on the move")
@@ -99,7 +98,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
       }
 
       "a response with no reason phrase and no trailing space" in new Test {
-        s"""HTTP/1.1 404${newLine}Content-Length: 0${newLine}${newLine}""".stripMargin should parseTo(HEAD, HttpResponse(NotFound))
+        s"""HTTP/1.1 404${newLine}Content-Length: 0${newLine}${newLine}""".stripMargin should parseTo(HEAD,
+          HttpResponse(NotFound))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
@@ -116,7 +116,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
           |Host: api.example.com
           |Host: akka.io
           |
-          |Foobs""" should parseTo(HttpResponse(NotFound, List(Host("api.example.com"), Host("akka.io")), "Foobs".getBytes, `HTTP/1.0`))
+          |Foobs""" should parseTo(HttpResponse(NotFound, List(Host("api.example.com"), Host("akka.io")),
+          "Foobs".getBytes, `HTTP/1.0`))
         closeAfterResponseCompletion shouldEqual Seq(true)
       }
 
@@ -132,31 +133,36 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
 
       "a response with several conflicting Content-Type headers with conflicting-content-type-header-processing-mode = first" in new Test {
         override def parserSettings: ParserSettings =
-          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(ConflictingContentTypeHeaderProcessingMode.First)
+          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
+            ConflictingContentTypeHeaderProcessingMode.First)
         """HTTP/1.1 200 OK
           |Content-Type: text/plain; charset=UTF-8
           |Content-Type: application/json; charset=utf-8
           |Content-Length: 0
           |
-          |""" should parseTo(HttpResponse(headers = List(`Content-Type`(ContentTypes.`application/json`)), entity = HttpEntity.empty(ContentTypes.`text/plain(UTF-8)`)))
+          |""" should parseTo(HttpResponse(headers = List(`Content-Type`(ContentTypes.`application/json`)),
+          entity = HttpEntity.empty(ContentTypes.`text/plain(UTF-8)`)))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
       "a response with several conflicting Content-Type headers with conflicting-content-type-header-processing-mode = last" in new Test {
         override def parserSettings: ParserSettings =
-          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(ConflictingContentTypeHeaderProcessingMode.Last)
+          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
+            ConflictingContentTypeHeaderProcessingMode.Last)
         """HTTP/1.1 200 OK
           |Content-Type: text/plain; charset=UTF-8
           |Content-Type: application/json; charset=utf-8
           |Content-Length: 0
           |
-          |""" should parseTo(HttpResponse(headers = List(`Content-Type`(ContentTypes.`text/plain(UTF-8)`)), entity = HttpEntity.empty(ContentTypes.`application/json`)))
+          |""" should parseTo(HttpResponse(headers = List(`Content-Type`(ContentTypes.`text/plain(UTF-8)`)),
+          entity = HttpEntity.empty(ContentTypes.`application/json`)))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
       "a response with several conflicting Content-Type headers with conflicting-content-type-header-processing-mode = no-content-type" in new Test {
         override def parserSettings: ParserSettings =
-          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(ConflictingContentTypeHeaderProcessingMode.NoContentType)
+          super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
+            ConflictingContentTypeHeaderProcessingMode.NoContentType)
         """HTTP/1.1 200 OK
           |Content-Type: text/plain; charset=UTF-8
           |Content-Type: application/json; charset=utf-8
@@ -168,9 +174,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
             headers = List(
               `Content-Type`(ContentTypes.`text/plain(UTF-8)`),
               `Content-Type`(ContentTypes.`application/json`),
-              `Content-Type`(ContentTypes.`text/xml(UTF-8)`)
-            ), entity = HttpEntity.Strict(ContentTypes.NoContentType, ByteString("foobar"))
-          ))
+              `Content-Type`(ContentTypes.`text/xml(UTF-8)`)),
+            entity = HttpEntity.Strict(ContentTypes.NoContentType, ByteString("foobar"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
@@ -228,7 +233,7 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
       "message chunk with and without extension" in new Test {
         Seq(
           start +
-            """3
+          """3
             |abc
             |10;some=stuff;bla
             |0123456789ABCDEF
@@ -242,7 +247,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
             |0
             |
             |""") should generalMultiParseTo(
-            Right(baseResponse.withEntity(Chunked(`application/pdf`, source(
+          Right(baseResponse.withEntity(Chunked(`application/pdf`,
+            source(
               Chunk(ByteString("abc")),
               Chunk(ByteString("0123456789ABCDEF"), "some=stuff;bla"),
               Chunk(ByteString("0123456789ABCDEF"), "foo=bar"),
@@ -256,7 +262,7 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
           """0
             |
             |""") should generalMultiParseTo(
-            Right(baseResponse.withEntity(Chunked(`application/pdf`, source(LastChunk)))))
+          Right(baseResponse.withEntity(Chunked(`application/pdf`, source(LastChunk)))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
@@ -269,10 +275,10 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
             |Bar: xyz
             |
             |HT""") should generalMultiParseTo(
-            Right(baseResponse.withEntity(Chunked(
-              `application/pdf`,
-              source(LastChunk("nice=true", List(RawHeader("Foo", "pip apo"), RawHeader("Bar", "xyz"))))))),
-            Left(MessageStartError(400: StatusCode, ErrorInfo("Illegal HTTP message start"))))
+          Right(baseResponse.withEntity(Chunked(
+            `application/pdf`,
+            source(LastChunk("nice=true", List(RawHeader("Foo", "pip apo"), RawHeader("Bar", "xyz"))))))),
+          Left(MessageStartError(400: StatusCode, ErrorInfo("Illegal HTTP message start"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
@@ -290,8 +296,7 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
           |Content-Type: application/json; charset=utf-8
           |
           |{}""" should parseTo(HttpResponse(
-          entity = HttpEntity.Strict(ContentType(openJson, HttpCharsets.`UTF-8`), ByteString("{}"))
-        ))
+          entity = HttpEntity.Strict(ContentType(openJson, HttpCharsets.`UTF-8`), ByteString("{}"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
     }
@@ -299,7 +304,9 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
     "reject a response with" should {
       "HTTP version 1.2" in new Test {
         Seq("HTTP/1.2 200 OK") should generalMultiParseTo(Left(MessageStartError(
-          400: StatusCode, ErrorInfo("The server-side protocol or HTTP version is not supported", "start of response: [48 54 54 50 2F 31 2E 32 20 32 30 30 20 4F 4B     | HTTP/1.2 200 OK]"))))
+          400: StatusCode,
+          ErrorInfo("The server-side protocol or HTTP version is not supported",
+            "start of response: [48 54 54 50 2F 31 2E 32 20 32 30 30 20 4F 4B     | HTTP/1.2 200 OK]"))))
       }
 
       "an illegal status code" in new Test {
@@ -309,7 +316,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
 
       "a too-long response status reason" in new Test {
         Seq("HTTP/1.1 204 12345678", s"90123456789012${newLine}") should generalMultiParseTo(Left(
-          MessageStartError(400: StatusCode, ErrorInfo("Response reason phrase exceeds the configured limit of 21 characters"))))
+          MessageStartError(400: StatusCode,
+            ErrorInfo("Response reason phrase exceeds the configured limit of 21 characters"))))
       }
 
       "conflicting Content-Type headers" in new Test {
@@ -318,14 +326,16 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
           |Content-Type: application/json; charset=utf-8
           |Content-Length: 0
           |
-          |""" should parseToError(MessageStartError(400: StatusCode, ErrorInfo("HTTP message must not contain more than one Content-Type header")))
+          |""" should parseToError(MessageStartError(400: StatusCode,
+          ErrorInfo("HTTP message must not contain more than one Content-Type header")))
       }
 
       "multiple transfer encodings in one header" in new Test {
         """HTTP/1.1 200 OK
           |Transfer-Encoding: fancy, chunked
           |
-          |""" should parseToError(MessageStartError(BadRequest, ErrorInfo("Multiple Transfer-Encoding entries not supported")))
+          |""" should parseToError(MessageStartError(BadRequest,
+          ErrorInfo("Multiple Transfer-Encoding entries not supported")))
       }
 
       "multiple transfer encoding headers" in new Test {
@@ -333,7 +343,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
           |Transfer-Encoding: chunked
           |Transfer-Encoding: fancy
           |
-          |""" should parseToError(MessageStartError(BadRequest, ErrorInfo("Multiple Transfer-Encoding entries not supported")))
+          |""" should parseToError(MessageStartError(BadRequest,
+          ErrorInfo("Multiple Transfer-Encoding entries not supported")))
       }
 
       "transfer encoding chunked and a content length" in new Test {
@@ -341,7 +352,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
           |Transfer-Encoding: chunked
           |Content-Length: 7
           |
-          |""" should parseToError(MessageStartError(BadRequest, ErrorInfo("A chunked response must not contain a Content-Length header")))
+          |""" should parseToError(MessageStartError(BadRequest,
+          ErrorInfo("A chunked response must not contain a Content-Length header")))
       }
     }
   }
@@ -353,9 +365,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
     class StrictEqualHttpResponse(val resp: HttpResponse) {
       override def equals(other: scala.Any): Boolean = other match {
         case other: StrictEqualHttpResponse =>
-
           this.resp.withEntity(HttpEntity.Empty) == other.resp.withEntity(HttpEntity.Empty) &&
-            Await.result(this.resp.entity.toStrict(awaitAtMost), awaitAtMost) ==
+          Await.result(this.resp.entity.toStrict(awaitAtMost), awaitAtMost) ==
             Await.result(other.resp.entity.toStrict(awaitAtMost), awaitAtMost)
       }
 
@@ -371,7 +382,7 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
 
     def multiParseTo(expected: HttpResponse*): Matcher[Seq[String]] = multiParseTo(GET, expected: _*)
     def multiParseTo(requestMethod: HttpMethod, expected: HttpResponse*): Matcher[Seq[String]] =
-      rawMultiParseTo(requestMethod, expected: _*).compose(_ map prep)
+      rawMultiParseTo(requestMethod, expected: _*).compose(_.map(prep))
 
     def rawMultiParseTo(expected: HttpResponse*): Matcher[Seq[String]] = rawMultiParseTo(GET, expected: _*)
     def rawMultiParseTo(requestMethod: HttpMethod, expected: HttpResponse*): Matcher[Seq[String]] =
@@ -380,13 +391,14 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends AkkaSpe
     def parseToError(error: ResponseOutput): Matcher[String] = generalMultiParseTo(Left(error)).compose(_ :: Nil)
 
     def generalMultiParseTo(expected: Either[ResponseOutput, HttpResponse]*): Matcher[Seq[String]] =
-      generalRawMultiParseTo(expected: _*).compose(_ map prep)
+      generalRawMultiParseTo(expected: _*).compose(_.map(prep))
 
     def generalRawMultiParseTo(expected: Either[ResponseOutput, HttpResponse]*): Matcher[Seq[String]] =
       generalRawMultiParseTo(GET, expected: _*)
-    def generalRawMultiParseTo(requestMethod: HttpMethod, expected: Either[ResponseOutput, HttpResponse]*): Matcher[Seq[String]] =
+    def generalRawMultiParseTo(
+        requestMethod: HttpMethod, expected: Either[ResponseOutput, HttpResponse]*): Matcher[Seq[String]] =
       equal(expected.map(strictEqualify))
-        .matcher[Seq[Either[ResponseOutput, StrictEqualHttpResponse]]] compose { (input: Seq[String]) =>
+        .matcher[Seq[Either[ResponseOutput, StrictEqualHttpResponse]]].compose { (input: Seq[String]) =>
           collectBlocking {
             rawParse(requestMethod, input: _*)
               .mapAsync(1) {

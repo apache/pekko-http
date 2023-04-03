@@ -51,13 +51,16 @@ class UriSpec extends AnyWordSpec with Matchers {
 
     "parse correctly from IPv6 literals (RFC2732)" in {
       // various
-      Host("[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]") shouldEqual IPv6Host("FEDCBA9876543210FEDCBA9876543210", "FEDC:BA98:7654:3210:FEDC:BA98:7654:3210")
-      Host("[1080:0:0:0:8:800:200C:417A]") shouldEqual IPv6Host("108000000000000000080800200C417A", "1080:0:0:0:8:800:200C:417A")
+      Host("[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]") shouldEqual IPv6Host("FEDCBA9876543210FEDCBA9876543210",
+        "FEDC:BA98:7654:3210:FEDC:BA98:7654:3210")
+      Host("[1080:0:0:0:8:800:200C:417A]") shouldEqual IPv6Host("108000000000000000080800200C417A",
+        "1080:0:0:0:8:800:200C:417A")
       Host("[3ffe:2a00:100:7031::1]") shouldEqual IPv6Host("3ffe2a00010070310000000000000001", "3ffe:2a00:100:7031::1")
       Host("[1080::8:800:200C:417A]") shouldEqual IPv6Host("108000000000000000080800200C417A", "1080::8:800:200C:417A")
       Host("[::192.9.5.5]") shouldEqual IPv6Host("000000000000000000000000C0090505", "::192.9.5.5")
       Host("[::FFFF:129.144.52.38]") shouldEqual IPv6Host("00000000000000000000FFFF81903426", "::FFFF:129.144.52.38")
-      Host("[2010:836B:4179::836B:4179]") shouldEqual IPv6Host("2010836B4179000000000000836B4179", "2010:836B:4179::836B:4179")
+      Host("[2010:836B:4179::836B:4179]") shouldEqual IPv6Host("2010836B4179000000000000836B4179",
+        "2010:836B:4179::836B:4179")
 
       // Quad length
       Host("[abcd::]") shouldEqual IPv6Host("ABCD0000000000000000000000000000", "abcd::")
@@ -67,11 +70,16 @@ class UriSpec extends AnyWordSpec with Matchers {
       Host("[abcd::1234]") shouldEqual IPv6Host("ABCD0000000000000000000000001234", "abcd::1234")
 
       // Full length
-      Host("[2001:0db8:0100:f101:0210:a4ff:fee3:9566]") shouldEqual IPv6Host("20010db80100f1010210a4fffee39566", "2001:0db8:0100:f101:0210:a4ff:fee3:9566") // lower hex
-      Host("[2001:0DB8:0100:F101:0210:A4FF:FEE3:9566]") shouldEqual IPv6Host("20010db80100f1010210a4fffee39566", "2001:0DB8:0100:F101:0210:A4FF:FEE3:9566") // Upper hex
-      Host("[2001:db8:100:f101:210:a4ff:fee3:9566]") shouldEqual IPv6Host("20010db80100f1010210a4fffee39566", "2001:db8:100:f101:210:a4ff:fee3:9566")
-      Host("[2001:0db8:100:f101:0:0:0:1]") shouldEqual IPv6Host("20010db80100f1010000000000000001", "2001:0db8:100:f101:0:0:0:1")
-      Host("[1:2:3:4:5:6:255.255.255.255]") shouldEqual IPv6Host("000100020003000400050006FFFFFFFF", "1:2:3:4:5:6:255.255.255.255")
+      Host("[2001:0db8:0100:f101:0210:a4ff:fee3:9566]") shouldEqual IPv6Host("20010db80100f1010210a4fffee39566",
+        "2001:0db8:0100:f101:0210:a4ff:fee3:9566") // lower hex
+      Host("[2001:0DB8:0100:F101:0210:A4FF:FEE3:9566]") shouldEqual IPv6Host("20010db80100f1010210a4fffee39566",
+        "2001:0DB8:0100:F101:0210:A4FF:FEE3:9566") // Upper hex
+      Host("[2001:db8:100:f101:210:a4ff:fee3:9566]") shouldEqual IPv6Host("20010db80100f1010210a4fffee39566",
+        "2001:db8:100:f101:210:a4ff:fee3:9566")
+      Host("[2001:0db8:100:f101:0:0:0:1]") shouldEqual IPv6Host("20010db80100f1010000000000000001",
+        "2001:0db8:100:f101:0:0:0:1")
+      Host("[1:2:3:4:5:6:255.255.255.255]") shouldEqual IPv6Host("000100020003000400050006FFFFFFFF",
+        "1:2:3:4:5:6:255.255.255.255")
 
       // Legal IPv4
       Host("[::1.2.3.4]") shouldEqual IPv6Host("00000000000000000000000001020304", "::1.2.3.4")
@@ -111,7 +119,7 @@ class UriSpec extends AnyWordSpec with Matchers {
       def roundTrip(ip: String): Unit = {
         val inetAddr = InetAddress.getByName(ip)
         val addr = Host(inetAddr)
-        addr equalsIgnoreCase fromAddress(ip) should be(true)
+        addr.equalsIgnoreCase(fromAddress(ip)) should be(true)
         addr.inetAddresses shouldEqual Seq(inetAddr)
       }
 
@@ -152,7 +160,7 @@ class UriSpec extends AnyWordSpec with Matchers {
         IllegalUriException(
           "Illegal URI host: Invalid input '5', expected ':' or ']' (line 1, column 8)",
           "[::12345]\n" +
-            "       ^")
+          "       ^")
       }
 
       // Two zippers
@@ -202,7 +210,8 @@ class UriSpec extends AnyWordSpec with Matchers {
         Matcher[String] { s =>
           val rendering = UriRendering.renderPath(new StringRendering, p, cs).get
           if (rendering != s) MatchResult(matches = false, s"The path rendered to '$rendering' rather than '$s'", "<?>")
-          else if (Path(s, cs) != p) MatchResult(matches = false, s"The string parsed to '${Path(s, cs)}' rather than '$p'", "<?>")
+          else if (Path(s, cs) != p)
+            MatchResult(matches = false, s"The string parsed to '${Path(s, cs)}' rather than '$p'", "<?>")
           else MatchResult(matches = true, "<?>", "<?>")
         }
 
@@ -223,30 +232,30 @@ class UriSpec extends AnyWordSpec with Matchers {
       "/%2F%5C" should roundTripTo(Path / """/\""")
       "/foo%F0%9F%92%A9bar" should roundTripTo(Path / "foo\ud83d\udca9bar")
       "/%C3%89g%20get%20eti%C3%B0%20gler%20%C3%A1n%20%C3%BEess%20a%C3%B0%20mei%C3%B0a%20mig" should
-        roundTripTo(Path / "Ég get etið gler án þess að meiða mig")
+      roundTripTo(Path / "Ég get etið gler án þess að meiða mig")
       "/%00%E4%00%F6%00%FC" should roundTripTo(Path / "äöü", Charset.forName("UTF-16BE"))
     }
     "support the `startsWith` predicate" in {
-      Empty startsWith Empty shouldBe true
-      Path./ startsWith Empty shouldBe true
-      Path("abc") startsWith Empty shouldBe true
-      Empty startsWith Path./ shouldBe false
-      Empty startsWith Path("abc") shouldBe false
-      Path./ startsWith Path./ shouldBe true
-      Path./ startsWith Path("abc") shouldBe false
-      Path("/abc") startsWith Path./ shouldBe true
-      Path("abc") startsWith Path./ shouldBe false
-      Path("abc") startsWith Path("ab") shouldBe true
-      Path("abc") startsWith Path("abc") shouldBe true
-      Path("/abc") startsWith Path("/a") shouldBe true
-      Path("/abc") startsWith Path("/abc") shouldBe true
-      Path("/ab") startsWith Path("/abc") shouldBe false
-      Path("/abc") startsWith Path("/abd") shouldBe false
-      Path("/abc/def") startsWith Path("/ab") shouldBe true
-      Path("/abc/def") startsWith Path("/abc/") shouldBe true
-      Path("/abc/def") startsWith Path("/abc/d") shouldBe true
-      Path("/abc/def") startsWith Path("/abc/def") shouldBe true
-      Path("/abc/def") startsWith Path("/abc/def/") shouldBe false
+      Empty.startsWith(Empty) shouldBe true
+      Path./.startsWith(Empty) shouldBe true
+      Path("abc").startsWith(Empty) shouldBe true
+      Empty.startsWith(Path./) shouldBe false
+      Empty.startsWith(Path("abc")) shouldBe false
+      Path./.startsWith(Path./) shouldBe true
+      Path./.startsWith(Path("abc")) shouldBe false
+      Path("/abc").startsWith(Path./) shouldBe true
+      Path("abc").startsWith(Path./) shouldBe false
+      Path("abc").startsWith(Path("ab")) shouldBe true
+      Path("abc").startsWith(Path("abc")) shouldBe true
+      Path("/abc").startsWith(Path("/a")) shouldBe true
+      Path("/abc").startsWith(Path("/abc")) shouldBe true
+      Path("/ab").startsWith(Path("/abc")) shouldBe false
+      Path("/abc").startsWith(Path("/abd")) shouldBe false
+      Path("/abc/def").startsWith(Path("/ab")) shouldBe true
+      Path("/abc/def").startsWith(Path("/abc/")) shouldBe true
+      Path("/abc/def").startsWith(Path("/abc/d")) shouldBe true
+      Path("/abc/def").startsWith(Path("/abc/def")) shouldBe true
+      Path("/abc/def").startsWith(Path("/abc/def/")) shouldBe false
     }
     "support the `endsWithSlash` predicate" in {
       Empty.endsWithSlash shouldBe false
@@ -309,18 +318,18 @@ class UriSpec extends AnyWordSpec with Matchers {
 
   "Uri.Query instances" should {
     "be parsed correctly in strict mode" in {
-      //#query-strict-definition
+      // #query-strict-definition
       def strict(queryString: String): Query = Query(queryString, mode = Uri.ParsingMode.Strict)
-      //#query-strict-definition
+      // #query-strict-definition
 
-      //#query-strict-mode
-      //query component "a=b" is parsed into parameter name: "a", and value: "b"
+      // #query-strict-mode
+      // query component "a=b" is parsed into parameter name: "a", and value: "b"
       strict("a=b") shouldEqual ("a", "b") +: Query.Empty
 
       strict("") shouldEqual Query.Empty
       strict("a") shouldEqual ("a", "") +: Query.Empty
       strict("a=") shouldEqual ("a", "") +: Query.Empty
-      strict("a=+") shouldEqual ("a", " ") +: Query.Empty //'+' is parsed to ' '
+      strict("a=+") shouldEqual ("a", " ") +: Query.Empty // '+' is parsed to ' '
       strict("a=%2B") shouldEqual ("a", "+") +: Query.Empty
       strict("=a") shouldEqual ("", "a") +: Query.Empty
       strict("a&") shouldEqual ("a", "") +: ("", "") +: Query.Empty
@@ -336,54 +345,54 @@ class UriSpec extends AnyWordSpec with Matchers {
       strict("a=b%2Bc") shouldEqual ("a", "b+c") +: Query.Empty
       strict("a=b%3Bc") shouldEqual ("a", "b;c") +: Query.Empty
 
-      strict("a+b=c") shouldEqual ("a b", "c") +: Query.Empty //'+' is parsed to ' '
-      strict("a=b+c") shouldEqual ("a", "b c") +: Query.Empty //'+' is parsed to ' '
-      //#query-strict-mode
+      strict("a+b=c") shouldEqual ("a b", "c") +: Query.Empty // '+' is parsed to ' '
+      strict("a=b+c") shouldEqual ("a", "b c") +: Query.Empty // '+' is parsed to ' '
+      // #query-strict-mode
 
-      //#query-strict-without-percent-encode
+      // #query-strict-without-percent-encode
       strict("a?b=c") shouldEqual ("a?b", "c") +: Query.Empty
       strict("a/b=c") shouldEqual ("a/b", "c") +: Query.Empty
 
       strict("a=b?c") shouldEqual ("a", "b?c") +: Query.Empty
       strict("a=b/c") shouldEqual ("a", "b/c") +: Query.Empty
-      //#query-strict-without-percent-encode
+      // #query-strict-without-percent-encode
 
-      //#query-strict-mode-exception-1
+      // #query-strict-mode-exception-1
       the[IllegalUriException] thrownBy strict("a^=b") shouldBe {
         IllegalUriException(
           "Illegal query: Invalid input '^', expected '+', query-char, pct-encoded, '=', '&' or 'EOI' (line 1, column 2)",
           "a^=b\n" +
-            " ^")
+          " ^")
       }
       the[IllegalUriException] thrownBy strict("a;=b") shouldBe {
         IllegalUriException(
           "Illegal query: Invalid input ';', expected '+', query-char, pct-encoded, '=', '&' or 'EOI' (line 1, column 2)",
           "a;=b\n" +
-            " ^")
+          " ^")
       }
-      //#query-strict-mode-exception-1
+      // #query-strict-mode-exception-1
 
-      //#query-strict-mode-exception-2
-      //double '=' in query string is invalid
+      // #query-strict-mode-exception-2
+      // double '=' in query string is invalid
       the[IllegalUriException] thrownBy strict("a=b=c") shouldBe {
         IllegalUriException(
           "Illegal query: Invalid input '=', expected '+', query-char, pct-encoded, '&' or 'EOI' (line 1, column 4)",
           "a=b=c\n" +
-            "   ^")
+          "   ^")
       }
-      //following '%', it should be percent encoding (HEXDIG), but "%b=" is not a valid percent encoding
+      // following '%', it should be percent encoding (HEXDIG), but "%b=" is not a valid percent encoding
       the[IllegalUriException] thrownBy strict("a%b=c") shouldBe {
         IllegalUriException(
           "Illegal query: Invalid input '=', expected HEXDIG (line 1, column 4)",
           "a%b=c\n" +
-            "   ^")
+          "   ^")
       }
-      //#query-strict-mode-exception-2
+      // #query-strict-mode-exception-2
     }
     "be parsed correctly in relaxed mode" in {
-      //#query-relaxed-mode
+      // #query-relaxed-mode
       def relaxed(queryString: String): Query = Query(queryString, mode = Uri.ParsingMode.Relaxed)
-      //#query-relaxed-mode
+      // #query-relaxed-mode
 
       relaxed("") shouldEqual Query.Empty
       relaxed("a") shouldEqual ("a", "") +: Query.Empty
@@ -404,10 +413,10 @@ class UriSpec extends AnyWordSpec with Matchers {
       relaxed("a=b%2Bc") shouldEqual ("a", "b+c") +: Query.Empty
       relaxed("a=b%3Bc") shouldEqual ("a", "b;c") +: Query.Empty
 
-      relaxed("a+b=c") shouldEqual ("a b", "c") +: Query.Empty //'+' is parsed to ' '
-      relaxed("a=b+c") shouldEqual ("a", "b c") +: Query.Empty //'+' is parsed to ' '
+      relaxed("a+b=c") shouldEqual ("a b", "c") +: Query.Empty // '+' is parsed to ' '
+      relaxed("a=b+c") shouldEqual ("a", "b c") +: Query.Empty // '+' is parsed to ' '
 
-      //without percent encoding
+      // without percent encoding
       relaxed("a?b=c") shouldEqual ("a?b", "c") +: Query.Empty
       relaxed("a/b=c") shouldEqual ("a/b", "c") +: Query.Empty
 
@@ -415,22 +424,22 @@ class UriSpec extends AnyWordSpec with Matchers {
       relaxed("a=b/c") shouldEqual ("a", "b/c") +: Query.Empty
       relaxed("a=b|c") shouldEqual ("a", "b|c") +: Query.Empty
 
-      //#query-relaxed-mode-success
+      // #query-relaxed-mode-success
       relaxed("a^=b") shouldEqual ("a^", "b") +: Query.Empty
       relaxed("a;=b") shouldEqual ("a;", "b") +: Query.Empty
       relaxed("a=b=c") shouldEqual ("a", "b=c") +: Query.Empty
-      //#query-relaxed-mode-success
+      // #query-relaxed-mode-success
 
-      //#query-relaxed-mode-exception
-      //following '%', it should be percent encoding (HEXDIG), but "%b=" is not a valid percent encoding
-      //still invalid even in relaxed mode
+      // #query-relaxed-mode-exception
+      // following '%', it should be percent encoding (HEXDIG), but "%b=" is not a valid percent encoding
+      // still invalid even in relaxed mode
       the[IllegalUriException] thrownBy relaxed("a%b=c") shouldBe {
         IllegalUriException(
           "Illegal query: Invalid input '=', expected HEXDIG (line 1, column 4)",
           "a%b=c\n" +
-            "   ^")
+          "   ^")
       }
-      //#query-relaxed-mode-exception
+      // #query-relaxed-mode-exception
     }
     "properly support the retrieval interface" in {
       val query = Query("a=1&b=2&c=3&b=4&b")
@@ -477,34 +486,34 @@ class UriSpec extends AnyWordSpec with Matchers {
     // http://tools.ietf.org/html/rfc3986#section-1.1.2
     "be correctly parsed from and rendered to simple test examples" in {
 
-      //#valid-uri-examples
+      // #valid-uri-examples
       Uri("ftp://ftp.is.co.za/rfc/rfc1808.txt") shouldEqual
-        Uri.from(scheme = "ftp", host = "ftp.is.co.za", path = "/rfc/rfc1808.txt")
+      Uri.from(scheme = "ftp", host = "ftp.is.co.za", path = "/rfc/rfc1808.txt")
 
       Uri("http://www.ietf.org/rfc/rfc2396.txt") shouldEqual
-        Uri.from(scheme = "http", host = "www.ietf.org", path = "/rfc/rfc2396.txt")
+      Uri.from(scheme = "http", host = "www.ietf.org", path = "/rfc/rfc2396.txt")
 
       Uri("ldap://[2001:db8::7]/c=GB?objectClass?one") shouldEqual
-        Uri.from(scheme = "ldap", host = "[2001:db8::7]", path = "/c=GB", queryString = Some("objectClass?one"))
+      Uri.from(scheme = "ldap", host = "[2001:db8::7]", path = "/c=GB", queryString = Some("objectClass?one"))
 
       Uri("mailto:John.Doe@example.com") shouldEqual
-        Uri.from(scheme = "mailto", path = "John.Doe@example.com")
+      Uri.from(scheme = "mailto", path = "John.Doe@example.com")
 
       Uri("news:comp.infosystems.www.servers.unix") shouldEqual
-        Uri.from(scheme = "news", path = "comp.infosystems.www.servers.unix")
+      Uri.from(scheme = "news", path = "comp.infosystems.www.servers.unix")
 
       Uri("tel:+1-816-555-1212") shouldEqual
-        Uri.from(scheme = "tel", path = "+1-816-555-1212")
+      Uri.from(scheme = "tel", path = "+1-816-555-1212")
 
       Uri("s3:image.png") shouldEqual
-        Uri.from(scheme = "s3", path = "image.png")
+      Uri.from(scheme = "s3", path = "image.png")
 
       Uri("telnet://192.0.2.16:80/") shouldEqual
-        Uri.from(scheme = "telnet", host = "192.0.2.16", port = 80, path = "/")
+      Uri.from(scheme = "telnet", host = "192.0.2.16", port = 80, path = "/")
 
       Uri("urn:oasis:names:specification:docbook:dtd:xml:4.1.2") shouldEqual
-        Uri.from(scheme = "urn", path = "oasis:names:specification:docbook:dtd:xml:4.1.2")
-      //#valid-uri-examples
+      Uri.from(scheme = "urn", path = "oasis:names:specification:docbook:dtd:xml:4.1.2")
+      // #valid-uri-examples
 
       // more examples
       Uri("http://") shouldEqual Uri(scheme = "http", authority = Authority(Host.Empty))
@@ -519,11 +528,11 @@ class UriSpec extends AnyWordSpec with Matchers {
       // handle query parameters with more than percent-encoded character
       Uri("?%7Ba%7D=$%7B%7D", UTF8, Uri.ParsingMode.Strict).query() shouldEqual Query.Cons("{a}", s"$${}", Query.Empty)
 
-      //#dont-double-decode
+      // #dont-double-decode
       // don't double decode
       Uri("%2520").path.head shouldEqual "%20"
       Uri("/%2F%5C").path shouldEqual Path / """/\"""
-      //#dont-double-decode
+      // #dont-double-decode
 
       // render
       Uri("https://server.com/path/to/here?st=12345").toString shouldEqual "https://server.com/path/to/here?st=12345"
@@ -562,22 +571,29 @@ class UriSpec extends AnyWordSpec with Matchers {
       normalize("//example.com:21") shouldEqual "//example.com:21"
       normalize("ftp://example.com:22") shouldEqual "ftp://example.com:22"
 
-      normalize("//user:pass@[::1]:80/segment/index.html?query#frag") shouldEqual "//user:pass@[::1]:80/segment/index.html?query#frag"
-      normalize("http://[::1]:80/segment/index.html?query#frag") shouldEqual "http://[::1]/segment/index.html?query#frag"
-      normalize("http://user:pass@[::1]/segment/index.html?query#frag") shouldEqual "http://user:pass@[::1]/segment/index.html?query#frag"
+      normalize(
+        "//user:pass@[::1]:80/segment/index.html?query#frag") shouldEqual "//user:pass@[::1]:80/segment/index.html?query#frag"
+      normalize(
+        "http://[::1]:80/segment/index.html?query#frag") shouldEqual "http://[::1]/segment/index.html?query#frag"
+      normalize(
+        "http://user:pass@[::1]/segment/index.html?query#frag") shouldEqual "http://user:pass@[::1]/segment/index.html?query#frag"
       normalize("http://user:pass@[::1]:80?query#frag") shouldEqual "http://user:pass@[::1]?query#frag"
-      normalize("http://user:pass@[::1]/segment/index.html#frag") shouldEqual "http://user:pass@[::1]/segment/index.html#frag"
-      normalize("http://user:pass@[::1]:81/segment/index.html?query") shouldEqual "http://user:pass@[::1]:81/segment/index.html?query"
+      normalize(
+        "http://user:pass@[::1]/segment/index.html#frag") shouldEqual "http://user:pass@[::1]/segment/index.html#frag"
+      normalize(
+        "http://user:pass@[::1]:81/segment/index.html?query") shouldEqual "http://user:pass@[::1]:81/segment/index.html?query"
       normalize("ftp://host:21/gnu/") shouldEqual "ftp://host/gnu/"
       normalize("one/two/three") shouldEqual "one/two/three"
       normalize("/one/two/three") shouldEqual "/one/two/three"
       normalize("//user:pass@localhost/one/two/three") shouldEqual "//user:pass@localhost/one/two/three"
       normalize("http://www.example.com/") shouldEqual "http://www.example.com/"
       normalize("http://sourceforge.net/projects/uriparser/") shouldEqual "http://sourceforge.net/projects/uriparser/"
-      normalize("http://sourceforge.net/project/platformdownload.php?group_id=182840") shouldEqual "http://sourceforge.net/project/platformdownload.php?group_id=182840"
+      normalize(
+        "http://sourceforge.net/project/platformdownload.php?group_id=182840") shouldEqual "http://sourceforge.net/project/platformdownload.php?group_id=182840"
       normalize("mailto:test@example.com") shouldEqual "mailto:test@example.com"
       normalize("file:/bin/bash") shouldEqual "file:///bin/bash"
-      normalize("http://www.example.com/name%20with%20spaces/") shouldEqual "http://www.example.com/name%20with%20spaces/"
+      normalize(
+        "http://www.example.com/name%20with%20spaces/") shouldEqual "http://www.example.com/name%20with%20spaces/"
       normalize("http://examp%4Ce.com/") shouldEqual "http://example.com/"
       normalize("http://example.com/a/b/%2E%2E/") shouldEqual "http://example.com/a/"
       normalize("http://user:pass@SOMEHOST.COM:123") shouldEqual "http://user:pass@somehost.com:123"
@@ -585,7 +601,8 @@ class UriSpec extends AnyWordSpec with Matchers {
 
       // acceptance and normalization of unescaped ascii characters such as {} and []:
       normalize("eXAMPLE://a/./b/../b/%63/{foo}/[bar]") shouldEqual "example://a/b/c/%7Bfoo%7D/%5Bbar%5D"
-      a[IllegalUriException] should be thrownBy normalize("eXAMPLE://a/./b/../b/%63/{foo}/[bar]", mode = Uri.ParsingMode.Strict)
+      a[IllegalUriException] should be thrownBy normalize("eXAMPLE://a/./b/../b/%63/{foo}/[bar]",
+        mode = Uri.ParsingMode.Strict)
 
       // queries and fragments
       normalize("?") shouldEqual "?"
@@ -624,13 +641,13 @@ class UriSpec extends AnyWordSpec with Matchers {
     }
 
     "produce proper error messages for illegal URIs" in {
-      //#illegal-cases-immediate-exception
-      //illegal scheme
+      // #illegal-cases-immediate-exception
+      // illegal scheme
       the[IllegalUriException] thrownBy Uri("foö:/a") shouldBe {
         IllegalUriException(
           "Illegal URI reference: Invalid input 'ö', expected scheme-char, ':', pchar, slashSegments, '?', '#' or 'EOI' (line 1, column 3)",
           "foö:/a\n" +
-            "  ^")
+          "  ^")
       }
 
       // illegal userinfo
@@ -638,7 +655,7 @@ class UriSpec extends AnyWordSpec with Matchers {
         IllegalUriException(
           "Illegal URI reference: Invalid input 'ö', expected userinfo-char, pct-encoded, '@' or port (line 1, column 13)",
           "http://user:ö@host\n" +
-            "            ^")
+          "            ^")
       }
 
       // illegal percent-encoding
@@ -646,7 +663,7 @@ class UriSpec extends AnyWordSpec with Matchers {
         IllegalUriException(
           "Illegal URI reference: Invalid input 'G', expected HEXDIG (line 1, column 13)",
           "http://use%2G@host\n" +
-            "            ^")
+          "            ^")
       }
 
       // illegal percent-encoding ends with %
@@ -654,7 +671,7 @@ class UriSpec extends AnyWordSpec with Matchers {
         IllegalUriException(
           "Illegal URI reference: Unexpected end of input, expected HEXDIG (line 1, column 31)",
           "http://www.example.com/%CE%B8%\n" +
-            "                              ^")
+          "                              ^")
       }
 
       // illegal percent-encoding in a query string
@@ -662,14 +679,14 @@ class UriSpec extends AnyWordSpec with Matchers {
         IllegalUriException(
           "Illegal URI reference: Invalid input 'G', expected HEXDIG (line 1, column 18)",
           "http://host?use%2G\n" +
-            "                 ^")
+          "                 ^")
       }
       // illegal percent-encoding in a fragment
       the[IllegalUriException] thrownBy Uri("http://host#use%2G") shouldBe {
         IllegalUriException(
           "Illegal URI reference: Invalid input 'G', expected HEXDIG (line 1, column 18)",
           "http://host#use%2G\n" +
-            "                 ^")
+          "                 ^")
       }
 
       // illegal path
@@ -677,7 +694,7 @@ class UriSpec extends AnyWordSpec with Matchers {
         IllegalUriException(
           "Illegal URI reference: Invalid input ' ', expected pchar, '/', '?', '#' or 'EOI' (line 1, column 28)",
           "http://www.example.com/name with spaces/\n" +
-            "                           ^")
+          "                           ^")
       }
 
       // illegal path with control character
@@ -685,9 +702,9 @@ class UriSpec extends AnyWordSpec with Matchers {
         IllegalUriException(
           "Illegal URI reference: Invalid input '\\n', expected pchar, '/', '?', '#' or 'EOI' (line 1, column 13)",
           "http:///with\n" +
-            "            ^")
+          "            ^")
       }
-      //#illegal-cases-immediate-exception
+      // #illegal-cases-immediate-exception
     }
 
     // http://tools.ietf.org/html/rfc3986#section-5.4
@@ -779,9 +796,9 @@ class UriSpec extends AnyWordSpec with Matchers {
       uri.withUserInfo("someInfo") shouldEqual Uri("http://someInfo@host/path?query#fragment")
       explicitDefault.withUserInfo("someInfo") shouldEqual Uri("http://someInfo@host:80/path?query#fragment")
 
-      //#create-uri-with-query
+      // #create-uri-with-query
       val uriWithQuery = uri.withQuery(Query("param1" -> "value1"))
-      //#create-uri-with-query
+      // #create-uri-with-query
 
       uriWithQuery shouldEqual Uri("http://host/path?param1=value1#fragment")
       uri.withQuery(Query(Map("param1" -> "value1"))) shouldEqual Uri("http://host/path?param1=value1#fragment")
@@ -831,8 +848,10 @@ class UriSpec extends AnyWordSpec with Matchers {
     }
 
     "properly render as HTTP request target origin forms" in {
-      Uri("http://example.com/foo/bar?query=1#frag").toHttpRequestTargetOriginForm.toString shouldEqual "/foo/bar?query=1"
-      Uri("http://example.com//foo/bar?query=1#frag").toHttpRequestTargetOriginForm.toString shouldEqual "//foo/bar?query=1"
+      Uri(
+        "http://example.com/foo/bar?query=1#frag").toHttpRequestTargetOriginForm.toString shouldEqual "/foo/bar?query=1"
+      Uri(
+        "http://example.com//foo/bar?query=1#frag").toHttpRequestTargetOriginForm.toString shouldEqual "//foo/bar?query=1"
     }
 
     "properly render query strings with invalid values" in {
@@ -860,9 +879,9 @@ class UriSpec extends AnyWordSpec with Matchers {
 
     "collapsing dot segments correctly in relative paths" in {
       Uri.from(scheme = "file", path = "aa/bb/../../cc") shouldEqual
-        Uri.from(scheme = "file", path = "cc")
+      Uri.from(scheme = "file", path = "cc")
       Uri.from(scheme = "file", path = "aa/../cc") shouldEqual
-        Uri.from(scheme = "file", path = "cc")
+      Uri.from(scheme = "file", path = "cc")
     }
 
   }

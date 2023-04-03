@@ -19,14 +19,17 @@ import scala.collection.immutable.VectorBuilder
 
 /** INTERNAL API */
 @InternalApi
-private[http2] class ResponseRendering(settings: ServerSettings, val log: LoggingAdapter, val dateHeaderRendering: DateHeaderRendering) extends MessageRendering[HttpResponse] {
+private[http2] class ResponseRendering(settings: ServerSettings, val log: LoggingAdapter,
+    val dateHeaderRendering: DateHeaderRendering) extends MessageRendering[HttpResponse] {
 
   private def failBecauseOfMissingAttribute: Nothing =
     // attribute is missing, shutting down because we will most likely otherwise miss a response and leak a substream
     // TODO: optionally a less drastic measure would be only resetting all the active substreams
-    throw new RuntimeException("Received response for HTTP/2 request without x-http2-stream-id attribute. Failing connection.")
+    throw new RuntimeException(
+      "Received response for HTTP/2 request without x-http2-stream-id attribute. Failing connection.")
 
-  protected override def nextStreamId(response: HttpResponse): Int = response.attribute(Http2.streamId).getOrElse(failBecauseOfMissingAttribute)
+  protected override def nextStreamId(response: HttpResponse): Int =
+    response.attribute(Http2.streamId).getOrElse(failBecauseOfMissingAttribute)
 
   protected override def initialHeaderPairs(response: HttpResponse): VectorBuilder[(String, String)] = {
     val headerPairs = new VectorBuilder[(String, String)]()
@@ -42,7 +45,8 @@ private[http2] class ResponseRendering(settings: ServerSettings, val log: Loggin
 
 /** INTERNAL API */
 @InternalApi
-private[http2] class RequestRendering(settings: ClientConnectionSettings, val log: LoggingAdapter) extends MessageRendering[HttpRequest] {
+private[http2] class RequestRendering(
+    settings: ClientConnectionSettings, val log: LoggingAdapter) extends MessageRendering[HttpRequest] {
 
   private val streamId = new AtomicInteger(1)
   protected override def nextStreamId(r: HttpRequest): Int = streamId.getAndAdd(2)
@@ -56,7 +60,8 @@ private[http2] class RequestRendering(settings: ClientConnectionSettings, val lo
     headerPairs
   }
 
-  override lazy val peerIdHeader: Option[(String, String)] = settings.userAgentHeader.map(h => h.lowercaseName -> h.value)
+  override lazy val peerIdHeader: Option[(String, String)] =
+    settings.userAgentHeader.map(h => h.lowercaseName -> h.value)
 
   override protected def dateHeaderRendering: DateHeaderRendering = DateHeaderRendering.Unavailable
 }
@@ -75,23 +80,27 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
     val headerPairs = initialHeaderPairs(r)
 
     HttpMessageRendering.addContentHeaders(headerPairs, r.entity)
-    HttpMessageRendering.renderHeaders(r.headers, headerPairs, peerIdHeader, log, isServer = r.isResponse, shouldRenderAutoHeaders = true, dateHeaderRendering)
+    HttpMessageRendering.renderHeaders(r.headers, headerPairs, peerIdHeader, log, isServer = r.isResponse,
+      shouldRenderAutoHeaders = true, dateHeaderRendering)
 
     val streamId = nextStreamId(r)
     val headersFrame = ParsedHeadersFrame(streamId, endStream = r.entity.isKnownEmpty, headerPairs.result(), None)
     val trailingHeadersFrame =
       r.attribute(AttributeKeys.trailer) match {
-        case Some(trailer) if trailer.headers.nonEmpty => OptionVal.Some(ParsedHeadersFrame(streamId, endStream = true, trailer.headers, None))
-        case None                                      => OptionVal.None
+        case Some(trailer) if trailer.headers.nonEmpty =>
+          OptionVal.Some(ParsedHeadersFrame(streamId, endStream = true, trailer.headers, None))
+        case None => OptionVal.None
       }
 
-    Http2SubStream(r.entity, headersFrame, trailingHeadersFrame, r.attributes.filter(_._2.isInstanceOf[RequestResponseAssociation]))
+    Http2SubStream(r.entity, headersFrame, trailingHeadersFrame,
+      r.attributes.filter(_._2.isInstanceOf[RequestResponseAssociation]))
   }
 }
 
 /** INTERNAL API */
 @InternalApi
 private[http2] object HttpMessageRendering {
+
   /**
    * Mutates `headerPairs` adding headers related to content (type and length).
    */
@@ -102,12 +111,11 @@ private[http2] object HttpMessageRendering {
   }
 
   def renderHeaders(
-    headers:                 immutable.Seq[HttpHeader],
-    log:                     LoggingAdapter,
-    isServer:                Boolean,
-    shouldRenderAutoHeaders: Boolean,
-    dateHeaderRendering:     DateHeaderRendering
-  ): Seq[(String, String)] = {
+      headers: immutable.Seq[HttpHeader],
+      log: LoggingAdapter,
+      isServer: Boolean,
+      shouldRenderAutoHeaders: Boolean,
+      dateHeaderRendering: DateHeaderRendering): Seq[(String, String)] = {
     val headerPairs = new VectorBuilder[(String, String)]()
     renderHeaders(headers, headerPairs, None, log, isServer, shouldRenderAutoHeaders, dateHeaderRendering)
     headerPairs.result()
@@ -119,14 +127,13 @@ private[http2] object HttpMessageRendering {
    *                     peer. For example, a User-Agent on the client or a Server header on the server.
    */
   def renderHeaders(
-    headersSeq:              immutable.Seq[HttpHeader],
-    headerPairs:             VectorBuilder[(String, String)],
-    peerIdHeader:            Option[(String, String)],
-    log:                     LoggingAdapter,
-    isServer:                Boolean,
-    shouldRenderAutoHeaders: Boolean,
-    dateHeaderRendering:     DateHeaderRendering
-  ): Unit = {
+      headersSeq: immutable.Seq[HttpHeader],
+      headerPairs: VectorBuilder[(String, String)],
+      peerIdHeader: Option[(String, String)],
+      log: LoggingAdapter,
+      isServer: Boolean,
+      shouldRenderAutoHeaders: Boolean,
+      dateHeaderRendering: DateHeaderRendering): Unit = {
     def suppressionWarning(h: HttpHeader, msg: String): Unit =
       log.warning("Explicitly set HTTP header '{}' is ignored, {}", h, msg)
 
@@ -154,15 +161,18 @@ private[http2] object HttpMessageRendering {
           case x: CustomHeader =>
             addHeader(x)
 
-          case x: RawHeader if (x is "content-type") || (x is "content-length") || (x is "transfer-encoding") ||
-            (x is "date") || (x is "server") || (x is "user-agent") || (x is "connection") =>
+          case x: RawHeader
+              if (x.is("content-type")) || (x.is("content-length")) || (x.is("transfer-encoding")) ||
+              (x.is("date")) || (x.is("server")) || (x.is("user-agent")) || (x.is("connection")) =>
             suppressionWarning(x, "illegal RawHeader")
 
           case x: `Content-Length` =>
-            suppressionWarning(x, "explicit `Content-Length` header is not allowed. Use the appropriate HttpEntity subtype.")
+            suppressionWarning(x,
+              "explicit `Content-Length` header is not allowed. Use the appropriate HttpEntity subtype.")
 
           case x: `Content-Type` =>
-            suppressionWarning(x, "explicit `Content-Type` header is not allowed. Set `HttpResponse.entity.contentType` instead.")
+            suppressionWarning(x,
+              "explicit `Content-Type` header is not allowed. Set `HttpResponse.entity.contentType` instead.")
 
           case x: `Transfer-Encoding` =>
             suppressionWarning(x, "`Transfer-Encoding` header is not allowed for HTTP/2")

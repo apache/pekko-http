@@ -20,9 +20,9 @@ import scala.concurrent.{ Future, Promise }
 @InternalApi
 private[http] object ProtocolSwitch {
   def apply(
-    chosenProtocolAccessor: SessionBytes => String,
-    http1Stack:             HttpImplementation,
-    http2Stack:             HttpImplementation): Flow[SslTlsInbound, SslTlsOutbound, Future[ServerTerminator]] =
+      chosenProtocolAccessor: SessionBytes => String,
+      http1Stack: HttpImplementation,
+      http2Stack: HttpImplementation): Flow[SslTlsInbound, SslTlsOutbound, Future[ServerTerminator]] =
     Flow.fromGraph(
       new GraphStageWithMaterializedValue[FlowShape[SslTlsInbound, SslTlsOutbound], Future[ServerTerminator]] {
 
@@ -34,7 +34,8 @@ private[http] object ProtocolSwitch {
         val shape: FlowShape[SslTlsInbound, SslTlsOutbound] =
           FlowShape(netIn, netOut)
 
-        override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, Future[ServerTerminator]) = {
+        override def createLogicAndMaterializedValue(
+            inheritedAttributes: Attributes): (GraphStageLogic, Future[ServerTerminator]) = {
           val terminatorPromise = Promise[ServerTerminator]()
 
           object Logic extends GraphStageLogic(shape) {
@@ -47,18 +48,20 @@ private[http] object ProtocolSwitch {
 
             override def preStart(): Unit = pull(netIn)
 
-            setHandler(netIn, new InHandler {
-              def onPush(): Unit =
-                grab(netIn) match {
-                  case first @ SessionBytes(session, bytes) =>
-                    val chosen = chosenProtocolAccessor(first)
-                    chosen match {
-                      case "h2" => install(http2Stack.addAttributes(HttpAttributes.tlsSessionInfo(session)), first)
-                      case _    => install(http1Stack, first)
-                    }
-                  case SessionTruncated => failStage(new SSLException("TLS session was truncated (probably missing a close_notify packet)."))
-                }
-            })
+            setHandler(netIn,
+              new InHandler {
+                def onPush(): Unit =
+                  grab(netIn) match {
+                    case first @ SessionBytes(session, bytes) =>
+                      val chosen = chosenProtocolAccessor(first)
+                      chosen match {
+                        case "h2" => install(http2Stack.addAttributes(HttpAttributes.tlsSessionInfo(session)), first)
+                        case _    => install(http1Stack, first)
+                      }
+                    case SessionTruncated =>
+                      failStage(new SSLException("TLS session was truncated (probably missing a close_notify packet)."))
+                  }
+              })
 
             private val ignorePull = new OutHandler {
               def onPull(): Unit = ()
@@ -77,8 +80,7 @@ private[http] object ProtocolSwitch {
                 Attributes(
                   // don't (re)set dispatcher attribute to avoid adding an explicit async boundary
                   // between low-level and high-level stages
-                  inheritedAttributes.attributeList.filterNot(_.isInstanceOf[Dispatcher])
-                )
+                  inheritedAttributes.attributeList.filterNot(_.isInstanceOf[Dispatcher]))
 
               val serverTerminator =
                 serverImplementation
@@ -113,19 +115,20 @@ private[http] object ProtocolSwitch {
                 }
 
               out.setHandler(firstHandler)
-              setHandler(in, new InHandler {
-                override def onPush(): Unit = out.push(grab(in))
+              setHandler(in,
+                new InHandler {
+                  override def onPush(): Unit = out.push(grab(in))
 
-                override def onUpstreamFinish(): Unit = {
-                  out.complete()
-                  super.onUpstreamFinish()
-                }
+                  override def onUpstreamFinish(): Unit = {
+                    out.complete()
+                    super.onUpstreamFinish()
+                  }
 
-                override def onUpstreamFailure(ex: Throwable): Unit = {
-                  out.fail(ex)
-                  super.onUpstreamFailure(ex)
-                }
-              })
+                  override def onUpstreamFailure(ex: Throwable): Unit = {
+                    out.fail(ex)
+                    super.onUpstreamFailure(ex)
+                  }
+                })
 
               if (out.isAvailable) pull(in) // to account for lost pulls during initialization
             }
@@ -152,10 +155,10 @@ private[http] object ProtocolSwitch {
 
           (Logic, terminatorPromise.future)
         }
-      }
-    )
+      })
 
-  def byPreface(http1Stack: HttpImplementation, http2Stack: HttpImplementation): Flow[SslTlsInbound, SslTlsOutbound, Future[ServerTerminator]] = {
+  def byPreface(http1Stack: HttpImplementation, http2Stack: HttpImplementation)
+      : Flow[SslTlsInbound, SslTlsOutbound, Future[ServerTerminator]] = {
     def chooseProtocol(sessionBytes: SessionBytes): String =
       if (sessionBytes.bytes.startsWith(Http2Protocol.ClientConnectionPreface)) "h2" else "http/1.1"
     ProtocolSwitch(chooseProtocol, http1Stack, http2Stack)

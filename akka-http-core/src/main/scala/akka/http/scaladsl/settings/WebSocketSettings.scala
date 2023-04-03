@@ -20,6 +20,7 @@ abstract class WebSocketSettings extends akka.http.javadsl.settings.WebSocketSet
   }
   override def periodicKeepAliveMode: String
   override def periodicKeepAliveMaxIdle: Duration
+
   /**
    * The provided function will be invoked for each new keep-alive frame that is sent.
    * The ByteString will be included in the Ping or Pong frame sent as heartbeat,

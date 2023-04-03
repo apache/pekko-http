@@ -141,8 +141,9 @@ final class ConnectHttpImpl(val host: String, val port: Int) extends ConnectHttp
 
 /** INTERNAL API */
 @InternalApi
-final class ConnectHttpsImpl(val host: String, val port: Int, val context: Optional[HttpsConnectionContext] = Optional.empty())
-  extends ConnectWithHttps {
+final class ConnectHttpsImpl(val host: String, val port: Int,
+    val context: Optional[HttpsConnectionContext] = Optional.empty())
+    extends ConnectWithHttps {
 
   override def isHttps: Boolean = true
 

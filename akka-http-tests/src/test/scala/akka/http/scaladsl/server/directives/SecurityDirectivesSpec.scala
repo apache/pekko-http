@@ -8,7 +8,7 @@ package directives
 import scala.concurrent.Future
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.AuthenticationFailedRejection.{ CredentialsRejected, CredentialsMissing }
+import akka.http.scaladsl.server.AuthenticationFailedRejection.{ CredentialsMissing, CredentialsRejected }
 import akka.testkit.EventFilter
 
 class SecurityDirectivesSpec extends RoutingSpec {
@@ -24,7 +24,8 @@ class SecurityDirectivesSpec extends RoutingSpec {
   def doBasicAuthVerify(secret: String) =
     authenticateBasicPF("MyRealm", { case p @ Credentials.Provided(identifier) if p.verify(secret) => identifier })
   def doBasicAuthProvideVerify(secret: String) =
-    authenticateBasicPF("MyRealm", { case p @ Credentials.Provided(identifier) if p.provideVerify(password => secret == password) => identifier })
+    authenticateBasicPF("MyRealm",
+      { case p @ Credentials.Provided(identifier) if p.provideVerify(password => secret == password) => identifier })
 
   "basic authentication" should {
     "reject requests without Authorization header with an AuthenticationFailedRejection" in {
@@ -81,8 +82,8 @@ class SecurityDirectivesSpec extends RoutingSpec {
       object TestException extends RuntimeException("Boom")
       EventFilter[TestException.type](
         occurrences = 1,
-        start = "Error during processing of request: 'Boom'. Completing with 500 Internal Server Error response."
-      ).intercept {
+        start =
+          "Error during processing of request: 'Boom'. Completing with 500 Internal Server Error response.").intercept {
         Get() ~> Authorization(BasicHttpCredentials("Alice", "")) ~> {
           Route.seal {
             doBasicAuth { _ => throw TestException }
@@ -144,8 +145,8 @@ class SecurityDirectivesSpec extends RoutingSpec {
       object TestException extends RuntimeException("Boom")
       EventFilter[TestException.type](
         occurrences = 1,
-        start = "Error during processing of request: 'Boom'. Completing with 500 Internal Server Error response."
-      ).intercept {
+        start =
+          "Error during processing of request: 'Boom'. Completing with 500 Internal Server Error response.").intercept {
         Get() ~> Authorization(OAuth2BearerToken("myToken")) ~> {
           Route.seal {
             doOAuth2Auth { _ => throw TestException }

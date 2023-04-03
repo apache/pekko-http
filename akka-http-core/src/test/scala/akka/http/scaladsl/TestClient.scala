@@ -43,9 +43,9 @@ object TestClient extends App {
 
     val connection = Http().outgoingConnectionHttps(host)
     val result = Source.single(HttpRequest()).via(connection).runWith(Sink.head)
-    result.map(_.header[headers.Server]) onComplete {
+    result.map(_.header[headers.Server]).onComplete {
       case Success(res) =>
-        println(s"$host is running ${res mkString ", "}")
+        println(s"$host is running ${res.mkString(", ")}")
         println()
         fetchServerVersion2()
 
@@ -59,9 +59,9 @@ object TestClient extends App {
   def fetchServerVersion2(): Unit = {
     println(s"Fetching HTTP server version of host `$host` via the high-level API ...")
     val result = Http().singleRequest(HttpRequest(uri = s"https://$host/"))
-    result.map(_.header[headers.Server]) onComplete {
+    result.map(_.header[headers.Server]).onComplete {
       case Success(res) =>
-        println(s"$host is running ${res mkString ", "}")
+        println(s"$host is running ${res.mkString(", ")}")
         Http().shutdownAllConnectionPools().onComplete { _ => system.log.info("STOPPED"); shutdown() }
 
       case Failure(error) =>
@@ -86,12 +86,12 @@ object TestClient extends App {
       val done = Future.traverse(urls.zipWithIndex) {
         case (url, index) =>
           Http().singleRequest(HttpRequest(uri = url)).map { response =>
-
             val path = new File(s"/tmp/client-dumps/akka-body-$index.dump").toPath
             val headersPath = new File(s"/tmp/client-dumps/akka-headers-$index.dump").toPath
 
             import scala.sys.process._
-            (s"""curl -D /tmp/client-dumps/curl-headers-$index.dump $url""" #> new File(s"/tmp/client-dumps/curl-body-$index.dump")).!
+            (s"""curl -D /tmp/client-dumps/curl-headers-$index.dump $url""" #> new File(
+              s"/tmp/client-dumps/curl-body-$index.dump")).!
 
             val headers = Source(response.headers).map(header => ByteString(header.name + ": " + header.value + "\n"))
               .runWith(FileIO.toPath(headersPath))
