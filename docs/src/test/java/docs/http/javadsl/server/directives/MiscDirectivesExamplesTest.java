@@ -131,7 +131,7 @@ public class MiscDirectivesExamplesTest extends JUnitRouteTest {
     };
 
     // tests:
-    // will work even if you have configured akka.http.parsing.max-content-length = 500
+    // will work even if you have configured pekko.http.parsing.max-content-length = 500
     testRoute(route).run(withEntityOfSize.apply(501))
       .assertStatusCode(StatusCodes.OK);
     //#withoutSizeLimitExample

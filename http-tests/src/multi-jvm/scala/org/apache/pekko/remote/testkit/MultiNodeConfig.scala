@@ -108,8 +108,8 @@ abstract class MultiNodeConfig {
     val transportConfig =
       if (_testTransport) ConfigFactory.parseString(
         """
-           akka.remote.netty.tcp.applied-adapters = [trttl, gremlin]
-           akka.remote.artery.advanced.test-mode = on
+           pekko.remote.netty.tcp.applied-adapters = [trttl, gremlin]
+           pekko.remote.artery.advanced.test-mode = on
         """)
       else ConfigFactory.empty
 
@@ -466,7 +466,7 @@ abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles:
    */
   protected def startNewSystem(): ActorSystem = {
     val config =
-      ConfigFactory.parseString(s"akka.remote.netty.tcp{port=${myAddress.port.get}\nhostname=${myAddress.host.get}}")
+      ConfigFactory.parseString(s"pekko.remote.netty.tcp{port=${myAddress.port.get}\nhostname=${myAddress.host.get}}")
         .withFallback(system.settings.config)
     val sys = ActorSystem(system.name, config)
     injectDeployments(sys, myself)

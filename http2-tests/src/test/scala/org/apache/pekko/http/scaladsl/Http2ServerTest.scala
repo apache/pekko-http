@@ -34,7 +34,7 @@ object Http2ServerTest extends App {
     pekko.actor.serialize-messages = off
     #pekko.actor.default-dispatcher.throughput = 1000
     pekko.actor.default-dispatcher.fork-join-executor.parallelism-max=8
-    akka.http.server.preview.enable-http2 = true
+    pekko.http.server.preview.enable-http2 = true
                                                    """)
   implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
   implicit val ec: ExecutionContext = system.dispatcher
@@ -97,7 +97,7 @@ object Http2ServerTest extends App {
       ContentTypes.`text/html(UTF-8)`,
       """|<html>
         | <body>
-        |    <h1>Say hello to <i>akka-http-core</i>!</h1>
+        |    <h1>Say hello to <i>pekko-http-core</i>!</h1>
         |    <p>Defined resources:</p>
         |    <ul>
         |      <li><a href="/ping">/ping</a></li>

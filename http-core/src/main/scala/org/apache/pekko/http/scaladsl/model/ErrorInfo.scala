@@ -118,8 +118,8 @@ object EntityStreamException {
 
 /**
  * This exception is thrown when the size of the HTTP Entity exceeds the configured limit.
- * It is possible to configure the limit using configuration options `akka.http.parsing.max-content-length`
- * or specifically for the server or client side by setting `akka.http.[server|client].parsing.max-content-length`.
+ * It is possible to configure the limit using configuration options `pekko.http.parsing.max-content-length`
+ * or specifically for the server or client side by setting `pekko.http.[server|client].parsing.max-content-length`.
  *
  * The limit can also be configured in code, by calling [[HttpEntity#withSizeLimit]]
  * on the entity before materializing its `dataBytes` stream.
@@ -130,8 +130,8 @@ final case class EntityStreamSizeException(limit: Long, actualSize: Option[Long]
 
   override def toString = {
     s"EntityStreamSizeException: incoming entity size (${actualSize.getOrElse("while streaming")}) exceeded size limit ($limit bytes)! " +
-    "This may have been a parser limit (set via `akka.http.[server|client].parsing.max-content-length`), " +
-    "a decoder limit (set via `akka.http.routing.decode-max-size`), " +
+    "This may have been a parser limit (set via `pekko.http.[server|client].parsing.max-content-length`), " +
+    "a decoder limit (set via `pekko.http.routing.decode-max-size`), " +
     "or a custom limit set with `withSizeLimit`."
   }
 }

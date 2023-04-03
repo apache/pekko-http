@@ -21,14 +21,14 @@ private[http] final case class RoutingSettingsImpl(
     decodeMaxSize: Long) extends pekko.http.scaladsl.settings.RoutingSettings {
 
   @deprecated(
-    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
-    since = "10.1.6")
+    "binary compatibility method. Use `pekko.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    since = "Akka HTTP 10.1.6")
   override def fileIODispatcher: String = ""
 
   override def productPrefix = "RoutingSettings"
 }
 
-object RoutingSettingsImpl extends SettingsCompanionImpl[RoutingSettingsImpl]("akka.http.routing") {
+object RoutingSettingsImpl extends SettingsCompanionImpl[RoutingSettingsImpl]("pekko.http.routing") {
   def fromSubConfig(root: Config, c: Config) = new RoutingSettingsImpl(
     c.getBoolean("verbose-error-messages"),
     c.getBoolean("file-get-conditional"),

@@ -59,7 +59,7 @@ if you don't care about the response entity.
 Read the @ref[Implications of the streaming nature of Request/Response Entities](../implications-of-streaming-http-entity.md) section for more details.
 
 If the application doesn't subscribe to the response entity within 
-`akka.http.host-connection-pool.response-entity-subscription-timeout`, the stream will fail with a 
+`pekko.http.host-connection-pool.response-entity-subscription-timeout`, the stream will fail with a 
 `TimeoutException: Response entity was not subscribed after ...`.
 @@@
 

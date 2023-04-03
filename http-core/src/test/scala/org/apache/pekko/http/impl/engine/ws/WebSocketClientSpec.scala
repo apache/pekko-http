@@ -24,7 +24,7 @@ import pekko.util.ByteString
 import pekko.testkit._
 import pekko.http.impl.util._
 
-class WebSocketClientSpec extends PekkoSpecWithMaterializer("akka.http.client.websocket.log-frames = on") {
+class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.websocket.log-frames = on") {
   "The client-side WebSocket implementation should" should {
     "establish a websocket connection when the user requests it" in new EstablishedConnectionSetup with ClientEchoes
 

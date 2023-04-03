@@ -18,8 +18,8 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class H2cUpgradeSpec extends PekkoSpecWithMaterializer("""
-    akka.http.server.preview.enable-http2 = on
-    akka.http.server.http2.log-frames = on
+    pekko.http.server.preview.enable-http2 = on
+    pekko.http.server.http2.log-frames = on
   """) {
 
   override implicit val patience = PatienceConfig(5.seconds, 5.seconds)

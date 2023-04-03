@@ -2,8 +2,8 @@
 
 HTTP client settings are split into different sections  
  
- * `akka.http.client`: basic client settings
- * `akka.http.host-connection-pool`: pool settings
+ * `pekko.http.client`: basic client settings
+ * `pekko.http.host-connection-pool`: pool settings
  
 ## Basic Client Settings
 
@@ -13,7 +13,7 @@ These settings influence the basic library behavior for each HTTP connection. Wh
 Basic client settings can be overridden in multiple ways:
 
  * by passing custom @apidoc[ClientConnectionSettings] instances to APIs in @apidoc[Http$]
- * by overriding settings in `akka.http.host-connection-pool.client`, these overrides will take effect whenever a pool is used
+ * by overriding settings in `pekko.http.host-connection-pool.client`, these overrides will take effect whenever a pool is used
    like with `Http().singleRequest`
  * by putting custom @apidoc[ClientConnectionSettings] into @apidoc[ConnectionPoolSettings] and passing those to APIs in `Http`
  * by using [per-host overrides](#per-host-overrides)
@@ -36,7 +36,7 @@ Pool settings can be overridden on a [per-target-host](#per-host-overrides) basi
 ## Per Host Overrides
 
 Settings can be overridden on a per-host basis by creating a list of `host-patterns` together with overridden settings
-in the `akka.http.host-connection-pool.per-host-override` setting.
+in the `pekko.http.host-connection-pool.per-host-override` setting.
 
 Note that only the first matching entry is selected and used even if multiple entries would match.
 
@@ -47,5 +47,5 @@ Note that only the first matching entry is selected and used even if multiple en
 When using pool APIs, settings take precedence like this (highest precedence first):
 
  * client settings in first `per-host-override` entry whose `host-pattern` matches the given target host
- * settings in `akka.http.host-connection-pool.client`
- * settings in `akka.http.client`
+ * settings in `pekko.http.host-connection-pool.client`
+ * settings in `pekko.http.client`

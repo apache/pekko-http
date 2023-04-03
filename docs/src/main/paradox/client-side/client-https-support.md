@@ -12,7 +12,7 @@ Java
 :  @@snip [ConnectionContext.scala](/http-core/src/main/scala/org/apache/pekko/http/javadsl/ConnectionContext.scala) { #https-client-context-creation }
 
 In addition to the `outgoingConnection`, `newHostConnectionPool` and `cachedHostConnectionPool` methods the
-@scala[@scaladoc[org.apache.pekko.http.scaladsl.Http](akka.http.scaladsl.Http$)]@java[@javadoc[org.apache.pekko.http.javadsl.Http](akka.http.javadsl.Http)]
+@scala[@scaladoc[org.apache.pekko.http.scaladsl.Http](org.apache.pekko.http.scaladsl.Http$)]@java[@javadoc[org.apache.pekko.http.javadsl.Http](org.apache.pekko.http.javadsl.Http)]
 extension also defines `outgoingConnectionHttps`, `newHostConnectionPoolHttps` and
 `cachedHostConnectionPoolHttps`. These methods work identically to their counterparts without the `-Https` suffix,
 with the exception that all connections will always be encrypted.

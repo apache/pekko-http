@@ -43,9 +43,9 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
   val testConf: Config = ConfigFactory.parseString("""
     pekko.event-handlers = ["org.apache.pekko.testkit.TestEventListener"]
     pekko.loglevel = WARNING
-    akka.http.parsing.max-header-value-length = 32
-    akka.http.parsing.max-uri-length = 40
-    akka.http.parsing.max-content-length = infinite""")
+    pekko.http.parsing.max-header-value-length = 32
+    pekko.http.parsing.max-uri-length = 40
+    pekko.http.parsing.max-content-length = infinite""")
   implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
   import system.dispatcher
 
@@ -567,7 +567,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           BadRequest,
           ErrorInfo(
             "Unsupported HTTP method",
-            "HTTP method too long (started with 'ABCDEFGHIJKLMNOP'). Increase `akka.http.server.parsing.max-method-length` to support HTTP methods with more characters."))
+            "HTTP method too long (started with 'ABCDEFGHIJKLMNOP'). Increase `pekko.http.server.parsing.max-method-length` to support HTTP methods with more characters."))
       }
 
       "two Content-Length headers" in new Test {

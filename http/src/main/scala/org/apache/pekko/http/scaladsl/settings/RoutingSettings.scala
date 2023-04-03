@@ -23,8 +23,8 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
   def decodeMaxBytesPerChunk: Int
   def decodeMaxSize: Long
   @deprecated(
-    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
-    since = "10.1.6")
+    "binary compatibility method. Use `pekko.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    since = "Akka HTTP 10.1.6")
   def fileIODispatcher: String
 
   /* Java APIs */
@@ -36,8 +36,8 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
   def getDecodeMaxBytesPerChunk: Int = this.decodeMaxBytesPerChunk
   def getDecodeMaxSize: Long = this.decodeMaxSize
   @deprecated(
-    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
-    since = "10.1.6")
+    "binary compatibility method. Use `pekko.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    since = "Akka HTTP 10.1.6")
   @Deprecated
   def getFileIODispatcher: String = this.fileIODispatcher
 
@@ -54,8 +54,8 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
     self.copy(decodeMaxBytesPerChunk = decodeMaxBytesPerChunk)
   override def withDecodeMaxSize(decodeMaxSize: Long): RoutingSettings = self.copy(decodeMaxSize = decodeMaxSize)
   @deprecated(
-    "binary compatibility method. Use `akka.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
-    since = "10.1.6")
+    "binary compatibility method. Use `pekko.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
+    since = "Akka HTTP 10.1.6")
   @Deprecated
   override def withFileIODispatcher(fileIODispatcher: String): RoutingSettings = self
 }

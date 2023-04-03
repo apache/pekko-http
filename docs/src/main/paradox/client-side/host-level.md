@@ -31,7 +31,7 @@ first connection to the target endpoint until the first request has arrived.
 
 Apart from the connection-level config settings and socket options there are a number of settings that allow you to
 influence the behavior of the connection pool logic itself.
-Check out the `akka.http.host-connection-pool` section of the Apache Pekko HTTP @ref[Configuration](../configuration.md) for
+Check out the `pekko.http.host-connection-pool` section of the Apache Pekko HTTP @ref[Configuration](../configuration.md) for
 more information about which settings are available and what they mean.
 
 Note that, if you request pools with different configurations for the same target host you will get *independent* pools.
@@ -123,7 +123,7 @@ In these cases, as well as when all retries have not yielded a proper response, 
 
 If a request fails during connecting to the server, for example, because the DNS name cannot be resolved or the server
 is currently unavailable, retries are attempted with exponential backoff delay. See the documentation of the
-`akka.http.host-connection-pool.base-connection-backoff` setting in the @ref[configuration](../configuration.md).
+`pekko.http.host-connection-pool.base-connection-backoff` setting in the @ref[configuration](../configuration.md).
 
 
 ## Pool Shutdown

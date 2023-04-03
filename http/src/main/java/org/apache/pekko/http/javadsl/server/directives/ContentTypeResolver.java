@@ -7,7 +7,7 @@ package org.apache.pekko.http.javadsl.server.directives;
 import org.apache.pekko.http.javadsl.model.ContentType;
 
 /**
- * Implement this interface to provide a custom mapping from a file name to a [[akka.http.javadsl.model.ContentType]].
+ * Implement this interface to provide a custom mapping from a file name to a [[org.apache.pekko.http.javadsl.model.ContentType]].
  */
 @FunctionalInterface
 public interface ContentTypeResolver {

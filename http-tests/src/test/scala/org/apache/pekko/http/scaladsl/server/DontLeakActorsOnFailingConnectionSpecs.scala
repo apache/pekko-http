@@ -32,7 +32,7 @@ abstract class DontLeakActorsOnFailingConnectionSpecs(poolImplementation: String
     pekko {
       # disable logs (very noisy tests - 100 expected errors)
       loglevel = DEBUG
-      loggers = ["pekko.http.impl.util.SilenceAllTestEventListener"]
+      loggers = ["org.apache.pekko.http.impl.util.SilenceAllTestEventListener"]
 
       http.host-connection-pool.pool-implementation = $poolImplementation
 

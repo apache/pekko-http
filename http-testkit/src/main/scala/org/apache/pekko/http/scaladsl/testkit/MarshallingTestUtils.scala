@@ -21,7 +21,7 @@ trait MarshallingTestUtils {
 
   def testConfig: Config
 
-  def marshallingTimeout = testConfig.getFiniteDuration("akka.http.testkit.marshalling.timeout")
+  def marshallingTimeout = testConfig.getFiniteDuration("pekko.http.testkit.marshalling.timeout")
 
   def marshal[T: ToEntityMarshaller](value: T)(implicit ec: ExecutionContext, mat: Materializer): HttpEntity.Strict =
     Await.result(Marshal(value).to[HttpEntity].flatMap(_.toStrict(marshallingTimeout)), 2 * marshallingTimeout)

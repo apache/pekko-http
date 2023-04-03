@@ -21,7 +21,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future, Promise }
 
 class ClientTransportWithCustomResolverSpec
-    extends PekkoSpecWithMaterializer("akka.http.server.request-timeout = infinite") with OptionValues {
+    extends PekkoSpecWithMaterializer("pekko.http.server.request-timeout = infinite") with OptionValues {
   "A custom resolver" should {
 
     "change to the desired destination" in {

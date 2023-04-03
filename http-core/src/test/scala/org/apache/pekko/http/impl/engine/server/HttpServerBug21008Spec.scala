@@ -20,7 +20,7 @@ import scala.concurrent.duration._
 
 class HttpServerBug21008Spec extends PekkoSpecWithMaterializer(
       """
-   akka.http.server.request-timeout = infinite
+   pekko.http.server.request-timeout = infinite
    pekko.test.filter-leeway=1s""") with Inside { spec =>
   "The HttpServer" should {
 

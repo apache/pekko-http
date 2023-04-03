@@ -29,7 +29,7 @@ ranges with a @apidoc[TooManyRangesRejection].
 Requests with unsatisfiable ranges are rejected with an @apidoc[UnsatisfiableRangeRejection].
 
 The `withRangeSupport()` form (without parameters) uses the `range-coalescing-threshold` and `range-count-limit`
-settings from the `akka.http.routing` configuration.
+settings from the `pekko.http.routing` configuration.
 
 This directive is transparent to non-`GET` requests.
 

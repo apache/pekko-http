@@ -72,7 +72,7 @@ private[pekko] final case class ServerSettingsImpl(
 
 /** INTERNAL API */
 @InternalApi
-private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSettingsImpl]("akka.http.server") {
+private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSettingsImpl]("pekko.http.server") {
   implicit def timeoutsShortcut(s: js.ServerSettings): js.ServerSettings.Timeouts = s.getTimeouts
 
   final case class Timeouts(

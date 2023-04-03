@@ -14,7 +14,7 @@ entities (and pulling them through the network) in a streaming fashion, and only
 ready to consume the bytes. Therefore, you have to explicitly consume or discard the entity. 
 
 On a client, for example, if the application doesn't subscribe to the response entity within 
-`akka.http.host-connection-pool.response-entity-subscription-timeout`, the stream will fail with a 
+`pekko.http.host-connection-pool.response-entity-subscription-timeout`, the stream will fail with a 
 `TimeoutException: Response entity was not subscribed after ...`.
 
 @@@ warning

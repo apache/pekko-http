@@ -20,10 +20,10 @@ import pekko.stream._
  * In any case, you might want to use `handleWebSocketMessages` instead as documented
  * at https://doc.akka.io/docs/akka-http/current/server-side/websocket-support.html#routing-support
  *
- * @deprecated use the WebSocketUpgrade attribute instead since 10.2.0
+ * @deprecated use the WebSocketUpgrade attribute instead since Akka HTTP 10.2.0
  */
 @Deprecated
-@deprecated("use the WebSocketUpgrade attribute instead", since = "10.2.0")
+@deprecated("use the WebSocketUpgrade attribute instead", since = "Akka HTTP 10.2.0")
 trait UpgradeToWebSocket extends sm.HttpHeader with WebSocketUpgrade {
 
   /**

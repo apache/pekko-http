@@ -24,7 +24,7 @@ class ClientSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
     pekko.stdout-loglevel = ERROR
     windows-connection-abort-workaround-enabled = auto
     pekko.log-dead-letters = OFF
-    akka.http.server.request-timeout = infinite""")
+    pekko.http.server.request-timeout = infinite""")
   implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 

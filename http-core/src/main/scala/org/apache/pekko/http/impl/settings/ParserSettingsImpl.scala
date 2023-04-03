@@ -77,7 +77,7 @@ private[pekko] final case class ParserSettingsImpl(
   override def productPrefix = "ParserSettings"
 }
 
-object ParserSettingsImpl extends SettingsCompanionImpl[ParserSettingsImpl]("akka.http.parsing") {
+object ParserSettingsImpl extends SettingsCompanionImpl[ParserSettingsImpl]("pekko.http.parsing") {
 
   private[this] val noCustomMethods: String => Option[HttpMethod] = ConstantFun.scalaAnyToNone
   private[this] val noCustomStatusCodes: Int => Option[StatusCode] = ConstantFun.scalaAnyToNone
@@ -85,7 +85,7 @@ object ParserSettingsImpl extends SettingsCompanionImpl[ParserSettingsImpl]("akk
     ConstantFun.scalaAnyTwoToNone
 
   def forServer(root: Config): ParserSettings =
-    fromSubConfig(root, root.getConfig("akka.http.server.parsing"))
+    fromSubConfig(root, root.getConfig("pekko.http.server.parsing"))
 
   def fromSubConfig(root: Config, inner: Config): ParserSettingsImpl = {
     val c = inner.withFallback(root.getConfig(prefix))

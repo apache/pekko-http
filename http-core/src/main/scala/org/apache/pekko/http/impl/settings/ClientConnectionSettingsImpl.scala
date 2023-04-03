@@ -52,7 +52,7 @@ private[pekko] final case class ClientConnectionSettingsImpl(
 /** INTERNAL API */
 @InternalApi
 private[pekko] object ClientConnectionSettingsImpl
-    extends SettingsCompanionImpl[ClientConnectionSettingsImpl]("akka.http.client") {
+    extends SettingsCompanionImpl[ClientConnectionSettingsImpl]("pekko.http.client") {
   def fromSubConfig(root: Config, inner: Config): ClientConnectionSettingsImpl = {
     val c = inner.withFallback(root.getConfig(prefix))
     new ClientConnectionSettingsImpl(

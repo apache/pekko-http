@@ -144,12 +144,12 @@ Java
 ## HttpEntity
 
 An @apidoc[HttpEntity] carries the data bytes of a message together with its Content-Type and, if known, its Content-Length.
-In Apache Pekko HTTP there are five different kinds of entities which model the various ways that message content can be
+In Apache Pekko HTTP, there are five different kinds of entities which model the various ways that message content can be
 received or sent:
 
 @scala[HttpEntity.Strict]@java[HttpEntityStrict]
 : The simplest entity, which is used when all the entity are already available in memory.
-It wraps a plain @apidoc[org.apache.pekko.util.ByteString] and  represents a standard, unchunked entity with a known `Content-Length`.
+It wraps a plain @apidoc[org.apache.pekko.util.ByteString] and represents a standard, unchunked entity with a known `Content-Length`.
 
 @scala[HttpEntity.Default]@java[HttpEntityDefault]
 : The general, unchunked HTTP/1.1 message entity.
@@ -246,10 +246,10 @@ content-length. If the entity is transformed in a way that changes the content-l
 then the previous limit will be applied against the previous content-length.
 Generally this behavior should be in line with your expectations.
 
-> <a id="1" href="#^1">[1]</a> *akka.http.parsing.max-content-length* (applying to server- as well as client-side),
-*akka.http.server.parsing.max-content-length* (server-side only),
-*akka.http.client.parsing.max-content-length* (client-side only) or
-*akka.http.host-connection-pool.client.parsing.max-content-length* (only host-connection-pools)
+> <a id="1" href="#^1">[1]</a> *pekko.http.parsing.max-content-length* (applying to server- as well as client-side),
+*pekko.http.server.parsing.max-content-length* (server-side only),
+*pekko.http.client.parsing.max-content-length* (client-side only) or
+*pekko.http.host-connection-pool.client.parsing.max-content-length* (only host-connection-pools)
 
 ### Special processing for HEAD requests
 
@@ -318,12 +318,12 @@ response will not be rendered onto the wire and trigger a warning being logged i
 
 Server
 : A `Server` header is usually added automatically to any response and its value can be configured via the
-`akka.http.server.server-header` setting. Additionally an application can override the configured header with a
+`pekko.http.server.server-header` setting. Additionally an application can override the configured header with a
 custom one by adding it to the response's `header` sequence.
 
 User-Agent
 : A `User-Agent` header is usually added automatically to any request and its value can be configured via the
-`akka.http.client.user-agent-header` setting. Additionally an application can override the configured header with a
+`pekko.http.client.user-agent-header` setting. Additionally an application can override the configured header with a
 custom one by adding it to the request's `header` sequence.
 
 Date
@@ -384,7 +384,7 @@ types (such as matching a custom header against a @apidoc[RawHeader] in routing 
 @@@
 
 @@@ note { .group-java }
-Implement @apidoc[ModeledCustomHeader] and @java[@javadoc[ModeledCustomHeaderFactory](akka.http.javadsl.model.headers.ModeledCustomHeaderFactory)] instead of @apidoc[CustomHeader] to be
+Implement @apidoc[ModeledCustomHeader] and @java[@javadoc[ModeledCustomHeaderFactory](org.apache.pekko.http.javadsl.model.headers.ModeledCustomHeaderFactory)] instead of @apidoc[CustomHeader] to be
 able to use the convenience methods that allow parsing the custom user-defined header from @apidoc[HttpHeader].
 @@@
 
@@ -408,16 +408,16 @@ Parsing and rendering of HTTP data structures is heavily optimized and for most 
 provided to parse (or render to) Strings or byte arrays.
 
 @@@ note
-Various parsing and rendering settings are available to tweak in the configuration under `akka.http.client[.parsing]`,
-`akka.http.server[.parsing]` and `akka.http.host-connection-pool[.client.parsing]`, with defaults for all of these
-being defined in the `akka.http.parsing` configuration section.
+Various parsing and rendering settings are available to tweak in the configuration under `pekko.http.client[.parsing]`,
+`pekko.http.server[.parsing]` and `pekko.http.host-connection-pool[.client.parsing]`, with defaults for all of these
+being defined in the `pekko.http.parsing` configuration section.
 
-For example, if you want to change a parsing setting for all components, you can set the `akka.http.parsing.illegal-header-warnings = off`
-value. However this setting can be still overridden by the more specific sections, like for example `akka.http.server.parsing.illegal-header-warnings = on`.
+For example, if you want to change a parsing setting for all components, you can set the `pekko.http.parsing.illegal-header-warnings = off`
+value. However this setting can be still overridden by the more specific sections, like for example `pekko.http.server.parsing.illegal-header-warnings = on`.
 
 In this case both `client` and `host-connection-pool` APIs will see the setting `off`, however the server will see `on`.
 
-In the case of `akka.http.host-connection-pool.client` settings, they default to settings set in `akka.http.client`,
+In the case of `pekko.http.host-connection-pool.client` settings, they default to settings set in `pekko.http.client`,
 and can override them if needed. This is useful, since both `client` and `host-connection-pool` APIs,
 such as the Client API @scala[`Http().outgoingConnection`]@java[`Http.get(sys).outgoingConnection`] or the Host Connection Pool APIs @scala[`Http().singleRequest`]@java[`Http.get(sys).singleRequest`]
 or @scala[`Http().superPool`]@java[`Http.get(sys).superPool`], usually need the same settings, however the `server` most likely has a very different set of settings.
@@ -426,7 +426,7 @@ or @scala[`Http().superPool`]@java[`Http.get(sys).superPool`], usually need the 
 <a id="registeringcustommediatypes"></a>
 ## Registering Custom Media Types
 
-Apache Pekko HTTP @scala[@scaladoc[predefines](akka.http.scaladsl.model.MediaTypes$)]@java[@javadoc[predefines](akka.http.javadsl.model.MediaTypes)] most commonly encountered media types and emits them in their well-typed form while parsing http messages.
+Apache Pekko HTTP @scala[@scaladoc[predefines](org.apache.pekko.http.scaladsl.model.MediaTypes$)]@java[@javadoc[predefines](org.apache.pekko.http.javadsl.model.MediaTypes)] most commonly encountered media types and emits them in their well-typed form while parsing http messages.
 Sometimes you may want to define a custom media type and inform the parser infrastructure about how to handle these custom
 media types, e.g. that `application/custom` is to be treated as `NonBinary` with `WithFixedCharset`. To achieve this you
 need to register the custom media type in the server's settings by configuring @apidoc[ParserSettings] like this:
@@ -443,7 +443,7 @@ in the right style / place.
 <a id="registeringcustomstatuscodes"></a>
 ## Registering Custom Status Codes
 
-Similarly to media types, Apache Pekko HTTP @scala[@scaladoc:[predefines](akka.http.scaladsl.model.StatusCodes$)]@java[@javadoc:[predefines](akka.http.javadsl.model.StatusCodes)]
+Similarly to media types, Apache Pekko HTTP @scala[@scaladoc:[predefines](org.apache.pekko.http.scaladsl.model.StatusCodes$)]@java[@javadoc:[predefines](org.apache.pekko.http.javadsl.model.StatusCodes)]
 well-known status codes, however sometimes you may need to use a custom one (or are forced to use an API which returns custom status codes).
 Similarly to the media types registration, you can register custom status codes by configuring @apidoc[ParserSettings] like this:
 
@@ -456,7 +456,7 @@ Java
 <a id="registeringcustommethod"></a>
 ## Registering Custom HTTP Method
 
-Apache Pekko HTTP also allows you to define custom HTTP methods, other than the well-known methods @scala[@scaladoc[predefined](akka.http.scaladsl.model.HttpMethods$)]@java[@javadoc[predefined](akka.http.javadsl.model.HttpMethods)] in Apache Pekko HTTP.
+Apache Pekko HTTP also allows you to define custom HTTP methods, other than the well-known methods @scala[@scaladoc[predefined](org.apache.pekko.http.scaladsl.model.HttpMethods$)]@java[@javadoc[predefined](org.apache.pekko.http.javadsl.model.HttpMethods)] in Apache Pekko HTTP.
 To use a custom HTTP method, you need to define it, and then add it to parser settings like below:
 
 Scala

@@ -25,10 +25,10 @@ abstract class WebSocketDirectives extends SecurityDirectives {
   /**
    * Extract the [[UpgradeToWebSocket]] header if existent. Rejects with an [[ExpectedWebSocketRequestRejection]], otherwise.
    *
-   * @deprecated use `webSocketUpgrade` instead since 10.2.0
+   * @deprecated use `webSocketUpgrade` instead since Akka HTTP 10.2.0
    */
   @Deprecated
-  @deprecated("use `extractWebSocketUpgrade` instead", since = "10.2.0")
+  @deprecated("use `extractWebSocketUpgrade` instead", since = "Akka HTTP 10.2.0")
   def extractUpgradeToWebSocket(inner: JFunction[UpgradeToWebSocket, Route]): Route = RouteAdapter {
     D.extractUpgradeToWebSocket { header =>
       inner.apply(header).delegate

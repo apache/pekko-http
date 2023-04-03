@@ -29,7 +29,7 @@ For XML Apache Pekko HTTP currently provides support for [Scala XML][scala-xml] 
 
 ## Scala XML Support
 
-The @scaladoc[ScalaXmlSupport](akka.http.scaladsl.marshallers.xml.ScalaXmlSupport) trait provides a `FromEntityUnmarshaller[NodeSeq]` and `ToEntityMarshaller[NodeSeq]` that
+The @scaladoc[ScalaXmlSupport](org.apache.pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport) trait provides a `FromEntityUnmarshaller[NodeSeq]` and `ToEntityMarshaller[NodeSeq]` that
 you can use directly or build upon.
 
 In order to enable support for (un)marshalling from and to XML with [Scala XML][scala-xml] `NodeSeq` you must add

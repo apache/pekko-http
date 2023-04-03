@@ -122,7 +122,7 @@ private[http] object PoolInterface {
     }
 
     override protected def onTimer(timerKey: Any): Unit = {
-      debug(s"Pool shutting down because akka.http.host-connection-pool.idle-timeout triggered after $idleTimeout.")
+      debug(s"Pool shutting down because pekko.http.host-connection-pool.idle-timeout triggered after $idleTimeout.")
       requestShutdown(ShutdownReason.IdleTimeout)
     }
 

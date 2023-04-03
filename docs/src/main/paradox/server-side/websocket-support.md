@@ -13,9 +13,9 @@ i.e. a sequence of octets or a text message, i.e. a sequence of Unicode code poi
 
 In the data model the two kinds of messages, binary and text messages, are represented by the two classes
 @apidoc[BinaryMessage] and @apidoc[TextMessage] deriving from a common superclass
-@scala[@scaladoc[Message](akka.http.scaladsl.model.ws.Message)]@java[@javadoc[Message](akka.http.javadsl.model.ws.Message)].
+@scala[@scaladoc[Message](org.apache.pekko.http.scaladsl.model.ws.Message)]@java[@javadoc[Message](org.apache.pekko.http.javadsl.model.ws.Message)].
 @scala[The subclasses @apidoc[BinaryMessage] and @apidoc[TextMessage] contain methods to access the data.]
-@java[The superclass @javadoc[Message](akka.http.javadsl.model.ws.Message)]
+@java[The superclass @javadoc[Message](org.apache.pekko.http.javadsl.model.ws.Message)]
 contains `isText` and `isBinary` methods to distinguish a message and `asBinaryMessage` and `asTextMessage` methods to cast a message.]
 Take the API of @apidoc[TextMessage] as an example (@apidoc[BinaryMessage] is very similar with `String` replaced by @apidoc[org.apache.pekko.util.ByteString]):
 
@@ -128,7 +128,7 @@ such an attribute is found, it is used to generate a response by passing a handl
 @scala[`handleMessages`]@java[`handleMessagesWith`] method. If no such attribute is found a `400 Bad Request` response is generated.
 
 @@@ div { .group-java }
-You can also use the @javadoc[WebSocket.handleWebSocketRequestWith](akka.http.javadsl.model.ws.WebSocket) helper method which can be used if
+You can also use the @javadoc[WebSocket.handleWebSocketRequestWith](org.apache.pekko.http.javadsl.model.ws.WebSocket) helper method which can be used if
 only WebSocket requests are expected. The method looks for the @apidoc[WebSocketUpgrade] attribute and returns a response
 that will install the passed WebSocket handler if the header is found. If the request is no WebSocket request it will
 return a `400 Bad Request` error response.
@@ -159,7 +159,7 @@ connection remains usable even after no data frames are communicated over a long
 initiated by either side of the connection, and the choice which side performs the heart beating is use-case dependent. 
 
 This is supported in a transparent way via configuration in Apache Pekko HTTP, and you can enable it by setting the: 
-`akka.http.server.websocket.periodic-keep-alive-max-idle = 1 second` to a specified max idle timeout. The keep alive triggers
+`pekko.http.server.websocket.periodic-keep-alive-max-idle = 1 second` to a specified max idle timeout. The keep alive triggers
 when no other messages are in-flight during the such configured period. Apache Pekko HTTP will then automatically send
 a [`Ping` frame](https://tools.ietf.org/html/rfc6455#section-5.5.2) for each of such idle intervals.
 
@@ -184,4 +184,4 @@ A Ping response will always be replied to by the client-side with an appropriate
 It is also possible to configure the keep-alive mechanism to send `Pong` frames instead of `Ping` frames, 
 which enables an [uni-directional heartbeat](https://tools.ietf.org/html/rfc6455#section-5.5.3) mechanism (in which case 
 the client side will *not* reply to such heartbeat). You can configure this mode by setting: 
-`akka.http.server.websocket.periodic-keep-alive-mode = pong`.
+`pekko.http.server.websocket.periodic-keep-alive-mode = pong`.

@@ -73,7 +73,7 @@ trait HeaderDirectives {
    */
   @deprecated(
     "Use string argument version or `headerValueByType`, e.g. instead of `headerValueByName('Referer)` use `headerValueByType(Referer)`",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   def headerValueByName(headerName: Symbol): Directive1[String] = headerValueByName(headerName.name)
 
   /**
@@ -128,7 +128,7 @@ trait HeaderDirectives {
    */
   @deprecated(
     "Use string argument version or `headerValueByType`, e.g. instead of `optionalHeaderValueByName('Referer)` use `optionalHeaderValueByType(Referer)`",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   def optionalHeaderValueByName(headerName: Symbol): Directive1[Option[String]] =
     optionalHeaderValueByName(headerName.name)
 
@@ -186,7 +186,7 @@ object HeaderMagnet extends LowPriorityHeaderMagnetImplicits {
 
   @deprecated(
     "Pass the companion object to headerValueByType as a parameter instead, e.g. `headerValueByType(Origin)` instead of `headerValueByType[Origin](())`",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   implicit def fromUnitForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](
       u: Unit)(implicit tag: ClassTag[T], companion: ModeledCustomHeaderCompanion[T]): HeaderMagnet[T] =
     fromClassTagForModeledCustomHeader[T, H](tag, companion)
@@ -228,7 +228,7 @@ trait LowPriorityHeaderMagnetImplicits {
 
   @deprecated(
     "Pass the companion object to headerValueByType as a parameter instead, e.g. `headerValueByType(Origin)` instead of `headerValueByType[Origin](())`",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   implicit def fromUnitNormalHeader[T <: HttpHeader](u: Unit)(implicit tag: ClassTag[T]): HeaderMagnet[T] =
     fromClassTagNormalHeader(tag)
 

@@ -48,7 +48,7 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
     pekko.io.tcp.trace-logging = off
     pekko.test.single-expect-default = 5000 # timeout for checks, adjust as necessary, set here to 5s
     pekko.scheduler.tick-duration = 1ms     # to make race conditions in Pool idle-timeout more likely
-    akka.http.client.log-unencrypted-network-bytes = 200
+    pekko.http.client.log-unencrypted-network-bytes = 200
                                           """) { testSuite =>
 
   implicit class WithPoolStatus(val poolId: PoolId) {

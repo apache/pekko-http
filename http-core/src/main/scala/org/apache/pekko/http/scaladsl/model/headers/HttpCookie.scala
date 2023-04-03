@@ -72,7 +72,7 @@ final class HttpCookie private[http] (
     val sameSite: Option[SameSite]) extends jm.headers.HttpCookie with ToStringRenderable with Product with Serializable
     with Equals {
 
-  @deprecated("Please use HttpCookie(name, value).withXxx()", "10.2.0")
+  @deprecated("Please use HttpCookie(name, value).withXxx()", "Akka HTTP 10.2.0")
   def this(
       name: String,
       value: String,
@@ -85,7 +85,7 @@ final class HttpCookie private[http] (
       extension: Option[String] = None) =
     this(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
 
-  @deprecated("for binary compatibility", since = "10.2.0")
+  @deprecated("for binary compatibility", since = "Akka HTTP 10.2.0")
   private[headers] def copy(
       name: String,
       value: String,
@@ -236,7 +236,7 @@ object HttpCookie {
 
   @deprecated(
     "Pattern matching on HttpCookie is deprecated because of the big number of fields and potential future compatibility hazards. Please use other means to check the fields.",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   def unapply(cookie: HttpCookie) = Option((
     cookie.name,
     cookie.value,
@@ -248,7 +248,7 @@ object HttpCookie {
     cookie.httpOnly,
     cookie.extension))
 
-  @deprecated("Use HttpCookiePair.toCookie and withXxx methods instead", "10.2.0")
+  @deprecated("Use HttpCookiePair.toCookie and withXxx methods instead", "Akka HTTP 10.2.0")
   def fromPair(
       pair: HttpCookiePair,
       expires: Option[DateTime] = None,

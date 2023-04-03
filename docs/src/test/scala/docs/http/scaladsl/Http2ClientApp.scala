@@ -30,8 +30,8 @@ object Http2ClientApp extends App {
     ConfigFactory.parseString(
       """
          # pekko.loglevel = debug
-         akka.http.client.http2.log-frames = true
-         akka.http.client.parsing.max-content-length = 20m
+         pekko.http.client.http2.log-frames = true
+         pekko.http.client.parsing.max-content-length = 20m
       """).withFallback(ConfigFactory.defaultApplication())
 
   implicit val system: ActorSystem = ActorSystem("Http2ClientApp", config)

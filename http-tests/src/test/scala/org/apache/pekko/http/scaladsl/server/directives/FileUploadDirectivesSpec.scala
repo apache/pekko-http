@@ -35,7 +35,7 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
           @volatile var file: Option[File] = None
 
           def tempDest(fileInfo: FileInfo): File = {
-            val dest = File.createTempFile("akka-http-FileUploadDirectivesSpec", ".tmp")
+            val dest = File.createTempFile("http-FileUploadDirectivesSpec", ".tmp")
             file = Some(dest)
             dest
           }
@@ -92,7 +92,7 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
           @volatile var files: Seq[File] = Nil
 
           def tempDest(fileInfo: FileInfo): File = {
-            val dest = File.createTempFile("akka-http-FileUploadDirectivesSpec", ".tmp")
+            val dest = File.createTempFile("http-FileUploadDirectivesSpec", ".tmp")
             files = files :+ dest
             dest
           }

@@ -56,7 +56,7 @@ Specifically these are:
 
 @@@ div { .group-scala }
 
- * @scaladoc[PredefinedToEntityMarshallers](akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers)
+ * @scaladoc[PredefinedToEntityMarshallers](org.apache.pekko.http.scaladsl.marshalling.PredefinedToEntityMarshallers)
     * `Array[Byte]`
     * @apidoc[org.apache.pekko.util.ByteString]
     * `Array[Char]`
@@ -64,7 +64,7 @@ Specifically these are:
     * `org.apache.pekko.http.scaladsl.model.FormData`
     * `org.apache.pekko.http.scaladsl.model.MessageEntity`
     * `T <: org.apache.pekko.http.scaladsl.model.Multipart`
- * @scaladoc[PredefinedToResponseMarshallers](akka.http.scaladsl.marshalling.PredefinedToResponseMarshallers)
+ * @scaladoc[PredefinedToResponseMarshallers](org.apache.pekko.http.scaladsl.marshalling.PredefinedToResponseMarshallers)
     * `T`, if a `ToEntityMarshaller[T]` is available
     * @apidoc[HttpResponse]
     * @apidoc[StatusCode]
@@ -72,12 +72,12 @@ Specifically these are:
     * `(Int, T)`, if a `ToEntityMarshaller[T]` is available
     * `(StatusCode, immutable.Seq[HttpHeader], T)`, if a `ToEntityMarshaller[T]` is available
     * `(Int, immutable.Seq[HttpHeader], T)`, if a `ToEntityMarshaller[T]` is available
- * @scaladoc[PredefinedToRequestMarshallers](akka.http.scaladsl.marshalling.PredefinedToRequestMarshallers)
+ * @scaladoc[PredefinedToRequestMarshallers](org.apache.pekko.http.scaladsl.marshalling.PredefinedToRequestMarshallers)
     * @apidoc[HttpRequest]
     * @apidoc[Uri]
     * `(HttpMethod, Uri, T)`, if a `ToEntityMarshaller[T]` is available
     * `(HttpMethod, Uri, immutable.Seq[HttpHeader], T)`, if a `ToEntityMarshaller[T]` is available
- * @scaladoc[GenericMarshallers](akka.http.scaladsl.marshalling.GenericMarshallers)
+ * @scaladoc[GenericMarshallers](org.apache.pekko.http.scaladsl.marshalling.GenericMarshallers)
     * @apidoc[Marshaller[Throwable, T]]
     * @apidoc[Marshaller[Option[A], B]], if a @apidoc[Marshaller[A, B]] and an `EmptyValue[B]` is available
     * @apidoc[Marshaller[Either[A1, A2], B]], if a @apidoc[Marshaller[A1, B]] and a @apidoc[Marshaller[A2, B]] is available
@@ -172,7 +172,7 @@ request using the @ref[Routing DSL](../routing-dsl/index.md).
 @@@ div { .group-scala }
 
 However, you can also use the marshalling infrastructure directly if you wish, which can be useful for example in tests.
-The best entry point for this is the @scaladoc[Marshal](akka.http.scaladsl.marshalling.Marshal) object, which you can use like this:
+The best entry point for this is the @scaladoc[Marshal](org.apache.pekko.http.scaladsl.marshalling.Marshal) object, which you can use like this:
 
 @@snip [MarshalSpec.scala](/docs/src/test/scala/docs/http/scaladsl/MarshalSpec.scala) { #use-marshal }
 

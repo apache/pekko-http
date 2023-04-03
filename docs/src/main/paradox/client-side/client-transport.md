@@ -2,7 +2,7 @@
 
 The client side infrastructure has support to plug different transport mechanisms underneath (the API may still change in the future). A client side
 transport is represented by an instance of
-@scala[@scaladoc[org.apache.pekko.http.scaladsl.ClientTransport](akka.http.scaladsl.ClientTransport)]@java[@javadoc[org.apache.pekko.http.javadsl.ClientTransport](akka.http.javadsl.ClientTransport)]:
+@scala[@scaladoc[org.apache.pekko.http.scaladsl.ClientTransport](org.apache.pekko.http.scaladsl.ClientTransport)]@java[@javadoc[org.apache.pekko.http.javadsl.ClientTransport](org.apache.pekko.http.javadsl.ClientTransport)]:
 
 Scala
 :  @@snip [ClientTransport.scala](/http-core/src/main/scala/org/apache/pekko/http/scaladsl/ClientTransport.scala) { #client-transport-definition }
@@ -48,7 +48,7 @@ The proxy transport can also be setup using `ClientTransport.httpsProxy()` or `C
 In order to define the transport as such, you will need to set the proxy host / port in your `conf` file like the following.
 
 ```
-akka.http.client.proxy {
+pekko.http.client.proxy {
  https {
    host = ""
    port = 443

@@ -37,7 +37,7 @@ object Route {
   def seal(route: Route)(implicit
       routingSettings: RoutingSettings = null,
       @deprecated("For binary compatibility. parserSettings is never used",
-        since = "10.1.8") parserSettings: ParserSettings = null,
+        since = "Akka HTTP 10.1.8") parserSettings: ParserSettings = null,
       rejectionHandler: RejectionHandler = RejectionHandler.default,
       exceptionHandler: ExceptionHandler = null): Route = {
     import directives.ExecutionDirectives._
@@ -64,7 +64,7 @@ object Route {
   /**
    * Turns a `Route` into a server flow.
    */
-  @deprecated("Replaced by `toFlow` that takes an implicit ActorSystem.", "10.2.0")
+  @deprecated("Replaced by `toFlow` that takes an implicit ActorSystem.", "Akka HTTP 10.2.0")
   def handlerFlow(route: Route)(implicit
       routingSettings: RoutingSettings,
       parserSettings: ParserSettings,
@@ -96,7 +96,7 @@ object Route {
    */
   @deprecated(
     "Use `toFunction` instead, which only requires an implicit ActorSystem and no rejection/exception handlers. Use directives to specify custom exceptions or rejection handlers",
-    "10.2.0")
+    "Akka HTTP 10.2.0")
   def asyncHandler(route: Route)(implicit
       routingSettings: RoutingSettings,
       parserSettings: ParserSettings,

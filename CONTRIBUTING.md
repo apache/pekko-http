@@ -4,7 +4,7 @@ We follow the standard GitHub [fork & pull](https://help.github.com/articles/usi
 
 You're always welcome to submit your PR straight away and start the discussion (without reading the rest of this wonderful doc, or the README.md). The goal of these notes is to make your experience contributing to Pekko HTTP as smooth and pleasant as possible. We're happy to guide you through the process once you've submitted your PR.
 
-# The Pekko Community
+# The Apache Pekko Community
 
 If you have questions about the contribution process or discuss specific issues, please interact with the community using the following resources.
 
@@ -22,7 +22,7 @@ Depending on which version (or sometimes module) you want to work on, you should
 
 ## Tags
 
-Pekko-http uses tags to categorise issues into groups or mark their phase in development.
+Pekko HTTP uses tags to categorise issues into groups or mark their phase in development.
 
 Most notably many tags start `t:` prefix (as in `topic:`), which categorises issues in terms of which module they relate to. Examples are:
 
@@ -52,7 +52,7 @@ Pull Request validation states:
 
 - `validating => [tested | needs-attention]` - signify pull request validation status
 
-# Pekko-http contributing guidelines
+# Pekko HTTP contributing guidelines
 
 These guidelines apply to all Apache Pekko projects, by which we mean both the `apache/incubator-pekko` repository,
 as well as any plugins or additional repos located under the Pekko GitHub organisation, e.g. `apache/incubator-pekko-http` and others.
@@ -70,7 +70,7 @@ The steps are exactly the same for everyone involved in the project (be it core 
 
 1. To avoid duplicated effort, it might be good to check the [issue tracker](https://github.com/apache/incubator-pekko-http/issues) and [existing pull requests](https://github.com/apache/incubator-pekko-http/pulls) for existing work.
    - If there is no ticket yet, feel free to [create one](https://github.com/apache/incubator-pekko-http/issues/new) to discuss the problem and the approach you want to take to solve it.
-1. [Fork the project](https://github.com/apache/incubator-pekko-http#fork-destination-box) on GitHub. You'll need to create a feature-branch for your work on your fork, as this way you'll be able to submit a PullRequest against the mainline Pekko-http.
+1. [Fork the project](https://github.com/apache/incubator-pekko-http#fork-destination-box) on GitHub. You'll need to create a feature-branch for your work on your fork, as this way you'll be able to submit a PullRequest against the mainline Pekko HTTP.
 1. Create a branch on your fork and work on the feature. For example: `git checkout -b wip-custom-headers-pekko-http`
    - Please make sure to follow the general quality guidelines (specified below) when developing your patch.
    - Please write additional tests covering your feature and adjust existing ones if needed before submitting your Pull Request. The `validatePullRequest` sbt task ([explained below](#the-validatepullrequest-task)) may come in handy to verify your changes are correct.
@@ -87,10 +87,10 @@ The steps are exactly the same for everyone involved in the project (be it core 
 
 The TL;DR; of the above very precise workflow version is:
 
-1. Fork pekko-http
+1. Fork incubator-pekko-http
 2. Hack and test on your feature (on a branch)
 3. Submit a PR
-4. Sign the an ASF CLA if necessary
+4. Sign the ASF CLA if necessary
 4. Keep polishing it until received enough LGTM
 5. Profit!
 
@@ -98,7 +98,7 @@ Note that the pekko-http sbt project is not as large as the Pekko one, so `sbt` 
 
 ## The `validatePullRequest` task
 
-The Pekko-http build includes a special task called `validatePullRequest` which investigates the changes made as well as dirty
+The Pekko HTTP build includes a special task called `validatePullRequest` which investigates the changes made as well as dirty
 (uncommitted changes) in your local working directory and figures out which projects are impacted by those changes,
 then running tests only on those projects.
 
@@ -114,7 +114,7 @@ To use the task simply type, and the output should include entries like shown be
 [info] Detected changes in directories: [docs, project, pekko-http-tests, pekko-protobuf, pekko-http-testkit, pekko-http, pekko-http-core, pekko-stream]
 ```
 
-By default changes are diffed with the `main` branch when working locally, if you want to validate against a different
+By default, changes are diffed with the `main` branch when working locally, if you want to validate against a different
 target PR branch you can do so by setting the PR_TARGET_BRANCH environment variable for SBT:
 
 ```
@@ -123,11 +123,11 @@ PR_TARGET_BRANCH=origin/example sbt validatePullRequest
 
 ## Developing against Pekko `main`
 
-Pekko-http codebase has not been switched yet to support Pekko "core" libs. This will happen soon. We currently build with Akka "core" libs.
+Pekko HTTP codebase is currently built with snapshot versions of the Pekko core libraries.
 
-Since Pekko HTTP is released separately to Pekko "core" yet some features require changes in Pekko itself, it is sometimes very useful
+Since Pekko HTTP is released separately to Pekko "core", yet some features require changes in Pekko itself, it is sometimes very useful
 to be able to develop Pekko HTTP with Pekko's sources used directly instead of the binary dependency. You can check out the Pekko 
-repository and run sbt with `-Dakka.sources=$HOME/akka` to develop Pekko HTTP with Pekko as a source dependency instead of a binary one.
+repository and run sbt with `-Dpekko.sources=$HOME/akka` to develop Pekko HTTP with Pekko as a source dependency instead of a binary one.
 
 This allows simple and fast iterations on changes that would need to be introduced in Pekko to develop a feature in HTTP that would require those.
 
@@ -135,7 +135,7 @@ This allows simple and fast iterations on changes that would need to be introduc
 Binary compatibility rules and guarantees are described in depth in the [Binary Compatibility Rules
 ](https://doc.akka.io/docs/akka/current/common/binary-compatibility-rules.html) section of the documentation.
 
-Pekko-http uses MiMa (which is short for [Lightbend Migration Manager](https://github.com/lightbend/migration-manager)) to
+Pekko HTTP uses MiMa (which is short for [Lightbend Migration Manager](https://github.com/lightbend/migration-manager)) to
 validate binary compatibility of incoming Pull Requests. If your PR fails due to binary compatibility issues, you may see 
 an error like this:
 
@@ -145,10 +145,10 @@ an error like this:
 [error]    filter with: ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.stream.scaladsl.FlowOps.foldAsync")
 ```
 
-In such situations it's good to consult with a core team member if the violation can be safely ignored (by adding the above snippet to the project's
+In such situations, it's good to consult with a core team member if the violation can be safely ignored (by adding the above snippet to the project's
 `src/main/mima-filters`), or if it would indeed break binary compatibility.
 
-Situations when it may be fine to ignore a MiMa issued warning include:
+Situations where it may be fine to ignore a MiMa issued warning include:
 
 - if it is touching any class marked as `private[pekko]`, `/** INTERNAL API*/` or similar markers
 - if it is concerning internal classes (often recognizable by package names like `dungeon`, `impl`, `internal` etc.)
@@ -163,7 +163,7 @@ incompatibility has been successfully ignored after adding it to the filter file
 
 ## Pull Request Requirements
 
-For a Pull Request to be considered at all it has to meet these requirements:
+For a Pull Request to be considered at all, it has to meet these requirements:
 
 1. Regardless if the code introduces new features or fixes bugs or regressions, it must have comprehensive tests.
 1. The code must be well documented in the Lightbend's standard documentation format (see the ‘Documentation’ section below).
@@ -173,7 +173,7 @@ For a Pull Request to be considered at all it has to meet these requirements:
     1. All source files in the project must have a Apache copyright notice in the file header.
     1. The Notices file for the project includes the Apache copyright notice and no other files contain copyright notices.  See https://www.apache.org/legal/src-headers.html for instructions for managing this approach for copyrights.
 
-    Pekko-http uses the first choice, having copyright notices in every file header.
+    Pekko HTTP uses the first choice, having copyright notices in every file header.
 
 
 ### Additional guidelines
@@ -214,7 +214,7 @@ The rendered documentation will be available under `docs/target/paradox/site/mai
 
 ### JavaDoc
 
-Pekko-http generates JavaDoc-style API documentation using the [genjavadoc](https://github.com/lightbend/genjavadoc) sbt plugin, since the sources are written mostly in Scala.
+Pekko HTTP generates JavaDoc-style API documentation using the [genjavadoc](https://github.com/lightbend/genjavadoc) sbt plugin, since the sources are written mostly in Scala.
 
 Generating JavaDoc is not enabled by default, as it's not needed on day-to-day development as it's expected to just work.
 If you'd like to check if you links and formatting looks good in JavaDoc (and not only in ScalaDoc), you can generate it by running:
@@ -277,9 +277,9 @@ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 ## Pull request validation workflow details
 
-Pekko-http uses Github Actions to validate PRs. It builds it, runs the tests and comments on the Pull Request in GitHub.
+Pekko HTTP uses Github Actions to validate PRs. It builds it, runs the tests and comments on the Pull Request in GitHub.
 
-In order to speed up PR validation times, the Pekko-http build contains a special sbt task called `validatePullRequest`,
+In order to speed up PR validation times, the Pekko HTTP build contains a special sbt task called `validatePullRequest`,
 which is smart enough to figure out which projects should be built if a PR only has changes in some parts of the project.
 For example, if your PR only touches `pekko-http-testkit`, no `pekko-parsing` tests need to be run, however the task
 will validate all projects that depend on `pekko-http-testkit` (including samples).
@@ -293,7 +293,7 @@ the validator to test all projects.
 
 ### Scala style 
 
-Pekko-http uses [scalafmt](https://scalameta.org/scalafmt/) to enforce some of the code style rules.
+Pekko HTTP uses [scalafmt](https://scalameta.org/scalafmt/) to enforce some of the code style rules.
 
 ### Java style
 

@@ -29,7 +29,7 @@ class HttpMessageSpec extends AnyWordSpec with Matchers {
 
     (thrown should have).message(
       s"Cannot establish effective URI of request to `/relative`, request has a relative URI and $details: " +
-      "consider setting `akka.http.server.default-host-header`")
+      "consider setting `pekko.http.server.default-host-header`")
   }
 
   "HttpRequest" should {

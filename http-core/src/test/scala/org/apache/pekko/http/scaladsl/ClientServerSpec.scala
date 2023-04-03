@@ -51,10 +51,10 @@ class ClientServerHttp2EnabledSpec extends ClientServerSpecBase(http2 = true)
 
 abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMaterializer(
       s"""
-     akka.http.server.preview.enable-http2 = $http2
-     akka.http.server.request-timeout = infinite
-     akka.http.server.log-unencrypted-network-bytes = 200
-     akka.http.client.log-unencrypted-network-bytes = 200
+     pekko.http.server.preview.enable-http2 = $http2
+     pekko.http.server.request-timeout = infinite
+     pekko.http.server.log-unencrypted-network-bytes = 200
+     pekko.http.client.log-unencrypted-network-bytes = 200
   """) with ScalaFutures {
   import system.dispatcher
 
@@ -872,7 +872,7 @@ Host: example.com
 
     "properly complete a simple request/response cycle when `modeled-header-parsing = off`" in Utils.assertAllStagesStopped {
       new TestSetup {
-        override def configOverrides = "akka.http.parsing.modeled-header-parsing = off"
+        override def configOverrides = "pekko.http.parsing.modeled-header-parsing = off"
 
         val (clientOut, clientIn) = openNewClientConnection()
         val (serverIn, serverOut) = acceptConnection()
@@ -906,8 +906,8 @@ Host: example.com
     "properly complete a simple request/response cycle when `max-content-length` is set to 0" in Utils.assertAllStagesStopped {
       new TestSetup {
         override def configOverrides = """
-            akka.http.client.parsing.max-content-length = 0
-            akka.http.server.parsing.max-content-length = 0
+            pekko.http.client.parsing.max-content-length = 0
+            pekko.http.server.parsing.max-content-length = 0
         """
 
         val (clientOut, clientIn) = openNewClientConnection()

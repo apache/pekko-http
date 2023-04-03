@@ -1,7 +1,7 @@
 # CachingDirectives
 
 Use these directives to "wrap" expensive operations with a caching layer that
-runs the wrapped operation only once and returns the the cached value for all
+runs the wrapped operation only once and returns the cached value for all
 future accesses for the same key (as long as the respective entry has not expired).
 See @ref[caching](../../../common/caching.md) for an introduction to how the
 caching support works.

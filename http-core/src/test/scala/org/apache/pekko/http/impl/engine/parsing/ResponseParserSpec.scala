@@ -33,7 +33,7 @@ import pekko.testkit._
 
 abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSpecWithMaterializer(
       """
-     akka.http.parsing.max-response-reason-length = 21
+     pekko.http.parsing.max-response-reason-length = 21
   """) {
   import system.dispatcher
 

@@ -18,8 +18,8 @@ import pekko.util.ByteString
 import scala.concurrent.Future
 
 class WithPriorKnowledgeSpec extends PekkoSpecWithMaterializer("""
-    akka.http.server.preview.enable-http2 = on
-    akka.http.server.http2.log-frames = on
+    pekko.http.server.preview.enable-http2 = on
+    pekko.http.server.http2.log-frames = on
   """) {
 
   "An HTTP server with PriorKnowledge" should {

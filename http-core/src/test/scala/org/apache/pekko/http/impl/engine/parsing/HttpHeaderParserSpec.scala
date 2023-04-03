@@ -26,9 +26,9 @@ import pekko.testkit.EventFilter
 
 abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends PekkoSpecWithMaterializer(
       """
-    akka.http.parsing.max-header-name-length = 60
-    akka.http.parsing.max-header-value-length = 1000
-    akka.http.parsing.header-cache.Host = 300
+    pekko.http.parsing.max-header-name-length = 60
+    pekko.http.parsing.max-header-value-length = 1000
+    pekko.http.parsing.header-cache.Host = 300
   """) {
   s"The HttpHeaderParser (mode: $mode)" should {
     "insert the 1st value" in new TestSetup(testSetupMode = TestSetupMode.Unprimed) {

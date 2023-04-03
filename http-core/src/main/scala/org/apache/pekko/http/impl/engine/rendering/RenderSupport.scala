@@ -159,6 +159,6 @@ private[http] object RenderSupport {
   }
 
   def suppressionWarning(log: LoggingAdapter, h: HttpHeader,
-      msg: String = "the akka-http-core layer sets this header automatically!"): Unit =
+      msg: String = "the pekko-http-core layer sets this header automatically!"): Unit =
     log.warning("Explicitly set HTTP header '{}' is ignored, {}", h, msg)
 }

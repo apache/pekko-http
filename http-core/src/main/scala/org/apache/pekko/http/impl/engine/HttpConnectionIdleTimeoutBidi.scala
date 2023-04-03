@@ -34,7 +34,7 @@ private[pekko] object HttpConnectionIdleTimeoutBidi {
     val ex = new HttpIdleTimeoutException(
       "HTTP idle-timeout encountered" + connectionToString + ", " +
       "no bytes passed in the last " + idleTimeout + ". " +
-      "This is configurable by akka.http.[server|client].idle-timeout.", idleTimeout)
+      "This is configurable by pekko.http.[server|client].idle-timeout.", idleTimeout)
 
     val mapError = Flow[ByteString].mapError { case t: TimeoutException => ex }
 

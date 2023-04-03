@@ -90,7 +90,7 @@ private[pekko] final case class ConnectionPoolSettingsImpl(
 /** INTERNAL API */
 @InternalApi
 private[pekko] object ConnectionPoolSettingsImpl
-    extends SettingsCompanionImpl[ConnectionPoolSettingsImpl]("akka.http.host-connection-pool") {
+    extends SettingsCompanionImpl[ConnectionPoolSettingsImpl]("pekko.http.host-connection-pool") {
 
   def fromSubConfig(root: Config, c: Config): ConnectionPoolSettingsImpl = {
     new ConnectionPoolSettingsImpl(

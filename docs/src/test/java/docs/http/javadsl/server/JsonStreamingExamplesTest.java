@@ -137,7 +137,7 @@ public class JsonStreamingExamplesTest extends JUnitRouteTest {
     JsonEntityStreamingSupport support = EntityStreamingSupport.json();
 
     // imagine receiving such response from a service:
-    String payload = "{\"uid\":1,\"txt\":\"#Akka rocks!\"}\n" +
+    String payload = "{\"uid\":1,\"txt\":\"#Pekko rocks!\"}\n" +
         "{\"uid\":2,\"txt\":\"Streaming is so hot right now!\"}\n" +
         "{\"uid\":3,\"txt\":\"You cannot enter the same river twice.\"}";
     HttpEntity.Strict entity = HttpEntities.create(ContentTypes.APPLICATION_JSON, payload);

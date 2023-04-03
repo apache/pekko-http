@@ -14,9 +14,9 @@ object HttpHeaderParserTestBed extends App {
   val testConf: Config = ConfigFactory.parseString("""
     pekko.event-handlers = ["org.apache.pekko.testkit.TestEventListener"]
     pekko.loglevel = ERROR
-    akka.http.parsing.max-header-name-length = 20
-    akka.http.parsing.max-header-value-length = 21
-    akka.http.parsing.header-cache.Host = 300""")
+    pekko.http.parsing.max-header-name-length = 20
+    pekko.http.parsing.max-header-value-length = 21
+    pekko.http.parsing.header-cache.Host = 300""")
   val system: ActorSystem = ActorSystem("HttpHeaderParserTestBed", testConf)
 
   val parser = HttpHeaderParser.prime {

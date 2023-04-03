@@ -72,14 +72,14 @@ sealed trait HttpEntity extends jm.HttpEntity {
    * Collects all possible parts and returns a potentially future Strict entity for easier processing.
    * The Future is failed with an TimeoutException if the stream isn't completed after the given timeout,
    * or with a EntityStreamException when the end of the entity is not reached within the maximum number of bytes
-   * as configured in `akka.http.parsing.max-to-strict-bytes`. Not that this method does not support different
+   * as configured in `pekko.http.parsing.max-to-strict-bytes`. Not that this method does not support different
    * defaults for client- and server use: if you want that, use the `toStrict` method and pass in an explicit
    * maximum number of bytes.
    */
   def toStrict(timeout: FiniteDuration)(implicit fm: Materializer): Future[HttpEntity.Strict] = {
     import pekko.http.impl.util._
     val config = fm.asInstanceOf[ActorMaterializer].system.settings.config
-    toStrict(timeout, config.getPossiblyInfiniteBytes("akka.http.parsing.max-to-strict-bytes"))
+    toStrict(timeout, config.getPossiblyInfiniteBytes("pekko.http.parsing.max-to-strict-bytes"))
   }
 
   /**
@@ -626,14 +626,14 @@ object HttpEntity {
   /**
    * Deprecated: no-op, not explicitly needed any more.
    */
-  @deprecated("Not needed explicitly any more. ", "10.1.5")
+  @deprecated("Not needed explicitly any more. ", "Akka HTTP 10.1.5")
   def limitableByteSource[Mat](source: Source[ByteString, Mat]): Source[ByteString, Mat] =
     source
 
   /**
    * Deprecated: no-op, not explicitly needed any more.
    */
-  @deprecated("Not needed explicitly any more. ", "10.1.5")
+  @deprecated("Not needed explicitly any more. ", "Akka HTTP 10.1.5")
   def limitableChunkSource[Mat](source: Source[ChunkStreamPart, Mat]): Source[ChunkStreamPart, Mat] =
     source
 

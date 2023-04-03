@@ -29,7 +29,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
   // #models
 
   val tweets = List(
-    Tweet(1, "#Akka rocks!"),
+    Tweet(1, "#Pekko rocks!"),
     Tweet(2, "Streaming is so hot right now!"),
     Tweet(3, "You cannot enter the same river twice."))
   def getTweets = Source(tweets)
@@ -61,7 +61,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
     Get("/tweets").withHeaders(AcceptJson) ~> route ~> check {
       responseAs[String] shouldEqual
       """[""" +
-      """{"txt":"#Akka rocks!","uid":1},""" +
+      """{"txt":"#Pekko rocks!","uid":1},""" +
       """{"txt":"Streaming is so hot right now!","uid":2},""" +
       """{"txt":"You cannot enter the same river twice.","uid":3}""" +
       """]"""
@@ -93,7 +93,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
 
     Get("/tweets").withHeaders(AcceptJson) ~> route ~> check {
       responseAs[String] shouldEqual
-      """{"txt":"#Akka rocks!","uid":1}""" + "\n" +
+      """{"txt":"#Pekko rocks!","uid":1}""" + "\n" +
       """{"txt":"Streaming is so hot right now!","uid":2}""" + "\n" +
       """{"txt":"You cannot enter the same river twice.","uid":3}""" + "\n"
     }
@@ -110,7 +110,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
     implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
       EntityStreamingSupport.json()
 
-    val input = """{"uid":1,"txt":"#Akka rocks!"}""" + "\n" +
+    val input = """{"uid":1,"txt":"#Pekko rocks!"}""" + "\n" +
       """{"uid":2,"txt":"Streaming is so hot right now!"}""" + "\n" +
       """{"uid":3,"txt":"You cannot enter the same river twice."}"""
 
@@ -128,7 +128,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
     // tests ------------------------------------------------------------
     val all = source.runWith(Sink.seq).futureValue
     all.head.uid should ===(1)
-    all.head.txt should ===("#Akka rocks!")
+    all.head.txt should ===("#Pekko rocks!")
     all.drop(1).head.uid should ===(2)
     all.drop(1).head.txt should ===("Streaming is so hot right now!")
     all.drop(2).head.uid should ===(3)
@@ -146,7 +146,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
     implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
       EntityStreamingSupport.json()
 
-    val input = """{"uid":1,"txt":"#Akka rocks!"}""" + "\n" +
+    val input = """{"uid":1,"txt":"#Pekko rocks!"}""" + "\n" +
       """{"uid":2,"txt":"Streaming is so hot right now!"}""" + "\n" +
       """{"uid":3,"txt":"You cannot enter the same river twice."}"""
 
@@ -162,7 +162,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
     // tests ------------------------------------------------------------
     val all = value.runWith(Sink.seq).futureValue
     all.head.uid should ===(1)
-    all.head.txt should ===("#Akka rocks!")
+    all.head.txt should ===("#Pekko rocks!")
     all.drop(1).head.uid should ===(2)
     all.drop(1).head.txt should ===("Streaming is so hot right now!")
     all.drop(2).head.uid should ===(3)
@@ -192,7 +192,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
 
     Get("/tweets").withHeaders(AcceptCsv) ~> route ~> check {
       responseAs[String] shouldEqual
-      "1,#Akka rocks!" + "\n" +
+      "1,#Pekko rocks!" + "\n" +
       "2,Streaming is so hot right now!" + "\n" +
       "3,You cannot enter the same river twice." + "\n"
     }
@@ -216,7 +216,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
 
     Get("/tweets").withHeaders(AcceptCsv) ~> route ~> check {
       responseAs[String] shouldEqual
-      """1,"Text: #Akka rocks!"""" + "\n" +
+      """1,"Text: #Pekko rocks!"""" + "\n" +
       """2,"Text: Streaming is so hot right now!"""" + "\n" +
       """3,"Text: You cannot enter the same river twice."""" + "\n"
     }
@@ -261,7 +261,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
 
     Get("/tweets").withHeaders(AcceptCsv) ~> route ~> check {
       responseAs[String] shouldEqual
-      "1,#Akka rocks!" + "\n" +
+      "1,#Pekko rocks!" + "\n" +
       "2,Streaming is so hot right now!" + "\n" +
       "3,You cannot enter the same river twice." + "\n"
     }

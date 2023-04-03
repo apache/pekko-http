@@ -47,7 +47,7 @@ private[engine] class HeaderParserBenchmark {
 
   private def settings() = {
     val root = ConfigFactory.load()
-    val settings = ParserSettingsImpl.fromSubConfig(root, root.getConfig("akka.http.server.parsing"))
+    val settings = ParserSettingsImpl.fromSubConfig(root, root.getConfig("pekko.http.server.parsing"))
     if (withCustomMediaTypes == "no") settings
     else settings.withCustomMediaTypes(
       MediaType.customWithOpenCharset("application", "json"))

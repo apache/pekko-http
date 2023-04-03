@@ -47,8 +47,8 @@ object TestParsingErrorHandler extends ParsingErrorHandler {
 class HttpServerSpec extends PekkoSpec(
       """pekko.loggers = ["org.apache.pekko.http.impl.util.SilenceAllTestEventListener"]
      pekko.loglevel = DEBUG
-     akka.http.server.log-unencrypted-network-bytes = 100
-     akka.http.server.request-timeout = infinite
+     pekko.http.server.log-unencrypted-network-bytes = 100
+     pekko.http.server.request-timeout = infinite
   """) with Inside with WithLogCapturing { spec =>
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 

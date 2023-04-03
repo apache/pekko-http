@@ -108,7 +108,7 @@ object TestServer extends App {
   lazy val index =
     <html>
       <body>
-        <h1>Say hello to <i>akka-http-core</i>!</h1>
+        <h1>Say hello to <i>pekko-http-core</i>!</h1>
         <p>Defined resources:</p>
         <ul>
           <li><a href="/ping">/ping</a></li>

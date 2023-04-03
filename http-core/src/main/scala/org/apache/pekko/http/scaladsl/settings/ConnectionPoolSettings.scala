@@ -46,7 +46,7 @@ abstract class ConnectionPoolSettings extends js.ConnectionPoolSettings { self: 
   /**
    * The underlying transport used to connect to hosts. By default [[ClientTransport.TCP]] is used.
    */
-  @deprecated("Deprecated in favor of connectionSettings.transport", "10.1.0")
+  @deprecated("Deprecated in favor of connectionSettings.transport", "Akka HTTP 10.1.0")
   def transport: ClientTransport = self.connectionSettings.transport
 
   /** The time after which the pool will drop an entity automatically if it wasn't read or discarded */
@@ -105,9 +105,9 @@ object ConnectionPoolSettings extends SettingsCompanion[ConnectionPoolSettings] 
     import scala.collection.JavaConverters._
 
     val hostOverrides =
-      config.getConfigList("akka.http.host-connection-pool.per-host-override").asScala.toList.map { cfg =>
+      config.getConfigList("pekko.http.host-connection-pool.per-host-override").asScala.toList.map { cfg =>
         ConnectionPoolSettingsImpl.hostRegex(cfg.getString("host-pattern")) ->
-        ConnectionPoolSettingsImpl(cfg.atPath("akka.http.host-connection-pool").withFallback(config))
+        ConnectionPoolSettingsImpl(cfg.atPath("pekko.http.host-connection-pool").withFallback(config))
       }
 
     ConnectionPoolSettingsImpl(config).copy(hostOverrides = hostOverrides)

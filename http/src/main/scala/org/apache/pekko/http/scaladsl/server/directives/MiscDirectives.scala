@@ -78,7 +78,7 @@ trait MiscDirectives {
 
   /**
    * Fails the stream with [[pekko.http.scaladsl.model.EntityStreamSizeException]] if its request entity size exceeds
-   * given limit. Limit given as parameter overrides limit configured with `akka.http.parsing.max-content-length`.
+   * given limit. Limit given as parameter overrides limit configured with `pekko.http.parsing.max-content-length`.
    *
    * Beware that request entity size check is executed when entity is consumed.
    *
@@ -88,7 +88,7 @@ trait MiscDirectives {
     mapRequestContext(_.mapRequest(_.mapEntity(_.withSizeLimit(maxBytes))))
 
   /**
-   * Disables the size limit (configured by `akka.http.parsing.max-content-length` by default) checking on the incoming
+   * Disables the size limit (configured by `pekko.http.parsing.max-content-length` by default) checking on the incoming
    * [[HttpRequest]] entity.
    * Can be useful when handling arbitrarily large data uploads in specific parts of your routes.
    *

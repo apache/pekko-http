@@ -15,12 +15,12 @@ inThisBuild(Def.settings(
   organization := "org.apache.pekko",
   apiURL := {
     val apiVersion = if (isSnapshot.value) "current" else version.value
-    Some(url(s"https://doc.akka.io/api/akka-http/$apiVersion/"))
+    Some(url(s"https://pekko.apache.org/api/pekko-http/$apiVersion/"))
   },
   scmInfo := Some(
     ScmInfo(url("https://github.com/apache/incubator-pekko-http"), "git@github.com:apache/incubator-pekko-http.git")),
   licenses := Seq("Apache-2.0" -> url("https://opensource.org/licenses/Apache-2.0")),
-  description := "Pekko Http: Modern, fast, asynchronous, streaming-first HTTP server and client.",
+  description := "Apache Pekko Http: Modern, fast, asynchronous, streaming-first HTTP server and client.",
   testOptions ++= Seq(
     Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
     Tests.Argument(TestFrameworks.ScalaTest, "-oDF")),
@@ -390,7 +390,7 @@ lazy val httpScalafixTests =
     .enablePlugins(ScalafixTestkitPlugin)
 
 lazy val docs = project("docs")
-  .enablePlugins(ParadoxPlugin, NoPublish, PublishRsyncPlugin)
+  .enablePlugins(ParadoxPlugin, PekkoParadoxPlugin, NoPublish, PublishRsyncPlugin)
   .disablePlugins(MimaPlugin)
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoDependency.docs)
   .addPekkoModuleDependency("pekko-actor-typed", "provided", PekkoDependency.docs)
@@ -431,24 +431,21 @@ lazy val docs = project("docs")
     paradoxGroups := Map("Language" -> Seq("Scala", "Java")),
     Compile / paradoxProperties ++= Map(
       "project.name" -> "Apache Pekko HTTP",
-      "canonical.base_url" -> "https://pekko.apache.org/docs/akka-http/current",
-      "akka.version" -> PekkoDependency.docs.version,
+      "canonical.base_url" -> "https://pekko.apache.org/docs/pekko-http/current",
+      "pekko.version" -> PekkoDependency.docs.version,
       "akka.minimum.version25" -> PekkoDependency.minimumExpectedPekkoVersion,
       "akka.minimum.version26" -> PekkoDependency.minimumExpectedPekko26Version,
       "jackson.xml.version" -> Dependencies.jacksonXmlVersion,
       "scalafix.version" -> _root_.scalafix.sbt.BuildInfo.scalafixVersion, // grab from scalafix plugin directly
       "extref.pekko-docs.base_url" -> s"https://pekko.apache.org/docs/pekko/current/%s",
-      "javadoc.akka.http.base_url" -> {
-        val v = if (isSnapshot.value) "current" else version.value
-        s"https://doc.akka.io/japi/akka-http/$v"
-      },
       "javadoc.akka.base_url" -> s"https://doc.akka.io/japi/akka/${PekkoDependency.docs.link}",
       "javadoc.akka.link_style" -> "direct",
-      "scaladoc.akka.http.base_url" -> {
+      "scaladoc.pekko.http.base_url" -> {
         val v = if (isSnapshot.value) "current" else version.value
-        s"https://doc.akka.io/api/akka-http/$v"
+        s"https://pekko.apache.org/api/pekko/current/$v/org/apache"
       },
-      "scaladoc.akka.base_url" -> s"https://doc.akka.io/api/akka/${PekkoDependency.docs.link}",
+      "scaladoc.pekko.base_url" -> "https://pekko.apache.org/api/pekko/current/org/apache",
+      "javadoc.base_url" -> "https://pekko.apache.org/japi/pekko-http/current/org/apache",
       "algolia.docsearch.api_key" -> "0ccbb8bf5148554a406fbf07df0a93b9",
       "algolia.docsearch.index_name" -> "akka-http",
       "google.analytics.account" -> "UA-21117439-1",

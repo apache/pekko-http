@@ -48,8 +48,8 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
        serialize-messages = off
        default-dispatcher.throughput = 100
      }
-     akka.http.client.log-unencrypted-network-bytes = 200
-     akka.http.server.log-unencrypted-network-bytes = 200
+     pekko.http.client.log-unencrypted-network-bytes = 200
+     pekko.http.server.log-unencrypted-network-bytes = 200
   """) with Eventually {
   lazy val singleElementBufferMaterializer = materializer
   val defaultSettings =
