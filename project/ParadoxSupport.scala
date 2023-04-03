@@ -31,15 +31,28 @@ object ParadoxSupport {
           case _                                   => sys.error("Source references are not supported")
         }
         val file = SourceDirective.resolveFile("signature", source, page.file, variables)
-        val Signature = """\s*((def|val|type) (\w+)(?=[:(\[]).*)(\s+\=.*)""".r // stupid approximation to match a signature
+
+        // The following are stupid approximation's to match a signature/s
+        val TypeSignature = """\s*(type (\w+)(?=[:(\[]).*)(\s+\=.*)""".r
         // println(s"Looking for signature regex '$Signature'")
-        val text =
-          Source.fromFile(file)(Codec.UTF8).getLines.collect {
-            case line @ Signature(signature, kind, l, definition) if labels contains l.toLowerCase() =>
-              // println(s"Found label '$l' with sig '$full' in line $line")
-              if (kind == "type") signature + definition
-              else signature
-          }.mkString("\n")
+        val lines = Source.fromFile(file)(Codec.UTF8).getLines.toList
+
+        val types = lines.collect {
+          case line @ TypeSignature(signature, l, definition) if labels contains l.toLowerCase() =>
+            // println(s"Found label '$l' with sig '$full' in line $line")
+            signature + definition
+        }
+
+        val Signature = """.*((def|val) (\w+)(?=[:(\[]).*)""".r
+
+        val other = lines.mkString.split("=").collect {
+          case line @ Signature(signature, kind, l) if labels contains l.toLowerCase() =>
+            // println(s"Found label '$l' with sig '$full' in line $line")
+            signature
+              .replaceAll("""\s{2,}""", " ") // Due to formatting with new lines its possible to have excessive whitespace
+        }
+
+        val text = (types ++ other).mkString("\n")
 
         if (text.trim.isEmpty) {
           ctx.error(
