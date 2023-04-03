@@ -14,7 +14,7 @@
 package org.apache.pekko.http.impl.engine.rendering
 
 import org.apache.pekko
-import pekko.parboiled2.util.Base64
+import org.parboiled2.util.Base64
 
 import scala.collection.immutable
 import pekko.event.LoggingAdapter

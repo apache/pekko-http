@@ -26,8 +26,8 @@ import pekko.util.ConstantFun
 
 import scala.util.control.NonFatal
 import pekko.http.impl.util.SingletonException
-import pekko.parboiled2._
-import pekko.parboiled2.support.hlist._
+import org.parboiled2._
+import org.parboiled2.support.hlist._
 import pekko.http.scaladsl.model._
 
 /**
@@ -119,11 +119,11 @@ private[http] object HeaderParser {
   object EmptyCookieException extends SingletonException("Cookie header contained no parsable cookie values.")
 
   def lookupParser(headerName: String, settings: Settings = DefaultSettings): Option[String => HeaderParser.Result] =
-    dispatch.lookup(headerName).map { runner => (value: String) =>
-      import pekko.parboiled2.EOI
+    Some { (value: String) =>
+      import org.parboiled2.EOI
       val v = value + EOI // this makes sure the parser isn't broken even if there's no trailing garbage in this value
       val parser = new HeaderParser(v, settings)
-      runner(parser) match {
+      dispatch(parser, headerName) match {
         case r @ Success(_) if parser.cursor == v.length => r
         case r @ Success(_) =>
           Failure(ErrorInfo(

@@ -14,7 +14,6 @@
 package org.apache.pekko.http.impl.model.parser
 
 import org.apache.pekko
-import pekko.parboiled2.Parser
 import pekko.http.scaladsl.model.headers._
 import CacheDirectives._
 

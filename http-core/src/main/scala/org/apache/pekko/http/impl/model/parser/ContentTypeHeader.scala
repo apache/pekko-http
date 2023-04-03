@@ -17,10 +17,10 @@ import scala.annotation.tailrec
 import scala.collection.immutable.TreeMap
 
 import org.apache.pekko
-import pekko.parboiled2.Parser
+import org.parboiled2.Parser
 import pekko.http.scaladsl.model._
 
-private[parser] trait ContentTypeHeader { this: Parser with CommonRules with CommonActions with StringBuilding =>
+private[parser] trait ContentTypeHeader { this: Parser with CommonRules with CommonActions =>
 
   // http://tools.ietf.org/html/rfc7231#section-3.1.1.5
   def `content-type` = rule {

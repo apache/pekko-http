@@ -14,7 +14,7 @@
 package org.apache.pekko.http.impl.model.parser
 
 import org.apache.pekko
-import pekko.parboiled2.CharPredicate
+import org.parboiled2.CharPredicate
 
 // efficient encoding of *7-bit* ASCII characters
 private[http] object CharacterClasses {
@@ -77,7 +77,7 @@ private[http] object CharacterClasses {
   // https://tools.ietf.org/html/rfc6265#section-4.1.1
   val `cookie-octet-rfc-6265` =
     CharPredicate('\u0021', '\u0023' to '\u002b', '\u002d' to '\u003a', '\u003c' to '\u005b', '\u005d' to '\u007e')
-  val `cookie-separator` = CharPredicate(pekko.parboiled2.EOI, ';')
+  val `cookie-separator` = CharPredicate(org.parboiled2.EOI, ';')
   val `cookie-octet-raw` =
     CharPredicate('\u0020' to '\u007e') ++
     CharPredicate((x: Char) => x > 0x7F && java.lang.Character.isDefined(x)) -- `cookie-separator`
@@ -94,7 +94,7 @@ private[http] object CharacterClasses {
   val DIGIT04 = CharPredicate('0' to '4')
   val DIGIT05 = CharPredicate('0' to '5')
   def DIGIT19 = CharPredicate.Digit19
-  val colonSlashEOI = CharPredicate(':', '/', pekko.parboiled2.EOI)
+  val colonSlashEOI = CharPredicate(':', '/', org.parboiled2.EOI)
   val `date-sep` = CharPredicate("""- """)
 
   require(`qdtext-base`.isMaskBased) // make sure we didn't introduce any non-7bit-chars by accident which

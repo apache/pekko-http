@@ -18,7 +18,7 @@ import java.net.InetAddress
 import org.apache.pekko
 import pekko.http.impl.util.StringRendering
 import org.scalatest.matchers.{ MatchResult, Matcher }
-import pekko.parboiled2.UTF8
+import org.parboiled2.UTF8
 import Uri._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

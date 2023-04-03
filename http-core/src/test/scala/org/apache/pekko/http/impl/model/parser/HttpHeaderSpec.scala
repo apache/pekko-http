@@ -377,8 +377,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     "If-Match dispatching" in {
       // https://github.com/apache/incubator-pekko-http/issues/443 Check dispatching for "if-match" does not throw "RuleNotFound"
       import scala.util._
-      import org.apache.pekko.parboiled2.DynamicRuleHandler
-      import org.apache.pekko.parboiled2.support.hlist.{ ::, HNil }
+      import org.parboiled2.DynamicRuleHandler
+      import org.parboiled2.support.hlist.{ ::, HNil }
       val Failure(cause) =
         Try(HeaderParser.dispatch(null.asInstanceOf[DynamicRuleHandler[HeaderParser, HttpHeader :: HNil]], "if-match"))
       cause.getClass should be(classOf[NullPointerException])

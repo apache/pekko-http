@@ -16,7 +16,7 @@ package org.apache.pekko.http.impl.model.parser
 import scala.collection.immutable.TreeMap
 
 import org.apache.pekko
-import pekko.parboiled2.Parser
+import org.parboiled2.Parser
 import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util.ISO88591
 import pekko.http.impl.util.UTF8
@@ -26,7 +26,7 @@ import pekko.http.scaladsl.model.Uri
 
 import java.nio.charset.Charset
 
-private[parser] trait ContentDispositionHeader { this: Parser with CommonRules with CommonActions with StringBuilding =>
+private[parser] trait ContentDispositionHeader { this: Parser with CommonRules with CommonActions =>
 
   // http://tools.ietf.org/html/rfc6266#section-4.1
   def `content-disposition` = rule {

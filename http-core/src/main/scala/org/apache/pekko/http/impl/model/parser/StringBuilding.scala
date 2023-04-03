@@ -16,7 +16,7 @@
 
 package org.apache.pekko.http.impl.model.parser
 
-import org.apache.pekko.parboiled2._
+import org.parboiled2._
 
 /**
  * For certain high-performance use-cases it is better to construct Strings

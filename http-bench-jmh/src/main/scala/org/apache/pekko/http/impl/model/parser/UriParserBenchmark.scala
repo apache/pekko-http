@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 
 import org.apache.pekko
 import pekko.http.scaladsl.model.Uri
-import pekko.parboiled2.UTF8
+import org.parboiled2.UTF8
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 

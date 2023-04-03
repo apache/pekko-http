@@ -19,11 +19,12 @@ import scala.collection.immutable.TreeMap
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
-import pekko.parboiled2._
-import pekko.parboiled2.support.hlist._
+import org.parboiled2._
+import org.parboiled2.support.hlist._
 
-private[parser] trait CommonRules { this: Parser with StringBuilding =>
+private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   protected def maxCommentParsingDepth: Int
+
   import CharacterClasses._
 
   // ******************************************************************************************
@@ -264,7 +265,7 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
   }
 
   def `cookie-pair`: Rule1[HttpCookiePair] = rule {
-    `cookie-name` ~ ws('=') ~ `cookie-value` ~> (createCookiePair _)
+    `cookie-name` ~ ws('=') ~ this.`cookie-value` ~> (this.createCookiePair _)
   }
 
   def `cookie-name` = rule { token }
@@ -492,5 +493,5 @@ private[parser] trait CommonRules { this: Parser with StringBuilding =>
   }
 
   def newUriParser(input: ParserInput): UriParser
-  def uriReference: Rule1[Uri] = rule { runSubParser(newUriParser(_).`URI-reference-pushed`) }
+  def uriReference: Rule1[Uri] = rule { runSubParser(this.newUriParser(_).`URI-reference-pushed`) }
 }

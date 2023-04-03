@@ -18,11 +18,11 @@ import scala.collection.immutable
 import scala.collection.immutable.TreeMap
 
 import org.apache.pekko
-import pekko.parboiled2.Parser
+import org.parboiled2.Parser
 import pekko.http.scaladsl.model.{ IllegalUriException, ParsingException }
 import pekko.http.scaladsl.model.headers._
 
-private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActions with StringBuilding =>
+private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActions =>
   import CharacterClasses._
 
   // http://tools.ietf.org/html/rfc5988#section-5

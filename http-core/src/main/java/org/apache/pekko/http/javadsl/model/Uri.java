@@ -17,7 +17,7 @@ import java.nio.charset.Charset;
 
 import org.apache.pekko.http.impl.model.JavaUri;
 import org.apache.pekko.http.impl.model.UriJavaAccessor;
-import org.apache.pekko.parboiled2.ParserInput$;
+import org.parboiled2.ParserInput$;
 
 import java.util.Optional;
 

@@ -16,12 +16,12 @@ package org.apache.pekko.http.impl.model.parser
 import scala.collection.immutable.TreeMap
 
 import org.apache.pekko
-import pekko.parboiled2.Parser
+import org.parboiled2.Parser
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.model.{ MediaRange, MediaRanges }
 import pekko.http.impl.util._
 
-private[parser] trait AcceptHeader { this: Parser with CommonRules with CommonActions with StringBuilding =>
+private[parser] trait AcceptHeader { this: Parser with CommonRules with CommonActions =>
   import CharacterClasses._
 
   // http://tools.ietf.org/html/rfc7231#section-5.3.2

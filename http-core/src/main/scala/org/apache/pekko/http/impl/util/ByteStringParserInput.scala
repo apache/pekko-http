@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.parboiled2.ParserInput.DefaultParserInput
+import org.parboiled2.ParserInput.DefaultParserInput
 import pekko.util.ByteString
 
 /**

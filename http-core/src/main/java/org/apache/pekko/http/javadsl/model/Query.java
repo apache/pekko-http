@@ -18,8 +18,8 @@ import org.apache.pekko.http.impl.model.UriJavaAccessor;
 import org.apache.pekko.http.scaladsl.model.*;
 import org.apache.pekko.http.javadsl.model.HttpCharset;
 import org.apache.pekko.japi.Pair;
-import org.apache.pekko.parboiled2.CharPredicate;
-import org.apache.pekko.parboiled2.ParserInput$;
+import org.parboiled2.CharPredicate;
+import org.parboiled2.ParserInput$;
 
 import java.nio.charset.Charset;
 import java.util.List;

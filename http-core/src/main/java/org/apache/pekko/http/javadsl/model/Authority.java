@@ -44,7 +44,7 @@ public abstract class Authority {
    */
   public static Authority create(String authority) {
     return org.apache.pekko.http.scaladsl.model.Uri.Authority$.MODULE$.parse(
-      org.apache.pekko.parboiled2.ParserInput$.MODULE$.apply(authority),
+      org.parboiled2.ParserInput$.MODULE$.apply(authority),
       Charset.forName("UTF8"),
       org.apache.pekko.http.scaladsl.model.Uri$ParsingMode$Relaxed$.MODULE$
     );

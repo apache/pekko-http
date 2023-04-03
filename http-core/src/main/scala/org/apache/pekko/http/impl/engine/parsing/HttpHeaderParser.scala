@@ -28,7 +28,7 @@ import pekko.http.scaladsl.settings.ParserSettings.ErrorLoggingVerbosity
 import pekko.http.scaladsl.settings.ParserSettings
 
 import scala.annotation.tailrec
-import pekko.parboiled2.CharUtils
+import org.parboiled2.CharUtils
 import pekko.util.ByteString
 import pekko.http.ccompat._
 import pekko.http.impl.util._

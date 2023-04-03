@@ -15,7 +15,7 @@ package org.apache.pekko.http.impl.model.parser
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.parboiled2.Parser
+import org.parboiled2.Parser
 import pekko.http.scaladsl.model.RemoteAddress
 import pekko.http.scaladsl.model.headers._
 
@@ -26,7 +26,7 @@ import pekko.http.scaladsl.model.headers._
  */
 @InternalApi
 private[parser] trait SimpleHeaders {
-  this: Parser with CommonRules with CommonActions with IpAddressParsing with StringBuilding =>
+  this: Parser with CommonRules with CommonActions with IpAddressParsing =>
 
   // http://tools.ietf.org/html/rfc7233#section-2.3
   def `accept-ranges` = rule {

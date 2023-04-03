@@ -15,7 +15,7 @@ package org.apache.pekko.http.impl.engine.rendering
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.parboiled2.CharUtils
+import org.parboiled2.CharUtils
 import pekko.stream.{ Attributes, SourceShape }
 import pekko.util.ByteString
 import pekko.event.LoggingAdapter

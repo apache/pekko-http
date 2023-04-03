@@ -19,7 +19,7 @@ import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.Uri
-import pekko.parboiled2.UTF8
+import org.parboiled2.UTF8
 
 import scala.collection.immutable
 import scala.language.implicitConversions

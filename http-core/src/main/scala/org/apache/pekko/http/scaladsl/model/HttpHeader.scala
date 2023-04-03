@@ -17,7 +17,7 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 
 import scala.util.{ Failure, Success }
-import pekko.parboiled2.ParseError
+import org.parboiled2.ParseError
 import pekko.http.impl.util.ToStringRenderable
 import pekko.http.impl.model.parser.{ CharacterClasses, HeaderParser }
 import pekko.http.javadsl.{ model => jm }
@@ -87,7 +87,7 @@ object HttpHeader {
   def parse(
       name: String, value: String, settings: HeaderParser.Settings = HeaderParser.DefaultSettings): ParsingResult =
     if (name.forall(c => CharacterClasses.tchar(c))) {
-      import pekko.parboiled2.Parser.DeliveryScheme.Try
+      import org.parboiled2.Parser.DeliveryScheme.Try
       val parser = new HeaderParser(value, settings)
       parser.`header-field-value`.run() match {
         case Success(preProcessedValue) =>

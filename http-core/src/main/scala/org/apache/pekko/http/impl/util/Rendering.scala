@@ -22,7 +22,7 @@ import pekko.annotation.InternalApi
 
 import scala.annotation.tailrec
 import scala.collection.{ immutable, LinearSeq }
-import pekko.parboiled2.{ CharPredicate, CharUtils }
+import org.parboiled2.{ CharPredicate, CharUtils }
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.scaladsl.model.HttpHeader
 import pekko.util.{ ByteString, ByteStringBuilder }
