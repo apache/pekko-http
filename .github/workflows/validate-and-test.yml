@@ -34,9 +34,6 @@ jobs:
           path: project/**/target
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
 
-      - name: Check headers
-        run: sbt headerCheckAll
-
       - name: Check for missing formatting
         run: git diff --exit-code --color
 

@@ -33,9 +33,7 @@ object CopyrightHeader extends AutoPlugin {
             HeaderFileType.scala -> cStyleComment,
             HeaderFileType.java -> cStyleComment,
             HeaderFileType("template") -> cStyleComment)))
-    },
-    ValidatePR / additionalTasks += Compile / headerCheck,
-    ValidatePR / additionalTasks += Test / headerCheck)
+    })
 
   val apacheHeader: String =
     """Licensed to the Apache Software Foundation (ASF) under one or more
