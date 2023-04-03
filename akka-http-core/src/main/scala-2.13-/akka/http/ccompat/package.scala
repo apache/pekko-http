@@ -5,7 +5,7 @@
 package akka.http
 
 import scala.collection.generic.{ CanBuildFrom, GenericCompanion }
-import scala.collection.{ GenTraversable, mutable }
+import scala.collection.{ mutable, GenTraversable }
 import scala.{ collection => c }
 
 /**
@@ -19,7 +19,7 @@ package object ccompat {
   import CompatImpl._
 
   implicit def genericCompanionToCBF[A, CC[X] <: GenTraversable[X]](
-    fact: GenericCompanion[CC]): CanBuildFrom[Any, A, CC[A]] =
+      fact: GenericCompanion[CC]): CanBuildFrom[Any, A, CC[A]] =
     simpleCBF(fact.newBuilder[A])
 
   // This really belongs into scala.collection but there's already a package object
@@ -43,8 +43,10 @@ package ccompat {
     def addOne(elem: Elem): this.type = self.+=(elem)
   }
 
-  trait QuerySeqOptimized extends scala.collection.immutable.LinearSeq[(String, String)] with scala.collection.LinearSeqOptimized[(String, String), akka.http.scaladsl.model.Uri.Query] {
+  trait QuerySeqOptimized extends scala.collection.immutable.LinearSeq[(String, String)]
+      with scala.collection.LinearSeqOptimized[(String, String), akka.http.scaladsl.model.Uri.Query] {
     self: akka.http.scaladsl.model.Uri.Query =>
-    override def newBuilder: mutable.Builder[(String, String), akka.http.scaladsl.model.Uri.Query] = akka.http.scaladsl.model.Uri.Query.newBuilder
+    override def newBuilder: mutable.Builder[(String, String), akka.http.scaladsl.model.Uri.Query] =
+      akka.http.scaladsl.model.Uri.Query.newBuilder
   }
 }
