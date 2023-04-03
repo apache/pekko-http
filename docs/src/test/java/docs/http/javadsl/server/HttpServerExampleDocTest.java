@@ -4,27 +4,27 @@
 
 package docs.http.javadsl.server;
 
-import akka.Done;
-import akka.NotUsed;
-import akka.actor.ActorSystem;
-import akka.actor.CoordinatedShutdown;
-import akka.http.javadsl.*;
-import akka.http.javadsl.marshallers.jackson.Jackson;
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.model.headers.Connection;
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.Directives;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.unmarshalling.Unmarshaller;
-import akka.japi.function.Function;
-import akka.stream.ActorMaterializer;
-import akka.stream.IOResult;
-import akka.stream.Materializer;
-import akka.stream.javadsl.FileIO;
-import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.Sink;
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
+import org.apache.pekko.Done;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.actor.CoordinatedShutdown;
+import org.apache.pekko.http.javadsl.*;
+import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.model.headers.Connection;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.Directives;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
+import org.apache.pekko.japi.function.Function;
+import org.apache.pekko.stream.ActorMaterializer;
+import org.apache.pekko.stream.IOResult;
+import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.stream.javadsl.FileIO;
+import org.apache.pekko.stream.javadsl.Flow;
+import org.apache.pekko.stream.javadsl.Sink;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.util.ByteString;
 import scala.concurrent.ExecutionContextExecutor;
 
 import java.io.BufferedReader;
@@ -34,7 +34,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
-import static akka.http.javadsl.server.Directives.*;
+import static org.apache.pekko.http.javadsl.server.Directives.*;
 
 @SuppressWarnings("unused")
 public class HttpServerExampleDocTest {

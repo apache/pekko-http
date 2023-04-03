@@ -4,12 +4,12 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.headers.BasicHttpCredentials;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.japi.JavaPartialFunction;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.BasicHttpCredentials;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.japi.JavaPartialFunction;
 import org.junit.Test;
 import scala.PartialFunction;
 import scala.util.Either;
@@ -23,68 +23,68 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.Optional;
-import akka.japi.Option;
+import org.apache.pekko.japi.Option;
 
 //#authenticateBasic
-import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 
-import static akka.http.javadsl.server.Directives.authenticateBasic;
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasic;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#authenticateBasic
 //#authenticateBasicPF
-import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 
-import static akka.http.javadsl.server.Directives.authenticateBasicPF;
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasicPF;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#authenticateBasicPF
 //#authenticateBasicPFAsync
-import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 
-import static akka.http.javadsl.server.Directives.authenticateBasicPFAsync;
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasicPFAsync;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#authenticateBasicPFAsync
 //#authenticateBasicAsync
-import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 
-import static akka.http.javadsl.server.Directives.authenticateBasicAsync;
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasicAsync;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#authenticateBasicAsync
 //#authenticateOrRejectWithChallenge
-import akka.http.javadsl.model.headers.HttpChallenge;
-import akka.http.javadsl.model.headers.HttpCredentials;
+import org.apache.pekko.http.javadsl.model.headers.HttpChallenge;
+import org.apache.pekko.http.javadsl.model.headers.HttpCredentials;
 
-import static akka.http.javadsl.server.Directives.authenticateOrRejectWithChallenge;
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateOrRejectWithChallenge;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#authenticateOrRejectWithChallenge
 //#authorize
-import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 
-import static akka.http.javadsl.server.Directives.authorize;
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.authorize;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 //#authorize
 //#authorizeAsync
-import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 
-import static akka.http.javadsl.server.Directives.authorizeAsync;
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.authorizeAsync;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 //#authorizeAsync
 //#extractCredentials
-import akka.http.javadsl.model.headers.HttpCredentials;
+import org.apache.pekko.http.javadsl.model.headers.HttpCredentials;
 
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.extractCredentials;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractCredentials;
 
 //#extractCredentials
 

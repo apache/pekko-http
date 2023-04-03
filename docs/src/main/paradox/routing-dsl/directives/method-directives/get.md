@@ -6,7 +6,7 @@ Matches requests with HTTP method `GET`.
 
 ## Signature
 
-@@signature [MethodDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/MethodDirectives.scala) { #get }
+@@signature [MethodDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/MethodDirectives.scala) { #get }
 
 @@@
 

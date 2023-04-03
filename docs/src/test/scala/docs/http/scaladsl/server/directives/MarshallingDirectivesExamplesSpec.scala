@@ -4,10 +4,11 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.MediaTypes.`application/json`
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import pekko.http.scaladsl.model.MediaTypes.`application/json`
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 //#person-case-class

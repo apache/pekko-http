@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [WebSocketDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/WebSocketDirectives.scala) { #extractWebSocketUpgrade }
+@@signature [WebSocketDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/WebSocketDirectives.scala) { #extractWebSocketUpgrade }
 
 @@@
 

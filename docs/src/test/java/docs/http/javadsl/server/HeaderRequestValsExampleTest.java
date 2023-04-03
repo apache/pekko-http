@@ -6,20 +6,20 @@ package docs.http.javadsl.server;
 
 import org.junit.Test;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.headers.Host;
-import akka.http.javadsl.model.headers.RawHeader;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.headers.Host;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 
 //#by-class
-import static akka.http.javadsl.server.Directives.extractHost;
-import static akka.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractHost;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
 //#by-class
 //#by-name
-import static akka.http.javadsl.server.Directives.headerValueByName;
-import static akka.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.headerValueByName;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
 //#by-name
 

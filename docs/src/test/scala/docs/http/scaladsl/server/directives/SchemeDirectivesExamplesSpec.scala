@@ -3,7 +3,8 @@
  */
 
 package docs.http.scaladsl.server.directives
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 class SchemeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
@@ -23,8 +24,9 @@ class SchemeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "example-2" in {
     // #example-2
-    import akka.http.scaladsl.model._
-    import akka.http.scaladsl.model.headers.Location
+    import org.apache.pekko
+    import pekko.http.scaladsl.model._
+    import pekko.http.scaladsl.model.headers.Location
     import StatusCodes.MovedPermanently
 
     val route =

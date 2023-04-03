@@ -6,12 +6,12 @@ package docs.http.javadsl.server.testkit;
 
 //#simple-app
 
-import akka.actor.ActorSystem;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.server.examples.simple.SimpleServerApp;
-import akka.http.javadsl.unmarshalling.StringUnmarshallers;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.examples.simple.SimpleServerApp;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 
 import java.io.IOException;
 

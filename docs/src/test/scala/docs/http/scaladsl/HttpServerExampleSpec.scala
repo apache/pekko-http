@@ -4,14 +4,14 @@
 
 package docs.http.scaladsl
 
-import akka.event.LoggingAdapter
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.{ Directive, Route }
-import akka.http.scaladsl.server.directives.FormFieldDirectives.FieldSpec
-import akka.http.scaladsl.server.util.ConstructFromTuple
-import akka.testkit.TestActors
-
+import org.apache.pekko
+import pekko.event.LoggingAdapter
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.model.StatusCodes
+import pekko.http.scaladsl.server.{ Directive, Route }
+import pekko.http.scaladsl.server.directives.FormFieldDirectives.FieldSpec
+import pekko.http.scaladsl.server.util.ConstructFromTuple
+import pekko.testkit.TestActors
 import scala.annotation.nowarn
 import docs.CompileOnlySpec
 
@@ -29,9 +29,10 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
   "binding-example" in compileOnlySpec {
     // #binding-example
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.Http
-    import akka.stream.scaladsl._
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.Http
+    import pekko.stream.scaladsl._
 
     implicit val system = ActorSystem()
     implicit val executionContext = system.dispatcher
@@ -48,15 +49,16 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
   // mock values:
   val handleConnections = {
-    import akka.stream.scaladsl.Sink
+    import pekko.stream.scaladsl.Sink
     Sink.ignore.mapMaterializedValue(_ => Future.failed(new Exception("")))
   }
 
   "binding-failure-handling" in compileOnlySpec {
     // #binding-failure-handling
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.Http.ServerBinding
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.Http.ServerBinding
 
     import scala.concurrent.Future
 
@@ -84,10 +86,11 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
   "incoming-connections-source-failure-handling" in compileOnlySpec {
     // #incoming-connections-source-failure-handling
-    import akka.actor.ActorSystem
-    import akka.actor.ActorRef
-    import akka.http.scaladsl.Http
-    import akka.stream.scaladsl.Flow
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.actor.ActorRef
+    import pekko.http.scaladsl.Http
+    import pekko.stream.scaladsl.Flow
 
     implicit val system = ActorSystem()
     implicit val executionContext = system.dispatcher
@@ -113,10 +116,11 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
   "connection-stream-failure-handling" in compileOnlySpec {
     // #connection-stream-failure-handling
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.model._
-    import akka.stream.scaladsl.Flow
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.model._
+    import pekko.stream.scaladsl.Flow
 
     implicit val system = ActorSystem()
     implicit val executionContext = system.dispatcher
@@ -147,11 +151,12 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
   "full-server-example" in compileOnlySpec {
     // #full-server-example
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.model.HttpMethods._
-    import akka.http.scaladsl.model._
-    import akka.stream.scaladsl.Sink
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.model.HttpMethods._
+    import pekko.http.scaladsl.model._
+    import pekko.stream.scaladsl.Sink
 
     implicit val system = ActorSystem()
     implicit val executionContext = system.dispatcher
@@ -188,14 +193,15 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
   "long-routing-example" in compileOnlySpec {
     // #long-routing-example
-    import akka.actor.{ ActorRef, ActorSystem }
-    import akka.http.scaladsl.coding.Coders
-    import akka.http.scaladsl.marshalling.ToResponseMarshaller
-    import akka.http.scaladsl.model.StatusCodes.MovedPermanently
-    import akka.http.scaladsl.server.Directives._
-    import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
-    import akka.pattern.ask
-    import akka.util.Timeout
+    import org.apache.pekko
+    import pekko.actor.{ ActorRef, ActorSystem }
+    import pekko.http.scaladsl.coding.Coders
+    import pekko.http.scaladsl.marshalling.ToResponseMarshaller
+    import pekko.http.scaladsl.model.StatusCodes.MovedPermanently
+    import pekko.http.scaladsl.server.Directives._
+    import pekko.http.scaladsl.unmarshalling.FromRequestUnmarshaller
+    import pekko.pattern.ask
+    import pekko.util.Timeout
 
     // types used by the API routes
     type Money = Double // only for demo purposes, don't try this at home!
@@ -306,9 +312,10 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
   "consume entity using entity directive" in compileOnlySpec {
     // #consume-entity-directive
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.server.Directives._
-    import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.server.Directives._
+    import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
     import spray.json.DefaultJsonProtocol._
     import spray.json.RootJsonFormat
 
@@ -335,9 +342,10 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
   "consume entity using raw dataBytes to file" in compileOnlySpec {
     // #consume-raw-dataBytes
-    import akka.actor.ActorSystem
-    import akka.stream.scaladsl.FileIO
-    import akka.http.scaladsl.server.Directives._
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.stream.scaladsl.FileIO
+    import pekko.http.scaladsl.server.Directives._
     import java.io.File
 
     implicit val system = ActorSystem()
@@ -362,9 +370,10 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
   "drain entity using request#discardEntityBytes" in compileOnlySpec {
     // #discard-discardEntityBytes
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.server.Directives._
-    import akka.http.scaladsl.model.HttpRequest
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.server.Directives._
+    import pekko.http.scaladsl.model.HttpRequest
 
     implicit val system = ActorSystem()
     // needed for the future flatMap/onComplete in the end
@@ -388,10 +397,11 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
   "discard entity manually" in compileOnlySpec {
     // #discard-close-connections
-    import akka.actor.ActorSystem
-    import akka.stream.scaladsl.Sink
-    import akka.http.scaladsl.server.Directives._
-    import akka.http.scaladsl.model.headers.Connection
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.stream.scaladsl.Sink
+    import pekko.http.scaladsl.server.Directives._
+    import pekko.http.scaladsl.model.headers.Connection
 
     implicit val system = ActorSystem()
     // needed for the future flatMap/onComplete in the end
@@ -417,10 +427,10 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
   }
 
   "dynamic routing example" in compileOnlySpec {
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-    import akka.http.scaladsl.server.Directives._
-    import akka.http.scaladsl.server.Route
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+    import pekko.http.scaladsl.server.Directives._
+    import pekko.http.scaladsl.server.Route
     import spray.json.DefaultJsonProtocol._
     import spray.json._
 
@@ -464,9 +474,10 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
 
   "graceful termination" in compileOnlySpec {
     // #graceful-termination
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.server.Directives._
-    import akka.http.scaladsl.server.Route
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.server.Directives._
+    import pekko.http.scaladsl.server.Route
     import scala.concurrent.duration._
 
     implicit val system = ActorSystem()

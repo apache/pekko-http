@@ -4,13 +4,13 @@
 
 package docs.http.javadsl.server.testkit;
 
-import akka.actor.typed.ActorRef;
-import akka.actor.typed.Scheduler;
-import akka.actor.typed.javadsl.AskPattern;
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.Route;
-import akka.http.scaladsl.model.StatusCodes;
-import akka.japi.pf.PFBuilder;
+import org.apache.pekko.actor.typed.ActorRef;
+import org.apache.pekko.actor.typed.Scheduler;
+import org.apache.pekko.actor.typed.javadsl.AskPattern;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.scaladsl.model.StatusCodes;
+import org.apache.pekko.japi.pf.PFBuilder;
 
 import java.time.Duration;
 

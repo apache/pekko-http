@@ -4,15 +4,16 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.directives.FileInfo
-import akka.http.scaladsl.testkit.RouteTestTimeout
-import akka.stream.scaladsl.Framing
-import akka.testkit.TestDuration
-import akka.util.ByteString
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.directives.FileInfo
+import pekko.http.scaladsl.testkit.RouteTestTimeout
+import pekko.stream.scaladsl.Framing
+import pekko.testkit.TestDuration
+import pekko.util.ByteString
 import java.io.File
 
-import akka.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 import scala.concurrent.Future
@@ -21,7 +22,7 @@ import scala.concurrent.duration._
 class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   override def testConfigSource = super.testConfigSource ++ """
-    akka.actor.default-mailbox.mailbox-type = "akka.dispatch.UnboundedMailbox"
+    pekko.actor.default-mailbox.mailbox-type = "org.apache.pekko.dispatch.UnboundedMailbox"
   """
 
   // test touches disk, so give it some time

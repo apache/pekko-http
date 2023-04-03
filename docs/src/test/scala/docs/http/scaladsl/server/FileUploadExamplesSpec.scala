@@ -6,14 +6,15 @@ package docs.http.scaladsl.server
 
 import java.io.File
 
-import akka.Done
-import akka.actor.ActorRef
-import akka.http.scaladsl.model.Multipart.FormData.BodyPart
-import akka.stream.scaladsl.Framing
-import akka.stream.scaladsl._
-import akka.http.scaladsl.model.Multipart
-import akka.http.scaladsl.server.RoutingSpec
-import akka.util.ByteString
+import org.apache.pekko
+import pekko.Done
+import pekko.actor.ActorRef
+import pekko.http.scaladsl.model.Multipart.FormData.BodyPart
+import pekko.stream.scaladsl.Framing
+import pekko.stream.scaladsl._
+import pekko.http.scaladsl.model.Multipart
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.util.ByteString
 import docs.CompileOnlySpec
 
 import scala.concurrent.duration._

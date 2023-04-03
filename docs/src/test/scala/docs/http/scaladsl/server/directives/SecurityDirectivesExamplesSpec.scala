@@ -4,11 +4,12 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.server.directives.Credentials
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.server.Route
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.server.directives.Credentials
 import docs.CompileOnlySpec
 
 import scala.concurrent.Future

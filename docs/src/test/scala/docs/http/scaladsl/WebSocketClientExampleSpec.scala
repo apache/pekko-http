@@ -4,6 +4,7 @@
 
 package docs.http.scaladsl
 
+import org.apache.pekko
 import docs.CompileOnlySpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -11,11 +12,11 @@ import org.scalatest.wordspec.AnyWordSpec
 class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
 
   "half-closed-WebSocket-closing-example" in compileOnlySpec {
-    import akka.actor.ActorSystem
-    import akka.NotUsed
-    import akka.http.scaladsl.Http
-    import akka.stream.scaladsl._
-    import akka.http.scaladsl.model.ws._
+    import pekko.actor.ActorSystem
+    import pekko.NotUsed
+    import pekko.http.scaladsl.Http
+    import pekko.stream.scaladsl._
+    import pekko.http.scaladsl.model.ws._
 
     implicit val system = ActorSystem()
 
@@ -36,10 +37,10 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
   }
 
   "half-closed-WebSocket-working-example" in compileOnlySpec {
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.Http
-    import akka.stream.scaladsl._
-    import akka.http.scaladsl.model.ws._
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.Http
+    import pekko.stream.scaladsl._
+    import pekko.http.scaladsl.model.ws._
 
     import scala.concurrent.Promise
 
@@ -65,10 +66,10 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
   }
 
   "half-closed-WebSocket-finite-working-example" in compileOnlySpec {
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.Http
-    import akka.stream.scaladsl._
-    import akka.http.scaladsl.model.ws._
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.Http
+    import pekko.stream.scaladsl._
+    import pekko.http.scaladsl.model.ws._
 
     import scala.concurrent.Promise
 
@@ -94,12 +95,12 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
   }
 
   "authorized-singleWebSocket-request-example" in compileOnlySpec {
-    import akka.actor.ActorSystem
-    import akka.NotUsed
-    import akka.http.scaladsl.Http
-    import akka.stream.scaladsl._
-    import akka.http.scaladsl.model.headers.{ Authorization, BasicHttpCredentials }
-    import akka.http.scaladsl.model.ws._
+    import pekko.actor.ActorSystem
+    import pekko.NotUsed
+    import pekko.http.scaladsl.Http
+    import pekko.stream.scaladsl._
+    import pekko.http.scaladsl.model.headers.{ Authorization, BasicHttpCredentials }
+    import pekko.http.scaladsl.model.ws._
 
     implicit val system = ActorSystem()
     import collection.immutable.Seq
@@ -124,12 +125,13 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
     // #https-proxy-singleWebSocket-request-example
     import java.net.InetSocketAddress
 
-    import akka.actor.ActorSystem
-    import akka.NotUsed
-    import akka.http.scaladsl.{ ClientTransport, Http }
-    import akka.http.scaladsl.settings.ClientConnectionSettings
-    import akka.http.scaladsl.model.ws._
-    import akka.stream.scaladsl._
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.NotUsed
+    import pekko.http.scaladsl.{ ClientTransport, Http }
+    import pekko.http.scaladsl.settings.ClientConnectionSettings
+    import pekko.http.scaladsl.model.ws._
+    import pekko.stream.scaladsl._
 
     implicit val system = ActorSystem()
 
@@ -152,12 +154,12 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
   "https-proxy-singleWebSocket-request-example with auth" in compileOnlySpec {
     import java.net.InetSocketAddress
 
-    import akka.actor.ActorSystem
-    import akka.NotUsed
-    import akka.http.scaladsl.{ ClientTransport, Http }
-    import akka.http.scaladsl.settings.ClientConnectionSettings
-    import akka.http.scaladsl.model.ws._
-    import akka.stream.scaladsl._
+    import pekko.actor.ActorSystem
+    import pekko.NotUsed
+    import pekko.http.scaladsl.{ ClientTransport, Http }
+    import pekko.http.scaladsl.settings.ClientConnectionSettings
+    import pekko.http.scaladsl.model.ws._
+    import pekko.stream.scaladsl._
 
     implicit val system = ActorSystem()
 
@@ -170,7 +172,7 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
     val proxyPort = 8888
 
     // #auth-https-proxy-singleWebSocket-request-example
-    import akka.http.scaladsl.model.headers
+    import org.apache.pekko.http.scaladsl.model.headers
 
     val proxyAddress = InetSocketAddress.createUnresolved(proxyHost, proxyPort)
     val auth = headers.BasicHttpCredentials("proxy-user", "secret-proxy-pass-dont-tell-anyone")

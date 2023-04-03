@@ -4,7 +4,7 @@
 
 package example
 
-import akka.http.scaladsl.Http.HostConnectionPool
+import org.apache.pekko.http.scaladsl.Http.HostConnectionPool
 
 object HostConnectionPoolCompat {
   def access(hcp: HostConnectionPool): Unit = {

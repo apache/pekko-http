@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [PathDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/PathDirectives.scala) { #ignoreTrailingSlash }
+@@signature [PathDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/PathDirectives.scala) { #ignoreTrailingSlash }
 
 @@@
 

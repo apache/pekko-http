@@ -9,9 +9,10 @@ import java.io.InputStream
 import java.security.{ KeyStore, SecureRandom }
 
 import javax.net.ssl.{ KeyManagerFactory, SSLContext, TrustManagerFactory }
-import akka.actor.ActorSystem
-import akka.http.scaladsl.server.{ Directives, Route }
-import akka.http.scaladsl.{ ConnectionContext, Http, HttpsConnectionContext }
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.server.{ Directives, Route }
+import pekko.http.scaladsl.{ ConnectionContext, Http, HttpsConnectionContext }
 //#imports
 
 import docs.CompileOnlySpec

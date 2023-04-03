@@ -1,0 +1,67 @@
+/*
+ * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ */
+
+package org.apache.pekko.http.scaladsl.coding
+
+import org.apache.pekko
+import pekko.util.ByteString
+import java.io.{ InputStream, OutputStream }
+import java.util.zip._
+
+import pekko.http.scaladsl.model.HttpMethods.POST
+import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest }
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncodings }
+import pekko.testkit._
+import scala.annotation.nowarn
+
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+
+class DeflateSpec extends CoderSpec {
+  protected def Coder: Coder = Coders.Deflate
+
+  protected def newDecodedInputStream(underlying: InputStream): InputStream =
+    new InflaterInputStream(underlying)
+
+  protected def newEncodedOutputStream(underlying: OutputStream): OutputStream =
+    new DeflaterOutputStream(underlying)
+
+  override def extraTests(): Unit = {
+    "throw early if header is corrupt" in {
+      (the[RuntimeException] thrownBy {
+        ourDecode(ByteString(0, 1, 2, 3, 4))
+      }).ultimateCause should be(a[DataFormatException])
+    }
+    "properly round-trip encode/decode an HttpRequest using no-wrap and best compression" in {
+      val request = HttpRequest(POST, entity = HttpEntity(largeText))
+      Coders.Deflate.decodeMessage(encodeMessage(request, Deflater.BEST_COMPRESSION, noWrap = true)).toStrict(
+        3.seconds.dilated)
+        .awaitResult(3.seconds.dilated) should equal(request)
+    }
+    "properly round-trip encode/decode an HttpRequest using no-wrap and no compression" in {
+      val request = HttpRequest(POST, entity = HttpEntity(largeText))
+      Coders.Deflate.decodeMessage(encodeMessage(request, Deflater.NO_COMPRESSION, noWrap = true)).toStrict(
+        3.seconds.dilated)
+        .awaitResult(3.seconds.dilated) should equal(request)
+    }
+    "properly round-trip encode/decode an HttpRequest with wrapping and no compression" in {
+      val request = HttpRequest(POST, entity = HttpEntity(largeText))
+      Coders.Deflate.decodeMessage(encodeMessage(request, Deflater.NO_COMPRESSION, noWrap = false)).toStrict(
+        3.seconds.dilated)
+        .awaitResult(3.seconds.dilated) should equal(request)
+    }
+  }
+
+  private def encodeMessage(request: HttpRequest, compressionLevel: Int, noWrap: Boolean): HttpRequest = {
+    @nowarn("msg=deprecated .* is internal API")
+    val deflaterWithoutWrapping = new Deflate(Encoder.DefaultFilter) {
+      override def newCompressor = new DeflateCompressor(compressionLevel) {
+        override lazy val deflater = new Deflater(compressionLevel, noWrap)
+      }
+    }
+    request.transformEntityDataBytes(deflaterWithoutWrapping.encoderFlow)
+      .withHeaders(`Content-Encoding`(HttpEncodings.deflate) +: request.headers)
+  }
+}

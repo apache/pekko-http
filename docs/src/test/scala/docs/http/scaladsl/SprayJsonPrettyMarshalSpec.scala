@@ -4,15 +4,16 @@
 
 package docs.http.scaladsl
 
-import akka.http.scaladsl.server.Directives
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.server.Directives
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 class SprayJsonPrettyMarshalSpec extends RoutingSpec with CompileOnlySpec {
 
   "spray-json example" in {
     // #example
-    import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+    import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
     import spray.json._
 
     // domain model

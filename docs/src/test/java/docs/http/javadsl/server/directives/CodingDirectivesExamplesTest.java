@@ -4,54 +4,54 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.HttpEntities;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.MediaTypes;
-import akka.http.javadsl.model.headers.AcceptEncoding;
-import akka.http.javadsl.model.headers.ContentEncoding;
-import akka.http.javadsl.model.headers.HttpEncodings;
-import akka.http.javadsl.coding.Coder;
-import akka.http.javadsl.server.Rejections;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.util.ByteString;
+import org.apache.pekko.http.javadsl.model.HttpEntities;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.javadsl.model.MediaTypes;
+import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
+import org.apache.pekko.http.javadsl.model.headers.ContentEncoding;
+import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
+import org.apache.pekko.http.javadsl.coding.Coder;
+import org.apache.pekko.http.javadsl.server.Rejections;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.util.ByteString;
 import org.junit.Test;
 
 import java.util.Collections;
 
-import static akka.http.javadsl.unmarshalling.Unmarshaller.entityToString;
+import static org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller.entityToString;
 
 //#responseEncodingAccepted
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.responseEncodingAccepted;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.responseEncodingAccepted;
 
 //#responseEncodingAccepted
 //#encodeResponse
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.encodeResponse;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.encodeResponse;
 
 //#encodeResponse
 //#encodeResponseWith
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.encodeResponseWith;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.encodeResponseWith;
 
 //#encodeResponseWith
 //#decodeRequest
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.decodeRequest;
-import static akka.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.decodeRequest;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
 
 //#decodeRequest
 //#decodeRequestWith
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.decodeRequestWith;
-import static akka.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.decodeRequestWith;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
 
 //#decodeRequestWith
 //#withPrecompressedMediaTypeSupport
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.withPrecompressedMediaTypeSupport;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.withPrecompressedMediaTypeSupport;
 
 //#withPrecompressedMediaTypeSupport
 

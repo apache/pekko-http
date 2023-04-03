@@ -4,18 +4,20 @@
 
 package docs.http.scaladsl.server
 
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.model.HttpResponse
+import pekko.http.scaladsl.server.Route
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 object MyRejectionHandler {
 
   // #custom-handler-example
-  import akka.actor.ActorSystem
-  import akka.http.scaladsl.Http
-  import akka.http.scaladsl.model._
-  import akka.http.scaladsl.server._
+  import org.apache.pekko
+  import pekko.actor.ActorSystem
+  import pekko.http.scaladsl.Http
+  import pekko.http.scaladsl.model._
+  import pekko.http.scaladsl.server._
   import StatusCodes._
   import Directives._
 
@@ -56,8 +58,9 @@ object MyRejectionHandler {
 object HandleNotFoundWithThePath {
 
   // #not-found-with-path
-  import akka.http.scaladsl.model.StatusCodes._
-  import akka.http.scaladsl.server._
+  import org.apache.pekko
+  import pekko.http.scaladsl.model.StatusCodes._
+  import pekko.http.scaladsl.server._
   import Directives._
 
   implicit def myRejectionHandler: RejectionHandler =
@@ -75,7 +78,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "example-1" in {
     // #example-1
-    import akka.http.scaladsl.coding.Coders
+    import org.apache.pekko.http.scaladsl.coding.Coders
 
     val route =
       path("order") {
@@ -94,8 +97,9 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "example-2-all-exceptions-json" in {
     // #example-json
-    import akka.http.scaladsl.model._
-    import akka.http.scaladsl.server.RejectionHandler
+    import org.apache.pekko
+    import pekko.http.scaladsl.model._
+    import pekko.http.scaladsl.server.RejectionHandler
 
     implicit def myRejectionHandler: RejectionHandler =
       RejectionHandler.default
@@ -127,8 +131,8 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
   }
 
   "example-3-custom-rejection-http-response" in {
-    import akka.http.scaladsl.model._
-    import akka.http.scaladsl.server.RejectionHandler
+    import pekko.http.scaladsl.model._
+    import pekko.http.scaladsl.server.RejectionHandler
 
     implicit def myRejectionHandler: RejectionHandler =
       RejectionHandler.default
@@ -162,8 +166,8 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
   }
 
   "test custom handler example" in {
-    import akka.http.scaladsl.server._
-    import akka.http.scaladsl.model.StatusCodes.BadRequest
+    import pekko.http.scaladsl.server._
+    import pekko.http.scaladsl.model.StatusCodes.BadRequest
 
     implicit def myRejectionHandler: RejectionHandler = RejectionHandler.newBuilder().handle {
       case MissingCookieRejection(_) => complete(HttpResponse(BadRequest, entity = "No cookies, no service!!!"))

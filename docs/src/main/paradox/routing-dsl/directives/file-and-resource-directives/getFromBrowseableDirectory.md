@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [FileAndResourceDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/FileAndResourceDirectives.scala) { #getFromBrowseableDirectory }
+@@signature [FileAndResourceDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/FileAndResourceDirectives.scala) { #getFromBrowseableDirectory }
 
 @@@
 
@@ -34,7 +34,7 @@ Directives which list directories (e.g. `getFromBrowsableDirectory`) use an impl
 instance to perform the actual rendering of the file listing. This rendered can be easily overridden by simply
 providing one in-scope for the directives to use, so you can build your custom directory listings.
 
-The default renderer is `akka.http.scaladsl.server.directives.FileAndResourceDirectives.defaultDirectoryRenderer`,
+The default renderer is `org.apache.pekko.http.scaladsl.server.directives.FileAndResourceDirectives.defaultDirectoryRenderer`,
 and renders a listing which looks like this:
 
 ![akka-http-file-listing.png](../../../akka-http-file-listing.png)

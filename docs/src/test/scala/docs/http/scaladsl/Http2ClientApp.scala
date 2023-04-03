@@ -4,17 +4,18 @@
 
 package docs.http.scaladsl
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.ResponsePromise
-import akka.http.scaladsl.model.headers.HttpEncodings
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.model.headers
-import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.model.ResponsePromise
+import pekko.http.scaladsl.model.headers.HttpEncodings
+import pekko.http.scaladsl.model.HttpRequest
+import pekko.http.scaladsl.model.HttpResponse
+import pekko.http.scaladsl.model.headers
+import pekko.stream.OverflowStrategy
+import pekko.stream.scaladsl.Flow
+import pekko.stream.scaladsl.Sink
+import pekko.stream.scaladsl.Source
 import com.typesafe.config.ConfigFactory
 
 import scala.annotation.nowarn
@@ -28,7 +29,7 @@ object Http2ClientApp extends App {
   val config =
     ConfigFactory.parseString(
       """
-         # akka.loglevel = debug
+         # pekko.loglevel = debug
          akka.http.client.http2.log-frames = true
          akka.http.client.parsing.max-content-length = 20m
       """).withFallback(ConfigFactory.defaultApplication())

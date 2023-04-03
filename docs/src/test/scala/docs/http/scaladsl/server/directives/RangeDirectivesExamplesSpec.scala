@@ -4,8 +4,9 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.RoutingSpec
 import com.typesafe.config.{ Config, ConfigFactory }
 import docs.CompileOnlySpec
 import headers._

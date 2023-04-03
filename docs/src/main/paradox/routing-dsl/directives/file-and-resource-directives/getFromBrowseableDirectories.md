@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [FileAndResourceDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/FileAndResourceDirectives.scala) { #getFromBrowseableDirectories }
+@@signature [FileAndResourceDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/FileAndResourceDirectives.scala) { #getFromBrowseableDirectories }
 
 @@@
 

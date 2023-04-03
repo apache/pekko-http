@@ -4,20 +4,21 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model.{ HttpResponse, StatusCodes }
-import akka.http.scaladsl.server.{ Route, RoutingSpec }
+import org.apache.pekko
+import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
+import pekko.http.scaladsl.server.{ Route, RoutingSpec }
 import docs.CompileOnlySpec
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.model.HttpEntity._
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.testkit.RouteTestTimeout
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.server.Directives._
+import pekko.http.scaladsl.model.HttpEntity._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.testkit.RouteTestTimeout
 import com.typesafe.config.{ Config, ConfigFactory }
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future, Promise }
-import akka.testkit.{ AkkaSpec, SocketUtil }
+import pekko.testkit.{ AkkaSpec, SocketUtil }
 
 class TimeoutDirectivesExamplesSpec extends RoutingSpec
     with ScalaFutures with CompileOnlySpec {

@@ -4,30 +4,32 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 import scala.concurrent.Future
 
 //#complete-examples
 //#reject-examples
-import akka.http.scaladsl.model._
+import org.apache.pekko
+import pekko.http.scaladsl.model._
 //#reject-examples
 //#complete-examples
 
 //#complete-examples
-import akka.http.scaladsl.model.ContentTypes._
-import akka.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
+import pekko.http.scaladsl.model.ContentTypes._
+import pekko.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
 
 //#complete-examples
 
 //#reject-examples
-import akka.http.scaladsl.server.ValidationRejection
+import pekko.http.scaladsl.server.ValidationRejection
 
 //#reject-examples
 
-import akka.http.scaladsl.server.Route
-import akka.testkit.EventFilter
+import pekko.http.scaladsl.server.Route
+import pekko.testkit.EventFilter
 
 class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 

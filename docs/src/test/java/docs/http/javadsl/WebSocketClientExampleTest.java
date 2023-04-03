@@ -4,26 +4,26 @@
 
 package docs.http.javadsl;
 
-import akka.Done;
-import akka.NotUsed;
-import akka.actor.ActorSystem;
-import akka.http.javadsl.ClientTransport;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.headers.Authorization;
-import akka.http.javadsl.model.headers.HttpCredentials;
-import akka.http.javadsl.model.ws.Message;
-import akka.http.javadsl.model.ws.TextMessage;
-import akka.http.javadsl.model.ws.WebSocketRequest;
-import akka.http.javadsl.model.ws.WebSocketUpgradeResponse;
-import akka.http.javadsl.settings.ClientConnectionSettings;
-import akka.japi.Pair;
-import akka.stream.ActorMaterializer;
-import akka.stream.Materializer;
-import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.Keep;
-import akka.stream.javadsl.Sink;
-import akka.stream.javadsl.Source;
+import org.apache.pekko.Done;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.ClientTransport;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.Authorization;
+import org.apache.pekko.http.javadsl.model.headers.HttpCredentials;
+import org.apache.pekko.http.javadsl.model.ws.Message;
+import org.apache.pekko.http.javadsl.model.ws.TextMessage;
+import org.apache.pekko.http.javadsl.model.ws.WebSocketRequest;
+import org.apache.pekko.http.javadsl.model.ws.WebSocketUpgradeResponse;
+import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
+import org.apache.pekko.japi.Pair;
+import org.apache.pekko.stream.ActorMaterializer;
+import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.stream.javadsl.Flow;
+import org.apache.pekko.stream.javadsl.Keep;
+import org.apache.pekko.stream.javadsl.Sink;
+import org.apache.pekko.stream.javadsl.Source;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;

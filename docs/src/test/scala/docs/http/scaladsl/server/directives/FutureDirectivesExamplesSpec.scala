@@ -9,12 +9,13 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
-import akka.http.scaladsl.server.{ CircuitBreakerOpenRejection, ExceptionHandler, Route }
-import akka.util.Timeout
-import akka.http.scaladsl.model._
+import org.apache.pekko
+import pekko.http.scaladsl.server.{ CircuitBreakerOpenRejection, ExceptionHandler, Route }
+import pekko.util.Timeout
+import pekko.http.scaladsl.model._
 import StatusCodes._
-import akka.http.scaladsl.server.RoutingSpec
-import akka.pattern.CircuitBreaker
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.pattern.CircuitBreaker
 import docs.CompileOnlySpec
 
 class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {

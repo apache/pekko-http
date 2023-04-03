@@ -368,7 +368,7 @@ Java
 anyOf(this::extractClientIP, this::extractMethod, routeProvider) // doesn't compile
 anyOf(bindParameter(this::parameter, "foo"), bindParameter(this::parameter, "bar"), routeProvider) // ok
 ```
-In this previous example we make use of the `bindParameter` function located in `pekko-http/akka.http.javadsl.common.PartialApplication`.
+In this previous example we make use of the `bindParameter` function located in `http/org.apache.pekko.http.javadsl.common.PartialApplication`.
 In order to be able to call `anyOf`, we need to convert our directive that takes 2 parameters to a function that takes only 1.
 In this particular case we want to use the `parameter` directive that takes a `String` and a function from `String` to @scala[@scaladoc[Route](akka.http.scaladsl.server.index#Route=akka.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[akka.http.scaladsl.server.RouteResult])]@java[@javadoc[Route](akka.http.javadsl.server.Route)],
 so to be able to use it in combination with `anyOf`, we need to bind the first parameter to `foo` and to `bar` in the second one. `bindParameter(this::parameter, "foo")` is equivalent 

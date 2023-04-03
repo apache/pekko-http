@@ -4,8 +4,9 @@
 
 package docs.http.scaladsl
 
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.server.{ Directives, Route, RoutingSpec }
+import org.apache.pekko
+import pekko.http.scaladsl.model.headers.RawHeader
+import pekko.http.scaladsl.server.{ Directives, Route, RoutingSpec }
 import docs.CompileOnlySpec
 
 class RouteSealExampleSpec extends RoutingSpec with Directives with CompileOnlySpec {

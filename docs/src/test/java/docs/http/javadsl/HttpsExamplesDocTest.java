@@ -4,11 +4,11 @@
 
 package docs.http.javadsl;
 
-import akka.actor.ActorSystem;
-import akka.http.javadsl.ConnectHttp;
-import akka.http.javadsl.ConnectionContext;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.HttpsConnectionContext;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.ConnectHttp;
+import org.apache.pekko.http.javadsl.ConnectionContext;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.HttpsConnectionContext;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;

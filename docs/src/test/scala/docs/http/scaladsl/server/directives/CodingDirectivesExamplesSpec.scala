@@ -4,13 +4,14 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.coding.{ Coder, Coders, Gzip }
-import akka.http.scaladsl.model.{ HttpEntity, HttpResponse }
-import akka.http.scaladsl.model.headers.{ `Accept-Encoding`, `Content-Encoding`, HttpEncoding, HttpEncodings }
-import akka.http.scaladsl.model.headers.HttpEncodings._
-import akka.http.scaladsl.model.MediaTypes._
-import akka.http.scaladsl.server._
-import akka.util.ByteString
+import org.apache.pekko
+import pekko.http.scaladsl.coding.{ Coder, Coders, Gzip }
+import pekko.http.scaladsl.model.{ HttpEntity, HttpResponse }
+import pekko.http.scaladsl.model.headers.{ `Accept-Encoding`, `Content-Encoding`, HttpEncoding, HttpEncodings }
+import pekko.http.scaladsl.model.headers.HttpEncodings._
+import pekko.http.scaladsl.model.MediaTypes._
+import pekko.http.scaladsl.server._
+import pekko.util.ByteString
 import scala.annotation.nowarn
 import docs.CompileOnlySpec
 import org.scalatest.matchers.Matcher

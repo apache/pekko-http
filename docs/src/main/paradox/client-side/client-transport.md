@@ -2,13 +2,13 @@
 
 The client side infrastructure has support to plug different transport mechanisms underneath (the API may still change in the future). A client side
 transport is represented by an instance of
-@scala[@scaladoc[akka.http.scaladsl.ClientTransport](akka.http.scaladsl.ClientTransport)]@java[@javadoc[akka.http.javadsl.ClientTransport](akka.http.javadsl.ClientTransport)]:
+@scala[@scaladoc[org.apache.pekko.http.scaladsl.ClientTransport](akka.http.scaladsl.ClientTransport)]@java[@javadoc[org.apache.pekko.http.javadsl.ClientTransport](akka.http.javadsl.ClientTransport)]:
 
 Scala
-:  @@snip [ClientTransport.scala](/http-core/src/main/scala/akka/http/scaladsl/ClientTransport.scala) { #client-transport-definition }
+:  @@snip [ClientTransport.scala](/http-core/src/main/scala/org/apache/pekko/http/scaladsl/ClientTransport.scala) { #client-transport-definition }
 
 Java
-:  @@snip [ClientTransport.scala](/http-core/src/main/scala/akka/http/javadsl/ClientTransport.scala) { #client-transport-definition }
+:  @@snip [ClientTransport.scala](/http-core/src/main/scala/org/apache/pekko/http/javadsl/ClientTransport.scala) { #client-transport-definition }
 
 A transport implementation defines how the client infrastructure should communicate with a given host.
 

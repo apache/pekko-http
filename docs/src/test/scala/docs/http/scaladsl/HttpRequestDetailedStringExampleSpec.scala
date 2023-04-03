@@ -4,9 +4,10 @@
 
 package docs.http.scaladsl
 
-import akka.http.scaladsl.model.{ HttpEntity, HttpRequest }
-import akka.http.scaladsl.model.headers.{ Authorization, BasicHttpCredentials }
-import akka.testkit.AkkaSpec
+import org.apache.pekko
+import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest }
+import pekko.http.scaladsl.model.headers.{ Authorization, BasicHttpCredentials }
+import pekko.testkit.AkkaSpec
 
 import scala.collection.immutable
 

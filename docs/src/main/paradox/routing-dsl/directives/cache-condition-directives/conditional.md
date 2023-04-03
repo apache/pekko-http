@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [CacheConditionDirectives.scala](/http/src/main/scala/akka/http/scaladsl/server/directives/CacheConditionDirectives.scala) { #conditional }
+@@signature [CacheConditionDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/CacheConditionDirectives.scala) { #conditional }
 
 @@@
 

@@ -5,7 +5,7 @@
 package docs.http.scaladsl.server
 
 import org.scalatest.Inside
-import akka.http.scaladsl.server._
+import org.apache.pekko.http.scaladsl.server._
 
 class CaseClassExtractionExamplesSpec extends RoutingSpec with Inside {
 

@@ -6,9 +6,10 @@ package docs.http.scaladsl.server
 
 //#source-quote
 import org.specs2.mutable.Specification
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.testkit.Specs2RouteTest
-import akka.http.scaladsl.server._
+import org.apache.pekko
+import pekko.http.scaladsl.model.StatusCodes
+import pekko.http.scaladsl.testkit.Specs2RouteTest
+import pekko.http.scaladsl.server._
 import Directives._
 
 class FullSpecs2TestKitExampleSpec extends Specification with Specs2RouteTest {

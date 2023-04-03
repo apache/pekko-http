@@ -4,10 +4,11 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.model.headers.Host
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.server.{ Directive, Directive1, MissingQueryParamRejection, Route }
+import org.apache.pekko
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers.Host
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.server.{ Directive, Directive1, MissingQueryParamRejection, Route }
 import docs.CompileOnlySpec
 
 class CustomDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {

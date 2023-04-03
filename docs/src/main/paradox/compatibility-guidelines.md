@@ -20,94 +20,94 @@ patch versions. However, binary compatibility will be attempted to be kept as mu
 
 Scala
 :   ```scala
-    akka.http.scaladsl.server.directives.FileUploadDirectives#storeUploadedFile
-    akka.http.scaladsl.server.directives.FileUploadDirectives#storeUploadedFiles
-    akka.http.scaladsl.server.directives.FileUploadDirectives#fileUploadAll
-    akka.http.scaladsl.marshalling.sse.EventStreamMarshalling
-    akka.http.scaladsl.server.HttpApp
-    akka.http.scaladsl.unmarshalling.sse.EventStreamParser
-    akka.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling
-    akka.http.scaladsl.OutgoingConnectionBuilder#managedPersistentHttp2
-    akka.http.scaladsl.OutgoingConnectionBuilder#managedPersistentHttp2WithPriorKnowledge
+    org.apache.pekko.http.scaladsl.server.directives.FileUploadDirectives#storeUploadedFile
+    org.apache.pekko.http.scaladsl.server.directives.FileUploadDirectives#storeUploadedFiles
+    org.apache.pekko.http.scaladsl.server.directives.FileUploadDirectives#fileUploadAll
+    org.apache.pekko.http.scaladsl.marshalling.sse.EventStreamMarshalling
+    org.apache.pekko.http.scaladsl.server.HttpApp
+    org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamParser
+    org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling
+    org.apache.pekko.http.scaladsl.OutgoingConnectionBuilder#managedPersistentHttp2
+    org.apache.pekko.http.scaladsl.OutgoingConnectionBuilder#managedPersistentHttp2WithPriorKnowledge
     ```
 
 Java
 :   ```java
-    akka.http.javadsl.common.PartialApplication#bindParameter
-    akka.http.javadsl.server.Directives#anyOf (all overloads)
-    akka.http.javadsl.server.Directives#allOf (all overloads)
-    akka.http.javadsl.server.directives.FileUploadDirectives#storeUploadedFile
-    akka.http.javadsl.server.directives.FileUploadDirectives#storeUploadedFiles
-    akka.http.javadsl.server.directives.FileUploadDirectives#fileUploadAll
-    akka.http.javadsl.server.HttpApp
-    akka.http.javadsl.model.RequestResponseAssociation
-    akka.http.javadsl.OutgoingConnectionBuilder#managedPersistentHttp2WithPriorKnowledge
-    akka.http.javadsl.OutgoingConnectionBuilder#managedPersistentHttp2
+    org.apache.pekko.http.javadsl.common.PartialApplication#bindParameter
+    org.apache.pekko.http.javadsl.server.Directives#anyOf (all overloads)
+    org.apache.pekko.http.javadsl.server.Directives#allOf (all overloads)
+    org.apache.pekko.http.javadsl.server.directives.FileUploadDirectives#storeUploadedFile
+    org.apache.pekko.http.javadsl.server.directives.FileUploadDirectives#storeUploadedFiles
+    org.apache.pekko.http.javadsl.server.directives.FileUploadDirectives#fileUploadAll
+    org.apache.pekko.http.javadsl.server.HttpApp
+    org.apache.pekko.http.javadsl.model.RequestResponseAssociation
+    org.apache.pekko.http.javadsl.OutgoingConnectionBuilder#managedPersistentHttp2WithPriorKnowledge
+    org.apache.pekko.http.javadsl.OutgoingConnectionBuilder#managedPersistentHttp2
     ```    
 
 #### pekko-http-caching
 
 Scala
 :   ```scala
-    akka.http.caching.LfuCache
-    akka.http.caching.scaladsl.Cache
-    akka.http.scaladsl.server.directives.CachingDirectives
+    org.apache.pekko.http.caching.LfuCache
+    org.apache.pekko.http.caching.scaladsl.Cache
+    org.apache.pekko.http.scaladsl.server.directives.CachingDirectives
     ```
 
 Java
 :   ```java
-    akka.http.caching.LfuCache
-    akka.http.caching.javadsl.Cache
-    akka.http.javadsl.server.directives.CachingDirectives
+    org.apache.pekko.http.caching.LfuCache
+    org.apache.pekko.http.caching.javadsl.Cache
+    org.apache.pekko.http.javadsl.server.directives.CachingDirectives
     ```    
 
 #### pekko-http-core
 
 Scala
 :   ```scala
-    akka.http.scaladsl.ClientTransport
-    akka.http.scaladsl.ConnectionContext#httpsClient
-    akka.http.scaladsl.ConnectionContext#httpsServer
-    akka.http.scaladsl.settings.PoolImplementation
-    akka.http.scaladsl.settings.ClientConnectionSettings#transport
-    akka.http.scaladsl.settings.ClientConnectionSettings#withTransport
-    akka.http.scaladsl.settings.ConnectionPoolSettings#appendHostOverride
-    akka.http.scaladsl.settings.ConnectionPoolSettings#poolImplementation
-    akka.http.scaladsl.settings.ConnectionPoolSettings#responseEntitySubscriptionTimeout
-    akka.http.scaladsl.settings.ConnectionPoolSettings#withHostOverrides
-    akka.http.scaladsl.settings.ConnectionPoolSettings#withOverrides
-    akka.http.scaladsl.settings.ConnectionPoolSettings#withPoolImplementation
-    akka.http.scaladsl.settings.ConnectionPoolSettings#withResponseEntitySubscriptionTimeout
-    akka.http.scaladsl.settings.HostOverride
-    akka.http.scaladsl.settings.Http2ServerSettings
-    akka.http.scaladsl.settings.Http2ClientSettings
-    akka.http.scaladsl.settings.PreviewServerSettings
-    akka.http.scaladsl.settings.ServerSentEventSettings
-    akka.http.scaladsl.model.headers.CacheDirectives.immutableDirective
-    akka.http.scaladsl.model.headers.X-Forwarded-Host
-    akka.http.scaladsl.model.headers.X-Forwarded-Proto
-    akka.http.scaladsl.model.http2.PeerClosedStreamException
-    akka.http.scaladsl.model.http2.Http2Exception
-    akka.http.scaladsl.model.SimpleRequestResponseAttribute
-    akka.http.scaladsl.model.RequestResponseAssociation
+    org.apache.pekko.http.scaladsl.ClientTransport
+    org.apache.pekko.http.scaladsl.ConnectionContext#httpsClient
+    org.apache.pekko.http.scaladsl.ConnectionContext#httpsServer
+    org.apache.pekko.http.scaladsl.settings.PoolImplementation
+    org.apache.pekko.http.scaladsl.settings.ClientConnectionSettings#transport
+    org.apache.pekko.http.scaladsl.settings.ClientConnectionSettings#withTransport
+    org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings#appendHostOverride
+    org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings#poolImplementation
+    org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings#responseEntitySubscriptionTimeout
+    org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings#withHostOverrides
+    org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings#withOverrides
+    org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings#withPoolImplementation
+    org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings#withResponseEntitySubscriptionTimeout
+    org.apache.pekko.http.scaladsl.settings.HostOverride
+    org.apache.pekko.http.scaladsl.settings.Http2ServerSettings
+    org.apache.pekko.http.scaladsl.settings.Http2ClientSettings
+    org.apache.pekko.http.scaladsl.settings.PreviewServerSettings
+    org.apache.pekko.http.scaladsl.settings.ServerSentEventSettings
+    org.apache.pekko.http.scaladsl.model.headers.CacheDirectives.immutableDirective
+    org.apache.pekko.http.scaladsl.model.headers.X-Forwarded-Host
+    org.apache.pekko.http.scaladsl.model.headers.X-Forwarded-Proto
+    org.apache.pekko.http.scaladsl.model.http2.PeerClosedStreamException
+    org.apache.pekko.http.scaladsl.model.http2.Http2Exception
+    org.apache.pekko.http.scaladsl.model.SimpleRequestResponseAttribute
+    org.apache.pekko.http.scaladsl.model.RequestResponseAssociation
     ```
 
 Java
 :   ```java
-    akka.http.javadsl.ClientTransport
-    akka.http.javadsl.ConnectionContext#httpsClient
-    akka.http.javadsl.ConnectionContext#httpsServer
-    akka.http.javadsl.settings.ClientConnectionSettings#getTransport
-    akka.http.javadsl.settings.ClientConnectionSettings#withTransport
-    akka.http.javadsl.settings.ConnectionPoolSettings#appendHostOverride
-    akka.http.javadsl.settings.ConnectionPoolSettings#getPoolImplementation
-    akka.http.javadsl.settings.ConnectionPoolSettings#getResponseEntitySubscriptionTimeout
-    akka.http.javadsl.settings.ConnectionPoolSettings#withHostOverrides
-    akka.http.javadsl.settings.ConnectionPoolSettings#withPoolImplementation
-    akka.http.javadsl.settings.ConnectionPoolSettings#withResponseEntitySubscriptionTimeout
-    akka.http.javadsl.settings.PoolImplementation
-    akka.http.javadsl.settings.PreviewServerSettings
-    akka.http.javadsl.settings.ServerSentEventSettings
+    org.apache.pekko.http.javadsl.ClientTransport
+    org.apache.pekko.http.javadsl.ConnectionContext#httpsClient
+    org.apache.pekko.http.javadsl.ConnectionContext#httpsServer
+    org.apache.pekko.http.javadsl.settings.ClientConnectionSettings#getTransport
+    org.apache.pekko.http.javadsl.settings.ClientConnectionSettings#withTransport
+    org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings#appendHostOverride
+    org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings#getPoolImplementation
+    org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings#getResponseEntitySubscriptionTimeout
+    org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings#withHostOverrides
+    org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings#withPoolImplementation
+    org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings#withResponseEntitySubscriptionTimeout
+    org.apache.pekko.http.javadsl.settings.PoolImplementation
+    org.apache.pekko.http.javadsl.settings.PreviewServerSettings
+    org.apache.pekko.http.javadsl.settings.ServerSentEventSettings
     ```
   
 ## Versioning and Compatibility

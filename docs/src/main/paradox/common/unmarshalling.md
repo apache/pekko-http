@@ -14,7 +14,7 @@ Unmarshalling of instances of type `A` into instances of type `B` is performed b
 @@@ div { .group-scala }
 Apache Pekko HTTP also predefines a number of helpful aliases for the types of unmarshallers that you'll likely work with most:
 
-@@snip [package.scala](/http/src/main/scala/akka/http/scaladsl/unmarshalling/package.scala) { #unmarshaller-aliases }
+@@snip [package.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/unmarshalling/package.scala) { #unmarshaller-aliases }
 
 @@@
 
@@ -44,10 +44,10 @@ Specifically these are:
  * @scala[@scaladoc[PredefinedFromEntityUnmarshallers](akka.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers)]
    @java[@apidoc[Unmarshaller]]
     * @scala[`Array[Byte]`]@java[`byte[]`]
-    * @apidoc[akka.util.ByteString]
+    * @apidoc[org.apache.pekko.util.ByteString]
     * @scala[`Array[Char]`]@java[`char[]`]
     * `String`
-    * @scala[`akka.http.scaladsl.model.FormData`]@java[`akka.http.javadsl.model.FormData`]
+    * @scala[`org.apache.pekko.http.scaladsl.model.FormData`]@java[`org.apache.pekko.http.javadsl.model.FormData`]
 
 @@@ div { .group-scala }
  * @scaladoc[GenericUnmarshallers](akka.http.scaladsl.unmarshalling.GenericUnmarshallers)
@@ -80,10 +80,10 @@ Rather, it should be possible to use one of the convenience construction helpers
 @scala[the @apidoc[Unmarshaller] companion]@java[@apidoc[Unmarshaller]]:
 
 Scala
-:  @@snip [Unmarshaller.scala](/http/src/main/scala/akka/http/scaladsl/unmarshalling/Unmarshaller.scala) { #unmarshaller-creation }
+:  @@snip [Unmarshaller.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/unmarshalling/Unmarshaller.scala) { #unmarshaller-creation }
 
 Java
-:  @@snip [Unmarshallers.scala](/http/src/main/java/akka/http/javadsl/unmarshalling/Unmarshallers.java) { #unmarshaller-creation }
+:  @@snip [Unmarshallers.scala](/http/src/main/java/org/apache/pekko/http/javadsl/unmarshalling/Unmarshallers.java) { #unmarshaller-creation }
 
 @@@ note
 To avoid unnecessary memory pressure, unmarshallers should make sure to either fully consume the incoming entity data stream, or make sure it is properly cancelled on error.
@@ -125,7 +125,7 @@ In many places throughout Apache Pekko HTTP unmarshallers are used implicitly, e
 of a request using the @ref[Routing DSL](../routing-dsl/index.md).
 
 However, you can also use the unmarshalling infrastructure directly if you wish, which can be useful for example in tests.
-The best entry point for this is the @scala[`akka.http.scaladsl.unmarshalling.Unmarshal` object]@java[`akka.http.javadsl.unmarshalling.StringUnmarshallers` class], which you can use like this:
+The best entry point for this is the @scala[`org.apache.pekko.http.scaladsl.unmarshalling.Unmarshal` object]@java[`org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers` class], which you can use like this:
 
 Scala
 :  @@snip [UnmarshalSpec.scala](/docs/src/test/scala/docs/http/scaladsl/UnmarshalSpec.scala) { #use-unmarshal }

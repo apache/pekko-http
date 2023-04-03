@@ -6,19 +6,19 @@ package docs.http.javadsl;
 
 //#respond-with-header-exceptionhandler-example
 
-import akka.actor.ActorSystem;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.ServerBinding;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.headers.RawHeader;
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.ExceptionHandler;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.testkit.TestRoute;
-import akka.http.scaladsl.model.ErrorInfo;
-import akka.http.scaladsl.model.IllegalHeaderException;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.ServerBinding;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.ExceptionHandler;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.TestRoute;
+import org.apache.pekko.http.scaladsl.model.ErrorInfo;
+import org.apache.pekko.http.scaladsl.model.IllegalHeaderException;
 import org.junit.Test;
 
 import java.io.IOException;

@@ -4,9 +4,10 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.server.Route
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 class FormFieldDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {

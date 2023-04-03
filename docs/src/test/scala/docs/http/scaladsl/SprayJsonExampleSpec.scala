@@ -15,8 +15,9 @@ class SprayJsonExampleSpec extends AnyWordSpec with Matchers {
 
   "spray-json example" in compileOnlySpec {
     // #minimal-spray-json-example
-    import akka.http.scaladsl.server.Directives
-    import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+    import org.apache.pekko
+    import pekko.http.scaladsl.server.Directives
+    import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
     import spray.json._
 
     // domain model

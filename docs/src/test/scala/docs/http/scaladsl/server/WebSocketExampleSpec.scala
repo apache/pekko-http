@@ -6,13 +6,14 @@ package docs.http.scaladsl.server
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.AttributeKeys
-import akka.http.scaladsl.model.ws.{ BinaryMessage, Message, WebSocketRequest }
-import akka.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
-import akka.stream.scaladsl.{ Flow, Sink }
-import akka.util.ByteString
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.model.AttributeKeys
+import pekko.http.scaladsl.model.ws.{ BinaryMessage, Message, WebSocketRequest }
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
+import pekko.stream.scaladsl.{ Flow, Sink }
+import pekko.util.ByteString
 import docs.CompileOnlySpec
 
 import scala.io.StdIn
@@ -22,13 +23,13 @@ import org.scalatest.wordspec.AnyWordSpec
 class WebSocketExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
   "core-example" in compileOnlySpec {
     // #websocket-example-using-core
-    import akka.actor.ActorSystem
-    import akka.stream.scaladsl.{ Source, Flow }
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.model.AttributeKeys.webSocketUpgrade
-    import akka.http.scaladsl.model.ws.{ TextMessage, Message }
-    import akka.http.scaladsl.model.{ HttpResponse, Uri, HttpRequest }
-    import akka.http.scaladsl.model.HttpMethods._
+    import pekko.actor.ActorSystem
+    import pekko.stream.scaladsl.{ Source, Flow }
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
+    import pekko.http.scaladsl.model.ws.{ TextMessage, Message }
+    import pekko.http.scaladsl.model.{ HttpResponse, Uri, HttpRequest }
+    import pekko.http.scaladsl.model.HttpMethods._
 
     implicit val system = ActorSystem()
 
@@ -75,11 +76,11 @@ class WebSocketExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpe
       .onComplete(_ => system.terminate()) // and shutdown when done
   }
   "routing-example" in compileOnlySpec {
-    import akka.actor.ActorSystem
-    import akka.stream.scaladsl.{ Source, Flow }
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.model.ws.{ TextMessage, Message }
-    import akka.http.scaladsl.server.Directives
+    import pekko.actor.ActorSystem
+    import pekko.stream.scaladsl.{ Source, Flow }
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.model.ws.{ TextMessage, Message }
+    import pekko.http.scaladsl.server.Directives
 
     implicit val system = ActorSystem()
 

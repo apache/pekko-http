@@ -4,8 +4,9 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server._
+import org.apache.pekko
+import pekko.http.scaladsl.model.StatusCodes
+import pekko.http.scaladsl.server._
 import docs.CompileOnlySpec
 
 class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
@@ -327,7 +328,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "redirectToTrailingSlashIfMissing-0" in {
     // #redirectToTrailingSlashIfMissing-0
-    import akka.http.scaladsl.model.StatusCodes
+    import org.apache.pekko.http.scaladsl.model.StatusCodes
 
     val route =
       redirectToTrailingSlashIfMissing(StatusCodes.MovedPermanently) {
@@ -383,7 +384,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "redirectToNoTrailingSlashIfPresent-0" in {
     // #redirectToNoTrailingSlashIfPresent-0
-    import akka.http.scaladsl.model.StatusCodes
+    import org.apache.pekko.http.scaladsl.model.StatusCodes
 
     val route =
       redirectToNoTrailingSlashIfPresent(StatusCodes.MovedPermanently) {

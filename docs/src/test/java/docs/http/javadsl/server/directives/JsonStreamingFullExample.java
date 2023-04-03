@@ -5,15 +5,15 @@
 package docs.http.javadsl.server.directives;
 
 //#custom-content-type
-import akka.NotUsed;
-import akka.actor.ActorSystem;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.common.EntityStreamingSupport;
-import akka.http.javadsl.marshalling.Marshaller;
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.Route;
-import akka.stream.javadsl.Source;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.common.EntityStreamingSupport;
+import org.apache.pekko.http.javadsl.marshalling.Marshaller;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.stream.javadsl.Source;
 
 import java.util.Random;
 import java.util.stream.Stream;

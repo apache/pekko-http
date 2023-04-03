@@ -67,7 +67,7 @@ Next, all in flight requests will be handled. If a request is "in-flight" (being
   which could trap the server in a situation where it could not terminate if it were to wait for a response to "finish".
     - existing streaming responses must complete before the deadline as well.
       When the deadline is reached the connection will be terminated regardless of status of the streaming responses.
-- if user code does not reply with a response within the deadline we produce a special @java[`akka.http.javadsl.settings.ServerSettings.getTerminationDeadlineExceededResponse`]@scala[`akka.http.scaladsl.settings.ServerSettings.terminationDeadlineExceededResponse`] 
+- if user code does not reply with a response within the deadline we produce a special @java[`org.apache.pekko.http.javadsl.settings.ServerSettings.getTerminationDeadlineExceededResponse`]@scala[`org.apache.pekko.http.scaladsl.settings.ServerSettings.terminationDeadlineExceededResponse`] 
 HTTP response (e.g. `503 Service Unavailable`) with a `Connection: close` header and close connection.
 
 During that time incoming requests continue to be served. The existing connections will remain alive until the 

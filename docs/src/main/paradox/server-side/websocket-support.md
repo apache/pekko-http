@@ -17,13 +17,13 @@ In the data model the two kinds of messages, binary and text messages, are repre
 @scala[The subclasses @apidoc[BinaryMessage] and @apidoc[TextMessage] contain methods to access the data.]
 @java[The superclass @javadoc[Message](akka.http.javadsl.model.ws.Message)]
 contains `isText` and `isBinary` methods to distinguish a message and `asBinaryMessage` and `asTextMessage` methods to cast a message.]
-Take the API of @apidoc[TextMessage] as an example (@apidoc[BinaryMessage] is very similar with `String` replaced by @apidoc[akka.util.ByteString]):
+Take the API of @apidoc[TextMessage] as an example (@apidoc[BinaryMessage] is very similar with `String` replaced by @apidoc[org.apache.pekko.util.ByteString]):
 
 Scala
-:  @@snip [Message.scala](/http-core/src/main/scala/akka/http/scaladsl/model/ws/Message.scala) { #message-model }
+:  @@snip [Message.scala](/http-core/src/main/scala/org/apache/pekko/http/scaladsl/model/ws/Message.scala) { #message-model }
 
 Java
-:  @@snip [Message.scala](/http-core/src/main/scala/akka/http/javadsl/model/ws/Message.scala) { #message-model }
+:  @@snip [Message.scala](/http-core/src/main/scala/org/apache/pekko/http/javadsl/model/ws/Message.scala) { #message-model }
 
 The data of a message is provided as a stream because WebSocket messages do not have a predefined size and could
 (in theory) be infinitely long. However, only one message can be open per direction of the WebSocket connection,
@@ -32,7 +32,7 @@ single application-level data units like "one event" or "one chat message".
 
 Many messages are small enough to be sent or received in one go. As an opportunity for optimization, the model provides
 the notion of a "strict" message to represent cases where a whole message was received in one go.
-@scala[Strict messages are represented with the `Strict` subclass for each kind of message which contains data as a strict, i.e. non-streamed, @apidoc[akka.util.ByteString] or `String`.]
+@scala[Strict messages are represented with the `Strict` subclass for each kind of message which contains data as a strict, i.e. non-streamed, @apidoc[org.apache.pekko.util.ByteString] or `String`.]
 @java[If `TextMessage.isStrict` returns true, the complete data is already available and can be accessed with `TextMessage.getStrictText` (analogously for @apidoc[BinaryMessage]).]
 
 When receiving data from the network connection the WebSocket implementation tries to create a strict message whenever

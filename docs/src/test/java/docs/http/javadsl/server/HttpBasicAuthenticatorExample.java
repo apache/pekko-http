@@ -8,16 +8,16 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.headers.Host;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.scaladsl.model.headers.Authorization;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.headers.Host;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.scaladsl.model.headers.Authorization;
 
 //#basic-authenticator-java
-import static akka.http.javadsl.server.Directives.authenticateBasic;
-import static akka.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasic;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
 //#basic-authenticator-java
 

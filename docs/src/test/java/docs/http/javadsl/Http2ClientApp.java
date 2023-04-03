@@ -4,21 +4,21 @@
 
 package docs.http.javadsl;
 
-import akka.actor.ActorSystem;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.model.AttributeKey;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.ResponseFuture;
-import akka.http.javadsl.model.headers.AcceptEncoding;
-import akka.http.javadsl.model.headers.HttpEncodings;
-import akka.stream.Materializer;
-import akka.stream.OverflowStrategy;
-import akka.stream.SystemMaterializer;
-import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.Sink;
-import akka.stream.javadsl.Source;
-import akka.stream.javadsl.SourceQueueWithComplete;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.model.AttributeKey;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.javadsl.model.ResponseFuture;
+import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
+import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
+import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.stream.OverflowStrategy;
+import org.apache.pekko.stream.SystemMaterializer;
+import org.apache.pekko.stream.javadsl.Flow;
+import org.apache.pekko.stream.javadsl.Sink;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.stream.javadsl.SourceQueueWithComplete;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
@@ -37,7 +37,7 @@ public class Http2ClientApp {
   public static void main(String[] args) {
     Config config =
         ConfigFactory.parseString(
-            "#akka.loglevel = debug\n" +
+            "#pekko.loglevel = debug\n" +
                "akka.http.client.http2.log-frames = true\n" +
                "akka.http.client.parsing.max-content-length = 20m"
         ).withFallback(ConfigFactory.load());

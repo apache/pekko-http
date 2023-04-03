@@ -4,19 +4,19 @@
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.Multipart;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.headers.ByteRange;
-import akka.http.javadsl.model.headers.ContentRange;
-import akka.http.javadsl.model.headers.Range;
-import akka.http.javadsl.model.headers.RangeUnits;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.unmarshalling.Unmarshaller;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.testkit.TestRouteResult;
-import akka.stream.Materializer;
-import akka.util.ByteString;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.Multipart;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.ByteRange;
+import org.apache.pekko.http.javadsl.model.headers.ContentRange;
+import org.apache.pekko.http.javadsl.model.headers.Range;
+import org.apache.pekko.http.javadsl.model.headers.RangeUnits;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
+import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.util.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.Test;
@@ -28,8 +28,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 //#withRangeSupport
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.withRangeSupport;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.withRangeSupport;
 
 //#withRangeSupport
 
@@ -46,11 +46,11 @@ public class RangeDirectivesExamplesTest extends JUnitRouteTest {
 
         // test:
         final String bytes348Range = ContentRange.create(RangeUnits.BYTES,
-                akka.http.javadsl.model.ContentRange.create(3, 4, 8)).value();
-        final akka.http.javadsl.model.ContentRange bytes028Range =
-                akka.http.javadsl.model.ContentRange.create(0, 2, 8);
-        final akka.http.javadsl.model.ContentRange bytes678Range =
-                akka.http.javadsl.model.ContentRange.create(6, 7, 8);
+                org.apache.pekko.http.javadsl.model.ContentRange.create(3, 4, 8)).value();
+        final org.apache.pekko.http.javadsl.model.ContentRange bytes028Range =
+                org.apache.pekko.http.javadsl.model.ContentRange.create(0, 2, 8);
+        final org.apache.pekko.http.javadsl.model.ContentRange bytes678Range =
+                org.apache.pekko.http.javadsl.model.ContentRange.create(6, 7, 8);
         final Materializer materializer = systemResource().materializer();
 
         testRoute(route).run(HttpRequest.GET("/")

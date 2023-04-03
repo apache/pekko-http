@@ -4,15 +4,16 @@
 
 package docs.http.scaladsl.server.directives
 
-import akka.NotUsed
-import akka.http.scaladsl.common.{ EntityStreamingSupport, JsonEntityStreamingSupport }
-import akka.http.scaladsl.marshalling._
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.Accept
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.server.{ UnacceptedResponseContentTypeRejection, UnsupportedRequestContentTypeRejection }
-import akka.stream.scaladsl.{ Flow, Source }
-import akka.util.ByteString
+import org.apache.pekko
+import pekko.NotUsed
+import pekko.http.scaladsl.common.{ EntityStreamingSupport, JsonEntityStreamingSupport }
+import pekko.http.scaladsl.marshalling._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.Accept
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.server.{ UnacceptedResponseContentTypeRejection, UnsupportedRequestContentTypeRejection }
+import pekko.stream.scaladsl.{ Flow, Source }
+import pekko.util.ByteString
 import docs.CompileOnlySpec
 
 import scala.concurrent.Future
@@ -33,7 +34,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
   import spray.json.RootJsonFormat
 
   object MyTweetJsonProtocol
-      extends akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+      extends pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
       with spray.json.DefaultJsonProtocol {
 
     implicit val tweetFormat: RootJsonFormat[Tweet] = jsonFormat2(Tweet.apply)
@@ -182,7 +183,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
   import spray.json.RootJsonFormat
 
   object MyMeasurementJsonProtocol
-      extends akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+      extends pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
       with spray.json.DefaultJsonProtocol {
 
     implicit val measurementFormat: RootJsonFormat[Measurement] = jsonFormat2(Measurement.apply)

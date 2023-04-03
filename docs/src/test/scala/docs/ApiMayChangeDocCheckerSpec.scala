@@ -6,7 +6,7 @@ package docs
 
 import java.lang.reflect.Method
 
-import akka.annotation.ApiMayChange
+import org.apache.pekko.annotation.ApiMayChange
 import org.reflections.Reflections
 import org.reflections.scanners.{ MethodAnnotationsScanner, Scanners, TypeAnnotationsScanner }
 import org.reflections.util.{ ClasspathHelper, ConfigurationBuilder }
@@ -48,7 +48,7 @@ class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers {
 
   "compatibility-guidelines.md doc page" should {
     val reflections = new Reflections(new ConfigurationBuilder()
-      .setUrls(ClasspathHelper.forPackage("akka.http"))
+      .setUrls(ClasspathHelper.forPackage("org.apache.pekko.http"))
       .setScanners(
         Scanners.TypesAnnotated,
         Scanners.MethodsAnnotated))
