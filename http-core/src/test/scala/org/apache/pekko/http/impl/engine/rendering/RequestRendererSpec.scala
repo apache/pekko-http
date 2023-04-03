@@ -42,7 +42,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
         HttpRequest(GET, "/abc") should renderTo {
           """GET /abc HTTP/1.1
             |Host: test.com:8080
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |
             |"""
         }
@@ -52,7 +52,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
         HttpRequest(GET, "/abc<def") should renderTo {
           """GET /abc%3Cdef HTTP/1.1
             |Host: test.com:8080
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |
             |"""
         }
@@ -62,7 +62,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
         HttpRequest(GET, uri = "/abc") should renderTo {
           """GET /abc HTTP/1.1
             |Host: [0:0:0:0:0:0:0:1]:8080
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |
             |"""
         }
@@ -78,7 +78,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
             |X-Fancy: naa
             |Link: <http://akka.io>; rel=first
             |Host: spray.io:9999
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |Content-Length: 0
             |
             |"""
@@ -95,7 +95,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
             |X-Fancy: naa
             |Cache-Control: public
             |Host: spray.io
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |Content-Type: text/plain; charset=UTF-8
             |Content-Length: 19
             |
@@ -114,7 +114,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
             |X-Fancy: naa
             |Cache-Control: public
             |Host: spray.io
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |Content-Length: 19
             |
             |The content please!"""
@@ -127,7 +127,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
           """PUT /abc/xyz HTTP/1.1
               |Transfer-Encoding: fancy
               |Host: test.com:8080
-              |User-Agent: akka-http/1.0.0
+              |User-Agent: pekko-http/1.0.0
               |Content-Type: text/plain; charset=UTF-8
               |Content-Length: 19
               |
@@ -139,7 +139,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
         HttpRequest(DELETE, "/abc") should renderTo {
           """DELETE /abc HTTP/1.1
             |Host: test.com:8080
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |
             |"""
         }
@@ -152,7 +152,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
         HttpRequest(PUT, "/abc/xyz", entity = Chunked(ContentTypes.`text/plain(UTF-8)`, Source.empty)) should renderTo {
           """PUT /abc/xyz HTTP/1.1
             |Host: test.com:8080
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |Content-Type: text/plain; charset=UTF-8
             |Content-Length: 0
             |
@@ -167,7 +167,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
             source("XXXX", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))) should renderTo {
           """POST /abc/xyz HTTP/1.1
               |Host: test.com:8080
-              |User-Agent: akka-http/1.0.0
+              |User-Agent: pekko-http/1.0.0
               |Transfer-Encoding: chunked
               |Content-Type: text/plain; charset=UTF-8
               |
@@ -194,7 +194,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
             Source(chunks))) should renderTo {
           """POST /abc/xyz HTTP/1.1
             |Host: test.com:8080
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |Transfer-Encoding: chunked
             |Content-Type: text/plain; charset=UTF-8
             |
@@ -222,7 +222,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
             Source(chunks))) should renderTo {
           """POST /abc/xyz HTTP/1.1
             |Host: test.com:8080
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |Transfer-Encoding: chunked
             |Content-Type: text/plain; charset=UTF-8
             |
@@ -243,7 +243,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
           """POST /abc/xyz HTTP/1.1
               |Transfer-Encoding: fancy, chunked
               |Host: test.com:8080
-              |User-Agent: akka-http/1.0.0
+              |User-Agent: pekko-http/1.0.0
               |Content-Type: text/plain; charset=UTF-8
               |
               |4
@@ -313,7 +313,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
         HttpRequest(GET, "/abc", List(`Raw-Request-URI`("/def"))) should renderTo {
           """GET /def HTTP/1.1
             |Host: test.com:8080
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |
             |"""
         }
@@ -323,7 +323,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
         HttpRequest(GET, "/abc", List(`Raw-Request-URI`("/def%80%fe%ff"))) should renderTo {
           """GET /def%80%fe%ff HTTP/1.1
             |Host: test.com:8080
-            |User-Agent: akka-http/1.0.0
+            |User-Agent: pekko-http/1.0.0
             |
             |"""
         }
@@ -334,7 +334,7 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
   override def afterAll() = TestKit.shutdownActorSystem(system)
 
   class TestSetup(
-      val userAgent: Option[`User-Agent`] = Some(`User-Agent`("akka-http/1.0.0")),
+      val userAgent: Option[`User-Agent`] = Some(`User-Agent`("pekko-http/1.0.0")),
       serverAddress: InetSocketAddress = new InetSocketAddress("test.com", 8080))
       extends HttpRequestRendererFactory(userAgent, requestHeaderSizeHint = 64, NoLogging) {
 

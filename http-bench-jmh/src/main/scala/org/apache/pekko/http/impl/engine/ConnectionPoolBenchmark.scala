@@ -64,7 +64,7 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
            pekko.actor.default-dispatcher.fork-join-executor.parallelism-max = 1
            akka.http.host-connection-pool.max-connections = ${maxConnections}
            akka.http.host-connection-pool.max-open-requests = 16384
-           akka.http.client.user-agent = akka-http-bench
+           akka.http.client.user-agent = pekko-http-bench
         """)
         .withFallback(ConfigFactory.load())
     system = ActorSystem("AkkaHttpBenchmarkSystem", config)
@@ -72,7 +72,7 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
 
     val responseBytes = ByteString(
       """HTTP/1.1 200 OK
-        |Server: akka-http/test
+        |Server: pekko-http/test
         |Date: Wed, 01 Jul 2020 13:26:33 GMT
         |Content-Length: 0
         |

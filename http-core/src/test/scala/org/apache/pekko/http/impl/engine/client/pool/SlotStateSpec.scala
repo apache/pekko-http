@@ -16,14 +16,14 @@ import pekko.http.scaladsl.model.HttpEntity
 import pekko.http.scaladsl.model.{ headers, HttpRequest, HttpResponse }
 import pekko.http.scaladsl.settings.ConnectionPoolSettings
 import pekko.stream.scaladsl.Source
-import pekko.testkit.AkkaSpec
+import pekko.testkit.PekkoSpec
 import pekko.util.ByteString
 
 import scala.concurrent.Promise
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
-class SlotStateSpec extends AkkaSpec {
+class SlotStateSpec extends PekkoSpec {
   val outgoingConnection = Http.OutgoingConnection(
     InetSocketAddress.createUnresolved("127.0.0.1", 1234),
     InetSocketAddress.createUnresolved("127.0.0.1", 5678))

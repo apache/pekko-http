@@ -113,9 +113,7 @@ object Dependencies {
 
   lazy val http = Seq()
 
-  lazy val http2 = l ++= Seq()
-
-  lazy val http2Support = l ++= Seq(Test.h2spec)
+  lazy val http2Tests = l ++= Seq(Test.h2spec)
 
   lazy val httpTestkit = Seq(
     versionDependentDeps(

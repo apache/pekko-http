@@ -28,7 +28,7 @@ abstract class HttpServerTestSetupBase {
   val responses = TestPublisher.probe[HttpResponse]()
 
   def settings = ServerSettings(system)
-    .withServerHeader(Some(Server(List(ProductVersion("akka-http", "test")))))
+    .withServerHeader(Some(Server(List(ProductVersion("pekko-http", "test")))))
 
   // hook to modify server, for example add attributes
   def modifyServer(server: Http.ServerLayer): Http.ServerLayer = server
@@ -79,7 +79,7 @@ abstract class HttpServerTestSetupBase {
     responses.sendNext(HttpResponse())
     expectResponseWithWipedDate(
       """HTTP/1.1 200 OK
-        |Server: akka-http/test
+        |Server: pekko-http/test
         |Date: XXXX
         |Content-Length: 0
         |

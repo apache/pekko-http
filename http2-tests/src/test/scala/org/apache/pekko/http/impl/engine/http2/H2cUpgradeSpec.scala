@@ -17,7 +17,7 @@ import scala.annotation.tailrec
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class H2cUpgradeSpec extends AkkaSpecWithMaterializer("""
+class H2cUpgradeSpec extends PekkoSpecWithMaterializer("""
     akka.http.server.preview.enable-http2 = on
     akka.http.server.http2.log-frames = on
   """) {

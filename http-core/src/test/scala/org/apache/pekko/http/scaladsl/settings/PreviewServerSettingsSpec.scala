@@ -4,9 +4,9 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
-import org.apache.pekko.testkit.AkkaSpec
+import org.apache.pekko.testkit.PekkoSpec
 
-class PreviewServerSettingsSpec extends AkkaSpec {
+class PreviewServerSettingsSpec extends PekkoSpec {
 
   def compileOnlySpec(body: => Unit) = ()
 

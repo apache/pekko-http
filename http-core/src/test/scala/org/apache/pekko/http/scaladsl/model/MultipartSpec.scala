@@ -5,7 +5,7 @@
 package org.apache.pekko.http.scaladsl.model
 
 import org.apache.pekko
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.model.headers._
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.testkit._
@@ -14,7 +14,7 @@ import pekko.util.ByteString
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class MultipartSpec extends AkkaSpecWithMaterializer {
+class MultipartSpec extends PekkoSpecWithMaterializer {
   "Multipart.General" should {
     "support `toStrict` on the streamed model" in {
       val streamed = Multipart.General(

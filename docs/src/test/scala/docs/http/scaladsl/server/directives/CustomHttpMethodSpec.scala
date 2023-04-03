@@ -10,12 +10,12 @@ import pekko.http.scaladsl.model.HttpProtocols._
 import pekko.http.scaladsl.model.RequestEntityAcceptance.Expected
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.server.Directives
-import pekko.testkit.{ AkkaSpec, SocketUtil }
+import pekko.testkit.{ PekkoSpec, SocketUtil }
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
 
-class CustomHttpMethodSpec extends AkkaSpec with ScalaFutures
+class CustomHttpMethodSpec extends PekkoSpec with ScalaFutures
     with Directives {
 
   "Http" should {

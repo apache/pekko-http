@@ -8,7 +8,7 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.Logging
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
-import pekko.http.impl.util.{ AkkaSpecWithMaterializer, ExampleHttpContexts }
+import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
 import pekko.http.scaladsl.model.{
   headers,
   AttributeKey,
@@ -47,7 +47,7 @@ import scala.concurrent.{ Future, Promise }
 class Http2PersistentClientTlsSpec extends Http2PersistentClientSpec(true)
 class Http2PersistentClientPlaintextSpec extends Http2PersistentClientSpec(false)
 
-abstract class Http2PersistentClientSpec(tls: Boolean) extends AkkaSpecWithMaterializer(
+abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMaterializer(
       // FIXME: would rather use remote-address-attribute, but that doesn't work with HTTP/2
       // see https://github.com/apache/incubator-pekko-http/issues/3707
       """akka.http.server.remote-address-attribute = on

@@ -8,6 +8,7 @@ import scala.language.postfixOps
 import sbt.{ Def, _ }
 import Keys._
 import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
+import org.mdedetrich.apache.sonatype.SonatypeApachePlugin
 
 /**
  * For projects that are not published.
@@ -23,9 +24,15 @@ object NoPublish extends AutoPlugin {
 }
 
 object Publish extends AutoPlugin {
-  override def requires = plugins.JvmPlugin
+  override def requires = SonatypeApachePlugin
   override def trigger = AllRequirements
 
-  override def projectSettings: Seq[Def.Setting[_]] = Seq(
-    sonatypeProfileName := "com.typesafe")
+  override lazy val projectSettings = Seq(
+    startYear := Some(2022),
+    developers := List(
+      Developer(
+        "pekko-http-contributors",
+        "Apache Pekko HTTP Contributors",
+        "dev@pekko.apache.org",
+        url("https://github.com/apache/incubator-pekko-http/graphs/contributors"))))
 }

@@ -14,7 +14,7 @@ import pekko.http.impl.util._
 import pekko.testkit._
 import Protocol.Opcode
 
-class FramingSpec extends AkkaSpecWithMaterializer {
+class FramingSpec extends PekkoSpecWithMaterializer {
   import BitBuilder._
 
   "The WebSocket parser/renderer round-trip should work for" should {

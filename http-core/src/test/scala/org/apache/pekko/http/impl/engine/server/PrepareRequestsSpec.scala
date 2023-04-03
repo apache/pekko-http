@@ -22,7 +22,7 @@ import pekko.testkit._
 import pekko.util.ByteString
 import scala.concurrent.duration._
 
-class PrepareRequestsSpec extends AkkaSpec {
+class PrepareRequestsSpec extends PekkoSpec {
 
   val chunkedStart =
     ParserOutput.RequestStart(

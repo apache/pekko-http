@@ -18,7 +18,7 @@ import pekko.util.ByteString
 import pekko.http.scaladsl.model.ws._
 import Protocol.Opcode
 import pekko.http.impl.settings.WebSocketSettingsImpl
-import pekko.http.impl.util.{ AkkaSpecWithMaterializer, LogByteStringTools }
+import pekko.http.impl.util.{ LogByteStringTools, PekkoSpecWithMaterializer }
 import pekko.http.scaladsl.settings.WebSocketSettings
 import pekko.testkit._
 import pekko.stream.OverflowStrategy
@@ -26,7 +26,7 @@ import org.scalatest.concurrent.Eventually
 
 import scala.concurrent.Await
 
-class MessageSpec extends AkkaSpecWithMaterializer(
+class MessageSpec extends PekkoSpecWithMaterializer(
       """
      akka.http.server.websocket.log-frames = on
      akka.http.client.websocket.log-frames = on

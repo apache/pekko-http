@@ -19,7 +19,7 @@ import org.scalatest.concurrent.Eventually
 
 import java.net.InetSocketAddress
 import pekko.Done
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.stream.stage.{ GraphStageLogic, GraphStageWithMaterializedValue, InHandler, OutHandler }
 import pekko.util.ByteString
@@ -28,7 +28,7 @@ import pekko.testkit._
 
 import scala.util.{ Failure, Success }
 
-class WebSocketIntegrationSpec extends AkkaSpecWithMaterializer(
+class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
       """
      akka {
        stream.materializer.debug.fuzzing-mode=off

@@ -10,7 +10,7 @@ import java.util.concurrent.{ TimeUnit, TimeoutException }
 import java.net.SocketException
 import org.apache.pekko
 import pekko.Done
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.javadsl.ServerBinding
 import pekko.http.javadsl.settings.ServerSettings
 import pekko.http.scaladsl.Http
@@ -23,7 +23,7 @@ import org.scalatest.concurrent.Eventually
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ Await, Future }
 
-class HttpAppSpec extends AkkaSpecWithMaterializer with RequestBuilding with Eventually {
+class HttpAppSpec extends PekkoSpecWithMaterializer with RequestBuilding with Eventually {
   import system.dispatcher
 
   def withMinimal(testCode: MinimalHttpApp => Any): Unit = {

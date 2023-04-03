@@ -7,7 +7,7 @@ package org.apache.pekko.http.impl.engine.http2
 import java.util.Base64
 
 import org.apache.pekko
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{ HttpProtocols, HttpRequest, HttpResponse, StatusCodes }
 import pekko.stream.OverflowStrategy
@@ -17,7 +17,7 @@ import pekko.util.ByteString
 
 import scala.concurrent.Future
 
-class WithPriorKnowledgeSpec extends AkkaSpecWithMaterializer("""
+class WithPriorKnowledgeSpec extends PekkoSpecWithMaterializer("""
     akka.http.server.preview.enable-http2 = on
     akka.http.server.http2.log-frames = on
   """) {

@@ -24,7 +24,7 @@ import pekko.util.ByteString
 import pekko.testkit._
 import pekko.http.impl.util._
 
-class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.websocket.log-frames = on") {
+class WebSocketClientSpec extends PekkoSpecWithMaterializer("akka.http.client.websocket.log-frames = on") {
   "The client-side WebSocket implementation should" should {
     "establish a websocket connection when the user requests it" in new EstablishedConnectionSetup with ClientEchoes
 
@@ -33,7 +33,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
       sendWireData("""HTTP/1.1 101 Switching Protocols
                      |Upgrade: wEbSOckET
                      |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
-                     |Server: akka-http/test
+                     |Server: pekko-http/test
                      |Sec-WebSocket-Version: 13
                      |Connection: upgrade
                      |
@@ -49,7 +49,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
       sendWireData("""Switching Protocols
                      |Upgrade: websocket
                      |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
-                     |Server: akka-http/test
+                     |Server: pekko-http/test
                      |Sec-WebSocket-Version: 13
                      |Connection: upgrade
                      |
@@ -65,7 +65,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
 
         sendWireData(
           """HTTP/1.1 404 Not Found
-            |Server: akka-http/test
+            |Server: pekko-http/test
             |Content-Length: 0
             |
             |""")
@@ -81,7 +81,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
           """HTTP/1.1 101 Switching Protocols
             |Upgrade: websocket
             |Sec-WebSocket-Version: 13
-            |Server: akka-http/test
+            |Server: pekko-http/test
             |Connection: upgrade
             |
             |""")
@@ -98,7 +98,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
             |Upgrade: websocket
             |Sec-WebSocket-Accept: s3pPLMBiTxhZRbK+xOo=
             |Sec-WebSocket-Version: 13
-            |Server: akka-http/test
+            |Server: pekko-http/test
             |Connection: upgrade
             |
             |""")
@@ -114,7 +114,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
           """HTTP/1.1 101 Switching Protocols
             |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
             |Sec-WebSocket-Version: 13
-            |Server: akka-http/test
+            |Server: pekko-http/test
             |Connection: upgrade
             |
             |""")
@@ -131,7 +131,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
             |Upgrade: websocket
             |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
             |Sec-WebSocket-Version: 13
-            |Server: akka-http/test
+            |Server: pekko-http/test
             |
             |""")
 
@@ -205,7 +205,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
           |Sec-WebSocket-Version: 13
           |Sec-WebSocket-Protocol: v2
           |Host: example.org
-          |User-Agent: akka-http/test
+          |User-Agent: pekko-http/test
           |
           |""")
         sendWireData(
@@ -213,7 +213,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
             |Upgrade: websocket
             |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
             |Sec-WebSocket-Version: 13
-            |Server: akka-http/test
+            |Server: pekko-http/test
             |Connection: upgrade
             |Sec-WebSocket-Protocol: v2
             |
@@ -234,7 +234,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
               |Sec-WebSocket-Version: 13
               |Sec-WebSocket-Protocol: v2, v3
               |Host: example.org
-              |User-Agent: akka-http/test
+              |User-Agent: pekko-http/test
               |
               |""")
           sendWireData(
@@ -242,7 +242,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
               |Upgrade: websocket
               |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
               |Sec-WebSocket-Version: 13
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Connection: upgrade
               |Sec-WebSocket-Protocol: v3
               |
@@ -264,7 +264,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
               |Sec-WebSocket-Version: 13
               |Sec-WebSocket-Protocol: v2
               |Host: example.org
-              |User-Agent: akka-http/test
+              |User-Agent: pekko-http/test
               |
               |""")
           sendWireData(
@@ -272,7 +272,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
               |Upgrade: websocket
               |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
               |Sec-WebSocket-Version: 13
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Connection: upgrade
               |
               |""")
@@ -292,7 +292,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
               |Sec-WebSocket-Version: 13
               |Sec-WebSocket-Protocol: v2
               |Host: example.org
-              |User-Agent: akka-http/test
+              |User-Agent: pekko-http/test
               |
               |""")
           sendWireData(
@@ -301,7 +301,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
               |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
               |Sec-WebSocket-Protocol: v3
               |Sec-WebSocket-Version: 13
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Connection: upgrade
               |
               |""")
@@ -321,7 +321,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
       |Sec-WebSocket-Key: YLQguzhR2dR6y5M9vnA5mw==
       |Sec-WebSocket-Version: 13
       |Host: example.org
-      |User-Agent: akka-http/test
+      |User-Agent: pekko-http/test
       |
       |""".stripMarginWithNewline("\r\n")
   }
@@ -330,7 +330,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
     """HTTP/1.1 101 Switching Protocols
       |Upgrade: websocket
       |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
-      |Server: akka-http/test
+      |Server: pekko-http/test
       |Sec-WebSocket-Version: 13
       |Connection: upgrade
       |
@@ -349,7 +349,7 @@ class WebSocketClientSpec extends AkkaSpecWithMaterializer("akka.http.client.web
 
     val random = new Random(0)
     def settings = ClientConnectionSettings(system)
-      .withUserAgentHeader(Some(`User-Agent`(List(ProductVersion("akka-http", "test")))))
+      .withUserAgentHeader(Some(`User-Agent`(List(ProductVersion("pekko-http", "test")))))
       .withWebsocketRandomFactory(() => random)
 
     def targetUri: Uri = "ws://example.org/ws"

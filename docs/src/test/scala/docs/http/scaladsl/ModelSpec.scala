@@ -9,11 +9,11 @@ import org.apache.pekko
 import org.apache.pekko.http.scaladsl.model._
 //#import-model
 
-import pekko.testkit.AkkaSpec
+import pekko.testkit.PekkoSpec
 import pekko.util.ByteString
 import pekko.http.scaladsl.model.headers.BasicHttpCredentials
 
-class ModelSpec extends AkkaSpec {
+class ModelSpec extends PekkoSpec {
   "construct request" in {
     // #construct-request
     import HttpMethods._

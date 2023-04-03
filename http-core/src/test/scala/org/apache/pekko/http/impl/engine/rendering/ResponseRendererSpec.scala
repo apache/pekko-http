@@ -42,7 +42,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
       "status 200 and no headers" in new TestSetup() {
         HttpResponse(200) should renderTo {
           """HTTP/1.1 200 OK
-            |Server: akka-http/1.0.0
+            |Server: pekko-http/1.0.0
             |Date: Thu, 25 Aug 2011 09:10:29 GMT
             |Content-Length: 0
             |
@@ -54,7 +54,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         HttpResponse(200, List(Date(DateTime(2011, 8, 26, 10, 11, 59)))) should renderTo {
           """HTTP/1.1 200 OK
             |Date: Fri, 26 Aug 2011 10:11:59 GMT
-            |Server: akka-http/1.0.0
+            |Server: pekko-http/1.0.0
             |Content-Length: 0
             |
             |"""
@@ -66,7 +66,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
           """HTTP/1.1 304 Not Modified
             |X-Fancy: of course
             |Age: 0
-            |Server: akka-http/1.0.0
+            |Server: pekko-http/1.0.0
             |Date: Thu, 25 Aug 2011 09:10:29 GMT
             |
             |"""
@@ -75,7 +75,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
       "a custom status code and no headers" in new TestSetup() {
         HttpResponse(ServerOnTheMove) should renderTo {
           """HTTP/1.1 330 Server on the move
-            |Server: akka-http/1.0.0
+            |Server: pekko-http/1.0.0
             |Date: Thu, 25 Aug 2011 09:10:29 GMT
             |Content-Length: 0
             |
@@ -89,7 +89,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
           extraMillis = millis
           HttpResponse(200) should renderTo {
             s"""HTTP/1.1 200 OK
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:0${extraMillis / 1000 % 60} GMT
               |Content-Length: 0
               |
@@ -108,7 +108,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
             entity = "Small f*ck up overhere!")) should renderTo(
           """HTTP/1.1 200 OK
               |Age: 30
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Content-Type: text/plain; charset=UTF-8
               |Content-Length: 23
@@ -126,7 +126,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
               Source.single(ByteString("Foo"))))) should renderTo(
           """HTTP/1.1 200 OK
               |Age: 30
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Content-Type: text/plain; charset=UTF-8
               |
@@ -143,7 +143,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
               Source.single(HttpEntity.Chunk(ByteString("Foo")))))) should renderTo(
           """HTTP/1.1 200 OK
               |Age: 30
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Transfer-Encoding: chunked
               |Content-Type: text/plain; charset=UTF-8
@@ -159,7 +159,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
             entity = HttpEntity.Default(ContentTypes.`text/plain(UTF-8)`, 100, Source.empty))) should renderTo(
           """HTTP/1.1 200 OK
               |Age: 30
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Content-Type: text/plain; charset=UTF-8
               |Content-Length: 100
@@ -173,7 +173,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         HttpResponse(400, List(Age(30), Connection("Keep-Alive")), "Small f*ck up overhere!") should renderTo {
           """HTTP/1.1 400 Bad Request
             |Age: 30
-            |Server: akka-http/1.0.0
+            |Server: pekko-http/1.0.0
             |Date: Thu, 25 Aug 2011 09:10:29 GMT
             |Content-Type: text/plain; charset=UTF-8
             |Content-Length: 23
@@ -187,7 +187,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
           HttpEntity(ContentTypes.NoContentType, ByteString("Small f*ck up overhere!"))) should renderTo {
           """HTTP/1.1 400 Bad Request
               |Age: 30
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Content-Length: 23
               |
@@ -201,7 +201,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
           entity = "All good") should renderTo {
           """HTTP/1.1 200 OK
               |Transfer-Encoding: fancy
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Content-Type: text/plain; charset=UTF-8
               |Content-Length: 8
@@ -218,7 +218,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
               source(ByteString("Small f*ck up overhere!")))) should renderTo {
           """HTTP/1.1 400 Bad Request
               |Age: 30
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Content-Type: text/plain; charset=UTF-8
               |Content-Length: 23
@@ -253,7 +253,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
               ContentTypes.`application/json`,
               source(ByteString.empty)))) should renderTo(
           """HTTP/1.1 200 OK
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Connection: close
               |Content-Type: application/json
@@ -267,7 +267,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
               ContentTypes.`application/json`,
               source(ByteString("abc"), ByteString("defg"))))) should renderTo(
           """HTTP/1.1 200 OK
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Connection: close
               |Content-Type: application/json
@@ -282,7 +282,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
           Chunked(ContentTypes.NoContentType, Source.empty)) should renderTo {
           """HTTP/1.1 200 OK
               |Age: 30
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |
               |"""
@@ -294,7 +294,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
           Chunked(ContentTypes.`application/json`, Source.empty)) should renderTo {
           """HTTP/1.1 200 OK
               |Age: 30
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Content-Type: application/json
               |
@@ -307,7 +307,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
           ContentTypes.`text/plain(UTF-8)`,
           source("Yahoooo"))) should renderTo {
           """HTTP/1.1 200 OK
-            |Server: akka-http/1.0.0
+            |Server: pekko-http/1.0.0
             |Date: Thu, 25 Aug 2011 09:10:29 GMT
             |Transfer-Encoding: chunked
             |Content-Type: text/plain; charset=UTF-8
@@ -327,7 +327,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
             Chunk(ByteString("body123"), """key=value;another="tl;dr""""),
             LastChunk("foo=bar", List(Age(30), RawHeader("Cache-Control", "public")))))) should renderTo {
           """HTTP/1.1 200 OK
-            |Server: akka-http/1.0.0
+            |Server: pekko-http/1.0.0
             |Date: Thu, 25 Aug 2011 09:10:29 GMT
             |Transfer-Encoding: chunked
             |Content-Type: text/plain; charset=UTF-8
@@ -349,7 +349,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
             Chunk(ByteString("body123"), """key=value;another="tl;dr""""),
             LastChunk("foo=bar", List(Age(30), RawHeader("Cache-Control", "public"))), LastChunk))) should renderTo {
           """HTTP/1.1 200 OK
-            |Server: akka-http/1.0.0
+            |Server: pekko-http/1.0.0
             |Date: Thu, 25 Aug 2011 09:10:29 GMT
             |Transfer-Encoding: chunked
             |Content-Type: text/plain; charset=UTF-8
@@ -370,7 +370,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
           entity = Chunked(ContentTypes.`text/plain(UTF-8)`, source("Yahoooo"))) should renderTo {
           """HTTP/1.1 200 OK
               |Transfer-Encoding: fancy, chunked
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Content-Type: text/plain; charset=UTF-8
               |
@@ -391,7 +391,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
             ContentTypes.`application/json`,
             source(Chunk("abc"), Chunk("defg"))))) should renderTo(
           """HTTP/1.1 200 OK
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Connection: close
               |Content-Type: application/json
@@ -408,7 +408,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
               Chunk(ByteString("body123"), """key=value;another="tl;dr""""),
               LastChunk("foo=bar", List(Age(30), RawHeader("Cache-Control", "public"))))))) should renderTo(
           """HTTP/1.1 200 OK
-              |Server: akka-http/1.0.0
+              |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Connection: close
               |Content-Type: text/plain; charset=UTF-8
@@ -475,7 +475,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
     "render headers safely" - {
       val defaultResponse =
         """HTTP/1.1 200 OK
-          |Server: akka-http/1.0.0
+          |Server: pekko-http/1.0.0
           |Date: Thu, 25 Aug 2011 09:10:29 GMT
           |Content-Length: 0
           |
@@ -668,7 +668,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
           requestProtocol = reqProto,
           closeRequested = closing(HttpMessage.connectionCloseExpected(reqProto, reqCH))) should renderTo(
           s"""${resProto.value} 200 OK
-                 |Server: akka-http/1.0.0
+                 |Server: pekko-http/1.0.0
                  |Date: Thu, 25 Aug 2011 09:10:29 GMT
                  |${renCH.fold("")(_.toString + "\n")}Content-Type: text/plain; charset=UTF-8
                  |${if (resCD) "" else "Content-Length: 6\n"}
@@ -678,7 +678,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
 
   override def afterAll() = TestKit.shutdownActorSystem(system)
 
-  class TestSetup(val serverHeader: Option[Server] = Some(Server("akka-http/1.0.0"))) {
+  class TestSetup(val serverHeader: Option[Server] = Some(Server("pekko-http/1.0.0"))) {
     private val rendererFactory = new HttpResponseRendererFactory(serverHeader, responseHeaderSizeHint = 64, NoLogging,
       new DateHeaderRendering {
         override def renderHeaderPair(): (String, String) = ???

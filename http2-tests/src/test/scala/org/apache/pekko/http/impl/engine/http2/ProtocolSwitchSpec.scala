@@ -20,14 +20,14 @@ import pekko.stream.scaladsl.Source
 import pekko.stream.scaladsl.Sink
 import pekko.stream.scaladsl.TLSPlacebo
 import pekko.util.ByteString
-import pekko.testkit.AkkaSpec
+import pekko.testkit.PekkoSpec
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.time.{ Milliseconds, Seconds, Span }
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 
-class ProtocolSwitchSpec extends AkkaSpec {
+class ProtocolSwitchSpec extends PekkoSpec {
   implicit val mat: Materializer = ActorMaterializer()
 
   override implicit val patience: PatienceConfig =

@@ -25,7 +25,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Await, Promise }
 import scala.util.Try
 
-object AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
+object PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
 
   commonConfig(ConfigFactory.parseString(
     """
@@ -36,8 +36,9 @@ object AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
         stream.materializer.debug.fuzzing-mode = off
 
         testconductor.barrier-timeout = 30m
-
-        test.AkkaHttpServerLatencySpec {
+      }
+      pekko {
+        test.PekkoHttpServerLatencySpec {
           enable = off
 
           rate = 10000
@@ -106,13 +107,14 @@ object AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
   }
 }
 
-class AkkaHttpServerLatencyMultiNodeSpecMultiJvmNode1 extends AkkaHttpServerLatencyMultiNodeSpec
-class AkkaHttpServerLatencyMultiNodeSpecMultiJvmNode2 extends AkkaHttpServerLatencyMultiNodeSpec
+class PekkoHttpServerLatencyMultiNodeSpecMultiJvmNode1 extends PekkoHttpServerLatencyMultiNodeSpec
+class PekkoHttpServerLatencyMultiNodeSpecMultiJvmNode2 extends PekkoHttpServerLatencyMultiNodeSpec
 
-class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLatencyMultiNodeSpec) with STMultiNodeSpec
+class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerLatencyMultiNodeSpec)
+    with STMultiNodeSpec
     with ScalaFutures with ImplicitSender {
 
-  import AkkaHttpServerLatencyMultiNodeSpec._
+  import PekkoHttpServerLatencyMultiNodeSpec._
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(10.seconds, interval = 300.millis)
 
@@ -145,13 +147,13 @@ class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLat
       })
   }
 
-  val enableSpec = system.settings.config.getBoolean("org.apache.pekko.test.AkkaHttpServerLatencySpec.enable")
+  val enableSpec = system.settings.config.getBoolean("pekko.test.PekkoHttpServerLatencySpec.enable")
   val totalRequestsFactor =
-    system.settings.config.getDouble("org.apache.pekko.test.AkkaHttpServerLatencySpec.totalRequestsFactor")
+    system.settings.config.getDouble("pekko.test.PekkoHttpServerLatencySpec.totalRequestsFactor")
   val requests = Math.round(10000 * totalRequestsFactor)
-  val rate = system.settings.config.getInt("org.apache.pekko.test.AkkaHttpServerLatencySpec.rate")
+  val rate = system.settings.config.getInt("pekko.test.PekkoHttpServerLatencySpec.rate")
   val testDuration =
-    system.settings.config.getDuration("org.apache.pekko.test.AkkaHttpServerLatencySpec.duration", TimeUnit.SECONDS)
+    system.settings.config.getDuration("pekko.test.PekkoHttpServerLatencySpec.duration", TimeUnit.SECONDS)
   val connections: Long = 10
 
   override def binding = _binding
@@ -168,8 +170,8 @@ class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLat
   // ---
 
   if (enableSpec) {
-    "Akka HTTP" must {
-      "start Akka HTTP" taggedAs LongRunningTest in {
+    "Pekko HTTP" must {
+      "start Pekko HTTP" taggedAs LongRunningTest in {
         enterBarrier("startup")
 
         runOn(loadGenerator) {
@@ -179,7 +181,7 @@ class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLat
 
         runOn(server) {
           val port = 0
-          info(s"Binding Akka HTTP Server to port: $port @ ${myself}")
+          info(s"Binding Pekko HTTP Server to port: $port @ ${myself}")
           val binding = Http().newServerAt("0.0.0.0", port).bind(routes).futureValue
 
           _binding = Some(binding)
@@ -236,8 +238,8 @@ class AkkaHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(AkkaHttpServerLat
       }
     }
   } else {
-    "Akka HTTP" must {
-      "enable these performance tests by running with -Dakka.test.AkkaHttpServerLatencySpec.enable=on" in pending
+    "Pekko HTTP" must {
+      "enable these performance tests by running with -Dpekko.test.PekkoHttpServerLatencySpec.enable=on" in pending
     }
   }
 

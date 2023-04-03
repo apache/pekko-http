@@ -13,7 +13,7 @@ import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.impl.util.LogByteStringTools
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.client.RequestBuilding.Post
@@ -63,7 +63,7 @@ import scala.collection.immutable
  * * if applicable: provide response frames
  * * validate the produced application-level responses
  */
-class Http2ClientSpec extends AkkaSpecWithMaterializer("""
+class Http2ClientSpec extends PekkoSpecWithMaterializer("""
     akka.http.client.remote-address-header = on
     akka.http.client.http2.log-frames = on
     akka.http.client.http2.completion-timeout = 500ms

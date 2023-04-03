@@ -8,9 +8,9 @@ import docs.CompileOnlySpec
 import org.scalatest.concurrent.ScalaFutures
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import org.apache.pekko.testkit.AkkaSpec
+import org.apache.pekko.testkit.PekkoSpec
 
-class HttpClientDecodingExampleSpec extends AkkaSpec with CompileOnlySpec with ScalaFutures {
+class HttpClientDecodingExampleSpec extends PekkoSpec with CompileOnlySpec with ScalaFutures {
   "single-request-decoding-example" in compileOnlySpec {
     // #single-request-decoding-example
     import org.apache.pekko

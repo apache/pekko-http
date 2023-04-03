@@ -24,7 +24,7 @@ import pekko.http.scaladsl.settings.ParserSettings.{
 }
 import pekko.testkit.EventFilter
 
-abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends AkkaSpecWithMaterializer(
+abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends PekkoSpecWithMaterializer(
       """
     akka.http.parsing.max-header-name-length = 60
     akka.http.parsing.max-header-value-length = 1000

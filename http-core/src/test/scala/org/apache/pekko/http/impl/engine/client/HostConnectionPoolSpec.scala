@@ -41,7 +41,7 @@ import scala.util.Try
  * against plain network bytes instead to show interaction on the HTTP protocol level instead of against the server
  * API level.
  */
-class HostConnectionPoolSpec extends AkkaSpecWithMaterializer(
+class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
       """
      pekko.actor {
        serialize-creators = off
@@ -72,8 +72,8 @@ class HostConnectionPoolSpec extends AkkaSpecWithMaterializer(
   }
 
   testSet(clientServerImplementation = PassThrough)
-  testSet(clientServerImplementation = AkkaHttpEngineNoNetwork)
-  testSet(clientServerImplementation = AkkaHttpEngineTCP)
+  testSet(clientServerImplementation = PekkoHttpEngineNoNetwork)
+  testSet(clientServerImplementation = PekkoHttpEngineTCP)
   // testSet(poolImplementation = NewPoolImplementation, clientServerImplementation = AkkaHttpEngineTLS)
 
   def testSet(clientServerImplementation: ClientServerImplementation) =
@@ -803,7 +803,7 @@ class HostConnectionPoolSpec extends AkkaSpecWithMaterializer(
   }
 
   /** Transport that runs everything through client and server engines but without actual network */
-  case object AkkaHttpEngineNoNetwork extends ClientServerImplementation {
+  case object PekkoHttpEngineNoNetwork extends ClientServerImplementation {
     def failsHandlerInputWhenHandlerOutputFails: Boolean = false
 
     override def get(connectionKillSwitch: SharedKillSwitch)
@@ -826,7 +826,7 @@ class HostConnectionPoolSpec extends AkkaSpecWithMaterializer(
   }
 
   /** Transport that uses actual top-level Http APIs to establish a plaintext HTTP connection */
-  case object AkkaHttpEngineTCP extends TopLevelApiClientServerImplementation {
+  case object PekkoHttpEngineTCP extends TopLevelApiClientServerImplementation {
     protected override def bindServerSource = Http().newServerAt("localhost", 0).connectionSource()
     protected def clientConnectionFlow(serverBinding: ServerBinding, connectionKillSwitch: SharedKillSwitch)
         : Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] = {
@@ -842,7 +842,7 @@ class HostConnectionPoolSpec extends AkkaSpecWithMaterializer(
    *
    * Currently requires an /etc/hosts entry that points akka.example.org to a locally bindable address.
    */
-  case object AkkaHttpEngineTLS extends TopLevelApiClientServerImplementation {
+  case object PekkoHttpEngineTLS extends TopLevelApiClientServerImplementation {
     protected override def bindServerSource =
       Http().newServerAt("akka.example.org", 0).enableHttps(ExampleHttpContexts.exampleServerContext).connectionSource()
     protected def clientConnectionFlow(serverBinding: ServerBinding, connectionKillSwitch: SharedKillSwitch)

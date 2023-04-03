@@ -44,7 +44,7 @@ object TestParsingErrorHandler extends ParsingErrorHandler {
     HttpResponse(StatusCodes.ImATeapot, entity = HttpEntity("Tea hea"))
 }
 
-class HttpServerSpec extends AkkaSpec(
+class HttpServerSpec extends PekkoSpec(
       """pekko.loggers = ["org.apache.pekko.http.impl.util.SilenceAllTestEventListener"]
      pekko.loglevel = DEBUG
      akka.http.server.log-unencrypted-network-bytes = 100
@@ -101,7 +101,7 @@ class HttpServerSpec extends AkkaSpec(
 
       expectResponseWithWipedDate(
         """HTTP/1.1 505 HTTP Version Not Supported
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Connection: close
           |Content-Type: text/plain; charset=UTF-8
@@ -141,7 +141,7 @@ class HttpServerSpec extends AkkaSpec(
 
           expectResponseWithWipedDate(
             """HTTP/1.1 400 Bad Request
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Connection: close
               |Content-Type: text/plain; charset=UTF-8
@@ -510,7 +510,7 @@ class HttpServerSpec extends AkkaSpec(
               ByteString("abcd"))))
             expectResponseWithWipedDate(
               """|HTTP/1.1 200 OK
-               |Server: akka-http/test
+               |Server: pekko-http/test
                |Date: XXXX
                |Content-Type: text/plain; charset=UTF-8
                |Content-Length: 4
@@ -538,7 +538,7 @@ class HttpServerSpec extends AkkaSpec(
             dataSub.expectCancellation()
             expectResponseWithWipedDate(
               """|HTTP/1.1 200 OK
-               |Server: akka-http/test
+               |Server: pekko-http/test
                |Date: XXXX
                |Content-Type: text/plain; charset=UTF-8
                |Content-Length: 4
@@ -566,7 +566,7 @@ class HttpServerSpec extends AkkaSpec(
             dataSub.expectCancellation()
             expectResponseWithWipedDate(
               """|HTTP/1.1 200 OK
-               |Server: akka-http/test
+               |Server: pekko-http/test
                |Date: XXXX
                |Content-Type: text/plain; charset=UTF-8
                |
@@ -595,7 +595,7 @@ class HttpServerSpec extends AkkaSpec(
             dataSub.expectCancellation()
             expectResponseWithWipedDate(
               """|HTTP/1.1 200 OK
-               |Server: akka-http/test
+               |Server: pekko-http/test
                |Date: XXXX
                |Transfer-Encoding: chunked
                |Content-Type: text/plain; charset=UTF-8
@@ -645,7 +645,7 @@ class HttpServerSpec extends AkkaSpec(
           dataSub.request(1) // triggers `100 Continue` response
           expectResponseWithWipedDate(
             """HTTP/1.1 100 Continue
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |
               |""")
@@ -657,7 +657,7 @@ class HttpServerSpec extends AkkaSpec(
           responses.sendNext(HttpResponse(entity = "Yeah"))
           expectResponseWithWipedDate(
             """HTTP/1.1 200 OK
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Content-Type: text/plain; charset=UTF-8
               |Content-Length: 4
@@ -686,7 +686,7 @@ class HttpServerSpec extends AkkaSpec(
             dataSub.request(1) // triggers `100 Continue` response
             expectResponseWithWipedDate(
               """HTTP/1.1 100 Continue
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |
               |""")
@@ -700,7 +700,7 @@ class HttpServerSpec extends AkkaSpec(
             responses.sendNext(HttpResponse(entity = "Yeah"))
             expectResponseWithWipedDate(
               """HTTP/1.1 200 OK
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Content-Type: text/plain; charset=UTF-8
               |Content-Length: 4
@@ -728,7 +728,7 @@ class HttpServerSpec extends AkkaSpec(
 
         expectResponseWithWipedDate(
           """HTTP/1.1 200 OK
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Content-Type: text/plain; charset=UTF-8
           |Content-Length: 4
@@ -753,7 +753,7 @@ class HttpServerSpec extends AkkaSpec(
 
         expectResponseWithWipedDate(
           """HTTP/1.1 200 OK
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Content-Type: text/plain; charset=UTF-8
           |Content-Length: 4
@@ -777,7 +777,7 @@ class HttpServerSpec extends AkkaSpec(
 
         expectResponseWithWipedDate(
           """HTTP/1.1 200 OK
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Content-Type: text/plain; charset=UTF-8
           |Content-Length: 4
@@ -804,7 +804,7 @@ class HttpServerSpec extends AkkaSpec(
           dataSub.request(2) // triggers `100 Continue` response
           expectResponseWithWipedDate(
             """HTTP/1.1 100 Continue
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |
               |""")
@@ -821,7 +821,7 @@ class HttpServerSpec extends AkkaSpec(
           responses.sendNext(HttpResponse(entity = "Yeah"))
           expectResponseWithWipedDate(
             """HTTP/1.1 200 OK
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Content-Type: text/plain; charset=UTF-8
               |Content-Length: 4
@@ -847,7 +847,7 @@ class HttpServerSpec extends AkkaSpec(
             responses.sendNext(HttpResponse(entity = "Yeah"))
             expectResponseWithWipedDate(
               """HTTP/1.1 200 OK
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Connection: close
               |Content-Type: text/plain; charset=UTF-8
@@ -879,7 +879,7 @@ class HttpServerSpec extends AkkaSpec(
 
         expectResponseWithWipedDate(
           """HTTP/1.1 100 Continue
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |
           |""")
@@ -891,7 +891,7 @@ class HttpServerSpec extends AkkaSpec(
         responses.sendNext(HttpResponse(entity = outEntity))
         expectResponseWithWipedDate(
           """HTTP/1.1 200 OK
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Connection: close
           |Content-Type: text/plain; charset=UTF-8
@@ -927,7 +927,7 @@ class HttpServerSpec extends AkkaSpec(
         responses.sendNext(HttpResponse(entity = outEntity))
         expectResponseWithWipedDate(
           """HTTP/1.1 200 OK
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Connection: close
           |Content-Type: text/plain; charset=UTF-8
@@ -964,7 +964,7 @@ class HttpServerSpec extends AkkaSpec(
 
       expectResponseWithWipedDate(
         """HTTP/1.1 500 Internal Server Error
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Connection: close
           |Content-Length: 0
@@ -991,7 +991,7 @@ class HttpServerSpec extends AkkaSpec(
       responses.sendNext(HttpResponse(entity = outEntity))
       expectResponseWithWipedDate(
         """HTTP/1.1 200 OK
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Transfer-Encoding: chunked
           |Content-Type: application/octet-stream
@@ -1037,7 +1037,7 @@ class HttpServerSpec extends AkkaSpec(
 
         expectResponseWithWipedDate(
           """HTTP/1.1 500 Internal Server Error
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Content-Type: text/plain; charset=UTF-8
           |Content-Length: 35
@@ -1060,7 +1060,7 @@ class HttpServerSpec extends AkkaSpec(
 
       expectResponseWithWipedDate(
         """HTTP/1.1 200 OK
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Connection: close
           |Content-Type: application/octet-stream
@@ -1099,7 +1099,7 @@ class HttpServerSpec extends AkkaSpec(
 
       expectResponseWithWipedDate(
         """HTTP/1.1 200 OK
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Transfer-Encoding: chunked
           |Content-Type: application/octet-stream
@@ -1148,7 +1148,7 @@ class HttpServerSpec extends AkkaSpec(
 
       expectResponseWithWipedDate(
         """|HTTP/1.1 400 Bad Request
-           |Server: akka-http/test
+           |Server: pekko-http/test
            |Date: XXXX
            |Connection: close
            |Content-Type: text/plain; charset=UTF-8
@@ -1288,7 +1288,7 @@ class HttpServerSpec extends AkkaSpec(
 
       expectResponseWithWipedDate(
         """HTTP/1.1 507 Insufficient Storage
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Connection: close
           |Content-Length: 0
@@ -1315,7 +1315,7 @@ class HttpServerSpec extends AkkaSpec(
 
         expectResponseWithWipedDate(
           """HTTP/1.1 507 Insufficient Storage
-          |Server: akka-http/test
+          |Server: pekko-http/test
           |Date: XXXX
           |Connection: close
           |Content-Length: 0
@@ -1385,7 +1385,7 @@ class HttpServerSpec extends AkkaSpec(
 
                 expectResponseWithWipedDate(
                   s"""HTTP/1.1 413 Payload Too Large
-                      |Server: akka-http/test
+                      |Server: pekko-http/test
                       |Date: XXXX
                       |Connection: close
                       |Content-Type: text/plain; charset=UTF-8
@@ -1409,7 +1409,7 @@ class HttpServerSpec extends AkkaSpec(
 
                 expectResponseWithWipedDate(
                   s"""HTTP/1.1 413 Payload Too Large
-                    |Server: akka-http/test
+                    |Server: pekko-http/test
                     |Date: XXXX
                     |Connection: close
                     |Content-Type: text/plain; charset=UTF-8
@@ -1541,7 +1541,7 @@ class HttpServerSpec extends AkkaSpec(
 
       expectResponseWithWipedDate(
         """|HTTP/1.1 400 Bad Request
-           |Server: akka-http/test
+           |Server: pekko-http/test
            |Date: XXXX
            |Connection: close
            |Content-Type: text/plain; charset=UTF-8
@@ -1563,7 +1563,7 @@ class HttpServerSpec extends AkkaSpec(
 
       expectResponseWithWipedDate(
         """|HTTP/1.1 400 Bad Request
-           |Server: akka-http/test
+           |Server: pekko-http/test
            |Date: XXXX
            |Connection: close
            |Content-Type: text/plain; charset=UTF-8
@@ -1586,7 +1586,7 @@ class HttpServerSpec extends AkkaSpec(
 
         expectResponseWithWipedDate(
           """|HTTP/1.1 400 Bad Request
-           |Server: akka-http/test
+           |Server: pekko-http/test
            |Date: XXXX
            |Connection: close
            |Content-Type: text/plain; charset=UTF-8
@@ -1611,7 +1611,7 @@ class HttpServerSpec extends AkkaSpec(
 
       expectResponseWithWipedDate(
         """|HTTP/1.1 418 I'm a teapot
-           |Server: akka-http/test
+           |Server: pekko-http/test
            |Date: XXXX
            |Connection: close
            |Content-Type: text/plain; charset=UTF-8

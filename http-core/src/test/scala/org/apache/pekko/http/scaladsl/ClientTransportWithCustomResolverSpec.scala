@@ -8,7 +8,7 @@ import java.util.concurrent.TimeoutException
 
 import org.apache.pekko
 import pekko.Done
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
@@ -21,7 +21,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future, Promise }
 
 class ClientTransportWithCustomResolverSpec
-    extends AkkaSpecWithMaterializer("akka.http.server.request-timeout = infinite") with OptionValues {
+    extends PekkoSpecWithMaterializer("akka.http.server.request-timeout = infinite") with OptionValues {
   "A custom resolver" should {
 
     "change to the desired destination" in {

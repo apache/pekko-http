@@ -11,11 +11,11 @@ import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.stream.testkit.Utils
 import pekko.util.ByteString
 import pekko.http.impl.engine.server.HttpServerTestSetupBase
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 
 import scala.concurrent.duration._
 
-class WebSocketServerSpec extends AkkaSpecWithMaterializer("akka.http.server.websocket.log-frames = on") { spec =>
+class WebSocketServerSpec extends PekkoSpecWithMaterializer("akka.http.server.websocket.log-frames = on") { spec =>
 
   "The server-side WebSocket integration should" should {
     "establish a websocket connection when the user requests it" should {
@@ -46,7 +46,7 @@ class WebSocketServerSpec extends AkkaSpecWithMaterializer("akka.http.server.web
             """HTTP/1.1 101 Switching Protocols
               |Upgrade: websocket
               |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Connection: upgrade
               |
@@ -89,7 +89,7 @@ class WebSocketServerSpec extends AkkaSpecWithMaterializer("akka.http.server.web
             """HTTP/1.1 101 Switching Protocols
               |Upgrade: websocket
               |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Connection: upgrade
               |
@@ -149,7 +149,7 @@ class WebSocketServerSpec extends AkkaSpecWithMaterializer("akka.http.server.web
             """HTTP/1.1 101 Switching Protocols
               |Upgrade: websocket
               |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-              |Server: akka-http/test
+              |Server: pekko-http/test
               |Date: XXXX
               |Connection: upgrade
               |

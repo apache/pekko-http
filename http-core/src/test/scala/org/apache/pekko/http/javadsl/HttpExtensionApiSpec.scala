@@ -15,7 +15,7 @@ import pekko.http.javadsl.model.ws._
 import pekko.http.javadsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings, ServerSettings }
 import pekko.japi.Pair
 import pekko.event.NoLogging
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.javadsl.model._
 import pekko.japi.function.Function
 import pekko.stream.javadsl.{ Flow, Keep, Sink, Source }
@@ -23,7 +23,7 @@ import pekko.stream.testkit.TestSubscriber
 
 import scala.util.Try
 
-class HttpExtensionApiSpec extends AkkaSpecWithMaterializer(
+class HttpExtensionApiSpec extends PekkoSpecWithMaterializer(
       """
     akka.http.server.log-unencrypted-network-bytes = 100
     akka.http.client.log-unencrypted-network-bytes = 100

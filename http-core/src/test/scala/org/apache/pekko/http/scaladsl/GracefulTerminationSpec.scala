@@ -29,7 +29,7 @@ import scala.concurrent.{ Await, ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
 class GracefulTerminationSpec
-    extends AkkaSpecWithMaterializer("""
+    extends PekkoSpecWithMaterializer("""
     windows-connection-abort-workaround-enabled = auto
     akka.http.server.request-timeout = infinite
     akka.http.server.log-unencrypted-network-bytes = 200

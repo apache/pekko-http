@@ -20,7 +20,7 @@ import scala.concurrent.duration._
 
 import FrameEvent._
 
-class Http2FramingSpec extends AkkaSpecWithMaterializer {
+class Http2FramingSpec extends PekkoSpecWithMaterializer {
   import BitBuilder._
   import pekko.http.impl.engine.http2._
 

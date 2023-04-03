@@ -7,7 +7,7 @@ package org.apache.pekko.http.impl.engine.http2
 import org.apache.pekko
 import pekko.http.impl.engine.http2.FrameEvent.{ ParsedHeadersFrame, Setting, SettingsFrame }
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.settings.Http2ServerSettings
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep }
 import pekko.stream.testkit.scaladsl.{ TestSink, TestSource }
@@ -18,7 +18,7 @@ import scala.collection.immutable.Seq
 /**
  * low-level tests testing Http2ServerDemux in isolation
  */
-class Http2ServerDemuxSpec extends AkkaSpecWithMaterializer("""
+class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
     akka.http.server.remote-address-header = on
     akka.http.server.http2.log-frames = on
     pekko.stream.materializer.debug.fuzzing-mode = on

@@ -220,7 +220,7 @@ Generating JavaDoc is not enabled by default, as it's not needed on day-to-day d
 If you'd like to check if you links and formatting looks good in JavaDoc (and not only in ScalaDoc), you can generate it by running:
 
 ```
-sbt -Dakka.genjavadoc.enabled=true javaunidoc:doc
+sbt -pekko.genjavadoc.enabled=true javaunidoc:doc
 ```
 
 Which will generate JavaDoc style docs in `./target/javaunidoc/index.html`

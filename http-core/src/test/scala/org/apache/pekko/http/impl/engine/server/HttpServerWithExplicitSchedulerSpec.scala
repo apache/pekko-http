@@ -15,7 +15,7 @@ import org.scalatest.Inside
 import scala.concurrent.duration._
 
 /** Tests similar to HttpServerSpec that need ExplicitlyTriggeredScheduler */
-class HttpServerWithExplicitSchedulerSpec extends AkkaSpecWithMaterializer(
+class HttpServerWithExplicitSchedulerSpec extends PekkoSpecWithMaterializer(
       """
      akka.http.server.log-unencrypted-network-bytes = 100
      akka.http.server.request-timeout = infinite
@@ -31,7 +31,7 @@ class HttpServerWithExplicitSchedulerSpec extends AkkaSpecWithMaterializer(
         scheduler.timePasses(20.millis)
         expectResponseWithWipedDate(
           """HTTP/1.1 503 Service Unavailable
-            |Server: akka-http/test
+            |Server: pekko-http/test
             |Date: XXXX
             |Content-Type: text/plain; charset=UTF-8
             |Content-Length: 105
@@ -57,7 +57,7 @@ class HttpServerWithExplicitSchedulerSpec extends AkkaSpecWithMaterializer(
         responses.sendNext(HttpResponse(headers = Connection("close") :: Nil))
         expectResponseWithWipedDate(
           """HTTP/1.1 200 OK
-            |Server: akka-http/test
+            |Server: pekko-http/test
             |Date: XXXX
             |Connection: close
             |Content-Length: 0
@@ -86,7 +86,7 @@ class HttpServerWithExplicitSchedulerSpec extends AkkaSpecWithMaterializer(
         scheduler.timePasses(100.millis)
         expectResponseWithWipedDate(
           """HTTP/1.1 503 Service Unavailable
-            |Server: akka-http/test
+            |Server: pekko-http/test
             |Date: XXXX
             |Content-Type: text/plain; charset=UTF-8
             |Content-Length: 105
@@ -115,7 +115,7 @@ class HttpServerWithExplicitSchedulerSpec extends AkkaSpecWithMaterializer(
         scheduler.timePasses(10.millis)
         expectResponseWithWipedDate(
           """HTTP/1.1 503 Service Unavailable
-            |Server: akka-http/test
+            |Server: pekko-http/test
             |Date: XXXX
             |Content-Type: text/plain; charset=UTF-8
             |Content-Length: 105
@@ -143,7 +143,7 @@ class HttpServerWithExplicitSchedulerSpec extends AkkaSpecWithMaterializer(
         scheduler.timePasses(500.millis)
         expectResponseWithWipedDate(
           """HTTP/1.1 500 Internal Server Error
-            |Server: akka-http/test
+            |Server: pekko-http/test
             |Date: XXXX
             |Content-Type: text/plain; charset=UTF-8
             |Content-Length: 5
