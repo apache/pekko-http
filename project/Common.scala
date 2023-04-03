@@ -25,13 +25,15 @@ object Common extends AutoPlugin {
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding", "UTF-8", // yes, this is 2 args
-      "-release", "8",
       "-unchecked",
       "-Ywarn-dead-code",
       // Silence deprecation notices for changes introduced in Scala 2.12
       // Can be removed when we drop support for Scala 2.12:
       "-Wconf:msg=object JavaConverters in package collection is deprecated:s",
-      "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s"),
+      "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s") ++
+    (if (isJdk8) Seq.empty
+     else if (scalaBinaryVersion.value == "2.12") Seq("-target:jvm-1.8")
+     else Seq("-release", "8")),
     scalacOptions ++= onlyOnScala2(Seq("-Xlint")).value,
     scalacOptions ++= onlyOnScala3(Seq("-Wconf:cat=deprecation:s")).value,
     javacOptions ++=
