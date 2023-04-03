@@ -641,7 +641,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
 
     "complete a request/response when request has `Connection: close` set" in Utils.assertAllStagesStopped {
       // FIXME: There seems to be a potential connection leak here in the ProtocolSwitch stage?
-      // https://github.com/akka/akka-http/issues/3963
+      // https://github.com/apache/incubator-pekko-http/issues/3963
       if (http2) pending
 
       // In akka/akka#19542 / akka/akka-http#459 it was observed that when an akka-http closes the connection after
@@ -695,7 +695,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends AkkaSpecWithMaterial
     "complete a request/response when the request side immediately closes the connection after sending the request" in Utils.assertAllStagesStopped {
       // FIXME: with HTTP/2 enabled the connection is closed directly after receiving closing from client (i.e. half-closed
       // HTTP connections are not allowed (whether they should be is a completely different question))
-      // https://github.com/akka/akka-http/issues/3964
+      // https://github.com/apache/incubator-pekko-http/issues/3964
       if (http2) pending
 
       val (hostname, port) = ("localhost", 8080)
@@ -864,7 +864,7 @@ Host: example.com
       new CloseDelimitedTLSSetup {
         killSwitch.shutdown() // simulate FIN in server -> client direction
         // akka-http is currently lenient wrt TLS truncation which is *not* reported to the user
-        // FIXME: if https://github.com/akka/akka-http/issues/235 is ever fixed, expect an error here
+        // FIXME: if https://github.com/apache/incubator-pekko-http/issues/235 is ever fixed, expect an error here
         sinkProbe.expectComplete()
       }
     }
@@ -970,7 +970,7 @@ Host: example.com
     }
 
     "produce a useful error message when connecting to a HTTP endpoint over HTTPS" in Utils.assertAllStagesStopped {
-      // FIXME: it would be better if this wouldn't be necessary, see https://github.com/akka/akka-http/issues/3159#issuecomment-628605844
+      // FIXME: it would be better if this wouldn't be necessary, see https://github.com/apache/incubator-pekko-http/issues/3159#issuecomment-628605844
       val settings = ConnectionPoolSettings(system).withUpdatedConnectionSettings(_.withIdleTimeout(100.millis))
       val dummyFlow = Flow[HttpRequest].map(_ => ???)
 

@@ -383,7 +383,7 @@ class Http2ServerSpec extends AkkaSpecWithMaterializer("""
 
           receivedRequest.entity.contentType should ===(ContentTypes.`application/json`)
           // FIXME: contentLength is not reported in all cases with HTTP/2
-          // see https://github.com/akka/akka-http/issues/3843
+          // see https://github.com/apache/incubator-pekko-http/issues/3843
           // receivedRequest.entity.isIndefiniteLength should ===(false)
           // receivedRequest.entity.contentLengthOption should ===(Some(1337L))
           entityDataIn.expectBytes(ByteString("x" * 1337))
@@ -408,7 +408,7 @@ class Http2ServerSpec extends AkkaSpecWithMaterializer("""
               // error is not surfaced anywhere
             })
 
-        // Reproducing https://github.com/akka/akka-http/issues/2957
+        // Reproducing https://github.com/apache/incubator-pekko-http/issues/2957
         "close the stream when we receive a RST after we have half-closed ourselves as well".inAssertAllStagesStopped(
           new WaitingForRequestData {
             // Client sends the request, but doesn't close the stream yet. This is a bit weird, but it's what grpcurl does ;)
@@ -811,7 +811,7 @@ class Http2ServerSpec extends AkkaSpecWithMaterializer("""
           network.sendSETTING(Http2Protocol.SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, bytesToSend)
           network.updateFromServerWindows(TheStreamId, _ + missingWindow) // test probe doesn't automatically update window
           network.expectDATA(TheStreamId, false, missingWindow)
-          network.expectSettingsAck() // FIXME: bug: we must send ACK before making use of the new setting, see https://github.com/akka/akka-http/issues/3553
+          network.expectSettingsAck() // FIXME: bug: we must send ACK before making use of the new setting, see https://github.com/apache/incubator-pekko-http/issues/3553
 
           entityDataOut.sendComplete()
           network.expectDATA(TheStreamId, true, 0)

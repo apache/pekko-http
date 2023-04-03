@@ -18,7 +18,7 @@ class IllegalHeadersIntegrationSpec extends RoutingSpec {
       complete(s"Accept:${req.header[Accept]}, byName:${req.headers.find(_.is("accept"))}")
     }
 
-    // see: https://github.com/akka/akka-http/issues/1072
+    // see: https://github.com/apache/incubator-pekko-http/issues/1072
     "not StackOverflow but be rejected properly" in {
       val theIllegalHeader = RawHeader("Accept", "*/xml")
       Get().addHeader(theIllegalHeader) ~!> route ~> check {

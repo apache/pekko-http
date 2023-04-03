@@ -347,7 +347,7 @@ private[client] object NewHostConnectionPool {
                 case NonFatal(ex) =>
                   error(
                     ex,
-                    "Slot execution failed. That's probably a bug. Please file a bug at https://github.com/akka/akka-http/issues. Slot is restarted.")
+                    "Slot execution failed. That's probably a bug. Please file a bug at https://github.com/apache/incubator-pekko-http/issues. Slot is restarted.")
 
                   try {
                     cancelCurrentTimeout()
@@ -375,7 +375,7 @@ private[client] object NewHostConnectionPool {
               else
                 throw new IllegalStateException(
                   "State transition loop exceeded maximum number of loops. The pool will shutdown itself. " +
-                  "That's probably a bug. Please file a bug at https://github.com/akka/akka-http/issues. ")
+                  "That's probably a bug. Please file a bug at https://github.com/apache/incubator-pekko-http/issues. ")
 
             loop(event, arg, 10)
           }

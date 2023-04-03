@@ -48,7 +48,7 @@ class Http2PersistentClientPlaintextSpec extends Http2PersistentClientSpec(false
 
 abstract class Http2PersistentClientSpec(tls: Boolean) extends AkkaSpecWithMaterializer(
       // FIXME: would rather use remote-address-attribute, but that doesn't work with HTTP/2
-      // see https://github.com/akka/akka-http/issues/3707
+      // see https://github.com/apache/incubator-pekko-http/issues/3707
       """akka.http.server.remote-address-attribute = on
      akka.http.server.preview.enable-http2 = on
      akka.http.client.http2.log-frames = on
@@ -62,7 +62,7 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends AkkaSpecWithMater
   private val notSevere = Set("ChannelReadable", "WriteAck")
   override protected def isSevere(event: Logging.LogEvent): Boolean =
     event.level <= Logging.WarningLevel &&
-    // fix for https://github.com/akka/akka-http/issues/3732 / https://github.com/akka/akka/issues/29330
+    // fix for https://github.com/apache/incubator-pekko-http/issues/3732 / https://github.com/akka/akka/issues/29330
     !notSevere.exists(cand => event.message.toString.contains(cand))
 
   case class RequestId(id: String) extends RequestResponseAssociation

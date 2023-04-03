@@ -88,7 +88,7 @@ class ScalatestRouteTestSpec extends AnyFreeSpec with Matchers with ScalatestRou
     }
 
     "running on akka dispatcher threads" in Await.result(Future {
-        // https://github.com/akka/akka-http/pull/2526
+        // https://github.com/apache/incubator-pekko-http/pull/2526
         // Check will block while waiting on the response, this might lead to starvation
         // on the BatchingExecutor of akka's dispatcher if the blocking is not managed properly.
         Get() ~> complete(Future(HttpResponse())) ~> check {

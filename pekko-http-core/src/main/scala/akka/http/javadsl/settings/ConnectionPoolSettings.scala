@@ -56,7 +56,7 @@ abstract class ConnectionPoolSettings private[akka] () { self: ConnectionPoolSet
   def withMaxRetries(n: Int): ConnectionPoolSettings
   def withMaxOpenRequests(newValue: Int): ConnectionPoolSettings
 
-  /** Client-side pipelining is not currently supported, see https://github.com/akka/akka-http/issues/32 */
+  /** Client-side pipelining is not currently supported, see https://github.com/apache/incubator-pekko-http/issues/32 */
   def withPipeliningLimit(newValue: Int): ConnectionPoolSettings
   def withBaseConnectionBackoff(newValue: FiniteDuration): ConnectionPoolSettings
   def withMaxConnectionBackoff(newValue: FiniteDuration): ConnectionPoolSettings

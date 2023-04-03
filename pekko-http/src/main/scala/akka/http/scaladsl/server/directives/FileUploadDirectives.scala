@@ -165,7 +165,7 @@ trait FileUploadDirectives {
       implicit val ec = ctx.executionContext
 
       def tempDest(fileInfo: FileInfo): File = {
-        val dest = File.createTempFile("akka-http-upload", ".tmp")
+        val dest = File.createTempFile("pekko-http-upload", ".tmp")
         dest.deleteOnExit()
         dest
       }

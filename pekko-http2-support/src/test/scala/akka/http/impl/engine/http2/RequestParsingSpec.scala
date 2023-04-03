@@ -526,7 +526,7 @@ class RequestParsingSpec extends AkkaSpecWithMaterializer with Inside with Inspe
         inside(request.entity) {
           case entity: HttpEntity =>
             // FIXME: contentLength is not reported in all cases with HTTP/2
-            // see https://github.com/akka/akka-http/issues/3843
+            // see https://github.com/apache/incubator-pekko-http/issues/3843
             // entity.contentLength should ===(123.toLong)
             entity.contentType should ===(ContentType(MediaTypes.`image/jpeg`))
         }

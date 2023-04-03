@@ -103,7 +103,7 @@ class ServerBinding private[http] (delegate: akka.http.scaladsl.Http.ServerBindi
    * This signal can for example be used to safely terminate the underlying ActorSystem.
    *
    * Note: This mechanism is currently NOT hooked into the Coordinated Shutdown mechanisms of Akka.
-   *       TODO: This feature request is tracked by: https://github.com/akka/akka-http/issues/1210
+   *       TODO: This feature request is tracked by: https://github.com/apache/incubator-pekko-http/issues/1210
    *
    * Note that this signal may be used for Coordinated Shutdown to proceed to next steps in the shutdown.
    * You may also explicitly depend on this completion stage to perform your next shutting down steps.
