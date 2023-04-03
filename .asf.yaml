@@ -1,0 +1,42 @@
+# https://cwiki.apache.org/confluence/display/INFRA/.asf.yaml+features+for+git+repositories
+
+github:
+  description: "The Streaming-first HTTP server/module of Apache Pekko"
+  homepage: https://pekko.apache.org/
+  labels:
+    - pekko
+    - pekko-http
+    - http
+    - http2
+    - http-client
+    - http-server
+    - streaming
+    - reactive
+    - websocket
+  
+  features:
+    # Enable wiki for documentation
+    wiki: false
+    # Enable issue management
+    issues: true
+    # Enable projects for project management boards
+    projects: false
+    
+  enabled_merge_buttons:
+    squash:  true
+    merge:   false
+    rebase:  true  
+
+  enabled_merge_buttons:
+    squash:  true
+    merge:   false
+    rebase:  true
+
+  protected_branches:
+    main: { }
+
+notifications:
+  commits:              commits@pekko.apache.org
+  issues:               notifications@pekko.apache.org
+  pullrequests:         notifications@pekko.apache.org
+  discussions:          notifications@pekko.apache.org

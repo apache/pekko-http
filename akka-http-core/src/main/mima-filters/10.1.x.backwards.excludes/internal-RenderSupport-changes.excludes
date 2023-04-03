@@ -1,2 +1,0 @@
-# Changes to internal methods
-ProblemFilters.exclude[IncompatibleResultTypeProblem]("akka.http.impl.engine.rendering.RenderSupport.CrLf")

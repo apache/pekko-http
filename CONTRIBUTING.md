@@ -283,7 +283,7 @@ the validator to test all projects.
 
 ### Scala style 
 
-Akka-http uses [Scalariform](https://github.com/scala-ide/scalariform) to enforce some of the code style rules.
+Akka-http uses [scalafmt](https://scalameta.org/scalafmt/) to enforce some of the code style rules.
 
 ### Java style
 
