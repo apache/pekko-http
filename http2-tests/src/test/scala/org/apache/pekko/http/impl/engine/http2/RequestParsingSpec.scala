@@ -453,7 +453,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
               keyValuePairs = Vector(
                 ":scheme" -> "https",
                 ":method" -> "GET",
-                ":authority" -> "akka.io",
+                ":authority" -> "pekko.apache.org",
                 ":path" -> "/") :+ (name -> alternative)))
             thrown.getMessage should ===(s"Malformed request: Pseudo-header '$name' must not occur more than once")
         }

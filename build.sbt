@@ -13,14 +13,12 @@ import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
 sourceDistName := "incubator-pekko-http"
 inThisBuild(Def.settings(
-  organization := "org.apache.pekko",
   apiURL := {
     val apiVersion = if (isSnapshot.value) "current" else version.value
     Some(url(s"https://pekko.apache.org/api/pekko-http/$apiVersion/"))
   },
   scmInfo := Some(
     ScmInfo(url("https://github.com/apache/incubator-pekko-http"), "git@github.com:apache/incubator-pekko-http.git")),
-  licenses := Seq("Apache-2.0" -> url("https://opensource.org/licenses/Apache-2.0")),
   description := "Apache Pekko Http: Modern, fast, asynchronous, streaming-first HTTP server and client.",
   testOptions ++= Seq(
     Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
@@ -60,7 +58,7 @@ lazy val aggregatedProjects: Seq[ProjectReference] = userProjects ++ List[Projec
 lazy val root = Project(
   id = "pekko-http",
   base = file("."))
-  .enablePlugins(UnidocRoot, NoPublish, PublishRsyncPlugin, AggregatePRValidation, NoScala3)
+  .enablePlugins(UnidocRoot, NoPublish, AggregatePRValidation, NoScala3)
   .disablePlugins(MimaPlugin)
   .settings(
     name := "pekko-http-root",
@@ -70,22 +68,7 @@ lazy val root = Project(
       httpScalafixTestInput, httpScalafixTestOutput, httpScalafixTests),
     // Support applying macros in unidoc:
     scalaMacroSupport,
-    Compile / headerCreate / unmanagedSources := (baseDirectory.value / "project").**("*.scala").get,
-    publishRsyncArtifacts := {
-      val unidocArtifacts = (Compile / unidoc).value
-      // unidoc returns a Seq[File] which contains directories of generated API docs, one for
-      // Java, one for Scala. It's not specified which is which, though.
-      // We currently expect the java documentation at http/target/javaunidoc, so
-      // the following heuristic is hopefully good enough to determine which one is the Java and
-      // which one the Scala version.
-
-      // This will fail with a MatchError when -Dpekko.genjavadoc.enabled is not set
-      val (Seq(java), Seq(scala)) = unidocArtifacts.partition(_.getName contains "java")
-
-      Seq(
-        scala -> gustavDir("api").value,
-        java -> gustavDir("japi").value)
-    })
+    Compile / headerCreate / unmanagedSources := (baseDirectory.value / "project").**("*.scala").get)
   .aggregate(aggregatedProjects: _*)
 
 /**
@@ -169,13 +152,6 @@ lazy val http = project("http")
       "scaladsl/server/directives/FormFieldDirectives.scala", "scaladsl/server/directives/RespondWithDirectives.scala"))
   .enablePlugins(BootstrapGenjavadoc, BoilerplatePlugin)
   .enablePlugins(ReproducibleBuildsPlugin)
-
-def gustavDir(kind: String) = Def.task {
-  val ver =
-    if (isSnapshot.value) "snapshot"
-    else version.value
-  s"www/$kind/akka-http/$ver"
-}
 
 lazy val http2Tests = project("http2-tests")
   .settings(commonSettings)
@@ -391,7 +367,7 @@ lazy val httpScalafixTests =
     .enablePlugins(ScalafixTestkitPlugin)
 
 lazy val docs = project("docs")
-  .enablePlugins(ParadoxPlugin, PekkoParadoxPlugin, NoPublish, PublishRsyncPlugin)
+  .enablePlugins(ParadoxPlugin, PekkoParadoxPlugin, NoPublish)
   .disablePlugins(MimaPlugin)
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoDependency.docs)
   .addPekkoModuleDependency("pekko-actor-typed", "provided", PekkoDependency.docs)
@@ -420,42 +396,35 @@ lazy val docs = project("docs")
     scalacOptions --= Seq(
       // Code after ??? can be considered 'dead',  but still useful for docs
       "-Ywarn-dead-code"),
-    (Compile / paradoxProcessor) := {
+    paradoxParsingTimeout := {
       import scala.concurrent.duration._
-      import com.lightbend.paradox.ParadoxProcessor
-      import com.lightbend.paradox.markdown.{ Reader, Writer }
-      // FIXME: use `paradoxParsingTimeout` when https://github.com/lightbend/paradox/pull/447 has been released
-      new ParadoxProcessor(
-        reader = new Reader(maxParsingTime = 10.seconds),
-        writer = new Writer(serializerPlugins = Writer.defaultPlugins(paradoxDirectives.value)))
+      10.seconds
     },
     paradoxGroups := Map("Language" -> Seq("Scala", "Java")),
     Compile / paradoxProperties ++= Map(
       "project.name" -> "Apache Pekko HTTP",
       "canonical.base_url" -> "https://pekko.apache.org/docs/pekko-http/current",
       "pekko.version" -> PekkoDependency.docs.version,
-      "akka.minimum.version25" -> PekkoDependency.minimumExpectedPekkoVersion,
-      "akka.minimum.version26" -> PekkoDependency.minimumExpectedPekko26Version,
       "jackson.xml.version" -> Dependencies.jacksonXmlVersion,
       "scalafix.version" -> _root_.scalafix.sbt.BuildInfo.scalafixVersion, // grab from scalafix plugin directly
       "extref.pekko-docs.base_url" -> s"https://pekko.apache.org/docs/pekko/current/%s",
-      "javadoc.akka.base_url" -> s"https://doc.akka.io/japi/akka/${PekkoDependency.docs.link}",
-      "javadoc.akka.link_style" -> "direct",
-      "scaladoc.pekko.http.base_url" -> {
-        val v = if (isSnapshot.value) "current" else version.value
-        s"https://pekko.apache.org/api/pekko/current/$v/org/apache"
+      "javadoc.java.base_url" -> "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/",
+      "javadoc.java.link_style" -> "direct",
+      "javadoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/japi/pekko/${PekkoDependency.docs.link}",
+      "javadoc.org.apache.pekko.link_style" -> "direct",
+      "scaladoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/api/pekko/${PekkoDependency.docs.link}",
+      "scaladoc.org.apache.pekko.link_style" -> "direct",
+      "javadoc.org.apache.pekko.http.base_url" -> {
+        val v = if (!isSnapshot.value) "current" else version.value
+        s"https://pekko.apache.org/api/pekko-http/$v"
       },
-      "scaladoc.pekko.base_url" -> "https://pekko.apache.org/api/pekko/current/org/apache",
-      "javadoc.base_url" -> "https://pekko.apache.org/japi/pekko-http/current/org/apache",
-      "algolia.docsearch.api_key" -> "0ccbb8bf5148554a406fbf07df0a93b9",
-      "algolia.docsearch.index_name" -> "akka-http",
-      "google.analytics.account" -> "UA-21117439-1",
-      "google.analytics.domain.name" -> "akka.io",
+      "scaladoc.org.apache.pekko.http.base_url" -> {
+        val v = if (!isSnapshot.value) "current" else version.value
+        s"https://pekko.apache.org/japi/pekko-http/$v"
+      },
       "github.base_url" -> GitHub.url(version.value, isSnapshot.value)),
     apidocRootPackage := "org.apache.pekko",
-    ValidatePR / additionalTasks += Compile / paradox,
-    ThisBuild / publishRsyncHost := "akkarepo@gustav.akka.io",
-    publishRsyncArtifacts := List((Compile / paradox).value -> gustavDir("docs").value))
+    ValidatePR / additionalTasks += Compile / paradox)
   .settings(ParadoxSupport.paradoxWithCustomDirectives)
 
 /*

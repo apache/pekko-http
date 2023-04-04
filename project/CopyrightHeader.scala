@@ -32,6 +32,7 @@ object CopyrightHeader extends AutoPlugin {
           headerMappings := headerMappings.value ++ Map(
             HeaderFileType.scala -> cStyleComment,
             HeaderFileType.java -> cStyleComment,
+            HeaderFileType.conf -> hashLineComment,
             HeaderFileType("template") -> cStyleComment)))
     })
 
@@ -43,6 +44,8 @@ object CopyrightHeader extends AutoPlugin {
       |
       |This file is part of the Apache Pekko project, derived from Akka.
       |""".stripMargin
+
+  val apacheSpdxHeader: String = "SPDX-License-Identifier: Apache-2.0"
 
   val cStyleComment = HeaderCommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
 
@@ -61,12 +64,29 @@ object CopyrightHeader extends AutoPlugin {
     }
   })
 
+  val hashLineComment = HeaderCommentStyle.hashLineComment.copy(commentCreator = new CommentCreator() {
+
+    // deliberately hardcode use of apacheSpdxHeader and ignore input text
+    override def apply(text: String, existingText: Option[String]): String = {
+      val formatted = existingText match {
+        case Some(currentText) if isApacheCopyrighted(currentText) =>
+          currentText
+        case Some(currentText) =>
+          HeaderCommentStyle.hashLineComment.commentCreator(apacheSpdxHeader, existingText) + NewLine * 2 + currentText
+        case None =>
+          HeaderCommentStyle.hashLineComment.commentCreator(apacheSpdxHeader, existingText)
+      }
+      formatted.trim
+    }
+  })
+
   private def isGenerated(text: String): Boolean =
     StringUtils.contains(text, "DO NOT EDIT DIRECTLY")
 
   private def isApacheCopyrighted(text: String): Boolean =
     StringUtils.containsIgnoreCase(text, "licensed to the apache software foundation (asf)") ||
-    StringUtils.containsIgnoreCase(text, "www.apache.org/licenses/license-2.0")
+    StringUtils.containsIgnoreCase(text, "www.apache.org/licenses/license-2.0") ||
+    StringUtils.contains(text, "Apache-2.0")
 
   private def isLightbendCopyrighted(text: String): Boolean =
     StringUtils.containsIgnoreCase(text, "lightbend inc.")

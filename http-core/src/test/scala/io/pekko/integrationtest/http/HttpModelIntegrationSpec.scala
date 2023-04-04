@@ -43,8 +43,8 @@ import org.scalatest.wordspec.AnyWordSpec
  * it can be fulfilled. A typical example of a use case is converting
  * between one library's HTTP model and the Akka HTTP core HTTP model.
  *
- * This test is located a different package (io.akka vs akka) in order to
- * check for any visibility issues when Akka HTTP core is used by third
+ * This test is located a different package (io.pekko vs org.apache.pekko) in order to
+ * check for any visibility issues when Pekko HTTP core is used by third
  * party libraries.
  */
 class HttpModelIntegrationSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {

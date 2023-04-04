@@ -100,7 +100,7 @@ class HttpMessageSpec extends AnyWordSpec with Matchers {
     "retrieve all headers of a given class when calling headers[...]" in {
       val oneCookieHeader = `Set-Cookie`(HttpCookie("foo", "bar"))
       val anotherCookieHeader = `Set-Cookie`(HttpCookie("foz", "baz"))
-      val hostHeader = Host("akka.io")
+      val hostHeader = Host("pekko.apache.org")
       val request = HttpRequest().withHeaders(oneCookieHeader, anotherCookieHeader, hostHeader)
       request.headers[`Set-Cookie`] should ===(Seq(oneCookieHeader, anotherCookieHeader))
     }

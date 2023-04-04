@@ -192,19 +192,19 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
 
   "the handle directive" should {
     "use a function to complete a request" in {
-      Get(Uri("https://akka.io/foo")) ~> {
+      Get(Uri("https://pekko.apache.org/foo")) ~> {
         handle(req => Future.successful(HttpResponse(OK, entity = req.uri.toString)))
-      } ~> check { response shouldEqual HttpResponse(200, entity = "https://akka.io/foo") }
+      } ~> check { response shouldEqual HttpResponse(200, entity = "https://pekko.apache.org/foo") }
     }
     "fail the request when the future fails" in {
-      Get(Uri("https://akka.io/foo")) ~> {
+      Get(Uri("https://pekko.apache.org/foo")) ~> {
         concat(
           handle(req => Future.failed(new IllegalStateException("Some error"))),
           complete(ImATeapot))
       } ~> check { response shouldEqual HttpResponse(500, entity = "There was an internal server error.") }
     }
     "fail the request when the function throws" in {
-      Get(Uri("https://akka.io/foo")) ~> {
+      Get(Uri("https://pekko.apache.org/foo")) ~> {
         concat(
           handle(req => throw new IllegalStateException("Some error")),
           complete(ImATeapot))

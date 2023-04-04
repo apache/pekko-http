@@ -15,14 +15,13 @@ addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.2")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.3")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1") // for advanced PR validation features
 addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.1")
-addSbtPlugin("com.lightbend.sbt" % "sbt-publish-rsync" % "0.2")
 addSbtPlugin("com.lightbend.sbt" % "sbt-bill-of-materials" % "1.0.2")
 // allow access to snapshots for pekko-sbt-paradox
 resolvers += "Apache Nexus Snapshots".at("https://repository.apache.org/content/repositories/snapshots/")
 
 // We have to deliberately use older versions of sbt-paradox because current Pekko sbt build
 // only loads on JDK 1.8 so we need to bring in older versions of parboiled which support JDK 1.8
-addSbtPlugin(("org.apache.pekko" % "pekko-sbt-paradox" % "0.0.0+19-f498f7c0-SNAPSHOT").excludeAll(
+addSbtPlugin(("org.apache.pekko" % "pekko-sbt-paradox" % "0.0.0+30-8bee46d0-SNAPSHOT").excludeAll(
   "com.lightbend.paradox", "sbt-paradox",
   "com.lightbend.paradox" % "sbt-paradox-apidoc",
   "com.lightbend.paradox" % "sbt-paradox-project-info"))
@@ -34,8 +33,9 @@ addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.30")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.10.0")
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.10")
-addSbtPlugin("org.mdedetrich" % "sbt-apache-sonatype" % "0.1.1")
+addSbtPlugin("org.mdedetrich" % "sbt-apache-sonatype" % "0.1.5")
 addSbtPlugin("com.github.pjfanning" % "sbt-source-dist" % "0.1.5")
+addSbtPlugin("net.virtual-void" % "sbt-hackers-digest" % "0.1.2")
 
 // used in ValidatePullRequest to check github PR comments whether to build all subprojects
 libraryDependencies += "org.kohsuke" % "github-api" % "1.306"

@@ -47,11 +47,11 @@ object Http2ClientApp extends App {
   implicit val ec: ExecutionContext = system.dispatcher
 
   // #response-future-association
-  val dispatch = singleRequest(Http().connectionTo("doc.akka.io").http2())
+  val dispatch = singleRequest(Http().connectionTo("pekko.apache.org").http2())
 
   dispatch(
     HttpRequest(
-      uri = "https://doc.akka.io/api/akka/current/akka/actor/typed/scaladsl/index.html",
+      uri = "https://pekko.apache.org/api/akka/current/akka/actor/typed/scaladsl/index.html",
       headers = headers.`Accept-Encoding`(HttpEncodings.gzip) :: Nil)).onComplete { res =>
     println(s"[1] Got index.html: $res")
     res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [1] $res"))
@@ -61,17 +61,17 @@ object Http2ClientApp extends App {
 
   dispatch(
     HttpRequest(
-      uri = "https://doc.akka.io/api/akka/current/index.js",
+      uri = "https://pekko.apache.org/api/akka/current/index.js",
       headers = /*headers.`Accept-Encoding`(HttpEncodings.gzip) ::*/ Nil)).onComplete { res =>
     println(s"[2] Got index.js: $res")
     res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [2] $res"))
   }
 
-  dispatch(HttpRequest(uri = "https://doc.akka.io/api/akka/current/lib/MaterialIcons-Regular.woff"))
+  dispatch(HttpRequest(uri = "https://pekko.apache.org/api/akka/current/lib/MaterialIcons-Regular.woff"))
     .flatMap(_.toStrict(1.second))
     .onComplete(res => println(s"[3] Got font: $res"))
 
-  dispatch(HttpRequest(uri = "https://doc.akka.io/favicon.ico"))
+  dispatch(HttpRequest(uri = "https://pekko.apache.org/favicon.ico"))
     .flatMap(_.toStrict(1.second))
     .onComplete(res => println(s"[4] Got favicon: $res"))
 

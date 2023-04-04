@@ -81,11 +81,11 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
         HttpRequest(POST, "/abc/xyz",
           List(
             RawHeader("X-Fancy", "naa"),
-            Link(Uri("http://akka.io"), LinkParams.first),
+            Link(Uri("http://pekko.apache.org"), LinkParams.first),
             Host("spray.io", 9999))) should renderTo {
           """POST /abc/xyz HTTP/1.1
             |X-Fancy: naa
-            |Link: <http://akka.io>; rel=first
+            |Link: <http://pekko.apache.org>; rel=first
             |Host: spray.io:9999
             |User-Agent: pekko-http/1.0.0
             |Content-Length: 0

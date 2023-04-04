@@ -54,11 +54,11 @@ public class Http2ClientApp {
 
     // #response-future-association
     Function<HttpRequest, CompletionStage<HttpResponse>> dispatch =
-        singleRequest(system, Http.get(system).connectionTo("doc.akka.io").http2());
+        singleRequest(system, Http.get(system).connectionTo("pekko.apache.org").http2());
 
     dispatch.apply(
         HttpRequest.create(
-            "https://doc.akka.io/api/akka/current/akka/actor/typed/scaladsl/index.html").withHeaders(
+            "https://pekko.apache.org/api/akka/current/akka/actor/typed/scaladsl/index.html").withHeaders(
             Arrays.asList(AcceptEncoding.create(HttpEncodings.GZIP))
         )
     ).thenAccept(res -> {
@@ -68,16 +68,16 @@ public class Http2ClientApp {
     });
 
     // #response-future-association
-    dispatch.apply(HttpRequest.create("https://doc.akka.io/api/akka/current/index.js"))
+    dispatch.apply(HttpRequest.create("https://pekko.apache.org/api/akka/current/index.js"))
         .thenAccept(res -> {
           System.out.println("[2] Got index.js: " + res);
           res.entity().getDataBytes().runWith(Sink.ignore(), mat)
             .thenAccept(consumedRes -> System.out.println("Finished reading [2] " + res));
         });
-    dispatch.apply(HttpRequest.create("https://doc.akka.io/api/akka/current/lib/MaterialIcons-Regular.woff"))
+    dispatch.apply(HttpRequest.create("https://pekko.apache.org/api/akka/current/lib/MaterialIcons-Regular.woff"))
         .thenCompose(res -> res.toStrict(1000, system))
         .thenAccept(res -> System.out.println("[3] Got font: " + res));
-    dispatch.apply(HttpRequest.create("https://doc.akka.io/favicon.ico"))
+    dispatch.apply(HttpRequest.create("https://pekko.apache.org/favicon.ico"))
         .thenCompose(res -> res.toStrict(1000, system))
         .thenAccept(res -> System.out.println("[4] Got favicon: " + res));
   }

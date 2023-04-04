@@ -27,7 +27,7 @@ import pekko.stream._
  * This low-level API is expected to be replaced by an Attribute in the future.
  *
  * In any case, you might want to use `handleWebSocketMessages` instead as documented
- * at https://doc.akka.io/docs/akka-http/current/server-side/websocket-support.html#routing-support
+ * at https://pekko.apache.org/docs/pekko-http/current/server-side/websocket-support.html#routing-support
  *
  * @deprecated use the WebSocketUpgrade attribute instead since Akka HTTP 10.2.0
  */

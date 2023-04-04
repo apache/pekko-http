@@ -197,7 +197,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
     // This idea came initially from this blog post:
     // http://kazuhiro.github.io/scala/akka/akka-http/akka-streams/2016/01/31/connection-pooling-with-akka-http-and-source-queue.html
-    val poolClientFlow = Http().cachedHostConnectionPool[Promise[HttpResponse]]("akka.io")
+    val poolClientFlow = Http().cachedHostConnectionPool[Promise[HttpResponse]]("pekko.apache.org")
     val queue =
       Source.queue[(HttpRequest, Promise[HttpResponse])](QueueSize, OverflowStrategy.dropNew)
         .via(poolClientFlow)
@@ -252,7 +252,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
         FileToUpload("baz.txt", Paths.get("./baz.txt"))))
 
     val poolClientFlow =
-      Http().cachedHostConnectionPool[FileToUpload]("akka.io")
+      Http().cachedHostConnectionPool[FileToUpload]("pekko.apache.org")
 
     def createUploadRequest(fileToUpload: FileToUpload): Future[(HttpRequest, FileToUpload)] = {
       val bodyPart =
@@ -293,14 +293,14 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.model._
     // #create-simple-request
-    HttpRequest(uri = "https://akka.io")
+    HttpRequest(uri = "https://pekko.apache.org")
 
     // or:
     import org.apache.pekko.http.scaladsl.client.RequestBuilding.Get
-    Get("https://akka.io")
+    Get("https://pekko.apache.org")
 
     // with query params
-    Get("https://akka.io?foo=bar")
+    Get("https://pekko.apache.org?foo=bar")
 
     // #create-simple-request
 
@@ -350,7 +350,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       val http = Http(system)
 
       override def preStart() = {
-        http.singleRequest(HttpRequest(uri = "http://akka.io"))
+        http.singleRequest(HttpRequest(uri = "http://pekko.apache.org"))
           .pipeTo(self)
       }
 
@@ -413,7 +413,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     val settings = ConnectionPoolSettings(system)
       .withConnectionSettings(ClientConnectionSettings(system)
         .withTransport(httpsProxyTransport))
-    Http().singleRequest(HttpRequest(uri = "http://akka.io"), settings = settings)
+    Http().singleRequest(HttpRequest(uri = "http://pekko.apache.org"), settings = settings)
     // #auth-https-proxy-example-single-request
   }
 
