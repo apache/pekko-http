@@ -1,25 +1,34 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl;
 
-import akka.NotUsed;
-import akka.actor.ActorSystem;
-import akka.http.javadsl.ConnectHttp;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.ServerBinding;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.PathMatcher1;
-import akka.http.javadsl.server.Route;
-import akka.stream.ActorMaterializer;
-import akka.stream.javadsl.Flow;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.ConnectHttp;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.ServerBinding;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.PathMatcher1;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.stream.ActorMaterializer;
+import org.apache.pekko.stream.javadsl.Flow;
 
-import static akka.http.javadsl.common.PartialApplication.*;
-import static akka.http.javadsl.server.PathMatchers.*;
-import static akka.http.javadsl.server.Directives.*;
+import static org.apache.pekko.http.javadsl.common.PartialApplication.*;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
+import static org.apache.pekko.http.javadsl.server.Directives.*;
 
 
 import java.util.concurrent.CompletionStage;
@@ -54,7 +63,7 @@ public class ComposeDirectivesExampleTest extends AllDirectives {
       //anyOf examples
       path("hello", () ->
         anyOf(this::get, this::put, () ->
-          complete("<h1>Say hello to akka-http</h1>"))),
+          complete("<h1>Say hello to pekko-http</h1>"))),
       path("foo", () ->
         anyOf(bindParameter(this::parameter, "foo"), bindParameter(this::parameter, "bar"), (String param) ->
           complete("param is " + param))

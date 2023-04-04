@@ -3,15 +3,15 @@
 @@@ div { .group-scala }
 ## Signature
 
-@@signature [SecurityDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/SecurityDirectives.scala) { #AsyncAuthenticatorPF }
+@@signature [SecurityDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/SecurityDirectives.scala) { #AsyncAuthenticatorPF }
 
-@@signature [SecurityDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/SecurityDirectives.scala) { #authenticateOAuth2PFAsync }
+@@signature [SecurityDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/SecurityDirectives.scala) { #authenticateOAuth2PFAsync }
 
 @@@
 
 ## Description
 
-Wraps the inner route with OAuth Bearer Token authentication support using a given @scala[@scaladoc[AsyncAuthenticatorPF[T]](akka.http.scaladsl.server.Directives#AsyncAuthenticatorPF[T]=PartialFunction[akka.http.scaladsl.server.directives.Credentials,scala.concurrent.Future[T]])]@java[`AsyncAuthenticatorPF<T>` - Partial function from `Optional<ProvidedCredentials>` to `CompletionStage<User>`].
+Wraps the inner route with OAuth Bearer Token authentication support using a given @scala[@scaladoc[AsyncAuthenticatorPF[T]](org.apache.pekko.http.scaladsl.server.Directives#AsyncAuthenticatorPF[T]=PartialFunction[org.apache.pekko.http.scaladsl.server.directives.Credentials,scala.concurrent.Future[T]])]@java[`AsyncAuthenticatorPF<T>` - Partial function from `Optional<ProvidedCredentials>` to `CompletionStage<User>`].
 
 Provides support for extracting the so-called "*Bearer Token*" from the @apidoc[Authorization] HTTP Header,
 which is used to initiate an OAuth2 authorization.
@@ -35,4 +35,4 @@ For more information on how OAuth2 works see [RFC 6750](https://tools.ietf.org/h
 ## Example
 
 Usage in code is exactly the same as @ref[authenticateBasicPFAsync](authenticateBasicPFAsync.md),
-with the difference that one must validate the token as OAuth2 dictates (which is currently not part of Akka HTTP itself).
+with the difference that one must validate the token as OAuth2 dictates (which is currently not part of Apache Pekko HTTP itself).

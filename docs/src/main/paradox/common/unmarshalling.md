@@ -3,7 +3,7 @@
 "Unmarshalling" is the process of converting some kind of a lower-level representation, often a "wire format", into a
 higher-level (object) structure. Other popular names for it are "Deserialization" or "Unpickling".
 
-In Akka HTTP "Unmarshalling" means the conversion of a lower-level source object, e.g. a `MessageEntity`
+In Apache Pekko HTTP "Unmarshalling" means the conversion of a lower-level source object, e.g. a `MessageEntity`
 (which forms the "entity body" of an HTTP request or response) or a full @apidoc[HttpRequest] or @apidoc[HttpResponse],
 into an instance of type `T`.
 
@@ -12,9 +12,9 @@ into an instance of type `T`.
 Unmarshalling of instances of type `A` into instances of type `B` is performed by an @apidoc[Unmarshaller[A, B]].
 
 @@@ div { .group-scala }
-Akka HTTP also predefines a number of helpful aliases for the types of unmarshallers that you'll likely work with most:
+Apache Pekko HTTP also predefines a number of helpful aliases for the types of unmarshallers that you'll likely work with most:
 
-@@snip [package.scala](/akka-http/src/main/scala/akka/http/scaladsl/unmarshalling/package.scala) { #unmarshaller-aliases }
+@@snip [package.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/unmarshalling/package.scala) { #unmarshaller-aliases }
 
 @@@
 
@@ -29,11 +29,11 @@ For the client side, see @ref[Processing Responses](../client-side/request-and-r
 
 ## Predefined Unmarshallers
 
-Akka HTTP already predefines a number of unmarshallers for the most common types.
+Apache Pekko HTTP already predefines a number of unmarshallers for the most common types.
 Specifically these are:
 
- * @scala[@scaladoc[PredefinedFromStringUnmarshallers](akka.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers)]
-   @java[@javadoc[StringUnmarshallers](akka.http.javadsl.unmarshalling.StringUnmarshallers)]
+ * @scala[@scaladoc[PredefinedFromStringUnmarshallers](org.apache.pekko.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers)]
+   @java[@javadoc[StringUnmarshallers](org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers)]
     * `Byte`
     * `Short`
     * @scala[`Int`]@java[`Integer`]
@@ -41,16 +41,16 @@ Specifically these are:
     * `Float`
     * `Double`
     * `Boolean`
- * @scala[@scaladoc[PredefinedFromEntityUnmarshallers](akka.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers)]
+ * @scala[@scaladoc[PredefinedFromEntityUnmarshallers](org.apache.pekko.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers)]
    @java[@apidoc[Unmarshaller]]
     * @scala[`Array[Byte]`]@java[`byte[]`]
-    * @apidoc[akka.util.ByteString]
+    * @apidoc[org.apache.pekko.util.ByteString]
     * @scala[`Array[Char]`]@java[`char[]`]
     * `String`
-    * @scala[`akka.http.scaladsl.model.FormData`]@java[`akka.http.javadsl.model.FormData`]
+    * @scala[`org.apache.pekko.http.scaladsl.model.FormData`]@java[`org.apache.pekko.http.javadsl.model.FormData`]
 
 @@@ div { .group-scala }
- * @scaladoc[GenericUnmarshallers](akka.http.scaladsl.unmarshalling.GenericUnmarshallers)
+ * @scaladoc[GenericUnmarshallers](org.apache.pekko.http.scaladsl.unmarshalling.GenericUnmarshallers)
     * @apidoc[Unmarshaller[T, T]](Unmarshaller) (identity unmarshaller)
     * @apidoc[Unmarshaller[Option[A], B]], if an @apidoc[Unmarshaller[A, B]] is available
     * @apidoc[Unmarshaller[A, Option[B]]], if an @apidoc[Unmarshaller[A, B]] is available
@@ -63,10 +63,10 @@ Additional unmarshallers are available in separate modules for specific content 
 
 ## Implicit Resolution
 
-The unmarshalling infrastructure of Akka HTTP relies on a type-class based approach, which means that @apidoc[Unmarshaller]
+The unmarshalling infrastructure of Apache Pekko HTTP relies on a type-class based approach, which means that @apidoc[Unmarshaller]
 instances from a certain type `A` to a certain type `B` have to be available implicitly.
 
-The implicits for most of the predefined unmarshallers in Akka HTTP are provided through the companion object of the
+The implicits for most of the predefined unmarshallers in Apache Pekko HTTP are provided through the companion object of the
 @apidoc[Unmarshaller] trait. This means that they are always available and never need to be explicitly imported.
 Additionally, you can simply "override" them by bringing your own custom version into local scope.
 
@@ -74,16 +74,16 @@ Additionally, you can simply "override" them by bringing your own custom version
 
 ## Custom Unmarshallers
 
-Akka HTTP gives you a few convenience tools for constructing unmarshallers for your own types.
+Apache Pekko HTTP gives you a few convenience tools for constructing unmarshallers for your own types.
 Usually you won't have to "manually" implement the @apidoc[Unmarshaller] @scala[trait]@java[class] directly.
 Rather, it should be possible to use one of the convenience construction helpers defined on
 @scala[the @apidoc[Unmarshaller] companion]@java[@apidoc[Unmarshaller]]:
 
 Scala
-:  @@snip [Unmarshaller.scala](/akka-http/src/main/scala/akka/http/scaladsl/unmarshalling/Unmarshaller.scala) { #unmarshaller-creation }
+:  @@snip [Unmarshaller.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/unmarshalling/Unmarshaller.scala) { #unmarshaller-creation }
 
 Java
-:  @@snip [Unmarshallers.scala](/akka-http/src/main/java/akka/http/javadsl/unmarshalling/Unmarshallers.java) { #unmarshaller-creation }
+:  @@snip [Unmarshallers.scala](/http/src/main/java/org/apache/pekko/http/javadsl/unmarshalling/Unmarshallers.java) { #unmarshaller-creation }
 
 @@@ note
 To avoid unnecessary memory pressure, unmarshallers should make sure to either fully consume the incoming entity data stream, or make sure it is properly cancelled on error.
@@ -96,7 +96,7 @@ Sometimes you can save yourself some work by reusing existing unmarshallers for 
 The idea is to "wrap" an existing unmarshaller with some logic to "re-target" it to your type.
 
 Usually what you want to do is to transform the output of some existing unmarshaller and convert it to your type.
-For this type of unmarshaller transformation Akka HTTP defines these methods:
+For this type of unmarshaller transformation Apache Pekko HTTP defines these methods:
 
 @@@ div { .group-scala }
  * `baseUnmarshaller.transform`
@@ -121,11 +121,11 @@ The method signatures should make their semantics relatively clear.
 
 ## Using Unmarshallers
 
-In many places throughout Akka HTTP unmarshallers are used implicitly, e.g. when you want to access the @ref[entity](../routing-dsl/directives/marshalling-directives/entity.md)
+In many places throughout Apache Pekko HTTP unmarshallers are used implicitly, e.g. when you want to access the @ref[entity](../routing-dsl/directives/marshalling-directives/entity.md)
 of a request using the @ref[Routing DSL](../routing-dsl/index.md).
 
 However, you can also use the unmarshalling infrastructure directly if you wish, which can be useful for example in tests.
-The best entry point for this is the @scala[`akka.http.scaladsl.unmarshalling.Unmarshal` object]@java[`akka.http.javadsl.unmarshalling.StringUnmarshallers` class], which you can use like this:
+The best entry point for this is the @scala[`org.apache.pekko.http.scaladsl.unmarshalling.Unmarshal` object]@java[`org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers` class], which you can use like this:
 
 Scala
 :  @@snip [UnmarshalSpec.scala](/docs/src/test/scala/docs/http/scaladsl/UnmarshalSpec.scala) { #use-unmarshal }

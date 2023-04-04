@@ -1,4 +1,13 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
@@ -6,9 +15,10 @@ package docs.http.scaladsl.server
 
 //#source-quote
 import org.specs2.mutable.Specification
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.testkit.Specs2RouteTest
-import akka.http.scaladsl.server._
+import org.apache.pekko
+import pekko.http.scaladsl.model.StatusCodes
+import pekko.http.scaladsl.testkit.Specs2RouteTest
+import pekko.http.scaladsl.server._
 import Directives._
 
 class FullSpecs2TestKitExampleSpec extends Specification with Specs2RouteTest {
@@ -23,8 +33,7 @@ class FullSpecs2TestKitExampleSpec extends Specification with Specs2RouteTest {
         },
         path("ping") {
           complete("PONG!")
-        }
-      )
+        })
     }
 
   "The service" should {

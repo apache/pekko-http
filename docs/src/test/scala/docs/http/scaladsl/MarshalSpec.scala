@@ -1,19 +1,30 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl
 
-import akka.testkit.AkkaSpec
+import org.apache.pekko.testkit.PekkoSpec
 
-class MarshalSpec extends AkkaSpec {
+class MarshalSpec extends PekkoSpec {
 
   "use marshal" in {
-    //#use-marshal
+    // #use-marshal
     import scala.concurrent.Await
     import scala.concurrent.duration._
-    import akka.http.scaladsl.marshalling.Marshal
-    import akka.http.scaladsl.model._
+
+    import org.apache.pekko
+    import pekko.http.scaladsl.marshalling.Marshal
+    import pekko.http.scaladsl.model._
 
     import system.dispatcher // ExecutionContext
 
@@ -34,7 +45,7 @@ class MarshalSpec extends AkkaSpec {
     a[Marshal.UnacceptableResponseContentTypeException] should be thrownBy {
       Await.result(respFuture, 1.second) // client requested JSON, we only have text/plain!
     }
-    //#use-marshal
+    // #use-marshal
   }
 
 }

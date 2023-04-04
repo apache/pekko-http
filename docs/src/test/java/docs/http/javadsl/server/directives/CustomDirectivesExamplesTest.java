@@ -1,14 +1,23 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2015-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.headers.RawHeader;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -19,17 +28,17 @@ import java.util.function.Supplier;
 import java.util.function.Function;
 
 //#labeling-1
-import static akka.http.javadsl.server.Directives.get;
-import static akka.http.javadsl.server.Directives.put;
-import static akka.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.put;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
 //#labeling-1
 //#composition-1
-import static akka.http.javadsl.server.Directives.headerValueByName;
+import static org.apache.pekko.http.javadsl.server.Directives.headerValueByName;
 
 //#composition-1
 //#composition-2
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#composition-2
 

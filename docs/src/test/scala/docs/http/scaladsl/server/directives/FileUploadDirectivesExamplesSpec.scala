@@ -1,18 +1,28 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2015-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.directives.FileInfo
-import akka.http.scaladsl.testkit.RouteTestTimeout
-import akka.stream.scaladsl.Framing
-import akka.testkit.TestDuration
-import akka.util.ByteString
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.directives.FileInfo
+import pekko.http.scaladsl.testkit.RouteTestTimeout
+import pekko.stream.scaladsl.Framing
+import pekko.testkit.TestDuration
+import pekko.util.ByteString
 import java.io.File
 
-import akka.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 import scala.concurrent.Future
@@ -21,14 +31,14 @@ import scala.concurrent.duration._
 class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   override def testConfigSource = super.testConfigSource ++ """
-    akka.actor.default-mailbox.mailbox-type = "akka.dispatch.UnboundedMailbox"
+    pekko.actor.default-mailbox.mailbox-type = "org.apache.pekko.dispatch.UnboundedMailbox"
   """
 
   // test touches disk, so give it some time
   implicit val routeTimeout: RouteTestTimeout = RouteTestTimeout(7.seconds.dilated)
 
   "storeUploadedFile" in {
-    //#storeUploadedFile
+    // #storeUploadedFile
 
     def tempDestination(fileInfo: FileInfo): File =
       File.createTempFile(fileInfo.fileName, ".tmp")
@@ -53,11 +63,11 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
       status shouldEqual StatusCodes.OK
     }
 
-    //#storeUploadedFile
+    // #storeUploadedFile
   }
 
   "storeUploadedFiles" in {
-    //#storeUploadedFiles
+    // #storeUploadedFiles
 
     def tempDestination(fileInfo: FileInfo): File =
       File.createTempFile(fileInfo.fileName, ".tmp")
@@ -90,11 +100,11 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
       status shouldEqual StatusCodes.OK
     }
 
-    //#storeUploadedFiles
+    // #storeUploadedFiles
   }
 
   "fileUpload" in {
-    //#fileUpload
+    // #fileUpload
 
     // adding integers as a service
     val route =
@@ -103,7 +113,6 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
 
         fileUpload("csv") {
           case (metadata, byteSource) =>
-
             val sumF: Future[Int] =
               // sum the numbers as they arrive so that we can
               // accept any size of file
@@ -128,11 +137,11 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
       responseAs[String] shouldEqual "Sum: 178"
     }
 
-    //#fileUpload
+    // #fileUpload
   }
 
   "fileUploadAll" in {
-    //#fileUploadAll
+    // #fileUploadAll
 
     // adding integers as a service
     val route =
@@ -174,7 +183,7 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
       responseAs[String] shouldEqual "Sum: 855"
     }
 
-    //#fileUploadAll
+    // #fileUploadAll
   }
 
 }

@@ -1,48 +1,57 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2017-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server;
 
-import akka.NotUsed;
-import akka.http.javadsl.common.CsvEntityStreamingSupport;
-import akka.http.javadsl.common.JsonEntityStreamingSupport;
-import akka.http.javadsl.marshallers.jackson.Jackson;
-import akka.http.javadsl.marshalling.Marshaller;
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.model.headers.Accept;
-import akka.http.javadsl.server.*;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.testkit.TestRoute;
-import akka.http.javadsl.unmarshalling.StringUnmarshallers;
-import akka.http.javadsl.common.EntityStreamingSupport;
-import akka.http.javadsl.unmarshalling.Unmarshaller;
-import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.http.javadsl.common.CsvEntityStreamingSupport;
+import org.apache.pekko.http.javadsl.common.JsonEntityStreamingSupport;
+import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.marshalling.Marshaller;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.model.headers.Accept;
+import org.apache.pekko.http.javadsl.server.*;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.TestRoute;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
+import org.apache.pekko.http.javadsl.common.EntityStreamingSupport;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
+import org.apache.pekko.stream.javadsl.Flow;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.util.ByteString;
 import org.junit.Test;
 
 import java.util.concurrent.CompletionStage;
 
 //#response-streaming
-import static akka.http.javadsl.server.Directives.completeOKWithSource;
-import static akka.http.javadsl.server.Directives.get;
-import static akka.http.javadsl.server.Directives.parameter;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.completeOKWithSource;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#response-streaming
 //#incoming-request-streaming
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.entityAsSourceOf;
-import static akka.http.javadsl.server.Directives.extractMaterializer;
-import static akka.http.javadsl.server.Directives.onComplete;
-import static akka.http.javadsl.server.Directives.post;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entityAsSourceOf;
+import static org.apache.pekko.http.javadsl.server.Directives.extractMaterializer;
+import static org.apache.pekko.http.javadsl.server.Directives.onComplete;
+import static org.apache.pekko.http.javadsl.server.Directives.post;
 
 //#incoming-request-streaming
 //#csv-example
-import static akka.http.javadsl.server.Directives.get;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.completeWithSource;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.completeWithSource;
 
 //#csv-example
 public class JsonStreamingExamplesTest extends JUnitRouteTest {
@@ -137,7 +146,7 @@ public class JsonStreamingExamplesTest extends JUnitRouteTest {
     JsonEntityStreamingSupport support = EntityStreamingSupport.json();
 
     // imagine receiving such response from a service:
-    String payload = "{\"uid\":1,\"txt\":\"#Akka rocks!\"}\n" +
+    String payload = "{\"uid\":1,\"txt\":\"#Pekko rocks!\"}\n" +
         "{\"uid\":2,\"txt\":\"Streaming is so hot right now!\"}\n" +
         "{\"uid\":3,\"txt\":\"You cannot enter the same river twice.\"}";
     HttpEntity.Strict entity = HttpEntities.create(ContentTypes.APPLICATION_JSON, payload);

@@ -1,0 +1,30 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
+ * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ */
+
+package org.scalatest.extra
+
+import org.scalatest.tools.StandardOutReporter
+import org.scalatest.events._
+import java.lang.Boolean.getBoolean
+
+class QuietReporter(inColor: Boolean, withDurations: Boolean = false)
+    extends StandardOutReporter(withDurations, inColor, false, true, false, false, false, false, false, false,
+      presentJson = false) {
+
+  def this() = this(!getBoolean("akka.test.nocolor"), !getBoolean("akka.test.nodurations"))
+
+  override def apply(event: Event): Unit = event match {
+    case _: RunStarting => ()
+    case _              => super.apply(event)
+  }
+}

@@ -1,43 +1,52 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server;
 
-import akka.http.javadsl.coding.Coder;
-import akka.http.javadsl.model.ContentTypes;
-import akka.http.javadsl.model.HttpEntity;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.AuthorizationFailedRejection;
-import akka.http.javadsl.server.MethodRejection;
-import akka.http.javadsl.server.MissingCookieRejection;
-import akka.http.javadsl.server.RejectionHandler;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.server.ValidationRejection;
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.coding.Coder;
+import org.apache.pekko.http.javadsl.model.ContentTypes;
+import org.apache.pekko.http.javadsl.model.HttpEntity;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.AuthorizationFailedRejection;
+import org.apache.pekko.http.javadsl.server.MethodRejection;
+import org.apache.pekko.http.javadsl.server.MissingCookieRejection;
+import org.apache.pekko.http.javadsl.server.RejectionHandler;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.ValidationRejection;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.junit.Test;
 
 import java.util.stream.Collectors;
 
 //#example1
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.decodeRequestWith;
-import static akka.http.javadsl.server.Directives.get;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.post;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.decodeRequestWith;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.post;
 //#example1
 //#custom-handler-example-java
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.handleRejections;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
 
 //#custom-handler-example-java
 //#example-json
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.handleRejections;
-import static akka.http.javadsl.server.Directives.validate;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
+import static org.apache.pekko.http.javadsl.server.Directives.validate;
 
 //#example-json
 public class RejectionHandlerExamplesTest extends JUnitRouteTest {

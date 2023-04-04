@@ -1,6 +1,6 @@
 # Marshalling Directives
 
-Marshalling directives work in conjunction with `akka.http.scaladsl.marshalling` and `akka.http.scaladsl.unmarshalling` to convert
+Marshalling directives work in conjunction with `org.apache.pekko.http.scaladsl.marshalling` and `org.apache.pekko.http.scaladsl.unmarshalling` to convert
 a request entity to a specific type or a type to a response.
 
 See @ref[marshalling](../../../common/marshalling.md) and @ref[unmarshalling](../../../common/unmarshalling.md) for specific

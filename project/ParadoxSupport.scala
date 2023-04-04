@@ -1,27 +1,40 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2016-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package akka
+package org.apache.pekko
 
-import java.io.{File, FileNotFoundException}
+import java.io.{ File, FileNotFoundException }
 
 import sbt._
 import Keys._
 import com.lightbend.paradox.markdown._
 import com.lightbend.paradox.sbt.ParadoxPlugin.autoImport._
+import org.apache.pekko.PekkoParadoxPlugin.autoImport._
 import org.pegdown.Printer
-import org.pegdown.ast.{DirectiveNode, HtmlBlockNode, VerbatimNode, Visitor}
+import org.pegdown.ast.{ DirectiveNode, HtmlBlockNode, VerbatimNode, Visitor }
 
 import scala.collection.JavaConverters._
-import scala.io.{Codec, Source}
+import scala.io.{ Codec, Source }
 
 object ParadoxSupport {
   val paradoxWithCustomDirectives = Seq(
-    paradoxDirectives += ((context: Writer.Context) => new SignatureDirective(context.location.tree.label, context.properties, context))
-  )
+    paradoxDirectives += ((context: Writer.Context) =>
+      new SignatureDirective(context.location.tree.label, context.properties, context)),
+    resolvers += "Apache Nexus Snapshots".at("https://repository.apache.org/content/repositories/snapshots/"),
+    pekkoParadoxGithub := Some("https://github.com/apache/incubator-pekko-http"))
 
-  class SignatureDirective(page: Page, variables: Map[String, String], ctx: Writer.Context) extends LeafBlockDirective("signature") {
+  class SignatureDirective(
+      page: Page, variables: Map[String, String], ctx: Writer.Context) extends LeafBlockDirective("signature") {
     def render(node: DirectiveNode, visitor: Visitor, printer: Printer): Unit =
       try {
         val labels = node.attributes.values("identifier").asScala.map(_.toLowerCase())
@@ -30,21 +43,35 @@ object ParadoxSupport {
           case _                                   => sys.error("Source references are not supported")
         }
         val file = SourceDirective.resolveFile("signature", source, page.file, variables)
-        val Signature = """\s*((def|val|type) (\w+)(?=[:(\[]).*)(\s+\=.*)""".r // stupid approximation to match a signature
-        //println(s"Looking for signature regex '$Signature'")
-        val text =
-          Source.fromFile(file)(Codec.UTF8).getLines.collect {
-            case line@Signature(signature, kind, l, definition) if labels contains l.toLowerCase() =>
-              //println(s"Found label '$l' with sig '$full' in line $line")
-              if (kind == "type") signature + definition
-              else signature
-          }.mkString("\n")
+
+        // The following are stupid approximation's to match a signature/s
+        val TypeSignature = """\s*(type (\w+)(?=[:(\[]).*)(\s+\=.*)""".r
+        // println(s"Looking for signature regex '$Signature'")
+        val lines = Source.fromFile(file)(Codec.UTF8).getLines.toList
+
+        val types = lines.collect {
+          case line @ TypeSignature(signature, l, definition) if labels contains l.toLowerCase() =>
+            // println(s"Found label '$l' with sig '$full' in line $line")
+            signature + definition
+        }
+
+        val Signature = """.*((def|val) (\w+)(?=[:(\[]).*)""".r
+
+        val other = lines.mkString.split("=").collect {
+          case line @ Signature(signature, kind, l) if labels contains l.toLowerCase() =>
+            // println(s"Found label '$l' with sig '$full' in line $line")
+            signature
+              .replaceAll("""\s{2,}""", " ") // Due to formatting with new lines its possible to have excessive whitespace
+        }
+
+        val text = (types ++ other).mkString("\n")
 
         if (text.trim.isEmpty) {
           ctx.error(
             s"Did not find any signatures with one of those names [${labels.mkString(", ")}]", page, node)
 
-          new HtmlBlockNode(s"""<div style="color: red;">[Broken signature inclusion [${labels.mkString(", ")}] to [${node.source}]</div>""").accept(visitor)
+          new HtmlBlockNode(s"""<div style="color: red;">[Broken signature inclusion [${labels.mkString(
+              ", ")}] to [${node.source}]</div>""").accept(visitor)
         } else {
           val lang = Option(node.attributes.value("type")).getOrElse(Snippet.language(file))
           new VerbatimNode(text, lang).accept(visitor)

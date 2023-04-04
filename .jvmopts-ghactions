@@ -1,6 +1,0 @@
--verbose:gc
--Duser.language=en_US.UTF-8
--Dfile.encoding=en_US.UTF-8
--Dsun.jnu.encoding=UTF-8
--XX:ReservedCodeCacheSize=256m
-

@@ -1,15 +1,15 @@
 # Server HTTPS Support
 
-Akka HTTP supports TLS encryption on the server-side as well as on the @ref[client-side](../client-side/client-https-support.md).
+Apache Pekko HTTP supports TLS encryption on the server-side as well as on the @ref[client-side](../client-side/client-https-support.md).
 
 The central vehicle for configuring encryption is the @apidoc[HttpsConnectionContext], which can be created using
 the static method `ConnectionContext.httpsServer` which is defined like this:
 
 Scala
-:  @@snip [ConnectionContext.scala](/akka-http-core/src/main/scala/akka/http/scaladsl/ConnectionContext.scala) { #https-server-context-creation }
+:  @@snip [ConnectionContext.scala](/http-core/src/main/scala/org/apache/pekko/http/scaladsl/ConnectionContext.scala) { #https-server-context-creation }
 
 Java
-:  @@snip [ConnectionContext.scala](/akka-http-core/src/main/scala/akka/http/javadsl/ConnectionContext.scala) { #https-server-context-creation }
+:  @@snip [ConnectionContext.scala](/http-core/src/main/scala/org/apache/pekko/http/javadsl/ConnectionContext.scala) { #https-server-context-creation }
 
 On the server-side, the @apidoc[ServerBuilder] defines a method `enableHttps` with an `httpsContext` parameter,
 which can receive the HTTPS configuration in the form of an `HttpsConnectionContext` instance.
@@ -41,7 +41,7 @@ Scala
 :  @@snip [HttpsServerExampleSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/HttpsServerExampleSpec.scala) { #imports #low-level-default }
 
 Java
-:  @@snip [SimpleServerApp.java](/akka-http-tests/src/main/java/akka/http/javadsl/server/examples/simple/SimpleServerApp.java) { #https-http-config }
+:  @@snip [SimpleServerApp.java](/http-tests/src/main/java/org/apache/pekko/http/javadsl/server/examples/simple/SimpleServerApp.java) { #https-http-config }
 
 After that you can pass it to `enableHttps`, like displayed below:
 
@@ -49,7 +49,7 @@ Scala
 :  @@snip [HttpsServerExampleSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/HttpsServerExampleSpec.scala) { #bind-low-level-context }
 
 Java
-:  @@snip [SimpleServerApp.java](/akka-http-tests/src/main/java/akka/http/javadsl/server/examples/simple/SimpleServerApp.java) { #bind-low-level-context }
+:  @@snip [SimpleServerApp.java](/http-tests/src/main/java/org/apache/pekko/http/javadsl/server/examples/simple/SimpleServerApp.java) { #bind-low-level-context }
 
 ## Running both HTTP and HTTPS
 
@@ -60,7 +60,7 @@ Scala
 :  @@snip [HttpsServerExampleSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/HttpsServerExampleSpec.scala) { #both-https-and-http }
 
 Java
-:  @@snip [SimpleServerHttpHttpsApp.java](/akka-http-tests/src/main/java/akka/http/javadsl/server/examples/simple/SimpleServerHttpHttpsApp.java) { #both-https-and-http }
+:  @@snip [SimpleServerHttpHttpsApp.java](/http-tests/src/main/java/org/apache/pekko/http/javadsl/server/examples/simple/SimpleServerHttpHttpsApp.java) { #both-https-and-http }
 
 ## Mutual authentication
 
@@ -86,7 +86,7 @@ Oracle in reaction to various security updates and known issues.
 
 We also recommend having a look at the [Play documentation about securing your app](https://www.playframework.com/documentation/2.5.x/ConfiguringHttps#ssl-certificates),
 as well as the techniques described in the Play documentation about setting up a [reverse proxy to terminate TLS in
-front of your application](https://www.playframework.com/documentation/2.5.x/HTTPServer) instead of terminating TLS inside the JVM, and therefore Akka HTTP, itself.
+front of your application](https://www.playframework.com/documentation/2.5.x/HTTPServer) instead of terminating TLS inside the JVM, and therefore Apache Pekko HTTP, itself.
 
 Other excellent articles on the subject:
 

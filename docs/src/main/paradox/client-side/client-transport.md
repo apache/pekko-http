@@ -2,13 +2,13 @@
 
 The client side infrastructure has support to plug different transport mechanisms underneath (the API may still change in the future). A client side
 transport is represented by an instance of
-@scala[@scaladoc[akka.http.scaladsl.ClientTransport](akka.http.scaladsl.ClientTransport)]@java[@javadoc[akka.http.javadsl.ClientTransport](akka.http.javadsl.ClientTransport)]:
+@scala[@scaladoc[org.apache.pekko.http.scaladsl.ClientTransport](org.apache.pekko.http.scaladsl.ClientTransport)]@java[@javadoc[org.apache.pekko.http.javadsl.ClientTransport](org.apache.pekko.http.javadsl.ClientTransport)]:
 
 Scala
-:  @@snip [ClientTransport.scala](/akka-http-core/src/main/scala/akka/http/scaladsl/ClientTransport.scala) { #client-transport-definition }
+:  @@snip [ClientTransport.scala](/http-core/src/main/scala/org/apache/pekko/http/scaladsl/ClientTransport.scala) { #client-transport-definition }
 
 Java
-:  @@snip [ClientTransport.scala](/akka-http-core/src/main/scala/akka/http/javadsl/ClientTransport.scala) { #client-transport-definition }
+:  @@snip [ClientTransport.scala](/http-core/src/main/scala/org/apache/pekko/http/javadsl/ClientTransport.scala) { #client-transport-definition }
 
 A transport implementation defines how the client infrastructure should communicate with a given host.
 
@@ -48,7 +48,7 @@ The proxy transport can also be setup using `ClientTransport.httpsProxy()` or `C
 In order to define the transport as such, you will need to set the proxy host / port in your `conf` file like the following.
 
 ```
-akka.http.client.proxy {
+pekko.http.client.proxy {
  https {
    host = ""
    port = 443
@@ -109,7 +109,7 @@ Java
 You can use @apidoc[ClientTransport.withCustomResolver](ClientTransport) to customize host name resolution. The given resolution function will be called for every connection attempt to resolve
 a hostname / port combination (potentially asynchronously) to an `InetSocketAddress`.
 
-As a backend to implement the resolution function you can use Akka's [Async DNS Resolution](https://doc.akka.io/docs/akka/current/io-dns.html#dns-extension).
+As a backend to implement the resolution function you can use Apache Pekko's [Async DNS Resolution](https://doc.akka.io/docs/akka/current/io-dns.html#dns-extension).
 
 Potential use cases:
 

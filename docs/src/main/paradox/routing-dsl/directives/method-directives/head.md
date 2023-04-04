@@ -6,7 +6,7 @@ Matches requests with HTTP method `HEAD`.
 
 ## Signature
 
-@@signature [MethodDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/MethodDirectives.scala) { #head }
+@@signature [MethodDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/MethodDirectives.scala) { #head }
 
 @@@
 
@@ -18,8 +18,8 @@ method `HEAD` are passed on to the inner route. All others are rejected with a
 by the default @ref[RejectionHandler](../../rejections.md#the-rejectionhandler).
 
 @@@ note
-Akka HTTP can handle HEAD requests transparently by dispatching a GET request to the handler and
-stripping off the result body. See the `akka.http.server.transparent-head-requests` setting for how to enable
+Apache Pekko HTTP can handle HEAD requests transparently by dispatching a GET request to the handler and
+stripping off the result body. See the `pekko.http.server.transparent-head-requests` setting for how to enable
 this behavior.
 @@@
 

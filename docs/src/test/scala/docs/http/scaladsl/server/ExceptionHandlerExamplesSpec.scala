@@ -1,11 +1,20 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server
 
-import akka.http.scaladsl.server.ExceptionHandler
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 import scala.annotation.nowarn
 
@@ -14,11 +23,12 @@ import scala.annotation.nowarn
 object MyExplicitExceptionHandler {
 
   //#explicit-handler-example
-  import akka.actor.ActorSystem
-  import akka.http.scaladsl.Http
-  import akka.http.scaladsl.model._
+  import org.apache.pekko
+  import pekko.actor.ActorSystem
+  import pekko.http.scaladsl.Http
+  import pekko.http.scaladsl.model._
   import StatusCodes._
-  import akka.http.scaladsl.server._
+  import pekko.http.scaladsl.server._
   import Directives._
 
   val myExceptionHandler = ExceptionHandler {
@@ -48,11 +58,12 @@ object MyExplicitExceptionHandler {
 object MyImplicitExceptionHandler {
 
   //#implicit-handler-example
-  import akka.actor.ActorSystem
-  import akka.http.scaladsl.Http
-  import akka.http.scaladsl.model._
+  import org.apache.pekko
+  import pekko.actor.ActorSystem
+  import pekko.http.scaladsl.Http
+  import pekko.http.scaladsl.model._
   import StatusCodes._
-  import akka.http.scaladsl.server._
+  import pekko.http.scaladsl.server._
   import Directives._
 
   implicit def myExceptionHandler: ExceptionHandler =
@@ -81,9 +92,10 @@ object MyImplicitExceptionHandler {
 @nowarn("msg=Evaluation of a constant expression results in an arithmetic error")
 object ExceptionHandlerInSealExample {
   //#seal-handler-example
-  import akka.http.scaladsl.model.HttpResponse
-  import akka.http.scaladsl.model.StatusCodes._
-  import akka.http.scaladsl.server._
+  import org.apache.pekko
+  import pekko.http.scaladsl.model.HttpResponse
+  import pekko.http.scaladsl.model.StatusCodes._
+  import pekko.http.scaladsl.server._
   import Directives._
 
   object SealedRouteWithCustomExceptionHandler {
@@ -110,13 +122,14 @@ object ExceptionHandlerInSealExample {
 @nowarn("msg=Evaluation of a constant expression results in an arithmetic error")
 object RespondWithHeaderExceptionHandlerExample {
   //#respond-with-header-exceptionhandler-example
-  import akka.actor.ActorSystem
-  import akka.http.scaladsl.model.HttpResponse
-  import akka.http.scaladsl.model.StatusCodes._
-  import akka.http.scaladsl.model.headers.RawHeader
-  import akka.http.scaladsl.server._
+  import org.apache.pekko
+  import pekko.actor.ActorSystem
+  import pekko.http.scaladsl.model.HttpResponse
+  import pekko.http.scaladsl.model.StatusCodes._
+  import pekko.http.scaladsl.model.headers.RawHeader
+  import pekko.http.scaladsl.server._
   import Directives._
-  import akka.http.scaladsl.Http
+  import pekko.http.scaladsl.Http
   import RespondWithHeaderExceptionHandler.route
 
 
@@ -171,7 +184,7 @@ class ExceptionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "test implicit example" in {
     import MyImplicitExceptionHandler.myExceptionHandler
-    import akka.http.scaladsl.server._
+    import pekko.http.scaladsl.server._
     // tests:
     Get() ~> Route.seal(ctx => ctx.complete((1 / 0).toString)) ~> check {
       responseAs[String] shouldEqual "Bad numbers, bad result!!!"
@@ -179,7 +192,7 @@ class ExceptionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
   }
 
   "test respond with outer header only example" in {
-    import akka.http.scaladsl.model.headers.RawHeader
+    import pekko.http.scaladsl.model.headers.RawHeader
     import RespondWithHeaderExceptionHandlerExample.RespondWithHeaderExceptionHandler.route
 
     Get("/divide") ~> route ~> check {
@@ -198,7 +211,7 @@ class ExceptionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "do not include possibly-sensitive details in the error response" in {
     //#no-exception-details-in-response
-    import akka.http.scaladsl.model.IllegalHeaderException
+    import org.apache.pekko.http.scaladsl.model.IllegalHeaderException
 
     val route = get {
       throw IllegalHeaderException("Value of header Foo was illegal", "Found illegal value \"<script>alert('evil_xss_or_xsrf_reflection')</script>\"")

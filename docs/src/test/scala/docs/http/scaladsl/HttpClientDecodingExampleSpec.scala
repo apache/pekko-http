@@ -1,4 +1,13 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
@@ -8,15 +17,16 @@ import docs.CompileOnlySpec
 import org.scalatest.concurrent.ScalaFutures
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import akka.testkit.AkkaSpec
+import org.apache.pekko.testkit.PekkoSpec
 
-class HttpClientDecodingExampleSpec extends AkkaSpec with CompileOnlySpec with ScalaFutures {
+class HttpClientDecodingExampleSpec extends PekkoSpec with CompileOnlySpec with ScalaFutures {
   "single-request-decoding-example" in compileOnlySpec {
-    //#single-request-decoding-example
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.coding.Coders
-    import akka.http.scaladsl.model._, headers.HttpEncodings
+    // #single-request-decoding-example
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.coding.Coders
+    import pekko.http.scaladsl.model._, headers.HttpEncodings
 
     import scala.concurrent.Future
 
@@ -55,6 +65,6 @@ class HttpClientDecodingExampleSpec extends AkkaSpec with CompileOnlySpec with S
     }
 
     system.terminate()
-    //#single-request-decoding-example
+    // #single-request-decoding-example
   }
 }

@@ -1,21 +1,21 @@
 # Route TestKit
 
-One of Akka HTTP's design goals is good testability of the created services.
-For services built with the Routing DSL Akka HTTP provides a dedicated testkit that makes efficient testing of
-route logic easy and convenient. This "route test DSL" is made available with the *akka-http-testkit* module.
+One of Apache Pekko HTTP's design goals is good testability of the created services.
+For services built with the Routing DSL Apache Pekko HTTP provides a dedicated testkit that makes efficient testing of
+route logic easy and convenient. This "route test DSL" is made available with the *pekko-http-testkit* module.
 
 ## Dependency
 
-To use Akka HTTP TestKit, add the module to your project:
+To use Apache Pekko HTTP TestKit, add the module to your project:
 
 @@dependency [sbt,Gradle,Maven] {
-  symbol1=AkkaVersion
-  value1=$akka.version$
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
-  symbol2="AkkaHttpVersion"
+  symbol1=PekkoVersion
+  value1=$pekko.version$
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
+  symbol2="PekkoHttpVersion"
   value2="$project.version$"
-  group1="com.typesafe.akka" artifact1="akka-stream-testkit_$scala.binary.version$" version1=AkkaVersion
-  group2="com.typesafe.akka" artifact2="akka-http-testkit_$scala.binary.version$" version2="AkkaHttpVersion"
+  group1="org.apache.pekko" artifact1="pekko-stream-testkit_$scala.binary.version$" version1=PekkoVersion
+  group2="org.apache.pekko" artifact2="pekko-http-testkit_$scala.binary.version$" version2="PekkoHttpVersion"
 }
 
 ## Usage
@@ -41,7 +41,7 @@ REQUEST ~> ROUTE ~> check {
 
 In this template *REQUEST* is an expression evaluating to an @apidoc[HttpRequest] instance.
 In most cases your test will, in one way or another, extend from @apidoc[RouteTest] which itself mixes in the
-`akka.http.scaladsl.client.RequestBuilding` trait, which gives you a concise and convenient way of constructing
+`org.apache.pekko.http.scaladsl.client.RequestBuilding` trait, which gives you a concise and convenient way of constructing
 test requests. <a id="^1" href="#1">[1]</a>
 
 *ROUTE* is an expression evaluating to a @ref[Route](routes.md). You can specify one inline or simply refer to the
@@ -84,7 +84,7 @@ The following inspectors are defined:
 |`trailer: Seq[HttpHeader]`                   | Returns the list of trailer headers the route produced with its last chunk. If the response entity is unchunked returns `Nil`.                                      |
 
 > <a id="1" href="#^1">[1]</a> If the request URI is relative it will be made absolute using an implicitly available instance of
-`DefaultHostInfo` whose value is "[http://example.com](http://example.com)" by default. This mirrors the behavior of akka-http-core
+`DefaultHostInfo` whose value is "[http://example.com](http://example.com)" by default. This mirrors the behavior of pekko-http-core
 which always produces absolute URIs for incoming request based on the request URI and the `Host`-header of
 the request. You can customize this behavior by bringing a custom instance of `DefaultHostInfo` into scope.
 
@@ -94,7 +94,7 @@ the request. You can customize this behavior by bringing a custom instance of `D
 
 To use the testkit you need to take these steps:
 
- * add a dependency to the `akka-http-testkit` module
+ * add a dependency to the `pekko-http-testkit` module
  * derive the test class from `JUnitRouteTest`
  * wrap the route under test with `RouteTest.testRoute` to create a `TestRoute`
  * run requests against the route using `TestRoute.run(request)` which will return
@@ -120,7 +120,7 @@ Java
 
 The testkit supports a fluent DSL to write compact assertions on the response by chaining assertions
 using "dot-syntax". To simplify working with streamed responses the entity of the response is first "strictified", i.e.
-entity data is collected into a single @apidoc[akka.util.ByteString] and provided the entity is supplied as an `HttpEntityStrict`. This
+entity data is collected into a single @apidoc[org.apache.pekko.util.ByteString] and provided the entity is supplied as an `HttpEntityStrict`. This
 allows to write several assertions against the same entity data which wouldn't (necessarily) be possible for the
 streamed version.
 
@@ -148,7 +148,7 @@ entity data.
 ## Supporting Custom Test Frameworks
 
 Adding support for a custom test framework is achieved by creating new superclass analogous to
-`JUnitRouteTest` for writing tests with the custom test framework deriving from `akka.http.javadsl.testkit.RouteTest`
+`JUnitRouteTest` for writing tests with the custom test framework deriving from `org.apache.pekko.http.javadsl.testkit.RouteTest`
 and implementing its abstract methods. This will allow users of the test framework to use `testRoute` and
 to write assertions using the assertion methods defined on `TestResponse`.
 
@@ -206,7 +206,7 @@ Java
 The timeouts you consciously defined on your lightning fast development environment might be too tight for your, most
 probably, high-loaded Continuous Integration server, invariably causing spurious failures. To account for such
 situations, timeout durations can be scaled by a given factor on such environments. Check the
-@extref[Akka Docs](akka-docs:testing.html#accounting-for-slow-test-systems)
+@extref[Apache Pekko Docs](pekko-docs:testing.html#accounting-for-slow-test-systems)
 for further information.
 
 
@@ -225,7 +225,7 @@ Remember to configure the timeout using `dilated` if you want to account for slo
 
 ## Testing Actor integration
 
-The @scala[`ScalatestRouteTest`]@java[`JUnitRouteTest`] still provides a Classic @apidoc[akka.actor.ActorSystem],
+The @scala[`ScalatestRouteTest`]@java[`JUnitRouteTest`] still provides a Classic @apidoc[org.apache.pekko.actor.ActorSystem],
 so if you are not using the Classic API you will need to adapt it:
 
 Scala
@@ -253,5 +253,5 @@ a server and bind to a port so use it only when necessary.
 
 ## Examples
 
-A great pool of examples are the tests for all the predefined directives in Akka HTTP.
-They can be found @scala[@github[here](/akka-http-tests/src/test/scala/akka/http/scaladsl/server/directives/)]@java[@github[here](/akka-http-tests/src/test/java/akka/http/javadsl/server/directives/)].
+A great pool of examples are the tests for all the predefined directives in Apache Pekko HTTP.
+They can be found @scala[@github[here](/http-tests/src/test/scala/akka/http/scaladsl/server/directives/)]@java[@github[here](/http-tests/src/test/java/akka/http/javadsl/server/directives/)].

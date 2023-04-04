@@ -90,7 +90,7 @@ The returned layer forms a @scala[@apidoc[BidiFlow[Message, SslTlsOutbound, SslT
 <a id="half-closed-client-websockets"></a>
 ## Half-Closed WebSockets
 
-The Akka HTTP WebSocket API does not support half-closed connections which means that if either stream completes the
+The Apache Pekko HTTP WebSocket API does not support half-closed connections which means that if either stream completes the
 entire connection is closed (after a "Closing Handshake" has been exchanged or a timeout of 3 seconds has passed).
 This may lead to unexpected behavior, for example if we are trying to only consume messages coming from the server,
 like this:
@@ -139,8 +139,8 @@ Similar to the @ref[server-side kee-alive Ping support](../server-side/websocket
 it is possible to configure the client-side to perform automatic keep-alive using Ping (or Pong) frames.
 
 This is supported in a transparent way via configuration by setting the: 
-`akka.http.client.websocket.periodic-keep-alive-max-idle = 1 second` to a specified max idle timeout. The keep-alive triggers
-when no other messages are in-flight during the such configured period. Akka HTTP will then automatically send
+`pekko.http.client.websocket.periodic-keep-alive-max-idle = 1 second` to a specified max idle timeout. The keep-alive triggers
+when no other messages are in-flight during the such configured period. Apache Pekko HTTP will then automatically send
 a [`Ping` frame](https://tools.ietf.org/html/rfc6455#section-5.5.2) for each of such idle intervals.
 
 By default, the automatic keep-alive feature is disabled.
@@ -164,4 +164,4 @@ A Ping response will always be replied to by the client-side with an appropriate
 It is also possible to configure the keep-alive mechanism to send `Pong` frames instead of `Ping` frames, 
 which enables an [uni-directional heartbeat](https://tools.ietf.org/html/rfc6455#section-5.5.3) mechanism (in which case 
 the client side will *not* reply to such heartbeat). You can configure this mode by setting: 
-`akka.http.client.websocket.periodic-keep-alive-mode = pong`.
+`pekko.http.client.websocket.periodic-keep-alive-mode = pong`.

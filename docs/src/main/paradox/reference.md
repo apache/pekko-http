@@ -2,8 +2,8 @@
 
 ## API Documentation
 
- * @scaladoc:[Scaladoc](akka.http.scaladsl.index)
- * @javadoc:[Javadoc](akka.http.javadsl.package-summary)
+ * @scaladoc:[Scaladoc](org.apache.pekko.http.scaladsl.index)
+ * @javadoc:[Javadoc](org.apache.pekko.http.javadsl.package-summary)
 
 ## Directives
 
@@ -12,4 +12,4 @@
 
 ## Books
 
- * [Start Building RESTful Microservices using Akka HTTP with Scala](https://www.amazon.com/dp/1976762545/), by Ayush Kumar Mishra, Knoldus Software LLP, ISBN: 9781976762543, December 2017
+ * The best option is to get a book about [Akka HTTP](https://doc.akka.io/docs/akka-http/current/reference.html). Anything you learn should be useful when it comes to Pekko HTTP.

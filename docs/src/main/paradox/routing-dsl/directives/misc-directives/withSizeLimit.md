@@ -4,17 +4,17 @@
 
 ## Signature
 
-@@signature [MiscDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/MiscDirectives.scala) { #withSizeLimit }
+@@signature [MiscDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/MiscDirectives.scala) { #withSizeLimit }
 
 @@@
 
 ## Description
 
 Fails the stream with `EntityStreamSizeException` if its request entity size exceeds given limit. Limit given
-as parameter overrides limit configured with `akka.http.parsing.max-content-length`.
+as parameter overrides limit configured with `pekko.http.parsing.max-content-length`.
 
 The whole mechanism of entity size checking is intended to prevent certain Denial-of-Service attacks.
-So suggested setup is to have `akka.http.parsing.max-content-length` relatively low and use `withSizeLimit`
+So suggested setup is to have `pekko.http.parsing.max-content-length` relatively low and use `withSizeLimit`
 directive for endpoints which expects bigger entities.
 
 See also @ref[withoutSizeLimit](withoutSizeLimit.md) for skipping request entity size check.

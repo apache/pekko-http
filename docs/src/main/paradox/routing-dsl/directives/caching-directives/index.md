@@ -1,22 +1,22 @@
 # CachingDirectives
 
 Use these directives to "wrap" expensive operations with a caching layer that
-runs the wrapped operation only once and returns the the cached value for all
+runs the wrapped operation only once and returns the cached value for all
 future accesses for the same key (as long as the respective entry has not expired).
 See @ref[caching](../../../common/caching.md) for an introduction to how the
 caching support works.
 
 ## Dependency
 
-To use Akka HTTP Caching, add the module to your project:
+To use Apache Pekko HTTP Caching, add the module to your project:
 
 @@dependency[sbt,Gradle,Maven] {
-  bomGroup2="com.typesafe.akka" bomArtifact2="akka-http-bom_$scala.binary.version$" bomVersionSymbols2="AkkaHttpVersion"
-  symbol="AkkaHttpVersion"
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
+  symbol="PekkoHttpVersion"
   value="$project.version$"
-  group="com.typesafe.akka"
-  artifact="akka-http-caching_$scala.binary.version$"
-  version="AkkaHttpVersion"
+  group="org.apache.pekko"
+  artifact="pekko-http-caching_$scala.binary.version$"
+  version="PekkoHttpVersion"
 }
 
 ## Imports

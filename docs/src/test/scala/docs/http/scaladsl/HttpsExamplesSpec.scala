@@ -1,11 +1,21 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.{ ConnectionContext, Http }
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.{ ConnectionContext, Http }
 import docs.CompileOnlySpec
 import javax.net.ssl.{ SSLContext, SSLEngine }
 import org.scalatest.matchers.should.Matchers
@@ -15,7 +25,7 @@ class HttpsExamplesSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
 
   "disable hostname verification for connection" in compileOnlySpec {
     val unsafeHost = "example.com"
-    //#disable-hostname-verification-connection
+    // #disable-hostname-verification-connection
     implicit val system = ActorSystem()
 
     def createInsecureSslEngine(host: String, port: Int): SSLEngine = {
@@ -35,6 +45,6 @@ class HttpsExamplesSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
     }
     val badCtx = ConnectionContext.httpsClient(createInsecureSslEngine _)
     Http().outgoingConnectionHttps(unsafeHost, connectionContext = badCtx)
-    //#disable-hostname-verification-connection
+    // #disable-hostname-verification-connection
   }
 }

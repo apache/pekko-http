@@ -1,20 +1,30 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl
 
+import org.apache.pekko
 //#import-model
-import akka.http.scaladsl.model._
+import org.apache.pekko.http.scaladsl.model._
 //#import-model
 
-import akka.testkit.AkkaSpec
-import akka.util.ByteString
-import akka.http.scaladsl.model.headers.BasicHttpCredentials
+import pekko.testkit.PekkoSpec
+import pekko.util.ByteString
+import pekko.http.scaladsl.model.headers.BasicHttpCredentials
 
-class ModelSpec extends AkkaSpec {
+class ModelSpec extends PekkoSpec {
   "construct request" in {
-    //#construct-request
+    // #construct-request
     import HttpMethods._
 
     // construct a simple GET request to `homeUri`
@@ -37,14 +47,14 @@ class ModelSpec extends AkkaSpec {
     HttpRequest(
       PUT,
       uri = "/user",
-      entity = HttpEntity(`text/plain` withCharset `UTF-8`, userData),
+      entity = HttpEntity(`text/plain`.withCharset(`UTF-8`), userData),
       headers = List(authorization),
       protocol = `HTTP/1.0`)
-    //#construct-request
+    // #construct-request
   }
 
   "construct response" in {
-    //#construct-response
+    // #construct-response
     import StatusCodes._
 
     // simple OK response without data created using the integer status code
@@ -60,12 +70,12 @@ class ModelSpec extends AkkaSpec {
     val locationHeader = headers.Location("http://example.com/other")
     HttpResponse(Found, headers = List(locationHeader))
 
-    //#construct-response
+    // #construct-response
   }
 
   "deal with headers" in {
-    //#headers
-    import akka.http.scaladsl.model.headers._
+    // #headers
+    import org.apache.pekko.http.scaladsl.model.headers._
 
     // create a ``Location`` header
     val loc = Location("http://example.com/other")
@@ -81,15 +91,16 @@ class ModelSpec extends AkkaSpec {
       for {
         case Authorization(BasicHttpCredentials(user, pass)) <- req.header[Authorization]
       } yield User(user, pass)
-    //#headers
+    // #headers
 
     credentialsOfRequest(HttpRequest(headers = List(auth))) should be(Some(User("joe", "josepp")))
     credentialsOfRequest(HttpRequest()) should be(None)
-    credentialsOfRequest(HttpRequest(headers = List(Authorization(GenericHttpCredentials("Other", Map.empty[String, String]))))) should be(None)
+    credentialsOfRequest(HttpRequest(headers = List(Authorization(GenericHttpCredentials("Other",
+      Map.empty[String, String]))))) should be(None)
   }
 
   "deal with attributes" in {
-    //#attributes
+    // #attributes
     case class User(name: String)
     object User {
       val attributeKey = AttributeKey[User]("user")
@@ -97,28 +108,28 @@ class ModelSpec extends AkkaSpec {
 
     def determineUser(req: HttpRequest): HttpRequest = {
       val user = // ... somehow determine the user for this request
-        //#attributes
+        // #attributes
         User("joe")
-      //#attributes
+      // #attributes
 
       // Add the attribute
       req.addAttribute(User.attributeKey, user)
     }
-    //#attributes
+    // #attributes
 
     val requestWithAttribute = determineUser(HttpRequest())
-    //#attributes
+    // #attributes
 
     // Retrieve the attribute
     val user: Option[User] = requestWithAttribute.attribute(User.attributeKey)
-    //#attributes
+    // #attributes
     user should be(Some(User("joe")))
   }
 
   "Synthetic-header-s3" in {
-    //#synthetic-header-s3
-    import akka.http.scaladsl.model.headers.`Raw-Request-URI`
+    // #synthetic-header-s3
+    import org.apache.pekko.http.scaladsl.model.headers.`Raw-Request-URI`
     val req = HttpRequest(uri = "/ignored", headers = List(`Raw-Request-URI`("/a/b%2Bc")))
-    //#synthetic-header-s3
+    // #synthetic-header-s3
   }
 }

@@ -1,4 +1,13 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2018-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
@@ -7,25 +16,25 @@ package docs.http.javadsl;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import akka.actor.ActorSystem;
-import akka.http.javadsl.HttpsConnectionContext;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.HttpsConnectionContext;
 //#trailingHeaders
-import akka.http.javadsl.model.Trailer;
-import akka.http.javadsl.model.headers.RawHeader;
-import static akka.http.javadsl.model.AttributeKeys.trailer;
+import org.apache.pekko.http.javadsl.model.Trailer;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
+import static org.apache.pekko.http.javadsl.model.AttributeKeys.trailer;
 
 //#trailingHeaders
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.HttpResponse;
-import akka.japi.function.Function;
-import akka.stream.ActorMaterializer;
-import akka.stream.Materializer;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.japi.function.Function;
+import org.apache.pekko.stream.ActorMaterializer;
+import org.apache.pekko.stream.Materializer;
 
 //#bindAndHandleSecure
 //#bindAndHandlePlain
 //#http2Client
 //#http2ClientWithPriorKnowledge
-import akka.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.Http;
 
 //#http2ClientWithPriorKnowledge
 //#http2Client

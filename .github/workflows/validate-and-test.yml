@@ -15,17 +15,19 @@ jobs:
   formatting-check:
     name: Checks
     runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-pekko-http'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
       - name: Set up Scala on JDK 8
-        uses: olafurpg/setup-scala@v13
+        uses: actions/setup-java@v3
         with:
-          java-version: adopt@1.8
+          distribution: temurin
+          java-version: 8
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6.2
+        uses: coursier/cache-action@v6
 
       - name: Cache Build Target
         uses: actions/cache@v2
@@ -33,41 +35,40 @@ jobs:
           path: project/**/target
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
 
-      - name: Autoformat
-        run: sbt +headerCreateAll +scalariformFormat +test:scalariformFormat
-
       - name: Check for missing formatting
         run: git diff --exit-code --color
 
-      - name: FOSSA policy check
-        if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'akka/akka-http' }}
-        run: |-
-          curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/spectrometer/master/install.sh | bash
-          fossa analyze && fossa test
-        env:
-          FOSSA_API_KEY: "${{secrets.FOSSA_API_KEY}}"
+      #- name: FOSSA policy check
+      #  if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'apache/incubator-pekko-http' }}
+      #  run: |-
+      #    curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/spectrometer/master/install.sh | bash
+      #    fossa analyze && fossa test
+      #  env:
+      #    FOSSA_API_KEY: "${{secrets.FOSSA_API_KEY}}"
 
   compile-and-test:
     name: Compile and test
     runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-pekko-http'
     strategy:
       fail-fast: false
       matrix:
         SCALA_VERSION: [2.12, 2.13, 3.2]
-        JABBA_JDK: [1.8]
+        JDK: [8, 11]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Set up JDK ${{ matrix.JABBA_JDK }}
-        uses: olafurpg/setup-scala@v10
+      - name: Set up JDK ${{ matrix.JDK }}
+        uses: actions/setup-java@v3
         with:
-          java-version: adopt@${{ matrix.JABBA_JDK }}
+          distribution: temurin
+          java-version: ${{ matrix.JDK }}
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6.2
+        uses: coursier/cache-action@v6
 
       - name: Cache Build Target
         uses: actions/cache@v2
@@ -75,23 +76,26 @@ jobs:
           path: project/**/target
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
 
+      - name: Enable jvm-opts
+        run: cp .jvmopts-ci .jvmopts
+
       - name: Compile everything
-        run: sbt "+~ ${{ matrix.SCALA_VERSION }} Test/compile"
+        run: sbt ++${{ matrix.SCALA_VERSION }} Test/compile
 
       # Quick testing for PR validation
-      - name: Validate pull request for JDK ${{ matrix.JABBA_JDK }}, Scala ${{ matrix.SCALA_VERSION }}
+      - name: Validate pull request for JDK ${{ matrix.JDK }}, Scala ${{ matrix.SCALA_VERSION }}
         if: ${{ github.event_name == 'pull_request' }}
         # FIXME: revert back to `validatePullRequest` task, when all modules support Scala 3
-        run: sbt -Dakka.http.parallelExecution=false -Dakka.test.timefactor=2 "+~ ${{ matrix.SCALA_VERSION }} executePullRequestValidation"
+        run: sbt -Dpekko.http.parallelExecution=false -Dakka.test.timefactor=2 ++${{ matrix.SCALA_VERSION }} executePullRequestValidation
 
       # Full testing for pushes
-      - name: Run all tests JDK ${{ matrix.JABBA_JDK }}, Scala ${{ matrix.SCALA_VERSION }}
+      - name: Run all tests JDK ${{ matrix.JDK }}, Scala ${{ matrix.SCALA_VERSION }}
         if: ${{ github.event_name == 'push' }}
-        run: sbt -Dakka.http.parallelExecution=false -Dakka.test.timefactor=2 "+~ ${{ matrix.SCALA_VERSION }} mimaReportBinaryIssues test"
+        run: sbt -Dpekko.http.parallelExecution=false -Dakka.test.timefactor=2 ++${{ matrix.SCALA_VERSION }} mimaReportBinaryIssues test
 
       - name: Upload test results
         uses: actions/upload-artifact@v2  # upload test results
         if: success() || failure()        # run this step even if previous step failed
         with:
-          name: test-results-${{ matrix.JABBA_JDK }}-${{ matrix.SCALA_VERSION }}
+          name: test-results-${{ matrix.JDK }}-${{ matrix.SCALA_VERSION }}
           path: '**/target/test-reports/*.xml'

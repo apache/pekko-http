@@ -1,4 +1,13 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
@@ -9,12 +18,13 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
-import akka.http.scaladsl.server.{ CircuitBreakerOpenRejection, ExceptionHandler, Route }
-import akka.util.Timeout
-import akka.http.scaladsl.model._
+import org.apache.pekko
+import pekko.http.scaladsl.server.{ CircuitBreakerOpenRejection, ExceptionHandler, Route }
+import pekko.util.Timeout
+import pekko.http.scaladsl.model._
 import StatusCodes._
-import akka.http.scaladsl.server.RoutingSpec
-import akka.pattern.CircuitBreaker
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.pattern.CircuitBreaker
 import docs.CompileOnlySpec
 
 class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
@@ -28,7 +38,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   implicit val responseTimeout: Timeout = Timeout(2, TimeUnit.SECONDS)
 
   "onComplete" in {
-    //#onComplete
+    // #onComplete
     def divide(a: Int, b: Int): Future[Int] = Future {
       a / b
     }
@@ -50,7 +60,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual InternalServerError
       responseAs[String] shouldEqual "An error occurred: / by zero"
     }
-    //#onComplete
+    // #onComplete
   }
 
   "onCompleteWithBreaker" in {
@@ -58,7 +68,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // between triggering and reporting errors for ongoing calls. This test fails a lot so disabling for now.
     pending
 
-    //#onCompleteWithBreaker
+    // #onCompleteWithBreaker
     def divide(a: Int, b: Int): Future[Int] = Future {
       a / b
     }
@@ -68,8 +78,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       system.scheduler,
       maxFailures = 1,
       callTimeout = 5.seconds,
-      resetTimeout
-    )
+      resetTimeout)
 
     val route =
       path("divide" / IntNumber / IntNumber) { (a, b) =>
@@ -95,7 +104,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Thread.sleep(resetTimeout.toMillis + 200)
 
-    //#onCompleteWithBreaker
+    // #onCompleteWithBreaker
     // retry to make test more stable, since breaker reset is timer based, hidden from docs
     // format: OFF
     awaitAssert({
@@ -109,7 +118,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   }
 
   "onSuccess" in {
-    //#onSuccess
+    // #onSuccess
     val route =
       concat(
         path("success") {
@@ -121,8 +130,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           onSuccess(Future.failed[String](TestException)) { extraction =>
             complete(extraction)
           }
-        }
-      )
+        })
 
     // tests:
     Get("/success") ~> route ~> check {
@@ -133,11 +141,11 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual InternalServerError
       responseAs[String] shouldEqual "Unsuccessful future!"
     }
-    //#onSuccess
+    // #onSuccess
   }
 
   "completeOrRecoverWith" in {
-    //#completeOrRecoverWith
+    // #completeOrRecoverWith
     val route =
       concat(
         path("success") {
@@ -149,8 +157,7 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           completeOrRecoverWith(Future.failed[String](TestException)) { extraction =>
             failWith(extraction)
           }
-        }
-      )
+        })
 
     // tests:
     Get("/success") ~> route ~> check {
@@ -161,6 +168,6 @@ class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual InternalServerError
       responseAs[String] shouldEqual "Unsuccessful future!"
     }
-    //#completeOrRecoverWith
+    // #completeOrRecoverWith
   }
 }

@@ -1,43 +1,52 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2016-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server.directives;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import akka.japi.JavaPartialFunction;
-import akka.http.javadsl.model.Uri;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.HttpMethods;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.headers.*;
-import akka.http.javadsl.model.headers.CacheDirectives.*;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.server.RequestContext;
+import org.apache.pekko.japi.JavaPartialFunction;
+import org.apache.pekko.http.javadsl.model.Uri;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpMethods;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.*;
+import org.apache.pekko.http.javadsl.model.headers.CacheDirectives.*;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.RequestContext;
 //#caching-directives-import
-import static akka.http.javadsl.server.directives.CachingDirectives.*;
+import static org.apache.pekko.http.javadsl.server.directives.CachingDirectives.*;
 //#caching-directives-import
 import scala.concurrent.duration.Duration;
 //#time-unit-import
 import java.util.concurrent.TimeUnit;
 //#time-unit-import
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
-import akka.http.javadsl.server.RouteResult;
+import org.apache.pekko.http.javadsl.server.RouteResult;
 //#create-cache-imports
-import akka.http.caching.javadsl.Cache;
-import akka.http.caching.javadsl.CachingSettings;
-import akka.http.caching.javadsl.LfuCacheSettings;
-import akka.http.caching.LfuCache;
+import org.apache.pekko.http.caching.javadsl.Cache;
+import org.apache.pekko.http.caching.javadsl.CachingSettings;
+import org.apache.pekko.http.caching.javadsl.LfuCacheSettings;
+import org.apache.pekko.http.caching.LfuCache;
 //#create-cache-imports
 
 //#cache
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.extractUri;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.PathMatchers.segment;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractUri;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
 //#cache
 
 public class CachingDirectivesExamplesTest extends JUnitRouteTest {

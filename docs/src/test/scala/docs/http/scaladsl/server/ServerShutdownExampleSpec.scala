@@ -1,13 +1,23 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server
 
-import akka.actor.CoordinatedShutdown
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
-import akka.http.scaladsl.Http
+import org.apache.pekko
+import pekko.actor.CoordinatedShutdown
+import pekko.actor.typed.ActorSystem
+import pekko.actor.typed.scaladsl.Behaviors
+import pekko.http.scaladsl.Http
 import docs.CompileOnlySpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -16,10 +26,10 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 class ServerShutdownExampleSpec extends AnyWordSpec with Matchers
-  with CompileOnlySpec {
+    with CompileOnlySpec {
 
   "mount coordinated shutdown" in compileOnlySpec {
-    import akka.http.scaladsl.server.Route
+    import org.apache.pekko.http.scaladsl.server.Route
 
     implicit val system = ActorSystem(Behaviors.empty, "http-server")
     implicit val ec: ExecutionContext = system.executionContext

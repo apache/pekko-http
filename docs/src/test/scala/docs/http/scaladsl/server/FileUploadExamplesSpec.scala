@@ -1,4 +1,13 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
@@ -6,14 +15,15 @@ package docs.http.scaladsl.server
 
 import java.io.File
 
-import akka.Done
-import akka.actor.ActorRef
-import akka.http.scaladsl.model.Multipart.FormData.BodyPart
-import akka.stream.scaladsl.Framing
-import akka.stream.scaladsl._
-import akka.http.scaladsl.model.Multipart
-import akka.http.scaladsl.server.RoutingSpec
-import akka.util.ByteString
+import org.apache.pekko
+import pekko.Done
+import pekko.actor.ActorRef
+import pekko.http.scaladsl.model.Multipart.FormData.BodyPart
+import pekko.stream.scaladsl.Framing
+import pekko.stream.scaladsl._
+import pekko.http.scaladsl.model.Multipart
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.util.ByteString
 import docs.CompileOnlySpec
 
 import scala.concurrent.duration._
@@ -27,11 +37,10 @@ class FileUploadExamplesSpec extends RoutingSpec with CompileOnlySpec {
   }
 
   "simple-upload" in {
-    //#simple-upload
+    // #simple-upload
     val uploadVideo =
       path("video") {
         entity(as[Multipart.FormData]) { formData =>
-
           // collect all parts of the multipart as it arrives into a map
           val allPartsF: Future[Map[String, Any]] = formData.parts.mapAsync[(String, Any)](1) {
 
@@ -40,12 +49,12 @@ class FileUploadExamplesSpec extends RoutingSpec with CompileOnlySpec {
               // file to where it got stored
               val file = File.createTempFile("upload", "tmp")
               b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ =>
-                (b.name -> file))
+                b.name -> file)
 
             case b: BodyPart =>
               // collect form field values
               b.toStrict(2.seconds).map(strict =>
-                (b.name -> strict.entity.data.utf8String))
+                b.name -> strict.entity.data.utf8String)
 
           }.runFold(Map.empty[String, Any])((map, tuple) => map + tuple)
 
@@ -65,7 +74,7 @@ class FileUploadExamplesSpec extends RoutingSpec with CompileOnlySpec {
           }
         }
       }
-    //#simple-upload
+    // #simple-upload
   }
 
   object MetadataActor {
@@ -74,7 +83,7 @@ class FileUploadExamplesSpec extends RoutingSpec with CompileOnlySpec {
   val metadataActor: ActorRef = system.deadLetters
 
   "stream-csv-upload" in {
-    //#stream-csv-upload
+    // #stream-csv-upload
     val splitLines = Framing.delimiter(ByteString("\n"), 256)
 
     val csvUploads =
@@ -98,7 +107,7 @@ class FileUploadExamplesSpec extends RoutingSpec with CompileOnlySpec {
           }
         }
       }
-    //#stream-csv-upload
+    // #stream-csv-upload
   }
 
 }

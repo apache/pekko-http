@@ -1,4 +1,13 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
@@ -9,9 +18,10 @@ import java.io.InputStream
 import java.security.{ KeyStore, SecureRandom }
 
 import javax.net.ssl.{ KeyManagerFactory, SSLContext, TrustManagerFactory }
-import akka.actor.ActorSystem
-import akka.http.scaladsl.server.{ Directives, Route }
-import akka.http.scaladsl.{ ConnectionContext, Http, HttpsConnectionContext }
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.server.{ Directives, Route }
+import pekko.http.scaladsl.{ ConnectionContext, Http, HttpsConnectionContext }
 //#imports
 
 import docs.CompileOnlySpec
@@ -19,10 +29,10 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 abstract class HttpsServerExampleSpec extends AnyWordSpec with Matchers
-  with Directives with CompileOnlySpec {
+    with Directives with CompileOnlySpec {
 
   "low level api" in compileOnlySpec {
-    //#low-level-default
+    // #low-level-default
     implicit val system = ActorSystem()
     implicit val dispatcher = system.dispatcher
 
@@ -45,25 +55,25 @@ abstract class HttpsServerExampleSpec extends AnyWordSpec with Matchers
     val sslContext: SSLContext = SSLContext.getInstance("TLS")
     sslContext.init(keyManagerFactory.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
     val https: HttpsConnectionContext = ConnectionContext.httpsServer(sslContext)
-    //#low-level-default
+    // #low-level-default
 
-    //#both-https-and-http
+    // #both-https-and-http
     // you can run both HTTP and HTTPS in the same application as follows:
     val commonRoutes: Route = get { complete("Hello world!") }
     Http().newServerAt("127.0.0.1", 443).enableHttps(https).bind(commonRoutes)
     Http().newServerAt("127.0.0.1", 80).bind(commonRoutes)
-    //#both-https-and-http
+    // #both-https-and-http
 
-    //#bind-low-level-context
+    // #bind-low-level-context
     val routes: Route = get { complete("Hello world!") }
     Http().newServerAt("127.0.0.1", 8080).enableHttps(https).bind(routes)
-    //#bind-low-level-context
+    // #bind-low-level-context
 
     system.terminate()
   }
 
   "require-client-auth" in {
-    //#require-client-auth
+    // #require-client-auth
     val sslContext: SSLContext = ???
     ConnectionContext.httpsServer(() => {
       val engine = sslContext.createSSLEngine()
@@ -74,6 +84,6 @@ abstract class HttpsServerExampleSpec extends AnyWordSpec with Matchers
 
       engine
     })
-    //#require-client-auth
+    // #require-client-auth
   }
 }

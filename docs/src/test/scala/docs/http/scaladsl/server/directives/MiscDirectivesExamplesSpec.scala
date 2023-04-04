@@ -1,12 +1,22 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server._
-import akka.util.ByteString
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server._
+import pekko.util.ByteString
 import headers._
 
 import java.net.InetAddress
@@ -15,7 +25,7 @@ import docs.CompileOnlySpec
 class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "extractClientIP-example" in {
-    //#extractClientIP-example
+    // #extractClientIP-example
     val route = extractClientIP { ip =>
       complete("Client's ip is " + ip.toOption.map(_.getHostAddress).getOrElse("unknown"))
     }
@@ -24,11 +34,11 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/").withHeaders(`X-Forwarded-For`(RemoteAddress(InetAddress.getByName("192.168.3.12")))) ~> route ~> check {
       responseAs[String] shouldEqual "Client's ip is 192.168.3.12"
     }
-    //#extractClientIP-example
+    // #extractClientIP-example
   }
 
   "rejectEmptyResponse-example" in {
-    //#rejectEmptyResponse-example
+    // #rejectEmptyResponse-example
     val route = rejectEmptyResponse {
       path("even" / IntNumber) { i =>
         complete {
@@ -47,11 +57,11 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/even/28") ~> route ~> check {
       responseAs[String] shouldEqual "Number 28 is even."
     }
-    //#rejectEmptyResponse-example
+    // #rejectEmptyResponse-example
   }
 
   "requestEntityEmptyPresent-example" in {
-    //#requestEntityEmptyPresent-example
+    // #requestEntityEmptyPresent-example
     val route =
       concat(
         requestEntityEmpty {
@@ -59,8 +69,7 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
         },
         requestEntityPresent {
           complete("request entity present")
-        }
-      )
+        })
 
     // tests:
     Post("/", "text") ~> Route.seal(route) ~> check {
@@ -69,16 +78,16 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Post("/") ~> route ~> check {
       responseAs[String] shouldEqual "request entity empty"
     }
-    //#requestEntityEmptyPresent-example
+    // #requestEntityEmptyPresent-example
   }
 
   "selectPreferredLanguage-example" in {
-    //#selectPreferredLanguage-example
+    // #selectPreferredLanguage-example
     val request = Get() ~> `Accept-Language`(
       Language("en-US"),
-      Language("en") withQValue 0.7f,
-      LanguageRange.`*` withQValue 0.1f,
-      Language("de") withQValue 0.5f)
+      Language("en").withQValue(0.7f),
+      LanguageRange.`*`.withQValue(0.1f),
+      Language("de").withQValue(0.5f))
 
     request ~> {
       selectPreferredLanguage("en", "en-US") { lang =>
@@ -91,11 +100,11 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
         complete(lang.toString)
       }
     } ~> check { responseAs[String] shouldEqual "de-DE" }
-    //#selectPreferredLanguage-example
+    // #selectPreferredLanguage-example
   }
 
   "validate-example" in {
-    //#validate-example
+    // #validate-example
     val route =
       extractUri { uri =>
         validate(uri.path.toString.size < 5, s"Path too long: '${uri.path.toString}'") {
@@ -110,11 +119,11 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/abcdefghijkl") ~> route ~> check {
       rejection shouldEqual ValidationRejection("Path too long: '/abcdefghijkl'", None)
     }
-    //#validate-example
+    // #validate-example
   }
 
   "withSizeLimit-example" in {
-    //#withSizeLimit-example
+    // #withSizeLimit-example
     val route = withSizeLimit(500) {
       entity(as[String]) { _ =>
         complete(HttpResponse())
@@ -133,11 +142,11 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.PayloadTooLarge
     }
 
-    //#withSizeLimit-example
+    // #withSizeLimit-example
   }
 
   "withSizeLimit-execution-moment-example" in {
-    //#withSizeLimit-execution-moment-example
+    // #withSizeLimit-execution-moment-example
     val route = withSizeLimit(500) {
       complete(HttpResponse())
     }
@@ -153,11 +162,11 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Post("/abc", entityOfSize(501)) ~> route ~> check {
       status shouldEqual StatusCodes.OK
     }
-    //#withSizeLimit-execution-moment-example
+    // #withSizeLimit-execution-moment-example
   }
 
   "withSizeLimit-nested-example" in {
-    //#withSizeLimit-nested-example
+    // #withSizeLimit-nested-example
     val route =
       withSizeLimit(500) {
         withSizeLimit(800) {
@@ -177,11 +186,11 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Post("/abc", entityOfSize(801)) ~> Route.seal(route) ~> check {
       status shouldEqual StatusCodes.PayloadTooLarge
     }
-    //#withSizeLimit-nested-example
+    // #withSizeLimit-nested-example
   }
 
   "withoutSizeLimit-example" in {
-    //#withoutSizeLimit-example
+    // #withoutSizeLimit-example
     val route =
       withoutSizeLimit {
         entity(as[String]) { _ =>
@@ -193,11 +202,11 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     def entityOfSize(size: Int) =
       HttpEntity(ContentTypes.`text/plain(UTF-8)`, List.fill(size)('0').mkString)
 
-    // will work even if you have configured akka.http.parsing.max-content-length = 500
+    // will work even if you have configured pekko.http.parsing.max-content-length = 500
     Post("/abc", entityOfSize(501)) ~> route ~> check {
       status shouldEqual StatusCodes.OK
     }
-    //#withoutSizeLimit-example
+    // #withoutSizeLimit-example
   }
 
 }

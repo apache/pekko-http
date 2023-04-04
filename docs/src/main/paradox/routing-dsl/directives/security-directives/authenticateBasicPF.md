@@ -3,15 +3,15 @@
 @@@ div { .group-scala }
 ## Signature
 
-@@signature [SecurityDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/SecurityDirectives.scala) { #AuthenticatorPF }
+@@signature [SecurityDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/SecurityDirectives.scala) { #AuthenticatorPF }
 
-@@signature [SecurityDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/SecurityDirectives.scala) { #authenticateBasicPF }
+@@signature [SecurityDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/SecurityDirectives.scala) { #authenticateBasicPF }
 
 @@@
 
 ## Description
 
-Wraps the inner route with Http Basic authentication support using a given @scala[@scaladoc[AuthenticatorPF[T]](akka.http.scaladsl.server.Directives#AuthenticatorPF[T]=PartialFunction[akka.http.scaladsl.server.directives.Credentials,T])]@java[`AuthenticatorPF<T>` - Partial function from `Optional<ProvidedCredentials>` to `String`].
+Wraps the inner route with Http Basic authentication support using a given @scala[@scaladoc[AuthenticatorPF[T]](org.apache.pekko.http.scaladsl.server.Directives#AuthenticatorPF[T]=PartialFunction[org.apache.pekko.http.scaladsl.server.directives.Credentials,T])]@java[`AuthenticatorPF<T>` - Partial function from `Optional<ProvidedCredentials>` to `String`].
 
 Provides support for handling [HTTP Basic Authentication](https://en.wikipedia.org/wiki/Basic_auth).
 

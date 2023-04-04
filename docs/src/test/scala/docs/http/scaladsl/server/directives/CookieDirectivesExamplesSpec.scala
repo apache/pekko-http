@@ -1,17 +1,27 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.server._
-import akka.http.scaladsl.model.headers.{ Cookie, HttpCookie, `Set-Cookie` }
-import akka.http.scaladsl.model.DateTime
+import org.apache.pekko
+import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.model.headers.{ `Set-Cookie`, Cookie, HttpCookie }
+import pekko.http.scaladsl.model.DateTime
 import docs.CompileOnlySpec
 
 class CookieDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "cookie" in {
-    //#cookie
+    // #cookie
     val route =
       cookie("userName") { nameCookie =>
         complete(s"The logged in user is '${nameCookie.value}'")
@@ -28,10 +38,10 @@ class CookieDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/") ~> Route.seal(route) ~> check {
       responseAs[String] shouldEqual "Request is missing required cookie 'userName'"
     }
-    //#cookie
+    // #cookie
   }
   "optionalCookie" in {
-    //#optionalCookie
+    // #optionalCookie
     val route =
       optionalCookie("userName") {
         case Some(nameCookie) => complete(s"The logged in user is '${nameCookie.value}'")
@@ -45,10 +55,10 @@ class CookieDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/") ~> route ~> check {
       responseAs[String] shouldEqual "No user logged in"
     }
-    //#optionalCookie
+    // #optionalCookie
   }
   "deleteCookie" in {
-    //#deleteCookie
+    // #deleteCookie
     val route =
       deleteCookie("userName") {
         complete("The user was logged out")
@@ -57,12 +67,13 @@ class CookieDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // tests:
     Get("/") ~> route ~> check {
       responseAs[String] shouldEqual "The user was logged out"
-      header[`Set-Cookie`] shouldEqual Some(`Set-Cookie`(HttpCookie("userName", value = "deleted", expires = Some(DateTime.MinValue))))
+      header[`Set-Cookie`] shouldEqual Some(`Set-Cookie`(HttpCookie("userName", value = "deleted",
+        expires = Some(DateTime.MinValue))))
     }
-    //#deleteCookie
+    // #deleteCookie
   }
   "setCookie" in {
-    //#setCookie
+    // #setCookie
     val route =
       setCookie(HttpCookie("userName", value = "paul")) {
         complete("The user was logged in")
@@ -73,6 +84,6 @@ class CookieDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       responseAs[String] shouldEqual "The user was logged in"
       header[`Set-Cookie`] shouldEqual Some(`Set-Cookie`(HttpCookie("userName", value = "paul")))
     }
-    //#setCookie
+    // #setCookie
   }
 }

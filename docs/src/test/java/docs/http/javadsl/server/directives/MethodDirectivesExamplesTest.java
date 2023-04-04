@@ -1,4 +1,13 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2015-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
@@ -6,58 +15,58 @@ package docs.http.javadsl.server.directives;
 
 import org.junit.Test;
 
-import akka.http.javadsl.model.HttpMethods;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.model.HttpMethods;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 
 //#delete
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.delete;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.delete;
 
 //#delete
 //#head
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.head;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.head;
 
 //#head
 //#options
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.options;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.options;
 
 //#options
 //#patch
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.patch;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.patch;
 
 //#patch
 //#post
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.post;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.post;
 
 //#post
 //#put
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.put;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.put;
 
 //#put
 //#method-example
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.method;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.method;
 
 //#method-example
 //#extractMethod
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.get;
-import static akka.http.javadsl.server.Directives.extractMethod;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.extractMethod;
 
 //#extractMethod
 //#overrideMethodWithParameter
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.get;
-import static akka.http.javadsl.server.Directives.post;
-import static akka.http.javadsl.server.Directives.overrideMethodWithParameter;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.post;
+import static org.apache.pekko.http.javadsl.server.Directives.overrideMethodWithParameter;
 
 //#overrideMethodWithParameter
 

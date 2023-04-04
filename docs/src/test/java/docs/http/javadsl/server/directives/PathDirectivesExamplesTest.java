@@ -1,4 +1,13 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2015-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
@@ -7,28 +16,28 @@ package docs.http.javadsl.server.directives;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-import akka.http.javadsl.server.PathMatchers;
+import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.junit.Test;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 //#path-matcher
-import akka.http.javadsl.server.PathMatcher1;
-import static akka.http.javadsl.server.PathMatchers.segment;
+import org.apache.pekko.http.javadsl.server.PathMatcher1;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
 //#path-matcher
-import static akka.http.javadsl.server.PathMatchers.segments;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segments;
 //#path-matcher
-import static akka.http.javadsl.server.PathMatchers.integerSegment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
 //#path-matcher
-import static akka.http.javadsl.server.PathMatchers.neutral;
-import static akka.http.javadsl.server.PathMatchers.slash;
-import akka.http.javadsl.server.directives.RouteAdapter;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.neutral;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.slash;
+import org.apache.pekko.http.javadsl.server.directives.RouteAdapter;
 import static java.util.regex.Pattern.compile;
-import static akka.http.javadsl.server.PathMatchers.segment;
-import static akka.http.javadsl.server.PathMatchers.integerSegment;
-import static akka.http.javadsl.server.PathMatchers.separateOnSlashes;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.separateOnSlashes;
 
 //#path-matcher
 
@@ -37,73 +46,73 @@ import static akka.http.javadsl.server.PathMatchers.separateOnSlashes;
 //#path-prefix-test, path-suffix, raw-path-prefix, raw-path-prefix-test
 import java.util.function.Supplier;
 
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.extractUnmatchedPath;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractUnmatchedPath;
 
 //#path-prefix-test, path-suffix, raw-path-prefix, raw-path-prefix-test
 
 //#path-dsl
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#path-dsl
 //#pathPrefix
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.pathPrefix;
-import static akka.http.javadsl.server.Directives.pathEnd;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.pathEnd;
 //#pathPrefix
 
 //#path-end-or-single-slash
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.pathEndOrSingleSlash;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.pathEndOrSingleSlash;
 //#path-end-or-single-slash
 //#path-prefix
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.pathEnd;
-import static akka.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.pathEnd;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 //#path-prefix
 //#path-prefix-test
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.pathEnd;
-import static akka.http.javadsl.server.Directives.pathPrefix;
-import static akka.http.javadsl.server.Directives.pathPrefixTest;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.pathEnd;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefixTest;
 //#path-prefix-test
 //#path-single-slash
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.pathPrefix;
-import static akka.http.javadsl.server.Directives.pathSingleSlash;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.pathSingleSlash;
 //#path-single-slash
 //#path-suffix
-import static akka.http.javadsl.server.Directives.pathPrefix;
-import static akka.http.javadsl.server.Directives.pathSuffix;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.pathSuffix;
 //#path-suffix
 //#path-suffix-test
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.pathSuffixTest;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.pathSuffixTest;
 //#path-suffix-test
 //#raw-path-prefix
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.rawPathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.rawPathPrefix;
 //#raw-path-prefix
 //#raw-path-prefix-test
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.rawPathPrefixTest;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.rawPathPrefixTest;
 //#raw-path-prefix-test
 //#redirect-notrailing-slash-missing
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.redirectToTrailingSlashIfMissing;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.redirectToTrailingSlashIfMissing;
 //#redirect-notrailing-slash-missing
 //#redirect-notrailing-slash-present
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.redirectToNoTrailingSlashIfPresent;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.redirectToNoTrailingSlashIfPresent;
 //#redirect-notrailing-slash-present
 //#ignoreTrailingSlash
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.path;
-import static akka.http.javadsl.server.Directives.ignoreTrailingSlash;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.ignoreTrailingSlash;
 //#ignoreTrailingSlash
 
 public class PathDirectivesExamplesTest extends JUnitRouteTest {

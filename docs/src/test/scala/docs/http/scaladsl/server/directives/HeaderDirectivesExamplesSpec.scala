@@ -1,20 +1,30 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.server.{ InvalidOriginRejection, MissingHeaderRejection, Route }
+import org.apache.pekko
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.server.{ InvalidOriginRejection, MissingHeaderRejection, Route }
 import docs.CompileOnlySpec
 import org.scalatest.Inside
 
 class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with Inside {
   "headerValueByName-0" in {
-    //#headerValueByName-0
+    // #headerValueByName-0
     val route =
       headerValueByName("X-User-Id") { userId =>
         complete(s"The user is $userId")
@@ -29,10 +39,10 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
       status shouldEqual BadRequest
       responseAs[String] shouldEqual "Request is missing required HTTP header 'X-User-Id'"
     }
-    //#headerValueByName-0
+    // #headerValueByName-0
   }
   "headerValue-0" in {
-    //#headerValue-0
+    // #headerValue-0
     def extractHostPort: HttpHeader => Option[Int] = {
       case h: `Host` => Some(h.port)
       case x         => None
@@ -51,10 +61,10 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
       status shouldEqual NotFound
       responseAs[String] shouldEqual "The requested resource could not be found."
     }
-    //#headerValue-0
+    // #headerValue-0
   }
   "headerValue-or-default-0" in {
-    //#headerValue-or-default-0
+    // #headerValue-or-default-0
     val exampleHeaderValue = "exampleHeaderValue".toLowerCase
     def extractExampleHeader: HttpHeader => Option[String] = {
       case HttpHeader(`exampleHeaderValue`, value) => Some(value)
@@ -74,10 +84,10 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
     Get("/") ~> route ~> check {
       responseAs[String] shouldEqual "headerValue newValue"
     }
-    //#headerValue-or-default-0
+    // #headerValue-or-default-0
   }
   "optionalHeaderValue-0" in {
-    //#optionalHeaderValue-0
+    // #optionalHeaderValue-0
     def extractHostPort: HttpHeader => Option[Int] = {
       case h: `Host` => Some(h.port)
       case x         => None
@@ -88,14 +98,14 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
         case Some(port) => complete(s"The port was $port")
         case None       => complete(s"The port was not provided explicitly")
       } ~ // can also be written as:
-        optionalHeaderValue(extractHostPort) { port =>
-          complete {
-            port match {
-              case Some(p) => s"The port was $p"
-              case _       => "The port was not provided explicitly"
-            }
+      optionalHeaderValue(extractHostPort) { port =>
+        complete {
+          port match {
+            case Some(p) => s"The port was $p"
+            case _       => "The port was not provided explicitly"
           }
         }
+      }
 
     // tests:
     Get("/") ~> Host("example.com", 5043) ~> route ~> check {
@@ -104,23 +114,23 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
     Get("/") ~> Route.seal(route) ~> check {
       responseAs[String] shouldEqual "The port was not provided explicitly"
     }
-    //#optionalHeaderValue-0
+    // #optionalHeaderValue-0
   }
   "optionalHeaderValueByName-0" in {
-    //#optionalHeaderValueByName-0
+    // #optionalHeaderValueByName-0
     val route =
       optionalHeaderValueByName("X-User-Id") {
         case Some(userId) => complete(s"The user is $userId")
         case None         => complete(s"No user was provided")
       } ~ // can also be written as:
-        optionalHeaderValueByName("X-User-Id") { userId =>
-          complete {
-            userId match {
-              case Some(u) => s"The user is $u"
-              case _       => "No user was provided"
-            }
+      optionalHeaderValueByName("X-User-Id") { userId =>
+        complete {
+          userId match {
+            case Some(u) => s"The user is $u"
+            case _       => "No user was provided"
           }
         }
+      }
 
     // tests:
     Get("/") ~> RawHeader("X-User-Id", "Joe42") ~> route ~> check {
@@ -129,10 +139,10 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
     Get("/") ~> Route.seal(route) ~> check {
       responseAs[String] shouldEqual "No user was provided"
     }
-    //#optionalHeaderValueByName-0
+    // #optionalHeaderValueByName-0
   }
   "headerValuePF-0" in {
-    //#headerValuePF-0
+    // #headerValuePF-0
     def extractHostPort: PartialFunction[HttpHeader, Int] = {
       case h: `Host` => h.port
     }
@@ -150,10 +160,10 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
       status shouldEqual NotFound
       responseAs[String] shouldEqual "The requested resource could not be found."
     }
-    //#headerValuePF-0
+    // #headerValuePF-0
   }
   "optionalHeaderValuePF-0" in {
-    //#optionalHeaderValuePF-0
+    // #optionalHeaderValuePF-0
     def extractHostPort: PartialFunction[HttpHeader, Int] = {
       case h: `Host` => h.port
     }
@@ -163,14 +173,14 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
         case Some(port) => complete(s"The port was $port")
         case None       => complete(s"The port was not provided explicitly")
       } ~ // can also be written as:
-        optionalHeaderValuePF(extractHostPort) { port =>
-          complete {
-            port match {
-              case Some(p) => s"The port was $p"
-              case _       => "The port was not provided explicitly"
-            }
+      optionalHeaderValuePF(extractHostPort) { port =>
+        complete {
+          port match {
+            case Some(p) => s"The port was $p"
+            case _       => "The port was not provided explicitly"
           }
         }
+      }
 
     // tests:
     Get("/") ~> Host("example.com", 5043) ~> route ~> check {
@@ -179,10 +189,10 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
     Get("/") ~> Route.seal(route) ~> check {
       responseAs[String] shouldEqual "The port was not provided explicitly"
     }
-    //#optionalHeaderValuePF-0
+    // #optionalHeaderValuePF-0
   }
   "headerValueByType-0" in {
-    //#headerValueByType-0
+    // #headerValueByType-0
     val route =
       headerValueByType(Origin) { origin =>
         complete(s"The first origin was ${origin.origins.head}")
@@ -200,10 +210,10 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
     Get("abc") ~> route ~> check {
       inside(rejection) { case MissingHeaderRejection("Origin") => }
     }
-    //#headerValueByType-0
+    // #headerValueByType-0
   }
   "optionalHeaderValueByType-0" in {
-    //#optionalHeaderValueByType-0
+    // #optionalHeaderValueByType-0
     val route =
       optionalHeaderValueByType(Origin) {
         case Some(origin) => complete(s"The first origin was ${origin.origins.head}")
@@ -222,10 +232,10 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
     Get("abc") ~> route ~> check {
       responseAs[String] shouldEqual "No Origin header found."
     }
-    //#optionalHeaderValueByType-0
+    // #optionalHeaderValueByType-0
   }
   "checkSameOrigin-0" in {
-    //#checkSameOrigin-0
+    // #checkSameOrigin-0
     val correctOrigin = HttpOrigin("http://localhost:8080")
     val route = checkSameOrigin(HttpOriginRange(correctOrigin)) {
       complete("Result")
@@ -258,6 +268,6 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
       status shouldEqual StatusCodes.Forbidden
       responseAs[String] should include(s"${correctOrigin.value}")
     }
-    //#checkSameOrigin-0
+    // #checkSameOrigin-0
   }
 }

@@ -1,6 +1,6 @@
 # HttpRequest and HttpResponse
 
-All 3 Akka HTTP Client API levels use the same basic model of @apidoc[HttpRequest] and @apidoc[HttpResponse].
+All 3 Apache Pekko HTTP Client API levels use the same basic model of @apidoc[HttpRequest] and @apidoc[HttpResponse].
 
 ## Creating requests
 

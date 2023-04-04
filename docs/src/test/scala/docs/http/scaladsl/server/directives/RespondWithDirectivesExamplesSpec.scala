@@ -1,25 +1,35 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 class RespondWithDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "multiple-headers" in {
-    //#multiple-headers
+    // #multiple-headers
     respondWithDefaultHeaders(
-      Origin(HttpOrigin("http://akka.io")),
+      Origin(HttpOrigin("http://pekko.apache.org")),
       RawHeader("X-Fish-Name", "Blippy")) { ??? }
-    //#multiple-headers
+    // #multiple-headers
   }
 
   "respondWithHeader-0" in {
-    //#respondWithHeader-0
+    // #respondWithHeader-0
     val route =
       path("foo") {
         respondWithHeader(RawHeader("Funky-Muppet", "gonzo")) {
@@ -32,11 +42,11 @@ class RespondWithDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec
       header("Funky-Muppet") shouldEqual Some(RawHeader("Funky-Muppet", "gonzo"))
       responseAs[String] shouldEqual "beep"
     }
-    //#respondWithHeader-0
+    // #respondWithHeader-0
   }
 
   "respondWithDefaultHeader-0" in {
-    //#respondWithDefaultHeader-0
+    // #respondWithDefaultHeader-0
     // custom headers
     val blippy = RawHeader("X-Fish-Name", "Blippy")
     val elTonno = RawHeader("X-Fish-Name", "El Tonno")
@@ -73,15 +83,15 @@ class RespondWithDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec
       header("X-Fish-Name") shouldEqual Some(RawHeader("X-Fish-Name", "El Tonno"))
       responseAs[String] shouldEqual "¡Ay ay blippy!"
     }
-    //#respondWithDefaultHeader-0
+    // #respondWithDefaultHeader-0
   }
   // format: ON
 
   "respondWithHeaders-0" in {
-    //#respondWithHeaders-0
+    // #respondWithHeaders-0
     val route =
       path("foo") {
-        respondWithHeaders(RawHeader("Funky-Muppet", "gonzo"), Origin(HttpOrigin("http://akka.io"))) {
+        respondWithHeaders(RawHeader("Funky-Muppet", "gonzo"), Origin(HttpOrigin("http://pekko.apache.org"))) {
           complete("beep")
         }
       }
@@ -89,10 +99,10 @@ class RespondWithDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec
     // tests:
     Get("/foo") ~> route ~> check {
       header("Funky-Muppet") shouldEqual Some(RawHeader("Funky-Muppet", "gonzo"))
-      header[Origin] shouldEqual Some(Origin(HttpOrigin("http://akka.io")))
+      header[Origin] shouldEqual Some(Origin(HttpOrigin("http://pekko.apache.org")))
       responseAs[String] shouldEqual "beep"
     }
-    //#respondWithHeaders-0
+    // #respondWithHeaders-0
   }
 
 }

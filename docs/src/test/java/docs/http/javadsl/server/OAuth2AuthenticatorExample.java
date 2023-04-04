@@ -1,24 +1,33 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.headers.Host;
-import akka.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.scaladsl.model.headers.Authorization;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.headers.Host;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.scaladsl.model.headers.Authorization;
 
 import java.util.Optional;
 
 import org.junit.Test;
 
 //#oauth2-authenticator-java
-import akka.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.Route;
 
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.authenticateOAuth2;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateOAuth2;
 
 //#oauth2-authenticator-java
 
@@ -49,15 +58,15 @@ public class OAuth2AuthenticatorExample extends JUnitRouteTest {
         // tests:
         final HttpRequest okRequest =
             HttpRequest
-                .GET("http://akka.io/")
-                .addHeader(Host.create("akka.io"))
+                .GET("http://pekko.apache.org/")
+                .addHeader(Host.create("pekko.apache.org"))
                 .addHeader(Authorization.oauth2("token"));
         testRoute(route).run(okRequest).assertEntity("The secret token is: token");
 
         final HttpRequest badRequest =
                 HttpRequest
-                        .GET("http://akka.io/")
-                        .addHeader(Host.create("akka.io"))
+                        .GET("http://pekko.apache.org/")
+                        .addHeader(Host.create("pekko.apache.org"))
                         .addHeader(Authorization.oauth2("wrong"));
         testRoute(route).run(badRequest).assertStatusCode(401);
 

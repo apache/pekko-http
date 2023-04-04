@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [MiscDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/MiscDirectives.scala) { #withoutSizeLimit }
+@@signature [MiscDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/MiscDirectives.scala) { #withoutSizeLimit }
 
 @@@
 
@@ -13,7 +13,7 @@
 Skips request entity size verification.
 
 The whole mechanism of entity size checking is intended to prevent certain Denial-of-Service attacks.
-So suggested setup is to have `akka.http.parsing.max-content-length` relatively low and use `withoutSizeLimit`
+So suggested setup is to have `pekko.http.parsing.max-content-length` relatively low and use `withoutSizeLimit`
 directive just for endpoints for which size verification should not be performed.
 
 @@@ warning { title="Caution" }

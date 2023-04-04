@@ -1,3 +1,0 @@
-# New method in @DoNotInherit class
-ProblemFilters.exclude[Problem]("akka.http.javadsl.server.Route.handler")
-ProblemFilters.exclude[InheritedNewAbstractMethodProblem]("akka.http.javadsl.server.Route.handler")

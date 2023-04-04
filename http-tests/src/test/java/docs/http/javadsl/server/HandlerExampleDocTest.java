@@ -1,0 +1,257 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
+ * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ */
+
+package docs.http.javadsl.server;
+
+import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
+import org.junit.Test;
+
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.TestRoute;
+
+//#simple-handler-example-full
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.post;
+//#simple-handler
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractMethod;
+import static org.apache.pekko.http.javadsl.server.Directives.extractUri;
+
+//#simple-handler
+//#simple-handler-example-full
+
+//#handler2-example-full
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+
+//#handler2-example-full
+
+//#async-handler-1
+import static org.apache.pekko.http.javadsl.server.Directives.extractExecutionContext;
+import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+
+//#async-handler-1
+
+public class HandlerExampleDocTest extends JUnitRouteTest {
+  @Test
+  public void testSimpleHandler() {
+    //#simple-handler-example-full
+    class TestHandler {
+      //#simple-handler
+      Route handlerString = extractMethod(method ->
+        extractUri(uri ->
+          complete(String.format("This was a %s request to %s", method.name(), uri))
+        )
+      );
+
+      Route handlerResponse = extractMethod(method ->
+        extractUri(uri -> {
+          // with full control over the returned HttpResponse:
+          final HttpResponse response = HttpResponse.create()
+            .withEntity(String.format("Accepted %s request to %s", method.name(), uri))
+            .withStatus(StatusCodes.ACCEPTED);
+          return complete(response);
+        })
+      );
+      //#simple-handler
+
+      Route createRoute() {
+        return concat(
+          get(() ->
+            handlerString
+          ),
+          post(() ->
+            path("abc", () ->
+              handlerResponse
+            )
+          )
+        );
+      }
+    }
+
+    // actual testing code
+    TestRoute r = testRoute(new TestHandler().createRoute());
+    r.run(HttpRequest.GET("/test"))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("This was a GET request to http://example.com/test");
+
+    r.run(HttpRequest.POST("/test"))
+      .assertStatusCode(StatusCodes.NOT_FOUND);
+
+    r.run(HttpRequest.POST("/abc"))
+      .assertStatusCode(StatusCodes.ACCEPTED)
+      .assertEntity("Accepted POST request to http://example.com/abc");
+    //#simple-handler-example-full
+  }
+
+  @Test
+  public void testCalculator() {
+    //#handler2-example-full
+    class TestHandler {
+
+      final Route multiplyXAndYParam =
+        parameter(StringUnmarshallers.INTEGER, "x", x ->
+          parameter(StringUnmarshallers.INTEGER, "y", y ->
+            complete("x * y = " + (x * y))
+          )
+        );
+
+      final Route pathMultiply =
+        path(integerSegment().slash(integerSegment()), (x, y) ->
+          complete("x * y = " + (x * y))
+        );
+
+      Route subtract(int x, int y) {
+        return complete("x - y = " + (x - y));
+      }
+
+      //#handler2
+
+      Route createRoute() {
+        return concat(
+          get(() ->
+            pathPrefix("calculator", () -> concat(
+              path("multiply", () ->
+                multiplyXAndYParam
+              ),
+              pathPrefix("path-multiply", () ->
+                pathMultiply
+              ),
+              // handle by lifting method
+              path(segment("subtract").slash(integerSegment()).slash(integerSegment()), this::subtract)
+            ))
+          )
+        );
+      }
+    }
+
+    // actual testing code
+    TestRoute r = testRoute(new TestHandler().createRoute());
+    r.run(HttpRequest.GET("/calculator/multiply?x=12&y=42"))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("x * y = 504");
+
+    r.run(HttpRequest.GET("/calculator/path-multiply/23/5"))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("x * y = 115");
+
+    r.run(HttpRequest.GET("/calculator/subtract/42/12"))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("x - y = 30");
+    //#handler2-example-full
+  }
+
+  @Test
+  public void testDeferredResultAsyncHandler() {
+    //#async-example-full
+    //#async-service-definition
+    class CalculatorService {
+      public CompletionStage<Integer> multiply(final int x, final int y) {
+        return CompletableFuture.supplyAsync(() -> x * y);
+      }
+
+      public CompletionStage<Integer> add(final int x, final int y) {
+        return CompletableFuture.supplyAsync(() -> x + y);
+      }
+    }
+    //#async-service-definition
+
+    class TestHandler {
+
+      /**
+       * Returns a route that applies the (required) request parameters "x" and "y", as integers, to
+       * the inner function.
+       */
+      Route paramXY(BiFunction<Integer, Integer, Route> inner) {
+        return
+          parameter(StringUnmarshallers.INTEGER, "x", x ->
+            parameter(StringUnmarshallers.INTEGER, "y", y ->
+              inner.apply(x, y)
+            )
+          );
+      }
+
+
+      //#async-handler-1
+      // would probably be injected or passed at construction time in real code
+      CalculatorService calculatorService = new CalculatorService();
+
+      public CompletionStage<Route> multiplyAsync(Executor ctx, int x, int y) {
+        CompletionStage<Integer> result = calculatorService.multiply(x, y);
+        return result.thenApplyAsync(product -> complete("x * y = " + product), ctx);
+      }
+
+      Route multiplyAsyncRoute =
+        extractExecutionContext(ctx ->
+          path("multiply", () ->
+            paramXY((x, y) ->
+              onSuccess(multiplyAsync(ctx, x, y), Function.identity())
+            )
+          )
+        );
+      //#async-handler-1
+
+      //#async-handler-2
+
+      public Route addAsync(int x, int y) {
+        CompletionStage<Integer> result = calculatorService.add(x, y);
+
+        return onSuccess(result, sum -> complete("x + y = " + sum));
+      }
+
+      Route addAsyncRoute =
+        path("add", () ->
+          paramXY(this::addAsync)
+        );
+      //#async-handler-2
+
+      Route createRoute() {
+        return concat(
+          get(() ->
+            pathPrefix("calculator", () -> concat(
+              multiplyAsyncRoute,
+              addAsyncRoute
+            ))
+          )
+        );
+      }
+    }
+
+    // testing code
+    TestRoute r = testRoute(new TestHandler().createRoute());
+    r.run(HttpRequest.GET("/calculator/multiply?x=12&y=42"))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("x * y = 504");
+
+    r.run(HttpRequest.GET("/calculator/add?x=23&y=5"))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("x + y = 28");
+    //#async-example-full
+  }
+}

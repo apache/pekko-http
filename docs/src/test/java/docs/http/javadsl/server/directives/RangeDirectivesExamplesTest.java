@@ -1,22 +1,31 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2016-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.Multipart;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.headers.ByteRange;
-import akka.http.javadsl.model.headers.ContentRange;
-import akka.http.javadsl.model.headers.Range;
-import akka.http.javadsl.model.headers.RangeUnits;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.unmarshalling.Unmarshaller;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.http.javadsl.testkit.TestRouteResult;
-import akka.stream.Materializer;
-import akka.util.ByteString;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.Multipart;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.ByteRange;
+import org.apache.pekko.http.javadsl.model.headers.ContentRange;
+import org.apache.pekko.http.javadsl.model.headers.Range;
+import org.apache.pekko.http.javadsl.model.headers.RangeUnits;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
+import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.util.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.Test;
@@ -28,15 +37,15 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 //#withRangeSupport
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.withRangeSupport;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.withRangeSupport;
 
 //#withRangeSupport
 
 public class RangeDirectivesExamplesTest extends JUnitRouteTest {
     @Override
     public Config additionalConfig() {
-        return ConfigFactory.parseString("akka.http.routing.range-coalescing-threshold=2");
+        return ConfigFactory.parseString("pekko.http.routing.range-coalescing-threshold=2");
     }
 
     @Test
@@ -46,11 +55,11 @@ public class RangeDirectivesExamplesTest extends JUnitRouteTest {
 
         // test:
         final String bytes348Range = ContentRange.create(RangeUnits.BYTES,
-                akka.http.javadsl.model.ContentRange.create(3, 4, 8)).value();
-        final akka.http.javadsl.model.ContentRange bytes028Range =
-                akka.http.javadsl.model.ContentRange.create(0, 2, 8);
-        final akka.http.javadsl.model.ContentRange bytes678Range =
-                akka.http.javadsl.model.ContentRange.create(6, 7, 8);
+                org.apache.pekko.http.javadsl.model.ContentRange.create(3, 4, 8)).value();
+        final org.apache.pekko.http.javadsl.model.ContentRange bytes028Range =
+                org.apache.pekko.http.javadsl.model.ContentRange.create(0, 2, 8);
+        final org.apache.pekko.http.javadsl.model.ContentRange bytes678Range =
+                org.apache.pekko.http.javadsl.model.ContentRange.create(6, 7, 8);
         final Materializer materializer = systemResource().materializer();
 
         testRoute(route).run(HttpRequest.GET("/")
@@ -60,7 +69,7 @@ public class RangeDirectivesExamplesTest extends JUnitRouteTest {
                 .assertStatusCode(StatusCodes.PARTIAL_CONTENT)
                 .assertEntity("DE");
 
-        // we set "akka.http.routing.range-coalescing-threshold = 2"
+        // we set "pekko.http.routing.range-coalescing-threshold = 2"
         // above to make sure we get two BodyParts
         final TestRouteResult response = testRoute(route).run(HttpRequest.GET("/")
                 .addHeader(Range.create(RangeUnits.BYTES,

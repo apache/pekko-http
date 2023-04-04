@@ -1,16 +1,25 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2016-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.FormData;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.unmarshalling.StringUnmarshallers;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.japi.Pair;
+import org.apache.pekko.http.javadsl.model.FormData;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.japi.Pair;
 import org.junit.Test;
 
 import java.util.List;
@@ -20,26 +29,26 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 //#formField
-import akka.http.javadsl.server.Directives;
+import org.apache.pekko.http.javadsl.server.Directives;
 
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.formField;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.formField;
 
 //#formField
 
 //#formFieldMap
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.formFieldMap;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.formFieldMap;
 
 //#formFieldMap
 //#formFieldList
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.formFieldList;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.formFieldList;
 
 //#formFieldList
 //#formFieldMultiMap
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.formFieldMultiMap;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.formFieldMultiMap;
 
 //#formFieldMultiMap
 

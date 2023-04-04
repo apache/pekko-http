@@ -1,29 +1,38 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2014-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl
 
-import akka.http.scaladsl.server.{ Directives, Route, RoutingSpec }
+import org.apache.pekko.http.scaladsl.server.{ Directives, Route, RoutingSpec }
 import docs.CompileOnlySpec
 
 final class ServerSentEventsExampleSpec extends RoutingSpec with Directives with CompileOnlySpec {
 
   "stream example" in compileOnlySpec {
-    //#event-stream-marshalling-example
-    import akka.NotUsed
-    import akka.stream.scaladsl.Source
-
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.unmarshalling.Unmarshal
-    import akka.http.scaladsl.model.sse.ServerSentEvent
+    // #event-stream-marshalling-example
+    import org.apache.pekko
+    import pekko.NotUsed
+    import pekko.stream.scaladsl.Source
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.unmarshalling.Unmarshal
+    import pekko.http.scaladsl.model.sse.ServerSentEvent
     import scala.concurrent.duration._
 
     import java.time.LocalTime
     import java.time.format.DateTimeFormatter.ISO_LOCAL_TIME
 
     def route: Route = {
-      import akka.http.scaladsl.marshalling.sse.EventStreamMarshalling._
+      import pekko.http.scaladsl.marshalling.sse.EventStreamMarshalling._
 
       path("events") {
         get {
@@ -37,15 +46,15 @@ final class ServerSentEventsExampleSpec extends RoutingSpec with Directives with
         }
       }
     }
-    //#event-stream-marshalling-example
+    // #event-stream-marshalling-example
 
-    //#event-stream-unmarshalling-example
-    import akka.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling._
+    // #event-stream-unmarshalling-example
+    import org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling._
 
     Http()
       .singleRequest(Get("http://localhost:8000/events"))
       .flatMap(Unmarshal(_).to[Source[ServerSentEvent, NotUsed]])
       .foreach(_.runForeach(println))
-    //#event-stream-unmarshalling-example
+    // #event-stream-unmarshalling-example
   }
 }

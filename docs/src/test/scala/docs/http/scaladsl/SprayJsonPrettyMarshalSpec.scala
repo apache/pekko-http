@@ -1,18 +1,28 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl
 
-import akka.http.scaladsl.server.Directives
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.server.Directives
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 class SprayJsonPrettyMarshalSpec extends RoutingSpec with CompileOnlySpec {
 
   "spray-json example" in {
-    //#example
-    import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+    // #example
+    import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
     import spray.json._
 
     // domain model
@@ -45,11 +55,11 @@ class SprayJsonPrettyMarshalSpec extends RoutingSpec with CompileOnlySpec {
     // verify the pretty printed JSON
     Get("/") ~> service.route ~> check {
       responseAs[String] shouldEqual
-        """{""" + "\n" +
-        """  "id": 42,""" + "\n" +
-        """  "name": "akka"""" + "\n" +
-        """}"""
+      """{""" + "\n" +
+      """  "id": 42,""" + "\n" +
+      """  "name": "akka"""" + "\n" +
+      """}"""
     }
-    //#example
+    // #example
   }
 }

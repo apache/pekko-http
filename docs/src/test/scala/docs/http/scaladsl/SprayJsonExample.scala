@@ -1,19 +1,29 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2020-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl
 
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
-import akka.http.scaladsl.Http
-import akka.Done
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko
+import pekko.actor.typed.ActorSystem
+import pekko.actor.typed.scaladsl.Behaviors
+import pekko.http.scaladsl.Http
+import pekko.Done
+import pekko.http.scaladsl.server.Route
+import pekko.http.scaladsl.server.Directives._
+import pekko.http.scaladsl.model.StatusCodes
 // for JSON serialization/deserialization following dependency is required:
-// "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.7"
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+// "org.apache.pekko" %% "pekko-http-spray-json" % "<latest version>"
+import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -71,8 +81,7 @@ object SprayJsonExample {
               }
             }
           }
-        }
-      )
+        })
 
     val bindingFuture = Http().newServerAt("localhost", 8080).bind(route)
     println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")

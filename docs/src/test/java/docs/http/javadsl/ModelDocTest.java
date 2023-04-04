@@ -1,16 +1,25 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl;
 
-import akka.util.ByteString;
+import org.apache.pekko.util.ByteString;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 //#import-model
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.model.headers.*;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.model.headers.*;
 
 import java.util.Optional;
 
@@ -127,7 +136,7 @@ public class ModelDocTest {
   @Test
   public void syntheticHeaderS3() {
     //#synthetic-header-s3
-    // imports akka.http.javadsl.model.headers.RawRequestURI
+    // imports org.apache.pekko.http.javadsl.model.headers.RawRequestURI
     HttpRequest.create("/ignored").addHeader(RawRequestURI.create("/a/b%2Bc"));
     //#synthetic-header-s3
   }

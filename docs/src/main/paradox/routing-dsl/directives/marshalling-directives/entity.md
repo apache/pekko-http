@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [MarshallingDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/MarshallingDirectives.scala) { #entity }
+@@signature [MarshallingDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/MarshallingDirectives.scala) { #entity }
 
 @@@
 
@@ -15,7 +15,7 @@ returns an `Either` with `Right(value)` if successful or `Left(exception)` for a
 The `entity` method will either pass the `value` to the inner route or map the `exception` to a
 @apidoc[Rejection].
 
-@scala[The `entity` directive works in conjunction with `as` and `akka.http.scaladsl.unmarshalling` to
+@scala[The `entity` directive works in conjunction with `as` and `org.apache.pekko.http.scaladsl.unmarshalling` to
 convert some serialized "wire format" value into a higher-level object structure.]  
 @ref[The unmarshalling documentation](../../../common/unmarshalling.md) explains this process in detail.
 This directive simplifies extraction and error handling to the specified type from the request.

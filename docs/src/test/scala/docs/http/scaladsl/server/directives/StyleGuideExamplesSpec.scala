@@ -1,10 +1,19 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.server._
+import org.apache.pekko.http.scaladsl.server._
 import docs.CompileOnlySpec
 
 class StyleGuideExamplesSpec extends RoutingSpec with CompileOnlySpec {
@@ -35,8 +44,7 @@ class StyleGuideExamplesSpec extends RoutingSpec with CompileOnlySpec {
               get {
                 complete("")
               }
-            }
-          )
+            })
         }
       // over
       val over: Route =
@@ -50,8 +58,7 @@ class StyleGuideExamplesSpec extends RoutingSpec with CompileOnlySpec {
             get {
               complete("")
             }
-          }
-        )
+          })
       // #path-prefix
     }
 
@@ -70,23 +77,21 @@ class StyleGuideExamplesSpec extends RoutingSpec with CompileOnlySpec {
             get {
               complete("")
             }
-          }
-        )
+          })
 
       val customerRoutes: Route =
         concat(
           path(IntNumber) { customerId =>
             complete("")
           }
-        // ...
+          // ...
         )
 
       // 2. Then compose the relative routes under their corresponding path prefix
       val prefer: Route =
         concat(
           pathPrefix("item")(itemRoutes),
-          pathPrefix("customer")(customerRoutes)
-        )
+          pathPrefix("customer")(customerRoutes))
 
       // over
       val over: Route =
@@ -102,18 +107,16 @@ class StyleGuideExamplesSpec extends RoutingSpec with CompileOnlySpec {
                 get {
                   complete("")
                 }
-              }
-            )
+              })
           },
           pathPrefix("customer") {
             concat(
               path(IntNumber) { customerId =>
                 complete("")
               }
-            // ...
+              // ...
             )
-          }
-        )
+          })
       // #path-compose
     }
   }
@@ -122,12 +125,12 @@ class StyleGuideExamplesSpec extends RoutingSpec with CompileOnlySpec {
     "be combined" in {
 
       // #directives-combine
-      val useCustomerIdForResponse: Long => Route = (customerId) => complete(customerId.toString)
+      val useCustomerIdForResponse: Long => Route = customerId => complete(customerId.toString)
       val completeWithResponse: Route = complete("")
 
       // prefer
       val getOrPost: Directive0 = get | post
-      val withCustomerId: Directive1[(Long)] =
+      val withCustomerId: Directive1[Long] =
         parameter("customerId".as[Long])
 
       val prefer: Route =
@@ -148,10 +151,8 @@ class StyleGuideExamplesSpec extends RoutingSpec with CompileOnlySpec {
               },
               path("page2") {
                 getOrPost(completeWithResponse)
-              }
-            )
-          }
-        )
+              })
+          })
       // over
       val over: Route =
         concat(
@@ -162,8 +163,7 @@ class StyleGuideExamplesSpec extends RoutingSpec with CompileOnlySpec {
               },
               (pathPrefix("engagement") & parameter("customerId".as[Long])) { customerId =>
                 useCustomerIdForResponse(customerId)
-              }
-            )
+              })
           },
           pathPrefix("pages") {
             concat(
@@ -174,17 +174,14 @@ class StyleGuideExamplesSpec extends RoutingSpec with CompileOnlySpec {
                   },
                   post {
                     complete("")
-                  }
-                )
+                  })
               },
               path("page2") {
                 (get | post) {
                   complete("")
                 }
-              }
-            )
-          }
-        )
+              })
+          })
       // #directives-combine
     }
   }

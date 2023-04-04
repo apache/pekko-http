@@ -1,4 +1,13 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
@@ -10,16 +19,17 @@ class JsonStreamingFullExamples extends AnyWordSpec {
 
   "compile only spec" in {}
 
-  //#custom-content-type
-  import akka.NotUsed
-  import akka.actor.ActorSystem
-  import akka.http.scaladsl.Http
-  import akka.http.scaladsl.common.{ EntityStreamingSupport, JsonEntityStreamingSupport }
-  import akka.http.scaladsl.model.{ HttpEntity, _ }
-  import akka.http.scaladsl.server.Directives._
-  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-  import akka.http.scaladsl.marshalling.{ Marshaller, ToEntityMarshaller }
-  import akka.stream.scaladsl.Source
+  // #custom-content-type
+  import org.apache.pekko
+  import pekko.NotUsed
+  import pekko.actor.ActorSystem
+  import pekko.http.scaladsl.Http
+  import pekko.http.scaladsl.common.{ EntityStreamingSupport, JsonEntityStreamingSupport }
+  import pekko.http.scaladsl.model.{ HttpEntity, _ }
+  import pekko.http.scaladsl.server.Directives._
+  import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  import pekko.http.scaladsl.marshalling.{ Marshaller, ToEntityMarshaller }
+  import pekko.stream.scaladsl.Source
   import spray.json.DefaultJsonProtocol
 
   import scala.concurrent.ExecutionContext
@@ -55,10 +65,11 @@ class JsonStreamingFullExamples extends AnyWordSpec {
     // (fake) async database query api
     def dummyUser(id: String) = User(s"User $id", id.toString)
 
-    def fetchUsers(): Source[User, NotUsed] = Source.fromIterator(() => Iterator.fill(10000) {
-      val id = Random.nextInt()
-      dummyUser(id.toString)
-    })
+    def fetchUsers(): Source[User, NotUsed] = Source.fromIterator(() =>
+      Iterator.fill(10000) {
+        val id = Random.nextInt()
+        dummyUser(id.toString)
+      })
 
     val route =
       pathPrefix("users") {
@@ -74,5 +85,5 @@ class JsonStreamingFullExamples extends AnyWordSpec {
     bindingFuture.flatMap(_.unbind()).onComplete(_ => system.terminate())
   }
 
-  //#custom-content-type
+  // #custom-content-type
 }

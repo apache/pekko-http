@@ -1,0 +1,106 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
+ * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ */
+
+package org.apache.pekko.http.javadsl.server
+
+import org.apache.pekko
+import pekko.http.javadsl.marshalling.Marshaller
+import pekko.http.javadsl.model.HttpRequest
+import pekko.http.scaladsl.util.FastFuture._
+
+import scala.concurrent.ExecutionContextExecutor
+import pekko.stream.Materializer
+import pekko.event.LoggingAdapter
+import pekko.http.javadsl.settings.RoutingSettings
+import pekko.http.javadsl.settings.ParserSettings
+import pekko.http.javadsl.model.HttpResponse
+import pekko.http.javadsl.model.StatusCode
+import pekko.http.javadsl.model.Uri
+import pekko.http.javadsl.model.headers.Location
+import java.util.concurrent.CompletionStage
+import java.util.function.{ Function => JFunction }
+
+import pekko.annotation.InternalApi
+import pekko.http.scaladsl
+import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.scaladsl.marshalling.ToResponseMarshallable
+
+import scala.compat.java8.FutureConverters._
+import scala.annotation.varargs
+import pekko.http.scaladsl.model.Uri.Path
+
+class RequestContext private (val delegate: scaladsl.server.RequestContext) {
+  import RequestContext._
+  import RoutingJavaMapping._
+
+  def getRequest: HttpRequest = delegate.request
+  def getUnmatchedPath: String = delegate.unmatchedPath.toString()
+  def getExecutionContext: ExecutionContextExecutor = delegate.executionContext
+  def getMaterializer: Materializer = delegate.materializer
+  def getLog: LoggingAdapter = delegate.log
+  def getSettings: RoutingSettings = delegate.settings
+  def getParserSettings: ParserSettings = delegate.parserSettings
+
+  def reconfigure(
+      executionContext: ExecutionContextExecutor,
+      materializer: Materializer,
+      log: LoggingAdapter,
+      settings: RoutingSettings): RequestContext =
+    wrap(delegate.reconfigure(executionContext, materializer, log, settings.asScala))
+
+  def complete[T](value: T, marshaller: Marshaller[T, HttpResponse]): CompletionStage[RouteResult] = {
+    delegate.complete(ToResponseMarshallable(value)(marshaller))
+      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).toJava
+  }
+
+  def completeWith(response: HttpResponse): CompletionStage[RouteResult] = {
+    delegate.complete(response.asScala)
+      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).toJava
+  }
+
+  @varargs def reject(rejections: Rejection*): CompletionStage[RouteResult] = {
+    val scalaRejections = rejections.map(_.asScala)
+    delegate.reject(scalaRejections: _*)
+      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).toJava
+  }
+
+  def redirect(uri: Uri, redirectionType: StatusCode): CompletionStage[RouteResult] = {
+    completeWith(HttpResponse.create().withStatus(redirectionType).addHeader(Location.create(uri)))
+  }
+
+  def fail(error: Throwable): CompletionStage[RouteResult] =
+    delegate.fail(error)
+      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).toJava
+
+  def withRequest(req: HttpRequest): RequestContext = wrap(delegate.withRequest(req.asScala))
+  def withExecutionContext(ec: ExecutionContextExecutor): RequestContext = wrap(delegate.withExecutionContext(ec))
+  def withMaterializer(materializer: Materializer): RequestContext = wrap(delegate.withMaterializer(materializer))
+  def withLog(log: LoggingAdapter): RequestContext = wrap(delegate.withLog(log))
+  def withRoutingSettings(settings: RoutingSettings): RequestContext =
+    wrap(delegate.withRoutingSettings(settings.asScala))
+  def withParserSettings(settings: ParserSettings): RequestContext = wrap(delegate.withParserSettings(settings.asScala))
+
+  def mapRequest(f: JFunction[HttpRequest, HttpRequest]): RequestContext =
+    wrap(delegate.mapRequest(r => f.apply(r.asJava).asScala))
+  def withUnmatchedPath(path: String): RequestContext = wrap(delegate.withUnmatchedPath(Path(path)))
+  def mapUnmatchedPath(f: JFunction[String, String]): RequestContext =
+    wrap(delegate.mapUnmatchedPath(p => Path(f.apply(p.toString()))))
+  def withAcceptAll: RequestContext = wrap(delegate.withAcceptAll)
+}
+
+object RequestContext {
+
+  /** INTERNAL API */
+  @InternalApi
+  private[http] def wrap(delegate: scaladsl.server.RequestContext) = new RequestContext(delegate)
+}

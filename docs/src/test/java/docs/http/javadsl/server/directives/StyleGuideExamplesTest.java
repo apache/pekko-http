@@ -1,14 +1,23 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2020-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server.directives;
 
 // #imports
-import static akka.http.javadsl.server.PathMatchers.*;
-import static akka.http.javadsl.server.Directives.*;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
+import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-import akka.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.Route;
 
 // #imports
 
@@ -16,7 +25,7 @@ import akka.http.javadsl.server.Route;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import akka.http.javadsl.unmarshalling.StringUnmarshallers;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 
 // #imports-directives
 

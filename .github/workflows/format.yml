@@ -1,0 +1,25 @@
+name: Scalafmt
+
+permissions: {}
+
+on:
+  pull_request:
+    branches: ['**']
+
+jobs:
+  build:
+    name: Code is formatted
+    runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-pekko-http'
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check project is formatted
+        uses: jrouly/scalafmt-native-action@v2
+        with:
+          version: '3.7.1'
+          arguments: '--list --mode diff-ref=origin/main'

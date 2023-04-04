@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [TimeoutDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/TimeoutDirectives.scala) { #withRequestTimeoutResponse }
+@@signature [TimeoutDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/TimeoutDirectives.scala) { #withRequestTimeoutResponse }
 
 @@@
 
@@ -26,7 +26,7 @@ of request timeouts being measured in seconds it shouldn't be a problem in reali
 
 @@@
 
-To learn more about various timeouts in Akka HTTP and how to configure them see @ref[Akka HTTP Timeouts](../../../common/timeouts.md).
+To learn more about various timeouts in Apache Pekko HTTP and how to configure them see @ref[Pekko HTTP Timeouts](../../../common/timeouts.md).
 
 ## Example
 

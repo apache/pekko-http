@@ -1,56 +1,65 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2016-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.PathMatchers;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.server.directives.DirectoryRenderer;
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.PathMatchers;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.directives.DirectoryRenderer;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.junit.Ignore;
 import org.junit.Test;
 import scala.NotImplementedError;
 
-import static akka.http.javadsl.server.PathMatchers.segment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
 
 //#getFromFile
-import static akka.http.javadsl.server.Directives.getFromFile;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.getFromFile;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#getFromFile
 //#getFromResource
-import static akka.http.javadsl.server.Directives.getFromResource;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.getFromResource;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#getFromResource
 //#listDirectoryContents
-import akka.http.javadsl.server.Directives;
+import org.apache.pekko.http.javadsl.server.Directives;
 
-import static akka.http.javadsl.server.Directives.listDirectoryContents;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.listDirectoryContents;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#listDirectoryContents
 //#getFromBrowseableDirectory
-import static akka.http.javadsl.server.Directives.getFromBrowseableDirectory;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.getFromBrowseableDirectory;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#getFromBrowseableDirectory
 //#getFromBrowseableDirectories
-import static akka.http.javadsl.server.Directives.getFromBrowseableDirectories;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.getFromBrowseableDirectories;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#getFromBrowseableDirectories
 //#getFromDirectory
-import static akka.http.javadsl.server.Directives.getFromDirectory;
-import static akka.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.getFromDirectory;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 
 //#getFromDirectory
 //#getFromResourceDirectory
-import static akka.http.javadsl.server.Directives.getFromResourceDirectory;
-import static akka.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.getFromResourceDirectory;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 
 //#getFromResourceDirectory
 

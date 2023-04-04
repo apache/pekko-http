@@ -1,0 +1,97 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
+ * Copyright (C) 2020-2022 Lightbend Inc. <https://www.lightbend.com>
+ */
+
+package org.apache.pekko.http.impl.engine.http2
+
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.CommonBenchmark
+import pekko.http.impl.engine.server.ServerTerminator
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.settings.ServerSettings
+import pekko.stream.ActorMaterializer
+import pekko.stream.TLSProtocol.{ SslTlsInbound, SslTlsOutbound }
+import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
+import pekko.util.ByteString
+import org.openjdk.jmh.annotations._
+
+import java.util.concurrent.{ CountDownLatch, TimeUnit }
+import scala.concurrent.duration._
+import scala.concurrent.{ Await, ExecutionContext, Future }
+
+class H2ServerProcessingBenchmark extends CommonBenchmark with H2RequestResponseBenchmark {
+
+  var httpFlow: Flow[ByteString, ByteString, Any] = _
+  implicit var system: ActorSystem = _
+  implicit var mat: ActorMaterializer = _
+
+  val packedResponse = ByteString(1, 5, 0, 0) // a HEADERS frame with end_stream == true
+
+  val numRequests = 10000
+
+  @Benchmark
+  @OperationsPerInvocation(10000) // should be same as numRequest
+  def benchRequestProcessing(): Unit = {
+    val latch = new CountDownLatch(numRequests)
+
+    val requests =
+      Source(Http2Protocol.ClientConnectionPreface +: Range(0, numRequests).map(i => requestDataCreator(1 + 2 * i)))
+        .concatMat(Source.maybe)(Keep.right)
+
+    val (in, done) =
+      requests
+        .viaMat(httpFlow)(Keep.left)
+        .toMat(Sink.foreach(res => {
+          // Skip headers/settings frames etc
+          if (res.containsSlice(HPackSpecExamples.C61FirstResponseWithHuffman)
+            || res.containsSlice(packedResponse)) {
+            latch.countDown()
+          }
+        }))(Keep.both)
+        .run()
+
+    require(latch.await(10, TimeUnit.SECONDS), "Not all responses were received in time")
+
+    in.success(None)
+    Await.result(done, 10.seconds)
+  }
+
+  @Setup
+  def setup(): Unit = {
+    initRequestResponse()
+
+    system = ActorSystem("AkkaHttpBenchmarkSystem", config)
+    mat = ActorMaterializer()
+    val settings = implicitly[ServerSettings]
+    val log = system.log
+    implicit val ec = system.dispatcher
+    val http1 = Flow[SslTlsInbound].mapAsync(1)(_ => {
+      Future.failed[SslTlsOutbound](new IllegalStateException("Failed h2 detection"))
+    }).mapMaterializedValue(_ =>
+      new ServerTerminator {
+        override def terminate(deadline: FiniteDuration)(implicit ex: ExecutionContext): Future[Http.HttpTerminated] =
+          ???
+      })
+    val http2 =
+      Http2Blueprint.handleWithStreamIdHeader(1)(req => {
+        req.discardEntityBytes().future.map(_ => response)
+      })(system.dispatcher)
+        .joinMat(Http2Blueprint.serverStackTls(settings, log, NoOpTelemetry, Http().dateHeaderRendering))(Keep.right)
+    httpFlow = Http2.priorKnowledge(http1, http2)
+  }
+
+  @TearDown
+  def tearDown(): Unit = {
+    system.terminate()
+  }
+}

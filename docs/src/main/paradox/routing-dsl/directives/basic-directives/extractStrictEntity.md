@@ -4,7 +4,7 @@
 
 ## Signature
 
-@@signature [BasicDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/BasicDirectives.scala) { #extractStrictEntity }
+@@signature [BasicDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/BasicDirectives.scala) { #extractStrictEntity }
 
 @@@
 
@@ -17,7 +17,7 @@ A timeout parameter is given and if the stream isn't completed after the timeout
 @@@ warning
 
 The directive will read the request entity into memory within the size limit(8M by default) and effectively disable streaming.
-The size limit can be configured globally with `akka.http.parsing.max-content-length` or
+The size limit can be configured globally with `pekko.http.parsing.max-content-length` or
 overridden by wrapping with @ref[withSizeLimit](../misc-directives/withSizeLimit.md) or @ref[withoutSizeLimit](../misc-directives/withoutSizeLimit.md) directive.
 
 @@@

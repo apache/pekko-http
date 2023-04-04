@@ -1,25 +1,34 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl;
 
-import akka.Done;
-import akka.NotUsed;
-import akka.actor.*;
-import akka.http.javadsl.model.headers.HttpCredentials;
-import akka.http.javadsl.model.headers.SetCookie;
-import akka.util.ByteString;
+import org.apache.pekko.Done;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.actor.*;
+import org.apache.pekko.http.javadsl.model.headers.HttpCredentials;
+import org.apache.pekko.http.javadsl.model.headers.SetCookie;
+import org.apache.pekko.util.ByteString;
 import scala.concurrent.ExecutionContextExecutor;
-import akka.stream.javadsl.*;
-import akka.http.javadsl.ClientTransport;
-import akka.http.javadsl.settings.ClientConnectionSettings;
-import akka.http.javadsl.settings.ConnectionPoolSettings;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.OutgoingConnection;
+import org.apache.pekko.stream.javadsl.*;
+import org.apache.pekko.http.javadsl.ClientTransport;
+import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
+import org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.OutgoingConnection;
 
-import static akka.http.javadsl.ConnectHttp.toHost;
-import static akka.util.ByteString.emptyByteString;
+import static org.apache.pekko.http.javadsl.ConnectHttp.toHost;
+import static org.apache.pekko.util.ByteString.emptyByteString;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -31,16 +40,16 @@ import java.io.File;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import akka.stream.javadsl.Framing;
-import akka.http.javadsl.model.*;
+import org.apache.pekko.stream.javadsl.Framing;
+import org.apache.pekko.http.javadsl.model.*;
 import scala.concurrent.duration.FiniteDuration;
 //#manual-entity-consume-example-1
 
 //#single-request-in-actor-example
-import akka.actor.AbstractActor;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.HttpResponse;
-import static akka.pattern.PatternsCS.pipe;
+import org.apache.pekko.actor.AbstractActor;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import static org.apache.pekko.pattern.PatternsCS.pipe;
 
 //#single-request-in-actor-example
 
@@ -186,7 +195,7 @@ public class HttpClientExampleDocTest {
     final ActorSystem system = ActorSystem.create();
 
     final Flow<HttpRequest, HttpResponse, CompletionStage<OutgoingConnection>> connectionFlow =
-            Http.get(system).connectionTo("akka.io").http();
+            Http.get(system).connectionTo("pekko.apache.org").http();
     final CompletionStage<HttpResponse> responseFuture =
             // This is actually a bad idea in general. Even if the `connectionFlow` was instantiated only once above,
             // a new connection is opened every single time, `runWith` is called. Materialization (the `runWith` call)
@@ -213,7 +222,7 @@ public class HttpClientExampleDocTest {
 
     final CompletionStage<HttpResponse> responseFuture =
       Http.get(system)
-          .singleRequest(HttpRequest.create("http://akka.io"));
+          .singleRequest(HttpRequest.create("http://pekko.apache.org"));
     //#single-request-example
     system.terminate();
   }

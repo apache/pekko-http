@@ -1,16 +1,26 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server._
+import org.apache.pekko
+import pekko.http.scaladsl.model.StatusCodes
+import pekko.http.scaladsl.server._
 import docs.CompileOnlySpec
 
 class ExecutionDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "handleExceptions" in {
-    //#handleExceptions
+    // #handleExceptions
     val divByZeroHandler = ExceptionHandler {
       case _: ArithmeticException => complete(StatusCodes.BadRequest, "You've got your arithmetic wrong, fool!")
     }
@@ -29,10 +39,10 @@ class ExecutionDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.BadRequest
       responseAs[String] shouldEqual "You've got your arithmetic wrong, fool!"
     }
-    //#handleExceptions
+    // #handleExceptions
   }
   "handleRejections" in {
-    //#handleRejections
+    // #handleRejections
     val totallyMissingHandler = RejectionHandler.newBuilder()
       .handleNotFound { complete(StatusCodes.NotFound, "Oh man, what you are looking for is long gone.") }
       .handle { case ValidationRejection(msg, _) => complete(StatusCodes.InternalServerError, msg) }
@@ -41,7 +51,7 @@ class ExecutionDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       pathPrefix("handled") {
         handleRejections(totallyMissingHandler) {
           path("existing")(complete("This path exists")) ~
-            path("boom")(reject(new ValidationRejection("This didn't work.")))
+          path("boom")(reject(new ValidationRejection("This didn't work.")))
         }
       }
 
@@ -61,6 +71,6 @@ class ExecutionDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.InternalServerError
       responseAs[String] shouldEqual "This didn't work."
     }
-    //#handleRejections
+    // #handleRejections
   }
 }

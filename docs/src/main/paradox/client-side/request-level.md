@@ -1,6 +1,6 @@
 # Request-Level Client-Side API
 
-The request-level API is the recommended and most convenient way of using Akka HTTP's client-side functionality. It internally builds upon the
+The request-level API is the recommended and most convenient way of using Apache Pekko HTTP's client-side functionality. It internally builds upon the
 @ref[Host-Level Client-Side API](host-level.md) to provide you with a simple and easy-to-use way of retrieving HTTP responses from remote servers.
 Depending on your preference you can pick the [Future-based variant](#future-based-variant) or [Flow-based variant](#flow-based-variant).
 
@@ -22,7 +22,7 @@ or an extra pool just for the long-running connection instead.
 Most often, your HTTP client needs are very basic. You need the HTTP response for a certain request and don't
 want to bother with setting up a full-blown streaming infrastructure.
 
-For these cases Akka HTTP offers the @scala[`Http().singleRequest(...)`]@java[`Http.get(system).singleRequest(...)`] method, which turns an @apidoc[HttpRequest] instance
+For these cases Apache Pekko HTTP offers the @scala[`Http().singleRequest(...)`]@java[`Http.get(system).singleRequest(...)`] method, which turns an @apidoc[HttpRequest] instance
 into @scala[`Future[HttpResponse]`]@java[`CompletionStage<HttpResponse>`]. Internally the request is dispatched across the (cached) host connection pool for the
 request's effective URI.
 
@@ -39,7 +39,7 @@ Java
 
 ### Using the Future-Based API in Actors
 
-When using the @scala[`Future`]@java[`CompletionStage`] based API from inside a classic Akka @apidoc[Actor], all the usual caveats apply to how one should deal
+When using the @scala[`Future`]@java[`CompletionStage`] based API from inside a classic Apache Pekko @apidoc[Actor], all the usual caveats apply to how one should deal
 with the futures completion. For example, you should not access the actor's state from within the @scala[`Future`]@java[`CompletionStage`]'s callbacks
 (such as `map`, `onComplete`, ...) and, instead, you should use the @scala[`pipeTo`]@java[`pipe`] pattern to pipe the result back
 to the actor as a message:
@@ -59,7 +59,7 @@ if you don't care about the response entity.
 Read the @ref[Implications of the streaming nature of Request/Response Entities](../implications-of-streaming-http-entity.md) section for more details.
 
 If the application doesn't subscribe to the response entity within 
-`akka.http.host-connection-pool.response-entity-subscription-timeout`, the stream will fail with a 
+`pekko.http.host-connection-pool.response-entity-subscription-timeout`, the stream will fail with a 
 `TimeoutException: Response entity was not subscribed after ...`.
 @@@
 
@@ -86,7 +86,7 @@ to direct the request to.
 
 ## Collecting headers from a server response
 
-Sometimes we would like to get only headers of specific type which are sent from a server. In order to collect headers in a type safe way Akka HTTP API provides a type for each HTTP header. Here is an example for getting all cookies set by a server (`Set-Cookie` header):
+Sometimes we would like to get only headers of specific type which are sent from a server. In order to collect headers in a type safe way Apache Pekko HTTP API provides a type for each HTTP header. Here is an example for getting all cookies set by a server (`Set-Cookie` header):
 
 Scala
 :   @@snip [HttpClientExampleSpec.scala](/docs/src/test/scala/docs/http/scaladsl/HttpClientCollectingHeaders.scala)

@@ -1,14 +1,16 @@
-# Welcome! Thank you for contributing to Akka HTTP!
+# Welcome! Thank you for contributing to Apache Pekko HTTP!
 
 We follow the standard GitHub [fork & pull](https://help.github.com/articles/using-pull-requests/#fork--pull) approach to pull requests. Just fork the official repo, develop in a branch, and submit a PR!
 
-You're always welcome to submit your PR straight away and start the discussion (without reading the rest of this wonderful doc, or the README.md). The goal of these notes is to make your experience contributing to Akka HTTP as smooth and pleasant as possible. We're happy to guide you through the process once you've submitted your PR.
+You're always welcome to submit your PR straight away and start the discussion (without reading the rest of this wonderful doc, or the README.md). The goal of these notes is to make your experience contributing to Pekko HTTP as smooth and pleasant as possible. We're happy to guide you through the process once you've submitted your PR.
 
-# The Akka Community
+# The Apache Pekko Community
 
-In case of questions about the contribution process or for discussion of specific issues please visit the [akka/dev gitter chat](https://gitter.im/akka/dev).
+If you have questions about the contribution process or discuss specific issues, please interact with the community using the following resources.
 
-You may also check out these [other resources](https://akka.io/get-involved/).
+- [GitHub discussions](https://github.com/apache/incubator-pekko-http/discussions): for questions and general discussion.
+- [Pekko dev mailing list](https://lists.apache.org/list.html?dev@pekko.apache.org): for Pekko development discussions.
+- [GitHub issues](https://github.com/apache/incubator-pekko-http/issues): for bug reports and feature requests. Please search the existing issues before creating new ones. If you are unsure whether you have found a bug, consider asking in GitHub discussions or the mailing list first.
 
 # Navigating around the project & codebase
 
@@ -16,67 +18,65 @@ You may also check out these [other resources](https://akka.io/get-involved/).
 
 Depending on which version (or sometimes module) you want to work on, you should target a specific branch as explained below:
 
-* `main` – active development branch of akka-http 10.2.x
-* `release-10.1` – branch for fixes to akka-http 10.1.x
+* `main` – active development branch of pekko-http 1.0.0
 
 ## Tags
 
-Akka-http uses tags to categorise issues into groups or mark their phase in development.
+Pekko HTTP uses tags to categorise issues into groups or mark their phase in development.
 
 Most notably many tags start `t:` prefix (as in `topic:`), which categorises issues in terms of which module they relate to. Examples are:
 
-- [t:http:core](https://github.com/akka/akka-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Acore)
-- [t:server:dsl](https://github.com/akka/akka-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Aserver%3Adsl)
-- see [all tags here](https://github.com/akka/akka-http/labels)
+- [t:http:core](https://github.com/apache/incubator-pekko-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Acore)
+- [t:server:dsl](https://github.com/apache/incubator-pekko-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Aserver%3Adsl)
+- see [all tags here](https://github.com/apache/incubator-pekko-http/labels)
 
 In general *all issues are open for anyone working on them*, however if you're new to the project and looking for an issue
 that will be accepted and likely is a nice one to get started you should check out the following tags:
 
-- [help wanted](https://github.com/akka/akka-http/labels/help%20wanted) - which identifies issues that the core team will likely not have time to work on, or the issue is a nice entry level ticket. If you're not sure how to solve a ticket but would like to work on it feel free to ask in the issue about clarification or tips.
-- [nice-to-have (low-priority)](https://github.com/akka/akka-http/labels/nice-to-have%20%28low-prio%29) - are tasks which make sense, however are not very high priority (in face of other very high priority issues). If you see something interesting in this list, a contribution would be really wonderful!
+- [help wanted](https://github.com/apache/incubator-pekko-http/labels/help%20wanted) - which identifies issues that the core team will likely not have time to work on, or the issue is a nice entry level ticket. If you're not sure how to solve a ticket but would like to work on it feel free to ask in the issue about clarification or tips.
+- [nice-to-have (low-priority)](https://github.com/apache/incubator-pekko-http/labels/nice-to-have%20%28low-prio%29) - are tasks which make sense, however are not very high priority (in face of other very high priority issues). If you see something interesting in this list, a contribution would be really wonderful!
 
 Another group of tickets are those which start from a number. They're used to signal in what phase of development an issue is:
 
-- [0 - new](https://github.com/akka/akka-http/labels/0%20-%20new) - is assigned when a ticket is unclear on it's purpose or if it is valid or not. Sometimes the additional tag `discuss` is used to mark such tickets, if they propose large scale changed and need more discussion before moving into triaged (or being closed as invalid)
-- [1 - triaged](https://github.com/akka/akka-http/labels/1%20-%20triaged) - roughly speaking means "this ticket makes sense". Triaged tickets are safe to pick up for contributing in terms of likeliness of a patch for it being accepted. It is not recommended to start working on a ticket that is not triaged.
-- [2 - pick next](https://github.com/akka/akka-http/labels/2%20-%20pick%20next) - used to mark issues which are next up in the queue to be worked on. Sometimes it's also used to mark which PRs are expected to be reviewed/merged for the next release. The tag is non-binding, and mostly used as organisational helper.
-- [3 - in progress](https://github.com/akka/akka-http/labels/3%20-%20in%20progress) - means someone is working on this ticket. If you see a ticket that has the tag, however seems inactive, it could have been an omission with removing the tag, feel free to ping the ticket then if it's still being worked on.
+- [0 - new](https://github.com/apache/incubator-pekko-http/labels/0%20-%20new) - is assigned when a ticket is unclear on it's purpose or if it is valid or not. Sometimes the additional tag `discuss` is used to mark such tickets, if they propose large scale changed and need more discussion before moving into triaged (or being closed as invalid)
+- [1 - triaged](https://github.com/apache/incubator-pekko-http/labels/1%20-%20triaged) - roughly speaking means "this ticket makes sense". Triaged tickets are safe to pick up for contributing in terms of likeliness of a patch for it being accepted. It is not recommended to start working on a ticket that is not triaged.
+- [2 - pick next](https://github.com/apache/incubator-pekko-http/labels/2%20-%20pick%20next) - used to mark issues which are next up in the queue to be worked on. Sometimes it's also used to mark which PRs are expected to be reviewed/merged for the next release. The tag is non-binding, and mostly used as organisational helper.
+- [3 - in progress](https://github.com/apache/incubator-pekko-http/labels/3%20-%20in%20progress) - means someone is working on this ticket. If you see a ticket that has the tag, however seems inactive, it could have been an omission with removing the tag, feel free to ping the ticket then if it's still being worked on.
 
 The last group of special tags indicate specific states a ticket is in:
 
-- [bug](https://github.com/akka/akka-http/labels/bug) - bugs take priority in being fixed above features. The core team dedicates a number of days to working on bugs each sprint. Bugs which have reproducers are also great for community contributions as they're well isolated. Sometimes we're not as lucky to have reproducers though, then a bugfix should also include a test reproducing the original error along with the fix.
-- [failed](https://github.com/akka/akka-http/labels/failed) - tickets indicate a Jenkins failure (for example from a nightly build). These tickets usually start with the `FAILED: ...` message, and include a stacktrace + link to the Jenkins failure. The tickets are collected and worked on with priority to keep the build stable and healthy. Often times it may be simple timeout issues (Jenkins boxes are slow), though sometimes real bugs are discovered this way.
+- [bug](https://github.com/apache/incubator-pekko-http/labels/bug) - bugs take priority in being fixed above features. The core team dedicates a number of days to working on bugs each sprint. Bugs which have reproducers are also great for community contributions as they're well isolated. Sometimes we're not as lucky to have reproducers though, then a bugfix should also include a test reproducing the original error along with the fix.
+- [failed](https://github.com/apache/incubator-pekko-http/labels/failed) - tickets indicate a Jenkins failure (for example from a nightly build). These tickets usually start with the `FAILED: ...` message, and include a stacktrace + link to the Jenkins failure. The tickets are collected and worked on with priority to keep the build stable and healthy. Often times it may be simple timeout issues (Jenkins boxes are slow), though sometimes real bugs are discovered this way.
 
 Pull Request validation states:
 
 - `validating => [tested | needs-attention]` - signify pull request validation status
 
-# Akka-http contributing guidelines
+# Pekko HTTP contributing guidelines
 
-These guidelines apply to all Akka projects, by which we mean both the `akka/akka` repository,
-as well as any plugins or additional repos located under the Akka GitHub organisation, e.g. `akka/akka-http` and others.
+These guidelines apply to all Apache Pekko projects, by which we mean both the `apache/incubator-pekko` repository,
+as well as any plugins or additional repos located under the Pekko GitHub organisation, e.g. `apache/incubator-pekko-http` and others.
 
 These guidelines are meant to be a living document that should be changed and adapted as needed.
 We encourage changes that make it easier to achieve our goals in an efficient way.
 
 Please also note that we have a *Code of Conduct* in place which aims keep our community a nice and helpful one.
-You can read its full text here: [Lightbend Community Code of Conduct](https://www.lightbend.com/conduct).
+You can read its full text here: [ASF Code of Conduct](https://www.apache.org/foundation/policies/conduct).
 
 ## General Workflow
 
 The below steps are how to get a patch into a `main` development branch.
 The steps are exactly the same for everyone involved in the project (be it core team, or first time contributor).
 
-1. To avoid duplicated effort, it might be good to check the [issue tracker](https://github.com/akka/akka-http/issues) and [existing pull requests](https://github.com/akka/akka-http/pulls) for existing work.
-   - If there is no ticket yet, feel free to [create one](https://github.com/akka/akka-http/issues/new) to discuss the problem and the approach you want to take to solve it.
-1. [Fork the project](https://github.com/akka/akka-http#fork-destination-box) on GitHub. You'll need to create a feature-branch for your work on your fork, as this way you'll be able to submit a PullRequest against the mainline Akka-http.
-1. Create a branch on your fork and work on the feature. For example: `git checkout -b wip-custom-headers-akka-http`
+1. To avoid duplicated effort, it might be good to check the [issue tracker](https://github.com/apache/incubator-pekko-http/issues) and [existing pull requests](https://github.com/apache/incubator-pekko-http/pulls) for existing work.
+   - If there is no ticket yet, feel free to [create one](https://github.com/apache/incubator-pekko-http/issues/new) to discuss the problem and the approach you want to take to solve it.
+1. [Fork the project](https://github.com/apache/incubator-pekko-http#fork-destination-box) on GitHub. You'll need to create a feature-branch for your work on your fork, as this way you'll be able to submit a PullRequest against the mainline Pekko HTTP.
+1. Create a branch on your fork and work on the feature. For example: `git checkout -b wip-custom-headers-pekko-http`
    - Please make sure to follow the general quality guidelines (specified below) when developing your patch.
    - Please write additional tests covering your feature and adjust existing ones if needed before submitting your Pull Request. The `validatePullRequest` sbt task ([explained below](#the-validatepullrequest-task)) may come in handy to verify your changes are correct.
 1. Once your feature is complete, prepare the commit following our [Creating Commits And Writing Commit Messages](#creating-commits-and-writing-commit-messages). For example, a good commit message would be: `Adding compression support for Manifests #22222` (note the reference to the ticket it aimed to resolve).
 1. Now it's finally time to [submit the Pull Request](https://help.github.com/articles/using-pull-requests)!
-1. If you have not already done so, you will be asked by our CLA bot to [sign the Lightbend CLA](https://www.lightbend.com/contribute/cla) online CLA stands for Contributor License Agreement and is a way of protecting intellectual property disputes from harming the project.
-1. If you're not already on the contributors white-list, the @akka-ci bot will ask `Can one of the repo owners verify this patch?`, to which a core member will reply by commenting `OK TO TEST`. This is just a sanity check to prevent malicious code from being run on the Jenkins cluster.
+1. For large PRs, we may ask you to submit an Apache Software Foundation [CLA](https://www.apache.org/licenses/contributor-agreements.html).
 1. Now both committers and interested people will review your code. This process is to ensure the code we merge is of the best possible quality, and that no silly mistakes slip through. You're expected to follow-up these comments by adding new commits to the same branch. The commit messages of those commits can be more lose, for example: `Removed debugging using printline`, as they all will be squashed into one commit before merging into the main branch.
     - The community and team are really nice people, so don't be afraid to ask follow up questions if you didn't understand some comment, or would like to clarify how to continue with a given feature. We're here to help, so feel free to ask and discuss any kind of questions you might have during review!
 1. After the review you should fix the issues as needed (pushing a new commit for new review etc.), iterating until the reviewers give their thumbs up–which is signaled usually by a comment saying `LGTM`, which means "Looks Good To Me". 
@@ -87,70 +87,72 @@ The steps are exactly the same for everyone involved in the project (be it core 
 
 The TL;DR; of the above very precise workflow version is:
 
-1. Fork akka-http
+1. Fork incubator-pekko-http
 2. Hack and test on your feature (on a branch)
 3. Submit a PR
-4. Sign the CLA if necessary
+4. Sign the ASF CLA if necessary
 4. Keep polishing it until received enough LGTM
 5. Profit!
 
-Note that the akka-http sbt project is not as large as the Akka one, so `sbt` should be able to run with less heap than with the Akka project. In case you need to increase the heap, this can be specified using a command line argument `sbt -mem 2048` or in the environment variable `SBT_OPTS` but then as a regular JVM memory flag, for example `SBT_OPTS=-Xmx2G`, on some platforms you can also edit the global defaults for sbt in `/usr/local/etc/sbtopts`.
+Note that the pekko-http sbt project is not as large as the Pekko one, so `sbt` should be able to run with less heap than with the Pekko project. In case you need to increase the heap, this can be specified using a command line argument `sbt -mem 2048` or in the environment variable `SBT_OPTS` but then as a regular JVM memory flag, for example `SBT_OPTS=-Xmx2G`, on some platforms you can also edit the global defaults for sbt in `/usr/local/etc/sbtopts`.
 
 ## The `validatePullRequest` task
 
-The Akka-http build includes a special task called `validatePullRequest` which investigates the changes made as well as dirty
+The Pekko HTTP build includes a special task called `validatePullRequest` which investigates the changes made as well as dirty
 (uncommitted changes) in your local working directory and figures out which projects are impacted by those changes,
 then running tests only on those projects.
 
-For example changing something in `akka-http-core` would cause tests to be run in all projects which depend on it
-(e.g. `akka-http-tests`, `akka-http-marshallers-*`, `docs` etc.).
+For example, changing something in `pekko-http-core` would cause tests to be run in all projects which depend on it
+(e.g. `pekko-http-tests`, `pekko-http-marshallers-*`, `docs` etc.).
 
 To use the task simply type, and the output should include entries like shown below:
 
 ```
 > validatePullRequest
 [info] Diffing [HEAD] to determine changed modules in PR...
-[info] Detected uncommitted changes in directories (including in dependency analysis): [akka-protobuf,project]
-[info] Detected changes in directories: [docs, project, akka-http-tests, akka-protobuf, akka-http-testkit, akka-http, akka-http-core, akka-stream]
+[info] Detected uncommitted changes in directories (including in dependency analysis): [pekko-protobuf,project]
+[info] Detected changes in directories: [docs, project, pekko-http-tests, pekko-protobuf, pekko-http-testkit, pekko-http, pekko-http-core, pekko-stream]
 ```
 
-By default changes are diffed with the `main` branch when working locally, if you want to validate against a different
+By default, changes are diffed with the `main` branch when working locally, if you want to validate against a different
 target PR branch you can do so by setting the PR_TARGET_BRANCH environment variable for SBT:
 
 ```
 PR_TARGET_BRANCH=origin/example sbt validatePullRequest
 ```
 
-## Developing against Akka `main`
+## Developing against Pekko `main`
 
-Since Akka HTTP is released separately to Akka "core" yet some features require changes in Akka itself, it is sometimes very useful
-to be able to develop Akka HTTP with Akka's sources used directly instead of the binary dependency. You can check out the Akka 
-repository and run sbt with `-Dakka.sources=$HOME/akka` to develop Akka HTTP with Akka as a source dependency instead of a binary one.
+Pekko HTTP codebase is currently built with snapshot versions of the Pekko core libraries.
 
-This allows simple and fast iterations on changes that would need to be introduced in Akka to develop a feature in HTTP that would require those.
+Since Pekko HTTP is released separately to Pekko "core", yet some features require changes in Pekko itself, it is sometimes very useful
+to be able to develop Pekko HTTP with Pekko's sources used directly instead of the binary dependency. You can check out the Pekko 
+repository and run sbt with `-Dpekko.sources=$HOME/akka` to develop Pekko HTTP with Pekko as a source dependency instead of a binary one.
+
+This allows simple and fast iterations on changes that would need to be introduced in Pekko to develop a feature in HTTP that would require those.
 
 ## Binary compatibility
 Binary compatibility rules and guarantees are described in depth in the [Binary Compatibility Rules
 ](https://doc.akka.io/docs/akka/current/common/binary-compatibility-rules.html) section of the documentation.
 
-Akka-http uses MiMa (which is short for [Lightbend Migration Manager](https://github.com/lightbend/migration-manager)) to
+Pekko HTTP uses MiMa (which is short for [Lightbend Migration Manager](https://github.com/lightbend/migration-manager)) to
 validate binary compatibility of incoming Pull Requests. If your PR fails due to binary compatibility issues, you may see 
 an error like this:
 
 ```
-[info] akka-stream: found 1 potential binary incompatibilities while checking against com.typesafe.akka:akka-stream_2.11:2.4.2  (filtered 222)
-[error]  * method foldAsync(java.lang.Object,scala.Function2)akka.stream.scaladsl.FlowOps in trait akka.stream.scaladsl.FlowOps is present only in current version
-[error]    filter with: ProblemFilters.exclude[ReversedMissingMethodProblem]("akka.stream.scaladsl.FlowOps.foldAsync")
+[info] pekko-stream: found 1 potential binary incompatibilities while checking against org.apache.pekko:pekko-stream_2.11:2.4.2  (filtered 222)
+[error]  * method foldAsync(java.lang.Object,scala.Function2)org.apache.pekko.stream.scaladsl.FlowOps in trait org.apache.pekko.stream.scaladsl.FlowOps is present only in current version
+[error]    filter with: ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.stream.scaladsl.FlowOps.foldAsync")
 ```
 
-In such situations it's good to consult with a core team member if the violation can be safely ignored (by adding the above snippet to the project's
+In such situations, it's good to consult with a core team member if the violation can be safely ignored (by adding the above snippet to the project's
 `src/main/mima-filters`), or if it would indeed break binary compatibility.
 
-Situations when it may be fine to ignore a MiMa issued warning include:
+Situations where it may be fine to ignore a MiMa issued warning include:
 
-- if it is touching any class marked as `private[akka]`, `/** INTERNAL API*/` or similar markers
+- if it is touching any class marked as `private[pekko]`, `/** INTERNAL API*/` or similar markers
 - if it is concerning internal classes (often recognizable by package names like `dungeon`, `impl`, `internal` etc.)
-- if it is adding API to classes / traits which are only meant for extension by Akka itself, i.e. should not be extended by end-users
+- if it is adding API to classes / traits which are only meant for extension by Pekko itself, i.e. should not be extended by end-users
 - if it is touching any class marked with the `@InternalApi`, `@DoNotInherit`, and `@ApiMayChange`. See [API stability annotations and comments](https://doc.akka.io/docs/akka/current/common/binary-compatibility-rules.html#api-stability-annotations-and-comments)
 - other tricky situations
 
@@ -161,24 +163,23 @@ incompatibility has been successfully ignored after adding it to the filter file
 
 ## Pull Request Requirements
 
-For a Pull Request to be considered at all it has to meet these requirements:
+For a Pull Request to be considered at all, it has to meet these requirements:
 
 1. Regardless if the code introduces new features or fixes bugs or regressions, it must have comprehensive tests.
 1. The code must be well documented in the Lightbend's standard documentation format (see the ‘Documentation’ section below).
 1. The commit messages must properly describe the changes, see further below.
-1. All Lightbend projects must include Lightbend copyright notices.  Each project can choose between one of two approaches:
+1. All Apache projects must include Apache copyright notices.  Each project can choose between one of two approaches:
 
-    1. All source files in the project must have a Lightbend copyright notice in the file header.
-    1. The Notices file for the project includes the Lightbend copyright notice and no other files contain copyright notices.  See https://www.apache.org/legal/src-headers.html for instructions for managing this approach for copyrights.
+    1. All source files in the project must have a Apache copyright notice in the file header.
+    1. The Notices file for the project includes the Apache copyright notice and no other files contain copyright notices.  See https://www.apache.org/legal/src-headers.html for instructions for managing this approach for copyrights.
 
-    Akka-http uses the first choice, having copyright notices in every file header.
+    Pekko HTTP uses the first choice, having copyright notices in every file header.
 
 
 ### Additional guidelines
 
 Some additional guidelines regarding source code are:
 
-- files should start with a ``Copyright (C) 2020 Lightbend Inc. <https://www.lightbend.com>`` copyright header
 - keep the code [DRY](https://www.oreilly.com/library/view/97-things-every/9780596809515/ch30.html)
 - apply the [Boy Scout Rule](https://www.oreilly.com/library/view/97-things-every/9780596809515/ch08.html) whenever you have the chance to
 - Never delete or change existing copyright notices, just add additional info.  
@@ -196,7 +197,6 @@ All documentation must abide by the following maxims:
 - Example code should be run as part of an automated test suite.
 - Version should be **programmatically** specifiable to the build.
 - Generation should be **completely automated** and available for scripting.
-- Artifacts that must be included in the Lightbend stack should be published to a maven “documentation” repository as documentation artifacts.
 - When renaming Markdown files, add a rewrite rule to the `.htaccess` file to not break external links.
 
 All documentation is preferred to be in Lightbend's standard documentation format [Paradox](https://github.com/lightbend/paradox).
@@ -214,13 +214,13 @@ The rendered documentation will be available under `docs/target/paradox/site/mai
 
 ### JavaDoc
 
-Akka-http generates JavaDoc-style API documentation using the [genjavadoc](https://github.com/lightbend/genjavadoc) sbt plugin, since the sources are written mostly in Scala.
+Pekko HTTP generates JavaDoc-style API documentation using the [genjavadoc](https://github.com/lightbend/genjavadoc) sbt plugin, since the sources are written mostly in Scala.
 
 Generating JavaDoc is not enabled by default, as it's not needed on day-to-day development as it's expected to just work.
 If you'd like to check if you links and formatting looks good in JavaDoc (and not only in ScalaDoc), you can generate it by running:
 
 ```
-sbt -Dakka.genjavadoc.enabled=true javaunidoc:doc
+sbt -pekko.genjavadoc.enabled=true javaunidoc:doc
 ```
 
 Which will generate JavaDoc style docs in `./target/javaunidoc/index.html`
@@ -265,14 +265,24 @@ Example:
     * Details 2
     * Details 3
 
+### Ignoring formatting commits in git blame
+
+Throughout the history of the codebase various formatting commits have been applied as the scalafmt style has evolved over time, if desired
+one can setup git blame to ignore these commits. The hashes for these specific are stored in [this file](.git-blame-ignore-revs) so to configure
+git blame to ignore these commits you can execute the following.
+
+```shell
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
 ## Pull request validation workflow details
 
-Akka-http uses Github Actions to validate PRs. It builds it, runs the tests and comments on the Pull Request in GitHub.
+Pekko HTTP uses Github Actions to validate PRs. It builds it, runs the tests and comments on the Pull Request in GitHub.
 
-In order to speed up PR validation times, the Akka-http build contains a special sbt task called `validatePullRequest`,
+In order to speed up PR validation times, the Pekko HTTP build contains a special sbt task called `validatePullRequest`,
 which is smart enough to figure out which projects should be built if a PR only has changes in some parts of the project.
-For example, if your PR only touches `akka-http-testkit`, no `akka-parsing` tests need to be run, however the task
-will validate all projects that depend on `akka-http-testkit` (including samples).
+For example, if your PR only touches `pekko-http-testkit`, no `pekko-parsing` tests need to be run, however the task
+will validate all projects that depend on `pekko-http-testkit` (including samples).
 Also, tests tagged as `PerformanceTest` and the likes of it are excluded from PR validation.
 
 In order to force the `validatePullRequest` task to build the entire project, regardless of dependency analysis of a PRs
@@ -283,7 +293,7 @@ the validator to test all projects.
 
 ### Scala style 
 
-Akka-http uses [Scalariform](https://github.com/scala-ide/scalariform) to enforce some of the code style rules.
+Pekko HTTP uses [scalafmt](https://scalameta.org/scalafmt/) to enforce some of the code style rules.
 
 ### Java style
 
@@ -298,7 +308,7 @@ Thus we ask Java contributions to follow these simple guidelines:
 
 Avoid short test timeouts, since Jenkins server may GC heavily causing spurious test failures. GC pause or other hiccup of 2 seconds is common in our CI environment. Please note that usually giving a larger timeout *does not slow down the tests*, as in an `expectMessage` call for example it usually will complete quickly.
 
-There is a number of ways timeouts can be defined in Akka tests. The following ways to use timeouts are recommended (in order of preference): 
+There is a number of ways timeouts can be defined in Pekko tests. The following ways to use timeouts are recommended (in order of preference): 
 
 * `remaining` is first choice (requires `within` block)
 * `remainingOrDefault` is second choice
@@ -307,23 +317,22 @@ There is a number of ways timeouts can be defined in Akka tests. The following w
 
 Special care should be given `expectNoMessage` calls, which indeed will wait the entire timeout before continuing, therefore a shorter timeout should be used in those, for example `200` or `300.millis`.
 
-You can read up on remaining and friends in [TestKit.scala](https://github.com/akka/akka/blob/main/akka-testkit/src/main/scala/akka/testkit/TestKit.scala)
+You can read up on remaining and friends in [TestKit.scala](https://github.com/apache/incubator-pekko/blob/main/akka-testkit/src/main/scala/org/apache/pekko/testkit/TestKit.scala)
 
 # Supporting infrastructure
 
 ## Continuous Integration
 
-akka-http currently uses Github Actions for continuous integration and release automation.
+pekko-http currently uses Github Actions for continuous integration and release automation.
 
 ## Snapshots
 
-Snapshots are published to a snapshot repository. See the latest information about how to use snapshots in the
-[documentation](https://doc.akka.io/docs/akka-http/snapshot/contributing.html#snapshots).
+We do not yet publish snapshots.
 
 ## Related links
 
-* [Akka Contributor License Agreement](https://www.lightbend.com/contribute/cla)
-* [Akka HTTP Issue Tracker](https://github.com/akka/akka-http/issues)
+* [Apache Contributor License Agreement](https://www.apache.org/licenses/contributor-agreements.html)
+* [Pekko HTTP Issue Tracker](https://github.com/apache/incubator-pekko-http/issues)
 * [Scalariform](https://github.com/scala-ide/scalariform)
 
 # Development tools
@@ -336,7 +345,7 @@ A great tool to inspect HTTP/2 frames of real-world connections is
 ### HTTPS
 
 When analyzing an HTTPS connection, you need a way to see the plaintext
-payloads. You can enable logging those on the Akka HTTP side with
+payloads. You can enable logging those on the Pekko HTTP side with
 `akka.http.server.log-unencrypted-network-bytes = 100` or
 `akka.http.server.http2.log-frames = true` (same for client-side).
 

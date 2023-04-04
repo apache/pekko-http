@@ -1,31 +1,42 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl
 
 import scala.concurrent.ExecutionContext
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.settings.ClientConnectionSettings
-import akka.http.scaladsl.settings.ConnectionPoolSettings
+import org.apache.pekko
+import pekko.http.scaladsl.model.HttpRequest
+import pekko.http.scaladsl.settings.ClientConnectionSettings
+import pekko.http.scaladsl.settings.ConnectionPoolSettings
 import scala.annotation.nowarn
 import docs.CompileOnlySpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-// OverflowStrategy.dropNew has been deprecated in latest Akka versions
+// OverflowStrategy.dropNew has been deprecated in latest Pekko versions
 // FIXME: replace with 2.6 queue when 2.5 support is dropped, see #3069
 @nowarn("msg=will not be a runnable program|Use Source.queue")
 class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
 
   "manual-entity-consume-example-1" in compileOnlySpec {
-    //#manual-entity-consume-example-1
+    // #manual-entity-consume-example-1
     import java.io.File
 
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.model._
-    import akka.stream.scaladsl.{ FileIO, Framing }
-    import akka.util.ByteString
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.model._
+    import pekko.stream.scaladsl.{ FileIO, Framing }
+    import pekko.util.ByteString
 
     implicit val system: ActorSystem = ActorSystem()
 
@@ -38,18 +49,19 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
     def transformEachLine(line: ByteString): ByteString = ???
 
-    //#manual-entity-consume-example-1
+    // #manual-entity-consume-example-1
   }
 
   "manual-entity-consume-example-2" in compileOnlySpec {
-    //#manual-entity-consume-example-2
+    // #manual-entity-consume-example-2
     import scala.concurrent.ExecutionContext
     import scala.concurrent.Future
     import scala.concurrent.duration._
 
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.model._
-    import akka.util.ByteString
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.model._
+    import pekko.util.ByteString
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
@@ -68,26 +80,27 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     // Though it is also still possible to use the streaming API to consume dataBytes,
     // even though now they're in memory:
     val person2: Future[ExamplePerson] =
-      strictEntity flatMap { e =>
+      strictEntity.flatMap { e =>
         e.dataBytes
           .runFold(ByteString.empty) { case (acc, b) => acc ++ b }
           .map(parse)
       }
 
-    //#manual-entity-consume-example-2
+    // #manual-entity-consume-example-2
   }
 
   "manual-entity-consume-example-3" in compileOnlySpec {
-    //#manual-entity-consume-example-3
+    // #manual-entity-consume-example-3
     import scala.concurrent.ExecutionContext
     import scala.concurrent.Future
 
-    import akka.NotUsed
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.model._
-    import akka.util.ByteString
-    import akka.stream.scaladsl.{ Flow, Sink, Source }
+    import org.apache.pekko
+    import pekko.NotUsed
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.model._
+    import pekko.util.ByteString
+    import pekko.stream.scaladsl.{ Flow, Sink, Source }
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
@@ -99,8 +112,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
     val requests: Source[HttpRequest, NotUsed] = Source
       .fromIterator(() =>
-        Range(0, 10).map(i => HttpRequest(uri = Uri(s"https://localhost/people/$i"))).iterator
-      )
+        Range(0, 10).map(i => HttpRequest(uri = Uri(s"https://localhost/people/$i"))).iterator)
 
     val processorFlow: Flow[Option[ExamplePerson], Int, NotUsed] =
       Flow[Option[ExamplePerson]].map(_.map(_.name.length).getOrElse(0))
@@ -123,16 +135,17 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       .via(processorFlow)
       .runWith(Sink.ignore)
 
-    //#manual-entity-consume-example-3
+    // #manual-entity-consume-example-3
   }
 
   "manual-entity-discard-example-1" in compileOnlySpec {
-    //#manual-entity-discard-example-1
+    // #manual-entity-discard-example-1
     import scala.concurrent.ExecutionContext
 
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.model.HttpMessage.DiscardedEntity
-    import akka.http.scaladsl.model._
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.model.HttpMessage.DiscardedEntity
+    import pekko.http.scaladsl.model._
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
@@ -142,39 +155,40 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     val discarded: DiscardedEntity = response1.discardEntityBytes()
     discarded.future.onComplete { done => println("Entity discarded completely!") }
 
-    //#manual-entity-discard-example-1
+    // #manual-entity-discard-example-1
   }
   "manual-entity-discard-example-2" in compileOnlySpec {
     import scala.concurrent.ExecutionContext
     import scala.concurrent.Future
 
-    import akka.Done
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.model._
-    import akka.stream.scaladsl.Sink
+    import pekko.Done
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.model._
+    import pekko.stream.scaladsl.Sink
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
 
-    //#manual-entity-discard-example-2
+    // #manual-entity-discard-example-2
     val response1: HttpResponse = ??? // obtained from an HTTP call (see examples below)
 
     val discardingComplete: Future[Done] = response1.entity.dataBytes.runWith(Sink.ignore)
     discardingComplete.onComplete(done => println("Entity discarded completely!"))
-    //#manual-entity-discard-example-2
+    // #manual-entity-discard-example-2
   }
 
   "host-level-queue-example" in compileOnlySpec {
-    //#host-level-queue-example
+    // #host-level-queue-example
     import scala.util.{ Failure, Success }
     import scala.concurrent.{ Future, Promise }
 
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.model._
-    import akka.stream.scaladsl._
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.model._
+    import pekko.stream.scaladsl._
 
-    import akka.stream.{ OverflowStrategy, QueueOfferResult }
+    import pekko.stream.{ OverflowStrategy, QueueOfferResult }
 
     implicit val system: ActorSystem = ActorSystem()
     import system.dispatcher // to get an implicit ExecutionContext into scope
@@ -183,14 +197,14 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
     // This idea came initially from this blog post:
     // http://kazuhiro.github.io/scala/akka/akka-http/akka-streams/2016/01/31/connection-pooling-with-akka-http-and-source-queue.html
-    val poolClientFlow = Http().cachedHostConnectionPool[Promise[HttpResponse]]("akka.io")
+    val poolClientFlow = Http().cachedHostConnectionPool[Promise[HttpResponse]]("pekko.apache.org")
     val queue =
       Source.queue[(HttpRequest, Promise[HttpResponse])](QueueSize, OverflowStrategy.dropNew)
         .via(poolClientFlow)
-        .to(Sink.foreach({
+        .to(Sink.foreach {
           case ((Success(resp), p)) => p.success(resp)
           case ((Failure(e), p))    => p.failure(e)
-        }))
+        })
         .run()
 
     def queueRequest(request: HttpRequest): Future[HttpResponse] = {
@@ -199,29 +213,31 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
         case QueueOfferResult.Enqueued    => responsePromise.future
         case QueueOfferResult.Dropped     => Future.failed(new RuntimeException("Queue overflowed. Try again later."))
         case QueueOfferResult.Failure(ex) => Future.failed(ex)
-        case QueueOfferResult.QueueClosed => Future.failed(new RuntimeException("Queue was closed (pool shut down) while running the request. Try again later."))
+        case QueueOfferResult.QueueClosed => Future.failed(
+            new RuntimeException("Queue was closed (pool shut down) while running the request. Try again later."))
       }
     }
 
     val responseFuture: Future[HttpResponse] = queueRequest(HttpRequest(uri = "/"))
-    //#host-level-queue-example
+    // #host-level-queue-example
   }
 
   "host-level-streamed-example" in compileOnlySpec {
-    //#host-level-streamed-example
+    // #host-level-streamed-example
     import java.nio.file.{ Path, Paths }
 
     import scala.util.{ Failure, Success }
     import scala.concurrent.Future
 
-    import akka.NotUsed
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.model._
-    import akka.stream.scaladsl._
+    import org.apache.pekko
+    import pekko.NotUsed
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.model._
+    import pekko.stream.scaladsl._
 
-    import akka.http.scaladsl.model.Multipart.FormData
-    import akka.http.scaladsl.marshalling.Marshal
+    import pekko.http.scaladsl.model.Multipart.FormData
+    import pekko.http.scaladsl.marshalling.Marshal
 
     implicit val system: ActorSystem = ActorSystem()
     import system.dispatcher // to get an implicit ExecutionContext into scope
@@ -233,11 +249,10 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       Source(List(
         FileToUpload("foo.txt", Paths.get("./foo.txt")),
         FileToUpload("bar.txt", Paths.get("./bar.txt")),
-        FileToUpload("baz.txt", Paths.get("./baz.txt"))
-      ))
+        FileToUpload("baz.txt", Paths.get("./baz.txt"))))
 
     val poolClientFlow =
-      Http().cachedHostConnectionPool[FileToUpload]("akka.io")
+      Http().cachedHostConnectionPool[FileToUpload]("pekko.apache.org")
 
     def createUploadRequest(fileToUpload: FileToUpload): Future[(HttpRequest, FileToUpload)] = {
       val bodyPart =
@@ -270,43 +285,43 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
         case (Failure(ex), fileToUpload) =>
           println(s"Uploading file $fileToUpload failed with $ex")
       }
-    //#host-level-streamed-example
+    // #host-level-streamed-example
   }
 
   "single-request-example" in compileOnlySpec {
     import scala.concurrent.Future
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.model._
-    //#create-simple-request
-    HttpRequest(uri = "https://akka.io")
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.model._
+    // #create-simple-request
+    HttpRequest(uri = "https://pekko.apache.org")
 
     // or:
-    import akka.http.scaladsl.client.RequestBuilding.Get
-    Get("https://akka.io")
+    import org.apache.pekko.http.scaladsl.client.RequestBuilding.Get
+    Get("https://pekko.apache.org")
 
     // with query params
-    Get("https://akka.io?foo=bar")
+    Get("https://pekko.apache.org?foo=bar")
 
-    //#create-simple-request
+    // #create-simple-request
 
     implicit val ec: ExecutionContext = null
-    //#create-post-request
+    // #create-post-request
     HttpRequest(
       method = HttpMethods.POST,
       uri = "https://userservice.example/users",
-      entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "data")
-    )
+      entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "data"))
 
     // or:
-    import akka.http.scaladsl.client.RequestBuilding.Post
+    import org.apache.pekko.http.scaladsl.client.RequestBuilding.Post
     Post("https://userservice.example/users", "data")
-    //#create-post-request
+    // #create-post-request
 
     implicit val system: ActorSystem = null
     val response: HttpResponse = null
-    //#unmarshal-response-body
-    import akka.http.scaladsl.unmarshalling.Unmarshal
-    import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+    // #unmarshal-response-body
+    import org.apache.pekko
+    import pekko.http.scaladsl.unmarshalling.Unmarshal
+    import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
     import spray.json.DefaultJsonProtocol._
     import spray.json.RootJsonFormat
 
@@ -314,27 +329,28 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     implicit val petFormat: RootJsonFormat[Pet] = jsonFormat1(Pet.apply)
 
     val pet: Future[Pet] = Unmarshal(response).to[Pet]
-    //#unmarshal-response-body
+    // #unmarshal-response-body
   }
 
   "single-request-in-actor-example" in compileOnlySpec {
-    //#single-request-in-actor-example
-    import akka.actor.{ Actor, ActorLogging, ActorSystem }
-    import akka.http.scaladsl.Http
-    import akka.http.scaladsl.model._
-    import akka.util.ByteString
+    // #single-request-in-actor-example
+    import org.apache.pekko
+    import pekko.actor.{ Actor, ActorLogging, ActorSystem }
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.model._
+    import pekko.util.ByteString
 
     class Myself extends Actor
-      with ActorLogging {
+        with ActorLogging {
 
-      import akka.pattern.pipe
+      import pekko.pattern.pipe
       import context.dispatcher
 
       implicit val system: ActorSystem = context.system
       val http = Http(system)
 
       override def preStart() = {
-        http.singleRequest(HttpRequest(uri = "http://akka.io"))
+        http.singleRequest(HttpRequest(uri = "http://pekko.apache.org"))
           .pipeTo(self)
       }
 
@@ -349,15 +365,16 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       }
 
     }
-    //#single-request-in-actor-example
+    // #single-request-in-actor-example
   }
 
   "https-proxy-example-single-request" in compileOnlySpec {
-    //#https-proxy-example-single-request
+    // #https-proxy-example-single-request
     import java.net.InetSocketAddress
 
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.{ ClientTransport, Http }
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.{ ClientTransport, Http }
 
     implicit val system = ActorSystem()
 
@@ -370,22 +387,23 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       .withConnectionSettings(ClientConnectionSettings(system)
         .withTransport(httpsProxyTransport))
     Http().singleRequest(HttpRequest(uri = "https://google.com"), settings = settings)
-    //#https-proxy-example-single-request
+    // #https-proxy-example-single-request
   }
 
   "https-proxy-example-single-request with auth" in compileOnlySpec {
     import java.net.InetSocketAddress
 
-    import akka.actor.ActorSystem
-    import akka.http.scaladsl.{ ClientTransport, Http }
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.scaladsl.{ ClientTransport, Http }
 
     implicit val system = ActorSystem()
 
     val proxyHost = "localhost"
     val proxyPort = 8888
 
-    //#auth-https-proxy-example-single-request
-    import akka.http.scaladsl.model.headers
+    // #auth-https-proxy-example-single-request
+    import org.apache.pekko.http.scaladsl.model.headers
 
     val proxyAddress = InetSocketAddress.createUnresolved(proxyHost, proxyPort)
     val auth = headers.BasicHttpCredentials("proxy-user", "secret-proxy-pass-dont-tell-anyone")
@@ -395,8 +413,8 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     val settings = ConnectionPoolSettings(system)
       .withConnectionSettings(ClientConnectionSettings(system)
         .withTransport(httpsProxyTransport))
-    Http().singleRequest(HttpRequest(uri = "http://akka.io"), settings = settings)
-    //#auth-https-proxy-example-single-request
+    Http().singleRequest(HttpRequest(uri = "http://pekko.apache.org"), settings = settings)
+    // #auth-https-proxy-example-single-request
   }
 
 }

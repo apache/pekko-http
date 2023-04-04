@@ -1,4 +1,13 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
@@ -6,7 +15,7 @@ package docs
 
 import java.lang.reflect.Method
 
-import akka.annotation.ApiMayChange
+import org.apache.pekko.annotation.ApiMayChange
 import org.reflections.Reflections
 import org.reflections.scanners.{ MethodAnnotationsScanner, Scanners, TypeAnnotationsScanner }
 import org.reflections.util.{ ClasspathHelper, ConfigurationBuilder }
@@ -40,13 +49,15 @@ class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers {
     if (missing.isEmpty) {
       succeed
     } else {
-      fail(s"Please add the following missing $typeOfUsage annotated with @ApiMayChange to docs/src/main/paradox/compatibility-guidelines.md:\n${missing.map(miss => s"* $miss").mkString("\n")}")
+      fail(
+        s"Please add the following missing $typeOfUsage annotated with @ApiMayChange to docs/src/main/paradox/compatibility-guidelines.md:\n${missing.map(
+            miss => s"* $miss").mkString("\n")}")
     }
   }
 
   "compatibility-guidelines.md doc page" should {
     val reflections = new Reflections(new ConfigurationBuilder()
-      .setUrls(ClasspathHelper.forPackage("akka.http"))
+      .setUrls(ClasspathHelper.forPackage("org.apache.pekko.http"))
       .setScanners(
         Scanners.TypesAnnotated,
         Scanners.MethodsAnnotated))

@@ -1,16 +1,26 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl
 
-import akka.http.scaladsl.model.{ HttpEntity, HttpResponse }
-import akka.http.scaladsl.model.headers.{ Authorization, BasicHttpCredentials }
-import akka.testkit.AkkaSpec
+import org.apache.pekko
+import pekko.http.scaladsl.model.{ HttpEntity, HttpResponse }
+import pekko.http.scaladsl.model.headers.{ Authorization, BasicHttpCredentials }
+import pekko.testkit.PekkoSpec
 
 import scala.collection.immutable
 
-class HttpResponseDetailedStringExampleSpec extends AkkaSpec {
+class HttpResponseDetailedStringExampleSpec extends PekkoSpec {
 
   // Custom string representation which includes headers
   def toDetailedString(response: HttpResponse): String = {
@@ -33,12 +43,10 @@ class HttpResponseDetailedStringExampleSpec extends AkkaSpec {
     // Our custom string representation includes body and headers string representations...
     assert(
       toDetailedString(httpResponseWithHeadersAndBody)
-        .contains(piiHeader.toString)
-    )
+        .contains(piiHeader.toString))
     assert(
       toDetailedString(httpResponseWithHeadersAndBody)
-        .contains(piiBody.toString)
-    )
+        .contains(piiBody.toString))
 
     // ... while default `toString` doesn't.
     assert(!s"$httpResponseWithHeadersAndBody".contains(piiHeader.unsafeToString))

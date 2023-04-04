@@ -1,19 +1,28 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2016-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server.directives;
 
-import akka.actor.ActorSystem;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.ServerBinding;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.HttpResponse;
-import akka.http.javadsl.model.StatusCode;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.AllDirectives;
-import akka.http.javadsl.server.Route;
-import akka.testkit.TestKit;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.ServerBinding;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.javadsl.model.StatusCode;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.testkit.TestKit;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.After;
@@ -28,11 +37,11 @@ import java.util.concurrent.TimeUnit;
 
 public class TimeoutDirectivesExamplesTest extends AllDirectives {
     //#testSetup
-    private final Config testConf = ConfigFactory.parseString("akka.loggers = [\"akka.testkit.TestEventListener\"]\n"
-            + "akka.loglevel = ERROR\n"
-            + "akka.stdout-loglevel = ERROR\n"
+    private final Config testConf = ConfigFactory.parseString("pekko.loggers = [\"org.apache.pekko.testkit.TestEventListener\"]\n"
+            + "pekko.loglevel = ERROR\n"
+            + "pekko.stdout-loglevel = ERROR\n"
             + "windows-connection-abort-workaround-enabled = auto\n"
-            + "akka.log-dead-letters = OFF\n"
+            + "pekko.log-dead-letters = OFF\n"
             + "akka.http.server.request-timeout = 1000s");
     // large timeout - 1000s (please note - setting to infinite will disable Timeout-Access header
     // and withRequestTimeout will not work)

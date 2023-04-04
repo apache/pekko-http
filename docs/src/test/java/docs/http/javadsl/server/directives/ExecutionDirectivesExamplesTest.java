@@ -1,44 +1,53 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2016-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.server.ExceptionHandler;
-import akka.http.javadsl.server.PathMatchers;
-import akka.http.javadsl.server.RejectionHandler;
-import akka.http.javadsl.server.Rejections;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.server.ValidationRejection;
-import akka.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.ExceptionHandler;
+import org.apache.pekko.http.javadsl.server.PathMatchers;
+import org.apache.pekko.http.javadsl.server.RejectionHandler;
+import org.apache.pekko.http.javadsl.server.Rejections;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.ValidationRejection;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.junit.Test;
 
-import static akka.http.javadsl.server.PathMatchers.integerSegment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
 
 //#handleExceptions
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.handleExceptions;
-import static akka.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.handleExceptions;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 //#handleExceptions
 //#handleRejections
-import akka.http.javadsl.server.Directives;
+import org.apache.pekko.http.javadsl.server.Directives;
 
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.handleRejections;
-import static akka.http.javadsl.server.Directives.pathPrefix;
-import static akka.http.javadsl.server.Directives.reject;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.reject;
 
 //#handleRejections
 //#handleNotFoundWithDefails
-import akka.http.javadsl.server.Directives;
+import org.apache.pekko.http.javadsl.server.Directives;
 
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.extractUnmatchedPath;
-import static akka.http.javadsl.server.Directives.handleRejections;
-import static akka.http.javadsl.server.Directives.reject;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractUnmatchedPath;
+import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
+import static org.apache.pekko.http.javadsl.server.Directives.reject;
 
 //#handleNotFoundWithDefails
 

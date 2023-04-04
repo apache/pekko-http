@@ -3,15 +3,15 @@
 @@@ div { .group-scala }
 ## Signature
 
-@@signature [SecurityDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/SecurityDirectives.scala) { #Authenticator }
+@@signature [SecurityDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/SecurityDirectives.scala) { #Authenticator }
 
-@@signature [SecurityDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/SecurityDirectives.scala) { #authenticateBasic }
+@@signature [SecurityDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/SecurityDirectives.scala) { #authenticateBasic }
 
 @@@
 
 ## Description
 
-Wraps the inner route with Http Basic authentication support using a given @scala[@scaladoc[Authenticator[T]](akka.http.scaladsl.server.Directives#Authenticator[T]=akka.http.scaladsl.server.directives.Credentials=%3EOption[T])]@java[`Authenticator<T>` - function from `Optional<ProvidedCredentials>` to `Optional<T>`].
+Wraps the inner route with Http Basic authentication support using a given @scala[@scaladoc[Authenticator[T]](org.apache.pekko.http.scaladsl.server.Directives#Authenticator[T]=org.apache.pekko.http.scaladsl.server.directives.Credentials=%3EOption[T])]@java[`Authenticator<T>` - function from `Optional<ProvidedCredentials>` to `Optional<T>`].
 
 Provides support for handling [HTTP Basic Authentication](https://en.wikipedia.org/wiki/Basic_auth).
 
@@ -20,7 +20,7 @@ respectively applies the inner route or rejects the request with a @apidoc[Authe
 which by default is mapped to an `401 Unauthorized` response.
 
 Longer-running authentication tasks (like looking up credentials in a database) should use the @ref[authenticateBasicAsync](authenticateBasicAsync.md)
-variant of this directive which allows it to run without blocking routing layer of Akka HTTP, freeing it for other requests.
+variant of this directive which allows it to run without blocking routing layer of Apache Pekko HTTP, freeing it for other requests.
 
 Standard HTTP-based authentication which uses the `WWW-Authenticate` header containing challenge data and
 @apidoc[Authorization] header for receiving credentials is implemented in `authenticateOrRejectWithChallenge`.

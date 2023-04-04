@@ -1,38 +1,49 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 import scala.concurrent.Future
 
 //#complete-examples
 //#reject-examples
-import akka.http.scaladsl.model._
+import org.apache.pekko
+import pekko.http.scaladsl.model._
 //#reject-examples
 //#complete-examples
 
 //#complete-examples
-import akka.http.scaladsl.model.ContentTypes._
-import akka.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
+import pekko.http.scaladsl.model.ContentTypes._
+import pekko.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
 
 //#complete-examples
 
 //#reject-examples
-import akka.http.scaladsl.server.ValidationRejection
+import pekko.http.scaladsl.server.ValidationRejection
 
 //#reject-examples
 
-import akka.http.scaladsl.server.Route
-import akka.testkit.EventFilter
+import pekko.http.scaladsl.server.Route
+import pekko.testkit.EventFilter
 
 class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "complete-examples" in {
-    //#complete-examples
+    // #complete-examples
     val route =
       concat(
         path("a") {
@@ -56,7 +67,7 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
         path("g") {
           complete(Future { StatusCodes.Created -> "bar" })
         },
-        (path("h") & complete("baz")) // `&` also works with `complete` as the 2nd argument
+        path("h") & complete("baz") // `&` also works with `complete` as the 2nd argument
       )
 
     // tests:
@@ -101,11 +112,11 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.OK
       responseAs[String] shouldEqual "baz"
     }
-    //#complete-examples
+    // #complete-examples
   }
 
   "reject-examples" in {
-    //#reject-examples
+    // #reject-examples
     val route =
       concat(
         path("a") {
@@ -118,8 +129,7 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           // trigger a ValidationRejection explicitly
           // rather than through the `validate` directive
           reject(ValidationRejection("Restricted!"))
-        }
-      )
+        })
 
     // tests:
     Get("/a") ~> route ~> check {
@@ -129,11 +139,11 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/b") ~> route ~> check {
       rejection shouldEqual ValidationRejection("Restricted!")
     }
-    //#reject-examples
+    // #reject-examples
   }
 
   "redirect-examples" in {
-    //#redirect-examples
+    // #redirect-examples
     val route =
       pathPrefix("foo") {
         concat(
@@ -142,8 +152,7 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           },
           pathEnd {
             redirect("/foo/", StatusCodes.PermanentRedirect)
-          }
-        )
+          })
       }
 
     // tests:
@@ -155,14 +164,13 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.PermanentRedirect
       responseAs[String] shouldEqual """The request, and all future requests should be repeated using <a href="/foo/">this URI</a>."""
     }
-    //#redirect-examples
+    // #redirect-examples
   }
 
   "failwith-examples" in EventFilter[RuntimeException](
     start = "Error during processing of request: 'Oops.'. Completing with 500 Internal Server Error response.",
-    occurrences = 1
-  ).intercept {
-    //#failwith-examples
+    occurrences = 1).intercept {
+    // #failwith-examples
     val route =
       path("foo") {
         failWith(new RuntimeException("Oops."))
@@ -173,11 +181,11 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.InternalServerError
       responseAs[String] shouldEqual "There was an internal server error."
     }
-    //#failwith-examples
+    // #failwith-examples
   }
 
   "handle-examples-with-PF" in {
-    //#handle-examples-with-PF
+    // #handle-examples-with-PF
     val handler: PartialFunction[HttpRequest, Future[HttpResponse]] = {
       case HttpRequest(HttpMethods.GET, Uri.Path("/value"), _, _, _) =>
         Future.successful(HttpResponse(entity = "23"))
@@ -186,8 +194,7 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     val route =
       concat(
         handle(handler),
-        complete("fallback")
-      )
+        complete("fallback"))
 
     // tests:
     Get("/value") ~> route ~> check {
@@ -201,11 +208,11 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.OK
       responseAs[String] shouldEqual "fallback"
     }
-    //#handle-examples-with-PF
+    // #handle-examples-with-PF
   }
 
   "handleSync-examples-with-PF" in {
-    //#handleSync-examples-with-PF
+    // #handleSync-examples-with-PF
     val handler: PartialFunction[HttpRequest, HttpResponse] = {
       case HttpRequest(HttpMethods.GET, Uri.Path("/value"), _, _, _) => HttpResponse(entity = "23")
     }
@@ -213,8 +220,7 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     val route =
       concat(
         handleSync(handler),
-        complete("fallback")
-      )
+        complete("fallback"))
 
     // tests:
     Get("/value") ~> route ~> check {
@@ -228,6 +234,6 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       status shouldEqual StatusCodes.OK
       responseAs[String] shouldEqual "fallback"
     }
-    //#handleSync-examples-with-PF
+    // #handleSync-examples-with-PF
   }
 }

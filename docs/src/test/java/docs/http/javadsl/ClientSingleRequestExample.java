@@ -1,21 +1,30 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl;
 
 //#unmarshall-response-body
-import akka.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 
 //#unmarshall-response-body
 
 //#single-request-example
-import akka.actor.typed.ActorSystem;
-import akka.actor.typed.javadsl.Behaviors;
-import akka.http.javadsl.Http;
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.server.examples.petstore.Pet;
-import akka.stream.SystemMaterializer;
+import org.apache.pekko.actor.typed.ActorSystem;
+import org.apache.pekko.actor.typed.javadsl.Behaviors;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.server.examples.petstore.Pet;
+import org.apache.pekko.stream.SystemMaterializer;
 
 import java.util.concurrent.CompletionStage;
 
@@ -26,7 +35,7 @@ public class ClientSingleRequestExample {
 
     final CompletionStage<HttpResponse> responseFuture =
       Http.get(system)
-        .singleRequest(HttpRequest.create("https://akka.io"));
+        .singleRequest(HttpRequest.create("https://pekko.apache.org"));
   }
 }
 //#single-request-example
@@ -34,10 +43,10 @@ public class ClientSingleRequestExample {
 class OtherRequestResponseExamples {
   public void request() {
     //#create-simple-request
-    HttpRequest.create("https://akka.io");
+    HttpRequest.create("https://pekko.apache.org");
 
     // with query params
-    HttpRequest.create("https://akka.io?foo=bar");
+    HttpRequest.create("https://pekko.apache.org?foo=bar");
     //#create-simple-request
     //#create-post-request
     HttpRequest.POST("https://userservice.example/users")

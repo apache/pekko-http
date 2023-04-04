@@ -1,21 +1,31 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.event.{ Logging, LoggingAdapter }
-import akka.event.Logging.LogLevel
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.server.RouteResult
-import akka.http.scaladsl.server.RouteResult.{ Complete, Rejected }
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.server.directives.{ DebuggingDirectives, LogEntry, LoggingMagnet }
+import org.apache.pekko
+import pekko.event.{ Logging, LoggingAdapter }
+import pekko.event.Logging.LogLevel
+import pekko.http.scaladsl.model.HttpRequest
+import pekko.http.scaladsl.server.RouteResult
+import pekko.http.scaladsl.server.RouteResult.{ Complete, Rejected }
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.server.directives.{ DebuggingDirectives, LogEntry, LoggingMagnet }
 import docs.CompileOnlySpec
 
 class DebuggingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "logRequest-0" in {
-    //#logRequest-0
+    // #logRequest-0
     // different possibilities of using logRequest
 
     // The first alternatives use an implicitly available LoggingContext for logging
@@ -41,10 +51,10 @@ class DebuggingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/") ~> logRequestPrintln(complete("logged")) ~> check {
       responseAs[String] shouldEqual "logged"
     }
-    //#logRequest-0
+    // #logRequest-0
   }
   "logRequestResult" in {
-    //#logRequestResult
+    // #logRequestResult
     // different possibilities of using logRequestResult
 
     // The first alternatives use an implicitly available LoggingContext for logging
@@ -63,24 +73,26 @@ class DebuggingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // This one will only log rejections
     val rejectionLogger: HttpRequest => RouteResult => Option[LogEntry] = req => {
-      case Rejected(rejections) => Some(LogEntry(s"Request: $req\nwas rejected with rejections:\n$rejections", Logging.DebugLevel))
-      case _                    => None
+      case Rejected(rejections) =>
+        Some(LogEntry(s"Request: $req\nwas rejected with rejections:\n$rejections", Logging.DebugLevel))
+      case _ => None
     }
     DebuggingDirectives.logRequestResult(rejectionLogger)
 
     // This one doesn't use the implicit LoggingContext but uses `println` for logging
     def printRequestMethodAndResponseStatus(req: HttpRequest)(res: RouteResult): Unit =
       println(requestMethodAndResponseStatusAsInfo(req)(res).map(_.obj.toString).getOrElse(""))
-    val logRequestResultPrintln = DebuggingDirectives.logRequestResult(LoggingMagnet(_ => printRequestMethodAndResponseStatus))
+    val logRequestResultPrintln =
+      DebuggingDirectives.logRequestResult(LoggingMagnet(_ => printRequestMethodAndResponseStatus))
 
     // tests:
     Get("/") ~> logRequestResultPrintln(complete("logged")) ~> check {
       responseAs[String] shouldEqual "logged"
     }
-    //#logRequestResult
+    // #logRequestResult
   }
   "logResult" in {
-    //#logResult
+    // #logResult
     // different possibilities of using logResponse
 
     // The first alternatives use an implicitly available LoggingContext for logging
@@ -109,15 +121,15 @@ class DebuggingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/") ~> logResultPrintln(complete("logged")) ~> check {
       responseAs[String] shouldEqual "logged"
     }
-    //#logResult
+    // #logResult
   }
   "logRequestResultWithResponseTime" in {
-    //#logRequestResultWithResponseTime
+    // #logRequestResultWithResponseTime
 
-    def akkaResponseTimeLoggingFunction(
-      loggingAdapter:   LoggingAdapter,
-      requestTimestamp: Long,
-      level:            LogLevel       = Logging.InfoLevel)(req: HttpRequest)(res: RouteResult): Unit = {
+    def pekkoResponseTimeLoggingFunction(
+        loggingAdapter: LoggingAdapter,
+        requestTimestamp: Long,
+        level: LogLevel = Logging.InfoLevel)(req: HttpRequest)(res: RouteResult): Unit = {
       val entry = res match {
         case Complete(resp) =>
           val responseTimestamp: Long = System.nanoTime
@@ -131,7 +143,7 @@ class DebuggingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     }
     def printResponseTime(log: LoggingAdapter) = {
       val requestTimestamp = System.nanoTime
-      akkaResponseTimeLoggingFunction(log, requestTimestamp)_
+      pekkoResponseTimeLoggingFunction(log, requestTimestamp) _
     }
 
     val logResponseTime = DebuggingDirectives.logRequestResult(LoggingMagnet(printResponseTime))
@@ -139,6 +151,6 @@ class DebuggingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     Get("/") ~> logResponseTime(complete("logged")) ~> check {
       responseAs[String] shouldEqual "logged"
     }
-    //#logRequestResultWithResponseTime
+    // #logRequestResultWithResponseTime
   }
 }

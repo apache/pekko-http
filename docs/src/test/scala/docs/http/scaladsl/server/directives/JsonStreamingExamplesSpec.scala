@@ -1,47 +1,57 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.NotUsed
-import akka.http.scaladsl.common.{ EntityStreamingSupport, JsonEntityStreamingSupport }
-import akka.http.scaladsl.marshalling._
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.Accept
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.server.{ UnacceptedResponseContentTypeRejection, UnsupportedRequestContentTypeRejection }
-import akka.stream.scaladsl.{ Flow, Source }
-import akka.util.ByteString
+import org.apache.pekko
+import pekko.NotUsed
+import pekko.http.scaladsl.common.{ EntityStreamingSupport, JsonEntityStreamingSupport }
+import pekko.http.scaladsl.marshalling._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.Accept
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.server.{ UnacceptedResponseContentTypeRejection, UnsupportedRequestContentTypeRejection }
+import pekko.stream.scaladsl.{ Flow, Source }
+import pekko.util.ByteString
 import docs.CompileOnlySpec
 
 import scala.concurrent.Future
 
 class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
-  //#tweet-model
+  // #tweet-model
   case class Tweet(uid: Int, txt: String)
-  //#tweet-model
+  // #tweet-model
 
   val tweets = List(
-    Tweet(1, "#Akka rocks!"),
+    Tweet(1, "#Pekko rocks!"),
     Tweet(2, "Streaming is so hot right now!"),
     Tweet(3, "You cannot enter the same river twice."))
   def getTweets = Source(tweets)
 
-  //#tweet-format
+  // #tweet-format
   import spray.json.RootJsonFormat
 
   object MyTweetJsonProtocol
-    extends akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-    with spray.json.DefaultJsonProtocol {
+      extends pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+      with spray.json.DefaultJsonProtocol {
 
     implicit val tweetFormat: RootJsonFormat[Tweet] = jsonFormat2(Tweet.apply)
   }
-  //#tweet-format
+  // #tweet-format
 
   "spray-json-response-streaming" in {
-    //#spray-json-response-streaming
+    // #spray-json-response-streaming
     // [1] import "my protocol", for marshalling Tweet objects:
     import MyTweetJsonProtocol._
 
@@ -62,11 +72,11 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Get("/tweets").withHeaders(AcceptJson) ~> route ~> check {
       responseAs[String] shouldEqual
-        """[""" +
-        """{"txt":"#Akka rocks!","uid":1},""" +
-        """{"txt":"Streaming is so hot right now!","uid":2},""" +
-        """{"txt":"You cannot enter the same river twice.","uid":3}""" +
-        """]"""
+      """[""" +
+      """{"txt":"#Pekko rocks!","uid":1},""" +
+      """{"txt":"Streaming is so hot right now!","uid":2},""" +
+      """{"txt":"You cannot enter the same river twice.","uid":3}""" +
+      """]"""
     }
 
     // endpoint can only marshal Json, so it will *reject* requests for application/xml:
@@ -74,11 +84,11 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
       handled should ===(false)
       rejection should ===(UnacceptedResponseContentTypeRejection(Set(ContentTypes.`application/json`)))
     }
-    //#spray-json-response-streaming
+    // #spray-json-response-streaming
   }
 
   "line-by-line-json-response-streaming" in {
-    //#line-by-line-json-response-streaming
+    // #line-by-line-json-response-streaming
     import MyTweetJsonProtocol._
 
     // Configure the EntityStreamingSupport to render the elements as:
@@ -103,22 +113,23 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Get("/tweets").withHeaders(AcceptJson) ~> route ~> check {
       responseAs[String] shouldEqual
-        """{"txt":"#Akka rocks!","uid":1}""" + "\n" +
-        """{"txt":"Streaming is so hot right now!","uid":2}""" + "\n" +
-        """{"txt":"You cannot enter the same river twice.","uid":3}""" + "\n"
+      """{"txt":"#Pekko rocks!","uid":1}""" + "\n" +
+      """{"txt":"Streaming is so hot right now!","uid":2}""" + "\n" +
+      """{"txt":"You cannot enter the same river twice.","uid":3}""" + "\n"
     }
-    //#line-by-line-json-response-streaming
+    // #line-by-line-json-response-streaming
   }
 
   "csv-example" in {
-    //#csv-example
+    // #csv-example
     // [1] provide a marshaller to ByteString
     implicit val tweetAsCsv = Marshaller.strict[Tweet, ByteString] { t =>
-      Marshalling.WithFixedContentType(ContentTypes.`text/csv(UTF-8)`, () => {
-        val txt = t.txt.replaceAll(",", ".")
-        val uid = t.uid
-        ByteString(List(uid, txt).mkString(","))
-      })
+      Marshalling.WithFixedContentType(ContentTypes.`text/csv(UTF-8)`,
+        () => {
+          val txt = t.txt.replaceAll(",", ".")
+          val uid = t.uid.toString
+          ByteString(List(uid, txt).mkString(","))
+        })
     }
 
     // [2] enable csv streaming:
@@ -135,16 +146,16 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Get("/tweets").withHeaders(AcceptCsv) ~> route ~> check {
       responseAs[String] shouldEqual
-        "1,#Akka rocks!" + "\n" +
-        "2,Streaming is so hot right now!" + "\n" +
-        "3,You cannot enter the same river twice." + "\n"
+      "1,#Pekko rocks!" + "\n" +
+      "2,Streaming is so hot right now!" + "\n" +
+      "3,You cannot enter the same river twice." + "\n"
     }
-    //#csv-example
+    // #csv-example
   }
 
   "response-streaming-modes" in {
     {
-      //#async-rendering
+      // #async-rendering
       import MyTweetJsonProtocol._
       implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
         EntityStreamingSupport.json()
@@ -154,11 +165,11 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
         val tweets: Source[Tweet, NotUsed] = getTweets
         complete(tweets)
       }
-      //#async-rendering
+      // #async-rendering
     }
 
     {
-      //#async-unordered-rendering
+      // #async-unordered-rendering
       import MyTweetJsonProtocol._
       implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
         EntityStreamingSupport.json()
@@ -168,28 +179,28 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
         val tweets: Source[Tweet, NotUsed] = getTweets
         complete(tweets)
       }
-      //#async-unordered-rendering
+      // #async-unordered-rendering
     }
   }
 
-  //#measurement-model
+  // #measurement-model
   case class Measurement(id: String, value: Int)
 
-  //#measurement-model
+  // #measurement-model
 
-  //#measurement-format
+  // #measurement-format
   import spray.json.RootJsonFormat
 
   object MyMeasurementJsonProtocol
-    extends akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-    with spray.json.DefaultJsonProtocol {
+      extends pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+      with spray.json.DefaultJsonProtocol {
 
     implicit val measurementFormat: RootJsonFormat[Measurement] = jsonFormat2(Measurement.apply)
   }
-  //#measurement-format
+  // #measurement-format
 
   "spray-json-request-streaming" in {
-    //#spray-json-request-streaming
+    // #spray-json-request-streaming
     // [1] import "my protocol", for unmarshalling Measurement objects:
     import MyMeasurementJsonProtocol._
 
@@ -244,7 +255,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
           Set(ContentTypes.`application/json`),
           Some(ContentTypes.`text/xml(UTF-8)`)))
     }
-    //#spray-json-request-streaming
+    // #spray-json-request-streaming
   }
 
 }

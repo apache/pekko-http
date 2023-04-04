@@ -1,18 +1,27 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl;
 
-import akka.http.javadsl.model.HttpHeader;
-import akka.http.javadsl.model.HttpRequest;
-import akka.http.javadsl.model.StatusCodes;
-import akka.http.javadsl.model.headers.ModeledCustomHeader;
-import akka.http.javadsl.model.headers.ModeledCustomHeaderFactory;
-import akka.http.javadsl.model.headers.RawHeader;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.japi.JavaPartialFunction;
+import org.apache.pekko.http.javadsl.model.HttpHeader;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.ModeledCustomHeader;
+import org.apache.pekko.http.javadsl.model.headers.ModeledCustomHeaderFactory;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.japi.JavaPartialFunction;
 import org.junit.Test;
 import scala.PartialFunction;
 
@@ -21,9 +30,9 @@ import java.util.Optional;
 import static org.junit.Assert.*;
 
 //#header-value-pf
-import akka.http.javadsl.server.Directives;
+import org.apache.pekko.http.javadsl.server.Directives;
 
-import static akka.http.javadsl.server.Directives.headerValuePF;
+import static org.apache.pekko.http.javadsl.server.Directives.headerValuePF;
 
 //#header-value-pf
 

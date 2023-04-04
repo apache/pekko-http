@@ -1,0 +1,249 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
+ * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ */
+
+package org.apache.pekko.http.javadsl.server.directives;
+
+import org.apache.pekko.http.javadsl.model.HttpHeader;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.*;
+import org.apache.pekko.http.javadsl.server.Directives;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.TestRoute;
+import org.apache.pekko.japi.pf.PFBuilder;
+import org.junit.Test;
+
+import java.util.Optional;
+
+import static org.apache.pekko.http.javadsl.server.Directives.*;
+
+public class HeaderDirectivesTest extends JUnitRouteTest {
+
+  @Test
+  public void testHeaderValue() {
+    TestRoute route = testRoute(headerValue((header) -> {
+      if (header.name().equals("X-Test-Header")) {
+        if (header.value().equals("bad value")) throw new RuntimeException("bad value");
+        else return Optional.of(header.value());
+      }
+      else return Optional.empty();
+    },
+    Directives::complete));
+
+    route
+      .run(HttpRequest.create().addHeader(RawHeader.create("X-Test-Header", "woho!")))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("woho!");
+
+    route
+      .run(HttpRequest.create().addHeader(RawHeader.create("X-Test-Header", "bad value")))
+      .assertStatusCode(StatusCodes.BAD_REQUEST);
+
+
+    route
+      .run(HttpRequest.create())
+      .assertStatusCode(StatusCodes.NOT_FOUND);
+  }
+
+  @Test
+  public void testHeaderValuePF() {
+    TestRoute route = testRoute(headerValuePF(
+      new PFBuilder<HttpHeader, String>().<Host>match(
+        Host.class, Host::value
+      ).build(),
+      Directives::complete));
+
+    route
+      .run(HttpRequest.create().addHeader(Host.create("example.com")))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("example.com");
+
+    route
+      .run(HttpRequest.create())
+      .assertStatusCode(StatusCodes.NOT_FOUND);
+  }
+
+  @Test
+  public void testHeaderValueByName() {
+    TestRoute route = testRoute(headerValueByName("X-Test-Header", Directives::complete));
+
+    route
+      .run(HttpRequest.create().addHeader(RawHeader.create("X-Test-Header", "woho!")))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("woho!");
+
+    route
+      .run(HttpRequest.create())
+      .assertStatusCode(StatusCodes.BAD_REQUEST);
+  }
+
+  @Test
+  public void testHeaderValueByType() {
+    TestRoute route = testRoute(headerValueByType(Server.class,
+      (Server s) -> complete(s.getProducts().iterator().next().product())));
+
+    route
+      .run(HttpRequest.create().addHeader(Server.create(ProductVersion.create("such-service", "0.6"))))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("such-service");
+
+    route
+      .run(HttpRequest.create())
+      .assertStatusCode(StatusCodes.BAD_REQUEST);
+  }
+
+  @Test
+  public void testOptionalHeaderValue() {
+    TestRoute route = testRoute(optionalHeaderValue((header) -> {
+        if (header.name().equals("X-Test-Header")) {
+          if (header.value().equals("bad value")) throw new RuntimeException("bad value");
+          else return Optional.of(header.value());
+        }
+        else return Optional.empty();
+      },
+      opt -> complete(opt.toString())));
+
+    route
+      .run(HttpRequest.create().addHeader(RawHeader.create("X-Test-Header", "woho!")))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("Optional[woho!]");
+
+    route
+      .run(HttpRequest.create().addHeader(RawHeader.create("X-Test-Header", "bad value")))
+      .assertStatusCode(StatusCodes.BAD_REQUEST);
+
+
+    route
+      .run(HttpRequest.create())
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("Optional.empty");
+  }
+
+  @Test
+  public void testOptionalHeaderValuePF() {
+    TestRoute route = testRoute(optionalHeaderValuePF(
+      new PFBuilder<HttpHeader, String>().<Host>match(
+        Host.class, Host::value
+      ).build(),
+      (opt) -> complete(opt.toString())));
+
+    route
+      .run(HttpRequest.create().addHeader(Host.create("example.com")))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("Optional[example.com]");
+
+    route
+      .run(HttpRequest.create())
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("Optional.empty");
+  }
+
+
+  @Test
+  public void testOptionalHeaderValueByName() {
+    TestRoute route = testRoute(optionalHeaderValueByName("X-Test-Header", (opt) -> complete(opt.toString())));
+
+    route
+      .run(HttpRequest.create().addHeader(RawHeader.create("X-Test-Header", "woho!")))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("Optional[woho!]");
+
+    route
+      .run(HttpRequest.create())
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("Optional.empty");
+  }
+
+  @Test
+  public void testOptionalHeaderValueByType() {
+    TestRoute route = testRoute(optionalHeaderValueByType(UserAgent.class,
+      (Optional<UserAgent> ua) -> complete(((Boolean)ua.isPresent()).toString())));
+
+    route
+      .run(HttpRequest.create().addHeader(UserAgent.create("custom-server/1.2.3")))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("true");
+
+    route
+      .run(HttpRequest.create())
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("false");
+  }
+
+  @Test
+  public void testValueByTypeHandlesCustomHeaders() {
+    TestRoute route = testRoute(headerValueByType(SampleCustomHeader.class,
+      (SampleCustomHeader m) -> complete(m.value())));
+
+    route
+      .run(HttpRequest.create().addHeader(RawHeader.create("X-Sample-Custom-Header", "such header")))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("X-Sample-Custom-Header: such header");
+
+    route
+      .run(HttpRequest.create())
+      .assertStatusCode(StatusCodes.BAD_REQUEST);
+  }
+
+  @Test
+  public void testCheckSameOrigin() {
+    final HttpOrigin validOriginHeader = HttpOrigin.create("http://localhost", Host.create("8080"));
+
+    final HttpOriginRange validOriginRange = HttpOriginRange.create(validOriginHeader);
+
+    TestRoute route = testRoute(checkSameOrigin(validOriginRange, () -> complete("Result")));
+
+    route
+      .run(HttpRequest.create().addHeader(Origin.create(validOriginHeader)))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("Result");
+
+    route
+      .run(HttpRequest.create())
+      .assertStatusCode(StatusCodes.BAD_REQUEST);
+
+    final HttpOrigin invalidOriginHeader = HttpOrigin.create("http://invalid.com", Host.create("8080"));
+
+    route
+      .run(HttpRequest.create().addHeader(Origin.create(invalidOriginHeader)))
+      .assertStatusCode(StatusCodes.FORBIDDEN);
+  }
+  
+  @Test
+  public void testCheckSameOriginGivenALL() {
+    final HttpOrigin validOriginHeader = HttpOrigin.create("http://localhost", Host.create("8080"));
+
+    // not very interesting case, however here we check that the directive simply avoids performing the check
+    final HttpOriginRange everythingGoes = HttpOriginRanges.ALL;
+
+    final TestRoute route = testRoute(checkSameOrigin(everythingGoes, () -> complete("Result")));
+
+    route
+      .run(HttpRequest.create().addHeader(Origin.create(validOriginHeader)))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("Result");
+
+    route
+      .run(HttpRequest.create())
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("Result");
+
+    final HttpOrigin otherOriginHeader = HttpOrigin.create("http://invalid.com", Host.create("8080"));
+
+    route
+      .run(HttpRequest.create().addHeader(Origin.create(otherOriginHeader)))
+      .assertStatusCode(StatusCodes.OK)
+      .assertEntity("Result");
+  }
+
+}

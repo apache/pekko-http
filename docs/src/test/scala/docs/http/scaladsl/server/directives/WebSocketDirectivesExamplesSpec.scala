@@ -1,21 +1,31 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
 import scala.concurrent.duration._
-import akka.util.ByteString
-import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.{ Flow, Sink, Source }
-import akka.http.scaladsl.model.ws.{ BinaryMessage, Message, TextMessage }
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.testkit.WSProbe
+import org.apache.pekko
+import pekko.util.ByteString
+import pekko.stream.OverflowStrategy
+import pekko.stream.scaladsl.{ Flow, Sink, Source }
+import pekko.http.scaladsl.model.ws.{ BinaryMessage, Message, TextMessage }
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.testkit.WSProbe
 import docs.CompileOnlySpec
 
 class WebSocketDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "greeter-service" in {
-    //#greeter-service
+    // #greeter-service
     def greeter: Flow[Message, Message, Any] =
       Flow[Message].mapConcat {
         case tm: TextMessage =>
@@ -36,28 +46,28 @@ class WebSocketDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // WS creates a WebSocket request for testing
     WS("/greeter", wsClient.flow) ~> websocketRoute ~>
-      check {
-        // check response for WS Upgrade headers
-        isWebSocketUpgrade shouldEqual true
+    check {
+      // check response for WS Upgrade headers
+      isWebSocketUpgrade shouldEqual true
 
-        // manually run a WS conversation
-        wsClient.sendMessage("Peter")
-        wsClient.expectMessage("Hello Peter!")
+      // manually run a WS conversation
+      wsClient.sendMessage("Peter")
+      wsClient.expectMessage("Hello Peter!")
 
-        wsClient.sendMessage(BinaryMessage(ByteString("abcdef")))
-        wsClient.expectNoMessage(100.millis)
+      wsClient.sendMessage(BinaryMessage(ByteString("abcdef")))
+      wsClient.expectNoMessage(100.millis)
 
-        wsClient.sendMessage("John")
-        wsClient.expectMessage("Hello John!")
+      wsClient.sendMessage("John")
+      wsClient.expectMessage("Hello John!")
 
-        wsClient.sendCompletion()
-        wsClient.expectCompletion()
-      }
-    //#greeter-service
+      wsClient.sendCompletion()
+      wsClient.expectCompletion()
+    }
+    // #greeter-service
   }
 
   "handle-multiple-protocols" in {
-    //#handle-multiple-protocols
+    // #handle-multiple-protocols
     def greeterService: Flow[Message, Message, Any] =
       Flow[Message].mapConcat {
         case tm: TextMessage =>
@@ -76,7 +86,7 @@ class WebSocketDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     def websocketMultipleProtocolRoute =
       path("services") {
         handleWebSocketMessagesForProtocol(greeterService, "greeter") ~
-          handleWebSocketMessagesForProtocol(echoService, "echo")
+        handleWebSocketMessagesForProtocol(echoService, "echo")
       }
 
     // tests:
@@ -84,30 +94,30 @@ class WebSocketDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // WS creates a WebSocket request for testing
     WS("/services", wsClient.flow, List("other", "echo")) ~>
-      websocketMultipleProtocolRoute ~>
-      check {
-        expectWebSocketUpgradeWithProtocol { protocol =>
-          protocol shouldEqual "echo"
+    websocketMultipleProtocolRoute ~>
+    check {
+      expectWebSocketUpgradeWithProtocol { protocol =>
+        protocol shouldEqual "echo"
 
-          wsClient.sendMessage("Peter")
-          wsClient.expectMessage("Peter")
+        wsClient.sendMessage("Peter")
+        wsClient.expectMessage("Peter")
 
-          wsClient.sendMessage(BinaryMessage(ByteString("abcdef")))
-          wsClient.expectMessage(ByteString("abcdef"))
+        wsClient.sendMessage(BinaryMessage(ByteString("abcdef")))
+        wsClient.expectMessage(ByteString("abcdef"))
 
-          wsClient.sendMessage("John")
-          wsClient.expectMessage("John")
+        wsClient.sendMessage("John")
+        wsClient.expectMessage("John")
 
-          wsClient.sendCompletion()
-          wsClient.expectCompletion()
-        }
+        wsClient.sendCompletion()
+        wsClient.expectCompletion()
       }
-    //#handle-multiple-protocols
+    }
+    // #handle-multiple-protocols
   }
 
   "extractWebSocketUpgrade" in {
-    //#extractWebSocketUpgrade
-    import akka.http.scaladsl.model.AttributeKeys.webSocketUpgrade
+    // #extractWebSocketUpgrade
+    import org.apache.pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 
     def echoService: Flow[Message, Message, Any] =
       Flow[Message]
@@ -134,11 +144,11 @@ class WebSocketDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
         wsClient.expectCompletion()
       }
     }
-    //#extractWebSocketUpgrade
+    // #extractWebSocketUpgrade
   }
 
   "extractOfferedWsProtocols" in {
-    //#extractOfferedWsProtocols
+    // #extractOfferedWsProtocols
     def echoService: Flow[Message, Message, Any] =
       Flow[Message]
         // needed because a noop flow hasn't any buffer that would start processing in tests
@@ -164,6 +174,6 @@ class WebSocketDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
         wsClient.expectCompletion()
       }
     }
-    //#extractOfferedWsProtocols
+    // #extractOfferedWsProtocols
   }
 }

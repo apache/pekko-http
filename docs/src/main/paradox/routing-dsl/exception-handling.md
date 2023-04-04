@@ -23,7 +23,7 @@ handle any exception.
 So, if you'd like to customize the way certain exceptions are handled you need to write a custom @apidoc[ExceptionHandler].
 Once you have defined your custom @apidoc[ExceptionHandler] you have two options for "activating" it:
 
- 1. @scala[Bring it into implicit scope at the top-level.]@java[Pass it to the `seal()` method of the @javadoc[Route](akka.http.javadsl.server.Route)]
+ 1. @scala[Bring it into implicit scope at the top-level.]@java[Pass it to the `seal()` method of the @javadoc[Route](org.apache.pekko.http.javadsl.server.Route)]
  2. Supply it as argument to the @ref[handleExceptions](directives/execution-directives/handleExceptions.md) directive.
 
 In the first case your handler will be "sealed" (which means that it will receive the default handler as a fallback for
@@ -79,7 +79,7 @@ This is because exceptions are known to have a negative performance impact for c
 when the depth of the call stack is significant (stack trace construction cost)
 and when the handler is located far from the place of the throwable instantiation (stack unwinding costs).
 
-In a typical Akka application both these conditions are frequently true,
+In a typical Apache Pekko application both these conditions are frequently true,
 so as a rule of thumb, you should try to minimize the number of `Throwable` instances
 reaching the exception handler.
 
@@ -89,7 +89,7 @@ have a read at this excellent post by A. Shipilёv: [The Exceptional Performance
 
 
 @@@ note
-Please note that since version `10.1.6`, the default `ExceptionHandler` will also discard the entity bytes automatically. If you want to change this behavior,
+Please note that the default `ExceptionHandler` will also discard the entity bytes automatically. If you want to change this behavior,
 please refer to @ref[the section above](exception-handling.md#exception-handling); however, might cause connections to stall
 if the entity is not properly rejected or cancelled on the client side.
 @@@

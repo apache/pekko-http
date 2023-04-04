@@ -1,18 +1,28 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.RoutingSpec
-import akka.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.Route
+import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers
 import docs.CompileOnlySpec
 
 class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with PredefinedFromStringUnmarshallers {
   "example-1" in {
-    //#example-1
+    // #example-1
     val route =
       parameter("color") { color =>
         complete(s"The color is '$color'")
@@ -27,10 +37,10 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
       status shouldEqual StatusCodes.NotFound
       responseAs[String] shouldEqual "Request is missing required query parameter 'color'"
     }
-    //#example-1
+    // #example-1
   }
   "required-1" in {
-    //#required-1
+    // #required-1
     val route =
       parameters("color", "backgroundColor") { (color, backgroundColor) =>
         complete(s"The color is '$color' and the background is '$backgroundColor'")
@@ -44,10 +54,10 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
       status shouldEqual StatusCodes.NotFound
       responseAs[String] shouldEqual "Request is missing required query parameter 'backgroundColor'"
     }
-    //#required-1
+    // #required-1
   }
   "optional" in {
-    //#optional
+    // #optional
     val route =
       parameters("color", "backgroundColor".optional) { (color, backgroundColor) =>
         val backgroundStr = backgroundColor.getOrElse("<undefined>")
@@ -61,10 +71,10 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
     Get("/?color=blue") ~> route ~> check {
       responseAs[String] shouldEqual "The color is 'blue' and the background is '<undefined>'"
     }
-    //#optional
+    // #optional
   }
   "optional-with-default" in {
-    //#optional-with-default
+    // #optional-with-default
     val route =
       parameters("color", "backgroundColor".withDefault("white")) { (color, backgroundColor) =>
         complete(s"The color is '$color' and the background is '$backgroundColor'")
@@ -77,10 +87,10 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
     Get("/?color=blue") ~> route ~> check {
       responseAs[String] shouldEqual "The color is 'blue' and the background is 'white'"
     }
-    //#optional-with-default
+    // #optional-with-default
   }
   "required-value" in {
-    //#required-value
+    // #required-value
     val route =
       parameters("color", "action".requiredValue("true")) { (color, _) =>
         complete(s"The color is '$color'.")
@@ -95,10 +105,10 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
       status shouldEqual StatusCodes.NotFound
       responseAs[String] shouldEqual "Request is missing required value 'true' for query parameter 'action'"
     }
-    //#required-value
+    // #required-value
   }
   "mapped-value" in {
-    //#mapped-value
+    // #mapped-value
     val route =
       parameters("color", "count".as[Int]) { (color, count) =>
         complete(s"The color is '$color' and you have $count of it.")
@@ -112,12 +122,12 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
     Get("/?color=blue&count=blub") ~> Route.seal(route) ~> check {
       status shouldEqual StatusCodes.BadRequest
       responseAs[String] shouldEqual "The query parameter 'count' was malformed:\n'blub'" +
-        " is not a valid 32-bit signed integer value"
+      " is not a valid 32-bit signed integer value"
     }
-    //#mapped-value
+    // #mapped-value
   }
   "repeated" in {
-    //#repeated
+    // #repeated
     val route =
       parameters("color", "city".repeated) { (color, cities) =>
         cities.toList match {
@@ -139,10 +149,10 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
     Get("/?color=blue&city=Chicago&city=Boston") ~> Route.seal(route) ~> check {
       responseAs[String] shouldEqual "The color is 'blue' and the cities are Boston, Chicago."
     }
-    //#repeated
+    // #repeated
   }
   "mapped-repeated" in {
-    //#mapped-repeated
+    // #mapped-repeated
     val route =
       parameters("color", "distance".as[Int].repeated) { (color, distances) =>
         distances.toList match {
@@ -164,10 +174,10 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
     Get("/?color=blue&distance=5&distance=14") ~> Route.seal(route) ~> check {
       responseAs[String] shouldEqual "The color is 'blue' and the distances are 14, 5."
     }
-    //#mapped-repeated
+    // #mapped-repeated
   }
   "parameterMap" in {
-    //#parameterMap
+    // #parameterMap
     val route =
       parameterMap { params =>
         def paramString(param: (String, String)): String = s"""${param._1} = '${param._2}'"""
@@ -181,10 +191,10 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
     Get("/?x=1&x=2") ~> route ~> check {
       responseAs[String] shouldEqual "The parameters are x = '2'"
     }
-    //#parameterMap
+    // #parameterMap
   }
   "parameterMultiMap" in {
-    //#parameterMultiMap
+    // #parameterMultiMap
     val route =
       parameterMultiMap { params =>
         complete(s"There are parameters ${params.map(x => x._1 + " -> " + x._2.size).mkString(", ")}")
@@ -197,10 +207,10 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
     Get("/?x=23&x=42") ~> route ~> check {
       responseAs[String] shouldEqual "There are parameters x -> 2"
     }
-    //#parameterMultiMap
+    // #parameterMultiMap
   }
   "parameterSeq" in {
-    //#parameterSeq
+    // #parameterSeq
     val route =
       parameterSeq { params =>
         def paramString(param: (String, String)): String = s"""${param._1} = '${param._2}'"""
@@ -214,10 +224,10 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
     Get("/?x=1&x=2") ~> route ~> check {
       responseAs[String] shouldEqual "The parameters are x = '1', x = '2'"
     }
-    //#parameterSeq
+    // #parameterSeq
   }
   "csv" in {
-    //#csv
+    // #csv
     val route =
       parameter("names".as(CsvSeq[String])) { names =>
         complete(s"The parameters are ${names.mkString(", ")}")
@@ -236,6 +246,6 @@ class ParameterDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec w
     Get("/?names=Caplin,John,") ~> route ~> check {
       responseAs[String] shouldEqual "The parameters are Caplin, John, "
     }
-    //#csv
+    // #csv
   }
 }

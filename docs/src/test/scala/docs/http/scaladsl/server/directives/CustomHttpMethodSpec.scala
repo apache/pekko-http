@@ -1,29 +1,39 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server.directives
 
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.HttpProtocols._
-import akka.http.scaladsl.model.RequestEntityAcceptance.Expected
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives
-import akka.testkit.{ AkkaSpec, SocketUtil }
+import org.apache.pekko
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.model.HttpProtocols._
+import pekko.http.scaladsl.model.RequestEntityAcceptance.Expected
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.Directives
+import pekko.testkit.{ PekkoSpec, SocketUtil }
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
 
-class CustomHttpMethodSpec extends AkkaSpec with ScalaFutures
-  with Directives {
+class CustomHttpMethodSpec extends PekkoSpec with ScalaFutures
+    with Directives {
 
   "Http" should {
     "allow registering custom method" in {
       import system.dispatcher
       val host = "localhost"
       var port = 0
-      //#application-custom
-      import akka.http.scaladsl.settings.{ ParserSettings, ServerSettings }
+      // #application-custom
+      import org.apache.pekko.http.scaladsl.settings.{ ParserSettings, ServerSettings }
 
       // define custom method type:
       val BOLT = HttpMethod.custom("BOLT", safe = false,
@@ -38,12 +48,12 @@ class CustomHttpMethodSpec extends AkkaSpec with ScalaFutures
       }
       val binding = Http().newServerAt(host, port).withSettings(serverSettings).bind(routes)
 
-      //#application-custom
+      // #application-custom
       // Make sure we're bound
       port = binding.futureValue.localAddress.getPort
-      //#application-custom
+      // #application-custom
       val request = HttpRequest(BOLT, s"http://$host:$port/", protocol = `HTTP/1.1`)
-      //#application-custom
+      // #application-custom
 
       // Check response
       val response = Http().singleRequest(request).futureValue
@@ -54,4 +64,3 @@ class CustomHttpMethodSpec extends AkkaSpec with ScalaFutures
     }
   }
 }
-

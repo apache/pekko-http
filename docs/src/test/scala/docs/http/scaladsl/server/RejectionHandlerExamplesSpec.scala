@@ -1,21 +1,32 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.scaladsl.server
 
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.RoutingSpec
+import org.apache.pekko
+import pekko.http.scaladsl.model.HttpResponse
+import pekko.http.scaladsl.server.Route
+import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
 
 object MyRejectionHandler {
 
-  //#custom-handler-example
-  import akka.actor.ActorSystem
-  import akka.http.scaladsl.Http
-  import akka.http.scaladsl.model._
-  import akka.http.scaladsl.server._
+  // #custom-handler-example
+  import org.apache.pekko
+  import pekko.actor.ActorSystem
+  import pekko.http.scaladsl.Http
+  import pekko.http.scaladsl.model._
+  import pekko.http.scaladsl.server._
   import StatusCodes._
   import Directives._
 
@@ -36,7 +47,7 @@ object MyRejectionHandler {
         }
         .handleAll[MethodRejection] { methodRejections =>
           val names = methodRejections.map(_.supported.name)
-          complete(MethodNotAllowed, s"Can't do that! Supported: ${names mkString " or "}!")
+          complete(MethodNotAllowed, s"Can't do that! Supported: ${names.mkString(" or ")}!")
         }
         .handleNotFound { complete((NotFound, "Not here!")) }
         .result()
@@ -50,14 +61,15 @@ object MyRejectionHandler {
 
     Http().newServerAt("localhost", 8080).bind(route)
   }
-  //#custom-handler-example
+  // #custom-handler-example
 }
 
 object HandleNotFoundWithThePath {
 
-  //#not-found-with-path
-  import akka.http.scaladsl.model.StatusCodes._
-  import akka.http.scaladsl.server._
+  // #not-found-with-path
+  import org.apache.pekko
+  import pekko.http.scaladsl.model.StatusCodes._
+  import pekko.http.scaladsl.server._
   import Directives._
 
   implicit def myRejectionHandler: RejectionHandler =
@@ -68,14 +80,14 @@ object HandleNotFoundWithThePath {
         }
       }
       .result()
-  //#not-found-with-path
+  // #not-found-with-path
 }
 
 class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
   "example-1" in {
-    //#example-1
-    import akka.http.scaladsl.coding.Coders
+    // #example-1
+    import org.apache.pekko.http.scaladsl.coding.Coders
 
     val route =
       path("order") {
@@ -87,16 +99,16 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
             decodeRequestWith(Coders.Gzip) {
               complete("Received compressed POST")
             }
-          }
-        )
+          })
       }
-    //#example-1
+    // #example-1
   }
 
   "example-2-all-exceptions-json" in {
-    //#example-json
-    import akka.http.scaladsl.model._
-    import akka.http.scaladsl.server.RejectionHandler
+    // #example-json
+    import org.apache.pekko
+    import pekko.http.scaladsl.model._
+    import pekko.http.scaladsl.server.RejectionHandler
 
     implicit def myRejectionHandler: RejectionHandler =
       RejectionHandler.default
@@ -116,8 +128,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
       Route.seal(
         path("hello") {
           complete("Hello there")
-        }
-      )
+        })
 
     // tests:
     Get("/nope") ~> route ~> check {
@@ -125,12 +136,12 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
       contentType shouldEqual ContentTypes.`application/json`
       responseAs[String] shouldEqual """{"rejection": "The requested resource could not be found."}"""
     }
-    //#example-json
+    // #example-json
   }
 
   "example-3-custom-rejection-http-response" in {
-    import akka.http.scaladsl.model._
-    import akka.http.scaladsl.server.RejectionHandler
+    import pekko.http.scaladsl.model._
+    import pekko.http.scaladsl.server.RejectionHandler
 
     implicit def myRejectionHandler: RejectionHandler =
       RejectionHandler.default
@@ -146,14 +157,13 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
           case x => x // pass through all other types of responses
         }
 
-    //#example-json
+    // #example-json
 
     val anotherRoute =
       Route.seal(
         validate(check = false, "Whoops, bad request!") {
           complete("Hello there")
-        }
-      )
+        })
 
     // tests:
     Get("/hello") ~> anotherRoute ~> check {
@@ -161,12 +171,12 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
       contentType shouldEqual ContentTypes.`application/json`
       responseAs[String] shouldEqual """{"rejection": "Whoops, bad request!"}"""
     }
-    //#example-json
+    // #example-json
   }
 
   "test custom handler example" in {
-    import akka.http.scaladsl.server._
-    import akka.http.scaladsl.model.StatusCodes.BadRequest
+    import pekko.http.scaladsl.server._
+    import pekko.http.scaladsl.model.StatusCodes.BadRequest
 
     implicit def myRejectionHandler: RejectionHandler = RejectionHandler.newBuilder().handle {
       case MissingCookieRejection(_) => complete(HttpResponse(BadRequest, entity = "No cookies, no service!!!"))

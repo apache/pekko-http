@@ -2,7 +2,7 @@
 
 In the chapter about constructing @ref[Routes](routes.md) the @scala[`~` operator]@java[`RouteDirectives.route()` method] was introduced, which connects two or more routes in a way
 that allows the next specified route to get a go at a request if the first route "rejected" it. The concept of "rejections" is
-used by Akka HTTP for maintaining a more functional overall architecture and in order to be able to properly
+used by Apache Pekko HTTP for maintaining a more functional overall architecture and in order to be able to properly
 handle all kinds of error scenarios.
 
 When a filtering directive, like the @ref[get](directives/method-directives/get.md) directive, cannot let the request pass through to its inner route because
@@ -22,7 +22,7 @@ and handle any rejection.
 ## Predefined Rejections
 
 A rejection encapsulates a specific reason why a route was not able to handle a request. It is modeled as an object of
-type @apidoc[Rejection]. Akka HTTP comes with a set of @scala[@scaladoc[predefined rejections](akka.http.scaladsl.server.Rejection)]@java[@javadoc[predefined rejections](akka.http.javadsl.server.Rejections)], which are used by the many
+type @apidoc[Rejection]. Apache Pekko HTTP comes with a set of @scala[@scaladoc[predefined rejections](org.apache.pekko.http.scaladsl.server.Rejection)]@java[@javadoc[predefined rejections](org.apache.pekko.http.javadsl.server.Rejections)], which are used by the many
 @ref[predefined directives](directives/alphabetically.md).
 
 Rejections are gathered up over the course of a Route evaluation and finally converted to @apidoc[HttpResponse] replies by
@@ -31,18 +31,18 @@ the @ref[handleRejections](directives/execution-directives/handleRejections.md) 
 <a id="the-rejectionhandler"></a>
 ## The RejectionHandler
 
-The @ref[handleRejections](directives/execution-directives/handleRejections.md) directive delegates the actual job of converting a list of rejections to the provided @scala[@scaladoc[RejectionHandler](akka.http.scaladsl.server.RejectionHandler)]@java[@javadoc[RejectionHandler](akka.http.javadsl.server.RejectionHandler)],
+The @ref[handleRejections](directives/execution-directives/handleRejections.md) directive delegates the actual job of converting a list of rejections to the provided @scala[@scaladoc[RejectionHandler](org.apache.pekko.http.scaladsl.server.RejectionHandler)]@java[@javadoc[RejectionHandler](org.apache.pekko.http.javadsl.server.RejectionHandler)],
 so it can choose whether it would like to handle the current set of rejections or not.
 Unhandled rejections will simply continue to flow through the route structure.
 
-The default `RejectionHandler` applied by the top-level glue code that turns a @scala[@scaladoc[Route](akka.http.scaladsl.server.index#Route=akka.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[akka.http.scaladsl.server.RouteResult])]@java[@javadoc[Route](akka.http.javadsl.server.Route)] into a
+The default `RejectionHandler` applied by the top-level glue code that turns a @scala[@scaladoc[Route](org.apache.pekko.http.scaladsl.server.index#Route=org.apache.pekko.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[org.apache.pekko.http.scaladsl.server.RouteResult])]@java[@javadoc[Route](org.apache.pekko.http.javadsl.server.Route)] into a
 @apidoc[Flow] or async handler function for the @ref[low-level API](../server-side/low-level-api.md)
 @scala[(via `Route.toFlow` or `Route.toFunction`)]
 will handle *all* rejections that reach it.
 
 
 @@@ note
-Please note that since version `10.1.2`, the default `RejectionHandler` will also discard the entity bytes automatically. If you want to change this behavior,
+Please note that the default `RejectionHandler` will also discard the entity bytes automatically. If you want to change this behavior,
 please refer to @ref[Customising rejection HTTP Responses](rejections.md#customising-rejections); however, might cause connections to stall
 if the entity is not properly rejected or cancelled on the client side.
 @@@
@@ -78,7 +78,7 @@ So, for the example above the `RejectionHandler` will be presented with only one
 
 Internally rejections are stored in an immutable list, so you might ask yourself what the semantics of
 an empty rejection list are. In fact, empty rejection lists have well defined semantics. They signal that a request was
-not handled because the respective resource could not be found. Akka HTTP reserves the special status of "empty
+not handled because the respective resource could not be found. Apache Pekko HTTP reserves the special status of "empty
 rejection" to this most common failure a service is likely to produce.
 
 So, for example, if the @ref[path](directives/path-directives/path.md) directive rejects a request it does so with an empty rejection list. The
@@ -95,12 +95,12 @@ Scala
 Java
 :  @@snip [RejectionHandlerExamplesTest.java](/docs/src/test/java/docs/http/javadsl/server/RejectionHandlerExamplesTest.java) { #custom-handler-example-java }
 
-The easiest way to construct a `RejectionHandler` is with `RejectionHandler.newBuilder()` that Akka HTTP provides.
+The easiest way to construct a `RejectionHandler` is with `RejectionHandler.newBuilder()` that Apache Pekko HTTP provides.
 After having created a new `Builder` instance
 you can attach handling logic for certain types of rejections through three helper methods:
 
 @scala[handle(PartialFunction[Rejection, Route])]@java[handle(Class<T>, Function<T, Route>)]
-: Handles the provided type of rejections with the given function. The provided function simply produces a @scala[@scaladoc[Route](akka.http.scaladsl.server.index#Route=akka.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[akka.http.scaladsl.server.RouteResult])]@java[@javadoc[Route](akka.http.javadsl.server.Route)] which is
+: Handles the provided type of rejections with the given function. The provided function simply produces a @scala[@scaladoc[Route](org.apache.pekko.http.scaladsl.server.index#Route=org.apache.pekko.http.scaladsl.server.RequestContext=%3Escala.concurrent.Future[org.apache.pekko.http.scaladsl.server.RouteResult])]@java[@javadoc[Route](org.apache.pekko.http.javadsl.server.Route)] which is
 run when the rejection is "caught". This makes the full power of the Routing DSL available for defining rejection
 handlers and even allows for recursing back into the main route structure if required.
 
@@ -120,7 +120,7 @@ This way the priority between rejections is properly defined via the order of yo
 
 Once you have defined your custom `RejectionHandler` you have two options for "activating" it:
 
- 1. @scala[Bring it into implicit scope at the top-level]@java[Pass it to the `seal()` method of the @javadoc[Route](akka.http.javadsl.server.Route) class]
+ 1. @scala[Bring it into implicit scope at the top-level]@java[Pass it to the `seal()` method of the @javadoc[Route](org.apache.pekko.http.javadsl.server.Route) class]
  2. Supply it as an argument to the @ref[handleRejections](directives/execution-directives/handleRejections.md) directive
 
 In the first case your handler will be "sealed" (which means that it will receive the default handler as a fallback for

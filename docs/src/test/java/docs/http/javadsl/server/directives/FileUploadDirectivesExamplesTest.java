@@ -1,18 +1,27 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
+/*
  * Copyright (C) 2016-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package docs.http.javadsl.server.directives;
 
-import akka.http.impl.engine.rendering.BodyPartRenderer;
-import akka.http.javadsl.model.*;
-import akka.http.javadsl.server.Route;
-import akka.http.javadsl.unmarshalling.Unmarshaller;
-import akka.http.javadsl.server.directives.FileInfo;
-import akka.http.javadsl.testkit.JUnitRouteTest;
-import akka.stream.javadsl.Framing;
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
+import org.apache.pekko.http.impl.engine.rendering.BodyPartRenderer;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
+import org.apache.pekko.http.javadsl.server.directives.FileInfo;
+import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.stream.javadsl.Framing;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.util.ByteString;
 import org.junit.Ignore;
 import org.junit.Test;
 import scala.concurrent.duration.FiniteDuration;
@@ -33,25 +42,25 @@ import java.util.function.Function;
 import static scala.compat.java8.JFunction.func;
 
 //#storeUploadedFile
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.storeUploadedFile;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.storeUploadedFile;
 
 //#storeUploadedFile
 //#storeUploadedFiles
-import static akka.http.javadsl.server.Directives.complete;
-import static akka.http.javadsl.server.Directives.storeUploadedFiles;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.storeUploadedFiles;
 
 //#storeUploadedFiles
 //#fileUpload
-import static akka.http.javadsl.server.Directives.extractRequestContext;
-import static akka.http.javadsl.server.Directives.fileUpload;
-import static akka.http.javadsl.server.Directives.onSuccess;
+import static org.apache.pekko.http.javadsl.server.Directives.extractRequestContext;
+import static org.apache.pekko.http.javadsl.server.Directives.fileUpload;
+import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
 
 //#fileUpload
 //#fileUploadAll
-import static akka.http.javadsl.server.Directives.extractRequestContext;
-import static akka.http.javadsl.server.Directives.fileUploadAll;
-import static akka.http.javadsl.server.Directives.onSuccess;
+import static org.apache.pekko.http.javadsl.server.Directives.extractRequestContext;
+import static org.apache.pekko.http.javadsl.server.Directives.fileUploadAll;
+import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
 
 //#fileUploadAll
 
@@ -82,7 +91,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
     Map<String, String> filenameMapping = new HashMap<>();
     filenameMapping.put("filename", "primes.csv");
 
-    akka.http.javadsl.model.Multipart.FormData multipartForm =
+    org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
       Multiparts.createStrictFormDataFromParts(Multiparts.createFormDataBodyPartStrict("csv",
         HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8,
           "2,3,5\n7,11,13,17,23\n29,31,37\n"), filenameMapping));
@@ -122,7 +131,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
     filenameMappingA.put("filename", "primesA.csv");
     filenameMappingB.put("filename", "primesB.csv");
 
-    akka.http.javadsl.model.Multipart.FormData multipartForm =
+    org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
       Multiparts.createStrictFormDataFromParts(
         Multiparts.createFormDataBodyPartStrict("csv",
           HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8,
@@ -158,7 +167,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
     Map<String, String> filenameMapping = new HashMap<>();
     filenameMapping.put("filename", "primes.csv");
 
-    akka.http.javadsl.model.Multipart.FormData multipartForm =
+    org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
       Multiparts.createStrictFormDataFromParts(
         Multiparts.createFormDataBodyPartStrict("csv",
           HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8,
@@ -200,7 +209,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
     filenameMappingA.put("filename", "primesA.csv");
     filenameMappingB.put("filename", "primesB.csv");
 
-    akka.http.javadsl.model.Multipart.FormData multipartForm =
+    org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
       Multiparts.createStrictFormDataFromParts(
         Multiparts.createFormDataBodyPartStrict("csv",
           HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8,
@@ -251,7 +260,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
     }
 
 
-    akka.http.javadsl.model.Multipart.FormData multipartForm =
+    org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
       Multiparts.createFormDataFromPath("csv", ContentTypes.TEXT_PLAIN_UTF8, tempFile.toPath());
 
     // test:

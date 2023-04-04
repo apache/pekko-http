@@ -4,13 +4,13 @@
 
 ## Signature
 
-@@signature [BasicDirectives.scala](/akka-http/src/main/scala/akka/http/scaladsl/server/directives/BasicDirectives.scala) { #extractActorSystem }
+@@signature [BasicDirectives.scala](/http/src/main/scala/org/apache/pekko/http/scaladsl/server/directives/BasicDirectives.scala) { #extractActorSystem }
 
 @@@
 
 ## Description
 
-Extracts the @apidoc[akka.actor.ActorSystem] from the @apidoc[RequestContext], which can be useful when the external API
+Extracts the @apidoc[org.apache.pekko.actor.ActorSystem] from the @apidoc[RequestContext], which can be useful when the external API
 in your route needs one.
 
 ## Example
