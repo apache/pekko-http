@@ -26,8 +26,14 @@ object PekkoDependency {
     // so 'x.y', 'x.y.z', 'current' or 'snapshot'
     def link: String
   }
-  case class Artifact(version: String, isSnapshot: Boolean = false) extends Pekko {
+  case class Artifact(version: String, isSnapshot: Boolean) extends Pekko {
     override def link = VersionNumber(version) match { case VersionNumber(Seq(x, y, _*), _, _) => s"$x.$y" }
+  }
+  object Artifact {
+    def apply(version: String): Artifact = {
+      val isSnap = version.endsWith("-SNAPSHOT")
+      new Artifact(version, isSnap)
+    }
   }
   case class Sources(uri: String, link: String = "current") extends Pekko {
     def version = link
@@ -39,25 +45,17 @@ object PekkoDependency {
         Sources(pekkoSources)
       case None =>
         Option(System.getProperty("pekko.http.build.pekko.version")) match {
-          case Some("main")        => mainSnapshot
-          case Some("release-1.0") =>
-            // Don't 'downgrade' building even if pekko.sources asks for it
-            // (typically for the docs that require 2.6)
-            if (defaultVersion.startsWith("1.0")) Artifact(determineLatestSnapshot("0.0.0"), true)
-            else Artifact(defaultVersion)
-          case Some("default") | None =>
-            // TODO: Revert to Artifact(defaultVersion) when release of Pekko is made
-            mainSnapshot
-          case Some(other) => Artifact(other, true)
+          case Some("main")           => mainSnapshot
+          case Some("default") | None => Artifact(defaultVersion)
+          case Some(other)            => Artifact(other, true)
         }
     }
   }
 
   // Default version updated only when needed, https://pekko.apache.org/docs/pekko/current/project/downstream-upgrade-strategy.html
-  val minimumExpectedPekkoVersion = "1.0.0"
+  val minimumExpectedPekkoVersion = "0.0.0+26623-85c2a469-SNAPSHOT"
   val default = pekkoDependency(defaultVersion = minimumExpectedPekkoVersion)
-  val minimumExpectedPekko26Version = "1.0.0"
-  val docs = pekkoDependency(defaultVersion = minimumExpectedPekko26Version)
+  def docs = default
 
   lazy val mainSnapshot = Artifact(determineLatestSnapshot("0.0.0"), true)
 

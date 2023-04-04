@@ -17,21 +17,23 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 8
-        uses: olafurpg/setup-scala@v10
+        uses: actions/setup-java@v3
         with:
-          java-version: adopt@1.8
+          distribution: temurin
+          java-version: 8
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6.2
+        uses: coursier/cache-action@v6
 
       - name: Install graphviz
         run: sudo apt-get install -y graphviz
 
       - name: Publish to Apache Maven repo
-        run: sbt -jvm-opts .jvmopts-ghactions +publish
+        run: sbt +publish
         env:
           NEXUS_USER: ${{ secrets.NEXUS_USER }}
           NEXUS_PW: ${{ secrets.NEXUS_PW }}
+          JAVA_OPTS: "-verbose:gc -Xmx4g"
 
   publish-docs:
     name: Publish documentation to nightlies.apache.org
@@ -44,16 +46,19 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 8
-        uses: olafurpg/setup-scala@v10
+        uses: actions/setup-java@v3
         with:
-          java-version: adopt@1.8
+          distribution: temurin
+          java-version: 8
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6.2
+        uses: coursier/cache-action@v6
 
       - name: Build Documentation
         run: |-
           sbt -Dpekko.genjavadoc.enabled=true docs/paradox unidoc
+        env:
+          JAVA_OPTS: "-verbose:gc -Xmx4g"
 
       # Create directory structure upfront since rsync does not create intermediate directories otherwise
       - name: Create nightly directory structure

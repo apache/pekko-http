@@ -94,13 +94,13 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializ
 
     val http2ClientFlow =
       if (useTls) {
-        Http().connectionTo("akka.example.org")
+        Http().connectionTo("pekko.example.org")
           .withCustomHttpsConnectionContext(ExampleHttpContexts.exampleClientContext)
           .withClientConnectionSettings(ClientConnectionSettings(system).withTransport(
             ExampleHttpContexts.proxyTransport(serverBinding.localAddress)))
           .http2()
       } else {
-        Http().connectionTo("akka.example.org")
+        Http().connectionTo("pekko.example.org")
           .withClientConnectionSettings(ClientConnectionSettings(system).withTransport(
             ExampleHttpContexts.proxyTransport(serverBinding.localAddress)))
           .http2WithPriorKnowledge()

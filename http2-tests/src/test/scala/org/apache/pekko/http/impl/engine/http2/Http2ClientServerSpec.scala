@@ -169,7 +169,7 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
         .withSettings(serverSettings)
         .bind(handler).futureValue
     lazy val clientFlow =
-      Http().connectionTo("akka.example.org")
+      Http().connectionTo("pekko.example.org")
         .withCustomHttpsConnectionContext(ExampleHttpContexts.exampleClientContext)
         .withClientConnectionSettings(
           clientSettings.withTransport(ExampleHttpContexts.proxyTransport(binding.localAddress)))

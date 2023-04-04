@@ -167,7 +167,7 @@ object HPackSpecExamples {
        9587 3160 65c0 03ed 4ee5 b106 3d50 07""".parseHexByteString
 
   /**
-   * akka-http model representation of first request (as encoded in C.5.1 and C.6.1)
+   * pekko-http model representation of first request (as encoded in C.5.1 and C.6.1)
    */
   val FirstResponse =
     HttpResponse(
@@ -180,7 +180,7 @@ object HPackSpecExamples {
       protocol = HttpProtocols.`HTTP/2.0`)
 
   /**
-   * akka-http model representation of second request (as encoded in C.5.2 and C.6.2)
+   * pekko-http model representation of second request (as encoded in C.5.2 and C.6.2)
    */
   val SecondResponse =
     HttpResponse(
@@ -193,7 +193,7 @@ object HPackSpecExamples {
       protocol = HttpProtocols.`HTTP/2.0`)
 
   /**
-   * akka-http model representation of second request (as encoded in C.5.3 and C.6.3)
+   * pekko-http model representation of second request (as encoded in C.5.3 and C.6.3)
    */
   val ThirdResponse =
     HttpResponse(

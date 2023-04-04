@@ -31,9 +31,9 @@ addSbtPlugin(("com.lightbend.paradox" % "sbt-paradox-project-info" % "2.0.0").fo
 
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
 addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.30")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.10.0")
-addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.10")
-addSbtPlugin("org.mdedetrich" % "sbt-apache-sonatype" % "0.1.5")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.10.4")
+addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.1.1")
+addSbtPlugin("org.mdedetrich" % "sbt-apache-sonatype" % "0.1.6")
 addSbtPlugin("com.github.pjfanning" % "sbt-source-dist" % "0.1.5")
 addSbtPlugin("net.virtual-void" % "sbt-hackers-digest" % "0.1.2")
 

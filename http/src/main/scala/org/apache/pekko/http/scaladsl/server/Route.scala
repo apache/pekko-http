@@ -50,7 +50,7 @@ object Route {
       rejectionHandler: RejectionHandler = RejectionHandler.default,
       exceptionHandler: ExceptionHandler = null): Route = {
     import directives.ExecutionDirectives._
-    // optimized as this is the root handler for all akka-http applications
+    // optimized as this is the root handler for all pekko-http applications
     BasicDirectives.extractSettings { theSettings =>
       val effectiveRoutingSettings = if (routingSettings eq null) theSettings else routingSettings
 

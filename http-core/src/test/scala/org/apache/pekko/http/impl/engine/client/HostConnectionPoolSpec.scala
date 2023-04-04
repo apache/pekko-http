@@ -849,16 +849,17 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
   /**
    * Transport that uses actual top-level Http APIs to establish a HTTPS connection
    *
-   * Currently requires an /etc/hosts entry that points akka.example.org to a locally bindable address.
+   * Currently requires an /etc/hosts entry that points pekko.example.org to a locally bindable address.
    */
   case object PekkoHttpEngineTLS extends TopLevelApiClientServerImplementation {
     protected override def bindServerSource =
-      Http().newServerAt("akka.example.org", 0).enableHttps(ExampleHttpContexts.exampleServerContext).connectionSource()
+      Http().newServerAt("pekko.example.org", 0).enableHttps(
+        ExampleHttpContexts.exampleServerContext).connectionSource()
     protected def clientConnectionFlow(serverBinding: ServerBinding, connectionKillSwitch: SharedKillSwitch)
         : Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] = {
       val clientConnectionSettings =
         ClientConnectionSettings(system).withTransport(new KillSwitchedClientTransport(connectionKillSwitch))
-      Http().outgoingConnectionUsingContext(host = "akka.example.org", port = serverBinding.localAddress.getPort,
+      Http().outgoingConnectionUsingContext(host = "pekko.example.org", port = serverBinding.localAddress.getPort,
         connectionContext = ExampleHttpContexts.exampleClientContext, settings = clientConnectionSettings)
     }
   }

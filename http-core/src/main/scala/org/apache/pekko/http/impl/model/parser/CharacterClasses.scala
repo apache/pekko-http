@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.impl.model.parser
 
-import org.apache.pekko
 import org.parboiled2.CharPredicate
 
 // efficient encoding of *7-bit* ASCII characters
