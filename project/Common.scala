@@ -33,6 +33,7 @@ object Common extends AutoPlugin {
       "-Wconf:msg=object JavaConverters in package collection is deprecated:s",
       "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s"),
     scalacOptions ++= onlyOnScala2(Seq("-Xlint")).value,
+    scalacOptions ++= onlyOnScala3(Seq("-Wconf:cat=deprecation:s")).value,
     javacOptions ++=
       Seq("-encoding", "UTF-8") ++ onlyOnJdk8("-source", "1.8") ++ onlyAfterJdk8("--release", "8"),
     // restrict to 'compile' scope because otherwise it is also passed to
@@ -58,6 +59,9 @@ object Common extends AutoPlugin {
   }
   def onlyOnScala2[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
     if (scalaVersion.value.startsWith("3")) Seq.empty[T] else values
+  }
+  def onlyOnScala3[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
+    if (scalaVersion.value.startsWith("3")) values else Seq.empty[T]
   }
 
   def scalaMinorVersion: Def.Initialize[Long] = Def.setting { CrossVersion.partialVersion(scalaVersion.value).get._2 }
