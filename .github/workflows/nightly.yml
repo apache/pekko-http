@@ -18,7 +18,7 @@ jobs:
         PEKKO_VERSION: [default, main]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -32,7 +32,7 @@ jobs:
         uses: coursier/cache-action@v6
 
       - name: Cache Build Target
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: project/**/target
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
@@ -47,7 +47,7 @@ jobs:
         run: sbt -Dpekko.http.parallelExecution=false -Dakka.test.timefactor=2 -Dpekko.http.build.pekko.version=${{ matrix.PEKKO_VERSION }} ++${{ matrix.SCALA_VERSION }} mimaReportBinaryIssues test
 
       - name: Upload test results
-        uses: actions/upload-artifact@v2  # upload test results
+        uses: actions/upload-artifact@v3  # upload test results
         if: success() || failure()        # run this step even if previous step failed
         with:
           name: test-results-${{ matrix.JDK }}-${{ matrix.SCALA_VERSION }}-${{ matrix.PEKKO_VERSION }}
