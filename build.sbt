@@ -307,6 +307,8 @@ def httpMarshallersJavaSubproject(moduleName: String) =
   Project(
     id = s"http-$moduleName",
     base = file(s"http-marshallers-java/http-$moduleName"))
+    .settings(
+      name := s"pekko-http-$moduleName")
     .dependsOn(http)
     .settings(commonSettings)
     .enablePlugins(BootstrapGenjavadoc)
