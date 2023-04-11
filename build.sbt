@@ -11,7 +11,7 @@ import sbtdynver.GitDescribeOutput
 import spray.boilerplate.BoilerplatePlugin
 import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
-sourceDistName := "incubator-pekko-http"
+sourceDistName := "incubating-pekko-http"
 inThisBuild(Def.settings(
   apiURL := {
     val apiVersion = if (isSnapshot.value) "current" else version.value
