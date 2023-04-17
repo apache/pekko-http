@@ -85,7 +85,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     "pekko-http-xml",
     "pekko-http-jackson")
 
-  ManifestInfo(system).checkSameVersion("Akka HTTP", allModules, logWarning = true)
+  ManifestInfo(system).checkSameVersion("Pekko HTTP", allModules, logWarning = true)
 
   import Http._
 
