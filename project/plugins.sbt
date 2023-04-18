@@ -21,7 +21,7 @@ resolvers += "Apache Nexus Snapshots".at("https://repository.apache.org/content/
 
 // We have to deliberately use older versions of sbt-paradox because current Pekko sbt build
 // only loads on JDK 1.8 so we need to bring in older versions of parboiled which support JDK 1.8
-addSbtPlugin(("org.apache.pekko" % "pekko-sbt-paradox" % "0.0.0+35-5ad31009-SNAPSHOT").excludeAll(
+addSbtPlugin(("org.apache.pekko" % "pekko-sbt-paradox" % "0.0.0+37-3df33944-SNAPSHOT").excludeAll(
   "com.lightbend.paradox", "sbt-paradox",
   "com.lightbend.paradox" % "sbt-paradox-apidoc",
   "com.lightbend.paradox" % "sbt-paradox-project-info"))
