@@ -13,7 +13,7 @@ github:
     - streaming
     - reactive
     - websocket
-  
+
   features:
     # Enable wiki for documentation
     wiki: false
@@ -21,10 +21,10 @@ github:
     issues: true
     # Enable projects for project management boards
     projects: true
-    
+
   enabled_merge_buttons:
     squash:  true
-    merge:   false
+    merge:   true
     rebase:  true
 
   protected_branches:
