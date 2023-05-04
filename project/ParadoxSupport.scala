@@ -30,7 +30,7 @@ object ParadoxSupport {
   val paradoxWithCustomDirectives = Seq(
     paradoxDirectives += ((context: Writer.Context) =>
       new SignatureDirective(context.location.tree.label, context.properties, context)),
-    resolvers += "Apache Nexus Snapshots".at("https://repository.apache.org/content/repositories/snapshots/"),
+    resolvers += Resolver.ApacheMavenSnapshotsRepo,
     pekkoParadoxGithub := Some("https://github.com/apache/incubator-pekko-http"))
 
   class SignatureDirective(
