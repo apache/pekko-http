@@ -39,8 +39,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static scala.compat.java8.JFunction.func;
-
 //#storeUploadedFile
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.storeUploadedFile;

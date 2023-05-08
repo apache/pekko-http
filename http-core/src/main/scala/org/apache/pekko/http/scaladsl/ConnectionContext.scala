@@ -19,13 +19,13 @@ import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, InternalApi }
 import pekko.stream.TLSClientAuth
 import pekko.stream.TLSProtocol._
+import pekko.util.OptionConverters._
 import scala.annotation.nowarn
 import com.typesafe.sslconfig.pekko.PekkoSSLConfig
 import javax.net.ssl._
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable
-import scala.compat.java8.OptionConverters._
 
 trait ConnectionContext extends pekko.http.javadsl.ConnectionContext {
   @deprecated("Internal method, left for binary compatibility", since = "Akka HTTP 10.2.0")
@@ -158,13 +158,13 @@ final class HttpsConnectionContext private[http] (
   override def getSslContext = sslContext
   @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
   override def getEnabledCipherSuites: Optional[JCollection[String]] =
-    enabledCipherSuites.map(_.asJavaCollection).asJava
+    enabledCipherSuites.map(_.asJavaCollection).toJava
   @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
-  override def getEnabledProtocols: Optional[JCollection[String]] = enabledProtocols.map(_.asJavaCollection).asJava
+  override def getEnabledProtocols: Optional[JCollection[String]] = enabledProtocols.map(_.asJavaCollection).toJava
   @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
-  override def getClientAuth: Optional[TLSClientAuth] = clientAuth.asJava
+  override def getClientAuth: Optional[TLSClientAuth] = clientAuth.toJava
   @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
-  override def getSslParameters: Optional[SSLParameters] = sslParameters.asJava
+  override def getSslParameters: Optional[SSLParameters] = sslParameters.toJava
 }
 
 sealed class HttpConnectionContext extends pekko.http.javadsl.HttpConnectionContext with ConnectionContext {

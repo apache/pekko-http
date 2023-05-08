@@ -13,10 +13,10 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
-import scala.compat.java8.OptionConverters;
-
 import java.util.Optional;
 import java.util.OptionalLong;
+import org.apache.pekko.http.impl.util.Util;
+import org.apache.pekko.util.OptionConverters;
 
 public final class CacheDirectives {
     private CacheDirectives() {}
@@ -28,7 +28,7 @@ public final class CacheDirectives {
         return new org.apache.pekko.http.scaladsl.model.headers.CacheDirectives.max$minusstale(OptionConverters.toScala(Optional.empty()));
     }
     public static CacheDirective MAX_STALE(long deltaSeconds) {
-        return new org.apache.pekko.http.scaladsl.model.headers.CacheDirectives.max$minusstale(OptionConverters.toScala(OptionalLong.of(deltaSeconds)));
+        return new org.apache.pekko.http.scaladsl.model.headers.CacheDirectives.max$minusstale(new scala.Some(deltaSeconds));
     }
     public static CacheDirective MIN_FRESH(long deltaSeconds) {
         return new org.apache.pekko.http.scaladsl.model.headers.CacheDirectives.min$minusfresh(deltaSeconds);

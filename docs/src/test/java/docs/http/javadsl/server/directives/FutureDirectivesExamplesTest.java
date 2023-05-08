@@ -30,7 +30,6 @@ import org.junit.Test;
 import scala.concurrent.duration.FiniteDuration;
 
 import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
-import static scala.compat.java8.JFunction.func;
 
 //#onComplete
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
@@ -60,14 +59,13 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
     @Test
     public void testOnComplete() {
         //#onComplete
-        // import static scala.compat.java8.JFunction.func;
         // import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
         final Route route = path(segment("divide").slash(integerSegment()).slash(integerSegment()),
                 (a, b) -> onComplete(
                         () -> CompletableFuture.supplyAsync(() -> a / b),
                         maybeResult -> maybeResult
-                                .map(func(result -> complete("The result was " + result)))
+                                .map(result -> complete("The result was " + result))
                                 .recover(new PFBuilder<Throwable, Route>()
                                         .matchAny(ex -> complete(StatusCodes.InternalServerError(),
                                                 "An error occurred: " + ex.getMessage())
@@ -154,7 +152,7 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
                 (a, b) -> onCompleteWithBreaker(breaker,
                         () -> CompletableFuture.supplyAsync(() -> a / b),
                         maybeResult -> maybeResult
-                                .map(func(result -> complete("The result was " + result)))
+                                .map(result -> complete("The result was " + result))
                                 .recover(new PFBuilder<Throwable, Route>()
                                         .matchAny(ex -> complete(StatusCodes.InternalServerError(),
                                                 "An error occurred: " + ex.toString())

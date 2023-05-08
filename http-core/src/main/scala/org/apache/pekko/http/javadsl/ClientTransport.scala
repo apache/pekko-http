@@ -97,8 +97,8 @@ object ClientTransport {
    *               to an [[InetSocketAddress]]
    */
   def withCustomResolver(lookup: BiFunction[String, Int, CompletionStage[InetSocketAddress]]): ClientTransport = {
-    import scala.compat.java8.FutureConverters._
-    scaladsl.ClientTransport.withCustomResolver((host, port) => lookup.apply(host, port).toScala).asJava
+    import pekko.util.FutureConverters._
+    scaladsl.ClientTransport.withCustomResolver((host, port) => lookup.apply(host, port).asScala).asJava
   }
 
   def fromScala(scalaTransport: scaladsl.ClientTransport): ClientTransport =

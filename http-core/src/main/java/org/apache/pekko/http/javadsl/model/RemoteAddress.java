@@ -18,7 +18,7 @@ import java.net.InetSocketAddress;
 import java.util.Optional;
 
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodingRanges;
-import scala.compat.java8.OptionConverters;
+import org.apache.pekko.util.OptionConverters;
 
 public abstract class RemoteAddress {
     public abstract boolean isUnknown();

@@ -19,8 +19,7 @@ import org.apache.pekko
 import pekko.http.javadsl.model.AttributeKey
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.server.directives.{ AttributeDirectives => D }
-
-import scala.compat.java8.OptionConverters._
+import pekko.util.OptionConverters._
 
 abstract class AttributeDirectives extends HeaderDirectives {
   import pekko.http.impl.util.JavaMapping._
@@ -40,7 +39,7 @@ abstract class AttributeDirectives extends HeaderDirectives {
    */
   def optionalAttribute[T](key: AttributeKey[T], inner: jf.Function[Optional[T], Route]) = RouteAdapter {
     D.optionalAttribute(toScala(key)) { value =>
-      inner.apply(value.asJava).delegate
+      inner.apply(value.toJava).delegate
     }
   }
 

@@ -48,8 +48,9 @@ import java.util.function.Predicate
 import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.http.javadsl.server
+import pekko.util.FutureConverters
+import pekko.util.FutureConverters._
 
-import scala.compat.java8.FutureConverters._
 import scala.concurrent.duration.FiniteDuration
 
 abstract class BasicDirectives {
@@ -97,7 +98,8 @@ abstract class BasicDirectives {
   def mapRouteResultFuture(f: JFunction[CompletionStage[RouteResult], CompletionStage[RouteResult]],
       inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRouteResultFuture(stage =>
-      f(toJava(stage.fast.map(_.asJava)(ExecutionContexts.sameThreadExecutionContext))).toScala.fast.map(_.asScala)(
+      FutureConverters.asScala(
+        f(stage.fast.map(_.asJava)(ExecutionContexts.sameThreadExecutionContext).asJava)).fast.map(_.asScala)(
         ExecutionContexts.sameThreadExecutionContext)) {
       inner.get.delegate
     }
@@ -105,14 +107,16 @@ abstract class BasicDirectives {
 
   def mapRouteResultWith(f: JFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route =
     RouteAdapter {
-      D.mapRouteResultWith(r => f(r.asJava).toScala.fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) {
+      D.mapRouteResultWith(r =>
+        FutureConverters.asScala(f(r.asJava)).fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) {
         inner.get.delegate
       }
     }
 
   def mapRouteResultWithPF(
       f: PartialFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
-    D.mapRouteResultWith(r => f(r.asJava).toScala.fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) {
+    D.mapRouteResultWith(r =>
+      FutureConverters.asScala(f(r.asJava)).fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) {
       inner.get.delegate
     }
   }
@@ -170,7 +174,7 @@ abstract class BasicDirectives {
   def recoverRejectionsWith(
       f: JFunction[JIterable[Rejection], CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
     D.recoverRejectionsWith(rs =>
-      f.apply(Util.javaArrayList(rs.map(_.asJava))).toScala.fast.map(_.asScala)(
+      FutureConverters.asScala(f.apply(Util.javaArrayList(rs.map(_.asJava)))).fast.map(_.asScala)(
         ExecutionContexts.sameThreadExecutionContext)) { inner.get.delegate }
   }
 

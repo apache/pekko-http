@@ -28,8 +28,7 @@ import pekko.http.javadsl.server.Route
 
 import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.http.scaladsl.server.directives.ParameterDirectives._
-
-import scala.compat.java8.OptionConverters
+import pekko.util.OptionConverters._
 
 abstract class FormFieldDirectives extends FileUploadDirectives {
 
@@ -63,7 +62,7 @@ abstract class FormFieldDirectives extends FileUploadDirectives {
     import t.asScala
     RouteAdapter(
       D.formField(name.as[T].optional) { value =>
-        inner.apply(OptionConverters.toJava(value)).delegate
+        inner.apply(value.toJava).delegate
       })
   }
 

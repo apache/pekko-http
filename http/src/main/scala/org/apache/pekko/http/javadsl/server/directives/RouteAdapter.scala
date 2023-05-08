@@ -29,6 +29,8 @@ import pekko.japi.function.Function
 import pekko.stream.{ javadsl, Materializer }
 import pekko.stream.scaladsl.Flow
 
+import scala.concurrent.Future
+
 /** INTERNAL API */
 @InternalApi
 final class RouteAdapter(val delegate: pekko.http.scaladsl.server.Route) extends Route {
@@ -37,10 +39,10 @@ final class RouteAdapter(val delegate: pekko.http.scaladsl.server.Route) extends
     scalaFlow(system, materializer).asJava
 
   override def handler(system: ClassicActorSystemProvider): Function[HttpRequest, CompletionStage[HttpResponse]] = {
-    import scala.compat.java8.FutureConverters.toJava
     import pekko.http.impl.util.JavaMapping._
+    import pekko.util.FutureConverters._
     val scalaFunction = scaladsl.server.Route.toFunction(delegate)(system)
-    request => toJava(scalaFunction(request.asScala))
+    request => (scalaFunction(request.asScala): Future[HttpResponse]).asJava
   }
 
   private def scalaFlow(system: ActorSystem, materializer: Materializer): Flow[HttpRequest, HttpResponse, NotUsed] = {
