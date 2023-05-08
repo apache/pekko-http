@@ -22,8 +22,7 @@ import pekko.http.scaladsl.model.DateTime
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.util.JavaMapping.Implicits._
-
-import scala.compat.java8.OptionConverters._
+import pekko.util.OptionConverters._
 
 /**
  * for a full definition of the http cookie header fields, see
@@ -186,7 +185,7 @@ final class HttpCookie private[http] (
   override def httpOnly(): Boolean = this.httpOnly
 
   /** Java API */
-  def getSameSite: Optional[jm.headers.SameSite] = sameSite.map(_.asJava).asJava
+  def getSameSite: Optional[jm.headers.SameSite] = sameSite.map(_.asJava).toJava
 
   /** Java API */
   def getExtension: Optional[String] = extension.asJava
@@ -198,10 +197,10 @@ final class HttpCookie private[http] (
   def getDomain: Optional[String] = domain.asJava
 
   /** Java API */
-  def getMaxAge: OptionalLong = maxAge.asPrimitive
+  def getMaxAge: OptionalLong = maxAge.toJavaPrimitive
 
   /** Java API */
-  def getExpires: Optional[jm.DateTime] = expires.map(_.asJava).asJava
+  def getExpires: Optional[jm.DateTime] = expires.map(_.asJava).toJava
 
   def withName(name: String): HttpCookie = copy(name = name)
   def withValue(value: String): HttpCookie = copy(value = value)
@@ -225,7 +224,7 @@ final class HttpCookie private[http] (
   /** Java API */
   def withSameSite(sameSite: jm.headers.SameSite): HttpCookie = copy(sameSite = Option(sameSite.asScala()))
   def withSameSite(sameSite: Optional[jm.headers.SameSite]): HttpCookie =
-    copy(sameSite = sameSite.asScala.map(_.asScala()))
+    copy(sameSite = sameSite.toScala.map(_.asScala()))
 
   def withExtension(extension: String): HttpCookie = copy(extension = Some(extension))
 }

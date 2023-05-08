@@ -24,11 +24,10 @@ import pekko.http.javadsl.model.headers.Host
 import pekko.http.javadsl.model.headers.Server
 import pekko.io.Inet.SocketOption
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.util.OptionConverters._
 import com.typesafe.config.Config
 
 import scala.collection.JavaConverters._
-import scala.compat.java8.OptionConverters
-import scala.compat.java8.OptionConverters._
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 /**
@@ -71,7 +70,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   // ---
 
   def withServerHeader(newValue: Optional[Server]): ServerSettings =
-    self.copy(serverHeader = newValue.asScala.map(_.asScala))
+    self.copy(serverHeader = newValue.asScala)
   def withPreviewServerSettings(newValue: PreviewServerSettings): ServerSettings =
     self.copy(previewServerSettings = newValue.asScala)
   def withTimeouts(newValue: ServerSettings.Timeouts): ServerSettings = self.copy(timeouts = newValue.asScala)
@@ -97,7 +96,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def withWebsocketSettings(newValue: WebSocketSettings): ServerSettings =
     self.copy(websocketSettings = newValue.asScala)
   def withLogUnencryptedNetworkBytes(newValue: Optional[Int]): ServerSettings =
-    self.copy(logUnencryptedNetworkBytes = OptionConverters.toScala(newValue))
+    self.copy(logUnencryptedNetworkBytes = newValue.toScala)
   def withHttp2Settings(newValue: Http2ServerSettings): ServerSettings = self.copy(http2Settings = newValue.asScala)
   def withDefaultHttpPort(newValue: Int): ServerSettings = self.copy(defaultHttpPort = newValue)
   def withDefaultHttpsPort(newValue: Int): ServerSettings = self.copy(defaultHttpPort = newValue)

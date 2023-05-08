@@ -23,7 +23,6 @@ import pekko.japi.Pair
 import pekko.stream.{ javadsl, scaladsl, FlowShape, Graph }
 
 import scala.collection.immutable
-import scala.compat.java8.{ FutureConverters, OptionConverters }
 import scala.reflect.ClassTag
 import pekko.NotUsed
 import pekko.annotation.InternalApi
@@ -37,6 +36,8 @@ import pekko.http.javadsl.{
 }
 import pekko.http.{ javadsl => jdsl, scaladsl => sdsl }
 import pekko.http.scaladsl.{ model => sm }
+import pekko.util.FutureConverters._
+import pekko.util.OptionConverters._
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
@@ -135,8 +136,8 @@ private[http] object JavaMapping {
     }
   implicit def option[_J, _S](implicit mapping: JavaMapping[_J, _S]): JavaMapping[Optional[_J], Option[_S]] =
     new JavaMapping[Optional[_J], Option[_S]] {
-      def toScala(javaObject: Optional[_J]): Option[_S] = OptionConverters.toScala(javaObject).map(mapping.toScala)
-      def toJava(scalaObject: Option[_S]): Optional[_J] = OptionConverters.toJava(scalaObject.map(mapping.toJava))
+      def toScala(javaObject: Optional[_J]): Option[_S] = javaObject.toScala.map(mapping.toScala)
+      def toJava(scalaObject: Option[_S]): Optional[_J] = scalaObject.map(mapping.toJava).toJava
     }
 
   implicit def flowMapping[JIn, SIn, JOut, SOut, JM, SM](implicit inMapping: JavaMapping[JIn, SIn],
@@ -191,9 +192,9 @@ private[http] object JavaMapping {
       implicit mapping: JavaMapping[_J, _S], ec: ExecutionContext): JavaMapping[CompletionStage[_J], Future[_S]] =
     new JavaMapping[CompletionStage[_J], Future[_S]] {
       def toJava(scalaObject: Future[_S]): CompletionStage[_J] =
-        FutureConverters.toJava(scalaObject.map(mapping.toJava))
+        scalaObject.map(mapping.toJava).asJava
       def toScala(javaObject: CompletionStage[_J]): Future[_S] =
-        FutureConverters.toScala(javaObject).map(mapping.toScala)
+        javaObject.asScala.map(mapping.toScala)
     }
 
   implicit object StringIdentity extends Identity[String]

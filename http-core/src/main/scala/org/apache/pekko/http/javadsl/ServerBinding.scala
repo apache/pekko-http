@@ -20,9 +20,9 @@ import org.apache.pekko
 import pekko.Done
 import pekko.annotation.DoNotInherit
 import pekko.dispatch.ExecutionContexts
+import pekko.util.FutureConverters._
 import pekko.util.JavaDurationConverters._
 
-import scala.compat.java8.FutureConverters._
 import scala.concurrent.duration.FiniteDuration
 import pekko.actor.ClassicActorSystemProvider
 
@@ -43,7 +43,7 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
    * The produced [[java.util.concurrent.CompletionStage]] is fulfilled when the unbinding has been completed.
    */
   def unbind(): CompletionStage[Done] =
-    delegate.unbind().toJava
+    delegate.unbind().asJava
 
   /**
    * Triggers "graceful" termination request being handled on this connection.
@@ -90,7 +90,7 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
   def terminate(hardDeadline: java.time.Duration): CompletionStage[HttpTerminated] = {
     delegate.terminate(FiniteDuration.apply(hardDeadline.toMillis, TimeUnit.MILLISECONDS))
       .map(_.asInstanceOf[HttpTerminated])(ExecutionContexts.sameThreadExecutionContext)
-      .toJava
+      .asJava
   }
 
   /**
@@ -104,7 +104,7 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
   def whenTerminationSignalIssued: CompletionStage[java.time.Duration] =
     delegate.whenTerminationSignalIssued
       .map(deadline => deadline.time.asJava)(ExecutionContexts.sameThreadExecutionContext)
-      .toJava
+      .asJava
 
   /**
    * This completion stage completes when the termination process, as initiated by an [[terminate]] call has completed.
@@ -121,7 +121,7 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
   def whenTerminated: CompletionStage[HttpTerminated] =
     delegate.whenTerminated
       .map(_.asInstanceOf[HttpTerminated])(ExecutionContexts.sameThreadExecutionContext)
-      .toJava
+      .asJava
 
   /**
    * Adds this `ServerBinding` to the actor system's coordinated shutdown, so that [[unbind]] and [[terminate]] get

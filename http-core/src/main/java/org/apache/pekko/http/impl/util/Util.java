@@ -13,16 +13,18 @@
 
 package org.apache.pekko.http.impl.util;
 
-import scala.compat.java8.OptionConverters;
 import scala.None$;
 import scala.collection.immutable.Map$;
 import scala.collection.immutable.Seq;
 import org.apache.pekko.stream.scaladsl.Source;
 import org.apache.pekko.http.ccompat.MapHelpers;
+import org.apache.pekko.util.OptionConverters;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 
 /**
  * Contains internal helper methods.
@@ -50,6 +52,26 @@ public abstract class Util {
     @SuppressWarnings("unchecked") // contains an upcast
     public static <T, U extends T> scala.Option<U> convertOptionalToScala(Optional<T> o) {
         return OptionConverters.toScala((Optional<U>) o);
+    }
+
+    // This is needed to be used in Java source code that calls Scala code which expects scala.Long
+    // since an implicit cast from java.lang.Long to scala.Long is not available in Java source
+    public static scala.Option<Object> convertOptionalToScala(OptionalLong o) {
+        if (o.isPresent()) {
+            return new scala.Some(o.getAsLong());
+        } else {
+            return scala.Option.empty();
+        }
+    }
+
+    // This is needed to be used in Java source code that calls Scala code which expects scala.Int
+    // since an implicit cast from java.lang.Int to scala.Int is not available in Java source
+    public static scala.Option<Object> convertOptionalToScala(OptionalInt o) {
+        if (o.isPresent()) {
+            return new scala.Some(o.getAsInt());
+        } else {
+            return scala.Option.empty();
+        }
     }
 
     public static final scala.collection.immutable.Map<String, String> emptyMap =

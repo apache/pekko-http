@@ -18,8 +18,6 @@ import java.util.Optional
 import java.util.concurrent.CompletionStage
 
 import scala.concurrent.Future
-import scala.compat.java8.FutureConverters._
-import scala.compat.java8.OptionConverters._
 import scala.util.Try
 import com.typesafe.sslconfig.pekko.PekkoSSLConfig
 import org.apache.pekko
@@ -39,6 +37,7 @@ import pekko.stream.TLSProtocol._
 import pekko.stream.Materializer
 import pekko.stream.javadsl.{ BidiFlow, Flow, Source }
 import pekko.stream.scaladsl.Keep
+import pekko.util.FutureConverters._
 
 object Http extends ExtensionId[Http] with ExtensionIdProvider {
   override def get(system: ActorSystem): Http = super.get(system)
@@ -126,7 +125,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
     new Source(delegate.bind(connect.host, connect.port, connectionContext)
       .map(new IncomingConnection(_))
-      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).toJava))
+      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).asJava))
   }
 
   /**
@@ -155,7 +154,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     new Source(delegate.bind(connect.host, connect.port, settings = settings.asScala,
       connectionContext = connectionContext)
       .map(new IncomingConnection(_))
-      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).toJava))
+      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).asJava))
   }
 
   /**
@@ -184,7 +183,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
     new Source(delegate.bind(connect.host, connect.port, connectionContext, settings.asScala, log)
       .map(new IncomingConnection(_))
-      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).toJava))
+      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).asJava))
   }
 
   /**
@@ -210,7 +209,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     delegate.bindAndHandle(
       handler.asInstanceOf[Flow[sm.HttpRequest, sm.HttpResponse, _]].asScala,
       connect.host, connect.port, connectionContext)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
+      .map(new ServerBinding(_))(ec).asJava
   }
 
   /**
@@ -238,7 +237,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     delegate.bindAndHandle(
       handler.asInstanceOf[Flow[sm.HttpRequest, sm.HttpResponse, _]].asScala,
       connect.host, connect.port, connectionContext, settings.asScala, log)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
+      .map(new ServerBinding(_))(ec).asJava
   }
 
   /**
@@ -262,7 +261,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
       materializer: Materializer): CompletionStage[ServerBinding] = {
     val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
     delegate.bindAndHandleSync(handler.apply(_).asScala, connect.host, connect.port, connectionContext)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
+      .map(new ServerBinding(_))(ec).asJava
   }
 
   /**
@@ -290,7 +289,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     delegate.bindAndHandleSync(
       handler.apply(_).asScala,
       connect.host, connect.port, connectionContext, settings.asScala, log)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
+      .map(new ServerBinding(_))(ec).asJava
   }
 
   /**
@@ -313,8 +312,8 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
       connect: ConnectHttp,
       materializer: Materializer): CompletionStage[ServerBinding] = {
     val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    delegate.bindAndHandleAsync(handler.apply(_).toScala, connect.host, connect.port, connectionContext)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
+    delegate.bindAndHandleAsync(handler.apply(_).asScala, connect.host, connect.port, connectionContext)(materializer)
+      .map(new ServerBinding(_))(ec).asJava
   }
 
   /**
@@ -340,9 +339,9 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
       materializer: Materializer): CompletionStage[ServerBinding] = {
     val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
     delegate.bindAndHandleAsync(
-      handler.apply(_).toScala,
+      handler.apply(_).asScala,
       connect.host, connect.port, connectionContext, settings.asScala, parallelism, log)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
+      .map(new ServerBinding(_))(ec).asJava
   }
 
   /**
@@ -641,7 +640,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * the future will be completed with an error.
    */
   def singleRequest(request: HttpRequest): CompletionStage[HttpResponse] =
-    delegate.singleRequest(request.asScala).toJava
+    delegate.singleRequest(request.asScala).asJava
 
   /**
    * Fires a single [[HttpRequest]] across the (cached) host connection pool for the request's
@@ -653,7 +652,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * the future will be completed with an error.
    */
   def singleRequest(request: HttpRequest, connectionContext: HttpsConnectionContext): CompletionStage[HttpResponse] =
-    delegate.singleRequest(request.asScala, connectionContext.asScala).toJava
+    delegate.singleRequest(request.asScala, connectionContext.asScala).asJava
 
   /**
    * Fires a single [[HttpRequest]] across the (cached) host connection pool for the request's
@@ -669,7 +668,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
       connectionContext: HttpsConnectionContext,
       settings: ConnectionPoolSettings,
       log: LoggingAdapter): CompletionStage[HttpResponse] =
-    delegate.singleRequest(request.asScala, connectionContext.asScala, settings.asScala, log).toJava
+    delegate.singleRequest(request.asScala, connectionContext.asScala, settings.asScala, log).asJava
 
   /**
    * Constructs a WebSocket [[pekko.stream.javadsl.BidiFlow]].
@@ -796,7 +795,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * If existing pool client flows are re-used or new ones materialized concurrently with or after this
    * method call the respective connection pools will be restarted and not contribute to the returned future.
    */
-  def shutdownAllConnectionPools(): CompletionStage[Unit] = delegate.shutdownAllConnectionPools().toJava
+  def shutdownAllConnectionPools(): CompletionStage[Unit] = delegate.shutdownAllConnectionPools().asJava
 
   /**
    * Gets the current default server-side [[ConnectionContext]] – defaults to plain HTTP.
@@ -855,7 +854,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     Flow.fromGraph {
       pekko.stream.scaladsl.Flow[HttpRequest].map(_.asScala)
         .viaMat(scalaFlow)(Keep.right)
-        .mapMaterializedValue(_.map(new OutgoingConnection(_))(ec).toJava)
+        .mapMaterializedValue(_.map(new OutgoingConnection(_))(ec).asJava)
     }
 
   private def adaptServerLayer(serverLayer: scaladsl.Http.ServerLayer)
@@ -897,5 +896,5 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     }
   private def adaptWsUpgradeResponse(
       responseFuture: Future[scaladsl.model.ws.WebSocketUpgradeResponse]): CompletionStage[WebSocketUpgradeResponse] =
-    responseFuture.map(WebSocketUpgradeResponse.adapt)(system.dispatcher).toJava
+    responseFuture.map(WebSocketUpgradeResponse.adapt)(system.dispatcher).asJava
 }

@@ -16,7 +16,7 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.annotation.DoNotInherit;
 import org.apache.pekko.http.javadsl.model.DateTime;
 import org.apache.pekko.http.impl.util.Util;
-import scala.compat.java8.OptionConverters;
+import org.apache.pekko.util.OptionConverters;
 
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -71,7 +71,7 @@ public abstract class HttpCookie {
         return new org.apache.pekko.http.scaladsl.model.headers.HttpCookie(
                 name, value,
                 Util.<DateTime, org.apache.pekko.http.scaladsl.model.DateTime>convertOptionalToScala(expires),
-                OptionConverters.toScala(maxAge),
+                Util.convertOptionalToScala(maxAge),
                 OptionConverters.toScala(domain),
                 OptionConverters.toScala(path),
                 secure,
@@ -94,7 +94,7 @@ public abstract class HttpCookie {
         return new org.apache.pekko.http.scaladsl.model.headers.HttpCookie(
                 name, value,
                 Util.<DateTime, org.apache.pekko.http.scaladsl.model.DateTime>convertOptionalToScala(expires),
-                OptionConverters.toScala(maxAge),
+                Util.convertOptionalToScala(maxAge),
                 OptionConverters.toScala(domain),
                 OptionConverters.toScala(path),
                 secure,

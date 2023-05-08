@@ -28,8 +28,8 @@ import pekko.http.scaladsl.{ model => sm }
 import pekko.japi.function.Function
 import pekko.stream.javadsl.{ Flow, Source }
 import pekko.stream.{ Materializer, SystemMaterializer }
+import pekko.util.FutureConverters._
 
-import scala.compat.java8.FutureConverters._
 import scala.concurrent.ExecutionContext
 
 /**
@@ -174,9 +174,9 @@ object ServerBuilder {
 
     def bind(handler: Function[HttpRequest, CompletionStage[HttpResponse]]): CompletionStage[ServerBinding] =
       http.bindAndHandleAsyncImpl(
-        handler.apply(_).asScala,
+        handler.apply(_).asScala.map(_.asScala),
         interface, port, context.asScala, settings.asScala, parallelism = 0, log = log)(materializer)
-        .map(new ServerBinding(_)).toJava
+        .map(new ServerBinding(_)).asJava
 
     def bind(handlerProvider: HandlerProvider): CompletionStage[ServerBinding] = bind(handlerProvider.handler(system))
 
@@ -184,17 +184,17 @@ object ServerBuilder {
       http.bindAndHandleAsyncImpl(
         req => FastFuture.successful(handler(req).asScala),
         interface, port, context.asScala, settings.asScala, parallelism = 0, log)(materializer)
-        .map(new ServerBinding(_)).toJava
+        .map(new ServerBinding(_)).asJava
 
     def bindFlow(handlerFlow: Flow[HttpRequest, HttpResponse, _]): CompletionStage[ServerBinding] =
       http.bindAndHandleImpl(
         handlerFlow.asInstanceOf[Flow[sm.HttpRequest, sm.HttpResponse, _]].asScala,
         interface, port, context.asScala, settings.asScala, log)(materializer)
-        .map(new ServerBinding(_)).toJava
+        .map(new ServerBinding(_)).asJava
 
     def connectionSource(): Source[IncomingConnection, CompletionStage[ServerBinding]] =
       http.bindImpl(interface, port, context.asScala, settings.asScala, log)
         .map(new IncomingConnection(_))
-        .mapMaterializedValue(_.map(new ServerBinding(_))(ExecutionContexts.sameThreadExecutionContext).toJava).asJava
+        .mapMaterializedValue(_.map(new ServerBinding(_))(ExecutionContexts.sameThreadExecutionContext).asJava).asJava
   }
 }
