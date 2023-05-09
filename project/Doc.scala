@@ -71,7 +71,7 @@ object Scaladoc extends AutoPlugin {
       "-groups",
       "-doc-source-url", urlString,
       "-sourcepath", base.getAbsolutePath,
-      "-doc-title", "Akka HTTP",
+      "-doc-title", "Apache Pekko HTTP",
       "-doc-version", ver,
       // Workaround https://issues.scala-lang.org/browse/SI-10028
       "-skip-packages", "org.apache.pekko.pattern:org.specs2",
