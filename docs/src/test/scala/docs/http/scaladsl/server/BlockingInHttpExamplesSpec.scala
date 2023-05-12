@@ -14,7 +14,7 @@
 package docs.http.scaladsl.server
 
 import org.apache.pekko
-import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.actor.{ ActorSystem, DispatcherSelector }
 import org.apache.pekko.http.scaladsl.server.{ Directives, Route }
 import docs.CompileOnlySpec
 
@@ -47,7 +47,7 @@ class BlockingInHttpExamplesSpec extends AnyWordSpec with CompileOnlySpec
 
     // #blocking-example-in-dedicated-dispatcher
     // GOOD (the blocking is now isolated onto a dedicated dispatcher):
-    implicit val blockingDispatcher = system.dispatchers.lookup("my-blocking-dispatcher")
+    implicit val blockingDispatcher = system.dispatchers.lookup(DispatcherSelector.fromConfig("my-blocking-dispatcher"))
 
     val routes: Route = post {
       complete {
