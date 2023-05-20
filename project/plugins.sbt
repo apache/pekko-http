@@ -16,6 +16,7 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.3")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1") // for advanced PR validation features
 addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.1")
 addSbtPlugin("com.lightbend.sbt" % "sbt-bill-of-materials" % "1.0.2")
+addSbtPlugin("com.github.sbt" % "sbt-license-report" % "1.5.0")
 // allow access to snapshots for pekko-sbt-paradox
 resolvers += Resolver.ApacheMavenSnapshotsRepo
 
