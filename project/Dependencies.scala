@@ -44,10 +44,10 @@ object Dependencies {
     scalaVersion := allScalaVersions.head)
 
   object Provided {
-    val jsr305 = "com.google.code.findbugs" % "jsr305" % "3.0.2" % "provided" // ApacheV2
+    val jsr305 = "com.google.code.findbugs" % "jsr305" % "3.0.2" % "provided"
 
     val scalaReflect = ScalaVersionDependentModuleID.fromPF {
-      case v if v.startsWith("2.") => "org.scala-lang" % "scala-reflect" % v % "provided" // Scala License
+      case v if v.startsWith("2.") => "org.scala-lang" % "scala-reflect" % v % "provided"
     }
   }
 
@@ -55,47 +55,48 @@ object Dependencies {
     val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
 
     // For pekko-http spray-json support
-    val sprayJson = "io.spray" %% "spray-json" % "1.3.6" // ApacheV2
+    val sprayJson = "io.spray" %% "spray-json" % "1.3.6"
 
     // For pekko-http-jackson support
-    val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion // ApacheV2
+    val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion
 
     // For pekko-http-testkit-java
-    val junit = "junit" % "junit" % junitVersion // Common Public License 1.0
+    val junit = "junit" % "junit" % junitVersion
 
     val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % "2.9.3"
 
-    val scalafix = "ch.epfl.scala" %% "scalafix-core" % Dependencies.scalafixVersion // grab from plugin
+    val scalafix = "ch.epfl.scala" %% "scalafix-core" % Dependencies.scalafixVersion
 
-    val parboiled = "org.parboiled" %% "parboiled" % "2.4.1" // ApacheV2
+    val parboiled = "org.parboiled" %% "parboiled" % "2.4.1"
 
     object Docs {
       val sprayJson = Compile.sprayJson % "test"
       val gson = "com.google.code.gson" % "gson" % "2.9.0" % "test"
-      val jacksonXml = "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml" % jacksonXmlVersion % "test" // ApacheV2
-      val reflections = "org.reflections" % "reflections" % "0.10.2" % "test" // WTFPL
+      val jacksonXml = "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml" % jacksonXmlVersion % "test"
+      val reflections = "org.reflections" % "reflections" % "0.10.2" % "test"
     }
 
     object Test {
-      val sprayJson = Compile.sprayJson % "test" // ApacheV2
-      val junit = Compile.junit % "test" // Common Public License 1.0
+      val sprayJson = Compile.sprayJson % "test"
+      val junit = Compile.junit % "test"
       val specs2 = {
-        val specs2 = "org.specs2" %% "specs2-core" // MIT
+        val specs2 = "org.specs2" %% "specs2-core"
         ScalaVersionDependentModuleID.versioned {
           case v if v.startsWith("2.") => specs2 % "4.10.6"
           case _                       => specs2 % "4.15.0"
         }
       }
 
-      val scalacheck = "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test" // New BSD
-      val junitIntf = "com.github.sbt" % "junit-interface" % "0.13.3" % "test" // MIT
+      val scalacheck = "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
+      val junitIntf = "com.github.sbt" % "junit-interface" % "0.13.3" % "test"
 
-      val scalatest = "org.scalatest" %% "scalatest" % scalaTestVersion % "test" // ApacheV2
+      val scalatest = "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
       val scalatestplusScalacheck = "org.scalatestplus" %% "scalacheck-1-15" % (scalaTestVersion + ".0") % "test"
       val scalatestplusJUnit = "org.scalatestplus" %% "junit-4-13" % (scalaTestVersion + ".0") % "test"
 
       // HTTP/2
-      val h2spec = ("io.github.summerwind" % h2specName % h2specVersion % "test").from(h2specUrl) // MIT
+
+      val h2spec = ("io.github.summerwind" % h2specName % h2specVersion % "test").from(h2specUrl)
     }
   }
 
