@@ -65,8 +65,8 @@ provided dispatcher would be used. Both these dispatchers are ForkJoin pools by 
 not best suited for blocking operations.
 @@@
 For example, the above screenshot shows an Apache Pekko FJP dispatchers threads,
-named "`m-pekko.actor.default-dispatcher-6,7`" going into the blocking state, after having been idle. 
-It can be observed that the number of new threads increases, "`default-akka.actor.default-dispatcher 18,19`" 
+named "`default-pekko.actor.default-dispatcher-16,15`" going into the blocking state, after having been idle. 
+It can be observed that the number of new threads increases, "`default-pekko.actor.default-dispatcher-18`" 
 however they go to sleep state immediately, thus wasting the resources.
 @java[The same happens to the global @javadoc[ForkJoinPool](java.util.concurrent.ForkJoinPool) when using Java Futures.]
 

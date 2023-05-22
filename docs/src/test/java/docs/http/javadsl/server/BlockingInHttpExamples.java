@@ -14,7 +14,6 @@
 package docs.http.javadsl.server;
 
 import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.actor.DispatcherSelector;
 import org.apache.pekko.dispatch.MessageDispatcher;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.server.Route;
@@ -61,7 +60,7 @@ public class BlockingInHttpExamples extends JUnitRouteTest {
         //#blocking-example-in-dedicated-dispatcher
         // GOOD (the blocking is now isolated onto a dedicated dispatcher):
         final Route routes = post(() -> {
-            final MessageDispatcher dispatcher = system.dispatchers().lookup(DispatcherSelector.fromConfig("my-blocking-dispatcher"));
+            final MessageDispatcher dispatcher = system.dispatchers().lookup("my-blocking-dispatcher");
             return completeWithFuture(CompletableFuture.supplyAsync(() -> {
                         try {
                             Thread.sleep(5000L);
