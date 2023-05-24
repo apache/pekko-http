@@ -16,11 +16,10 @@ package org.apache.pekko.http.javadsl
 import java.util.Locale
 import java.util.Optional
 
-import scala.compat.java8.OptionConverters._
-
 import org.apache.pekko
 import pekko.annotation.{ DoNotInherit, InternalApi }
 import pekko.http.javadsl.model.Uri
+import pekko.util.OptionConverters._
 
 @DoNotInherit
 abstract class ConnectHttp {
@@ -31,11 +30,11 @@ abstract class ConnectHttp {
   def connectionContext: Optional[HttpsConnectionContext]
 
   final def effectiveHttpsConnectionContext(fallbackContext: HttpsConnectionContext): HttpsConnectionContext =
-    connectionContext.asScala
+    connectionContext.toScala
       .getOrElse(fallbackContext)
 
   final def effectiveConnectionContext(fallbackContext: ConnectionContext): ConnectionContext =
-    connectionContext.asScala // Optional doesn't deal well with covariance
+    connectionContext.toScala // Optional doesn't deal well with covariance
       .getOrElse(fallbackContext)
 
   override def toString = s"ConnectHttp($host,$port,$isHttps,$connectionContext)"

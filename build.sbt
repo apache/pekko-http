@@ -11,7 +11,7 @@ import sbtdynver.GitDescribeOutput
 import spray.boilerplate.BoilerplatePlugin
 import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
-sourceDistName := "incubator-pekko-http"
+sourceDistName := "incubating-pekko-http"
 inThisBuild(Def.settings(
   apiURL := {
     val apiVersion = if (isSnapshot.value) "current" else version.value
@@ -134,7 +134,7 @@ lazy val httpCore = project("http-core")
   .enablePlugins(BootstrapGenjavadoc)
   .enablePlugins(ReproducibleBuildsPlugin)
   .enablePlugins(Pre213Preprocessor).settings(
-    akka.http.sbt.Pre213Preprocessor.pre213Files := Seq(
+    pekko.http.sbt.Pre213Preprocessor.pre213Files := Seq(
       "headers.scala", "HttpMessage.scala", "LanguageRange.scala", "CacheDirective.scala", "LinkValue.scala"))
   .disablePlugins(ScalafixPlugin)
 
@@ -148,7 +148,7 @@ lazy val http = project("http")
     Compile / scalacOptions += "-language:_")
   .settings(scalaMacroSupport)
   .enablePlugins(Pre213Preprocessor).settings(
-    akka.http.sbt.Pre213Preprocessor.pre213Files := Seq(
+    pekko.http.sbt.Pre213Preprocessor.pre213Files := Seq(
       "scaladsl/server/directives/FormFieldDirectives.scala", "scaladsl/server/directives/RespondWithDirectives.scala"))
   .enablePlugins(BootstrapGenjavadoc, BoilerplatePlugin)
   .enablePlugins(ReproducibleBuildsPlugin)
@@ -443,7 +443,7 @@ lazy val compatibilityTests = Project("http-compatibility-tests", file("http-com
       //       current version but that fails. So, this is a manual `dependsOn` which works as expected.
       (Test / dependencyClasspath).value.filterNot(_.data.getName contains "akka") ++
       (httpTests / Test / fullClasspath).value
-    },
+    }
   )
  */
 

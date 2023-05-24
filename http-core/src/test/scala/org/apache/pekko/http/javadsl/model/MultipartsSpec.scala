@@ -25,8 +25,8 @@ import pekko.actor.ActorSystem
 import pekko.stream.SystemMaterializer
 import pekko.stream.javadsl.Source
 import pekko.testkit._
+import pekko.util.FutureConverters._
 
-import scala.compat.java8.FutureConverters
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -45,7 +45,7 @@ class MultipartsSpec extends AnyWordSpec with Matchers with Inside with BeforeAn
         Multiparts.createFormDataBodyPart("foo", HttpEntities.create("FOO")),
         Multiparts.createFormDataBodyPart("bar", HttpEntities.create("BAR")))
       val strictCS = streamed.toStrict(1000, materializer)
-      val strict = Await.result(FutureConverters.toScala(strictCS), 1.second.dilated)
+      val strict = Await.result(strictCS.asScala, 1.second.dilated)
 
       strict shouldEqual org.apache.pekko.http.scaladsl.model.Multipart.FormData(
         Map("foo" -> org.apache.pekko.http.scaladsl.model.HttpEntity("FOO"),
@@ -56,7 +56,7 @@ class MultipartsSpec extends AnyWordSpec with Matchers with Inside with BeforeAn
         Multiparts.createFormDataBodyPart("foo", HttpEntities.create("FOO")),
         Multiparts.createFormDataBodyPart("bar", HttpEntities.create("BAR")))))
       val strictCS = streamed.toStrict(1000, materializer)
-      val strict = Await.result(FutureConverters.toScala(strictCS), 1.second.dilated)
+      val strict = Await.result(strictCS.asScala, 1.second.dilated)
       strict shouldEqual org.apache.pekko.http.scaladsl.model.Multipart.FormData(
         Map("foo" -> org.apache.pekko.http.scaladsl.model.HttpEntity("FOO"),
           "bar" -> org.apache.pekko.http.scaladsl.model.HttpEntity("BAR")))
@@ -69,7 +69,7 @@ class MultipartsSpec extends AnyWordSpec with Matchers with Inside with BeforeAn
       fields.put("foo", HttpEntities.create("FOO"))
       val streamed = Multiparts.createFormDataFromFields(fields)
       val strictCS = streamed.toStrict(1000, materializer)
-      val strict = Await.result(FutureConverters.toScala(strictCS), 1.second.dilated)
+      val strict = Await.result(strictCS.asScala, 1.second.dilated)
 
       strict shouldEqual org.apache.pekko.http.scaladsl.model.Multipart.FormData(
         Map("foo" -> org.apache.pekko.http.scaladsl.model.HttpEntity("FOO")))

@@ -53,7 +53,7 @@ object PekkoDependency {
   }
 
   // Default version updated only when needed, https://pekko.apache.org/docs/pekko/current/project/downstream-upgrade-strategy.html
-  val minimumExpectedPekkoVersion = "0.0.0+26623-85c2a469-SNAPSHOT"
+  val minimumExpectedPekkoVersion = "0.0.0+26656-898c6970-SNAPSHOT"
   val default = pekkoDependency(defaultVersion = minimumExpectedPekkoVersion)
   def docs = default
 
@@ -90,7 +90,7 @@ object PekkoDependency {
                 "org.apache.pekko" %% module % pekkoVersion % config
             },
             resolvers ++= (if (pekkoSnapshot)
-                             Seq("Apache Snapshots".at("https://repository.apache.org/content/repositories/snapshots/"))
+                             Seq(Resolver.ApacheMavenSnapshotsRepo)
                            else Nil))
       }
   }
@@ -105,7 +105,7 @@ object PekkoDependency {
 
     // pekko-cluster-sharding-typed_2.13 seems to be the last nightly published by `pekko-publish-nightly` so if that's there then it's likely the rest also made it
     val body = Await.result(http.run(url(
-        "https://repository.apache.org/content/repositories/snapshots/org/apache/pekko/pekko-cluster-sharding-typed_2.13/")),
+        s"${Resolver.ApacheMavenSnapshotsRepo.root}org/apache/pekko/pekko-cluster-sharding-typed_2.13/")),
       10.seconds).bodyAsString
 
     val allVersions =

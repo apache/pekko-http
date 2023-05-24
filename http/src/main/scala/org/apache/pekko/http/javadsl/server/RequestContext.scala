@@ -35,9 +35,9 @@ import pekko.http.scaladsl
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.scaladsl.marshalling.ToResponseMarshallable
 
-import scala.compat.java8.FutureConverters._
 import scala.annotation.varargs
 import pekko.http.scaladsl.model.Uri.Path
+import pekko.util.FutureConverters._
 
 class RequestContext private (val delegate: scaladsl.server.RequestContext) {
   import RequestContext._
@@ -60,18 +60,18 @@ class RequestContext private (val delegate: scaladsl.server.RequestContext) {
 
   def complete[T](value: T, marshaller: Marshaller[T, HttpResponse]): CompletionStage[RouteResult] = {
     delegate.complete(ToResponseMarshallable(value)(marshaller))
-      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).toJava
+      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).asJava
   }
 
   def completeWith(response: HttpResponse): CompletionStage[RouteResult] = {
     delegate.complete(response.asScala)
-      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).toJava
+      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).asJava
   }
 
   @varargs def reject(rejections: Rejection*): CompletionStage[RouteResult] = {
     val scalaRejections = rejections.map(_.asScala)
     delegate.reject(scalaRejections: _*)
-      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).toJava
+      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).asJava
   }
 
   def redirect(uri: Uri, redirectionType: StatusCode): CompletionStage[RouteResult] = {
@@ -80,7 +80,7 @@ class RequestContext private (val delegate: scaladsl.server.RequestContext) {
 
   def fail(error: Throwable): CompletionStage[RouteResult] =
     delegate.fail(error)
-      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).toJava
+      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.sameThreadExecutionContext).asJava
 
   def withRequest(req: HttpRequest): RequestContext = wrap(delegate.withRequest(req.asScala))
   def withExecutionContext(ec: ExecutionContextExecutor): RequestContext = wrap(delegate.withExecutionContext(ec))

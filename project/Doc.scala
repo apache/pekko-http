@@ -71,7 +71,7 @@ object Scaladoc extends AutoPlugin {
       "-groups",
       "-doc-source-url", urlString,
       "-sourcepath", base.getAbsolutePath,
-      "-doc-title", "Akka HTTP",
+      "-doc-title", "Apache Pekko HTTP",
       "-doc-version", ver,
       // Workaround https://issues.scala-lang.org/browse/SI-10028
       "-skip-packages", "org.apache.pekko.pattern:org.specs2",
@@ -80,9 +80,9 @@ object Scaladoc extends AutoPlugin {
       // Workaround https://issues.scala-lang.org/browse/SI-10028
       (if (scalaBinaryVersion == "3")
          // https://github.com/lampepfl/dotty/issues/14939
-         List("-skip-packages:akka.pattern:org.specs2")
+         List("-skip-packages:org.apache.pekko.pattern:org.specs2")
        else
-         List("-skip-packages", "akka.pattern:org.specs2"))
+         List("-skip-packages", "org.apache.pekko:org.specs2"))
     CliOptions.scaladocDiagramsEnabled.ifTrue("-diagrams").toList ::: opts
   }
 

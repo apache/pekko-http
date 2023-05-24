@@ -19,14 +19,13 @@ import java.util.{ function => jf }
 import org.apache.pekko
 import pekko.actor.ReflectiveDynamicAccess
 
-import scala.compat.java8.OptionConverters
-import scala.compat.java8.OptionConverters._
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.headers.{ HttpOriginRange, HttpOriginRanges }
 import pekko.http.javadsl.model.HttpHeader
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.model.headers.{ ModeledCustomHeader, ModeledCustomHeaderCompanion }
 import pekko.http.scaladsl.server.directives.{ HeaderDirectives => D, HeaderMagnet }
+import pekko.util.OptionConverters._
 
 import scala.reflect.ClassTag
 import scala.util.{ Failure, Success }
@@ -60,7 +59,7 @@ abstract class HeaderDirectives extends FutureDirectives {
    * with a [[pekko.http.javadsl.server.MalformedHeaderRejection]].
    */
   def headerValue[T](f: jf.Function[HttpHeader, Optional[T]], inner: jf.Function[T, Route]) = RouteAdapter {
-    D.headerValue(h => f.apply(h).asScala) { value =>
+    D.headerValue(h => f.apply(h).toScala) { value =>
       inner.apply(value).delegate
     }
   }
@@ -125,8 +124,8 @@ abstract class HeaderDirectives extends FutureDirectives {
    */
   def optionalHeaderValue[T](f: jf.Function[HttpHeader, Optional[T]], inner: jf.Function[Optional[T], Route]) =
     RouteAdapter {
-      D.optionalHeaderValue(h => f.apply(h).asScala) { value =>
-        inner.apply(value.asJava).delegate
+      D.optionalHeaderValue(h => f.apply(h).toScala) { value =>
+        inner.apply(value.toJava).delegate
       }
     }
 
@@ -138,7 +137,7 @@ abstract class HeaderDirectives extends FutureDirectives {
   def optionalHeaderValuePF[T](pf: PartialFunction[HttpHeader, T], inner: jf.Function[Optional[T], Route]) =
     RouteAdapter {
       D.optionalHeaderValuePF(pf) { value =>
-        inner.apply(value.asJava).delegate
+        inner.apply(value.toJava).delegate
       }
     }
 
@@ -161,7 +160,7 @@ abstract class HeaderDirectives extends FutureDirectives {
     // TODO needs instance of check if it's a modeled header and then magically locate companion
     D.optionalHeaderValueByType(HeaderMagnet.fromClassNormalJavaHeader(t).asInstanceOf[ScalaHeaderMagnet]) { value =>
       val valueT = value.asInstanceOf[Option[T]] // we know this is safe because T <: HttpHeader
-      inner.apply(OptionConverters.toJava[T](valueT)).delegate
+      inner.apply(valueT.toJava).delegate
     }
   }
 

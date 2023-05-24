@@ -25,10 +25,10 @@ import pekko.http.impl.util._
 import pekko.http.javadsl.model
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.{ settings => js }
+import pekko.util.OptionConverters._
 import com.typesafe.config.Config
 
 import scala.collection.JavaConverters._
-import scala.compat.java8.OptionConverters
 
 /**
  * Public API but not intended for subclassing
@@ -88,15 +88,15 @@ abstract class ParserSettings private[pekko] () extends pekko.http.javadsl.setti
   override def getConflictingContentTypeHeaderProcessingMode = this.conflictingContentTypeHeaderProcessingMode
 
   override def getCustomMethods = new Function[String, Optional[pekko.http.javadsl.model.HttpMethod]] {
-    override def apply(t: String) = OptionConverters.toJava(self.customMethods(t))
+    override def apply(t: String) = (self.customMethods(t): Option[pekko.http.javadsl.model.HttpMethod]).toJava
   }
   override def getCustomStatusCodes = new Function[Int, Optional[pekko.http.javadsl.model.StatusCode]] {
-    override def apply(t: Int) = OptionConverters.toJava(self.customStatusCodes(t))
+    override def apply(t: Int) = (self.customStatusCodes(t): Option[pekko.http.javadsl.model.StatusCode]).toJava
   }
   override def getCustomMediaTypes =
     new pekko.japi.function.Function2[String, String, Optional[pekko.http.javadsl.model.MediaType]] {
       override def apply(mainType: String, subType: String): Optional[model.MediaType] =
-        OptionConverters.toJava(self.customMediaTypes(mainType, subType))
+        (self.customMediaTypes(mainType, subType): Option[pekko.http.javadsl.model.MediaType]).toJava
     }
   def getModeledHeaderParsing: Boolean = this.modeledHeaderParsing
 

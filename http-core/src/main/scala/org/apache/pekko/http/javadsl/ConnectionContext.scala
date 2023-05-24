@@ -20,10 +20,9 @@ import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.http.scaladsl
 import pekko.japi.Util
 import pekko.stream.TLSClientAuth
+import pekko.util.OptionConverters._
 import com.typesafe.sslconfig.pekko.PekkoSSLConfig
 import javax.net.ssl.{ SSLContext, SSLEngine, SSLParameters }
-
-import scala.compat.java8.OptionConverters
 
 object ConnectionContext {
   // #https-server-context-creation
@@ -80,11 +79,11 @@ object ConnectionContext {
     // #https-context-creation
     scaladsl.ConnectionContext.https(
       sslContext,
-      OptionConverters.toScala(sslConfig),
-      OptionConverters.toScala(enabledCipherSuites).map(Util.immutableSeq(_)),
-      OptionConverters.toScala(enabledProtocols).map(Util.immutableSeq(_)),
-      OptionConverters.toScala(clientAuth),
-      OptionConverters.toScala(sslParameters))
+      sslConfig.toScala,
+      enabledCipherSuites.toScala.map(Util.immutableSeq(_)),
+      enabledProtocols.toScala.map(Util.immutableSeq(_)),
+      clientAuth.toScala,
+      sslParameters.toScala)
 
   /** Used to serve HTTPS traffic. */
   @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory",
@@ -98,10 +97,10 @@ object ConnectionContext {
     scaladsl.ConnectionContext.https(
       sslContext,
       None,
-      OptionConverters.toScala(enabledCipherSuites).map(Util.immutableSeq(_)),
-      OptionConverters.toScala(enabledProtocols).map(Util.immutableSeq(_)),
-      OptionConverters.toScala(clientAuth),
-      OptionConverters.toScala(sslParameters))
+      enabledCipherSuites.toScala.map(Util.immutableSeq(_)),
+      enabledProtocols.toScala.map(Util.immutableSeq(_)),
+      clientAuth.toScala,
+      sslParameters.toScala)
 
   /** Used to serve HTTP traffic. */
   def noEncryption(): HttpConnectionContext =

@@ -27,10 +27,10 @@ import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.pattern.CircuitBreakerOpenException
 import pekko.http.javadsl.model.headers.{ HttpOrigin => JHttpOrigin }
 import pekko.http.scaladsl.model.headers.{ HttpOrigin => SHttpOrigin }
+import pekko.util.OptionConverters._
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable
-import scala.compat.java8.OptionConverters
 import scala.runtime.AbstractFunction1
 
 /**
@@ -41,7 +41,7 @@ import scala.runtime.AbstractFunction1
 trait Rejection extends pekko.http.javadsl.server.Rejection
 
 trait RejectionWithOptionalCause extends Rejection {
-  final def getCause: Optional[Throwable] = OptionConverters.toJava(cause)
+  final def getCause: Optional[Throwable] = cause.toJava
   def cause: Option[Throwable]
 }
 

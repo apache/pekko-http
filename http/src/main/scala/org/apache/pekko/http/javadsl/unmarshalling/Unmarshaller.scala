@@ -32,10 +32,10 @@ import pekko.http.scaladsl.unmarshalling.Unmarshaller.{
 import pekko.http.scaladsl.util.FastFuture
 import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.util.ByteString
+import pekko.util.FutureConverters._
 import scala.annotation.nowarn
 
 import scala.collection.JavaConverters._
-import scala.compat.java8.FutureConverters._
 import scala.concurrent.ExecutionContext
 
 object Unmarshaller extends pekko.http.javadsl.unmarshalling.Unmarshallers {
@@ -55,7 +55,7 @@ object Unmarshaller extends pekko.http.javadsl.unmarshalling.Unmarshallers {
    * Creates an unmarshaller from an asynchronous Java function.
    */
   override def async[A, B](f: java.util.function.Function[A, CompletionStage[B]]): Unmarshaller[A, B] =
-    unmarshalling.Unmarshaller[A, B] { ctx => a => f(a).toScala }
+    unmarshalling.Unmarshaller[A, B] { ctx => a => f(a).asScala }
 
   /**
    * Creates an unmarshaller from a Java function.
@@ -144,7 +144,7 @@ abstract class Unmarshaller[-A, B] extends UnmarshallerBase[A, B] {
    * Apply this Unmarshaller to the given value.
    */
   def unmarshal(value: A, ec: ExecutionContext, mat: Materializer): CompletionStage[B] =
-    asScala.apply(value)(ec, mat).toJava
+    asScala.apply(value)(ec, mat).asJava
 
   /**
    * Apply this Unmarshaller to the given value. Uses the default materializer [[ExecutionContext]].
@@ -173,7 +173,7 @@ abstract class Unmarshaller[-A, B] extends UnmarshallerBase[A, B] {
   def thenApply[C](f: java.util.function.Function[B, C]): Unmarshaller[A, C] = asScala.map(f.apply)
 
   def flatMap[C](f: java.util.function.Function[B, CompletionStage[C]]): Unmarshaller[A, C] =
-    asScala.flatMap { ctx => mat => b => f.apply(b).toScala }
+    asScala.flatMap { ctx => mat => b => f.apply(b).asScala }
 
   def flatMap[C](u: Unmarshaller[_ >: B, C]): Unmarshaller[A, C] =
     asScala.flatMap { ctx => mat => b => u.asScala.apply(b)(ctx, mat) }

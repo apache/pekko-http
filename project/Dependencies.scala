@@ -20,8 +20,8 @@ import scala.language.implicitConversions
 object Dependencies {
   import DependencyHelpers._
 
-  val jacksonDatabindVersion = "2.10.5.1"
-  val jacksonXmlVersion = "2.10.5"
+  val jacksonDatabindVersion = "2.14.3"
+  val jacksonXmlVersion = jacksonDatabindVersion
   val junitVersion = "4.13.2"
   val h2specVersion = "1.5.0"
   val h2specName = s"h2spec_${DependencyHelpers.osName}_amd64"
@@ -52,13 +52,7 @@ object Dependencies {
   }
 
   object Compile {
-    val scalaXml = {
-      val xml = "org.scala-lang.modules" %% "scala-xml" // Scala License
-      ScalaVersionDependentModuleID.versioned {
-        case v if v.startsWith("2.") => xml % "1.3.0"
-        case _                       => xml % "2.0.1"
-      }
-    }
+    val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
 
     // For pekko-http spray-json support
     val sprayJson = "io.spray" %% "spray-json" % "1.3.6" // ApacheV2

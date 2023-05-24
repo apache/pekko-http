@@ -13,8 +13,8 @@
 
 package org.apache.pekko.macros
 
-import org.apache.pekko.annotation.InternalApi
-//import pekko.event.LoggingAdapter
+import org.apache.pekko
+import pekko.annotation.InternalApi
 
 /**
  * INTERNAL API
@@ -24,7 +24,7 @@ import org.apache.pekko.annotation.InternalApi
  */
 @InternalApi
 private[pekko] trait LogHelper extends LogHelperMacro {
-  def log: org.apache.pekko.event.LoggingAdapter
+  def log: pekko.event.LoggingAdapter
   def isDebugEnabled: Boolean = log.isDebugEnabled
   def isInfoEnabled: Boolean = log.isInfoEnabled
   def isWarningEnabled: Boolean = log.isWarningEnabled

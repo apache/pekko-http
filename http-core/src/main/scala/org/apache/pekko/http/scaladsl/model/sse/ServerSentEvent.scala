@@ -19,9 +19,9 @@ package sse
 import org.apache.pekko
 import pekko.http.javadsl.model
 import pekko.util.ByteString
+import pekko.util.OptionConverters._
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.annotation.tailrec
-import scala.compat.java8.OptionConverters.RichOptionForJava8
 
 object ServerSentEvent {
 
@@ -133,9 +133,9 @@ final case class ServerSentEvent(
 
   override def getData = data
 
-  override def getEventType = eventType.asJava
+  override def getEventType = eventType.toJava
 
-  override def getId = id.asJava
+  override def getId = id.toJava
 
-  override def getRetry = retry.asPrimitive
+  override def getRetry = retry.toJavaPrimitive
 }

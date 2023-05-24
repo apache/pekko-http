@@ -1,4 +1,4 @@
-package akka
+package org.apache.pekko
 
 import sbt.{ Def, _ }
 import Keys._

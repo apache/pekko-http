@@ -18,8 +18,10 @@ package org.apache.pekko.http.javadsl.model.sse;
 
 import java.util.Optional;
 import java.util.OptionalInt;
+
+import org.apache.pekko.util.OptionConverters;
 import scala.Option;
-import static scala.compat.java8.OptionConverters.toScala;
+import org.apache.pekko.http.impl.util.Util;
 
 /**
  * Representation of a server-sent event. According to the specification, an empty data field
@@ -27,9 +29,9 @@ import static scala.compat.java8.OptionConverters.toScala;
  */
 public abstract class ServerSentEvent {
 
-    private static final Option<String> stringNone =  toScala(Optional.empty());
+    private static final Option<String> stringNone =  Util.scalaNone();
 
-    private static final Option<Object> intNone = toScala(OptionalInt.empty());
+    private static final Option<Object> intNone = Util.scalaNone();
 
 
     /**
@@ -92,7 +94,7 @@ public abstract class ServerSentEvent {
                                          Optional<String> id,
                                          OptionalInt retry) {
         return org.apache.pekko.http.scaladsl.model.sse.ServerSentEvent.apply(
-                data, toScala(type), toScala(id), toScala(retry)
+                data, OptionConverters.toScala(type), OptionConverters.toScala(id), Util.convertOptionalToScala(retry)
         );
     }
 

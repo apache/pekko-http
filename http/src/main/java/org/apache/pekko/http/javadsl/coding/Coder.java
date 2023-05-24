@@ -21,8 +21,8 @@ import org.apache.pekko.http.scaladsl.coding.Deflate$;
 import org.apache.pekko.http.scaladsl.coding.Gzip$;
 import org.apache.pekko.http.scaladsl.coding.NoCoding$;
 import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.util.FutureConverters;
 import org.apache.pekko.util.ByteString;
-import scala.compat.java8.FutureConverters;
 
 /**
  * A coder is an implementation of the predefined encoders/decoders defined for HTTP.
@@ -65,7 +65,7 @@ public enum Coder {
     }
 
     public CompletionStage<ByteString> decode(ByteString input, Materializer mat) {
-        return FutureConverters.toJava(underlying.decode(input, mat));
+        return FutureConverters.asJava(underlying.decode(input, mat));
     }
     public org.apache.pekko.http.scaladsl.coding.Coder _underlyingScalaCoder() {
         return underlying;

@@ -43,6 +43,7 @@ import pekko.stream._
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl._
 import pekko.util.ByteString
+import pekko.util.FutureConverters._
 import pekko.util.ManifestInfo
 
 import scala.annotation.nowarn
@@ -54,7 +55,6 @@ import com.typesafe.sslconfig.ssl.ConfigSSLContextBuilder
 import scala.concurrent._
 import scala.util.{ Success, Try }
 import scala.util.control.NonFatal
-import scala.compat.java8.FutureConverters._
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.duration._
 
@@ -85,7 +85,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     "pekko-http-xml",
     "pekko-http-jackson")
 
-  ManifestInfo(system).checkSameVersion("Akka HTTP", allModules, logWarning = true)
+  ManifestInfo(system).checkSameVersion("Pekko HTTP", allModules, logWarning = true)
 
   import Http._
 
@@ -1106,7 +1106,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
 
     private[http] def toJava = new pekko.http.javadsl.HostConnectionPool {
       override def setup = HostConnectionPool.this.setup
-      def shutdown(): CompletionStage[Done] = HostConnectionPool.this.shutdown().toJava
+      def shutdown(): CompletionStage[Done] = HostConnectionPool.this.shutdown().asJava
     }
 
     override def productArity: Int = 1

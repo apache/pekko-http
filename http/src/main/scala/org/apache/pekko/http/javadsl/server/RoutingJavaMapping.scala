@@ -99,7 +99,7 @@ private[http] object RoutingJavaMapping {
   //  val javaToScalaResponseEntity extends Inherited[javadsl.model.ResponseEntity, scaladsl.model.ResponseEntity]
 
   implicit final class ConvertCompletionStage[T](val stage: CompletionStage[T]) extends AnyVal {
-    import scala.compat.java8.FutureConverters._
-    def asScala = stage.toScala
+    import pekko.util.FutureConverters
+    def asScala = FutureConverters.asScala(stage)
   }
 }

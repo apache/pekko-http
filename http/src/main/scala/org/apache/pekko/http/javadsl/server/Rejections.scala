@@ -27,8 +27,8 @@ import pekko.annotation.DoNotInherit
 import pekko.http.scaladsl
 import pekko.japi.Util
 import pekko.pattern.CircuitBreakerOpenException
+import pekko.util.OptionConverters._
 
-import scala.compat.java8.OptionConverters._
 import scala.collection.immutable
 import scala.collection.JavaConverters._
 
@@ -380,7 +380,7 @@ object Rejections {
     s.MalformedQueryParamRejection(parameterName, errorMsg)
   def malformedQueryParam(
       parameterName: String, errorMsg: String, cause: Optional[Throwable]): MalformedQueryParamRejection =
-    s.MalformedQueryParamRejection(parameterName, errorMsg, cause.asScala)
+    s.MalformedQueryParamRejection(parameterName, errorMsg, cause.toScala)
 
   def missingFormField(fieldName: String): MissingFormFieldRejection =
     s.MissingFormFieldRejection(fieldName)
@@ -389,7 +389,7 @@ object Rejections {
     s.MalformedFormFieldRejection(fieldName, errorMsg)
   def malformedFormField(
       fieldName: String, errorMsg: String, cause: Optional[Throwable]): s.MalformedFormFieldRejection =
-    s.MalformedFormFieldRejection(fieldName, errorMsg, cause.asScala)
+    s.MalformedFormFieldRejection(fieldName, errorMsg, cause.toScala)
 
   def missingHeader(headerName: String): MissingHeaderRejection =
     s.MissingHeaderRejection(headerName)
@@ -397,7 +397,7 @@ object Rejections {
   def malformedHeader(headerName: String, errorMsg: String): MalformedHeaderRejection =
     s.MalformedHeaderRejection(headerName, errorMsg)
   def malformedHeader(headerName: String, errorMsg: String, cause: Optional[Throwable]): s.MalformedHeaderRejection =
-    s.MalformedHeaderRejection(headerName, errorMsg, cause.asScala)
+    s.MalformedHeaderRejection(headerName, errorMsg, cause.toScala)
 
   def unsupportedRequestContentType(
       supported: java.lang.Iterable[MediaType],
@@ -457,7 +457,7 @@ object Rejections {
   def validationRejection(message: String) =
     s.ValidationRejection(message)
   def validationRejection(message: String, cause: Optional[Throwable]) =
-    s.ValidationRejection(message, cause.asScala)
+    s.ValidationRejection(message, cause.toScala)
 
   def transformationRejection(f: java.util.function.Function[java.util.List[Rejection], java.util.List[Rejection]]) =
     s.TransformationRejection(rejections => f.apply(rejections.map(_.asJava).asJava).asScala.toVector.map(_.asScala)) // TODO this is maddness
