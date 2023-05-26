@@ -57,5 +57,5 @@ Java
 :  @@snip [EventStreamMarshallingTest.java](/http-tests/src/test/java/org/apache/pekko/http/javadsl/unmarshalling/sse/EventStreamUnmarshallingTest.java) { #event-stream-unmarshalling-example }
 
 Notice that if you are looking for a resilient way to permanently subscribe to an event stream,
-Apache Pekko Connectors provides the [EventSource](https://doc.akka.io/docs/alpakka/current/sse.html)
+Apache Pekko Connectors provides the [EventSource](https://pekko.apache.org/docs/pekko-connectors/current/sse.html)
 connector which reconnects automatically with the id of the last seen event.

@@ -38,7 +38,7 @@ object PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
 
   commonConfig(ConfigFactory.parseString(
     """
-      akka {
+      pekko {
         actor.default-mailbox.mailbox-type = "org.apache.pekko.dispatch.UnboundedMailbox"
         actor.provider = "org.apache.pekko.remote.RemoteActorRefProvider"
         actor.warn-about-java-serializer-usage = off

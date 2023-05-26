@@ -441,7 +441,7 @@ lazy val compatibilityTests = Project("http-compatibility-tests", file("http-com
     (Test / dependencyClasspath) := {
       // HACK: We'd like to use `dependsOn(http % "test->compile")` to upgrade the explicit dependency above to the
       //       current version but that fails. So, this is a manual `dependsOn` which works as expected.
-      (Test / dependencyClasspath).value.filterNot(_.data.getName contains "akka") ++
+      (Test / dependencyClasspath).value.filterNot(_.data.getName contains "pekko") ++
       (httpTests / Test / fullClasspath).value
     }
   )

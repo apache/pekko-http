@@ -39,7 +39,7 @@ import scala.util.{ Failure, Success }
 
 class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
       """
-     akka {
+     pekko {
        stream.materializer.debug.fuzzing-mode=off
        http.server.websocket.log-frames = on
        http.client.websocket.log-frames = on

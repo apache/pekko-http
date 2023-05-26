@@ -117,7 +117,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     val processorFlow: Flow[Option[ExamplePerson], Int, NotUsed] =
       Flow[Option[ExamplePerson]].map(_.map(_.name.length).getOrElse(0))
 
-    // Run and completely consume a single akka http request
+    // Run and completely consume a single pekko http request
     def runRequest(req: HttpRequest): Future[Option[ExamplePerson]] =
       Http()
         .singleRequest(req)
@@ -127,7 +127,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
             .map(parse)
         }
 
-    // Run each akka http flow to completion, then continue processing. You'll want to tune the `parallelism`
+    // Run each pekko http flow to completion, then continue processing. You'll want to tune the `parallelism`
     // parameter to mapAsync -- higher values will create more cpu and memory load which may or may not positively
     // impact performance.
     requests

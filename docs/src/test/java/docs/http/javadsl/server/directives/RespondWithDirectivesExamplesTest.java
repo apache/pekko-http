@@ -148,10 +148,10 @@ public class RespondWithDirectivesExamplesTest extends JUnitRouteTest {
   public void testRespondWithHeaders() {
     // #respondWithHeaders
     final HttpHeader gonzo = RawHeader.create("Funky-Muppet", "gonzo");
-    final HttpHeader akka = Origin.create(HttpOrigin.parse("http://pekko.apache.org"));
+    final HttpHeader pekko = Origin.create(HttpOrigin.parse("http://pekko.apache.org"));
 
     final Route route =
-        path("foo", () -> respondWithHeaders(Arrays.asList(gonzo, akka), () -> complete("beep")));
+        path("foo", () -> respondWithHeaders(Arrays.asList(gonzo, pekko), () -> complete("beep")));
 
     testRoute(route)
         .run(HttpRequest.GET("/foo"))
@@ -167,8 +167,8 @@ public class RespondWithDirectivesExamplesTest extends JUnitRouteTest {
     // #respondWithDefaultHeaders
     // custom headers
     final RawHeader blippy = RawHeader.create("X-Fish-Name", "Blippy");
-    final HttpHeader akka = Origin.create(HttpOrigin.parse("http://pekko.apache.org"));
-    final List<HttpHeader> defaultHeaders = Arrays.asList(blippy, akka);
+    final HttpHeader pekko = Origin.create(HttpOrigin.parse("http://pekko.apache.org"));
+    final List<HttpHeader> defaultHeaders = Arrays.asList(blippy, pekko);
     final RawHeader elTonno = RawHeader.create("X-Fish-Name", "El Tonno");
 
     // format: OFF

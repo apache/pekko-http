@@ -21,13 +21,13 @@ import sbt.Keys._
 object MultiNode extends AutoPlugin {
 
   object CliOptions {
-    val multiNode = CliOption("akka.test.multi-node", false)
+    val multiNode = CliOption("pekko.test.multi-node", false)
     val sbtLogNoFormat = CliOption("sbt.log.noformat", false)
 
     def seqWithProperty(name: String) = Option(System.getProperty(name)).toSeq
-    val hostsFileName = seqWithProperty("akka.test.multi-node.hostsFileName")
-    val javaName = seqWithProperty("akka.test.multi-node.java")
-    val targetDirName = seqWithProperty("akka.test.multi-node.targetDirName")
+    val hostsFileName = seqWithProperty("pekko.test.multi-node.hostsFileName")
+    val javaName = seqWithProperty("pekko.test.multi-node.java")
+    val targetDirName = seqWithProperty("pekko.test.multi-node.targetDirName")
   }
 
   val multiExecuteTests =
@@ -44,10 +44,10 @@ object MultiNode extends AutoPlugin {
     // multinode.D= and multinode.X= makes it possible to pass arbitrary
     // -D or -X arguments to the forked jvm, e.g.
     // -Dmultinode.Djava.net.preferIPv4Stack=true -Dmultinode.Xmx512m -Dmultinode.XX:MaxPermSize=256M
-    // -DMultiJvm.akka.cluster.Stress.nrOfNodes=15
+    // -DMultiJvm.pekko.cluster.Stress.nrOfNodes=15
     val MultinodeJvmArgs = "multinode\\.(D|X)(.*)".r
-    val knownPrefix = Set("multnode.", "akka.", "MultiJvm.")
-    val akkaProperties =
+    val knownPrefix = Set("multinode.", "pekko.", "MultiJvm.")
+    val pekkoProperties =
       System.getProperties.propertyNames.asInstanceOf[java.util.Enumeration[String]].asScala.toList.collect {
         case MultinodeJvmArgs(a, b) =>
           val value = System.getProperty("multinode." + a + b)
@@ -55,7 +55,7 @@ object MultiNode extends AutoPlugin {
         case key: String if knownPrefix.exists(pre => key.startsWith(pre)) => "-D" + key + "=" + System.getProperty(key)
       }
 
-    "-Xmx256m" :: akkaProperties ::: CliOptions.sbtLogNoFormat.ifTrue("-Dakka.test.nocolor=true").toList
+    "-Xmx256m" :: pekkoProperties ::: CliOptions.sbtLogNoFormat.ifTrue("-Dpekko.test.nocolor=true").toList
   }
 
   private val multiJvmSettings =
@@ -102,7 +102,7 @@ object MultiNodeScalaTest extends AutoPlugin {
   override lazy val projectSettings = Seq(
     MultiJvm / extraOptions := {
       val src = (MultiJvm / sourceDirectory).value
-      (name: String) => (src ** (name + ".conf")).get.headOption.map("-Dakka.config=" + _.absolutePath).toSeq
+      (name: String) => (src ** (name + ".conf")).get.headOption.map("-Dpekko.config=" + _.absolutePath).toSeq
     },
     MultiJvm / scalatestOptions := {
       Seq("-C", "org.scalatest.extra.QuietReporter")

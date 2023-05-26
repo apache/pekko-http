@@ -3,7 +3,7 @@
 Apache Pekko HTTP's @ref[marshalling](marshalling.md) and @ref[unmarshalling](unmarshalling.md) infrastructure makes it rather easy to seamlessly convert application-domain objects from and to JSON.
 Integration with @scala[[spray-json]]@java[[Jackson]] is provided out of the box through the @scala[`pekko-http-spray-json`]@java[`pekko-http-jackson`] module.
 Integration with other JSON libraries are supported by the community.
-See [the list of current community extensions for Apache Pekko HTTP](https://akka.io/community/#extensions-to-akka-http).
+See @ref[the list of current community extensions for Apache Pekko HTTP](../examples-and-extensions.md#extensions).
 
 @@@ div { .group-java }
 

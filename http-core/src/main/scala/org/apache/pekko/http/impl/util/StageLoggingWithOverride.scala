@@ -10,7 +10,7 @@
 /*
  * Copyright (C) 2017-2022 Lightbend Inc. <https://www.lightbend.com>
  *
- * Copied and adapted from akka-remote
+ * Copied and adapted from pekko-remote
  * https://github.com/akka/akka/blob/c90121485fcfc44a3cee62a0c638e1982d13d812/akka-remote/src/main/scala/akka/remote/artery/StageLogging.scala
  */
 
@@ -22,7 +22,7 @@ import pekko.stream.stage.GraphStageLogic
 import pekko.event.{ LogSource, LoggingAdapter, NoLogging }
 import pekko.stream.ActorMaterializer
 
-// TODO Try to reconcile with what Akka provides in StageLogging.
+// TODO Try to reconcile with what Pekko provides in StageLogging.
 // We thought this could be removed when https://github.com/akka/akka/issues/18793 had been implemented
 // but we need a few more changes to be able to override the default logger. So for now we keep it here.
 /**

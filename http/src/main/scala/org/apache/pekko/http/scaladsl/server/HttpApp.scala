@@ -30,7 +30,7 @@ import scala.io.StdIn
 import scala.util.{ Failure, Success, Try }
 
 /**
- * DEPRECATED, consider https://developer.lightbend.com/guides/akka-http-quickstart-scala/ instead
+ * DEPRECATED, consider https://github.com/theiterators/pekko-http-quickstart-scala.g8 instead
  *
  * Bootstrap trait for Http Server. It helps booting up an pekko-http server by only defining the desired routes.
  * It offers additional hooks to modify the default behavior.
