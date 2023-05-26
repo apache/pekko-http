@@ -22,10 +22,11 @@ import pekko.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import spray.json.{ DefaultJsonProtocol, JsValue, JsonPrinter, PrettyPrinter }
 
 import scala.collection.immutable.ListMap
+import spray.json.RootJsonFormat
 
 class SprayJsonSupportSpec extends JsonSupportSpec {
   object EmployeeJsonProtocol extends DefaultJsonProtocol {
-    implicit val employeeFormat = jsonFormat5(Employee.apply)
+    implicit val employeeFormat: RootJsonFormat[Employee] = jsonFormat5(Employee.apply)
   }
   import EmployeeJsonProtocol._
 

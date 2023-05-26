@@ -37,12 +37,12 @@ import org.scalatest.matchers.should.Matchers
 
 class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll {
   val testConf: Config = ConfigFactory.parseString("""
-    pekko.event-handlers = ["org.apache.pekko.testkit.TestEventListener"]
+    pekko.event-handlers = ["pekko.testkit.TestEventListener"]
     pekko.loglevel = WARNING""")
-  implicit val system = ActorSystem(getClass.getSimpleName, testConf)
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
   import system.dispatcher
 
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   "The request preparation logic should" - {
     "properly render an unchunked" - {

@@ -52,7 +52,7 @@ object MyRejectionHandler {
         .handleNotFound { complete((NotFound, "Not here!")) }
         .result()
 
-    implicit val system = ActorSystem()
+    implicit val system: ActorSystem = ActorSystem()
 
     val route: Route = handleRejections(myRejectionHandler) {
       // ... some route structure
@@ -72,7 +72,7 @@ object HandleNotFoundWithThePath {
   import pekko.http.scaladsl.server._
   import Directives._
 
-  implicit def myRejectionHandler =
+  implicit def myRejectionHandler: RejectionHandler =
     RejectionHandler.newBuilder()
       .handleNotFound {
         extractUnmatchedPath { p =>
@@ -110,7 +110,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
     import pekko.http.scaladsl.model._
     import pekko.http.scaladsl.server.RejectionHandler
 
-    implicit def myRejectionHandler =
+    implicit def myRejectionHandler: RejectionHandler =
       RejectionHandler.default
         .mapRejectionResponse {
           case res @ HttpResponse(_, _, ent: HttpEntity.Strict, _) =>
@@ -143,7 +143,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
     import pekko.http.scaladsl.model._
     import pekko.http.scaladsl.server.RejectionHandler
 
-    implicit def myRejectionHandler =
+    implicit def myRejectionHandler: RejectionHandler =
       RejectionHandler.default
         .mapRejectionResponse {
           case res @ HttpResponse(_, _, ent: HttpEntity.Strict, _) =>
@@ -178,7 +178,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
     import pekko.http.scaladsl.server._
     import pekko.http.scaladsl.model.StatusCodes.BadRequest
 
-    implicit def myRejectionHandler = RejectionHandler.newBuilder().handle {
+    implicit def myRejectionHandler: RejectionHandler = RejectionHandler.newBuilder().handle {
       case MissingCookieRejection(_) => complete(HttpResponse(BadRequest, entity = "No cookies, no service!!!"))
     }.result()
 

@@ -51,6 +51,7 @@ import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.Promise
 
@@ -67,7 +68,7 @@ class Http2ServerSpec extends PekkoSpecWithMaterializer("""
     pekko.http.server.remote-address-header = on
     pekko.http.server.http2.log-frames = on
   """)
-    with WithInPendingUntilFixed with Eventually {
+    with Eventually {
   override def failOnSevereMessages: Boolean = true
 
   "The Http/2 server implementation" should {
@@ -1511,13 +1512,14 @@ class Http2ServerSpec extends PekkoSpecWithMaterializer("""
         })
       "reject incoming frames on already half-closed substream" in pending
 
-      "reject even-numbered client-initiated substreams".inPendingUntilFixed(new SimpleRequestResponseRoundtripSetup {
+      "reject even-numbered client-initiated substreams" in pending /* new SimpleRequestResponseRoundtripSetup {
         network.sendHEADERS(2, endStream = true, endHeaders = true, HPackSpecExamples.C41FirstRequestWithHuffman)
         network.expectGOAWAY()
         // after GOAWAY we expect graceful completion after x amount of time
         // TODO: completion logic, wait?!
         expectGracefulCompletion()
-      })
+      }
+       */
 
       "reject all other frames while waiting for CONTINUATION frames" in pending
 
@@ -1805,7 +1807,7 @@ class Http2ServerSpec extends PekkoSpecWithMaterializer("""
   }
 
   protected /* To make ByteFlag warnings go away */ abstract class TestSetupWithoutHandshake {
-    implicit def ec = system.dispatcher
+    implicit def ec: ExecutionContext = system.dispatcher
 
     private val framesOut: Http2FrameProbe = Http2FrameProbe()
     private val toNet = framesOut.plainDataProbe

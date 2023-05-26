@@ -116,7 +116,8 @@ class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
             Http().webSocketClientLayer(WebSocketRequest("ws://localhost:" + myPort))
               .atop(TLSPlacebo())
               .joinMat(completeOnlySwitch.via(
-                Tcp().outgoingConnection(new InetSocketAddress("localhost", myPort), halfClose = true)))(Keep.both)
+                Tcp(system).outgoingConnection(new InetSocketAddress("localhost", myPort), halfClose = true)))(
+                Keep.both)
           }(Keep.right)
           .toMat(TestSink.probe[Message])(Keep.both)
           .run()
@@ -193,7 +194,7 @@ class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
               .atop(TLSPlacebo())
               // the resource leak of #19398 existed only for severed websocket connections
               .atopMat(KillSwitches.singleBidi[ByteString, ByteString])(Keep.right)
-              .join(Tcp().outgoingConnection(new InetSocketAddress("localhost", myPort), halfClose = true))
+              .join(Tcp(system).outgoingConnection(new InetSocketAddress("localhost", myPort), halfClose = true))
           }(Keep.right)
           .toMat(Sink.foreach(_ => messages += 1))(Keep.both)
           .run()
@@ -227,7 +228,7 @@ class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
             Http().webSocketClientLayer(WebSocketRequest("ws://localhost:" + myPort))
               .atop(TLSPlacebo())
               .atopMat(KillSwitches.singleBidi[ByteString, ByteString])(Keep.right)
-              .join(Tcp().outgoingConnection(new InetSocketAddress("localhost", myPort), halfClose = true))
+              .join(Tcp(system).outgoingConnection(new InetSocketAddress("localhost", myPort), halfClose = true))
           }(Keep.right)
           .toMat(Sink.fromSubscriber(clientMessageIn))(Keep.left)
           .run()

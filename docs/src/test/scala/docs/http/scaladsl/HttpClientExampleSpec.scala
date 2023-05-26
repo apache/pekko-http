@@ -38,7 +38,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.stream.scaladsl.{ FileIO, Framing }
     import pekko.util.ByteString
 
-    implicit val system = ActorSystem()
+    implicit val system: ActorSystem = ActorSystem()
 
     val response: HttpResponse = ???
 
@@ -54,6 +54,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "manual-entity-consume-example-2" in compileOnlySpec {
     // #manual-entity-consume-example-2
+    import scala.concurrent.ExecutionContext
     import scala.concurrent.Future
     import scala.concurrent.duration._
 
@@ -62,8 +63,8 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.http.scaladsl.model._
     import pekko.util.ByteString
 
-    implicit val system = ActorSystem()
-    implicit val dispatcher = system.dispatcher
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val dispatcher: ExecutionContext = system.dispatcher
 
     case class ExamplePerson(name: String)
     def parse(line: ByteString): ExamplePerson = ???
@@ -90,6 +91,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "manual-entity-consume-example-3" in compileOnlySpec {
     // #manual-entity-consume-example-3
+    import scala.concurrent.ExecutionContext
     import scala.concurrent.Future
 
     import org.apache.pekko
@@ -100,13 +102,13 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.util.ByteString
     import pekko.stream.scaladsl.{ Flow, Sink, Source }
 
-    implicit val system = ActorSystem()
-    implicit val dispatcher = system.dispatcher
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val dispatcher: ExecutionContext = system.dispatcher
 
     case class ExamplePerson(name: String)
 
     def parse(line: ByteString): Option[ExamplePerson] =
-      line.utf8String.split(" ").headOption.map(ExamplePerson)
+      line.utf8String.split(" ").headOption.map(ExamplePerson.apply)
 
     val requests: Source[HttpRequest, NotUsed] = Source
       .fromIterator(() =>
@@ -138,13 +140,15 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "manual-entity-discard-example-1" in compileOnlySpec {
     // #manual-entity-discard-example-1
+    import scala.concurrent.ExecutionContext
+
     import org.apache.pekko
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.model.HttpMessage.DiscardedEntity
     import pekko.http.scaladsl.model._
 
-    implicit val system = ActorSystem()
-    implicit val dispatcher = system.dispatcher
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val dispatcher: ExecutionContext = system.dispatcher
 
     val response1: HttpResponse = ??? // obtained from an HTTP call (see examples below)
 
@@ -154,6 +158,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     // #manual-entity-discard-example-1
   }
   "manual-entity-discard-example-2" in compileOnlySpec {
+    import scala.concurrent.ExecutionContext
     import scala.concurrent.Future
 
     import pekko.Done
@@ -161,8 +166,8 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.http.scaladsl.model._
     import pekko.stream.scaladsl.Sink
 
-    implicit val system = ActorSystem()
-    implicit val dispatcher = system.dispatcher
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val dispatcher: ExecutionContext = system.dispatcher
 
     // #manual-entity-discard-example-2
     val response1: HttpResponse = ??? // obtained from an HTTP call (see examples below)
@@ -185,7 +190,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
     import pekko.stream.{ OverflowStrategy, QueueOfferResult }
 
-    implicit val system = ActorSystem()
+    implicit val system: ActorSystem = ActorSystem()
     import system.dispatcher // to get an implicit ExecutionContext into scope
 
     val QueueSize = 10
@@ -234,7 +239,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.http.scaladsl.model.Multipart.FormData
     import pekko.http.scaladsl.marshalling.Marshal
 
-    implicit val system = ActorSystem()
+    implicit val system: ActorSystem = ActorSystem()
     import system.dispatcher // to get an implicit ExecutionContext into scope
 
     case class FileToUpload(name: String, location: Path)
@@ -318,9 +323,10 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.http.scaladsl.unmarshalling.Unmarshal
     import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
     import spray.json.DefaultJsonProtocol._
+    import spray.json.RootJsonFormat
 
     case class Pet(name: String)
-    implicit val petFormat = jsonFormat1(Pet)
+    implicit val petFormat: RootJsonFormat[Pet] = jsonFormat1(Pet.apply)
 
     val pet: Future[Pet] = Unmarshal(response).to[Pet]
     // #unmarshal-response-body
@@ -329,7 +335,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
   "single-request-in-actor-example" in compileOnlySpec {
     // #single-request-in-actor-example
     import org.apache.pekko
-    import pekko.actor.{ Actor, ActorLogging }
+    import pekko.actor.{ Actor, ActorLogging, ActorSystem }
     import pekko.http.scaladsl.Http
     import pekko.http.scaladsl.model._
     import pekko.util.ByteString
@@ -340,7 +346,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       import pekko.pattern.pipe
       import context.dispatcher
 
-      implicit val system = context.system
+      implicit val system: ActorSystem = context.system
       val http = Http(system)
 
       override def preStart() = {

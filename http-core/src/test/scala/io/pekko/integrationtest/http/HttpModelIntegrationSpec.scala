@@ -50,13 +50,13 @@ import org.scalatest.wordspec.AnyWordSpec
 class HttpModelIntegrationSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
 
   val testConf: Config = ConfigFactory.parseString("""
-    pekko.event-handlers = ["org.apache.pekko.testkit.TestEventListener"]
+    pekko.event-handlers = ["pekko.testkit.TestEventListener"]
     pekko.loglevel = WARNING""")
-  implicit val system = ActorSystem(getClass.getSimpleName, testConf)
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
 
   override def afterAll() = TestKit.shutdownActorSystem(system)
 
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   "External HTTP libraries" should {
 

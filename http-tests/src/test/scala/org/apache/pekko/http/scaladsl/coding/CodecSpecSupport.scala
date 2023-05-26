@@ -82,8 +82,8 @@ voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita ka
 est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy e""".replace(
       "\r\n", "\n")
 
-  implicit val system = ActorSystem(getClass.getSimpleName)
-  implicit val materializer = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName)
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   override def afterAll() = TestKit.shutdownActorSystem(system)
 }

@@ -21,5 +21,5 @@ import pekko.testkit._
 case class RouteTestTimeout(duration: FiniteDuration)
 
 object RouteTestTimeout {
-  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(1.second.dilated)
+  implicit def default(implicit system: ActorSystem): RouteTestTimeout = RouteTestTimeout(1.second.dilated)
 }

@@ -79,7 +79,7 @@ object Marshaller {
   def wrapEntity[A, C](f: function.BiFunction[ExecutionContext, C, A], m: Marshaller[A, RequestEntity],
       mediaType: MediaType): Marshaller[C, RequestEntity] = {
     val scalaMarshaller = m.asScalaCastOutput
-    fromScala(scalaMarshaller.wrapWithEC(mediaType.asScala) { ctx => c: C => f(ctx, c) }(
+    fromScala(scalaMarshaller.wrapWithEC(mediaType.asScala) { ctx => (c: C) => f(ctx, c) }(
       ContentTypeOverrider.forEntity))
   }
 

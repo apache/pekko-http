@@ -103,7 +103,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           ":method" -> "GET",
           ":scheme" -> "https",
           ":path" -> "/")
-        forAll(0 until pseudoHeaders.length) { insertPoint: Int =>
+        forAll(pseudoHeaders.indices: Seq[Int]) { (insertPoint: Int) =>
           // Insert the Foo header so it occurs before at least one pseudo-header
           val (before, after) = pseudoHeaders.splitAt(insertPoint)
           val modified = before ++ Vector("Foo" -> "bar") ++ after
@@ -156,7 +156,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
 
       "parse the ':method' pseudo-header correctly" in {
         val methods = Seq("GET", "POST", "DELETE", "OPTIONS")
-        forAll(methods) { method: String =>
+        forAll(methods) { (method: String) =>
           val request: HttpRequest = parse(
             keyValuePairs = Vector(
               ":method" -> method,
@@ -178,7 +178,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         // We're restricted in what we can test because the HttpRequest class
         // can't be constructed with any other schemes.
         val schemes = Seq("http", "https", "ws", "wss")
-        forAll(schemes) { scheme: String =>
+        forAll(schemes) { (scheme: String) =>
           val request: HttpRequest = parse(
             keyValuePairs = Vector(
               ":method" -> "POST",
@@ -244,8 +244,8 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           "John.Doe@example.com",
           "cnn.example.com&story=breaking_news@10.0.0.1")
         val schemes = Seq("http", "https")
-        forAll(schemes) { scheme: String =>
-          forAll(authorities) { authority: String =>
+        forAll(schemes) { (scheme: String) =>
+          forAll(authorities) { (authority: String) =>
             val exception = the[Exception] thrownBy (parse(
               keyValuePairs = Vector(
                 ":method" -> "POST",
@@ -328,7 +328,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
             "/ ", "x", "1", "%2f", "-", ".", "_", "~",
             "?", "&", "=", "#", ":", "?", "#", "[", "]", "@", " ",
             "http://localhost/foo")
-          forAll(invalidAbsolutePaths) { absPath: String =>
+          forAll(invalidAbsolutePaths) { (absPath: String) =>
             val exception = the[ParsingException] thrownBy (parsePath(absPath))
             exception.getMessage should include("http2-path-pseudo-header")
           }
@@ -338,7 +338,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           val invalidAbsolutePaths = Seq(
             // Illegal for path-absolute in RFC3986 to start with multiple slashes
             "//", "//x")
-          forAll(invalidAbsolutePaths) { absPath: String =>
+          forAll(invalidAbsolutePaths) { (absPath: String) =>
             val exception = the[ParsingException] thrownBy (parsePath(absPath, uriParsingMode = Uri.ParsingMode.Strict))
             exception.getMessage should include("http2-path-pseudo-header")
           }
@@ -372,7 +372,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
                   // How form-encoded query strings are parsed is not strictly part of the HTTP/2 and URI RFCs,
                   // but lets do a quick sanity check to ensure that form-encoded query strings are correctly
                   // parsed into values further up the parsing stack.
-                  optParsedQuery.foreach { expectedParsedQuery: Uri.Query =>
+                  optParsedQuery.foreach { (expectedParsedQuery: Uri.Query) =>
                     uri.query() should contain theSameElementsAs expectedParsedQuery
                   }
               }
@@ -384,7 +384,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
             ":", "/", "?", "#", "[", "]", "@", " ")
           forAll(absolutePaths.take(3)) {
             case (inputPath, _) =>
-              forAll(invalidQueries) { query: String =>
+              forAll(invalidQueries) { (query: String) =>
                 shouldThrowMalformedRequest(parsePath(inputPath + "?" + query, uriParsingMode = Uri.ParsingMode.Strict))
               }
           }
@@ -409,7 +409,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
 
       "reject empty ':path' pseudo-headers for http and https" in pendingUntilFixed {
         val schemes = Seq("http", "https")
-        forAll(schemes) { scheme: String =>
+        forAll(schemes) { (scheme: String) =>
           shouldThrowMalformedRequest(parse(
             keyValuePairs = Vector(
               ":method" -> "POST",
@@ -434,7 +434,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
 
       "reject requests without a mandatory pseudo-headers" in {
         val mandatoryPseudoHeaders = Seq(":method", ":scheme", ":path")
-        forAll(mandatoryPseudoHeaders) { name: String =>
+        forAll(mandatoryPseudoHeaders) { (name: String) =>
           val thrown = shouldThrowMalformedRequest(parse(
             keyValuePairs = Vector(
               ":scheme" -> "https",

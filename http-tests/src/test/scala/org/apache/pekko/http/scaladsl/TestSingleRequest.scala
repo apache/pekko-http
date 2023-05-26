@@ -29,8 +29,8 @@ object TestSingleRequest extends App {
     pekko.log-dead-letters = off
     pekko.stream.materializer.debug.fuzzing-mode = off
     """)
-  implicit val system = ActorSystem("ServerTest", testConf)
-  implicit val materializer = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
   import system.dispatcher
 
   val url = StdIn.readLine("url? ")

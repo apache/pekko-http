@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.testkit
 
 import org.apache.pekko
+import pekko.actor.ActorRef
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model._
@@ -64,7 +65,7 @@ class Specs2RouteTestSpec extends Specification with Specs2RouteTest {
       case object Command
       val service = TestProbe()
       val handler = TestProbe()
-      implicit def serviceRef = service.ref
+      implicit def serviceRef: ActorRef = service.ref
       implicit val askTimeout: Timeout = 1.second
 
       val result =

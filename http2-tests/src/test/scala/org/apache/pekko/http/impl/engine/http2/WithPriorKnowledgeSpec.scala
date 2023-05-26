@@ -51,7 +51,7 @@ class WithPriorKnowledgeSpec extends PekkoSpecWithMaterializer("""
       val source =
         Source.queue[String](1000, OverflowStrategy.fail)
           .map(str => ByteString(Base64.getDecoder.decode(str)))
-          .via(Tcp().outgoingConnection(host, port))
+          .via(Tcp(system).outgoingConnection(host, port))
           .toMat(fromServer.sink)(Keep.left)
           .run()
 

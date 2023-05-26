@@ -16,7 +16,7 @@ package org.apache.pekko.http.impl.util
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.Http
-import pekko.stream.{ ActorMaterializer, SystemMaterializer }
+import pekko.stream.{ ActorMaterializer, Materializer, SystemMaterializer }
 import pekko.testkit.PekkoSpec
 import pekko.testkit.EventFilter
 import com.typesafe.config.ConfigFactory
@@ -34,7 +34,7 @@ abstract class PekkoSpecWithMaterializer(configOverrides: String)
 
   def this() = this("")
 
-  implicit val materializer = SystemMaterializer(system).materializer
+  implicit val materializer: Materializer = SystemMaterializer(system).materializer
 
   override protected def beforeTermination(): Unit =
     // don't log anything during shutdown, especially not AbruptTerminationExceptions

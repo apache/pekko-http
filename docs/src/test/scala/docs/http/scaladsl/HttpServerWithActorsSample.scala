@@ -63,6 +63,7 @@ object HttpServerWithActorsSample {
   import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
   import spray.json.DefaultJsonProtocol
   import spray.json.DeserializationException
+  import spray.json.JsonFormat
   import spray.json.JsString
   import spray.json.JsValue
   import spray.json.RootJsonFormat
@@ -85,7 +86,7 @@ object HttpServerWithActorsSample {
       }
     }
 
-    implicit val jobFormat = jsonFormat4(Job)
+    implicit val jobFormat: RootJsonFormat[Job] = jsonFormat4(Job.apply)
   }
   // #akka-typed-json
 

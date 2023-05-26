@@ -26,7 +26,7 @@ import pekko.http.scaladsl.settings.RoutingSettings
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.http.scaladsl.unmarshalling._
 import pekko.http.scaladsl.util.FastFuture._
-import pekko.stream.SystemMaterializer
+import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.stream.scaladsl.Source
 import pekko.testkit.TestKit
 import pekko.util.ConstantFun
@@ -34,7 +34,7 @@ import com.typesafe.config.{ Config, ConfigFactory }
 
 import scala.collection.immutable
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.{ Await, ExecutionContext, ExecutionContextExecutor, Future }
 import scala.reflect.ClassTag
 import scala.util.DynamicVariable
 
@@ -58,9 +58,9 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
     val config = if (source.isEmpty) ConfigFactory.empty() else ConfigFactory.parseString(source)
     config.withFallback(ConfigFactory.load())
   }
-  implicit val system = createActorSystem()
-  implicit def executor = system.dispatcher
-  implicit val materializer = SystemMaterializer(system).materializer
+  implicit val system: ActorSystem = createActorSystem()
+  implicit def executor: ExecutionContextExecutor = system.dispatcher
+  implicit val materializer: Materializer = SystemMaterializer(system).materializer
 
   def cleanUp(): Unit = TestKit.shutdownActorSystem(system)
 

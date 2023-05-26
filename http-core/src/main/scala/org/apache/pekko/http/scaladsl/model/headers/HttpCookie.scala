@@ -68,14 +68,14 @@ object HttpCookiePair {
  * http://tools.ietf.org/html/rfc6265
  */
 final class HttpCookie private[http] (
-    name: String,
-    value: String,
+    val name: String,
+    val value: String,
     val expires: Option[DateTime],
     val maxAge: Option[Long],
     val domain: Option[String],
     val path: Option[String],
-    secure: Boolean,
-    httpOnly: Boolean,
+    val secure: Boolean,
+    val httpOnly: Boolean,
     val extension: Option[String],
     val sameSite: Option[SameSite]) extends jm.headers.HttpCookie with ToStringRenderable with Product with Serializable
     with Equals {
@@ -179,11 +179,6 @@ final class HttpCookie private[http] (
     r
   }
 
-  override def name(): String = this.name
-  override def value(): String = this.value
-  override def secure(): Boolean = this.secure
-  override def httpOnly(): Boolean = this.httpOnly
-
   /** Java API */
   def getSameSite: Optional[jm.headers.SameSite] = sameSite.map(_.asJava).toJava
 
@@ -251,14 +246,14 @@ object HttpCookie {
     "Pattern matching on HttpCookie is deprecated because of the big number of fields and potential future compatibility hazards. Please use other means to check the fields.",
     since = "Akka HTTP 10.2.0")
   def unapply(cookie: HttpCookie) = Option((
-    cookie.name(),
-    cookie.value(),
+    cookie.name,
+    cookie.value,
     cookie.expires,
     cookie.maxAge,
     cookie.domain,
     cookie.path,
-    cookie.secure(),
-    cookie.httpOnly(),
+    cookie.secure,
+    cookie.httpOnly,
     cookie.extension))
 
   @deprecated("Use HttpCookiePair.toCookie and withXxx methods instead", "Akka HTTP 10.2.0")

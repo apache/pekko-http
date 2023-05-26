@@ -690,7 +690,7 @@ class BasicDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "extractSettings-examples" in {
     // #extractSettings-examples
     val route =
-      extractSettings { settings: RoutingSettings =>
+      extractSettings { (settings: RoutingSettings) =>
         complete(s"RoutingSettings.renderVanityFooter = ${settings.renderVanityFooter}")
       }
 
@@ -708,7 +708,7 @@ class BasicDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     val route =
       tunedSettings {
-        extractSettings { settings: RoutingSettings =>
+        extractSettings { (settings: RoutingSettings) =>
           complete(s"RoutingSettings.fileGetConditional = ${settings.fileGetConditional}")
         }
       }

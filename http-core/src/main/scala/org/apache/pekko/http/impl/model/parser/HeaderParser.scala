@@ -118,7 +118,7 @@ private[http] object HeaderParser {
 
   object EmptyCookieException extends SingletonException("Cookie header contained no parsable cookie values.")
 
-  def lookupParser(headerName: String, settings: Settings = DefaultSettings): Option[String => HeaderParser#Result] =
+  def lookupParser(headerName: String, settings: Settings = DefaultSettings): Option[String => HeaderParser.Result] =
     Some { (value: String) =>
       import org.parboiled2.EOI
       val v = value + EOI // this makes sure the parser isn't broken even if there's no trailing garbage in this value
@@ -135,7 +135,7 @@ private[http] object HeaderParser {
       }
     }
 
-  def parseFull(headerName: String, value: String, settings: Settings = DefaultSettings): HeaderParser#Result =
+  def parseFull(headerName: String, value: String, settings: Settings = DefaultSettings): HeaderParser.Result =
     lookupParser(headerName, settings).map(_(value)).getOrElse(HeaderParser.RuleNotFound)
 
   val (dispatch, ruleNames) = DynamicRuleDispatch[HeaderParser, HttpHeader :: HNil](

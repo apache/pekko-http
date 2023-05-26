@@ -304,7 +304,7 @@ class HttpEntitySpec extends PekkoSpecWithMaterializer {
     }
 
   def renderStrictDataAs(dataRendering: String): Matcher[Strict] =
-    Matcher { strict: Strict =>
+    Matcher { (strict: Strict) =>
       val expectedRendering = s"${strict.productPrefix}(${strict.contentType},$dataRendering)"
       MatchResult(
         strict.toString == expectedRendering,

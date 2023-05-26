@@ -17,7 +17,7 @@ import java.util.concurrent.{ CountDownLatch, TimeUnit }
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.event.Logging
+import pekko.event.{ LogSource, Logging }
 import pekko.http.impl.util.WithLogCapturing
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, Uri }
@@ -47,10 +47,10 @@ abstract class DontLeakActorsOnFailingConnectionSpecs(poolImplementation: String
 
       http.host-connection-pool.base-connection-backoff = 0 ms
     }""").withFallback(ConfigFactory.load())
-  implicit val system = ActorSystem("DontLeakActorsOnFailingConnectionSpecs-" + poolImplementation, config)
-  implicit val materializer = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem("DontLeakActorsOnFailingConnectionSpecs-" + poolImplementation, config)
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  val log = Logging(system, getClass)
+  val log = Logging(system, getClass)(LogSource.fromClass)
 
   "Http.superPool" should {
 
@@ -90,7 +90,7 @@ abstract class DontLeakActorsOnFailingConnectionSpecs(poolImplementation: String
     }
   }
 
-  override def afterAll = TestKit.shutdownActorSystem(system)
+  override def afterAll(): Unit = TestKit.shutdownActorSystem(system)
 }
 
 class LegacyPoolDontLeakActorsOnFailingConnectionSpecs extends DontLeakActorsOnFailingConnectionSpecs("legacy")

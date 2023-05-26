@@ -27,9 +27,9 @@ import pekko.http.scaladsl.model.Uri
 import pekko.http.scaladsl.model.ws._
 
 object WSClientAutobahnTest extends App {
-  implicit val system = ActorSystem()
+  implicit val system: ActorSystem = ActorSystem()
   import system.dispatcher
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   val Agent = "pekko-http"
   val Parallelism = 4

@@ -33,8 +33,8 @@ private[parser] trait AcceptEncodingHeader { this: Parser with CommonRules with 
     }
   }
 
-  def codings = rule { ws('*') ~ push(HttpEncodingRange.`*`) | token ~> getEncoding }
+  def codings = rule { ws('*') ~ push(HttpEncodingRange.`*`) | token ~> getEncoding _ }
 
-  private val getEncoding: String => HttpEncodingRange =
-    name => HttpEncodingRange(HttpEncodings.getForKeyCaseInsensitive(name).getOrElse(HttpEncoding.custom(name)))
+  private def getEncoding(name: String): HttpEncodingRange =
+    HttpEncodingRange(HttpEncodings.getForKeyCaseInsensitive(name).getOrElse(HttpEncoding.custom(name)))
 }

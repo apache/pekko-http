@@ -109,7 +109,7 @@ private[http] object OutgoingConnectionBlueprint {
       val logger =
         b.add(Flow[ByteString].mapError { case t => log.debug(s"Outgoing request stream error {}", t); t }.named(
           "errorLogger"))
-      val wrapTls = b.add(Flow[ByteString].map(SendBytes))
+      val wrapTls = b.add(Flow[ByteString].map(SendBytes(_)))
 
       val collectSessionBytes = b.add(Flow[SslTlsInbound].collect { case s: SessionBytes => s })
 

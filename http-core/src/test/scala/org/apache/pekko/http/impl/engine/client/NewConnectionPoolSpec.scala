@@ -698,7 +698,7 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
       else Sink.fromSubscriber(incomingConnections)
 
       val binding =
-        Tcp()
+        Tcp(system)
           .bind("localhost", 0, idleTimeout = serverSettings.timeouts.idleTimeout)
           .map { c =>
             val layer = Http().serverLayer(serverSettings, log = log)

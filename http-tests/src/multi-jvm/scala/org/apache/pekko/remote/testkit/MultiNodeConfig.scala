@@ -32,7 +32,7 @@ import pekko.testkit.TestEvent._
 import scala.concurrent.duration._
 import pekko.remote.testconductor.RoleName
 import pekko.actor.RootActorPath
-import pekko.event.{ Logging, LoggingAdapter }
+import pekko.event.{ LogSource, Logging, LoggingAdapter }
 
 /**
  * Configure the role names and participants of the test, including configuration settings.
@@ -275,13 +275,13 @@ abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles:
       ActorSystem(MultiNodeSpec.getCallerName(classOf[MultiNodeSpec]), ConfigFactory.load(config.config)),
       config.roles, config.deployments)
 
-  val log: LoggingAdapter = Logging(system, this.getClass)
+  val log: LoggingAdapter = Logging(system, this.getClass)(LogSource.fromClass)
 
   /**
    * Enrich `.await()` onto all Awaitables, using remaining duration from the innermost
    * enclosing `within` block or QueryTimeout.
    */
-  implicit def awaitHelper[T](w: Awaitable[T]) = new AwaitHelper(w)
+  implicit def awaitHelper[T](w: Awaitable[T]): AwaitHelper[T] = new AwaitHelper(w)
   class AwaitHelper[T](w: Awaitable[T]) {
     def await: T = Await.result(w, remainingOr(testConductor.Settings.QueryTimeout.duration))
   }
