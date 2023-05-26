@@ -74,7 +74,6 @@ object Scaladoc extends AutoPlugin {
       "-doc-title", "Apache Pekko HTTP",
       "-doc-version", ver,
       // Workaround https://issues.scala-lang.org/browse/SI-10028
-      "-skip-packages", "org.apache.pekko.pattern:org.specs2",
       "-doc-canonical-base-url", "https://pekko.apache.org/api/pekko-http/current/") ++
       plugins.map(plugin => "-Xplugin:" + plugin) ++
       // Workaround https://issues.scala-lang.org/browse/SI-10028
@@ -82,7 +81,7 @@ object Scaladoc extends AutoPlugin {
          // https://github.com/lampepfl/dotty/issues/14939
          List("-skip-packages:org.apache.pekko.pattern:org.specs2")
        else
-         List("-skip-packages", "org.apache.pekko:org.specs2"))
+         List("-skip-packages", "org.apache.pekko.pattern:org.specs2"))
     CliOptions.scaladocDiagramsEnabled.ifTrue("-diagrams").toList ::: opts
   }
 
