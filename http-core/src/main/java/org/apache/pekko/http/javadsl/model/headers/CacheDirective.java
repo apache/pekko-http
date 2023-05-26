@@ -15,5 +15,5 @@ package org.apache.pekko.http.javadsl.model.headers;
 
 /** @see CacheDirectives for convenience access to often used values. */
 public interface CacheDirective {
-    String value();
+  String value();
 }

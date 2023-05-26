@@ -36,15 +36,13 @@ import static org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.HUFFMAN_C
 
 public final class Huffman {
 
-  /**
-   * Huffman Decoder
-   */
-  public static final HuffmanDecoder DECODER = new HuffmanDecoder(HUFFMAN_CODES, HUFFMAN_CODE_LENGTHS);
+  /** Huffman Decoder */
+  public static final HuffmanDecoder DECODER =
+      new HuffmanDecoder(HUFFMAN_CODES, HUFFMAN_CODE_LENGTHS);
 
-  /**
-   * Huffman Encoder
-   */
-  public static final HuffmanEncoder ENCODER = new HuffmanEncoder(HUFFMAN_CODES, HUFFMAN_CODE_LENGTHS);
+  /** Huffman Encoder */
+  public static final HuffmanEncoder ENCODER =
+      new HuffmanEncoder(HUFFMAN_CODES, HUFFMAN_CODE_LENGTHS);
 
   private Huffman() {
     // utility class

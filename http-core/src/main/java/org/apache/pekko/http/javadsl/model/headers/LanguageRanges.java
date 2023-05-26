@@ -14,7 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 public class LanguageRanges {
-    private LanguageRanges() { }
+  private LanguageRanges() {}
 
-    public static final LanguageRange ALL = org.apache.pekko.http.scaladsl.model.headers.LanguageRange.$times$.MODULE$;
+  public static final LanguageRange ALL =
+      org.apache.pekko.http.scaladsl.model.headers.LanguageRange.$times$.MODULE$;
 }

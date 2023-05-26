@@ -14,9 +14,9 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 public abstract class RangeUnit {
-    public abstract String name();
+  public abstract String name();
 
-    public static RangeUnit create(String name) {
-        return new org.apache.pekko.http.scaladsl.model.headers.RangeUnits.Other(name);
-    }
+  public static RangeUnit create(String name) {
+    return new org.apache.pekko.http.scaladsl.model.headers.RangeUnits.Other(name);
+  }
 }

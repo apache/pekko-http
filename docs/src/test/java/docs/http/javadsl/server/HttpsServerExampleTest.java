@@ -33,16 +33,17 @@ public class HttpsServerExampleTest extends JUnitSuite {
   void requireClientAuth() {
     final ActorSystem system = ActorSystem.create();
     SSLContext sslContext = null;
-    //#require-client-auth
-    ConnectionContext.httpsServer(() -> {
-            SSLEngine engine = sslContext.createSSLEngine();
-            engine.setUseClientMode(false);
+    // #require-client-auth
+    ConnectionContext.httpsServer(
+        () -> {
+          SSLEngine engine = sslContext.createSSLEngine();
+          engine.setUseClientMode(false);
 
-            engine.setNeedClientAuth(true);
-            // or: engine.setWantClientAuth(true);
+          engine.setNeedClientAuth(true);
+          // or: engine.setWantClientAuth(true);
 
-            return engine;
-    });
-    //#require-client-auth
+          return engine;
+        });
+    // #require-client-auth
   }
 }

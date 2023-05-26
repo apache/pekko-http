@@ -14,7 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 public final class RangeUnits {
-    private RangeUnits() {}
+  private RangeUnits() {}
 
-    public static final RangeUnit BYTES = org.apache.pekko.http.scaladsl.model.headers.RangeUnits.Bytes$.MODULE$;
+  public static final RangeUnit BYTES =
+      org.apache.pekko.http.scaladsl.model.headers.RangeUnits.Bytes$.MODULE$;
 }
