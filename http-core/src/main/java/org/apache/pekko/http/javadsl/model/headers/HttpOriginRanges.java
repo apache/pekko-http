@@ -14,7 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 public final class HttpOriginRanges {
-    private HttpOriginRanges() { }
+  private HttpOriginRanges() {}
 
-    public static final HttpOriginRange ALL = org.apache.pekko.http.scaladsl.model.headers.HttpOriginRange.$times$.MODULE$;
+  public static final HttpOriginRange ALL =
+      org.apache.pekko.http.scaladsl.model.headers.HttpOriginRange.$times$.MODULE$;
 }

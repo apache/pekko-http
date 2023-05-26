@@ -45,13 +45,16 @@ public class JacksonTest extends JUnitRouteTest {
 
   public static class SomeData {
     public final String field;
+
     @JsonCreator
     public SomeData(@JsonProperty("field") String field) {
       this.field = field;
     }
   }
 
-  RequestEntity invalidEntity = HttpEntities.create(ContentTypes.APPLICATION_JSON, "{\"droids\":\"not the ones you are looking for\"}");
+  RequestEntity invalidEntity =
+      HttpEntities.create(
+          ContentTypes.APPLICATION_JSON, "{\"droids\":\"not the ones you are looking for\"}");
 
   @Override
   public Config additionalConfig() {
@@ -63,14 +66,17 @@ public class JacksonTest extends JUnitRouteTest {
     ActorSystem sys = ActorSystem.create("test");
     try {
       Materializer materializer = ActorMaterializer.create(sys);
-      CompletionStage<SomeData> unmarshalled = Jackson.unmarshaller(SomeData.class).unmarshal(invalidEntity, system());
+      CompletionStage<SomeData> unmarshalled =
+          Jackson.unmarshaller(SomeData.class).unmarshal(invalidEntity, system());
 
-
-        SomeData result = unmarshalled.toCompletableFuture().get(3, TimeUnit.SECONDS);
-        throw new AssertionError("Invalid json should not parse to object");
+      SomeData result = unmarshalled.toCompletableFuture().get(3, TimeUnit.SECONDS);
+      throw new AssertionError("Invalid json should not parse to object");
     } catch (ExecutionException ex) {
       // CompletableFuture.get wraps in one layer of ExecutionException
-      assertTrue(ex.getCause().getMessage().startsWith("Cannot unmarshal JSON as SomeData: Unrecognized field \"droids\""));
+      assertTrue(
+          ex.getCause()
+              .getMessage()
+              .startsWith("Cannot unmarshal JSON as SomeData: Unrecognized field \"droids\""));
     } finally {
       sys.terminate();
     }
@@ -81,6 +87,6 @@ public class JacksonTest extends JUnitRouteTest {
     Route route = entity(Jackson.unmarshaller(SomeData.class), theData -> complete(theData.field));
 
     runRoute(route.seal(), HttpRequest.PUT("/").withEntity(invalidEntity))
-      .assertEntity("The request content was malformed:\nCannot unmarshal JSON as SomeData");
+        .assertEntity("The request content was malformed:\nCannot unmarshal JSON as SomeData");
   }
 }

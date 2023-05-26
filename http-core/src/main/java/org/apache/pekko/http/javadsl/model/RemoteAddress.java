@@ -21,22 +21,23 @@ import org.apache.pekko.http.javadsl.model.headers.HttpEncodingRanges;
 import org.apache.pekko.util.OptionConverters;
 
 public abstract class RemoteAddress {
-    public abstract boolean isUnknown();
+  public abstract boolean isUnknown();
 
-    public abstract Optional<InetAddress> getAddress();
+  public abstract Optional<InetAddress> getAddress();
 
-    /**
-     * Returns a port if defined or 0 otherwise.
-     */
-    public abstract int getPort();
+  /** Returns a port if defined or 0 otherwise. */
+  public abstract int getPort();
 
-    public static RemoteAddress create(InetAddress address) {
-        return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(address, OptionConverters.toScala(Optional.empty()));
-    }
-    public static RemoteAddress create(InetSocketAddress address) {
-        return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(address);
-    }
-    public static RemoteAddress create(byte[] address) {
-        return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(address);
-    }
+  public static RemoteAddress create(InetAddress address) {
+    return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(
+        address, OptionConverters.toScala(Optional.empty()));
+  }
+
+  public static RemoteAddress create(InetSocketAddress address) {
+    return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(address);
+  }
+
+  public static RemoteAddress create(byte[] address) {
+    return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(address);
+  }
 }

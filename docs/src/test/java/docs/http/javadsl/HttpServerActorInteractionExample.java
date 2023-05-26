@@ -13,7 +13,7 @@
 
 package docs.http.javadsl;
 
-//#actor-interaction
+// #actor-interaction
 
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -53,19 +53,18 @@ public class HttpServerActorInteractionExample extends AllDirectives {
 
     final Http http = Http.get(system);
 
-    //In order to access all directives we need an instance where the routes are define.
+    // In order to access all directives we need an instance where the routes are define.
     HttpServerActorInteractionExample app = new HttpServerActorInteractionExample(system);
 
     final CompletionStage<ServerBinding> binding =
-      http.newServerAt("localhost", 8080)
-        .bind(app.createRoute());
+        http.newServerAt("localhost", 8080).bind(app.createRoute());
 
     System.out.println("Server online at http://localhost:8080/\nPress RETURN to stop...");
     System.in.read(); // let it run until user presses return
 
     binding
-      .thenCompose(ServerBinding::unbind) // trigger unbinding from the port
-      .thenAccept(unbound -> system.terminate()); // and shutdown when done
+        .thenCompose(ServerBinding::unbind) // trigger unbinding from the port
+        .thenAccept(unbound -> system.terminate()); // and shutdown when done
   }
 
   private HttpServerActorInteractionExample(final ActorSystem<Auction.Message> system) {
@@ -75,20 +74,34 @@ public class HttpServerActorInteractionExample extends AllDirectives {
 
   private Route createRoute() {
     return concat(
-      path("auction", () -> concat(
-        put(() ->
-          parameter(StringUnmarshallers.INTEGER, "bid", bid ->
-            parameter("user", user -> {
-              // place a bid, fire-and-forget
-              auction.tell(new Auction.Bid(user, bid));
-              return complete(StatusCodes.ACCEPTED, "bid placed");
-            })
-          )),
-        get(() -> {
-          // query the actor for the current auction state
-          CompletionStage<Auction.Bids> bids = ask(auction, Auction.GetBids::new, Duration.ofSeconds(5), system.scheduler());
-          return completeOKWithFuture(bids, Jackson.marshaller());
-        }))));
+        path(
+            "auction",
+            () ->
+                concat(
+                    put(
+                        () ->
+                            parameter(
+                                StringUnmarshallers.INTEGER,
+                                "bid",
+                                bid ->
+                                    parameter(
+                                        "user",
+                                        user -> {
+                                          // place a bid, fire-and-forget
+                                          auction.tell(new Auction.Bid(user, bid));
+                                          return complete(StatusCodes.ACCEPTED, "bid placed");
+                                        }))),
+                    get(
+                        () -> {
+                          // query the actor for the current auction state
+                          CompletionStage<Auction.Bids> bids =
+                              ask(
+                                  auction,
+                                  Auction.GetBids::new,
+                                  Duration.ofSeconds(5),
+                                  system.scheduler());
+                          return completeOKWithFuture(bids, Jackson.marshaller());
+                        }))));
   }
 
   static class Auction extends AbstractBehavior<Auction.Message> {
@@ -133,9 +146,9 @@ public class HttpServerActorInteractionExample extends AllDirectives {
     @Override
     public Receive<Message> createReceive() {
       return newReceiveBuilder()
-        .onMessage(Bid.class, this::onBid)
-        .onMessage(GetBids.class, this::onGetBids)
-        .build();
+          .onMessage(Bid.class, this::onBid)
+          .onMessage(GetBids.class, this::onGetBids)
+          .build();
     }
 
     private Behavior<Message> onBid(Bid bid) {
@@ -150,4 +163,4 @@ public class HttpServerActorInteractionExample extends AllDirectives {
     }
   }
 }
-//#actor-interaction
+// #actor-interaction

@@ -14,7 +14,8 @@
 package org.apache.pekko.http.javadsl.model;
 
 public final class RemoteAddresses {
-    private RemoteAddresses() { }
+  private RemoteAddresses() {}
 
-    public static final RemoteAddress UNKNOWN = org.apache.pekko.http.scaladsl.model.RemoteAddress.Unknown$.MODULE$;
+  public static final RemoteAddress UNKNOWN =
+      org.apache.pekko.http.scaladsl.model.RemoteAddress.Unknown$.MODULE$;
 }

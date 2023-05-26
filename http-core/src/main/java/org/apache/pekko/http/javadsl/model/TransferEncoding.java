@@ -18,18 +18,19 @@ import org.apache.pekko.http.javadsl.model.headers.EntityTagRanges;
 
 import java.util.Map;
 
-/**
- * @see TransferEncodings for convenience access to often used values.
- */
+/** @see TransferEncodings for convenience access to often used values. */
 public abstract class TransferEncoding {
-    public abstract String name();
+  public abstract String name();
 
-    public abstract Map<String, String> getParams();
+  public abstract Map<String, String> getParams();
 
-    public static TransferEncoding createExtension(String name) {
-        return new org.apache.pekko.http.scaladsl.model.TransferEncodings.Extension(name, Util.emptyMap);
-    }
-    public static TransferEncoding createExtension(String name, Map<String, String> params) {
-        return new org.apache.pekko.http.scaladsl.model.TransferEncodings.Extension(name, Util.convertMapToScala(params));
-    }
+  public static TransferEncoding createExtension(String name) {
+    return new org.apache.pekko.http.scaladsl.model.TransferEncodings.Extension(
+        name, Util.emptyMap);
+  }
+
+  public static TransferEncoding createExtension(String name, Map<String, String> params) {
+    return new org.apache.pekko.http.scaladsl.model.TransferEncodings.Extension(
+        name, Util.convertMapToScala(params));
+  }
 }
