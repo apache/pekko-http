@@ -118,7 +118,7 @@ public class RejectionHandlerExamplesTest extends JUnitRouteTest {
             .mapRejectionResponse(
                 response -> {
                   if (response.entity() instanceof HttpEntity.Strict) {
-                    // since all Akka default rejection responses are Strict this will handle all
+                    // since all Pekko default rejection responses are Strict this will handle all
                     // rejections
                     String message =
                         ((HttpEntity.Strict) response.entity())

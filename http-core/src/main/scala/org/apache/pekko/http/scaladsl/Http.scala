@@ -59,7 +59,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.duration._
 
 /**
- * Akka extension for HTTP which serves as the main entry point into pekko-http.
+ * Pekko extension for HTTP which serves as the main entry point into pekko-http.
  *
  * Use as `Http().bindAndHandle` etc. with an implicit [[ActorSystem]] in scope.
  */

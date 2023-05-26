@@ -30,8 +30,8 @@ object Doc {
 object Scaladoc extends AutoPlugin {
 
   object CliOptions {
-    val scaladocDiagramsEnabled = CliOption("akka.scaladoc.diagrams", true)
-    val scaladocAutoAPI = CliOption("akka.scaladoc.autoapi", true)
+    val scaladocDiagramsEnabled = CliOption("pekko.scaladoc.diagrams", true)
+    val scaladocAutoAPI = CliOption("pekko.scaladoc.autoapi", true)
   }
 
   override def trigger = allRequirements
@@ -152,7 +152,7 @@ object UnidocRoot extends AutoPlugin {
   override def requires =
     ScalaUnidocPlugin && CliOptions.genjavadocEnabled.ifTrue(JavaUnidocPlugin).getOrElse(plugins.JvmPlugin)
 
-  val akkaSettings = UnidocRoot.CliOptions.genjavadocEnabled.ifTrue(Seq(
+  val pekkoSettings = UnidocRoot.CliOptions.genjavadocEnabled.ifTrue(Seq(
     JavaUnidoc / unidoc / javacOptions ++= (
       if (isJdk8) Seq("-Xdoclint:none")
       else Seq("-Xdoclint:none", "--ignore-source-errors")),
@@ -169,7 +169,7 @@ object UnidocRoot extends AutoPlugin {
 
   override lazy val projectSettings =
     settings ++
-    akkaSettings
+    pekkoSettings
 }
 
 /**

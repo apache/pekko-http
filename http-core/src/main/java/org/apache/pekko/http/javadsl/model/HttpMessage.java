@@ -31,7 +31,7 @@ import java.util.concurrent.Executor;
  * The base type for an Http message (request or response).
  *
  * <p>INTERNAL API: this trait will be changed in binary-incompatible ways for classes that are
- * derived from it! Do not implement this interface outside the Akka code base!
+ * derived from it! Do not implement this interface outside the Pekko code base!
  *
  * <p>Binary compatibility is only maintained for callers of this trait’s interface.
  */

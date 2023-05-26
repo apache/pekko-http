@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * DEPRECATED, consider https://developer.lightbend.com/guides/akka-http-quickstart-java/ instead
+ * DEPRECATED, consider https://github.com/theiterators/pekko-http-quickstart-java.g8 instead
  *
  * <p>Bootstrap trait for Http Server. It helps booting up an pekko-http server by only defining the
  * desired routes. It offers additional hooks to modify the default behavior.

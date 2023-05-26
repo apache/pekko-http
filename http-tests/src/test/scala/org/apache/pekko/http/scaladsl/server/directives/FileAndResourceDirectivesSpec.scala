@@ -58,7 +58,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       Get() ~> getFromFile(Properties.javaHome) ~> check { handled shouldEqual false }
     }
     "return the file content with the MediaType matching the file extension" in {
-      val file = File.createTempFile("akka Http Test", ".PDF")
+      val file = File.createTempFile("pekko Http Test", ".PDF")
       try {
         writeAllText("This is PDF", file)
         Get() ~> getFromFile(file.getPath) ~> check {

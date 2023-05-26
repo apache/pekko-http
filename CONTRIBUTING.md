@@ -127,13 +127,13 @@ Pekko HTTP codebase is currently built with snapshot versions of the Pekko core 
 
 Since Pekko HTTP is released separately to Pekko "core", yet some features require changes in Pekko itself, it is sometimes very useful
 to be able to develop Pekko HTTP with Pekko's sources used directly instead of the binary dependency. You can check out the Pekko 
-repository and run sbt with `-Dpekko.sources=$HOME/akka` to develop Pekko HTTP with Pekko as a source dependency instead of a binary one.
+repository and run sbt with `-Dpekko.sources=$HOME/pekko` to develop Pekko HTTP with Pekko as a source dependency instead of a binary one.
 
 This allows simple and fast iterations on changes that would need to be introduced in Pekko to develop a feature in HTTP that would require those.
 
 ## Binary compatibility
 Binary compatibility rules and guarantees are described in depth in the [Binary Compatibility Rules
-](https://doc.akka.io/docs/akka/current/common/binary-compatibility-rules.html) section of the documentation.
+](https://pekko.apache.org/docs/pekko/current/common/binary-compatibility-rules.html) section of the documentation.
 
 Pekko HTTP uses MiMa (which is short for [Lightbend Migration Manager](https://github.com/lightbend/migration-manager)) to
 validate binary compatibility of incoming Pull Requests. If your PR fails due to binary compatibility issues, you may see 
@@ -153,7 +153,7 @@ Situations where it may be fine to ignore a MiMa issued warning include:
 - if it is touching any class marked as `private[pekko]`, `/** INTERNAL API*/` or similar markers
 - if it is concerning internal classes (often recognizable by package names like `dungeon`, `impl`, `internal` etc.)
 - if it is adding API to classes / traits which are only meant for extension by Pekko itself, i.e. should not be extended by end-users
-- if it is touching any class marked with the `@InternalApi`, `@DoNotInherit`, and `@ApiMayChange`. See [API stability annotations and comments](https://doc.akka.io/docs/akka/current/common/binary-compatibility-rules.html#api-stability-annotations-and-comments)
+- if it is touching any class marked with the `@InternalApi`, `@DoNotInherit`, and `@ApiMayChange`. See [API stability annotations and comments](https://pekko.apache.org/docs/pekko/current/common/binary-compatibility-rules.html#api-stability-annotations-and-comments)
 - other tricky situations
 
 If it turns out that the change can be safely ignored, please add the filter to a file with the issue number in the filename, placed in the submodule's `src/main/mima-filters/<last-released-version>.backwards.excludes` directory.
@@ -317,7 +317,7 @@ There is a number of ways timeouts can be defined in Pekko tests. The following 
 
 Special care should be given `expectNoMessage` calls, which indeed will wait the entire timeout before continuing, therefore a shorter timeout should be used in those, for example `200` or `300.millis`.
 
-You can read up on remaining and friends in [TestKit.scala](https://github.com/apache/incubator-pekko/blob/main/akka-testkit/src/main/scala/org/apache/pekko/testkit/TestKit.scala)
+You can read up on remaining and friends in [TestKit.scala](https://github.com/apache/incubator-pekko/blob/main/pekko-testkit/src/main/scala/org/apache/pekko/testkit/TestKit.scala)
 
 # Supporting infrastructure
 
@@ -346,8 +346,8 @@ A great tool to inspect HTTP/2 frames of real-world connections is
 
 When analyzing an HTTPS connection, you need a way to see the plaintext
 payloads. You can enable logging those on the Pekko HTTP side with
-`akka.http.server.log-unencrypted-network-bytes = 100` or
-`akka.http.server.http2.log-frames = true` (same for client-side).
+`pekko.http.server.log-unencrypted-network-bytes = 100` or
+`pekko.http.server.http2.log-frames = true` (same for client-side).
 
 To see the traffic in Wireshark, some clients can be configured to dump an
 `SSLKEYLOGFILE` that Wireshark
