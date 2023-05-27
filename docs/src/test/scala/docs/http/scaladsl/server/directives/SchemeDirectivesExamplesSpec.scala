@@ -21,7 +21,7 @@ class SchemeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // #example-1
     val route =
       extractScheme { scheme =>
-        complete(s"The scheme is '${scheme}'")
+        complete(s"The scheme is '$scheme'")
       }
 
     // tests:

@@ -56,7 +56,7 @@ object CopyrightHeader extends AutoPlugin {
         case Some(currentText) if isOnlyLightbendCopyrightAnnotated(currentText) =>
           HeaderCommentStyle.cStyleBlockComment.commentCreator(text, existingText) + NewLine * 2 + currentText
         case Some(currentText) =>
-          throw new IllegalStateException(s"Unable to detect copyright for header: [${currentText}]")
+          throw new IllegalStateException(s"Unable to detect copyright for header: [$currentText]")
         case None =>
           HeaderCommentStyle.cStyleBlockComment.commentCreator(text, existingText)
       }
