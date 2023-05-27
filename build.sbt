@@ -32,7 +32,8 @@ inThisBuild(Def.settings(
     (onLoad in Global).value
   },
   scalafixScalaBinaryVersion := scalaBinaryVersion.value,
-  apacheSonatypeProjectProfile := "pekko"))
+  apacheSonatypeProjectProfile := "pekko",
+  versionScheme := Some("semver-spec")))
 
 // When this is updated the set of modules in Http.allModules should also be updated
 lazy val userProjects: Seq[ProjectReference] = List[ProjectReference](
