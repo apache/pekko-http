@@ -76,7 +76,7 @@ object HandleNotFoundWithThePath {
     RejectionHandler.newBuilder()
       .handleNotFound {
         extractUnmatchedPath { p =>
-          complete(NotFound, s"The path you requested [${p}] does not exist.")
+          complete(NotFound, s"The path you requested [$p] does not exist.")
         }
       }
       .result()
