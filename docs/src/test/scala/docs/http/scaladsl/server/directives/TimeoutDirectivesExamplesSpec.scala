@@ -162,7 +162,7 @@ class TimeoutDirectivesFiniteTimeoutExamplesSpec extends RoutingSpec
     "be configurable in routing layer for finite initial value of request-timeout" in {
       val route =
         path("timeout") {
-          withRequestTimeout(1.seconds) { // modifies the global akka.http.server.request-timeout for this request
+          withRequestTimeout(1.seconds) { // modifies the global pekko.http.server.request-timeout for this request
             val response: Future[String] = slowFuture() // very slow
             complete(response)
           }
