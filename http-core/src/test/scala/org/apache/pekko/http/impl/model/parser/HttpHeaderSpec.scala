@@ -780,7 +780,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     "X-Forwarded-Proto" in {
       "X-Forwarded-Proto: http" =!= `X-Forwarded-Proto`("http")
       "X-Forwarded-Proto: https" =!= `X-Forwarded-Proto`("https")
-      "X-Forwarded-Proto: akka" =!= `X-Forwarded-Proto`("akka")
+      "X-Forwarded-Proto: pekko" =!= `X-Forwarded-Proto`("pekko")
     }
 
     "X-Real-Ip" in {

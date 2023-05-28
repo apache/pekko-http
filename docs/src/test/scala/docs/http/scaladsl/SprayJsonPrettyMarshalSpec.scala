@@ -43,7 +43,7 @@ class SprayJsonPrettyMarshalSpec extends RoutingSpec with CompileOnlySpec {
         get {
           pathSingleSlash {
             complete {
-              PrettyPrintedItem("akka", 42) // will render as JSON
+              PrettyPrintedItem("pekko", 42) // will render as JSON
             }
           }
         }
@@ -57,7 +57,7 @@ class SprayJsonPrettyMarshalSpec extends RoutingSpec with CompileOnlySpec {
       responseAs[String] shouldEqual
       """{""" + "\n" +
       """  "id": 42,""" + "\n" +
-      """  "name": "akka"""" + "\n" +
+      """  "name": "pekko"""" + "\n" +
       """}"""
     }
     // #example

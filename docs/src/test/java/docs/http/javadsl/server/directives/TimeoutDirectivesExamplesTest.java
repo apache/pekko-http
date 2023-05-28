@@ -44,7 +44,7 @@ public class TimeoutDirectivesExamplesTest extends AllDirectives {
               + "pekko.stdout-loglevel = ERROR\n"
               + "windows-connection-abort-workaround-enabled = auto\n"
               + "pekko.log-dead-letters = OFF\n"
-              + "akka.http.server.request-timeout = 1000s");
+              + "pekko.http.server.request-timeout = 1000s");
   // large timeout - 1000s (please note - setting to infinite will disable Timeout-Access header
   // and withRequestTimeout will not work)
 
