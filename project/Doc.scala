@@ -30,8 +30,8 @@ object Doc {
 object Scaladoc extends AutoPlugin {
 
   object CliOptions {
-    val scaladocDiagramsEnabled = CliOption("akka.scaladoc.diagrams", true)
-    val scaladocAutoAPI = CliOption("akka.scaladoc.autoapi", true)
+    val scaladocDiagramsEnabled = CliOption("pekko.scaladoc.diagrams", true)
+    val scaladocAutoAPI = CliOption("pekko.scaladoc.autoapi", true)
   }
 
   override def trigger = allRequirements
@@ -74,9 +74,14 @@ object Scaladoc extends AutoPlugin {
       "-doc-title", "Apache Pekko HTTP",
       "-doc-version", ver,
       // Workaround https://issues.scala-lang.org/browse/SI-10028
-      "-skip-packages", "org.apache.pekko.pattern:org.specs2",
       "-doc-canonical-base-url", "https://pekko.apache.org/api/pekko-http/current/") ++
-      plugins.map(plugin => "-Xplugin:" + plugin)
+      plugins.map(plugin => "-Xplugin:" + plugin) ++
+      // Workaround https://issues.scala-lang.org/browse/SI-10028
+      (if (scalaBinaryVersion == "3")
+         // https://github.com/lampepfl/dotty/issues/14939
+         List("-skip-packages:org.apache.pekko.pattern:org.specs2")
+       else
+         List("-skip-packages", "org.apache.pekko.pattern:org.specs2"))
     CliOptions.scaladocDiagramsEnabled.ifTrue("-diagrams").toList ::: opts
   }
 
@@ -147,7 +152,7 @@ object UnidocRoot extends AutoPlugin {
   override def requires =
     ScalaUnidocPlugin && CliOptions.genjavadocEnabled.ifTrue(JavaUnidocPlugin).getOrElse(plugins.JvmPlugin)
 
-  val akkaSettings = UnidocRoot.CliOptions.genjavadocEnabled.ifTrue(Seq(
+  val pekkoSettings = UnidocRoot.CliOptions.genjavadocEnabled.ifTrue(Seq(
     JavaUnidoc / unidoc / javacOptions ++= (
       if (isJdk8) Seq("-Xdoclint:none")
       else Seq("-Xdoclint:none", "--ignore-source-errors")),
@@ -164,7 +169,7 @@ object UnidocRoot extends AutoPlugin {
 
   override lazy val projectSettings =
     settings ++
-    akkaSettings
+    pekkoSettings
 }
 
 /**

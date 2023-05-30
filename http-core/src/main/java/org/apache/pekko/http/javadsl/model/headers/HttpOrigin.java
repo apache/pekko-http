@@ -16,13 +16,16 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.scaladsl.model.headers.HttpOrigin$;
 
 public abstract class HttpOrigin {
-    public abstract String scheme();
-    public abstract Host host();
+  public abstract String scheme();
 
-    public static HttpOrigin create(String scheme, Host host) {
-        return new org.apache.pekko.http.scaladsl.model.headers.HttpOrigin(scheme, (org.apache.pekko.http.scaladsl.model.headers.Host) host);
-    }
-    public static HttpOrigin parse(String originString) {
-        return HttpOrigin$.MODULE$.apply(originString);
-    }
+  public abstract Host host();
+
+  public static HttpOrigin create(String scheme, Host host) {
+    return new org.apache.pekko.http.scaladsl.model.headers.HttpOrigin(
+        scheme, (org.apache.pekko.http.scaladsl.model.headers.Host) host);
+  }
+
+  public static HttpOrigin parse(String originString) {
+    return HttpOrigin$.MODULE$.apply(originString);
+  }
 }

@@ -27,7 +27,7 @@ import scala.concurrent.duration._
 class CustomMediaTypesSpec extends PekkoSpec with ScalaFutures
     with Directives with RequestBuilding {
 
-  implicit val mat = ActorMaterializer()
+  implicit val mat: ActorMaterializer = ActorMaterializer()
 
   "Http" should {
     "find media types in a set if they differ in casing" in {

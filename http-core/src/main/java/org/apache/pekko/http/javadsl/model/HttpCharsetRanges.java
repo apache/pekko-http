@@ -13,14 +13,11 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-/**
- * Contains constructors to create a HttpCharsetRange.
- */
+/** Contains constructors to create a HttpCharsetRange. */
 public final class HttpCharsetRanges {
-    private HttpCharsetRanges() {}
+  private HttpCharsetRanges() {}
 
-    /**
-     * A constant representing the range that matches all charsets.
-     */
-    public static final HttpCharsetRange ALL = org.apache.pekko.http.scaladsl.model.HttpCharsetRange.$times$.MODULE$;
+  /** A constant representing the range that matches all charsets. */
+  public static final HttpCharsetRange ALL =
+      org.apache.pekko.http.scaladsl.model.HttpCharsetRange.$times$.MODULE$;
 }

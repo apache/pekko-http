@@ -40,12 +40,13 @@ import pekko.http.scaladsl.server.RouteResult
 import pekko.http.scaladsl.server.directives.{ RouteDirectives => D }
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
+import scala.concurrent.ExecutionContext
 
 abstract class RouteDirectives extends RespondWithDirectives {
   import RoutingJavaMapping.Implicits._
 
   // Don't try this at home – we only use it here for the java -> scala conversions
-  private implicit val conversionExecutionContext = ExecutionContexts.sameThreadExecutionContext
+  private implicit val conversionExecutionContext: ExecutionContext = ExecutionContexts.sameThreadExecutionContext
 
   /**
    * Java-specific call added so you can chain together multiple alternate routes using comma,
@@ -270,7 +271,7 @@ abstract class RouteDirectives extends RespondWithDirectives {
    */
   @CorrespondsTo("complete")
   def completeWithFuture(value: CompletionStage[HttpResponse]) = RouteAdapter {
-    D.complete(value.asScala.fast.map(_.asScala).recover(unwrapCompletionException))
+    D.complete(value.asScala.fast.map((h: HttpResponse) => h.asScala).recover(unwrapCompletionException))
   }
 
   /**
@@ -278,7 +279,7 @@ abstract class RouteDirectives extends RespondWithDirectives {
    */
   @CorrespondsTo("complete")
   def completeOKWithFuture(value: CompletionStage[RequestEntity]) = RouteAdapter {
-    D.complete(value.asScala.fast.map(_.asScala).recover(unwrapCompletionException))
+    D.complete(value.asScala.fast.map((r: RequestEntity) => r.asScala).recover(unwrapCompletionException))
   }
 
   /**
@@ -294,7 +295,7 @@ abstract class RouteDirectives extends RespondWithDirectives {
    */
   @CorrespondsTo("complete")
   def completeWithFutureStatus(status: CompletionStage[StatusCode]): Route = RouteAdapter {
-    D.complete(status.asScala.fast.map(_.asScala).recover(unwrapCompletionException))
+    D.complete(status.asScala.fast.map((s: StatusCode) => s.asScala).recover(unwrapCompletionException))
   }
 
   /**
@@ -319,7 +320,9 @@ abstract class RouteDirectives extends RespondWithDirectives {
    */
   def handle(handler: pekko.japi.function.Function[HttpRequest, CompletionStage[HttpResponse]]): Route = {
     import pekko.http.impl.util.JavaMapping._
-    RouteAdapter { ctx => handler(ctx.request).asScala.fast.map(response => RouteResult.Complete(response.asScala)) }
+    RouteAdapter { ctx =>
+      handler(ctx.request).asScala.fast.map((response: HttpResponse) => RouteResult.Complete(response.asScala))
+    }
   }
 
   /**

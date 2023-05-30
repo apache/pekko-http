@@ -29,6 +29,7 @@ import com.typesafe.config.ConfigFactory
 
 import scala.annotation.nowarn
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.Promise
 
@@ -42,8 +43,8 @@ object Http2ClientApp extends App {
          pekko.http.client.parsing.max-content-length = 20m
       """).withFallback(ConfigFactory.defaultApplication())
 
-  implicit val system = ActorSystem("Http2ClientApp", config)
-  implicit val ec = system.dispatcher
+  implicit val system: ActorSystem = ActorSystem("Http2ClientApp", config)
+  implicit val ec: ExecutionContext = system.dispatcher
 
   // #response-future-association
   val dispatch = singleRequest(Http().connectionTo("pekko.apache.org").http2())

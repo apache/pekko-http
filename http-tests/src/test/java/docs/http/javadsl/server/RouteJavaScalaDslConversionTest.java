@@ -25,30 +25,25 @@ import scala.concurrent.Future;
 public class RouteJavaScalaDslConversionTest {
 
   void scalaToJava() {
-    //#scala-to-java
+    // #scala-to-java
     scala.Function1<
-        org.apache.pekko.http.scaladsl.server.RequestContext,
-        scala.concurrent.Future<org.apache.pekko.http.scaladsl.server.RouteResult>> scalaRoute = someRoute();
+            org.apache.pekko.http.scaladsl.server.RequestContext,
+            scala.concurrent.Future<org.apache.pekko.http.scaladsl.server.RouteResult>>
+        scalaRoute = someRoute();
 
-    org.apache.pekko.http.javadsl.server.Route javaRoute =
-        RouteAdapter.asJava(scalaRoute);
-    //#scala-to-java
+    org.apache.pekko.http.javadsl.server.Route javaRoute = RouteAdapter.asJava(scalaRoute);
+    // #scala-to-java
   }
 
   void javaToScala() {
-    //#java-to-scala
-    Route javaRoute = Directives.get(() ->
-        Directives.complete("okey")
-    );
+    // #java-to-scala
+    Route javaRoute = Directives.get(() -> Directives.complete("okey"));
 
-    scala.Function1<RequestContext, Future<RouteResult>> scalaRoute =
-        javaRoute.asScala();
-    //#java-to-scala
+    scala.Function1<RequestContext, Future<RouteResult>> scalaRoute = javaRoute.asScala();
+    // #java-to-scala
   }
 
   private Function1<RequestContext, Future<RouteResult>> someRoute() {
     return null;
   }
-
-
 }

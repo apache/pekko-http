@@ -23,9 +23,11 @@ import pekko.http.scaladsl.unmarshalling.Unmarshaller.HexInt
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.impl.util.BenchUtils
+import pekko.http.scaladsl.unmarshalling.FromEntityUnmarshaller
+import scala.xml.NodeSeq
 
 class FormFieldDirectivesSpec extends RoutingSpec {
-  implicit val nodeSeqUnmarshaller =
+  implicit val nodeSeqUnmarshaller: FromEntityUnmarshaller[NodeSeq] =
     ScalaXmlSupport.nodeSeqUnmarshaller(`text/xml`, `text/html`, `text/plain`)
 
   val nodeSeq: xml.NodeSeq = <b>yes</b>

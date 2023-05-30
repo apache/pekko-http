@@ -49,8 +49,8 @@ private[http] object One2OneBidiFlow {
    */
   def apply[I, O](
       maxPending: Int,
-      outputTruncationException: Int => Throwable = OutputTruncationException,
-      unexpectedOutputException: Any => Throwable = UnexpectedOutputException): BidiFlow[I, I, O, O, NotUsed] =
+      outputTruncationException: Int => Throwable = OutputTruncationException(_),
+      unexpectedOutputException: Any => Throwable = UnexpectedOutputException(_)): BidiFlow[I, I, O, O, NotUsed] =
     BidiFlow.fromGraph(new One2OneBidi[I, O](maxPending, outputTruncationException, unexpectedOutputException))
 
   /*

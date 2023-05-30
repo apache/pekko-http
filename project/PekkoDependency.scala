@@ -53,7 +53,7 @@ object PekkoDependency {
   }
 
   // Default version updated only when needed, https://pekko.apache.org/docs/pekko/current/project/downstream-upgrade-strategy.html
-  val minimumExpectedPekkoVersion = "0.0.0+26656-898c6970-SNAPSHOT"
+  val minimumExpectedPekkoVersion = "0.0.0+26669-ec5b6764-SNAPSHOT"
   val default = pekkoDependency(defaultVersion = minimumExpectedPekkoVersion)
   def docs = default
 

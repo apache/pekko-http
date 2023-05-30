@@ -26,7 +26,7 @@ object HttpHeaderParserTestBed extends App {
     pekko.http.parsing.max-header-name-length = 20
     pekko.http.parsing.max-header-value-length = 21
     pekko.http.parsing.header-cache.Host = 300""")
-  val system = ActorSystem("HttpHeaderParserTestBed", testConf)
+  val system: ActorSystem = ActorSystem("HttpHeaderParserTestBed", testConf)
 
   val parser = HttpHeaderParser.prime {
     HttpHeaderParser.unprimed(ParserSettings(system), system.log,

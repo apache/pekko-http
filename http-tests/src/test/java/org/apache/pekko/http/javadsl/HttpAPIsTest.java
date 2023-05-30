@@ -80,10 +80,18 @@ public class HttpAPIsTest extends JUnitRouteTest {
     http.outgoingConnection(toHost("pekko.apache.org", 8080));
     http.outgoingConnection(toHost("https://pekko.apache.org"));
     http.outgoingConnection(toHostHttps("pekko.apache.org")); // default ssl context (ssl-config)
-    http.outgoingConnection(toHostHttps("ssh://pekko.apache.org")); // throws, we explicitly require https or ""
-    http.outgoingConnection(toHostHttps("pekko.apache.org", 8081).withCustomHttpsContext(httpsContext));
-    http.outgoingConnection(toHostHttps("pekko.apache.org", 8081).withCustomHttpsContext(httpsContext).withDefaultHttpsContext());
-    http.outgoingConnection(toHostHttps("pekko.apache.org", 8081).withCustomHttpsContext(httpsContext).withDefaultHttpsContext());
+    http.outgoingConnection(
+        toHostHttps("ssh://pekko.apache.org")); // throws, we explicitly require https or ""
+    http.outgoingConnection(
+        toHostHttps("pekko.apache.org", 8081).withCustomHttpsContext(httpsContext));
+    http.outgoingConnection(
+        toHostHttps("pekko.apache.org", 8081)
+            .withCustomHttpsContext(httpsContext)
+            .withDefaultHttpsContext());
+    http.outgoingConnection(
+        toHostHttps("pekko.apache.org", 8081)
+            .withCustomHttpsContext(httpsContext)
+            .withDefaultHttpsContext());
 
     http.connectionTo("pekko.apache.org").http();
     http.connectionTo("pekko.apache.org").https();
@@ -96,23 +104,26 @@ public class HttpAPIsTest extends JUnitRouteTest {
         .logTo(system().log())
         .https();
 
-    // in future we can add modify(context -> Context) to "keep ssl-config defaults, but tweak them in code)
+    // in future we can add modify(context -> Context) to "keep ssl-config defaults, but tweak them
+    // in code)
 
     http.newHostConnectionPool("pekko.apache.org", materializer());
     http.newHostConnectionPool("https://pekko.apache.org", materializer());
     http.newHostConnectionPool("https://pekko.apache.org:8080", materializer());
     http.newHostConnectionPool(toHost("pekko.apache.org"), materializer());
-    http.newHostConnectionPool(toHostHttps("ftp://pekko.apache.org"), materializer()); // throws, we explicitly require https or ""
+    http.newHostConnectionPool(
+        toHostHttps("ftp://pekko.apache.org"),
+        materializer()); // throws, we explicitly require https or ""
     http.newHostConnectionPool(toHostHttps("https://pekko.apache.org:2222"), materializer());
     http.newHostConnectionPool(toHostHttps("pekko.apache.org"), materializer());
     http.newHostConnectionPool(toHost(""), conSettings, log, materializer());
-
 
     http.cachedHostConnectionPool("pekko.apache.org");
     http.cachedHostConnectionPool("https://pekko.apache.org");
     http.cachedHostConnectionPool("https://pekko.apache.org:8080");
     http.cachedHostConnectionPool(toHost("pekko.apache.org"));
-    http.cachedHostConnectionPool(toHostHttps("smtp://pekko.apache.org")); // throws, we explicitly require https or ""
+    http.cachedHostConnectionPool(
+        toHostHttps("smtp://pekko.apache.org")); // throws, we explicitly require https or ""
     http.cachedHostConnectionPool(toHostHttps("https://pekko.apache.org:2222"));
     http.cachedHostConnectionPool(toHostHttps("pekko.apache.org"));
     http.cachedHostConnectionPool(toHost("pekko.apache.org"), conSettings, log);
@@ -121,8 +132,12 @@ public class HttpAPIsTest extends JUnitRouteTest {
     http.superPool(conSettings, log);
     http.superPool(conSettings, httpsContext, log);
 
-    final ConnectWithHttps connect = toHostHttps("pekko.apache.org", 8081).withCustomHttpsContext(httpsContext).withDefaultHttpsContext();
-    connect.effectiveHttpsConnectionContext(http.defaultClientHttpsContext()); // usage by us internally
+    final ConnectWithHttps connect =
+        toHostHttps("pekko.apache.org", 8081)
+            .withCustomHttpsContext(httpsContext)
+            .withDefaultHttpsContext();
+    connect.effectiveHttpsConnectionContext(
+        http.defaultClientHttpsContext()); // usage by us internally
   }
 
   @SuppressWarnings("unused")
@@ -137,7 +152,9 @@ public class HttpAPIsTest extends JUnitRouteTest {
     http.bind(toHost("https://127.0.0.1", 9090)); // HTTPS 9090
 
     http.bind(toHostHttps("127.0.0.1")); // HTTPS 443
-    http.bind(toHostHttps("127.0.0.1").withCustomHttpsContext(httpsConnectionContext)); // custom HTTPS 443
+    http.bind(
+        toHostHttps("127.0.0.1")
+            .withCustomHttpsContext(httpsConnectionContext)); // custom HTTPS 443
 
     http.bind(toHostHttps("http://127.0.0.1")); // throws
   }

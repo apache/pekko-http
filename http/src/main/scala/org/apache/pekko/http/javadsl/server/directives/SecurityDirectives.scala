@@ -253,7 +253,7 @@ abstract class SecurityDirectives extends SchemeDirectives {
       authenticator: JFunction[Optional[HttpCredentials], CompletionStage[Either[HttpChallenge, T]]],
       inner: JFunction[T, Route]): Route = RouteAdapter {
     D.extractExecutionContext { implicit ctx =>
-      val scalaAuthenticator = { cred: Option[scaladsl.model.headers.HttpCredentials] =>
+      val scalaAuthenticator = { (cred: Option[scaladsl.model.headers.HttpCredentials]) =>
         authenticator.apply(cred.map(_.asJava).toJava).asScala.map(_.left.map(_.asScala))
       }
 
@@ -272,7 +272,7 @@ abstract class SecurityDirectives extends SchemeDirectives {
       authenticator: JFunction[Optional[C], CompletionStage[Either[HttpChallenge, T]]],
       inner: JFunction[T, Route]): Route = RouteAdapter {
     D.extractExecutionContext { implicit ctx =>
-      val scalaAuthenticator = { cred: Option[scaladsl.model.headers.HttpCredentials] =>
+      val scalaAuthenticator = { (cred: Option[scaladsl.model.headers.HttpCredentials]) =>
         authenticator.apply(cred.filter(c.isInstance).map(_.asJava).toJava.asInstanceOf[Optional[C]]).asScala.map(
           _.left.map(_.asScala)) // TODO make sure cast is safe
       }

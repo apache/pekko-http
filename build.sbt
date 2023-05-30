@@ -1,3 +1,12 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
 import org.apache.pekko
 import pekko._
 import pekko.ValidatePullRequest._
@@ -32,7 +41,8 @@ inThisBuild(Def.settings(
     (onLoad in Global).value
   },
   scalafixScalaBinaryVersion := scalaBinaryVersion.value,
-  apacheSonatypeProjectProfile := "pekko"))
+  apacheSonatypeProjectProfile := "pekko",
+  versionScheme := Some("semver-spec")))
 
 // When this is updated the set of modules in Http.allModules should also be updated
 lazy val userProjects: Seq[ProjectReference] = List[ProjectReference](
@@ -58,7 +68,7 @@ lazy val aggregatedProjects: Seq[ProjectReference] = userProjects ++ List[Projec
 lazy val root = Project(
   id = "pekko-http",
   base = file("."))
-  .enablePlugins(UnidocRoot, NoPublish, AggregatePRValidation)
+  .enablePlugins(UnidocRoot, NoPublish, AggregatePRValidation, NoScala3)
   .disablePlugins(MimaPlugin)
   .settings(
     name := "pekko-http-root",
@@ -79,8 +89,8 @@ def add213CrossDirs(config: Configuration): Seq[Setting[_]] = Seq(
   config / unmanagedSourceDirectories += {
     val sourceDir = (config / sourceDirectory).value
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, n)) if n >= 13 => sourceDir / "scala-2.13+"
-      case _                       => sourceDir / "scala-2.13-"
+      case Some((e, n)) if e > 2 || (e == 2 && n >= 13) => sourceDir / "scala-2.13+"
+      case _                                            => sourceDir / "scala-2.13-"
     }
   })
 
@@ -120,7 +130,7 @@ lazy val httpCore = project("http-core")
   .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.core"))
   .settings(AddMetaInfLicenseFiles.httpCoreSettings)
-  .dependsOn(parsing, httpScalafixRules % ScalafixConfig)
+  .dependsOn(parsing /*, httpScalafixRules % ScalafixConfig*/ )
   .addPekkoModuleDependency("pekko-stream", "provided")
   .addPekkoModuleDependency(
     "pekko-stream-testkit",
@@ -133,6 +143,10 @@ lazy val httpCore = project("http-core")
   .settings(scalaMacroSupport)
   .enablePlugins(BootstrapGenjavadoc)
   .enablePlugins(ReproducibleBuildsPlugin)
+  .enablePlugins(Pre213Preprocessor).settings(
+    pekko.http.sbt.Pre213Preprocessor.pre213Files := Seq(
+      "headers.scala", "HttpMessage.scala", "LanguageRange.scala", "CacheDirective.scala", "LinkValue.scala"))
+  .disablePlugins(ScalafixPlugin)
 
 lazy val http = project("http")
   .settings(commonSettings)
@@ -143,6 +157,9 @@ lazy val http = project("http")
   .settings(
     Compile / scalacOptions += "-language:_")
   .settings(scalaMacroSupport)
+  .enablePlugins(Pre213Preprocessor).settings(
+    pekko.http.sbt.Pre213Preprocessor.pre213Files := Seq(
+      "scaladsl/server/directives/FormFieldDirectives.scala", "scaladsl/server/directives/RespondWithDirectives.scala"))
   .enablePlugins(BootstrapGenjavadoc, BoilerplatePlugin)
   .enablePlugins(ReproducibleBuildsPlugin)
 
@@ -308,7 +325,7 @@ def httpMarshallersJavaSubproject(moduleName: String) =
     .enablePlugins(ReproducibleBuildsPlugin)
 
 lazy val httpScalafix = project("http-scalafix")
-  .enablePlugins(NoPublish)
+  .enablePlugins(NoPublish, NoScala3)
   .disablePlugins(MimaPlugin)
   .aggregate(httpScalafixRules, httpScalafixTestInput, httpScalafixTestOutput, httpScalafixTests)
 
@@ -317,13 +334,14 @@ lazy val httpScalafixRules =
     .settings(
       name := "pekko-http-scalafix-rules",
       libraryDependencies += Dependencies.Compile.scalafix)
+    .enablePlugins(NoScala3)
     .disablePlugins(MimaPlugin) // tooling, no bin compat guaranteed
 
 lazy val httpScalafixTestInput =
   Project(id = "http-scalafix-test-input", base = file("http-scalafix/scalafix-test-input"))
     .dependsOn(http)
     .addPekkoModuleDependency("pekko-stream")
-    .enablePlugins(NoPublish)
+    .enablePlugins(NoPublish, NoScala3)
     .disablePlugins(MimaPlugin, HeaderPlugin /* because it gets confused about metaheader required for tests */ )
     .settings(
       addCompilerPlugin(scalafixSemanticdb),
@@ -337,12 +355,12 @@ lazy val httpScalafixTestOutput =
   Project(id = "http-scalafix-test-output", base = file("http-scalafix/scalafix-test-output"))
     .dependsOn(http)
     .addPekkoModuleDependency("pekko-stream")
-    .enablePlugins(NoPublish)
+    .enablePlugins(NoPublish, NoScala3)
     .disablePlugins(MimaPlugin, HeaderPlugin /* because it gets confused about metaheader required for tests */ )
 
 lazy val httpScalafixTests =
   Project(id = "http-scalafix-tests", base = file("http-scalafix/scalafix-tests"))
-    .enablePlugins(NoPublish)
+    .enablePlugins(NoPublish, NoScala3)
     .disablePlugins(MimaPlugin)
     .settings(
       name := "pekko-http-scalafix-tests",
@@ -378,11 +396,15 @@ lazy val docs = project("docs")
     scalacOptions ++= Seq(
       // Make sure we don't accidentally keep documenting deprecated calls
       "-Xfatal-warnings",
-      // In docs adding an unused variable can be helpful, for example
-      // to show its type
-      "-Xlint:-unused",
       // Does not appear to lead to problems
       "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s"),
+    scalacOptions ++= (
+      if (scalaVersion.value.startsWith("3")) Seq.empty
+      else Seq(
+        // In docs adding an unused variable can be helpful, for example
+        // to show its type
+        "-Xlint:-unused")
+    ),
     scalacOptions --= Seq(
       // Code after ??? can be considered 'dead',  but still useful for docs
       "-Ywarn-dead-code"),
@@ -419,7 +441,7 @@ lazy val docs = project("docs")
 
 /*
 lazy val compatibilityTests = Project("http-compatibility-tests", file("http-compatibility-tests"))
-  .enablePlugins(NoPublish)
+  .enablePlugins(NoPublish, NoScala3)
   .disablePlugins(MimaPlugin)
   .addPekkoModuleDependency("pekko-stream", "provided")
   .settings(
@@ -429,7 +451,7 @@ lazy val compatibilityTests = Project("http-compatibility-tests", file("http-com
     (Test / dependencyClasspath) := {
       // HACK: We'd like to use `dependsOn(http % "test->compile")` to upgrade the explicit dependency above to the
       //       current version but that fails. So, this is a manual `dependsOn` which works as expected.
-      (Test / dependencyClasspath).value.filterNot(_.data.getName contains "akka") ++
+      (Test / dependencyClasspath).value.filterNot(_.data.getName contains "pekko") ++
       (httpTests / Test / fullClasspath).value
     }
   )

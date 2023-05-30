@@ -33,9 +33,9 @@ import org.scalatest.wordspec.AnyWordSpec
 class MultipartsSpec extends AnyWordSpec with Matchers with Inside with BeforeAndAfterAll {
 
   val testConf: Config = ConfigFactory.parseString("""
-  pekko.event-handlers = ["org.apache.pekko.testkit.TestEventListener"]
+  pekko.event-handlers = ["pekko.testkit.TestEventListener"]
   pekko.loglevel = WARNING""")
-  implicit val system = ActorSystem(getClass.getSimpleName, testConf)
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
   val materializer = SystemMaterializer.get(system).materializer
   override def afterAll() = TestKit.shutdownActorSystem(system)
 

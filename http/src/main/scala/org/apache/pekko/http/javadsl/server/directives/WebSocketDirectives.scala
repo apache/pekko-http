@@ -20,7 +20,6 @@ import java.util.function.{ Function => JFunction }
 
 import org.apache.pekko
 import pekko.NotUsed
-import scala.collection.JavaConverters._
 import pekko.http.scaladsl.model.{ ws => s }
 import pekko.http.javadsl.model.ws.Message
 import pekko.http.javadsl.model.ws.UpgradeToWebSocket
@@ -60,7 +59,8 @@ abstract class WebSocketDirectives extends SecurityDirectives {
    * this is a WebSocket request. Rejects with an [[ExpectedWebSocketRequestRejection]], otherwise.
    */
   def extractOfferedWsProtocols(inner: JFunction[JList[String], Route]): Route = RouteAdapter {
-    D.extractOfferedWsProtocols { list =>
+    import scala.collection.JavaConverters._
+    D.extractOfferedWsProtocols { (list: Seq[String]) =>
       inner.apply(list.asJava).delegate
     }
   }

@@ -139,7 +139,7 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
     "propagate the exception in the failure case" in EventFilter[TestException.type](
       occurrences = 1,
       message = BasicRouteSpecs.defaultExnHandler500Error("XXX")).intercept {
-      Get() ~> onSuccess(Future.failed(TestException)) { echoComplete } ~> check {
+      Get() ~> onSuccess(Future.failed[Int](TestException)) { echoComplete } ~> check {
         status shouldEqual StatusCodes.InternalServerError
       }
     }
@@ -152,7 +152,7 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
     "catch an exception in the failure case" in EventFilter[TestException.type](
       occurrences = 1,
       message = BasicRouteSpecs.defaultExnHandler500Error("XXX")).intercept {
-      Get() ~> onSuccess(Future.failed(TestException)) { throwTestException("EX when ") } ~> check {
+      Get() ~> onSuccess(Future.failed[Unit](TestException)) { throwTestException("EX when ") } ~> check {
         status shouldEqual StatusCodes.InternalServerError
         responseAs[String] shouldEqual "There was an internal server error."
       }

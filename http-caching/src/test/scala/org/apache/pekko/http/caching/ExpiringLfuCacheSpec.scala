@@ -59,11 +59,14 @@ class ExpiringLfuCacheSpec extends AnyWordSpec with Matchers with BeforeAndAfter
       val cache = lfuCache[String]()
       val latch = new CountDownLatch(1)
       val future1 = cache(1,
-        (promise: Promise[String]) =>
+        { (promise: Promise[String]) =>
           Future {
             latch.await()
             promise.success("A")
-          })
+          }
+          // (block autoformat)
+          () // provide Unit result automatically to hand-hold Scala 3 overload selection
+        })
       val future2 = cache.get(1, () => "")
 
       latch.countDown()
@@ -162,7 +165,7 @@ class ExpiringLfuCacheSpec extends AnyWordSpec with Matchers with BeforeAndAfter
           }
         }, 10.second)
 
-      views.transpose.foreach { ints: Seq[Int] =>
+      views.transpose.foreach { (ints: Seq[Int]) =>
         ints.filter(_ != 0).reduceLeft((a, b) => if (a == b) a else 0) should not be 0
       }
     }

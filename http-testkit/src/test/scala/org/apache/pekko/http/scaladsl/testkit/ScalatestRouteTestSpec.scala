@@ -24,6 +24,7 @@ import pekko.http.scaladsl.model._
 import StatusCodes._
 import HttpMethods._
 import Directives._
+import pekko.actor.ActorRef
 import pekko.stream.scaladsl.Source
 import org.scalatest.exceptions.TestFailedException
 import headers.`X-Forwarded-Proto`
@@ -96,10 +97,10 @@ class ScalatestRouteTestSpec extends AnyFreeSpec with Matchers with ScalatestRou
       }
     }
 
-    "running on akka dispatcher threads" in Await.result(Future {
+    "running on pekko dispatcher threads" in Await.result(Future {
         // https://github.com/apache/incubator-pekko-http/pull/2526
         // Check will block while waiting on the response, this might lead to starvation
-        // on the BatchingExecutor of akka's dispatcher if the blocking is not managed properly.
+        // on the BatchingExecutor of pekko's dispatcher if the blocking is not managed properly.
         Get() ~> complete(Future(HttpResponse())) ~> check {
           status shouldEqual OK
         }
@@ -111,7 +112,7 @@ class ScalatestRouteTestSpec extends AnyFreeSpec with Matchers with ScalatestRou
       case object Command
       val service = TestProbe()
       val handler = TestProbe()
-      implicit def serviceRef = service.ref
+      implicit def serviceRef: ActorRef = service.ref
       implicit val askTimeout: Timeout = 1.second.dilated
 
       val result =

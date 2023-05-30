@@ -25,8 +25,7 @@ import org.apache.pekko.annotation.InternalApi
 final class ErrorInfo(
     val summary: String = "",
     val detail: String = "",
-    val errorHeaderName: String = "") extends scala.Product with scala.Serializable with scala.Equals
-    with java.io.Serializable {
+    val errorHeaderName: String = "") extends scala.Product with scala.Equals with java.io.Serializable {
   def withSummary(newSummary: String) = copy(summary = newSummary)
   def withSummaryPrepended(prefix: String) = withSummary(if (summary.isEmpty) prefix else prefix + ": " + summary)
   def withErrorHeaderName(headerName: String) = new ErrorInfo(summary, detail, headerName.toLowerCase)

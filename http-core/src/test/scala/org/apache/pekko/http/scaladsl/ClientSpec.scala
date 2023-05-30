@@ -34,8 +34,8 @@ class ClientSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
     windows-connection-abort-workaround-enabled = auto
     pekko.log-dead-letters = OFF
     pekko.http.server.request-timeout = infinite""")
-  implicit val system = ActorSystem(getClass.getSimpleName, testConf)
-  implicit val materializer = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   override def afterAll() = TestKit.shutdownActorSystem(system)
 

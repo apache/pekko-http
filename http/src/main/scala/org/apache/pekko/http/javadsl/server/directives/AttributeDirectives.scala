@@ -29,7 +29,7 @@ abstract class AttributeDirectives extends HeaderDirectives {
    * If no attribute is found the request is rejected with a [[pekko.http.javadsl.server.MissingAttributeRejection]].
    */
   def attribute[T](key: AttributeKey[T], inner: jf.Function[T, Route]) = RouteAdapter {
-    D.attribute(toScala(key)) { value: T =>
+    D.attribute(toScala(key)) { (value: T) =>
       inner.apply(value).delegate
     }
   }

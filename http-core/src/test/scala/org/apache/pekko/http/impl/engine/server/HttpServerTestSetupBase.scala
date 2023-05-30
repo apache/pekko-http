@@ -46,7 +46,7 @@ abstract class HttpServerTestSetupBase {
     val netIn = TestPublisher.probe[ByteString]()
     val netOut = ByteStringSinkProbe()
 
-    RunnableGraph.fromGraph(GraphDSL.create(modifyServer(Http().serverLayer(settings))) { implicit b => server =>
+    RunnableGraph.fromGraph(GraphDSL.createGraph(modifyServer(Http().serverLayer(settings))) { implicit b => server =>
       import GraphDSL.Implicits._
       Source.fromPublisher(netIn) ~> Flow[ByteString].map(SessionBytes(null, _)) ~> server.in2
       server.out1                      ~> Flow[SslTlsOutbound].collect { case SendBytes(x) => x }.buffer(1,

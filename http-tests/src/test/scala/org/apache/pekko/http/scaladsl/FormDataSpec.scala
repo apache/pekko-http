@@ -21,7 +21,7 @@ import pekko.http.scaladsl.model._
 import pekko.testkit.PekkoSpec
 
 class FormDataSpec extends PekkoSpec {
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
   import system.dispatcher
 
   val formData = FormData(Map("surname" -> "Smith", "age" -> "42"))

@@ -25,10 +25,12 @@ import pekko.http.scaladsl.model.headers._
 import pekko.stream.scaladsl._
 import pekko.testkit._
 import pekko.util.ByteString
+
 import org.scalatest.concurrent.ScalaFutures
+import spray.json.{ DefaultJsonProtocol, RootJsonFormat }
 
 class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
-  implicit override val patience = PatienceConfig(5.seconds.dilated(system), 200.millis)
+  implicit override val patience: PatienceConfig = PatienceConfig(5.seconds.dilated(system), 200.millis)
 
   // #models
   case class Tweet(uid: Int, txt: String)
@@ -45,8 +47,8 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
       extends pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
       with spray.json.DefaultJsonProtocol {
 
-    implicit val tweetFormat = jsonFormat2(Tweet.apply)
-    implicit val measurementFormat = jsonFormat2(Measurement.apply)
+    implicit val tweetFormat: RootJsonFormat[Tweet] = jsonFormat2(Tweet.apply)
+    implicit val measurementFormat: RootJsonFormat[Measurement] = jsonFormat2(Measurement.apply)
   }
 
   "spray-json-response-streaming" in {
@@ -292,7 +294,10 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
               .runFold(0) { (cnt, _) => cnt + 1 }
 
           complete {
-            measurementsSubmitted.map(n => Map("msg" -> s"""Total metrics received: $n"""))
+            // FIXME: workaround for Scala 3 which cannot figure out the right implicit for some reason
+            // Needs same name to avoid ambiguity in Scala 2
+            implicit val mapFormat: RootJsonFormat[Map[String, String]] = DefaultJsonProtocol.mapFormat
+            measurementsSubmitted.map((n: Int) => Map[String, String]("msg" -> s"""Total metrics received: $n"""))
           }
         }
       }

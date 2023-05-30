@@ -13,7 +13,7 @@ We strongly encourage people to report such problems to our private security mai
 
 Please follow the [guidelines](https://www.apache.org/security/) laid down by the Apache Security team.
 
-Ideally, any issues affecting Apache Pekko and Pekko should be reported to Apache team first. We will share the
+Ideally, any issues affecting Apache Pekko and Akka should be reported to Apache team first. We will share the
 report with the Lightbend Akka team.
 
 ## References

@@ -26,25 +26,29 @@ object Common extends AutoPlugin {
       "-deprecation",
       "-encoding", "UTF-8", // yes, this is 2 args
       "-unchecked",
-      "-Xlint",
       "-Ywarn-dead-code",
       // Silence deprecation notices for changes introduced in Scala 2.12
       // Can be removed when we drop support for Scala 2.12:
       "-Wconf:msg=object JavaConverters in package collection is deprecated:s",
       "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s",
-      "-Wconf:cat=unused-imports&origin=org.apache.pekko.http.ccompat.*:s",
       // tolerate deprecations from Akka 2.6.0 until 1.1.x where we clean up
       "-Wconf:cat=deprecation&msg=since Akka 2\\.6\\.:s",
       // tolerate deprecations from Akka HTTP 10.2.0 until 1.1.x where we clean up
       "-Wconf:cat=deprecation&msg=since Akka HTTP 10\\.2\\.:s",
-      // Exhaustivity checking is only useful for simple sealed hierarchies and matches without filters.
-      // In all other cases, the warning is non-actionable: you get spurious warnings that need to be suppressed
-      // verbosely. So, opt out of those in general.
-      "-Wconf:cat=other-match-analysis&msg=match may not be exhaustive:s",
       "-Wconf:msg=reached max recursion depth:s") ++
     (if (isJdk8) Seq.empty
      else if (scalaBinaryVersion.value == "2.12") Seq("-target:jvm-1.8")
      else Seq("-release", "8")),
+    scalacOptions ++= onlyOnScala2(Seq(
+      "-Xlint",
+      // Silence deprecation notices for changes introduced in Scala 2.12
+      // Can be removed when we drop support for Scala 2.12:
+      "-Wconf:cat=unused-imports&origin=org.apache.pekko.http.ccompat.*:s",
+      // Exhaustivity checking is only useful for simple sealed hierarchies and matches without filters.
+      // In all other cases, the warning is non-actionable: you get spurious warnings that need to be suppressed
+      // verbosely. So, opt out of those in general.
+      "-Wconf:cat=other-match-analysis&msg=match may not be exhaustive:s")).value,
+    scalacOptions ++= onlyOnScala3(Seq("-Wconf:cat=deprecation:s")).value,
     javacOptions ++=
       Seq("-encoding", "UTF-8") ++ onlyOnJdk8("-source", "1.8") ++ onlyAfterJdk8("--release", "8"),
     // restrict to 'compile' scope because otherwise it is also passed to
@@ -63,6 +67,12 @@ object Common extends AutoPlugin {
   def onlyAfterJdk8[T](values: T*): Seq[T] = if (isJdk8) Seq.empty[T] else values
   def onlyAfterScala212[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
     if (scalaMinorVersion.value >= 12) values else Seq.empty[T]
+  }
+  def onlyOnScala2[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
+    if (scalaVersion.value.startsWith("3")) Seq.empty[T] else values
+  }
+  def onlyOnScala3[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
+    if (scalaVersion.value.startsWith("3")) values else Seq.empty[T]
   }
 
   def scalaMinorVersion: Def.Initialize[Long] = Def.setting { CrossVersion.partialVersion(scalaVersion.value).get._2 }

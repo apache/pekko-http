@@ -723,7 +723,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
 Host: example.com
 
 """))
-          .via(Tcp().outgoingConnection(hostname, port))
+          .via(Tcp(system).outgoingConnection(hostname, port))
           .runWith(Sink.reduce[ByteString](_ ++ _))
         Try(Await.result(result, 2.seconds).utf8String) match {
           case scala.util.Success(body)                => fail(body)
@@ -747,7 +747,7 @@ Host: example.com
 
       // Disable hostname verification as ExampleHttpContexts.exampleClientContext sets hostname as pekko.example.org
       val sslConfigSettings = SSLConfigSettings().withLoose(SSLLooseConfig().withDisableHostnameVerification(true))
-      val sslConfig = PekkoSSLConfig().withSettings(sslConfigSettings)
+      val sslConfig = PekkoSSLConfig.apply().withSettings(sslConfigSettings)
       val sslContext = {
         val certStore = KeyStore.getInstance(KeyStore.getDefaultType)
         certStore.load(null, null)
@@ -1002,7 +1002,7 @@ Host: example.com
       val settings = ConnectionPoolSettings(system).withUpdatedConnectionSettings(_.withIdleTimeout(100.millis))
 
       val binding =
-        Tcp().bindAndHandle(Flow[ByteString].map(_ => ByteString("hello world!")), "127.0.0.1", 0).futureValue
+        Tcp(system).bindAndHandle(Flow[ByteString].map(_ => ByteString("hello world!")), "127.0.0.1", 0).futureValue
       val uri = "http://" + binding.localAddress.getHostString + ":" + binding.localAddress.getPort
 
       val ex = the[IllegalResponseException] thrownBy Await.result(Http().singleRequest(HttpRequest(uri = uri,

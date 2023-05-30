@@ -16,7 +16,7 @@ package org.apache.pekko
 import scala.language.postfixOps
 import sbt.{ Def, _ }
 import Keys._
-import org.mdedetrich.apache.sonatype.SonatypeApachePlugin
+import org.mdedetrich.apache.sonatype.ApacheSonatypePlugin
 import sbtdynver.DynVerPlugin
 import sbtdynver.DynVerPlugin.autoImport.dynverSonatypeSnapshots
 
@@ -34,7 +34,7 @@ object NoPublish extends AutoPlugin {
 }
 
 object Publish extends AutoPlugin {
-  override def requires = SonatypeApachePlugin
+  override def requires = ApacheSonatypePlugin
   override def trigger = AllRequirements
 
   override lazy val projectSettings = Seq(

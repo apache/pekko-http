@@ -22,6 +22,7 @@ import com.lightbend.paradox.sbt.ParadoxPlugin.autoImport._
 import org.apache.pekko.PekkoParadoxPlugin.autoImport._
 import org.pegdown.Printer
 import org.pegdown.ast.{ DirectiveNode, HtmlBlockNode, VerbatimNode, Visitor }
+import sbtlicensereport.SbtLicenseReport.autoImportImpl.dumpLicenseReportAggregate
 
 import scala.collection.JavaConverters._
 import scala.io.{ Codec, Source }
@@ -31,7 +32,14 @@ object ParadoxSupport {
     paradoxDirectives += ((context: Writer.Context) =>
       new SignatureDirective(context.location.tree.label, context.properties, context)),
     resolvers += Resolver.ApacheMavenSnapshotsRepo,
-    pekkoParadoxGithub := Some("https://github.com/apache/incubator-pekko-http"))
+    pekkoParadoxGithub := Some("https://github.com/apache/incubator-pekko-http"),
+    Compile / paradoxMarkdownToHtml / sourceGenerators += Def.taskDyn {
+      val targetFile = (Compile / paradox / sourceManaged).value / "license-report.md"
+
+      (LocalRootProject / dumpLicenseReportAggregate).map { dir =>
+        IO.copy(List(dir / "pekko-http-root-licenses.md" -> targetFile)).toList
+      }
+    }.taskValue)
 
   class SignatureDirective(
       page: Page, variables: Map[String, String], ctx: Writer.Context) extends LeafBlockDirective("signature") {

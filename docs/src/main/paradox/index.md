@@ -5,6 +5,7 @@
 @@@ index
 
 * [Security Announcements](security.md)
+* [License Report](license-report.md)
 * [Release Notes](release-notes/index.md)
 * [introduction](introduction.md)
 * [usage](usage.md)

@@ -17,9 +17,10 @@ import org.apache.pekko.http.impl.util.Rendering;
 import org.apache.pekko.util.Helpers;
 
 /**
- * Support class for building user-defined custom headers defined by implementing `name` and `value`.
- * Implement {@link ModeledCustomHeader} and {@link ModeledCustomHeaderFactory} instead of {@link CustomHeader} to be
- * able to use the convenience methods that allow parsing the custom user-defined header from {@link org.apache.pekko.http.javadsl.model.HttpHeader}.
+ * Support class for building user-defined custom headers defined by implementing `name` and
+ * `value`. Implement {@link ModeledCustomHeader} and {@link ModeledCustomHeaderFactory} instead of
+ * {@link CustomHeader} to be able to use the convenience methods that allow parsing the custom
+ * user-defined header from {@link org.apache.pekko.http.javadsl.model.HttpHeader}.
  */
 public abstract class ModeledCustomHeader extends CustomHeader {
 

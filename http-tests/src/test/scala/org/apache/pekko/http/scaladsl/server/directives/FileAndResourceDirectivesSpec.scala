@@ -33,7 +33,7 @@ import pekko.testkit._
 class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Inside {
 
   // operations touch files, can be randomly hit by slowness
-  implicit val routeTestTimeout = RouteTestTimeout(3.seconds.dilated)
+  implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(3.seconds.dilated)
 
   // need to serve from the src directory, when sbt copies the resource directory over to the
   // target directory it will resolve symlinks in the process
@@ -58,7 +58,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       Get() ~> getFromFile(Properties.javaHome) ~> check { handled shouldEqual false }
     }
     "return the file content with the MediaType matching the file extension" in {
-      val file = File.createTempFile("akka Http Test", ".PDF")
+      val file = File.createTempFile("pekko Http Test", ".PDF")
       try {
         writeAllText("This is PDF", file)
         Get() ~> getFromFile(file.getPath) ~> check {

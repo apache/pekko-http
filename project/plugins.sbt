@@ -1,3 +1,12 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, derived from Akka.
+ */
+
 resolvers += Classpaths.sbtPluginReleases
 resolvers += Classpaths.typesafeReleases
 resolvers ++= Resolver.sonatypeOssRepos("releases") // to more quickly obtain paradox right after release
@@ -16,6 +25,7 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.3")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1") // for advanced PR validation features
 addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.1")
 addSbtPlugin("com.lightbend.sbt" % "sbt-bill-of-materials" % "1.0.2")
+addSbtPlugin("com.github.sbt" % "sbt-license-report" % "1.5.0")
 // allow access to snapshots for pekko-sbt-paradox
 resolvers += Resolver.ApacheMavenSnapshotsRepo
 
@@ -29,13 +39,14 @@ addSbtPlugin(("com.lightbend.paradox" % "sbt-paradox" % "0.9.2").force())
 addSbtPlugin(("com.lightbend.paradox" % "sbt-paradox-apidoc" % "0.10.1").force())
 addSbtPlugin(("com.lightbend.paradox" % "sbt-paradox-project-info" % "2.0.0").force())
 
-addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.7.0")
+addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.9.0")
 addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.30")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.10.4")
 addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.1.1")
-addSbtPlugin("org.mdedetrich" % "sbt-apache-sonatype" % "0.1.6")
+addSbtPlugin("org.mdedetrich" % "sbt-apache-sonatype" % "0.1.10")
 addSbtPlugin("com.github.pjfanning" % "sbt-source-dist" % "0.1.5")
 addSbtPlugin("net.virtual-void" % "sbt-hackers-digest" % "0.1.2")
+addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.7.0")
 
 // used in ValidatePullRequest to check github PR comments whether to build all subprojects
 libraryDependencies += "org.kohsuke" % "github-api" % "1.306"

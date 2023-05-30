@@ -20,31 +20,38 @@ import java.util.OptionalLong;
 import org.apache.pekko.http.impl.util.Util;
 
 public abstract class ContentRange {
-    public abstract boolean isByteContentRange();
-    public abstract boolean isSatisfiable();
-    public abstract boolean isOther();
+  public abstract boolean isByteContentRange();
 
-    public abstract OptionalLong getSatisfiableFirst();
-    public abstract OptionalLong getSatisfiableLast();
+  public abstract boolean isSatisfiable();
 
-    public abstract Optional<String> getOtherValue();
+  public abstract boolean isOther();
 
-    public abstract OptionalLong getInstanceLength();
+  public abstract OptionalLong getSatisfiableFirst();
 
-    public static ContentRange create(long first, long last) {
-        return ContentRange$.MODULE$.apply(first, last);
-    }
-    public static ContentRange create(long first, long last, long instanceLength) {
-        return ContentRange$.MODULE$.apply(first, last, instanceLength);
-    }
-    @SuppressWarnings("unchecked")
-    public static ContentRange create(long first, long last, OptionalLong instanceLength) {
-        return ContentRange$.MODULE$.apply(first, last, Util.convertOptionalToScala(instanceLength));
-    }
-    public static ContentRange createUnsatisfiable(long length) {
-        return new org.apache.pekko.http.scaladsl.model.ContentRange.Unsatisfiable(length);
-    }
-    public static ContentRange createOther(String value) {
-        return new org.apache.pekko.http.scaladsl.model.ContentRange.Other(value);
-    }
+  public abstract OptionalLong getSatisfiableLast();
+
+  public abstract Optional<String> getOtherValue();
+
+  public abstract OptionalLong getInstanceLength();
+
+  public static ContentRange create(long first, long last) {
+    return ContentRange$.MODULE$.apply(first, last);
+  }
+
+  public static ContentRange create(long first, long last, long instanceLength) {
+    return ContentRange$.MODULE$.apply(first, last, instanceLength);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static ContentRange create(long first, long last, OptionalLong instanceLength) {
+    return ContentRange$.MODULE$.apply(first, last, Util.convertOptionalToScala(instanceLength));
+  }
+
+  public static ContentRange createUnsatisfiable(long length) {
+    return new org.apache.pekko.http.scaladsl.model.ContentRange.Unsatisfiable(length);
+  }
+
+  public static ContentRange createOther(String value) {
+    return new org.apache.pekko.http.scaladsl.model.ContentRange.Other(value);
+  }
 }

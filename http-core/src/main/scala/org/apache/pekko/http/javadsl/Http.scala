@@ -42,7 +42,7 @@ import pekko.util.FutureConverters._
 object Http extends ExtensionId[Http] with ExtensionIdProvider {
   override def get(system: ActorSystem): Http = super.get(system)
   override def get(system: ClassicActorSystemProvider): Http = super.get(system)
-  def lookup() = Http
+  def lookup = Http
   def createExtension(system: ExtendedActorSystem): Http = new Http(system)
 }
 
@@ -843,7 +843,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
   private def adaptTupleFlow[T, Mat](
       scalaFlow: stream.scaladsl.Flow[(scaladsl.model.HttpRequest, T), (Try[scaladsl.model.HttpResponse], T), Mat])
       : Flow[Pair[HttpRequest, T], Pair[Try[HttpResponse], T], Mat] = {
-    implicit def id[X] = JavaMapping.identity[X]
+    implicit def id[X]: JavaMapping[X, X] = JavaMapping.identity[X]
     JavaMapping.toJava(scalaFlow)(JavaMapping.flowMapping[Pair[HttpRequest, T], (scaladsl.model.HttpRequest, T), Pair[
         Try[HttpResponse], T], (Try[scaladsl.model.HttpResponse], T), Mat, Mat])
   }

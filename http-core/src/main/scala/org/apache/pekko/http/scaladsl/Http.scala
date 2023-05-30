@@ -20,7 +20,7 @@ import org.apache.pekko
 import pekko.actor._
 import pekko.annotation.{ DoNotInherit, InternalApi, InternalStableApi }
 import pekko.dispatch.ExecutionContexts
-import pekko.event.{ Logging, LoggingAdapter }
+import pekko.event.{ LogSource, Logging, LoggingAdapter }
 import pekko.http.impl.engine.HttpConnectionIdleTimeoutBidi
 import pekko.http.impl.engine.client._
 import pekko.http.impl.engine.http2.Http2
@@ -59,7 +59,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.duration._
 
 /**
- * Akka extension for HTTP which serves as the main entry point into pekko-http.
+ * Pekko extension for HTTP which serves as the main entry point into pekko-http.
  *
  * Use as `Http().bindAndHandle` etc. with an implicit [[ActorSystem]] in scope.
  */
@@ -142,7 +142,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
 
   private def tcpBind(interface: String, port: Int, settings: ServerSettings)
       : Source[Tcp.IncomingConnection, Future[Tcp.ServerBinding]] =
-    Tcp()
+    Tcp(system)
       .bind(
         interface,
         port,
@@ -1133,7 +1133,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
   def apply()(implicit system: ClassicActorSystemProvider): HttpExt = super.apply(system)
   override def apply(system: ActorSystem): HttpExt = super.apply(system)
 
-  def lookup() = Http
+  def lookup = Http
 
   def createExtension(system: ExtendedActorSystem): HttpExt =
     new HttpExt(system.settings.config.getConfig("pekko.http"))(system)
@@ -1189,7 +1189,7 @@ trait DefaultSSLContextCreation {
   def createClientHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext = {
     val config = sslConfig.config
 
-    val log = Logging(system, getClass)
+    val log = Logging(system, getClass)(LogSource.fromClass)
     val mkLogger = new PekkoLoggerFactory(system)
 
     // initial ssl context!

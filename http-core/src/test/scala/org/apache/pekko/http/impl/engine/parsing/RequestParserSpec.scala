@@ -55,11 +55,11 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
     pekko.http.parsing.max-header-value-length = 32
     pekko.http.parsing.max-uri-length = 40
     pekko.http.parsing.max-content-length = infinite""")
-  implicit val system = ActorSystem(getClass.getSimpleName, testConf)
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
   import system.dispatcher
 
   val BOLT = HttpMethod.custom("BOLT", safe = false, idempotent = true, requestEntityAcceptance = Expected)
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   s"The request parsing logic should (mode: $mode)" - {
     "properly parse a request" - {

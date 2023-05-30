@@ -45,7 +45,7 @@ object Http2ServerTest extends App {
     pekko.actor.default-dispatcher.fork-join-executor.parallelism-max=8
     pekko.http.server.preview.enable-http2 = true
                                                    """)
-  implicit val system = ActorSystem("ServerTest", testConf)
+  implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
   implicit val ec: ExecutionContext = system.dispatcher
 
   def slowDown[T](millis: Int): T => Future[T] = { t =>

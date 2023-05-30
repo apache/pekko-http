@@ -30,12 +30,12 @@ import pekko.stream.scaladsl.Flow
 import scala.io.StdIn
 
 object WSServerAutobahnTest extends App {
-  implicit val system = ActorSystem("WSServerTest")
-  implicit val fm = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem("WSServerTest")
+  implicit val fm: ActorMaterializer = ActorMaterializer()
 
-  val host = System.getProperty("akka.ws-host", "127.0.0.1")
-  val port = System.getProperty("akka.ws-port", "9001").toInt
-  val mode = System.getProperty("akka.ws-mode", "read") // read or sleep
+  val host = System.getProperty("pekko.ws-host", "127.0.0.1")
+  val port = System.getProperty("pekko.ws-port", "9001").toInt
+  val mode = System.getProperty("pekko.ws-mode", "read") // read or sleep
 
   try {
     val binding = Http().newServerAt(host, port).bindSync {
@@ -52,7 +52,7 @@ object WSServerAutobahnTest extends App {
     mode match {
       case "sleep" => while (true) Thread.sleep(1.minute.toMillis)
       case "read"  => StdIn.readLine("Press RETURN to stop...")
-      case _       => throw new Exception("akka.ws-mode MUST be sleep or read.")
+      case _       => throw new Exception("pekko.ws-mode MUST be sleep or read.")
     }
   } finally {
     system.terminate()

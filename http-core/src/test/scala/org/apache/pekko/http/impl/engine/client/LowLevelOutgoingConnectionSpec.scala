@@ -13,10 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.client
 
-import com.typesafe.config.ConfigFactory
+import scala.concurrent.ExecutionContext
 
+import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
+
 import org.scalatest.Inside
 import org.apache.pekko
 import pekko.http.scaladsl.settings.ClientConnectionSettings
@@ -31,10 +33,11 @@ import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util._
+import pekko.http.scaladsl.Http
 import pekko.testkit._
 
 class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Inside {
-  implicit val dispatcher = system.dispatcher
+  implicit val dispatcher: ExecutionContext = system.dispatcher
 
   "The connection-level client implementation" should {
 
@@ -1022,14 +1025,14 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
       val netOut = TestSubscriber.manualProbe[ByteString]()
       val netIn = TestPublisher.manualProbe[ByteString]()
 
-      RunnableGraph.fromGraph(GraphDSL.create(OutgoingConnectionBlueprint(Host("example.com"), settings, NoLogging)) {
-        implicit b => client =>
-          import GraphDSL.Implicits._
-          Source.fromPublisher(netIn)    ~> Flow[ByteString].map(SessionBytes(null, _))             ~> client.in2
-          client.out1                    ~> Flow[SslTlsOutbound].collect { case SendBytes(x) => x } ~> Sink.fromSubscriber(netOut)
-          Source.fromPublisher(requests) ~> client.in1
-          client.out2                    ~> Sink.fromSubscriber(responses)
-          ClosedShape
+      RunnableGraph.fromGraph(GraphDSL.createGraph(OutgoingConnectionBlueprint(Host("example.com"), settings,
+        NoLogging)) { implicit b => client =>
+        import GraphDSL.Implicits._
+        Source.fromPublisher(netIn)    ~> Flow[ByteString].map(SessionBytes(null, _))             ~> client.in2
+        client.out1                    ~> Flow[SslTlsOutbound].collect { case SendBytes(x) => x } ~> Sink.fromSubscriber(netOut)
+        Source.fromPublisher(requests) ~> client.in1
+        client.out2                    ~> Sink.fromSubscriber(responses)
+        ClosedShape
       }).run()
 
       netOut -> netIn

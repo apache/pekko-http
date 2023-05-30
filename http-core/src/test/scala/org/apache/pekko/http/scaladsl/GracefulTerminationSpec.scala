@@ -34,7 +34,7 @@ import org.scalactic.Tolerance
 import org.scalatest.concurrent.Eventually
 
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future, Promise }
+import scala.concurrent.{ Await, ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
 class GracefulTerminationSpec
@@ -45,9 +45,9 @@ class GracefulTerminationSpec
     pekko.http.client.log-unencrypted-network-bytes = 200
                                                    """)
     with Tolerance with Eventually {
-  implicit lazy val dispatcher = system.dispatcher
+  implicit lazy val dispatcher: ExecutionContext = system.dispatcher
 
-  implicit override val patience = PatienceConfig(5.seconds.dilated(system), 200.millis)
+  implicit override val patience: PatienceConfig = PatienceConfig(5.seconds.dilated(system), 200.millis)
 
   "Unbinding" should {
     "not allow new connections" in new TestSetup {

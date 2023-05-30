@@ -53,6 +53,7 @@ class HeaderField implements Comparable<HeaderField> {
     this.name = requireNonNull(name);
     this.value = requireNonNull(value);
   }
+
   HeaderField(String name, String value, Object parsedValue) {
     this.name = requireNonNull(name);
     this.value = requireNonNull(value);
