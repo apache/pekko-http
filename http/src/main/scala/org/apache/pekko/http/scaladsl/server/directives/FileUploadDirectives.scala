@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.server.directives
 
 import java.io.File
+import java.nio.file.Files
 
 import org.apache.pekko
 import pekko.Done
@@ -175,9 +176,12 @@ trait FileUploadDirectives {
       implicit val ec = ctx.executionContext
 
       def tempDest(fileInfo: FileInfo): File = {
-        val dest = File.createTempFile("pekko-http-upload", ".tmp")
-        dest.deleteOnExit()
-        dest
+        val dest = Files.createTempFile("pekko-http-upload", ".tmp")
+        Runtime.getRuntime.addShutdownHook(new Thread() {
+          override def run(): Unit =
+            Files.delete(dest)
+        })
+        dest.toFile
       }
 
       storeUploadedFiles(fieldName, tempDest).map { files =>
