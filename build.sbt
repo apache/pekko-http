@@ -42,7 +42,9 @@ inThisBuild(Def.settings(
   },
   scalafixScalaBinaryVersion := scalaBinaryVersion.value,
   apacheSonatypeProjectProfile := "pekko",
-  versionScheme := Some("semver-spec")))
+  versionScheme := Some("semver-spec"),
+  // TODO: Remove when Pekko has a proper release
+  updateOptions := updateOptions.value.withLatestSnapshots(false)))
 
 // When this is updated the set of modules in Http.allModules should also be updated
 lazy val userProjects: Seq[ProjectReference] = List[ProjectReference](
