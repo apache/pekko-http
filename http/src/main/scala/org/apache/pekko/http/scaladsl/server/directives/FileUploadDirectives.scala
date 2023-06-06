@@ -179,7 +179,7 @@ trait FileUploadDirectives {
         val dest = Files.createTempFile("pekko-http-upload", ".tmp")
         Runtime.getRuntime.addShutdownHook(new Thread() {
           override def run(): Unit =
-            Files.delete(dest)
+            Files.deleteIfExists(dest)
         })
         dest.toFile
       }
