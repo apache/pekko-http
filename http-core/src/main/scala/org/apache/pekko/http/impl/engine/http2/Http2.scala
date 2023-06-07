@@ -101,7 +101,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
     val masterTerminator = new MasterServerTerminator(log)
 
     Tcp(system).bind(interface, effectivePort, settings.backlog, settings.socketOptions, halfClose = false,
-      Duration.Inf) // we knowingly disable idle-timeout on TCP level, as we handle it explicitly in Akka HTTP itself
+      Duration.Inf) // we knowingly disable idle-timeout on TCP level, as we handle it explicitly in Pekko HTTP itself
       .via(if (telemetry == NoOpTelemetry) Flow[Tcp.IncomingConnection] else telemetry.serverBinding)
       .mapAsyncUnordered(settings.maxConnections) {
         (incoming: Tcp.IncomingConnection) =>

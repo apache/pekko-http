@@ -35,7 +35,7 @@ import scala.util.control.NoStackTrace
  *
  * Handles HTTP/2 stream states
  * Accepts `FrameEvent`s from the network side and emits `ByteHttp2SubStream`s for streams
- * to be handled by the Akka HTTP layer.
+ * to be handled by the Pekko HTTP layer.
  *
  * Mixed into the Http2ServerDemux graph logic.
  */
