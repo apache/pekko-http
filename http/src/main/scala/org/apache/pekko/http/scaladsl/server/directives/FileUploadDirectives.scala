@@ -176,12 +176,9 @@ trait FileUploadDirectives {
       implicit val ec = ctx.executionContext
 
       def tempDest(fileInfo: FileInfo): File = {
-        val dest = Files.createTempFile("pekko-http-upload", ".tmp")
-        Runtime.getRuntime.addShutdownHook(new Thread() {
-          override def run(): Unit =
-            Files.deleteIfExists(dest)
-        })
-        dest.toFile
+        val dest = Files.createTempFile("pekko-http-upload", ".tmp").toFile
+        dest.deleteOnExit()
+        dest
       }
 
       storeUploadedFiles(fieldName, tempDest).map { files =>
