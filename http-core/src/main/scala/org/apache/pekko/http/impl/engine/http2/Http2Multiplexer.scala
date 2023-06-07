@@ -65,7 +65,7 @@ private[http2] object PullFrameResult {
  * INTERNAL API
  *
  * Multiplexes the outgoing side of the streams on a HTTP/2 connection.
- * Accepts the streams from the Akka HTTP side and turns them into `FrameEvent`s
+ * Accepts the streams from the Pekko HTTP side and turns them into `FrameEvent`s
  * to be passed to the network side.
  *
  * The main interface between stream handling and multiplexing is this:

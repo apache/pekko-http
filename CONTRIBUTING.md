@@ -170,7 +170,7 @@ For a Pull Request to be considered at all, it has to meet these requirements:
 1. The commit messages must properly describe the changes, see further below.
 1. All Apache projects must include Apache copyright notices.  Each project can choose between one of two approaches:
 
-    1. All source files in the project must have a Apache copyright notice in the file header.
+    1. All source files in the project must have an Apache copyright notice in the file header.
     1. The Notices file for the project includes the Apache copyright notice and no other files contain copyright notices.  See https://www.apache.org/legal/src-headers.html for instructions for managing this approach for copyrights.
 
     Pekko HTTP uses the first choice, having copyright notices in every file header.

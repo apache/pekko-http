@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>Bootstrap trait for Http Server. It helps booting up an pekko-http server by only defining the
  * desired routes. It offers additional hooks to modify the default behavior.
  *
- * @deprecated HttpApp this doesn't reflect the latest Pekko APIs, since Akka HTTP 10.2.0
+ * @deprecated HttpApp this doesn't reflect the latest APIs, since Akka HTTP 10.2.0
  */
 @Deprecated
 public abstract class HttpApp extends AllDirectives {

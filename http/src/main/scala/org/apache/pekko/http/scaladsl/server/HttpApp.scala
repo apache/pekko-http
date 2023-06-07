@@ -35,7 +35,7 @@ import scala.util.{ Failure, Success, Try }
  * Bootstrap trait for Http Server. It helps booting up an pekko-http server by only defining the desired routes.
  * It offers additional hooks to modify the default behavior.
  */
-@deprecated("HttpApp this doesn't reflect the latest Akka APIs", "Akka HTTP 10.2.0")
+@deprecated("HttpApp this doesn't reflect the latest APIs", "Akka HTTP 10.2.0")
 abstract class HttpApp extends Directives {
 
   private val serverBinding = new AtomicReference[ServerBinding]()

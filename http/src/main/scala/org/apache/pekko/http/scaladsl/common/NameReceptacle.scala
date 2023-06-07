@@ -19,7 +19,7 @@ import pekko.http.scaladsl.unmarshalling.{ FromStringUnmarshaller => FSU, Unmars
 private[http] trait ToNameReceptacleEnhancements {
   implicit def _symbol2NR(symbol: Symbol): NameReceptacle[String] = new NameReceptacle[String](symbol.name)
   @annotation.implicitAmbiguous(
-    "Akka HTTP's `*` decorator conflicts with Scala's String.`*` method. Use `.repeated` instead.")
+    "Pekko HTTP's `*` decorator conflicts with Scala's String.`*` method. Use `.repeated` instead.")
   implicit def _string2NR(string: String): NameReceptacle[String] = new NameReceptacle[String](string)
 }
 object ToNameReceptacleEnhancements extends ToNameReceptacleEnhancements
