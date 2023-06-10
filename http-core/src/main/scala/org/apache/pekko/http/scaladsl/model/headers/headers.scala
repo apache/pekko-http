@@ -459,7 +459,7 @@ object `Content-Length` extends ModeledCompanion[`Content-Length`]
  * Instances of this class will only be created transiently during header parsing and will never appear
  * in HttpMessage.header. To access the Content-Length, see subclasses of HttpEntity.
  */
-final case class `Content-Length` private[http] (length: Long) extends jm.headers.ContentLength
+final case class `Content-Length` private[pekko] (length: Long) extends jm.headers.ContentLength
     with RequestResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ length
   protected def companion = `Content-Length`
@@ -555,7 +555,7 @@ object `Content-Type` extends ModeledCompanion[`Content-Type`]
  * Instances of this class will only be created transiently during header parsing and will never appear
  * in HttpMessage.header. To access the Content-Type, see subclasses of HttpEntity.
  */
-final case class `Content-Type` private[http] (contentType: ContentType) extends jm.headers.ContentType
+final case class `Content-Type` private[pekko] (contentType: ContentType) extends jm.headers.ContentType
     with RequestResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = r ~~ contentType
   protected def companion = `Content-Type`
