@@ -49,7 +49,6 @@ private[http] object ProtocolSwitch {
           val terminatorPromise = Promise[ServerTerminator]()
 
           object Logic extends GraphStageLogic(shape) {
-            logic =>
 
             // --- inner ports, bound to actual server in install call ---
             val serverDataIn = new SubSinkInlet[SslTlsOutbound]("ServerImpl.netIn")
