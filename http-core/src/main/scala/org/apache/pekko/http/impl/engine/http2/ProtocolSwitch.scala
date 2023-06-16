@@ -63,6 +63,7 @@ private[http] object ProtocolSwitch {
                 def onPush(): Unit =
                   grab(netIn) match {
                     case first @ SessionBytes(session, bytes) =>
+                      if (1 == 1) throw new RuntimeException("deliberate fail")
                       val chosen = chosenProtocolAccessor(first)
                       chosen match {
                         case "h2" => install(http2Stack.addAttributes(HttpAttributes.tlsSessionInfo(session)), first)
