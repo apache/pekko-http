@@ -62,10 +62,10 @@ private[http] object ProtocolSwitch {
               new InHandler {
                 def onPush(): Unit =
                   grab(netIn) match {
-                    case first @ SessionBytes(session, bytes) =>
+                    case first: SessionBytes =>
                       val chosen = chosenProtocolAccessor(first)
                       chosen match {
-                        case "h2" => install(http2Stack.addAttributes(HttpAttributes.tlsSessionInfo(session)), first)
+                        case "h2" => install(http2Stack.addAttributes(HttpAttributes.tlsSessionInfo(first.session)), first)
                         case _    => install(http1Stack, first)
                       }
                     case SessionTruncated =>
