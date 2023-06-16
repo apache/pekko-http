@@ -65,8 +65,9 @@ private[http] object ProtocolSwitch {
                     case first: SessionBytes =>
                       val chosen = chosenProtocolAccessor(first)
                       chosen match {
-                        case "h2" => install(http2Stack.addAttributes(HttpAttributes.tlsSessionInfo(first.session)), first)
-                        case _    => install(http1Stack, first)
+                        case "h2" =>
+                          install(http2Stack.addAttributes(HttpAttributes.tlsSessionInfo(first.session)), first)
+                        case _ => install(http1Stack, first)
                       }
                     case SessionTruncated =>
                       failStage(new SSLException("TLS session was truncated (probably missing a close_notify packet)."))
