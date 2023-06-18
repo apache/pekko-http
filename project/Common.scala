@@ -35,10 +35,8 @@ object Common extends AutoPlugin {
       "-Wconf:cat=deprecation&msg=since Akka 2\\.6\\.:s",
       // tolerate deprecations from Akka HTTP 10.2.0 until Pekko 1.1.x where we clean up
       "-Wconf:cat=deprecation&msg=since Akka HTTP 10\\.2\\.:s",
-      "-Wconf:msg=reached max recursion depth:s") ++
-    (if (isJdk8) Seq.empty
-     else if (scalaBinaryVersion.value == "2.12") Seq("-target:jvm-1.8")
-     else Seq("-release", "8")),
+      "-Wconf:msg=reached max recursion depth:s",
+      "-release:8"),
     scalacOptions ++= onlyOnScala2(Seq(
       "-Xlint",
       // Silence deprecation notices for changes introduced in Scala 2.12
