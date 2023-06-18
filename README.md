@@ -31,7 +31,8 @@ The documentation is available at
 ## Building from Source
 
 ### Prerequisites
-- Make sure you have installed a Java Development Kit (JDK) version 8 or later.
+- Make sure you have installed a Java Development Kit (JDK) version 8.
+    - there is an issue with the jars produced by higher JDK versions  
 - Make sure you have [sbt](https://www.scala-sbt.org/) installed and using this JDK.
 - [Graphviz](https://graphviz.gitlab.io/download/) is needed for the scaladoc generation build task, which is part of the release.
 
