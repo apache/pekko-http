@@ -120,9 +120,7 @@ lazy val parsing = project("parsing")
   .settings(AutomaticModuleName.settings("pekko.http.parsing"))
   .addPekkoModuleDependency("pekko-actor", "provided")
   .settings(Dependencies.parsing)
-  .settings(
-    scalacOptions --= Seq("-Xfatal-warnings", "-Xlint", "-Ywarn-dead-code"), // disable warnings for parboiled code
-    scalacOptions += "-language:_")
+  .settings(scalacOptions += "-language:_")
   .settings(scalaMacroSupport)
   .enablePlugins(ScaladocNoVerificationOfDiagrams)
   .enablePlugins(ReproducibleBuildsPlugin)
