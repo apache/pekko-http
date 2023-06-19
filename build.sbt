@@ -29,6 +29,7 @@ inThisBuild(Def.settings(
   scmInfo := Some(
     ScmInfo(url("https://github.com/apache/incubator-pekko-http"), "git@github.com:apache/incubator-pekko-http.git")),
   description := "Apache Pekko Http: Modern, fast, asynchronous, streaming-first HTTP server and client.",
+  resolvers += "Apache Pekko Staging" at "https://repository.apache.org/content/groups/staging",
   testOptions ++= Seq(
     Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
     Tests.Argument(TestFrameworks.ScalaTest, "-oDF")),
