@@ -92,7 +92,7 @@ trait RouteDirectives {
    * @group route
    */
   def handle(handler: HttpRequest => Future[HttpResponse]): StandardRoute = { ctx =>
-    handler(ctx.request).fast.map(RouteResult.Complete)(ctx.executionContext)
+    handler(ctx.request).fast.map(RouteResult.Complete.apply)(ctx.executionContext)
   }
 
   /**
@@ -131,7 +131,7 @@ trait RouteDirectives {
   def handle(
       handler: PartialFunction[HttpRequest, Future[HttpResponse]], rejections: Seq[Rejection]): StandardRoute = { ctx =>
     handler
-      .andThen(_.fast.map(RouteResult.Complete)(ctx.executionContext))
+      .andThen(_.fast.map(RouteResult.Complete.apply)(ctx.executionContext))
       .applyOrElse[HttpRequest, Future[RouteResult]](ctx.request, _ => ctx.reject(rejections: _*))
   }
 

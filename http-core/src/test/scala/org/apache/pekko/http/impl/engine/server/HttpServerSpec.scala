@@ -18,6 +18,7 @@ import scala.annotation.nowarn
 import java.net.{ InetAddress, InetSocketAddress }
 
 import org.apache.pekko
+import pekko.actor.ActorSystem
 import pekko.event.LoggingAdapter
 import pekko.http.ParsingErrorHandler
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
@@ -32,7 +33,7 @@ import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.scaladsl._
 import pekko.stream.testkit.Utils.assertAllStagesStopped
 import pekko.stream.testkit._
-import pekko.stream.ActorMaterializer
+import pekko.stream.{ ActorMaterializer, Materializer }
 import pekko.stream.Attributes
 import pekko.stream.Outlet
 import pekko.stream.SourceShape
@@ -1633,8 +1634,8 @@ class HttpServerSpec extends PekkoSpec(
     })
   }
   class TestSetup(maxContentLength: Int = -1) extends HttpServerTestSetupBase {
-    implicit def system = spec.system
-    implicit def materializer = spec.materializer
+    implicit def system: ActorSystem = spec.system
+    implicit def materializer: Materializer = spec.materializer
 
     override def settings = {
       val s = super.settings

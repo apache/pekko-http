@@ -18,7 +18,6 @@ import org.scalatest.Inside
 import org.apache.pekko
 import pekko.http.scaladsl.unmarshalling.Unmarshaller, Unmarshaller._
 import pekko.http.scaladsl.model.StatusCodes
-import pekko.http.scaladsl.server.util.ConstructFromTuple
 import org.scalatest.freespec.AnyFreeSpec
 
 class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with Inside {
@@ -66,7 +65,7 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
     "supply chaining of unmarshallers" in {
       case class UserId(id: Int)
       case class AnotherUserId(id: Int)
-      val UserIdUnmarshaller = Unmarshaller.strict[Int, UserId](UserId)
+      val UserIdUnmarshaller = Unmarshaller.strict[Int, UserId](UserId.apply)
       implicit val AnotherUserIdUnmarshaller =
         Unmarshaller.strict[UserId, AnotherUserId](userId => AnotherUserId(userId.id))
       Get("/?id=45") ~> {

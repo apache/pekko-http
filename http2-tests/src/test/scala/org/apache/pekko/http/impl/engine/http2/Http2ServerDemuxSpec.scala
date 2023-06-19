@@ -62,11 +62,11 @@ class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
         Left(ByteString.empty),
         Map.empty))
 
-      frameConsumer.expectNext shouldBe an[SettingsFrame]
+      frameConsumer.expectNext() shouldBe an[SettingsFrame]
       // The client could send an 'ack' here, but doesn't need to
       // frameProducer.sendNext(SettingsAckFrame(frame.asInstanceOf[SettingsFrame].settings))
 
-      frameConsumer.expectNext shouldBe response
+      frameConsumer.expectNext() shouldBe response
     }
   }
 }

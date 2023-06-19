@@ -18,7 +18,6 @@ import pekko.http.scaladsl.model
 import model.HttpMethods._
 import model.StatusCodes
 import pekko.testkit.EventFilter
-import pekko.http.scaladsl.server.util.ConstructFromTuple
 
 object BasicRouteSpecs {
   private[http] def defaultExnHandler500Error(message: String) = {

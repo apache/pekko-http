@@ -45,7 +45,7 @@ object TestServer extends App {
   import spray.json.DefaultJsonProtocol._
   import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   final case class Tweet(message: String)
-  implicit val tweetFormat: RootJsonFormat[Tweet] = jsonFormat1(Tweet)
+  implicit val tweetFormat: RootJsonFormat[Tweet] = jsonFormat1(Tweet.apply)
 
   implicit val jsonStreaming: JsonEntityStreamingSupport = EntityStreamingSupport.json()
 
