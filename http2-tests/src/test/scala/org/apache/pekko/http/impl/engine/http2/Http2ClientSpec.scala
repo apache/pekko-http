@@ -79,7 +79,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
   """)
     with Eventually {
 
-  override implicit val patience = PatienceConfig(5.seconds, 5.seconds)
+  override implicit val patience: PatienceConfig = PatienceConfig(5.seconds, 5.seconds)
   override def failOnSevereMessages: Boolean = true
 
   "The Http/2 client implementation" should {

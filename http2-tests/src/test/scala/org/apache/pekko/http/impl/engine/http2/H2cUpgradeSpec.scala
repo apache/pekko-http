@@ -31,7 +31,7 @@ class H2cUpgradeSpec extends PekkoSpecWithMaterializer("""
     pekko.http.server.http2.log-frames = on
   """) {
 
-  override implicit val patience = PatienceConfig(5.seconds, 5.seconds)
+  override implicit val patience: PatienceConfig = PatienceConfig(5.seconds, 5.seconds)
 
   "An HTTP/1.1 server without TLS that allows upgrading to cleartext HTTP/2" should {
     val binding = Http2().bindAndHandleAsync(

@@ -119,7 +119,7 @@ object Unmarshaller extends pekko.http.javadsl.unmarshalling.Unmarshallers {
     unmarshalling.Unmarshaller.firstOf(u1.asScala, u2.asScala, u3.asScala, u4.asScala, u5.asScala)
   }
 
-  @nowarn("msg=parameter value mi in method adaptInputToJava is never used")
+  @nowarn("msg=mi in method adaptInputToJava is never used")
   private implicit def adaptInputToJava[JI, SI, O](um: unmarshalling.Unmarshaller[SI, O])(
       implicit mi: JavaMapping[JI, SI]): unmarshalling.Unmarshaller[JI, O] =
     um.asInstanceOf[unmarshalling.Unmarshaller[JI, O]] // since guarantee provided by existence of `mi`

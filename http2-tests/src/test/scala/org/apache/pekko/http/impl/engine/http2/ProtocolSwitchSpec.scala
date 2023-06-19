@@ -33,7 +33,6 @@ import pekko.testkit.PekkoSpec
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.time.{ Milliseconds, Seconds, Span }
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 
 class ProtocolSwitchSpec extends PekkoSpec {
