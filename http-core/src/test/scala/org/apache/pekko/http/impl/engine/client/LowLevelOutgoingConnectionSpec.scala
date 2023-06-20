@@ -33,7 +33,6 @@ import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util._
-import pekko.http.scaladsl.Http
 import pekko.testkit._
 
 class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Inside {
