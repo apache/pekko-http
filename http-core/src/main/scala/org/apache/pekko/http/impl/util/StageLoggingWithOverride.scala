@@ -11,7 +11,7 @@
  * Copyright (C) 2017-2022 Lightbend Inc. <https://www.lightbend.com>
  *
  * Copied and adapted from pekko-remote
- * https://github.com/akka/akka/blob/c90121485fcfc44a3cee62a0c638e1982d13d812/akka-remote/src/main/scala/akka/remote/artery/StageLogging.scala
+ * https://github.com/apache/incubator-pekko/blob/c90121485fcfc44a3cee62a0c638e1982d13d812/akka-remote/src/main/scala/akka/remote/artery/StageLogging.scala
  */
 
 package org.apache.pekko.http.impl.util
