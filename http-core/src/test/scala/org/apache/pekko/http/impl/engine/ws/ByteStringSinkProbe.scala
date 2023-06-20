@@ -65,7 +65,7 @@ private[http] object ByteStringSinkProbe {
       }
       def expectNoBytes(): Unit = {
         ensureRequested()
-        probe.expectNoMsg()
+        probe.expectNoMessage()
       }
       def expectNoBytes(timeout: FiniteDuration): Unit = {
         ensureRequested()
