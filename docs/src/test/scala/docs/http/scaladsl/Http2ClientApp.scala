@@ -51,7 +51,7 @@ object Http2ClientApp extends App {
 
   dispatch(
     HttpRequest(
-      uri = "https://pekko.apache.org/api/akka/current/akka/actor/typed/scaladsl/index.html",
+      uri = "https://pekko.apache.org/api/pekko/current/org/apache/pekko/actor/typed/scaladsl/index.html",
       headers = headers.`Accept-Encoding`(HttpEncodings.gzip) :: Nil)).onComplete { res =>
     println(s"[1] Got index.html: $res")
     res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [1] $res"))
@@ -61,13 +61,13 @@ object Http2ClientApp extends App {
 
   dispatch(
     HttpRequest(
-      uri = "https://pekko.apache.org/api/akka/current/index.js",
+      uri = "https://pekko.apache.org/api/pekko/current/index.js",
       headers = /*headers.`Accept-Encoding`(HttpEncodings.gzip) ::*/ Nil)).onComplete { res =>
     println(s"[2] Got index.js: $res")
     res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [2] $res"))
   }
 
-  dispatch(HttpRequest(uri = "https://pekko.apache.org/api/akka/current/lib/MaterialIcons-Regular.woff"))
+  dispatch(HttpRequest(uri = "https://pekko.apache.org/api/pekko/current/lib/MaterialIcons-Regular.woff"))
     .flatMap(_.toStrict(1.second))
     .onComplete(res => println(s"[3] Got font: $res"))
 
