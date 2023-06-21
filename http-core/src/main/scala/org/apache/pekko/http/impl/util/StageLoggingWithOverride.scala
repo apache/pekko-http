@@ -10,8 +10,8 @@
 /*
  * Copyright (C) 2017-2022 Lightbend Inc. <https://www.lightbend.com>
  *
- * Copied and adapted from pekko-remote
- * https://github.com/apache/incubator-pekko/blob/c90121485fcfc44a3cee62a0c638e1982d13d812/akka-remote/src/main/scala/akka/remote/artery/StageLogging.scala
+ * Copied and adapted from pekko-stream
+ * https://github.com/apache/incubator-pekko/blob/bd1af56fcead435cb3d730e759223dcb2b0fb4c6/stream/src/main/scala/org/apache/pekko/stream/stage/StageLogging.scala
  */
 
 package org.apache.pekko.http.impl.util
