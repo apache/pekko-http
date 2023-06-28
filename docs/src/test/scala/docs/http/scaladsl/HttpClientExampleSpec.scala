@@ -195,7 +195,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
     val QueueSize = 10
 
-    // This idea came initially from this blog post:
+    // This idea came initially from this blog post (link broken):
     // http://kazuhiro.github.io/scala/akka/akka-http/akka-streams/2016/01/31/connection-pooling-with-akka-http-and-source-queue.html
     val poolClientFlow = Http().cachedHostConnectionPool[Promise[HttpResponse]]("pekko.apache.org")
     val queue =
