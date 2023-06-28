@@ -265,3 +265,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---------------
+
+pekko-http-core contains code based on code by Tim Kienzle with his permission to use it under an Apache License
+(see https://github.com/apache/incubator-pekko-http/issues/195#issuecomment-1610633609).
+
+ - http-core/src/main/scala/org/apache/pekko/http/scaladsl/model/DateTime.scala
+
+(C) 2000 by Tim Kientzle <kientzle@acm.org>
+
+---------------
