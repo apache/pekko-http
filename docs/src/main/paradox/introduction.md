@@ -43,7 +43,7 @@ choose an Apache Pekko version to run against and add a manual dependency to `pe
   group3="org.apache.pekko" artifact3="pekko-http_$scala.binary.version$" version3="PekkoHttpVersion"
 }
 
-You can bootstrap a new project with Apache Pekko HTTP already configured using the [Giter8](http://www.foundweekends.org/giter8/) template directly via sbt:
+You can bootstrap a new project with Apache Pekko HTTP already configured using the [Giter8](https://www.foundweekends.org/giter8/) template directly via sbt:
 
 @@@ div { .group-scala }
 For Scala (sbt)
