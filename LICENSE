@@ -269,7 +269,7 @@ SOFTWARE.
 ---------------
 
 pekko-http-core contains code based on code by Tim Kienzle with his permission to use it under an Apache License
-(see https://github.com/apache/incubator-pekko-http/issues/195#issuecomment-1610633609).
+(see https://lists.apache.org/thread/v61twg09h0spcdzk2v8hb5cccs2krn12).
 
  - http-core/src/main/scala/org/apache/pekko/http/scaladsl/model/DateTime.scala
 
