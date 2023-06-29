@@ -118,6 +118,8 @@ object Dependencies {
     Provided.jsr305,
     Test.scalatest)
 
+  lazy val httpCors = l ++= Seq(Test.scalatest)
+
   lazy val http = Seq()
 
   lazy val http2Tests = l ++= Seq(Test.h2spec)

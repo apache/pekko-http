@@ -15,4 +15,7 @@ pekko-http
 pekko-http-caching
 :  @@snip [reference.conf](/http-caching/src/main/resources/reference.conf)
 
+pekko-http-cors
+:  @@snip [reference.conf](/http-cors/src/main/resources/reference.conf)
+
 The other Apache Pekko HTTP modules do not offer any configuration via [Typesafe Config](https://github.com/lightbend/config).
