@@ -56,6 +56,7 @@ lazy val userProjects: Seq[ProjectReference] = List[ProjectReference](
   http2Tests,
   http,
   httpCaching,
+  httpCors,
   httpTestkit,
   httpMarshallersScala,
   httpMarshallersJava,
@@ -251,7 +252,7 @@ lazy val httpTests = project("http-tests")
 
 lazy val httpJmhBench = project("http-bench-jmh")
   .settings(commonSettings)
-  .dependsOn(http, http2Tests % "compile->compile,test")
+  .dependsOn(http, httpCors, http2Tests % "compile->compile,test")
   .addPekkoModuleDependency("pekko-stream")
   .enablePlugins(JmhPlugin)
   .enablePlugins(NoPublish) // don't release benchs
@@ -298,6 +299,17 @@ lazy val httpCaching = project("http-caching")
   .addPekkoModuleDependency("pekko-stream", "provided")
   .addPekkoModuleDependency("pekko-stream-testkit", "provided")
   .settings(Dependencies.httpCaching)
+  .dependsOn(http, httpCore, httpTestkit % "test")
+  .enablePlugins(BootstrapGenjavadoc)
+
+lazy val httpCors = project("http-cors")
+  .settings(
+    name := "pekko-http-cors")
+  .settings(commonSettings)
+  .settings(AutomaticModuleName.settings("pekko.http.cors"))
+  .addPekkoModuleDependency("pekko-stream", "provided")
+  .addPekkoModuleDependency("pekko-stream-testkit", "provided")
+  .settings(Dependencies.httpCors)
   .dependsOn(http, httpCore, httpTestkit % "test")
   .enablePlugins(BootstrapGenjavadoc)
 
@@ -390,7 +402,7 @@ lazy val docs = project("docs")
   .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoDependency.docs)
   .addPekkoModuleDependency("pekko-actor-testkit-typed", "provided", PekkoDependency.docs)
   .dependsOn(
-    httpCore, http, httpXml, http2Tests, httpMarshallersJava, httpMarshallersScala, httpCaching,
+    httpCore, http, httpXml, http2Tests, httpMarshallersJava, httpMarshallersScala, httpCaching, httpCors,
     httpTests % "compile;test->test", httpTestkit % "compile;test->test", httpScalafixRules % ScalafixConfig)
   .settings(Dependencies.docs)
   .settings(

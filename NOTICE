@@ -21,3 +21,9 @@ Copyright (c) 2011-2023 Lightbend, Inc.
 Scala includes software developed at
 LAMP/EPFL (https://lamp.epfl.ch/) and
 Lightbend, Inc. (https://www.lightbend.com/).
+
+---------------
+
+pekko-http-cors contains code that was donated by Lomig Mégard to the Apache Software Foundation
+via a Software Grant Agreement <https://www.apache.org/licenses/contributor-agreements.html#grants>
+See <https://github.com/lomigmegard/pekko-http-cors/issues/33>.
