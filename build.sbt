@@ -42,6 +42,7 @@ inThisBuild(Def.settings(
       s"Building Pekko HTTP ${version.value} against Pekko ${PekkoDependency.pekkoVersion} on Scala ${(httpCore / scalaVersion).value}")
     (onLoad in Global).value
   },
+  projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
   scalafixScalaBinaryVersion := scalaBinaryVersion.value,
   apacheSonatypeProjectProfile := "pekko",
   versionScheme := Some("semver-spec"),
@@ -428,14 +429,8 @@ lazy val docs = project("docs")
       "javadoc.org.apache.pekko.link_style" -> "direct",
       "scaladoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/api/pekko/${PekkoDependency.docs.link}",
       "scaladoc.org.apache.pekko.link_style" -> "direct",
-      "javadoc.org.apache.pekko.http.base_url" -> {
-        val v = if (!isSnapshot.value) "current" else version.value
-        s"https://pekko.apache.org/api/pekko-http/$v"
-      },
-      "scaladoc.org.apache.pekko.http.base_url" -> {
-        val v = if (!isSnapshot.value) "current" else version.value
-        s"https://pekko.apache.org/japi/pekko-http/$v"
-      },
+      "javadoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/api/pekko-http/${projectInfoVersion.value}",
+      "scaladoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/japi/pekko-http/${projectInfoVersion.value}",
       "github.base_url" -> GitHub.url(version.value, isSnapshot.value)),
     apidocRootPackage := "org.apache.pekko",
     ValidatePR / additionalTasks += Compile / paradox)
