@@ -42,6 +42,7 @@ inThisBuild(Def.settings(
       s"Building Pekko HTTP ${version.value} against Pekko ${PekkoDependency.pekkoVersion} on Scala ${(httpCore / scalaVersion).value}")
     (onLoad in Global).value
   },
+  projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
   scalafixScalaBinaryVersion := scalaBinaryVersion.value,
   apacheSonatypeProjectProfile := "pekko",
   versionScheme := Some("semver-spec"),
@@ -415,7 +416,6 @@ lazy val docs = project("docs")
       10.seconds
     },
     paradoxGroups := Map("Language" -> Seq("Scala", "Java")),
-    projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
     Compile / paradoxProperties ++= Map(
       "project.name" -> "Apache Pekko HTTP",
       "canonical.base_url" -> "https://pekko.apache.org/docs/pekko-http/current",
