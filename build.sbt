@@ -429,11 +429,11 @@ lazy val docs = project("docs")
       "scaladoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/api/pekko/${PekkoDependency.docs.link}",
       "scaladoc.org.apache.pekko.link_style" -> "direct",
       "javadoc.org.apache.pekko.http.base_url" -> {
-        val v = if (!isSnapshot.value) "current" else version.value
+        val v = if (!isSnapshot.value) "current" else "snapshot"
         s"https://pekko.apache.org/api/pekko-http/$v"
       },
       "scaladoc.org.apache.pekko.http.base_url" -> {
-        val v = if (!isSnapshot.value) "current" else version.value
+        val v = if (!isSnapshot.value) "current" else "snapshot"
         s"https://pekko.apache.org/japi/pekko-http/$v"
       },
       "github.base_url" -> GitHub.url(version.value, isSnapshot.value)),
