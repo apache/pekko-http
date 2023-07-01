@@ -27,7 +27,10 @@ object PekkoDependency {
     def link: String
   }
   case class Artifact(version: String, isSnapshot: Boolean) extends Pekko {
-    override def link = VersionNumber(version) match { case VersionNumber(Seq(x, y, _*), _, _) => s"$x.$y" }
+    override def link = VersionNumber(version) match {
+      case VersionNumber(Seq(x, y, z, _*), _, _) => s"$x.$y.$z"
+      case VersionNumber(Seq(x, y, _*), _, _) => s"$x.$y"
+    }
   }
   object Artifact {
     def apply(version: String): Artifact = {
