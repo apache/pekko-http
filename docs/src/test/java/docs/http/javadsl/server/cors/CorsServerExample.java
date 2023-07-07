@@ -18,25 +18,50 @@
 package docs.http.javadsl.server.cors;
 
 // #cors-server-example
+import org.apache.pekko.actor.typed.ActorSystem;
+import org.apache.pekko.actor.typed.javadsl.Behaviors;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.apache.pekko.http.javadsl.server.*;
+import org.apache.pekko.http.javadsl.server.ExceptionHandler;
+import org.apache.pekko.http.javadsl.server.RejectionHandler;
+import org.apache.pekko.http.javadsl.server.Route;
 
 import java.util.NoSuchElementException;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.apache.pekko.http.cors.javadsl.CorsDirectives.cors;
 import static org.apache.pekko.http.cors.javadsl.CorsDirectives.corsRejectionHandler;
+import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class CorsServerExample extends HttpApp {
+public class CorsServerExample {
 
-  public static void main(String[] args) throws ExecutionException, InterruptedException {
+  public static void main(String[] args) throws Exception {
+    final ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "cors-server");
+
     final CorsServerExample app = new CorsServerExample();
-    app.startServer("127.0.0.1", 9000);
+
+    final CompletionStage<ServerBinding> futureBinding =
+            Http.get(system).newServerAt("localhost", 8080).bind(app.createRoute());
+
+    futureBinding.whenComplete((binding, exception) -> {
+      if (binding != null) {
+        system.log().info("Server online at http://localhost:8080/\nPress RETURN to stop...");
+      } else {
+        system.log().error("Failed to bind HTTP endpoint, terminating system", exception);
+        system.terminate();
+      }
+    });
+
+    System.in.read(); // let it run until user presses return
+    futureBinding
+            .thenCompose(ServerBinding::unbind)
+            .thenAccept(unbound -> system.terminate());
   }
 
-  protected Route routes() {
+  private Route createRoute() {
 
     // Your CORS settings are loaded from `application.conf`
 
@@ -55,7 +80,7 @@ public class CorsServerExample extends HttpApp {
     // Combining the two handlers only for convenience
     final Function<Supplier<Route>, Route> handleErrors =
         inner ->
-            Directives.allOf(
+            allOf(
                 s -> handleExceptions(exceptionHandler, s),
                 s -> handleRejections(rejectionHandler, s),
                 inner);
