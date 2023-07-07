@@ -19,15 +19,38 @@ package docs.http.scaladsl.server.cors
 
 // #cors-server-example
 import org.apache.pekko
-import pekko.http.scaladsl.model.StatusCodes
-import pekko.http.scaladsl.server._
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.server._
 
-object CorsServerExample extends HttpApp {
+import scala.io.StdIn
+import scala.util.{ Failure, Success }
+
+object CorsServerExample {
   def main(args: Array[String]): Unit = {
-    CorsServerExample.startServer("127.0.0.1", 9000)
+    implicit val system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, "cors-server")
+    import system.executionContext
+
+    val futureBinding = Http().newServerAt("localhost", 8080).bind(route)
+
+    futureBinding.onComplete {
+      case Success(_) =>
+        system.log.info("Server online at http://localhost:8080/\nPress RETURN to stop...")
+      case Failure(exception) =>
+        system.log.error("Failed to bind HTTP endpoint, terminating system", exception)
+        system.terminate()
+    }
+
+    StdIn.readLine() // let it run until user presses return
+    futureBinding
+      .flatMap(_.unbind())
+      .onComplete(_ => system.terminate())
   }
 
-  protected def routes: Route = {
+  def route: Route = {
     import pekko.http.cors.scaladsl.CorsDirectives._
 
     // Your CORS settings are loaded from `application.conf`
