@@ -19,12 +19,12 @@ package docs.http.scaladsl.server.cors
 
 // #cors-server-example
 import org.apache.pekko
-import org.apache.pekko.actor.typed.ActorSystem
-import org.apache.pekko.actor.typed.scaladsl.Behaviors
-import org.apache.pekko.http.scaladsl.Http
-import org.apache.pekko.http.scaladsl.model.StatusCodes
-import org.apache.pekko.http.scaladsl.server.Directives._
-import org.apache.pekko.http.scaladsl.server._
+import pekko.actor.typed.ActorSystem
+import pekko.actor.typed.scaladsl.Behaviors
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.model.StatusCodes
+import pekko.http.scaladsl.server.Directives._
+import pekko.http.scaladsl.server._
 
 import scala.io.StdIn
 import scala.util.{ Failure, Success }
