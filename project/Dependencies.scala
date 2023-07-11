@@ -28,7 +28,7 @@ object Dependencies {
   val h2specExe = "h2spec" + DependencyHelpers.exeIfWindows
   val h2specUrl = s"https://github.com/summerwind/h2spec/releases/download/v$h2specVersion/$h2specName.zip"
 
-  val scalaTestVersion = "3.2.9"
+  val scalaTestVersion = "3.2.14"
   val specs2Version = "4.10.6"
   val scalaCheckVersion = "1.15.4"
 
@@ -91,7 +91,7 @@ object Dependencies {
       val junitIntf = "com.github.sbt" % "junit-interface" % "0.13.3" % "test"
 
       val scalatest = "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
-      val scalatestplusScalacheck = "org.scalatestplus" %% "scalacheck-1-15" % (scalaTestVersion + ".0") % "test"
+      val scalatestplusScalacheck = "org.scalatestplus" %% "scalacheck-1-16" % (scalaTestVersion + ".0") % "test"
       val scalatestplusJUnit = "org.scalatestplus" %% "junit-4-13" % (scalaTestVersion + ".0") % "test"
 
       // HTTP/2
