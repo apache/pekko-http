@@ -11,6 +11,18 @@
  * Copyright (C) 2018-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
+/*
+ * Scala (https://www.scala-lang.org)
+ *
+ * Copyright EPFL and Lightbend, Inc.
+ *
+ * Licensed under Apache License 2.0
+ * (http://www.apache.org/licenses/LICENSE-2.0).
+ *
+ * See the NOTICE file distributed with this work for
+ * additional information regarding copyright ownership.
+ */
+
 package org.apache.pekko.http
 
 import org.apache.pekko
@@ -21,7 +33,7 @@ import scala.{ collection => c }
 /**
  * INTERNAL API
  *
- * Partly based on https://github.com/scala/scala-collection-compat/blob/master/compat/src/main/scala-2.11_2.12/scala/collection/compat/PackageShared.scala
+ * Partly based on https://github.com/scala/scala-collection-compat/blob/main/compat/src/main/scala-2.11_2.12/scala/collection/compat/PackageShared.scala
  * but reproduced here so we don't need to add a dependency on this library. It contains much more than we need right now, and is
  * not promising binary compatibility yet at the time of writing.
  */
