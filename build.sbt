@@ -20,7 +20,8 @@ import sbtdynver.GitDescribeOutput
 import spray.boilerplate.BoilerplatePlugin
 import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
-sourceDistName := "incubating-pekko-http"
+sourceDistName := "apache-pekko-http"
+sourceDistIncubating := true
 inThisBuild(Def.settings(
   apiURL := {
     val apiVersion = if (isSnapshot.value) "current" else version.value
@@ -43,9 +44,7 @@ inThisBuild(Def.settings(
   projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
   scalafixScalaBinaryVersion := scalaBinaryVersion.value,
   apacheSonatypeProjectProfile := "pekko",
-  versionScheme := Some("semver-spec"),
-  // TODO: Remove when Pekko has a proper release
-  updateOptions := updateOptions.value.withLatestSnapshots(false)))
+  versionScheme := Some("semver-spec")))
 
 // When this is updated the set of modules in Http.allModules should also be updated
 lazy val userProjects: Seq[ProjectReference] = List[ProjectReference](
