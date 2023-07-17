@@ -28,6 +28,7 @@ We haven't had to fix many bugs that were in Akka HTTP 10.2.10.
 
 ### Dependency Upgrades
 We have tried to limit the changes to third party dependencies that are used in Pekko HTTP 1.0.0. These are some exceptions:
+
 * parboiled 2.5.0 ([PR14](https://github.com/apache/incubator-pekko-http/pull/14)). We have dropped the use of the internal Akka/Pekko copy of parboiled in favour of using the jar directly. There have been reports of small binary compatibility issues between parboiled 2.4.1 and parboiled 2.5.0 ([#174](https://github.com/apache/incubator-pekko-http/issues/174)).
 * jackson 2.14.3
 * scalatest 3.2.14. Pekko users who have existing tests based on Akka Testkit may need to migrate their tests due to the scalatest upgrade. The [scalatest 3.2 release notes](https://www.scalatest.org/release_notes/3.2.0) have a detailed description of the changes needed.
