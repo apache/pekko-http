@@ -32,7 +32,6 @@ The documentation is available at
 
 ### Prerequisites
 - Make sure you have installed a Java Development Kit (JDK) version 8 or later.
-- You will need Java Development Kit (JDK) version 11 or later when building the docs.
 - Make sure you have [sbt](https://www.scala-sbt.org/) installed.
 - [Graphviz](https://graphviz.gitlab.io/download/) is needed for the scaladoc generation build task, which is part of the release.
 
@@ -43,13 +42,13 @@ The documentation is available at
 - `sbt compile` compiles the main source for project default version of Scala (2.13)
     - `sbt +compile` will compile for all supported versions of Scala
 - `sbt test` will compile the code and run the unit tests
+- `sbt testQuick` similar to `test` but when repeated in shell mode will only run failing tests
 - `sbt package` will build the jars
     - the jars will built into target dirs of the various modules
     - for the the 'http-core' module, the jar will be built to `http-core/target/scala-2.13/`
 - `sbt publishLocal` will push the jars to your local Apache Ivy repository
 - `sbt publishM2` will push the jars to your local Apache Maven repository
 - `sbt docs/paradox` will build the docs (the ones describing the module features)
-     - requires JDK 11 or above
      - `sbt docs/paradoxBrowse` does the same but will open the docs in your browser when complete
      - the `index.html` file will appear in `target/paradox/site/main/`
 - `sbt unidoc` will build the Javadocs for all the modules and load them to one place (may require Graphviz, see Prerequisites above)
