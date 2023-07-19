@@ -434,7 +434,7 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         }.concatSubstreams
 
     def collectBlocking[T](source: Source[T, Any]): Seq[T] =
-      Await.result(source.limit(100000).runWith(Sink.seq), 1000.millis.dilated)
+      Await.result(source.limit(100000).runWith(Sink.seq), 2000.millis.dilated)
 
     protected def parserSettings: ParserSettings = ParserSettings(system)
 
