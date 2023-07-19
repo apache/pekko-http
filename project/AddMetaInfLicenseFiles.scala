@@ -41,6 +41,13 @@ object AddMetaInfLicenseFiles extends AutoPlugin {
     apacheSonatypeLicenseFile := baseDir.value / "LICENSE",
     apacheSonatypeNoticeFile := baseDir.value / "NOTICE")
 
+  /**
+   * Settings specific for Pekko http-cors subproject which require a different license file.
+   */
+  lazy val httpCorsSettings = Seq(
+    apacheSonatypeLicenseFile := baseDir.value / "legal" / "StandardLicense.txt",
+    apacheSonatypeNoticeFile := baseDir.value / "legal" / "CorsNotice.txt")
+
   override def trigger = allRequirements
 
   override def requires = ApacheSonatypePlugin
