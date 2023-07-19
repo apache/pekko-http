@@ -31,6 +31,13 @@ limitations under the License.
 
 ---------------
 
+pekko-http-core contains code based on akka-sse <https://github.com/hseeberger/akka-sse>
+distributed under the Apache 2.0 license.
+
+Copyright 2015 Heiko Seeberger
+
+---------------
+
 pekko-http-cors contains code that was donated by Lomig Mégard to the Apache Software Foundation
 via a Software Grant Agreement <https://www.apache.org/licenses/contributor-agreements.html#grants>
 See <https://github.com/lomigmegard/pekko-http-cors/issues/33>.
