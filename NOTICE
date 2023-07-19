@@ -31,7 +31,7 @@ limitations under the License.
 
 ---------------
 
-pekko-http-core contains code based on akka-sse <https://github.com/hseeberger/akka-sse>
+pekko-http-core and pekko-http-tests contain code based on akka-sse <https://github.com/hseeberger/akka-sse>
 distributed under the Apache 2.0 license.
 
 Copyright 2015 Heiko Seeberger
