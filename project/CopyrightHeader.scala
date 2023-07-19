@@ -68,7 +68,8 @@ object CopyrightHeader extends AutoPlugin {
 
     override def apply(text: String, existingText: Option[String]): String = {
       val formatted = existingText match {
-        case Some(currentText) if isApacheCopyrighted(currentText) || isGenerated(currentText) =>
+        case Some(currentText)
+            if isApacheCopyrighted(currentText) || isGenerated(currentText) || isSbt012Licensed(currentText) =>
           currentText
         case Some(currentText) if isOnlyLightbendCopyrightAnnotated(currentText) =>
           HeaderCommentStyle.cStyleBlockComment.commentCreator(apacheFromAkkaSourceHeader,
@@ -112,4 +113,7 @@ object CopyrightHeader extends AutoPlugin {
   private def isOnlyLightbendCopyrightAnnotated(text: String): Boolean = {
     isLightbendCopyrighted(text) && !isApacheCopyrighted(text)
   }
+
+  private def isSbt012Licensed(text: String): Boolean =
+    StringUtils.containsIgnoreCase(text, "sbt -- Simple Build Tool")
 }
