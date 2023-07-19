@@ -8,6 +8,13 @@
  */
 
 /*
+ * Contains code based on code by Tim Kienzle with his permission to use it under an Apache License
+ * (see https://lists.apache.org/thread/v61twg09h0spcdzk2v8hb5cccs2krn12).
+ *
+ * (C) 2000 by Tim Kientzle <kientzle@acm.org>
+ */
+
+/*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
