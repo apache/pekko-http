@@ -279,6 +279,16 @@ pekko-http-core contains code based on code by Tim Kienzle with his permission t
 
 ---------------
 
+pekko-http-core contain code from parboiled2 <https://github.com/sirthias/parboiled2>
+distributed under the Apache 2.0 license.
+
+  - http-core/src/main/scala/org/apache/pekko/http/impl/model/parser/Base64Parsing.scala
+
+Copyright © 2009-2013 Mathias Doenitz <http://parboiled2.org>
+Copyright © 2013 Alexander Myltsev
+
+---------------
+
 pekko-http-core and pekko-http-tests contain code based on akka-sse <https://github.com/hseeberger/akka-sse>
 distributed under the Apache 2.0 license.
 
