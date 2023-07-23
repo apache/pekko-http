@@ -187,9 +187,11 @@ lazy val http2Tests = project("http2-tests")
         if (!h2spec.exists) {
           log.info("Extracting h2spec to " + h2spec)
 
-          for (zip <- (Test / update).value.select(artifact = artifactFilter(name = h2specName,
-              extension = h2specArtifactExtension)))
-            IO.unzip(zip, (Test / target).value)
+          for (zip <- (Test / update).value.select(artifact = artifactFilter(name = h2specName, extension = "zip")))
+            IO.unzip(zip, (Test / target).value / h2specName)
+
+          for (tarGz <- (Test / update).value.select(artifact = artifactFilter(name = h2specName, extension = "gz")))
+            Untar.unTarGz(tarGz, (Test / target).value / h2specName)
 
           // Set the executable bit on the expected path to fail if it doesn't exist
           for (view <- Option(Files.getFileAttributeView(h2spec.toPath, classOf[PosixFileAttributeView]))) {
