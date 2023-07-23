@@ -48,5 +48,4 @@ private[pekko] object Http2SettingsHeader {
     val reader = new io.ByteStringParser.ByteReader(bytes)
     Http2FrameParsing.readSettings(reader, log)
   }
-
 }
