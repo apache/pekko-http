@@ -21,7 +21,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.io.IOUtils
 
-import java.io.{BufferedInputStream, File, FileInputStream, FileOutputStream}
+import java.io.{ BufferedInputStream, File, FileInputStream, FileOutputStream }
 import scala.util.Using
 
 object Untar {
