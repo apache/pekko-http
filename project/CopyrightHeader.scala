@@ -33,7 +33,8 @@ object CopyrightHeader extends AutoPlugin {
             HeaderFileType.scala -> cStyleComment,
             HeaderFileType.java -> cStyleComment,
             HeaderFileType.conf -> hashLineComment,
-            HeaderFileType("template") -> cStyleComment)))
+            HeaderFileType("template") -> cStyleComment),
+          headerSources ++= (sourceDirectory.value ** "*.scala.template").get))
     })
 
   val apacheFromAkkaSourceHeader: String =
