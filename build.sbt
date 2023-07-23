@@ -11,7 +11,7 @@ import org.apache.pekko
 import pekko._
 import pekko.ValidatePullRequest._
 import PekkoDependency._
-import Dependencies.{ h2specExe, h2specName }
+import Dependencies.{ h2specExe, h2specName, h2specArtifactExtension }
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 import java.nio.file.Files
 import java.nio.file.attribute.{ PosixFileAttributeView, PosixFilePermission }
@@ -187,7 +187,7 @@ lazy val http2Tests = project("http2-tests")
         if (!h2spec.exists) {
           log.info("Extracting h2spec to " + h2spec)
 
-          for (zip <- (Test / update).value.select(artifact = artifactFilter(name = h2specName, extension = "zip")))
+          for (zip <- (Test / update).value.select(artifact = artifactFilter(name = h2specName, extension = h2specArtifactExtension)))
             IO.unzip(zip, (Test / target).value)
 
           // Set the executable bit on the expected path to fail if it doesn't exist
