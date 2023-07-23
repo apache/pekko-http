@@ -171,7 +171,7 @@ class H2SpecIntegrationSpec extends PekkoSpec(
         "-k", "-t",
         "-p", port.toString,
         "-j", junitOutput.getPath) ++
-        specSectionNumber.toList.flatMap(number => Seq(s"http2/$number"))
+        specSectionNumber.toList.map(number => s"http2/$number")
 
       log.debug(s"Executing h2spec: $command")
       val aggregateTckLogs = ProcessLogger(
