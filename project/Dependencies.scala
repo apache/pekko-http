@@ -23,7 +23,7 @@ object Dependencies {
   val jacksonDatabindVersion = "2.14.3"
   val jacksonXmlVersion = jacksonDatabindVersion
   val junitVersion = "4.13.2"
-  val h2specVersion = "1.5.0"
+  val h2specVersion = "2.6.0"
   val h2specName = s"h2spec_${DependencyHelpers.osName}_amd64"
   val h2specExe = "h2spec" + DependencyHelpers.exeIfWindows
   val h2specUrl = s"https://github.com/summerwind/h2spec/releases/download/v$h2specVersion/$h2specName.zip"
