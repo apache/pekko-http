@@ -22,7 +22,7 @@ import pekko.util.ByteString
 
 import java.io.ByteArrayOutputStream
 
-/** Helps with a encoding headers to HPACK from Akka HTTP model */
+/** Helps with a encoding headers to HPACK from Pekko HTTP model */
 trait HPackEncodingSupport {
   lazy val encoder = new Encoder(Http2Protocol.InitialMaxHeaderTableSize)
 

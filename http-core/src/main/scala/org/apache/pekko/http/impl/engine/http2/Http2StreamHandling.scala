@@ -262,24 +262,24 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     /** Called when we receive a user-created stream (that is open for more data) */
     def handleOutgoingCreated(outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
       warning(
-        s"handleOutgoingCreated received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+        s"handleOutgoingCreated received unexpectedly in state $stateName. This indicates a bug in Pekko HTTP, please report it to the issue tracker.")
       this
     }
 
     /** Called when we receive a user-created stream that is already closed */
     def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
       warning(
-        s"handleOutgoingCreatedAndFinished received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+        s"handleOutgoingCreatedAndFinished received unexpectedly in state $stateName. This indicates a bug in Pekko HTTP, please report it to the issue tracker.")
       this
     }
     def handleOutgoingEnded(): StreamState = {
       warning(
-        s"handleOutgoingEnded received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+        s"handleOutgoingEnded received unexpectedly in state $stateName. This indicates a bug in Pekko HTTP, please report it to the issue tracker.")
       this
     }
     def handleOutgoingFailed(cause: Throwable): StreamState = {
       warning(
-        s"handleOutgoingFailed received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+        s"handleOutgoingFailed received unexpectedly in state $stateName. This indicates a bug in Pekko HTTP, please report it to the issue tracker.")
       this
     }
     def receivedUnexpectedFrame(e: StreamFrameEvent): StreamState = {

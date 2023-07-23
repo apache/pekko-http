@@ -61,7 +61,7 @@ trait OutgoingConnectionBuilder {
    *
    * Note that the responses are not guaranteed to arrive in the same order as the requests go out (In the case of a HTTP/2 connection)
    * so therefore requests needs to have a [[pekko.http.scaladsl.model.RequestResponseAssociation]]
-   * which Akka HTTP will carry over to the corresponding response for a request.
+   * which Pekko HTTP will carry over to the corresponding response for a request.
    */
   def http2(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]]
 
@@ -72,7 +72,7 @@ trait OutgoingConnectionBuilder {
    *
    * Note that the responses are not guaranteed to arrive in the same order as the requests go out
    * so therefore requests needs to have a [[pekko.http.scaladsl.model.RequestResponseAssociation]]
-   * which Akka HTTP will carry over to the corresponding response for a request.
+   * which Pekko HTTP will carry over to the corresponding response for a request.
    */
   @ApiMayChange
   def managedPersistentHttp2(): Flow[HttpRequest, HttpResponse, NotUsed]
@@ -82,7 +82,7 @@ trait OutgoingConnectionBuilder {
    *
    * Note that the responses are not guaranteed to arrive in the same order as the requests go out (In the case of a HTTP/2 connection)
    * so therefore requests needs to have a [[pekko.http.scaladsl.model.RequestResponseAssociation]]
-   * which Akka HTTP will carry over to the corresponding response for a request.
+   * which Pekko HTTP will carry over to the corresponding response for a request.
    */
   def http2WithPriorKnowledge(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]]
 
@@ -93,7 +93,7 @@ trait OutgoingConnectionBuilder {
    *
    * Note that the responses are not guaranteed to arrive in the same order as the requests go out (In the case of a HTTP/2 connection)
    * so therefore requests needs to have a [[pekko.http.scaladsl.model.RequestResponseAssociation]]
-   * which Akka HTTP will carry over to the corresponding response for a request.
+   * which Pekko HTTP will carry over to the corresponding response for a request.
    */
   @ApiMayChange
   def managedPersistentHttp2WithPriorKnowledge(): Flow[HttpRequest, HttpResponse, NotUsed]
