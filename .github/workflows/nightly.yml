@@ -1,7 +1,5 @@
 name: Nightly Builds
 
-permissions: {}
-
 on:
   schedule:
     - cron: "0 2 * * *"

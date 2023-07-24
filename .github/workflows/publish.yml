@@ -1,8 +1,5 @@
 name: Publish nightly snapshots and documentation
 
-permissions:
-  contents: read
-
 on:
   schedule:
     - cron: "0 3 * * *"

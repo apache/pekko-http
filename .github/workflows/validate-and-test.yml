@@ -1,7 +1,5 @@
 name: Validate and test
 
-permissions: {}
-
 on:
   pull_request:
   push:
