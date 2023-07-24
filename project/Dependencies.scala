@@ -23,10 +23,12 @@ object Dependencies {
   val jacksonDatabindVersion = "2.14.3"
   val jacksonXmlVersion = jacksonDatabindVersion
   val junitVersion = "4.13.2"
-  val h2specVersion = "1.5.0"
+  val h2specVersion = "2.6.0"
   val h2specName = s"h2spec_${DependencyHelpers.osName}_amd64"
   val h2specExe = "h2spec" + DependencyHelpers.exeIfWindows
-  val h2specUrl = s"https://github.com/summerwind/h2spec/releases/download/v$h2specVersion/$h2specName.zip"
+  val h2specArtifactExtension = if (h2specExe == "exe") "zip" else "tar.gz"
+  val h2specUrl =
+    s"https://github.com/summerwind/h2spec/releases/download/v$h2specVersion/$h2specName.$h2specArtifactExtension"
 
   val scalaTestVersion = "3.2.14"
   val specs2Version = "4.10.6"
@@ -186,8 +188,7 @@ object DependencyHelpers {
   }
 
   def exeIfWindows: String = {
-    val os = System.getProperty("os.name").toLowerCase()
-    if (os.startsWith("win")) ".exe"
+    if (osName.startsWith("win")) ".exe"
     else ""
   }
 

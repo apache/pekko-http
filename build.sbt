@@ -11,7 +11,7 @@ import org.apache.pekko
 import pekko._
 import pekko.ValidatePullRequest._
 import PekkoDependency._
-import Dependencies.{ h2specExe, h2specName }
+import Dependencies.{ h2specArtifactExtension, h2specExe, h2specName }
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 import java.nio.file.Files
 import java.nio.file.attribute.{ PosixFileAttributeView, PosixFilePermission }
@@ -188,7 +188,10 @@ lazy val http2Tests = project("http2-tests")
           log.info("Extracting h2spec to " + h2spec)
 
           for (zip <- (Test / update).value.select(artifact = artifactFilter(name = h2specName, extension = "zip")))
-            IO.unzip(zip, (Test / target).value)
+            IO.unzip(zip, (Test / target).value / h2specName)
+
+          for (tarGz <- (Test / update).value.select(artifact = artifactFilter(name = h2specName, extension = "gz")))
+            Untar.unTarGz(tarGz, (Test / target).value / h2specName)
 
           // Set the executable bit on the expected path to fail if it doesn't exist
           for (view <- Option(Files.getFileAttributeView(h2spec.toPath, classOf[PosixFileAttributeView]))) {
