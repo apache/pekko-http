@@ -39,8 +39,8 @@ The documentation is available at
 
 Some tests for HTTP/2 compliance use [h2spec](https://github.com/summerwind/h2spec). The sbt build downloads
 pre-built binaries from the GitHub releases page for the h2spec project. These binaries are not available for all
-operating systems. In particular, we have received reports of issues with running the tests on Apple Mac Silicon
-machines.
+operating systems. Apple Mac Silicon users may need to install [Rosetta](https://support.apple.com/en-us/HT211861) if
+they do not have it installed already.
 
 ### Running the Build
 - Open a command window and change directory to your preferred base directory
