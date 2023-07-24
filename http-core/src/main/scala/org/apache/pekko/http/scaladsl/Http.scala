@@ -149,7 +149,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
         settings.backlog,
         settings.socketOptions,
         halfClose = false,
-        idleTimeout = Duration.Inf // we knowingly disable idle-timeout on TCP level, as we handle it explicitly in Akka HTTP itself
+        idleTimeout = Duration.Inf // we knowingly disable idle-timeout on TCP level, as we handle it explicitly in Pekko HTTP itself
       )
 
   private def choosePort(port: Int, connectionContext: ConnectionContext, settings: ServerSettings) =

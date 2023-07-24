@@ -93,7 +93,7 @@ private[headers] sealed trait SyntheticHeader extends ModeledHeader
  * Superclass for user-defined custom headers defined by implementing `name` and `value`.
  *
  * Prefer to extend [[ModeledCustomHeader]] and [[ModeledCustomHeaderCompanion]] instead if
- * planning to use the defined header in match clauses (e.g. in the routing layer of Akka HTTP),
+ * planning to use the defined header in match clauses (e.g. in the routing layer of Pekko HTTP),
  * as they allow the custom header to be matched from [[RawHeader]] and vice-versa.
  */
 abstract class CustomHeader extends jm.headers.CustomHeader {
@@ -485,7 +485,7 @@ final case class `Content-Location`(uri: Uri) extends jm.headers.ContentLocation
  * as reference here.
  * Extended (i.e. encoded) parameter values are not quoted, see ext-parameter - https://tools.ietf.org/html/rfc5987#section-3.2.1
  *
- * Note: Akka HTTP uses "filename" key to store filename and handles encoding/decoding automatically.
+ * Note: Pekko HTTP uses "filename" key to store filename and handles encoding/decoding automatically.
  * To output customized ASCII fallback version of filename provide "filename*" for unicode and "filename" for ASCII.
  */
 object `Content-Disposition` extends ModeledCompanion[`Content-Disposition`]
