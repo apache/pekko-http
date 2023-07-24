@@ -1,17 +1,9 @@
-name: Validate and test
+name: JDK 20 test
 
 permissions: {}
 
 on:
-  pull_request:
-  push:
-    branches: [ main ]
-    tags-ignore: [ v* ]
-
-concurrency:
-  # Only run once for latest commit per ref and cancel other (previous) runs.
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_dispatch:
 
 jobs:
   formatting-check:
@@ -59,7 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         SCALA_VERSION: [2.12, 2.13, 3.3]
-        JDK: [8, 11]
+        JDK: [20]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
