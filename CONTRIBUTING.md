@@ -4,13 +4,9 @@ We follow the standard GitHub [fork & pull](https://help.github.com/articles/usi
 
 You're always welcome to submit your PR straight away and start the discussion (without reading the rest of this wonderful doc, or the README.md). The goal of these notes is to make your experience contributing to Pekko HTTP as smooth and pleasant as possible. We're happy to guide you through the process once you've submitted your PR.
 
-# The Apache Pekko Community
+# Introduction
 
-If you have questions about the contribution process or discuss specific issues, please interact with the community using the following resources.
-
-- [GitHub discussions](https://github.com/apache/incubator-pekko-http/discussions): for questions and general discussion.
-- [Pekko dev mailing list](https://lists.apache.org/list.html?dev@pekko.apache.org): for Pekko development discussions.
-- [GitHub issues](https://github.com/apache/incubator-pekko-http/issues): for bug reports and feature requests. Please search the existing issues before creating new ones. If you are unsure whether you have found a bug, consider asking in GitHub discussions or the mailing list first.
+The [README](README.md) has details about the Pekko Community and building from source. 
 
 # Navigating around the project & codebase
 

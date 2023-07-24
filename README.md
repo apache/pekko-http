@@ -35,6 +35,13 @@ The documentation is available at
 - Make sure you have [sbt](https://www.scala-sbt.org/) installed.
 - [Graphviz](https://graphviz.gitlab.io/download/) is needed for the scaladoc generation build task, which is part of the release.
 
+### h2spec
+
+Some tests for HTTP/2 compliance use [h2spec](https://github.com/summerwind/h2spec). The sbt build downloads
+pre-built binaries from the GitHub releases page for the h2spec project. These binaries are not available for all
+operating systems. In particular, we have received reports of issues with running the tests on Apple Mac Silicon
+machines.
+
 ### Running the Build
 - Open a command window and change directory to your preferred base directory
 - Use git to clone the [repo](https://github.com/apache/incubator-pekko-http) or download a source release from https://pekko.apache.org (and unzip or untar it, as appropriate)
