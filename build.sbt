@@ -22,6 +22,13 @@ import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
 sourceDistName := "apache-pekko-http"
 sourceDistIncubating := true
+
+commands := commands.value.filterNot { command =>
+  command.nameOption.exists { name =>
+    name.contains("sonatypeRelease") || name.contains("sonatypeBundleRelease")
+  }
+}
+
 inThisBuild(Def.settings(
   apiURL := {
     val apiVersion = if (isSnapshot.value) "current" else version.value
