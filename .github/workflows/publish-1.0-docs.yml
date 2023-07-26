@@ -40,7 +40,7 @@ jobs:
           cp -r target/scala-2.13/unidoc target/nightly-docs/docs/pekko-http/1.0.0/api
           cp -r target/scala-2.13/unidoc target/nightly-docs/docs/pekko-http/1.0/api
           rm -r target/scala-2.13/unidoc
-          cp -r target/javaunidoc target/nightly-docs/docs/pekko-http/1.0./japi
+          cp -r target/javaunidoc target/nightly-docs/docs/pekko-http/1.0.0/japi
           cp -r target/javaunidoc target/nightly-docs/docs/pekko-http/1.0/japi
           rm -r target/javaunidoc
 
