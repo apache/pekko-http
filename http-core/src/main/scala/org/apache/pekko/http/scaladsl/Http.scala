@@ -188,7 +188,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    */
   @deprecated(
     "Use Http().newServerAt(...)...connectionSource() to create a source that can be materialized to a binding.",
-    since = "10.2.0")
+    since = "Akka HTTP 10.2.0")
   @nowarn("msg=deprecated")
   def bind(interface: String, port: Int = DefaultPortForProtocol,
       connectionContext: ConnectionContext = defaultServerHttpContext,
@@ -237,7 +237,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * To configure additional settings for a server started using this method,
    * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    */
-  @deprecated("Use Http().newServerAt(...)...bindFlow() to create server bindings.", since = "10.2.0")
+  @deprecated("Use Http().newServerAt(...)...bindFlow() to create server bindings.", since = "Akka HTTP 10.2.0")
   @nowarn("msg=deprecated")
   def bindAndHandle(
       handler: Flow[HttpRequest, HttpResponse, Any],
@@ -319,7 +319,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * To configure additional settings for a server started using this method,
    * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    */
-  @deprecated("Use Http().newServerAt(...)...bindSync() to create server bindings.", since = "10.2.0")
+  @deprecated("Use Http().newServerAt(...)...bindSync() to create server bindings.", since = "Akka HTTP 10.2.0")
   @nowarn("msg=deprecated")
   def bindAndHandleSync(
       handler: HttpRequest => HttpResponse,
@@ -348,7 +348,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    *
    * Any other value for `parallelism` overrides the setting.
    */
-  @deprecated("Use Http().newServerAt(...)...bind() to create server bindings.", since = "10.2.0")
+  @deprecated("Use Http().newServerAt(...)...bind() to create server bindings.", since = "Akka HTTP 10.2.0")
   @nowarn("msg=deprecated")
   def bindAndHandleAsync(
       handler: HttpRequest => Future[HttpResponse],
@@ -761,7 +761,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * Gets the current default server-side [[ConnectionContext]] – defaults to plain HTTP.
    * Can be modified using [[setDefaultServerHttpContext]], and will then apply for servers bound after that call has completed.
    */
-  @deprecated("Set context explicitly when binding", since = "10.2.0")
+  @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
   def defaultServerHttpContext: ConnectionContext =
     synchronized {
       if (_defaultServerConnectionContext == null)
@@ -773,7 +773,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * Sets the default server-side [[ConnectionContext]].
    * If it is an instance of [[HttpsConnectionContext]] then the server will be bound using HTTPS.
    */
-  @deprecated("Set context explicitly when binding", since = "10.2.0")
+  @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
   def setDefaultServerHttpContext(context: ConnectionContext): Unit =
     synchronized {
       _defaultServerConnectionContext = context
@@ -1113,7 +1113,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
     override def productElement(n: Int): Any = if (n == 0) setup else throw new IllegalArgumentException
     override def canEqual(that: Any): Boolean = that.isInstanceOf[HostConnectionPool]
   }
-  @deprecated("Not needed any more. Kept for binary compatibility.", "10.2.0")
+  @deprecated("Not needed any more. Kept for binary compatibility.", "Akka HTTP 10.2.0")
   private[http] object HostConnectionPool
 
   /** INTERNAL API */
@@ -1161,7 +1161,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
  * The remaining four parameters configure the initial session that will
  * be negotiated, see [[pekko.stream.TLSProtocol.NegotiateNewSession]] for details.
  */
-@deprecated("use ConnectionContext.httpsServer and httpsClient directly", since = "10.2.0")
+@deprecated("use ConnectionContext.httpsServer and httpsClient directly", since = "Akka HTTP 10.2.0")
 trait DefaultSSLContextCreation {
 
   protected def system: ActorSystem
@@ -1170,22 +1170,22 @@ trait DefaultSSLContextCreation {
   // --- log warnings ---
   private[this] def log = system.log
 
-  @deprecated("PekkoSSLConfig usage is deprecated", since = "10.2.0")
+  @deprecated("PekkoSSLConfig usage is deprecated", since = "Akka HTTP 10.2.0")
   def validateAndWarnAboutLooseSettings() = ()
   // --- end of log warnings ---
 
-  @deprecated("use ConnectionContext.httpServer instead", since = "10.2.0")
+  @deprecated("use ConnectionContext.httpServer instead", since = "Akka HTTP 10.2.0")
   def createDefaultClientHttpsContext(): HttpsConnectionContext =
     createClientHttpsContext(PekkoSSLConfig(system))
 
-  @deprecated("use ConnectionContext.httpServer instead", since = "10.2.0")
+  @deprecated("use ConnectionContext.httpServer instead", since = "Akka HTTP 10.2.0")
   def createServerHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext = {
     log.warning("Automatic server-side configuration is not supported yet, will attempt to use client-side settings. " +
       "Instead it is recommended to construct the Servers HttpsConnectionContext manually (via SSLContext).")
     createClientHttpsContext(sslConfig)
   }
 
-  @deprecated("use ConnectionContext.httpClient(sslContext) instead", since = "10.2.0")
+  @deprecated("use ConnectionContext.httpClient(sslContext) instead", since = "Akka HTTP 10.2.0")
   def createClientHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext = {
     val config = sslConfig.config
 
