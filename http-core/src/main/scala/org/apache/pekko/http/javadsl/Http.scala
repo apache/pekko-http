@@ -828,15 +828,15 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
   def setDefaultClientHttpsContext(context: HttpsConnectionContext): Unit =
     delegate.setDefaultClientHttpsContext(context.asScala)
 
-  @deprecated("use ConnectionContext.httpsServer", since = "10.2.0")
+  @deprecated("use ConnectionContext.httpsServer", since = "Akka HTTP 10.2.0")
   def createServerHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext =
     delegate.createServerHttpsContext(sslConfig)
 
-  @deprecated("use ConnectionContext.httpsClient", since = "10.2.0")
+  @deprecated("use ConnectionContext.httpsClient", since = "Akka HTTP 10.2.0")
   def createClientHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext =
     delegate.createClientHttpsContext(sslConfig)
 
-  @deprecated("use ConnectionContext.httpsClient", since = "10.2.0")
+  @deprecated("use ConnectionContext.httpsClient", since = "Akka HTTP 10.2.0")
   def createDefaultClientHttpsContext(): HttpsConnectionContext =
     delegate.createDefaultClientHttpsContext()
 
