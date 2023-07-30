@@ -11,9 +11,7 @@
  * Copyright (C) 2016-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.pekko
-
-import java.io.{ File, FileNotFoundException }
+import java.io.FileNotFoundException
 
 import sbt._
 import Keys._

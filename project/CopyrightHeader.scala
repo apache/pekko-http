@@ -11,8 +11,6 @@
  * Copyright (C) 2018-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.pekko
-
 import sbt._, Keys._
 import de.heikoseeberger.sbtheader.{ CommentCreator, HeaderPlugin, NewLine }
 import org.apache.commons.lang3.StringUtils

@@ -11,8 +11,6 @@
  * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.pekko
-
 import sbt._
 import sbt.Keys._
 import scala.language.implicitConversions

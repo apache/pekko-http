@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-package org.apache.pekko
-
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.io.IOUtils

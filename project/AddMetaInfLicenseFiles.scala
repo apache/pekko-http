@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-package org.apache.pekko
-
 import sbt.Keys._
 import sbt._
 import org.mdedetrich.apache.sonatype.ApacheSonatypePlugin

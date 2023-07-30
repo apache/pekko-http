@@ -11,8 +11,6 @@
  * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.pekko
-
 import sbt._
 import sbt.Keys._
 import scala.annotation.tailrec
@@ -20,7 +18,7 @@ import sbtunidoc.{ GenJavadocPlugin, JavaUnidocPlugin, ScalaUnidocPlugin }
 import sbtunidoc.BaseUnidocPlugin.autoImport.{ unidoc, unidocProjectFilter }
 import sbtunidoc.JavaUnidocPlugin.autoImport.JavaUnidoc
 import sbtunidoc.ScalaUnidocPlugin.autoImport.ScalaUnidoc
-import sbtunidoc.GenJavadocPlugin.autoImport.{ unidocGenjavadocVersion, Genjavadoc }
+import sbtunidoc.GenJavadocPlugin.autoImport.unidocGenjavadocVersion
 import Common.isJdk8
 
 object Doc {

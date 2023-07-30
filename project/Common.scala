@@ -11,8 +11,6 @@
  * Copyright (C) 2017-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.pekko
-
 import sbt._
 import Keys._
 import com.lightbend.paradox.projectinfo.ParadoxProjectInfoPluginKeys._
