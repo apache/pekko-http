@@ -545,8 +545,8 @@ private[client] object NewHostConnectionPool {
                 slot.debug("Connection failed")
                 slot.onConnectionFailed(ex)
               }
-            // otherwise, rely on connection.onComplete to fail below
-            // (connection error is sent through matValue future and through the stream)
+              // otherwise, rely on connection.onComplete to fail below
+              // (connection error is sent through matValue future and through the stream)
             }
 
           def onPull(): Unit = () // emitRequests makes sure not to push too early

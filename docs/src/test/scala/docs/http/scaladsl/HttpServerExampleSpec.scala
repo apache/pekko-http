@@ -194,8 +194,8 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
         println("Accepted new connection from " + connection.remoteAddress)
 
         connection.handleWithSyncHandler(requestHandler)
-      // this is equivalent to
-      // connection handleWith { Flow[HttpRequest] map requestHandler }
+        // this is equivalent to
+        // connection handleWith { Flow[HttpRequest] map requestHandler }
       }).run()
     // #full-server-example
   }
