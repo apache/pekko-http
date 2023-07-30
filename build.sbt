@@ -7,12 +7,10 @@
  * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
+import ValidatePullRequest._
 import net.bzzt.reproduciblebuilds.ReproducibleBuildsPlugin.reproducibleBuildsCheckResolver
-import org.apache.pekko
-import pekko._
-import pekko.ValidatePullRequest._
 import PekkoDependency._
-import Dependencies.{ h2specArtifactExtension, h2specExe, h2specName }
+import Dependencies.{ h2specExe, h2specName }
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 import java.nio.file.Files
 import java.nio.file.attribute.{ PosixFileAttributeView, PosixFilePermission }
@@ -156,7 +154,7 @@ lazy val httpCore = project("http-core")
   .enablePlugins(BootstrapGenjavadoc)
   .enablePlugins(ReproducibleBuildsPlugin)
   .enablePlugins(Pre213Preprocessor).settings(
-    pekko.http.sbt.Pre213Preprocessor.pre213Files := Seq(
+    Pre213Preprocessor.pre213Files := Seq(
       "headers.scala", "HttpMessage.scala", "LanguageRange.scala", "CacheDirective.scala", "LinkValue.scala"))
   .disablePlugins(ScalafixPlugin)
 
@@ -170,7 +168,7 @@ lazy val http = project("http")
     Compile / scalacOptions += "-language:_")
   .settings(scalaMacroSupport)
   .enablePlugins(Pre213Preprocessor).settings(
-    pekko.http.sbt.Pre213Preprocessor.pre213Files := Seq(
+    Pre213Preprocessor.pre213Files := Seq(
       "scaladsl/server/directives/FormFieldDirectives.scala", "scaladsl/server/directives/RespondWithDirectives.scala"))
   .enablePlugins(BootstrapGenjavadoc, BoilerplatePlugin)
   .enablePlugins(ReproducibleBuildsPlugin)

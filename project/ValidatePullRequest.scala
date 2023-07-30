@@ -11,11 +11,9 @@
  * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.pekko
-
 import java.io._
 
-import org.apache.pekko.MimaWithPrValidation.{ MimaResult, NoErrors, Problems }
+import MimaWithPrValidation.{ MimaResult, NoErrors, Problems }
 import net.virtualvoid.sbt.graph.ModuleGraph
 import net.virtualvoid.sbt.graph.backend.SbtUpdateReport
 import org.kohsuke.github.GHIssueComment

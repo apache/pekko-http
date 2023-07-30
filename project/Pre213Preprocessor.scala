@@ -7,8 +7,6 @@
  * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
-package org.apache.pekko.http.sbt
-
 import sbt._
 import Keys._
 

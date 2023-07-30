@@ -11,10 +11,8 @@
  * Copyright (C) 2016-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.pekko
-
 import scala.language.postfixOps
-import sbt.{ Def, _ }
+import sbt._
 import Keys._
 import org.mdedetrich.apache.sonatype.ApacheSonatypePlugin
 import sbtdynver.DynVerPlugin
