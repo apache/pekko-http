@@ -19,8 +19,6 @@ have trouble achieving something using a high-level API, there's a good chance
 that you can get it done with a low-level API, which offers more flexibility but
 might require you to write more application code.
 
-Learn more at [pekko.apache.org](https://pekko.apache.org/docs/pekko-http/current/).
-
 ## Documentation
 
 The documentation is available at
