@@ -44,21 +44,20 @@ public class CorsServerExample {
     final CorsServerExample app = new CorsServerExample();
 
     final CompletionStage<ServerBinding> futureBinding =
-            Http.get(system).newServerAt("localhost", 8080).bind(app.createRoute());
+        Http.get(system).newServerAt("localhost", 8080).bind(app.createRoute());
 
-    futureBinding.whenComplete((binding, exception) -> {
-      if (binding != null) {
-        system.log().info("Server online at http://localhost:8080/\nPress RETURN to stop...");
-      } else {
-        system.log().error("Failed to bind HTTP endpoint, terminating system", exception);
-        system.terminate();
-      }
-    });
+    futureBinding.whenComplete(
+        (binding, exception) -> {
+          if (binding != null) {
+            system.log().info("Server online at http://localhost:8080/\nPress RETURN to stop...");
+          } else {
+            system.log().error("Failed to bind HTTP endpoint, terminating system", exception);
+            system.terminate();
+          }
+        });
 
     System.in.read(); // let it run until user presses return
-    futureBinding
-            .thenCompose(ServerBinding::unbind)
-            .thenAccept(unbound -> system.terminate());
+    futureBinding.thenCompose(ServerBinding::unbind).thenAccept(unbound -> system.terminate());
   }
 
   private Route createRoute() {
