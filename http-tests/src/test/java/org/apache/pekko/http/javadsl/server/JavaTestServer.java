@@ -48,9 +48,8 @@ public class JavaTestServer {
                     timeout,
                     this::mkTimeoutResponse,
                     () -> {
-                      silentSleep(
-                          5000); // too long, but note that this will NOT activate
-                                 // withRequestTimeout, see below
+                      silentSleep(5000); // too long, but note that this will NOT activate
+                      // withRequestTimeout, see below
                       return complete(index());
                     }));
 

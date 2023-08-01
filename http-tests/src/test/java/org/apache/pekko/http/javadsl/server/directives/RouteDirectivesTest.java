@@ -51,7 +51,7 @@ public class RouteDirectivesTest extends JUnitRouteTest {
                                 mat ->
                                     Directives.<ByteString>onSuccess(
                                         entity // fails to infer type parameter with some older
-                                               // oracle JDK versions
+                                            // oracle JDK versions
                                             .withoutSizeLimit()
                                             .getDataBytes()
                                             .runWith(Sink.<ByteString>head(), mat),
@@ -74,7 +74,7 @@ public class RouteDirectivesTest extends JUnitRouteTest {
                             mat ->
                                 Directives.<ByteString>onSuccess(
                                     entity // fails to infer type parameter with some older oracle
-                                           // JDK versions
+                                        // JDK versions
                                         .withSizeLimit(5)
                                         .getDataBytes()
                                         .runWith(Sink.head(), mat),
