@@ -31,8 +31,8 @@ commands := commands.value.filterNot { command =>
 ThisBuild / reproducibleBuildsCheckResolver :=
   "Apache Pekko Staging".at("https://repository.apache.org/content/groups/staging/")
 
-addCommandAlias("verifyCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; headerCheckAll; javafmtCheckAll")
-addCommandAlias("applyCodeStyle", "headerCreateAll; scalafmtAll; scalafmtSbt; javafmtAll")
+addCommandAlias("verifyCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; +headerCheckAll; javafmtCheckAll")
+addCommandAlias("applyCodeStyle", "+headerCreateAll; scalafmtAll; scalafmtSbt; javafmtAll")
 
 inThisBuild(Def.settings(
   apiURL := {
