@@ -512,11 +512,8 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
         info.summary shouldEqual "HTTP message had declared Content-Length 8 but entity data stream amounts to 2 bytes less"
         netInSub.sendComplete()
         responsesSub.request(1)
-        responses.expectError().getMessage should (
-          equal("HTTP message had declared Content-Length 8 but entity data stream amounts to 2 bytes less").or( // with Akka 2.6
-            equal(
-              "The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests")) // with Akka 2.5
-        )
+        responses.expectError().getMessage should equal(
+          "HTTP message had declared Content-Length 8 but entity data stream amounts to 2 bytes less")
       }
 
       "catch the request entity stream being longer than the Content-Length" in new TestSetup {
@@ -543,11 +540,8 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
         info.summary shouldEqual "HTTP message had declared Content-Length 8 but entity data stream amounts to more bytes"
         netInSub.sendComplete()
         responsesSub.request(1)
-        responses.expectError().getMessage should (
-          equal("HTTP message had declared Content-Length 8 but entity data stream amounts to more bytes").or( // with Akka 2.6
-            equal(
-              "The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests")) // with Akka 2.5
-        )
+        responses.expectError().getMessage should equal(
+          "HTTP message had declared Content-Length 8 but entity data stream amounts to more bytes")
       }
 
       "catch illegal response starts" in new TestSetup {
