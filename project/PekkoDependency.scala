@@ -99,7 +99,7 @@ object PekkoDependency {
     import scala.concurrent.Await
     import scala.concurrent.duration._
 
-    val snapshotVersionR = """href=".*/((\d+)\.(\d+)\.(\d+)(-(M|RC)(\d+))?\+(\d+)-[0-9a-f]+-SNAPSHOT)/""""".r
+    val snapshotVersionR = """href=".*/((\d+)\.(\d+)\.(\d+)(-(M|RC)(\d+))?\+(\d+)-[0-9a-f]+-SNAPSHOT)/"""".r
 
     // pekko-cluster-sharding-typed_2.13 seems to be the last nightly published by `pekko-publish-nightly` so if that's there then it's likely the rest also made it
     val body = Await.result(http.run(url(
@@ -109,11 +109,12 @@ object PekkoDependency {
     val allVersions =
       snapshotVersionR.findAllMatchIn(body)
         .map {
-          case Groups(full, ep, maj, min, offset) =>
+          case Groups(full, ep, maj, min, _, _, tagNumber, offset) =>
             (
               ep.toInt,
               maj.toInt,
               min.toInt,
+              Option(tagNumber).map(_.toInt),
               offset.toInt) -> full
         }
         .filter(_._2.startsWith(prefix))
