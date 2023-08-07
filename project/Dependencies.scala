@@ -24,7 +24,7 @@ object Dependencies {
   val h2specVersion = "2.6.0"
   val h2specName = s"h2spec_${DependencyHelpers.osName}_amd64"
   val h2specExe = "h2spec" + DependencyHelpers.exeIfWindows
-  val h2specArtifactExtension = if (h2specExe == "exe") "zip" else "tar.gz"
+  val h2specArtifactExtension = if (h2specExe.endsWith("exe")) "zip" else "tar.gz"
   val h2specUrl =
     s"https://github.com/summerwind/h2spec/releases/download/v$h2specVersion/$h2specName.$h2specArtifactExtension"
 
