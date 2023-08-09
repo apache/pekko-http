@@ -78,7 +78,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
 
     "not accept entities bigger than configured with pekko.http.parsing.max-content-length" in {
       Http().singleRequest(Post(s"http:/${binding.localAddress}/noDirective", entityOfSize(maxContentLength + 1)))
-        .futureValue.status shouldEqual StatusCodes.PayloadTooLarge
+        .futureValue.status shouldEqual StatusCodes.ContentTooLarge
     }
   }
 
@@ -116,7 +116,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
       data.size should be > decodeMaxSize
 
       Http().singleRequest(request)
-        .futureValue.status shouldEqual StatusCodes.PayloadTooLarge
+        .futureValue.status shouldEqual StatusCodes.ContentTooLarge
     }
   }
 
@@ -139,7 +139,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
       val request =
         Post(s"http:/${binding.localAddress}/noDirective", "x").withHeaders(`Content-Encoding`(HttpEncoding("custom")))
       val response = Http().singleRequest(request).futureValue
-      response.status shouldEqual StatusCodes.PayloadTooLarge
+      response.status shouldEqual StatusCodes.ContentTooLarge
     }
   }
 
@@ -162,7 +162,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
       val request =
         Post(s"http:/${binding.localAddress}/noDirective", "x").withHeaders(`Content-Encoding`(HttpEncoding("custom")))
       val response = Http().singleRequest(request).futureValue
-      response.status shouldEqual StatusCodes.PayloadTooLarge
+      response.status shouldEqual StatusCodes.ContentTooLarge
     }
   }
 

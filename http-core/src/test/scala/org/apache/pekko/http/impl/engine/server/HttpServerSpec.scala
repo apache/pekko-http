@@ -1394,7 +1394,7 @@ class HttpServerSpec extends PekkoSpec(
                 responses.sendError(error.asInstanceOf[Exception])
 
                 expectResponseWithWipedDate(
-                  s"""HTTP/1.1 413 Payload Too Large
+                  s"""HTTP/1.1 413 Content Too Large
                       |Server: pekko-http/test
                       |Date: XXXX
                       |Connection: close
@@ -1418,7 +1418,7 @@ class HttpServerSpec extends PekkoSpec(
                 responses.sendError(error.asInstanceOf[Exception])
 
                 expectResponseWithWipedDate(
-                  s"""HTTP/1.1 413 Payload Too Large
+                  s"""HTTP/1.1 413 Content Too Large
                     |Server: pekko-http/test
                     |Date: XXXX
                     |Connection: close

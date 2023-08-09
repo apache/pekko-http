@@ -546,7 +546,7 @@ private[http] object HttpServerBluePrint {
                   }
                   val info =
                     ErrorInfo(summary, "Consider increasing the value of pekko.http.server.parsing.max-content-length")
-                  finishWithIllegalRequestError(StatusCodes.PayloadTooLarge, info)
+                  finishWithIllegalRequestError(StatusCodes.ContentTooLarge, info)
 
                 case IllegalUriException(errorInfo) =>
                   finishWithIllegalRequestError(StatusCodes.BadRequest, errorInfo)
