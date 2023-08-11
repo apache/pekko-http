@@ -97,7 +97,7 @@ public class RouteDirectivesTest extends JUnitRouteTest {
 
     route
         .run(HttpRequest.create("/limit-5").withEntity("1234567890"))
-        .assertStatusCode(StatusCodes.PAYLOAD_TOO_LARGE)
+        .assertStatusCode(StatusCodes.CONTENT_TOO_LARGE)
         .assertEntity(
             "EntityStreamSizeException: incoming entity size (10) exceeded size limit (5 bytes)! "
                 + "This may have been a parser limit (set via `pekko.http.[server|client].parsing.max-content-length`), "

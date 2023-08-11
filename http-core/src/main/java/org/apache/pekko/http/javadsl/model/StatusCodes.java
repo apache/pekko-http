@@ -97,10 +97,19 @@ public final class StatusCodes {
       org.apache.pekko.http.scaladsl.model.StatusCodes.LengthRequired();
   public static final StatusCode PRECONDITION_FAILED =
       org.apache.pekko.http.scaladsl.model.StatusCodes.PreconditionFailed();
+
+  public static final StatusCode CONTENT_TOO_LARGE =
+      org.apache.pekko.http.scaladsl.model.StatusCodes.ContentTooLarge();
+
+  /** @deprecated deprecated in favor of CONTENT_TOO_LARGE since 1.1.0 */
+  @Deprecated
   public static final StatusCode PAYLOAD_TOO_LARGE =
       org.apache.pekko.http.scaladsl.model.StatusCodes.PayloadTooLarge();
 
-  /** @deprecated deprecated in favor of PAYLOAD_TOO_LARGE */
+  /**
+   * @deprecated deprecated in favor of PAYLOAD_TOO_LARGE, which was later deprecated in favor of
+   *     CONTENT_TOO_LARGE (please switch to CONTENT_TOO_LARGE)
+   */
   @Deprecated
   public static final StatusCode REQUEST_ENTITY_TOO_LARGE =
       org.apache.pekko.http.scaladsl.model.StatusCodes.RequestEntityTooLarge();
@@ -131,8 +140,14 @@ public final class StatusCodes {
       org.apache.pekko.http.scaladsl.model.StatusCodes.EnhanceYourCalm();
   public static final StatusCode MISDIRECTED_REQUEST =
       org.apache.pekko.http.scaladsl.model.StatusCodes.MisdirectedRequest();
+  public static final StatusCode UNPROCESSABLE_CONTENT =
+      org.apache.pekko.http.scaladsl.model.StatusCodes.UnprocessableContent();
+
+  /** @deprecated deprecated in favor of UNPROCESSABLE_CONTENT since 1.1.0 */
+  @Deprecated
   public static final StatusCode UNPROCESSABLE_ENTITY =
       org.apache.pekko.http.scaladsl.model.StatusCodes.UnprocessableEntity();
+
   public static final StatusCode LOCKED = org.apache.pekko.http.scaladsl.model.StatusCodes.Locked();
   public static final StatusCode FAILED_DEPENDENCY =
       org.apache.pekko.http.scaladsl.model.StatusCodes.FailedDependency();
