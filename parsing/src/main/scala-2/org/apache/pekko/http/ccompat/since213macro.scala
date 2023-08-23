@@ -26,7 +26,7 @@ object since213macro {
       else
         c.Expr[Nothing](EmptyTree)
     case _ =>
-      throw new IllegalArgumentException("Please annotate single expressions")
+      c.abort(c.enclosingPosition, "Please annotate single expressions")
   }
 }
 class since213 extends StaticAnnotation {
