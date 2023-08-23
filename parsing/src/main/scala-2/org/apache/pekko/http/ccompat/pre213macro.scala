@@ -26,7 +26,7 @@ object pre213macro {
       else
         method
     case _ =>
-      throw new IllegalArgumentException("Please annotate single expressions")
+      c.abort(c.enclosingPosition, "Please annotate single expressions")
   }
 }
 class pre213 extends StaticAnnotation {
