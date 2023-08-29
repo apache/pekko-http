@@ -24,11 +24,9 @@ object MiMa extends AutoPlugin {
   override def requires = MimaPlugin
   override def trigger = allRequirements
 
-  // lazy val latestVersion = post213Versions.max(versionOrdering)
-
   override val projectSettings = Seq(
     mimaPreviousArtifacts := {
-      val versions = Set.empty
+      val versions = Set("1.0.0")
 
       versions.collect { case version =>
         organization.value %% name.value % version
