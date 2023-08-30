@@ -19,7 +19,6 @@ import pekko.util.ByteString
 import pekko.stream.scaladsl.{ Flow, Source }
 import Protocol.Opcode
 import pekko.annotation.InternalApi
-import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.model.ws._
 
 /**
@@ -35,20 +34,10 @@ private[http] object MessageToFrameRenderer {
       Source.single(FrameEvent.fullFrame(opcode, None, data, fin = true))
 
     def streamedFrames[M](opcode: Opcode, data: Source[ByteString, M]): Source[FrameStart, Any] =
-      data.via(StreamUtils.statefulMap(() => {
-        var isFirst = true
-
-        { data =>
-          val frameOpcode =
-            if (isFirst) {
-              isFirst = false
-              opcode
-            } else Opcode.Continuation
-
-          FrameEvent.fullFrame(frameOpcode, None, data, fin = false)
-        }
-      })) ++
-      Source.single(FrameEvent.emptyLastContinuationFrame)
+      data.statefulMap(() => true)((isFirst, data) => {
+          val frameOpcode = if (isFirst) opcode else Opcode.Continuation
+          (false, FrameEvent.fullFrame(frameOpcode, None, data, fin = false))
+        }, _ => None) ++ Source.single(FrameEvent.emptyLastContinuationFrame)
 
     Flow[Message]
       .flatMapConcat {

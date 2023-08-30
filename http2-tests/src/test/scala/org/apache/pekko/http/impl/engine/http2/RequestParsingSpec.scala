@@ -66,7 +66,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           .map(parseRequest)
           .runWith(Sink.head)
           .futureValue
-      catch { case ex => throw ex.getCause } // unpack futureValue exceptions
+      catch { case ex: Throwable => throw ex.getCause } // unpack futureValue exceptions
     }
 
     def shouldThrowMalformedRequest[T](block: => T): Exception = {
