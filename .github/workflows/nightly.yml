@@ -18,9 +18,10 @@ jobs:
         PEKKO_VERSION: [default, main]
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
 
       - name: Set up JDK ${{ matrix.JDK }}
         uses: actions/setup-java@v3

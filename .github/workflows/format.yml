@@ -13,9 +13,10 @@ jobs:
     if: github.repository == 'apache/incubator-pekko-http'
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: 0
           persist-credentials: false
 
       - name: Check project is formatted
