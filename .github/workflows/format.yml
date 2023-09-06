@@ -16,7 +16,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          fetch-tags: 0
           persist-credentials: false
 
       - name: Check project is formatted
