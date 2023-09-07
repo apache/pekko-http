@@ -12,7 +12,7 @@ resolvers += Classpaths.typesafeReleases
 resolvers ++= Resolver.sonatypeOssRepos("releases") // to more quickly obtain paradox right after release
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.4.0")
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.0")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.3")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
 addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.1.1")
 addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.5.0")
