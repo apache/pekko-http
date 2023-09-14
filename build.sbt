@@ -28,8 +28,7 @@ commands := commands.value.filterNot { command =>
   }
 }
 
-ThisBuild / reproducibleBuildsCheckResolver :=
-  "Apache Pekko Staging".at("https://repository.apache.org/content/groups/staging/")
+ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
 
 addCommandAlias("verifyCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; +headerCheckAll; javafmtCheckAll")
 addCommandAlias("applyCodeStyle", "+headerCreateAll; scalafmtAll; scalafmtSbt; javafmtAll")
