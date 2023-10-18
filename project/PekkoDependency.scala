@@ -56,7 +56,7 @@ object PekkoDependency {
   val default = pekkoDependency(defaultVersion = minimumExpectedPekkoVersion)
   def docs = default
 
-  lazy val snapshot10x = Artifact(determineLatestSnapshot("1.0", false), true)
+  lazy val snapshot10x = Artifact(determineLatestSnapshot("1.0"), true)
   lazy val mainSnapshot = Artifact(determineLatestSnapshot(), true)
 
   val pekkoVersion: String = default match {
@@ -95,46 +95,33 @@ object PekkoDependency {
       }
   }
 
-  private def determineLatestSnapshot(prefix: String = "", allowRCVersions: Boolean = true): String = {
+  private def determineLatestSnapshot(prefix: String = ""): String = {
     import sbt.librarymanagement.Http.http
     import gigahorse.GigahorseSupport.url
     import scala.concurrent.Await
     import scala.concurrent.duration._
 
-    lazy val snapshotRCVersionR = """href=".*/((\d+)\.(\d+)\.(\d+)(-(M|RC)(\d+))?\+(\d+)-[0-9a-f]+-SNAPSHOT)/"""".r
-    lazy val snapshotVersionR = """href=".*/((\d+)\.(\d+)\.(\d+)\+(\d+)-[0-9a-f]+-SNAPSHOT)/"""".r
+    val snapshotVersionR = """href=".*/((\d+)\.(\d+)\.(\d+)(-(M|RC)(\d+))?\+(\d+)-[0-9a-f]+-SNAPSHOT)/"""".r
 
     // pekko-cluster-sharding-typed_2.13 seems to be the last nightly published by `pekko-publish-nightly` so if that's there then it's likely the rest also made it
     val body = Await.result(http.run(url(
         s"${Resolver.ApacheMavenSnapshotsRepo.root}org/apache/pekko/pekko-cluster-sharding-typed_2.13/")),
       10.seconds).bodyAsString
 
-    val allVersions = if (allowRCVersions) {
-      snapshotRCVersionR.findAllMatchIn(body)
+    val allVersions =
+      snapshotVersionR.findAllMatchIn(body)
         .map {
           case Groups(full, ep, maj, min, _, _, tagNumber, offset) =>
             (
               ep.toInt,
               maj.toInt,
               min.toInt,
-              Option(tagNumber).map(_.toInt),
+              Option(tagNumber).map(_.toInt).getOrElse(Integer.MAX_VALUE),
               offset.toInt) -> full
         }
-    } else {
-      snapshotVersionR.findAllMatchIn(body)
-        .map {
-          case Groups(full, ep, maj, min, offset) =>
-            (
-              ep.toInt,
-              maj.toInt,
-              min.toInt,
-              None,
-              offset.toInt) -> full
-        }
-    }
-    allVersions
       .filter(_._2.startsWith(prefix))
       .toVector.sortBy(_._1)
-      .last._2
+
+    allVersions.last._2
   }
 }
