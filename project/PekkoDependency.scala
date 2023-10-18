@@ -119,8 +119,8 @@ object PekkoDependency {
               Option(tagNumber).map(_.toInt).getOrElse(Integer.MAX_VALUE),
               offset.toInt) -> full
         }
-      .filter(_._2.startsWith(prefix))
-      .toVector.sortBy(_._1)
+        .filter(_._2.startsWith(prefix))
+        .toVector.sortBy(_._1)
 
     allVersions.last._2
   }
