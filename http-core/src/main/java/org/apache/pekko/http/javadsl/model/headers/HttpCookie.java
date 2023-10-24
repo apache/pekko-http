@@ -75,8 +75,8 @@ public abstract class HttpCookie {
   }
 
   /**
-   * @deprecated Since Akka HTTP 10.2.0. Use {@link #create(String, String, Optional, OptionalLong, Optional,
-   *     Optional, boolean, boolean, Optional, Optional)} instead.
+   * @deprecated Since Akka HTTP 10.2.0. Use {@link #create(String, String, Optional, OptionalLong,
+   *     Optional, Optional, boolean, boolean, Optional, Optional)} instead.
    */
   @SuppressWarnings("unchecked")
   public static HttpCookie create(
