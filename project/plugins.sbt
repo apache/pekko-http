@@ -11,10 +11,6 @@ resolvers += Classpaths.sbtPluginReleases
 resolvers += Classpaths.typesafeReleases
 resolvers ++= Resolver.sonatypeOssRepos("releases") // to more quickly obtain paradox right after release
 
-// need this to resolve https://jcenter.bintray.com/org/jenkins-ci/jenkins/1.26/
-// which is used by plugin "org.kohsuke" % "github-api" % "1.68"
-resolvers += Resolver.jcenterRepo
-
 addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.4.0")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
