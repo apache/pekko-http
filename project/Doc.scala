@@ -155,7 +155,7 @@ object UnidocRoot extends AutoPlugin {
       if (isJdk8) Seq("-Xdoclint:none")
       else Seq("-Xdoclint:none", "--ignore-source-errors")),
     // genjavadoc needs to generate synthetic methods since the java code uses them
-    // fails since 10.0.11 disabled to get the doc gen to pass, see #1584
+    // fails since Akka HTTP 10.0.11 disabled to get the doc gen to pass, see #1584
     // scalacOptions += "-P:genjavadoc:suppressSynthetic=false",
     // FIXME: see https://github.com/akka/akka-http/issues/230
     JavaUnidoc / unidoc / sources ~= (_.filterNot(
