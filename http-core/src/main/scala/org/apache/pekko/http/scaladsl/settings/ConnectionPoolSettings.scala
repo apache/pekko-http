@@ -99,7 +99,7 @@ abstract class ConnectionPoolSettings extends js.ConnectionPoolSettings { self: 
     self.copyDeep(_.withResponseEntitySubscriptionTimeout(newValue), responseEntitySubscriptionTimeout = newValue)
 
   /**
-   * Since 10.1.0, the transport is configured in [[ClientConnectionSettings]]. This method is a shortcut for
+   * Since Akka HTTP 10.1.0, the transport is configured in [[ClientConnectionSettings]]. This method is a shortcut for
    * `withUpdatedConnectionSettings(_.withTransport(newTransport))`.
    */
   def withTransport(newValue: ClientTransport): ConnectionPoolSettings =
