@@ -44,7 +44,7 @@ object PekkoDependency {
       case None =>
         Option(System.getProperty("pekko.http.build.pekko.version")) match {
           case Some("main")           => mainSnapshot
-          case Some("snapshot-1.0.x") => snapshot10x
+          case Some("1.0.x")          => snapshot10x
           case Some("default") | None => Artifact(defaultVersion)
           case Some(other)            => Artifact(other, true)
         }
