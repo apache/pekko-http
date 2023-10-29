@@ -25,6 +25,7 @@ import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.stream.testkit.Utils.assertAllStagesStopped
 import pekko.testkit.TestKit
 import com.typesafe.config.ConfigFactory
+import org.apache.pekko.stream.ActorMaterializer
 import org.scalatest.BeforeAndAfterAll
 
 import scala.concurrent.Await
@@ -47,6 +48,7 @@ abstract class DontLeakActorsOnFailingConnectionSpecs(poolImplementation: String
       http.host-connection-pool.base-connection-backoff = 0 ms
     }""").withFallback(ConfigFactory.load())
   implicit val system: ActorSystem = ActorSystem("DontLeakActorsOnFailingConnectionSpecs-" + poolImplementation, config)
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   val log = Logging(system, getClass)(LogSource.fromClass)
 

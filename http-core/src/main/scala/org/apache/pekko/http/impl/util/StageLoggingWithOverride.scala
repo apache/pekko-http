@@ -20,7 +20,7 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.stream.stage.GraphStageLogic
 import pekko.event.{ LogSource, LoggingAdapter, NoLogging }
-import pekko.stream.{ ActorMaterializer, Materializer }
+import pekko.stream.ActorMaterializer
 
 // TODO Try to reconcile with what Pekko provides in StageLogging.
 // We thought this could be removed when https://github.com/akka/akka/issues/18793 had been implemented
