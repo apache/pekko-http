@@ -44,6 +44,7 @@ object PekkoDependency {
       case None =>
         Option(System.getProperty("pekko.http.build.pekko.version")) match {
           case Some("main")           => mainSnapshot
+          case Some("1.0.x")          => snapshot10x
           case Some("default") | None => Artifact(defaultVersion)
           case Some(other)            => Artifact(other, true)
         }
@@ -55,6 +56,7 @@ object PekkoDependency {
   val default = pekkoDependency(defaultVersion = minimumExpectedPekkoVersion)
   def docs = default
 
+  lazy val snapshot10x = Artifact(determineLatestSnapshot("1.0"), true)
   lazy val mainSnapshot = Artifact(determineLatestSnapshot(), true)
 
   val pekkoVersion: String = default match {
@@ -106,6 +108,8 @@ object PekkoDependency {
         s"${Resolver.ApacheMavenSnapshotsRepo.root}org/apache/pekko/pekko-cluster-sharding-typed_2.13/")),
       10.seconds).bodyAsString
 
+    // we use tagNumber set as Integer.MAX_VALUE when there is no tagNumber
+    // this ensures that RC and Milistone versions are treated as older than non-RC/non-milestone versions
     val allVersions =
       snapshotVersionR.findAllMatchIn(body)
         .map {
@@ -114,11 +118,12 @@ object PekkoDependency {
               ep.toInt,
               maj.toInt,
               min.toInt,
-              Option(tagNumber).map(_.toInt),
+              Option(tagNumber).map(_.toInt).getOrElse(Integer.MAX_VALUE),
               offset.toInt) -> full
         }
         .filter(_._2.startsWith(prefix))
         .toVector.sortBy(_._1)
+
     allVersions.last._2
   }
 }
