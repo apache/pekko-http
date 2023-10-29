@@ -23,7 +23,6 @@ import pekko.http.scaladsl.model.HttpEntity.Chunk
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncoding, HttpEncodings }
 import pekko.http.scaladsl.server.Directives._
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.{ Flow, Source }
 import pekko.testkit.TestKit
 import pekko.util.ByteString
@@ -55,7 +54,6 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
     """)
   implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
   import system.dispatcher
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
   val random = new scala.util.Random(42)
 
   implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = Span(2, Seconds), interval = Span(5, Millis))
