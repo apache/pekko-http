@@ -53,7 +53,7 @@ class HttpEntityBenchmark extends CommonBenchmark {
            pekko.actor.default-dispatcher.fork-join-executor.parallelism-max = 1
         """)
         .withFallback(ConfigFactory.load())
-    system = ActorSystem("AkkaHttpBenchmarkSystem", config)
+    system = ActorSystem("PekkoHttpBenchmarkSystem", config)
     mat = ActorMaterializer()
 
     entity = entityType match {

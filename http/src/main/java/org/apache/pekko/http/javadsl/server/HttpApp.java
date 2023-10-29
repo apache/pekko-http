@@ -16,7 +16,6 @@ package org.apache.pekko.http.javadsl.server;
 import org.apache.pekko.Done;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.event.Logging;
-import org.apache.pekko.http.javadsl.ConnectHttp;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
@@ -33,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * DEPRECATED, consider https://github.com/theiterators/pekko-http-quickstart-java.g8 instead
  *
- * <p>Bootstrap trait for Http Server. It helps booting up an pekko-http server by only defining the
+ * <p>Bootstrap trait for Http Server. It helps booting up a pekko-http server by only defining the
  * desired routes. It offers additional hooks to modify the default behavior.
  *
  * @deprecated HttpApp this doesn't reflect the latest APIs, since Akka HTTP 10.2.0
