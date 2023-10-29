@@ -36,7 +36,7 @@ class HttpEntityBenchmark extends CommonBenchmark {
   @Benchmark
   def discardBytes(): Unit = {
     val latch = new CountDownLatch(1)
-    entity.discardBytes(mat)
+    entity.discardBytes(system)
       .future
       .onComplete(_ => latch.countDown())(ExecutionContexts.parasitic)
     latch.await()
