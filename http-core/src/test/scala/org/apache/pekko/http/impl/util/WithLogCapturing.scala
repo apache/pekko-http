@@ -35,6 +35,12 @@ trait WithLogCapturing extends SuiteMixin { this: TestSuite =>
   protected def failOnSevereMessages: Boolean = false
 
   /**
+   * We expect a severe message but the message should contain this text. If there are any other severe messages,
+   * the test will fail.
+   */
+  protected val expectSevereLogsOnlyToMatch: Option[String] = None
+
+  /**
    * Can be overridden to adapt which events should be considered as severe if `failOnSevereMessages` is
    * enabled.
    */
@@ -86,6 +92,19 @@ trait WithLogCapturing extends SuiteMixin { this: TestSuite =>
       Failed(new AssertionError(
         s"No severe log messages should be emitted during test run but got [${stats(
             Logging.WarningLevel)}] warnings and [${stats(Logging.ErrorLevel)}] errors (see marked lines above)"))
+    } else if (expectSevereLogsOnlyToMatch.nonEmpty) {
+      val severeEvents = events.filter(isSevere(_))
+      val matchingEvents = severeEvents.filter(_.message.toString.contains(expectSevereLogsOnlyToMatch.get))
+      if (severeEvents.isEmpty || matchingEvents != severeEvents) {
+        val stats = events.groupBy(_.level).mapValues(_.size).toMap.withDefaultValue(0)
+        flushLog()
+
+        Failed(new AssertionError(
+          s"Expected an error during test run but got unexpected results - got [${
+              stats(
+                Logging.WarningLevel)
+            }] warnings and [${stats(Logging.ErrorLevel)}] errors (see marked lines above)"))
+      } else res
     } else res
 
   }

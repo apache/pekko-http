@@ -51,6 +51,14 @@ trait Http2ServerSettings {
 
   def getPingTimeout: Duration = Duration.ofMillis(pingTimeout.toMillis)
   def withPingTimeout(timeout: Duration): Http2ServerSettings = withPingTimeout(timeout.toMillis.millis)
+
+  def getResetsThrottleCost(): Int = resetFrameThrottleCost
+  def getResetsThrottleBurst(): Int = resetFrameThrottleBurst
+
+  def getResetsThrottleInterval: Duration = Duration.ofMillis(resetFrameThrottleInterval.toMillis)
+
+  def withResetsThrottleInterval(interval: Duration): Http2ServerSettings =
+    withResetsThrottleInterval(interval.toMillis.millis)
 }
 object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
   def create(config: Config): Http2ServerSettings = scaladsl.settings.Http2ServerSettings(config)
