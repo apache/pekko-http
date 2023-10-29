@@ -663,7 +663,7 @@ object HttpEntity {
         private var bytesLeft = Long.MaxValue
 
         override def preStart(): Unit = {
-          _attributes.getFirst[SizeLimit] match {
+          _attributes.get[SizeLimit] match {
             case Some(limit: SizeLimit) if limit.isDisabled =>
             // "no limit"
             case Some(SizeLimit(bytes, cl @ Some(contentLength))) =>
