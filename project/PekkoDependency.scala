@@ -108,6 +108,8 @@ object PekkoDependency {
         s"${Resolver.ApacheMavenSnapshotsRepo.root}org/apache/pekko/pekko-cluster-sharding-typed_2.13/")),
       10.seconds).bodyAsString
 
+    // we use tagNumber set as Integer.MAX_VALUE when there is no tagNumber
+    // this ensures that RC and Milistone versions are treated as older than non-RC/non-milestone versions
     val allVersions =
       snapshotVersionR.findAllMatchIn(body)
         .map {
