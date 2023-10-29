@@ -27,7 +27,6 @@ import pekko.http.scaladsl.model.HttpRequest
 import pekko.http.scaladsl.model.HttpResponse
 import pekko.http.scaladsl.model.headers
 import pekko.http.scaladsl.settings.ServerSettings
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.Flow
 import pekko.stream.scaladsl.Sink
 import pekko.stream.scaladsl.Source
@@ -57,7 +56,6 @@ class StreamServerProcessingBenchmark extends CommonBenchmark {
   var httpFlow: Flow[ByteString, ByteString, Any] = _
 
   implicit var system: ActorSystem = _
-  implicit var mat: ActorMaterializer = _
 
   @Benchmark
   def benchRequestProcessing(): Unit = {
@@ -84,7 +82,6 @@ class StreamServerProcessingBenchmark extends CommonBenchmark {
         """)
         .withFallback(ConfigFactory.load())
     system = ActorSystem("PekkoHttpBenchmarkSystem", config)
-    mat = ActorMaterializer()
 
     val bytesPerChunk = totalBytes.toInt / numChunks.toInt
     totalExpectedBytes = numRequestsPerConnection.toInt * bytesPerChunk * numChunks.toInt

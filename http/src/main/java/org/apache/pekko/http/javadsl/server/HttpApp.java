@@ -19,7 +19,6 @@ import org.apache.pekko.event.Logging;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
-import org.apache.pekko.stream.ActorMaterializer;
 import com.typesafe.config.ConfigFactory;
 
 import java.io.IOException;
@@ -102,7 +101,6 @@ public abstract class HttpApp extends AllDirectives {
     final ActorSystem theSystem =
         system.orElseGet(() -> ActorSystem.create(Logging.simpleName(this).replaceAll("\\$", "")));
     systemReference.set(theSystem);
-    final ActorMaterializer materializer = ActorMaterializer.create(theSystem);
 
     CompletionStage<ServerBinding> bindingFuture =
         Http.get(theSystem).newServerAt(host, port).withSettings(settings).bind(routes());

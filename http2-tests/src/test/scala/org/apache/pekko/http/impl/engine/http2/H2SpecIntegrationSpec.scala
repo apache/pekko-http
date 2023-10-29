@@ -19,7 +19,6 @@ import org.apache.pekko
 import pekko.http.impl.util.{ ExampleHttpContexts, WithLogCapturing }
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.server.Directives
-import pekko.stream.{ ActorMaterializer, Materializer }
 import pekko.testkit._
 import pekko.util.ByteString
 import org.scalatest.concurrent.ScalaFutures
@@ -45,7 +44,6 @@ class H2SpecIntegrationSpec extends PekkoFreeSpec(
   """) with Directives with ScalaFutures with WithLogCapturing {
 
   implicit val ec: ExecutionContext = system.dispatcher
-  implicit val mat: Materializer = ActorMaterializer()
 
   override def expectedTestDuration = 5.minutes // because slow jenkins, generally finishes below 1 or 2 minutes
 

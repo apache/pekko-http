@@ -21,7 +21,6 @@ import pekko.http.impl.engine.server.ServerTerminator
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
-import pekko.stream.ActorMaterializer
 import pekko.stream.TLSProtocol.{ SslTlsInbound, SslTlsOutbound }
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Sink, Source }
 import pekko.util.ByteString
@@ -38,7 +37,6 @@ import scala.concurrent.{ Await, ExecutionContext, Future }
 class H2ClientServerBenchmark extends CommonBenchmark with H2RequestResponseBenchmark {
   var httpFlow: Flow[HttpRequest, HttpResponse, Any] = _
   implicit var system: ActorSystem = _
-  implicit var mat: ActorMaterializer = _
 
   val numRequests = 1000
 
@@ -72,7 +70,6 @@ class H2ClientServerBenchmark extends CommonBenchmark with H2RequestResponseBenc
     initRequestResponse()
 
     system = ActorSystem("PekkoHttpBenchmarkSystem", config)
-    mat = ActorMaterializer()
     val settings = implicitly[ServerSettings]
     val log = system.log
     implicit val ec = system.dispatcher

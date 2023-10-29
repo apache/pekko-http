@@ -21,7 +21,6 @@ import pekko.dispatch.ExecutionContexts
 import pekko.http.CommonBenchmark
 import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity }
 import pekko.stream.scaladsl.Source
-import pekko.stream.{ ActorMaterializer, Materializer }
 import pekko.util.ByteString
 import com.typesafe.config.ConfigFactory
 import org.openjdk.jmh.annotations.{ Benchmark, Param, Setup, TearDown }
@@ -31,7 +30,6 @@ class HttpEntityBenchmark extends CommonBenchmark {
   var entityType: String = _
 
   implicit var system: ActorSystem = _
-  implicit var mat: Materializer = _
 
   var entity: HttpEntity = _
 
@@ -54,7 +52,6 @@ class HttpEntityBenchmark extends CommonBenchmark {
         """)
         .withFallback(ConfigFactory.load())
     system = ActorSystem("PekkoHttpBenchmarkSystem", config)
-    mat = ActorMaterializer()
 
     entity = entityType match {
       case "strict" =>

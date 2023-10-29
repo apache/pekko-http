@@ -24,7 +24,6 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.Http
 import pekko.macros.LogHelper
-import pekko.stream.ActorMaterializer
 import pekko.stream.Attributes
 import pekko.stream.FlowShape
 import pekko.stream.Inlet
@@ -69,7 +68,7 @@ private[http] object PoolInterface {
     import poolId.hcps
     import hcps._
     import setup.{ connectionContext, settings }
-    implicit val system = fm.asInstanceOf[ActorMaterializer].system
+    implicit val system = fm.system
     val log: LoggingAdapter = Logging(system, poolId)(PoolLogSource)
 
     log.debug("Creating pool.")

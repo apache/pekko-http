@@ -17,8 +17,6 @@ import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.japi.function.Function;
-import org.apache.pekko.stream.ActorMaterializer;
-import org.apache.pekko.stream.Materializer;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;

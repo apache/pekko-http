@@ -21,7 +21,6 @@ import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
 import pekko.http.scaladsl.server.directives.Credentials
 import com.typesafe.config.{ Config, ConfigFactory }
 import pekko.actor.ActorSystem
-import pekko.stream._
 import pekko.stream.scaladsl._
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.common.EntityStreamingSupport
@@ -40,7 +39,6 @@ object TestServer extends App {
 
   implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
   implicit val ec: ExecutionContext = system.dispatcher
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   import spray.json.DefaultJsonProtocol._
   import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._

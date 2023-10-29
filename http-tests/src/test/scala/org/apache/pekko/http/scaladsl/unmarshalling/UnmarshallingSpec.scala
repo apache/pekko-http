@@ -21,7 +21,6 @@ import org.scalatest.BeforeAndAfterAll
 import pekko.http.scaladsl.testkit.ScalatestUtils
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.model.MediaType.WithFixedCharset
-import pekko.stream.ActorMaterializer
 import pekko.http.scaladsl.model._
 import pekko.testkit._
 import com.typesafe.config.ConfigFactory
@@ -34,7 +33,6 @@ import org.scalatest.matchers.should.Matchers
 
 class UnmarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll with ScalatestUtils {
   implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName)
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   override val testConfig = ConfigFactory.load()
 

@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.ActorSystem
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.{ FileIO, Keep, RunnableGraph, Sink, Source }
 import pekko.util.ByteString
 import org.openjdk.jmh.annotations._
@@ -33,7 +32,6 @@ import scala.concurrent.duration._
 @BenchmarkMode(Array(Mode.AverageTime))
 class LineParserBenchmark {
   implicit val system: ActorSystem = ActorSystem("line-parser-benchmark")
-  implicit val mat: ActorMaterializer = ActorMaterializer()
 
   // @formatter:off
   @Param(Array(

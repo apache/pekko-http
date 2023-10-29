@@ -18,8 +18,6 @@ import org.apache.pekko
 import pekko.Done
 import pekko.http.impl.engine.server.ServerTerminator
 import pekko.http.scaladsl.Http
-import pekko.stream.ActorMaterializer
-import pekko.stream.Materializer
 import pekko.stream.OverflowStrategy
 import pekko.stream.QueueOfferResult.Enqueued
 import pekko.stream.TLSProtocol._
@@ -36,8 +34,6 @@ import org.scalatest.time.{ Milliseconds, Seconds, Span }
 import scala.concurrent.duration.FiniteDuration
 
 class ProtocolSwitchSpec extends PekkoSpec {
-  implicit val mat: Materializer = ActorMaterializer()
-
   override implicit val patience: PatienceConfig =
     PatienceConfig(timeout = Span(2, Seconds), interval = Span(50, Milliseconds))
 

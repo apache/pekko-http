@@ -21,7 +21,6 @@ import pekko.event.{ LogSource, Logging }
 import pekko.http.impl.util.WithLogCapturing
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, Uri }
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.stream.testkit.Utils.assertAllStagesStopped
 import pekko.testkit.TestKit
@@ -48,7 +47,6 @@ abstract class DontLeakActorsOnFailingConnectionSpecs(poolImplementation: String
       http.host-connection-pool.base-connection-backoff = 0 ms
     }""").withFallback(ConfigFactory.load())
   implicit val system: ActorSystem = ActorSystem("DontLeakActorsOnFailingConnectionSpecs-" + poolImplementation, config)
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   val log = Logging(system, getClass)(LogSource.fromClass)
 
