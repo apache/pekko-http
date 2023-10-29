@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         SCALA_VERSION: [2.12, 2.13, 3]
-        JDK: [8, 11, 17, 20]
+        JDK: [8, 11, 17, 21]
         PEKKO_VERSION: ['default', 'main', '1.0.x']
     steps:
       - name: Checkout
