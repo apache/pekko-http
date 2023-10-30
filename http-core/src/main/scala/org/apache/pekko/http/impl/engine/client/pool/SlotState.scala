@@ -241,7 +241,7 @@ private[pool] object SlotState {
       Connecting(requestContext)
 
     override def onConnectionAttemptFailed(ctx: SlotContext, cause: Throwable): SlotState = {
-      // TODO: register failed connection attempt to be able to backoff (see https://github.com/apache/incubator-pekko-http/issues/1391)
+      // TODO: register failed connection attempt to be able to backoff (see https://github.com/akka/akka-http/issues/1391)
       onConnectionFailure(ctx, "connection attempt failed", cause)
     }
     override def onConnectionFailed(ctx: SlotContext, cause: Throwable): SlotState =
