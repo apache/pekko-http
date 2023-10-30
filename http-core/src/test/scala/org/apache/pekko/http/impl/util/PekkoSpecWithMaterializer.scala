@@ -49,9 +49,9 @@ abstract class PekkoSpecWithMaterializer(configOverrides: String)
     }
 }
 object PekkoSpecWithMaterializer {
-  // adapted version of AkkaSpec.getCallerName that also works for `AkkaSpecWithMaterializer`
+  // adapted version of PekkoSpec.getCallerName that also works for `PekkoSpecWithMaterializer`
   def callerName(): String =
     Thread.currentThread.getStackTrace.map(_.getClassName).drop(1)
-      .dropWhile(_.matches("(java.lang.Thread|.*AkkaSpecWithMaterializer.?$|.*StreamSpec.?$)"))
+      .dropWhile(_.matches("(java.lang.Thread|.*PekkoSpecWithMaterializer.?$|.*StreamSpec.?$)"))
       .head.replaceFirst(""".*\.""", "").replaceAll("[^a-zA-Z_0-9]", "_")
 }
