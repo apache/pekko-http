@@ -43,7 +43,7 @@ object PekkoDependency {
         Sources(pekkoSources)
       case None =>
         Option(System.getProperty("pekko.http.build.pekko.version")) match {
-          case Some("main")           => mainSnapshot
+          case Some("main")           => snapshotMain
           case Some("1.0.x")          => snapshot10x
           case Some("default") | None => Artifact(defaultVersion)
           case Some(other)            => Artifact(other, true)
@@ -57,7 +57,7 @@ object PekkoDependency {
   def docs = default
 
   lazy val snapshot10x = Artifact(determineLatestSnapshot("1.0"), true)
-  lazy val mainSnapshot = Artifact(determineLatestSnapshot(), true)
+  lazy val snapshotMain = Artifact(determineLatestSnapshot(), true)
 
   val pekkoVersion: String = default match {
     case Artifact(version, _) => version
