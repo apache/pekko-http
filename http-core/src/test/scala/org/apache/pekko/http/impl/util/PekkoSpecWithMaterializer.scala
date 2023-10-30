@@ -16,7 +16,7 @@ package org.apache.pekko.http.impl.util
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.Http
-import pekko.stream.{ ActorMaterializer, Materializer, SystemMaterializer }
+import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.testkit.PekkoSpec
 import pekko.testkit.EventFilter
 import com.typesafe.config.ConfigFactory

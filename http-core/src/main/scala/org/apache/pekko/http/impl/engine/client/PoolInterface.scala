@@ -24,7 +24,6 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.Http
 import pekko.macros.LogHelper
-import pekko.stream.ActorMaterializer
 import pekko.stream.Attributes
 import pekko.stream.FlowShape
 import pekko.stream.Inlet
