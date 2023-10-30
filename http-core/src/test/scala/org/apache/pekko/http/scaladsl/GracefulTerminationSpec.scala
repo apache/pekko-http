@@ -107,7 +107,7 @@ class GracefulTerminationSpec
             val termination = serverBinding.terminate(hardDeadline = 1.second)
             // Right now graceful terminate will immediately kill the connection
             // even if a streamed response is still ongoing
-            // FIXME: https://github.com/apache/incubator-pekko-http/issues/3209
+            // FIXME: https://github.com/akka/akka-http/issues/3209
             eventually {
               responseEntity.expectEvent() shouldBe a[OnError]
             }
@@ -187,7 +187,7 @@ class GracefulTerminationSpec
       ensureServerDeliveredRequest(r1) // we want the request to be in the server user's hands before we cause termination
       serverBinding.terminate(hardDeadline = time)
       // avoid race condition between termination and sending out response
-      // FIXME: https://github.com/apache/incubator-pekko-http/issues/4060
+      // FIXME: https://github.com/akka/akka-http/issues/4060
       Thread.sleep(500)
       reply(_ => HttpResponse(StatusCodes.OK))
 
@@ -202,7 +202,7 @@ class GracefulTerminationSpec
       ensureServerDeliveredRequest(r1) // we want the request to be in the server user's hands before we cause termination
       serverBinding.terminate(hardDeadline = time)
       // avoid race condition between termination and sending out response
-      // FIXME: https://github.com/apache/incubator-pekko-http/issues/4060
+      // FIXME: https://github.com/akka/akka-http/issues/4060
       Thread.sleep(500)
       reply(_ => HttpResponse(StatusCodes.OK))
       r1.futureValue.status should ===(StatusCodes.OK)

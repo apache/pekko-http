@@ -327,7 +327,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         response.entity.contentType should ===(ContentTypes.`application/json`)
 
         // FIXME: contentLength is not reported in all cases with HTTP/2
-        // see https://github.com/apache/incubator-pekko-http/issues/3843
+        // see https://github.com/akka/akka-http/issues/3843
         // response.entity.isIndefiniteLength should ===(false)
         // response.entity.contentLengthOption should ===(Some(2000L))
 
