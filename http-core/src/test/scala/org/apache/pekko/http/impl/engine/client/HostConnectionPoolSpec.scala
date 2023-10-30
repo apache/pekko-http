@@ -83,7 +83,7 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
   testSet(clientServerImplementation = PassThrough)
   testSet(clientServerImplementation = PekkoHttpEngineNoNetwork)
   testSet(clientServerImplementation = PekkoHttpEngineTCP)
-  // testSet(poolImplementation = NewPoolImplementation, clientServerImplementation = AkkaHttpEngineTLS)
+  // testSet(poolImplementation = NewPoolImplementation, clientServerImplementation = PekkoHttpEngineTLS)
 
   def testSet(clientServerImplementation: ClientServerImplementation) =
     s"NewPoolImplementation on $clientServerImplementation" should {
