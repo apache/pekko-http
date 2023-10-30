@@ -375,7 +375,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     }
 
     "If-Match dispatching" in {
-      // https://github.com/apache/incubator-pekko-http/issues/443 Check dispatching for "if-match" does not throw "RuleNotFound"
+      // https://github.com/akka/akka-http/issues/443 Check dispatching for "if-match" does not throw "RuleNotFound"
       import scala.util._
       import org.parboiled2.DynamicRuleHandler
       import org.parboiled2.support.hlist.{ ::, HNil }

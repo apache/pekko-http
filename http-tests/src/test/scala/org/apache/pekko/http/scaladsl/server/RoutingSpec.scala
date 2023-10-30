@@ -31,7 +31,7 @@ trait GenericRoutingSpec extends Matchers with Directives with ScalatestRouteTes
   def echoComplete2[T, U]: (T, U) => Route = { (x, y) => complete(s"$x $y") }
 }
 
-// FIXME: currently cannot use `AkkaSpec` or `AkkaSpecWithMaterializer`, see https://github.com/apache/incubator-pekko-http/issues/3313
+// FIXME: currently cannot use `PekkoSpec` or `PekkoSpecWithMaterializer`, see https://github.com/akka/akka-http/issues/3313
 abstract class RoutingSpec extends AnyWordSpec with GenericRoutingSpec with WithLogCapturing with TestKitBase
     with ScalaFutures {
   override def testConfigSource: String =

@@ -204,7 +204,7 @@ private[http] final class PoolMasterActor extends Actor with ActorLogging {
     // Shutdown all known pools and signal their termination.
     case ShutdownAll(shutdownCompletedPromise) =>
       import context.dispatcher
-      // FIXME: shutdown pools directly without going through message, https://github.com/apache/incubator-pekko-http/issues/3184
+      // FIXME: shutdown pools directly without going through message, https://github.com/akka/akka-http/issues/3184
       Future.traverse(statusById.keys)(thisMaster.shutdown)
         .onComplete(_ => shutdownCompletedPromise.trySuccess(Done))
 
