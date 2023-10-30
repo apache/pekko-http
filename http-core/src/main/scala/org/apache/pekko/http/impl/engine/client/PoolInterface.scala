@@ -69,7 +69,7 @@ private[http] object PoolInterface {
     import poolId.hcps
     import hcps._
     import setup.{ connectionContext, settings }
-    implicit val system = fm.asInstanceOf[ActorMaterializer].system
+    implicit val system = fm.system
     val log: LoggingAdapter = Logging(system, poolId)(PoolLogSource)
 
     log.debug("Creating pool.")

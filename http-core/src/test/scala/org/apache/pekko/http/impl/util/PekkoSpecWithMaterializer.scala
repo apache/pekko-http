@@ -42,7 +42,7 @@ abstract class PekkoSpecWithMaterializer(configOverrides: String)
       // shutdown materializer first, otherwise it will only be shutdown during
       // main system guardian being shutdown which will be after the logging has
       // reverted to stdout logging that cannot be intercepted
-      materializer.asInstanceOf[ActorMaterializer].shutdown()
+      materializer.shutdown()
       Http().shutdownAllConnectionPools()
       // materializer shutdown is async but cannot be watched
       Thread.sleep(10)
