@@ -18,7 +18,7 @@ import pekko.actor._
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, Uri }
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
-import pekko.stream.{ ActorMaterializer, OverflowStrategy }
+import pekko.stream.OverflowStrategy
 import com.typesafe.config.{ Config, ConfigFactory }
 
 import scala.concurrent.Future
@@ -39,7 +39,6 @@ object ConnectionTestApp {
 
   implicit val system: ActorSystem = ActorSystem("ConnectionTest", testConf)
   import system.dispatcher
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   val clientFlow = Http().superPool[Int]()
 

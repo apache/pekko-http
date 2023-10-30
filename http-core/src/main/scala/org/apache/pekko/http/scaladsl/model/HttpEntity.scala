@@ -85,7 +85,7 @@ sealed trait HttpEntity extends jm.HttpEntity {
    */
   def toStrict(timeout: FiniteDuration)(implicit fm: Materializer): Future[HttpEntity.Strict] = {
     import pekko.http.impl.util._
-    val config = fm.asInstanceOf[ActorMaterializer].system.settings.config
+    val config = fm.system.settings.config
     toStrict(timeout, config.getPossiblyInfiniteBytes("pekko.http.parsing.max-to-strict-bytes"))
   }
 

@@ -18,8 +18,6 @@ package org.apache.pekko.http.javadsl.unmarshalling.sse;
 
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.model.HttpEntity;
-import org.apache.pekko.stream.ActorMaterializer;
-import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.http.javadsl.model.sse.ServerSentEvent;
 import org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshallingSpec;
@@ -36,8 +34,6 @@ public class EventStreamUnmarshallingTest extends JUnitSuite {
   public void testFromEventsStream() throws Exception {
     ActorSystem system = ActorSystem.create();
     try {
-      Materializer mat = ActorMaterializer.create(system);
-
       List<ServerSentEvent> events = EventStreamUnmarshallingSpec.eventsAsJava();
       HttpEntity entity = EventStreamUnmarshallingSpec.entity();
 
@@ -45,7 +41,7 @@ public class EventStreamUnmarshallingTest extends JUnitSuite {
       List<ServerSentEvent> unmarshalledEvents =
           EventStreamUnmarshalling.fromEventsStream(system)
               .unmarshal(entity, system)
-              .thenCompose(source -> source.runWith(Sink.seq(), mat))
+              .thenCompose(source -> source.runWith(Sink.seq(), system))
               .toCompletableFuture()
               .get(3000, TimeUnit.SECONDS);
       // #event-stream-unmarshalling-example

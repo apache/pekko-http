@@ -27,8 +27,6 @@ import static org.apache.pekko.http.javadsl.model.AttributeKeys.trailer;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.japi.function.Function;
-import org.apache.pekko.stream.ActorMaterializer;
-import org.apache.pekko.stream.Materializer;
 
 // #bindAndHandleSecure
 // #bindAndHandlePlain
@@ -46,7 +44,6 @@ class Http2Test {
     Function<HttpRequest, CompletionStage<HttpResponse>> asyncHandler =
         r -> CompletableFuture.completedFuture(HttpResponse.create());
     ActorSystem system = ActorSystem.create();
-    Materializer materializer = ActorMaterializer.create(system);
     HttpsConnectionContext httpsConnectionContext = null;
 
     // #bindAndHandleSecure

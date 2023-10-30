@@ -14,14 +14,12 @@
 package org.apache.pekko.http.javadsl.server.examples.petstore;
 
 import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.http.javadsl.ConnectHttp;
 import org.apache.pekko.http.javadsl.Http;
 // #imports
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 // #imports
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.stream.ActorMaterializer;
 
 import java.io.IOException;
 // #imports

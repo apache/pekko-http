@@ -23,7 +23,6 @@ import pekko.util.ByteString
 import pekko.actor.ActorSystem
 import pekko.http.ccompat._ // required for Scala 2.12 compilation
 import pekko.http.scaladsl.model._
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl._
 import pekko.testkit._
 import headers._
@@ -55,8 +54,6 @@ class HttpModelIntegrationSpec extends AnyWordSpec with Matchers with BeforeAndA
   implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
 
   override def afterAll() = TestKit.shutdownActorSystem(system)
-
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   "External HTTP libraries" should {
 

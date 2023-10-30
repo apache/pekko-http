@@ -16,17 +16,14 @@ package docs.http.javadsl.server;
 import org.apache.pekko.Done;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.actor.CoordinatedShutdown;
 import org.apache.pekko.http.javadsl.*;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.Connection;
-import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.japi.function.Function;
-import org.apache.pekko.stream.ActorMaterializer;
 import org.apache.pekko.stream.IOResult;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.FileIO;
@@ -51,7 +48,7 @@ public class HttpServerExampleDocTest {
   public static void bindingExample() throws Exception {
     // #binding-example
     ActorSystem system = ActorSystem.create();
-    Materializer materializer = ActorMaterializer.create(system);
+    Materializer materializer = Materializer.createMaterializer(system);
 
     Source<IncomingConnection, CompletionStage<ServerBinding>> serverSource =
         Http.get(system).bind(ConnectHttp.toHost("localhost", 8080));
@@ -73,7 +70,7 @@ public class HttpServerExampleDocTest {
   public static void bindingFailureExample() throws Exception {
     // #binding-failure-handling
     ActorSystem system = ActorSystem.create();
-    Materializer materializer = ActorMaterializer.create(system);
+    Materializer materializer = Materializer.createMaterializer(system);
 
     Source<IncomingConnection, CompletionStage<ServerBinding>> serverSource =
         Http.get(system).bind(ConnectHttp.toHost("localhost", 80));
@@ -101,7 +98,7 @@ public class HttpServerExampleDocTest {
   public static void connectionSourceFailureExample() throws Exception {
     // #incoming-connections-source-failure-handling
     ActorSystem system = ActorSystem.create();
-    Materializer materializer = ActorMaterializer.create(system);
+    Materializer materializer = Materializer.createMaterializer(system);
 
     Source<IncomingConnection, CompletionStage<ServerBinding>> serverSource =
         Http.get(system).bind(ConnectHttp.toHost("localhost", 8080));
@@ -137,7 +134,7 @@ public class HttpServerExampleDocTest {
   public static void connectionStreamFailureExample() throws Exception {
     // #connection-stream-failure-handling
     ActorSystem system = ActorSystem.create();
-    Materializer materializer = ActorMaterializer.create(system);
+    Materializer materializer = Materializer.createMaterializer(system);
 
     Source<IncomingConnection, CompletionStage<ServerBinding>> serverSource =
         Http.get(system).bind(ConnectHttp.toHost("localhost", 8080));
@@ -186,7 +183,7 @@ public class HttpServerExampleDocTest {
     // #full-server-example
     try {
       // #full-server-example
-      final Materializer materializer = ActorMaterializer.create(system);
+      final Materializer materializer = Materializer.createMaterializer(system);
 
       Source<IncomingConnection, CompletionStage<ServerBinding>> serverSource =
           Http.get(system).bind(ConnectHttp.toHost("localhost", 8080));
@@ -265,7 +262,6 @@ public class HttpServerExampleDocTest {
 
     final ActorSystem system = ActorSystem.create();
     final ExecutionContextExecutor dispatcher = system.dispatcher();
-    final ActorMaterializer materializer = ActorMaterializer.create(system);
 
     final Unmarshaller<HttpEntity, Bid> asBid = Jackson.unmarshaller(Bid.class);
 
@@ -287,7 +283,6 @@ public class HttpServerExampleDocTest {
     // #consume-raw-dataBytes
     final ActorSystem system = ActorSystem.create();
     final ExecutionContextExecutor dispatcher = system.dispatcher();
-    final ActorMaterializer materializer = ActorMaterializer.create(system);
 
     final Route s =
         put(
@@ -302,7 +297,7 @@ public class HttpServerExampleDocTest {
                                       final CompletionStage<IOResult> res =
                                           bytes.runWith(
                                               FileIO.toPath(new File("/tmp/example.out").toPath()),
-                                              materializer);
+                                              system);
 
                                       return onComplete(
                                           () -> res,
@@ -347,7 +342,6 @@ public class HttpServerExampleDocTest {
     // #discard-close-connections
     final ActorSystem system = ActorSystem.create();
     final ExecutionContextExecutor dispatcher = system.dispatcher();
-    final ActorMaterializer materializer = ActorMaterializer.create(system);
 
     final Route s =
         put(
@@ -364,7 +358,7 @@ public class HttpServerExampleDocTest {
                                       // right away:
                                       bytes.runWith(
                                           Sink.cancelled(),
-                                          materializer); // "brutally" closes the connection
+                                          system); // "brutally" closes the connection
 
                                       // Closing connections, method 2 (graceful):
                                       // consider draining connection and replying with `Connection:
@@ -381,7 +375,7 @@ public class HttpServerExampleDocTest {
   public static void gracefulTerminationExample() throws Exception {
     // #graceful-termination
     ActorSystem system = ActorSystem.create();
-    Materializer materializer = ActorMaterializer.create(system);
+    Materializer materializer = Materializer.createMaterializer(system);
 
     CompletionStage<ServerBinding> binding =
         Http.get(system)

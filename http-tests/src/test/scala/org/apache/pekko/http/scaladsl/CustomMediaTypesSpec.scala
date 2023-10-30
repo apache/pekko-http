@@ -18,7 +18,6 @@ import pekko.http.scaladsl.client.RequestBuilding
 import pekko.http.scaladsl.model.MediaType.WithFixedCharset
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.server.Directives
-import pekko.stream.ActorMaterializer
 import pekko.testkit._
 import pekko.util.ByteString
 import org.scalatest.concurrent.ScalaFutures
@@ -26,8 +25,6 @@ import scala.concurrent.duration._
 
 class CustomMediaTypesSpec extends PekkoSpec with ScalaFutures
     with Directives with RequestBuilding {
-
-  implicit val mat: ActorMaterializer = ActorMaterializer()
 
   "Http" should {
     "find media types in a set if they differ in casing" in {

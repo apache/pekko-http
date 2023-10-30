@@ -16,7 +16,6 @@ package org.apache.pekko.http.scaladsl.coding
 import org.scalatest.{ BeforeAndAfterAll, Suite }
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.stream.ActorMaterializer
 import pekko.testkit.TestKit
 import pekko.util.ByteString
 import org.scalatest.matchers.should.Matchers
@@ -83,7 +82,6 @@ est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscin
       "\r\n", "\n")
 
   implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName)
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   override def afterAll() = TestKit.shutdownActorSystem(system)
 }

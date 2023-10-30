@@ -22,7 +22,6 @@ import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.testkit.MarshallingTestUtils
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.Source
 import pekko.testkit.TestKit
 import pekko.util.ByteString
@@ -37,7 +36,6 @@ import org.scalatest.matchers.should.Matchers
 class MarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll with MultipartMarshallers
     with MarshallingTestUtils {
   implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName)
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
   import system.dispatcher
 
   override val testConfig = ConfigFactory.load()

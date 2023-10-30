@@ -16,15 +16,10 @@ package docs.http.javadsl;
 import static org.junit.Assert.assertEquals;
 import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 
-import org.apache.pekko.util.ByteString;
-import org.apache.pekko.stream.ActorMaterializer;
-import org.apache.pekko.stream.Materializer;
 import org.junit.Test;
 
 // #imports
-import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;

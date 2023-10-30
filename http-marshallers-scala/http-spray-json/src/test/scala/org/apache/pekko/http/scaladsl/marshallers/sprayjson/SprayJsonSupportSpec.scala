@@ -20,7 +20,6 @@ import pekko.actor.ActorSystem
 import pekko.http.scaladsl.marshalling.Marshal
 import pekko.http.scaladsl.model.MessageEntity
 import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.stream.ActorMaterializer
 import pekko.util.ByteString
 import org.scalatest.concurrent.ScalaFutures
 import spray.json.{ JsArray, JsString, JsValue }
@@ -35,7 +34,6 @@ class SprayJsonSupportSpec extends AnyWordSpec with Matchers with ScalaFutures {
 
   implicit val exampleFormat: RootJsonFormat[Example] = jsonFormat1(Example.apply)
   implicit val sys: ActorSystem = ActorSystem("SprayJsonSupportSpec")
-  implicit val mat: ActorMaterializer = ActorMaterializer()
   implicit val ec: ExecutionContext = sys.dispatcher
 
   val TestString =

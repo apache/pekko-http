@@ -35,7 +35,6 @@ import org.apache.pekko.http.scaladsl.model.AttributeKeys;
 import org.apache.pekko.japi.JavaPartialFunction;
 import org.apache.pekko.japi.function.Function;
 
-import org.apache.pekko.stream.ActorMaterializer;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Source;

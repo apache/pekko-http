@@ -16,7 +16,6 @@ package docs.http.scaladsl.server
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
 import org.apache.pekko.http.scaladsl.Http
 import org.apache.pekko.http.scaladsl.server.Route
-import org.apache.pekko.stream.{ ActorMaterializer, Materializer }
 import scala.annotation.nowarn
 
 @nowarn("msg=is deprecated")
@@ -27,7 +26,6 @@ class PekkoHttp1020MigrationSpec {
     // #old-binding
     // only worked with classic actor system
     implicit val system = org.apache.pekko.actor.ActorSystem("TheSystem")
-    implicit val mat: Materializer = ActorMaterializer()
     val route: Route =
       get {
         complete("Hello world")

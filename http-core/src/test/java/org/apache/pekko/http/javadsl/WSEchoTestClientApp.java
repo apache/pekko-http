@@ -20,7 +20,6 @@ import org.apache.pekko.http.javadsl.model.ws.Message;
 import org.apache.pekko.http.javadsl.model.ws.TextMessage;
 import org.apache.pekko.http.javadsl.model.ws.WebSocketRequest;
 import org.apache.pekko.japi.function.Function;
-import org.apache.pekko.stream.ActorMaterializer;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Keep;
@@ -51,7 +50,7 @@ public class WSEchoTestClientApp {
     ActorSystem system = ActorSystem.create();
 
     try {
-      final Materializer materializer = ActorMaterializer.create(system);
+      final Materializer materializer = Materializer.createMaterializer(system);
 
       final Future<Message> ignoredMessage =
           Futures.successful((Message) TextMessage.create("blub"));

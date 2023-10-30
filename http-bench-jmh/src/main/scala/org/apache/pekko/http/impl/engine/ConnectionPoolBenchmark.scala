@@ -24,7 +24,6 @@ import pekko.http.impl.util.enhanceString_
 import pekko.http.scaladsl.model.HttpRequest
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
 import pekko.http.scaladsl.{ ClientTransport, Http }
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.Flow
 import pekko.util.ByteString
 import com.typesafe.config.ConfigFactory
@@ -43,7 +42,6 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
   var maxConnections: String = _
 
   implicit var system: ActorSystem = _
-  implicit var mat: ActorMaterializer = _
   implicit def ec: ExecutionContext = system.dispatcher
 
   private var poolSettings: ConnectionPoolSettings = _
@@ -77,7 +75,6 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
         """)
         .withFallback(ConfigFactory.load())
     system = ActorSystem("PekkoHttpBenchmarkSystem", config)
-    mat = ActorMaterializer()
 
     val responseBytes = ByteString(
       """HTTP/1.1 200 OK

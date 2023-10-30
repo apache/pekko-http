@@ -35,7 +35,6 @@ import org.apache.pekko.http.javadsl.server.*;
 import org.apache.pekko.japi.pf.PFBuilder;
 import org.apache.pekko.stream.ActorMaterializer;
 import org.apache.pekko.stream.ActorMaterializerSettings;
-import org.apache.pekko.stream.javadsl.FileIO;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
@@ -44,7 +43,6 @@ import org.junit.Test;
 import scala.concurrent.ExecutionContextExecutor;
 import scala.concurrent.duration.FiniteDuration;
 
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -57,13 +55,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
-
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.get;
-import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
-import static org.apache.pekko.http.javadsl.server.Directives.post;
 
 // #extract
 import static org.apache.pekko.http.javadsl.server.Directives.extract;

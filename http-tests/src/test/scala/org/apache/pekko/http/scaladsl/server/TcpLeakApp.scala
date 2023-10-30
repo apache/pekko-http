@@ -19,7 +19,7 @@ import org.apache.pekko
 import pekko.actor.{ ActorSystem, ActorSystemImpl }
 import pekko.event.Logging
 import pekko.stream.scaladsl._
-import pekko.stream.{ ActorAttributes, ActorMaterializer }
+import pekko.stream.ActorAttributes
 import pekko.util.ByteString
 import com.typesafe.config.{ Config, ConfigFactory }
 import scala.io.StdIn
@@ -31,7 +31,6 @@ object TcpLeakApp extends App {
     pekko.log-dead-letters = on
     pekko.io.tcp.trace-logging = on""")
   implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
-  implicit val fm: ActorMaterializer = ActorMaterializer()
 
   import system.dispatcher
 

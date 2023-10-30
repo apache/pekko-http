@@ -18,7 +18,6 @@ import pekko.http.scaladsl.model.HttpRequest
 import pekko.util.ByteString
 import com.typesafe.config.{ Config, ConfigFactory }
 import pekko.actor.ActorSystem
-import pekko.stream._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.io.StdIn
@@ -30,7 +29,6 @@ object TestSingleRequest extends App {
     pekko.stream.materializer.debug.fuzzing-mode = off
     """)
   implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
   import system.dispatcher
 
   val url = StdIn.readLine("url? ")
