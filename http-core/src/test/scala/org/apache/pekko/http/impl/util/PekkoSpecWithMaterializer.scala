@@ -16,7 +16,7 @@ package org.apache.pekko.http.impl.util
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.Http
-import pekko.stream.{ ActorMaterializer, Materializer, SystemMaterializer }
+import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.testkit.PekkoSpec
 import pekko.testkit.EventFilter
 import com.typesafe.config.ConfigFactory
@@ -42,7 +42,7 @@ abstract class PekkoSpecWithMaterializer(configOverrides: String)
       // shutdown materializer first, otherwise it will only be shutdown during
       // main system guardian being shutdown which will be after the logging has
       // reverted to stdout logging that cannot be intercepted
-      materializer.asInstanceOf[ActorMaterializer].shutdown()
+      materializer.shutdown()
       Http().shutdownAllConnectionPools()
       // materializer shutdown is async but cannot be watched
       Thread.sleep(10)
