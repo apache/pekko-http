@@ -76,7 +76,7 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
            pekko.http.client.user-agent = pekko-http-bench
         """)
         .withFallback(ConfigFactory.load())
-    system = ActorSystem("AkkaHttpBenchmarkSystem", config)
+    system = ActorSystem("PekkoHttpBenchmarkSystem", config)
     mat = ActorMaterializer()
 
     val responseBytes = ByteString(

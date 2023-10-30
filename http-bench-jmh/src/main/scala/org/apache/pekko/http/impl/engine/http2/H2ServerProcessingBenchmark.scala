@@ -70,7 +70,7 @@ class H2ServerProcessingBenchmark extends CommonBenchmark with H2RequestResponse
   def setup(): Unit = {
     initRequestResponse()
 
-    system = ActorSystem("AkkaHttpBenchmarkSystem", config)
+    system = ActorSystem("PekkoHttpBenchmarkSystem", config)
     mat = ActorMaterializer()
     val settings = implicitly[ServerSettings]
     val log = system.log

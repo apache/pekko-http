@@ -61,7 +61,7 @@ class ServerProcessingBenchmark extends CommonBenchmark {
            pekko.http.server.server-header = "pekko-http-bench"
         """)
         .withFallback(ConfigFactory.load())
-    system = ActorSystem("AkkaHttpBenchmarkSystem", config)
+    system = ActorSystem("PekkoHttpBenchmarkSystem", config)
     mat = ActorMaterializer()
     httpFlow =
       Flow[HttpRequest].map(_ => response).join(
