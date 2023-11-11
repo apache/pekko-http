@@ -29,7 +29,7 @@ import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.scaladsl._
 import pekko.stream.testkit.Utils.assertAllStagesStopped
 import pekko.stream.testkit._
-import pekko.stream.{ ActorMaterializer, Attributes, Materializer, Outlet, SourceShape }
+import pekko.stream.{ Attributes, Materializer, Outlet, SourceShape }
 import pekko.stream.stage.GraphStage
 import pekko.stream.stage.GraphStageLogic
 import pekko.testkit._
@@ -54,7 +54,7 @@ class HttpServerSpec extends PekkoSpec(
      pekko.http.server.log-unencrypted-network-bytes = 100
      pekko.http.server.request-timeout = infinite
   """) with Inside with WithLogCapturing { spec =>
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val materializer: Materializer = Materializer(system)
 
   "The server implementation" should {
     "deliver an empty request as soon as all headers are received" in assertAllStagesStopped(new TestSetup {
