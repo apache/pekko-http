@@ -24,14 +24,12 @@ import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.ws.Message
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.Flow
 
 import scala.io.StdIn
 
 object WSServerAutobahnTest extends App {
   implicit val system: ActorSystem = ActorSystem("WSServerTest")
-  implicit val fm: ActorMaterializer = ActorMaterializer()
 
   val host = System.getProperty("pekko.ws-host", "127.0.0.1")
   val port = System.getProperty("pekko.ws-port", "9001").toInt

@@ -21,7 +21,7 @@ import com.typesafe.config.{ Config, ConfigFactory }
 import scala.util.{ Failure, Success }
 import org.apache.pekko
 import pekko.actor.{ ActorSystem, UnhandledMessage }
-import pekko.stream.{ ActorMaterializer, IOResult }
+import pekko.stream.IOResult
 import pekko.stream.scaladsl.{ FileIO, Sink, Source }
 import pekko.http.scaladsl.model._
 import pekko.http.impl.util._
@@ -36,7 +36,6 @@ object TestClient extends App {
     pekko.log-dead-letters = off
     pekko.io.tcp.trace-logging = off""")
   implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
-  implicit val fm: ActorMaterializer = ActorMaterializer()
   import system.dispatcher
 
   installEventStreamLoggerFor[UnhandledMessage]

@@ -27,7 +27,6 @@ import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util._
 import pekko.util.ByteString
 import pekko.stream.scaladsl._
-import pekko.stream.ActorMaterializer
 import HttpEntity._
 import pekko.http.impl.engine.rendering.ResponseRenderingContext.CloseRequested
 import pekko.http.impl.util.Rendering.CrLf
@@ -44,7 +43,6 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
   implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
 
   val ServerOnTheMove = StatusCodes.custom(330, "Server on the move")
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   "The response preparation logic should properly render" - {
     "a response with no body," - {

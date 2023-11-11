@@ -18,7 +18,7 @@ import pekko.actor.ActorSystem
 import pekko.event.Logging
 import pekko.http.scaladsl.model._
 import pekko.stream.scaladsl._
-import pekko.stream.{ ActorMaterializer, OverflowStrategy }
+import pekko.stream.OverflowStrategy
 import com.typesafe.config.{ Config, ConfigFactory }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
@@ -37,7 +37,6 @@ class TightRequestTimeoutSpec extends AnyWordSpec with Matchers with BeforeAndAf
     pekko.http.server.request-timeout = 10ms""")
 
   implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val patience: PatienceConfig = PatienceConfig(3.seconds.dilated)
 
   override def afterAll() = TestKit.shutdownActorSystem(system)

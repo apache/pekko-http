@@ -28,7 +28,6 @@ import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util._
 import pekko.stream.scaladsl._
-import pekko.stream.ActorMaterializer
 import HttpEntity._
 import HttpMethods._
 import pekko.testkit._
@@ -41,8 +40,6 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
     pekko.loglevel = WARNING""")
   implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
   import system.dispatcher
-
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   "The request preparation logic should" - {
     "properly render an unchunked" - {

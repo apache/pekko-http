@@ -24,7 +24,7 @@ import pekko.http.impl.engine.parsing.ParserOutput.{
 import pekko.http.impl.engine.server.HttpServerBluePrint.PrepareRequests
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.ServerSettings
-import pekko.stream.{ ActorMaterializer, Attributes }
+import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.testkit._
@@ -70,7 +70,6 @@ class PrepareRequestsSpec extends PekkoSpec {
   "The PrepareRequest stage" should {
 
     "not fail when there is demand from both streamed entity consumption and regular flow" in {
-      implicit val materializer: ActorMaterializer = ActorMaterializer()
       // covers bug #19623 where a reply before the streamed
       // body has been consumed causes pull/push twice
       val inProbe = TestPublisher.manualProbe[ParserOutput.RequestOutput]()
@@ -130,8 +129,6 @@ class PrepareRequestsSpec extends PekkoSpec {
     }
 
     "not complete running entity stream when upstream cancels" in {
-      implicit val materializer: ActorMaterializer = ActorMaterializer()
-
       val inProbe = TestPublisher.manualProbe[ParserOutput.RequestOutput]()
       val upstreamProbe = TestSubscriber.manualProbe[HttpRequest]()
 
@@ -180,9 +177,6 @@ class PrepareRequestsSpec extends PekkoSpec {
     }
 
     "complete stage if chunked stream is completed without reaching end of chunks" in {
-      // a bit unsure about this, but to document the assumption
-      implicit val materializer: ActorMaterializer = ActorMaterializer()
-
       val inProbe = TestPublisher.manualProbe[ParserOutput.RequestOutput]()
       val upstreamProbe = TestSubscriber.manualProbe[HttpRequest]()
 
@@ -222,8 +216,6 @@ class PrepareRequestsSpec extends PekkoSpec {
     }
 
     "cancel the stage when the entity stream is canceled" in {
-      implicit val materializer: ActorMaterializer = ActorMaterializer()
-
       val inProbe = TestPublisher.manualProbe[ParserOutput.RequestOutput]()
       val upstreamProbe = TestSubscriber.manualProbe[HttpRequest]()
 
