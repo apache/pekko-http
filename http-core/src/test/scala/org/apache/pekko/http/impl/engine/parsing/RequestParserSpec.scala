@@ -21,7 +21,6 @@ import scala.concurrent.duration._
 import com.typesafe.config.{ Config, ConfigFactory }
 import pekko.util.ByteString
 import pekko.actor.ActorSystem
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl._
 import pekko.stream.TLSProtocol._
 import org.scalatest.matchers.Matcher
@@ -59,7 +58,6 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
   import system.dispatcher
 
   val BOLT = HttpMethod.custom("BOLT", safe = false, idempotent = true, requestEntityAcceptance = Expected)
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   s"The request parsing logic should (mode: $mode)" - {
     "properly parse a request" - {

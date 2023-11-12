@@ -21,7 +21,6 @@ import scala.concurrent.duration._
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.ws.{ BinaryMessage, Message, TextMessage }
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl._
 import pekko.util.ByteString
 
@@ -34,7 +33,6 @@ import scala.util.{ Failure, Success }
 object EchoTestClientApp extends App {
   implicit val system: ActorSystem = ActorSystem()
   import system.dispatcher
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   def delayedCompletion(delay: FiniteDuration): Source[Nothing, NotUsed] =
     Source.single(1)

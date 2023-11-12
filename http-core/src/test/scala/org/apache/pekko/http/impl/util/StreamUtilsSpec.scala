@@ -14,7 +14,7 @@
 package org.apache.pekko.http.impl.util
 
 import org.apache.pekko
-import pekko.stream.{ ActorMaterializer, Attributes, Materializer }
+import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.util.ByteString
 import pekko.testkit._
@@ -24,7 +24,6 @@ import scala.concurrent.duration._
 import scala.util.Failure
 
 class StreamUtilsSpec extends PekkoSpec with ScalaFutures {
-  implicit val materializer: Materializer = ActorMaterializer()
 
   "captureTermination" should {
     "signal completion" when {

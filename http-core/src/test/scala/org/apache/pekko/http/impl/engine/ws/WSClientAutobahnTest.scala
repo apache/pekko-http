@@ -20,7 +20,6 @@ import scala.concurrent.Future
 import scala.util.{ Failure, Success, Try }
 import spray.json._
 import pekko.actor.ActorSystem
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl._
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.Uri
@@ -29,7 +28,6 @@ import pekko.http.scaladsl.model.ws._
 object WSClientAutobahnTest extends App {
   implicit val system: ActorSystem = ActorSystem()
   import system.dispatcher
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   val Agent = "pekko-http"
   val Parallelism = 4

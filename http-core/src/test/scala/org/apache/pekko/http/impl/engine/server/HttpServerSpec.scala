@@ -13,10 +13,6 @@
 
 package org.apache.pekko.http.impl.engine.server
 
-import scala.annotation.nowarn
-
-import java.net.{ InetAddress, InetSocketAddress }
-
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.LoggingAdapter
@@ -33,17 +29,15 @@ import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.scaladsl._
 import pekko.stream.testkit.Utils.assertAllStagesStopped
 import pekko.stream.testkit._
-import pekko.stream.{ ActorMaterializer, Materializer }
-import pekko.stream.Attributes
-import pekko.stream.Outlet
-import pekko.stream.SourceShape
+import pekko.stream.{ Attributes, Materializer, Outlet, SourceShape }
 import pekko.stream.stage.GraphStage
 import pekko.stream.stage.GraphStageLogic
 import pekko.testkit._
 import pekko.util.ByteString
 import org.scalatest.Inside
 
-import scala.annotation.tailrec
+import java.net.{ InetAddress, InetSocketAddress }
+import scala.annotation.{ nowarn, tailrec }
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import scala.util.Random
@@ -60,7 +54,7 @@ class HttpServerSpec extends PekkoSpec(
      pekko.http.server.log-unencrypted-network-bytes = 100
      pekko.http.server.request-timeout = infinite
   """) with Inside with WithLogCapturing { spec =>
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val materializer: Materializer = Materializer(system)
 
   "The server implementation" should {
     "deliver an empty request as soon as all headers are received" in assertAllStagesStopped(new TestSetup {
