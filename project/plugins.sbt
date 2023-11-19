@@ -9,6 +9,7 @@
 
 resolvers += Classpaths.sbtPluginReleases
 resolvers += Classpaths.typesafeReleases
+resolvers ++= Resolver.sonatypeOssRepos("snapshots") // while testing sbt-pekko-build
 resolvers ++= Resolver.sonatypeOssRepos("releases") // to more quickly obtain paradox right after release
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.4.0")
@@ -39,6 +40,7 @@ addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.11.0")
 addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.1.1")
 addSbtPlugin("org.mdedetrich" % "sbt-apache-sonatype" % "0.1.10")
 addSbtPlugin("com.github.pjfanning" % "sbt-source-dist" % "0.1.11")
+addSbtPlugin("com.github.pjfanning" % "sbt-pekko-build" % "0.0.0+5-6051b8f4-SNAPSHOT")
 addSbtPlugin("net.virtual-void" % "sbt-hackers-digest" % "0.1.2")
 addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.7.0")
 
