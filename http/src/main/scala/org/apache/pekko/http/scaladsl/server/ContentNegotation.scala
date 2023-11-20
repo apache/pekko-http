@@ -29,7 +29,7 @@ final class MediaTypeNegotiator(requestHeaders: Seq[HttpHeader]) {
    */
   val acceptedMediaRanges: List[MediaRange] =
     (for {
-      Accept(mediaRanges) <- requestHeaders
+      case Accept(mediaRanges) <- requestHeaders
       range <- mediaRanges
     } yield range).sortBy { // `sortBy` is stable, i.e. upholds the original order on identical weights
       case x if x.isWildcard   => (2, -x.params.size, -x.qValue)
@@ -63,7 +63,7 @@ final class CharsetNegotiator(requestHeaders: Seq[HttpHeader]) {
    */
   val acceptedCharsetRanges: List[HttpCharsetRange] =
     (for {
-      `Accept-Charset`(charsetRanges) <- requestHeaders
+      case `Accept-Charset`(charsetRanges) <- requestHeaders
       range <- charsetRanges
     } yield range).sortBy { // `sortBy` is stable, i.e. upholds the original order on identical keys
       case _: HttpCharsetRange.`*` => 1f // most general, needs to come last
@@ -171,7 +171,7 @@ final class EncodingNegotiator(requestHeaders: Seq[HttpHeader]) {
    */
   val acceptedEncodingRanges: List[HttpEncodingRange] =
     (for {
-      `Accept-Encoding`(encodingRanges) <- requestHeaders
+      case `Accept-Encoding`(encodingRanges) <- requestHeaders
       range <- encodingRanges
     } yield range).sortBy { // `sortBy` is stable, i.e. upholds the original order on identical keys
       case _: HttpEncodingRange.`*` => 1f // most general, needs to come last
@@ -230,7 +230,7 @@ final class LanguageNegotiator(requestHeaders: Seq[HttpHeader]) {
    */
   val acceptedLanguageRanges: List[LanguageRange] =
     (for {
-      `Accept-Language`(languageRanges) <- requestHeaders
+      case `Accept-Language`(languageRanges) <- requestHeaders
       range <- languageRanges
     } yield range).sortBy { // `sortBy` is stable, i.e. upholds the original order on identical keys
       case _: LanguageRange.`*` => 1f // most general, needs to come last
