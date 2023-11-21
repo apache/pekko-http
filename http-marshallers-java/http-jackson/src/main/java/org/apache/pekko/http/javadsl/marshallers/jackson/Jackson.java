@@ -15,19 +15,24 @@ package org.apache.pekko.http.javadsl.marshallers.jackson;
 
 import java.io.IOException;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.apache.pekko.http.javadsl.model.HttpEntity;
 import org.apache.pekko.http.javadsl.model.MediaTypes;
 import org.apache.pekko.http.javadsl.model.RequestEntity;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
-
 import org.apache.pekko.http.scaladsl.model.ExceptionWithErrorInfo;
 import org.apache.pekko.http.scaladsl.model.ErrorInfo;
-
 import org.apache.pekko.util.ByteString;
+
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.fasterxml.jackson.core.StreamWriteConstraints;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 public class Jackson {
   private static final ObjectMapper defaultObjectMapper =
@@ -85,5 +90,24 @@ public class Jackson {
     } catch (IOException e) {
       throw new JacksonUnmarshallingException(expectedType, e);
     }
+  }
+
+  private static ObjectMapper createMapper() {
+    Config config = ConfigFactory.load().getConfig("pekko.http.jackson");
+    StreamReadConstraints streamReadConstraints = StreamReadConstraints.builder()
+            .maxNestingDepth(config.getInt("read.max-nesting-depth"))
+            .maxNumberLength(config.getInt("read.max-number-length"))
+            .maxStringLength(config.getInt("read.max-string-length"))
+            .maxNameLength(config.getInt("read.max-name-length"))
+            .maxDocumentLength(config.getLong("read.max-document-length"))
+            .build();
+    StreamWriteConstraints streamWriteConstraints = StreamWriteConstraints.builder()
+            .maxNestingDepth(config.getInt("write.max-nesting-depth"))
+            .build();
+    JsonFactory jsonFactory = JsonFactory.builder()
+            .streamReadConstraints(streamReadConstraints)
+            .streamWriteConstraints(streamWriteConstraints)
+            .build();
+    return new JsonMapper(jsonFactory);
   }
 }
