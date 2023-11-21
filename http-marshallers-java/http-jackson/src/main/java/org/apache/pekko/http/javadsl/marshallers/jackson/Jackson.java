@@ -94,17 +94,20 @@ public class Jackson {
 
   private static ObjectMapper createMapper() {
     Config config = ConfigFactory.load().getConfig("pekko.http.jackson");
-    StreamReadConstraints streamReadConstraints = StreamReadConstraints.builder()
+    StreamReadConstraints streamReadConstraints =
+        StreamReadConstraints.builder()
             .maxNestingDepth(config.getInt("read.max-nesting-depth"))
             .maxNumberLength(config.getInt("read.max-number-length"))
             .maxStringLength(config.getInt("read.max-string-length"))
             .maxNameLength(config.getInt("read.max-name-length"))
             .maxDocumentLength(config.getLong("read.max-document-length"))
             .build();
-    StreamWriteConstraints streamWriteConstraints = StreamWriteConstraints.builder()
+    StreamWriteConstraints streamWriteConstraints =
+        StreamWriteConstraints.builder()
             .maxNestingDepth(config.getInt("write.max-nesting-depth"))
             .build();
-    JsonFactory jsonFactory = JsonFactory.builder()
+    JsonFactory jsonFactory =
+        JsonFactory.builder()
             .streamReadConstraints(streamReadConstraints)
             .streamWriteConstraints(streamWriteConstraints)
             .build();
