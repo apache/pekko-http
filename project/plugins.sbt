@@ -40,7 +40,7 @@ addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.11.0")
 addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.1.1")
 addSbtPlugin("org.mdedetrich" % "sbt-apache-sonatype" % "0.1.10")
 addSbtPlugin("com.github.pjfanning" % "sbt-source-dist" % "0.1.11")
-addSbtPlugin("com.github.pjfanning" % "sbt-pekko-build" % "0.0.0+8-63b8fa8b-SNAPSHOT")
+addSbtPlugin("com.github.pjfanning" % "sbt-pekko-build" % "0.0.0+11-1c009511-SNAPSHOT")
 addSbtPlugin("net.virtual-void" % "sbt-hackers-digest" % "0.1.2")
 addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.7.0")
 
