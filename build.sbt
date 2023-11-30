@@ -9,7 +9,7 @@
 
 import ValidatePullRequest._
 import net.bzzt.reproduciblebuilds.ReproducibleBuildsPlugin.reproducibleBuildsCheckResolver
-import com.github.pjfanning.pekkobuild.PekkoBuildPlugin.autoImport._
+import com.github.pjfanning.pekkobuild.PekkoDependency
 import PekkoDependency._
 import Dependencies.{ h2specExe, h2specName }
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
@@ -22,7 +22,6 @@ import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
 sourceDistName := "apache-pekko-http"
 sourceDistIncubating := true
-pekkoMinVersion := "1.0.0"
 
 commands := commands.value.filterNot { command =>
   command.nameOption.exists { name =>
@@ -443,15 +442,15 @@ lazy val docs = project("docs")
     Compile / paradoxProperties ++= Map(
       "project.name" -> "Apache Pekko HTTP",
       "canonical.base_url" -> "https://pekko.apache.org/docs/pekko-http/current",
-      "pekko.version" -> PekkoDependency.docs.version,
+      "pekko.version" -> PekkoDependency.pekkoVersion,
       "jackson.xml.version" -> Dependencies.jacksonXmlVersion,
       "scalafix.version" -> _root_.scalafix.sbt.BuildInfo.scalafixVersion, // grab from scalafix plugin directly
       "extref.pekko-docs.base_url" -> s"https://pekko.apache.org/docs/pekko/current/%s",
       "javadoc.java.base_url" -> "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/",
       "javadoc.java.link_style" -> "direct",
-      "javadoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/japi/pekko/${PekkoDependency.docs.link}",
+      "javadoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/japi/pekko/1.0",
       "javadoc.org.apache.pekko.link_style" -> "direct",
-      "scaladoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/api/pekko/${PekkoDependency.docs.link}",
+      "scaladoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/api/pekko/1.0",
       "scaladoc.org.apache.pekko.link_style" -> "direct",
       "javadoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/api/pekko-http/${projectInfoVersion.value}",
       "scaladoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/japi/pekko-http/${projectInfoVersion.value}",

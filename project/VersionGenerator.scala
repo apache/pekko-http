@@ -13,7 +13,6 @@
 
 import sbt._
 import sbt.Keys._
-import com.github.pjfanning.pekkobuild.PekkoBuildPlugin.autoImport._
 
 /**
  * Generate version.conf and pekko/Version.scala files based on the version setting.
@@ -45,7 +44,7 @@ object VersionGenerator {
 
   def generateVersion(dir: SettingKey[File], locate: File => File, template: String) = Def.task[Seq[File]] {
     val file = locate(dir.value)
-    val content = template.stripMargin.format(version.value, pekkoMinVersion)
+    val content = template.stripMargin.format(version.value, "1.0.0")
     if (!file.exists || IO.read(file) != content) IO.write(file, content)
     Seq(file)
   }
