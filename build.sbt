@@ -419,7 +419,6 @@ lazy val docs = project("docs")
   .settings(Dependencies.docs)
   .settings(
     name := "pekko-http-docs",
-    resolvers += Resolver.jcenterRepo,
     scalacOptions ++= Seq(
       // Make sure we don't accidentally keep documenting deprecated calls
       "-Xfatal-warnings",
