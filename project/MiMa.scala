@@ -20,9 +20,13 @@ import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 import scala.util.Try
 
 object MiMa extends AutoPlugin {
+  private val latestPatchOf10 = 0
 
   override def requires = MimaPlugin
   override def trigger = allRequirements
+
+  val checkMimaFilterDirectories =
+    taskKey[Unit]("Check that the mima directories are correct compared to latest version")
 
   override val projectSettings = Seq(
     mimaPreviousArtifacts := {
@@ -48,7 +52,17 @@ object MiMa extends AutoPlugin {
       }
 
       Map.empty
-    })
+    },
+    checkMimaFilterDirectories := checkFilterDirectories(baseDirectory.value))
+
+  def checkFilterDirectories(moduleRoot: File): Unit = {
+    val nextVersionFilterDir =
+      moduleRoot / "src" / "main" / "mima-filters" / s"1.0.${latestPatchOf10 + 1}.backwards.excludes"
+    if (nextVersionFilterDir.exists()) {
+      throw new IllegalArgumentException(s"Incorrect mima filter directory exists: '$nextVersionFilterDir' " +
+        s"should be with number from current release '${moduleRoot / "src" / "main" / "mima-filters" / s"1.0.$latestPatchOf10.backwards.excludes"}")
+    }
+  }
 
   def latestForkVersion(fork: String, allVersions: Seq[String]): String =
     allVersions
