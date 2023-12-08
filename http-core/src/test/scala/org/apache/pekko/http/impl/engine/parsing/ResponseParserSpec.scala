@@ -24,7 +24,7 @@ import scala.concurrent.duration._
 import org.scalatest.matchers.Matcher
 import pekko.util.ByteString
 import pekko.stream.scaladsl._
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet, SubstreamCancelStrategy }
 import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
@@ -422,7 +422,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
       Source(input.toList)
         .map(bytes => SessionBytes(TLSPlacebo.dummySession, ByteString(bytes)))
         .via(newParserStage(requestMethod)).named("parser")
-        .splitWhen(x => x.isInstanceOf[MessageStart] || x.isInstanceOf[EntityStreamError])
+        .splitWhen(SubstreamCancelStrategy.drain)(x =>
+          x.isInstanceOf[MessageStart] || x.isInstanceOf[EntityStreamError])
         .prefixAndTail(1)
         .collect {
           case (Seq(ResponseStart(statusCode, protocol, attributes, headers, createEntity, close)), entityParts) =>

@@ -177,7 +177,7 @@ private[http] object WebSocket {
     def prepareMessages: Flow[MessagePart, Message, NotUsed] =
       Flow[MessagePart]
         .via(PrepareForUserHandler)
-        .splitAfter(_.isMessageEnd)
+        .splitAfter(SubstreamCancelStrategy.drain)(_.isMessageEnd)
         .collect {
           case m: MessageDataPart => m
         }

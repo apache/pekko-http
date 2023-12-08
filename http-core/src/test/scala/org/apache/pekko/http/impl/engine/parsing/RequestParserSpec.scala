@@ -42,6 +42,7 @@ import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.settings.ParserSettings.ConflictingContentTypeHeaderProcessingMode
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
+import pekko.stream.SubstreamCancelStrategy
 import pekko.testkit._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -787,7 +788,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
       Source(input.toList)
         .map(bytes => SessionBytes(TLSPlacebo.dummySession, ByteString(bytes)))
         .via(parser).named("parser")
-        .splitWhen(x => x.isInstanceOf[MessageStart] || x.isInstanceOf[EntityStreamError])
+        .splitWhen(SubstreamCancelStrategy.drain)(x =>
+          x.isInstanceOf[MessageStart] || x.isInstanceOf[EntityStreamError])
         .prefixAndTail(1)
         .collect {
           case (Seq(RequestStart(method, uri, protocol, attrs, headers, createEntity, _, close)), entityParts) =>

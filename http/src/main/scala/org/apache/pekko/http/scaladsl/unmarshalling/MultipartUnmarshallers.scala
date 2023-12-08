@@ -24,7 +24,7 @@ import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import pekko.http.scaladsl.util.FastFuture
-import pekko.stream.ActorMaterializerHelper
+import pekko.stream.{ ActorMaterializerHelper, SubstreamCancelStrategy }
 import pekko.stream.scaladsl._
 
 import scala.collection.immutable
@@ -118,7 +118,7 @@ trait MultipartUnmarshallers {
               case _ =>
                 val bodyParts = entity.dataBytes
                   .via(parser)
-                  .splitWhen(_.isInstanceOf[PartStart])
+                  .splitWhen(SubstreamCancelStrategy.drain)(_.isInstanceOf[PartStart])
                   .prefixAndTail(1)
                   .collect {
                     case (Seq(BodyPartStart(headers, createEntity)), entityParts) =>
