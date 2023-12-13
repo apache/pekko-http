@@ -42,10 +42,10 @@ jobs:
         run: cp .jvmopts-ci .jvmopts
 
       - name: Compile everything
-        run: sbt -Dpekko.http.build.pekko.version=${{ matrix.PEKKO_VERSION }} "++ ${{ matrix.SCALA_VERSION }}" Test/compile
+        run: sbt -Dpekko.build.pekko.version=${{ matrix.PEKKO_VERSION }} "++ ${{ matrix.SCALA_VERSION }}" Test/compile
 
       - name: Run all tests JDK ${{ matrix.JDK }}, Scala ${{ matrix.SCALA_VERSION }}, Pekko ${{ matrix.PEKKO_VERSION }}
-        run: sbt -Dpekko.http.parallelExecution=false -Dpekko.test.timefactor=2 -Dpekko.http.build.pekko.version=${{ matrix.PEKKO_VERSION }} "++ ${{ matrix.SCALA_VERSION }}" mimaReportBinaryIssues test
+        run: sbt -Dpekko.http.parallelExecution=false -Dpekko.test.timefactor=2 -Dpekko.build.pekko.version=${{ matrix.PEKKO_VERSION }} "++ ${{ matrix.SCALA_VERSION }}" mimaReportBinaryIssues test
 
       - name: Upload test results
         uses: actions/upload-artifact@v3  # upload test results
