@@ -9,7 +9,8 @@
 
 import ValidatePullRequest._
 import net.bzzt.reproduciblebuilds.ReproducibleBuildsPlugin.reproducibleBuildsCheckResolver
-import com.github.pjfanning.pekkobuild._
+import com.github.pjfanning.pekkobuild.PekkoDependency
+import PekkoDependency._
 import Dependencies.{ h2specExe, h2specName }
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 import java.nio.file.Files
