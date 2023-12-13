@@ -2,7 +2,7 @@
 
 ## Examples
 * https://github.com/jrudolph/pekko-http-scala-js-websocket-chat
-* https://github.com/theiterators/pekko-http-microservice
+* https://github.com/apache/incubator-pekko-http-microservice
 
 If you are aware of any interesting examples that use Apache Pekko HTTP, please notify us or create a PR to modify this page.
 
