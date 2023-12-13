@@ -9,6 +9,7 @@
 
 import ValidatePullRequest._
 import net.bzzt.reproduciblebuilds.ReproducibleBuildsPlugin.reproducibleBuildsCheckResolver
+import com.github.pjfanning.pekkobuild.PekkoDependency
 import PekkoDependency._
 import Dependencies.{ h2specExe, h2specName }
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
@@ -147,9 +148,7 @@ lazy val httpCore = project("http-core")
   .addPekkoModuleDependency(
     "pekko-stream-testkit",
     "test",
-    pekko =
-      if (System.getProperty("pekko.http.test-against-pekko-main", "false") == "true") PekkoDependency.snapshotMain
-      else PekkoDependency.default)
+    PekkoDependency.default)
   .settings(Dependencies.httpCore)
   .settings(VersionGenerator.versionSettings)
   .settings(scalaMacroSupport)
@@ -408,11 +407,11 @@ lazy val httpScalafixTests =
 lazy val docs = project("docs")
   .enablePlugins(ParadoxPlugin, PekkoParadoxPlugin, NoPublish)
   .disablePlugins(MimaPlugin)
-  .addPekkoModuleDependency("pekko-stream", "provided", PekkoDependency.docs)
-  .addPekkoModuleDependency("pekko-actor-typed", "provided", PekkoDependency.docs)
-  .addPekkoModuleDependency("pekko-multi-node-testkit", "provided", PekkoDependency.docs)
-  .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoDependency.docs)
-  .addPekkoModuleDependency("pekko-actor-testkit-typed", "provided", PekkoDependency.docs)
+  .addPekkoModuleDependency("pekko-stream", "provided")
+  .addPekkoModuleDependency("pekko-actor-typed", "provided")
+  .addPekkoModuleDependency("pekko-multi-node-testkit", "provided")
+  .addPekkoModuleDependency("pekko-stream-testkit", "provided")
+  .addPekkoModuleDependency("pekko-actor-testkit-typed", "provided")
   .dependsOn(
     httpCore, http, httpXml, http2Tests, httpMarshallersJava, httpMarshallersScala, httpCaching, httpCors,
     httpTests % "compile;test->test", httpTestkit % "compile;test->test", httpScalafixRules % ScalafixConfig)
@@ -442,15 +441,15 @@ lazy val docs = project("docs")
     Compile / paradoxProperties ++= Map(
       "project.name" -> "Apache Pekko HTTP",
       "canonical.base_url" -> "https://pekko.apache.org/docs/pekko-http/current",
-      "pekko.version" -> PekkoDependency.docs.version,
+      "pekko.version" -> PekkoDependency.pekkoVersion,
       "jackson.xml.version" -> Dependencies.jacksonXmlVersion,
       "scalafix.version" -> _root_.scalafix.sbt.BuildInfo.scalafixVersion, // grab from scalafix plugin directly
       "extref.pekko-docs.base_url" -> s"https://pekko.apache.org/docs/pekko/current/%s",
       "javadoc.java.base_url" -> "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/",
       "javadoc.java.link_style" -> "direct",
-      "javadoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/japi/pekko/${PekkoDependency.docs.link}",
+      "javadoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/japi/pekko/${PekkoDependency.default.link}",
       "javadoc.org.apache.pekko.link_style" -> "direct",
-      "scaladoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/api/pekko/${PekkoDependency.docs.link}",
+      "scaladoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/api/pekko/${PekkoDependency.default.link}",
       "scaladoc.org.apache.pekko.link_style" -> "direct",
       "javadoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/api/pekko-http/${projectInfoVersion.value}",
       "scaladoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/japi/pekko-http/${projectInfoVersion.value}",
