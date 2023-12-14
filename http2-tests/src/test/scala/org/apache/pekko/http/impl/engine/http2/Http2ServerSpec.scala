@@ -19,7 +19,6 @@ import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.{ ErrorCode, Flags, FrameType, SettingIdentifier }
 import pekko.http.impl.engine.server.{ HttpAttributes, ServerTerminator }
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
-import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ CacheDirectives, RawHeader }
