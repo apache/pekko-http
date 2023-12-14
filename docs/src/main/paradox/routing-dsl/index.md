@@ -55,7 +55,7 @@ the Routing DSL will look like:
 
 ## Getting started
 
-The project template in @scala[[Apache Pekko HTTP Quickstart for Scala](https://github.com/theiterators/pekko-http-quickstart-scala.g8)]@java[[Apache Pekko HTTP Quickstart for Java](https://github.com/theiterators/pekko-http-quickstart-java.g8)] will help you to get a working Apache Pekko HTTP server running.
+The project template in @scala[[Apache Pekko HTTP Quickstart for Scala](https://github.com/apache/incubator-pekko-http-quickstart-scala.g8)]@java[[Apache Pekko HTTP Quickstart for Java](https://github.com/apache/incubator-pekko-http-quickstart-java.g8)] will help you to get a working Apache Pekko HTTP server running.
 
 ## Compared with Play framework routes
 
