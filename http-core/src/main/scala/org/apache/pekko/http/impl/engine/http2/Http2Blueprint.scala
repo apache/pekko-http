@@ -203,13 +203,9 @@ private[http] object Http2Blueprint {
 
   private def rapidResetMitigation(
       settings: Http2ServerSettings): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] = {
-    def frameCost(event: FrameEvent): Int = {
-      event match {
-        case _: FrameEvent.DataFrame         => 0
-        case _: FrameEvent.HeadersFrame      => 0
-        case _: FrameEvent.WindowUpdateFrame => 0 // TODO: should we throttle these?
-        case _                               => 1
-      }
+    def frameCost(event: FrameEvent): Int = event match {
+      case _: FrameEvent.RstStreamFrame => 1
+      case _                            => 0
     }
 
     BidiFlow.fromFlows(
