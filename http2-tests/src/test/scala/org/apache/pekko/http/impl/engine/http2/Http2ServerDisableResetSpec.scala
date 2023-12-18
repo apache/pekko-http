@@ -26,7 +26,7 @@ import java.nio.ByteOrder
 class Http2ServerDisableResetSpec extends Http2SpecWithMaterializer("""
     pekko.http.server.remote-address-header = on
     pekko.http.server.http2.log-frames = on
-    pekko.http.server.http2.reset-frame-throttle-interval = 0s
+    pekko.http.server.http2.reset-frame.throttle-interval = 0s
   """) {
   override def failOnSevereMessages: Boolean = true
 

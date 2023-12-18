@@ -163,9 +163,9 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       logFrames = c.getBoolean("log-frames"),
       pingInterval = c.getFiniteDuration("ping-interval"),
       pingTimeout = c.getFiniteDuration("ping-timeout"),
-      resetFrameThrottleCost = c.getInt("reset-frame-throttle-cost"),
-      resetFrameThrottleBurst = c.getInt("reset-frame-throttle-burst"),
-      resetFrameThrottleInterval = c.getFiniteDuration("reset-frame-throttle-interval"),
+      resetFrameThrottleCost = c.getInt("reset-frame.throttle-cost"),
+      resetFrameThrottleBurst = c.getInt("reset-frame.throttle-burst"),
+      resetFrameThrottleInterval = c.getFiniteDuration("reset-frame.throttle-interval"),
       None // no possibility to configure internal settings with config
     )
   }
