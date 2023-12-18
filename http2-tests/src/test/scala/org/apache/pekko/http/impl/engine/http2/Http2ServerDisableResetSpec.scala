@@ -14,9 +14,9 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import org.apache.pekko
-import org.apache.pekko.http.impl.engine.http2.Http2Protocol.FrameType
-import org.apache.pekko.http.impl.engine.http2.framing.FrameRenderer
-import org.apache.pekko.util.ByteStringBuilder
+import pekko.http.impl.engine.http2.Http2Protocol.FrameType
+import pekko.http.impl.engine.http2.framing.FrameRenderer
+import pekko.util.ByteStringBuilder
 
 import java.nio.ByteOrder
 
