@@ -24,6 +24,7 @@ import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
 import pekko.stream.TLSProtocol.{ SslTlsInbound, SslTlsOutbound }
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Sink, Source }
 import pekko.util.ByteString
+import com.typesafe.config.ConfigFactory
 import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.{ CountDownLatch, TimeUnit }
@@ -39,6 +40,9 @@ class H2ClientServerBenchmark extends CommonBenchmark with H2RequestResponseBenc
   implicit var system: ActorSystem = _
 
   val numRequests = 1000
+
+  @Param(Array("1s", "0s"))
+  var resetFrameThrottleInterval: String = _
 
   @Benchmark
   @OperationsPerInvocation(1000) // should be same as numRequest
@@ -69,7 +73,9 @@ class H2ClientServerBenchmark extends CommonBenchmark with H2RequestResponseBenc
   def setup(): Unit = {
     initRequestResponse()
 
-    system = ActorSystem("PekkoHttpBenchmarkSystem", config)
+    val resetFrameConfig = ConfigFactory.parseString(
+      s"pekko.http.server.http2.reset-frame.throttle-interval=$resetFrameThrottleInterval")
+    system = ActorSystem("PekkoHttpBenchmarkSystem", resetFrameConfig.withFallback(config))
     val settings = implicitly[ServerSettings]
     val log = system.log
     implicit val ec = system.dispatcher
