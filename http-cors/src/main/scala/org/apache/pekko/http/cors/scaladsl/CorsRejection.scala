@@ -26,7 +26,6 @@ import pekko.http.cors.javadsl
 
 import java.util
 import scala.collection.JavaConverters._
-import scala.collection.immutable.Seq
 
 /**
  * Rejection created by the CORS directives. Signal the CORS request was rejected. The reason of the rejection is

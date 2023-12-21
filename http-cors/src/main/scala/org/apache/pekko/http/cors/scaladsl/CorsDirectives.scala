@@ -27,8 +27,6 @@ import pekko.http.cors.javadsl
 import pekko.http.cors.scaladsl.model.HttpOriginMatcher
 import pekko.http.cors.scaladsl.settings.CorsSettings
 
-import scala.collection.immutable.Seq
-
 /**
  * Provides directives that implement the CORS mechanism, enabling cross origin requests.
  *
