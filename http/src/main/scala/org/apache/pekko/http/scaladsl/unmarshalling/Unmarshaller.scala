@@ -15,15 +15,19 @@ package org.apache.pekko.http.scaladsl.unmarshalling
 
 import org.apache.pekko
 import pekko.event.Logging
+import pekko.http.{ javadsl => jm }
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.stream.Materializer
+import pekko.util.OptionConverters._
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.control.{ NoStackTrace, NonFatal }
 
-trait Unmarshaller[-A, B] extends pekko.http.javadsl.unmarshalling.Unmarshaller[A, B] {
+trait Unmarshaller[-A, B] extends jm.unmarshalling.Unmarshaller[A, B] {
 
   implicit final def asScala: Unmarshaller[A, B] = this
 
@@ -164,21 +168,29 @@ object Unmarshaller
    * [[pekko.http.scaladsl.unmarshalling.Unmarshaller]] instead.
    */
   final class UnsupportedContentTypeException(
-      val supported: Set[ContentTypeRange],
-      val actualContentType: Option[ContentType])
-      extends RuntimeException(supported.mkString(
-        s"Unsupported Content-Type [$actualContentType], supported: ", ", ", "")) with Product with Serializable {
+      private val _supported: java.util.Set[jm.model.ContentTypeRange],
+      private val _actualContentType: java.util.Optional[jm.model.ContentType])
+      extends jm.unmarshalling.Unmarshaller.UnsupportedContentTypeException(_supported, _actualContentType) with Product
+      with Serializable {
+
+    val supported: Set[ContentTypeRange] =
+      _supported.asScala.toSet.asInstanceOf[Set[pekko.http.scaladsl.model.ContentTypeRange]]
+    val actualContentType: Option[ContentType] = _actualContentType.asScala
+
+    def this(supported: Set[ContentTypeRange], actualContentType: Option[ContentType]) =
+      this(supported.asJava.asInstanceOf[java.util.Set[jm.model.ContentTypeRange]],
+        actualContentType.toJava.asInstanceOf[java.util.Optional[jm.model.ContentType]])
 
     @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
     def this(supported: Set[ContentTypeRange]) = this(supported, None)
 
     @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
     def copy(supported: Set[ContentTypeRange]): UnsupportedContentTypeException =
-      new UnsupportedContentTypeException(supported, this.actualContentType)
+      new UnsupportedContentTypeException(supported, actualContentType)
 
     @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
     def copy$default$1(supported: Set[ContentTypeRange]): UnsupportedContentTypeException =
-      new UnsupportedContentTypeException(supported, this.actualContentType)
+      new UnsupportedContentTypeException(supported, actualContentType)
 
     @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
     def copy(
@@ -190,7 +202,7 @@ object Unmarshaller
 
     override def equals(that: Any): Boolean = that match {
       case that: UnsupportedContentTypeException =>
-        that.canEqual(this) && that.supported == this.supported && that.actualContentType == this.actualContentType
+        that.canEqual(this) && super.equals(this)
       case _ => false
     }
     override def productArity: Int = 1
