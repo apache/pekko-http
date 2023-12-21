@@ -16,6 +16,7 @@ package org.apache.pekko.http.impl.engine.http2
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.util.AsciiTreeLayout
+import pekko.http.ccompat.imm._
 
 import scala.collection.immutable
 import scala.collection.immutable.{ TreeMap, TreeSet }

@@ -14,6 +14,7 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import org.apache.pekko
+import pekko.http.ccompat._
 
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter

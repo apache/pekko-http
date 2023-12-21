@@ -29,6 +29,7 @@ import pekko.http.scaladsl.settings.ParserSettings
 
 import scala.annotation.tailrec
 import pekko.util.ByteString
+import pekko.http.ccompat._
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
 import pekko.http.scaladsl.model.headers.{ EmptyHeader, RawHeader }
