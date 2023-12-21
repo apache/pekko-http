@@ -13,12 +13,7 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-import org.apache.pekko.Done;
 import org.apache.pekko.http.impl.util.JavaAccessors;
-import org.apache.pekko.stream.Materializer;
-import org.apache.pekko.stream.javadsl.Sink;
-
-import java.util.concurrent.CompletionStage;
 
 /** Represents an Http request. */
 public abstract class HttpRequest

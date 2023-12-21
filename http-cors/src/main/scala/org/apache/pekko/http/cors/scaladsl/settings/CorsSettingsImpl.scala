@@ -22,8 +22,6 @@ import pekko.http.scaladsl.model.{ HttpHeader, HttpMethod }
 import pekko.http.scaladsl.model.headers._
 import pekko.http.cors.scaladsl.model.{ HttpHeaderRange, HttpOriginMatcher }
 
-import scala.collection.immutable.Seq
-
 /** INTERNAL API */
 final private[pekko] case class CorsSettingsImpl(
     allowGenericHttpRequests: Boolean,

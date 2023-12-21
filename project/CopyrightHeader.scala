@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils
 
 object CopyrightHeader extends AutoPlugin {
   import HeaderPlugin.autoImport._
-  import ValidatePullRequest.{ additionalTasks, ValidatePR }
 
   override def requires = HeaderPlugin
   override def trigger = allRequirements

@@ -15,7 +15,6 @@ package org.apache.pekko.http.impl.util
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.http.ccompat._
 import pekko.util.ByteString
 
 /**

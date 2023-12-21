@@ -21,8 +21,6 @@ import org.apache.pekko
 import pekko.http.cors.javadsl
 import pekko.util.Helpers
 
-import scala.collection.immutable.Seq
-
 abstract class HttpHeaderRange extends javadsl.model.HttpHeaderRange
 
 object HttpHeaderRange {

@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import org.apache.pekko
 import directives._
 
 /**
