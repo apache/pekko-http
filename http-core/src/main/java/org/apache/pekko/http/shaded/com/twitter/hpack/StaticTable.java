@@ -36,8 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.ISO_8859_1;
-
 final class StaticTable {
 
   private static final String EMPTY = "";

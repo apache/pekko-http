@@ -15,8 +15,6 @@ package org.apache.pekko.http.javadsl.model;
 
 import org.apache.pekko.http.impl.model.JavaQuery;
 import org.apache.pekko.http.impl.model.UriJavaAccessor;
-import org.apache.pekko.http.scaladsl.model.*;
-import org.apache.pekko.http.javadsl.model.HttpCharset;
 import org.apache.pekko.japi.Pair;
 import org.parboiled2.CharPredicate;
 import org.parboiled2.ParserInput$;

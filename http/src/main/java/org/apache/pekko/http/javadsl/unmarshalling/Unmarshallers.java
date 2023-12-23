@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.javadsl.unmarshalling;
 
-import java.util.function.Function;
-
 public interface Unmarshallers {
   /** Creates an unmarshaller from an asynchronous Java function. */
   // #unmarshaller-creation
