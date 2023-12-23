@@ -22,6 +22,8 @@ import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.headers.HttpOrigin
 import pekko.http.cors.javadsl
 
+import scala.collection.immutable.Seq
+
 /**
  * HttpOrigin matcher.
  */

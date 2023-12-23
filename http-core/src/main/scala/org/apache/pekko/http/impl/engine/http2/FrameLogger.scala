@@ -19,6 +19,7 @@ import pekko.annotation.InternalApi
 import pekko.stream.scaladsl.{ BidiFlow, Flow }
 import pekko.util.ByteString
 
+import scala.collection.immutable.Seq
 import FrameEvent._
 import pekko.event.Logging
 import pekko.stream.Attributes
