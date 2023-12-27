@@ -45,7 +45,7 @@ object VersionGenerator {
 
   def generateVersion(dir: SettingKey[File], locate: File => File, template: String) = Def.task[Seq[File]] {
     val file = locate(dir.value)
-    val content = template.stripMargin.format(version.value, PekkoDependency.pekkoVersion)
+    val content = template.stripMargin.format(version.value, PekkoDependency.minPekkoVersion)
     if (!file.exists || IO.read(file) != content) IO.write(file, content)
     Seq(file)
   }
