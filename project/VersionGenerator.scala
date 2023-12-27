@@ -13,6 +13,7 @@
 
 import sbt._
 import sbt.Keys._
+import com.github.pjfanning.pekkobuild.PekkoDependency
 
 /**
  * Generate version.conf and pekko/Version.scala files based on the version setting.
