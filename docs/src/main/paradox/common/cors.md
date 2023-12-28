@@ -59,7 +59,7 @@ final Route route = cors(settings, () -> {
 ## Rejection
 The CORS directives can reject requests using the `CorsRejection` class. Requests can be either malformed or not allowed to access the resource.
 
-A rejection handler is provided by the library to return meaningful HTTP responses. Read the pekko documentation (link TODO) to learn more about rejections, or if you need to write your own handler.
+A rejection handler is provided by the library to return meaningful HTTP responses. Read the @ref[Pekko documentation](../routing-dsl/rejections.md) to learn more about rejections, or if you need to write your own handler.
 
 Scala
 :   @@snip [CorsServerExample.scala](/docs/src/test/scala/docs/http/scaladsl/server/cors/CorsServerExample.scala) { #cors-server-example }
