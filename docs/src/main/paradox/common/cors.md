@@ -28,6 +28,7 @@ val route: Route = cors() {
 }
 ```
 @@@
+
 @@@ div { .group-java }
 ```java
 import static org.apache.pekko.http.cors.javadsl.CorsDirectives.*;
@@ -39,6 +40,7 @@ final Route route = cors(() -> {
 @@@
 
 The settings can be updated programmatically too.
+
 @@@ div { .group-scala }
 ```scala
 val settings = CorsSettings(...).withAllowGenericHttpRequests(false)
@@ -47,6 +49,7 @@ val strictRoute: Route = cors(settings) {
 }
 ```
 @@@
+
 @@@ div { .group-java }
 ```java
 final CorsSettings settings = CorsSettings.create(...).withAllowGenericHttpRequests(false);
