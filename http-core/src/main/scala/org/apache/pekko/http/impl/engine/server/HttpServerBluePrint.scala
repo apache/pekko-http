@@ -503,7 +503,7 @@ private[http] object HttpServerBluePrint {
                       log.error(ex,
                         s"Response stream for [${requestStart.debugString}] failed with '${ex.getMessage}'. Aborting connection.")
                     case _ => // ignore
-                  }(ExecutionContexts.sameThreadExecutionContext)
+                  }(ExecutionContexts.parasitic)
                   newEntity
                 }
 

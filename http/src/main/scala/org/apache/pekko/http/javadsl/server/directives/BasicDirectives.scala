@@ -99,8 +99,8 @@ abstract class BasicDirectives {
       inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRouteResultFuture(stage =>
       FutureConverters.asScala(
-        f(stage.fast.map(_.asJava)(ExecutionContexts.sameThreadExecutionContext).asJava)).fast.map(_.asScala)(
-        ExecutionContexts.sameThreadExecutionContext)) {
+        f(stage.fast.map(_.asJava)(ExecutionContexts.parasitic).asJava)).fast.map(_.asScala)(
+        ExecutionContexts.parasitic)) {
       inner.get.delegate
     }
   }
@@ -108,7 +108,7 @@ abstract class BasicDirectives {
   def mapRouteResultWith(f: JFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route =
     RouteAdapter {
       D.mapRouteResultWith(r =>
-        FutureConverters.asScala(f(r.asJava)).fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) {
+        FutureConverters.asScala(f(r.asJava)).fast.map(_.asScala)(ExecutionContexts.parasitic)) {
         inner.get.delegate
       }
     }
@@ -116,7 +116,7 @@ abstract class BasicDirectives {
   def mapRouteResultWithPF(
       f: PartialFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRouteResultWith(r =>
-      FutureConverters.asScala(f(r.asJava)).fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) {
+      FutureConverters.asScala(f(r.asJava)).fast.map(_.asScala)(ExecutionContexts.parasitic)) {
       inner.get.delegate
     }
   }
@@ -175,7 +175,7 @@ abstract class BasicDirectives {
       f: JFunction[JIterable[Rejection], CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
     D.recoverRejectionsWith(rs =>
       FutureConverters.asScala(f.apply(Util.javaArrayList(rs.map(_.asJava)))).fast.map(_.asScala)(
-        ExecutionContexts.sameThreadExecutionContext)) { inner.get.delegate }
+        ExecutionContexts.parasitic)) { inner.get.delegate }
   }
 
   /**

@@ -125,7 +125,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
                 // See https://github.com/akka/akka/issues/17992
                 case NonFatal(ex) =>
                   Done
-              }(ExecutionContexts.sameThreadExecutionContext)
+              }(ExecutionContexts.parasitic)
           } catch {
             case NonFatal(e) =>
               log.error(e, "Could not materialize handling flow for {}", incoming)
