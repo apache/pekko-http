@@ -469,7 +469,7 @@ private[client] object NewHostConnectionPool {
                   entityComplete.onComplete(safely {
                     case Success(_)     => withSlot(_.onRequestEntityCompleted())
                     case Failure(cause) => withSlot(_.onRequestEntityFailed(cause))
-                  })(ExecutionContexts.sameThreadExecutionContext)
+                  })(ExecutionContexts.parasitic)
                   request.withEntity(newEntity)
               }
 
@@ -524,9 +524,9 @@ private[client] object NewHostConnectionPool {
                       ongoingResponseEntity = None
                       ongoingResponseEntityKillSwitch = None
                     }
-                  }(ExecutionContexts.sameThreadExecutionContext)
+                  }(ExecutionContexts.parasitic)
                 case Failure(_) => throw new IllegalStateException("Should never fail")
-              })(ExecutionContexts.sameThreadExecutionContext)
+              })(ExecutionContexts.parasitic)
 
               withSlot(_.onResponseReceived(response.withEntity(newEntity)))
             }
@@ -609,7 +609,7 @@ private[client] object NewHostConnectionPool {
                 onConnectionAttemptFailed(currentEmbargoLevel)
                 sl.onConnectionAttemptFailed(cause)
               }
-          })(ExecutionContexts.sameThreadExecutionContext)
+          })(ExecutionContexts.parasitic)
 
           slotCon
         }

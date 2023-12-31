@@ -89,7 +89,7 @@ private[http] object StreamUtils {
             killResult.future.value match {
               case Some(res) => handleKill(res)
               case None =>
-                killResult.future.onComplete(killCallback.invoke)(ExecutionContexts.sameThreadExecutionContext)
+                killResult.future.onComplete(killCallback.invoke)(ExecutionContexts.parasitic)
             }
           }
 
