@@ -48,7 +48,6 @@ import java.util.function.Predicate
 import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.http.javadsl.server
-import pekko.util.FutureConverters
 import pekko.util.FutureConverters._
 
 import scala.concurrent.duration.FiniteDuration
@@ -98,8 +97,8 @@ abstract class BasicDirectives {
   def mapRouteResultFuture(f: JFunction[CompletionStage[RouteResult], CompletionStage[RouteResult]],
       inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRouteResultFuture(stage =>
-      FutureConverters.asScala(
-        f(stage.fast.map(_.asJava)(ExecutionContexts.parasitic).asJava)).fast.map(_.asScala)(
+      CompletionStageOps(
+        f(stage.fast.map(_.asJava)(ExecutionContexts.parasitic).asJava)).asScala.fast.map(_.asScala)(
         ExecutionContexts.parasitic)) {
       inner.get.delegate
     }
@@ -108,7 +107,7 @@ abstract class BasicDirectives {
   def mapRouteResultWith(f: JFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route =
     RouteAdapter {
       D.mapRouteResultWith(r =>
-        FutureConverters.asScala(f(r.asJava)).fast.map(_.asScala)(ExecutionContexts.parasitic)) {
+        CompletionStageOps(f(r.asJava)).asScala.fast.map(_.asScala)(ExecutionContexts.parasitic)) {
         inner.get.delegate
       }
     }
@@ -116,7 +115,7 @@ abstract class BasicDirectives {
   def mapRouteResultWithPF(
       f: PartialFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRouteResultWith(r =>
-      FutureConverters.asScala(f(r.asJava)).fast.map(_.asScala)(ExecutionContexts.parasitic)) {
+      CompletionStageOps(f(r.asJava)).asScala.fast.map(_.asScala)(ExecutionContexts.parasitic)) {
       inner.get.delegate
     }
   }
@@ -174,7 +173,7 @@ abstract class BasicDirectives {
   def recoverRejectionsWith(
       f: JFunction[JIterable[Rejection], CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
     D.recoverRejectionsWith(rs =>
-      FutureConverters.asScala(f.apply(Util.javaArrayList(rs.map(_.asJava)))).fast.map(_.asScala)(
+      CompletionStageOps(f.apply(Util.javaArrayList(rs.map(_.asJava)))).asScala.fast.map(_.asScala)(
         ExecutionContexts.parasitic)) { inner.get.delegate }
   }
 
