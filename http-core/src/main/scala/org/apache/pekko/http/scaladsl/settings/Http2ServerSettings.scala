@@ -103,13 +103,13 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def withPingTimeout(timeout: FiniteDuration): Http2ServerSettings = copy(pingTimeout = timeout)
 
   def resetFrameThrottleCost: Int
-  def withResetsThrottleCost(cost: Int) = copy(resetFrameThrottleCost = cost)
+  def withResetThrottleCost(cost: Int) = copy(resetFrameThrottleCost = cost)
 
   def resetFrameThrottleBurst: Int
-  def withResetsThrottleBurst(burst: Int) = copy(resetFrameThrottleBurst = burst)
+  def withResetThrottleBurst(burst: Int) = copy(resetFrameThrottleBurst = burst)
 
   def resetFrameThrottleInterval: FiniteDuration
-  def withResetsThrottleInterval(interval: FiniteDuration) = copy(resetFrameThrottleInterval = interval)
+  def withResetThrottleInterval(interval: FiniteDuration) = copy(resetFrameThrottleInterval = interval)
 
   @InternalApi
   private[http] def internalSettings: Option[Http2InternalServerSettings]
