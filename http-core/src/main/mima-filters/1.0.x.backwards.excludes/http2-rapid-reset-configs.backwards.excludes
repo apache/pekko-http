@@ -16,6 +16,7 @@
 # under the License.
 
 # New configs added to support throttling HTTP/2 reset frames
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings.frameTypeThrottleFrameTypes")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings.frameTypeThrottleCost")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings.frameTypeThrottleBurst")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings.frameTypeThrottleInterval")
