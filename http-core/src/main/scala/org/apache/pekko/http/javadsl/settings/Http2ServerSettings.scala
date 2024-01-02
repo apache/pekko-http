@@ -53,7 +53,6 @@ trait Http2ServerSettings {
   def getPingTimeout: Duration = Duration.ofMillis(pingTimeout.toMillis)
   def withPingTimeout(timeout: Duration): Http2ServerSettings = withPingTimeout(timeout.toMillis.millis)
 
-
   def getFrameTypeThrottleFrameTypes(): java.util.List[String] = frameTypeThrottleFrameTypes.asJava
   def getFrameTypeThrottleCost(): Int = frameTypeThrottleCost
   def getFrameTypeThrottleBurst(): Int = frameTypeThrottleBurst
