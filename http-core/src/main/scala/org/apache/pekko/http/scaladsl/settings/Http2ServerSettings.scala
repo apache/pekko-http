@@ -102,14 +102,14 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def pingTimeout: FiniteDuration
   def withPingTimeout(timeout: FiniteDuration): Http2ServerSettings = copy(pingTimeout = timeout)
 
-  def resetFrameThrottleCost: Int
-  def withResetThrottleCost(cost: Int) = copy(resetFrameThrottleCost = cost)
+  def frameTypeThrottleCost: Int
+  def withFrameTypeThrottleCost(cost: Int) = copy(frameTypeThrottleCost = cost)
 
-  def resetFrameThrottleBurst: Int
-  def withResetThrottleBurst(burst: Int) = copy(resetFrameThrottleBurst = burst)
+  def frameTypeThrottleBurst: Int
+  def withFrameTypeThrottleBurst(burst: Int) = copy(frameTypeThrottleBurst = burst)
 
-  def resetFrameThrottleInterval: FiniteDuration
-  def withResetThrottleInterval(interval: FiniteDuration) = copy(resetFrameThrottleInterval = interval)
+  def frameTypeThrottleInterval: FiniteDuration
+  def withFrameTypeThrottleInterval(interval: FiniteDuration) = copy(frameTypeThrottleInterval = interval)
 
   @InternalApi
   private[http] def internalSettings: Option[Http2InternalServerSettings]
@@ -133,9 +133,9 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       logFrames: Boolean,
       pingInterval: FiniteDuration,
       pingTimeout: FiniteDuration,
-      resetFrameThrottleCost: Int,
-      resetFrameThrottleBurst: Int,
-      resetFrameThrottleInterval: FiniteDuration,
+      frameTypeThrottleCost: Int,
+      frameTypeThrottleBurst: Int,
+      frameTypeThrottleInterval: FiniteDuration,
       internalSettings: Option[Http2InternalServerSettings])
       extends Http2ServerSettings {
     require(maxConcurrentStreams >= 0, "max-concurrent-streams must be >= 0")
@@ -163,9 +163,9 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       logFrames = c.getBoolean("log-frames"),
       pingInterval = c.getFiniteDuration("ping-interval"),
       pingTimeout = c.getFiniteDuration("ping-timeout"),
-      resetFrameThrottleCost = c.getInt("reset-frame.throttle-cost"),
-      resetFrameThrottleBurst = c.getInt("reset-frame.throttle-burst"),
-      resetFrameThrottleInterval = c.getFiniteDuration("reset-frame.throttle-interval"),
+      frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),
+      frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),
+      frameTypeThrottleInterval = c.getFiniteDuration("frame-type-throttle.interval"),
       None // no possibility to configure internal settings with config
     )
   }

@@ -128,7 +128,7 @@ private[http] object Http2Blueprint {
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames) atop // enable for debugging
       hpackCoding(masterHttpHeaderParser, settings.parserSettings)
 
-    val flow1 = if (settings.http2Settings.resetFrameThrottleInterval.toMillis > 0) {
+    val flow1 = if (settings.http2Settings.frameTypeThrottleInterval.toMillis > 0) {
       flow0 atop rapidResetMitigation(settings.http2Settings) atopKeepLeft framing(log)
     } else flow0 atop framing(log)
 
@@ -210,8 +210,8 @@ private[http] object Http2Blueprint {
 
     BidiFlow.fromFlows(
       Flow[FrameEvent],
-      Flow[FrameEvent].throttle(settings.resetFrameThrottleCost, settings.resetFrameThrottleInterval,
-        settings.resetFrameThrottleBurst, frameCost, ThrottleMode.Enforcing))
+      Flow[FrameEvent].throttle(settings.frameTypeThrottleCost, settings.frameTypeThrottleInterval,
+        settings.frameTypeThrottleBurst, frameCost, ThrottleMode.Enforcing))
   }
 
   /**

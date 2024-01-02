@@ -26,7 +26,7 @@ import java.nio.ByteOrder
 class Http2ServerEnableResetThrottleSpec extends Http2SpecWithMaterializer("""
     pekko.http.server.remote-address-header = on
     pekko.http.server.http2.log-frames = on
-    pekko.http.server.http2.reset-frame.throttle-interval = 1s
+    pekko.http.server.http2.frame-type-throttle.interval = 1s
   """) {
   override val expectSevereLogsOnlyToMatch: Option[String] = Some(
     "HTTP2 connection failed with error [Maximum throttle throughput exceeded.]. Sending INTERNAL_ERROR and closing connection.")
