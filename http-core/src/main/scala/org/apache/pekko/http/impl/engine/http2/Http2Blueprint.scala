@@ -128,8 +128,9 @@ private[http] object Http2Blueprint {
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames) atop // enable for debugging
       hpackCoding(masterHttpHeaderParser, settings.parserSettings)
 
-    val flow1 = if (settings.http2Settings.frameTypeThrottleInterval.toMillis > 0) {
-      flow0 atop rapidResetMitigation(settings.http2Settings) atopKeepLeft framing(log)
+    val frameTypesForThrottle = getFrameTypesForThrottle(settings.http2Settings)
+    val flow1 = if (frameTypesForThrottle.nonEmpty) {
+      flow0 atop rapidResetMitigation(settings.http2Settings, frameTypesForThrottle) atopKeepLeft framing(log)
     } else flow0 atop framing(log)
 
     flow1 atop
@@ -201,17 +202,37 @@ private[http] object Http2Blueprint {
       Flow[FrameEvent].map(FrameRenderer.render).prepend(Source.single(Http2Protocol.ClientConnectionPreface)),
       Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = false, log)))
 
-  private def rapidResetMitigation(
-      settings: Http2ServerSettings): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] = {
-    def frameCost(event: FrameEvent): Int = event match {
-      case _: FrameEvent.RstStreamFrame => 1
-      case _                            => 0
+  private def rapidResetMitigation(settings: Http2ServerSettings,
+      frameTypesForThrottle: Set[String]): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] = {
+    def frameCost(event: FrameEvent): Int = {
+      if (frameTypesForThrottle.contains(event.frameTypeName)) 1 else 0
     }
 
     BidiFlow.fromFlows(
       Flow[FrameEvent],
       Flow[FrameEvent].throttle(settings.frameTypeThrottleCost, settings.frameTypeThrottleInterval,
         settings.frameTypeThrottleBurst, frameCost, ThrottleMode.Enforcing))
+  }
+
+  private def getFrameTypesForThrottle(settings: Http2ServerSettings): Set[String] = {
+    val list = settings.frameTypeThrottleFrameTypes
+    if (list.isEmpty) {
+      Set.empty
+    } else {
+      list.flatMap { frameType =>
+        frameType.toLowerCase match {
+          case "reset"         => Some("RstStreamFrame")
+          case "headers"       => Some("HeadersFrame")
+          case "continuation"  => Some("ContinuationFrame")
+          case "go-away"       => Some("GoAwayFrame")
+          case "priority"      => Some("PriorityFrame")
+          case "ping"          => Some("PingFrame")
+          case "push-promise"  => Some("PushPromiseFrame")
+          case "window-update" => Some("WindowUpdateFrame")
+          case _               => None
+        }
+      }.toSet
+    }
   }
 
   /**

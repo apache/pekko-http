@@ -23,7 +23,7 @@ import java.nio.ByteOrder
 /**
  * This tests the http2 server throttle support for rapid resets is disabled by default.
  */
-class Http2ServerDisableResetThrottleSpec extends Http2SpecWithMaterializer("""
+class Http2ServerDisableFrameTypeThrottleSpec extends Http2SpecWithMaterializer("""
     pekko.http.server.remote-address-header = on
     pekko.http.server.http2.log-frames = on
   """) {

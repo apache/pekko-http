@@ -153,6 +153,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
     require(minCollectStrictEntitySize <= (incomingConnectionLevelBufferSize / maxConcurrentStreams),
       "min-collect-strict-entity-size <= incoming-connection-level-buffer-size / max-concurrent-streams")
     require(outgoingControlFrameBufferSize > 0, "outgoing-control-frame-buffer-size must be > 0")
+    require(frameTypeThrottleInterval.toMillis > 0, "frame-type-throttle.interval must be a positive duration")
     Http2CommonSettings.validate(this)
   }
 

@@ -41,8 +41,8 @@ class H2ClientServerBenchmark extends CommonBenchmark with H2RequestResponseBenc
 
   val numRequests = 1000
 
-  @Param(Array("1s", "0s"))
-  var frameTypeThrottleInterval: String = _
+  @Param(Array("[]", "[\"reset\"]"))
+  var frameTypeThrottleFrameTypes: String = _
 
   @Benchmark
   @OperationsPerInvocation(1000) // should be same as numRequest
@@ -73,9 +73,9 @@ class H2ClientServerBenchmark extends CommonBenchmark with H2RequestResponseBenc
   def setup(): Unit = {
     initRequestResponse()
 
-    val resetFrameConfig = ConfigFactory.parseString(
-      s"pekko.http.server.http2.frame-type-throttle.interval=$frameTypeThrottleInterval")
-    system = ActorSystem("PekkoHttpBenchmarkSystem", resetFrameConfig.withFallback(config))
+    val throttleConfig = ConfigFactory.parseString(
+      s"pekko.http.server.http2.frame-type-throttle.frame-types=$frameTypeThrottleFrameTypes")
+    system = ActorSystem("PekkoHttpBenchmarkSystem", throttleConfig.withFallback(config))
     val settings = implicitly[ServerSettings]
     val log = system.log
     implicit val ec = system.dispatcher
