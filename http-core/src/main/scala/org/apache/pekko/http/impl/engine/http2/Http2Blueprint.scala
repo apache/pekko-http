@@ -219,19 +219,21 @@ private[http] object Http2Blueprint {
     if (set.isEmpty) {
       Set.empty
     } else {
-      set.flatMap { frameType =>
-        frameType.toLowerCase match {
-          case "reset"         => Some("RstStreamFrame")
-          case "headers"       => Some("HeadersFrame")
-          case "continuation"  => Some("ContinuationFrame")
-          case "go-away"       => Some("GoAwayFrame")
-          case "priority"      => Some("PriorityFrame")
-          case "ping"          => Some("PingFrame")
-          case "push-promise"  => Some("PushPromiseFrame")
-          case "window-update" => Some("WindowUpdateFrame")
-          case _               => None
-        }
-      }
+      set.flatMap(frameTypeAliasToFrameTypeName)
+    }
+  }
+
+  private[http2] def frameTypeAliasToFrameTypeName(frameType: String): Option[String] = {
+    frameType.toLowerCase match {
+      case "reset"         => Some("RstStreamFrame")
+      case "headers"       => Some("HeadersFrame")
+      case "continuation"  => Some("ContinuationFrame")
+      case "go-away"       => Some("GoAwayFrame")
+      case "priority"      => Some("PriorityFrame")
+      case "ping"          => Some("PingFrame")
+      case "push-promise"  => Some("PushPromiseFrame")
+      case "window-update" => Some("WindowUpdateFrame")
+      case _               => None
     }
   }
 
