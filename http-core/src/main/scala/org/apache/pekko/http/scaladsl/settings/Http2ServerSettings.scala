@@ -103,8 +103,8 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def pingTimeout: FiniteDuration
   def withPingTimeout(timeout: FiniteDuration): Http2ServerSettings = copy(pingTimeout = timeout)
 
-  def frameTypeThrottleFrameTypes: Seq[String]
-  def withFrameTypeThrottleFrameTypes(frameTypes: Seq[String]) = copy(frameTypeThrottleFrameTypes = frameTypes)
+  def frameTypeThrottleFrameTypes: Set[String]
+  def withFrameTypeThrottleFrameTypes(frameTypes: Set[String]) = copy(frameTypeThrottleFrameTypes = frameTypes)
 
   def frameTypeThrottleCost: Int
   def withFrameTypeThrottleCost(cost: Int) = copy(frameTypeThrottleCost = cost)
@@ -137,7 +137,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       logFrames: Boolean,
       pingInterval: FiniteDuration,
       pingTimeout: FiniteDuration,
-      frameTypeThrottleFrameTypes: Seq[String],
+      frameTypeThrottleFrameTypes: Set[String],
       frameTypeThrottleCost: Int,
       frameTypeThrottleBurst: Int,
       frameTypeThrottleInterval: FiniteDuration,
@@ -169,7 +169,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       logFrames = c.getBoolean("log-frames"),
       pingInterval = c.getFiniteDuration("ping-interval"),
       pingTimeout = c.getFiniteDuration("ping-timeout"),
-      frameTypeThrottleFrameTypes = c.getStringList("frame-type-throttle.frame-types").asScala.toSeq,
+      frameTypeThrottleFrameTypes = c.getStringList("frame-type-throttle.frame-types").asScala.toSet,
       frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),
       frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),
       frameTypeThrottleInterval = c.getFiniteDuration("frame-type-throttle.interval"),

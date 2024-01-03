@@ -215,11 +215,11 @@ private[http] object Http2Blueprint {
   }
 
   private def getFrameTypesForThrottle(settings: Http2ServerSettings): Set[String] = {
-    val list = settings.frameTypeThrottleFrameTypes
-    if (list.isEmpty) {
+    val set = settings.frameTypeThrottleFrameTypes
+    if (set.isEmpty) {
       Set.empty
     } else {
-      list.flatMap { frameType =>
+      set.flatMap { frameType =>
         frameType.toLowerCase match {
           case "reset"         => Some("RstStreamFrame")
           case "headers"       => Some("HeadersFrame")
@@ -231,7 +231,7 @@ private[http] object Http2Blueprint {
           case "window-update" => Some("WindowUpdateFrame")
           case _               => None
         }
-      }.toSet
+      }
     }
   }
 
