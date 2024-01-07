@@ -21,7 +21,7 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.3")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1") // for advanced PR validation features
 addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.1")
 addSbtPlugin("com.lightbend.sbt" % "sbt-bill-of-materials" % "1.0.2")
-addSbtPlugin("com.github.sbt" % "sbt-license-report" % "1.5.0")
+addSbtPlugin("com.github.sbt" % "sbt-license-report" % "1.6.1")
 
 // We have to deliberately use older versions of sbt-paradox because current Pekko sbt build
 // only loads on JDK 1.8 so we need to bring in older versions of parboiled which support JDK 1.8
