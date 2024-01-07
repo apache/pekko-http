@@ -92,8 +92,7 @@ public class Jackson {
     }
   }
 
-  private static ObjectMapper createMapper() {
-    Config config = ConfigFactory.load().getConfig("pekko.http.jackson");
+  static ObjectMapper createMapper(final Config config) {
     StreamReadConstraints streamReadConstraints =
         StreamReadConstraints.builder()
             .maxNestingDepth(config.getInt("read.max-nesting-depth"))
