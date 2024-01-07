@@ -15,6 +15,9 @@ package org.apache.pekko.http.javadsl.marshallers.jackson;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.fasterxml.jackson.core.StreamWriteConstraints;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
@@ -32,7 +35,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class JacksonTest extends JUnitRouteTest {
 
@@ -80,5 +83,51 @@ public class JacksonTest extends JUnitRouteTest {
 
     runRoute(route.seal(), HttpRequest.PUT("/").withEntity(invalidEntity))
         .assertEntity("The request content was malformed:\nCannot unmarshal JSON as SomeData");
+  }
+
+  @Test
+  public void configStreamReadsConstraints() throws Exception {
+    final int maxNumLen = 987;
+    final int maxNameLen = 54321;
+    final int maxStringLen = 1234567;
+    final long maxDocLen = 123456789L;
+    final int maxNestingDepth = 5;
+    String configText =
+        "read.max-number-length="
+            + maxNumLen
+            + "\n"
+            + "read.max-name-length="
+            + maxNameLen
+            + "\n"
+            + "read.max-string-length="
+            + maxStringLen
+            + "\n"
+            + "read.max-document-length="
+            + maxDocLen
+            + "\n"
+            + "read.max-nesting-depth="
+            + maxNestingDepth;
+    Config config =
+        ConfigFactory.parseString(configText)
+            .withFallback(ConfigFactory.load().getConfig("pekko.http.jackson"));
+    ObjectMapper mapper = Jackson.createMapper(config);
+    StreamReadConstraints constraints = mapper.getFactory().streamReadConstraints();
+    assertEquals(maxNumLen, constraints.getMaxNumberLength());
+    assertEquals(maxNameLen, constraints.getMaxNameLength());
+    assertEquals(maxStringLen, constraints.getMaxStringLength());
+    assertEquals(maxDocLen, constraints.getMaxDocumentLength());
+    assertEquals(maxNestingDepth, constraints.getMaxNestingDepth());
+  }
+
+  @Test
+  public void configStreamWritesConstraints() throws Exception {
+    final int maxNestingDepth = 5;
+    String configText = "write.max-nesting-depth=" + maxNestingDepth;
+    Config config =
+        ConfigFactory.parseString(configText)
+            .withFallback(ConfigFactory.load().getConfig("pekko.http.jackson"));
+    ObjectMapper mapper = Jackson.createMapper(config);
+    StreamWriteConstraints constraints = mapper.getFactory().streamWriteConstraints();
+    assertEquals(maxNestingDepth, constraints.getMaxNestingDepth());
   }
 }
