@@ -66,7 +66,7 @@ object Dependencies {
 
     val scalafix = "ch.epfl.scala" %% "scalafix-core" % Dependencies.scalafixVersion
 
-    val parboiled = "org.parboiled" %% "parboiled" % "2.5.0"
+    val parboiled = "org.parboiled" %% "parboiled" % "2.5.1"
 
     object Docs {
       val sprayJson = Compile.sprayJson % "test"
