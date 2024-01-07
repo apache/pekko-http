@@ -109,7 +109,7 @@ public class JacksonTest extends JUnitRouteTest {
             + maxNestingDepth;
     Config config =
         ConfigFactory.parseString(configText)
-            .withFallback(ConfigFactory.load().getConfig("pekko.http.jackson"));
+            .withFallback(ConfigFactory.load().getConfig("pekko.http.marshallers.jackson"));
     ObjectMapper mapper = Jackson.createMapper(config);
     StreamReadConstraints constraints = mapper.getFactory().streamReadConstraints();
     assertEquals(maxNumLen, constraints.getMaxNumberLength());
@@ -125,7 +125,7 @@ public class JacksonTest extends JUnitRouteTest {
     String configText = "write.max-nesting-depth=" + maxNestingDepth;
     Config config =
         ConfigFactory.parseString(configText)
-            .withFallback(ConfigFactory.load().getConfig("pekko.http.jackson"));
+            .withFallback(ConfigFactory.load().getConfig("pekko.http.marshallers.jackson"));
     ObjectMapper mapper = Jackson.createMapper(config);
     StreamWriteConstraints constraints = mapper.getFactory().streamWriteConstraints();
     assertEquals(maxNestingDepth, constraints.getMaxNestingDepth());

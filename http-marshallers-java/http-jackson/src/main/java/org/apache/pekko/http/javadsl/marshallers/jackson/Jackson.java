@@ -93,7 +93,7 @@ public class Jackson {
   }
 
   private static ObjectMapper createMapper() {
-    return createMapper(ConfigFactory.load().getConfig("pekko.http.jackson"));
+    return createMapper(ConfigFactory.load().getConfig("pekko.http.marshallers.jackson"));
   }
 
   static ObjectMapper createMapper(final Config config) {
