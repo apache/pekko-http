@@ -54,9 +54,6 @@ final class HuffmanEncoder {
    * Compresses the input string literal using the Huffman coding.
    *
    * @param out the output stream for the compressed data
-   * @param data the string literal to be Huffman encoded
-   * @param off the start offset in the data
-   * @param len the number of bytes to encode
    * @throws IOException if an I/O error occurs. In particular, an <code>IOException</code> may be
    *     thrown if the output stream has been closed.
    */
