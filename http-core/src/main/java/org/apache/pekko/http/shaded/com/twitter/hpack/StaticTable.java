@@ -153,7 +153,7 @@ final class StaticTable {
   // create a map of header name to index value to allow quick lookup
   private static Map<String, Integer> createMap() {
     int length = STATIC_TABLE.size();
-    HashMap<String, Integer> ret = new HashMap<String, Integer>(length);
+    HashMap<String, Integer> ret = new HashMap<>(length);
     // Iterate through the static table in reverse order to
     // save the smallest index for a given name in the map.
     for (int index = length; index > 0; index--) {

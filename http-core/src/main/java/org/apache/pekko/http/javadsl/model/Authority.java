@@ -13,7 +13,7 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /** Represents a hostname, port and user info. */
 public abstract class Authority {
@@ -40,7 +40,7 @@ public abstract class Authority {
   public static Authority create(String authority) {
     return org.apache.pekko.http.scaladsl.model.Uri.Authority$.MODULE$.parse(
         org.parboiled2.ParserInput$.MODULE$.apply(authority),
-        Charset.forName("UTF8"),
+        StandardCharsets.UTF_8,
         org.apache.pekko.http.scaladsl.model.Uri$ParsingMode$Relaxed$.MODULE$);
   }
 }
