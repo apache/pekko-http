@@ -28,6 +28,9 @@ commands := commands.value.filterNot { command =>
   }
 }
 
+// pekkoInlineEnabled must be set to false when this is backported to 1.0.x branch
+ThisBuild / pekkoInlineEnabled := true
+
 ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
 
 addCommandAlias("verifyCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; +headerCheckAll; javafmtCheckAll")
