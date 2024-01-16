@@ -32,10 +32,11 @@
 package org.apache.pekko.http.shaded.com.twitter.hpack;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 final class HpackUtil {
 
-  static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
+  static final Charset ISO_8859_1 = StandardCharsets.ISO_8859_1;
 
   /** A string compare that doesn't leak timing information. */
   static boolean equals(byte[] s1, byte[] s2) {

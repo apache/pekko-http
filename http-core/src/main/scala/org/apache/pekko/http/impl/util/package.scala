@@ -14,7 +14,7 @@
 package org.apache.pekko.http.impl
 
 import language.implicitConversions
-import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 
 import com.typesafe.config.Config
 import org.apache.pekko
@@ -32,9 +32,9 @@ import pekko.http.impl.engine.parsing.ParserOutput.RequestStart
 import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest, HttpResponse }
 
 package object util {
-  private[http] val UTF8 = Charset.forName("UTF8")
-  private[http] val ASCII = Charset.forName("ASCII")
-  private[http] val ISO88591 = Charset.forName("ISO-8859-1")
+  private[http] val UTF8 = StandardCharsets.UTF_8
+  private[http] val ASCII = StandardCharsets.US_ASCII
+  private[http] val ISO88591 = StandardCharsets.ISO_8859_1
 
   private[http] val EmptyByteArray = Array.empty[Byte]
 

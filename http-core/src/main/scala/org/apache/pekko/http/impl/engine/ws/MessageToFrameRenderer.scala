@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import java.nio.charset.StandardCharsets
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.util.ByteString
@@ -43,7 +45,7 @@ private[http] object MessageToFrameRenderer {
       .flatMapConcat {
         case BinaryMessage.Strict(data) => strictFrames(Opcode.Binary, data)
         case bm: BinaryMessage          => streamedFrames(Opcode.Binary, bm.dataStream)
-        case TextMessage.Strict(text)   => strictFrames(Opcode.Text, ByteString(text, "UTF-8"))
+        case TextMessage.Strict(text)   => strictFrames(Opcode.Text, ByteString(text, StandardCharsets.UTF_8))
         case tm: TextMessage            => streamedFrames(Opcode.Text, tm.textStream.via(Utf8Encoder))
       }
   }
