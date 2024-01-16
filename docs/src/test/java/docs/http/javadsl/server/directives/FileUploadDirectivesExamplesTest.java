@@ -27,7 +27,7 @@ import org.junit.Test;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.io.File;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -300,7 +300,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
       Files.write(
           tempFile.toPath(),
           Arrays.asList("2,3,5", "7,11,13,17,23", "29,31,37"),
-          Charset.forName("UTF-8"));
+          StandardCharsets.UTF_8);
     } catch (Exception e) {
       // ignore
     }
