@@ -15,20 +15,22 @@ package org.apache.pekko.http.scaladsl.server
 package directives
 
 import java.io.File
-
-import org.apache.pekko
-import pekko.http.scaladsl.settings.RoutingSettings
-import pekko.http.scaladsl.testkit.RouteTestTimeout
+import java.nio.charset.StandardCharsets
 
 import scala.concurrent.duration._
 import scala.util.Properties
-import org.scalatest.{ Inside, Inspectors }
+
+import org.apache.pekko
 import pekko.http.scaladsl.model.MediaTypes._
+import pekko.http.scaladsl.model.Uri.Path
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.settings.RoutingSettings
+import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.http.impl.util._
-import pekko.http.scaladsl.model.Uri.Path
 import pekko.testkit._
+
+import org.scalatest.{ Inside, Inspectors }
 
 class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Inside {
 
@@ -45,7 +47,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
   """
 
   def writeAllText(text: String, file: File): Unit =
-    java.nio.file.Files.write(file.toPath, text.getBytes("UTF-8"))
+    java.nio.file.Files.write(file.toPath, text.getBytes(StandardCharsets.UTF_8))
 
   "getFromFile" should {
     "reject non-GET requests" in {

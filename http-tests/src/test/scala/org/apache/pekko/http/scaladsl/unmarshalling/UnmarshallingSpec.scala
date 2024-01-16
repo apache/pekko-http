@@ -13,6 +13,7 @@
 
 package org.apache.pekko.http.scaladsl.unmarshalling
 
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 import org.apache.pekko
@@ -41,7 +42,7 @@ class UnmarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll
       Unmarshal(HttpEntity("Hällö")).to[String] should evaluateTo("Hällö")
     }
     "stringUnmarshaller should assume UTF-8 for textual content type with missing charset" in {
-      Unmarshal(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hällö".getBytes("UTF-8"))).to[
+      Unmarshal(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hällö".getBytes(StandardCharsets.UTF_8))).to[
         String] should evaluateTo("Hällö")
     }
     "charArrayUnmarshaller should unmarshal `text/plain` content in UTF-8 to char arrays" in {
@@ -116,7 +117,7 @@ class UnmarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll
 
     "should handle media ranges of types with missing charset by assuming UTF-8 charset when matching" in {
       val um = Unmarshaller.stringUnmarshaller.forContentTypes(MediaTypes.`text/plain`)
-      Await.result(um(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hêllö".getBytes("utf-8"))),
+      Await.result(um(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hêllö".getBytes(StandardCharsets.UTF_8))),
         1.second.dilated) should ===("Hêllö")
     }
 

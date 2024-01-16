@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import java.nio.charset.StandardCharsets
+
 import org.apache.pekko
 import pekko.http.impl.engine.ws.Protocol.Opcode
 import pekko.util.ByteString
@@ -62,7 +64,7 @@ object WSTestUtils {
       frameHeader(opcode, data.size, fin, mask = None) ++ data
 
   def closeFrame(closeCode: Int, mask: Boolean, msg: String = ""): ByteString =
-    closeFrame(closeCode, mask, ByteString(msg, "UTF-8"))
+    closeFrame(closeCode, mask, ByteString(msg, StandardCharsets.UTF_8))
 
   def closeFrame(closeCode: Int, mask: Boolean, msgBytes: ByteString): ByteString =
     frame(Opcode.Close, closeFrameData(closeCode, msgBytes), fin = true, mask)
@@ -71,9 +73,9 @@ object WSTestUtils {
     shortBE(closeCode) ++ msgBytes
 
   def maskedASCII(str: String, mask: Int): (ByteString, Int) =
-    FrameEventParser.mask(ByteString(str, "ASCII"), mask)
+    FrameEventParser.mask(ByteString(str, StandardCharsets.US_ASCII), mask)
   def maskedUTF8(str: String, mask: Int): (ByteString, Int) =
-    FrameEventParser.mask(ByteString(str, "UTF-8"), mask)
+    FrameEventParser.mask(ByteString(str, StandardCharsets.UTF_8), mask)
   def maskedBytes(bytes: ByteString, mask: Int): (ByteString, Int) =
     FrameEventParser.mask(bytes, mask)
 
