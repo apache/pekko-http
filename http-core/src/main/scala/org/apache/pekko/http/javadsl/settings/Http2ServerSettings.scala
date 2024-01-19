@@ -18,6 +18,7 @@ import java.time.Duration
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.scaladsl
+import pekko.util.ccompat.JavaConverters._
 import com.typesafe.config.Config
 import scala.concurrent.duration._
 
@@ -51,6 +52,14 @@ trait Http2ServerSettings {
 
   def getPingTimeout: Duration = Duration.ofMillis(pingTimeout.toMillis)
   def withPingTimeout(timeout: Duration): Http2ServerSettings = withPingTimeout(timeout.toMillis.millis)
+
+  def getFrameTypeThrottleFrameTypes(): java.util.Set[String] = frameTypeThrottleFrameTypes.asJava
+  def getFrameTypeThrottleCost(): Int = frameTypeThrottleCost
+  def getFrameTypeThrottleBurst(): Int = frameTypeThrottleBurst
+  def getFrameTypeThrottleInterval: Duration = Duration.ofMillis(frameTypeThrottleInterval.toMillis)
+
+  def withFrameTypeThrottleInterval(interval: Duration): Http2ServerSettings =
+    withFrameTypeThrottleInterval(interval.toMillis.millis)
 }
 object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
   def create(config: Config): Http2ServerSettings = scaladsl.settings.Http2ServerSettings(config)
