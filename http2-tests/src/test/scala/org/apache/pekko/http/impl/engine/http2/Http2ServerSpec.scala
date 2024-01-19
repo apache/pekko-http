@@ -13,47 +13,34 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import java.net.InetSocketAddress
 import org.apache.pekko
 import pekko.NotUsed
-import pekko.event.Logging
 import pekko.http.impl.engine.http2.FrameEvent._
-import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
-import pekko.http.impl.engine.http2.Http2Protocol.Flags
-import pekko.http.impl.engine.http2.Http2Protocol.FrameType
-import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
+import pekko.http.impl.engine.http2.Http2Protocol.{ ErrorCode, Flags, FrameType, SettingIdentifier }
 import pekko.http.impl.engine.server.{ HttpAttributes, ServerTerminator }
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
-import pekko.http.impl.util.PekkoSpecWithMaterializer
-import pekko.http.impl.util.LogByteStringTools
-import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.CacheDirectives
-import pekko.http.scaladsl.model.headers.RawHeader
+import pekko.http.scaladsl.model.headers.{ CacheDirectives, RawHeader }
 import pekko.http.scaladsl.settings.ServerSettings
-import pekko.stream.Attributes
-import pekko.stream.Attributes.LogLevels
 import pekko.stream.OverflowStrategy
-import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Sink, Source, SourceQueueWithComplete }
-import pekko.stream.testkit.TestPublisher.{ ManualProbe, Probe }
+import pekko.stream.scaladsl.{ BidiFlow, Flow, Source, SourceQueueWithComplete }
+import pekko.stream.testkit.TestPublisher.ManualProbe
 import pekko.stream.testkit.scaladsl.StreamTestKit
 import pekko.stream.testkit.TestPublisher
-import pekko.stream.testkit.TestSubscriber
 import pekko.testkit._
 import pekko.util.ByteString
 
-import scala.annotation.nowarn
-import javax.net.ssl.SSLContext
 import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 
+import java.net.InetSocketAddress
+import javax.net.ssl.SSLContext
+
+import scala.annotation.nowarn
 import scala.collection.immutable
 import scala.concurrent.duration._
-import scala.concurrent.Await
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.concurrent.Promise
+import scala.concurrent.{ Await, Promise }
 
 /**
  * This tests the http2 server protocol logic.
@@ -64,7 +51,7 @@ import scala.concurrent.Promise
  * * if applicable: provide application-level response
  * * validate the produced response frames
  */
-class Http2ServerSpec extends PekkoSpecWithMaterializer("""
+class Http2ServerSpec extends Http2SpecWithMaterializer("""
     pekko.http.server.remote-address-header = on
     pekko.http.server.http2.log-frames = on
   """)
@@ -1793,100 +1780,4 @@ class Http2ServerSpec extends PekkoSpecWithMaterializer("""
     }
   }
 
-  implicit class InWithStoppedStages(name: String) {
-    def inAssertAllStagesStopped(runTest: => TestSetup) =
-      name in StreamTestKit.assertAllStagesStopped {
-        val setup = runTest
-
-        // force connection to shutdown (in case it is an invalid state)
-        setup.network.fromNet.sendError(new RuntimeException)
-        setup.network.toNet.cancel()
-
-        // and then assert that all stages, substreams in particular, are stopped
-      }
-  }
-
-  protected /* To make ByteFlag warnings go away */ abstract class TestSetupWithoutHandshake {
-    implicit def ec: ExecutionContext = system.dispatcher
-
-    private val framesOut: Http2FrameProbe = Http2FrameProbe()
-    private val toNet = framesOut.plainDataProbe
-    private val fromNet = TestPublisher.probe[ByteString]()
-
-    def handlerFlow: Flow[HttpRequest, HttpResponse, NotUsed]
-
-    // hook to modify server, for example add attributes
-    def modifyServer(server: BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator]) = server
-
-    // hook to modify server settings
-    def settings: ServerSettings = ServerSettings(system).withServerHeader(None)
-
-    final def theServer: BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] =
-      modifyServer(Http2Blueprint.serverStack(settings, system.log, telemetry = NoOpTelemetry,
-        dateHeaderRendering = Http().dateHeaderRendering))
-        .atop(LogByteStringTools.logByteStringBidi("network-plain-text").addAttributes(
-          Attributes(LogLevels(Logging.DebugLevel, Logging.DebugLevel, Logging.DebugLevel))))
-
-    val serverTerminator =
-      handlerFlow
-        .joinMat(theServer)(Keep.right)
-        .join(Flow.fromSinkAndSource(toNet.sink, Source.fromPublisher(fromNet)))
-        .withAttributes(Attributes.inputBuffer(1, 1))
-        .run()
-
-    val network = new NetworkSide(fromNet, toNet, framesOut) with Http2FrameHpackSupport
-  }
-
-  class NetworkSide(val fromNet: Probe[ByteString], val toNet: ByteStringSinkProbe, val framesOut: Http2FrameProbe)
-      extends WindowTracking {
-    override def frameProbeDelegate = framesOut
-
-    def sendBytes(bytes: ByteString): Unit = fromNet.sendNext(bytes)
-
-  }
-
-  /** Basic TestSetup that has already passed the exchange of the connection preface */
-  abstract class TestSetup(initialClientSettings: Setting*) extends TestSetupWithoutHandshake {
-    network.sendBytes(Http2Protocol.ClientConnectionPreface)
-    network.expectSETTINGS()
-
-    network.sendFrame(SettingsFrame(immutable.Seq.empty ++ initialClientSettings))
-    network.expectSettingsAck()
-  }
-
-  /** Provides the user handler flow as `requestIn` and `responseOut` probes for manual stream interaction */
-  trait RequestResponseProbes extends TestSetupWithoutHandshake {
-    private lazy val requestIn = TestSubscriber.probe[HttpRequest]()
-    private lazy val responseOut = TestPublisher.probe[HttpResponse]()
-
-    def handlerFlow: Flow[HttpRequest, HttpResponse, NotUsed] =
-      Flow.fromSinkAndSource(Sink.fromSubscriber(requestIn), Source.fromPublisher(responseOut))
-
-    lazy val user = new UserSide(requestIn, responseOut)
-
-    def expectGracefulCompletion(): Unit = {
-      network.toNet.expectComplete()
-      user.requestIn.expectComplete()
-    }
-  }
-
-  class UserSide(val requestIn: TestSubscriber.Probe[HttpRequest], val responseOut: TestPublisher.Probe[HttpResponse]) {
-    def expectRequest(): HttpRequest = requestIn.requestNext().removeAttribute(Http2.streamId)
-    def expectRequestRaw(): HttpRequest = requestIn.requestNext() // TODO, make it so that internal headers are not listed in `headers` etc?
-    def emitResponse(streamId: Int, response: HttpResponse): Unit =
-      responseOut.sendNext(response.addAttribute(Http2.streamId, streamId))
-
-  }
-
-  /** Provides the user handler flow as a handler function */
-  trait HandlerFunctionSupport extends TestSetupWithoutHandshake {
-    def parallelism: Int = 2
-    def handler: HttpRequest => Future[HttpResponse] =
-      _ => Future.successful(HttpResponse())
-
-    def handlerFlow: Flow[HttpRequest, HttpResponse, NotUsed] =
-      Http2Blueprint.handleWithStreamIdHeader(parallelism)(handler)
-  }
-
-  def bytes(num: Int, byte: Byte): ByteString = ByteString(Array.fill[Byte](num)(byte))
 }
