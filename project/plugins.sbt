@@ -18,7 +18,7 @@ addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.5.0")
 addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings" % "3.0.2")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.7")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1") // for advanced PR validation features
-addSbtPlugin("io.spray" % "sbt-boilerplate" % "0.6.1")
+addSbtPlugin("com.github.sbt" % "sbt-boilerplate" % "0.7.0")
 addSbtPlugin("com.lightbend.sbt" % "sbt-bill-of-materials" % "1.0.2")
 addSbtPlugin("com.github.sbt" % "sbt-license-report" % "1.6.1")
 
