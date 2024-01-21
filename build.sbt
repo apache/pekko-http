@@ -243,7 +243,6 @@ lazy val httpTests = project("http-tests")
   .enablePlugins(NoPublish) // don't release tests
   .enablePlugins(MultiNode)
   .disablePlugins(MimaPlugin) // this is only tests
-  .configs(MultiJvm)
   .settings(headerSettings(MultiJvm))
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-multi-node-testkit", "test", PekkoCoreDependency.default)

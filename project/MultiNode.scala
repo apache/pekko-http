@@ -11,7 +11,7 @@
  * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-import com.typesafe.sbt.SbtMultiJvm
+import com.typesafe.sbt.{ MultiJvmPlugin, SbtMultiJvm }
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys._
 import sbt._
 import sbt.Keys._
@@ -33,7 +33,7 @@ object MultiNode extends AutoPlugin {
   val multiTest = CliOptions.multiNode.ifTrue(MultiJvm / multiNodeTest).getOrElse(MultiJvm / test)
 
   override def trigger = noTrigger
-  override def requires = plugins.JvmPlugin
+  override def requires = plugins.JvmPlugin && MultiJvmPlugin
 
   override lazy val projectSettings = multiJvmSettings
 
