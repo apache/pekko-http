@@ -11,4 +11,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: pekko-http-tests_3
+          modules-ignore: pekko-http-tests_3 pekko-http-docs_3
