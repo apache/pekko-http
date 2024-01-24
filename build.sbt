@@ -57,7 +57,6 @@ inThisBuild(Def.settings(
   },
   projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
   scalafixScalaBinaryVersion := scalaBinaryVersion.value,
-  apacheSonatypeProjectProfile := "pekko",
   versionScheme := Some(VersionScheme.SemVerSpec)))
 
 // When this is updated the set of modules in Http.allModules should also be updated
