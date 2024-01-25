@@ -1,6 +1,15 @@
 # 0. Release Notes
 
+## 1.0.1
+
+This is a bug fix release. There have also been some doc and build improvements.
+
+### Bug Fixes
+* Add optional throttle to handle excessive HTTP/2 non-data frames ([PR394](https://github.com/apache/incubator-pekko-http/pull/394))
+* Set the minimum required Pekko version to 1.0.0 (had been 1.0.1) ([PR328]https://github.com/apache/incubator-pekko-http/pull/328))
+
 ## 1.0.0
+
 Apache Pekko HTTP 1.0.0 is based on Akka HTTP 10.2.10. Pekko came about as a result of Lightbend's decision to make future
 Akka releases under a [Business Software License](https://www.lightbend.com/blog/why-we-are-changing-the-license-for-akka),
 a license that is not compatible with Open Source usage.
