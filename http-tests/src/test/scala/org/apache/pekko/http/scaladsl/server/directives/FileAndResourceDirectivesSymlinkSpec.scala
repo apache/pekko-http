@@ -35,17 +35,16 @@ class FileAndResourceDirectivesSymlinkSpec extends RoutingSpec
 
   val tempDir = Files.createTempDirectory("pekko-http-symlink-test")
   tempDir.toFile.deleteOnExit()
+  val dirWithLink = new File(tempDir.toFile, "dirWithLink")
+  dirWithLink.mkdir()
   val symlink = Files.createSymbolicLink(
-    Paths.get(tempDir.toAbsolutePath.toString, "linked-dir"),
+    Paths.get(dirWithLink.getAbsolutePath, "linked-dir"),
     new File(testRoot, "subDirectory").toPath)
-
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-  }
 
   override def afterAll(): Unit = {
     super.afterAll()
     Files.deleteIfExists(symlink)
+    Files.deleteIfExists(dirWithLink.toPath)
     Files.deleteIfExists(tempDir)
   }
 
@@ -57,7 +56,7 @@ class FileAndResourceDirectivesSymlinkSpec extends RoutingSpec
   """
 
   "getFromDirectory" should {
-    def _getFromDirectory() = getFromDirectory(tempDir.toFile.getCanonicalPath)
+    def _getFromDirectory() = getFromDirectory(dirWithLink.getCanonicalPath)
 
     "not follow symbolic links to find a file" in {
       EventFilter.warning(pattern = ".* points to a location that is not part of .*", occurrences = 1).intercept {
