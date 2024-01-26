@@ -39,7 +39,7 @@ class FileAndResourceDirectivesSymlinkSpec extends RoutingSpec
   dirWithLink.mkdir()
   val symlink = Files.createSymbolicLink(
     Paths.get(dirWithLink.getAbsolutePath, "linked-dir"),
-    new File(testRoot, "subDirectory").toPath)
+    new File(testRoot, "subDirectory").toPath.toAbsolutePath)
 
   override def afterAll(): Unit = {
     super.afterAll()
@@ -59,6 +59,7 @@ class FileAndResourceDirectivesSymlinkSpec extends RoutingSpec
     def _getFromDirectory() = getFromDirectory(dirWithLink.getCanonicalPath)
 
     "not follow symbolic links to find a file" in {
+      Files.isSymbolicLink(symlink) shouldBe true
       EventFilter.warning(pattern = ".* points to a location that is not part of .*", occurrences = 1).intercept {
         Get("linked-dir/empty.pdf") ~> _getFromDirectory() ~> check {
           handled shouldBe false
