@@ -16,19 +16,20 @@ package directives
 
 import java.io.File
 
-import org.apache.pekko
-import pekko.http.scaladsl.settings.RoutingSettings
-import pekko.http.scaladsl.testkit.RouteTestTimeout
-
 import scala.concurrent.duration._
 import scala.util.Properties
-import org.scalatest.{ Inside, Inspectors }
-import pekko.http.scaladsl.model.MediaTypes._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers._
+
+import org.apache.pekko
 import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.MediaTypes._
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.model.Uri.Path
+import pekko.http.scaladsl.settings.RoutingSettings
+import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.testkit._
+
+import org.scalatest.{ Inside, Inspectors }
 
 class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Inside {
 
