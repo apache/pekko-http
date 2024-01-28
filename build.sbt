@@ -22,12 +22,6 @@ import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 sourceDistName := "apache-pekko-http"
 sourceDistIncubating := true
 
-commands := commands.value.filterNot { command =>
-  command.nameOption.exists { name =>
-    name.contains("sonatypeRelease") || name.contains("sonatypeBundleRelease")
-  }
-}
-
 // pekkoInlineEnabled must be set to false when this is backported to 1.0.x branch
 ThisBuild / pekkoInlineEnabled := false
 
