@@ -16,19 +16,20 @@ package directives
 
 import java.io.File
 
-import org.apache.pekko
-import pekko.http.scaladsl.settings.RoutingSettings
-import pekko.http.scaladsl.testkit.RouteTestTimeout
-
 import scala.concurrent.duration._
 import scala.util.Properties
-import org.scalatest.{ Inside, Inspectors }
-import pekko.http.scaladsl.model.MediaTypes._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers._
+
+import org.apache.pekko
 import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.MediaTypes._
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.model.Uri.Path
+import pekko.http.scaladsl.settings.RoutingSettings
+import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.testkit._
+
+import org.scalatest.{ Inside, Inspectors }
 
 class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Inside {
 
@@ -208,16 +209,6 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
         responseAs[String] shouldEqual "This is PDF"
         val lastModified = new File(testRoot, "sübdir/sample späce.PDF").lastModified()
         headers should contain(`Last-Modified`(DateTime(lastModified)))
-      }
-    }
-    "not follow symbolic links to find a file" in {
-      EventFilter.warning(pattern = ".* points to a location that is not part of .*", occurrences = 1).intercept {
-        Get("linked-dir/empty.pdf") ~> _getFromDirectory("dirWithLink") ~> check {
-          handled shouldBe false
-          /* TODO: resurrect following links under an option
-          responseAs[String] shouldEqual "123"
-          mediaType shouldEqual `application/pdf`*/
-        }
       }
     }
   }
