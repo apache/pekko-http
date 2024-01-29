@@ -35,7 +35,7 @@ import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success }
 
 /**
- * INTERNAL API: Used to start the termination process of an Pekko HTTP server.
+ * INTERNAL API: Used to start the termination process of a Pekko HTTP server.
  */
 // "Hasta la vista, baby."
 @InternalApi
