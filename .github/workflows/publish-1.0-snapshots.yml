@@ -1,0 +1,38 @@
+name: Publish nightly 1.0 snapshots
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  publish-artifacts:
+    name: Publish 1.0 artifacts to Apache Nexus
+    runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-pekko-http'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: 1.0.x
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Cache Coursier cache
+        uses: coursier/cache-action@v6
+
+      - name: Install graphviz
+        run: sudo apt-get install -y graphviz
+
+      - name: Publish to Apache Maven repo
+        run: sbt +publish
+        env:
+          NEXUS_USER: ${{ secrets.NEXUS_USER }}
+          NEXUS_PW: ${{ secrets.NEXUS_PW }}
+          JAVA_OPTS: "-verbose:gc -Xmx4g"
