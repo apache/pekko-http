@@ -41,7 +41,7 @@ private[coding] class GzipCompressor(compressionLevel: Int) extends DeflateCompr
     header() ++ super.finishWithBuffer(buffer) ++ trailer()
 
   private def updateCrc(input: ByteString): Unit = {
-    checkSum.update(input.toArray)
+    checkSum.update(input.toArrayUnsafe())
     bytesRead += input.length
   }
   private def header(): ByteString =
@@ -117,7 +117,7 @@ private[coding] class GzipDecompressor(
   }
   private def crc16(data: ByteString) = {
     val crc = new CRC32
-    crc.update(data.toArray)
+    crc.update(data.toArrayUnsafe())
     crc.getValue.toInt & 0xFFFF
   }
 }

@@ -58,7 +58,7 @@ trait Http2FrameHpackSupport extends Http2FrameProbeDelegator with Http2FrameSen
   val decoder = new Decoder(Http2Protocol.InitialMaxHeaderListSize, Http2Protocol.InitialMaxHeaderTableSize)
 
   def decodeHeaders(bytes: ByteString): Seq[(String, String)] = {
-    val bis = new ByteArrayInputStream(bytes.toArray)
+    val bis = new ByteArrayInputStream(bytes.toArrayUnsafe())
     val hs = new VectorBuilder[(String, String)]()
 
     decoder.decode(bis,
