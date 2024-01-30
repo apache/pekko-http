@@ -14,6 +14,7 @@
 package org.apache.pekko.http.impl.util
 
 import org.apache.pekko
+import org.apache.pekko.stream.ActorAttributes.SupervisionStrategy
 import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
@@ -261,6 +262,15 @@ private[http] object StreamUtils {
   }
 
   /**
+   * Similar idea as [[FlowOps.statefulMap]] but simpler,
+   * which the state is captured instead of a passing in parameter, when
+   * the Flow completes, the state is lost, if you prefer additional emitting on complete,
+   * use [[FlowOps.statefulMap]] instead.
+   */
+  def statefulMap[T, U](functionConstructor: () => T => U): Flow[T, U, NotUsed] =
+    Flow[T].via(new SimpleStatefulMap[T, U](functionConstructor))
+
+  /**
    * Lifts the streams attributes into an element and passes them to the function for each passed through element.
    * Similar idea than [[FlowOps.statefulMapConcat]] but for a simple map.
    *
@@ -392,6 +402,43 @@ private[http] class EnhancedByteStringSource[Mat](val byteStringStream: Source[B
         try push(out, f(grab(in)))
         catch { case NonFatal(ex) => failStage(ex) }
       override def onPull(): Unit = pull(in)
+
+      setHandlers(in, out, this)
+    }
+}
+
+/**
+ * INTERNAL API
+ */
+@InternalApi private[http] final class SimpleStatefulMap[T, U](
+    statefulFunctionConstructor: () => T => U) extends GraphStage[FlowShape[T, U]] {
+  private val in = Inlet[T]("SimpleStatefulMap.in")
+  private val out = Outlet[U]("SimpleStatefulMap.out")
+  override val shape = FlowShape(in, out)
+
+  final override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+    new GraphStageLogic(shape) with InHandler with OutHandler {
+      private lazy val decider = inheritedAttributes.mandatoryAttribute[SupervisionStrategy].decider
+      private var statefulFunction: T => U = _
+
+      override def preStart(): Unit = {
+        statefulFunction = statefulFunctionConstructor()
+        require(statefulFunction ne null, "statefulFunctionConstructor must not return null")
+      }
+
+      override def onPush(): Unit = {
+        try {
+          push(out, statefulFunction(grab(in)))
+        } catch {
+          case NonFatal(ex) =>
+            decider(ex) match {
+              case Supervision.Stop => failStage(ex)
+              case _                => pull(in)
+            }
+        }
+      }
+
+      final override def onPull(): Unit = pull(in)
 
       setHandlers(in, out, this)
     }
