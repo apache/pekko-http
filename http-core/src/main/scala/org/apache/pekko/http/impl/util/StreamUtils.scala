@@ -14,7 +14,6 @@
 package org.apache.pekko.http.impl.util
 
 import org.apache.pekko
-import org.apache.pekko.stream.ActorAttributes.SupervisionStrategy
 import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
@@ -22,6 +21,7 @@ import pekko.dispatch.ExecutionContexts
 import pekko.http.scaladsl.model.HttpEntity
 import pekko.http.scaladsl.util.FastFuture
 import pekko.stream._
+import pekko.stream.ActorAttributes.SupervisionStrategy
 import pekko.stream.impl.fusing.GraphInterpreter
 import pekko.stream.impl.fusing.GraphStages.SimpleLinearGraphStage
 import pekko.stream.scaladsl._
