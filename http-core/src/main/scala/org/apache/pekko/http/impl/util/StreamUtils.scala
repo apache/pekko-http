@@ -436,7 +436,7 @@ private[http] class EnhancedByteStringSource[Mat](val byteStringStream: Source[B
               case Supervision.Restart =>
                 statefulFunction = statefulFunctionConstructor()
                 tryPull(in)
-              case _ => tryPull(in)
+              case Supervision.Resume => tryPull(in)
             }
         }
       }

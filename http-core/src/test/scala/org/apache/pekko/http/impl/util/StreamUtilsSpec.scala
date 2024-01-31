@@ -13,14 +13,16 @@
 
 package org.apache.pekko.http.impl.util
 
-import org.apache.pekko
-import pekko.stream.Attributes
-import pekko.stream.scaladsl.{ Sink, Source }
-import pekko.util.ByteString
-import pekko.testkit._
 import org.scalatest.concurrent.ScalaFutures
-import scala.concurrent.Await
+
+import org.apache.pekko
+import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.stream.{ ActorAttributes, Attributes, Supervision }
+import pekko.testkit._
+import pekko.util.ByteString
+
 import scala.concurrent.duration._
+import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.util.Failure
 
 class StreamUtilsSpec extends PekkoSpec with ScalaFutures {
@@ -68,6 +70,89 @@ class StreamUtilsSpec extends PekkoSpec with ScalaFutures {
 
       val (attrs, `element`) = res.futureValue
       attrs.attributeList should contain(nameAttr.attributeList.head)
+    }
+  }
+
+  "simple statefulMap" should {
+
+    "be able to handle state" in {
+      val flow = StreamUtils.statefulMap[Int, Int](() => {
+        var state = 0
+
+        { delta =>
+          state += delta
+          state
+        }
+      })
+
+      implicit val ec: ExecutionContext = system.dispatcher
+      val list =
+        for {
+          _ <- 1 to 10
+        } yield Source(1 to 10)
+          .via(flow)
+          .runWith(Sink.last)
+
+      Future.reduceLeft(list)(_ + _)
+        .futureValue shouldBe 550
+    }
+
+    "be able to stop" in {
+      val flow = StreamUtils.statefulMap[Int, Int](() => {
+        var state = 0
+
+        { input =>
+          if (input == 2) {
+            throw new RuntimeException("stop")
+          }
+          state += input
+          state
+        }
+      })
+
+      Source(1 to 10)
+        .via(flow)
+        .runWith(Sink.ignore)
+        .failed
+        .futureValue shouldBe a[RuntimeException]
+    }
+
+    "be able to restart" in {
+      val flow = StreamUtils.statefulMap[Int, Int](() => {
+        var state = 0
+
+        { input =>
+          if (input % 2 == 0) {
+            throw new RuntimeException("stop")
+          }
+          state += input
+          state
+        }
+      })
+
+      Source(1 to 10)
+        .via(flow.withAttributes(ActorAttributes.supervisionStrategy(Supervision.restartingDecider)))
+        .runWith(Sink.seq)
+        .futureValue shouldBe List(1, 3, 5, 7, 9)
+    }
+
+    "be able to resume" in {
+      val flow = StreamUtils.statefulMap[Int, Int](() => {
+        var state = 0
+
+        { input =>
+          if (input % 2 == 0) {
+            throw new RuntimeException("stop")
+          }
+          state += input
+          state
+        }
+      })
+
+      Source(1 to 10)
+        .via(flow.withAttributes(ActorAttributes.supervisionStrategy(Supervision.resumingDecider)))
+        .runWith(Sink.seq)
+        .futureValue shouldBe List(1, 4, 9, 16, 25)
     }
   }
 
