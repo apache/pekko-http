@@ -11,8 +11,8 @@
  * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-import com.typesafe.sbt.{ MultiJvmPlugin, SbtMultiJvm }
-import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys._
+import com.typesafe.sbt.MultiJvmPlugin
+import MultiJvmPlugin.autoImport._
 import sbt._
 import sbt.Keys._
 
@@ -57,7 +57,7 @@ object MultiNode extends AutoPlugin {
   }
 
   private val multiJvmSettings =
-    SbtMultiJvm.multiJvmSettings ++
+    MultiJvmPlugin.multiJvmSettings ++
     inConfig(MultiJvm)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings) ++
     inConfig(MultiJvm)(Seq(
       MultiJvm / jvmOptions := defaultMultiJvmOptions,
