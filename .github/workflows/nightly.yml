@@ -24,7 +24,7 @@ jobs:
           fetch-tags: true
 
       - name: Set up JDK ${{ matrix.JDK }}
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: ${{ matrix.JDK }}
