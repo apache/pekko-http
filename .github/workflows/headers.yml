@@ -14,13 +14,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Java 8
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 8
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6.4.0
+        uses: coursier/cache-action@v6
 
       - name: Enable jvm-opts
         run: cp .jvmopts-ci .jvmopts
