@@ -6,7 +6,7 @@ This is a bug fix release. There have also been some doc and build improvements.
 
 ### Bug Fixes
 * Add optional throttle to handle excessive HTTP/2 non-data frames ([PR394](https://github.com/apache/incubator-pekko-http/pull/394))
-* Set the minimum required Pekko version to 1.0.0 (had been 1.0.1) ([PR328]https://github.com/apache/incubator-pekko-http/pull/328))
+* Set the minimum required Pekko version to 1.0.0 (had been 1.0.1) ([PR328](https://github.com/apache/incubator-pekko-http/pull/328))
 
 ## 1.0.0
 
