@@ -33,7 +33,7 @@ jobs:
         uses: coursier/cache-action@v6
 
       - name: Setup Coursier
-        uses: coursier/setup-action@v1.3.3
+        uses: coursier/setup-action@v1
 
       # assign an arbitrary version number so that scripts/link-validator.conf has a predictable set of links to work with
       - name: Create the Pekko site
