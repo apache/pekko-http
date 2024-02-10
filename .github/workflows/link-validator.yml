@@ -35,6 +35,9 @@ jobs:
       - name: Setup Coursier
         uses: coursier/setup-action@v1
 
+      - name: Enable jvm-opts
+        run: cp .jvmopts-ci .jvmopts
+
       # assign an arbitrary version number so that scripts/link-validator.conf has a predictable set of links to work with
       - name: Create the Pekko site
         run: sbt -Dpekko.genjavadoc.enabled=true "set ThisBuild / version := \"1.0.0\"; Javaunidoc/doc; Compile/unidoc; docs/paradox"
