@@ -28,7 +28,7 @@ addSbtPlugin(("org.apache.pekko" % "pekko-sbt-paradox" % "1.0.0").excludeAll(
   "com.lightbend.paradox", "sbt-paradox",
   "com.lightbend.paradox" % "sbt-paradox-apidoc",
   "com.lightbend.paradox" % "sbt-paradox-project-info"))
-addSbtPlugin(("com.lightbend.paradox" % "sbt-paradox" % "0.10.6").force())
+addSbtPlugin(("com.lightbend.paradox" % "sbt-paradox" % "0.9.2").force())
 addSbtPlugin(("com.lightbend.paradox" % "sbt-paradox-apidoc" % "1.1.0").force())
 addSbtPlugin(("com.lightbend.paradox" % "sbt-paradox-project-info" % "3.0.1").force())
 
