@@ -2,7 +2,7 @@
 
 ## API Documentation
 
- * @scaladoc:[Scaladoc](org.apache.pekko.http.scaladsl.index)
+ * @scaladoc:[Scaladoc](org.apache.pekko.http.scaladsl.package-summary)
  * @javadoc:[Javadoc](org.apache.pekko.http.javadsl.package-summary)
 
 ## Directives
