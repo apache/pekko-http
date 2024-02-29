@@ -447,8 +447,8 @@ lazy val docs = project("docs")
       "javadoc.org.apache.pekko.link_style" -> "direct",
       "scaladoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/api/pekko/${PekkoCoreDependency.default.link}",
       "scaladoc.org.apache.pekko.link_style" -> "direct",
-      "javadoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/api/pekko-http/${projectInfoVersion.value}",
-      "scaladoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/japi/pekko-http/${projectInfoVersion.value}",
+      "javadoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/japi/pekko-http/${projectInfoVersion.value}",
+      "scaladoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/api/pekko-http/${projectInfoVersion.value}",
       "github.base_url" -> GitHub.url(version.value, isSnapshot.value)),
     apidocRootPackage := "org.apache.pekko",
     ValidatePR / additionalTasks += Compile / paradox)
