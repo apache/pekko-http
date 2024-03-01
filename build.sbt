@@ -396,7 +396,7 @@ lazy val httpScalafixTests =
     .enablePlugins(ScalafixTestkitPlugin)
 
 lazy val docs = project("docs")
-  .enablePlugins(ParadoxPlugin, PekkoParadoxPlugin, NoPublish)
+  .enablePlugins(PekkoParadoxPlugin, NoPublish)
   .disablePlugins(MimaPlugin)
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-actor-typed", "provided", PekkoCoreDependency.default)

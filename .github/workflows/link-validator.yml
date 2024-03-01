@@ -22,12 +22,11 @@ jobs:
           git fetch origin pull/${{ github.event.pull_request.number }}/merge:scratch
           git checkout scratch
 
-      # needs Java 8, see https://github.com/apache/incubator-pekko-http/pull/204#discussion_r1265279415
-      - name: Setup Java 8
+      - name: Setup Java 11
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 8
+          java-version: 11
 
       - name: Cache Coursier cache
         uses: coursier/cache-action@v6
