@@ -29,7 +29,7 @@ addSbtPlugin(("org.apache.pekko" % "pekko-sbt-paradox" % "1.0.0").excludeAll(
   "com.lightbend.paradox" % "sbt-paradox-apidoc",
   "com.lightbend.paradox" % "sbt-paradox-project-info"))
 addSbtPlugin(("com.lightbend.paradox" % "sbt-paradox" % "0.9.2").force().exclude("com.typesafe.sbt", "sbt-web"))
-addSbtPlugin("com.github.sbt" % "sbt-web" % "1.5.4") // sbt-paradox 0.9.2 depends on old sbt-web 1.4.x, but we want a newer version
+addSbtPlugin("com.github.sbt" % "sbt-web" % "1.5.5") // sbt-paradox 0.9.2 depends on old sbt-web 1.4.x, but we want a newer version
 addSbtPlugin(("com.lightbend.paradox" % "sbt-paradox-apidoc" % "1.1.0").excludeAll(
   "com.lightbend.paradox", "sbt-paradox"))
 addSbtPlugin(("com.lightbend.paradox" % "sbt-paradox-project-info" % "3.0.1").excludeAll(
