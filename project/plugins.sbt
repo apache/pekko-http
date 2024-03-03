@@ -38,7 +38,7 @@ dependencyOverrides += "org.parboiled" % "parboiled-java" % "1.3.1"
 
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.10.0")
 addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.32")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.11.1")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.12.0")
 addSbtPlugin("com.github.sbt" % "sbt-dynver" % "5.0.1")
 addSbtPlugin("com.github.pjfanning" % "sbt-source-dist" % "0.1.11")
 addSbtPlugin("com.github.pjfanning" % "sbt-pekko-build" % "0.3.3")
