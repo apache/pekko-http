@@ -30,6 +30,8 @@ ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
 addCommandAlias("verifyCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; +headerCheckAll; javafmtCheckAll")
 addCommandAlias("applyCodeStyle", "+headerCreateAll; scalafmtAll; scalafmtSbt; javafmtAll")
 
+ThisBuild / resolvers += Resolver.ApacheMavenSnapshotsRepo
+
 inThisBuild(Def.settings(
   apiURL := {
     val apiVersion = if (isSnapshot.value) "current" else version.value
