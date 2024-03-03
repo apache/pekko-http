@@ -25,9 +25,7 @@ addSbtPlugin("com.github.sbt" % "sbt-license-report" % "1.6.1")
 // We have to deliberately use older versions of sbt-paradox because current Pekko sbt build
 // only loads on JDK 1.8 so we need to bring in older versions of parboiled which support JDK 1.8
 resolvers += Resolver.ApacheMavenSnapshotsRepo
-addSbtPlugin("org.apache.pekko" % "pekko-sbt-paradox" % "1.0.0+37-5e25566b-SNAPSHOT")
-dependencyOverrides += "org.parboiled" % "parboiled-java" % "1.3.1"
-dependencyOverrides += "com.lightbend.paradox" %% "paradox" % "0.9.2"
+addSbtPlugin("org.apache.pekko" % "pekko-sbt-paradox" % "1.0.1-RC1+3-2b1f8708-SNAPSHOT")
 
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.10.0")
 addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.32")
