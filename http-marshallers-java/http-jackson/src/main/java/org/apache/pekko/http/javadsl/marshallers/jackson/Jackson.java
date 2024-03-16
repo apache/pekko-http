@@ -30,6 +30,9 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.StreamWriteConstraints;
+import com.fasterxml.jackson.core.util.BufferRecycler;
+import com.fasterxml.jackson.core.util.JsonRecyclerPools;
+import com.fasterxml.jackson.core.util.RecyclerPool;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -113,7 +116,30 @@ public class Jackson {
         JsonFactory.builder()
             .streamReadConstraints(streamReadConstraints)
             .streamWriteConstraints(streamWriteConstraints)
+            .recyclerPool(getBufferRecyclerPool(config))
             .build();
     return new JsonMapper(jsonFactory);
   }
+
+  private static RecyclerPool<BufferRecycler> getBufferRecyclerPool(final Config cfg) {
+    switch (cfg.getString("buffer-recycler.pool-instance")) {
+      case "thread-local":
+        return JsonRecyclerPools.threadLocalPool();
+      case "lock-free":
+        return JsonRecyclerPools.newLockFreePool();
+      case "shared-lock-free":
+        return JsonRecyclerPools.sharedLockFreePool();
+      case "concurrent-deque":
+        return JsonRecyclerPools.newConcurrentDequePool();
+      case "shared-concurrent-deque":
+        return JsonRecyclerPools.sharedConcurrentDequePool();
+      case "bounded":
+        return JsonRecyclerPools.newBoundedPool(
+          cfg.getInt("buffer-recycler.bounded-pool-size")); 
+      default:
+        throw new IllegalArgumentException(
+          "Unknown recycler-pool: " + cfg.getString("buffer-recycler.pool-instance"));
+    }
+  }
+
 }
