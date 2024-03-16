@@ -134,12 +134,10 @@ public class Jackson {
       case "shared-concurrent-deque":
         return JsonRecyclerPools.sharedConcurrentDequePool();
       case "bounded":
-        return JsonRecyclerPools.newBoundedPool(
-          cfg.getInt("buffer-recycler.bounded-pool-size")); 
+        return JsonRecyclerPools.newBoundedPool(cfg.getInt("buffer-recycler.bounded-pool-size"));
       default:
         throw new IllegalArgumentException(
-          "Unknown recycler-pool: " + cfg.getString("buffer-recycler.pool-instance"));
+            "Unknown recycler-pool: " + cfg.getString("buffer-recycler.pool-instance"));
     }
   }
-
 }
