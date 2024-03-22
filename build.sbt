@@ -20,7 +20,7 @@ import spray.boilerplate.BoilerplatePlugin
 import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
 sourceDistName := "apache-pekko-http"
-sourceDistIncubating := true
+sourceDistIncubating := false
 
 ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
 
@@ -33,7 +33,7 @@ inThisBuild(Def.settings(
     Some(url(s"https://pekko.apache.org/api/pekko-http/$apiVersion/"))
   },
   scmInfo := Some(
-    ScmInfo(url("https://github.com/apache/incubator-pekko-http"), "git@github.com:apache/incubator-pekko-http.git")),
+    ScmInfo(url("https://github.com/apache/pekko-http"), "git@github.com:apache/pekko-http.git")),
   description := "Apache Pekko Http: Modern, fast, asynchronous, streaming-first HTTP server and client.",
   testOptions ++= Seq(
     Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
