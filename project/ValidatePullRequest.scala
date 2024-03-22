@@ -158,7 +158,7 @@ object ValidatePullRequest extends AutoPlugin {
         try {
           import scala.collection.JavaConverters._
           val gh = GitHubBuilder.fromEnvironment().withOAuthToken(GitHub.envTokenOrThrow).build()
-          val comments = gh.getRepository("apache/incubator-pekko-http").getIssue(prId).getComments.asScala
+          val comments = gh.getRepository("apache/pekko-http").getIssue(prId).getComments.asScala
 
           def triggersBuildAll(c: GHIssueComment): Boolean = buildAllMagicPhrase.findFirstIn(c.getBody).isDefined
           comments.collectFirst {

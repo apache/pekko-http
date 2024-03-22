@@ -128,7 +128,7 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
     } else if (isNewLine(cursor + 3)) {
       parseStatusCode()
       // Status format with no reason phrase and no trailing space accepted, diverging from the spec
-      // See https://github.com/apache/incubator-pekko-http/pull/989
+      // See https://github.com/apache/pekko-http/pull/989
       skipNewLine(cursor + 3)
     } else badStatusCode()
   }

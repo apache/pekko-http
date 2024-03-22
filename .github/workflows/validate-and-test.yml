@@ -15,7 +15,7 @@ jobs:
   formatting-check:
     name: Checks
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,7 +45,7 @@ jobs:
         run: git diff --exit-code --color
 
       #- name: FOSSA policy check
-      #  if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'apache/incubator-pekko-http' }}
+      #  if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'apache/pekko-http' }}
       #  run: |-
       #    curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/spectrometer/master/install.sh | bash
       #    fossa analyze && fossa test
@@ -55,7 +55,7 @@ jobs:
   compile-and-test:
     name: Compile and test
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'apache/pekko-http'
     strategy:
       fail-fast: false
       matrix:

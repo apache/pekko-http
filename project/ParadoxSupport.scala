@@ -29,7 +29,7 @@ object ParadoxSupport {
   val paradoxWithCustomDirectives = Seq(
     paradoxDirectives += ((context: Writer.Context) =>
       new SignatureDirective(context.location.tree.label, context.properties, context)),
-    pekkoParadoxGithub := Some("https://github.com/apache/incubator-pekko-http"),
+    pekkoParadoxGithub := Some("https://github.com/apache/pekko-http"),
     Compile / paradoxMarkdownToHtml / sourceGenerators += Def.taskDyn {
       val targetFile = (Compile / paradox / sourceManaged).value / "license-report.md"
 

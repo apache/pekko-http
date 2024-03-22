@@ -9,7 +9,7 @@ jobs:
   compile-and-test:
     name: Compile and test
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'apache/pekko-http'
     strategy:
       fail-fast: false
       matrix:
