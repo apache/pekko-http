@@ -24,7 +24,7 @@ jobs:
   publish-docs:
     name: Publish documentation to nightlies.apache.org
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

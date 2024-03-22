@@ -48,20 +48,20 @@ You can bootstrap a new project with Apache Pekko HTTP already configured using 
 @@@ div { .group-scala }
 For Scala (sbt)
 :  ```sh
-    sbt new apache/incubator-pekko-http-quickstart-scala.g8
+    sbt new apache/pekko-http-quickstart-scala.g8
     ```
 @@@
 @@@ div { .group-java }
 For Java (Maven or Gradle)
 :  ```sh
-    sbt new apache/incubator-pekko-http-quickstart-java.g8
+    sbt new apache/pekko-http-quickstart-java.g8
     ```
 From there on the prepared project can be built using Gradle or Maven.
 @@@
 
 More instructions can be found on the @scala[[template
-project](https://github.com/apache/incubator-pekko-http-quickstart-scala.g8)]@java[[template
-project](https://github.com/apache/incubator-pekko-http-quickstart-java.g8)].
+project](https://github.com/apache/pekko-http-quickstart-scala.g8)]@java[[template
+project](https://github.com/apache/pekko-http-quickstart-java.g8)].
 
 ## Routing DSL for HTTP servers
 
