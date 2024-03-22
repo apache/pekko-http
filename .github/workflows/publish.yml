@@ -9,7 +9,7 @@ jobs:
   publish-artifacts:
     name: Publish artifacts to Apache Nexus
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
   publish-docs:
     name: Publish documentation to nightlies.apache.org
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

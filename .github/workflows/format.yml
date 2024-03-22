@@ -10,7 +10,7 @@ jobs:
   build:
     name: Code is formatted
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout current branch (full)
         uses: actions/checkout@v4

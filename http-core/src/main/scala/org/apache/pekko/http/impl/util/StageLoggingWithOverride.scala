@@ -11,7 +11,7 @@
  * Copyright (C) 2017-2022 Lightbend Inc. <https://www.lightbend.com>
  *
  * Copied and adapted from pekko-stream
- * https://github.com/apache/incubator-pekko/blob/bd1af56fcead435cb3d730e759223dcb2b0fb4c6/stream/src/main/scala/org/apache/pekko/stream/stage/StageLogging.scala
+ * https://github.com/apache/pekko/blob/bd1af56fcead435cb3d730e759223dcb2b0fb4c6/stream/src/main/scala/org/apache/pekko/stream/stage/StageLogging.scala
  */
 
 package org.apache.pekko.http.impl.util

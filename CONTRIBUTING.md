@@ -22,27 +22,27 @@ Pekko HTTP uses tags to categorise issues into groups or mark their phase in dev
 
 Most notably many tags start `t:` prefix (as in `topic:`), which categorises issues in terms of which module they relate to. Examples are:
 
-- [t:http:core](https://github.com/apache/incubator-pekko-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Acore)
-- [t:server:dsl](https://github.com/apache/incubator-pekko-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Aserver%3Adsl)
-- see [all tags here](https://github.com/apache/incubator-pekko-http/labels)
+- [t:http:core](https://github.com/apache/pekko-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Acore)
+- [t:server:dsl](https://github.com/apache/pekko-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Aserver%3Adsl)
+- see [all tags here](https://github.com/apache/pekko-http/labels)
 
 In general *all issues are open for anyone working on them*, however if you're new to the project and looking for an issue
 that will be accepted and likely is a nice one to get started you should check out the following tags:
 
-- [help wanted](https://github.com/apache/incubator-pekko-http/labels/help%20wanted) - which identifies issues that the core team will likely not have time to work on, or the issue is a nice entry level ticket. If you're not sure how to solve a ticket but would like to work on it feel free to ask in the issue about clarification or tips.
-- [nice-to-have (low-priority)](https://github.com/apache/incubator-pekko-http/labels/nice-to-have%20%28low-prio%29) - are tasks which make sense, however are not very high priority (in face of other very high priority issues). If you see something interesting in this list, a contribution would be really wonderful!
+- [help wanted](https://github.com/apache/pekko-http/labels/help%20wanted) - which identifies issues that the core team will likely not have time to work on, or the issue is a nice entry level ticket. If you're not sure how to solve a ticket but would like to work on it feel free to ask in the issue about clarification or tips.
+- [nice-to-have (low-priority)](https://github.com/apache/pekko-http/labels/nice-to-have%20%28low-prio%29) - are tasks which make sense, however are not very high priority (in face of other very high priority issues). If you see something interesting in this list, a contribution would be really wonderful!
 
 Another group of tickets are those which start from a number. They're used to signal in what phase of development an issue is:
 
-- [0 - new](https://github.com/apache/incubator-pekko-http/labels/0%20-%20new) - is assigned when a ticket is unclear on it's purpose or if it is valid or not. Sometimes the additional tag `discuss` is used to mark such tickets, if they propose large scale changed and need more discussion before moving into triaged (or being closed as invalid)
-- [1 - triaged](https://github.com/apache/incubator-pekko-http/labels/1%20-%20triaged) - roughly speaking means "this ticket makes sense". Triaged tickets are safe to pick up for contributing in terms of likeliness of a patch for it being accepted. It is not recommended to start working on a ticket that is not triaged.
-- [2 - pick next](https://github.com/apache/incubator-pekko-http/labels/2%20-%20pick%20next) - used to mark issues which are next up in the queue to be worked on. Sometimes it's also used to mark which PRs are expected to be reviewed/merged for the next release. The tag is non-binding, and mostly used as organisational helper.
-- [3 - in progress](https://github.com/apache/incubator-pekko-http/labels/3%20-%20in%20progress) - means someone is working on this ticket. If you see a ticket that has the tag, however seems inactive, it could have been an omission with removing the tag, feel free to ping the ticket then if it's still being worked on.
+- [0 - new](https://github.com/apache/pekko-http/labels/0%20-%20new) - is assigned when a ticket is unclear on it's purpose or if it is valid or not. Sometimes the additional tag `discuss` is used to mark such tickets, if they propose large scale changed and need more discussion before moving into triaged (or being closed as invalid)
+- [1 - triaged](https://github.com/apache/pekko-http/labels/1%20-%20triaged) - roughly speaking means "this ticket makes sense". Triaged tickets are safe to pick up for contributing in terms of likeliness of a patch for it being accepted. It is not recommended to start working on a ticket that is not triaged.
+- [2 - pick next](https://github.com/apache/pekko-http/labels/2%20-%20pick%20next) - used to mark issues which are next up in the queue to be worked on. Sometimes it's also used to mark which PRs are expected to be reviewed/merged for the next release. The tag is non-binding, and mostly used as organisational helper.
+- [3 - in progress](https://github.com/apache/pekko-http/labels/3%20-%20in%20progress) - means someone is working on this ticket. If you see a ticket that has the tag, however seems inactive, it could have been an omission with removing the tag, feel free to ping the ticket then if it's still being worked on.
 
 The last group of special tags indicate specific states a ticket is in:
 
-- [bug](https://github.com/apache/incubator-pekko-http/labels/bug) - bugs take priority in being fixed above features. The core team dedicates a number of days to working on bugs each sprint. Bugs which have reproducers are also great for community contributions as they're well isolated. Sometimes we're not as lucky to have reproducers though, then a bugfix should also include a test reproducing the original error along with the fix.
-- [failed](https://github.com/apache/incubator-pekko-http/labels/failed) - tickets indicate a Jenkins failure (for example from a nightly build). These tickets usually start with the `FAILED: ...` message, and include a stacktrace + link to the Jenkins failure. The tickets are collected and worked on with priority to keep the build stable and healthy. Often times it may be simple timeout issues (Jenkins boxes are slow), though sometimes real bugs are discovered this way.
+- [bug](https://github.com/apache/pekko-http/labels/bug) - bugs take priority in being fixed above features. The core team dedicates a number of days to working on bugs each sprint. Bugs which have reproducers are also great for community contributions as they're well isolated. Sometimes we're not as lucky to have reproducers though, then a bugfix should also include a test reproducing the original error along with the fix.
+- [failed](https://github.com/apache/pekko-http/labels/failed) - tickets indicate a Jenkins failure (for example from a nightly build). These tickets usually start with the `FAILED: ...` message, and include a stacktrace + link to the Jenkins failure. The tickets are collected and worked on with priority to keep the build stable and healthy. Often times it may be simple timeout issues (Jenkins boxes are slow), though sometimes real bugs are discovered this way.
 
 Pull Request validation states:
 
@@ -50,8 +50,8 @@ Pull Request validation states:
 
 # Pekko HTTP contributing guidelines
 
-These guidelines apply to all Apache Pekko projects, by which we mean both the `apache/incubator-pekko` repository,
-as well as any plugins or additional repos located under the Pekko GitHub organisation, e.g. `apache/incubator-pekko-http` and others.
+These guidelines apply to all Apache Pekko projects, by which we mean both the `apache/pekko` repository,
+as well as any plugins or additional repos located under the Pekko GitHub organisation, e.g. `apache/pekko-http` and others.
 
 These guidelines are meant to be a living document that should be changed and adapted as needed.
 We encourage changes that make it easier to achieve our goals in an efficient way.
@@ -64,9 +64,9 @@ You can read its full text here: [ASF Code of Conduct](https://www.apache.org/fo
 The below steps are how to get a patch into a `main` development branch.
 The steps are exactly the same for everyone involved in the project (be it core team, or first time contributor).
 
-1. To avoid duplicated effort, it might be good to check the [issue tracker](https://github.com/apache/incubator-pekko-http/issues) and [existing pull requests](https://github.com/apache/incubator-pekko-http/pulls) for existing work.
-   - If there is no ticket yet, feel free to [create one](https://github.com/apache/incubator-pekko-http/issues/new) to discuss the problem and the approach you want to take to solve it.
-1. [Fork the project](https://github.com/apache/incubator-pekko-http#fork-destination-box) on GitHub. You'll need to create a feature-branch for your work on your fork, as this way you'll be able to submit a PullRequest against the mainline Pekko HTTP.
+1. To avoid duplicated effort, it might be good to check the [issue tracker](https://github.com/apache/pekko-http/issues) and [existing pull requests](https://github.com/apache/pekko-http/pulls) for existing work.
+   - If there is no ticket yet, feel free to [create one](https://github.com/apache/pekko-http/issues/new) to discuss the problem and the approach you want to take to solve it.
+1. [Fork the project](https://github.com/apache/pekko-http#fork-destination-box) on GitHub. You'll need to create a feature-branch for your work on your fork, as this way you'll be able to submit a PullRequest against the mainline Pekko HTTP.
 1. Create a branch on your fork and work on the feature. For example: `git checkout -b wip-custom-headers-pekko-http`
    - Please make sure to follow the general quality guidelines (specified below) when developing your patch.
    - Please write additional tests covering your feature and adjust existing ones if needed before submitting your Pull Request. The `validatePullRequest` sbt task ([explained below](#the-validatepullrequest-task)) may come in handy to verify your changes are correct.
@@ -83,7 +83,7 @@ The steps are exactly the same for everyone involved in the project (be it core 
 
 The TL;DR; of the above very precise workflow version is:
 
-1. Fork incubator-pekko-http
+1. Fork pekko-http
 2. Hack and test on your feature (on a branch)
 3. Submit a PR
 4. Sign the ASF CLA if necessary
@@ -319,7 +319,7 @@ There is a number of ways timeouts can be defined in Pekko tests. The following 
 
 Special care should be given `expectNoMessage` calls, which indeed will wait the entire timeout before continuing, therefore a shorter timeout should be used in those, for example `200` or `300.millis`.
 
-You can read up on remaining and friends in [TestKit.scala](https://github.com/apache/incubator-pekko/blob/main/pekko-testkit/src/main/scala/org/apache/pekko/testkit/TestKit.scala)
+You can read up on remaining and friends in [TestKit.scala](https://github.com/apache/pekko/blob/main/pekko-testkit/src/main/scala/org/apache/pekko/testkit/TestKit.scala)
 
 # Supporting infrastructure
 
@@ -334,7 +334,7 @@ We do not yet publish snapshots.
 ## Related links
 
 * [Apache Contributor License Agreement](https://www.apache.org/licenses/contributor-agreements.html)
-* [Pekko HTTP Issue Tracker](https://github.com/apache/incubator-pekko-http/issues)
+* [Pekko HTTP Issue Tracker](https://github.com/apache/pekko-http/issues)
 * [Scalariform](https://github.com/scala-ide/scalariform)
 
 # Development tools
