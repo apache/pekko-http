@@ -17,6 +17,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.StreamWriteConstraints;
+import com.fasterxml.jackson.core.util.BufferRecycler;
+import com.fasterxml.jackson.core.util.JsonRecyclerPools.BoundedPool;
+import com.fasterxml.jackson.core.util.RecyclerPool;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -107,9 +110,7 @@ public class JacksonTest extends JUnitRouteTest {
             + "\n"
             + "read.max-nesting-depth="
             + maxNestingDepth;
-    Config config =
-        ConfigFactory.parseString(configText)
-            .withFallback(ConfigFactory.load().getConfig("pekko.http.marshallers.jackson"));
+    Config config = ConfigFactory.parseString(configText).withFallback(getDefaultConfig());
     ObjectMapper mapper = Jackson.createMapper(config);
     StreamReadConstraints constraints = mapper.getFactory().streamReadConstraints();
     assertEquals(maxNumLen, constraints.getMaxNumberLength());
@@ -123,11 +124,36 @@ public class JacksonTest extends JUnitRouteTest {
   public void configStreamWritesConstraints() throws Exception {
     final int maxNestingDepth = 5;
     String configText = "write.max-nesting-depth=" + maxNestingDepth;
-    Config config =
-        ConfigFactory.parseString(configText)
-            .withFallback(ConfigFactory.load().getConfig("pekko.http.marshallers.jackson"));
+    Config config = ConfigFactory.parseString(configText).withFallback(getDefaultConfig());
     ObjectMapper mapper = Jackson.createMapper(config);
     StreamWriteConstraints constraints = mapper.getFactory().streamWriteConstraints();
     assertEquals(maxNestingDepth, constraints.getMaxNestingDepth());
+  }
+
+  @Test
+  public void testDefaultFactory() throws Exception {
+    ObjectMapper mapper = Jackson.createMapper(getDefaultConfig());
+    RecyclerPool<BufferRecycler> recyclerPool = mapper.getFactory()._getRecyclerPool();
+    assertEquals("ThreadLocalPool", recyclerPool.getClass().getSimpleName());
+  }
+
+  @Test
+  public void testFactoryWithBufferRecyclerSetting() throws Exception {
+    final String poolType = "bounded";
+    final int poolSize = 10;
+    String configText =
+        "buffer-recycler.pool-instance="
+            + poolType
+            + "\nbuffer-recycler.bounded-pool-size="
+            + poolSize;
+    Config config = ConfigFactory.parseString(configText).withFallback(getDefaultConfig());
+    ObjectMapper mapper = Jackson.createMapper(config);
+    RecyclerPool<BufferRecycler> recyclerPool = mapper.getFactory()._getRecyclerPool();
+    assertEquals("BoundedPool", recyclerPool.getClass().getSimpleName());
+    assertEquals(poolSize, ((BoundedPool) recyclerPool).capacity());
+  }
+
+  private static Config getDefaultConfig() {
+    return ConfigFactory.load().getConfig("pekko.http.marshallers.jackson");
   }
 }
