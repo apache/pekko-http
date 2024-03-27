@@ -122,7 +122,8 @@ public class Jackson {
   }
 
   private static RecyclerPool<BufferRecycler> getBufferRecyclerPool(final Config cfg) {
-    switch (cfg.getString("buffer-recycler.pool-instance")) {
+    final String poolType = cfg.getString("buffer-recycler.pool-instance");
+    switch (poolType) {
       case "thread-local":
         return JsonRecyclerPools.threadLocalPool();
       case "lock-free":
@@ -136,8 +137,7 @@ public class Jackson {
       case "bounded":
         return JsonRecyclerPools.newBoundedPool(cfg.getInt("buffer-recycler.bounded-pool-size"));
       default:
-        throw new IllegalArgumentException(
-            "Unknown recycler-pool: " + cfg.getString("buffer-recycler.pool-instance"));
+        throw new IllegalArgumentException("Unknown recycler-pool: " + poolType);
     }
   }
 }
