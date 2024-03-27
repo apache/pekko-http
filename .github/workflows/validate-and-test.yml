@@ -33,7 +33,7 @@ jobs:
         uses: coursier/cache-action@v6
 
       - name: Cache Build Target
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: project/**/target
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
@@ -78,7 +78,7 @@ jobs:
         uses: coursier/cache-action@v6
 
       - name: Cache Build Target
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: project/**/target
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
@@ -100,7 +100,7 @@ jobs:
         run: sbt -Dpekko.http.parallelExecution=false -Dpekko.test.timefactor=2 ++${{ matrix.SCALA_VERSION }} mimaReportBinaryIssues test
 
       - name: Upload test results
-        uses: actions/upload-artifact@v3  # upload test results
+        uses: actions/upload-artifact@v4  # upload test results
         if: success() || failure()        # run this step even if previous step failed
         with:
           name: test-results-${{ matrix.JDK }}-${{ matrix.SCALA_VERSION }}
