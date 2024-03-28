@@ -537,7 +537,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           """1a2b3c4d5e
             |""") should generalMultiParseTo(
           Right(baseRequest),
-          Left(EntityStreamError(ErrorInfo("HTTP chunk size exceeds 2147483647 bytes"))))
+          Left(EntityStreamError(ErrorInfo("HTTP chunk size exceeds Integer.MAX_VALUE (2147483647) bytes"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 

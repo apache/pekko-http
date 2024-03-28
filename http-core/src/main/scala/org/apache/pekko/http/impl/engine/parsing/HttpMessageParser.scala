@@ -320,7 +320,7 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
           case c if CharacterClasses.WSP(c) => parseSize(cursor + 1, size) // illegal according to the spec but can happen, see issue #1812
           case c                            => failEntityStream(s"Illegal character '${escape(c)}' in chunk start")
         }
-      } else failEntityStream(s"HTTP chunk size exceeds ${Int.MaxValue} bytes")
+      } else failEntityStream(s"HTTP chunk size exceeds Integer.MAX_VALUE (${Int.MaxValue}) bytes")
 
     try parseSize(offset, 0)
     catch {
