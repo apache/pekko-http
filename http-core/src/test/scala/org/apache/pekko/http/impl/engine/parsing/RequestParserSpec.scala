@@ -544,11 +544,11 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
       "too-large chunk size" in new Test {
         Seq(
           start,
-          """400000
+          """1400000
             |""") should generalMultiParseTo(
           Right(baseRequest),
           Left(
-            EntityStreamError(ErrorInfo("HTTP chunk of 4194304 bytes exceeds the configured limit of 1048576 bytes"))))
+            EntityStreamError(ErrorInfo("HTTP chunk of 20971520 bytes exceeds the configured limit of 1048576 bytes"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
