@@ -31,14 +31,14 @@ object Untar {
       val gzIn = new GzipCompressorInputStream(buffIn)
       Using(new TarArchiveInputStream(gzIn)) { tis =>
         toDirectory.mkdirs()
-        var entry = tis.getNextTarEntry
+        var entry = tis.getNextEntry
         while (entry ne null) {
           val name = entry.getName
           val outFile = new File(toDirectory, name)
           Using(new FileOutputStream(outFile)) { fos =>
             IOUtils.copy(tis, fos)
           }
-          entry = tis.getNextTarEntry
+          entry = tis.getNextEntry
         }
       }
     }
