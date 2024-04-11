@@ -79,6 +79,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     "pekko-http",
     "pekko-http-caching",
     "pekko-http-testkit",
+    "pekko-http-testkit-munit",
     "pekko-http-marshallers-scala",
     "pekko-http-marshallers-java",
     "pekko-http-spray-json",
