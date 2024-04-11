@@ -350,7 +350,11 @@ lazy val httpScalafixRules =
   Project(id = "http-scalafix-rules", base = file("http-scalafix/scalafix-rules"))
     .settings(
       name := "pekko-http-scalafix-rules",
-      libraryDependencies += Dependencies.Compile.scalafix)
+      libraryDependencies ++= Seq(
+          Dependencies.Compile.scalafix,
+          Dependencies.Compile.protobufJava
+        )
+      )
     .enablePlugins(NoScala3)
     .disablePlugins(MimaPlugin) // tooling, no bin compat guaranteed
 

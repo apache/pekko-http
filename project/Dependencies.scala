@@ -27,6 +27,7 @@ object Dependencies {
   val h2specArtifactExtension = if (h2specExe.endsWith("exe")) "zip" else "tar.gz"
   val h2specUrl =
     s"https://github.com/summerwind/h2spec/releases/download/v$h2specVersion/$h2specName.$h2specArtifactExtension"
+  val protobufJavaVersion = "3.21.12"
 
   val scalaTestVersion = "3.2.18"
   val scalaCheckVersion = "1.17.0"
@@ -67,6 +68,8 @@ object Dependencies {
     val scalafix = "ch.epfl.scala" %% "scalafix-core" % Dependencies.scalafixVersion
 
     val parboiled = "org.parboiled" %% "parboiled" % "2.5.1"
+
+    val protobufJava = "com.google.protobuf" % "protobuf-java" % protobufJavaVersion
 
     object Docs {
       val sprayJson = Compile.sprayJson % "test"
