@@ -18,7 +18,7 @@ import org.apache.pekko
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import pekko.http.scaladsl.model.HttpRequest
-import pekko.http.scaladsl.settings.{ClientConnectionSettings, ConnectionPoolSettings}
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
 
 import scala.concurrent.ExecutionContext
 
@@ -29,7 +29,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import org.apache.pekko
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.model._
-    import pekko.stream.scaladsl.{FileIO, Framing}
+    import pekko.stream.scaladsl.{ FileIO, Framing }
     import pekko.util.ByteString
 
     import java.io.File
@@ -55,7 +55,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.http.scaladsl.model._
     import pekko.util.ByteString
 
-    import scala.concurrent.{ExecutionContext, Future}
+    import scala.concurrent.{ ExecutionContext, Future }
     import scala.concurrent.duration._
 
     implicit val system: ActorSystem = ActorSystem()
@@ -91,10 +91,10 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.Http
     import pekko.http.scaladsl.model._
-    import pekko.stream.scaladsl.{Flow, Sink, Source}
+    import pekko.stream.scaladsl.{ Flow, Sink, Source }
     import pekko.util.ByteString
 
-    import scala.concurrent.{ExecutionContext, Future}
+    import scala.concurrent.{ ExecutionContext, Future }
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
@@ -157,7 +157,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.http.scaladsl.model._
     import pekko.stream.scaladsl.Sink
 
-    import scala.concurrent.{ExecutionContext, Future}
+    import scala.concurrent.{ ExecutionContext, Future }
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
@@ -179,8 +179,8 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.stream.scaladsl._
     import pekko.stream.QueueOfferResult
 
-    import scala.concurrent.{Future, Promise}
-    import scala.util.{Failure, Success}
+    import scala.concurrent.{ Future, Promise }
+    import scala.util.{ Failure, Success }
 
     implicit val system: ActorSystem = ActorSystem() // to get an implicit ExecutionContext into scope
 
@@ -224,9 +224,9 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.http.scaladsl.model.Multipart.FormData
     import pekko.stream.scaladsl._
 
-    import java.nio.file.{Path, Paths}
+    import java.nio.file.{ Path, Paths }
     import scala.concurrent.Future
-    import scala.util.{Failure, Success}
+    import scala.util.{ Failure, Success }
 
     implicit val system: ActorSystem = ActorSystem()
     import system.dispatcher // to get an implicit ExecutionContext into scope
@@ -325,7 +325,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
   "single-request-in-actor-example" in compileOnlySpec {
     // #single-request-in-actor-example
     import org.apache.pekko
-    import pekko.actor.{Actor, ActorLogging, ActorSystem}
+    import pekko.actor.{ Actor, ActorLogging, ActorSystem }
     import pekko.http.scaladsl.Http
     import pekko.http.scaladsl.model._
     import pekko.util.ByteString
@@ -362,7 +362,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     // #https-proxy-example-single-request
     import org.apache.pekko
     import pekko.actor.ActorSystem
-    import pekko.http.scaladsl.{ClientTransport, Http}
+    import pekko.http.scaladsl.{ ClientTransport, Http }
 
     import java.net.InetSocketAddress
 
@@ -383,7 +383,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
   "https-proxy-example-single-request with auth" in compileOnlySpec {
     import org.apache.pekko
     import pekko.actor.ActorSystem
-    import pekko.http.scaladsl.{ClientTransport, Http}
+    import pekko.http.scaladsl.{ ClientTransport, Http }
 
     import java.net.InetSocketAddress
 
