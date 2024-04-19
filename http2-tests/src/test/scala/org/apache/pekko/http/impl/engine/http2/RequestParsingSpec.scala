@@ -535,9 +535,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           Host(Uri.Host("example.org")))
         inside(request.entity) {
           case entity: HttpEntity =>
-            // FIXME: contentLength is not reported in all cases with HTTP/2
-            // see https://github.com/akka/akka-http/issues/3843
-            // entity.contentLength should ===(123.toLong)
+            entity.contentLengthOption shouldBe Some(123.toLong)
             entity.contentType should ===(ContentType(MediaTypes.`image/jpeg`))
         }
         request.protocol should ===(HttpProtocols.`HTTP/2.0`)
