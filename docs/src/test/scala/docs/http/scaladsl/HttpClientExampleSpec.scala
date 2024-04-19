@@ -13,13 +13,14 @@
 
 package docs.http.scaladsl
 
-import docs.CompileOnlySpec
 import org.apache.pekko
+import pekko.http.scaladsl.model.HttpRequest
+import pekko.http.scaladsl.settings.ClientConnectionSettings
+import pekko.http.scaladsl.settings.ConnectionPoolSettings
+
+import docs.CompileOnlySpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import pekko.http.scaladsl.model.HttpRequest
-import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
-
 import scala.concurrent.ExecutionContext
 
 class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpec {

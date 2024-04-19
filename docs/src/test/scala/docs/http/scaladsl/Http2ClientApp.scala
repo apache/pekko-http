@@ -24,8 +24,9 @@ import pekko.http.scaladsl.model.headers
 import pekko.stream.scaladsl.Flow
 import pekko.stream.scaladsl.Sink
 import pekko.stream.scaladsl.Source
+import pekko.stream.QueueOfferResult
+
 import com.typesafe.config.ConfigFactory
-import org.apache.pekko.stream.QueueOfferResult
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
@@ -77,7 +78,7 @@ object Http2ClientApp extends App {
   // #response-future-association
   def singleRequest(
       connection: Flow[HttpRequest, HttpResponse, Any], bufferSize: Int = 100): HttpRequest => Future[HttpResponse] = {
-    val queue = {
+    val queue =
       Source.queue(bufferSize)
         .via(connection)
         .to(Sink.foreach { response =>
@@ -86,7 +87,6 @@ object Http2ClientApp extends App {
           responseAssociation.promise.trySuccess(response)
         })
         .run()
-    }
 
     req => {
       // create a promise of the response for each request and set it as an attribute on the request
