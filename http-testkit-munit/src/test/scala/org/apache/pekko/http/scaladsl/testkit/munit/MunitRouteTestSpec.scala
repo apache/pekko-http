@@ -27,12 +27,12 @@ import StatusCodes._
 import pekko.http.scaladsl.server._
 import Directives._
 import munit.FailException
-import pekko.http.scaladsl.model.headers.{RawHeader, `X-Forwarded-Proto`}
+import pekko.http.scaladsl.model.headers.{ `X-Forwarded-Proto`, RawHeader }
 import pekko.actor.ActorRef
 import pekko.pattern.ask
 import pekko.stream.scaladsl.Source
 import pekko.testkit._
-import pekko.util.{ByteString, Timeout}
+import pekko.util.{ ByteString, Timeout }
 
 class MunitRouteTestSpec extends MunitRouteTest {
   override def testConfigSource: String = "pekko.http.server.transparent-head-requests = on" // see test below
