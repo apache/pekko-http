@@ -14,6 +14,7 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import org.apache.pekko
+import pekko.http.impl.engine.http2.hpack.ByteStringInputStream
 import pekko.http.scaladsl.model.headers.RawHeader
 import pekko.http.scaladsl.model._
 import pekko.http.shaded.com.twitter.hpack._
@@ -22,7 +23,6 @@ import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
 import org.scalatest.concurrent.ScalaFutures
 
-import java.io.ByteArrayInputStream
 import scala.collection.immutable.VectorBuilder
 
 /** Helper that allows automatic HPACK encoding/decoding for wire sends / expectations */
@@ -58,7 +58,7 @@ trait Http2FrameHpackSupport extends Http2FrameProbeDelegator with Http2FrameSen
   val decoder = new Decoder(Http2Protocol.InitialMaxHeaderListSize, Http2Protocol.InitialMaxHeaderTableSize)
 
   def decodeHeaders(bytes: ByteString): Seq[(String, String)] = {
-    val bis = new ByteArrayInputStream(bytes.toArrayUnsafe())
+    val bis = ByteStringInputStream(bytes)
     val hs = new VectorBuilder[(String, String)]()
 
     decoder.decode(bis,
