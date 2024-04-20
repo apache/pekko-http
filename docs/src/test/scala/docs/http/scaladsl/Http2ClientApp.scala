@@ -97,7 +97,7 @@ object Http2ClientApp extends App {
         case QueueOfferResult.Dropped     => Future.failed(new RuntimeException("Queue overflowed. Try again later."))
         case QueueOfferResult.Failure(ex) => Future.failed(ex)
         case QueueOfferResult.QueueClosed => Future.failed(
-            new RuntimeException("Queue was closed (pool shut down) while running the request. Try again later."))
+            new RuntimeException("Queue was closed (pool shut down) while running the request."))
       }
     }
   }
