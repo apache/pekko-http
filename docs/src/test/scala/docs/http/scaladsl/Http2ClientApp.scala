@@ -94,10 +94,10 @@ object Http2ClientApp extends App {
       queue.offer(req.addAttribute(ResponsePromise.Key, ResponsePromise(p))) match {
         // return the future response
         case QueueOfferResult.Enqueued    => p.future
-        case QueueOfferResult.Dropped     => Future.failed(new RuntimeException("Queue overflowed. Try again later."))
+        case QueueOfferResult.Dropped     => Future.failed(new RuntimeException("Queue overflowed."))
         case QueueOfferResult.Failure(ex) => Future.failed(ex)
         case QueueOfferResult.QueueClosed => Future.failed(
-            new RuntimeException("Queue was closed (pool shut down) while running the request."))
+            new RuntimeException("Queue was closed (pool shut down)."))
       }
     }
   }
