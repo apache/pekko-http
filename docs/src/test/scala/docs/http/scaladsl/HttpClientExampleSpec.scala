@@ -13,30 +13,27 @@
 
 package docs.http.scaladsl
 
-import scala.concurrent.ExecutionContext
 import org.apache.pekko
 import pekko.http.scaladsl.model.HttpRequest
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.ConnectionPoolSettings
-import scala.annotation.nowarn
+
 import docs.CompileOnlySpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import scala.concurrent.ExecutionContext
 
-// OverflowStrategy.dropNew has been deprecated in latest Pekko versions
-// FIXME: replace with 2.6 queue when 2.5 support is dropped, see #3069
-@nowarn("msg=will not be a runnable program|Use Source.queue")
 class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
 
   "manual-entity-consume-example-1" in compileOnlySpec {
     // #manual-entity-consume-example-1
-    import java.io.File
-
     import org.apache.pekko
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.model._
     import pekko.stream.scaladsl.{ FileIO, Framing }
     import pekko.util.ByteString
+
+    import java.io.File
 
     implicit val system: ActorSystem = ActorSystem()
 
@@ -54,14 +51,13 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "manual-entity-consume-example-2" in compileOnlySpec {
     // #manual-entity-consume-example-2
-    import scala.concurrent.ExecutionContext
-    import scala.concurrent.Future
-    import scala.concurrent.duration._
-
     import org.apache.pekko
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.model._
     import pekko.util.ByteString
+
+    import scala.concurrent.{ ExecutionContext, Future }
+    import scala.concurrent.duration._
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
@@ -91,16 +87,15 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "manual-entity-consume-example-3" in compileOnlySpec {
     // #manual-entity-consume-example-3
-    import scala.concurrent.ExecutionContext
-    import scala.concurrent.Future
-
     import org.apache.pekko
     import pekko.NotUsed
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.Http
     import pekko.http.scaladsl.model._
-    import pekko.util.ByteString
     import pekko.stream.scaladsl.{ Flow, Sink, Source }
+    import pekko.util.ByteString
+
+    import scala.concurrent.{ ExecutionContext, Future }
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
@@ -140,12 +135,12 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "manual-entity-discard-example-1" in compileOnlySpec {
     // #manual-entity-discard-example-1
-    import scala.concurrent.ExecutionContext
-
     import org.apache.pekko
     import pekko.actor.ActorSystem
-    import pekko.http.scaladsl.model.HttpMessage.DiscardedEntity
     import pekko.http.scaladsl.model._
+    import pekko.http.scaladsl.model.HttpMessage.DiscardedEntity
+
+    import scala.concurrent.ExecutionContext
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
@@ -158,13 +153,12 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     // #manual-entity-discard-example-1
   }
   "manual-entity-discard-example-2" in compileOnlySpec {
-    import scala.concurrent.ExecutionContext
-    import scala.concurrent.Future
-
     import pekko.Done
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.model._
     import pekko.stream.scaladsl.Sink
+
+    import scala.concurrent.{ ExecutionContext, Future }
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
@@ -179,19 +173,17 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "host-level-queue-example" in compileOnlySpec {
     // #host-level-queue-example
-    import scala.util.{ Failure, Success }
-    import scala.concurrent.{ Future, Promise }
-
     import org.apache.pekko
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.Http
     import pekko.http.scaladsl.model._
     import pekko.stream.scaladsl._
+    import pekko.stream.QueueOfferResult
 
-    import pekko.stream.{ OverflowStrategy, QueueOfferResult }
+    import scala.concurrent.{ Future, Promise }
+    import scala.util.{ Failure, Success }
 
-    implicit val system: ActorSystem = ActorSystem()
-    import system.dispatcher // to get an implicit ExecutionContext into scope
+    implicit val system: ActorSystem = ActorSystem() // to get an implicit ExecutionContext into scope
 
     val QueueSize = 10
 
@@ -199,7 +191,7 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     // http://kazuhiro.github.io/scala/akka/akka-http/akka-streams/2016/01/31/connection-pooling-with-akka-http-and-source-queue.html
     val poolClientFlow = Http().cachedHostConnectionPool[Promise[HttpResponse]]("pekko.apache.org")
     val queue =
-      Source.queue[(HttpRequest, Promise[HttpResponse])](QueueSize, OverflowStrategy.dropNew)
+      Source.queue[(HttpRequest, Promise[HttpResponse])](QueueSize)
         .via(poolClientFlow)
         .to(Sink.foreach {
           case ((Success(resp), p)) => p.success(resp)
@@ -209,12 +201,12 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
     def queueRequest(request: HttpRequest): Future[HttpResponse] = {
       val responsePromise = Promise[HttpResponse]()
-      queue.offer(request -> responsePromise).flatMap {
+      queue.offer(request -> responsePromise) match {
         case QueueOfferResult.Enqueued    => responsePromise.future
         case QueueOfferResult.Dropped     => Future.failed(new RuntimeException("Queue overflowed. Try again later."))
         case QueueOfferResult.Failure(ex) => Future.failed(ex)
         case QueueOfferResult.QueueClosed => Future.failed(
-            new RuntimeException("Queue was closed (pool shut down) while running the request. Try again later."))
+            new RuntimeException("Queue was closed (pool shut down) while running the request."))
       }
     }
 
@@ -224,20 +216,18 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "host-level-streamed-example" in compileOnlySpec {
     // #host-level-streamed-example
-    import java.nio.file.{ Path, Paths }
-
-    import scala.util.{ Failure, Success }
-    import scala.concurrent.Future
-
     import org.apache.pekko
     import pekko.NotUsed
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.marshalling.Marshal
     import pekko.http.scaladsl.model._
+    import pekko.http.scaladsl.model.Multipart.FormData
     import pekko.stream.scaladsl._
 
-    import pekko.http.scaladsl.model.Multipart.FormData
-    import pekko.http.scaladsl.marshalling.Marshal
+    import java.nio.file.{ Path, Paths }
+    import scala.concurrent.Future
+    import scala.util.{ Failure, Success }
 
     implicit val system: ActorSystem = ActorSystem()
     import system.dispatcher // to get an implicit ExecutionContext into scope
@@ -289,9 +279,10 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
   }
 
   "single-request-example" in compileOnlySpec {
-    import scala.concurrent.Future
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.model._
+
+    import scala.concurrent.Future
     // #create-simple-request
     HttpRequest(uri = "https://pekko.apache.org")
 
@@ -320,8 +311,8 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     val response: HttpResponse = null
     // #unmarshal-response-body
     import org.apache.pekko
-    import pekko.http.scaladsl.unmarshalling.Unmarshal
     import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+    import pekko.http.scaladsl.unmarshalling.Unmarshal
     import spray.json.DefaultJsonProtocol._
     import spray.json.RootJsonFormat
 
@@ -343,8 +334,8 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     class Myself extends Actor
         with ActorLogging {
 
-      import pekko.pattern.pipe
       import context.dispatcher
+      import pekko.pattern.pipe
 
       implicit val system: ActorSystem = context.system
       val http = Http(system)
@@ -370,11 +361,11 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
 
   "https-proxy-example-single-request" in compileOnlySpec {
     // #https-proxy-example-single-request
-    import java.net.InetSocketAddress
-
     import org.apache.pekko
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.{ ClientTransport, Http }
+
+    import java.net.InetSocketAddress
 
     implicit val system = ActorSystem()
 
@@ -391,11 +382,11 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
   }
 
   "https-proxy-example-single-request with auth" in compileOnlySpec {
-    import java.net.InetSocketAddress
-
     import org.apache.pekko
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.{ ClientTransport, Http }
+
+    import java.net.InetSocketAddress
 
     implicit val system = ActorSystem()
 
