@@ -27,7 +27,7 @@ import pekko.util.ByteString.ByteString1C
 @InternalApi
 private[http2] object ByteStringInputStream {
 
-  private lazy val byteStringInputStreamMethodTypeOpt = Try {
+  private val byteStringInputStreamMethodTypeOpt = Try {
     val lookup = MethodHandles.publicLookup()
     val inputStreamMethodType = MethodType.methodType(classOf[InputStream])
     lookup.findVirtual(classOf[ByteString], "asInputStream", inputStreamMethodType)
