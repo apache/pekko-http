@@ -10,7 +10,7 @@ def withRangeSupport(rangeCountLimit: Int, rangeCoalescingThreshold:Long): Direc
 
 The signature shown is simplified, the real signature uses magnets. <a id="^1" href="#1">[1]</a>
 
-> <a id="1" href="#^1">[1]</a> See [The Magnet Pattern](https://www.baeldung.com/scala/magnet-pattern) for an explanation of magnet-based overloading.
+> <a id="1" href="#^1">[1]</a> See [The Magnet Pattern](https://web.archive.org/web/20240311111722/http://spray.io/blog/2012-12-13-the-magnet-pattern/) for an explanation of magnet-based overloading.
 
 @@@
 
