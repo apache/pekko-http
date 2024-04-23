@@ -35,21 +35,25 @@ private[http2] object ByteStringInputStream {
 
   def apply(bs: ByteString): InputStream = bs match {
     case cs: ByteString1C =>
-      new ByteArrayInputStream(cs.toArrayUnsafe())
+      getInputStreamUnsafe(cs)
     case _ => {
       byteStringInputStreamMethodTypeOpt.map { mh =>
         mh.invoke(bs).asInstanceOf[InputStream]
       }.getOrElse {
-        legacyConvert(bs)
+        legacyConvert(bs.compact)
       }
     }
   }
 
   private def legacyConvert(bs: ByteString): InputStream = bs match {
     case cs: ByteString1C =>
-      new ByteArrayInputStream(cs.toArrayUnsafe())
+      getInputStreamUnsafe(cs)
     case _ =>
       // NOTE: We actually measured recently, and compact + use array was pretty good usually
       legacyConvert(bs.compact)
   }
+
+  private def getInputStreamUnsafe(bs: ByteString): InputStream =
+    new ByteArrayInputStream(bs.toArrayUnsafe())
+
 }
