@@ -36,13 +36,12 @@ private[http2] object ByteStringInputStream {
   def apply(bs: ByteString): InputStream = bs match {
     case cs: ByteString1C =>
       getInputStreamUnsafe(cs)
-    case _ => {
-      byteStringInputStreamMethodTypeOpt.map { mh =>
-        mh.invoke(bs).asInstanceOf[InputStream]
-      }.getOrElse {
+    case _ =>
+      if (byteStringInputStreamMethodTypeOpt.isDefined) {
+        byteStringInputStreamMethodTypeOpt.get.invoke(bs).asInstanceOf[InputStream]
+      } else {
         legacyConvert(bs.compact)
       }
-    }
   }
 
   private def legacyConvert(bs: ByteString): InputStream = bs match {
