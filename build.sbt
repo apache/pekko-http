@@ -47,7 +47,6 @@ inThisBuild(Def.settings(
     (onLoad in Global).value
   },
   projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
-  scalafixScalaBinaryVersion := scalaBinaryVersion.value,
   versionScheme := Some(VersionScheme.SemVerSpec)))
 
 // When this is updated the set of modules in Http.allModules should also be updated
