@@ -40,19 +40,34 @@ private[http2] object ByteStringInputStream {
       if (byteStringInputStreamMethodTypeOpt.isDefined) {
         byteStringInputStreamMethodTypeOpt.get.invoke(bs).asInstanceOf[InputStream]
       } else {
-        legacyConvert(bs.compact)
+        asByteArrayInputStream(bs.compact)
       }
   }
 
-  private def legacyConvert(bs: ByteString): InputStream = bs match {
+  def asByteArrayInputStream(bs: ByteString): ByteArrayInputStream = bs match {
     case cs: ByteString1C =>
       getInputStreamUnsafe(cs)
     case _ =>
       // NOTE: We actually measured recently, and compact + use array was pretty good usually
-      legacyConvert(bs.compact)
+      getInputStreamUnsafe(bs.compact)
   }
 
-  private def getInputStreamUnsafe(bs: ByteString): InputStream =
+  private def getInputStreamUnsafe(bs: ByteString): ByteArrayInputStream =
     new ByteArrayInputStream(bs.toArrayUnsafe())
+
+  private def asString(stream: InputStream): String = {
+    val bos = new java.io.ByteArrayOutputStream()
+    val array = new Array[Byte](4096)
+    try {
+      var n = stream.read(array)
+      while (n != -1) {
+        bos.write(array, 0, n)
+        n = stream.read(array)
+      }
+      bos.toString("UTF-8")
+    } finally {
+      bos.close()
+    }
+  }
 
 }

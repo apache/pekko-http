@@ -93,7 +93,7 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
           }
         }
         try {
-          decoder.decode(ByteStringInputStream(payload), Receiver)
+          decoder.decode(ByteStringInputStream.asByteArrayInputStream(payload), Receiver)
           decoder.endHeaderBlock() // TODO: do we have to check the result here?
 
           push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo))
