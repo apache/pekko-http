@@ -803,7 +803,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    *
    * @deprecated since Akka HTTP 10.2.0: set context explicitly when binding
    */
-  @Deprecated @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
+  @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
   def defaultServerHttpContext: ConnectionContext =
     delegate.defaultServerHttpContext
 
@@ -813,7 +813,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    *
    * @deprecated since Akka HTTP 10.2.0: set context explicitly when binding
    */
-  @Deprecated @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
+  @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
   def setDefaultServerHttpContext(context: ConnectionContext): Unit =
     delegate.setDefaultServerHttpContext(context.asScala)
 

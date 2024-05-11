@@ -56,7 +56,7 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   def backlog: Int
   def socketOptions: immutable.Seq[SocketOption]
   def defaultHostHeader: Host
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.randomFactory instead",
+  @deprecated("Kept for binary compatibility; Use websocketSettings.randomFactory instead",
     since = "Akka HTTP 10.1.1")
   def websocketRandomFactory: () => Random
   def websocketSettings: WebSocketSettings
@@ -87,7 +87,7 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   override def getRemoteAddressHeader = this.remoteAddressHeader
   override def getRemoteAddressAttribute: Boolean = this.remoteAddressAttribute
   override def getLogUnencryptedNetworkBytes = this.logUnencryptedNetworkBytes.toJava
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.getRandomFactory instead",
+  @deprecated("Kept for binary compatibility; Use websocketSettings.getRandomFactory instead",
     since = "Akka HTTP 10.2.0")
   override def getWebsocketRandomFactory = new Supplier[Random] {
     override def get(): Random = self.websocketRandomFactory()
@@ -116,7 +116,7 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   override def withBacklog(newValue: Int): ServerSettings = self.copy(backlog = newValue)
   override def withSocketOptions(newValue: java.lang.Iterable[SocketOption]): ServerSettings =
     self.copy(socketOptions = newValue.asScala.toList)
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
+  @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
     since = "Akka HTTP 10.2.0")
   override def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ServerSettings =
     self.copy(websocketSettings = this.websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
@@ -139,7 +139,7 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
     self.copy(logUnencryptedNetworkBytes = newValue)
   def withDefaultHostHeader(newValue: Host): ServerSettings = self.copy(defaultHostHeader = newValue)
   def withParserSettings(newValue: ParserSettings): ServerSettings = self.copy(parserSettings = newValue)
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
+  @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
     since = "Akka HTTP 10.2.0")
   def withWebsocketRandomFactory(newValue: () => Random): ServerSettings =
     self.copy(websocketSettings = this.websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
