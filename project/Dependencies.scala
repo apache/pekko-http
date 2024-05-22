@@ -70,7 +70,7 @@ object Dependencies {
 
     object Docs {
       val sprayJson = Compile.sprayJson % "test"
-      val gson = "com.google.code.gson" % "gson" % "2.10.1" % "test"
+      val gson = "com.google.code.gson" % "gson" % "2.11.0" % "test"
       val jacksonXml = "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml" % jacksonXmlVersion % "test"
       val reflections = "org.reflections" % "reflections" % "0.10.2" % "test"
     }
