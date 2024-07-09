@@ -84,8 +84,7 @@ object HttpHeader {
    * 3. The header name or value are illegal according to the basic requirements for HTTP headers
    *    (http://tools.ietf.org/html/rfc7230#section-3.2). In this case the method returns a `ParsingResult.Error`.
    */
-  def parse(
-      name: String, value: String, settings: HeaderParser.Settings = HeaderParser.DefaultSettings): ParsingResult =
+  def parse(name: String, value: String, settings: HeaderParser.Settings = HeaderParser.DefaultSettings): ParsingResult =
     if (name.forall(c => CharacterClasses.tchar(c))) {
       import org.parboiled2.Parser.DeliveryScheme.Try
       val parser = new HeaderParser(value, settings)
@@ -99,10 +98,11 @@ object HttpHeader {
             case HeaderParser.RuleNotFound => ParsingResult.Ok(RawHeader(name, preProcessedValue), Nil)
           }
         case Failure(error) =>
-          val info = (error match {
-            case e: ParseError => parser.parseError(e)
-            case e             => parser.failure(e)
-          }).info
+          val info = error match {
+            case e: ParseError => parser.parseError(e).info
+            case _: NullPointerException => ErrorInfo()
+            case e             => parser.failure(e).info
+          }
           ParsingResult.Error(info.withSummaryPrepended(s"Illegal HTTP header value"))
       }
     } else ParsingResult.Error(ErrorInfo(s"Illegal HTTP header name", name))

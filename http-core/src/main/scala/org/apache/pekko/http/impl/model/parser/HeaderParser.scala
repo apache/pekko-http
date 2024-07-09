@@ -17,10 +17,7 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.settings.ParserSettings.CookieParsingMode
-import pekko.http.scaladsl.settings.ParserSettings.{
-  IllegalResponseHeaderNameProcessingMode,
-  IllegalResponseHeaderValueProcessingMode
-}
+import pekko.http.scaladsl.settings.ParserSettings.{IllegalResponseHeaderNameProcessingMode, IllegalResponseHeaderValueProcessingMode}
 import pekko.http.scaladsl.model.headers.HttpCookiePair
 import pekko.util.ConstantFun
 
@@ -87,7 +84,7 @@ private[http] class HeaderParser(
     HeaderParser.Failure {
       error match {
         case IllegalUriException(info) => info
-        case NonFatal(e)               => ErrorInfo.fromCompoundString(e.getMessage)
+        case NonFatal(e)               => ErrorInfo.fromCompoundString(if(e.getMessage == null) "" else e.getMessage)
       }
     }
   def ruleNotFound(ruleName: String): Result = HeaderParser.RuleNotFound
