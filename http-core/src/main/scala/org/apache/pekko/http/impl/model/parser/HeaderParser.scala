@@ -87,7 +87,7 @@ private[http] class HeaderParser(
     HeaderParser.Failure {
       error match {
         case IllegalUriException(info) => info
-        case NonFatal(e)               => ErrorInfo.fromCompoundString(if (e.getMessage == null) "" else e.getMessage)
+        case NonFatal(e)               => ErrorInfo.fromCompoundString(e.getMessage)
       }
     }
   def ruleNotFound(ruleName: String): Result = HeaderParser.RuleNotFound
