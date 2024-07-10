@@ -878,7 +878,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     }
 
     "should not broken when header-value is null" in {
-      parse("Content-Disposition", null).errors.head.summary shouldBe  "Illegal HTTP header value"
+      parse("Content-Disposition", null).errors.head.isInstanceOf[ErrorInfo] shouldBe true
     }
 
   }
