@@ -99,11 +99,10 @@ object HttpHeader {
             case HeaderParser.RuleNotFound => ParsingResult.Ok(RawHeader(name, preProcessedValue), Nil)
           }
         case Failure(error) =>
-          val info = error match {
-            case e: ParseError             => parser.parseError(e).info
-            case e if e.getMessage == null => ErrorInfo()
-            case e                         => parser.failure(e).info
-          }
+          val info = (error match {
+            case e: ParseError => parser.parseError(e)
+            case e             => parser.failure(e)
+          }).info
           ParsingResult.Error(info.withSummaryPrepended(s"Illegal HTTP header value"))
       }
     } else ParsingResult.Error(ErrorInfo(s"Illegal HTTP header name", name))
