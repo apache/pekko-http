@@ -100,8 +100,8 @@ object HttpHeader {
           }
         case Failure(error) =>
           val info = error match {
-            case e: ParseError             => parser.parseError(e).info
-            case e                         => parser.failure(e).info
+            case e: ParseError => parser.parseError(e).info
+            case e             => parser.failure(e).info
           }
           ParsingResult.Error(info.withSummaryPrepended("Illegal HTTP header value"))
       }
