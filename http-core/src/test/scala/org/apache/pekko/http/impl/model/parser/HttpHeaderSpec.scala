@@ -877,7 +877,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       ErrorInfo("Illegal HTTP header 'User-Agent': Illegal header value", "Header comment nested too deeply")
     }
 
-    "should not broken when header-value is null" in {
+    "not break when header-value is null" in {
       val errors = parse("Content-Disposition", null).errors
       errors should have size 1
       errors.head shouldBe an[ErrorInfo]
