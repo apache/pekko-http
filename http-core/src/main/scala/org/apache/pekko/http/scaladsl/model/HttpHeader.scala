@@ -103,9 +103,9 @@ object HttpHeader {
             case e: ParseError => parser.parseError(e)
             case e             => parser.failure(e)
           }).info
-          ParsingResult.Error(info.withSummaryPrepended(s"Illegal HTTP header value"))
+          ParsingResult.Error(info.withSummaryPrepended("Illegal HTTP header value"))
       }
-    } else ParsingResult.Error(ErrorInfo(s"Illegal HTTP header name", name))
+    } else ParsingResult.Error(ErrorInfo("Illegal HTTP header name", name))
 
   /** INTERNAL API */
   @InternalApi
