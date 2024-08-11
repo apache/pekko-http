@@ -11,7 +11,7 @@ resolvers += Classpaths.sbtPluginReleases
 resolvers += Classpaths.typesafeReleases
 
 addSbtPlugin("com.github.sbt" % "sbt-multi-jvm" % "0.6.0")
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.3")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.4")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
 addSbtPlugin("com.github.sbt" % "sbt-dynver" % "5.0.1")
 addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.5.0")
