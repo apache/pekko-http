@@ -283,11 +283,15 @@ class MarshallingDirectivesSpec extends RoutingSpec with Inside {
         responseEntity shouldEqual HttpEntity(ContentType(`text/plain`, `UTF-8`), foo)
       }
     }
-    "rrender text with UTF-8 encoding if an `Accept-Charset` request header requests a non-UTF-8 encoding" in {
+    "render text with requested encoding if an `Accept-Charset` request header requests a non-UTF-8 encoding" in {
       Get() ~> `Accept-Charset`(`ISO-8859-1`) ~> complete(foo) ~> check {
         responseEntity shouldEqual HttpEntity(ContentType(`text/plain`, `ISO-8859-1`), foo)
       }
     }
-
+    "render text with UTF-8 encoding if an `Accept-Charset` request header requests an unknown encoding" in {
+      Get() ~> `Accept-Charset`(HttpCharset("unknown")(Nil)) ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/plain`, `UTF-8`), foo)
+      }
+    }
   }
 }
