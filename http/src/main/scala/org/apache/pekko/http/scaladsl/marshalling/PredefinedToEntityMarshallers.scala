@@ -35,7 +35,14 @@ trait PredefinedToEntityMarshallers extends MultipartMarshallers {
   implicit val CharArrayMarshaller: ToEntityMarshaller[Array[Char]] = charArrayMarshaller(`text/plain`)
   def charArrayMarshaller(mediaType: MediaType.WithOpenCharset): ToEntityMarshaller[Array[Char]] =
     Marshaller.withOpenCharset(mediaType) { (value, charset) =>
-      marshalCharArray(value, mediaType.withCharset(charset))
+      // https://github.com/apache/pekko-http/issues/300
+      // ignore issues with invalid charset - use UTF-8 instead
+      try {
+        marshalCharArray(value, mediaType.withCharset(charset))
+      } catch {
+        case _: UnsupportedCharsetException =>
+          marshalCharArray(value, mediaType.withCharset(HttpCharsets.`UTF-8`))
+      }
     }
   def charArrayMarshaller(mediaType: MediaType.WithFixedCharset): ToEntityMarshaller[Array[Char]] =
     Marshaller.withFixedContentType(mediaType) { value => marshalCharArray(value, mediaType) }
