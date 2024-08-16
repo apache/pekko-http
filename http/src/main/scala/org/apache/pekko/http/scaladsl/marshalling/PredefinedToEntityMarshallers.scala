@@ -14,7 +14,6 @@
 package org.apache.pekko.http.scaladsl.marshalling
 
 import java.nio.CharBuffer
-import java.nio.charset.UnsupportedCharsetException
 
 import org.apache.pekko
 import pekko.http.scaladsl.model.MediaTypes._
@@ -37,12 +36,7 @@ trait PredefinedToEntityMarshallers extends MultipartMarshallers {
     Marshaller.withOpenCharset(mediaType) { (value, charset) =>
       // https://github.com/apache/pekko-http/issues/300
       // ignore issues with invalid charset - use UTF-8 instead
-      try {
-        marshalCharArray(value, mediaType.withCharset(charset))
-      } catch {
-        case _: UnsupportedCharsetException =>
-          marshalCharArray(value, mediaType.withCharset(HttpCharsets.`UTF-8`))
-      }
+      marshalCharArray(value, mediaType.withCharset(charset.charsetWithUtf8Failover))
     }
   def charArrayMarshaller(mediaType: MediaType.WithFixedCharset): ToEntityMarshaller[Array[Char]] =
     Marshaller.withFixedContentType(mediaType) { value => marshalCharArray(value, mediaType) }
@@ -66,12 +60,7 @@ trait PredefinedToEntityMarshallers extends MultipartMarshallers {
     Marshaller.withOpenCharset(mediaType) { (s, cs) =>
       // https://github.com/apache/pekko-http/issues/300
       // ignore issues with invalid charset - use UTF-8 instead
-      try {
-        HttpEntity(mediaType.withCharset(cs), s)
-      } catch {
-        case _: UnsupportedCharsetException =>
-          HttpEntity(mediaType.withCharset(HttpCharsets.`UTF-8`), s)
-      }
+      HttpEntity(mediaType.withCharset(cs.charsetWithUtf8Failover), s)
     }
   def stringMarshaller(mediaType: MediaType.WithFixedCharset): ToEntityMarshaller[String] =
     Marshaller.withFixedContentType(mediaType) { s => HttpEntity(mediaType, s) }
