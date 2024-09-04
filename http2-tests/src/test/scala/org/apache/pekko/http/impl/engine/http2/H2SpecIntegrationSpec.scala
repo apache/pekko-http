@@ -306,6 +306,7 @@ class H2SpecIntegrationSpec extends PekkoFreeSpec(
         executable,
         "-k", "-t",
         "-p", port.toString,
+        "-o", "9",
         "-j", junitOutput.getPath) ++
         specSectionNumber.toList.map(number => s"http2/$number")
 
