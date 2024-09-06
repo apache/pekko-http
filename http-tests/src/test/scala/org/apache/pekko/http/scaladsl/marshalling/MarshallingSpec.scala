@@ -56,6 +56,23 @@ class MarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll w
     }
   }
 
+  "The PredefinedToEntityMarshallers" - {
+    "StringMarshaller should marshal response to `text/plain` content in UTF-8 when accept-charset is invalid" in {
+      val invalidAcceptCharsetHeader = `Accept-Charset`(HttpCharsetRange(HttpCharset.custom("invalid")))
+      val request = HttpRequest().withHeaders(invalidAcceptCharsetHeader)
+      val responseEntity = marshalToResponse("Ha“llo", request).entity
+      responseEntity.contentType.charsetOption shouldEqual Some(HttpCharsets.`UTF-8`)
+      responseEntity.contentType.mediaType shouldEqual MediaTypes.`text/plain`
+    }
+    "CharArrayMarshaller should marshal response to `text/plain` content in UTF-8 when accept-charset is invalid" in {
+      val invalidAcceptCharsetHeader = `Accept-Charset`(HttpCharsetRange(HttpCharset.custom("invalid")))
+      val request = HttpRequest().withHeaders(invalidAcceptCharsetHeader)
+      val responseEntity = marshalToResponse("Ha“llo".toCharArray(), request).entity
+      responseEntity.contentType.charsetOption shouldEqual Some(HttpCharsets.`UTF-8`)
+      responseEntity.contentType.mediaType shouldEqual MediaTypes.`text/plain`
+    }
+  }
+
   "The PredefinedToResponseMarshallers" - {
     "fromStatusCode should properly marshal a status code that doesn't allow an entity" in {
       marshalToResponse(StatusCodes.NoContent) shouldEqual HttpResponse(StatusCodes.NoContent,

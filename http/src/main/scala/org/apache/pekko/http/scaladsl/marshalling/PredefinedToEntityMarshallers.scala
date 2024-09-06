@@ -34,7 +34,9 @@ trait PredefinedToEntityMarshallers extends MultipartMarshallers {
   implicit val CharArrayMarshaller: ToEntityMarshaller[Array[Char]] = charArrayMarshaller(`text/plain`)
   def charArrayMarshaller(mediaType: MediaType.WithOpenCharset): ToEntityMarshaller[Array[Char]] =
     Marshaller.withOpenCharset(mediaType) { (value, charset) =>
-      marshalCharArray(value, mediaType.withCharset(charset))
+      // https://github.com/apache/pekko-http/issues/300
+      // ignore issues with invalid charset - use UTF-8 instead
+      marshalCharArray(value, mediaType.withCharset(charset.charsetWithUtf8Failover))
     }
   def charArrayMarshaller(mediaType: MediaType.WithFixedCharset): ToEntityMarshaller[Array[Char]] =
     Marshaller.withFixedContentType(mediaType) { value => marshalCharArray(value, mediaType) }
@@ -55,7 +57,11 @@ trait PredefinedToEntityMarshallers extends MultipartMarshallers {
 
   implicit val StringMarshaller: ToEntityMarshaller[String] = stringMarshaller(`text/plain`)
   def stringMarshaller(mediaType: MediaType.WithOpenCharset): ToEntityMarshaller[String] =
-    Marshaller.withOpenCharset(mediaType) { (s, cs) => HttpEntity(mediaType.withCharset(cs), s) }
+    Marshaller.withOpenCharset(mediaType) { (s, cs) =>
+      // https://github.com/apache/pekko-http/issues/300
+      // ignore issues with invalid charset - use UTF-8 instead
+      HttpEntity(mediaType.withCharset(cs.charsetWithUtf8Failover), s)
+    }
   def stringMarshaller(mediaType: MediaType.WithFixedCharset): ToEntityMarshaller[String] =
     Marshaller.withFixedContentType(mediaType) { s => HttpEntity(mediaType, s) }
 

@@ -250,6 +250,11 @@ class MarshallingDirectivesSpec extends RoutingSpec with Inside {
         rejection shouldEqual UnacceptedResponseContentTypeRejection(Set(ContentType(`application/json`)))
       }
     }
+    "reject JSON rendering if an `Accept-Charset` request header requests an unknown encoding" in {
+      Get() ~> `Accept-Charset`(HttpCharset("unknown")(Nil)) ~> complete(foo) ~> check {
+        rejection shouldEqual UnacceptedResponseContentTypeRejection(Set(ContentType(`application/json`)))
+      }
+    }
     val acceptHeaderUtf = Accept.parseFromValueString("application/json;charset=utf8").right.get
     val acceptHeaderNonUtf = Accept.parseFromValueString("application/json;charset=ISO-8859-1").right.get
     "render JSON response when `Accept` header is present with the `charset` parameter ignoring it" in {
@@ -272,6 +277,45 @@ class MarshallingDirectivesSpec extends RoutingSpec with Inside {
       val acceptHeader = Accept(MediaRange(`application/json`))
       Get().withHeaders(acceptHeader) ~> complete(foo) ~> check {
         responseEntity shouldEqual HttpEntity(`application/json`, foo.toJson.compactPrint)
+      }
+    }
+  }
+
+  "The marshalling infrastructure for text" should {
+    val foo = "Hällö"
+    "render text with UTF-8 encoding if no `Accept-Charset` request header is present" in {
+      Get() ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/plain`, `UTF-8`), foo)
+      }
+    }
+    "render text with requested encoding if an `Accept-Charset` request header requests a non-UTF-8 encoding" in {
+      Get() ~> `Accept-Charset`(`ISO-8859-1`) ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/plain`, `ISO-8859-1`), foo)
+      }
+    }
+    "render text with UTF-8 encoding if an `Accept-Charset` request header requests an unknown encoding" in {
+      Get() ~> `Accept-Charset`(HttpCharset("unknown")(Nil)) ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/plain`, `UTF-8`), foo)
+      }
+    }
+  }
+
+  "The marshalling infrastructure for text/xml" should {
+    val foo = <foo>Hällö</foo>
+    "render XML with UTF-8 encoding if no `Accept-Charset` request header is present" in {
+      Get() ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/xml`, `UTF-8`), foo.toString)
+      }
+    }
+    "render XML with requested encoding if an `Accept-Charset` request header requests a non-UTF-8 encoding" in {
+      Get() ~> `Accept-Charset`(`ISO-8859-1`) ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/xml`, `ISO-8859-1`), foo.toString)
+      }
+    }
+    "render XML with UTF-8 encoding if an `Accept-Charset` request header requests an unknown encoding" ignore {
+      // still returns Content-Type: text/xml; charset=unknown
+      Get() ~> `Accept-Charset`(HttpCharset("unknown")(Nil)) ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/xml`, `UTF-8`), foo.toString)
       }
     }
   }
