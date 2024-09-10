@@ -19,7 +19,7 @@ There are several third party libraries that expand the functionality of Apache 
 - [tapir](https://github.com/softwaremill/tapir): Tapir is a library to describe HTTP APIs, expose them as a server, consume as a client, and automatically document using open standards. Pekko HTTP is one supported backend.
 - [pekko-http-metrics](https://github.com/rustedbones/pekko-http-metrics) Easily collect and expose metrics in your pekko-http server.
 
-[pekko-http-cors](common/cors.md) was previously an independent library that has now been included in Pekko HTTP.
+@ref:[pekko-http-cors](common/cors.md) was previously an independent library that has now been included in Pekko HTTP.
 
 If you are aware of any extensions that support Apache Pekko HTTP, please notify us or create a PR to modify this page.
 
