@@ -12,7 +12,6 @@ All the changes in the @ref:[1.0.x releases](releases-1.0.md) up to and includin
 ### Changes
 * Changed names of HTTP status codes 413 and 422 ([PR87](https://github.com/apache/pekko-http/pull/87))
 * Parse entire HTTP chunk size ([PR528](https://github.com/apache/pekko-http/pull/528))
-* Increased default value of `pekko.http.server.stream-cancellation-delay` and `pekko.http.client.stream-cancellation-delay` from 100 to 1000 millis ([PR590](https://github.com/apache/pekko-http/pull/590))
 
 ### Additions
 * Add UnsupportedContentTypeException Java DSL ([PR376](https://github.com/apache/pekko-http/pull/376))
