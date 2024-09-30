@@ -40,6 +40,7 @@ import scala.util.control.NoStackTrace
  * Mixed into the Http2ServerDemux graph logic.
  */
 @InternalApi
+//noinspection ConvertibleToMethodValue,ScalaWeakerAccess,ScalaUnusedSymbol
 private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper { self =>
   // required API from demux
   def isServer: Boolean
