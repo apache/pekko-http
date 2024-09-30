@@ -638,8 +638,7 @@ public final class MediaTypes {
             : org.apache.pekko.http.scaladsl.model.MediaType.NotCompressible$.MODULE$;
 
     scala.collection.immutable.List<String> fileEx =
-        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions))
-            .toList();
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions)).toList();
 
     scala.collection.immutable.Map<String, String> p = Util.convertMapToScala(params);
 
@@ -658,8 +657,7 @@ public final class MediaTypes {
         (org.apache.pekko.http.scaladsl.model.MediaType.Compressibility) compressibility;
 
     scala.collection.immutable.List<String> fileEx =
-        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions))
-            .toList();
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions)).toList();
 
     scala.collection.immutable.Map<String, String> p = Util.convertMapToScala(params);
 
@@ -678,8 +676,7 @@ public final class MediaTypes {
         (org.apache.pekko.http.scaladsl.model.HttpCharset) charset;
 
     scala.collection.immutable.List<String> fileEx =
-        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions))
-            .toList();
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions)).toList();
 
     scala.collection.immutable.Map<String, String> p = Util.convertMapToScala(params);
 
@@ -694,8 +691,7 @@ public final class MediaTypes {
       boolean allowArbitrarySubtypes,
       String... fileExtensions) {
     scala.collection.immutable.List<String> fileEx =
-        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions))
-            .toList();
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions)).toList();
 
     scala.collection.immutable.Map<String, String> p = Util.convertMapToScala(params);
 
