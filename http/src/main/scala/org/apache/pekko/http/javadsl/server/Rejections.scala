@@ -25,7 +25,7 @@ import java.lang.{ Iterable => JIterable }
 
 import pekko.annotation.DoNotInherit
 import pekko.http.scaladsl
-import pekko.japi.Util
+import pekko.http.impl.util.Util
 import pekko.pattern.CircuitBreakerOpenException
 import pekko.util.OptionConverters._
 
@@ -416,7 +416,8 @@ object Rejections {
     s.UnsupportedRequestEncodingRejection(supported.asScala)
 
   def unsatisfiableRange(unsatisfiableRanges: java.lang.Iterable[ByteRange], actualEntityLength: Long) =
-    UnsatisfiableRangeRejection(Util.immutableSeq(unsatisfiableRanges).map(_.asScala), actualEntityLength)
+    UnsatisfiableRangeRejection(Util.convertIterable[ByteRange, ByteRange](unsatisfiableRanges).map(_.asScala),
+      actualEntityLength)
 
   def tooManyRanges(maxRanges: Int) = TooManyRangesRejection(maxRanges)
 

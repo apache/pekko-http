@@ -18,7 +18,7 @@ import java.util.Optional
 import java.util.function.Function
 
 import org.apache.pekko
-import pekko.japi.Util
+import pekko.http.impl.util.Util
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ ByteRange, HttpChallenge, HttpEncoding }
 import pekko.http.javadsl.{ model, server => jserver }
@@ -335,7 +335,9 @@ final case class TransformationRejection(transform: immutable.Seq[Rejection] => 
     override def apply(t: Iterable[jserver.Rejection]): Iterable[jserver.Rejection] = {
       // explicit collects assignment is because of unidoc failing compilation on .asScala and .asJava here
       val transformed: Seq[jserver.Rejection] =
-        transform(Util.immutableSeq(t).collect { case r: Rejection => r }).collect { case j: jserver.Rejection => j }
+        transform(Util.convertIterable[jserver.Rejection, jserver.Rejection](t).collect { case r: Rejection =>
+          r
+        }).collect { case j: jserver.Rejection => j }
       transformed.asJava // TODO "asJavaDeep" and optimise?
     }
   }
