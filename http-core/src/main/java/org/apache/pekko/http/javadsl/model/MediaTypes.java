@@ -467,7 +467,7 @@ public final class MediaTypes {
             : org.apache.pekko.http.scaladsl.model.MediaType.NotCompressible$.MODULE$;
 
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.applicationBinary(subType, comp, fileEx);
   }
@@ -478,7 +478,7 @@ public final class MediaTypes {
         (org.apache.pekko.http.scaladsl.model.MediaType.Compressibility) compressibility;
 
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.applicationBinary(subType, comp, fileEx);
   }
@@ -489,7 +489,7 @@ public final class MediaTypes {
         (org.apache.pekko.http.scaladsl.model.HttpCharset) charset;
 
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.applicationWithFixedCharset(
         subType, cs, fileEx);
@@ -498,7 +498,7 @@ public final class MediaTypes {
   public static MediaType.WithOpenCharset applicationWithOpenCharset(
       String subType, String... fileExtensions) {
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.applicationWithOpenCharset(
         subType, fileEx);
@@ -512,7 +512,7 @@ public final class MediaTypes {
             : org.apache.pekko.http.scaladsl.model.MediaType.NotCompressible$.MODULE$;
 
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.audio(subType, comp, fileEx);
   }
@@ -523,7 +523,7 @@ public final class MediaTypes {
         (org.apache.pekko.http.scaladsl.model.MediaType.Compressibility) compressibility;
 
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.audio(subType, comp, fileEx);
   }
@@ -536,7 +536,7 @@ public final class MediaTypes {
             : org.apache.pekko.http.scaladsl.model.MediaType.NotCompressible$.MODULE$;
 
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.image(subType, comp, fileEx);
   }
@@ -547,7 +547,7 @@ public final class MediaTypes {
         (org.apache.pekko.http.scaladsl.model.MediaType.Compressibility) compressibility;
 
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.image(subType, comp, fileEx);
   }
@@ -560,7 +560,7 @@ public final class MediaTypes {
             : org.apache.pekko.http.scaladsl.model.MediaType.NotCompressible$.MODULE$;
 
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.message(subType, comp, fileEx);
   }
@@ -571,14 +571,14 @@ public final class MediaTypes {
         (org.apache.pekko.http.scaladsl.model.MediaType.Compressibility) compressibility;
 
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.message(subType, comp, fileEx);
   }
 
   public static MediaType.WithOpenCharset text(String subType, String... fileExtensions) {
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.text(subType, fileEx);
   }
@@ -591,7 +591,7 @@ public final class MediaTypes {
             : org.apache.pekko.http.scaladsl.model.MediaType.NotCompressible$.MODULE$;
 
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.video(subType, comp, fileEx);
   }
@@ -602,7 +602,7 @@ public final class MediaTypes {
         (org.apache.pekko.http.scaladsl.model.MediaType.Compressibility) compressibility;
 
     scala.collection.immutable.Seq<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions));
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions));
 
     return org.apache.pekko.http.scaladsl.model.MediaType.video(subType, comp, fileEx);
   }
@@ -638,7 +638,7 @@ public final class MediaTypes {
             : org.apache.pekko.http.scaladsl.model.MediaType.NotCompressible$.MODULE$;
 
     scala.collection.immutable.List<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions))
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions))
             .toList();
 
     scala.collection.immutable.Map<String, String> p = Util.convertMapToScala(params);
@@ -658,7 +658,7 @@ public final class MediaTypes {
         (org.apache.pekko.http.scaladsl.model.MediaType.Compressibility) compressibility;
 
     scala.collection.immutable.List<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions))
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions))
             .toList();
 
     scala.collection.immutable.Map<String, String> p = Util.convertMapToScala(params);
@@ -678,7 +678,7 @@ public final class MediaTypes {
         (org.apache.pekko.http.scaladsl.model.HttpCharset) charset;
 
     scala.collection.immutable.List<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions))
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions))
             .toList();
 
     scala.collection.immutable.Map<String, String> p = Util.convertMapToScala(params);
@@ -694,7 +694,7 @@ public final class MediaTypes {
       boolean allowArbitrarySubtypes,
       String... fileExtensions) {
     scala.collection.immutable.List<String> fileEx =
-        org.apache.pekko.japi.Util.<String>immutableSeq(java.util.Arrays.asList(fileExtensions))
+        Util.<String, String>convertIterable(java.util.Arrays.asList(fileExtensions))
             .toList();
 
     scala.collection.immutable.Map<String, String> p = Util.convertMapToScala(params);
