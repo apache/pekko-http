@@ -40,7 +40,6 @@ import scala.util.control.NoStackTrace
  * Mixed into the Http2ServerDemux graph logic.
  */
 @InternalApi
-//noinspection ConvertibleToMethodValue,ScalaWeakerAccess,ScalaUnusedSymbol
 private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper { self =>
   // required API from demux
   def isServer: Boolean
@@ -446,9 +445,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       case _: WindowUpdateFrame =>
         // We're not planning on sending any data on this stream anymore, so we don't care about window updates.
         this
-      case rst@RstStreamFrame(streamId, _) =>
-        val headers = ParsedHeadersFrame(streamId, endStream = false, Seq((":status", "429")), None)
-        dispatchSubstream(headers, Right(Source.failed(new PeerClosedStreamException(rst.streamId, rst.errorCode))), correlationAttributes)
+      case rst: RstStreamFrame =>
+        val headers = ParsedHeadersFrame(rst.streamId, endStream = false, Seq((":status", "429")), None)
+        dispatchSubstream(headers, Right(Source.failed(new PeerClosedStreamException(rst.streamId, rst.errorCode))),
+          correlationAttributes)
         Closed
       case _ =>
         expectIncomingStream(event, Closed, HalfClosedLocal(_), correlationAttributes)
