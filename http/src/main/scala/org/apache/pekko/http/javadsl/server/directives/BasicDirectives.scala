@@ -17,39 +17,36 @@ import java.util.function.{ Function => JFunction }
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.http.impl.util.JavaMapping
-import pekko.http.javadsl.settings.ParserSettings
-import pekko.http.javadsl.settings.RoutingSettings
+import pekko.dispatch.ExecutionContexts
+import pekko.event.LoggingAdapter
 import pekko.japi.Util
+import pekko.stream.Materializer
 import pekko.stream.javadsl.Source
 import pekko.util.ByteString
+import pekko.util.FutureConverters._
 
-import scala.concurrent.ExecutionContextExecutor
 import pekko.http.impl.model.JavaUri
-import pekko.http.javadsl.model.HttpRequest
-import pekko.http.javadsl.model.HttpEntity
-import pekko.http.javadsl.model.RequestEntity
-import pekko.http.javadsl.model.Uri
+import pekko.http.impl.util.JavaMapping
+import pekko.http.impl.util.Util.convertIterable
+import pekko.http.javadsl.model.{ HttpEntity, HttpRequest, RequestEntity, Uri }
 import pekko.http.javadsl.server._
-import pekko.http.scaladsl.server.{ Directives => D }
+import pekko.http.javadsl.settings.{ ParserSettings, RoutingSettings }
 import pekko.http.scaladsl
-import pekko.stream.Materializer
-import java.util.function.Supplier
-import java.util.{ List => JList }
+import pekko.http.scaladsl.server.{ Directives => D }
 
 import pekko.http.javadsl.model.HttpResponse
 import pekko.http.javadsl.model.ResponseEntity
 import pekko.http.javadsl.model.HttpHeader
 import pekko.http.scaladsl.util.FastFuture._
+import pekko.http.javadsl.server
+
 import java.lang.{ Iterable => JIterable }
+import java.util.function.Supplier
+import java.util.{ List => JList }
 import java.util.concurrent.CompletionStage
 import java.util.function.Predicate
 
-import pekko.dispatch.ExecutionContexts
-import pekko.event.LoggingAdapter
-import pekko.http.javadsl.server
-import pekko.util.FutureConverters._
-
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.FiniteDuration
 
 abstract class BasicDirectives {
@@ -66,7 +63,8 @@ abstract class BasicDirectives {
 
   def mapRejections(f: JFunction[JList[Rejection], JList[Rejection]], inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRejections(rejections =>
-      Util.immutableSeq(f.apply(Util.javaArrayList(rejections.map(_.asJava)))).map(_.asScala)) { inner.get.delegate }
+      convertIterable[Rejection, Rejection](f.apply(Util.javaArrayList(rejections.map(_.asJava)))).map(
+        _.asScala)) { inner.get.delegate }
   }
 
   def mapResponse(f: JFunction[HttpResponse, HttpResponse], inner: Supplier[Route]): Route = RouteAdapter {
@@ -79,7 +77,10 @@ abstract class BasicDirectives {
 
   def mapResponseHeaders(f: JFunction[JList[HttpHeader], JList[HttpHeader]], inner: Supplier[Route]): Route =
     RouteAdapter {
-      D.mapResponseHeaders(l => Util.immutableSeq(f.apply(Util.javaArrayList(l))).map(_.asScala)) { inner.get.delegate } // TODO try to remove map()
+      D.mapResponseHeaders(l =>
+        convertIterable[HttpHeader, HttpHeader](f.apply(Util.javaArrayList(l))).map(_.asScala)) {
+        inner.get.delegate
+      } // TODO try to remove map()
     }
 
   def mapInnerRoute(f: JFunction[Route, Route], inner: Supplier[Route]): Route = RouteAdapter {
@@ -155,7 +156,7 @@ abstract class BasicDirectives {
    * to the list of rejections potentially coming back from the inner route.
    */
   def cancelRejections(classes: JIterable[Class[_]], inner: Supplier[Route]): Route = RouteAdapter {
-    D.cancelRejections(Util.immutableSeq(classes): _*) { inner.get.delegate }
+    D.cancelRejections(convertIterable[Class[_], Class[_]](classes): _*) { inner.get.delegate }
   }
 
   /**
