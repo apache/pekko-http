@@ -446,6 +446,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       case _: WindowUpdateFrame =>
         // We're not planning on sending any data on this stream anymore, so we don't care about window updates.
         this
+      case rst@RstStreamFrame(streamId, _) =>
+        //TODO if errorCode is REFUSED_STREAM, we should try to open a new stream
+        val frame = ParsedHeadersFrame(streamId, endStream = true, Seq((":status", "429")), None)
+        dispatchStream(streamId, frame, ByteString.empty, correlationAttributes, _ => Closed)
       case _ =>
         expectIncomingStream(event, Closed, HalfClosedLocal(_), correlationAttributes)
     }

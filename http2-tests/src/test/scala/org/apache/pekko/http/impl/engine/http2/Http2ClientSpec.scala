@@ -298,7 +298,8 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
 
         network.sendRST_STREAM(TheStreamId, ErrorCode.REFUSED_STREAM)
 
-        expectGracefulCompletion()
+        val response = user.expectResponse()
+        response.status should be(StatusCodes.TooManyRequests)
 
       })
     }
