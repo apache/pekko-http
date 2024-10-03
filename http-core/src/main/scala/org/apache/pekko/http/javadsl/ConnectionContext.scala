@@ -17,8 +17,8 @@ import java.util.{ Collection => JCollection, Optional }
 
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
+import pekko.http.impl.util.Util
 import pekko.http.scaladsl
-import pekko.japi.Util
 import pekko.stream.TLSClientAuth
 import pekko.util.OptionConverters._
 import com.typesafe.sslconfig.pekko.PekkoSSLConfig
@@ -80,8 +80,8 @@ object ConnectionContext {
     scaladsl.ConnectionContext.https(
       sslContext,
       sslConfig.toScala,
-      enabledCipherSuites.toScala.map(Util.immutableSeq(_)),
-      enabledProtocols.toScala.map(Util.immutableSeq(_)),
+      enabledCipherSuites.toScala.map(Util.convertIterable[String, String](_)),
+      enabledProtocols.toScala.map(Util.convertIterable[String, String](_)),
       clientAuth.toScala,
       sslParameters.toScala)
 
@@ -97,8 +97,8 @@ object ConnectionContext {
     scaladsl.ConnectionContext.https(
       sslContext,
       None,
-      enabledCipherSuites.toScala.map(Util.immutableSeq(_)),
-      enabledProtocols.toScala.map(Util.immutableSeq(_)),
+      enabledCipherSuites.toScala.map(Util.convertIterable[String, String](_)),
+      enabledProtocols.toScala.map(Util.convertIterable[String, String](_)),
       clientAuth.toScala,
       sslParameters.toScala)
 

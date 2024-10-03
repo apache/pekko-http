@@ -28,8 +28,7 @@ trait Rejected extends RouteResult {
 
 object RouteResults {
   import pekko.http.scaladsl.{ server => s }
-  import pekko.japi.Util
-  import pekko.http.impl.util.JavaMapping
+  import pekko.http.impl.util.{ JavaMapping, Util }
   import JavaMapping.Implicits._
   import RoutingJavaMapping._
 
@@ -38,7 +37,7 @@ object RouteResults {
   }
 
   def rejected(rejections: java.lang.Iterable[Rejection]): Rejected = {
-    s.RouteResult.Rejected(Util.immutableSeq(rejections).map(_.asScala))
+    s.RouteResult.Rejected(Util.convertIterable[Rejection, Rejection](rejections).map(_.asScala))
   }
 
 }
