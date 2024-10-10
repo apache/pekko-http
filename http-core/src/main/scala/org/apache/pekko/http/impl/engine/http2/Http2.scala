@@ -75,6 +75,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
   val telemetry = TelemetrySpi.create(system)
 
   // TODO: split up similarly to what `Http` does into `serverLayer`, `bindAndHandle`, etc.
+  @noinline // Not inlined to permit instrumentation to pass params (interface, port) as context to constructed implementation flows
   def bindAndHandleAsync(
       handler: HttpRequest => Future[HttpResponse],
       interface: String, port: Int = DefaultPortForProtocol,
