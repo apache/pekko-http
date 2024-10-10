@@ -296,6 +296,7 @@ private[http] object Http2Blueprint {
    * Returns a flow that handles `parallelism` requests in parallel, automatically keeping track of the
    * Http2StreamIdHeader between request and responses.
    */
+  @noinline // Not inlined so that we can instrument the produced flow with e.g. tracing downstream
   def handleWithStreamIdHeader(parallelism: Int)(handler: HttpRequest => Future[HttpResponse])(
       implicit ec: ExecutionContext): Flow[HttpRequest, HttpResponse, NotUsed] =
     Flow[HttpRequest]
