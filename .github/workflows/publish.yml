@@ -23,6 +23,9 @@ jobs:
           distribution: temurin
           java-version: 8
 
+      - name: Install sbt
+        uses: sbt/setup-sbt@v1
+
       - name: Cache Coursier cache
         uses: coursier/cache-action@v6
 
@@ -52,6 +55,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 8
+
+      - name: Install sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Cache Coursier cache
         uses: coursier/cache-action@v6
