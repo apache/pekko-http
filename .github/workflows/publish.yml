@@ -8,7 +8,7 @@ on:
 jobs:
   publish-artifacts:
     name: Publish artifacts to Apache Nexus
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout
@@ -38,7 +38,7 @@ jobs:
 
   publish-docs:
     name: Publish documentation to nightlies.apache.org
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout

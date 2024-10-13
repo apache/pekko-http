@@ -8,7 +8,7 @@ on:
 jobs:
   compile-and-test:
     name: Compile and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.repository == 'apache/pekko-http'
     strategy:
       fail-fast: false

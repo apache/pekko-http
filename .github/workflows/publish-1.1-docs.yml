@@ -23,7 +23,7 @@ on:
 jobs:
   publish-docs:
     name: Publish documentation to nightlies.apache.org
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout

@@ -9,7 +9,7 @@ on:
 jobs:
   publish-test-results:
     name: "Publish details with dorny-test-reporter"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.repository == 'apache/pekko-http'
     strategy:
       fail-fast: false
