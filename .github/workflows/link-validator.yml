@@ -10,7 +10,7 @@ on:
 
 jobs:
   validate-links:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout
@@ -28,6 +28,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 8
+
+      - name: Install sbt
+        uses: sbt/setup-sbt@v1          
 
       - name: Cache Coursier cache
         uses: coursier/cache-action@v6

@@ -7,8 +7,11 @@ jobs:
   dependency-graph:
     name: Update Dependency Graph
     runs-on: ubuntu-latest
+    if: github.repository == 'apache/pekko-http'    
     steps:
       - uses: actions/checkout@v4
+      - name: Install sbt
+        uses: sbt/setup-sbt@v1      
       - uses: scalacenter/sbt-dependency-submission@v2
         with:
           modules-ignore: pekko-http-tests_3 pekko-http-docs_3
