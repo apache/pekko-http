@@ -26,6 +26,8 @@ import scala.util.Try
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import scala.collection.immutable
+
 object MyCustomHeader extends ModeledCustomHeaderCompanion[MyCustomHeader] {
   override def name: String = "custom-header"
   override def parse(value: String): Try[MyCustomHeader] = ???
@@ -163,12 +165,12 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
 
   }
 
-  private def renderClientHeaders(headers: Seq[HttpHeader], builder: VectorBuilder[(String, String)],
+  private def renderClientHeaders(headers: immutable.Seq[HttpHeader], builder: VectorBuilder[(String, String)],
       peerIdHeader: Option[(String, String)] = None): Unit =
     HttpMessageRendering.renderHeaders(headers, builder, peerIdHeader, NoLogging, isServer = false,
       shouldRenderAutoHeaders = true, dateHeaderRendering = DateHeaderRendering.Unavailable)
 
-  private def renderServerHeaders(headers: Seq[HttpHeader], builder: VectorBuilder[(String, String)],
+  private def renderServerHeaders(headers: immutable.Seq[HttpHeader], builder: VectorBuilder[(String, String)],
       peerIdHeader: Option[(String, String)] = None): Unit =
     HttpMessageRendering.renderHeaders(headers, builder, peerIdHeader, NoLogging, isServer = true,
       shouldRenderAutoHeaders = true,
