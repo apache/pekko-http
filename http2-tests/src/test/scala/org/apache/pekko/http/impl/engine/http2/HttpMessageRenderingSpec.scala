@@ -16,7 +16,7 @@ package org.apache.pekko.http.impl.engine.http2
 import com.typesafe.config.ConfigFactory
 import java.time.format.DateTimeFormatter
 import org.apache.pekko
-import org.apache.pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
 import pekko.event.NoLogging
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.scaladsl.model.headers._
@@ -25,8 +25,6 @@ import scala.collection.immutable.VectorBuilder
 import scala.util.Try
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-
-import scala.collection.immutable
 
 object MyCustomHeader extends ModeledCustomHeaderCompanion[MyCustomHeader] {
   override def name: String = "custom-header"
@@ -165,18 +163,18 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
 
   }
 
-  private def renderClientHeaders(headers: immutable.Seq[HttpHeader], builder: VectorBuilder[(String, String)],
+  private def renderClientHeaders(headers: Seq[HttpHeader], builder: VectorBuilder[(String, String)],
       peerIdHeader: Option[(String, String)] = None): Unit =
     HttpMessageRendering.renderHeaders(headers, builder, peerIdHeader, NoLogging, isServer = false,
       shouldRenderAutoHeaders = true, dateHeaderRendering = DateHeaderRendering.Unavailable)
 
-  private def renderServerHeaders(headers: immutable.Seq[HttpHeader], builder: VectorBuilder[(String, String)],
+  private def renderServerHeaders(headers: Seq[HttpHeader], builder: VectorBuilder[(String, String)],
       peerIdHeader: Option[(String, String)] = None): Unit =
     HttpMessageRendering.renderHeaders(headers, builder, peerIdHeader, NoLogging, isServer = true,
       shouldRenderAutoHeaders = true,
       dateHeaderRendering = dateHeaderRendering)
 
-  private lazy val dateHeaderRendering = new DateHeaderRendering {
+  private lazy val dateHeaderRendering: DateHeaderRendering = new DateHeaderRendering {
     // fake date rendering
     override def renderHeaderPair(): (String, String) = "date" -> DateTime.now.toRfc1123DateTimeString
     override def renderHeaderBytes(): Array[Byte] = ???
