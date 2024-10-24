@@ -25,7 +25,7 @@ import scala.collection.immutable.VectorBuilder
 import scala.util.Try
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-
+import scala.collection.immutable.Seq
 import scala.collection.immutable
 
 object MyCustomHeader extends ModeledCustomHeaderCompanion[MyCustomHeader] {
