@@ -46,4 +46,4 @@ jobs:
         run: sbt -Dpekko.genjavadoc.enabled=true "set ThisBuild / version := \"1.0.0\"; Javaunidoc/doc; Compile/unidoc; docs/paradox"
 
       - name: Run Link Validator
-        run: cs launch net.runne::site-link-validator:0.2.2 -- scripts/link-validator.conf
+        run: cs launch net.runne::site-link-validator:0.2.5 -- scripts/link-validator.conf
