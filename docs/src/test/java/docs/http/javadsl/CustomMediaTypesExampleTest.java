@@ -70,7 +70,7 @@ public class CustomMediaTypesExampleTest extends JUnitRouteTest {
         extractRequest(
             req ->
                 complete(
-                    req.entity().getContentType().toString()
+                    req.entity().getContentType().value()
                         + " = "
                         + req.entity().getContentType().getClass()));
 
