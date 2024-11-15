@@ -26,7 +26,7 @@ properly acknowledged, please get in touch.
 ### Bug Fixes
 We haven't had to fix many bugs that were in Akka HTTP 10.2.10.
 
-* Use Java NIO Files#createTempFile [PR170](https://github.com/apache/pekko-http/pull/170) (Akka HTTP [CVE-2023-33251](https://akka.io/security/akka-http-cve-2023-05-15.html))
+* Use Java NIO Files#createTempFile [PR170](https://github.com/apache/pekko-http/pull/170) (Akka HTTP [CVE-2023-33251](https://doc.akka.io/reference/security-announcements/akka-http-cve-2023-05-15.html))
 
 ### Additions
 * Scala 3 support ([PR150](https://github.com/apache/pekko-http/pull/150))
