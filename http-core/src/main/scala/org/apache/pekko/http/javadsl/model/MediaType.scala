@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.javadsl.model
 
+import org.apache.pekko.annotation.DoNotInherit
+
 /**
  * Represents an Http media-type. A media-type consists of a main-type and a sub-type.
  *
@@ -65,6 +67,7 @@ object MediaType {
   }
 }
 
+@DoNotInherit
 trait MediaType {
 
   /**
@@ -110,4 +113,10 @@ trait MediaType {
    * Creates a media-range from this media-type with a given qValue.
    */
   def toRange(qValue: Float): MediaRange
+
+  /**
+   * Returns the string representation of this MediaType
+   * @since 1.2.0
+   */
+  def value: String
 }

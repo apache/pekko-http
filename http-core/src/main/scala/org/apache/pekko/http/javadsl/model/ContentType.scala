@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.javadsl.model
 
+import org.apache.pekko.annotation.DoNotInherit
+
 import java.util.Optional
 
 // Has to be defined in Scala even though it's JavaDSL because of:
@@ -45,6 +47,7 @@ object ContentType {
  *
  * See [[ContentTypes]] for convenience access to often used values.
  */
+@DoNotInherit
 trait ContentType {
 
   /**
@@ -61,4 +64,10 @@ trait ContentType {
    * Returns the charset if this ContentType is non-binary.
    */
   def getCharsetOption: Optional[HttpCharset]
+
+  /**
+   * Returns the string representation of this ContentType
+   * @since 1.2.0
+   */
+  def value: String
 }
