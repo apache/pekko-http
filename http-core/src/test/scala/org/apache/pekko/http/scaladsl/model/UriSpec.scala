@@ -821,7 +821,7 @@ class UriSpec extends AnyWordSpec with Matchers {
       uri.withQuery(Query("param1=val\"ue1")) shouldEqual Uri("http://host/path?param1=val%22ue1#fragment")
       uri.withQuery(Query(("param1", "val\"ue1"))) shouldEqual Uri("http://host/path?param1=val%22ue1#fragment")
       uri.withQuery(Query(Some("param1=val\"ue1"))) shouldEqual Uri("http://host/path?param1=val%22ue1#fragment")
-      val query = Query.newBuilder.addOne("param1" -> "val\"ue1").result()
+      val query = Query.newBuilder.+=("param1" -> "val\"ue1").result()
       uri.withQuery(query) shouldEqual Uri("http://host/path?param1=val%22ue1#fragment")
 
       uri.withFragment("otherFragment") shouldEqual Uri("http://host/path?query#otherFragment")
