@@ -129,7 +129,8 @@ sealed abstract case class Uri(scheme: String, authority: Authority, path: Path,
   /**
    * Returns a copy of this Uri with the given query.
    */
-  def withQuery(query: Query): Uri = copy(rawQueryString = if (query.isEmpty) None else Some(query.toString))
+  def withQuery(query: Query): Uri =
+    createUnsafe(scheme, authority, path, if (query.isEmpty) None else Some(query.toString), fragment)
 
   /**
    * Returns a copy of this Uri with the given query string.
