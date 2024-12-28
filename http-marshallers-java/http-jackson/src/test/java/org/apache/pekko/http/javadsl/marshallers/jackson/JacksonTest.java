@@ -94,6 +94,7 @@ public class JacksonTest extends JUnitRouteTest {
     final int maxNameLen = 54321;
     final int maxStringLen = 1234567;
     final long maxDocLen = 123456789L;
+    final long maxTokenCount = 9876543210L;
     final int maxNestingDepth = 5;
     String configText =
         "read.max-number-length="
@@ -108,6 +109,9 @@ public class JacksonTest extends JUnitRouteTest {
             + "read.max-document-length="
             + maxDocLen
             + "\n"
+            + "read.max-token-count="
+            + maxTokenCount
+            + "\n"
             + "read.max-nesting-depth="
             + maxNestingDepth;
     Config config = ConfigFactory.parseString(configText).withFallback(getDefaultConfig());
@@ -117,6 +121,7 @@ public class JacksonTest extends JUnitRouteTest {
     assertEquals(maxNameLen, constraints.getMaxNameLength());
     assertEquals(maxStringLen, constraints.getMaxStringLength());
     assertEquals(maxDocLen, constraints.getMaxDocumentLength());
+    assertEquals(maxTokenCount, constraints.getMaxTokenCount());
     assertEquals(maxNestingDepth, constraints.getMaxNestingDepth());
   }
 

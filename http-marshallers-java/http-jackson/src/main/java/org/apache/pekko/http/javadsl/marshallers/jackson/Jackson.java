@@ -107,6 +107,7 @@ public class Jackson {
             .maxStringLength(config.getInt("read.max-string-length"))
             .maxNameLength(config.getInt("read.max-name-length"))
             .maxDocumentLength(config.getLong("read.max-document-length"))
+            .maxTokenCount(config.getLong("read.max-token-count"))
             .build();
     StreamWriteConstraints streamWriteConstraints =
         StreamWriteConstraints.builder()
@@ -126,16 +127,14 @@ public class Jackson {
     switch (poolType) {
       case "thread-local":
         return JsonRecyclerPools.threadLocalPool();
-      case "lock-free":
-        return JsonRecyclerPools.newLockFreePool();
-      case "shared-lock-free":
-        return JsonRecyclerPools.sharedLockFreePool();
       case "concurrent-deque":
         return JsonRecyclerPools.newConcurrentDequePool();
       case "shared-concurrent-deque":
         return JsonRecyclerPools.sharedConcurrentDequePool();
       case "bounded":
         return JsonRecyclerPools.newBoundedPool(cfg.getInt("buffer-recycler.bounded-pool-size"));
+      case "non-recycling":
+        return JsonRecyclerPools.nonRecyclingPool();
       default:
         throw new IllegalArgumentException("Unknown recycler-pool: " + poolType);
     }
