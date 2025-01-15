@@ -135,7 +135,7 @@ private[http] object HttpServerBluePrint {
         }
 
         // optimization: this callback is used to handle entity substream cancellation to avoid allocating a dedicated handler
-        override def onDownstreamFinish(): Unit = {
+        override def onDownstreamFinish(cause: Throwable): Unit = {
           if (entitySource ne null) {
             // application layer has cancelled or only partially consumed response entity:
             // connection will be closed
@@ -235,7 +235,7 @@ private[http] object HttpServerBluePrint {
               // so can pull downstream then
               downstreamPullWaiting = true
             }
-            override def onDownstreamFinish(): Unit = {
+            override def onDownstreamFinish(cause: Throwable): Unit = {
               // downstream signalled not wanting any more requests
               // we should keep processing the entity stream and then
               // when it completes complete the stage
@@ -320,14 +320,14 @@ private[http] object HttpServerBluePrint {
             openTimeouts = openTimeouts.enqueue(access)
             push(requestOut, request.addHeader(`Timeout-Access`(access)).withEntity(entity))
           }
-          override def onUpstreamFinish() = complete(requestOut)
-          override def onUpstreamFailure(ex: Throwable) = fail(requestOut, ex)
+          override def onUpstreamFinish(): Unit = complete(requestOut)
+          override def onUpstreamFailure(ex: Throwable): Unit = fail(requestOut, ex)
         })
       // TODO: provide and use default impl for simply connecting an input and an output port as we do here
       setHandler(requestOut,
         new OutHandler {
           def onPull(): Unit = pull(requestIn)
-          override def onDownstreamFinish() = cancel(requestIn)
+          override def onDownstreamFinish(cause: Throwable): Unit = cancel(requestIn)
         })
       setHandler(responseIn,
         new InHandler {
@@ -336,13 +336,13 @@ private[http] object HttpServerBluePrint {
             openTimeouts = openTimeouts.tail
             push(responseOut, grab(responseIn))
           }
-          override def onUpstreamFinish() = complete(responseOut)
-          override def onUpstreamFailure(ex: Throwable) = fail(responseOut, ex)
+          override def onUpstreamFinish(): Unit = complete(responseOut)
+          override def onUpstreamFailure(ex: Throwable): Unit = fail(responseOut, ex)
         })
       setHandler(responseOut,
         new OutHandler {
           def onPull(): Unit = pull(responseIn)
-          override def onDownstreamFinish() = cancel(responseIn)
+          override def onDownstreamFinish(cause: Throwable): Unit = cancel(responseIn)
         })
     }
   }
@@ -481,7 +481,7 @@ private[http] object HttpServerBluePrint {
             def onPull(): Unit =
               if (oneHundredContinueResponsePending) pullSuppressed = true
               else if (!hasBeenPulled(requestParsingIn)) pull(requestParsingIn)
-            override def onDownstreamFinish(): Unit =
+            override def onDownstreamFinish(cause: Throwable): Unit =
               if (openRequests.isEmpty) completeStage()
               else failStage(
                 new IllegalStateException("User handler flow was cancelled with ongoing request") with NoStackTrace)
@@ -705,7 +705,7 @@ private[http] object HttpServerBluePrint {
       setHandler(toNet,
         new OutHandler {
           override def onPull(): Unit = pull(fromHttp)
-          override def onDownstreamFinish(): Unit = completeStage()
+          override def onDownstreamFinish(cause: Throwable): Unit = completeStage()
         })
 
       setHandler(fromNet,
@@ -717,7 +717,7 @@ private[http] object HttpServerBluePrint {
       setHandler(toHttp,
         new OutHandler {
           override def onPull(): Unit = pull(fromNet)
-          override def onDownstreamFinish(): Unit = cancel(fromNet)
+          override def onDownstreamFinish(cause: Throwable): Unit = cancel(fromNet)
         })
 
       private var activeTimers = 0
@@ -753,7 +753,7 @@ private[http] object HttpServerBluePrint {
           setHandler(toNet,
             new OutHandler {
               override def onPull(): Unit = sinkIn.pull()
-              override def onDownstreamFinish(): Unit = {
+              override def onDownstreamFinish(cause: Throwable): Unit = {
                 completeStage()
                 sinkIn.cancel()
               }
@@ -771,7 +771,7 @@ private[http] object HttpServerBluePrint {
           setHandler(toNet,
             new OutHandler {
               override def onPull(): Unit = sinkIn.pull()
-              override def onDownstreamFinish(): Unit = {
+              override def onDownstreamFinish(cause: Throwable): Unit = {
                 completeStage()
                 sinkIn.cancel()
                 sourceOut.complete()
@@ -801,10 +801,10 @@ private[http] object HttpServerBluePrint {
 
               sourceOut.setHandler(new OutHandler {
                 override def onPull(): Unit = if (!hasBeenPulled(fromNet)) pull(fromNet)
-                override def onDownstreamFinish(): Unit = cancel(fromNet)
+                override def onDownstreamFinish(cause: Throwable): Unit = cancel(fromNet)
               })
             }
-            override def onDownstreamFinish(): Unit = cancel(fromNet)
+            override def onDownstreamFinish(cause: Throwable): Unit = cancel(fromNet)
           })
 
           // disable the old handlers, at this point we might still get something due to cancellation delay which we need to ignore
@@ -814,7 +814,7 @@ private[http] object HttpServerBluePrint {
               override def onPull(): Unit = ()
               override def onUpstreamFinish(): Unit = ()
               override def onUpstreamFailure(ex: Throwable): Unit = ()
-              override def onDownstreamFinish(): Unit = ()
+              override def onDownstreamFinish(cause: Throwable): Unit = ()
             })
 
           newFlow.runWith(sourceOut.source, sinkIn.sink)(subFusingMaterializer)
