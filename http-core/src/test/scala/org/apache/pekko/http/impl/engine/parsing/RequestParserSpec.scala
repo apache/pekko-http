@@ -810,7 +810,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         }
         .concatSubstreams
         .flatMapConcat { x =>
-          Source.fromFuture {
+          Source.future {
             x match {
               case Right(request) => compactEntity(request.entity).fast.map(x => Right(request.withEntity(x)))
               case Left(error)    => FastFuture.successful(Left(error))

@@ -92,7 +92,7 @@ class HttpEntitySpec extends PekkoSpecWithMaterializer {
       "Infinite data stream" in {
         val neverCompleted = Promise[ByteString]()
         intercept[TimeoutException] {
-          Await.result(Default(tpe, 42, Source.fromFuture(neverCompleted.future)).toStrict(100.millis), awaitAtMost)
+          Await.result(Default(tpe, 42, Source.future(neverCompleted.future)).toStrict(100.millis), awaitAtMost)
         }.getMessage should be(
           "HttpEntity.toStrict timed out after 100 milliseconds while still waiting for outstanding data")
       }
