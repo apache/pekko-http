@@ -803,7 +803,7 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
             super.onUpstreamFailure(ex)
           }
 
-          override def onDownstreamFinish(): Unit = failStage(new RuntimeException("was cancelled"))
+          override def onDownstreamFinish(cause: Throwable): Unit = failStage(new RuntimeException("was cancelled"))
         }
         setHandlers(reqIn, reqOut, new MonitorMessage(reqIn, reqOut))
         setHandlers(resIn, resOut, new MonitorMessage(resIn, resOut))

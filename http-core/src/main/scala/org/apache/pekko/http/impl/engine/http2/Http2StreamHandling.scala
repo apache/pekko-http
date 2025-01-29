@@ -598,7 +598,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     outlet.setHandler(this)
 
     def onPull(): Unit = incomingStreamPulled(streamId)
-    override def onDownstreamFinish(): Unit = {
+    override def onDownstreamFinish(cause: Throwable): Unit = {
       debug(s"Incoming side of stream [$streamId]: cancelling because downstream finished")
       multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
       // FIXME: go through state machine and don't manipulate vars directly here

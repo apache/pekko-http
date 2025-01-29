@@ -247,7 +247,7 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
 
       val crashingEntity =
         Source.fromIterator(() => Iterator.fill(10)(ByteString("abc")))
-          .concat(Source.fromFuture(errorOnConnection1.future))
+          .concat(Source.future(errorOnConnection1.future))
           .log("response-entity-stream")
           .addAttributes(Attributes.logLevels(Logging.InfoLevel, Logging.InfoLevel, Logging.InfoLevel))
 
