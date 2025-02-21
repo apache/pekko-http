@@ -68,7 +68,7 @@ package object util {
   private[http] def installEventStreamLoggerFor[T](implicit ct: ClassTag[T], system: ActorSystem): Unit =
     installEventStreamLoggerFor(ct.runtimeClass)
 
-  private[http] implicit class AddFutureAwaitResult[T](future: Future[T]) {
+  private[http] implicit class AddFutureAwaitResult[T](val future: Future[T]) extends AnyVal {
 
     /** "Safe" Await.result that doesn't throw away half of the stacktrace */
     def awaitResult(atMost: Duration): T = {
