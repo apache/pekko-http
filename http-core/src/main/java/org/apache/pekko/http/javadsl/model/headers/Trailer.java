@@ -28,16 +28,14 @@ import org.apache.pekko.http.impl.util.Util;
  */
 public abstract class Trailer extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   /**
-   * Returns the names of the trailer fields that are ex
-   *
-   * @return an iterable collection of trailer field names
+   * @return an iterable collection of field names that are expected to be present in the trailer
    */
   public abstract Iterable<String> getTrailers();
 
   /**
    * Creates a new `Trailer` header with the specified trailer field names.
    *
-   * @param values the names of the fields that are
+   * @param values the names of the fields that are expected to be present in the trailer
    * @return a new `Trailer` header instance
    */
   public static Trailer create(String... values) {
