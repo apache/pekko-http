@@ -19,7 +19,7 @@ import pekko.http.impl.model.parser.HeaderParser.Settings
 import org.scalatest.matchers.{ MatchResult, Matcher }
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model.{ HttpHeader, _ }
-import headers._
+import headers.{ Trailer => `Trailer`, _ }
 import CacheDirectives._
 import MediaTypes._
 import MediaRanges._
@@ -818,6 +818,23 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         ErrorInfo(
           "Illegal HTTP header 'X-Real-Ip': Invalid input 'p', expected ip-v4-address or ip-v6-address (line 1, column 1)",
           "pekko.apache.org\n^")
+    }
+
+    "Trailer" in {
+      "Trailer: one" =!= `Trailer`(Seq("one"))
+      "Trailer: one, two" =!= `Trailer`(Seq("one", "two"))
+      "Trailer: ignore,spacing,          between,    values" =!=> "ignore, spacing, between, values"
+      "Trailer: Content-MD5, Content-Length, ETag" =!= `Trailer`(Seq("Content-MD5", "Content-Length", "ETag"))
+      "Trailer: Content-MD5 , ETag,  X-Custom-Field" =!= `Trailer`(Seq("Content-MD5", "ETag", "X-Custom-Field"))
+        .renderedTo("Content-MD5, ETag, X-Custom-Field")
+      "Trailer: content-md5, ETAG, X-Custom-Field" =!= `Trailer`(Seq("content-md5", "ETAG", "X-Custom-Field"))
+      "Trailer: " =!= ErrorInfo(
+        "Illegal HTTP header 'Trailer': Invalid input 'EOI', expected trailer (line 1, column 1)",
+        "\n^")
+      "Trailer: X-Custom-Hash, X-Custom-Signature" =!= `Trailer`(Seq("X-Custom-Hash", "X-Custom-Signature"))
+      "Trailer: Content@Md5" =!= ErrorInfo(
+        "Illegal HTTP header 'Trailer': Invalid input '@', expected tchar, OWS, listSep or 'EOI' (line 1, column 8)",
+        "Content@Md5\n       ^")
     }
 
     "RawHeader" in {

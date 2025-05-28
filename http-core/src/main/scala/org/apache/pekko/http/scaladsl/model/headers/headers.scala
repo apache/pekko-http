@@ -17,13 +17,12 @@ import java.lang.Iterable
 import java.net.InetSocketAddress
 import java.security.MessageDigest
 import java.util
-
 import javax.net.ssl.SSLSession
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, InternalApi }
 import pekko.stream.scaladsl.ScalaSessionAPI
 
-import scala.collection.immutable.TreeMap
+import scala.collection.immutable.{ ArraySeq, TreeMap }
 import scala.reflect.ClassTag
 import scala.util.{ Failure, Success, Try }
 import scala.annotation.tailrec
@@ -1225,4 +1224,25 @@ final case class `X-Real-Ip`(address: RemoteAddress) extends jm.headers.XRealIp
   import `X-Real-Ip`.addressRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ address
   protected def companion = `X-Real-Ip`
+}
+
+object Trailer extends ModeledCompanion[Trailer] {
+  private implicit val trailersRenderer: Renderer[immutable.Iterable[String]] =
+    Renderer.defaultSeqRenderer[String]
+
+  def apply(values: immutable.Seq[String]): Trailer = {
+    val clean = values.map(_.trim).filter(_.nonEmpty)
+    require(clean.nonEmpty, "Trailer values must not be empty")
+    new Trailer(clean)
+  }
+}
+
+// https://datatracker.ietf.org/doc/html/rfc7230#section-4.4
+@ApiMayChange
+final case class Trailer private (values: immutable.Seq[String]) extends jm.headers.Trailer with RequestResponseHeader {
+  require(values.nonEmpty, "Trailer values must not be empty")
+  import Trailer.trailersRenderer
+  def getTrailers: Iterable[String] = values.asJava
+  protected[http] def renderValue[R <: Rendering](r: R): r.type = r ~~ values
+  protected def companion: ModeledCompanion[Trailer] = Trailer
 }

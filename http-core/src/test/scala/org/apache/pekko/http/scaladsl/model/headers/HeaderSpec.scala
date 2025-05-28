@@ -17,7 +17,7 @@ import org.apache.pekko
 import pekko.http.impl.util._
 import java.net.InetAddress
 
-import pekko.http.scaladsl.model.{ headers, _ }
+import pekko.http.scaladsl.model.{ headers, Trailer => _, _ }
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -184,7 +184,8 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
         `X-Forwarded-For`(RemoteAddress(InetAddress.getByName("192.168.0.1"))),
         `X-Forwarded-Host`(Uri.Host(InetAddress.getByName("192.168.0.2"))),
         `X-Forwarded-Proto`("https"),
-        `X-Real-Ip`(RemoteAddress(InetAddress.getByName("192.168.1.1"))))
+        `X-Real-Ip`(RemoteAddress(InetAddress.getByName("192.168.1.1"))),
+        Trailer(Seq("X-My-Trailer", "X-My-Other-Trailer")))
 
       requestHeaders.foreach { header =>
         header shouldBe Symbol("renderInRequests")
@@ -227,7 +228,8 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
         `Transfer-Encoding`(TransferEncodings.chunked),
         Upgrade(Vector(UpgradeProtocol("HTTP", Some("2.0")))),
         `WWW-Authenticate`(HttpChallenge("Basic", Some("example.com"))),
-        `Retry-After`(120))
+        `Retry-After`(120),
+        Trailer(Seq("X-My-Trailer", "X-My-Other-Trailer")))
 
       responseHeaders.foreach { header =>
         header shouldBe Symbol("renderInResponses")
