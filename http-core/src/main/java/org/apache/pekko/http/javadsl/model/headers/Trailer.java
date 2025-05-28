@@ -19,9 +19,27 @@ package org.apache.pekko.http.javadsl.model.headers;
 
 import org.apache.pekko.http.impl.util.Util;
 
+/**
+ * The `Trailer` header is used before a message body to indicate which fields will be present
+ * in the trailers when using chunked transfer encoding.
+ * See <a href="https://datatracker.ietf.org/doc/html/rfc7230#section-4.4">RFC 7230, Section 4.4</a>
+ *
+ * @since 1.3.0
+ */
 public abstract class Trailer extends org.apache.pekko.http.scaladsl.model.HttpHeader {
+    /**
+     * Returns the names of the trailer fields that are ex
+     *
+     * @return an iterable collection of trailer field names
+     */
     public abstract Iterable<String> getTrailers();
 
+    /**
+     * Creates a new `Trailer` header with the specified trailer field names.
+     *
+     * @param values the names of the fields that are
+     * @return a new `Trailer` header instance
+     */
     public static Trailer create(String... values) {
         return org.apache.pekko.http.scaladsl.model.headers.Trailer.apply(Util.convertArray(values));
     }

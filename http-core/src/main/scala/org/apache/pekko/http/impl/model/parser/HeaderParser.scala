@@ -202,8 +202,7 @@ private[http] object HeaderParser {
     "x-forwarded-host",
     "x-forwarded-proto",
     "x-real-ip",
-    "trailer"
-  )
+    "trailer")
 
   abstract class Settings {
     def uriParsingMode: Uri.ParsingMode

@@ -22,7 +22,7 @@ import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, InternalApi }
 import pekko.stream.scaladsl.ScalaSessionAPI
 
-import scala.collection.immutable.{ ArraySeq, TreeMap }
+import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.{ Failure, Success, Try }
 import scala.annotation.tailrec
@@ -1237,7 +1237,13 @@ object Trailer extends ModeledCompanion[Trailer] {
   }
 }
 
-// https://datatracker.ietf.org/doc/html/rfc7230#section-4.4
+/**
+ * The `Trailer` header is used before a message body to indicate which fields will be present
+ * in the trailers when using chunked transfer encoding.
+ * See <a href="https://datatracker.ietf.org/doc/html/rfc7230#section-4.4">RFC 7230, Section 4.4</a>
+ *
+ * @since 1.3.0
+ */
 @ApiMayChange
 final case class Trailer private (values: immutable.Seq[String]) extends jm.headers.Trailer with RequestResponseHeader {
   require(values.nonEmpty, "Trailer values must not be empty")
