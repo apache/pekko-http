@@ -28,6 +28,7 @@ import HttpEncodings._
 import HttpMethods._
 
 import java.net.InetAddress
+import scala.collection.immutable.Seq
 import pekko.http.scaladsl.model.MediaType.WithOpenCharset
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
