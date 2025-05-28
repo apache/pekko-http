@@ -86,6 +86,7 @@ Scala
     org.apache.pekko.http.scaladsl.model.headers.CacheDirectives.immutableDirective
     org.apache.pekko.http.scaladsl.model.headers.X-Forwarded-Host
     org.apache.pekko.http.scaladsl.model.headers.X-Forwarded-Proto
+    org.apache.pekko.http.scaladsl.model.headers.Trailer
     org.apache.pekko.http.scaladsl.model.http2.PeerClosedStreamException
     org.apache.pekko.http.scaladsl.model.http2.Http2Exception
     org.apache.pekko.http.scaladsl.model.SimpleRequestResponseAttribute
