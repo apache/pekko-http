@@ -1232,9 +1232,49 @@ object Trailer extends ModeledCompanion[Trailer] {
 
   def apply(values: immutable.Seq[String]): Trailer = {
     val clean = values.map(_.trim).filter(_.nonEmpty)
-    require(clean.nonEmpty, "Trailer values must not be empty")
-    new Trailer(clean)
+    val (forbidden, allowed) = clean.partition(name => isForbidden(name.toRootLowerCase))
+    if (clean.isEmpty)
+      throw new IllegalArgumentException(s"Trailer values must not be empty: No valid header names specified")
+    else if (forbidden.nonEmpty) {
+      val forbiddenInput = forbidden.mkString("[", ", ", "]")
+      throw new IllegalArgumentException(
+        s"Trailer values must not contain forbidden header names: Trailer contained $forbiddenInput")
+    } else new Trailer(allowed)
   }
+
+  /**
+   * Non-exhaustive set of header names that are disallowed in the `Trailer` header.
+   * See <a href="https://datatracker.ietf.org/doc/html/rfc7230#section-4.1.2">RFC 7230, Section 4.1.2</a>
+   */
+  private val isForbidden: Set[String] =
+    Set(
+      Trailer,
+      // Framing
+      `Transfer-Encoding`,
+      `Content-Length`,
+      // Routing
+      Host,
+      // Modifiers
+      Expect,
+      Range,
+      `If-Match`,
+      `If-None-Match`,
+      `If-Modified-Since`,
+      `If-Unmodified-Since`,
+      `Cache-Control`,
+      TE,
+      // Auth and cookies
+      Authorization,
+      `Proxy-Authorization`,
+      `Cookie`,
+      `Set-Cookie`,
+      // Response control
+      `WWW-Authenticate`,
+      Age,
+      // Payload processing
+      `Content-Encoding`,
+      `Content-Type`,
+      `Content-Range`).map(_.lowercaseName)
 }
 
 /**

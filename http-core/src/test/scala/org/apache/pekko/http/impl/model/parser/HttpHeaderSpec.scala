@@ -825,17 +825,20 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Trailer: one" =!= `Trailer`(Seq("one"))
       "Trailer: one, two" =!= `Trailer`(Seq("one", "two"))
       "Trailer: ignore,spacing,          between,    values" =!=> "ignore, spacing, between, values"
-      "Trailer: Content-MD5, Content-Length, ETag" =!= `Trailer`(Seq("Content-MD5", "Content-Length", "ETag"))
       "Trailer: Content-MD5 , ETag,  X-Custom-Field" =!= `Trailer`(Seq("Content-MD5", "ETag", "X-Custom-Field"))
         .renderedTo("Content-MD5, ETag, X-Custom-Field")
       "Trailer: content-md5, ETAG, X-Custom-Field" =!= `Trailer`(Seq("content-md5", "ETAG", "X-Custom-Field"))
       "Trailer: " =!= ErrorInfo(
-        "Illegal HTTP header 'Trailer': Invalid input 'EOI', expected trailer (line 1, column 1)",
-        "\n^")
+        summary = "Illegal HTTP header 'Trailer': Trailer values must not be empty",
+        detail = "No valid header names specified")
       "Trailer: X-Custom-Hash, X-Custom-Signature" =!= `Trailer`(Seq("X-Custom-Hash", "X-Custom-Signature"))
       "Trailer: Content@Md5" =!= ErrorInfo(
-        "Illegal HTTP header 'Trailer': Invalid input '@', expected tchar, OWS, listSep or 'EOI' (line 1, column 8)",
-        "Content@Md5\n       ^")
+        summary =
+          "Illegal HTTP header 'Trailer': Invalid input '@', expected tchar, OWS, listSep or 'EOI' (line 1, column 8)",
+        detail = "Content@Md5\n       ^")
+      "Trailer: Content-Length" =!= ErrorInfo(
+        summary = "Illegal HTTP header 'Trailer': Trailer values must not contain forbidden header names",
+        detail = "Trailer contained [Content-Length]")
     }
 
     "RawHeader" in {

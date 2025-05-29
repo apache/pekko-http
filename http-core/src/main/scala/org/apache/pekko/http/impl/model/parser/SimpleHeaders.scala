@@ -285,6 +285,6 @@ private[parser] trait SimpleHeaders {
   }
 
   def trailer = rule {
-    oneOrMore(token).separatedBy(listSep) ~ EOI ~> (Trailer(_))
+    zeroOrMore(token).separatedBy(listSep) ~ EOI ~> (Trailer(_))
   }
 }
