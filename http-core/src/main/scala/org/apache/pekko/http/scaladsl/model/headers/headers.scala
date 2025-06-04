@@ -1226,6 +1226,7 @@ final case class `X-Real-Ip`(address: RemoteAddress) extends jm.headers.XRealIp
   protected def companion = `X-Real-Ip`
 }
 
+@ApiMayChange
 object Trailer extends ModeledCompanion[Trailer] {
   private implicit val trailersRenderer: Renderer[immutable.Iterable[String]] =
     Renderer.defaultSeqRenderer[String]
