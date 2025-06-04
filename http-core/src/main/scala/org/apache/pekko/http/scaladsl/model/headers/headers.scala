@@ -1234,11 +1234,14 @@ object Trailer extends ModeledCompanion[Trailer] {
     val clean = values.map(_.trim).filter(_.nonEmpty)
     val (forbidden, allowed) = clean.partition(name => isForbidden(name.toRootLowerCase))
     if (clean.isEmpty)
-      throw new IllegalArgumentException(s"Trailer values must not be empty: No valid header names specified")
+      throw IllegalHeaderException(
+        "Trailer values must not be empty",
+        "No valid header names specified")
     else if (forbidden.nonEmpty) {
       val forbiddenInput = forbidden.mkString("[", ", ", "]")
-      throw new IllegalArgumentException(
-        s"Trailer values must not contain forbidden header names: Trailer contained $forbiddenInput")
+      throw IllegalHeaderException(
+        "Trailer values must not contain forbidden header names",
+        s"Trailer contained $forbiddenInput")
     } else new Trailer(allowed)
   }
 
