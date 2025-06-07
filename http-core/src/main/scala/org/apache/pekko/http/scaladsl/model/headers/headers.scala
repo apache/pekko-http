@@ -17,7 +17,6 @@ import java.lang.Iterable
 import java.net.InetSocketAddress
 import java.security.MessageDigest
 import java.util
-
 import javax.net.ssl.SSLSession
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, InternalApi }
@@ -1225,4 +1224,75 @@ final case class `X-Real-Ip`(address: RemoteAddress) extends jm.headers.XRealIp
   import `X-Real-Ip`.addressRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ address
   protected def companion = `X-Real-Ip`
+}
+
+@ApiMayChange
+object Trailer extends ModeledCompanion[Trailer] {
+  private implicit val trailersRenderer: Renderer[immutable.Iterable[String]] =
+    Renderer.defaultSeqRenderer[String]
+
+  def apply(values: immutable.Seq[String]): Trailer = {
+    val clean = values.map(_.trim).filter(_.nonEmpty)
+    val (forbidden, allowed) = clean.partition(name => isForbidden(name.toRootLowerCase))
+    if (clean.isEmpty)
+      throw IllegalHeaderException(
+        "Trailer values must not be empty",
+        "No valid header names specified")
+    else if (forbidden.nonEmpty) {
+      val forbiddenInput = forbidden.mkString("[", ", ", "]")
+      throw IllegalHeaderException(
+        "Trailer values must not contain forbidden header names",
+        s"Trailer contained $forbiddenInput")
+    } else new Trailer(allowed)
+  }
+
+  /**
+   * Non-exhaustive set of header names that are disallowed in the `Trailer` header.
+   * See <a href="https://datatracker.ietf.org/doc/html/rfc7230#section-4.1.2">RFC 7230, Section 4.1.2</a>
+   */
+  private val isForbidden: Set[String] =
+    Set(
+      Trailer,
+      // Framing
+      `Transfer-Encoding`,
+      `Content-Length`,
+      // Routing
+      Host,
+      // Modifiers
+      Expect,
+      Range,
+      `If-Match`,
+      `If-None-Match`,
+      `If-Modified-Since`,
+      `If-Unmodified-Since`,
+      `Cache-Control`,
+      TE,
+      // Auth and cookies
+      Authorization,
+      `Proxy-Authorization`,
+      `Cookie`,
+      `Set-Cookie`,
+      // Response control
+      `WWW-Authenticate`,
+      Age,
+      // Payload processing
+      `Content-Encoding`,
+      `Content-Type`,
+      `Content-Range`).map(_.lowercaseName)
+}
+
+/**
+ * The `Trailer` header is used before a message body to indicate which fields will be present
+ * in the trailers when using chunked transfer encoding.
+ * See <a href="https://datatracker.ietf.org/doc/html/rfc7230#section-4.4">RFC 7230, Section 4.4</a>
+ *
+ * @since 1.3.0
+ */
+@ApiMayChange
+final case class Trailer private (values: immutable.Seq[String]) extends jm.headers.Trailer with RequestResponseHeader {
+  require(values.nonEmpty, "Trailer values must not be empty")
+  import Trailer.trailersRenderer
+  def getTrailers: Iterable[String] = values.asJava
+  protected[http] def renderValue[R <: Rendering](r: R): r.type = r ~~ values
+  protected def companion: ModeledCompanion[Trailer] = Trailer
 }
