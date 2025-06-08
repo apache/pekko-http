@@ -284,4 +284,7 @@ private[parser] trait SimpleHeaders {
     (`ip-v4-address` | `ip-v6-address`) ~ EOI ~> (b => `X-Real-Ip`(RemoteAddress(b)))
   }
 
+  def trailer = rule {
+    zeroOrMore(token).separatedBy(listSep) ~ EOI ~> (Trailer(_))
+  }
 }
