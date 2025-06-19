@@ -24,7 +24,7 @@ import scala.annotation.nowarn
  */
 @InternalApi
 private[http] object StringTools {
-  private val avoidUnsafe = JavaVersion.majorVersion >= 21
+  private val avoidUnsafe = JavaVersion.majorVersion >= 17
 
   @nowarn("msg=deprecated")
   def asciiStringFromBytes(bytes: Array[Byte]): String =
