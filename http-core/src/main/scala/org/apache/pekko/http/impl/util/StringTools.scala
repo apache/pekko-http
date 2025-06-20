@@ -15,7 +15,8 @@ package org.apache.pekko.http.impl.util
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.util.Unsafe
+import pekko.util.{ JavaVersion, Unsafe }
+
 import scala.annotation.nowarn
 
 /**
@@ -23,6 +24,8 @@ import scala.annotation.nowarn
  */
 @InternalApi
 private[http] object StringTools {
+  private val avoidUnsafe = JavaVersion.majorVersion >= 17
+
   @nowarn("msg=deprecated")
   def asciiStringFromBytes(bytes: Array[Byte]): String =
     // Deprecated constructor but also (unfortunately) the fastest way to convert a ASCII encoded byte array
@@ -30,8 +33,14 @@ private[http] object StringTools {
     new String(bytes, 0)
 
   def asciiStringBytes(string: String): Array[Byte] = {
-    val bytes = new Array[Byte](string.length)
-    Unsafe.copyUSAsciiStrToBytes(string, bytes)
-    bytes
+    if (avoidUnsafe) {
+      // this is as fast as Unsafe.copyUSAsciiStrToBytes for recent JDK versions
+      // and avoids the use of deprecated Unsafe methods
+      string.getBytes(java.nio.charset.StandardCharsets.US_ASCII)
+    } else {
+      val bytes = new Array[Byte](string.length)
+      Unsafe.copyUSAsciiStrToBytes(string, bytes)
+      bytes
+    }
   }
 }
