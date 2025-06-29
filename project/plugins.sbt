@@ -28,7 +28,7 @@ addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.32")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.3")
 addSbtPlugin("com.github.sbt" % "sbt-dynver" % "5.1.0")
 addSbtPlugin("com.github.pjfanning" % "sbt-source-dist" % "0.1.12")
-addSbtPlugin("com.github.pjfanning" % "sbt-pekko-build" % "0.4.2")
+addSbtPlugin("com.github.pjfanning" % "sbt-pekko-build" % "0.4.4")
 addSbtPlugin("net.virtual-void" % "sbt-hackers-digest" % "0.1.2")
 addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.7.0")
 
