@@ -13,6 +13,7 @@
 
 import com.typesafe.sbt.MultiJvmPlugin
 import MultiJvmPlugin.autoImport._
+import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import sbt._
 import sbt.Keys._
 
@@ -58,7 +59,7 @@ object MultiNode extends AutoPlugin {
 
   private val multiJvmSettings =
     MultiJvmPlugin.multiJvmSettings ++
-    inConfig(MultiJvm)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings) ++
+    scalafmtConfigSettings(MultiJvm) ++
     inConfig(MultiJvm)(Seq(
       MultiJvm / jvmOptions := defaultMultiJvmOptions,
       MultiJvm / scalacOptions := (Test / scalacOptions).value,
