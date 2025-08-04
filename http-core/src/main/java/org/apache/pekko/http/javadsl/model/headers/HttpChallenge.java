@@ -15,9 +15,11 @@ package org.apache.pekko.http.javadsl.model.headers;
 
 import org.apache.pekko.http.impl.util.Util;
 import org.apache.pekko.japi.Option;
+import org.apache.pekko.util.OptionConverters;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public abstract class HttpChallenge {
   public abstract String scheme();
@@ -27,31 +29,56 @@ public abstract class HttpChallenge {
   public abstract Map<String, String> getParams();
 
   public static HttpChallenge create(String scheme, String realm) {
-    return create(scheme, Option.option(realm));
+    return create(scheme, Optional.of(realm));
   }
 
   public static HttpChallenge create(String scheme, String realm, Map<String, String> params) {
-    return create(scheme, Option.option(realm), params);
+    return create(scheme, Optional.of(realm), params);
   }
 
+  /**
+   * @deprecated Use {@link #create(String, Optional)} instead.
+   */
+  @Deprecated // since 1.3.0 
   public static HttpChallenge create(String scheme, Option<String> realm) {
     return org.apache.pekko.http.scaladsl.model.headers.HttpChallenge.apply(
         scheme, realm.asScala(), Util.emptyMap);
   }
 
+  /**
+   * @since 1.3.0
+   */
+  public static HttpChallenge create(String scheme, Optional<String> realm) {
+    return org.apache.pekko.http.scaladsl.model.headers.HttpChallenge.apply(
+        scheme, OptionConverters.toScala(realm), Util.emptyMap);
+  }
+
+  /**
+   * @deprecated Use {@link #create(String, Optional, Map<String, String>)} instead.
+   */
+  @Deprecated // since 1.3.0 
   public static HttpChallenge create(
       String scheme, Option<String> realm, Map<String, String> params) {
     return org.apache.pekko.http.scaladsl.model.headers.HttpChallenge.apply(
         scheme, realm.asScala(), Util.convertMapToScala(params));
   }
 
+  /**
+   * @since 1.3.0
+   */
+  public static HttpChallenge create(
+      String scheme, Optional<String> realm, Map<String, String> params) {
+    return org.apache.pekko.http.scaladsl.model.headers.HttpChallenge.apply(
+        scheme, OptionConverters.toScala(realm), Util.convertMapToScala(params));
+  }
+
   public static HttpChallenge createBasic(String realm) {
     Map<String, String> params = new HashMap<String, String>();
     params.put("charset", "UTF-8");
-    return create("Basic", Option.option(realm), params);
+    return create("Basic", Optional.of(realm), params);
   }
 
   public static HttpChallenge createOAuth2(String realm) {
-    return create("Bearer", Option.option(realm));
+    return create("Bearer", Optional.of(realm));
   }
 }
