@@ -27,11 +27,11 @@ import scala.util.Right;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
-import java.util.Optional;
 
 // #authenticateBasic
 import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
