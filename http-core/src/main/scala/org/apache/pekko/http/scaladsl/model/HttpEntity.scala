@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-
 import java.io.File
 import java.nio.file.{ Files, Path }
 import java.lang.{ Iterable => JIterable }
