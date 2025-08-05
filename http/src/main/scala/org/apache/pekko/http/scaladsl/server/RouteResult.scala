@@ -19,7 +19,7 @@ import pekko.actor.ClassicActorSystemProvider
 import pekko.http.javadsl
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import pekko.http.scaladsl.settings.{ ParserSettings, RoutingSettings }
-import pekko.stream.{ ActorMaterializerHelper, Materializer }
+import pekko.stream.Materializer
 import pekko.stream.scaladsl.Flow
 
 import scala.collection.JavaConverters._
@@ -98,6 +98,6 @@ sealed abstract class LowerPriorityRouteResultImplicits {
   @deprecated("make an ActorSystem available implicitly instead", "Akka HTTP 10.2.0")
   implicit def routeToFlowViaMaterializer(route: Route)(
       implicit materializer: Materializer): Flow[HttpRequest, HttpResponse, NotUsed] =
-    Route.toFlow(route)(ActorMaterializerHelper.downcast(materializer).system)
+    Route.toFlow(route)(materializer.system)
 
 }
