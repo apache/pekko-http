@@ -27,12 +27,11 @@ import scala.util.Right;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
-import java.util.Optional;
-import org.apache.pekko.japi.Option;
 
 // #authenticateBasic
 import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
@@ -313,7 +312,7 @@ public class SecurityDirectivesExamplesTest extends JUnitRouteTest {
   @Test
   public void testAuthenticateOrRejectWithChallenge() {
     // #authenticateOrRejectWithChallenge
-    final HttpChallenge challenge = HttpChallenge.create("MyAuth", new Option.Some<>("MyRealm"));
+    final HttpChallenge challenge = HttpChallenge.create("MyAuth", Optional.of("MyRealm"));
 
     // your custom authentication logic:
     final Function<HttpCredentials, Boolean> auth = credentials -> true;
