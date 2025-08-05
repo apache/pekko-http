@@ -14,17 +14,17 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import org.apache.pekko
-import pekko.http.ccompat._
-
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.http2.FrameEvent._
+import pekko.http.ccompat._
 import pekko.http.scaladsl.settings.Http2CommonSettings
 import pekko.macros.LogHelper
 import pekko.stream.stage.GraphStageLogic
 import pekko.stream.stage.OutHandler
 import pekko.stream.stage.StageLogging
 
+import scala.annotation.nowarn
 import scala.collection.mutable
 
 /**
@@ -166,6 +166,7 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
         def name: String = productPrefix
 
         def onPull(): MultiplexerState
+        @nowarn("msg=references private")
         def pushControlFrame(frame: FrameEvent): MultiplexerState
         def connectionWindowAvailable(): MultiplexerState
         def enqueueOutStream(streamId: Int): MultiplexerState
