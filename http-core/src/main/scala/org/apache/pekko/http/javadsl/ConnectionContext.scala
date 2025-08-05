@@ -121,6 +121,7 @@ abstract class ConnectionContext {
 @DoNotInherit
 abstract class HttpConnectionContext extends pekko.http.javadsl.ConnectionContext {
   override final def isSecure = false
+  @nowarn("msg=deprecated")
   override def sslConfig: Option[PekkoSSLConfig] = None
 }
 
