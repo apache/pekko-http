@@ -329,7 +329,6 @@ abstract class RouteDirectives extends RespondWithDirectives {
    * Handle the request using a function.
    */
   def handleSync(handler: pekko.japi.function.Function[HttpRequest, HttpResponse]): Route = {
-    import pekko.http.impl.util.JavaMapping._
     RouteAdapter { ctx => FastFuture.successful(RouteResult.Complete(handler(ctx.request).asScala)) }
   }
 

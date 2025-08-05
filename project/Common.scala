@@ -29,10 +29,6 @@ object Common extends AutoPlugin {
       // Can be removed when we drop support for Scala 2.12:
       "-Wconf:msg=object JavaConverters in package collection is deprecated:s",
       "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s",
-      // tolerate deprecations from Akka 2.6.0 until Pekko 1.1.x where we clean up
-      "-Wconf:cat=deprecation&msg=since Akka 2\\.6\\.:s",
-      // tolerate deprecations from Akka HTTP 10.2.0 until Pekko 1.1.x where we clean up
-      "-Wconf:cat=deprecation&msg=since Akka HTTP 10\\.2\\.:s",
       "-Wconf:msg=reached max recursion depth:s",
       "-release:8"),
     scalacOptions ++= onlyOnScala2(Seq(
