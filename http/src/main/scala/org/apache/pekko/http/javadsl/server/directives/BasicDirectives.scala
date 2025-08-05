@@ -238,7 +238,7 @@ abstract class BasicDirectives {
     D.extractMaterializer { m => inner.apply(m).delegate })
 
   /**
-   * Extracts the [[pekko.actor.ActorSystem]] if the available Materializer is an [[pekko.stream.ActorMaterializer]].
+   * Extracts the [[pekko.actor.ActorSystem]] if the Materializer is available.
    * Otherwise throws an exception as it won't be able to extract the system from arbitrary materializers.
    */
   def extractActorSystem(inner: JFunction[ActorSystem, Route]): Route = RouteAdapter(

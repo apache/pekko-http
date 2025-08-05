@@ -266,7 +266,7 @@ trait BasicDirectives {
   def extractMaterializer: Directive1[Materializer] = BasicDirectives._extractMaterializer
 
   /**
-   * Extracts the [[pekko.actor.ActorSystem]] if the available Materializer is an [[pekko.stream.ActorMaterializer]].
+   * Extracts the [[pekko.actor.ActorSystem]] if the Materializer is available.
    * Otherwise throws an exception as it won't be able to extract the system from arbitrary materializers.
    *
    * @group basic
