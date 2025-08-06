@@ -24,7 +24,6 @@ import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import pekko.http.scaladsl.util.FastFuture
-import pekko.stream.ActorMaterializerHelper
 import pekko.stream.scaladsl._
 
 import scala.collection.immutable
@@ -93,7 +92,7 @@ trait MultipartUnmarshallers {
           case Some(boundary) =>
             import BodyPartParser._
             val effectiveParserSettings =
-              Option(parserSettings).getOrElse(ParserSettings(ActorMaterializerHelper.downcast(mat).system))
+              Option(parserSettings).getOrElse(ParserSettings(mat.system))
             val parser = new BodyPartParser(defaultContentType, boundary, log, effectiveParserSettings)
 
             entity match {

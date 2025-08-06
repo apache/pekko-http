@@ -434,7 +434,7 @@ private[http] object HttpServerBluePrint {
         outerMaterializer: Materializer) =
       new GraphStageLogic(shape) {
         val parsingErrorHandler: ParsingErrorHandler =
-          settings.parsingErrorHandlerInstance(ActorMaterializerHelper.downcast(outerMaterializer).system)
+          settings.parsingErrorHandlerInstance(outerMaterializer.system)
         val pullHttpResponseIn = () => tryPull(httpResponseIn)
         var openRequests = immutable.Queue[RequestStart]()
         var oneHundredContinueResponsePending = false
@@ -721,7 +721,7 @@ private[http] object HttpServerBluePrint {
         })
 
       private var activeTimers = 0
-      private def timeout = ActorMaterializerHelper.downcast(materializer).settings.subscriptionTimeoutSettings.timeout
+      private def timeout = materializer.settings.subscriptionTimeoutSettings.timeout
       private def addTimeout(s: SubscriptionTimeout): Unit = {
         if (activeTimers == 0) setKeepGoing(true)
         activeTimers += 1

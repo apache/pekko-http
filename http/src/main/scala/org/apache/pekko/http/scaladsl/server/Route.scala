@@ -21,7 +21,7 @@ import pekko.http.scaladsl.server.directives.BasicDirectives
 import pekko.http.scaladsl.settings.{ ParserSettings, RoutingSettings }
 import pekko.http.scaladsl.util.FastFuture._
 import pekko.stream.scaladsl.Flow
-import pekko.stream.{ ActorMaterializerHelper, Materializer, SystemMaterializer }
+import pekko.stream.{ Materializer, SystemMaterializer }
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 
@@ -116,7 +116,7 @@ object Route {
       exceptionHandler: ExceptionHandler = null): HttpRequest => Future[HttpResponse] = {
     val effectiveEC = if (executionContext ne null) executionContext else materializer.executionContext
     val effectiveParserSettings = if (parserSettings ne null) parserSettings
-    else ParserSettings(ActorMaterializerHelper.downcast(materializer).system)
+    else ParserSettings(materializer.system)
     createAsyncHandler(seal(route), routingLog, routingSettings, effectiveParserSettings)(effectiveEC, materializer)
   }
 
