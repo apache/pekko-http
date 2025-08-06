@@ -35,7 +35,7 @@ object Directives extends AllDirectives {
   // signatures for varargs methods, making them show up as Seq<Object> instead of T... in Java.
 
   // deprecated in https://github.com/apache/pekko-http/commit/fffca8de9f6a6237788021a2e3fa49a95463a8c6
-  @deprecated("Use the RouteDirectives.concat method instead." since = "Akka HTTP 10.2.0")
+  @deprecated("Use the RouteDirectives.concat method instead.", since = "Akka HTTP 10.2.0")
   @varargs
   @nowarn("msg=route in class RouteDirectives is deprecated")
   override def route(alternatives: Route*): Route =
