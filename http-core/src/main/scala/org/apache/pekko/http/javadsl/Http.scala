@@ -119,7 +119,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    *
    * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).connectionSource() instead
    */
-  @Deprecated
   @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
   def bind(connect: ConnectHttp): Source[IncomingConnection, CompletionStage[ServerBinding]] = {
     val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
@@ -145,7 +144,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    *
    * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).connectionSource() instead
    */
-  @Deprecated
   @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
   def bind(
       connect: ConnectHttp,
@@ -174,7 +172,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    *
    * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).logTo(log).connectionSource() instead
    */
-  @Deprecated
   @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
   def bind(
       connect: ConnectHttp,
@@ -199,7 +196,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    *
    * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).bindFlow(handler) instead.
    */
-  @Deprecated
   @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
   def bindAndHandle(
       handler: Flow[HttpRequest, HttpResponse, _],
@@ -225,7 +221,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    *
    * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).logTo(log).bindFlow(handler) instead.
    */
-  @Deprecated
   @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
   def bindAndHandle(
       handler: Flow[HttpRequest, HttpResponse, _],
@@ -253,7 +248,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    *
    * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).bindSync(handler) instead
    */
-  @Deprecated
   @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
   def bindAndHandleSync(
       handler: pekko.japi.Function[HttpRequest, HttpResponse],
@@ -277,7 +271,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    *
    * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).logTo(log).bindSync(handler) instead
    */
-  @Deprecated
   @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
   def bindAndHandleSync(
       handler: pekko.japi.Function[HttpRequest, HttpResponse],
@@ -305,7 +298,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    *
    * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).bind(handler) instead
    */
-  @Deprecated
   @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
   def bindAndHandleAsync(
       handler: pekko.japi.Function[HttpRequest, CompletionStage[HttpResponse]],
@@ -329,7 +321,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    *
    * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).logTo(log).bind(handler) instead
    */
-  @Deprecated
   @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
   def bindAndHandleAsync(
       handler: pekko.japi.Function[HttpRequest, CompletionStage[HttpResponse]],
@@ -828,14 +819,23 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
   def setDefaultClientHttpsContext(context: HttpsConnectionContext): Unit =
     delegate.setDefaultClientHttpsContext(context.asScala)
 
+  /**
+    * @deprecated use ConnectionContext.httpsServer instead
+    */
   @deprecated("use ConnectionContext.httpsServer", since = "Akka HTTP 10.2.0")
   def createServerHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext =
     delegate.createServerHttpsContext(sslConfig)
 
+  /**
+    * @deprecated use ConnectionContext.httpsClient instead
+    */
   @deprecated("use ConnectionContext.httpsClient", since = "Akka HTTP 10.2.0")
   def createClientHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext =
     delegate.createClientHttpsContext(sslConfig)
 
+  /**
+    * @deprecated use ConnectionContext.httpsClient instead
+    */
   @deprecated("use ConnectionContext.httpsClient", since = "Akka HTTP 10.2.0")
   def createDefaultClientHttpsContext(): HttpsConnectionContext =
     delegate.createDefaultClientHttpsContext()

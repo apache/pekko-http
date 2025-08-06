@@ -31,7 +31,6 @@ import pekko.stream._
  *
  * @deprecated use the WebSocketUpgrade attribute instead since Akka HTTP 10.2.0
  */
-@Deprecated
 @deprecated("use the WebSocketUpgrade attribute instead", since = "Akka HTTP 10.2.0")
 trait UpgradeToWebSocket extends sm.HttpHeader with WebSocketUpgrade {
 

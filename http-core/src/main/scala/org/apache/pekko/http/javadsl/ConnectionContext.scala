@@ -59,14 +59,20 @@ object ConnectionContext {
     scaladsl.ConnectionContext.httpsClient((host, port) => createEngine(host, port))
 
   // ConnectionContext
-  /** Used to serve HTTPS traffic. */
+  /**
+    * Used to serve HTTPS traffic.
+    * @deprecated since Akka HTTP 10.2.0, use httpsServer, httpsClient or the method that takes a custom factory
+    */
   @deprecated("use httpsServer, httpsClient or the method that takes a custom factory",
     since = "Akka HTTP 10.2.0")
   def https(sslContext: SSLContext): HttpsConnectionContext = // ...
     // #https-context-creation
     scaladsl.ConnectionContext.https(sslContext)
 
-  /** Used to serve HTTPS traffic. */
+  /**
+   * Used to serve HTTPS traffic.
+   * @deprecated since Akka HTTP 10.2.0, use httpsServer, httpsClient or the method that takes a custom factory
+   */
   @deprecated("use httpsServer, httpsClient or the method that takes a custom factory",
     since = "Akka HTTP 10.2.0")
   def https(
@@ -85,7 +91,10 @@ object ConnectionContext {
       clientAuth.toScala,
       sslParameters.toScala)
 
-  /** Used to serve HTTPS traffic. */
+  /**
+   * Used to serve HTTPS traffic.
+   * @deprecated since Akka HTTP 10.2.0, use httpsServer, httpsClient or the method that takes a custom factory
+   */
   @deprecated("use httpsServer, httpsClient or the method that takes a custom factory",
     since = "Akka HTTP 10.2.0")
   def https(
@@ -110,7 +119,6 @@ object ConnectionContext {
 @DoNotInherit
 abstract class ConnectionContext {
   def isSecure: Boolean
-  @Deprecated
   @deprecated("Not always available", since = "Akka HTTP 10.2.0")
   def sslConfig: Option[PekkoSSLConfig]
 }
