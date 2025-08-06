@@ -53,6 +53,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def getBacklog: Int
   def getSocketOptions: java.lang.Iterable[SocketOption]
   def getDefaultHostHeader: Host
+
   /**
    * @deprecated since Akka HTTP 10.2.0, use websocketSettings.getRandomFactory instead
    */
@@ -89,9 +90,10 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
     self.copy(socketOptions = newValue.asScala.toList)
   def withDefaultHostHeader(newValue: Host): ServerSettings = self.copy(defaultHostHeader = newValue.asScala)
   def withParserSettings(newValue: ParserSettings): ServerSettings = self.copy(parserSettings = newValue.asScala)
+
   /**
-    * @deprecated since Akka HTTP 10.2.0, use websocketSettings.withRandomFactoryFactory instead
-    */
+   * @deprecated since Akka HTTP 10.2.0, use websocketSettings.withRandomFactoryFactory instead
+   */
   @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
     since = "Akka HTTP 10.2.0")
   def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ServerSettings =

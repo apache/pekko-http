@@ -60,9 +60,9 @@ object ConnectionContext {
 
   // ConnectionContext
   /**
-    * Used to serve HTTPS traffic.
-    * @deprecated since Akka HTTP 10.2.0, use httpsServer, httpsClient or the method that takes a custom factory
-    */
+   * Used to serve HTTPS traffic.
+   * @deprecated since Akka HTTP 10.2.0, use httpsServer, httpsClient or the method that takes a custom factory
+   */
   @deprecated("use httpsServer, httpsClient or the method that takes a custom factory",
     since = "Akka HTTP 10.2.0")
   def https(sslContext: SSLContext): HttpsConnectionContext = // ...
