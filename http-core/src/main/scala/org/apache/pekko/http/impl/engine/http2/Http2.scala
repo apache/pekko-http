@@ -51,6 +51,7 @@ import pekko.util.ByteString
 import pekko.Done
 
 import javax.net.ssl.SSLEngine
+import scala.annotation.nowarn
 import scala.collection.immutable
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
@@ -218,6 +219,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
     def getChosenProtocol(): String = chosenProtocol.getOrElse(Http2AlpnSupport.HTTP11) // default to http/1, e.g. when ALPN jar is missing
 
     var eng: Option[SSLEngine] = None
+    @nowarn("msg=deprecated") // TODO find an alternative way to do this
     def createEngine(): SSLEngine = {
       val engine = httpsContext.sslContextData match {
         case Left(ssl) =>
@@ -230,6 +232,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       engine.setUseClientMode(false)
       Http2AlpnSupport.enableForServer(engine, setChosenProtocol)
     }
+    @nowarn("msg=deprecated") // TODO find an alternative way to do this
     val tls = TLS(() => createEngine(), _ => Success(()), IgnoreComplete)
 
     ProtocolSwitch(_ => getChosenProtocol(), http1, http2).join(
@@ -239,6 +242,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
   def outgoingConnection(host: String, port: Int, connectionContext: HttpsConnectionContext,
       clientConnectionSettings: ClientConnectionSettings, log: LoggingAdapter)
       : Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
+    @nowarn("msg=deprecated") // TODO find an alternative way to do this
     def createEngine(): SSLEngine = {
       val engine = connectionContext.sslContextData match {
         // TODO FIXME configure hostname verification for this case

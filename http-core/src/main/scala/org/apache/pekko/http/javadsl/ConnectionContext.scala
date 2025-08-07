@@ -15,6 +15,8 @@ package org.apache.pekko.http.javadsl
 
 import java.util.{ Collection => JCollection, Optional }
 
+import scala.annotation.nowarn
+
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.http.impl.util.Util
@@ -67,6 +69,7 @@ object ConnectionContext {
     scaladsl.ConnectionContext.https(sslContext)
 
   /** Used to serve HTTPS traffic. */
+  @nowarn("msg=deprecated")
   @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory",
     since = "Akka HTTP 10.2.0")
   def https(
@@ -118,6 +121,7 @@ abstract class ConnectionContext {
 @DoNotInherit
 abstract class HttpConnectionContext extends pekko.http.javadsl.ConnectionContext {
   override final def isSecure = false
+  @nowarn("msg=deprecated")
   override def sslConfig: Option[PekkoSSLConfig] = None
 }
 

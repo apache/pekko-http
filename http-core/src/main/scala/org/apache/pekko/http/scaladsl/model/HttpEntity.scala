@@ -13,18 +13,22 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import java.util.OptionalLong
-
-import language.implicitConversions
 import java.io.File
 import java.nio.file.{ Files, Path }
 import java.lang.{ Iterable => JIterable }
+import java.util.OptionalLong
+import java.util.concurrent.CompletionStage
 
-import scala.util.control.NonFatal
+import scala.language.implicitConversions
+import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.collection.immutable
+import scala.util.control.NonFatal
+
 import org.apache.pekko
+import pekko.actor.ClassicActorSystemProvider
+import pekko.annotation.{ DoNotInherit, InternalApi }
 import pekko.util.ByteString
 import pekko.stream.scaladsl._
 import pekko.stream.stage._
@@ -37,16 +41,10 @@ import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.util.FutureConverters._
 import pekko.util.OptionConverters._
 
-import java.util.concurrent.CompletionStage
-
-import pekko.actor.ClassicActorSystemProvider
-import pekko.annotation.{ DoNotInherit, InternalApi }
-
 /**
  * Models the entity (aka "body" or "content") of an HTTP message.
  */
 sealed trait HttpEntity extends jm.HttpEntity {
-  import language.implicitConversions
   private implicit def completionStageCovariant[T, U >: T](in: CompletionStage[T]): CompletionStage[U] =
     in.asInstanceOf[CompletionStage[U]]
 
@@ -662,6 +660,7 @@ object HttpEntity {
         private var maxBytes = -1L
         private var bytesLeft = Long.MaxValue
 
+        @nowarn("msg=deprecated") // Attributes.getFirst is deprecated, but we need to use it here
         override def preStart(): Unit = {
           _attributes.getFirst[SizeLimit] match {
             case Some(limit: SizeLimit) if limit.isDisabled =>

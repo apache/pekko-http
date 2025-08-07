@@ -314,7 +314,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
         pingState.tickInterval().foreach(interval =>
           // to limit overhead rather than constantly rescheduling a timer and looking at system time we use a constant timer
-          schedulePeriodically(ConfigurablePing.Tick, interval))
+          scheduleAtFixedRate(ConfigurablePing.Tick, interval, interval))
       }
 
       override def pushGOAWAY(errorCode: ErrorCode, debug: String): Unit = {
