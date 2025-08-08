@@ -43,7 +43,6 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   /**
    * @deprecated since Akka HTTP 10.2.0, use remoteAddressAttribute instead
    */
-  @Deprecated
   @deprecated("Use remoteAddressAttribute instead", since = "Akka HTTP 10.2.0")
   def getRemoteAddressHeader: Boolean
   def getRemoteAddressAttribute: Boolean
@@ -54,7 +53,11 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def getBacklog: Int
   def getSocketOptions: java.lang.Iterable[SocketOption]
   def getDefaultHostHeader: Host
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.getRandomFactory instead",
+
+  /**
+   * @deprecated since Akka HTTP 10.2.0, use websocketSettings.getRandomFactory instead
+   */
+  @deprecated("Kept for binary compatibility; Use websocketSettings.getRandomFactory instead",
     since = "Akka HTTP 10.2.0")
   def getWebsocketRandomFactory: java.util.function.Supplier[Random]
   def getWebsocketSettings: WebSocketSettings
@@ -87,7 +90,11 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
     self.copy(socketOptions = newValue.asScala.toList)
   def withDefaultHostHeader(newValue: Host): ServerSettings = self.copy(defaultHostHeader = newValue.asScala)
   def withParserSettings(newValue: ParserSettings): ServerSettings = self.copy(parserSettings = newValue.asScala)
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
+
+  /**
+   * @deprecated since Akka HTTP 10.2.0, use websocketSettings.withRandomFactoryFactory instead
+   */
+  @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
     since = "Akka HTTP 10.2.0")
   def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ServerSettings =
     self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(new Supplier[Random] {

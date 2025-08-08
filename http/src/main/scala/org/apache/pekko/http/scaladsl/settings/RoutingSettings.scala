@@ -47,7 +47,6 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
   @deprecated(
     "binary compatibility method. Use `pekko.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
     since = "Akka HTTP 10.1.6")
-  @Deprecated
   def getFileIODispatcher: String = this.fileIODispatcher
 
   override def withVerboseErrorMessages(verboseErrorMessages: Boolean): RoutingSettings =
@@ -65,7 +64,6 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
   @deprecated(
     "binary compatibility method. Use `pekko.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
     since = "Akka HTTP 10.1.6")
-  @Deprecated
   override def withFileIODispatcher(fileIODispatcher: String): RoutingSettings = self
 }
 
