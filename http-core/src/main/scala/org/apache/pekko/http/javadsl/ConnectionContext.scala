@@ -15,6 +15,8 @@ package org.apache.pekko.http.javadsl
 
 import java.util.{ Collection => JCollection, Optional }
 
+import scala.annotation.nowarn
+
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.http.impl.util.Util
@@ -126,6 +128,7 @@ abstract class ConnectionContext {
 @DoNotInherit
 abstract class HttpConnectionContext extends pekko.http.javadsl.ConnectionContext {
   override final def isSecure = false
+  @nowarn("msg=deprecated")
   override def sslConfig: Option[PekkoSSLConfig] = None
 }
 

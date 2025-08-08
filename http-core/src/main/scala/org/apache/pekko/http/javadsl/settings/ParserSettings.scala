@@ -135,7 +135,7 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
    * @deprecated Use forServer or forClient instead.
    */
   @deprecated("Use forServer or forClient instead", since = "Akka HTTP 10.2.0")
-  @nowarn("msg=create overrides concrete, non-deprecated symbol")
+  @nowarn("msg=deprecated")
   override def create(system: ActorSystem): ParserSettings = create(system.settings.config)
 
   def forServer(system: ClassicActorSystemProvider): ParserSettings =
