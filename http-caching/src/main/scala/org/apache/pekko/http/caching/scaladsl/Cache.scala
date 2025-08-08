@@ -18,7 +18,7 @@ import java.util.concurrent.{ CompletableFuture, CompletionStage }
 
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
-import pekko.japi.{ Creator, Procedure }
+import pekko.japi.function.{ Creator, Procedure }
 import pekko.util.FutureConverters._
 
 import scala.collection.JavaConverters._
