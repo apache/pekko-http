@@ -20,7 +20,7 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.stream.stage.GraphStageLogic
 import pekko.event.{ LogSource, LoggingAdapter, NoLogging }
-import pekko.stream.ActorMaterializer
+import pekko.stream.Materializer
 
 // TODO Try to reconcile with what Pekko provides in StageLogging.
 // We thought this could be removed when https://github.com/akka/akka/issues/18793 had been implemented
@@ -44,8 +44,8 @@ private[pekko] trait StageLoggingWithOverride extends GraphStageLogic {
           logOverride match {
             case DefaultNoLogging =>
               materializer match {
-                case a: ActorMaterializer => pekko.event.Logging(a.system, logSource)(LogSource.fromClass)
-                case _                    => NoLogging
+                case m: Materializer => pekko.event.Logging(m.system, logSource)(LogSource.fromClass)
+                case _               => NoLogging
               }
             case x => x
           }
