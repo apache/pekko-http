@@ -30,6 +30,7 @@ object Common extends AutoPlugin {
       "-Wconf:msg=object JavaConverters in package collection is deprecated:s",
       "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s",
       "-Wconf:msg=reached max recursion depth:s",
+      "-Wconf:msg=Prefer the Scala annotation over Java's `@Deprecated`:s",
       "-release:8"),
     scalacOptions ++= onlyOnScala2(Seq(
       "-Xlint",
