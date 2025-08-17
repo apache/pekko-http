@@ -152,8 +152,6 @@ object ClientTransport {
       Flow[ByteString].prepend(Source.single(ByteString()))
         .viaMat(
           Flow.lazyFutureFlow(flowFactory)
-            //.prefixAndTail(1)
-            //.mapMaterializedValue(_.map(_.get))
             // buffer needed because HTTP client expects demand before it does request (which is reasonable for buffered TCP connections)
             .buffer(1, OverflowStrategy.backpressure))(Keep.right)
     }
