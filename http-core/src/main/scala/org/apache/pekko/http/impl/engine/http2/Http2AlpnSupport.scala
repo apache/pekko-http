@@ -16,9 +16,9 @@ package org.apache.pekko.http.impl.engine.http2
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.Http2AlpnSupport.{ H2, HTTP11 }
-import pekko.http.impl.util.JavaVersion
 import pekko.stream.TLSProtocol.NegotiateNewSession
 import pekko.stream.impl.io.TlsUtils
+import pekko.util.JavaVersion
 
 import java.{ util => ju }
 import javax.net.ssl.SSLEngine
