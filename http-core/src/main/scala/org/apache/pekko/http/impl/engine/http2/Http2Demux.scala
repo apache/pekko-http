@@ -32,7 +32,6 @@ import pekko.stream.Attributes
 import pekko.stream.BidiShape
 import pekko.stream.Inlet
 import pekko.stream.Outlet
-import pekko.stream.impl.io.ByteStringParser.ParsingException
 import pekko.stream.scaladsl.Source
 import pekko.stream.stage.{
   GraphStageLogic,
@@ -410,12 +409,6 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
               case e: Http2Compliance.Http2ProtocolStreamException =>
                 resetStream(e.streamId, e.errorCode)
-
-              case e: ParsingException =>
-                e.getCause match {
-                  case null  => super.onUpstreamFailure(e) // fail with the raw parsing exception
-                  case cause => onUpstreamFailure(cause) // unwrap the cause, which should carry ComplianceException and recurse
-                }
 
               // handle every unhandled exception
               case NonFatal(e) =>
