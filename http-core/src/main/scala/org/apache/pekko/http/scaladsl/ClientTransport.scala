@@ -147,8 +147,8 @@ object ClientTransport {
       }.mapMaterializedValue(_.flatten)
     }
 
-    private def initFutureFlow[M](flowFactory: () => Future[Flow[ByteString, ByteString, M]])(
-        implicit ec: ExecutionContext): Flow[ByteString, ByteString, Future[M]] = {
+    private def initFutureFlow[M](
+        flowFactory: () => Future[Flow[ByteString, ByteString, M]]): Flow[ByteString, ByteString, Future[M]] = {
       Flow[ByteString].prepend(Source.single(ByteString()))
         .viaMat(
           Flow.lazyFutureFlow(flowFactory)
