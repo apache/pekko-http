@@ -1,5 +1,11 @@
 # ! Security Announcements !
 
+## Security model
+
+Pekko HTTP-based applications should not be exposed to the public internet directly.
+We believe Pekko HTTP behaves pretty well under most known Denial of Service attacks, but if you want the best security, you should use an enterprise grade routing solution.
+Even using a load balancing solution like an up-to-date version of [Apache HTTP Server](https://httpd.apache.org/) or [Nginx](https://nginx.org/) would be safer than exposing Pekko HTTP-based applications directly to the public internet.
+
 ## Receiving Security Advisories
 The best way to receive any and all security announcements is to subscribe to the [Apache Announce Mailing List](https://lists.apache.org/list.html?announce@apache.org).
 
