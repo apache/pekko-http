@@ -15,8 +15,8 @@ package org.apache.pekko.http.caching.javadsl;
 
 import org.apache.pekko.annotation.ApiMayChange;
 import org.apache.pekko.annotation.DoNotInherit;
-import org.apache.pekko.japi.Creator;
-import org.apache.pekko.japi.Procedure;
+import org.apache.pekko.japi.function.Creator;
+import org.apache.pekko.japi.function.Procedure;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
