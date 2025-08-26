@@ -26,8 +26,6 @@ import pekko.stream.stage.GraphStage
 import pekko.util.ByteString
 import headers._
 
-import scala.annotation.nowarn
-
 trait Encoder {
   def encoding: HttpEncoding
 
