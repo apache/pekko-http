@@ -43,7 +43,7 @@ trait Encoder {
     mapper.transformDataBytes(t, Flow.fromGraph(singleUseEncoderFlow()))
 
   def encoderFlow: Flow[ByteString, ByteString, NotUsed] =
-    Flow.setup { (_, _) => Flow.fromGraph(singleUseEncoderFlow()) }
+    Flow.fromMaterializer { (_, _) => Flow.fromGraph(singleUseEncoderFlow()) }
       .mapMaterializedValue(_ => NotUsed)
 
   @InternalApi
