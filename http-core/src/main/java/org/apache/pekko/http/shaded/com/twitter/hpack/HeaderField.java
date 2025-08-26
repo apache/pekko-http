@@ -82,10 +82,11 @@ class HeaderField implements Comparable<HeaderField> {
     if (obj == this) {
       return true;
     }
-    if (obj instanceof HeaderField other) {
-      return name.equals(other.name) && value.equals(other.value);
+    if (!(obj instanceof HeaderField)) {
+      return false;
     }
-    return false;
+    HeaderField other = (HeaderField) obj;
+    return name.equals(other.name) && value.equals(other.value);
   }
 
   @Override
