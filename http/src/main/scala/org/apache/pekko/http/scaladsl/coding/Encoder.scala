@@ -46,22 +46,11 @@ trait Encoder {
     Flow.fromMaterializer { (_, _) => Flow.fromGraph(singleUseEncoderFlow()) }
       .mapMaterializedValue(_ => NotUsed)
 
-  @InternalApi
-  @deprecated(
-    "synchronous compression with `encode` is not supported in the future any more, use `encodeAsync` instead",
-    since = "Akka HTTP 10.2.0")
-  def encode(input: ByteString): ByteString = newCompressor.compressAndFinish(input)
-
   def encodeAsync(input: ByteString)(implicit mat: Materializer): Future[ByteString] =
     Source.single(input).via(singleUseEncoderFlow()).runWith(Sink.fold(ByteString.empty)(_ ++ _))
 
   @InternalApi
-  @deprecated("newCompressor is internal API", since = "Akka HTTP 10.2.0")
-  def newCompressor: Compressor
-
-  @InternalApi
-  @deprecated("newEncodeTransformer is internal API", since = "Akka HTTP 10.2.0")
-  def newEncodeTransformer(): GraphStage[FlowShape[ByteString, ByteString]] = singleUseEncoderFlow()
+  protected def newCompressor: Compressor
 
   private def singleUseEncoderFlow(): GraphStage[FlowShape[ByteString, ByteString]] = {
     @nowarn("msg=deprecated")

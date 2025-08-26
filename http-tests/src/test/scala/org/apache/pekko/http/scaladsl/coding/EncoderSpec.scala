@@ -48,7 +48,7 @@ class EncoderSpec extends AnyWordSpec with CodecSpecSupport {
   case object DummyEncoder extends Encoder {
     val messageFilter = Encoder.DefaultFilter
     val encoding = HttpEncodings.compress
-    def newCompressor = DummyCompressor
+    protected def newCompressor = DummyCompressor
   }
 
   @nowarn("msg=is internal API")
