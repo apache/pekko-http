@@ -47,7 +47,10 @@ trait Encoder {
       .mapMaterializedValue(_ => NotUsed)
 
   @InternalApi
-  private[http] def encode(input: ByteString): ByteString = newCompressor.compressAndFinish(input)
+  @deprecated(
+    "synchronous compression with `encode` is not supported in the future any more, use `encodeAsync` instead",
+    since = "Akka HTTP 10.2.0")
+  def encode(input: ByteString): ByteString = newCompressor.compressAndFinish(input)
 
   def encodeAsync(input: ByteString)(implicit mat: Materializer): Future[ByteString] =
     Source.single(input).via(singleUseEncoderFlow()).runWith(Sink.fold(ByteString.empty)(_ ++ _))
