@@ -46,11 +46,14 @@ trait Encoder {
     Flow.fromMaterializer { (_, _) => Flow.fromGraph(singleUseEncoderFlow()) }
       .mapMaterializedValue(_ => NotUsed)
 
+  @InternalApi
+  private[http] def encode(input: ByteString): ByteString = newCompressor.compressAndFinish(input)
+
   def encodeAsync(input: ByteString)(implicit mat: Materializer): Future[ByteString] =
     Source.single(input).via(singleUseEncoderFlow()).runWith(Sink.fold(ByteString.empty)(_ ++ _))
 
   @InternalApi
-  protected def newCompressor: Compressor
+  private[http] def newCompressor: Compressor
 
   private def singleUseEncoderFlow(): GraphStage[FlowShape[ByteString, ByteString]] = {
     @nowarn("msg=deprecated")

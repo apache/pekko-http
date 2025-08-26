@@ -50,6 +50,12 @@ public enum Coder {
         underlying.encodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);
   }
 
+  /** @deprecated Synchronous encoding is deprecated since Akka HTTP 10.2.0 */
+  @Deprecated
+  public ByteString encode(ByteString input) {
+    return underlying.encode(input);
+  }
+
   public HttpResponse decodeMessage(HttpResponse message) {
     return (HttpResponse)
         underlying.decodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);

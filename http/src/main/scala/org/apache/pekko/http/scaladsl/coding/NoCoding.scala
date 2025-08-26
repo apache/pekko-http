@@ -36,7 +36,7 @@ object NoCoding extends Coder with StreamDecoder {
 
   val messageFilter: HttpMessage => Boolean = _ => false
 
-  protected def newCompressor = NoCodingCompressor
+  private[http] def newCompressor = NoCodingCompressor
 
   def newDecompressorStage(maxBytesPerChunk: Int): () => GraphStage[FlowShape[ByteString, ByteString]] =
     () => StreamUtils.limitByteChunksStage(maxBytesPerChunk)
