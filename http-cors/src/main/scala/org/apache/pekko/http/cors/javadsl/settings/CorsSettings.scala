@@ -67,11 +67,4 @@ object CorsSettings {
    * Creates an instance of CorsSettings using the configuration provided by the given ActorSystem.
    */
   def create(system: ActorSystem): CorsSettings = scaladsl.settings.CorsSettings(system)
-
-  /**
-   * Settings from the default loaded configuration. Note that application code may want to use the `apply()` methods
-   * instead to have more control over the source of the configuration.
-   */
-  @deprecated("Use other CorsSettings constructors", "1.0.0")
-  def defaultSettings: CorsSettings = scaladsl.settings.CorsSettings.defaultSettings
 }

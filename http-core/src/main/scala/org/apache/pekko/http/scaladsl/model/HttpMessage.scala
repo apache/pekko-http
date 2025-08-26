@@ -348,11 +348,6 @@ final class HttpRequest(
   override def isRequest = true
   override def isResponse = false
 
-  @deprecated("use the constructor that includes an attributes parameter instead", "Akka HTTP 10.2.0")
-  private[model] def this(method: HttpMethod, uri: Uri, headers: immutable.Seq[HttpHeader], entity: RequestEntity,
-      protocol: HttpProtocol) =
-    this(method, uri, headers, Map.empty, entity, protocol)
-
   /**
    * Resolve this request's URI according to the logic defined at
    * http://tools.ietf.org/html/rfc7230#section-5.5

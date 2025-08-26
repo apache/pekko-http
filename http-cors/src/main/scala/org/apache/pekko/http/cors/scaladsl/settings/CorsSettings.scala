@@ -185,13 +185,6 @@ object CorsSettings extends SettingsCompanionImpl[CorsSettings]("pekko.http.cors
    */
   implicit def default(implicit system: ActorSystem): CorsSettings = apply(system)
 
-  /**
-   * Settings from the default loaded configuration. Note that application code may want to use the `apply()` methods
-   * instead to have more control over the source of the configuration.
-   */
-  @deprecated("Use other CorsSettings constructors", "1.0.0")
-  def defaultSettings: CorsSettings = apply(ConfigFactory.load(getClass.getClassLoader))
-
   def fromSubConfig(root: Config, config: Config): CorsSettings = {
     def parseStringList(path: String): List[String] =
       Try(config.getStringList(path).asScala.toList).recover { case _: WrongType =>
