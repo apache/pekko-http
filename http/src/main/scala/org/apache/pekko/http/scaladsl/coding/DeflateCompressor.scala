@@ -26,8 +26,7 @@ import scala.annotation.tailrec
 
 /** Internal API */
 @InternalApi
-@deprecated("DeflateCompressor is internal API and will be moved or removed in the future", since = "Akka HTTP 10.2.0")
-class DeflateCompressor private[coding] (compressionLevel: Int) extends Compressor {
+private[coding] class DeflateCompressor private[coding] (compressionLevel: Int) extends Compressor {
   require(compressionLevel >= 0 && compressionLevel <= 9, "Compression level needs to be between 0 and 9")
   import DeflateCompressor._
 

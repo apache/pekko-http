@@ -45,12 +45,6 @@ import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMes
 import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessagesForProtocol;
 
 // #handleWebSocketMessagesForProtocol
-// #extractUpgradeToWebSocket
-import org.apache.pekko.http.javadsl.model.AttributeKeys;
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractUpgradeToWebSocket;
-
-// #extractUpgradeToWebSocket
 // #extractOfferedWsProtocols
 import static org.apache.pekko.http.javadsl.server.Directives.extractOfferedWsProtocols;
 import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessagesForOptionalProtocol;
