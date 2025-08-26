@@ -32,8 +32,7 @@ Note that currently only `newServerAt(...).bind` and `newServerAt(...).bindSync`
 support HTTP/2 but not `bindFlow` or `connectionSource(): Source`.
 
 HTTP/2 over TLS needs [Application-Layer Protocol Negotiation (ALPN)](https://en.wikipedia.org/wiki/Application-Layer_Protocol_Negotiation)
-to negotiate whether both client and server support HTTP/2. The JVM provides ALPN support starting from JDK 8u252.
-Make sure to use at least that version.
+to negotiate whether both client and server support HTTP/2.
 
 ### HTTP/2 without HTTPS
 
