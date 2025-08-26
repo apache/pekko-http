@@ -18,11 +18,9 @@ import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.Http2AlpnSupport.{ H2, HTTP11 }
 import pekko.stream.TLSProtocol.NegotiateNewSession
 import pekko.stream.impl.io.TlsUtils
-import pekko.util.JavaVersion
 
 import java.{ util => ju }
 import javax.net.ssl.SSLEngine
-import scala.util.Try
 
 /**
  * INTERNAL API
@@ -39,29 +37,10 @@ private[http] object Http2AlpnSupport {
    * Enables server-side Http/2 ALPN support for the given engine.
    */
   def enableForServer(engine: SSLEngine, setChosenProtocol: String => Unit): SSLEngine =
-    if (isAlpnSupportedByJDK) Http2JDKAlpnSupport.jdkAlpnSupport(engine, setChosenProtocol)
-    else throw new RuntimeException(
-      s"Need to run on a JVM >= 8u252 for ALPN support needed for HTTP/2. Running on ${sys.props("java.version")}")
+    Http2JDKAlpnSupport.jdkAlpnSupport(engine, setChosenProtocol)
 
   def clientSetApplicationProtocols(engine: SSLEngine, protocols: Array[String]): Unit =
-    if (isAlpnSupportedByJDK) Http2JDKAlpnSupport.clientSetApplicationProtocols(engine, protocols)
-    else throw new RuntimeException(
-      s"Need to run on a JVM >= 8u252 for ALPN support needed for HTTP/2. Running on ${sys.props("java.version")}")
-
-  private def isAlpnSupportedByJDK: Boolean =
-    // ALPN is supported starting with JDK 9
-    JavaVersion.majorVersion >= 9 ||
-    (classOf[SSLEngine].getMethods.exists(_.getName == "setHandshakeApplicationProtocolSelector")
-    && {
-      // This method only exists in the jetty-alpn provided implementation. If it exists an old version of the jetty-alpn-agent is active which is not supported
-      // on JDK>= 8u252. When running on such a JVM, you can either just remove the agent or (if you want to support older JVMs with the same command line),
-      // use jetty-alpn-agent >= 2.0.10
-      val jettyAlpnClassesAvailable = Try(Class.forName("sun.security.ssl.ALPNExtension")).toOption.exists(
-        _.getDeclaredMethods.exists(_.getName == "init"))
-      if (jettyAlpnClassesAvailable) throw new RuntimeException(
-        "On JDK >= 8u252 you need to either remove jetty-alpn-agent or use version 2.0.10 (which is a noop)")
-      else true
-    })
+    Http2JDKAlpnSupport.clientSetApplicationProtocols(engine, protocols)
 }
 
 /**
