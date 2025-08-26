@@ -59,7 +59,6 @@ trait Encoder {
   private[http] def newCompressor: Compressor
 
   private def singleUseEncoderFlow(): GraphStage[FlowShape[ByteString, ByteString]] = {
-    @nowarn("msg=deprecated")
     val compressor = newCompressor
 
     def encodeChunk(bytes: ByteString): ByteString = compressor.compressAndFlush(bytes)
