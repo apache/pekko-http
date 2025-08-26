@@ -104,10 +104,10 @@ public class JobRoutes {
       CompletionStage<JobRepository.Response> stage) {
     return stage.thenApply(
         response -> {
-          if (response instanceof JobRepository.OK) {
-            return (JobRepository.OK) response;
-          } else if (response instanceof JobRepository.KO) {
-            throw new IllegalStateException(((JobRepository.KO) response).reason);
+          if (response instanceof JobRepository.OK ok) {
+            return ok;
+          } else if (response instanceof JobRepository.KO ko) {
+            throw new IllegalStateException(ko.reason);
           } else {
             throw new IllegalStateException("Invalid response");
           }
