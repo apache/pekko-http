@@ -30,8 +30,8 @@ private[http] object StringTools {
     new String(bytes, 0)
 
   def asciiStringBytes(string: String): Array[Byte] = {
-    val bytes = new Array[Byte](string.length)
-    Unsafe.copyUSAsciiStrToBytes(string, bytes)
-    bytes
+    // this is as fast as Unsafe.copyUSAsciiStrToBytes for recent JDK versions
+    // and avoids the use of deprecated Unsafe methods
+    string.getBytes(java.nio.charset.StandardCharsets.US_ASCII)
   }
 }
