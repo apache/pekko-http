@@ -31,7 +31,7 @@ object Common extends AutoPlugin {
       "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s",
       "-Wconf:msg=reached max recursion depth:s",
       "-Wconf:msg=Prefer the Scala annotation over Java's `@Deprecated`:s",
-      "-release:17"),
+      "-release", "17"),
     scalacOptions ++= onlyOnScala2(Seq(
       "-Xlint",
       // Silence deprecation notices for changes introduced in Scala 2.12
