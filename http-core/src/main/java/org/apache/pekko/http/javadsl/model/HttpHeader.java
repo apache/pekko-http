@@ -56,8 +56,8 @@ public abstract class HttpHeader {
             value,
             org.apache.pekko.http.impl.model.parser.HeaderParser$.MODULE$.DefaultSettings());
 
-    if (result instanceof org.apache.pekko.http.scaladsl.model.HttpHeader$ParsingResult$Ok) {
-      return ((org.apache.pekko.http.scaladsl.model.HttpHeader$ParsingResult$Ok) result).header();
+    if (result instanceof org.apache.pekko.http.scaladsl.model.HttpHeader$ParsingResult$Ok ok) {
+      return ok.header();
     } else {
       throw new IllegalHeaderException(
           ((org.apache.pekko.http.scaladsl.model.HttpHeader$ParsingResult$Error) result).error());

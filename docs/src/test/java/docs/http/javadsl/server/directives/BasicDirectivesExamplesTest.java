@@ -531,8 +531,8 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
     final Route route =
         mapRouteResult(
             r -> {
-              if (r instanceof Complete) {
-                final HttpResponse response = ((Complete) r).getResponse();
+              if (r instanceof Complete complete) {
+                final HttpResponse response = complete.getResponse();
                 return RouteResults.complete(response.withStatus(200));
               } else {
                 return r;
@@ -563,8 +563,8 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
                         })
                     .thenApply(
                         rr -> {
-                          if (rr instanceof Complete) {
-                            final HttpResponse res = ((Complete) rr).getResponse();
+                          if (rr instanceof Complete complete) {
+                            final HttpResponse res = complete.getResponse();
                             return RouteResults.complete(
                                 res.addHeader(
                                     Server.create(ProductVersion.create("MyServer", "1.0"))));
@@ -587,8 +587,7 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
     // #mapResponseEntity
     final Function<ResponseEntity, ResponseEntity> prefixEntity =
         entity -> {
-          if (entity instanceof HttpEntity.Strict) {
-            final HttpEntity.Strict strict = (HttpEntity.Strict) entity;
+          if (entity instanceof HttpEntity.Strict strict) {
             return HttpEntities.create(
                 strict.getContentType(), ByteString.fromString("test").concat(strict.getData()));
           } else {
@@ -1172,8 +1171,7 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
             () ->
                 extractRequest(
                     req -> {
-                      if (req.entity() instanceof HttpEntity.Strict) {
-                        final HttpEntity.Strict strict = (HttpEntity.Strict) req.entity();
+                      if (req.entity() instanceof HttpEntity.Strict strict) {
                         return complete(
                             "Request entity is strict, data=" + strict.getData().utf8String());
                       } else {

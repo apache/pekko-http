@@ -93,8 +93,8 @@ public class HeaderDirectivesExamplesTest extends JUnitRouteTest {
     // #headerValue
     final Function<HttpHeader, Optional<Host>> extractHostPort =
         header -> {
-          if (header instanceof Host) {
-            return Optional.of((Host) header);
+          if (header instanceof Host host) {
+            return Optional.of(host);
           } else {
             return Optional.empty();
           }
@@ -189,11 +189,11 @@ public class HeaderDirectivesExamplesTest extends JUnitRouteTest {
         new JavaPartialFunction<HttpHeader, Integer>() {
           @Override
           public Integer apply(HttpHeader x, boolean isCheck) throws Exception {
-            if (x instanceof Host) {
+            if (x instanceof Host host) {
               if (isCheck) {
                 return null;
               } else {
-                return ((Host) x).port();
+                return host.port();
               }
             } else {
               throw noMatch();
@@ -220,8 +220,8 @@ public class HeaderDirectivesExamplesTest extends JUnitRouteTest {
     // #optionalHeaderValue
     final Function<HttpHeader, Optional<Integer>> extractHostPort =
         header -> {
-          if (header instanceof Host) {
-            return Optional.of(((Host) header).port());
+          if (header instanceof Host host) {
+            return Optional.of(host.port());
           } else {
             return Optional.empty();
           }
@@ -306,11 +306,11 @@ public class HeaderDirectivesExamplesTest extends JUnitRouteTest {
         new JavaPartialFunction<HttpHeader, Integer>() {
           @Override
           public Integer apply(HttpHeader x, boolean isCheck) throws Exception {
-            if (x instanceof Host) {
+            if (x instanceof Host host) {
               if (isCheck) {
                 return null;
               } else {
-                return ((Host) x).port();
+                return host.port();
               }
             } else {
               throw noMatch();
