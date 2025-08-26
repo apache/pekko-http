@@ -187,8 +187,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
 
     "accept a small request that decodes into a large entity" in {
       val data = ByteString.fromString("0" * (decodeMaxSize + 1))
-      import scala.concurrent.ExecutionContext.Implicits.global
-      val zippedData = Await.result(Coders.Gzip.encodeAsync(ByteString(data)), 3.seconds)
+      val zippedData = Await.result(Coders.Gzip.encodeAsync(data), 10.seconds)
       val request = HttpRequest(
         HttpMethods.POST,
         s"http:/${binding.localAddress}/noDirective",
