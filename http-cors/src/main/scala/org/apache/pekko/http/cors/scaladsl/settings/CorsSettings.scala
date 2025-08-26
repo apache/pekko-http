@@ -31,7 +31,7 @@ import pekko.http.scaladsl.model.headers.HttpOrigin
 import pekko.http.scaladsl.model.{ HttpHeader, HttpMethod, HttpMethods }
 import pekko.util.OptionConverters._
 import com.typesafe.config.ConfigException.{ Missing, WrongType }
-import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.config.Config
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Seq
