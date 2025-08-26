@@ -50,28 +50,6 @@ object EventStreamUnmarshalling extends EventStreamUnmarshalling
 trait EventStreamUnmarshalling {
 
   /**
-   * The maximum size for parsing lines of a server-sent event; 4KiB by default.
-   */
-  @deprecated(
-    "Set this property in configuration as `pekko.http.sse.max-line-size` before calling fromEventsStream(implicit ActorSystem)",
-    "Akka HTTP 10.1.8")
-  protected def maxLineSize: Int = 4096
-
-  /**
-   * The maximum size for parsing server-sent events; 8KiB by default.
-   */
-  @deprecated(
-    "Set this property in configuration as `pekko.http.sse.max-event-size` before calling fromEventsStream(implicit ActorSystem)",
-    "Akka HTTP 10.1.8")
-  protected def maxEventSize: Int = 8192
-
-  @deprecated(
-    "Binary compatibility method. Invocations should have an implicit ActorSystem in scope to provide access to configuration",
-    "Akka HTTP 10.1.8")
-  final val fromEventStream: FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] =
-    fromEventsStream(maxEventSize, maxLineSize, emitEmptyEvents = false)
-
-  /**
    * Lets an `HttpEntity` with a `text/event-stream` media type be unmarshalled to a source of `ServerSentEvent`s.
    */
   implicit final def fromEventsStream(

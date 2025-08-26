@@ -99,17 +99,6 @@ class HeaderDirectivesSpec extends RoutingSpec with Inside {
       }
     }
 
-    "extract a header with Symbol name" in {
-      lazy val symbolRoute =
-        headerValueByName(Symbol("Referer")) { referer =>
-          complete(s"The symbol referer was $referer")
-        }
-
-      Get("abc") ~> RawHeader("Referer", "http://example.com/symbol") ~> symbolRoute ~> check {
-        responseAs[String] shouldEqual "The symbol referer was http://example.com/symbol"
-      }
-    }
-
     "reject a request if no header of the given type is present" in {
       Get("abc") ~> route ~> check {
         inside(rejection) {
@@ -128,17 +117,6 @@ class HeaderDirectivesSpec extends RoutingSpec with Inside {
     "extract a header if the name is matching" in {
       Get("abc") ~> RawHeader("Referer", "http://example.com") ~> route ~> check {
         responseAs[String] shouldEqual "The referer was Some(http://example.com)"
-      }
-    }
-
-    "extract a header with Symbol name" in {
-      lazy val symbolRoute =
-        optionalHeaderValueByName(Symbol("Referer")) { referer =>
-          complete(s"The symbol referer was $referer")
-        }
-
-      Get("abc") ~> RawHeader("Referer", "http://example.com/symbol") ~> symbolRoute ~> check {
-        responseAs[String] shouldEqual "The symbol referer was Some(http://example.com/symbol)"
       }
     }
 

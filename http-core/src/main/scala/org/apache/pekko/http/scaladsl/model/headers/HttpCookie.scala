@@ -13,16 +13,16 @@
 
 package org.apache.pekko.http.scaladsl.model.headers
 
-import org.apache.pekko
-import pekko.http.impl.model.parser.CharacterClasses
-import org.parboiled2.CharPredicate
 import java.util.{ Optional, OptionalLong }
 
-import pekko.http.scaladsl.model.DateTime
+import org.apache.pekko
+import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.impl.util._
-import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.javadsl.{ model => jm }
+import pekko.http.scaladsl.model.DateTime
 import pekko.util.OptionConverters._
+import org.parboiled2.CharPredicate
 
 /**
  * for a full definition of the http cookie header fields, see
@@ -79,32 +79,6 @@ final class HttpCookie private[http] (
     val extension: Option[String],
     val sameSite: Option[SameSite]) extends jm.headers.HttpCookie with ToStringRenderable with Product with Serializable
     with Equals {
-
-  @deprecated("Please use HttpCookie(name, value).withXxx()", "Akka HTTP 10.2.0")
-  def this(
-      name: String,
-      value: String,
-      expires: Option[DateTime] = None,
-      maxAge: Option[Long] = None,
-      domain: Option[String] = None,
-      path: Option[String] = None,
-      secure: Boolean = false,
-      httpOnly: Boolean = false,
-      extension: Option[String] = None) =
-    this(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
-
-  @deprecated("for binary compatibility", since = "Akka HTTP 10.2.0")
-  private[headers] def copy(
-      name: String,
-      value: String,
-      expires: Option[DateTime],
-      maxAge: Option[Long],
-      domain: Option[String],
-      path: Option[String],
-      secure: Boolean,
-      httpOnly: Boolean,
-      extension: Option[String]): HttpCookie = copy(name = name, value = value, expires = expires, maxAge = maxAge,
-    domain = domain, path = path, secure = secure, httpOnly = httpOnly, extension = extension, sameSite = sameSite)
 
   private[headers] def copy(
       name: String = this.name,
@@ -241,32 +215,6 @@ object HttpCookie {
       httpOnly: Boolean = false,
       extension: Option[String] = None) =
     new HttpCookie(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
-
-  @deprecated(
-    "Pattern matching on HttpCookie is deprecated because of the big number of fields and potential future compatibility hazards. Please use other means to check the fields.",
-    since = "Akka HTTP 10.2.0")
-  def unapply(cookie: HttpCookie) = Option((
-    cookie.name,
-    cookie.value,
-    cookie.expires,
-    cookie.maxAge,
-    cookie.domain,
-    cookie.path,
-    cookie.secure,
-    cookie.httpOnly,
-    cookie.extension))
-
-  @deprecated("Use HttpCookiePair.toCookie and withXxx methods instead", "Akka HTTP 10.2.0")
-  def fromPair(
-      pair: HttpCookiePair,
-      expires: Option[DateTime] = None,
-      maxAge: Option[Long] = None,
-      domain: Option[String] = None,
-      path: Option[String] = None,
-      secure: Boolean = false,
-      httpOnly: Boolean = false,
-      extension: Option[String] = None): HttpCookie =
-    new HttpCookie(pair.name, pair.value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
 
   import pekko.http.impl.model.parser.CharacterClasses._
 
