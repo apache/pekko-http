@@ -31,7 +31,7 @@ import pekko.http.scaladsl.model.headers.HttpOrigin
 import pekko.http.scaladsl.model.{ HttpHeader, HttpMethod, HttpMethods }
 import pekko.util.OptionConverters._
 import com.typesafe.config.ConfigException.{ Missing, WrongType }
-import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.config.Config
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Seq
@@ -184,13 +184,6 @@ object CorsSettings extends SettingsCompanionImpl[CorsSettings]("pekko.http.cors
    * Creates an instance of CorsSettings using the configuration provided by the given ActorSystem.
    */
   implicit def default(implicit system: ActorSystem): CorsSettings = apply(system)
-
-  /**
-   * Settings from the default loaded configuration. Note that application code may want to use the `apply()` methods
-   * instead to have more control over the source of the configuration.
-   */
-  @deprecated("Use other CorsSettings constructors", "1.0.0")
-  def defaultSettings: CorsSettings = apply(ConfigFactory.load(getClass.getClassLoader))
 
   def fromSubConfig(root: Config, config: Config): CorsSettings = {
     def parseStringList(path: String): List[String] =

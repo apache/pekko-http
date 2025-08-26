@@ -13,8 +13,7 @@
 
 package org.apache.pekko.http.javadsl.settings
 
-import java.util.function.Supplier
-import java.util.{ Optional, Random }
+import java.util.Optional
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
@@ -54,9 +53,6 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def getBacklog: Int
   def getSocketOptions: java.lang.Iterable[SocketOption]
   def getDefaultHostHeader: Host
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.getRandomFactory instead",
-    since = "Akka HTTP 10.2.0")
-  def getWebsocketRandomFactory: java.util.function.Supplier[Random]
   def getWebsocketSettings: WebSocketSettings
   def getParserSettings: ParserSettings
   def getLogUnencryptedNetworkBytes: Optional[Int]
@@ -87,12 +83,6 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
     self.copy(socketOptions = newValue.asScala.toList)
   def withDefaultHostHeader(newValue: Host): ServerSettings = self.copy(defaultHostHeader = newValue.asScala)
   def withParserSettings(newValue: ParserSettings): ServerSettings = self.copy(parserSettings = newValue.asScala)
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
-    since = "Akka HTTP 10.2.0")
-  def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ServerSettings =
-    self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
-      override def get(): Random = newValue.get()
-    }))
   def withWebsocketSettings(newValue: WebSocketSettings): ServerSettings =
     self.copy(websocketSettings = newValue.asScala)
   def withLogUnencryptedNetworkBytes(newValue: Optional[Int]): ServerSettings =

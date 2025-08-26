@@ -628,20 +628,6 @@ object HttpEntity {
   }
   object LastChunk extends LastChunk("", Nil)
 
-  /**
-   * Deprecated: no-op, not explicitly needed any more.
-   */
-  @deprecated("Not needed explicitly any more. ", "Akka HTTP 10.1.5")
-  def limitableByteSource[Mat](source: Source[ByteString, Mat]): Source[ByteString, Mat] =
-    source
-
-  /**
-   * Deprecated: no-op, not explicitly needed any more.
-   */
-  @deprecated("Not needed explicitly any more. ", "Akka HTTP 10.1.5")
-  def limitableChunkSource[Mat](source: Source[ChunkStreamPart, Mat]): Source[ChunkStreamPart, Mat] =
-    source
-
   private final case class SizeLimit(maxBytes: Long, contentLength: Option[Long] = None) extends Attributes.Attribute {
     def isDisabled = maxBytes < 0
   }
