@@ -16,10 +16,15 @@
 # under the License.
 
 # Remove deprecated methods
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.model.FormData.toEntity")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.model.headers.HttpCookie.create")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.FormData.toEntity")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpEntity.limitableByteSource")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpEntity.limitableChunkSource")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpRequest.copy")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpRequest.copy$*")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpResponse.copy")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpResponse.copy$*")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.headers.HttpCookie.fromPair")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.headers.HttpCookie.fromPair$*")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.headers.HttpCookie.<init>$*")

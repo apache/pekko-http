@@ -16,8 +16,12 @@
 # under the License.
 
 # Remove deprecated methods
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.unmarshalling.sse.EventStreamUnmarshalling.fromEventStream")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.Deflate.newEncodeTransformer")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.Encoder.newEncodeTransformer")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.Gzip.newEncodeTransformer")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.NoCoding.newCompressor")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.NoCoding.newEncodeTransformer")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling.maxLineSize")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling.maxEventSize")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling.fromEventStream")

@@ -28,19 +28,8 @@ public final class FormData {
 
   /** Converts this FormData to a RequestEntity using UTF8 encoding. */
   public RequestEntity toEntity() {
-    return toEntity(HttpCharsets.UTF_8);
-  }
-
-  /**
-   * Converts this FormData to a RequestEntity using the given encoding.
-   *
-   * @deprecated FormData always uses charset UTF-8 without appending the charset to 'Content-Type:
-   *     application/x-www-form-urlencoded', use toEntity() instead.
-   */
-  @Deprecated // since Akka HTTP 10.1.8
-  public RequestEntity toEntity(HttpCharset charset) {
     return HttpEntities.create(
-        ContentTypes.APPLICATION_X_WWW_FORM_URLENCODED, fields.render(charset));
+        ContentTypes.APPLICATION_X_WWW_FORM_URLENCODED, fields.render(HttpCharsets.UTF_8));
   }
 
   /** Returns empty FormData. */
