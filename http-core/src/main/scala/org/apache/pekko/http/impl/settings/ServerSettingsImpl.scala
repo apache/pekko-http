@@ -70,8 +70,6 @@ private[pekko] final case class ServerSettingsImpl(
     Try { parserSettings.maxContentLength }.isSuccess,
     "The provided ParserSettings is a generic object that does not contain the server-specific settings.")
 
-  override def websocketRandomFactory: () => Random = websocketSettings.randomFactory
-
   override def productPrefix = "ServerSettings"
 
   private[http] def parsingErrorHandlerInstance(system: ActorSystem): ParsingErrorHandler =

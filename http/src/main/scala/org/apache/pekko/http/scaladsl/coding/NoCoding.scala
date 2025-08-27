@@ -44,8 +44,7 @@ object NoCoding extends Coder with StreamDecoder {
 
 /** Internal API */
 @InternalApi
-@deprecated("NoCodingCompressor is internal API and will be moved or removed in the future", since = "Akka HTTP 10.2.0")
-object NoCodingCompressor extends Compressor {
+private[coding] object NoCodingCompressor extends Compressor {
   def compress(input: ByteString): ByteString = input
   def flush() = ByteString.empty
   def finish() = ByteString.empty
