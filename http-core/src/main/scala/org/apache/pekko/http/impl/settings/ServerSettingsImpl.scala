@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.impl.settings
 
-import java.util.Random
-
 import org.apache.pekko
 import pekko.http.scaladsl.settings.{ SettingsCompanion => _, _ }
 import com.typesafe.config.Config

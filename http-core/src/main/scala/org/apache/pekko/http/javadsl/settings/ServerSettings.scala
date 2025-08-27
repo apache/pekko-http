@@ -13,8 +13,7 @@
 
 package org.apache.pekko.http.javadsl.settings
 
-import java.util.function.Supplier
-import java.util.{ Optional, Random }
+import java.util.Optional
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
