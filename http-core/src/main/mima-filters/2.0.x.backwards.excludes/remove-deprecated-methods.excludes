@@ -18,6 +18,8 @@
 # Remove deprecated methods
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.model.FormData.toEntity")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.model.headers.HttpCookie.create")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ServerSettings.getWebsocketRandomFactory")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ServerSettings.withWebsocketRandomFactory")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.FormData.toEntity")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpEntity.limitableByteSource")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpEntity.limitableChunkSource")
@@ -30,3 +32,6 @@ ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scalad
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.headers.HttpCookie.<init>$*")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.headers.HttpCookie.unapply")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.headers.HttpCookie.this")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.websocketRandomFactory")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.getWebsocketRandomFactory")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.withWebsocketRandomFactory")
