@@ -5,7 +5,6 @@
 @@@ index
 
 * [extractOfferedWsProtocols](extractOfferedWsProtocols.md)
-* [extractUpgradeToWebSocket](extractUpgradeToWebSocket.md)
 * [extractWebSocketUpgrade](extractWebSocketUpgrade.md)
 * [handleWebSocketMessages](handleWebSocketMessages.md)
 * [handleWebSocketMessagesForOptionalProtocol](handleWebSocketMessagesForOptionalProtocol.md)
