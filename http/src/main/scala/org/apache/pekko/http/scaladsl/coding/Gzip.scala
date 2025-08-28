@@ -27,7 +27,7 @@ class Gzip private[http] (compressionLevel: Int, val messageFilter: HttpMessage 
   }
 
   val encoding = HttpEncodings.gzip
-  def newCompressor = new GzipCompressor(compressionLevel)
+  private[http] def newCompressor = new GzipCompressor(compressionLevel)
   def newDecompressorStage(maxBytesPerChunk: Int) = () => new GzipDecompressor(maxBytesPerChunk)
 
   @deprecated("Use Coders.Gzip(compressionLevel = ...) instead", since = "Akka HTTP 10.2.0")

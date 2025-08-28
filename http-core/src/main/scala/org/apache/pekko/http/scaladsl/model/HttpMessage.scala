@@ -348,11 +348,6 @@ final class HttpRequest(
   override def isRequest = true
   override def isResponse = false
 
-  @deprecated("use the constructor that includes an attributes parameter instead", "Akka HTTP 10.2.0")
-  private[model] def this(method: HttpMethod, uri: Uri, headers: immutable.Seq[HttpHeader], entity: RequestEntity,
-      protocol: HttpProtocol) =
-    this(method, uri, headers, Map.empty, entity, protocol)
-
   /**
    * Resolve this request's URI according to the logic defined at
    * http://tools.ietf.org/html/rfc7230#section-5.5
@@ -412,14 +407,6 @@ final class HttpRequest(
   override def withUri(uri: jm.Uri): HttpRequest = copyImpl(uri = uri.asScala)
 
   /* Manual Case Class things, to easen bin-compat */
-
-  @deprecated("Use the `withXYZ` methods instead. Kept for binary compatibility", "Akka HTTP 10.2.0")
-  def copy(
-      method: HttpMethod = method,
-      uri: Uri = uri,
-      headers: immutable.Seq[HttpHeader] = headers,
-      entity: RequestEntity = entity,
-      protocol: HttpProtocol = protocol) = copyImpl(method, uri, headers, entity = entity, protocol = protocol)
 
   private def copyImpl(
       method: HttpMethod = method,
@@ -560,11 +547,6 @@ final class HttpResponse(
   override def isRequest = false
   override def isResponse = true
 
-  @deprecated("use the constructor that includes an attributes parameter instead", "Akka HTTP 10.2.0")
-  private[model] def this(status: StatusCode, headers: immutable.Seq[HttpHeader], entity: ResponseEntity,
-      protocol: HttpProtocol) =
-    this(status, headers, Map.empty, entity, protocol)
-
   override def withHeaders(headers: immutable.Seq[HttpHeader]): HttpResponse =
     if (headers eq this.headers) this else copyImpl(headers = headers)
 
@@ -591,14 +573,6 @@ final class HttpResponse(
 
   def transformEntityDataBytes[T](transformer: Graph[FlowShape[ByteString, ByteString], T]): HttpResponse =
     copyImpl(entity = entity.transformDataBytes(Flow.fromGraph(transformer)))
-
-  /* Manual Case Class things, to ease bin-compat */
-  @deprecated("Use the `withXYZ` methods instead", "Akka HTTP 10.2.0")
-  def copy(
-      status: StatusCode = status,
-      headers: immutable.Seq[HttpHeader] = headers,
-      entity: ResponseEntity = entity,
-      protocol: HttpProtocol = protocol) = copyImpl(status, headers, entity = entity, protocol = protocol)
 
   private def copyImpl(
       status: StatusCode = status,

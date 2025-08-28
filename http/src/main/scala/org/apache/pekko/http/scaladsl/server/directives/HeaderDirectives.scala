@@ -75,17 +75,6 @@ trait HeaderDirectives {
   def headerValuePF[T](pf: PartialFunction[HttpHeader, T]): Directive1[T] = headerValue(pf.lift)
 
   /**
-   * Extracts the value of the first HTTP request header with the given name.
-   * If no header with a matching name is found the request is rejected with a [[pekko.http.scaladsl.server.MissingHeaderRejection]].
-   *
-   * @group header
-   */
-  @deprecated(
-    "Use string argument version or `headerValueByType`, e.g. instead of `headerValueByName('Referer)` use `headerValueByType(Referer)`",
-    since = "Akka HTTP 10.2.0")
-  def headerValueByName(headerName: Symbol): Directive1[String] = headerValueByName(headerName.name)
-
-  /**
    * Extracts the value of the HTTP request header with the given name.
    * If no header with a matching name is found the request is rejected with a [[pekko.http.scaladsl.server.MissingHeaderRejection]].
    *
@@ -129,17 +118,6 @@ trait HeaderDirectives {
    */
   def optionalHeaderValuePF[T](pf: PartialFunction[HttpHeader, T]): Directive1[Option[T]] =
     optionalHeaderValue(pf.lift)
-
-  /**
-   * Extracts the value of the optional HTTP request header with the given name.
-   *
-   * @group header
-   */
-  @deprecated(
-    "Use string argument version or `headerValueByType`, e.g. instead of `optionalHeaderValueByName('Referer)` use `optionalHeaderValueByType(Referer)`",
-    since = "Akka HTTP 10.2.0")
-  def optionalHeaderValueByName(headerName: Symbol): Directive1[Option[String]] =
-    optionalHeaderValueByName(headerName.name)
 
   /**
    * Extracts the value of the optional HTTP request header with the given name.
