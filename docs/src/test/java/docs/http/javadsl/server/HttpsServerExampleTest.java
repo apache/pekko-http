@@ -15,7 +15,6 @@ package docs.http.javadsl.server;
 
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.ConnectionContext;
-import com.typesafe.sslconfig.pekko.PekkoSSLConfig;
 import org.junit.Test;
 import org.scalatestplus.junit.JUnitSuite;
 
