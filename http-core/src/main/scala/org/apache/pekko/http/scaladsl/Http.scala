@@ -16,11 +16,13 @@ package org.apache.pekko.http.scaladsl
 import java.net.InetSocketAddress
 import java.util.concurrent.CompletionStage
 import javax.net.ssl._
+
+import com.typesafe.config.Config
 import org.apache.pekko
 import pekko.actor._
 import pekko.annotation.{ DoNotInherit, InternalApi, InternalStableApi }
 import pekko.dispatch.ExecutionContexts
-import pekko.event.{ LogSource, Logging, LoggingAdapter }
+import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.HttpConnectionIdleTimeoutBidi
 import pekko.http.impl.engine.client._
 import pekko.http.impl.engine.http2.Http2
@@ -47,27 +49,19 @@ import pekko.util.FutureConverters._
 import pekko.util.ManifestInfo
 
 import scala.annotation.nowarn
-import com.typesafe.config.Config
-import com.typesafe.sslconfig.pekko._
-import com.typesafe.sslconfig.pekko.util.PekkoLoggerFactory
-import com.typesafe.sslconfig.ssl.ConfigSSLContextBuilder
-
 import scala.concurrent._
+import scala.concurrent.duration._
 import scala.util.{ Success, Try }
 import scala.util.control.NonFatal
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.concurrent.duration._
 
 /**
  * Pekko extension for HTTP which serves as the main entry point into pekko-http.
  *
  * Use as `Http().bindAndHandle` etc. with an implicit [[ActorSystem]] in scope.
  */
-@nowarn("msg=DefaultSSLContextCreation in package scaladsl is deprecated")
 @DoNotInherit
 class HttpExt @InternalStableApi /* constructor signature is hardcoded in Telemetry */ private[http] (
-    private val config: Config)(implicit val system: ExtendedActorSystem) extends pekko.actor.Extension
-    with DefaultSSLContextCreation {
+    private val config: Config)(implicit val system: ExtendedActorSystem) extends pekko.actor.Extension {
 
   pekko.http.Version.check(system.settings.config)
   pekko.PekkoVersion.require("pekko-http", pekko.http.Version.supportedPekkoVersion)
@@ -847,7 +841,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       case hctx: HttpsConnectionContext =>
         hctx.sslContextData match {
           case Left(ssl) =>
-            TLS(ssl.sslContext, ssl.sslConfig, ssl.firstSession, role, hostInfo = hostInfo,
+            TLS(ssl.sslContext, None, ssl.firstSession, role, hostInfo = hostInfo,
               closing = TLSClosing.eagerClose)
           case Right(engineCreator) =>
             TLS(() => engineCreator(hostInfo), TLSClosing.eagerClose)
@@ -1151,89 +1145,4 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
         case d             => AfterDelay(d, FailStage)
       }
     })
-}
-
-/**
- * TLS configuration for an HTTPS server binding or client connection.
- * For the sslContext please refer to the com.typeasfe.ssl-config library.
- * The remaining four parameters configure the initial session that will
- * be negotiated, see [[pekko.stream.TLSProtocol.NegotiateNewSession]] for details.
- */
-@deprecated("use ConnectionContext.httpsServer and httpsClient directly", since = "Akka HTTP 10.2.0")
-trait DefaultSSLContextCreation {
-
-  protected def system: ActorSystem
-  def sslConfig = PekkoSSLConfig(system)
-
-  // --- log warnings ---
-  private[this] def log = system.log
-
-  @deprecated("PekkoSSLConfig usage is deprecated", since = "Akka HTTP 10.2.0")
-  def validateAndWarnAboutLooseSettings() = ()
-  // --- end of log warnings ---
-
-  @deprecated("use ConnectionContext.httpServer instead", since = "Akka HTTP 10.2.0")
-  def createDefaultClientHttpsContext(): HttpsConnectionContext =
-    createClientHttpsContext(PekkoSSLConfig(system))
-
-  @deprecated("use ConnectionContext.httpServer instead", since = "Akka HTTP 10.2.0")
-  def createServerHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext = {
-    log.warning("Automatic server-side configuration is not supported yet, will attempt to use client-side settings. " +
-      "Instead it is recommended to construct the Servers HttpsConnectionContext manually (via SSLContext).")
-    createClientHttpsContext(sslConfig)
-  }
-
-  @deprecated("use ConnectionContext.httpClient(sslContext) instead", since = "Akka HTTP 10.2.0")
-  def createClientHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext = {
-    val config = sslConfig.config
-
-    val log = Logging(system, getClass)(LogSource.fromClass)
-    val mkLogger = new PekkoLoggerFactory(system)
-
-    // initial ssl context!
-    val sslContext = if (sslConfig.config.default) {
-      log.debug("buildSSLContext: ssl-config.default is true, using default SSLContext")
-      sslConfig.validateDefaultTrustManager(config)
-      SSLContext.getDefault
-    } else {
-      // break out the static methods as much as we can...
-      val keyManagerFactory = sslConfig.buildKeyManagerFactory(config)
-      val trustManagerFactory = sslConfig.buildTrustManagerFactory(config)
-      new ConfigSSLContextBuilder(mkLogger, config, keyManagerFactory, trustManagerFactory).build()
-    }
-
-    // protocols!
-    val defaultParams = sslContext.getDefaultSSLParameters
-    val defaultProtocols = defaultParams.getProtocols
-    val protocols = sslConfig.configureProtocols(defaultProtocols, config)
-    defaultParams.setProtocols(protocols)
-
-    // ciphers!
-    val defaultCiphers = defaultParams.getCipherSuites
-    val cipherSuites = sslConfig.configureCipherSuites(defaultCiphers, config)
-    defaultParams.setCipherSuites(cipherSuites)
-
-    // auth!
-    import com.typesafe.sslconfig.ssl.{ ClientAuth => SslClientAuth }
-    val clientAuth = config.sslParametersConfig.clientAuth match {
-      case SslClientAuth.Default => None
-      case SslClientAuth.Want    => Some(TLSClientAuth.Want)
-      case SslClientAuth.Need    => Some(TLSClientAuth.Need)
-      case SslClientAuth.None    => Some(TLSClientAuth.None)
-    }
-
-    // hostname!
-    if (!sslConfig.config.loose.disableHostnameVerification) {
-      defaultParams.setEndpointIdentificationAlgorithm("https")
-    }
-
-    new HttpsConnectionContext(
-      sslContext,
-      Some(sslConfig),
-      Some(cipherSuites.toList),
-      Some(defaultProtocols.toList),
-      clientAuth,
-      Some(defaultParams))
-  }
-
 }

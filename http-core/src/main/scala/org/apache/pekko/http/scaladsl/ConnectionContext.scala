@@ -21,7 +21,6 @@ import pekko.stream.TLSClientAuth
 import pekko.stream.TLSProtocol._
 import pekko.util.OptionConverters._
 import scala.annotation.nowarn
-import com.typesafe.sslconfig.pekko.PekkoSSLConfig
 import javax.net.ssl._
 
 import scala.collection.JavaConverters._
@@ -89,24 +88,22 @@ object ConnectionContext {
       case Some((host, port)) => createSSLEngine(host, port)
     }: Option[(String, Int)] => SSLEngine))
 
-  @deprecated("use httpsClient, httpsServer, or the lower-level SSLEngine-based constructor", "Akka HTTP 10.2.0")
-  def https(
+  private[http] def https(
       sslContext: SSLContext,
-      sslConfig: Option[PekkoSSLConfig] = None,
       enabledCipherSuites: Option[immutable.Seq[String]] = None,
       enabledProtocols: Option[immutable.Seq[String]] = None,
       clientAuth: Option[TLSClientAuth] = None,
       sslParameters: Option[SSLParameters] = None) =
-    new HttpsConnectionContext(Left(DeprecatedSslContextParameters(sslContext, sslConfig, enabledCipherSuites,
+    new HttpsConnectionContext(Left(DeprecatedSslContextParameters(sslContext, enabledCipherSuites,
       enabledProtocols, clientAuth, sslParameters)))
 
   def noEncryption() = HttpConnectionContext
 }
 
+// removed sslConfig: Option[PekkoSSLConfig] param in 2.0.0 with hope of removing this function later
 @deprecated("here to be able to keep supporting the old API", since = "Akka HTTP 10.2.0")
 private[http] case class DeprecatedSslContextParameters(
     sslContext: SSLContext,
-    sslConfig: Option[PekkoSSLConfig],
     enabledCipherSuites: Option[immutable.Seq[String]],
     enabledProtocols: Option[immutable.Seq[String]],
     clientAuth: Option[TLSClientAuth],
@@ -127,20 +124,8 @@ final class HttpsConnectionContext private[http] (
     extends pekko.http.javadsl.HttpsConnectionContext with ConnectionContext {
   protected[http] override final def defaultPort: Int = 443
 
-  @deprecated("prefer ConnectionContext.httpsClient or ConnectionContext.httpsServer", "Akka HTTP 10.2.0")
-  def this(
-      sslContext: SSLContext,
-      sslConfig: Option[PekkoSSLConfig] = None,
-      enabledCipherSuites: Option[immutable.Seq[String]] = None,
-      enabledProtocols: Option[immutable.Seq[String]] = None,
-      clientAuth: Option[TLSClientAuth] = None,
-      sslParameters: Option[SSLParameters] = None) = this(Left(DeprecatedSslContextParameters(sslContext, sslConfig,
-    enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)))
-
   @deprecated("not always available", "Akka HTTP 10.2.0") def sslContext: SSLContext =
     sslContextData.left.get.sslContext
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def sslConfig: Option[PekkoSSLConfig] =
-    sslContextData.left.get.sslConfig
   @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def enabledCipherSuites
       : Option[immutable.Seq[String]] = sslContextData.left.get.enabledCipherSuites
   @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def enabledProtocols
