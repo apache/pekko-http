@@ -171,7 +171,7 @@ sealed class HttpConnectionContext extends pekko.http.javadsl.HttpConnectionCont
   protected[http] override final def defaultPort: Int = 80
 }
 
-final object HttpConnectionContext extends HttpConnectionContext {
+object HttpConnectionContext extends HttpConnectionContext {
 
   /** Java API */
   def getInstance() = this

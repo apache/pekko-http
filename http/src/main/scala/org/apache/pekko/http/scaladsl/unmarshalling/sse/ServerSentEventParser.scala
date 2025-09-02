@@ -26,7 +26,7 @@ import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 @InternalApi
 private object ServerSentEventParser {
 
-  final object PosInt {
+  object PosInt {
     def unapply(s: String): Option[Int] =
       try { Some(s.trim.toInt) }
       catch { case _: NumberFormatException => None }
