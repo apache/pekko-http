@@ -40,6 +40,7 @@ ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scalad
 ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.<init>$*")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.sslConfig")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.this")
+ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext$")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.FormData.toEntity")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpEntity.limitableByteSource")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpEntity.limitableChunkSource")
