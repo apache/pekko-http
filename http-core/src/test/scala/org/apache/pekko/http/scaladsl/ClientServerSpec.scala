@@ -18,12 +18,13 @@ import java.net.{ BindException, Socket }
 import java.security.{ KeyStore, SecureRandom }
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
-import scala.annotation.tailrec
+import javax.net.ssl.{ SSLContext, SSLEngine, TrustManagerFactory }
+
+import scala.annotation.{ nowarn, tailrec }
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future, Promise }
 import scala.util.{ Success, Try }
-import com.typesafe.sslconfig.ssl.SSLConfigSettings
-import com.typesafe.sslconfig.ssl.SSLLooseConfig
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.Logging
@@ -45,10 +46,8 @@ import pekko.stream.testkit._
 import pekko.stream._
 import pekko.testkit._
 import pekko.util.ByteString
-import scala.annotation.nowarn
 import com.typesafe.config.{ Config, ConfigFactory }
 
-import javax.net.ssl.{ SSLContext, TrustManagerFactory }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.concurrent.Eventually.eventually
 
@@ -744,8 +743,6 @@ Host: example.com
         Http().newServerAt("localhost", 0).enableHttps(serverConnectionContext).bindFlow(handlerFlow)
           .futureValue
 
-      // Disable hostname verification as ExampleHttpContexts.exampleClientContext sets hostname as pekko.example.org
-      val sslConfigSettings = SSLConfigSettings().withLoose(SSLLooseConfig().withDisableHostnameVerification(true))
       val sslContext = {
         val certStore = KeyStore.getInstance(KeyStore.getDefaultType)
         certStore.load(null, null)
@@ -760,9 +757,24 @@ Host: example.com
         context
       }
 
-      // This approach is deprecated, but we still want to check it works
-      @nowarn("msg=deprecated")
-      val clientConnectionContext = ConnectionContext.https(sslContext)
+      // Disable hostname verification as ExampleHttpContexts.exampleClientContext sets hostname as pekko.example.org
+      val createInsecureSslEngine: (String, Int) => SSLEngine = (host, port) => {
+        val engine = sslContext.createSSLEngine(host, port)
+        engine.setUseClientMode(true)
+
+        // WARNING: this creates an SSL Engine without enabling endpoint identification/verification procedures
+        // Disabling host name verification is a very bad idea, please don't unless you have a very good reason to.
+        // When in doubt, use the `ConnectionContext.httpsClient` that takes an `SSLContext` instead, or enable with:
+        engine.setSSLParameters({
+          val params = engine.getSSLParameters
+          params.setEndpointIdentificationAlgorithm("https")
+          params
+        })
+
+        engine
+      }
+
+      val clientConnectionContext = ConnectionContext.httpsClient(createInsecureSslEngine)
 
       val request = HttpRequest(uri = s"https:/${serverBinding.localAddress}")
       Http()
