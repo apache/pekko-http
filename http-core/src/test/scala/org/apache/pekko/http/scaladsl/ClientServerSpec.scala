@@ -18,7 +18,7 @@ import java.net.{ BindException, Socket }
 import java.security.{ KeyStore, SecureRandom }
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
-import javax.net.ssl.{ SSLContext, SSLEngine, TrustManagerFactory }
+import javax.net.ssl.{ SNIMatcher, SNIServerName, SSLContext, SSLEngine, TrustManagerFactory }
 
 import scala.annotation.{ nowarn, tailrec }
 import scala.concurrent.duration._
@@ -767,7 +767,10 @@ Host: example.com
         // When in doubt, use the `ConnectionContext.httpsClient` that takes an `SSLContext` instead, or enable with:
         engine.setSSLParameters {
           val params = engine.getSSLParameters
-          params.setEndpointIdentificationAlgorithm("https")
+          val sniMatcher = new SNIMatcher(0) {
+            override def matches(serverName: SNIServerName): Boolean = true
+          }
+          params.setSNIMatchers(java.util.Collections.singletonList(sniMatcher))
           params
         }
 
