@@ -14,8 +14,7 @@
 package org.apache.pekko.http.javadsl
 
 import java.util.{ Collection => JCollection, Optional }
-
-import scala.annotation.nowarn
+import javax.net.ssl.{ SSLContext, SSLEngine, SSLParameters }
 
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
@@ -23,8 +22,6 @@ import pekko.http.impl.util.Util
 import pekko.http.scaladsl
 import pekko.stream.TLSClientAuth
 import pekko.util.OptionConverters._
-import com.typesafe.sslconfig.pekko.PekkoSSLConfig
-import javax.net.ssl.{ SSLContext, SSLEngine, SSLParameters }
 
 object ConnectionContext {
   // #https-server-context-creation
@@ -69,26 +66,6 @@ object ConnectionContext {
     scaladsl.ConnectionContext.https(sslContext)
 
   /** Used to serve HTTPS traffic. */
-  @nowarn("msg=deprecated")
-  @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory",
-    since = "Akka HTTP 10.2.0")
-  def https(
-      sslContext: SSLContext,
-      sslConfig: Optional[PekkoSSLConfig],
-      enabledCipherSuites: Optional[JCollection[String]],
-      enabledProtocols: Optional[JCollection[String]],
-      clientAuth: Optional[TLSClientAuth],
-      sslParameters: Optional[SSLParameters]) = // ...
-    // #https-context-creation
-    scaladsl.ConnectionContext.https(
-      sslContext,
-      sslConfig.toScala,
-      enabledCipherSuites.toScala.map(Util.convertIterable[String, String](_)),
-      enabledProtocols.toScala.map(Util.convertIterable[String, String](_)),
-      clientAuth.toScala,
-      sslParameters.toScala)
-
-  /** Used to serve HTTPS traffic. */
   @Deprecated @deprecated("use httpsServer, httpsClient or the method that takes a custom factory",
     since = "Akka HTTP 10.2.0")
   def https(
@@ -99,7 +76,6 @@ object ConnectionContext {
       sslParameters: Optional[SSLParameters]) =
     scaladsl.ConnectionContext.https(
       sslContext,
-      None,
       enabledCipherSuites.toScala.map(Util.convertIterable[String, String](_)),
       enabledProtocols.toScala.map(Util.convertIterable[String, String](_)),
       clientAuth.toScala,
@@ -113,16 +89,11 @@ object ConnectionContext {
 @DoNotInherit
 abstract class ConnectionContext {
   def isSecure: Boolean
-  @Deprecated
-  @deprecated("Not always available", since = "Akka HTTP 10.2.0")
-  def sslConfig: Option[PekkoSSLConfig]
 }
 
 @DoNotInherit
 abstract class HttpConnectionContext extends pekko.http.javadsl.ConnectionContext {
   override final def isSecure = false
-  @nowarn("msg=deprecated")
-  override def sslConfig: Option[PekkoSSLConfig] = None
 }
 
 @DoNotInherit

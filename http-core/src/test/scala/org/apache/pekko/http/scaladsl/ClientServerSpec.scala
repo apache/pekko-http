@@ -22,7 +22,6 @@ import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future, Promise }
 import scala.util.{ Success, Try }
-import com.typesafe.sslconfig.pekko.PekkoSSLConfig
 import com.typesafe.sslconfig.ssl.SSLConfigSettings
 import com.typesafe.sslconfig.ssl.SSLLooseConfig
 import org.apache.pekko
@@ -747,7 +746,6 @@ Host: example.com
 
       // Disable hostname verification as ExampleHttpContexts.exampleClientContext sets hostname as pekko.example.org
       val sslConfigSettings = SSLConfigSettings().withLoose(SSLLooseConfig().withDisableHostnameVerification(true))
-      val sslConfig = PekkoSSLConfig.apply().withSettings(sslConfigSettings)
       val sslContext = {
         val certStore = KeyStore.getInstance(KeyStore.getDefaultType)
         certStore.load(null, null)
@@ -764,7 +762,7 @@ Host: example.com
 
       // This approach is deprecated, but we still want to check it works
       @nowarn("msg=deprecated")
-      val clientConnectionContext = ConnectionContext.https(sslContext, Some(sslConfig))
+      val clientConnectionContext = ConnectionContext.https(sslContext)
 
       val request = HttpRequest(uri = s"https:/${serverBinding.localAddress}")
       Http()

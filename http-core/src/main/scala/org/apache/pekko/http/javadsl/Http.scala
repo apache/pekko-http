@@ -19,7 +19,7 @@ import java.util.concurrent.CompletionStage
 
 import scala.concurrent.Future
 import scala.util.Try
-import com.typesafe.sslconfig.pekko.PekkoSSLConfig
+
 import org.apache.pekko
 import pekko.{ stream, NotUsed }
 import pekko.actor.{ ActorSystem, ClassicActorSystemProvider, ExtendedActorSystem, ExtensionId, ExtensionIdProvider }
@@ -827,18 +827,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    */
   def setDefaultClientHttpsContext(context: HttpsConnectionContext): Unit =
     delegate.setDefaultClientHttpsContext(context.asScala)
-
-  @deprecated("use ConnectionContext.httpsServer", since = "Akka HTTP 10.2.0")
-  def createServerHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext =
-    delegate.createServerHttpsContext(sslConfig)
-
-  @deprecated("use ConnectionContext.httpsClient", since = "Akka HTTP 10.2.0")
-  def createClientHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext =
-    delegate.createClientHttpsContext(sslConfig)
-
-  @deprecated("use ConnectionContext.httpsClient", since = "Akka HTTP 10.2.0")
-  def createDefaultClientHttpsContext(): HttpsConnectionContext =
-    delegate.createDefaultClientHttpsContext()
 
   private def adaptTupleFlow[T, Mat](
       scalaFlow: stream.scaladsl.Flow[(scaladsl.model.HttpRequest, T), (Try[scaladsl.model.HttpResponse], T), Mat])
