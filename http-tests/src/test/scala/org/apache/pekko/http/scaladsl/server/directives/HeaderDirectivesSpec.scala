@@ -243,7 +243,7 @@ class HeaderDirectivesSpec extends RoutingSpec with Inside {
 }
 
 object HeaderDirectivesSpec {
-  final object XCustomHeader extends ModeledCustomHeaderCompanion[XCustomHeader] {
+  object XCustomHeader extends ModeledCustomHeaderCompanion[XCustomHeader] {
     override def name: String = "X-Custom-Header"
     override def parse(value: String): Try[XCustomHeader] = Try(new XCustomHeader)
   }
