@@ -114,7 +114,7 @@ public class JacksonXmlExampleTest extends JUnitRouteTest {
     }
 
     public boolean equals(Object other) {
-      Point that = other instanceof Point ? (Point) other : null;
+      Point that = other instanceof Point point ? point : null;
       return that != null && that.x == this.x && that.y == this.y;
     }
   }

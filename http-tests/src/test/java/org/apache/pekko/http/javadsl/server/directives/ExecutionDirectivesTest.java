@@ -130,9 +130,9 @@ public class ExecutionDirectivesTest extends JUnitRouteTest {
         RejectionHandler.defaultHandler()
             .mapRejectionResponse(
                 response -> {
-                  if (response.entity() instanceof HttpEntity.Strict) {
+                  if (response.entity() instanceof HttpEntity.Strict entity) {
                     String message =
-                        ((HttpEntity.Strict) response.entity())
+                        entity
                             .getData()
                             .utf8String()
                             .replaceAll("\"", "\\\"");

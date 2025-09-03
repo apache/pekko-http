@@ -34,8 +34,7 @@ Java
 :   @@snip[Http2Test.java](/docs/src/test/java/docs/http/javadsl/Http2Test.java) { #http2Client }
 
 HTTP/2 over TLS needs [Application-Layer Protocol Negotiation (ALPN)](https://en.wikipedia.org/wiki/Application-Layer_Protocol_Negotiation)
-to negotiate whether both client and server support HTTP/2. The JVM provides ALPN support starting from JDK 8u252.
-Make sure to use at least that version.
+to negotiate whether both client and server support HTTP/2.
 
 Apache Pekko HTTP does not currently support protocol negotiation to fall back to HTTP/1.1 for this API. When the server does not support HTTP/2, the stream will fail.
 ### h2c with prior knowledge

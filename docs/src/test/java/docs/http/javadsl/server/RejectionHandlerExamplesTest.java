@@ -117,11 +117,11 @@ public class RejectionHandlerExamplesTest extends JUnitRouteTest {
         RejectionHandler.defaultHandler()
             .mapRejectionResponse(
                 response -> {
-                  if (response.entity() instanceof HttpEntity.Strict) {
+                  if (response.entity() instanceof HttpEntity.Strict entity) {
                     // since all Pekko default rejection responses are Strict this will handle all
                     // rejections
                     String message =
-                        ((HttpEntity.Strict) response.entity())
+                        entity
                             .getData()
                             .utf8String()
                             .replaceAll("\"", "\\\"");
