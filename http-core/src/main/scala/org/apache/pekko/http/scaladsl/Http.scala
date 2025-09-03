@@ -301,53 +301,14 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
     bindAndHandle(handler, interface, port, connectionContext, settings, log)(fm)
 
-  /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * To configure additional settings for a server started using this method,
-   * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
-   */
-  @deprecated("Use Http().newServerAt(...)...bindSync() to create server bindings.", since = "Akka HTTP 10.2.0")
-  def bindAndHandleSync(
-      handler: HttpRequest => HttpResponse,
-      interface: String, port: Int = DefaultPortForProtocol,
-      connectionContext: ConnectionContext = defaultServerHttpContext,
-      settings: ServerSettings = ServerSettings(system),
-      log: LoggingAdapter = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] =
-    bindAndHandleAsync(req => FastFuture.successful(handler(req)), interface, port, connectionContext, settings,
-      parallelism = 0, log)(fm)
-
-  /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * To configure additional settings for a server started using this method,
-   * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
-   *
-   * Parameter `parallelism` specifies how many requests are attempted to be handled concurrently per connection. In HTTP/1
-   * this makes only sense if HTTP pipelining is enabled (which is not recommended). The default value of `0` means that
-   * the value is taken from the `pekko.http.server.pipelining-limit` setting from the configuration. In HTTP/2,
-   * the default value is taken from `pekko.http.server.http2.max-concurrent-streams`.
-   *
-   * Any other value for `parallelism` overrides the setting.
-   */
-  @deprecated("Use Http().newServerAt(...)...bind() to create server bindings.", since = "Akka HTTP 10.2.0")
-  def bindAndHandleAsync(
+  private def bindAndHandleAsync(
       handler: HttpRequest => Future[HttpResponse],
-      interface: String, port: Int = DefaultPortForProtocol,
-      connectionContext: ConnectionContext = defaultServerHttpContext,
-      settings: ServerSettings = ServerSettings(system),
-      parallelism: Int = 0,
-      log: LoggingAdapter = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] = {
+      interface: String,
+      port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      parallelism: Int,
+      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] = {
     if (settings.previewServerSettings.enableHttp2) {
       log.debug("Binding server using HTTP/2")
 
@@ -367,7 +328,6 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   }
 
   // forwarder to allow internal code to call deprecated method without warning
-  @nowarn("msg=deprecated")
   private[http] def bindAndHandleAsyncImpl(
       handler: HttpRequest => Future[HttpResponse],
       interface: String, port: Int,
