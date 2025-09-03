@@ -15,7 +15,6 @@ package org.apache.pekko.http.javadsl;
 
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.dispatch.Futures;
 import org.apache.pekko.http.javadsl.model.ws.Message;
 import org.apache.pekko.http.javadsl.model.ws.TextMessage;
 import org.apache.pekko.http.javadsl.model.ws.WebSocketRequest;
@@ -25,11 +24,11 @@ import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Keep;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
-import scala.concurrent.Future;
-import scala.concurrent.duration.FiniteDuration;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
@@ -52,14 +51,14 @@ public class WSEchoTestClientApp {
     try {
       final Materializer materializer = Materializer.createMaterializer(system);
 
-      final Future<Message> ignoredMessage =
-          Futures.successful((Message) TextMessage.create("blub"));
-      final Future<Message> delayedCompletion =
+      final CompletableFuture<Message> ignoredMessage =
+          CompletableFuture.completedFuture((Message) TextMessage.create("blub"));
+      final CompletionStage<Message> delayedCompletion =
           org.apache.pekko.pattern.Patterns.after(
-              FiniteDuration.apply(1, "second"),
+              Duration.ofSeconds(1),
               system.scheduler(),
               system.dispatcher(),
-              ignoredMessage);
+              () -> ignoredMessage);
 
       Source<Message, NotUsed> echoSource =
           Source.from(
@@ -67,7 +66,7 @@ public class WSEchoTestClientApp {
                       TextMessage.create("abc"),
                       TextMessage.create("def"),
                       TextMessage.create("ghi")))
-              .concat(Source.future(delayedCompletion).drop(1));
+              .concat(Source.completionStage(delayedCompletion).drop(1));
 
       Sink<Message, CompletionStage<List<String>>> echoSink =
           Flow.of(Message.class)
