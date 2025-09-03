@@ -150,7 +150,7 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializ
       val (requestQueue, _) =
         Source.queue(10, OverflowStrategy.fail)
           .viaMat(http2ClientFow)(Keep.left)
-          .toMat(Sink.actorRef(responseProbe.ref, "done"))(Keep.both)
+          .toMat(Sink.actorRef(responseProbe.ref, "done", (t: Throwable) => t.toString))(Keep.both)
           .run()
       requestQueue.offer(HttpRequest())
 
@@ -217,7 +217,7 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializ
       val (requestQueue, _) =
         Source.queue(10, OverflowStrategy.fail)
           .viaMat(http2ClientFlow)(Keep.left)
-          .toMat(Sink.actorRef(responseProbe.ref, "onCompleteMessage"))(Keep.both)
+          .toMat(Sink.actorRef(responseProbe.ref, "onCompleteMessage", (t: Throwable) => t.toString))(Keep.both)
           .run()
       requestQueue.offer(HttpRequest())
 
