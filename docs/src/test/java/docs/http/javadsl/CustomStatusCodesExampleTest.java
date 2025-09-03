@@ -89,7 +89,7 @@ public class CustomStatusCodesExampleTest extends JUnitRouteTest {
         Http.get(system)
             .singleRequest(
                 HttpRequest.GET("http://" + host + ":" + port + "/"),
-                ConnectionContext.https(SSLContext.getDefault()),
+                ConnectionContext.httpsClient(SSLContext.getDefault()),
                 clientSettings,
                 system.log())
             .toCompletableFuture()

@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.javadsl
 
+import javax.net.ssl.SSLContext
+
 import org.apache.pekko.http.javadsl.model._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
@@ -21,7 +23,7 @@ import org.scalatest.wordspec.AnyWordSpec
 class ConnectHttpSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
 
   val httpContext = ConnectionContext.noEncryption()
-  val httpsContext = ConnectionContext.https(null)
+  val httpsContext = ConnectionContext.httpsClient(SSLContext.getDefault)
 
   val successResponse = HttpResponse.create().withStatus(200)
 
