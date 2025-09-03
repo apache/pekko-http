@@ -16,7 +16,7 @@ package org.apache.pekko.http.javadsl;
 import org.apache.pekko.annotation.DoNotInherit;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
-import org.apache.pekko.japi.Function;
+import org.apache.pekko.japi.function.Function;
 import scala.concurrent.duration.Duration;
 
 /**
