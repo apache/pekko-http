@@ -55,10 +55,7 @@ public class WSEchoTestClientApp {
           CompletableFuture.completedFuture((Message) TextMessage.create("blub"));
       final CompletionStage<Message> delayedCompletion =
           org.apache.pekko.pattern.Patterns.after(
-              Duration.ofSeconds(1),
-              system.scheduler(),
-              system.dispatcher(),
-              () -> ignoredMessage);
+              Duration.ofSeconds(1), system.scheduler(), system.dispatcher(), () -> ignoredMessage);
 
       Source<Message, NotUsed> echoSource =
           Source.from(
