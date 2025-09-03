@@ -42,9 +42,8 @@ public class HttpAPIsTest extends JUnitRouteTest {
   public void compileOnly() throws Exception {
     final Http http = Http.get(system());
 
-    final ConnectionContext connectionContext = ConnectionContext.https(SSLContext.getDefault());
     final HttpConnectionContext httpContext = ConnectionContext.noEncryption();
-    final HttpsConnectionContext httpsContext = ConnectionContext.https(SSLContext.getDefault());
+    final HttpsConnectionContext httpsContext = ConnectionContext.httpsClient(SSLContext.getDefault());
 
     String host = "";
     int port = 9090;

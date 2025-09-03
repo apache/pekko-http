@@ -799,13 +799,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   private def sslTlsStage(connectionContext: ConnectionContext, role: TLSRole, hostInfo: Option[(String, Int)]) =
     connectionContext match {
       case hctx: HttpsConnectionContext =>
-        hctx.sslContextData match {
-          case Left(ssl) =>
-            TLS(ssl.sslContext, None, ssl.firstSession, role, hostInfo = hostInfo,
-              closing = TLSClosing.eagerClose)
-          case Right(engineCreator) =>
-            TLS(() => engineCreator(hostInfo), TLSClosing.eagerClose)
-        }
+        TLS(() => hctx.engineCreator(hostInfo), TLSClosing.eagerClose)
       case other =>
         TLSPlacebo() // if it's not HTTPS, we don't enable SSL/TLS
     }

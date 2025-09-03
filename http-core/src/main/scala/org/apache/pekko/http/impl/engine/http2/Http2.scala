@@ -44,7 +44,6 @@ import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.stream.TLSClosing
 import pekko.stream.TLSProtocol.{ SslTlsInbound, SslTlsOutbound }
-import pekko.stream.impl.io.TlsUtils
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source, TLS, TLSPlacebo, Tcp }
 import pekko.stream.{ IgnoreComplete, Materializer }
 import pekko.util.ByteString
@@ -219,15 +218,8 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
     def getChosenProtocol(): String = chosenProtocol.getOrElse(Http2AlpnSupport.HTTP11) // default to http/1, e.g. when ALPN jar is missing
 
     var eng: Option[SSLEngine] = None
-    @nowarn("msg=deprecated") // TODO find an alternative way to do this
     def createEngine(): SSLEngine = {
-      val engine = httpsContext.sslContextData match {
-        case Left(ssl) =>
-          val e = ssl.sslContext.createSSLEngine()
-          TlsUtils.applySessionParameters(e, ssl.firstSession)
-          e
-        case Right(e) => e(None)
-      }
+      val engine = httpsContext.engineCreator(None)
       eng = Some(engine)
       engine.setUseClientMode(false)
       Http2AlpnSupport.enableForServer(engine, setChosenProtocol)
@@ -244,14 +236,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       : Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
     @nowarn("msg=deprecated") // TODO find an alternative way to do this
     def createEngine(): SSLEngine = {
-      val engine = connectionContext.sslContextData match {
-        // TODO FIXME configure hostname verification for this case
-        case Left(ssl) =>
-          val e = ssl.sslContext.createSSLEngine(host, port)
-          TlsUtils.applySessionParameters(e, ssl.firstSession)
-          e
-        case Right(e) => e(Some((host, port)))
-      }
+      val engine = connectionContext.engineCreator(Some((host, port)))
       engine.setUseClientMode(true)
       Http2AlpnSupport.clientSetApplicationProtocols(engine, Array("h2"))
       engine
