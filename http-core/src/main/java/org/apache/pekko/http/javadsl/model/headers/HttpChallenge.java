@@ -14,7 +14,6 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 import org.apache.pekko.http.impl.util.Util;
-import org.apache.pekko.japi.Option;
 import org.apache.pekko.util.OptionConverters;
 
 import java.util.HashMap;
@@ -36,25 +35,10 @@ public abstract class HttpChallenge {
     return create(scheme, Optional.of(realm), params);
   }
 
-  /** @deprecated Use {@link #create(String, Optional)} instead. */
-  @Deprecated // since 1.3.0
-  public static HttpChallenge create(String scheme, Option<String> realm) {
-    return org.apache.pekko.http.scaladsl.model.headers.HttpChallenge.apply(
-        scheme, realm.asScala(), Util.emptyMap);
-  }
-
   /** @since 1.3.0 */
   public static HttpChallenge create(String scheme, Optional<String> realm) {
     return org.apache.pekko.http.scaladsl.model.headers.HttpChallenge.apply(
         scheme, OptionConverters.toScala(realm), Util.emptyMap);
-  }
-
-  /** @deprecated Use {@link #create(String, Optional, Map<String, String>)} instead. */
-  @Deprecated // since 1.3.0
-  public static HttpChallenge create(
-      String scheme, Option<String> realm, Map<String, String> params) {
-    return org.apache.pekko.http.scaladsl.model.headers.HttpChallenge.apply(
-        scheme, realm.asScala(), Util.convertMapToScala(params));
   }
 
   /** @since 1.3.0 */

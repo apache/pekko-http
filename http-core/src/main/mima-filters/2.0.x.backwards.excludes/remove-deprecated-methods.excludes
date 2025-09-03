@@ -37,6 +37,7 @@ ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.java
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.TimeoutAccess.update")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.model.FormData.toEntity")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.model.headers.HttpCookie.create")
+ProblemFilters.exclude[IncompatibleMethTypeProblem]("org.apache.pekko.http.javadsl.model.headers.HttpChallenge.create")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ServerSettings.getWebsocketRandomFactory")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ServerSettings.withWebsocketRandomFactory")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.ConnectionContext.https")
