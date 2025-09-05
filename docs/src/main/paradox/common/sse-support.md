@@ -56,6 +56,49 @@ Scala
 Java
 :  @@snip [EventStreamMarshallingTest.java](/http-tests/src/test/java/org/apache/pekko/http/javadsl/unmarshalling/sse/EventStreamUnmarshallingTest.java) { #event-stream-unmarshalling-example }
 
+## Configuration
+
+Apache Pekko HTTP provides several configuration options for Server-Sent Events handling:
+
+### Message Size Limits
+
+The SSE client parser has configurable limits to handle various message sizes:
+
+```hocon
+pekko.http.sse {
+  # The maximum size for parsing received server-sent events.
+  # This value must be larger than `max-line-size`. Set to 0 to disable limit entirely (unlimited).
+  max-event-size = 115713
+
+  # The maximum size for parsing received lines of a server-sent event. Set to 0 to disable limit entirely (unlimited).
+  max-line-size = 115712
+}
+```
+
+### Oversized Message Handling
+
+When SSE messages exceed the configured `max-line-size`, Apache Pekko HTTP provides four handling strategies:
+
+- **fail-stream** (default): Fails the stream with a clear error message, maintaining backward compatibility
+- **log-and-skip**: Logs a warning and skips the oversized message, continuing stream processing
+- **truncate**: Logs a warning and truncates the message to the configured limit, continuing processing
+- **dead-letter**: Logs a warning and sends the oversized message to the dead letter queue, continuing processing
+
+```hocon
+pekko.http.sse {
+  # How to handle messages that exceed max-line-size limit
+  # Options:
+  #   "fail-stream" - Fail the stream with a clear error message (default)
+  #   "log-and-skip" - Log a warning and skip the oversized message
+  #   "truncate" - Log a warning and truncate the message to max-line-size
+  #   "dead-letter" - Log a warning, send oversized message to dead letters
+  oversized-message-handling = "fail-stream"
+}
+```
+
+For applications that need to handle very large messages (like blockchain data or detailed JSON payloads), consider 
+setting `max-line-size = 0` to disable limits entirely, or use one of the non-failing handling modes.
+
 Notice that if you are looking for a resilient way to permanently subscribe to an event stream,
-Apache Pekko Connectors provides the [EventSource](https://pekko.apache.org/docs/pekko-connectors/current/sse.html)
-connector which reconnects automatically with the id of the last seen event.
+Apache Pekko Connectors provides the [EventSource](https://pekko.apache.org/docs/pekko-connectors/current/sse.html)connector which reconnects automatically with the id of the 
+last seen event.

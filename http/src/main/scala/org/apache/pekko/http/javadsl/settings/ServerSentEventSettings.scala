@@ -16,6 +16,7 @@ package org.apache.pekko.http.javadsl.settings
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.http.impl.settings.ServerSentEventSettingsImpl
+import pekko.http.scaladsl.settings.OversizedSseStrategy
 
 /**
  * Public API but not intended for subclassing
@@ -42,9 +43,15 @@ abstract class ServerSentEventSettings private[pekko] () { self: ServerSentEvent
    */
   def emitEmptyEvents: Boolean
 
-  // ---
+  /**
+   * How to handle messages that exceed max-line-size limit.
+   * Valid options: "fail-stream", "log-and-skip", "truncate", "dead-letter"
+   */
+  def getOversizedStrategy: String = self.oversizedStrategyAsString
 
   def withMaxEventSize(newValue: Int): ServerSentEventSettings = self.copy(maxEventSize = newValue)
   def withLineLength(newValue: Int): ServerSentEventSettings = self.copy(maxLineSize = newValue)
   def withEmitEmptyEvents(newValue: Boolean): ServerSentEventSettings = self.copy(emitEmptyEvents = newValue)
+  def withOversizedStrategy(newValue: String): ServerSentEventSettings =
+    self.copy(oversizedStrategy = OversizedSseStrategy.fromString(newValue))
 }
