@@ -74,36 +74,6 @@ public abstract class HttpCookie {
         Util.<org.apache.pekko.http.scaladsl.model.headers.SameSite>scalaNone());
   }
 
-  /**
-   * @deprecated Since Akka HTTP 10.2.0. Use {@link #create(String, String, Optional, OptionalLong,
-   *     Optional, Optional, boolean, boolean, Optional, Optional)} instead.
-   */
-  @Deprecated
-  @SuppressWarnings("unchecked")
-  public static HttpCookie create(
-      String name,
-      String value,
-      Optional<DateTime> expires,
-      OptionalLong maxAge,
-      Optional<String> domain,
-      Optional<String> path,
-      boolean secure,
-      boolean httpOnly,
-      Optional<String> extension) {
-    return new org.apache.pekko.http.scaladsl.model.headers.HttpCookie(
-        name,
-        value,
-        Util.<DateTime, org.apache.pekko.http.scaladsl.model.DateTime>convertOptionalToScala(
-            expires),
-        Util.convertOptionalToScala(maxAge),
-        OptionConverters.toScala(domain),
-        OptionConverters.toScala(path),
-        secure,
-        httpOnly,
-        OptionConverters.toScala(extension),
-        Util.<org.apache.pekko.http.scaladsl.model.headers.SameSite>scalaNone());
-  }
-
   @SuppressWarnings("unchecked")
   public static HttpCookie create(
       String name,

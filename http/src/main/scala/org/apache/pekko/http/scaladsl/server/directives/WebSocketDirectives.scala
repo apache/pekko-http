@@ -18,7 +18,7 @@ import scala.collection.immutable
 
 import org.apache.pekko
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
-import pekko.http.scaladsl.model.ws.{ Message, UpgradeToWebSocket, WebSocketUpgrade }
+import pekko.http.scaladsl.model.ws.{ Message, WebSocketUpgrade }
 import pekko.stream.scaladsl.Flow
 
 /**
@@ -28,20 +28,7 @@ import pekko.stream.scaladsl.Flow
 trait WebSocketDirectives {
   import AttributeDirectives._
   import BasicDirectives._
-  import HeaderDirectives._
   import RouteDirectives._
-
-  /**
-   * Extract the [[UpgradeToWebSocket]] header if existent. Rejects with an [[ExpectedWebSocketRequestRejection]], otherwise.
-   *
-   * @group websocket
-   */
-  @deprecated("use `extractWebSocketUpgrade` instead", since = "Akka HTTP 10.2.0")
-  def extractUpgradeToWebSocket: Directive1[UpgradeToWebSocket] =
-    optionalHeaderValueByType(classOf[UpgradeToWebSocket]).flatMap {
-      case Some(upgrade) => provide(upgrade)
-      case None          => reject(ExpectedWebSocketRequestRejection)
-    }
 
   /**
    * Extract the WebSocketUpgrade attribute if this is a WebSocket request.

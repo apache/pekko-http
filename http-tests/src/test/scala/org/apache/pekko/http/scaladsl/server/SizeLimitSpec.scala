@@ -26,17 +26,17 @@ import pekko.http.scaladsl.server.Directives._
 import pekko.stream.scaladsl.{ Flow, Source }
 import pekko.testkit.TestKit
 import pekko.util.ByteString
-import scala.annotation.nowarn
 import com.typesafe.config.{ Config, ConfigFactory }
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.BeforeAndAfterAll
-
-import scala.collection.immutable
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.wordspec.AnyWordSpec
 
-@nowarn("msg=synchronous compression with `encode` is not supported in the future any more")
+import scala.collection.immutable
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+
 class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with BeforeAndAfterAll with ScalaFutures {
 
   import pekko.http.ccompat.ImplicitUtils._
@@ -103,7 +103,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
 
     "reject a small request that decodes into a large entity" in {
       val data = ByteString.fromString("0" * (decodeMaxSize + 1))
-      val zippedData = Coders.Gzip.encode(data)
+      val zippedData = Await.result(Coders.Gzip.encodeAsync(data), 10.seconds)
       val request = HttpRequest(
         HttpMethods.POST,
         s"http:/${binding.localAddress}/noDirective",
@@ -187,7 +187,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
 
     "accept a small request that decodes into a large entity" in {
       val data = ByteString.fromString("0" * (decodeMaxSize + 1))
-      val zippedData = Coders.Gzip.encode(data)
+      val zippedData = Await.result(Coders.Gzip.encodeAsync(data), 10.seconds)
       val request = HttpRequest(
         HttpMethods.POST,
         s"http:/${binding.localAddress}/noDirective",
@@ -206,7 +206,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
     "accept a large request that decodes into a large entity" in {
       val data = new Array[Byte](decodeMaxSize)
       random.nextBytes(data)
-      val zippedData = Coders.Gzip.encode(ByteString(data))
+      val zippedData = Await.result(Coders.Gzip.encodeAsync(ByteString(data)), 3.seconds)
       val request = HttpRequest(
         HttpMethods.POST,
         s"http:/${binding.localAddress}/noDirective",

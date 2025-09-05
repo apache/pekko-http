@@ -1,0 +1,89 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# Remove deprecated methods
+ProblemFilters.exclude[IncompatibleMethTypeProblem]("org.apache.pekko.http.impl.engine.server.HttpServerBluePrint#TimeoutAccessImpl.update")
+ProblemFilters.exclude[IncompatibleMethTypeProblem]("org.apache.pekko.http.impl.engine.server.HttpServerBluePrint#TimeoutAccessImpl.updateHandler")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.ConnectionContext.https")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.ConnectionContext.sslConfig")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.Http.bindAndHandleAsync")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.Http.bindAndHandleSync")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.Http.createServerHttpsContext")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.Http.createClientHttpsContext")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.Http.createDefaultClientHttpsContext")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.HttpConnectionContext.sslConfig")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.HttpsConnectionContext.getEnabledCipherSuites")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.HttpsConnectionContext.getEnabledProtocols")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.HttpsConnectionContext.getClientAuth")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.HttpsConnectionContext.getSslContext")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.HttpsConnectionContext.getSslParameters")
+ProblemFilters.exclude[IncompatibleMethTypeProblem]("org.apache.pekko.http.javadsl.TimeoutAccess.updateHandler")
+ProblemFilters.exclude[IncompatibleMethTypeProblem]("org.apache.pekko.http.javadsl.TimeoutAccess.update")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.TimeoutAccess.updateHandler")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.TimeoutAccess.update")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.model.FormData.toEntity")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.model.headers.HttpCookie.create")
+ProblemFilters.exclude[IncompatibleMethTypeProblem]("org.apache.pekko.http.javadsl.model.headers.HttpChallenge.create")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ServerSettings.getWebsocketRandomFactory")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ServerSettings.withWebsocketRandomFactory")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.ConnectionContext.https")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.ConnectionContext.https$*")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.scaladsl.ConnectionContext.https$*")
+ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.DefaultSSLContextCreation")
+ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.DeprecatedSslContextParameters")
+ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.DeprecatedSslContextParameters$")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.sslContext")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.enabledCipherSuites")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.enabledProtocols")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.clientAuth")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.sslContextData")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.sslParameters")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.getSslContext")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.getEnabledCipherSuites")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.getEnabledProtocols")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.getClientAuth")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.getSslParameters")
+ProblemFilters.exclude[MissingTypesProblem]("org.apache.pekko.http.scaladsl.HttpExt")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpExt.bindAndHandleSync")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpExt.bindAndHandleSync$*")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpExt.bindAndHandleAsync")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpExt.bindAndHandleAsync$*")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpExt.createDefaultClientHttpsContext")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpExt.createServerHttpsContext")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpExt.createClientHttpsContext")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpExt.sslConfig")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpExt.validateAndWarnAboutLooseSettings")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.<init>$*")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.<init>$*")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.sslConfig")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.this")
+ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext$")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.FormData.toEntity")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpEntity.limitableByteSource")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpEntity.limitableChunkSource")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpRequest.copy")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpRequest.copy$*")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpResponse.copy")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpResponse.copy$*")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.headers.HttpCookie.fromPair")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.headers.HttpCookie.fromPair$*")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.headers.HttpCookie.<init>$*")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.headers.HttpCookie.unapply")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.headers.HttpCookie.this")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.websocketRandomFactory")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.getWebsocketRandomFactory")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.withWebsocketRandomFactory")

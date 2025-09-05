@@ -23,7 +23,7 @@ import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
 import pekko.dispatch.ExecutionContexts
-import pekko.japi.Function
+import pekko.japi.function.Function
 import pekko.event.LoggingAdapter
 import pekko.http.ParsingErrorHandler
 import pekko.util.ByteString
