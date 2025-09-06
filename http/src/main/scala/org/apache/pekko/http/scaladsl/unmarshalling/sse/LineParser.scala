@@ -66,7 +66,6 @@ private final class LineParser(maxLineSize: Int,
               log.info("Truncating oversized SSE message: {} bytes > {} max-line-size", lineLength, maxLineSize)
               Some(line.take(maxLineSize))
             case OversizedSseStrategy.DeadLetter =>
-              log.info("Oversized SSE message sent to dead letters: {} bytes > {} max-line-size", lineLength, maxLineSize)
               materializer.system.deadLetters ! line
               None
           }

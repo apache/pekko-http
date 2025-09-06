@@ -31,7 +31,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
   "EventStreamUnmarshalling with oversized message handling" should {
 
     "fail the stream with FailStream strategy" in {
-      val oversizedSseData = 
+      val oversizedSseData =
         s"""data: before
            |
            |data: ${"x" * 200}
@@ -41,7 +41,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
            |""".stripMargin
 
       val entity = HttpEntity(`text/event-stream`, oversizedSseData)
-      
+
       val settings = ServerSentEventSettings(system)
         .withLineLength(50)
         .withOversizedStrategy(OversizedSseStrategy.FailStream)
@@ -59,7 +59,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
     }
 
     "skip oversized content with LogAndSkip strategy" in {
-      val oversizedSseData = 
+      val oversizedSseData =
         s"""data: before
            |
            |data: ${"x" * 200}
@@ -69,7 +69,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
            |""".stripMargin
 
       val entity = HttpEntity(`text/event-stream`, oversizedSseData)
-      
+
       val settings = ServerSentEventSettings(system)
         .withLineLength(50)
         .withOversizedStrategy(OversizedSseStrategy.LogAndSkip)
@@ -82,13 +82,12 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
         .map { result =>
           result shouldBe Vector(
             ServerSentEvent("before"),
-            ServerSentEvent("after")
-          )
+            ServerSentEvent("after"))
         }
     }
 
     "truncate oversized content with Truncate strategy" in {
-      val oversizedSseData = 
+      val oversizedSseData =
         s"""data: before
            |
            |data: ${"x" * 200}
@@ -98,7 +97,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
            |""".stripMargin
 
       val entity = HttpEntity(`text/event-stream`, oversizedSseData)
-      
+
       val settings = ServerSentEventSettings(system)
         .withLineLength(50)
         .withOversizedStrategy(OversizedSseStrategy.Truncate)
@@ -117,7 +116,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
     }
 
     "send oversized content to dead letters with DeadLetter strategy" in {
-      val oversizedSseData = 
+      val oversizedSseData =
         s"""data: before
            |
            |data: ${"x" * 200}
@@ -127,7 +126,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
            |""".stripMargin
 
       val entity = HttpEntity(`text/event-stream`, oversizedSseData)
-      
+
       val settings = ServerSentEventSettings(system)
         .withLineLength(50)
         .withOversizedStrategy(OversizedSseStrategy.DeadLetter)
@@ -140,8 +139,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
         .map { result =>
           result shouldBe Vector(
             ServerSentEvent("before"),
-            ServerSentEvent("after")
-          )
+            ServerSentEvent("after"))
         }
     }
   }

@@ -39,8 +39,7 @@ final class EventStreamParserOversizedSpec extends AsyncWordSpec with Matchers w
       val expected = Vector(
         ServerSentEvent("event1"),
         ServerSentEvent("event2", Some("custom"), Some("123")),
-        ServerSentEvent("event3")
-      )
+        ServerSentEvent("event3"))
 
       for {
         failStreamResult <- Source.single(normalSseData)
@@ -57,7 +56,7 @@ final class EventStreamParserOversizedSpec extends AsyncWordSpec with Matchers w
           .runWith(Sink.seq)
       } yield {
         failStreamResult shouldBe expected
-        logAndSkipResult shouldBe expected  
+        logAndSkipResult shouldBe expected
         truncateResult shouldBe expected
         deadLetterResult shouldBe expected
       }
@@ -99,8 +98,7 @@ final class EventStreamParserOversizedSpec extends AsyncWordSpec with Matchers w
         .map { result =>
           result shouldBe Vector(
             ServerSentEvent("before"),
-            ServerSentEvent("after")
-          )
+            ServerSentEvent("after"))
         }
     }
 
@@ -121,7 +119,7 @@ final class EventStreamParserOversizedSpec extends AsyncWordSpec with Matchers w
         .map { result =>
           result should have size 3
           result(0) shouldBe ServerSentEvent("before")
-          result(1).data shouldBe "x" * 44 // truncated to line size limit  
+          result(1).data shouldBe "x" * 44 // truncated to line size limit
           result(2) shouldBe ServerSentEvent("after")
         }
     }
@@ -142,8 +140,7 @@ final class EventStreamParserOversizedSpec extends AsyncWordSpec with Matchers w
         .map { result =>
           result shouldBe Vector(
             ServerSentEvent("before"),
-            ServerSentEvent("after")
-          )
+            ServerSentEvent("after"))
         }
     }
 
@@ -169,8 +166,7 @@ final class EventStreamParserOversizedSpec extends AsyncWordSpec with Matchers w
           result shouldBe Vector(
             ServerSentEvent("event1"),
             ServerSentEvent("event2"),
-            ServerSentEvent("event3")
-          )
+            ServerSentEvent("event3"))
         }
     }
 
@@ -205,8 +201,7 @@ final class EventStreamParserOversizedSpec extends AsyncWordSpec with Matchers w
         .map { result =>
           result shouldBe Vector(
             ServerSentEvent("before"),
-            ServerSentEvent("after")
-          )
+            ServerSentEvent("after"))
         }
     }
 
@@ -235,13 +230,13 @@ final class EventStreamParserOversizedSpec extends AsyncWordSpec with Matchers w
           .runWith(Sink.seq)
       } yield {
         // All should preserve the before/after events
-        logSkipResult.map(_.data) should contain allOf ("before", "after")
-        truncateResult.map(_.data) should contain allOf ("before", "after")  
-        deadLetterResult.map(_.data) should contain allOf ("before", "after")
+        (logSkipResult.map(_.data) should contain).allOf("before", "after")
+        (truncateResult.map(_.data) should contain).allOf("before", "after")
+        (deadLetterResult.map(_.data) should contain).allOf("before", "after")
 
         // Middle event behavior differs by strategy
         logSkipResult.find(_.data == "middle") shouldBe Some(ServerSentEvent("middle", None, Some("123")))
-        truncateResult.find(_.data == "middle").get.eventType.get should have length 43 // truncated event type (50 - "event: ".length)
+        (truncateResult.find(_.data == "middle").get.eventType.get should have).length(43) // truncated event type (50 - "event: ".length)
         deadLetterResult.find(_.data == "middle") shouldBe Some(ServerSentEvent("middle", None, Some("123")))
       }
     }

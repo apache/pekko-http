@@ -19,21 +19,28 @@ object OversizedSseStrategy {
   case object Truncate extends OversizedSseStrategy
   case object DeadLetter extends OversizedSseStrategy
 
+  /**
+   * Convert from a Java enum to the corresponding Scala case object.
+   * Java API.
+   */
+  def fromJava(javaStrategy: org.apache.pekko.http.javadsl.settings.OversizedSseStrategy): OversizedSseStrategy =
+    javaStrategy.asScala()
+
   @InternalApi
   private[http] def fromString(value: String): OversizedSseStrategy = value match {
-    case "fail-stream" => FailStream
+    case "fail-stream"  => FailStream
     case "log-and-skip" => LogAndSkip
-    case "truncate" => Truncate
-    case "dead-letter" => DeadLetter
+    case "truncate"     => Truncate
+    case "dead-letter"  => DeadLetter
     case _ => throw new IllegalArgumentException(
-      s"Invalid oversized-message-handling: '$value'. Valid options are: fail-stream, log-and-skip, truncate, dead-letter")
+        s"Invalid oversized-message-handling: '$value'. Valid options are: fail-stream, log-and-skip, truncate, dead-letter")
   }
 
   @InternalApi
   private[http] def toString(handling: OversizedSseStrategy): String = handling match {
     case FailStream => "fail-stream"
     case LogAndSkip => "log-and-skip"
-    case Truncate => "truncate"
+    case Truncate   => "truncate"
     case DeadLetter => "dead-letter"
   }
 }

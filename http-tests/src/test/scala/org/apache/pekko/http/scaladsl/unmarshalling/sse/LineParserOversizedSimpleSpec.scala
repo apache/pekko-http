@@ -25,7 +25,7 @@ final class LineParserOversizedSimpleSpec extends AsyncWordSpec with Matchers wi
 
     "fail the stream with FailStream strategy" in {
       val input = ByteString("before\n" + "x" * 100 + "\nafter\n")
-      
+
       recoverToExceptionIf[IllegalStateException] {
         Source.single(input)
           .via(new LineParser(50, OversizedSseStrategy.FailStream))
@@ -38,7 +38,7 @@ final class LineParserOversizedSimpleSpec extends AsyncWordSpec with Matchers wi
 
     "skip oversized messages with LogAndSkip strategy" in {
       val input = ByteString("before\n" + "x" * 100 + "\nafter\n")
-      
+
       Source.single(input)
         .via(new LineParser(50, OversizedSseStrategy.LogAndSkip))
         .runWith(Sink.seq)
@@ -49,7 +49,7 @@ final class LineParserOversizedSimpleSpec extends AsyncWordSpec with Matchers wi
 
     "truncate oversized messages with Truncate strategy" in {
       val input = ByteString("before\n" + "x" * 100 + "\nafter\n")
-      
+
       Source.single(input)
         .via(new LineParser(50, OversizedSseStrategy.Truncate))
         .runWith(Sink.seq)
@@ -63,7 +63,7 @@ final class LineParserOversizedSimpleSpec extends AsyncWordSpec with Matchers wi
 
     "send oversized messages to dead letters with DeadLetter strategy" in {
       val input = ByteString("before\n" + "x" * 100 + "\nafter\n")
-      
+
       Source.single(input)
         .via(new LineParser(50, OversizedSseStrategy.DeadLetter))
         .runWith(Sink.seq)
