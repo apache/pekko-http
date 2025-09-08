@@ -100,5 +100,5 @@ For applications that need to handle very large messages (like blockchain data o
 setting `max-line-size = 0` to disable limits entirely, or use one of the non-failing handling modes.
 
 Notice that if you are looking for a resilient way to permanently subscribe to an event stream,
-Apache Pekko Connectors provides the [EventSource](https://pekko.apache.org/docs/pekko-connectors/current/sse.html)connector which reconnects automatically with the id of the 
-last seen event.
+Apache Pekko Connectors provides the [EventSource](https://pekko.apache.org/docs/pekko-connectors/current/sse.html) 
+connector which reconnects automatically with the id of the last seen event.

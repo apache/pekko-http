@@ -64,6 +64,7 @@ object EventStreamParser {
    * @param maxEventSize The maximum size of a server-sent event for the event Stream parser
    * @param emitEmptyEvents Should the parser emit events with empty data field
    * @param oversizedStrategy How to handle messages that exceed max-line-size
+   * @since 1.3.0
    */
   def apply(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean, oversizedStrategy: String)
       : Flow[ByteString, ServerSentEvent, NotUsed] =
@@ -78,6 +79,7 @@ object EventStreamParser {
    * @param maxEventSize The maximum size of a server-sent event for the event Stream parser
    * @param emitEmptyEvents Should the parser emit events with empty data field
    * @param oversizedStrategy How to handle messages that exceed max-line-size
+   * @since 1.3.0
    */
   def apply(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean, oversizedStrategy: OversizedSseStrategy)
       : Flow[ByteString, ServerSentEvent, NotUsed] =
