@@ -35,7 +35,7 @@ addSbtPlugin("net.virtual-void" % "sbt-hackers-digest" % "0.1.2")
 addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.7.0")
 
 // used in ValidatePullRequest to check github PR comments whether to build all subprojects
-libraryDependencies += "org.kohsuke" % "github-api" % "1.329"
+libraryDependencies += "org.kohsuke" % "github-api" % "1.330"
 
 // used for @unidoc directive
 libraryDependencies += "io.github.lukehutch" % "fast-classpath-scanner" % "3.1.15"

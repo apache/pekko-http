@@ -43,7 +43,6 @@ object TestServer extends App {
   implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
 
   val settings = ActorMaterializerSettings(system)
-    .withFuzzing(false)
     //    .withSyncProcessingLimit(Int.MaxValue)
     .withInputBuffer(128, 128)
   implicit val fm: ActorMaterializer = ActorMaterializer(settings)
