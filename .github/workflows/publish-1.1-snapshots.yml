@@ -9,13 +9,11 @@
 name: Publish nightly 1.1 snapshots
 
 on:
-  schedule:
-    - cron: "30 1 * * *"
   workflow_dispatch:
 
 jobs:
   publish-artifacts:
-    name: Publish 1.0 artifacts to Apache Nexus
+    name: Publish 1.1 artifacts to Apache Nexus
     runs-on: ubuntu-latest
     if: github.repository == 'apache/pekko-http'
     steps:
