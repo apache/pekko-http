@@ -181,23 +181,6 @@ object Unmarshaller
       this(supported.asJava.asInstanceOf[java.util.Set[jm.model.ContentTypeRange]],
         actualContentType.toJava.asInstanceOf[java.util.Optional[jm.model.ContentType]])
 
-    @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
-    def this(supported: Set[ContentTypeRange]) = this(supported, None)
-
-    @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
-    def copy(supported: Set[ContentTypeRange]): UnsupportedContentTypeException =
-      new UnsupportedContentTypeException(supported, actualContentType)
-
-    @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
-    def copy$default$1(supported: Set[ContentTypeRange]): UnsupportedContentTypeException =
-      new UnsupportedContentTypeException(supported, actualContentType)
-
-    @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
-    def copy(
-        supported: Set[ContentTypeRange] = this.supported,
-        contentType: Option[ContentType] = this.actualContentType): UnsupportedContentTypeException =
-      new UnsupportedContentTypeException(supported, contentType)
-
     override def canEqual(that: Any): Boolean = that.isInstanceOf[UnsupportedContentTypeException]
 
     override def equals(that: Any): Boolean = that match {

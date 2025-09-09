@@ -154,15 +154,9 @@ object StatusCodes extends ObjectRegistry[Int, StatusCode] {
   val ContentTooLarge              = reg(c(413)("Content Too Large", "The request content is larger than the server is willing or able to process."))
   @deprecated("deprecated in favor of ContentTooLarge", "1.1.0")
   val PayloadTooLarge              = ContentTooLarge
-  @deprecated("deprecated in favor of PayloadTooLarge, which was later deprecated in favor of ContentTooLarge (please switch to ContentTooLarge)", "Akka HTTP 10.1.11")
-  val RequestEntityTooLarge        = ContentTooLarge
   val UriTooLong                   = reg(c(414)("URI Too Long", "The URI provided was too long for the server to process."))
-  @deprecated("deprecated in favor of UriTooLong", "Akka HTTP 10.1.11")
-  val RequestUriTooLong            = UriTooLong
   val UnsupportedMediaType         = reg(c(415)("Unsupported Media Type", "The request entity has a media type which the server or resource does not support."))
   val RangeNotSatisfiable          = reg(c(416)("Range Not Satisfiable", "The client has asked for a portion of the file, but the server cannot supply that portion."))
-  @deprecated("deprecated in favor of RangeNotSatisfiable", "Akka HTTP 10.1.11")
-  val RequestedRangeNotSatisfiable = RangeNotSatisfiable
   val ExpectationFailed            = reg(c(417)("Expectation Failed", "The server cannot meet the requirements of the Expect request-header field."))
   val ImATeapot                    = reg(c(418)("I'm a teapot", "The resulting entity body MAY be short and stout."))
   val EnhanceYourCalm              = reg(c(420)("Enhance Your Calm", "You are being rate-limited.")) // Twitter only
@@ -173,8 +167,6 @@ object StatusCodes extends ObjectRegistry[Int, StatusCode] {
   val Locked                       = reg(c(423)("Locked", "The resource that is being accessed is locked."))
   val FailedDependency             = reg(c(424)("Failed Dependency", "The request failed due to failure of a previous request."))
   val TooEarly                     = reg(c(425)("Too Early", "The server is unwilling to risk processing a request that might be replayed.")) // RFC 8470
-  @deprecated("Non-standard Unordered Collection should not be used, deprecated in favor of TooEarly", "Akka HTTP 10.1.6")
-  val UnorderedCollection          = TooEarly
   val UpgradeRequired              = reg(c(426)("Upgrade Required", "The client should switch to a different protocol."))
   val PreconditionRequired         = reg(c(428)("Precondition Required", "The server requires the request to be conditional."))
   val TooManyRequests              = reg(c(429)("Too Many Requests", "The user has sent too many requests in a given amount of time."))
@@ -189,8 +181,6 @@ object StatusCodes extends ObjectRegistry[Int, StatusCode] {
   val ServiceUnavailable            = reg(e(503)("Service Unavailable", "The server is currently unavailable (because it is overloaded or down for maintenance)."))
   val GatewayTimeout                = reg(e(504)("Gateway Timeout", "The server was acting as a gateway or proxy and did not receive a timely response from the upstream server."))
   val HttpVersionNotSupported       = reg(e(505)("HTTP Version Not Supported", "The server does not support the HTTP protocol version used in the request."))
-  @deprecated("deprecated in favor of HttpVersionNotSupported", "Akka HTTP 10.1.11")
-  val HTTPVersionNotSupported       = HttpVersionNotSupported
   val VariantAlsoNegotiates         = reg(e(506)("Variant Also Negotiates", "Transparent content negotiation for the request, results in a circular reference."))
   val InsufficientStorage           = reg(e(507)("Insufficient Storage", "Insufficient storage to complete the request."))
   val LoopDetected                  = reg(e(508)("Loop Detected", "The server detected an infinite loop while processing the request."))

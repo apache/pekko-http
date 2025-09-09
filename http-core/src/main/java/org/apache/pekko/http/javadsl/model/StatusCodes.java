@@ -106,31 +106,13 @@ public final class StatusCodes {
   public static final StatusCode PAYLOAD_TOO_LARGE =
       org.apache.pekko.http.scaladsl.model.StatusCodes.PayloadTooLarge();
 
-  /**
-   * @deprecated deprecated in favor of PAYLOAD_TOO_LARGE, which was later deprecated in favor of
-   *     CONTENT_TOO_LARGE (please switch to CONTENT_TOO_LARGE)
-   */
-  @Deprecated
-  public static final StatusCode REQUEST_ENTITY_TOO_LARGE =
-      org.apache.pekko.http.scaladsl.model.StatusCodes.RequestEntityTooLarge();
-
   public static final StatusCode URI_TOO_LONG =
       org.apache.pekko.http.scaladsl.model.StatusCodes.UriTooLong();
-
-  /** @deprecated deprecated in favor of URI_TOO_LONG */
-  @Deprecated
-  public static final StatusCode REQUEST_URI_TOO_LONG =
-      org.apache.pekko.http.scaladsl.model.StatusCodes.RequestUriTooLong();
 
   public static final StatusCode UNSUPPORTED_MEDIA_TYPE =
       org.apache.pekko.http.scaladsl.model.StatusCodes.UnsupportedMediaType();
   public static final StatusCode RANGE_NOT_SATISFIABLE =
       org.apache.pekko.http.scaladsl.model.StatusCodes.RangeNotSatisfiable();
-
-  /** @deprecated deprecated in favor of RANGE_NOT_SATISFIABLE */
-  @Deprecated
-  public static final StatusCode REQUESTED_RANGE_NOT_SATISFIABLE =
-      org.apache.pekko.http.scaladsl.model.StatusCodes.RequestedRangeNotSatisfiable();
 
   public static final StatusCode EXPECTATION_FAILED =
       org.apache.pekko.http.scaladsl.model.StatusCodes.ExpectationFailed();
@@ -151,14 +133,6 @@ public final class StatusCodes {
   public static final StatusCode LOCKED = org.apache.pekko.http.scaladsl.model.StatusCodes.Locked();
   public static final StatusCode FAILED_DEPENDENCY =
       org.apache.pekko.http.scaladsl.model.StatusCodes.FailedDependency();
-
-  /**
-   * @deprecated Non-standard Unordered Collection should not be used, deprecated in favor of
-   *     TOO_EARLY
-   */
-  @Deprecated
-  public static final StatusCode UNORDERED_COLLECTION =
-      org.apache.pekko.http.scaladsl.model.StatusCodes.UnorderedCollection();
 
   public static final StatusCode TOO_EARLY =
       org.apache.pekko.http.scaladsl.model.StatusCodes.TooEarly();
