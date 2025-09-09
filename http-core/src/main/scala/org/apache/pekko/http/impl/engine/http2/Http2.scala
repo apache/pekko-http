@@ -224,7 +224,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       engine.setUseClientMode(false)
       Http2AlpnSupport.enableForServer(engine, setChosenProtocol)
     }
-    @nowarn("msg=deprecated") // TODO find an alternative way to do this
+    // TODO find an alternative way to do this
     val tls = TLS(() => createEngine(), _ => Success(()), IgnoreComplete)
 
     ProtocolSwitch(_ => getChosenProtocol(), http1, http2).join(
@@ -234,7 +234,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
   def outgoingConnection(host: String, port: Int, connectionContext: HttpsConnectionContext,
       clientConnectionSettings: ClientConnectionSettings, log: LoggingAdapter)
       : Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
-    @nowarn("msg=deprecated") // TODO find an alternative way to do this
+    // TODO find an alternative way to do this
     def createEngine(): SSLEngine = {
       val engine = connectionContext.engineCreator(Some((host, port)))
       engine.setUseClientMode(true)

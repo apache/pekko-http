@@ -17,7 +17,6 @@ import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.event.LoggingAdapter;
 import org.apache.pekko.event.NoLogging;
-import org.apache.pekko.http.javadsl.ConnectHttp;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.model.*;
