@@ -17,7 +17,7 @@ import org.apache.pekko
 import pekko.http.impl.engine.server.InternalCustomHeader
 import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Protocol`, Upgrade, UpgradeProtocol }
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes, Uri }
-import pekko.http.scaladsl.model.ws.{ Message, UpgradeToWebSocket, WebSocketUpgrade }
+import pekko.http.scaladsl.model.ws.{ Message, WebSocketUpgrade }
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import scala.collection.immutable
 import pekko.stream.{ FlowShape, Graph, Materializer }
@@ -27,7 +27,7 @@ trait WSTestRequestBuilding {
   def WS(uri: Uri, clientSideHandler: Flow[Message, Message, Any], subprotocols: Seq[String] = Nil)(
       implicit materializer: Materializer): HttpRequest = {
     val upgrade =
-      new InternalCustomHeader("UpgradeToWebSocketTestHeader") with UpgradeToWebSocket with WebSocketUpgrade {
+      new InternalCustomHeader("UpgradeToWebSocketTestHeader") with WebSocketUpgrade {
         def requestedProtocols: immutable.Seq[String] = subprotocols.toList
 
         def handleMessages(
