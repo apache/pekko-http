@@ -14,7 +14,6 @@
 package docs.http.javadsl;
 
 import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.http.javadsl.ConnectHttp;
 import org.apache.pekko.http.javadsl.ConnectionContext;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.HttpsConnectionContext;
