@@ -29,11 +29,6 @@ private[http] final case class RoutingSettingsImpl(
     decodeMaxBytesPerChunk: Int,
     decodeMaxSize: Long) extends pekko.http.scaladsl.settings.RoutingSettings {
 
-  @deprecated(
-    "binary compatibility method. Use `pekko.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
-    since = "Akka HTTP 10.1.6")
-  override def fileIODispatcher: String = ""
-
   override def productPrefix = "RoutingSettings"
 }
 

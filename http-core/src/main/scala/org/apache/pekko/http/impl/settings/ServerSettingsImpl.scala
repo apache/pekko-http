@@ -13,27 +13,24 @@
 
 package org.apache.pekko.http.impl.settings
 
-import java.util.Random
-
-import org.apache.pekko
-import pekko.http.scaladsl.settings.{ SettingsCompanion => _, _ }
-import com.typesafe.config.Config
-
 import scala.language.implicitConversions
 import scala.collection.immutable
 import scala.concurrent.duration._
-import pekko.http.javadsl.{ settings => js }
+import scala.util.Try
+
+import com.typesafe.config.Config
+import org.apache.pekko
 import pekko.ConfigurationException
 import pekko.actor.{ ActorSystem, ExtendedActorSystem }
 import pekko.annotation.InternalApi
 import pekko.http.ParsingErrorHandler
-import pekko.io.Inet.SocketOption
 import pekko.http.impl.util._
+import pekko.http.javadsl.{ settings => js }
 import pekko.http.scaladsl.model.{ HttpHeader, HttpResponse, StatusCodes }
 import pekko.http.scaladsl.model.headers.{ Host, Server }
+import pekko.http.scaladsl.settings.{ SettingsCompanion => _, _ }
 import pekko.http.scaladsl.settings.ServerSettings.LogUnencryptedNetworkBytes
-
-import scala.util.Try
+import pekko.io.Inet.SocketOption
 
 /** INTERNAL API */
 @InternalApi
@@ -69,8 +66,6 @@ private[pekko] final case class ServerSettingsImpl(
   require(
     Try { parserSettings.maxContentLength }.isSuccess,
     "The provided ParserSettings is a generic object that does not contain the server-specific settings.")
-
-  override def websocketRandomFactory: () => Random = websocketSettings.randomFactory
 
   override def productPrefix = "ServerSettings"
 

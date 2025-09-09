@@ -26,8 +26,6 @@ import pekko.stream.stage.GraphStage
 import pekko.util.ByteString
 import headers._
 
-import scala.annotation.nowarn
-
 trait Encoder {
   def encoding: HttpEncoding
 
@@ -56,15 +54,9 @@ trait Encoder {
     Source.single(input).via(singleUseEncoderFlow()).runWith(Sink.fold(ByteString.empty)(_ ++ _))
 
   @InternalApi
-  @deprecated("newCompressor is internal API", since = "Akka HTTP 10.2.0")
-  def newCompressor: Compressor
-
-  @InternalApi
-  @deprecated("newEncodeTransformer is internal API", since = "Akka HTTP 10.2.0")
-  def newEncodeTransformer(): GraphStage[FlowShape[ByteString, ByteString]] = singleUseEncoderFlow()
+  private[http] def newCompressor: Compressor
 
   private def singleUseEncoderFlow(): GraphStage[FlowShape[ByteString, ByteString]] = {
-    @nowarn("msg=deprecated")
     val compressor = newCompressor
 
     def encodeChunk(bytes: ByteString): ByteString = compressor.compressAndFlush(bytes)

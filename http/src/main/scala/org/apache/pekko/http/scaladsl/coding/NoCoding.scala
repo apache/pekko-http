@@ -36,7 +36,7 @@ object NoCoding extends Coder with StreamDecoder {
 
   val messageFilter: HttpMessage => Boolean = _ => false
 
-  def newCompressor = NoCodingCompressor
+  private[http] def newCompressor = NoCodingCompressor
 
   def newDecompressorStage(maxBytesPerChunk: Int): () => GraphStage[FlowShape[ByteString, ByteString]] =
     () => StreamUtils.limitByteChunksStage(maxBytesPerChunk)
@@ -44,8 +44,7 @@ object NoCoding extends Coder with StreamDecoder {
 
 /** Internal API */
 @InternalApi
-@deprecated("NoCodingCompressor is internal API and will be moved or removed in the future", since = "Akka HTTP 10.2.0")
-object NoCodingCompressor extends Compressor {
+private[coding] object NoCodingCompressor extends Compressor {
   def compress(input: ByteString): ByteString = input
   def flush() = ByteString.empty
   def finish() = ByteString.empty
