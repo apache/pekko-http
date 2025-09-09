@@ -762,7 +762,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
 
   private[http] def sslTlsServerStage(connectionContext: ConnectionContext) =
     sslTlsStage(connectionContext, Server, None)
-  
+
   // TODO find an alternative way to do this
   private def sslTlsStage(connectionContext: ConnectionContext, role: TLSRole, hostInfo: Option[(String, Int)]) =
     connectionContext match {
