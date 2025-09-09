@@ -380,8 +380,7 @@ public class HttpServerExampleDocTest {
     CompletionStage<ServerBinding> binding =
         Http.get(system)
             .newServerAt("localhost", 8080)
-            .bindFlow(
-                Directives.complete("Hello world!").flow(system, materializer));
+            .bindFlow(Directives.complete("Hello world!").flow(system, materializer));
 
     ServerBinding serverBinding = binding.toCompletableFuture().get(3, TimeUnit.SECONDS);
 
