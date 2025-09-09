@@ -16,19 +16,18 @@ package org.apache.pekko.http.caching
 import java.util.concurrent.{ CompletableFuture, Executor, TimeUnit }
 import java.util.function.BiFunction
 
-import org.apache.pekko
-import pekko.actor.ActorSystem
-import pekko.annotation.{ ApiMayChange, InternalApi }
-
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ ExecutionContext, Future }
+
 import com.github.benmanes.caffeine.cache.{ AsyncCache, Caffeine }
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.annotation.{ ApiMayChange, InternalApi }
 import pekko.http.caching.LfuCache.toJavaMappingFunction
 import pekko.http.caching.scaladsl.Cache
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.caching.CacheJavaMapping.Implicits._
-
 import pekko.util.FutureConverters._
 import pekko.util.FunctionConverters._
 
