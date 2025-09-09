@@ -20,21 +20,8 @@ import static org.apache.pekko.http.javadsl.server.Directives.*;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.stream.Materializer;
 
-@SuppressWarnings("deprecation")
 public class PekkoHttp1020MigrationExample {
   public static void main(String[] args) {
-    {
-      // #old-binding
-      // only worked with classic actor system
-      org.apache.pekko.actor.ActorSystem system =
-          org.apache.pekko.actor.ActorSystem.create("TheSystem");
-      Materializer mat = Materializer.createMaterializer(system);
-      Route route = get(() -> complete("Hello World!"));
-      Http.get(system)
-          .bindAndHandle(route.flow(system), ConnectHttp.toHost("localhost", 8080), mat);
-      // #old-binding
-    }
-
     {
       // #new-binding
       // works with classic or typed actor system

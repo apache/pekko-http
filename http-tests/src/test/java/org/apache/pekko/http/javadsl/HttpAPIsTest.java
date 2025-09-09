@@ -139,23 +139,4 @@ public class HttpAPIsTest extends JUnitRouteTest {
     connect.effectiveHttpsConnectionContext(
         http.defaultClientHttpsContext()); // usage by us internally
   }
-
-  @SuppressWarnings("unused")
-  public void compileOnlyBinding() throws Exception {
-    final Http http = Http.get(system());
-    final HttpsConnectionContext httpsConnectionContext = null;
-
-    http.bind(toHost("127.0.0.1")); // 80
-    http.bind(toHost("127.0.0.1", 8080)); // 8080
-
-    http.bind(toHost("https://127.0.0.1")); // HTTPS 443
-    http.bind(toHost("https://127.0.0.1", 9090)); // HTTPS 9090
-
-    http.bind(toHostHttps("127.0.0.1")); // HTTPS 443
-    http.bind(
-        toHostHttps("127.0.0.1")
-            .withCustomHttpsContext(httpsConnectionContext)); // custom HTTPS 443
-
-    http.bind(toHostHttps("http://127.0.0.1")); // throws
-  }
 }

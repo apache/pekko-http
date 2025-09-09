@@ -181,10 +181,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * To configure additional settings for a server started using this method,
    * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    */
-  @deprecated(
-    "Use Http().newServerAt(...)...connectionSource() to create a source that can be materialized to a binding.",
-    since = "Akka HTTP 10.2.0")
-  def bind(interface: String, port: Int = DefaultPortForProtocol,
+  private[http] def bind(interface: String, port: Int = DefaultPortForProtocol,
       connectionContext: ConnectionContext = defaultServerHttpContext,
       settings: ServerSettings = ServerSettings(system),
       log: LoggingAdapter = system.log): Source[Http.IncomingConnection, Future[ServerBinding]] = {
@@ -213,7 +210,6 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   }
 
   // forwarder to allow internal code to call deprecated method without warning
-  @nowarn("msg=deprecated")
   private[http] def bindImpl(interface: String, port: Int,
       connectionContext: ConnectionContext,
       settings: ServerSettings,
@@ -231,8 +227,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * To configure additional settings for a server started using this method,
    * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    */
-  @deprecated("Use Http().newServerAt(...)...bindFlow() to create server bindings.", since = "Akka HTTP 10.2.0")
-  def bindAndHandle(
+  private[http] def bindAndHandle(
       handler: Flow[HttpRequest, HttpResponse, Any],
       interface: String, port: Int = DefaultPortForProtocol,
       connectionContext: ConnectionContext = defaultServerHttpContext,
@@ -292,7 +287,6 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   }
 
   // forwarder to allow internal code to call deprecated method without warning
-  @nowarn("msg=deprecated")
   private[http] def bindAndHandleImpl(
       handler: Flow[HttpRequest, HttpResponse, Any],
       interface: String, port: Int,
@@ -301,10 +295,10 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
     bindAndHandle(handler, interface, port, connectionContext, settings, log)(fm)
 
-  private def bindAndHandleAsync(
+  // forwarder to allow internal code to call deprecated method without warning
+  private[http] def bindAndHandleAsyncImpl(
       handler: HttpRequest => Future[HttpResponse],
-      interface: String,
-      port: Int,
+      interface: String, port: Int,
       connectionContext: ConnectionContext,
       settings: ServerSettings,
       parallelism: Int,
@@ -326,16 +320,6 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
         settings, log)
     }
   }
-
-  // forwarder to allow internal code to call deprecated method without warning
-  private[http] def bindAndHandleAsyncImpl(
-      handler: HttpRequest => Future[HttpResponse],
-      interface: String, port: Int,
-      connectionContext: ConnectionContext,
-      settings: ServerSettings,
-      parallelism: Int,
-      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
-    bindAndHandleAsync(handler, interface, port, connectionContext, settings, parallelism, log)(fm)
 
   type ServerLayer = Http.ServerLayer
 
@@ -794,8 +778,8 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
 
   private[http] def sslTlsServerStage(connectionContext: ConnectionContext) =
     sslTlsStage(connectionContext, Server, None)
-
-  @nowarn("msg=deprecated") // TODO find an alternative way to do this
+  
+  // TODO find an alternative way to do this
   private def sslTlsStage(connectionContext: ConnectionContext, role: TLSRole, hostInfo: Option[(String, Int)]) =
     connectionContext match {
       case hctx: HttpsConnectionContext =>

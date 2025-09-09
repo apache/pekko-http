@@ -35,7 +35,7 @@ import pekko.http.javadsl.settings.{ ClientConnectionSettings, ConnectionPoolSet
 import pekko.japi.Pair
 import pekko.stream.TLSProtocol._
 import pekko.stream.Materializer
-import pekko.stream.javadsl.{ BidiFlow, Flow, Source }
+import pekko.stream.javadsl.{ BidiFlow, Flow }
 import pekko.stream.scaladsl.Keep
 import pekko.util.FutureConverters._
 
@@ -99,116 +99,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * @param port The port to bind to or `0` if the port should be automatically assigned.
    */
   def newServerAt(interface: String, port: Int): ServerBuilder = ServerBuilder(interface, port, system)
-
-  /**
-   * Creates a [[pekko.stream.javadsl.Source]] of [[IncomingConnection]] instances which represents a prospective HTTP server binding
-   * on the given `endpoint`.
-   *
-   * If the given port is 0 the resulting source can be materialized several times. Each materialization will
-   * then be assigned a new local port by the operating system, which can then be retrieved by the materialized
-   * [[ServerBinding]].
-   *
-   * If the given port is non-zero subsequent materialization attempts of the produced source will immediately
-   * fail, unless the first materialization has already been unbound. Unbinding can be triggered via the materialized
-   * [[ServerBinding]].
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).connectionSource() instead
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bind(connect: ConnectHttp): Source[IncomingConnection, CompletionStage[ServerBinding]] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    new Source(delegate.bind(connect.host, connect.port, connectionContext)
-      .map(new IncomingConnection(_))
-      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).asJava))
-  }
-
-  /**
-   * Creates a [[pekko.stream.javadsl.Source]] of [[IncomingConnection]] instances which represents a prospective HTTP server binding
-   * on the given `endpoint`.
-   *
-   * If the given port is 0 the resulting source can be materialized several times. Each materialization will
-   * then be assigned a new local port by the operating system, which can then be retrieved by the materialized
-   * [[ServerBinding]].
-   *
-   * If the given port is non-zero subsequent materialization attempts of the produced source will immediately
-   * fail, unless the first materialization has already been unbound. Unbinding can be triggered via the materialized
-   * [[ServerBinding]].
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).connectionSource() instead
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bind(
-      connect: ConnectHttp,
-      settings: ServerSettings): Source[IncomingConnection, CompletionStage[ServerBinding]] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    new Source(delegate.bind(connect.host, connect.port, settings = settings.asScala,
-      connectionContext = connectionContext)
-      .map(new IncomingConnection(_))
-      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).asJava))
-  }
-
-  /**
-   * Creates a [[pekko.stream.javadsl.Source]] of [[IncomingConnection]] instances which represents a prospective HTTP server binding
-   * on the given `endpoint`.
-   *
-   * If the given port is 0 the resulting source can be materialized several times. Each materialization will
-   * then be assigned a new local port by the operating system, which can then be retrieved by the materialized
-   * [[ServerBinding]].
-   *
-   * If the given port is non-zero subsequent materialization attempts of the produced source will immediately
-   * fail, unless the first materialization has already been unbound. Unbinding can be triggered via the materialized
-   * [[ServerBinding]].
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).logTo(log).connectionSource() instead
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bind(
-      connect: ConnectHttp,
-      settings: ServerSettings,
-      log: LoggingAdapter): Source[IncomingConnection, CompletionStage[ServerBinding]] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    new Source(delegate.bind(connect.host, connect.port, connectionContext, settings.asScala, log)
-      .map(new IncomingConnection(_))
-      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).asJava))
-  }
-
-  /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * [[pekko.stream.javadsl.Flow]] for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).bindFlow(handler) instead.
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bindAndHandle(
-      handler: Flow[HttpRequest, HttpResponse, _],
-      connect: ConnectHttp,
-      materializer: Materializer): CompletionStage[ServerBinding] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    delegate.bindAndHandle(
-      handler.asInstanceOf[Flow[sm.HttpRequest, sm.HttpResponse, _]].asScala,
-      connect.host, connect.port, connectionContext)(materializer)
-      .map(new ServerBinding(_))(ec).asJava
-  }
 
   /**
    * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
