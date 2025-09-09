@@ -31,7 +31,7 @@ object Common extends AutoPlugin {
       "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s",
       "-Wconf:msg=reached max recursion depth:s",
       "-Wconf:msg=Prefer the Scala annotation over Java's `@Deprecated`:s",
-      "-release:8"),
+      "-release:" + javacTarget),
     scalacOptions ++= onlyOnScala2(Seq(
       "-Xlint",
       // Silence deprecation notices for changes introduced in Scala 2.12
@@ -43,21 +43,11 @@ object Common extends AutoPlugin {
       "-Wconf:cat=other-match-analysis&msg=match may not be exhaustive:s")).value,
     scalacOptions ++= onlyOnScala3(Seq("-Wconf:cat=deprecation:s")).value,
     javacOptions ++=
-      Seq("-encoding", "UTF-8") ++ onlyOnJdk8("-source", "1.8") ++ onlyAfterJdk8("--release", "8"),
-    // restrict to 'compile' scope because otherwise it is also passed to
-    // javadoc and -target is not valid there.
-    // https://github.com/sbt/sbt/issues/1785
-    Compile / compile / javacOptions ++=
-      // From jdk9 onwards this is covered by the '-release' flag above
-      onlyOnJdk8("-target", "1.8"),
+      Seq("-encoding", "UTF-8", "--release", javacTarget),
     mimaReportSignatureProblems := true,
     Global / parallelExecution := sys.props.getOrElse("pekko.http.parallelExecution", "true") != "false")
 
-  val specificationVersion: String = sys.props("java.specification.version")
-  def isJdk8: Boolean =
-    VersionNumber(specificationVersion).matchesSemVer(SemanticSelector(s"=1.8"))
-  def onlyOnJdk8[T](values: T*): Seq[T] = if (isJdk8) values else Seq.empty[T]
-  def onlyAfterJdk8[T](values: T*): Seq[T] = if (isJdk8) Seq.empty[T] else values
+  val javacTarget: String = "17"
   def onlyAfterScala212[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
     if (scalaMinorVersion.value >= 12) values else Seq.empty[T]
   }
