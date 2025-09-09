@@ -65,24 +65,6 @@ object RouteResult extends LowerPriorityRouteResultImplicits {
   implicit def routeToFunction(route: Route)(
       implicit system: ClassicActorSystemProvider): HttpRequest => Future[HttpResponse] =
     Route.toFunction(route)
-
-  @deprecated("Replaced by routeToFlow", "Akka HTTP 10.2.0")
-  def route2HandlerFlow(route: Route)(
-      implicit
-      routingSettings: RoutingSettings,
-      parserSettings: ParserSettings,
-      materializer: Materializer,
-      routingLog: RoutingLog,
-      executionContext: ExecutionContext = null,
-      rejectionHandler: RejectionHandler = RejectionHandler.default,
-      exceptionHandler: ExceptionHandler = null): Flow[HttpRequest, HttpResponse, NotUsed] = {
-    implicit val ec: ExecutionContextExecutor = executionContext match {
-      case e: ExecutionContextExecutor => e
-      case _                           => null
-    }
-    Route.handlerFlow(route)(routingSettings, parserSettings, materializer, routingLog, ec, rejectionHandler,
-      exceptionHandler)
-  }
 }
 
 sealed abstract class LowerPriorityRouteResultImplicits {

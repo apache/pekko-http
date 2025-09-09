@@ -27,21 +27,6 @@ public final class MediaTypes {
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divbase64();
   public static final MediaType.Binary APPLICATION_CBOR =
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divcbor();
-  /**
-   * @deprecated This format is unofficial and should not be used.
-   *              Use {@link{#APPLICATION_VND_MS_EXCEL} instead.
-   */
-  @Deprecated
-  public static final MediaType.Binary APPLICATION_EXCEL =
-      org.apache.pekko.http.scaladsl.model.MediaTypes.application$divexcel();
-  /**
-   * @deprecated This format is unofficial and should not be used.
-   *              Use {@link{#FONT_WOFF} instead.
-   */
-  @Deprecated
-  public static final MediaType.Binary APPLICATION_FONT_WOFF =
-      org.apache.pekko.http.scaladsl.model.MediaTypes.application$divfont$minuswoff();
-
   public static final MediaType.Binary APPLICATION_GNUTAR =
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divgnutar();
   public static final MediaType.Binary APPLICATION_JAVA_ARCHIVE =
@@ -58,14 +43,6 @@ public final class MediaTypes {
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divlha();
   public static final MediaType.Binary APPLICATION_LZX =
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divlzx();
-  /**
-   * @deprecated This format is unofficial and should not be used.
-   *              Use {@link{#APPLICATION_VND_MS_POWERPOINT} instead.
-   */
-  @Deprecated
-  public static final MediaType.Binary APPLICATION_MSPOWERPOINT =
-      org.apache.pekko.http.scaladsl.model.MediaTypes.application$divmspowerpoint();
-
   public static final MediaType.Binary APPLICATION_MSWORD =
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divmsword();
   public static final MediaType.Binary APPLICATION_OCTET_STREAM =
