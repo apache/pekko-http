@@ -18,13 +18,11 @@ import pekko.NotUsed
 import pekko.actor.ClassicActorSystemProvider
 import pekko.http.javadsl
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
-import pekko.http.scaladsl.settings.{ ParserSettings, RoutingSettings }
-import pekko.stream.Materializer
 import pekko.stream.scaladsl.Flow
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable
-import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future }
+import scala.concurrent.Future
 
 /**
  * The result of handling a request.
@@ -34,7 +32,7 @@ import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future }
  */
 sealed trait RouteResult extends javadsl.server.RouteResult
 
-object RouteResult extends LowerPriorityRouteResultImplicits {
+object RouteResult {
   final case class Complete(response: HttpResponse) extends javadsl.server.Complete with RouteResult {
     override def getResponse = response
   }
@@ -65,21 +63,4 @@ object RouteResult extends LowerPriorityRouteResultImplicits {
   implicit def routeToFunction(route: Route)(
       implicit system: ClassicActorSystemProvider): HttpRequest => Future[HttpResponse] =
     Route.toFunction(route)
-}
-
-sealed abstract class LowerPriorityRouteResultImplicits {
-
-  /**
-   * Turns a `Route` into a server flow.
-   *
-   * This implicit conversion is defined here because `Route` is an alias for
-   * `RequestContext => Future[RouteResult]`, and the fact that `RouteResult`
-   * is in that type means this implicit conversion come into scope whereever
-   * a `Route` is given but a `Flow` is expected.
-   */
-  @deprecated("make an ActorSystem available implicitly instead", "Akka HTTP 10.2.0")
-  implicit def routeToFlowViaMaterializer(route: Route)(
-      implicit materializer: Materializer): Flow[HttpRequest, HttpResponse, NotUsed] =
-    Route.toFlow(route)(materializer.system)
-
 }
