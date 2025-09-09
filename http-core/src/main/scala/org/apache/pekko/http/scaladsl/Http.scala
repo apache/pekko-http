@@ -181,10 +181,10 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * To configure additional settings for a server started using this method,
    * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    */
-  private[http] def bind(interface: String, port: Int = DefaultPortForProtocol,
-      connectionContext: ConnectionContext = defaultServerHttpContext,
-      settings: ServerSettings = ServerSettings(system),
-      log: LoggingAdapter = system.log): Source[Http.IncomingConnection, Future[ServerBinding]] = {
+  private[http] def bindImpl(interface: String, port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      log: LoggingAdapter): Source[Http.IncomingConnection, Future[ServerBinding]] = {
     if (settings.previewServerSettings.enableHttp2)
       log.warning(
         s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port]")
@@ -209,13 +209,6 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       }
   }
 
-  // forwarder to allow internal code to call deprecated method without warning
-  private[http] def bindImpl(interface: String, port: Int,
-      connectionContext: ConnectionContext,
-      settings: ServerSettings,
-      log: LoggingAdapter): Source[Http.IncomingConnection, Future[ServerBinding]] =
-    bind(interface, port, connectionContext, settings, log)
-
   /**
    * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
    * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
@@ -227,12 +220,12 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * To configure additional settings for a server started using this method,
    * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    */
-  private[http] def bindAndHandle(
+  private[http] def bindAndHandleImpl(
       handler: Flow[HttpRequest, HttpResponse, Any],
-      interface: String, port: Int = DefaultPortForProtocol,
-      connectionContext: ConnectionContext = defaultServerHttpContext,
-      settings: ServerSettings = ServerSettings(system),
-      log: LoggingAdapter = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] = {
+      interface: String, port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] = {
     if (settings.previewServerSettings.enableHttp2)
       log.warning(
         s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port].")
@@ -285,15 +278,6 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       .to(Sink.ignore)
       .run()
   }
-
-  // forwarder to allow internal code to call deprecated method without warning
-  private[http] def bindAndHandleImpl(
-      handler: Flow[HttpRequest, HttpResponse, Any],
-      interface: String, port: Int,
-      connectionContext: ConnectionContext,
-      settings: ServerSettings,
-      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
-    bindAndHandle(handler, interface, port, connectionContext, settings, log)(fm)
 
   // forwarder to allow internal code to call deprecated method without warning
   private[http] def bindAndHandleAsyncImpl(

@@ -101,34 +101,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
   def newServerAt(interface: String, port: Int): ServerBuilder = ServerBuilder(interface, port, system)
 
   /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * [[pekko.stream.javadsl.Flow]] for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).logTo(log).bindFlow(handler) instead.
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bindAndHandle(
-      handler: Flow[HttpRequest, HttpResponse, _],
-      connect: ConnectHttp,
-      settings: ServerSettings,
-      log: LoggingAdapter,
-      materializer: Materializer): CompletionStage[ServerBinding] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    delegate.bindAndHandle(
-      handler.asInstanceOf[Flow[sm.HttpRequest, sm.HttpResponse, _]].asScala,
-      connect.host, connect.port, connectionContext, settings.asScala, log)(materializer)
-      .map(new ServerBinding(_))(ec).asJava
-  }
-
-  /**
    * Constructs a client layer stage using the configured default [[pekko.http.javadsl.settings.ClientConnectionSettings]].
    */
   def clientLayer(
