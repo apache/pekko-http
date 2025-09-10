@@ -41,13 +41,6 @@ private[http2] object RequestParsing {
   def parseRequest(httpHeaderParser: HttpHeaderParser, serverSettings: ServerSettings, streamAttributes: Attributes)
       : Http2SubStream => HttpRequest = {
 
-    val remoteAddressHeader: Option[`Remote-Address`] =
-      if (serverSettings.remoteAddressHeader) {
-        streamAttributes.get[HttpAttributes.RemoteAddress].map(remote =>
-          model.headers.`Remote-Address`(RemoteAddress(remote.address)))
-        // in order to avoid searching all the time for the attribute, we need to guard it with the setting condition
-      } else None // no need to emit the remote address header
-
     val remoteAddressAttribute: Option[RemoteAddress] =
       if (serverSettings.remoteAddressAttribute) {
         streamAttributes.get[HttpAttributes.RemoteAddress].map(remote => RemoteAddress(remote.address))
@@ -97,7 +90,6 @@ private[http2] object RequestParsing {
           // Compress 'cookie' headers if present
           headers += parseHeaderPair(httpHeaderParser, "cookie", cookies.toString)
         }
-        if (remoteAddressHeader.isDefined) headers += remoteAddressHeader.get
 
         if (tlsSessionInfoHeader.isDefined) headers += tlsSessionInfoHeader.get
 

@@ -40,7 +40,6 @@ private[pekko] final case class ServerSettingsImpl(
     timeouts: ServerSettings.Timeouts,
     maxConnections: Int,
     pipeliningLimit: Int,
-    remoteAddressHeader: Boolean,
     remoteAddressAttribute: Boolean,
     rawRequestUriHeader: Boolean,
     transparentHeadRequests: Boolean,

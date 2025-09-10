@@ -43,8 +43,6 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   def timeouts: ServerSettings.Timeouts
   def maxConnections: Int
   def pipeliningLimit: Int
-  @deprecated("use remote-address-attribute instead", since = "Akka HTTP 10.2.0")
-  def remoteAddressHeader: Boolean
   def remoteAddressAttribute: Boolean
   def rawRequestUriHeader: Boolean
   def transparentHeadRequests: Boolean

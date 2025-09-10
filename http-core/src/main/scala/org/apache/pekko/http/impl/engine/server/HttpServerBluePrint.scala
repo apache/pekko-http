@@ -159,14 +159,8 @@ private[http] object HttpServerBluePrint {
             val effectiveMethod = if (method == HttpMethods.HEAD && settings.transparentHeadRequests) HttpMethods.GET
             else method
 
-            @nowarn("msg=use remote-address-attribute instead")
-            val effectiveHeaders =
-              if (settings.remoteAddressHeader && remoteAddressOpt.isDefined)
-                headers.`Remote-Address`(RemoteAddress(remoteAddressOpt.get)) +: hdrs
-              else hdrs
-
             val entity = createEntity(entityCreator).withSizeLimit(settings.parserSettings.maxContentLength)
-            val httpRequest = HttpRequest(effectiveMethod, uri, effectiveHeaders, entity, protocol)
+            val httpRequest = HttpRequest(effectiveMethod, uri, hdrs, entity, protocol)
               .withAttributes(attrs)
 
             val effectiveHttpRequest = if (settings.remoteAddressAttribute) {

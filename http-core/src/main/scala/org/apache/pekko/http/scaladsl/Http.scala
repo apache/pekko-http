@@ -48,7 +48,6 @@ import pekko.util.ByteString
 import pekko.util.FutureConverters._
 import pekko.util.ManifestInfo
 
-import scala.annotation.nowarn
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{ Success, Try }
@@ -1052,10 +1051,9 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
   def createExtension(system: ExtendedActorSystem): HttpExt =
     new HttpExt(system.settings.config.getConfig("pekko.http"))(system)
 
-  @nowarn("msg=use remote-address-attribute instead")
   @InternalApi
   private[pekko] def prepareAttributes(settings: ServerSettings, incoming: Tcp.IncomingConnection) =
-    if (settings.remoteAddressHeader || settings.remoteAddressAttribute)
+    if (settings.remoteAddressAttribute)
       HttpAttributes.remoteAddress(incoming.remoteAddress)
     else HttpAttributes.empty
 
