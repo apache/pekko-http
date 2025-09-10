@@ -219,7 +219,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
       }
 
       abstract class RemoteAddressTestScenario {
-        val settings = ServerSettings(system).withRemoteAddressHeader(true)
+        val settings = ServerSettings(system).withRemoteAddressAttribute(true)
         def createBinding(): Future[ServerBinding]
 
         val binding = createBinding()

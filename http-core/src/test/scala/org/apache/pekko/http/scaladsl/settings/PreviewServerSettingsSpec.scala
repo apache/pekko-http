@@ -23,7 +23,7 @@ class PreviewServerSettingsSpec extends PekkoSpec {
     "compile when set programmatically" in compileOnlySpec {
       ServerSettings(system)
         .withPreviewServerSettings(PreviewServerSettings(system).withEnableHttp2(true))
-        .withRemoteAddressHeader(true)
+        .withRemoteAddressAttribute(true)
     }
     "work get right defaults" in {
       val it: PreviewServerSettings = PreviewServerSettings(system)
