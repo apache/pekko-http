@@ -76,6 +76,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def withTimeouts(newValue: ServerSettings.Timeouts): ServerSettings = self.copy(timeouts = newValue.asScala)
   def withMaxConnections(newValue: Int): ServerSettings = self.copy(maxConnections = newValue)
   def withPipeliningLimit(newValue: Int): ServerSettings = self.copy(pipeliningLimit = newValue)
+
   /**
    * @deprecated since Pekko HTTP 1.3.0, use withRemoteAddressAttribute instead
    */
