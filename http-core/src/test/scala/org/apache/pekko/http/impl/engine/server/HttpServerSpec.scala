@@ -1168,6 +1168,7 @@ class HttpServerSpec extends PekkoSpec(
       // coverage for #21130
       lazy val theAddress = InetAddress.getByName("127.5.2.1")
 
+      @nowarn("msg=deprecated")
       override def settings: ServerSettings =
         super.settings.withRemoteAddressHeader(true)
 

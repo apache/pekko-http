@@ -15,6 +15,7 @@ package org.apache.pekko.http.scaladsl.settings
 
 import org.apache.pekko.testkit.PekkoSpec
 
+@nowarn("msg=deprecated")
 class PreviewServerSettingsSpec extends PekkoSpec {
 
   def compileOnlySpec(body: => Unit) = ()
