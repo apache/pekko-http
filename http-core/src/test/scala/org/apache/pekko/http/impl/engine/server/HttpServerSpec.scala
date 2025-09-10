@@ -1169,7 +1169,7 @@ class HttpServerSpec extends PekkoSpec(
       lazy val theAddress = InetAddress.getByName("127.5.2.1")
 
       override def settings: ServerSettings =
-        super.settings.withRemoteAddressHeader(true)
+        super.settings.withRemoteAddressAttribute(true)
 
       // this is the normal behavior for bindAndHandle(flow), it will set an attribute
       // with remote ip before flow is materialized, rather than from the blueprint apply method
