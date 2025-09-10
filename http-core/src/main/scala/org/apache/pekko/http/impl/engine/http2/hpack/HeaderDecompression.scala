@@ -93,9 +93,13 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
           }
         }
         try {
-          decoder.decode(ByteStringInputStream(payload), Receiver)
+          val inputStream = payload.asInputStream
+          try {
+            decoder.decode(inputStream, Receiver)
+          } finally {
+            inputStream.close()
+          }
           decoder.endHeaderBlock() // TODO: do we have to check the result here?
-
           push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo))
         } catch {
           case ex: IOException =>
