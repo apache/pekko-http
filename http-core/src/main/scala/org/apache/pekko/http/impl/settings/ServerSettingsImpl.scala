@@ -101,7 +101,6 @@ private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSett
         c.getPotentiallyInfiniteDuration("linger-timeout")),
       c.getInt("max-connections"),
       c.getInt("pipelining-limit"),
-      c.getBoolean("remote-address-header"),
       c.getBoolean("remote-address-attribute"),
       c.getBoolean("raw-request-uri-header"),
       c.getBoolean("transparent-head-requests"),

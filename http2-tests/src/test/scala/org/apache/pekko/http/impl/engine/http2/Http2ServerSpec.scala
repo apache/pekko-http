@@ -52,7 +52,6 @@ import scala.concurrent.{ Await, Promise }
  * * validate the produced response frames
  */
 class Http2ServerSpec extends Http2SpecWithMaterializer("""
-    pekko.http.server.remote-address-header = on
     pekko.http.server.http2.log-frames = on
   """)
     with Eventually {

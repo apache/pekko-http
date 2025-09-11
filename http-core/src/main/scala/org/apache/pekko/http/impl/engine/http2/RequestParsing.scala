@@ -21,7 +21,7 @@ import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.scaladsl.model
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.{ `Remote-Address`, `Tls-Session-Info` }
+import pekko.http.scaladsl.model.headers.`Tls-Session-Info`
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.util.ByteString

@@ -72,8 +72,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
 
   /**
    * Constructs a server layer stage using the given [[pekko.http.javadsl.settings.ServerSettings]]. The returned [[pekko.stream.javadsl.BidiFlow]] isn't reusable and
-   * can only be materialized once. The `remoteAddress`, if provided, will be added as a header to each [[HttpRequest]]
-   * this layer produces if the `pekko.http.server.remote-address-header` configuration option is enabled.
+   * can only be materialized once.
    */
   def serverLayer(
       settings: ServerSettings,
@@ -83,8 +82,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
 
   /**
    * Constructs a server layer stage using the given [[ServerSettings]]. The returned [[pekko.stream.javadsl.BidiFlow]] isn't reusable and
-   * can only be materialized once. The remoteAddress, if provided, will be added as a header to each [[HttpRequest]]
-   * this layer produces if the `pekko.http.server.remote-address-header` configuration option is enabled.
+   * can only be materialized once.
    */
   def serverLayer(
       settings: ServerSettings,

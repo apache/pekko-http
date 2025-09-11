@@ -49,7 +49,6 @@ import pekko.http.javadsl.model
 import pekko.http.scaladsl.model._
 import pekko.http.impl.util.LogByteStringTools._
 
-import scala.annotation.nowarn
 import scala.util.Failure
 
 /**

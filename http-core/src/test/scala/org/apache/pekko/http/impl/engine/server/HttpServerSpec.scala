@@ -37,7 +37,7 @@ import pekko.util.ByteString
 import org.scalatest.Inside
 
 import java.net.{ InetAddress, InetSocketAddress }
-import scala.annotation.{ nowarn, tailrec }
+import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import scala.util.Random
@@ -1162,33 +1162,6 @@ class HttpServerSpec extends PekkoSpec(
 
       netIn.sendComplete()
       netOut.expectComplete()
-    })
-
-    "support remote-address-header when blueprint not constructed with it" in assertAllStagesStopped(new TestSetup {
-      // coverage for #21130
-      lazy val theAddress = InetAddress.getByName("127.5.2.1")
-
-      override def settings: ServerSettings =
-        super.settings.withRemoteAddressAttribute(true)
-
-      // this is the normal behavior for bindAndHandle(flow), it will set an attribute
-      // with remote ip before flow is materialized, rather than from the blueprint apply method
-      override def modifyServer(server: ServerLayer): ServerLayer = {
-        BidiFlow.fromGraph(server.withAttributes(
-          HttpAttributes.remoteAddress(new InetSocketAddress(theAddress, 8080))))
-      }
-
-      send("""GET / HTTP/1.1
-             |Host: example.com
-             |
-             |""".stripMarginWithNewline("\r\n"))
-
-      val request = expectRequest()
-
-      request.headers should contain(`Remote-Address`(RemoteAddress(theAddress, Some(8080)))): @nowarn(
-        "msg=Remote-Address in package headers is deprecated")
-
-      shutdownBlueprint()
     })
 
     "support remote-address-attribute" in assertAllStagesStopped(new TestSetup {
