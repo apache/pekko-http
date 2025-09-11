@@ -221,6 +221,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
       }
 
       abstract class RemoteAddressTestScenario {
+        @nowarn("msg=deprecated")
         val settings = ServerSettings(system).withRemoteAddressHeader(true)
         def createBinding(): Future[ServerBinding]
 
