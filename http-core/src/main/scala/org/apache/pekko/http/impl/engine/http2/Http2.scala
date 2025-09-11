@@ -50,7 +50,6 @@ import pekko.util.ByteString
 import pekko.Done
 
 import javax.net.ssl.SSLEngine
-import scala.annotation.nowarn
 import scala.collection.immutable
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration

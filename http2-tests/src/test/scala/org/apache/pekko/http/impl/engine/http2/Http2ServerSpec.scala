@@ -52,7 +52,6 @@ import scala.concurrent.{ Await, Promise }
  * * validate the produced response frames
  */
 class Http2ServerSpec extends Http2SpecWithMaterializer("""
-    pekko.http.server.remote-address-header = on
     pekko.http.server.http2.log-frames = on
   """)
     with Eventually {
@@ -1540,26 +1539,6 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
     }
 
     "expose synthetic headers" should {
-      "expose Remote-Address".inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
-
-        lazy val theAddress = "127.0.0.1"
-        lazy val thePort = 1337
-        override def modifyServer(
-            server: BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator]) =
-          BidiFlow.fromGraph(server.withAttributes(
-            HttpAttributes.remoteAddress(new InetSocketAddress(theAddress, thePort))))
-
-        val target = Uri("http://www.example.com/")
-        network.sendRequest(1, HttpRequest(uri = target))
-        user.requestIn.ensureSubscription()
-
-        val request = user.expectRequestRaw()
-        @nowarn("msg=deprecated")
-        val remoteAddressHeader = request.header[headers.`Remote-Address`].get
-        remoteAddressHeader.address.getAddress.get().toString shouldBe ("/" + theAddress)
-        remoteAddressHeader.address.getPort shouldBe thePort
-      })
-
       "expose Tls-Session-Info".inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
         override def settings: ServerSettings =
           super.settings.withParserSettings(super.settings.parserSettings.withIncludeTlsSessionInfoHeader(true))

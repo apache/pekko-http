@@ -43,8 +43,6 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   def timeouts: ServerSettings.Timeouts
   def maxConnections: Int
   def pipeliningLimit: Int
-  @deprecated("use remote-address-attribute instead", since = "Akka HTTP 10.2.0")
-  def remoteAddressHeader: Boolean
   def remoteAddressAttribute: Boolean
   def rawRequestUriHeader: Boolean
   def transparentHeadRequests: Boolean
@@ -78,7 +76,6 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   override def getServerHeader = this.serverHeader.map(_.asJava).toJava
   override def getTimeouts = this.timeouts
   override def getRawRequestUriHeader = this.rawRequestUriHeader
-  override def getRemoteAddressHeader = this.remoteAddressHeader
   override def getRemoteAddressAttribute: Boolean = this.remoteAddressAttribute
   override def getLogUnencryptedNetworkBytes = this.logUnencryptedNetworkBytes.toJava
   override def getDefaultHttpPort: Int = this.defaultHttpPort
@@ -94,7 +91,6 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
     self.copy(previewServerSettings = newValue)
   override def withMaxConnections(newValue: Int): ServerSettings = self.copy(maxConnections = newValue)
   override def withPipeliningLimit(newValue: Int): ServerSettings = self.copy(pipeliningLimit = newValue)
-  override def withRemoteAddressHeader(newValue: Boolean): ServerSettings = self.copy(remoteAddressHeader = newValue)
   override def withRemoteAddressAttribute(newValue: Boolean): ServerSettings =
     self.copy(remoteAddressAttribute = newValue)
   override def withRawRequestUriHeader(newValue: Boolean): ServerSettings = self.copy(rawRequestUriHeader = newValue)

@@ -48,7 +48,6 @@ import pekko.util.ByteString
 import pekko.util.FutureConverters._
 import pekko.util.ManifestInfo
 
-import scala.annotation.nowarn
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{ Success, Try }
@@ -309,8 +308,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
 
   /**
    * Constructs a [[pekko.http.scaladsl.Http.ServerLayer]] stage using the given [[pekko.http.scaladsl.settings.ServerSettings]]. The returned [[pekko.stream.scaladsl.BidiFlow]] isn't reusable and
-   * can only be materialized once. The `remoteAddress`, if provided, will be added as a header to each [[pekko.http.scaladsl.model.HttpRequest]]
-   * this layer produces if the `pekko.http.server.remote-address-header` configuration option is enabled.
+   * can only be materialized once.
    */
   def serverLayer(
       settings: ServerSettings = ServerSettings(system),
@@ -1052,10 +1050,9 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
   def createExtension(system: ExtendedActorSystem): HttpExt =
     new HttpExt(system.settings.config.getConfig("pekko.http"))(system)
 
-  @nowarn("msg=use remote-address-attribute instead")
   @InternalApi
   private[pekko] def prepareAttributes(settings: ServerSettings, incoming: Tcp.IncomingConnection) =
-    if (settings.remoteAddressHeader || settings.remoteAddressAttribute)
+    if (settings.remoteAddressAttribute)
       HttpAttributes.remoteAddress(incoming.remoteAddress)
     else HttpAttributes.empty
 

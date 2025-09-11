@@ -38,13 +38,6 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def getTimeouts: ServerSettings.Timeouts
   def getMaxConnections: Int
   def getPipeliningLimit: Int
-
-  /**
-   * @deprecated since Akka HTTP 10.2.0, use remoteAddressAttribute instead
-   */
-  @Deprecated
-  @deprecated("Use remoteAddressAttribute instead", since = "Akka HTTP 10.2.0")
-  def getRemoteAddressHeader: Boolean
   def getRemoteAddressAttribute: Boolean
   def getRawRequestUriHeader: Boolean
   def getTransparentHeadRequests: Boolean
@@ -72,7 +65,6 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def withTimeouts(newValue: ServerSettings.Timeouts): ServerSettings = self.copy(timeouts = newValue.asScala)
   def withMaxConnections(newValue: Int): ServerSettings = self.copy(maxConnections = newValue)
   def withPipeliningLimit(newValue: Int): ServerSettings = self.copy(pipeliningLimit = newValue)
-  def withRemoteAddressHeader(newValue: Boolean): ServerSettings = self.copy(remoteAddressHeader = newValue)
   def withRemoteAddressAttribute(newValue: Boolean): ServerSettings = self.copy(remoteAddressAttribute = newValue)
   def withRawRequestUriHeader(newValue: Boolean): ServerSettings = self.copy(rawRequestUriHeader = newValue)
   def withTransparentHeadRequests(newValue: Boolean): ServerSettings = self.copy(transparentHeadRequests = newValue)

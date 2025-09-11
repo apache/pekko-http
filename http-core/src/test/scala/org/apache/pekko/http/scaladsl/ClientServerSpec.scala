@@ -20,7 +20,7 @@ import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
 import javax.net.ssl.{ SNIMatcher, SNIServerName, SSLContext, SSLEngine, TrustManagerFactory }
 
-import scala.annotation.{ nowarn, tailrec }
+import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future, Promise }
 import scala.util.{ Success, Try }
@@ -190,53 +190,6 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
       diff should be > 1000000000L // the diff must be at least the time to complete the first request and to close the first connection
 
       Await.result(b1.unbind(), 1.second.dilated)
-    }
-
-    // The Remote-Address header is deprecated, but we still want to test it works
-    "Remote-Address header" should {
-      def handler(req: HttpRequest): HttpResponse = {
-        @nowarn("msg=deprecated")
-        val entity = req.header[headers.`Remote-Address`].flatMap(_.address.toIP).flatMap(_.port).toString
-        HttpResponse(entity = entity)
-      }
-
-      "be added when using bind API" in new RemoteAddressTestScenario {
-        def createBinding(): Future[ServerBinding] =
-          Http().newServerAt("localhost", 0).withSettings(settings).connectionSource()
-            .map(_.flow.join(Flow[HttpRequest].map(handler)).run())
-            .to(Sink.ignore)
-            .run()
-      }
-
-      "be added when using bindFlow API" in new RemoteAddressTestScenario {
-        def createBinding(): Future[ServerBinding] =
-          Http().newServerAt("localhost", 0).withSettings(settings).bindFlow(Flow[HttpRequest].map(handler))
-      }
-
-      "be added when using bindSync API" in new RemoteAddressTestScenario {
-        def createBinding(): Future[ServerBinding] =
-          Http().newServerAt("localhost", 0).withSettings(settings).bindSync(handler)
-      }
-
-      abstract class RemoteAddressTestScenario {
-        val settings = ServerSettings(system).withRemoteAddressHeader(true)
-        def createBinding(): Future[ServerBinding]
-
-        val binding = createBinding()
-        val b1 = Await.result(binding, 3.seconds.dilated)
-
-        val (conn, response) =
-          Source.single(HttpRequest(uri = "/abc"))
-            .viaMat(Http().outgoingConnection("localhost", b1.localAddress.getPort))(Keep.right)
-            .toMat(Sink.head)(Keep.both)
-            .run()
-
-        val r = Await.result(response, 1.second.dilated)
-        val c = Await.result(conn, 1.second.dilated)
-        Await.result(b1.unbind(), 1.second.dilated)
-
-        toStrict(r.entity).data.utf8String shouldBe s"Some(${c.localAddress.getPort})"
-      }
     }
 
     "timeouts" should {

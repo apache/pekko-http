@@ -21,7 +21,7 @@ import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.scaladsl.model
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.{ `Remote-Address`, `Tls-Session-Info` }
+import pekko.http.scaladsl.model.headers.`Tls-Session-Info`
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.util.ByteString
@@ -40,13 +40,6 @@ private[http2] object RequestParsing {
   @nowarn("msg=use remote-address-attribute instead")
   def parseRequest(httpHeaderParser: HttpHeaderParser, serverSettings: ServerSettings, streamAttributes: Attributes)
       : Http2SubStream => HttpRequest = {
-
-    val remoteAddressHeader: Option[`Remote-Address`] =
-      if (serverSettings.remoteAddressHeader) {
-        streamAttributes.get[HttpAttributes.RemoteAddress].map(remote =>
-          model.headers.`Remote-Address`(RemoteAddress(remote.address)))
-        // in order to avoid searching all the time for the attribute, we need to guard it with the setting condition
-      } else None // no need to emit the remote address header
 
     val remoteAddressAttribute: Option[RemoteAddress] =
       if (serverSettings.remoteAddressAttribute) {
@@ -97,7 +90,6 @@ private[http2] object RequestParsing {
           // Compress 'cookie' headers if present
           headers += parseHeaderPair(httpHeaderParser, "cookie", cookies.toString)
         }
-        if (remoteAddressHeader.isDefined) headers += remoteAddressHeader.get
 
         if (tlsSessionInfoHeader.isDefined) headers += tlsSessionInfoHeader.get
 

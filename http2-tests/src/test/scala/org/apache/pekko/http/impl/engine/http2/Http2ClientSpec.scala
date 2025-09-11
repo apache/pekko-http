@@ -73,7 +73,6 @@ import scala.collection.immutable
  * * validate the produced application-level responses
  */
 class Http2ClientSpec extends PekkoSpecWithMaterializer("""
-    pekko.http.client.remote-address-header = on
     pekko.http.client.http2.log-frames = on
     pekko.http.client.http2.completion-timeout = 500ms
   """)
