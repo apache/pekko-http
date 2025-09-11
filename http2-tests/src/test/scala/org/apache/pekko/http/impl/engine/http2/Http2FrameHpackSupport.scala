@@ -14,7 +14,6 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import org.apache.pekko
-import pekko.http.impl.engine.http2.hpack.ByteStringInputStream
 import pekko.http.scaladsl.model.headers.RawHeader
 import pekko.http.scaladsl.model._
 import pekko.http.shaded.com.twitter.hpack._
@@ -58,10 +57,9 @@ trait Http2FrameHpackSupport extends Http2FrameProbeDelegator with Http2FrameSen
   val decoder = new Decoder(Http2Protocol.InitialMaxHeaderListSize, Http2Protocol.InitialMaxHeaderTableSize)
 
   def decodeHeaders(bytes: ByteString): Seq[(String, String)] = {
-    val bis = ByteStringInputStream(bytes)
     val hs = new VectorBuilder[(String, String)]()
 
-    decoder.decode(bis,
+    decoder.decode(bytes.asInputStream,
       new HeaderListener {
         def addHeader(name: String, value: String, parsedValue: AnyRef, sensitive: Boolean): AnyRef = {
           hs += name -> value
