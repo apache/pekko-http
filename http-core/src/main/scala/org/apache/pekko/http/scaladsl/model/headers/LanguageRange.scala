@@ -20,7 +20,7 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.model.WithQValue
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.http.ccompat.{ pre213, since213 }
+import pekko.http.ccompat.since213
 
 sealed trait LanguageRange extends jm.headers.LanguageRange with ValueRenderable with WithQValue[LanguageRange] {
   def qValue: Float
@@ -82,7 +82,6 @@ object Language {
       val tags = compoundTag.split('-')
       new Language(tags.head, immutable.Seq(tags.tail: _*))
     } else new Language(compoundTag, immutable.Seq.empty)
-  @pre213
   def apply(primaryTag: String, subTags: String*): Language =
     new Language(primaryTag, immutable.Seq(subTags: _*))
   @since213

@@ -88,19 +88,6 @@ lazy val root = Project(
     Compile / headerCreate / unmanagedSources := (baseDirectory.value / "project").**("*.scala").get)
   .aggregate(aggregatedProjects: _*)
 
-/**
- * Adds a `src/.../scala-2.13+` source directory for Scala 2.13 and newer
- * and a `src/.../scala-2.13-` source directory for Scala version older than 2.13
- */
-def add213CrossDirs(config: Configuration): Seq[Setting[_]] = Seq(
-  config / unmanagedSourceDirectories += {
-    val sourceDir = (config / sourceDirectory).value
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((e, n)) if e > 2 || (e == 2 && n >= 13) => sourceDir / "scala-2.13+"
-      case _                                            => sourceDir / "scala-2.13-"
-    }
-  })
-
 val commonSettings =
   add213CrossDirs(Compile) ++
   add213CrossDirs(Test)
@@ -146,9 +133,6 @@ lazy val httpCore = project("http-core")
   .settings(scalaMacroSupport)
   .enablePlugins(BootstrapGenjavadoc)
   .enablePlugins(ReproducibleBuildsPlugin)
-  .enablePlugins(Pre213Preprocessor).settings(
-    Pre213Preprocessor.pre213Files := Seq(
-      "headers.scala", "HttpMessage.scala", "LanguageRange.scala", "CacheDirective.scala", "LinkValue.scala"))
   .disablePlugins(ScalafixPlugin)
 
 lazy val http = project("http")
@@ -160,9 +144,6 @@ lazy val http = project("http")
   .settings(
     Compile / scalacOptions += "-language:_")
   .settings(scalaMacroSupport)
-  .enablePlugins(Pre213Preprocessor).settings(
-    Pre213Preprocessor.pre213Files := Seq(
-      "scaladsl/server/directives/FormFieldDirectives.scala", "scaladsl/server/directives/RespondWithDirectives.scala"))
   .enablePlugins(BootstrapGenjavadoc, BoilerplatePlugin)
   .enablePlugins(ReproducibleBuildsPlugin)
 

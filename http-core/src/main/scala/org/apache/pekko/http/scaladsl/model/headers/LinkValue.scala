@@ -21,7 +21,7 @@ import pekko.http.scaladsl.model._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.util.JavaMapping.Implicits._
 import UriRendering.UriRenderer
-import pekko.http.ccompat.{ pre213, since213 }
+import pekko.http.ccompat.since213
 
 final case class LinkValue(uri: Uri, params: immutable.Seq[LinkParam]) extends jm.headers.LinkValue
     with ValueRenderable {
@@ -36,7 +36,6 @@ final case class LinkValue(uri: Uri, params: immutable.Seq[LinkParam]) extends j
 }
 
 object LinkValue {
-  @pre213
   def apply(uri: Uri, params: LinkParam*): LinkValue = apply(uri, immutable.Seq(params: _*))
   @since213
   def apply(uri: Uri, firstParam: LinkParam, otherParams: LinkParam*): LinkValue = apply(uri, firstParam +: otherParams)

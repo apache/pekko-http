@@ -47,7 +47,6 @@ trait RespondWithDirectives {
    *
    * @group response
    */
-  @pre213
   def respondWithHeaders(responseHeaders: HttpHeader*): Directive0 =
     respondWithHeaders(responseHeaders.toList)
 
@@ -69,7 +68,6 @@ trait RespondWithDirectives {
    *
    * @group response
    */
-  @pre213
   def respondWithDefaultHeaders(responseHeaders: HttpHeader*): Directive0 =
     respondWithDefaultHeaders(responseHeaders.toList)
 

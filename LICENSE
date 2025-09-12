@@ -212,8 +212,8 @@ Copyright 2014 Twitter, Inc.
 
 pekko-http-core contains code from scala-collection-compat in the `org.apache.pekko.http.ccompat` package
 distributed under the Apache 2.0 license.
-- http-core/src/main/scala-2.13-/org/apache/pekko/http/ccompat/package.scala
-- http-core/src/main/scala-2.13-/org/apache/pekko/http/ccompat/CompatImpl.scala
+- http-core/src/main/scala-2.13/org/apache/pekko/http/ccompat/package.scala
+- http-core/src/main/scala-2.13/org/apache/pekko/http/ccompat/CompatImpl.scala
 
 Copyright EPFL and Lightbend, Inc.
 
