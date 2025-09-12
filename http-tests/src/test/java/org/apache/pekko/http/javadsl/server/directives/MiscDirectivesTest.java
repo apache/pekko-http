@@ -74,15 +74,6 @@ public class MiscDirectivesTest extends JUnitRouteTest {
         .run(
             HttpRequest.create()
                 .addHeader(
-                    org.apache.pekko.http.javadsl.model.headers.RemoteAddress.create(
-                        RemoteAddress.create(InetAddress.getByName("127.0.0.3")))))
-        .assertStatusCode(StatusCodes.OK)
-        .assertEntity("127.0.0.3");
-
-    route
-        .run(
-            HttpRequest.create()
-                .addHeader(
                     XRealIp.create(RemoteAddress.create(InetAddress.getByName("127.0.0.4")))))
         .assertStatusCode(StatusCodes.OK)
         .assertEntity("127.0.0.4");

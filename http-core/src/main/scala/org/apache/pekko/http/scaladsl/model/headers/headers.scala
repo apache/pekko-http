@@ -820,15 +820,6 @@ final case class `Raw-Request-URI`(uri: String) extends jm.headers.RawRequestURI
   protected def companion = `Raw-Request-URI`
 }
 
-@deprecated("use remote-address-attribute instead", since = "Akka HTTP 10.2.0")
-object `Remote-Address` extends ModeledCompanion[`Remote-Address`]
-@deprecated("use remote-address-attribute instead", since = "Akka HTTP 10.2.0")
-final case class `Remote-Address`(address: RemoteAddress) extends jm.headers.RemoteAddress with SyntheticHeader
-    with SensitiveHttpHeader {
-  def renderValue[R <: Rendering](r: R): r.type = r ~~ address
-  protected def companion = `Remote-Address`
-}
-
 // https://tools.ietf.org/html/rfc7231#section-5.5.2
 object Referer extends ModeledCompanion[Referer]
 final case class Referer(uri: Uri) extends jm.headers.Referer with RequestHeader with SensitiveHttpHeader {

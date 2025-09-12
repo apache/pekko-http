@@ -119,7 +119,6 @@ object MiscDirectives extends MiscDirectives {
   private val _extractClientIP: Directive1[RemoteAddress] =
     headerValuePF { case `X-Forwarded-For`(Seq(address, _*)) => address } |
     headerValuePF { case `X-Real-Ip`(address) => address } |
-    headerValuePF { case `Remote-Address`(address) => address } |
     extractRequest.map { request =>
       request.attribute(AttributeKeys.remoteAddress).getOrElse(RemoteAddress.Unknown)
     }
