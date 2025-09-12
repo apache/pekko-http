@@ -21,7 +21,6 @@ import org.scalatest.BeforeAndAfterAll
 import org.apache.pekko
 import pekko.util.ByteString
 import pekko.actor.ActorSystem
-import pekko.http.ccompat._ // required for Scala 2.12 compilation
 import pekko.http.scaladsl.model._
 import pekko.stream.scaladsl._
 import pekko.testkit._

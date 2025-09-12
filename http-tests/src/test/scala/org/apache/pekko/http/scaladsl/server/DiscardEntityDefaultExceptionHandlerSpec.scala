@@ -22,7 +22,6 @@ import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
 import org.scalatest.concurrent.Eventually._
 import org.scalatest.concurrent.ScalaFutures
-import pekko.http.ccompat.imm._
 
 import scala.concurrent.Future
 
