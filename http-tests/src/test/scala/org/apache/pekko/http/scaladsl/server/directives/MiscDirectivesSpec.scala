@@ -14,19 +14,18 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import java.net.InetAddress
+
 import scala.concurrent.{ Await, Promise }
 import scala.concurrent.duration._
 import scala.util.Try
+
 import org.apache.pekko
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.util.VarArgsFunction1
 import pekko.testkit._
 import headers._
-import java.net.InetAddress
 
-import pekko.http.scaladsl.server.util.VarArgsFunction1
-import scala.annotation.nowarn
-
-@nowarn("msg=use remote-address-attribute instead")
 class MiscDirectivesSpec extends RoutingSpec {
 
   import pekko.http.ccompat.ImplicitUtils._
@@ -37,18 +36,8 @@ class MiscDirectivesSpec extends RoutingSpec {
         extractClientIP { echoComplete }
       } ~> check { responseAs[String] shouldEqual "2.3.4.5" }
     }
-    "extract from a (synthetic) Remote-Address header" in {
-      Get() ~> addHeader(`Remote-Address`(remoteAddress("1.2.3.4"))) ~> {
-        extractClientIP { echoComplete }
-      } ~> check { responseAs[String] shouldEqual "1.2.3.4" }
-    }
     "extract from a X-Real-IP header" in {
       Get() ~> addHeader(`X-Real-Ip`(remoteAddress("1.2.3.4"))) ~> {
-        extractClientIP { echoComplete }
-      } ~> check { responseAs[String] shouldEqual "1.2.3.4" }
-    }
-    "select X-Real-Ip when both X-Real-Ip and Remote-Address headers are present" in {
-      Get() ~> addHeaders(`X-Real-Ip`(remoteAddress("1.2.3.4")), `Remote-Address`(remoteAddress("5.6.7.8"))) ~> {
         extractClientIP { echoComplete }
       } ~> check { responseAs[String] shouldEqual "1.2.3.4" }
     }

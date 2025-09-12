@@ -1025,8 +1025,6 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
     override def productElement(n: Int): Any = if (n == 0) setup else throw new IllegalArgumentException
     override def canEqual(that: Any): Boolean = that.isInstanceOf[HostConnectionPool]
   }
-  @deprecated("Not needed any more. Kept for binary compatibility.", "Akka HTTP 10.2.0")
-  private[http] object HostConnectionPool
 
   /** INTERNAL API */
   @InternalApi
