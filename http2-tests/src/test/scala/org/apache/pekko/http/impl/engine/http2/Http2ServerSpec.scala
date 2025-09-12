@@ -34,10 +34,8 @@ import pekko.util.ByteString
 import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 
-import java.net.InetSocketAddress
 import javax.net.ssl.SSLContext
 
-import scala.annotation.nowarn
 import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Promise }
