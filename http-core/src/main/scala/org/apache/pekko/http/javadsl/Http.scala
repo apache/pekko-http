@@ -552,26 +552,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
   def shutdownAllConnectionPools(): CompletionStage[Unit] = delegate.shutdownAllConnectionPools().asJava
 
   /**
-   * Gets the current default server-side [[ConnectionContext]] – defaults to plain HTTP.
-   * Can be modified using [[setDefaultServerHttpContext]], and will then apply for servers bound after that call has completed.
-   *
-   * @deprecated since Akka HTTP 10.2.0: set context explicitly when binding
-   */
-  @Deprecated @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
-  def defaultServerHttpContext: ConnectionContext =
-    delegate.defaultServerHttpContext
-
-  /**
-   * Sets the default server-side [[ConnectionContext]].
-   * If it is an instance of [[HttpsConnectionContext]] then the server will be bound using HTTPS.
-   *
-   * @deprecated since Akka HTTP 10.2.0: set context explicitly when binding
-   */
-  @Deprecated @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
-  def setDefaultServerHttpContext(context: ConnectionContext): Unit =
-    delegate.setDefaultServerHttpContext(context.asScala)
-
-  /**
    * Gets the current default client-side [[ConnectionContext]].
    */
   def defaultClientHttpsContext: pekko.http.javadsl.HttpsConnectionContext = delegate.defaultClientHttpsContext
