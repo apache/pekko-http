@@ -88,27 +88,17 @@ lazy val root = Project(
     Compile / headerCreate / unmanagedSources := (baseDirectory.value / "project").**("*.scala").get)
   .aggregate(aggregatedProjects: _*)
 
-val commonSettings =
-  add213CrossDirs(Compile) ++
-  add213CrossDirs(Test)
-
 val scalaMacroSupport = Seq(
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, n)) if n >= 13 =>
+      case Some((2, n)) =>
         Seq("-Ymacro-annotations")
       case _ =>
         Seq.empty
     }
-  },
-  libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, n)) if n < 13 =>
-      Seq(compilerPlugin(("org.scalamacros" % "paradise" % "2.1.1").cross(CrossVersion.full)))
-    case _ => Seq.empty
-  }))
+  })
 
 lazy val parsing = project("parsing")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.parsing"))
   .addPekkoModuleDependency("pekko-actor", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.parsing)
@@ -119,7 +109,6 @@ lazy val parsing = project("parsing")
   .disablePlugins(MimaPlugin)
 
 lazy val httpCore = project("http-core")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.core"))
   .settings(AddMetaInfLicenseFiles.httpCoreSettings)
   .dependsOn(parsing /*, httpScalafixRules % ScalafixConfig*/ )
@@ -136,7 +125,6 @@ lazy val httpCore = project("http-core")
   .disablePlugins(ScalafixPlugin)
 
 lazy val http = project("http")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http"))
   .dependsOn(httpCore)
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
@@ -148,7 +136,6 @@ lazy val http = project("http")
   .enablePlugins(ReproducibleBuildsPlugin)
 
 lazy val http2Tests = project("http2-tests")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.http2"))
   .dependsOn(httpCore, httpTestkit % "test", httpCore % "test->test")
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
@@ -190,7 +177,6 @@ lazy val http2Tests = project("http2-tests")
   .disablePlugins(MimaPlugin) // experimental module still
 
 lazy val httpTestkit = project("http-testkit")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.testkit"))
   .dependsOn(http)
   .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
@@ -206,7 +192,6 @@ lazy val httpTestkit = project("http-testkit")
   .disablePlugins(MimaPlugin) // testkit, no bin compat guaranteed
 
 lazy val httpTestkitMunit = project("http-testkit-munit")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.testkit.munit"))
   .dependsOn(http, httpTestkit)
   .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
@@ -215,7 +200,6 @@ lazy val httpTestkitMunit = project("http-testkit-munit")
   .disablePlugins(MimaPlugin) // testkit, no bin compat guaranteed
 
 lazy val httpTests = project("http-tests")
-  .settings(commonSettings)
   .settings(Dependencies.httpTests)
   .dependsOn(httpSprayJson, httpXml, httpJackson,
     httpTestkit % "test", httpCore % "test->test",
@@ -242,7 +226,6 @@ lazy val httpTests = project("http-tests")
     })
 
 lazy val httpJmhBench = project("http-bench-jmh")
-  .settings(commonSettings)
   .dependsOn(http, httpCors, http2Tests % "compile->compile,test")
   .addPekkoModuleDependency("pekko-stream", "", PekkoCoreDependency.default)
   .enablePlugins(JmhPlugin)
@@ -250,7 +233,6 @@ lazy val httpJmhBench = project("http-bench-jmh")
   .disablePlugins(MimaPlugin)
 
 lazy val httpMarshallersScala = project("http-marshallers-scala")
-  .settings(commonSettings)
   .enablePlugins(NoPublish /*, AggregatePRValidation*/ )
   .disablePlugins(MimaPlugin)
   .aggregate(httpSprayJson, httpXml)
@@ -268,7 +250,6 @@ lazy val httpSprayJson =
     .settings(Dependencies.httpSprayJson)
 
 lazy val httpMarshallersJava = project("http-marshallers-java")
-  .settings(commonSettings)
   .enablePlugins(NoPublish /*, AggregatePRValidation*/ )
   .disablePlugins(MimaPlugin)
   .aggregate(httpJackson)
@@ -285,7 +266,6 @@ lazy val httpJackson =
 lazy val httpCaching = project("http-caching")
   .settings(
     name := "pekko-http-caching")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.caching"))
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
@@ -296,7 +276,6 @@ lazy val httpCaching = project("http-caching")
 lazy val httpCors = project("http-cors")
   .settings(
     name := "pekko-http-cors")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.cors"))
   .settings(AddMetaInfLicenseFiles.httpCorsSettings)
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
@@ -316,7 +295,6 @@ def httpMarshallersScalaSubproject(moduleName: String) =
     .dependsOn(http)
     .settings(
       name := s"pekko-http-$moduleName")
-    .settings(commonSettings)
     .enablePlugins(BootstrapGenjavadoc)
     .enablePlugins(ReproducibleBuildsPlugin)
 
@@ -327,7 +305,6 @@ def httpMarshallersJavaSubproject(moduleName: String) =
     .settings(
       name := s"pekko-http-$moduleName")
     .dependsOn(http)
-    .settings(commonSettings)
     .enablePlugins(BootstrapGenjavadoc)
     .enablePlugins(ReproducibleBuildsPlugin)
 
