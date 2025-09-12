@@ -48,26 +48,6 @@ trait ParameterDirectives extends ParameterDirectivesInstances with ToNameRecept
    * @group param
    */
   def parameterSeq: Directive1[immutable.Seq[(String, String)]] = _parameterSeq
-
-  /**
-   * Extracts a query parameter value from the request.
-   * Rejects the request if the defined query parameter matcher(s) don't match.
-   *
-   * @group param
-   */
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
-    "Akka HTTP 10.2.0")
-  private[http] def parameter(pdm: ParamMagnet): pdm.Out = pdm()
-
-  /**
-   * Extracts a number of query parameter values from the request.
-   * Rejects the request if the defined query parameter matcher(s) don't match.
-   *
-   * @group param
-   */
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
-    "Akka HTTP 10.2.0")
-  private[http] def parameters(pdm: ParamMagnet): pdm.Out = pdm()
 }
 
 object ParameterDirectives extends ParameterDirectives {
@@ -128,96 +108,6 @@ object ParameterDirectives extends ParameterDirectives {
       ParamSpec(repeatedFilter(name, fsu))
     private def forNameRequired[T](name: String, fsu: FSU[T], requiredValue: T): ParamSpec.Aux[Unit] =
       ParamSpec(requiredFilter(name, fsu, requiredValue).tmap(_ => Tuple1(())))
-  }
-
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
-    "Akka HTTP 10.2.0")
-  sealed trait ParamMagnet {
-    type Out
-    def apply(): Out
-  }
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
-    "Akka HTTP 10.2.0")
-  object ParamMagnet {
-    def apply[T](value: T)(implicit pdef: ParamDef[T]): ParamMagnet { type Out = pdef.Out } =
-      new ParamMagnet {
-        type Out = pdef.Out
-        def apply() = pdef(value)
-      }
-  }
-
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
-    "Akka HTTP 10.2.0")
-  type ParamDefAux[T, U] = ParamDef[T] { type Out = U }
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
-    "Akka HTTP 10.2.0")
-  sealed trait ParamDef[T] {
-    type Out
-    def apply(value: T): Out
-  }
-  @deprecated("Use new `parameters` overloads with ParamSpec parameters. Kept for binary compatibility",
-    "Akka HTTP 10.2.0")
-  object ParamDef {
-    import Impl._
-    import pekko.http.scaladsl.unmarshalling.{ FromStringUnmarshaller => FSU }
-
-    def paramDef[A, B](f: A => B): ParamDefAux[A, B] =
-      new ParamDef[A] {
-        type Out = B
-        def apply(value: A) = f(value)
-      }
-    def extractParameter[A, B](f: A => Directive1[B]): ParamDefAux[A, Directive1[B]] = paramDef(f)
-
-    def forString(implicit fsu: FSU[String]): ParamDefAux[String, Directive1[String]] =
-      extractParameter[String, String] { string => filter(string, fsu) }
-    def forSymbol(implicit fsu: FSU[String]): ParamDefAux[Symbol, Directive1[String]] =
-      extractParameter[Symbol, String] { symbol => filter(symbol.name, fsu) }
-    def forNR[T](implicit fsu: FSU[T]): ParamDefAux[NameReceptacle[T], Directive1[T]] =
-      extractParameter[NameReceptacle[T], T] { nr => filter(nr.name, fsu) }
-    def forNUR[T]: ParamDefAux[NameUnmarshallerReceptacle[T], Directive1[T]] =
-      extractParameter[NameUnmarshallerReceptacle[T], T] { nr => filter(nr.name, nr.um) }
-    def forNOR[T](implicit fsou: FSOU[T]): ParamDefAux[NameOptionReceptacle[T], Directive1[Option[T]]] =
-      extractParameter[NameOptionReceptacle[T], Option[T]] { nr => filter[Option[T]](nr.name, fsou) }
-    def forNDR[T](implicit fsou: FSOU[T]): ParamDefAux[NameDefaultReceptacle[T], Directive1[T]] =
-      extractParameter[NameDefaultReceptacle[T], T] { nr => filter[T](nr.name, fsou.withDefaultValue(nr.default)) }
-    def forNOUR[T]: ParamDefAux[NameOptionUnmarshallerReceptacle[T], Directive1[Option[T]]] =
-      extractParameter[NameOptionUnmarshallerReceptacle[T], Option[T]] { nr => filter(nr.name, nr.um: FSOU[T]) }
-    def forNDUR[T]: ParamDefAux[NameDefaultUnmarshallerReceptacle[T], Directive1[T]] =
-      extractParameter[NameDefaultUnmarshallerReceptacle[T], T] { nr =>
-        filter[T](nr.name, (nr.um: FSOU[T]).withDefaultValue(nr.default))
-      }
-
-    //////////////////// required parameter support ////////////////////
-
-    def forRVR[T](implicit fsu: FSU[T]): ParamDefAux[RequiredValueReceptacle[T], Directive0] =
-      paramDef[RequiredValueReceptacle[T], Directive0] { rvr => requiredFilter(rvr.name, fsu, rvr.requiredValue) }
-    def forRVDR[T]: ParamDefAux[RequiredValueUnmarshallerReceptacle[T], Directive0] =
-      paramDef[RequiredValueUnmarshallerReceptacle[T], Directive0] { rvr =>
-        requiredFilter(rvr.name, rvr.um, rvr.requiredValue)
-      }
-
-    //////////////////// repeated parameter support ////////////////////
-
-    def forRepVR[T](implicit fsu: FSU[T]): ParamDefAux[RepeatedValueReceptacle[T], Directive1[Iterable[T]]] =
-      extractParameter[RepeatedValueReceptacle[T], Iterable[T]] { rvr => repeatedFilter(rvr.name, fsu) }
-    def forRepVDR[T]: ParamDefAux[RepeatedValueUnmarshallerReceptacle[T], Directive1[Iterable[T]]] =
-      extractParameter[RepeatedValueUnmarshallerReceptacle[T], Iterable[T]] { rvr => repeatedFilter(rvr.name, rvr.um) }
-
-    //////////////////// tuple support ////////////////////
-
-    import pekko.http.scaladsl.server.util.TupleOps._
-    import pekko.http.scaladsl.server.util.BinaryPolyFunc
-
-    // not implicit any more
-    private[http] def forTuple[T](
-        implicit fold: FoldLeft[Directive0, T, ConvertParamDefAndConcatenate.type]): ParamDefAux[T, fold.Out] =
-      paramDef[T, fold.Out](fold(BasicDirectives.pass, _))
-
-    object ConvertParamDefAndConcatenate extends BinaryPolyFunc {
-      implicit def from[P, TA, TB](implicit pdef: ParamDef[P] { type Out = Directive[TB] }, ev: Join[TA, TB])
-          : BinaryPolyFunc.Case[Directive[TA], P, ConvertParamDefAndConcatenate.type] { type Out = Directive[ev.Out] } =
-        at[Directive[TA], P] { (a, t) => a & pdef(t) }
-    }
   }
 
   /** Actual directive implementations shared between old and new API */
