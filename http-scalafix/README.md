@@ -11,6 +11,3 @@ The setup of the scalafix module roughly follows the example in https://github.c
  * run `scalafixEnable` on the sbt shell (this will unfortunately require a complete rebuild afterwards)
  * run `set scalacOptions in ThisBuild += "-P:semanticdb:synthetics:on"` to allow access to synthetics
  * e.g. run `docs/scalafixAll MigrateToServerBuilder`
-
-*Note:* There's some weird stuff going on regarding cross-publishing. If running the rule fails with a weird error, try switching to Scala 2.12 first with `++2.12.11` (or
-whatever is now the current version).
