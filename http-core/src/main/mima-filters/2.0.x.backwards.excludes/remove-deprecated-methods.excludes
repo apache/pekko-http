@@ -70,6 +70,7 @@ ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scalad
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.getEnabledProtocols")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.getClientAuth")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.getSslParameters")
+ProblemFilters.exclude[MissingFieldProblem]("org.apache.pekko.http.scaladsl.Http.HostConnectionPool")
 ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.Http$HostConnectionPool$")
 ProblemFilters.exclude[MissingTypesProblem]("org.apache.pekko.http.scaladsl.HttpExt")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpExt.bind")
