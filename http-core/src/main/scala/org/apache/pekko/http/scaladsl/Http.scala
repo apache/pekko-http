@@ -675,28 +675,6 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   def shutdownAllConnectionPools(): Future[Unit] = poolMaster.shutdownAll().map(_ => ())(system.dispatcher)
 
   /**
-   * Gets the current default server-side [[ConnectionContext]] – defaults to plain HTTP.
-   * Can be modified using [[setDefaultServerHttpContext]], and will then apply for servers bound after that call has completed.
-   */
-  @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
-  def defaultServerHttpContext: ConnectionContext =
-    synchronized {
-      if (_defaultServerConnectionContext == null)
-        _defaultServerConnectionContext = ConnectionContext.noEncryption()
-      _defaultServerConnectionContext
-    }
-
-  /**
-   * Sets the default server-side [[ConnectionContext]].
-   * If it is an instance of [[HttpsConnectionContext]] then the server will be bound using HTTPS.
-   */
-  @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
-  def setDefaultServerHttpContext(context: ConnectionContext): Unit =
-    synchronized {
-      _defaultServerConnectionContext = context
-    }
-
-  /**
    * Gets the current default client-side [[HttpsConnectionContext]].
    * Defaults used here can be configured using ssl-config or the context can be replaced using [[setDefaultClientHttpsContext]]
    */
