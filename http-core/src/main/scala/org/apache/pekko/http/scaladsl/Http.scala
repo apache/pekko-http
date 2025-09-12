@@ -88,7 +88,6 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   // configured default HttpsContext for the client-side
   // SYNCHRONIZED ACCESS ONLY!
   private[this] var _defaultClientHttpsConnectionContext: HttpsConnectionContext = _
-  private[this] var _defaultServerConnectionContext: ConnectionContext = _
 
   // ** SERVER ** //
 
