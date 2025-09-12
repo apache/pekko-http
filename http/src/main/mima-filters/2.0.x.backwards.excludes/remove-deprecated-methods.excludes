@@ -65,6 +65,8 @@ ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.serv
 ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.server.directives.ParameterDirectives$ParamDef$ConvertParamDefAndConcatenate$")
 ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.server.directives.ParameterDirectives$ParamMagnet")
 ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.server.directives.ParameterDirectives$ParamMagnet$")
+ProblemFilters.exclude[MissingFieldProblem]("org.apache.pekko.http.scaladsl.server.directives.ParameterDirectives.ParamMagnet")
+ProblemFilters.exclude[MissingFieldProblem]("org.apache.pekko.http.scaladsl.server.directives.ParameterDirectives.ParamDef")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.server.directives.FormFieldDirectives.formField")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.server.directives.FormFieldDirectives.formFields")
 ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.server.directives.FormFieldDirectives$FieldMagnet")
