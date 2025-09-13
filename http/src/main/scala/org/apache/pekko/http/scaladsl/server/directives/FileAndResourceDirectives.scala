@@ -18,21 +18,20 @@ import java.io.File
 import java.net.{ URI, URL }
 
 import org.apache.pekko
-import pekko.http.javadsl.{ marshalling, model }
-import pekko.stream.scaladsl.{ FileIO, StreamConverters }
-
-import scala.annotation.tailrec
 import pekko.actor.ActorSystem
 import pekko.event.LoggingAdapter
+import pekko.http.impl.util._
+import pekko.http.javadsl
+import pekko.http.javadsl.{ marshalling, model }
+import JavaMapping.Implicits._
+import pekko.http.javadsl.server.RoutingJavaMapping
 import pekko.http.scaladsl.marshalling.{ Marshaller, ToEntityMarshaller }
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
-import pekko.http.impl.util._
-import pekko.http.javadsl
+import pekko.stream.scaladsl.{ FileIO, StreamConverters }
 
-import scala.collection.JavaConverters._
-import JavaMapping.Implicits._
-import pekko.http.javadsl.server.RoutingJavaMapping
+import scala.annotation.tailrec
+import scala.jdk.CollectionConverters._
 
 /**
  * @groupname fileandresource File and resource directives

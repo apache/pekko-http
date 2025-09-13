@@ -21,8 +21,9 @@ import pekko.http.impl.util._
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.DateTime
-import pekko.util.OptionConverters._
 import org.parboiled2.CharPredicate
+
+import scala.jdk.OptionConverters._
 
 /**
  * for a full definition of the http cookie header fields, see

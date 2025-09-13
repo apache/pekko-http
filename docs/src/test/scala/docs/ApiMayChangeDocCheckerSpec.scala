@@ -21,9 +21,9 @@ import org.reflections.scanners.{ MethodAnnotationsScanner, Scanners, TypeAnnota
 import org.reflections.util.{ ClasspathHelper, ConfigurationBuilder }
 import org.scalatest.Assertion
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.io.Source
+import scala.jdk.CollectionConverters._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

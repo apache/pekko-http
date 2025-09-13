@@ -19,8 +19,9 @@ package org.apache.pekko.http.javadsl.model.sse;
 import java.util.Optional;
 import java.util.OptionalInt;
 
-import org.apache.pekko.util.OptionConverters;
 import scala.Option;
+import scala.jdk.javaapi.OptionConverters;
+
 import org.apache.pekko.http.impl.util.Util;
 
 /**

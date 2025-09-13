@@ -27,10 +27,10 @@ import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.pattern.CircuitBreakerOpenException
 import pekko.http.javadsl.model.headers.{ HttpOrigin => JHttpOrigin }
 import pekko.http.scaladsl.model.headers.{ HttpOrigin => SHttpOrigin }
-import pekko.util.OptionConverters._
 
-import scala.collection.JavaConverters._
 import scala.collection.immutable
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 import scala.runtime.AbstractFunction1
 
 /**

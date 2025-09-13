@@ -17,13 +17,13 @@ import java.io.File
 
 import org.apache.pekko
 import pekko.http.javadsl.marshalling.Marshaller
-
-import scala.annotation.varargs
-import scala.collection.JavaConverters._
 import pekko.http.javadsl.model.ContentType
 import pekko.http.javadsl.model.RequestEntity
 import pekko.http.javadsl.server.{ Route, RoutingJavaMapping }
 import pekko.http.scaladsl.server.{ Directives => D }
+
+import scala.annotation.varargs
+import scala.jdk.CollectionConverters._
 
 abstract class DirectoryListing {
   def getPath: String

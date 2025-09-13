@@ -16,10 +16,11 @@ package org.apache.pekko.http.javadsl
 import java.util.Locale
 import java.util.Optional
 
+import scala.jdk.OptionConverters._
+
 import org.apache.pekko
 import pekko.annotation.{ DoNotInherit, InternalApi }
 import pekko.http.javadsl.model.Uri
-import pekko.util.OptionConverters._
 
 @DoNotInherit
 abstract class ConnectHttp {

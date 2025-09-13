@@ -51,7 +51,7 @@ abstract class ConnectionPoolSettings private[pekko] () { self: ConnectionPoolSe
 
   @ApiMayChange
   def withHostOverrides(hostOverrides: java.util.List[(String, ConnectionPoolSettings)]): ConnectionPoolSettings = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     self.copy(hostOverrides = hostOverrides.asScala.toList.map { case (h, s) =>
       ConnectionPoolSettingsImpl.hostRegex(h) -> s.asScala
     })

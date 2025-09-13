@@ -14,11 +14,12 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 import org.apache.pekko.http.impl.util.Util;
-import org.apache.pekko.util.OptionConverters;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import scala.jdk.javaapi.OptionConverters;
 
 public abstract class HttpChallenge {
   public abstract String scheme();

@@ -27,7 +27,7 @@ import pekko.http.scaladsl.{ model => sm }
 import pekko.japi.Pair
 import org.parboiled2.CharPredicate
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import pekko.http.impl.util.JavaMapping.Implicits._
 
 /** INTERNAL API */

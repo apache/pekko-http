@@ -15,7 +15,7 @@ package org.apache.pekko.http.ccompat
 
 object MapHelpers {
   def convertMapToScala[K, V](jmap: java.util.Map[K, V]): scala.collection.immutable.Map[K, V] = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     Map.empty.concat(jmap.asScala)
   }
 }

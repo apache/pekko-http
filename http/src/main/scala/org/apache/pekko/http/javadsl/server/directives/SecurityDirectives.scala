@@ -25,9 +25,9 @@ import pekko.http.javadsl.server.{ RequestContext, Route }
 import pekko.http.scaladsl
 import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.util.FutureConverters._
-import pekko.util.OptionConverters._
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
+import scala.jdk.OptionConverters._
 
 object SecurityDirectives {
 

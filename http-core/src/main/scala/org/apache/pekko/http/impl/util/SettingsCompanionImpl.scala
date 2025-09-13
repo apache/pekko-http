@@ -20,7 +20,7 @@ import com.typesafe.config.ConfigFactory._
 
 import scala.util.control.NonFatal
 import scala.collection.immutable.ListMap
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import org.apache.pekko
 import pekko.actor.{ ActorRefFactory, ActorSystem }
 import pekko.annotation.InternalApi

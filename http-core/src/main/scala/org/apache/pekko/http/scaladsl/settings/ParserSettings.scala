@@ -17,6 +17,7 @@ import java.util
 import java.util.Optional
 import java.util.function.Function
 
+import com.typesafe.config.Config
 import org.apache.pekko
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.DoNotInherit
@@ -25,10 +26,9 @@ import pekko.http.impl.util._
 import pekko.http.javadsl.model
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.{ settings => js }
-import pekko.util.OptionConverters._
-import com.typesafe.config.Config
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 
 /**
  * Public API but not intended for subclassing

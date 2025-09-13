@@ -17,13 +17,12 @@ import java.util.UUID
 import java.util.regex.Pattern
 
 import org.apache.pekko
+import pekko.http.javadsl.common.RegexConverters.toScala
 import pekko.http.scaladsl.model.Uri.Path
-
-import scala.collection.JavaConverters._
-
 import pekko.http.scaladsl.server.{ PathMatcher => SPathMatcher }
 import pekko.http.scaladsl.server.{ PathMatchers => SPathMatchers }
-import pekko.http.javadsl.common.RegexConverters.toScala
+
+import scala.jdk.CollectionConverters._
 
 final class PathMatchers
 

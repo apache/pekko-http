@@ -17,6 +17,7 @@ import java.net.InetSocketAddress
 import java.util.function.Supplier
 import java.util.{ Optional, Random }
 
+import com.typesafe.config.Config
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.ApiMayChange
@@ -24,13 +25,12 @@ import pekko.annotation.DoNotInherit
 import pekko.http.impl.settings.ClientConnectionSettingsImpl
 import pekko.http.javadsl.ClientTransport
 import pekko.http.javadsl.model.headers.UserAgent
-import pekko.io.Inet.SocketOption
-import com.typesafe.config.Config
 import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.util.OptionConverters._
+import pekko.io.Inet.SocketOption
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 
 /**
  * Public API but not intended for subclassing

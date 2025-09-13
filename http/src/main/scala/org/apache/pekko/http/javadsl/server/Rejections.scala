@@ -13,24 +13,24 @@
 
 package org.apache.pekko.http.javadsl.server
 
-import org.apache.pekko
-import pekko.http.impl.util.JavaMapping
-import pekko.http.scaladsl.server.ContentNegotiator.Alternative
-import pekko.http.scaladsl.server._
-import pekko.http.javadsl.model._
-import pekko.http.javadsl.model.headers.{ ByteRange, HttpChallenge, HttpEncoding }
 import java.util.Optional
 import java.util.function.{ Function => JFunction }
 import java.lang.{ Iterable => JIterable }
 
+import org.apache.pekko
 import pekko.annotation.DoNotInherit
+import pekko.http.impl.util.JavaMapping
+import pekko.http.javadsl.model._
+import pekko.http.javadsl.model.headers.{ ByteRange, HttpChallenge, HttpEncoding }
 import pekko.http.scaladsl
+import pekko.http.scaladsl.server.ContentNegotiator.Alternative
+import pekko.http.scaladsl.server._
 import pekko.http.impl.util.Util
 import pekko.pattern.CircuitBreakerOpenException
-import pekko.util.OptionConverters._
 
 import scala.collection.immutable
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 
 /**
  * A rejection encapsulates a specific reason why a Route was not able to handle a request. Rejections are gathered

@@ -32,9 +32,9 @@ import pekko.http.scaladsl.util.FastFuture
 import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.util.ByteString
 import pekko.util.FutureConverters._
-import scala.annotation.nowarn
 
-import scala.collection.JavaConverters._
+import scala.annotation.nowarn
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext
 
 object Unmarshaller extends pekko.http.javadsl.unmarshalling.Unmarshallers {
