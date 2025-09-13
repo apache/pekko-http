@@ -48,9 +48,6 @@ object Common extends AutoPlugin {
     Global / parallelExecution := sys.props.getOrElse("pekko.http.parallelExecution", "true") != "false")
 
   val javacTarget: String = "17"
-  def onlyAfterScala212[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
-    if (scalaMinorVersion.value >= 12) values else Seq.empty[T]
-  }
   def onlyOnScala2[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
     if (scalaVersion.value.startsWith("3")) Seq.empty[T] else values
   }
