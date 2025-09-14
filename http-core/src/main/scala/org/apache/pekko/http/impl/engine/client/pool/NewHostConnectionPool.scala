@@ -20,7 +20,6 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.client.PoolFlow.{ RequestContext, ResponseContext }
 import pekko.http.impl.engine.client.pool.SlotState._
@@ -33,7 +32,7 @@ import pekko.stream._
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import scala.util.control.{ NoStackTrace, NonFatal }
@@ -469,7 +468,7 @@ private[client] object NewHostConnectionPool {
                   entityComplete.onComplete(safely {
                     case Success(_)     => withSlot(_.onRequestEntityCompleted())
                     case Failure(cause) => withSlot(_.onRequestEntityFailed(cause))
-                  })(ExecutionContexts.parasitic)
+                  })(ExecutionContext.parasitic)
                   request.withEntity(newEntity)
               }
 
@@ -524,9 +523,9 @@ private[client] object NewHostConnectionPool {
                       ongoingResponseEntity = None
                       ongoingResponseEntityKillSwitch = None
                     }
-                  }(ExecutionContexts.parasitic)
+                  }(ExecutionContext.parasitic)
                 case Failure(_) => throw new IllegalStateException("Should never fail")
-              })(ExecutionContexts.parasitic)
+              })(ExecutionContext.parasitic)
 
               withSlot(_.onResponseReceived(response.withEntity(newEntity)))
             }
@@ -609,7 +608,7 @@ private[client] object NewHostConnectionPool {
                 onConnectionAttemptFailed(currentEmbargoLevel)
                 sl.onConnectionAttemptFailed(cause)
               }
-          })(ExecutionContexts.parasitic)
+          })(ExecutionContext.parasitic)
 
           slotCon
         }

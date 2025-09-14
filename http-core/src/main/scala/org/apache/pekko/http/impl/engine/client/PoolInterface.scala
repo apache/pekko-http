@@ -37,9 +37,7 @@ import pekko.stream.stage.TimerGraphStageLogic
 import pekko.stream.{ BufferOverflowException, Materializer }
 
 import java.util
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.concurrent.Promise
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success, Try }
 

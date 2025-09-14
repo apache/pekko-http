@@ -21,7 +21,6 @@ import com.typesafe.config.Config
 import org.apache.pekko
 import pekko.actor._
 import pekko.annotation.{ DoNotInherit, InternalApi, InternalStableApi }
-import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.HttpConnectionIdleTimeoutBidi
 import pekko.http.impl.engine.client._
@@ -129,7 +128,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
         .watchTermination() { (termWatchBefore, termWatchAfter) =>
           // flag termination when the user handler has gotten (or has emitted) termination
           // signals in both directions
-          termWatchBefore.flatMap(_ => termWatchAfter)(ExecutionContexts.parasitic)
+          termWatchBefore.flatMap(_ => termWatchAfter)(ExecutionContext.parasitic)
         }
         .joinMat(baseFlow)(Keep.both))
 
@@ -259,7 +258,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
               // from the TCP layer through the HTTP layer to the Http.IncomingConnection.flow.
               // See https://github.com/akka/akka/issues/17992
               case NonFatal(ex) => Done
-            }(ExecutionContexts.parasitic)
+            }(ExecutionContext.parasitic)
         } catch {
           case NonFatal(e) =>
             log.error(e, "Could not materialize handling flow for {}", incoming)
@@ -727,7 +726,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     val parallelism = settings.pipeliningLimit * settings.maxConnections
     Flow[(HttpRequest, T)].mapAsyncUnordered(parallelism) {
       case (request, userContext) => poolInterface(request).transform(response => Success(response -> userContext))(
-          ExecutionContexts.parasitic)
+          ExecutionContext.parasitic)
     }
   }
 
@@ -837,7 +836,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
      * Note: rather than unbinding explicitly you can also use [[addToCoordinatedShutdown]] to add this task to Akka's coordinated shutdown.
      */
     def unbind(): Future[Done] =
-      unbindAction().map(_ => Done)(ExecutionContexts.parasitic)
+      unbindAction().map(_ => Done)(ExecutionContext.parasitic)
 
     /**
      * Triggers "graceful" termination request being handled on this connection.
@@ -887,7 +886,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
 
       _whenTerminationSignalIssued.trySuccess(hardDeadline.fromNow)
       val terminated =
-        unbindAction().flatMap(_ => terminateAction(hardDeadline))(ExecutionContexts.parasitic)
+        unbindAction().flatMap(_ => terminateAction(hardDeadline))(ExecutionContext.parasitic)
       _whenTerminated.completeWith(terminated)
       whenTerminated
     }
@@ -928,7 +927,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
         unbind()
       }
       shutdown.addTask(CoordinatedShutdown.PhaseServiceRequestsDone, s"http-terminate-${localAddress}") { () =>
-        terminate(hardTerminationDeadline).map(_ => Done)(ExecutionContexts.parasitic)
+        terminate(hardTerminationDeadline).map(_ => Done)(ExecutionContext.parasitic)
       }
       this
     }

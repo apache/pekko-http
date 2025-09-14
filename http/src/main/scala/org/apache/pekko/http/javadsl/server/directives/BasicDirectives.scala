@@ -17,7 +17,6 @@ import java.util.function.{ Function => JFunction }
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.japi.Util
 import pekko.stream.Materializer
@@ -46,7 +45,7 @@ import java.util.{ List => JList }
 import java.util.concurrent.CompletionStage
 import java.util.function.Predicate
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
 import scala.concurrent.duration.FiniteDuration
 
 abstract class BasicDirectives {
@@ -99,8 +98,8 @@ abstract class BasicDirectives {
       inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRouteResultFuture(stage =>
       CompletionStageOps(
-        f(stage.fast.map(_.asJava)(ExecutionContexts.parasitic).asJava)).asScala.fast.map(_.asScala)(
-        ExecutionContexts.parasitic)) {
+        f(stage.fast.map(_.asJava)(ExecutionContext.parasitic).asJava)).asScala.fast.map(_.asScala)(
+        ExecutionContext.parasitic)) {
       inner.get.delegate
     }
   }
@@ -108,7 +107,7 @@ abstract class BasicDirectives {
   def mapRouteResultWith(f: JFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route =
     RouteAdapter {
       D.mapRouteResultWith(r =>
-        CompletionStageOps(f(r.asJava)).asScala.fast.map(_.asScala)(ExecutionContexts.parasitic)) {
+        CompletionStageOps(f(r.asJava)).asScala.fast.map(_.asScala)(ExecutionContext.parasitic)) {
         inner.get.delegate
       }
     }
@@ -116,7 +115,7 @@ abstract class BasicDirectives {
   def mapRouteResultWithPF(
       f: PartialFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRouteResultWith(r =>
-      CompletionStageOps(f(r.asJava)).asScala.fast.map(_.asScala)(ExecutionContexts.parasitic)) {
+      CompletionStageOps(f(r.asJava)).asScala.fast.map(_.asScala)(ExecutionContext.parasitic)) {
       inner.get.delegate
     }
   }
@@ -175,7 +174,7 @@ abstract class BasicDirectives {
       f: JFunction[JIterable[Rejection], CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
     D.recoverRejectionsWith(rs =>
       CompletionStageOps(f.apply(Util.javaArrayList(rs.map(_.asJava)))).asScala.fast.map(_.asScala)(
-        ExecutionContexts.parasitic)) { inner.get.delegate }
+        ExecutionContext.parasitic)) { inner.get.delegate }
   }
 
   /**

@@ -17,13 +17,14 @@ import java.util.concurrent.CountDownLatch
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.dispatch.ExecutionContexts
 import pekko.http.CommonBenchmark
 import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity }
 import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
 import com.typesafe.config.ConfigFactory
 import org.openjdk.jmh.annotations.{ Benchmark, Param, Setup, TearDown }
+
+import scala.concurrent.ExecutionContext
 
 class HttpEntityBenchmark extends CommonBenchmark {
   @Param(Array("strict", "default"))
@@ -38,7 +39,7 @@ class HttpEntityBenchmark extends CommonBenchmark {
     val latch = new CountDownLatch(1)
     entity.discardBytes(system)
       .future
-      .onComplete(_ => latch.countDown())(ExecutionContexts.parasitic)
+      .onComplete(_ => latch.countDown())(ExecutionContext.parasitic)
     latch.await()
   }
 

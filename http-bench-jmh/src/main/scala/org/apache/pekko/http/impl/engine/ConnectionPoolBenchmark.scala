@@ -18,7 +18,6 @@ import java.util.concurrent.CountDownLatch
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.dispatch.ExecutionContexts
 import pekko.http.CommonBenchmark
 import pekko.http.impl.util.enhanceString_
 import pekko.http.scaladsl.model.HttpRequest
@@ -57,7 +56,7 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
         .onComplete {
           case Success(_) => latch.countDown()
           case Failure(_) => throw new IllegalStateException
-        }(ExecutionContexts.parasitic)
+        }(ExecutionContext.parasitic)
     }
 
     latch.await()

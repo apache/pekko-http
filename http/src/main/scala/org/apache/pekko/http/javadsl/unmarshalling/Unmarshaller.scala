@@ -34,8 +34,8 @@ import pekko.util.ByteString
 import pekko.util.FutureConverters._
 
 import scala.annotation.nowarn
-import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext
+import scala.jdk.CollectionConverters._
 
 object Unmarshaller extends pekko.http.javadsl.unmarshalling.Unmarshallers {
   implicit def fromScala[A, B](scalaUnmarshaller: unmarshalling.Unmarshaller[A, B]): Unmarshaller[A, B] =

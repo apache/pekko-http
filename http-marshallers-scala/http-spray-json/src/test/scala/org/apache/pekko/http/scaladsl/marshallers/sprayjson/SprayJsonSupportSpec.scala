@@ -22,9 +22,9 @@ import pekko.http.scaladsl.model.MessageEntity
 import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.util.ByteString
 import org.scalatest.concurrent.ScalaFutures
-import spray.json.{ JsArray, JsString, JsValue }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import spray.json.{ JsArray, JsString, JsValue }
 import spray.json.RootJsonFormat
 
 class SprayJsonSupportSpec extends AnyWordSpec with Matchers with ScalaFutures {

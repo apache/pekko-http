@@ -15,7 +15,6 @@ package docs.http.javadsl.server.directives;
 
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.dispatch.ExecutionContexts;
 import org.apache.pekko.event.Logging;
 import org.apache.pekko.event.LoggingAdapter;
 import org.apache.pekko.http.javadsl.model.ContentTypes;
@@ -40,6 +39,7 @@ import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
 import org.junit.Ignore;
 import org.junit.Test;
+import scala.concurrent.ExecutionContext;
 import scala.concurrent.ExecutionContextExecutor;
 import scala.concurrent.duration.FiniteDuration;
 
@@ -354,7 +354,7 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
     // #withExecutionContext
 
     final ExecutionContextExecutor special =
-        ExecutionContexts.fromExecutor(Executors.newFixedThreadPool(1));
+        ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1));
 
     final Route sample =
         path(

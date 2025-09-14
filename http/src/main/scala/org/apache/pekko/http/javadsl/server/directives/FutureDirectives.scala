@@ -21,13 +21,13 @@ import java.util.function.Supplier
 import org.apache.pekko
 import pekko.http.javadsl.marshalling.Marshaller
 import pekko.http.javadsl.model.RequestEntity
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Try
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.server.directives.{ CompleteOrRecoverWithMagnet, FutureDirectives => D }
 import pekko.pattern.CircuitBreaker
 import pekko.util.FutureConverters._
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Try
 
 abstract class FutureDirectives extends FormFieldDirectives {
 

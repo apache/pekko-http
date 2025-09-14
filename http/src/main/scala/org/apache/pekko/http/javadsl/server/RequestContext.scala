@@ -13,31 +13,30 @@
 
 package org.apache.pekko.http.javadsl.server
 
+import java.util.concurrent.CompletionStage
+import java.util.function.{ Function => JFunction }
+
 import org.apache.pekko
+import pekko.annotation.InternalApi
+import pekko.event.LoggingAdapter
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.marshalling.Marshaller
 import pekko.http.javadsl.model.HttpRequest
-import pekko.http.scaladsl.util.FastFuture._
-
-import scala.concurrent.ExecutionContextExecutor
-import pekko.stream.Materializer
-import pekko.event.LoggingAdapter
-import pekko.http.javadsl.settings.RoutingSettings
-import pekko.http.javadsl.settings.ParserSettings
 import pekko.http.javadsl.model.HttpResponse
 import pekko.http.javadsl.model.StatusCode
 import pekko.http.javadsl.model.Uri
 import pekko.http.javadsl.model.headers.Location
-import java.util.concurrent.CompletionStage
-import java.util.function.{ Function => JFunction }
-
-import pekko.annotation.InternalApi
+import pekko.http.javadsl.settings.RoutingSettings
+import pekko.http.javadsl.settings.ParserSettings
 import pekko.http.scaladsl
-import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.scaladsl.marshalling.ToResponseMarshallable
+import pekko.http.scaladsl.model.Uri.Path
+import pekko.http.scaladsl.util.FastFuture._
+import pekko.stream.Materializer
+import pekko.util.FutureConverters._
 
 import scala.annotation.varargs
-import pekko.http.scaladsl.model.Uri.Path
-import pekko.util.FutureConverters._
+import scala.concurrent.ExecutionContextExecutor
 
 class RequestContext private (val delegate: scaladsl.server.RequestContext) {
   import RequestContext._
@@ -60,18 +59,18 @@ class RequestContext private (val delegate: scaladsl.server.RequestContext) {
 
   def complete[T](value: T, marshaller: Marshaller[T, HttpResponse]): CompletionStage[RouteResult] = {
     delegate.complete(ToResponseMarshallable(value)(marshaller))
-      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.parasitic).asJava
+      .fast.map(r => r: RouteResult)(scala.concurrent.ExecutionContext.parasitic).asJava
   }
 
   def completeWith(response: HttpResponse): CompletionStage[RouteResult] = {
     delegate.complete(response.asScala)
-      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.parasitic).asJava
+      .fast.map(r => r: RouteResult)(scala.concurrent.ExecutionContext.parasitic).asJava
   }
 
   @varargs def reject(rejections: Rejection*): CompletionStage[RouteResult] = {
     val scalaRejections = rejections.map(_.asScala)
     delegate.reject(scalaRejections: _*)
-      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.parasitic).asJava
+      .fast.map(r => r: RouteResult)(scala.concurrent.ExecutionContext.parasitic).asJava
   }
 
   def redirect(uri: Uri, redirectionType: StatusCode): CompletionStage[RouteResult] = {
@@ -80,7 +79,7 @@ class RequestContext private (val delegate: scaladsl.server.RequestContext) {
 
   def fail(error: Throwable): CompletionStage[RouteResult] =
     delegate.fail(error)
-      .fast.map(r => r: RouteResult)(pekko.dispatch.ExecutionContexts.parasitic).asJava
+      .fast.map(r => r: RouteResult)(scala.concurrent.ExecutionContext.parasitic).asJava
 
   def withRequest(req: HttpRequest): RequestContext = wrap(delegate.withRequest(req.asScala))
   def withExecutionContext(ec: ExecutionContextExecutor): RequestContext = wrap(delegate.withExecutionContext(ec))
