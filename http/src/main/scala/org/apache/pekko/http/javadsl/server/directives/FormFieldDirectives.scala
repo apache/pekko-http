@@ -20,10 +20,7 @@ import java.util.function.{ Function => JFunction }
 
 import org.apache.pekko
 import pekko.http.javadsl.unmarshalling.Unmarshaller
-
-
 import pekko.http.javadsl.server.Route
-
 import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.http.scaladsl.server.directives.ParameterDirectives._
 
