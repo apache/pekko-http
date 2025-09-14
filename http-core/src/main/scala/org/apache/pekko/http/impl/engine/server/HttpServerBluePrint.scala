@@ -22,7 +22,6 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.japi.function.Function
 import pekko.event.LoggingAdapter
 import pekko.http.ParsingErrorHandler
@@ -49,6 +48,7 @@ import pekko.http.javadsl.model
 import pekko.http.scaladsl.model._
 import pekko.http.impl.util.LogByteStringTools._
 
+import scala.concurrent.ExecutionContext
 import scala.util.Failure
 
 /**
@@ -496,7 +496,7 @@ private[http] object HttpServerBluePrint {
                       log.error(ex,
                         s"Response stream for [${requestStart.debugString}] failed with '${ex.getMessage}'. Aborting connection.")
                     case _ => // ignore
-                  }(ExecutionContexts.parasitic)
+                  }(ExecutionContext.parasitic)
                   newEntity
                 }
 

@@ -17,7 +17,6 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.http.scaladsl.model.HttpEntity
 import pekko.http.scaladsl.util.FastFuture
 import pekko.stream._
@@ -89,7 +88,7 @@ private[http] object StreamUtils {
             killResult.future.value match {
               case Some(res) => handleKill(res)
               case None =>
-                killResult.future.onComplete(killCallback.invoke)(ExecutionContexts.parasitic)
+                killResult.future.onComplete(killCallback.invoke)(ExecutionContext.parasitic)
             }
           }
 

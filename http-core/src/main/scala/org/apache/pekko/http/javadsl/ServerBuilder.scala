@@ -17,7 +17,6 @@ import java.util.concurrent.CompletionStage
 
 import org.apache.pekko
 import pekko.actor.ClassicActorSystemProvider
-import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.{ HttpRequest, HttpResponse }
@@ -195,6 +194,6 @@ object ServerBuilder {
     def connectionSource(): Source[IncomingConnection, CompletionStage[ServerBinding]] =
       http.bindImpl(interface, port, context.asScala, settings.asScala, log)
         .map(new IncomingConnection(_))
-        .mapMaterializedValue(_.map(new ServerBinding(_))(ExecutionContexts.parasitic).asJava).asJava
+        .mapMaterializedValue(_.map(new ServerBinding(_))(ExecutionContext.parasitic).asJava).asJava
   }
 }

@@ -16,7 +16,6 @@ package org.apache.pekko.http.impl.engine.http2.client
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.http.scaladsl.Http.OutgoingConnection
 import pekko.http.scaladsl.model.{ AttributeKey, HttpRequest, HttpResponse, RequestResponseAssociation, StatusCodes }
 import pekko.http.scaladsl.settings.Http2ClientSettings
@@ -27,10 +26,8 @@ import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet, StreamTcpException }
 import pekko.util.PrettyDuration
 
 import java.util.concurrent.ThreadLocalRandom
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration.DurationLong
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ Future, Promise }
+import scala.concurrent.duration.{ Duration, DurationLong, FiniteDuration }
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success }
 
 /** INTERNAL API */
@@ -117,7 +114,7 @@ private[http2] object PersistentConnection {
               onConnected.invoke(())
             case Failure(cause) =>
               onFailed.invoke(cause)
-          }(ExecutionContexts.parasitic)
+          }(ExecutionContext.parasitic)
 
           var requestOutPulled = false
           requestOut.setHandler(new OutHandler {

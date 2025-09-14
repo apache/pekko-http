@@ -140,8 +140,6 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
     import pekko.http.scaladsl.model._
     import pekko.http.scaladsl.model.HttpMessage.DiscardedEntity
 
-    import scala.concurrent.ExecutionContext
-
     implicit val system: ActorSystem = ActorSystem()
     implicit val dispatcher: ExecutionContext = system.dispatcher
 

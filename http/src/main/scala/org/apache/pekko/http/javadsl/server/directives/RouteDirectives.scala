@@ -15,12 +15,12 @@ package org.apache.pekko.http.javadsl.server.directives
 
 import java.util.concurrent.{ CompletionException, CompletionStage }
 
-import org.apache.pekko
-import pekko.dispatch.ExecutionContexts
-import pekko.http.javadsl.marshalling.Marshaller
-
 import scala.annotation.varargs
+import scala.concurrent.ExecutionContext
+
+import org.apache.pekko
 import pekko.http.impl.model.JavaUri
+import pekko.http.javadsl.marshalling.Marshaller
 import pekko.http.javadsl.model.{
   HttpHeader,
   HttpRequest,
@@ -31,22 +31,21 @@ import pekko.http.javadsl.model.{
   Uri
 }
 import pekko.http.javadsl.server.{ Rejection, Route, RoutingJavaMapping }
+import pekko.http.javadsl.server.RoutingJavaMapping._
 import pekko.http.scaladsl
 import pekko.http.scaladsl.marshalling.Marshaller._
 import pekko.http.scaladsl.marshalling.ToResponseMarshallable
 import pekko.http.scaladsl.model.StatusCodes.Redirection
-import pekko.http.javadsl.server.RoutingJavaMapping._
 import pekko.http.scaladsl.server.RouteResult
 import pekko.http.scaladsl.server.directives.{ RouteDirectives => D }
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
-import scala.concurrent.ExecutionContext
 
 abstract class RouteDirectives extends RespondWithDirectives {
   import RoutingJavaMapping.Implicits._
 
   // Don't try this at home – we only use it here for the java -> scala conversions
-  private implicit val conversionExecutionContext: ExecutionContext = ExecutionContexts.parasitic
+  private implicit val conversionExecutionContext: ExecutionContext = ExecutionContext.parasitic
 
   /**
    * Java-specific call added so you can chain together multiple alternate routes using comma,

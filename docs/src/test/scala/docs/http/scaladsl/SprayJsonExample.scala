@@ -27,10 +27,9 @@ import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.io.StdIn
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.io.StdIn
 
 object SprayJsonExample {
 

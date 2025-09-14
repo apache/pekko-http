@@ -18,13 +18,13 @@ import java.util.concurrent.{ CompletionStage, TimeUnit }
 
 import org.apache.pekko
 import pekko.Done
+import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.DoNotInherit
-import pekko.dispatch.ExecutionContexts
 import pekko.util.FutureConverters._
 import pekko.util.JavaDurationConverters._
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
-import pekko.actor.ClassicActorSystemProvider
 
 /**
  * Represents a prospective HTTP server binding.
@@ -89,7 +89,7 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
 
   def terminate(hardDeadline: java.time.Duration): CompletionStage[HttpTerminated] = {
     delegate.terminate(FiniteDuration.apply(hardDeadline.toMillis, TimeUnit.MILLISECONDS))
-      .map(_.asInstanceOf[HttpTerminated])(ExecutionContexts.parasitic)
+      .map(_.asInstanceOf[HttpTerminated])(ExecutionContext.parasitic)
       .asJava
   }
 
@@ -103,7 +103,7 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
    */
   def whenTerminationSignalIssued: CompletionStage[java.time.Duration] =
     delegate.whenTerminationSignalIssued
-      .map(deadline => deadline.time.asJava)(ExecutionContexts.parasitic)
+      .map(deadline => deadline.time.asJava)(ExecutionContext.parasitic)
       .asJava
 
   /**
@@ -120,7 +120,7 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
    */
   def whenTerminated: CompletionStage[HttpTerminated] =
     delegate.whenTerminated
-      .map(_.asInstanceOf[HttpTerminated])(ExecutionContexts.parasitic)
+      .map(_.asInstanceOf[HttpTerminated])(ExecutionContext.parasitic)
       .asJava
 
   /**

@@ -23,7 +23,6 @@ import pekko.actor.{
   ExtensionIdProvider
 }
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.HttpConnectionIdleTimeoutBidi
 import pekko.http.impl.engine.server.{
@@ -51,7 +50,7 @@ import pekko.Done
 
 import javax.net.ssl.SSLEngine
 import scala.collection.immutable
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success }
@@ -125,7 +124,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
                 // See https://github.com/akka/akka/issues/17992
                 case NonFatal(ex) =>
                   Done
-              }(ExecutionContexts.parasitic)
+              }(ExecutionContext.parasitic)
           } catch {
             case NonFatal(e) =>
               log.error(e, "Could not materialize handling flow for {}", incoming)

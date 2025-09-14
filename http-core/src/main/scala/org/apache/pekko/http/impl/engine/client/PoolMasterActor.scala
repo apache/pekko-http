@@ -26,15 +26,12 @@ import pekko.actor.{
   Props
 }
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.http.impl.engine.client.PoolInterface.ShutdownReason
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import pekko.stream.Materializer
 
-import scala.concurrent.{ Future, Promise }
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.util.{ Failure, Success, Try }
 
 /**
  * INTERNAL API
@@ -191,7 +188,7 @@ private[http] final class PoolMasterActor extends Actor with ActorLogging {
           // has completed.
           val completed = pool.shutdown()(context.dispatcher)
           shutdownCompletedPromise.tryCompleteWith(
-            completed.map(_ => Done)(ExecutionContexts.parasitic))
+            completed.map(_ => Done)(ExecutionContext.parasitic))
           statusById += poolId -> PoolInterfaceShuttingDown(shutdownCompletedPromise)
         case Some(PoolInterfaceShuttingDown(formerPromise)) =>
           // Pool is already shutting down, mirror the existing promise.

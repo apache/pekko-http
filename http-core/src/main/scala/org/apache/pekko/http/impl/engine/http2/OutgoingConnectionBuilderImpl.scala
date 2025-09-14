@@ -18,7 +18,6 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.http2.client.PersistentConnection
 import pekko.http.scaladsl.Http.OutgoingConnection
@@ -34,7 +33,7 @@ import pekko.http.scaladsl.HttpsConnectionContext
 import pekko.http.scaladsl.OutgoingConnectionBuilder
 import pekko.stream.javadsl.{ Flow => JFlow }
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 /**
  * INTERNAL API
@@ -161,7 +160,7 @@ private[pekko] object OutgoingConnectionBuilderImpl {
         : JFlow[javadsl.model.HttpRequest, javadsl.model.HttpResponse, CompletionStage[javadsl.OutgoingConnection]] = {
       import pekko.util.FutureConverters._
       javaFlowKeepMatVal(flow.mapMaterializedValue(f =>
-        f.map(oc => new javadsl.OutgoingConnection(oc))(ExecutionContexts.parasitic).asJava))
+        f.map(oc => new javadsl.OutgoingConnection(oc))(ExecutionContext.parasitic).asJava))
     }
 
     private def javaFlowKeepMatVal[M](

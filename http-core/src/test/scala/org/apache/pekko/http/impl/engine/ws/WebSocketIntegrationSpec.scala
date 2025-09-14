@@ -100,7 +100,7 @@ class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
 
               override def preStart(): Unit = {
                 promise.future.foreach(_ => getAsyncCallback[Done](_ => complete(shape.out)).invoke(Done))(
-                  pekko.dispatch.ExecutionContexts.parasitic)
+                  scala.concurrent.ExecutionContext.parasitic)
               }
 
               setHandlers(shape.in, shape.out, this)
