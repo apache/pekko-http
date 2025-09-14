@@ -126,7 +126,7 @@ private[http] object JavaMapping {
 
       def toJava(scalaObject: immutable.Seq[_S]): jl.Iterable[_J] = scalaObject.map(mapping.toJava).asJavaCollection
       def toScala(javaObject: jl.Iterable[_J]): immutable.Seq[_S] =
-        Implicits.convertSeqToScala(scala.collection.JavaConverters.iterableAsScalaIterableConverter(javaObject).asScala.toSeq)
+        Implicits.convertSeqToScala(javaObject.asScala.toSeq)
     }
   implicit def map[K, V]: JavaMapping[ju.Map[K, V], immutable.Map[K, V]] =
     new JavaMapping[ju.Map[K, V], immutable.Map[K, V]] {
