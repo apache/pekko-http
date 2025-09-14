@@ -16,9 +16,9 @@ package org.apache.pekko.http.caching
 import java.util.concurrent.{ CompletableFuture, Executor, TimeUnit }
 import java.util.function.BiFunction
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.jdk.CollectionConverters._
 
 import com.github.benmanes.caffeine.cache.{ AsyncCache, Caffeine }
 import org.apache.pekko

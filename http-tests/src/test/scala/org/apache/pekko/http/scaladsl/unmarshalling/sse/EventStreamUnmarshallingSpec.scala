@@ -25,7 +25,6 @@ import pekko.http.scaladsl.settings.ServerSentEventSettings
 import pekko.stream.scaladsl.{ Sink, Source }
 
 import java.util.{ List => JList }
-import scala.collection.JavaConverters
 import scala.collection.immutable.Seq
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
@@ -37,7 +36,7 @@ object EventStreamUnmarshallingSpec {
 
   // Also used by EventStreamUnmarshallingTest.java
   val eventsAsJava: JList[javadsl.model.sse.ServerSentEvent] = {
-    import JavaConverters._
+    import scala.jdk.CollectionConverters._
     events.map(_.asInstanceOf[javadsl.model.sse.ServerSentEvent]).asJava
   }
 

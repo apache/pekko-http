@@ -16,10 +16,11 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.annotation.DoNotInherit;
 import org.apache.pekko.http.javadsl.model.DateTime;
 import org.apache.pekko.http.impl.util.Util;
-import org.apache.pekko.util.OptionConverters;
 
 import java.util.Optional;
 import java.util.OptionalLong;
+
+import scala.jdk.javaapi.OptionConverters;
 
 @DoNotInherit
 public abstract class HttpCookie {

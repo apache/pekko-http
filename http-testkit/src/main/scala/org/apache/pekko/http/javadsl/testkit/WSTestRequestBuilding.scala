@@ -14,16 +14,15 @@
 package org.apache.pekko.http.javadsl.testkit
 
 import org.apache.pekko
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.ws.Message
 import pekko.http.javadsl.model.{ HttpRequest, Uri }
 import pekko.http.scaladsl.{ model => sm }
+import pekko.http.scaladsl.{ testkit => st }
+import pekko.stream.{ scaladsl, Materializer }
 import pekko.stream.javadsl.Flow
 
-import pekko.http.scaladsl.{ testkit => st }
-
-import pekko.http.impl.util.JavaMapping.Implicits._
-import scala.collection.JavaConverters._
-import pekko.stream.{ scaladsl, Materializer }
+import scala.jdk.CollectionConverters._
 
 trait WSTestRequestBuilding {
 

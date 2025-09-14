@@ -33,9 +33,9 @@ import pekko.stream._
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 
-import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 import scala.util.control.{ NoStackTrace, NonFatal }
 import scala.util.{ Failure, Random, Success, Try }
 

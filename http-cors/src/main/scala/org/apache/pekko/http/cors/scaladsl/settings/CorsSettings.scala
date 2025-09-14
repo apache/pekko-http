@@ -19,6 +19,7 @@ package org.apache.pekko.http.cors.scaladsl.settings
 
 import java.util.OptionalLong
 import java.util.concurrent.TimeUnit
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.DoNotInherit
@@ -29,12 +30,12 @@ import pekko.http.impl.util.SettingsCompanionImpl
 import pekko.http.javadsl.{ model => jmmodel }
 import pekko.http.scaladsl.model.headers.HttpOrigin
 import pekko.http.scaladsl.model.{ HttpHeader, HttpMethod, HttpMethods }
-import pekko.util.OptionConverters._
 import com.typesafe.config.ConfigException.{ Missing, WrongType }
 import com.typesafe.config.Config
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.immutable.Seq
+import scala.jdk.OptionConverters._
 import scala.util.Try
 
 /**

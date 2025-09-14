@@ -25,7 +25,7 @@ import pekko.http.scaladsl
 import pekko.http.scaladsl.server.directives.LoggingMagnet
 import pekko.http.scaladsl.server.{ Directives => D, RouteResult }
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 abstract class DebuggingDirectives extends CookieDirectives {
   import pekko.http.impl.util.JavaMapping.Implicits._

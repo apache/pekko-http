@@ -21,9 +21,9 @@ import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.japi.function.{ Creator, Procedure }
 import pekko.util.FutureConverters._
 
-import scala.collection.JavaConverters._
 import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.jdk.CollectionConverters._
 
 /**
  * API MAY CHANGE

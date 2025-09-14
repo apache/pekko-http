@@ -16,7 +16,8 @@ package directives
 
 import java.util.function.Supplier
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.coding.Coder

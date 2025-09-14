@@ -19,7 +19,8 @@ import org.apache.pekko
 import pekko.http.javadsl.model.AttributeKey
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.server.directives.{ AttributeDirectives => D }
-import pekko.util.OptionConverters._
+
+import scala.jdk.OptionConverters._
 
 abstract class AttributeDirectives extends HeaderDirectives {
   import pekko.http.impl.util.JavaMapping._

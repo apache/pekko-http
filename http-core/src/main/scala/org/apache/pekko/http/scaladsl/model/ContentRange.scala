@@ -14,10 +14,12 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.util.{ Optional, OptionalLong }
+
 import org.apache.pekko
 import pekko.http.impl.util.{ Rendering, ValueRenderable }
 import pekko.http.javadsl.{ model => jm }
-import pekko.util.OptionConverters._
+
+import scala.jdk.OptionConverters._
 
 sealed trait ContentRange extends jm.ContentRange with ValueRenderable {
   // default implementations to override

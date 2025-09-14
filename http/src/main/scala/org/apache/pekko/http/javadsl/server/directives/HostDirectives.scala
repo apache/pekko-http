@@ -20,7 +20,7 @@ import java.util.function.Predicate
 import java.util.function.Supplier
 import java.util.regex.Pattern
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import org.apache.pekko
 import pekko.http.javadsl.common.RegexConverters.toScala

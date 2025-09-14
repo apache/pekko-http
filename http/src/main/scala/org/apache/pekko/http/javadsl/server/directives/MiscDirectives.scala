@@ -19,7 +19,7 @@ import java.util.function.BooleanSupplier
 import java.util.function.{ Function => JFunction }
 import java.util.function.Supplier
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import org.apache.pekko
 import pekko.http.javadsl.model.RemoteAddress

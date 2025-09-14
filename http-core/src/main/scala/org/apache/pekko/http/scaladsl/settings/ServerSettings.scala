@@ -13,6 +13,7 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
+import com.typesafe.config.Config
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.{ DoNotInherit, InternalApi }
@@ -24,12 +25,11 @@ import pekko.http.javadsl.{ settings => js }
 import pekko.http.scaladsl.model.HttpResponse
 import pekko.http.scaladsl.model.headers.{ Host, Server }
 import pekko.io.Inet.SocketOption
-import pekko.util.OptionConverters._
-import com.typesafe.config.Config
 
-import scala.collection.JavaConverters._
 import scala.collection.immutable
 import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 import scala.language.implicitConversions
 
 /**

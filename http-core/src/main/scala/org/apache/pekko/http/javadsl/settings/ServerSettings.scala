@@ -26,7 +26,7 @@ import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.util.OptionConverters._
 import com.typesafe.config.Config
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 /**

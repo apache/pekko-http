@@ -12,35 +12,34 @@
  */
 
 package org.apache.pekko.http.scaladsl.model
+
 import java.io.File
 import java.nio.file.Path
 import java.util.Optional
+import java.util.concurrent.CompletionStage
 
 import org.apache.pekko
+import pekko.annotation.InternalApi
+import pekko.event.LoggingAdapter
+import pekko.http.ccompat._
+import pekko.http.impl.engine.rendering.BodyPartRenderer
 import pekko.http.impl.util.{ DefaultNoLogging, Util }
+import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.javadsl.{ model => jm }
+import pekko.http.scaladsl.util.FastFuture
+import pekko.http.scaladsl.model.headers._
+import FastFuture._
+import pekko.stream.Materializer
+import pekko.stream.javadsl.{ Source => JSource }
+import pekko.stream.scaladsl._
+import pekko.util.ConstantFun
+import pekko.util.FutureConverters._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.Future
 import scala.collection.immutable
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.{ Failure, Success, Try }
-import pekko.event.LoggingAdapter
-import pekko.util.ConstantFun
-import pekko.stream.Materializer
-import pekko.stream.javadsl.{ Source => JSource }
-import pekko.stream.scaladsl._
-import pekko.http.ccompat._
-import pekko.http.scaladsl.util.FastFuture
-import pekko.http.scaladsl.model.headers._
-import pekko.http.impl.engine.rendering.BodyPartRenderer
-import pekko.http.javadsl.{ model => jm }
-import FastFuture._
-import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.util.FutureConverters._
-
-import java.util.concurrent.CompletionStage
-
-import pekko.annotation.InternalApi
 
 /**
  * The model of multipart content for media-types `multipart/\*` (general multipart content),
