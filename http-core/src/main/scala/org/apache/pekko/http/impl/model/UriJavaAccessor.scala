@@ -30,7 +30,7 @@ private[http] abstract class UriJavaAccessor
  */
 @InternalApi
 private[http] object UriJavaAccessor {
-  import collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
 
   def hostApply(string: String): Host = Uri.Host(string)
   def hostApply(string: String, mode: Uri.ParsingMode): Host = Uri.Host(string, mode = mode)

@@ -210,7 +210,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
 
   def transformEntityDataBytes[M](transformer: Graph[FlowShape[ByteString, ByteString], M]): Self
 
-  import collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
 
   /** Java API */
   def getHeaders: JIterable[jm.HttpHeader] = (headers: immutable.Seq[jm.HttpHeader]).asJava

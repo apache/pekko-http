@@ -47,7 +47,7 @@ sealed abstract class MediaRange extends jm.MediaRange with Renderable with With
 
   /** Java API */
   def getParams: util.Map[String, String] = {
-    import collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     params.asJava
   }
 

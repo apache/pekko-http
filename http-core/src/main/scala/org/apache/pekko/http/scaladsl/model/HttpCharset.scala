@@ -89,7 +89,7 @@ final case class HttpCharset private[http] (override val value: String)(val alia
 
   /** Java API */
   def getAliases: JIterable[String] = {
-    import collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     aliases.asJava
   }
 }

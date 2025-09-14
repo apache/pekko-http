@@ -22,8 +22,6 @@ import org.apache.pekko
 import pekko.japi.Pair
 import pekko.stream.{ javadsl, scaladsl, FlowShape, Graph }
 
-import scala.collection.immutable
-import scala.reflect.ClassTag
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.impl.model.{ JavaQuery, JavaUri }
@@ -37,9 +35,11 @@ import pekko.http.javadsl.{
 import pekko.http.{ javadsl => jdsl, scaladsl => sdsl }
 import pekko.http.scaladsl.{ model => sm }
 import pekko.util.FutureConverters._
-import pekko.util.OptionConverters._
 
+import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.jdk.OptionConverters._
+import scala.reflect.ClassTag
 import scala.util.Try
 
 /** INTERNAL API */
@@ -122,15 +122,15 @@ private[http] object JavaMapping {
   implicit def iterableMapping[_J, _S](
       implicit mapping: JavaMapping[_J, _S]): JavaMapping[jl.Iterable[_J], immutable.Seq[_S]] =
     new JavaMapping[jl.Iterable[_J], immutable.Seq[_S]] {
-      import collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
 
       def toJava(scalaObject: immutable.Seq[_S]): jl.Iterable[_J] = scalaObject.map(mapping.toJava).asJavaCollection
       def toScala(javaObject: jl.Iterable[_J]): immutable.Seq[_S] =
-        Implicits.convertSeqToScala(iterableAsScalaIterableConverter(javaObject).asScala.toSeq)
+        Implicits.convertSeqToScala(javaObject.asScala.toSeq)
     }
   implicit def map[K, V]: JavaMapping[ju.Map[K, V], immutable.Map[K, V]] =
     new JavaMapping[ju.Map[K, V], immutable.Map[K, V]] {
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       def toScala(javaObject: ju.Map[K, V]): immutable.Map[K, V] = javaObject.asScala.toMap
       def toJava(scalaObject: immutable.Map[K, V]): ju.Map[K, V] = scalaObject.asJava
     }

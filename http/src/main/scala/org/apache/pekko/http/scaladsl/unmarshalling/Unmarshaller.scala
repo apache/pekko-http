@@ -23,7 +23,7 @@ import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.stream.Materializer
 import pekko.util.OptionConverters._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.control.{ NoStackTrace, NonFatal }
 
