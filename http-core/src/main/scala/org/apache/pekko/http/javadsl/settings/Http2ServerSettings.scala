@@ -18,9 +18,10 @@ import java.time.Duration
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.scaladsl
-import pekko.util.ccompat.JavaConverters._
 import com.typesafe.config.Config
+
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
 @DoNotInherit
 trait Http2ServerSettings {

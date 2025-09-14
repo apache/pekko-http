@@ -25,8 +25,8 @@ import pekko.http.javadsl.model.HttpHeader
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.model.headers.{ ModeledCustomHeader, ModeledCustomHeaderCompanion }
 import pekko.http.scaladsl.server.directives.{ HeaderDirectives => D, HeaderMagnet }
-import pekko.util.OptionConverters._
 
+import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
 import scala.util.{ Failure, Success }
 

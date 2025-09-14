@@ -21,14 +21,15 @@ import java.util.function.{ Function => JFunction }
 import org.apache.pekko
 import pekko.http.javadsl.unmarshalling.Unmarshaller
 
-import scala.collection.JavaConverters._
-import pekko.http.impl.util.JavaMapping.Implicits._
 
 import pekko.http.javadsl.server.Route
 
 import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.http.scaladsl.server.directives.ParameterDirectives._
-import pekko.util.OptionConverters._
+
+import scala.jdk.CollectionConverters._
+import pekko.http.impl.util.JavaMapping.Implicits._
+import scala.jdk.OptionConverters._
 
 abstract class FormFieldDirectives extends FileUploadDirectives {
 

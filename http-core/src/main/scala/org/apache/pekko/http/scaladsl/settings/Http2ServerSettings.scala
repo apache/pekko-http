@@ -19,11 +19,11 @@ import pekko.annotation.DoNotInherit
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
 import pekko.http.javadsl
-import pekko.util.ccompat.JavaConverters._
 import com.typesafe.config.Config
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
+import scala.jdk.CollectionConverters._
 
 /**
  * INTERNAL API
