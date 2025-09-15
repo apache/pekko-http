@@ -19,10 +19,10 @@ import org.apache.pekko
 import pekko.stream.{ javadsl, Materializer }
 import pekko.stream.scaladsl.Source
 import pekko.util.{ ByteString, ByteStringBuilder }
-import pekko.util.FutureConverters._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.jdk.FutureConverters._
 
 //#message-model
 /**

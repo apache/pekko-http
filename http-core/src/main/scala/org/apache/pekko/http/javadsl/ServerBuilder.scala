@@ -27,9 +27,9 @@ import pekko.http.scaladsl.{ model => sm }
 import pekko.japi.function.Function
 import pekko.stream.javadsl.{ Flow, Source }
 import pekko.stream.{ Materializer, SystemMaterializer }
-import pekko.util.FutureConverters._
 
 import scala.concurrent.ExecutionContext
+import scala.jdk.FutureConverters._
 
 /**
  * Builder API to create server bindings.

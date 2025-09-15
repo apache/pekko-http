@@ -24,9 +24,9 @@ import pekko.http.javadsl.model.headers.HttpCredentials
 import pekko.http.javadsl.server.{ RequestContext, Route }
 import pekko.http.scaladsl
 import pekko.http.scaladsl.server.{ Directives => D }
-import pekko.util.FutureConverters._
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
+import scala.jdk.FutureConverters._
 import scala.jdk.OptionConverters._
 
 object SecurityDirectives {

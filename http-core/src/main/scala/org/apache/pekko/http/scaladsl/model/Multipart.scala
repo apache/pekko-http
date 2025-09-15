@@ -33,12 +33,12 @@ import pekko.stream.Materializer
 import pekko.stream.javadsl.{ Source => JSource }
 import pekko.stream.scaladsl._
 import pekko.util.ConstantFun
-import pekko.util.FutureConverters._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.Future
 import scala.collection.immutable
 import scala.jdk.CollectionConverters._
+import scala.jdk.FutureConverters._
 import scala.util.{ Failure, Success, Try }
 
 /**

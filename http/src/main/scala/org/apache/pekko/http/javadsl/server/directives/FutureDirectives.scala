@@ -24,9 +24,9 @@ import pekko.http.javadsl.model.RequestEntity
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.server.directives.{ CompleteOrRecoverWithMagnet, FutureDirectives => D }
 import pekko.pattern.CircuitBreaker
-import pekko.util.FutureConverters._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.jdk.FutureConverters._
 import scala.util.Try
 
 abstract class FutureDirectives extends FormFieldDirectives {

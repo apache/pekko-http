@@ -31,11 +31,11 @@ import pekko.http.scaladsl.unmarshalling.Unmarshaller.EnhancedFromEntityUnmarsha
 import pekko.http.scaladsl.util.FastFuture
 import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.util.ByteString
-import pekko.util.FutureConverters._
 
 import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters._
+import scala.jdk.FutureConverters._
 
 object Unmarshaller extends pekko.http.javadsl.unmarshalling.Unmarshallers {
   implicit def fromScala[A, B](scalaUnmarshaller: unmarshalling.Unmarshaller[A, B]): Unmarshaller[A, B] =

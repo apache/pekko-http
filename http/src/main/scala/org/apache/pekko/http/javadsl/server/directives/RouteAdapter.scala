@@ -39,7 +39,7 @@ final class RouteAdapter(val delegate: pekko.http.scaladsl.server.Route) extends
     scalaFlow(system, materializer).asJava
 
   override def handler(system: ClassicActorSystemProvider): Function[HttpRequest, CompletionStage[HttpResponse]] = {
-    import pekko.util.FutureConverters._
+    import scala.jdk.FutureConverters._
     val scalaFunction = scaladsl.server.Route.toFunction(delegate)(system)
     request => (scalaFunction(request.asScala): Future[HttpResponse]).asJava
   }

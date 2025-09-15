@@ -15,18 +15,18 @@ package org.apache.pekko.http.javadsl.model
 
 import java.util
 
-import com.typesafe.config.{ Config, ConfigFactory }
-
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import org.scalatest.{ BeforeAndAfterAll, Inside }
+import scala.jdk.FutureConverters._
+
+import com.typesafe.config.{ Config, ConfigFactory }
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.stream.SystemMaterializer
 import pekko.stream.javadsl.Source
 import pekko.testkit._
-import pekko.util.FutureConverters._
 
+import org.scalatest.{ BeforeAndAfterAll, Inside }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

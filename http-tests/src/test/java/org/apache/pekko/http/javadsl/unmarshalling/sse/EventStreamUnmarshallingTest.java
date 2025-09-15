@@ -16,17 +16,19 @@
 
 package org.apache.pekko.http.javadsl.unmarshalling.sse;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.model.HttpEntity;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.http.javadsl.model.sse.ServerSentEvent;
 import org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshallingSpec;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 import org.scalatestplus.junit.JUnitSuite;
-import static org.apache.pekko.util.FutureConverters.asJava;
+
+import static scala.jdk.javaapi.FutureConverters.asJava;
 
 public class EventStreamUnmarshallingTest extends JUnitSuite {
 
