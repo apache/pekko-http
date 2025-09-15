@@ -21,7 +21,6 @@ import java.util.concurrent.CompletionStage
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
-import pekko.http.ccompat._
 import pekko.http.impl.engine.rendering.BodyPartRenderer
 import pekko.http.impl.util.{ DefaultNoLogging, Util }
 import pekko.http.impl.util.JavaMapping.Implicits._

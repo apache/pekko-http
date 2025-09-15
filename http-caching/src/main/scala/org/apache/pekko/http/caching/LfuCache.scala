@@ -19,6 +19,7 @@ import java.util.function.BiFunction
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.jdk.CollectionConverters._
+import scala.jdk.FunctionConverters._
 import scala.jdk.FutureConverters._
 
 import com.github.benmanes.caffeine.cache.{ AsyncCache, Caffeine }
@@ -29,7 +30,6 @@ import pekko.http.caching.LfuCache.toJavaMappingFunction
 import pekko.http.caching.scaladsl.Cache
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.caching.CacheJavaMapping.Implicits._
-import pekko.util.FunctionConverters._
 
 @ApiMayChange
 object LfuCache {

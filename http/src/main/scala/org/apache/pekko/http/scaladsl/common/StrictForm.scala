@@ -19,7 +19,6 @@ import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
 import org.apache.pekko
 import pekko.stream.Materializer
-import pekko.http.ccompat._
 import pekko.http.scaladsl.unmarshalling._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.util.FastFuture

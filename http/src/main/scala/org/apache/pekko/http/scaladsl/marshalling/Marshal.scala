@@ -15,7 +15,6 @@ package org.apache.pekko.http.scaladsl.marshalling
 
 import scala.concurrent.{ ExecutionContext, Future }
 import org.apache.pekko
-import pekko.http.ccompat._
 import pekko.http.scaladsl.server.ContentNegotiator
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.util.FastFuture._
