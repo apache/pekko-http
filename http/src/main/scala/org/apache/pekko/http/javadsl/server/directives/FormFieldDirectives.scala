@@ -25,7 +25,6 @@ import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.http.scaladsl.server.directives.ParameterDirectives._
 
 import scala.jdk.CollectionConverters._
-import pekko.http.impl.util.JavaMapping.Implicits._
 import scala.jdk.OptionConverters._
 
 abstract class FormFieldDirectives extends FileUploadDirectives {

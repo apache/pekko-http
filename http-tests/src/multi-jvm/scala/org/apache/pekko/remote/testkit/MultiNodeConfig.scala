@@ -13,26 +13,23 @@
 
 package org.apache.pekko.remote.testkit
 
-import language.implicitConversions
 import java.net.{ InetAddress, InetSocketAddress }
 
 import com.typesafe.config.{ Config, ConfigFactory, ConfigObject }
 
+import language.implicitConversions
 import scala.concurrent.{ Await, Awaitable }
-import scala.util.control.NonFatal
+import scala.concurrent.duration._
 import scala.collection.immutable
+import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.actor._
-import pekko.util.Timeout
-import pekko.http.ccompat._
-import pekko.remote.testconductor.{ TestConductor, TestConductorExt }
+import pekko.event.{ LogSource, Logging, LoggingAdapter }
+import pekko.remote.testconductor.{ RoleName, TestConductor, TestConductorExt }
 import pekko.testkit._
 import pekko.testkit.TestEvent._
-
-import scala.concurrent.duration._
-import pekko.remote.testconductor.RoleName
-import pekko.actor.RootActorPath
-import pekko.event.{ LogSource, Logging, LoggingAdapter }
+import pekko.util.Timeout
 
 /**
  * Configure the role names and participants of the test, including configuration settings.

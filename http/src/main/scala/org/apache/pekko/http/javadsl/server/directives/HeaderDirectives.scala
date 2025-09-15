@@ -18,8 +18,6 @@ import java.util.{ function => jf }
 
 import org.apache.pekko
 import pekko.actor.ReflectiveDynamicAccess
-
-import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.headers.{ HttpOriginRange, HttpOriginRanges }
 import pekko.http.javadsl.model.HttpHeader
 import pekko.http.javadsl.server.Route
