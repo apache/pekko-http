@@ -24,6 +24,7 @@ import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.collection.immutable
+import scala.jdk.FutureConverters._
 import scala.jdk.OptionConverters._
 import scala.util.control.NonFatal
 
@@ -39,7 +40,6 @@ import pekko.http.scaladsl.util.FastFuture
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.util.{ JavaMapping, StreamUtils }
 import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.util.FutureConverters._
 
 /**
  * Models the entity (aka "body" or "content") of an HTTP message.

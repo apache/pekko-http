@@ -20,11 +20,11 @@ import org.apache.pekko
 import pekko.Done
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.DoNotInherit
-import pekko.util.FutureConverters._
 import pekko.util.JavaDurationConverters._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
+import scala.jdk.FutureConverters._
 
 /**
  * Represents a prospective HTTP server binding.

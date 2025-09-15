@@ -22,22 +22,25 @@ import pekko.japi.Util
 import pekko.stream.Materializer
 import pekko.stream.javadsl.Source
 import pekko.util.ByteString
-import pekko.util.FutureConverters._
 
 import pekko.http.impl.model.JavaUri
 import pekko.http.impl.util.JavaMapping
 import pekko.http.impl.util.Util.convertIterable
-import pekko.http.javadsl.model.{ HttpEntity, HttpRequest, RequestEntity, Uri }
+import pekko.http.javadsl.model.{
+  HttpEntity,
+  HttpHeader,
+  HttpRequest,
+  HttpResponse,
+  RequestEntity,
+  ResponseEntity,
+  Uri
+}
+import pekko.http.javadsl.server
 import pekko.http.javadsl.server._
 import pekko.http.javadsl.settings.{ ParserSettings, RoutingSettings }
 import pekko.http.scaladsl
 import pekko.http.scaladsl.server.{ Directives => D }
-
-import pekko.http.javadsl.model.HttpResponse
-import pekko.http.javadsl.model.ResponseEntity
-import pekko.http.javadsl.model.HttpHeader
 import pekko.http.scaladsl.util.FastFuture._
-import pekko.http.javadsl.server
 
 import java.lang.{ Iterable => JIterable }
 import java.util.function.Supplier
@@ -47,6 +50,7 @@ import java.util.function.Predicate
 
 import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
 import scala.concurrent.duration.FiniteDuration
+import scala.jdk.FutureConverters._
 
 abstract class BasicDirectives {
   import pekko.http.impl.util.JavaMapping.Implicits._

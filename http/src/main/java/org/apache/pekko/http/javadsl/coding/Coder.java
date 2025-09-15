@@ -21,8 +21,9 @@ import org.apache.pekko.http.scaladsl.coding.Deflate$;
 import org.apache.pekko.http.scaladsl.coding.Gzip$;
 import org.apache.pekko.http.scaladsl.coding.NoCoding$;
 import org.apache.pekko.stream.Materializer;
-import org.apache.pekko.util.FutureConverters;
 import org.apache.pekko.util.ByteString;
+
+import scala.jdk.javaapi.FutureConverters;
 
 /** A coder is an implementation of the predefined encoders/decoders defined for HTTP. */
 public enum Coder {

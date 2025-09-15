@@ -34,11 +34,11 @@ import pekko.http.ccompat.{ pre213, since213 }
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.util.FastFuture._
-import pekko.util.FutureConverters._
 import headers._
 
 import scala.annotation.tailrec
 import scala.concurrent.duration._
+import scala.jdk.FutureConverters._
 
 /**
  * Common base class of HttpRequest and HttpResponse.

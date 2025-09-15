@@ -19,11 +19,11 @@ import java.util.concurrent.{ CompletableFuture, CompletionStage }
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.japi.function.{ Creator, Procedure }
-import pekko.util.FutureConverters._
 
 import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.jdk.CollectionConverters._
+import scala.jdk.FutureConverters._
 
 /**
  * API MAY CHANGE

@@ -44,11 +44,11 @@ import pekko.stream._
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl._
 import pekko.util.ByteString
-import pekko.util.FutureConverters._
 import pekko.util.ManifestInfo
 
 import scala.concurrent._
 import scala.concurrent.duration._
+import scala.jdk.FutureConverters._
 import scala.util.{ Success, Try }
 import scala.util.control.NonFatal
 

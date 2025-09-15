@@ -158,7 +158,7 @@ private[pekko] object OutgoingConnectionBuilderImpl {
 
     private def javaFlow(flow: Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]])
         : JFlow[javadsl.model.HttpRequest, javadsl.model.HttpResponse, CompletionStage[javadsl.OutgoingConnection]] = {
-      import pekko.util.FutureConverters._
+      import scala.jdk.FutureConverters._
       javaFlowKeepMatVal(flow.mapMaterializedValue(f =>
         f.map(oc => new javadsl.OutgoingConnection(oc))(ExecutionContext.parasitic).asJava))
     }

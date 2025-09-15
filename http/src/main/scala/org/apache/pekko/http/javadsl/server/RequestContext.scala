@@ -33,10 +33,10 @@ import pekko.http.scaladsl.marshalling.ToResponseMarshallable
 import pekko.http.scaladsl.model.Uri.Path
 import pekko.http.scaladsl.util.FastFuture._
 import pekko.stream.Materializer
-import pekko.util.FutureConverters._
 
 import scala.annotation.varargs
 import scala.concurrent.ExecutionContextExecutor
+import scala.jdk.FutureConverters._
 
 class RequestContext private (val delegate: scaladsl.server.RequestContext) {
   import RequestContext._

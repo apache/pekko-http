@@ -18,6 +18,7 @@ import java.util.Optional
 import java.util.concurrent.CompletionStage
 
 import scala.concurrent.Future
+import scala.jdk.FutureConverters._
 import scala.util.Try
 
 import org.apache.pekko
@@ -37,7 +38,6 @@ import pekko.stream.TLSProtocol._
 import pekko.stream.Materializer
 import pekko.stream.javadsl.{ BidiFlow, Flow }
 import pekko.stream.scaladsl.Keep
-import pekko.util.FutureConverters._
 
 object Http extends ExtensionId[Http] with ExtensionIdProvider {
   override def get(system: ActorSystem): Http = super.get(system)
