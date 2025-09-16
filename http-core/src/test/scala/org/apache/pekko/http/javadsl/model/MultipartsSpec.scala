@@ -18,7 +18,7 @@ import java.util
 import com.typesafe.config.{ Config, ConfigFactory }
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.duration.DurationInt
 import org.scalatest.{ BeforeAndAfterAll, Inside }
 import org.apache.pekko
 import pekko.actor.ActorSystem

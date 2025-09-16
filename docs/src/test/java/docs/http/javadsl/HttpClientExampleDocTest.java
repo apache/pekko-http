@@ -31,6 +31,7 @@ import static org.apache.pekko.http.javadsl.ConnectHttp.toHost;
 import static org.apache.pekko.util.ByteString.emptyByteString;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -42,7 +43,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.apache.pekko.stream.javadsl.Framing;
 import org.apache.pekko.http.javadsl.model.*;
-import scala.concurrent.duration.FiniteDuration;
 // #manual-entity-consume-example-1
 
 // #single-request-in-actor-example
@@ -106,7 +106,7 @@ public class HttpClientExampleDocTest {
 
     // toStrict to enforce all data be loaded into memory from the connection
     final CompletionStage<HttpEntity.Strict> strictEntity =
-        response.entity().toStrict(FiniteDuration.create(3, TimeUnit.SECONDS).toMillis(), system);
+        response.entity().toStrict(Duration.ofSeconds(3).toMillis(), system);
 
     // You can now use `getData` to get the data directly...
     final CompletionStage<ExamplePerson> person1 =
