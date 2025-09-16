@@ -25,6 +25,7 @@ import pekko.http.scaladsl.settings.ClientConnectionSettings.LogUnencryptedNetwo
 import pekko.http.scaladsl.settings.Http2ClientSettings.Http2ClientSettingsImpl
 import pekko.http.scaladsl.settings.{ Http2ClientSettings, ParserSettings, WebSocketSettings }
 import pekko.io.Inet.SocketOption
+import pekko.util.JavaDurationConverters._
 import com.typesafe.config.Config
 
 import scala.collection.immutable
@@ -54,6 +55,17 @@ private[pekko] final case class ClientConnectionSettingsImpl(
     Try { parserSettings.maxContentLength }.isSuccess,
     "The provided ParserSettings is a generic object that does not contain the client-specific settings.")
   override def productPrefix = "ClientConnectionSettings"
+
+  override def withConnectingTimeout(
+      newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
+    copy(connectingTimeout = newValue.asScala)
+
+  override def withIdleTimeout(newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
+    copy(idleTimeout = newValue.asScala)
+
+  override def withStreamCancellationDelay(
+      newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
+    copy(streamCancellationDelay = newValue.asScala)
 
   override def websocketRandomFactory: () => Random = websocketSettings.randomFactory
 }
