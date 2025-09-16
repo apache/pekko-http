@@ -721,7 +721,11 @@ private[http] object HttpServerBluePrint {
         })
 
       private var activeTimers = 0
-      private def timeout = materializer.settings.subscriptionTimeoutSettings.timeout
+      private val timeout = {
+        import scala.jdk.DurationConverters._
+        materializer.system.settings.config.getDuration(
+          "pekko.stream.materializer.stream-ref.subscription-timeout").toScala
+      }
       private def addTimeout(s: SubscriptionTimeout): Unit = {
         if (activeTimers == 0) setKeepGoing(true)
         activeTimers += 1
