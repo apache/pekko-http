@@ -1144,7 +1144,7 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
   @Test
   public void testExtractStrictEntity() {
     // #extractStrictEntity
-    final FiniteDuration timeout = FiniteDuration.create(3, TimeUnit.SECONDS);
+    final java.time.Duration timeout = java.time.Duration.ofSeconds(3);
     final Route route =
         extractStrictEntity(timeout, strict -> complete(strict.getData().utf8String()));
 

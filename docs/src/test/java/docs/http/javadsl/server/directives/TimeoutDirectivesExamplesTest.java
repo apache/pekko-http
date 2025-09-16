@@ -23,13 +23,14 @@ import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.testkit.TestKit;
+import org.apache.pekko.util.JavaDurationConverters;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
-import scala.concurrent.duration.Duration;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -84,13 +85,14 @@ public class TimeoutDirectivesExamplesTest extends AllDirectives {
 
   @After
   public void shutDown() {
-    TestKit.shutdownActorSystem(system, Duration.create(1, TimeUnit.SECONDS), false);
+    TestKit.shutdownActorSystem(
+        system, scala.concurrent.duration.Duration.create(1, TimeUnit.SECONDS), false);
   }
 
   @Test
   public void testRequestTimeoutIsConfigurable() throws Exception {
     // #withRequestTimeout-plain
-    final Duration timeout = Duration.create(1, TimeUnit.SECONDS);
+    final Duration timeout = Duration.ofSeconds(1);
     CompletionStage<String> slowFuture = new CompletableFuture<>();
 
     final Route route =
@@ -132,7 +134,7 @@ public class TimeoutDirectivesExamplesTest extends AllDirectives {
   @Test
   public void testRequestTimeoutAllowsCustomResponse() throws Exception {
     // #withRequestTimeout-with-handler
-    final Duration timeout = Duration.create(1, TimeUnit.MILLISECONDS);
+    final Duration timeout = Duration.ofMillis(1);
     CompletionStage<String> slowFuture = new CompletableFuture<>();
 
     HttpResponse enhanceYourCalmResponse =
@@ -162,7 +164,7 @@ public class TimeoutDirectivesExamplesTest extends AllDirectives {
   @Test
   public void testRequestTimeoutCustomResponseCanBeAddedSeparately() throws Exception {
     // #withRequestTimeoutResponse
-    final Duration timeout = Duration.create(100, TimeUnit.MILLISECONDS);
+    final Duration timeout = Duration.ofMillis(100);
     CompletionStage<String> slowFuture = new CompletableFuture<>();
 
     HttpResponse enhanceYourCalmResponse =
@@ -193,8 +195,8 @@ public class TimeoutDirectivesExamplesTest extends AllDirectives {
   @Test
   public void extractRequestTimeout() throws Exception {
     // #extractRequestTimeout
-    Duration timeout1 = Duration.create(500, TimeUnit.MILLISECONDS);
-    Duration timeout2 = Duration.create(1000, TimeUnit.MILLISECONDS);
+    Duration timeout1 = Duration.ofMillis(500);
+    Duration timeout2 = Duration.ofMillis(1000);
     Route route =
         path(
             "timeout",
@@ -209,7 +211,12 @@ public class TimeoutDirectivesExamplesTest extends AllDirectives {
                                     () ->
                                         extractRequestTimeout(
                                             t2 -> {
-                                              if (t1 == timeout1 && t2 == timeout2)
+                                              if (t1.equals(
+                                                      JavaDurationConverters.asFiniteDuration(
+                                                          timeout1))
+                                                  && t2.equals(
+                                                      JavaDurationConverters.asFiniteDuration(
+                                                          timeout2)))
                                                 return complete(StatusCodes.OK);
                                               else
                                                 return complete(StatusCodes.INTERNAL_SERVER_ERROR);
