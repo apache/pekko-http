@@ -43,10 +43,11 @@ object ConnectionTestApp {
 
   val clientFlow = Http().superPool[Int]()
 
-  val sourceActor = {
+  val sourceQueue = {
     // Our superPool expects (HttpRequest, Int) as input
     val source =
-      Source.actorRef[(HttpRequest, Int)](10000, OverflowStrategy.dropNew).buffer(20000, OverflowStrategy.fail)
+      Source.queue[(HttpRequest, Int)](10000)
+        .buffer(20000, OverflowStrategy.fail)
     val sink = Sink.foreach[(Try[HttpResponse], Int)] {
       case (resp, id) => handleResponse(resp, id)
     }
@@ -55,7 +56,7 @@ object ConnectionTestApp {
   }
 
   def sendPoolFlow(uri: Uri, id: Int): Unit = {
-    sourceActor ! ((buildRequest(uri), id))
+    sourceQueue.offer((buildRequest(uri), id))
   }
 
   def sendPoolFuture(uri: Uri, id: Int): Unit = {
