@@ -16,7 +16,8 @@ package org.apache.pekko.http.javadsl.settings
 import java.time.Duration
 
 import org.apache.pekko.http.scaladsl
-import scala.concurrent.duration._
+
+import scala.concurrent.duration.DurationLong
 
 trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2ClientSettingsImpl =>
   def requestEntityChunkSize: Int
