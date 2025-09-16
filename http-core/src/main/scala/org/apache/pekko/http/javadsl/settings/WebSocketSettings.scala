@@ -40,7 +40,7 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
    * Java API
    * @since 1.3.0
    */
-  def getPeriodicKeepAliveMaxIdle: JDuration = periodicKeepAliveMaxIdle.asJava
+  def getPeriodicKeepAliveMaxIdle: JDuration
 
   /**
    * The provided supplier will be invoked for each new keep-alive frame that is sent.
