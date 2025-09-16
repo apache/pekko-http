@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         SCALA_VERSION: [2.13, 3]
-        JDK: [25]
+        JDK: [25-ea]
         PEKKO_VERSION: ['1.2.x']
     steps:
       - name: Checkout
