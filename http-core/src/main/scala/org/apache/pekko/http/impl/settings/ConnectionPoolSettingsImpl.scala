@@ -17,6 +17,7 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
 import pekko.http.scaladsl.settings._
+import pekko.util.JavaDurationConverters._
 import com.typesafe.config.Config
 
 import scala.collection.immutable
@@ -58,6 +59,21 @@ private[pekko] final case class ConnectionPoolSettingsImpl(
     "host-overrides should not be nested")
 
   override def productPrefix = "ConnectionPoolSettings"
+
+  override def withBaseConnectionBackoff(newValue: java.time.Duration): ConnectionPoolSettings =
+    withBaseConnectionBackoff(newValue.asScala)
+
+  override def withMaxConnectionBackoff(newValue: java.time.Duration): ConnectionPoolSettings =
+    withMaxConnectionBackoff(newValue.asScala)
+
+  override def withIdleTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
+    withIdleTimeout(newValue.asScala)
+
+  override def withKeepAliveTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
+    withKeepAliveTimeout(newValue.asScala)
+
+  override def withMaxConnectionLifetime(newValue: java.time.Duration): ConnectionPoolSettings =
+    withMaxConnectionLifetime(newValue.asScala)
 
   def withUpdatedConnectionSettings(
       f: ClientConnectionSettings => ClientConnectionSettings): ConnectionPoolSettingsImpl =

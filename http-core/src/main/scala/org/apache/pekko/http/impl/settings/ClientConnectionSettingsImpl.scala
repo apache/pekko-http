@@ -58,14 +58,14 @@ private[pekko] final case class ClientConnectionSettingsImpl(
 
   override def withConnectingTimeout(
       newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
-    copy(connectingTimeout = newValue.asScala)
+    withConnectingTimeout(newValue.asScala)
 
   override def withIdleTimeout(newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
-    copy(idleTimeout = newValue.asScala)
+    withIdleTimeout(newValue.asScala)
 
   override def withStreamCancellationDelay(
       newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
-    copy(streamCancellationDelay = newValue.asScala)
+    withStreamCancellationDelay(newValue.asScala)
 
   override def websocketRandomFactory: () => Random = websocketSettings.randomFactory
 }
