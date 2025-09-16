@@ -17,7 +17,6 @@ import org.apache.pekko.annotation.DoNotInherit;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.japi.Function;
-import scala.concurrent.duration.Duration;
 
 /**
  * Enables programmatic access to the server-side request timeout logic.
@@ -34,17 +33,29 @@ public interface TimeoutAccess {
    * <p>Due to the inherent raciness it is not guaranteed that the returned timeout was applied
    * before the previously set timeout has expired!
    */
-  Duration getTimeout();
+  scala.concurrent.duration.Duration getTimeout();
 
   /**
    * Tries to set a new timeout. The timeout period is measured as of the point in time that the end
-   * of the request has been received, which may be in the past or in the future! Use `Duration.Inf`
+   * of the request has been received, which may be in the past or in the future! Use `scala.concurrent.duration.Duration.Inf`
    * to completely disable request timeout checking for this request.
    *
    * <p>Due to the inherent raciness it is not guaranteed that the update will be applied before the
    * previously set timeout has expired!
    */
-  void updateTimeout(Duration timeout);
+  void updateTimeout(scala.concurrent.duration.Duration timeout);
+
+  /**
+   * Tries to set a new timeout. The timeout period is measured as of the point in time that the end
+   * of the request has been received, which may be in the past or in the future! Use a `java.time.Duration`
+   * with a long duration to disable request timeout checking for this request
+   * (e.g. `java.time.temporal.ChronoUnit.FOREVER.getDuration()`).
+   *
+   * <p>Due to the inherent raciness it is not guaranteed that the update will be applied before the
+   * previously set timeout has expired!
+   * @since 1.3.0
+   */
+  void updateTimeout(java.time.Duration timeout);
 
   /**
    * Tries to set a new timeout handler, which produces the timeout response for a given request.
@@ -61,5 +72,15 @@ public interface TimeoutAccess {
    * <p>Due to the inherent raciness it is not guaranteed that the update will be applied before the
    * previously set timeout has expired!
    */
-  void update(Duration timeout, Function<HttpRequest, HttpResponse> handler);
+  void update(scala.concurrent.duration.Duration timeout, Function<HttpRequest, HttpResponse> handler);
+
+  /**
+   * Tries to set a new timeout and handler at the same time.
+   *
+   * <p>Due to the inherent raciness it is not guaranteed that the update will be applied before the
+   * previously set timeout has expired!
+   * @since 1.3.0
+   */
+  void update(java.time.Duration timeout, Function<HttpRequest, HttpResponse> handler);
+
 }

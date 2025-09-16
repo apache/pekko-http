@@ -28,7 +28,6 @@ import pekko.http.impl.util.JavaMapping.Implicits._
 
 abstract class TimeoutDirectives extends WebSocketDirectives {
 
-  // TODO find a way to support Java Duration here. Type Erasure on the Function causes issues
   def extractRequestTimeout(inner: JFunction[Duration, Route]): RouteAdapter = RouteAdapter {
     D.extractRequestTimeout { timeout => inner.apply(timeout).delegate }
   }

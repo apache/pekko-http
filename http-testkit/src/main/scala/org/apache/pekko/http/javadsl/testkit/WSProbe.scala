@@ -21,6 +21,7 @@ import pekko.stream.Materializer
 import pekko.stream.javadsl.Flow
 import pekko.stream.scaladsl
 import pekko.util.ByteString
+import pekko.util.JavaDurationConverters._
 
 import pekko.http.scaladsl.{ testkit => st }
 
@@ -89,6 +90,12 @@ class WSProbe(delegate: st.WSProbe) {
    * Expect no message on the input side of the flow for the given maximum duration.
    */
   def expectNoMessage(max: FiniteDuration): Unit = delegate.expectNoMessage(max)
+
+  /**
+   * Expect no message on the input side of the flow for the given maximum duration.
+   * @since 1.3.0
+   */
+  def expectNoMessage(max: java.time.Duration): Unit = delegate.expectNoMessage(max.asScala)
 
   /**
    * Expect completion on the input side of the flow.
