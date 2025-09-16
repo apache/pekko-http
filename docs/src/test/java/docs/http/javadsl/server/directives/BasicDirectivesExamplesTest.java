@@ -32,8 +32,7 @@ import org.apache.pekko.http.javadsl.settings.RoutingSettings;
 import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.apache.pekko.http.javadsl.server.*;
 import org.apache.pekko.japi.pf.PFBuilder;
-import org.apache.pekko.stream.ActorMaterializer;
-import org.apache.pekko.stream.ActorMaterializerSettings;
+import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
@@ -292,8 +291,7 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
   @Test
   public void testWithMaterializer() {
     // #withMaterializer
-    final ActorMaterializerSettings settings = ActorMaterializerSettings.create(system());
-    final ActorMaterializer special = ActorMaterializer.create(settings, system(), "special");
+    final Materializer special = Materializer.createMaterializer(system());
 
     final Route sample =
         path(
