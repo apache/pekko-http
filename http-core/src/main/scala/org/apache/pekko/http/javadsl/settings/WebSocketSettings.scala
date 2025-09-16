@@ -35,10 +35,11 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
   def getRandomFactory: Supplier[Random]
   def periodicKeepAliveMode: String
   def periodicKeepAliveMaxIdle: Duration
+
   /**
-    * Java API 
-    * @since 1.3.0
-    */
+   * Java API
+   * @since 1.3.0
+   */
   def getPeriodicKeepAliveMaxIdle: JDuration = periodicKeepAliveMaxIdle.asJava
 
   /**
@@ -54,9 +55,10 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
     copy(periodicKeepAliveMode = newValue)
   def withPeriodicKeepAliveMaxIdle(newValue: Duration): WebSocketSettings =
     copy(periodicKeepAliveMaxIdle = newValue)
+
   /**
-    * @since 1.3.0
-    */
+   * @since 1.3.0
+   */
   def withPeriodicKeepAliveMaxIdle(newValue: JDuration): WebSocketSettings =
     copy(periodicKeepAliveMaxIdle = newValue.asScala)
   def withPeriodicKeepAliveData(newValue: Supplier[ByteString]): WebSocketSettings =
