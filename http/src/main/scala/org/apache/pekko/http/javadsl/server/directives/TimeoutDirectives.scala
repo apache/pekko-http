@@ -38,10 +38,10 @@ abstract class TimeoutDirectives extends WebSocketDirectives {
    *
    * Due to the inherent raciness it is not guaranteed that the update will be applied before
    * the previously set timeout has expired!
-   * @deprecated As of 1.3.0, use the overload taking a `java.time.Duration` instead.
+   * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
    */
   @Deprecated
-  @deprecated("use the overload taking a `java.time.Duration` instead.", "1.3.0")
+  @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def withRequestTimeout(timeout: scala.concurrent.duration.Duration, inner: Supplier[Route]): RouteAdapter =
     RouteAdapter {
       D.withRequestTimeout(timeout) { inner.get.delegate }
@@ -64,10 +64,10 @@ abstract class TimeoutDirectives extends WebSocketDirectives {
    *
    * Due to the inherent raciness it is not guaranteed that the update will be applied before
    * the previously set timeout has expired!
-   * @deprecated As of 1.3.0, use the overload taking a `java.time.Duration` instead.
+   * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
    */
   @Deprecated
-  @deprecated("use the overload taking a `java.time.Duration` instead.", "1.3.0")
+  @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def withRequestTimeout(timeout: scala.concurrent.duration.Duration,
       timeoutHandler: JFunction[HttpRequest, HttpResponse],
       inner: Supplier[Route]): RouteAdapter = RouteAdapter {
