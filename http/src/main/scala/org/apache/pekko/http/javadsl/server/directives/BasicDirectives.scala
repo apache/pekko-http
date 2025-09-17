@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.javadsl.server.directives
 
-import java.util.function.{ Function => JFunction }
-
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.LoggingAdapter
@@ -43,13 +41,16 @@ import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.http.scaladsl.util.FastFuture._
 
 import java.lang.{ Iterable => JIterable }
-import java.util.function.Supplier
+import java.time.{ Duration => JDuration }
 import java.util.{ List => JList }
 import java.util.concurrent.CompletionStage
+import java.util.function.{ Function => JFunction }
 import java.util.function.Predicate
+import java.util.function.Supplier
 
 import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
 import scala.concurrent.duration.FiniteDuration
+import scala.jdk.DurationConverters._
 import scala.jdk.FutureConverters._
 
 abstract class BasicDirectives {
@@ -347,7 +348,10 @@ abstract class BasicDirectives {
    * entire request body within the timeout.
    *
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
    */
+  @Deprecated
+  @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def extractStrictEntity(timeout: FiniteDuration, inner: JFunction[HttpEntity.Strict, Route]): Route = RouteAdapter {
     D.extractStrictEntity(timeout) { strict => inner.apply(strict).delegate }
   }
@@ -363,10 +367,48 @@ abstract class BasicDirectives {
    * entire request body within the timeout.
    *
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @since 1.3.0
    */
+  def extractStrictEntity(timeout: JDuration, inner: JFunction[HttpEntity.Strict, Route]): Route = RouteAdapter {
+    D.extractStrictEntity(timeout.toScala) { strict => inner.apply(strict).delegate }
+  }
+
+  /**
+   * WARNING: This will read the entire request entity into memory and effectively disable streaming.
+   *
+   * To help protect against excessive memory use, the request will be aborted if the request is larger
+   * than allowed by the `pekko.http.parsing.max-to-strict-bytes` configuration setting.
+   *
+   * Converts the HttpEntity from the [[pekko.http.javadsl.server.RequestContext]] into an
+   * [[pekko.http.javadsl.model.HttpEntity.Strict]] and extracts it, or fails the route if unable to drain the
+   * entire request body within the timeout.
+   *
+   * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
+   */
+  @Deprecated
+  @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def extractStrictEntity(timeout: FiniteDuration, maxBytes: Long, inner: JFunction[HttpEntity.Strict, Route]): Route =
     RouteAdapter {
       D.extractStrictEntity(timeout, maxBytes) { strict => inner.apply(strict).delegate }
+    }
+
+  /**
+   * WARNING: This will read the entire request entity into memory and effectively disable streaming.
+   *
+   * To help protect against excessive memory use, the request will be aborted if the request is larger
+   * than allowed by the `pekko.http.parsing.max-to-strict-bytes` configuration setting.
+   *
+   * Converts the HttpEntity from the [[pekko.http.javadsl.server.RequestContext]] into an
+   * [[pekko.http.javadsl.model.HttpEntity.Strict]] and extracts it, or fails the route if unable to drain the
+   * entire request body within the timeout.
+   *
+   * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @since 1.3.0
+   */
+  def extractStrictEntity(timeout: JDuration, maxBytes: Long, inner: JFunction[HttpEntity.Strict, Route]): Route =
+    RouteAdapter {
+      D.extractStrictEntity(timeout.toScala, maxBytes) { strict => inner.apply(strict).delegate }
     }
 
   /**
@@ -379,7 +421,10 @@ abstract class BasicDirectives {
    * or fails the route if unable to drain the entire request body within the timeout.
    *
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
    */
+  @Deprecated
+  @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def toStrictEntity(timeout: FiniteDuration, inner: Supplier[Route]): Route = RouteAdapter {
     D.toStrictEntity(timeout) { inner.get.delegate }
   }
@@ -394,9 +439,43 @@ abstract class BasicDirectives {
    * or fails the route if unable to drain the entire request body within the timeout.
    *
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @since 1.3.0
    */
+  def toStrictEntity(timeout: JDuration, inner: Supplier[Route]): Route = RouteAdapter {
+    D.toStrictEntity(timeout.toScala) { inner.get.delegate }
+  }
+
+  /**
+   * WARNING: This will read the entire request entity into memory and effectively disable streaming.
+   *
+   * To help protect against excessive memory use, the request will be aborted if the request is larger
+   * than allowed by the `pekko.http.parsing.max-to-strict-bytes` configuration setting.
+   *
+   * Extracts the [[pekko.http.javadsl.server.RequestContext]] itself with the strict HTTP entity,
+   * or fails the route if unable to drain the entire request body within the timeout.
+   *
+   * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
+   */
+  @Deprecated
+  @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def toStrictEntity(timeout: FiniteDuration, maxBytes: Long, inner: Supplier[Route]): Route = RouteAdapter {
     D.toStrictEntity(timeout, maxBytes) { inner.get.delegate }
   }
 
+  /**
+   * WARNING: This will read the entire request entity into memory and effectively disable streaming.
+   *
+   * To help protect against excessive memory use, the request will be aborted if the request is larger
+   * than allowed by the `pekko.http.parsing.max-to-strict-bytes` configuration setting.
+   *
+   * Extracts the [[pekko.http.javadsl.server.RequestContext]] itself with the strict HTTP entity,
+   * or fails the route if unable to drain the entire request body within the timeout.
+   *
+   * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @since 1.3.0
+   */
+  def toStrictEntity(timeout: JDuration, maxBytes: Long, inner: Supplier[Route]): Route = RouteAdapter {
+    D.toStrictEntity(timeout.toScala, maxBytes) { inner.get.delegate }
+  }
 }

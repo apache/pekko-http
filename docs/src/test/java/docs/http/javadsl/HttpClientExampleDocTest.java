@@ -27,6 +27,7 @@ import org.apache.pekko.stream.javadsl.*;
 import org.apache.pekko.util.ByteString;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -107,7 +108,7 @@ public class HttpClientExampleDocTest {
 
     // toStrict to enforce all data be loaded into memory from the connection
     final CompletionStage<HttpEntity.Strict> strictEntity =
-        response.entity().toStrict(FiniteDuration.create(3, TimeUnit.SECONDS).toMillis(), system);
+        response.entity().toStrict(Duration.ofSeconds(3).toMillis(), system);
 
     // You can now use `getData` to get the data directly...
     final CompletionStage<ExamplePerson> person1 =

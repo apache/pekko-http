@@ -20,7 +20,7 @@ import pekko.annotation.DoNotInherit
 import pekko.http.scaladsl
 import com.typesafe.config.Config
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.DurationLong
 import scala.jdk.CollectionConverters._
 
 @DoNotInherit
