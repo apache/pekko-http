@@ -26,9 +26,7 @@ import pekko.http.impl.settings.ClientConnectionSettingsImpl
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.ClientTransport
 import pekko.http.javadsl.model.headers.UserAgent
-import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.io.Inet.SocketOption
-import pekko.util.OptionConverters._
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.jdk.CollectionConverters._
@@ -45,15 +43,15 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
   final def getParserSettings: ParserSettings = parserSettings
   final def getIdleTimeout: Duration = idleTimeout
   final def getSocketOptions: java.lang.Iterable[SocketOption] = socketOptions.asJava
-  final def getUserAgentHeader: Optional[UserAgent] = (userAgentHeader: Option[UserAgent]).toJava
-  final def getLogUnencryptedNetworkBytes: Optional[Int] = (logUnencryptedNetworkBytes: Option[Int]).toJava
+  final def getUserAgentHeader: Optional[UserAgent] = (userAgentHeader: Option[UserAgent]).asJava
+  final def getLogUnencryptedNetworkBytes: Optional[Int] = (logUnencryptedNetworkBytes: Option[Int]).asJava
   final def getStreamCancellationDelay: FiniteDuration = streamCancellationDelay
   final def getRequestHeaderSizeHint: Int = requestHeaderSizeHint
   final def getWebsocketSettings: WebSocketSettings = websocketSettings
   final def getWebsocketRandomFactory: Supplier[Random] = new Supplier[Random] {
     override def get(): Random = websocketRandomFactory()
   }
-  final def getLocalAddress: Optional[InetSocketAddress] = (localAddress: Option[InetSocketAddress]).toJava
+  final def getLocalAddress: Optional[InetSocketAddress] = (localAddress: Option[InetSocketAddress]).asJava
 
   /** The underlying transport used to connect to hosts. By default [[ClientTransport.TCP]] is used. */
   @ApiMayChange
@@ -89,7 +87,7 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
   def withUserAgentHeader(newValue: Optional[UserAgent]): ClientConnectionSettings =
     self.copy(userAgentHeader = (newValue.asScala: Option[UserAgent]).map(_.asScala))
   def withLogUnencryptedNetworkBytes(newValue: Optional[Int]): ClientConnectionSettings =
-    self.copy(logUnencryptedNetworkBytes = newValue.toScala)
+    self.copy(logUnencryptedNetworkBytes = newValue.asScala)
   def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ClientConnectionSettings =
     self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
       override def get(): Random = newValue.get()

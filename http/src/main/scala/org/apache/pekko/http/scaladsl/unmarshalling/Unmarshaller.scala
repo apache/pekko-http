@@ -21,9 +21,9 @@ import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.stream.Materializer
-import pekko.util.OptionConverters._
 
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.control.{ NoStackTrace, NonFatal }
 
@@ -175,7 +175,7 @@ object Unmarshaller
 
     val supported: Set[ContentTypeRange] =
       _supported.asScala.toSet.asInstanceOf[Set[pekko.http.scaladsl.model.ContentTypeRange]]
-    val actualContentType: Option[ContentType] = _actualContentType.asScala
+    val actualContentType: Option[ContentType] = _actualContentType.asScala.map(_.asScala)
 
     def this(supported: Set[ContentTypeRange], actualContentType: Option[ContentType]) =
       this(supported.asJava.asInstanceOf[java.util.Set[jm.model.ContentTypeRange]],
