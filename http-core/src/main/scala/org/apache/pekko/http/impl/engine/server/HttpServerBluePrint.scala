@@ -406,17 +406,13 @@ private[http] object HttpServerBluePrint {
     import pekko.http.impl.util.JavaMapping.Implicits._
 
     /** JAVA API * */
-    override def updateTimeout(timeout: java.time.Duration): Unit = {
-      val stimeout = if (timeout eq null) null else timeout.asScala
-      update(stimeout, null: HttpRequest => HttpResponse)
-    }
+    override def updateTimeout(timeout: java.time.Duration): Unit =
+      update(timeout.asScala, null: HttpRequest => HttpResponse)
     override def update(timeout: Duration, handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
       update(timeout, handler(_: HttpRequest).asScala)
     override def update(
-        timeout: java.time.Duration, handler: Function[model.HttpRequest, model.HttpResponse]): Unit = {
-      val stimeout = if (timeout eq null) null else timeout.asScala
-      update(stimeout, handler(_: HttpRequest).asScala)
-    }
+        timeout: java.time.Duration, handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
+      update(timeout.asScala, handler(_: HttpRequest).asScala)
     override def updateHandler(handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
       updateHandler(handler(_: HttpRequest).asScala)
 
