@@ -80,6 +80,9 @@ private[pekko] final case class ConnectionPoolSettingsImpl(
     copy(connectionSettings = f(connectionSettings),
       hostOverrides = hostOverrides.map { case (k, v) => k -> v.withUpdatedConnectionSettings(f) })
 
+  override def withResponseEntitySubscriptionTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
+    withResponseEntitySubscriptionTimeout(newValue.asScala)
+
   /** INTERNAL API */
   private[http] def copyDeep(
       mapHostOverrides: ConnectionPoolSettings => ConnectionPoolSettings,
