@@ -16,20 +16,28 @@ package org.apache.pekko.http.javadsl.server.directives
 import java.time.{ Duration => JDuration }
 import java.util.function.{ Function => JFunction, Supplier }
 
-import scala.concurrent.duration.Duration
+import scala.jdk.DurationConverters._
 
 import org.apache.pekko
+import pekko.http.impl.util.JavaDurationConverter
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.{ HttpRequest, HttpResponse }
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.server.{ Directives => D }
-import pekko.util.JavaDurationConverters._
-
-import pekko.http.impl.util.JavaMapping.Implicits._
 
 abstract class TimeoutDirectives extends WebSocketDirectives {
 
-  def extractRequestTimeout(inner: JFunction[Duration, Route]): RouteAdapter = RouteAdapter {
-    D.extractRequestTimeout { timeout => inner.apply(timeout).delegate }
+  /**
+   * Java API
+   * <p>
+   * In 2.0.0, the input function changed from expecting `scala.concurrent.duration.Duration`
+   * as input to `java.time.Duration`.
+   * </p>
+   */
+  def extractRequestTimeout(inner: JFunction[java.time.Duration, Route]): RouteAdapter = RouteAdapter {
+    D.extractRequestTimeout { timeout =>
+      inner.apply(JavaDurationConverter.toJava(timeout)).delegate
+    }
   }
 
   /**
@@ -55,7 +63,7 @@ abstract class TimeoutDirectives extends WebSocketDirectives {
    */
   def withRequestTimeout(timeout: JDuration, inner: Supplier[Route]): RouteAdapter =
     RouteAdapter {
-      D.withRequestTimeout(timeout.asScala) { inner.get.delegate }
+      D.withRequestTimeout(timeout.toScala) { inner.get.delegate }
     }
 
   /**
@@ -83,7 +91,7 @@ abstract class TimeoutDirectives extends WebSocketDirectives {
   def withRequestTimeout(timeout: JDuration,
       timeoutHandler: JFunction[HttpRequest, HttpResponse],
       inner: Supplier[Route]): RouteAdapter = RouteAdapter {
-    D.withRequestTimeout(timeout.asScala, in => timeoutHandler(in.asJava).asScala) { inner.get.delegate }
+    D.withRequestTimeout(timeout.toScala, in => timeoutHandler(in.asJava).asScala) { inner.get.delegate }
   }
 
   def withoutRequestTimeout(inner: Supplier[Route]): RouteAdapter = RouteAdapter {

@@ -17,6 +17,7 @@ import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.caching.impl.settings.LfuCachingSettingsImpl
 import pekko.http.caching.javadsl
+import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.scaladsl.settings.SettingsCompanion
 import com.typesafe.config.Config
 
@@ -34,8 +35,8 @@ abstract class LfuCacheSettings private[http] () extends javadsl.LfuCacheSetting
 
   final def getMaxCapacity: Int = self.maxCapacity
   final def getInitialCapacity: Int = self.initialCapacity
-  final def getTimeToLive: Duration = self.timeToLive
-  final def getTimeToIdle: Duration = self.timeToIdle
+  final def getTimeToLive: java.time.Duration = JavaDurationConverter.toJava(self.timeToLive)
+  final def getTimeToIdle: java.time.Duration = JavaDurationConverter.toJava(self.timeToIdle)
 
   override def withMaxCapacity(newMaxCapacity: Int): LfuCacheSettings = self.copy(maxCapacity = newMaxCapacity)
   override def withInitialCapacity(newInitialCapacity: Int): LfuCacheSettings =

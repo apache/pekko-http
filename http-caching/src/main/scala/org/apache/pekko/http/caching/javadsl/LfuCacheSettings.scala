@@ -31,8 +31,24 @@ abstract class LfuCacheSettings private[http] () { self: LfuCachingSettingsImpl 
   /* JAVA APIs */
   def getMaxCapacity: Int
   def getInitialCapacity: Int
-  def getTimeToLive: Duration
-  def getTimeToIdle: Duration
+
+  /**
+   * Java API
+   * <p>
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
+   * to `java.time.Duration`.
+   * </p>
+   */
+  def getTimeToLive: java.time.Duration
+
+  /**
+   * Java API
+   * <p>
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
+   * to `java.time.Duration`.
+   * </p>
+   */
+  def getTimeToIdle: java.time.Duration
 
   def withMaxCapacity(newMaxCapacity: Int): LfuCacheSettings = self.copy(maxCapacity = newMaxCapacity)
   def withInitialCapacity(newInitialCapacity: Int): LfuCacheSettings = self.copy(initialCapacity = newInitialCapacity)

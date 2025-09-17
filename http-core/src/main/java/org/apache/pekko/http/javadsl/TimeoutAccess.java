@@ -32,8 +32,11 @@ public interface TimeoutAccess {
    *
    * <p>Due to the inherent raciness it is not guaranteed that the returned timeout was applied
    * before the previously set timeout has expired!
+   * 
+   * <p>In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
+   * to `java.time.Duration`.
    */
-  scala.concurrent.duration.Duration getTimeout();
+  java.time.Duration getTimeout();
 
   /**
    * Tries to set a new timeout. The timeout period is measured as of the point in time that the end
