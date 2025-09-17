@@ -26,8 +26,8 @@ import org.apache.pekko.http.javadsl.server.RequestContext;
 // #caching-directives-import
 import static org.apache.pekko.http.javadsl.server.directives.CachingDirectives.*;
 // #caching-directives-import
-import scala.concurrent.duration.Duration;
 // #time-unit-import
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 // #time-unit-import
 import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
@@ -198,8 +198,8 @@ public class CachingDirectivesExamplesTest extends JUnitRouteTest {
             .lfuCacheSettings()
             .withInitialCapacity(25)
             .withMaxCapacity(50)
-            .withTimeToLive(Duration.create(20, TimeUnit.SECONDS))
-            .withTimeToIdle(Duration.create(10, TimeUnit.SECONDS));
+            .withTimeToLive(Duration.ofSeconds(20))
+            .withTimeToIdle(Duration.ofSeconds(10));
     final CachingSettings cachingSettings =
         defaultCachingSettings.withLfuCacheSettings(lfuCacheSettings);
     final Cache<Uri, RouteResult> lfuCache = LfuCache.create(cachingSettings);

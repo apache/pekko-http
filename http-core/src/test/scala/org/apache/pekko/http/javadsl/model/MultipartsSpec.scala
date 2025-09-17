@@ -16,10 +16,11 @@ package org.apache.pekko.http.javadsl.model
 import java.util
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.duration.DurationInt
 import scala.jdk.FutureConverters._
 
 import com.typesafe.config.{ Config, ConfigFactory }
+import org.scalatest.{ BeforeAndAfterAll, Inside }
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.stream.SystemMaterializer

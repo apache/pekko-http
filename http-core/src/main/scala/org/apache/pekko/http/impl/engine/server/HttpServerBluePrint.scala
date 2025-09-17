@@ -14,22 +14,20 @@
 package org.apache.pekko.http.impl.engine.server
 
 import java.util.concurrent.atomic.AtomicReference
-import scala.concurrent.{ Future, Promise }
-import scala.concurrent.duration.{ Deadline, Duration, FiniteDuration }
-import scala.collection.immutable
-import scala.util.control.{ NoStackTrace, NonFatal }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
 import pekko.japi.function.Function
 import pekko.event.LoggingAdapter
-import pekko.http.ParsingErrorHandler
 import pekko.util.ByteString
+import pekko.util.JavaDurationConverters._
 import pekko.stream._
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl._
 import pekko.stream.stage._
+import pekko.http.ParsingErrorHandler
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.http.impl.engine.parsing.ParserOutput._
 import pekko.http.impl.engine.parsing._
@@ -41,15 +39,19 @@ import pekko.http.impl.engine.rendering.{
   ResponseRenderingOutput
 }
 import pekko.http.impl.util._
+import pekko.http.javadsl.model
 import pekko.http.scaladsl.util.FastFuture.EnhancedFuture
 import pekko.http.scaladsl.{ Http, TimeoutAccess }
 import pekko.http.scaladsl.model.headers.`Timeout-Access`
-import pekko.http.javadsl.model
 import pekko.http.scaladsl.model._
 import pekko.http.impl.util.LogByteStringTools._
 
-import scala.concurrent.ExecutionContext
+import scala.annotation.nowarn
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.duration.{ Deadline, Duration, FiniteDuration }
+import scala.collection.immutable
 import scala.util.Failure
+import scala.util.control.{ NoStackTrace, NonFatal }
 
 /**
  * INTERNAL API
@@ -381,7 +383,8 @@ private[http] object HttpServerBluePrint {
       get.fast.foreach(setup => if (setup.scheduledTask ne null) setup.scheduledTask.cancel())
 
     override def updateTimeout(timeout: Duration): Unit = update(timeout, null: HttpRequest => HttpResponse)
-    override def updateHandler(handler: HttpRequest => HttpResponse): Unit = update(null, handler)
+    override def updateHandler(handler: HttpRequest => HttpResponse): Unit =
+      update(null.asInstanceOf[Duration], handler)
     override def update(timeout: Duration, handler: HttpRequest => HttpResponse): Unit = {
       val promise = Promise[TimeoutSetup]()
       for (old <- getAndSet(promise.future).fast)
@@ -404,9 +407,18 @@ private[http] object HttpServerBluePrint {
     import pekko.http.impl.util.JavaMapping.Implicits._
 
     /** JAVA API * */
-    def update(timeout: Duration, handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
+    override def updateTimeout(timeout: java.time.Duration): Unit = {
+      val stimeout = if (timeout eq null) null else timeout.asScala
+      update(stimeout, null: HttpRequest => HttpResponse)
+    }
+    override def update(timeout: Duration, handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
       update(timeout, handler(_: HttpRequest).asScala)
-    def updateHandler(handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
+    override def update(
+        timeout: java.time.Duration, handler: Function[model.HttpRequest, model.HttpResponse]): Unit = {
+      val stimeout = if (timeout eq null) null else timeout.asScala
+      update(stimeout, handler(_: HttpRequest).asScala)
+    }
+    override def updateHandler(handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
       updateHandler(handler(_: HttpRequest).asScala)
 
     def timeout = currentTimeout

@@ -23,10 +23,12 @@ import pekko.actor.ActorSystem
 import pekko.annotation.ApiMayChange
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.settings.ClientConnectionSettingsImpl
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.ClientTransport
 import pekko.http.javadsl.model.headers.UserAgent
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.io.Inet.SocketOption
+import pekko.util.OptionConverters._
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.jdk.CollectionConverters._
@@ -65,6 +67,24 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
   def withStreamCancellationDelay(newValue: FiniteDuration): ClientConnectionSettings
 
   // Java API versions of mutators
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withConnectingTimeout(newValue: java.time.Duration): ClientConnectionSettings
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withIdleTimeout(newValue: java.time.Duration): ClientConnectionSettings
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withStreamCancellationDelay(newValue: java.time.Duration): ClientConnectionSettings
 
   def withUserAgentHeader(newValue: Optional[UserAgent]): ClientConnectionSettings =
     self.copy(userAgentHeader = (newValue.asScala: Option[UserAgent]).map(_.asScala))
