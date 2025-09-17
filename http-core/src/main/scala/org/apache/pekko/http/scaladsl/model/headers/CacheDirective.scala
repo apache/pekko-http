@@ -20,7 +20,6 @@ import scala.annotation.{ tailrec, varargs }
 import scala.collection.immutable
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
-import pekko.http.ccompat.{ pre213, since213 }
 
 sealed trait CacheDirective extends Renderable with jm.headers.CacheDirective {
   def value: String
@@ -93,10 +92,6 @@ object CacheDirectives {
    * http://tools.ietf.org/html/rfc7234#section-5.2.1.4
    */
   case object `no-cache` extends SingletonValueRenderable with RequestDirective with ResponseDirective {
-    @pre213
-    def apply(fieldNames: String*): `no-cache` =
-      new `no-cache`(immutable.Seq(fieldNames: _*))
-    @since213
     def apply(firstFieldName: String, otherFieldNames: String*): `no-cache` =
       new `no-cache`(firstFieldName +: otherFieldNames.toList)
   }
@@ -148,11 +143,7 @@ object CacheDirectives {
    */
   final case class `private`(fieldNames: immutable.Seq[String]) extends FieldNamesDirective with ResponseDirective
   object `private` {
-    @pre213
-    def apply(fieldNames: String*): `private` = new `private`(immutable.Seq(fieldNames: _*))
-    @since213
     def apply(): `private` = new `private`(immutable.Seq.empty)
-    @since213
     def apply(firstFieldName: String, otherFieldNames: String*): `private` =
       new `private`(firstFieldName +: otherFieldNames)
   }
