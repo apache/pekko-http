@@ -47,39 +47,50 @@ public class EventStreamUnmarshallingOversizedTest extends JUnitSuite {
   @Test
   public void testOversizedStrategyEnum() {
     // Test that the Java enum can be used with the settings
-    ServerSentEventSettings settings = 
+    ServerSentEventSettings settings =
         ServerSentEventSettings.create(system)
-        .withLineLength(50)
-        .withOversizedStrategy(OversizedSseStrategy.FailStream);
-    
+            .withLineLength(50)
+            .withOversizedLineStrategy(OversizedSseStrategy.FailStream);
+
     assertEquals("Should have correct line length", 50, settings.maxLineSize());
-    assertEquals("Should have FailStream strategy", 
-        OversizedSseStrategy.FailStream, settings.getOversizedStrategyEnum());
+    assertEquals(
+        "Should have FailStream line strategy",
+        OversizedSseStrategy.FailStream,
+        settings.getOversizedLineStrategyEnum());
 
     // Test all strategies can be set
-    settings = settings.withOversizedStrategy(OversizedSseStrategy.LogAndSkip);
-    assertEquals("Should have LogAndSkip strategy", 
-        OversizedSseStrategy.LogAndSkip, settings.getOversizedStrategyEnum());
+    settings = settings.withOversizedLineStrategy(OversizedSseStrategy.LogAndSkip);
+    assertEquals(
+        "Should have LogAndSkip line strategy",
+        OversizedSseStrategy.LogAndSkip,
+        settings.getOversizedLineStrategyEnum());
 
-    settings = settings.withOversizedStrategy(OversizedSseStrategy.Truncate);
-    assertEquals("Should have Truncate strategy", 
-        OversizedSseStrategy.Truncate, settings.getOversizedStrategyEnum());
+    settings = settings.withOversizedLineStrategy(OversizedSseStrategy.Truncate);
+    assertEquals(
+        "Should have Truncate line strategy",
+        OversizedSseStrategy.Truncate,
+        settings.getOversizedLineStrategyEnum());
 
-    settings = settings.withOversizedStrategy(OversizedSseStrategy.DeadLetter);
-    assertEquals("Should have DeadLetter strategy", 
-        OversizedSseStrategy.DeadLetter, settings.getOversizedStrategyEnum());
+    settings = settings.withOversizedLineStrategy(OversizedSseStrategy.DeadLetter);
+    assertEquals(
+        "Should have DeadLetter line strategy",
+        OversizedSseStrategy.DeadLetter,
+        settings.getOversizedLineStrategyEnum());
   }
 
   @Test
-  public void testOversizedStrategyStringCompatibility() {
-    // Test that the string-based API still works
-    ServerSentEventSettings settings = 
-        ServerSentEventSettings.create(system)
-        .withOversizedStrategy("log-and-skip");
-    
-    assertEquals("Should have log-and-skip strategy string", 
-        "log-and-skip", settings.getOversizedStrategy());
-    assertEquals("Should have LogAndSkip strategy enum", 
-        OversizedSseStrategy.LogAndSkip, settings.getOversizedStrategyEnum());
+  public void testOversizedLineStrategyStringCompatibility() {
+    // Test that the string-based API works for line strategies
+    ServerSentEventSettings settings =
+        ServerSentEventSettings.create(system).withOversizedLineStrategy("log-and-skip");
+
+    assertEquals(
+        "Should have log-and-skip line strategy string",
+        "log-and-skip",
+        settings.getOversizedLineStrategy());
+    assertEquals(
+        "Should have LogAndSkip line strategy enum",
+        OversizedSseStrategy.LogAndSkip,
+        settings.getOversizedLineStrategyEnum());
   }
 }

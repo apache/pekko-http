@@ -89,7 +89,8 @@ trait EventStreamUnmarshalling {
       settings.maxLineSize,
       settings.maxEventSize,
       settings.emitEmptyEvents,
-      settings.oversizedStrategy)
+      settings.oversizedLineStrategy,
+      settings.oversizedEventStrategy)
 
   private final def fromEventsStream(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean)
       : FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] =
@@ -100,8 +101,14 @@ trait EventStreamUnmarshalling {
     fromEventsStreamInternal(maxLineSize, maxEventSize, emitEmptyEvents, oversizedStrategy)
 
   private final def fromEventsStream(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean,
-      oversizedStrategy: OversizedSseStrategy): FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] = {
-    val eventStreamParser = EventStreamParser(maxLineSize, maxEventSize, emitEmptyEvents, oversizedStrategy)
+      oversizedStrategy: OversizedSseStrategy): FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] =
+    fromEventsStream(maxLineSize, maxEventSize, emitEmptyEvents, oversizedStrategy, oversizedStrategy)
+
+  private final def fromEventsStream(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean,
+      oversizedLineStrategy: OversizedSseStrategy, oversizedEventStrategy: OversizedSseStrategy)
+      : FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] = {
+    val eventStreamParser =
+      EventStreamParser(maxLineSize, maxEventSize, emitEmptyEvents, oversizedLineStrategy, oversizedEventStrategy)
     def unmarshal(entity: HttpEntity) =
       entity
         .withoutSizeLimit // Because of streaming: the server keeps the response open and potentially streams huge amounts of data

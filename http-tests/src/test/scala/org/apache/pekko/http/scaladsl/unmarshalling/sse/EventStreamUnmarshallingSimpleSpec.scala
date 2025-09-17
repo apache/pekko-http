@@ -44,7 +44,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
 
       val settings = ServerSentEventSettings(system)
         .withLineLength(50)
-        .withOversizedStrategy(OversizedSseStrategy.FailStream)
+        .withOversizedLineStrategy(OversizedSseStrategy.FailStream)
 
       val unmarshaller = EventStreamUnmarshalling.fromEventsStream(settings)
 
@@ -72,7 +72,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
 
       val settings = ServerSentEventSettings(system)
         .withLineLength(50)
-        .withOversizedStrategy(OversizedSseStrategy.LogAndSkip)
+        .withOversizedLineStrategy(OversizedSseStrategy.LogAndSkip)
 
       val unmarshaller = EventStreamUnmarshalling.fromEventsStream(settings)
 
@@ -100,7 +100,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
 
       val settings = ServerSentEventSettings(system)
         .withLineLength(50)
-        .withOversizedStrategy(OversizedSseStrategy.Truncate)
+        .withOversizedLineStrategy(OversizedSseStrategy.Truncate)
 
       val unmarshaller = EventStreamUnmarshalling.fromEventsStream(settings)
 
@@ -129,7 +129,7 @@ final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matche
 
       val settings = ServerSentEventSettings(system)
         .withLineLength(50)
-        .withOversizedStrategy(OversizedSseStrategy.DeadLetter)
+        .withOversizedLineStrategy(OversizedSseStrategy.DeadLetter)
 
       val unmarshaller = EventStreamUnmarshalling.fromEventsStream(settings)
 

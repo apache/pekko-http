@@ -33,10 +33,10 @@ private object LineParser {
 }
 
 /**
- * A wrapper for an SSE message which exceeds the configured limit. Used for pattern matching.
+ * A wrapper for an SSE line which exceeds the configured limit. Used for pattern matching.
  * @param line The oversized contents of the SSE line being parsed.
  */
-case class OversizedSseMessage(line: String)
+case class OversizedSseLine(line: String)
 
 /** INTERNAL API */
 @InternalApi
@@ -72,7 +72,7 @@ private final class LineParser(maxLineSize: Int,
               log.info("Truncating oversized SSE message: {} bytes > {} max-line-size", lineLength, maxLineSize)
               Some(line.take(maxLineSize))
             case OversizedSseStrategy.DeadLetter =>
-              materializer.system.deadLetters ! OversizedSseMessage(line)
+              materializer.system.deadLetters ! OversizedSseLine(line)
               None
           }
         }

@@ -19,34 +19,29 @@ package org.apache.pekko.http.javadsl.settings;
 
 /**
  * Strategy for handling oversized SSE messages that exceed the configured max-line-size.
+ *
  * @since 1.3.0
  */
 public enum OversizedSseStrategy {
   /**
-   * Fail the stream with an IllegalStateException when an oversized message is encountered.
-   * This is the default behavior to maintain backward compatibility.
+   * Fail the stream with an IllegalStateException when an oversized message is encountered. This is
+   * the default behavior to maintain backward compatibility.
    */
   FailStream,
-  
-  /**
-   * Log a warning and skip the oversized message, continuing with stream processing.
-   */
+
+  /** Log a warning and skip the oversized message, continuing with stream processing. */
   LogAndSkip,
-  
+
   /**
    * Log an info message and truncate the oversized message to the configured max-line-size,
    * continuing with stream processing.
    */
   Truncate,
-  
-  /**
-   * Send the oversized message to dead letters, continuing with stream processing.
-   */
+
+  /** Send the oversized message to dead letters, continuing with stream processing. */
   DeadLetter;
 
-  /**
-   * Convert this Java enum to the corresponding Scala enum value.
-   */
+  /** Convert this Java enum to the corresponding Scala enum value. */
   public org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy asScala() {
     switch (this) {
       case FailStream:
@@ -62,17 +57,20 @@ public enum OversizedSseStrategy {
     }
   }
 
-  /**
-   * Convert from a Scala enum value to the corresponding Java enum value.
-   */
-  public static OversizedSseStrategy fromScala(org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy scalaStrategy) {
-    if (scalaStrategy == org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.FailStream$.MODULE$) {
+  /** Convert from a Scala enum value to the corresponding Java enum value. */
+  public static OversizedSseStrategy fromScala(
+      org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy scalaStrategy) {
+    if (scalaStrategy
+        == org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.FailStream$.MODULE$) {
       return FailStream;
-    } else if (scalaStrategy == org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.LogAndSkip$.MODULE$) {
+    } else if (scalaStrategy
+        == org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.LogAndSkip$.MODULE$) {
       return LogAndSkip;
-    } else if (scalaStrategy == org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.Truncate$.MODULE$) {
+    } else if (scalaStrategy
+        == org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.Truncate$.MODULE$) {
       return Truncate;
-    } else if (scalaStrategy == org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.DeadLetter$.MODULE$) {
+    } else if (scalaStrategy
+        == org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.DeadLetter$.MODULE$) {
       return DeadLetter;
     } else {
       throw new IllegalArgumentException("Unknown Scala OversizedSseStrategy: " + scalaStrategy);

@@ -24,7 +24,9 @@ private[http] final case class ServerSentEventSettingsImpl(
     maxEventSize: Int,
     maxLineSize: Int,
     emitEmptyEvents: Boolean,
-    override val oversizedStrategy: OversizedSseStrategy) extends pekko.http.scaladsl.settings.ServerSentEventSettings {
+    override val oversizedLineStrategy: OversizedSseStrategy,
+    override val oversizedEventStrategy: OversizedSseStrategy)
+    extends pekko.http.scaladsl.settings.ServerSentEventSettings {
   require(maxLineSize >= 0, "max-line-size must be >= 0 (0 means unlimited)")
   require(maxEventSize >= 0, "max-event-size must be >= 0 (0 means unlimited)")
   require(
@@ -33,15 +35,21 @@ private[http] final case class ServerSentEventSettingsImpl(
 
   override def productPrefix: String = "ServerSentEventSettings"
 
-  // Override methods to resolve conflict between Java and Scala return types
-  override def withOversizedStrategy(newValue: String): ServerSentEventSettingsImpl =
-    copy(oversizedStrategy = OversizedSseStrategy.fromString(newValue))
+  override def withOversizedLineStrategy(newValue: String): ServerSentEventSettingsImpl =
+    copy(oversizedLineStrategy = OversizedSseStrategy.fromString(newValue))
 
-  override def withOversizedStrategy(newValue: OversizedSseStrategy): ServerSentEventSettingsImpl =
-    copy(oversizedStrategy = newValue)
+  override def withOversizedLineStrategy(newValue: OversizedSseStrategy): ServerSentEventSettingsImpl =
+    copy(oversizedLineStrategy = newValue)
+
+  override def withOversizedEventStrategy(newValue: String): ServerSentEventSettingsImpl =
+    copy(oversizedEventStrategy = OversizedSseStrategy.fromString(newValue))
+
+  override def withOversizedEventStrategy(newValue: OversizedSseStrategy): ServerSentEventSettingsImpl =
+    copy(oversizedEventStrategy = newValue)
 
   // For Java API compatibility
-  def oversizedStrategyAsString: String = OversizedSseStrategy.toString(oversizedStrategy)
+  def oversizedLineStrategyAsString: String = OversizedSseStrategy.toString(oversizedLineStrategy)
+  def oversizedEventStrategyAsString: String = OversizedSseStrategy.toString(oversizedEventStrategy)
 
 }
 
@@ -50,5 +58,6 @@ object ServerSentEventSettingsImpl extends SettingsCompanionImpl[ServerSentEvent
     c.getInt("max-event-size"),
     c.getInt("max-line-size"),
     c.getBoolean("emit-empty-events"),
-    OversizedSseStrategy.fromString(c.getString("oversized-message-handling")))
+    OversizedSseStrategy.fromString(c.getString("oversized-line-handling")),
+    OversizedSseStrategy.fromString(c.getString("oversized-event-handling")))
 }

@@ -17,7 +17,7 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.http.impl.settings.ServerSentEventSettingsImpl
-import pekko.http.scaladsl.settings.OversizedSseStrategy
+import pekko.http.scaladsl.settings.{ OversizedSseStrategy => ScalaOversizedSseStrategy }
 import com.typesafe.config.Config
 
 /**
@@ -46,26 +46,64 @@ abstract class ServerSentEventSettings private[pekko] () { self: ServerSentEvent
   def emitEmptyEvents: Boolean
 
   /**
-   * How to handle messages that exceed max-line-size limit.
+   * How to handle lines that exceed max-line-size limit.
    * Valid options: "fail-stream", "log-and-skip", "truncate", "dead-letter"
+   * @since 1.3.0
    */
-  def getOversizedStrategy: String = self.oversizedStrategyAsString
+  def getOversizedLineStrategy: String = self.oversizedLineStrategyAsString
 
   /**
-   * How to handle messages that exceed max-line-size limit.
+   * How to handle lines that exceed max-line-size limit.
    * Returns the strategy as a Java enum.
+   * @since 1.3.0
    */
-  def getOversizedStrategyEnum: org.apache.pekko.http.javadsl.settings.OversizedSseStrategy =
-    org.apache.pekko.http.javadsl.settings.OversizedSseStrategy.fromScala(self.oversizedStrategy)
+  def getOversizedLineStrategyEnum: org.apache.pekko.http.javadsl.settings.OversizedSseStrategy =
+    org.apache.pekko.http.javadsl.settings.OversizedSseStrategy.fromScala(self.oversizedLineStrategy)
+
+  /**
+   * How to handle events that exceed max-event-size limit.
+   * Valid options: "fail-stream", "log-and-skip", "truncate", "dead-letter"
+   * @since 1.3.0
+   */
+  def getOversizedEventStrategy: String = self.oversizedEventStrategyAsString
+
+  /**
+   * How to handle events that exceed max-event-size limit.
+   * Returns the strategy as a Java enum.
+   * @since 1.3.0
+   */
+  def getOversizedEventStrategyEnum: org.apache.pekko.http.javadsl.settings.OversizedSseStrategy =
+    org.apache.pekko.http.javadsl.settings.OversizedSseStrategy.fromScala(self.oversizedEventStrategy)
 
   def withMaxEventSize(newValue: Int): ServerSentEventSettings = self.copy(maxEventSize = newValue)
   def withLineLength(newValue: Int): ServerSentEventSettings = self.copy(maxLineSize = newValue)
   def withEmitEmptyEvents(newValue: Boolean): ServerSentEventSettings = self.copy(emitEmptyEvents = newValue)
-  def withOversizedStrategy(newValue: String): ServerSentEventSettings =
-    self.copy(oversizedStrategy = OversizedSseStrategy.fromString(newValue))
-  def withOversizedStrategy(
+
+  /**
+   * @since 1.3.0
+   */
+  def withOversizedLineStrategy(newValue: String): ServerSentEventSettings =
+    self.copy(oversizedLineStrategy = ScalaOversizedSseStrategy.fromString(newValue))
+
+  /**
+   * @since 1.3.0
+   */
+  def withOversizedLineStrategy(
       newValue: org.apache.pekko.http.javadsl.settings.OversizedSseStrategy): ServerSentEventSettings =
-    self.copy(oversizedStrategy = newValue.asScala)
+    self.copy(oversizedLineStrategy = newValue.asScala)
+
+  /**
+   * @since 1.3.0
+   */
+  def withOversizedEventStrategy(newValue: String): ServerSentEventSettings =
+    self.copy(oversizedEventStrategy = ScalaOversizedSseStrategy.fromString(newValue))
+
+  /**
+   * @since 1.3.0
+   */
+  def withOversizedEventStrategy(
+      newValue: org.apache.pekko.http.javadsl.settings.OversizedSseStrategy): ServerSentEventSettings =
+    self.copy(oversizedEventStrategy = newValue.asScala)
 }
 
 object ServerSentEventSettings extends SettingsCompanion[ServerSentEventSettings] {

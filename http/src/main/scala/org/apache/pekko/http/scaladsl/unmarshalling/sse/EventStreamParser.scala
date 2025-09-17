@@ -78,11 +78,27 @@ object EventStreamParser {
    * @param maxLineSize The maximum size of a line for the event Stream parser
    * @param maxEventSize The maximum size of a server-sent event for the event Stream parser
    * @param emitEmptyEvents Should the parser emit events with empty data field
-   * @param oversizedStrategy How to handle messages that exceed max-line-size
+   * @param oversizedStrategy How to handle messages that exceed max-line-size and max-event-size
    * @since 1.3.0
    */
   def apply(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean, oversizedStrategy: OversizedSseStrategy)
       : Flow[ByteString, ServerSentEvent, NotUsed] =
-    Flow[ByteString].via(new LineParser(maxLineSize, oversizedStrategy)).via(
-      new ServerSentEventParser(maxEventSize, emitEmptyEvents))
+    apply(maxLineSize, maxEventSize, emitEmptyEvents, oversizedStrategy, oversizedStrategy)
+
+  /**
+   * Flow that converts raw byte string input into [[ServerSentEvent]]s.
+   *
+   * This API is made for use in non-pekko-http clients, like Play's WSClient.
+   *
+   * @param maxLineSize The maximum size of a line for the event Stream parser
+   * @param maxEventSize The maximum size of a server-sent event for the event Stream parser
+   * @param emitEmptyEvents Should the parser emit events with empty data field
+   * @param oversizedLineStrategy How to handle lines that exceed max-line-size
+   * @param oversizedEventStrategy How to handle events that exceed max-event-size
+   * @since 1.3.0
+   */
+  def apply(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean, oversizedLineStrategy: OversizedSseStrategy,
+      oversizedEventStrategy: OversizedSseStrategy): Flow[ByteString, ServerSentEvent, NotUsed] =
+    Flow[ByteString].via(new LineParser(maxLineSize, oversizedLineStrategy)).via(
+      new ServerSentEventParser(maxEventSize, emitEmptyEvents, oversizedEventStrategy))
 }

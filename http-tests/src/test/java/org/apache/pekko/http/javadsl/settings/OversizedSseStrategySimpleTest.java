@@ -30,7 +30,7 @@ public class OversizedSseStrategySimpleTest extends JUnitSuite {
     OversizedSseStrategy logAndSkip = OversizedSseStrategy.LogAndSkip;
     OversizedSseStrategy truncate = OversizedSseStrategy.Truncate;
     OversizedSseStrategy deadLetter = OversizedSseStrategy.DeadLetter;
-    
+
     assertNotNull("FailStream should not be null", failStream);
     assertNotNull("LogAndSkip should not be null", logAndSkip);
     assertNotNull("Truncate should not be null", truncate);
@@ -40,9 +40,9 @@ public class OversizedSseStrategySimpleTest extends JUnitSuite {
   @Test
   public void testFromScala() {
     // Test that fromScala method works
-    OversizedSseStrategy strategy = OversizedSseStrategy.fromScala(
-        org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.FailStream$.MODULE$
-    );
+    OversizedSseStrategy strategy =
+        OversizedSseStrategy.fromScala(
+            org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.FailStream$.MODULE$);
     assertEquals("Should convert from Scala FailStream", OversizedSseStrategy.FailStream, strategy);
   }
 }
