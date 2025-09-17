@@ -34,6 +34,6 @@ private[http] object JavaDurationConverter {
     case fd: scala.concurrent.duration.FiniteDuration => fd.toJava
     case scala.concurrent.duration.Duration.Inf       => ChronoUnit.FOREVER.getDuration
     case scala.concurrent.duration.Duration.MinusInf  => ChronoUnit.FOREVER.getDuration.negated()
-    case scala.concurrent.duration.Duration.Undefined => ChronoUnit.FOREVER.getDuration
+    case _                                            => ChronoUnit.FOREVER.getDuration
   }
 }

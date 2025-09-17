@@ -41,8 +41,6 @@ import java.io.File;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import scala.concurrent.duration.FiniteDuration;
-
 import org.apache.pekko.stream.javadsl.Framing;
 import org.apache.pekko.http.javadsl.model.*;
 // #manual-entity-consume-example-1
