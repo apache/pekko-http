@@ -26,14 +26,14 @@ import scala.concurrent.duration.FiniteDuration
 import scala.jdk.DurationConverters._
 
 /**
-  * Internal Pekko HTTP API
-  */
+ * Internal Pekko HTTP API
+ */
 @InternalApi
 private[http] object JavaDurationConverter {
   def toJava(d: scala.concurrent.duration.Duration): java.time.Duration = d match {
     case fd: scala.concurrent.duration.FiniteDuration => fd.toJava
-    case scala.concurrent.duration.Duration.Inf    => ChronoUnit.FOREVER.getDuration
-    case scala.concurrent.duration.Duration.MinusInf => ChronoUnit.FOREVER.getDuration.negated()
-    case scala.concurrent.duration.Duration.Undefined  => ChronoUnit.FOREVER.getDuration
+    case scala.concurrent.duration.Duration.Inf       => ChronoUnit.FOREVER.getDuration
+    case scala.concurrent.duration.Duration.MinusInf  => ChronoUnit.FOREVER.getDuration.negated()
+    case scala.concurrent.duration.Duration.Undefined => ChronoUnit.FOREVER.getDuration
   }
 }

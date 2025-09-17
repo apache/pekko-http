@@ -17,10 +17,10 @@ import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.caching.impl.settings.LfuCachingSettingsImpl
 import pekko.http.javadsl.settings.SettingsCompanion
-import pekko.util.JavaDurationConverters._
 import com.typesafe.config.Config
 
 import scala.concurrent.duration.Duration
+import scala.jdk.DurationConverters._
 
 /**
  * Public API but not intended for subclassing
@@ -59,7 +59,7 @@ abstract class LfuCacheSettings private[http] () { self: LfuCachingSettingsImpl 
    * @since 1.3.0
    */
   def withTimeToLive(newTimeToLive: java.time.Duration): LfuCacheSettings =
-    self.copy(timeToLive = newTimeToLive.asScala)
+    self.copy(timeToLive = newTimeToLive.toScala)
   def withTimeToIdle(newTimeToIdle: Duration): LfuCacheSettings = self.copy(timeToIdle = newTimeToIdle)
 
   /**
@@ -67,7 +67,7 @@ abstract class LfuCacheSettings private[http] () { self: LfuCachingSettingsImpl 
    * @since 1.3.0
    */
   def withTimeToIdle(newTimeToIdle: java.time.Duration): LfuCacheSettings =
-    self.copy(timeToIdle = newTimeToIdle.asScala)
+    self.copy(timeToIdle = newTimeToIdle.toScala)
 }
 
 object LfuCacheSettings extends SettingsCompanion[LfuCacheSettings] {

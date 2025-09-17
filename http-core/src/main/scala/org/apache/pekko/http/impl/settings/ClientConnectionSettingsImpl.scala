@@ -25,11 +25,11 @@ import pekko.http.scaladsl.settings.ClientConnectionSettings.LogUnencryptedNetwo
 import pekko.http.scaladsl.settings.Http2ClientSettings.Http2ClientSettingsImpl
 import pekko.http.scaladsl.settings.{ Http2ClientSettings, ParserSettings, WebSocketSettings }
 import pekko.io.Inet.SocketOption
-import pekko.util.JavaDurationConverters._
 import com.typesafe.config.Config
 
 import scala.collection.immutable
 import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.jdk.DurationConverters._
 import scala.util.Try
 
 /** INTERNAL API */
@@ -58,14 +58,14 @@ private[pekko] final case class ClientConnectionSettingsImpl(
 
   override def withConnectingTimeout(
       newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
-    withConnectingTimeout(newValue.asScala)
+    withConnectingTimeout(newValue.toScala)
 
   override def withIdleTimeout(newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
-    withIdleTimeout(newValue.asScala)
+    withIdleTimeout(newValue.toScala)
 
   override def withStreamCancellationDelay(
       newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
-    withStreamCancellationDelay(newValue.asScala)
+    withStreamCancellationDelay(newValue.toScala)
 
   override def websocketRandomFactory: () => Random = websocketSettings.randomFactory
 }

@@ -17,12 +17,12 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
 import pekko.http.scaladsl.settings._
-import pekko.util.JavaDurationConverters._
 import com.typesafe.config.Config
 
 import scala.collection.immutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
+import scala.jdk.DurationConverters._
 import scala.util.matching.Regex
 
 /** INTERNAL API */
@@ -61,24 +61,27 @@ private[pekko] final case class ConnectionPoolSettingsImpl(
   override def productPrefix = "ConnectionPoolSettings"
 
   override def withBaseConnectionBackoff(newValue: java.time.Duration): ConnectionPoolSettings =
-    withBaseConnectionBackoff(newValue.asScala)
+    withBaseConnectionBackoff(newValue.toScala)
 
   override def withMaxConnectionBackoff(newValue: java.time.Duration): ConnectionPoolSettings =
-    withMaxConnectionBackoff(newValue.asScala)
+    withMaxConnectionBackoff(newValue.toScala)
 
   override def withIdleTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
-    withIdleTimeout(newValue.asScala)
+    withIdleTimeout(newValue.toScala)
 
   override def withKeepAliveTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
-    withKeepAliveTimeout(newValue.asScala)
+    withKeepAliveTimeout(newValue.toScala)
 
   override def withMaxConnectionLifetime(newValue: java.time.Duration): ConnectionPoolSettings =
-    withMaxConnectionLifetime(newValue.asScala)
+    withMaxConnectionLifetime(newValue.toScala)
 
   def withUpdatedConnectionSettings(
       f: ClientConnectionSettings => ClientConnectionSettings): ConnectionPoolSettingsImpl =
     copy(connectionSettings = f(connectionSettings),
       hostOverrides = hostOverrides.map { case (k, v) => k -> v.withUpdatedConnectionSettings(f) })
+
+  override def withResponseEntitySubscriptionTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
+    withResponseEntitySubscriptionTimeout(newValue.toScala)
 
   /** INTERNAL API */
   private[http] def copyDeep(
