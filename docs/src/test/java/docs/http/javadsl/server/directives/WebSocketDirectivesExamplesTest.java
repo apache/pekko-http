@@ -30,8 +30,8 @@ import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
 import org.junit.Test;
-import scala.concurrent.duration.FiniteDuration;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -97,7 +97,7 @@ public class WebSocketDirectivesExamplesTest extends JUnitRouteTest {
     wsClient.expectMessage("Hello Peter!");
 
     wsClient.sendMessage(BinaryMessage.create(ByteString.fromString("abcdef")));
-    wsClient.expectNoMessage(FiniteDuration.create(100, TimeUnit.MILLISECONDS));
+    wsClient.expectNoMessage(Duration.ofMillis(100));
 
     wsClient.sendMessage("John");
     wsClient.expectMessage("Hello John!");

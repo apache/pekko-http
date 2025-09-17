@@ -27,8 +27,8 @@ import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
-import scala.concurrent.duration.Duration;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Function;
@@ -38,7 +38,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.*;
 public class JavaTestServer {
 
   public Route createRoute() {
-    final Duration timeout = Duration.create(1, TimeUnit.SECONDS);
+    final Duration timeout = Duration.ofSeconds(1);
 
     final Route index =
         path(

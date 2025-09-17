@@ -41,8 +41,8 @@ import org.apache.pekko.util.ByteString;
 import org.junit.Ignore;
 import org.junit.Test;
 import scala.concurrent.ExecutionContextExecutor;
-import scala.concurrent.duration.FiniteDuration;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -1144,7 +1144,7 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
   @Test
   public void testExtractStrictEntity() {
     // #extractStrictEntity
-    final FiniteDuration timeout = FiniteDuration.create(3, TimeUnit.SECONDS);
+    final java.time.Duration timeout = java.time.Duration.ofSeconds(3);
     final Route route =
         extractStrictEntity(timeout, strict -> complete(strict.getData().utf8String()));
 
@@ -1165,7 +1165,7 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
   @Test
   public void testToStrictEntity() {
     // #toStrictEntity
-    final FiniteDuration timeout = FiniteDuration.create(3, TimeUnit.SECONDS);
+    final Duration timeout = Duration.ofSeconds(3);
     final Route route =
         toStrictEntity(
             timeout,

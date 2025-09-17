@@ -13,6 +13,7 @@
 
 package org.apache.pekko.http.javadsl.settings
 
+import java.time.{ Duration => JDuration }
 import java.util.Random
 import java.util.function.Supplier
 
@@ -21,6 +22,7 @@ import pekko.actor.ActorSystem
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.settings.WebSocketSettingsImpl
 import pekko.util.ByteString
+import pekko.util.JavaDurationConverters._
 import com.typesafe.config.Config
 
 import scala.concurrent.duration.Duration
@@ -35,6 +37,12 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
   def periodicKeepAliveMaxIdle: Duration
 
   /**
+   * Java API
+   * @since 1.3.0
+   */
+  def getPeriodicKeepAliveMaxIdle: JDuration
+
+  /**
    * The provided supplier will be invoked for each new keep-alive frame that is sent.
    * The ByteString will be included in the Ping or Pong frame sent as heartbeat,
    * so keep in mind to keep it relatively small, in order not to make the frames too bloated.
@@ -47,6 +55,12 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
     copy(periodicKeepAliveMode = newValue)
   def withPeriodicKeepAliveMaxIdle(newValue: Duration): WebSocketSettings =
     copy(periodicKeepAliveMaxIdle = newValue)
+
+  /**
+   * @since 1.3.0
+   */
+  def withPeriodicKeepAliveMaxIdle(newValue: JDuration): WebSocketSettings =
+    copy(periodicKeepAliveMaxIdle = newValue.asScala)
   def withPeriodicKeepAliveData(newValue: Supplier[ByteString]): WebSocketSettings =
     copy(periodicKeepAliveData = () => newValue.get())
 

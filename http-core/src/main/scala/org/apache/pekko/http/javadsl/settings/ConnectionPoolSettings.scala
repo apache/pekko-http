@@ -69,10 +69,40 @@ abstract class ConnectionPoolSettings private[pekko] () { self: ConnectionPoolSe
   /** Client-side pipelining is not currently supported, see https://github.com/akka/akka-http/issues/32 */
   def withPipeliningLimit(newValue: Int): ConnectionPoolSettings
   def withBaseConnectionBackoff(newValue: FiniteDuration): ConnectionPoolSettings
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withBaseConnectionBackoff(newValue: java.time.Duration): ConnectionPoolSettings
   def withMaxConnectionBackoff(newValue: FiniteDuration): ConnectionPoolSettings
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withMaxConnectionBackoff(newValue: java.time.Duration): ConnectionPoolSettings
   def withIdleTimeout(newValue: Duration): ConnectionPoolSettings
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withIdleTimeout(newValue: java.time.Duration): ConnectionPoolSettings
   def withKeepAliveTimeout(newValue: Duration): ConnectionPoolSettings
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withKeepAliveTimeout(newValue: java.time.Duration): ConnectionPoolSettings
   def withMaxConnectionLifetime(newValue: Duration): ConnectionPoolSettings
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withMaxConnectionLifetime(newValue: java.time.Duration): ConnectionPoolSettings
   def withConnectionSettings(newValue: ClientConnectionSettings): ConnectionPoolSettings =
     self.copyDeep(_.withConnectionSettings(newValue.asScala), connectionSettings = newValue.asScala)
 
