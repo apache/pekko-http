@@ -109,6 +109,12 @@ abstract class ConnectionPoolSettings private[pekko] () { self: ConnectionPoolSe
   @ApiMayChange
   def withResponseEntitySubscriptionTimeout(newValue: Duration): ConnectionPoolSettings
 
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withResponseEntitySubscriptionTimeout(newValue: java.time.Duration): ConnectionPoolSettings
+
   def withTransport(newValue: ClientTransport): ConnectionPoolSettings =
     withUpdatedConnectionSettings(_.withTransport(newValue.asScala))
 }
