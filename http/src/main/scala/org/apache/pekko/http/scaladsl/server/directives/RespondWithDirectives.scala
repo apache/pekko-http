@@ -16,7 +16,6 @@ package directives
 
 import org.apache.pekko
 import pekko.http.scaladsl.model._
-import pekko.http.ccompat._
 import scala.collection.immutable
 
 /**
@@ -47,11 +46,6 @@ trait RespondWithDirectives {
    *
    * @group response
    */
-  @pre213
-  def respondWithHeaders(responseHeaders: HttpHeader*): Directive0 =
-    respondWithHeaders(responseHeaders.toList)
-
-  @since213
   def respondWithHeaders(firstHeader: HttpHeader, otherHeaders: HttpHeader*): Directive0 =
     respondWithHeaders(firstHeader +: otherHeaders.toList)
 
@@ -69,17 +63,6 @@ trait RespondWithDirectives {
    *
    * @group response
    */
-  @pre213
-  def respondWithDefaultHeaders(responseHeaders: HttpHeader*): Directive0 =
-    respondWithDefaultHeaders(responseHeaders.toList)
-
-  /**
-   * Adds the given response headers to all HTTP responses of its inner Route,
-   * if a header already exists it is not added again.
-   *
-   * @group response
-   */
-  @since213
   def respondWithDefaultHeaders(firstHeader: HttpHeader, otherHeaders: HttpHeader*): Directive0 =
     respondWithDefaultHeaders(firstHeader +: otherHeaders.toList)
 

@@ -27,8 +27,6 @@ import scala.collection.immutable
 import scala.concurrent.Future
 import scala.util.{ Failure, Success }
 import BasicDirectives._
-import pekko.http.ccompat.pre213
-import pekko.http.ccompat.since213
 
 /**
  * @groupname form Form field directives

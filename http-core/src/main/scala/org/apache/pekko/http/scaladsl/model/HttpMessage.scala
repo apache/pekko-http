@@ -30,7 +30,6 @@ import pekko.Done
 import pekko.actor.ClassicActorSystemProvider
 import org.parboiled2.CharUtils
 import pekko.util.{ ByteString, HashCode, OptionVal }
-import pekko.http.ccompat.{ pre213, since213 }
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.util.FastFuture._
@@ -82,11 +81,6 @@ sealed trait HttpMessage extends jm.HttpMessage {
     entity.discardBytes()(SystemMaterializer(system).materializer)
 
   /** Returns a copy of this message with the list of headers set to the given ones. */
-  @pre213
-  def withHeaders(headers: HttpHeader*): Self = withHeaders(headers.toList)
-
-  /** Returns a copy of this message with the list of headers set to the given ones. */
-  @since213
   def withHeaders(firstHeader: HttpHeader, otherHeaders: HttpHeader*): Self =
     withHeaders(firstHeader +: otherHeaders.toList)
 
@@ -97,10 +91,6 @@ sealed trait HttpMessage extends jm.HttpMessage {
    * Returns a new message that contains all of the given default headers which didn't already
    * exist (by case-insensitive header name) in this message.
    */
-  @pre213
-  def withDefaultHeaders(defaultHeaders: HttpHeader*): Self = withDefaultHeaders(defaultHeaders.toList)
-
-  @since213
   def withDefaultHeaders(firstHeader: HttpHeader, otherHeaders: HttpHeader*): Self =
     withDefaultHeaders(firstHeader +: otherHeaders.toList)
 
