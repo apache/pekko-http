@@ -24,7 +24,6 @@ ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.jav
 ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings.getIdleTimeout")
 ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings.getKeepAliveTimeout")
 ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings.getResponseEntitySubscriptionTimeout")
-ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings.withResponseEntitySubscriptionTimeout")
 ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.engine.server.HttpServerBluePrint#TimeoutAccessImpl.getTimeout")
 ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.javadsl.TimeoutAccess.getTimeout")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.TimeoutAccess.getTimeout")
