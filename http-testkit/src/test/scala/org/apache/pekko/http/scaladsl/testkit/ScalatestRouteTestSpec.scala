@@ -18,12 +18,13 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 import Directives._
-import HttpMethods._
 import headers.`X-Forwarded-Proto`
 
 import org.apache.pekko
 import pekko.actor.ActorRef
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model.headers.RawHeader
 import pekko.http.scaladsl.server._

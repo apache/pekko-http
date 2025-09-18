@@ -25,11 +25,11 @@ import pekko.actor.ActorSystem
 import pekko.event.NoLogging
 import pekko.util.ByteString
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpEntity._
+import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util._
 import pekko.stream.scaladsl._
-import HttpEntity._
-import HttpMethods._
 import pekko.testkit._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers

@@ -15,7 +15,7 @@ package org.apache.pekko.http.impl.model.parser
 
 import org.apache.pekko
 import pekko.http.scaladsl.model.headers._
-import CacheDirectives._
+import pekko.http.scaladsl.model.headers.CacheDirectives._
 
 private[parser] trait CacheControlHeader { this: HeaderParser =>
 

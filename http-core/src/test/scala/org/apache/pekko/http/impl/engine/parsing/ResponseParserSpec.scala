@@ -30,8 +30,8 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import MediaTypes._
-import HttpMethods._
 import HttpProtocols._
+import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.StatusCodes._
 import HttpEntity._
 import ParserOutput._

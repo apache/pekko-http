@@ -18,13 +18,12 @@ import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
 
-import FastFuture._
-
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.unmarshalling._
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import pekko.http.scaladsl.util.FastFuture
+import pekko.http.scaladsl.util.FastFuture._
 import pekko.stream.Materializer
 
 /**

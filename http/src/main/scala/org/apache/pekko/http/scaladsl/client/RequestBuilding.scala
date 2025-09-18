@@ -18,13 +18,12 @@ import scala.concurrent.{ Await, ExecutionContext }
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 
-import HttpMethods._
-import headers.HttpCredentials
-
 import org.apache.pekko
 import pekko.event.{ Logging, LoggingAdapter }
 import pekko.http.scaladsl.marshalling._
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.model.headers.HttpCredentials
 import pekko.util.Timeout
 
 trait RequestBuilding extends TransformerPipelineSupport {
