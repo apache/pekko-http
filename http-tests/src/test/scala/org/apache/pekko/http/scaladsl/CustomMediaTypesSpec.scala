@@ -34,7 +34,7 @@ class CustomMediaTypesSpec extends PekkoSpec with ScalaFutures
       set.add(MediaTypes.`application/vnd.ms-excel`)
       set.add(MediaTypes.`application/vnd.ms-powerpoint`)
       set.add(MediaTypes.`application/msword`)
-      set.add(MediaType.customBinary("application", "x-Akka-TEST", MediaType.NotCompressible))
+      set.add(MediaType.customBinary("application", "x-Pekko-TEST", MediaType.NotCompressible))
 
       set.contains(MediaType.parse("application/msword").right.get) should ===(true)
       set.contains(MediaType.parse("application/MsWord").right.get) should ===(true)
