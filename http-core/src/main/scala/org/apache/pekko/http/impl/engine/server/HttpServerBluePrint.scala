@@ -45,9 +45,9 @@ import pekko.http.scaladsl.model.headers.`Timeout-Access`
 import pekko.http.scaladsl.model._
 import pekko.http.impl.util.LogByteStringTools._
 
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.concurrent.duration.{ Deadline, Duration, FiniteDuration }
 import scala.collection.immutable
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.duration.{ Deadline, Duration, DurationLong, FiniteDuration }
 import scala.jdk.DurationConverters._
 import scala.util.Failure
 import scala.util.control.{ NoStackTrace, NonFatal }
