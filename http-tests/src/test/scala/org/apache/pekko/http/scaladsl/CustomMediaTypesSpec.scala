@@ -17,10 +17,9 @@ import scala.concurrent.duration._
 
 import org.apache.pekko
 import pekko.http.scaladsl.client.RequestBuilding
-import pekko.http.scaladsl.model.MediaType.WithFixedCharset
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.MediaType.WithFixedCharset
 import pekko.http.scaladsl.server.Directives
-import pekko.http.scaladsl.settings.{ ParserSettings, ServerSettings }
 import pekko.testkit._
 import pekko.util.ByteString
 
@@ -41,18 +40,15 @@ class CustomMediaTypesSpec extends PekkoSpec with ScalaFutures
       set.contains(MediaType.parse("application/MsWord").right.get) should ===(true)
       set.contains(MediaType.parse("application/vnd.ms-POWERPOINT").right.get) should ===(true)
       set.contains(MediaType.parse("application/VnD.MS-eXceL").right.get) should ===(true)
-      set.contains(MediaType.parse("application/x-akka-test").right.get) should ===(true)
-      set.contains(MediaType.parse("application/x-Akka-TEST").right.get) should ===(true)
+      set.contains(MediaType.parse("application/x-pekko-test").right.get) should ===(true)
+      set.contains(MediaType.parse("application/x-Pekko-TEST").right.get) should ===(true)
     }
 
-    // need to disable scalafix here because the code is used in the docs
-    // scalafix:off
     "allow registering custom media type" in {
-      import system.dispatcher
       // #application-custom
 
-      // similarly in Java: `org.apache.pekko.http.javadsl.settings.[...]`
-      import org.apache.pekko
+      import system.dispatcher
+
       import pekko.http.scaladsl.settings.ParserSettings
       import pekko.http.scaladsl.settings.ServerSettings
 
