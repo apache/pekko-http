@@ -26,6 +26,7 @@ ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
 
 addCommandAlias("verifyCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; +headerCheckAll; javafmtCheckAll")
 addCommandAlias("applyCodeStyle", "+headerCreateAll; scalafmtAll; scalafmtSbt; javafmtAll")
+addCommandAlias(name = "sortImports", value = ";scalafixEnable; scalafixAll SortImports; scalafmtAll")
 
 inThisBuild(Def.settings(
   apiURL := {
@@ -364,7 +365,7 @@ lazy val httpScalafixTests =
 
 lazy val docs = project("docs")
   .enablePlugins(ParadoxPlugin, PekkoParadoxPlugin, NoPublish)
-  .disablePlugins(MimaPlugin)
+  .disablePlugins(MimaPlugin, ScalafixPlugin)
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-actor-typed", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-multi-node-testkit", "provided", PekkoCoreDependency.default)
