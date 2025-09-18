@@ -22,7 +22,6 @@ import pekko.actor.ActorRef
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.StatusCodes._
-import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model.headers.{ `X-Forwarded-Proto`, RawHeader }
 import pekko.http.scaladsl.server._
 import pekko.http.scaladsl.server.Directives._
