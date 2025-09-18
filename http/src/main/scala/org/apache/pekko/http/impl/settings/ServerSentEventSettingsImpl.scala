@@ -54,6 +54,12 @@ private[http] final case class ServerSentEventSettingsImpl(
 }
 
 object ServerSentEventSettingsImpl extends SettingsCompanionImpl[ServerSentEventSettingsImpl]("pekko.http.sse") {
+
+  // Binary compatibility: provide original 3-parameter constructor
+  def apply(maxEventSize: Int, maxLineSize: Int, emitEmptyEvents: Boolean): ServerSentEventSettingsImpl =
+    ServerSentEventSettingsImpl(maxEventSize, maxLineSize, emitEmptyEvents, OversizedSseStrategy.FailStream,
+      OversizedSseStrategy.FailStream)
+
   def fromSubConfig(root: Config, c: Config) = ServerSentEventSettingsImpl(
     c.getInt("max-event-size"),
     c.getInt("max-line-size"),

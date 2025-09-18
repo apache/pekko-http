@@ -175,9 +175,8 @@ data: Line 3
 ```
 
 With **log-and-skip**: The entire event is logged and skipped
-With **truncate**: The event's data field is truncated to fit within the limit
-With **dead-letter**: The oversized event is sent to dead letters as `OversizedSseEvent(event: ServerSentEvent)` The
-`OversizedSseEvent` sent to DeadLetters will be truncated to the `max-event-size`.
+With **truncate**: The event is truncated by dropping the final line(s) that would exceed the limit, and the remaining event is emitted
+With **dead-letter**: The oversized event is sent to dead letters as `OversizedSseEvent(event: ServerSentEvent)` and skipped from the stream
 
 **Example 3: Event Size Exceeded During Line Parsing (Memory Protection)**
 
@@ -192,29 +191,29 @@ data: Line 4 (fits line limit)
 ```
 
 With **log-and-skip**:
-- Line 3 is logged and skipped. Line 4 is processed
-- The event containing all of lines 1, 2, and 4 is emitted to the stream.
+- The event with Line 3 is built and logged as oversized
+- Lines 3 and 4 are both skipped until the empty line
+- No event is emitted to the stream
 
 With **truncate**:
-- Line 3 is truncated as needed and line 4 is processed
-- The event containing all of lines 1 and 2, truncated line 3, and all of line 4 is emitted to the stream
+- The event with lines 1 and 2 (without Line 3) is emitted
+- Lines 3 and 4 are both skipped until the empty line
 
 With **dead-letter**:
-- The partial event (Lines 1 and 2) is sent to dead letters as `OversizedSseEvent(partialEvent: ServerSentEvent)`
-- Lines 3 and 4 are skipped
-- Parser resets and continues with the next event
+- The event with Line 3 is built and sent to dead letters as `OversizedSseEvent(event: ServerSentEvent)`
+- Lines 3 and 4 are both skipped until the empty line
+- No event is emitted to the stream
 
-This behavior prevents the application from running out of memory when processing very large events, as only the partial 
-event up to the size limit is handled.
+This behavior prevents the application from running out of memory when processing very large events, as the parser
+immediately stops accumulating data once the size limit would be exceeded.
 
 #### Processing Order
 
 1. **First**: Individual lines are processed against `max-line-size`
-2. **Then**: Each line is added to the event builder, checking against `max-event-size`
-3. **Finally**: Complete events are validated against `max-event-size`
+2. **Then**: Each line is added to the event builder, checking against `max-event-size` during accumulation
 
-This means an event can have individual lines handled by the line-level strategy, then be subject to partial event 
-handling during building, and finally be subject to complete event-level handling.
+This means an event can have individual lines handled by the line-level strategy, then be subject to event-level
+handling during building as lines are accumulated.
 
 For applications that need to handle very large messages (like blockchain data or detailed JSON payloads), consider
 setting `max-line-size = 0` and `max-event-size = 0` to disable limits entirely, or use one of the non-failing handling modes.

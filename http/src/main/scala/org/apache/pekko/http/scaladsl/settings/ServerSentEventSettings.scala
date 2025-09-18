@@ -35,12 +35,12 @@ abstract class ServerSentEventSettings private[pekko] () extends pekko.http.java
   /**
    * @since 1.3.0
    */
-  override def oversizedLineStrategy: OversizedSseStrategy
+  override def oversizedLineStrategy: OversizedSseStrategy = OversizedSseStrategy.FailStream
 
   /**
    * @since 1.3.0
    */
-  override def oversizedEventStrategy: OversizedSseStrategy
+  override def oversizedEventStrategy: OversizedSseStrategy = OversizedSseStrategy.FailStream
 
   override def withMaxEventSize(newValue: Int): ServerSentEventSettings = self.copy(maxEventSize = newValue)
   override def withLineLength(newValue: Int): ServerSentEventSettings = self.copy(maxLineSize = newValue)
