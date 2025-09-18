@@ -20,12 +20,11 @@ import java.net.{ URI, URL }
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
 
-import JavaMapping.Implicits._
-
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.LoggingAdapter
 import pekko.http.impl.util._
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl
 import pekko.http.javadsl.{ marshalling, model }
 import pekko.http.javadsl.server.RoutingJavaMapping

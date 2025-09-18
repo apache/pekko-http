@@ -20,11 +20,11 @@ import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 import scala.xml.NodeSeq
 
-import MediaTypes._
 import org.xml.sax.SAXParseException
 
 import org.apache.pekko
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.testkit.ScalatestRouteTest
 import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException

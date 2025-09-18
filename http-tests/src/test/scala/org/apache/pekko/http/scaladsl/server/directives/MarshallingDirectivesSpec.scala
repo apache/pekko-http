@@ -18,8 +18,6 @@ import scala.concurrent.Future
 import scala.util.{ Failure, Try }
 import scala.xml.NodeSeq
 
-import HttpCharsets._
-import MediaTypes._
 import org.xml.sax.SAXParseException
 import spray.json.DefaultJsonProtocol._
 
@@ -28,6 +26,8 @@ import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport
 import pekko.http.scaladsl.marshalling._
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpCharsets._
+import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.unmarshalling._
 import pekko.testkit.EventFilter

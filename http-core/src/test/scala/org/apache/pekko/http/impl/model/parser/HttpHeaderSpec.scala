@@ -25,11 +25,13 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.model.{ HttpHeader, _ }
 import pekko.http.scaladsl.model.MediaRanges._
 import pekko.http.scaladsl.model.MediaType.WithOpenCharset
+import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model.HttpCharsets._
-import pekko.http.scaladsl.model.HttpEncodings._
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.headers.{ Trailer => `Trailer`, _ }
 import pekko.http.scaladsl.model.headers.CacheDirectives._
+import pekko.http.scaladsl.model.headers.CacheDirectives._
+import pekko.http.scaladsl.model.headers.HttpEncodings._
 
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec

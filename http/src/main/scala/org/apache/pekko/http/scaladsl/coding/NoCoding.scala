@@ -13,12 +13,11 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
-import headers.HttpEncodings
-
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.stream.FlowShape
 import pekko.stream.stage.GraphStage
 import pekko.util.ByteString

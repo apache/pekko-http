@@ -13,32 +13,33 @@
 
 package org.apache.pekko.http.impl.engine.parsing
 
-import org.apache.pekko
-import pekko.NotUsed
-import pekko.http.scaladsl.settings.ParserSettings
-import pekko.http.scaladsl.util.FastFuture
-import pekko.stream.TLSProtocol._
-
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
-import org.scalatest.matchers.Matcher
+
+import org.apache.pekko
+import pekko.NotUsed
+import pekko.stream.TLSProtocol._
 import pekko.util.ByteString
 import pekko.stream.scaladsl._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
-import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.impl.util._
+import pekko.http.impl.engine.parsing.ParserOutput._
+import pekko.http.scaladsl.settings.ParserSettings
+import pekko.http.scaladsl.util.FastFuture
+import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers._
-import MediaTypes._
-import HttpProtocols._
+import pekko.http.scaladsl.model.HttpEntity._
 import pekko.http.scaladsl.model.HttpMethods._
-import pekko.http.scaladsl.model.StatusCodes._
-import HttpEntity._
-import ParserOutput._
+import pekko.http.scaladsl.model.HttpProtocols._
 import pekko.http.scaladsl.model.MediaType.WithOpenCharset
+import pekko.http.scaladsl.model.MediaTypes._
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.settings.ParserSettings.ConflictingContentTypeHeaderProcessingMode
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import pekko.testkit._
+
+import org.scalatest.matchers.Matcher
 
 abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSpecWithMaterializer(
       """

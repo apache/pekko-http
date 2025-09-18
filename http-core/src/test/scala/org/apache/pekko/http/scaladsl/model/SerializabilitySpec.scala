@@ -14,10 +14,14 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.io._
-import pekko.http.scaladsl.model.headers._
-import org.scalatest.matchers.{ MatchResult, Matcher }
+
 import scala.util.Try
-import org.apache.pekko.util.ByteString
+
+import org.apache.pekko
+import pekko.util.ByteString
+import pekko.http.scaladsl.model.headers._
+
+import org.scalatest.matchers.{ MatchResult, Matcher }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

@@ -17,17 +17,15 @@ import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-import Directives._
-import headers.`X-Forwarded-Proto`
-
 import org.apache.pekko
 import pekko.actor.ActorRef
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model.StatusCodes._
-import pekko.http.scaladsl.model.headers.RawHeader
+import pekko.http.scaladsl.model.headers.{ RawHeader, `X-Forwarded-Proto` }
 import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.server.Directives._
 import pekko.pattern.ask
 import pekko.stream.scaladsl.Source
 import pekko.testkit._

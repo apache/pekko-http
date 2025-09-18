@@ -23,11 +23,11 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.NoLogging
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpEntity._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util._
 import pekko.util.ByteString
 import pekko.stream.scaladsl._
-import HttpEntity._
 import pekko.http.impl.engine.rendering.ResponseRenderingContext.CloseRequested
 import pekko.http.impl.util.Rendering.CrLf
 import pekko.testkit._

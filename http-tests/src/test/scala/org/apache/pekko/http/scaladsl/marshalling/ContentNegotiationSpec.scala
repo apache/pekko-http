@@ -16,12 +16,11 @@ package org.apache.pekko.http.scaladsl.marshalling
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-import HttpCharsets._
-import MediaTypes._
-
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpCharsets._
+import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.server.ContentNegotiator.Alternative
 import pekko.http.scaladsl.server.MediaTypeNegotiator
 import pekko.http.scaladsl.server.util.VarArgsFunction1

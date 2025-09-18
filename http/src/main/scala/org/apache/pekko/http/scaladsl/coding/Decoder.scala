@@ -15,12 +15,11 @@ package org.apache.pekko.http.scaladsl.coding
 
 import scala.concurrent.Future
 
-import headers.HttpEncoding
-
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.HttpEncoding
 import pekko.stream.{ FlowShape, Materializer }
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
 import pekko.stream.stage.GraphStage

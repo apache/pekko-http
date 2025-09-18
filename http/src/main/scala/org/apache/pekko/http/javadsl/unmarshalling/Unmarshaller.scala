@@ -21,15 +21,14 @@ import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters._
 import scala.jdk.FutureConverters._
 
-import jm.model._
-
 import org.apache.pekko
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.InternalApi
-import pekko.http.{ javadsl => jm }
 import pekko.http.impl.model.JavaQuery
 import pekko.http.impl.util.JavaMapping
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.{ javadsl => jm }
+import pekko.http.javadsl.model._
 import pekko.http.scaladsl.model.{ ContentTypeRange, ContentTypes }
 import pekko.http.scaladsl.unmarshalling
 import pekko.http.scaladsl.unmarshalling.FromEntityUnmarshaller
@@ -39,6 +38,7 @@ import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.util.ByteString
 
 object Unmarshaller extends pekko.http.javadsl.unmarshalling.Unmarshallers {
+
   implicit def fromScala[A, B](scalaUnmarshaller: unmarshalling.Unmarshaller[A, B]): Unmarshaller[A, B] =
     scalaUnmarshaller
 

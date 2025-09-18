@@ -16,12 +16,11 @@ package org.apache.pekko.http.scaladsl.server.directives
 import scala.reflect.ClassTag
 import scala.util.Try
 
-import directives.HeaderDirectivesSpec.XCustomHeader
-
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.server.directives.HeaderDirectivesSpec.XCustomHeader
 
 import org.scalatest.Inside
 

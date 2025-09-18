@@ -20,6 +20,7 @@ import pekko.http.scaladsl.client.RequestBuilding
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.MediaType.WithFixedCharset
 import pekko.http.scaladsl.server.Directives
+import pekko.http.scaladsl.settings.{ ParserSettings, ServerSettings }
 import pekko.testkit._
 import pekko.util.ByteString
 

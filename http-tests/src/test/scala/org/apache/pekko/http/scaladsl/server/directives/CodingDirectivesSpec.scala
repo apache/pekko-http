@@ -16,19 +16,18 @@ package directives
 
 import scala.concurrent.duration._
 
-import ContentTypes.`application/octet-stream`
-import HttpCharsets._
-import HttpEncodings._
-import HttpEntity.{ Chunk, ChunkStreamPart }
-import MediaTypes._
-
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.coding.Coders._
 import pekko.http.scaladsl.coding.Encoder
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.ContentTypes.`application/octet-stream`
+import pekko.http.scaladsl.model.HttpCharsets._
+import pekko.http.scaladsl.model.HttpEntity.{ Chunk, ChunkStreamPart }
+import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.model.headers.HttpEncodings._
 import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.testkit._

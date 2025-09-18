@@ -111,9 +111,8 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
                   // Needs to avoid importing more implicits accidentally from DefaultJsonProtocol to avoid ambiguity in
                   // Scala 2
                   implicit val mapFormat: spray.json.RootJsonFormat[Map[String, String]] = {
-                    import DefaultJsonProtocol._
-                    import spray.json.DefaultJsonProtocol
-                    DefaultJsonProtocol.mapFormat
+                    import spray.json.DefaultJsonProtocol._
+                    spray.json.DefaultJsonProtocol.mapFormat
                   }
                   StatusCodes.BadRequest -> Map[String, String]("error" -> "User already Registered")
               }
