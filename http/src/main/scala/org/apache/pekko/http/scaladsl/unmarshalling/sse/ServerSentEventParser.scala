@@ -108,6 +108,9 @@ private final class ServerSentEventParser(
     oversizedStrategy: OversizedSseStrategy = OversizedSseStrategy.FailStream)
     extends GraphStage[FlowShape[String, ServerSentEvent]] {
 
+  def this(maxEventSize: Int, emitEmptyEvents: Boolean) =
+    this(maxEventSize, emitEmptyEvents, OversizedSseStrategy.FailStream)
+
   override val shape =
     FlowShape(Inlet[String]("ServerSentEventParser.in"), Outlet[ServerSentEvent]("ServerSentEventParser.out"))
 
@@ -117,7 +120,7 @@ private final class ServerSentEventParser(
       import shape._
 
       private val builder = new Builder()
-      private lazy val log = Logging(materializer.system, this.getClass)
+      private lazy val log = Logging(materializer.system, classOf[ServerSentEventParser])
       @volatile private var shouldSkipUntilEventEnd = false
 
       setHandlers(in, out, this)

@@ -66,12 +66,11 @@ The SSE client parser has configurable limits to handle various message sizes:
 
 ```hocon
 pekko.http.sse {
-  # The maximum size for parsing received server-sent events.
-  # This value must be larger than `max-line-size`. Set to 0 to disable limit entirely (unlimited).
-  max-event-size = 115713
+  # The maximum size for parsing server-sent events. Set to 0 to disable limit entirely (unlimited).
+  max-event-size = 8192
 
-  # The maximum size for parsing received lines of a server-sent event. Set to 0 to disable limit entirely (unlimited).
-  max-line-size = 115712
+  # The maximum size for parsing lines of a server-sent event. Set to 0 to disable limit entirely (unlimited).
+  max-line-size = 4096
 }
 ```
 

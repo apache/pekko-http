@@ -44,6 +44,8 @@ private final class LineParser(maxLineSize: Int,
     oversizedStrategy: OversizedSseStrategy = OversizedSseStrategy.FailStream)
     extends GraphStage[FlowShape[ByteString, String]] {
 
+  def this(maxLineSize: Int) = this(maxLineSize, OversizedSseStrategy.FailStream)
+
   override val shape = FlowShape(Inlet[ByteString]("LineParser.in"), Outlet[String]("LineParser.out"))
 
   override def createLogic(attributes: Attributes) =
@@ -53,7 +55,7 @@ private final class LineParser(maxLineSize: Int,
 
       private var buffer = ByteString.empty
       private var lastCharWasCr = false
-      private lazy val log = Logging(materializer.system, this.getClass)
+      private lazy val log = Logging(materializer.system, classOf[LineParser])
 
       setHandlers(in, out, this)
 
