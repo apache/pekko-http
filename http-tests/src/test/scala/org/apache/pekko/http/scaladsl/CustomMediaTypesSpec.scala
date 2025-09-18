@@ -17,8 +17,8 @@ import scala.concurrent.duration._
 
 import org.apache.pekko
 import pekko.http.scaladsl.client.RequestBuilding
-import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.MediaType.WithFixedCharset
+import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.server.Directives
 import pekko.http.scaladsl.settings.{ ParserSettings, ServerSettings }
 import pekko.testkit._
@@ -45,10 +45,16 @@ class CustomMediaTypesSpec extends PekkoSpec with ScalaFutures
       set.contains(MediaType.parse("application/x-Akka-TEST").right.get) should ===(true)
     }
 
+    // need to disable scalafix here because the code is used in the docs
+    // scalafix:off
     "allow registering custom media type" in {
       import system.dispatcher
+      // #application-custom
 
-      // #application-custom      // similarly in Java: `org.apache.pekko.http.javadsl.settings.[...]`      import org.apache.pekko      import pekko.http.scaladsl.settings.ParserSettings      import pekko.http.scaladsl.settings.ServerSettings
+      // similarly in Java: `org.apache.pekko.http.javadsl.settings.[...]`
+      import org.apache.pekko
+      import pekko.http.scaladsl.settings.ParserSettings
+      import pekko.http.scaladsl.settings.ServerSettings
 
       // define custom media type:
       val utf8 = HttpCharsets.`UTF-8`
