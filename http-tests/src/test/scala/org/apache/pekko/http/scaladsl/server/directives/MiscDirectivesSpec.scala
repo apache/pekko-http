@@ -20,10 +20,9 @@ import scala.concurrent.{ Await, Promise }
 import scala.concurrent.duration._
 import scala.util.Try
 
-import headers._
-
 import org.apache.pekko
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server.util.VarArgsFunction1
 import pekko.testkit._
 

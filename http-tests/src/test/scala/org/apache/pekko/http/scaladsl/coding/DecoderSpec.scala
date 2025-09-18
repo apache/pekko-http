@@ -17,11 +17,11 @@ import scala.annotation.nowarn
 import scala.concurrent.duration._
 
 import HttpMethods.POST
-import headers._
 
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
 import pekko.stream.{ Attributes, FlowShape }
 import pekko.stream.impl.fusing.GraphStages.SimpleLinearGraphStage
 import pekko.stream.stage._

@@ -14,7 +14,7 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.io._
-import headers._
+import pekko.http.scaladsl.model.headers._
 import org.scalatest.matchers.{ MatchResult, Matcher }
 import scala.util.Try
 import org.apache.pekko.util.ByteString

@@ -26,7 +26,7 @@ import pekko.util.ByteString
 import pekko.http.scaladsl.model._
 import pekko.http.impl.util._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
-import headers._
+import pekko.http.scaladsl.model.headers._
 
 import scala.collection.mutable.ListBuffer
 

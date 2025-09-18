@@ -22,12 +22,12 @@ import scala.concurrent.duration._
 
 import Directives._
 import HttpMethods._
-import StatusCodes._
 import munit.FailException
 
 import org.apache.pekko
 import pekko.actor.ActorRef
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model.headers.{ `X-Forwarded-Proto`, RawHeader }
 import pekko.http.scaladsl.server._
 import pekko.pattern.ask

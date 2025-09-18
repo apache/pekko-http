@@ -16,12 +16,12 @@ package directives
 
 import EntityTag._
 import HttpMethods._
-import StatusCodes._
-import headers._
 
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.DateTime
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers._
 
 /**
  * @groupname cachecondition Cache condition directives

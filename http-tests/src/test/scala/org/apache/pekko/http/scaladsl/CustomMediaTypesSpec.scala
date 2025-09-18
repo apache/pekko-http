@@ -47,8 +47,7 @@ class CustomMediaTypesSpec extends PekkoSpec with ScalaFutures
     "allow registering custom media type" in {
       import system.dispatcher
 
-      // #application-custom      // similarly in Java: `org.apache.pekko.http.javadsl.settings.[...]`      import org.apache.pekko
-      import pekko.http.scaladsl.settings.ParserSettings
+      // #application-custom      // similarly in Java: `org.apache.pekko.http.javadsl.settings.[...]`      import org.apache.pekko      import pekko.http.scaladsl.settings.ParserSettings
       import pekko.http.scaladsl.settings.ServerSettings
 
       // define custom media type:

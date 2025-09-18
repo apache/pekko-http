@@ -17,6 +17,7 @@ import java.lang.{ StringBuilder => JStringBuilder }
 import javax.net.ssl.SSLSession
 
 import scala.annotation.{ switch, tailrec }
+
 import org.apache.pekko
 import pekko.http.scaladsl.settings.{ ParserSettings, WebSocketSettings }
 import pekko.util.ByteString
@@ -24,16 +25,16 @@ import pekko.util.OptionVal
 import pekko.http.impl.engine.ws.Handshake
 import pekko.http.impl.model.parser.{ CharacterClasses, UriParser }
 import pekko.http.scaladsl.model.{ ParsingException => _, _ }
-import headers._
-import StatusCodes._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.model.StatusCodes._
 import ParserOutput._
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util.ByteStringParserInput
-import org.parboiled2.ParserInput
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.TLSProtocol.SessionBytes
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
+import org.parboiled2.ParserInput
 
 /**
  * INTERNAL API

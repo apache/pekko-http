@@ -17,10 +17,10 @@ import scala.reflect.ClassTag
 import scala.util.Try
 
 import directives.HeaderDirectivesSpec.XCustomHeader
-import headers._
 
 import org.apache.pekko
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server._
 
 import org.scalatest.Inside

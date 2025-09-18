@@ -28,11 +28,11 @@ import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
-import headers._
+import pekko.http.scaladsl.model.headers._
 import MediaTypes._
 import HttpMethods._
 import HttpProtocols._
-import StatusCodes._
+import pekko.http.scaladsl.model.StatusCodes._
 import HttpEntity._
 import ParserOutput._
 import pekko.http.scaladsl.model.MediaType.WithOpenCharset

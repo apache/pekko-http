@@ -32,7 +32,7 @@ import pekko.annotation.InternalApi
 import ResponseRenderingContext.CloseRequested
 import pekko.http.impl.engine.server.UpgradeToOtherProtocolResponseHeader
 import pekko.stream.scaladsl.Sink
-import headers._
+import pekko.http.scaladsl.model.headers._
 
 import scala.util.control.NonFatal
 

@@ -16,15 +16,14 @@ package org.apache.pekko.http.scaladsl.server.directives
 import scala.concurrent.{ Await, Future, Promise }
 import scala.concurrent.duration._
 
-import StatusCodes._
-import headers._
-
 import org.apache.pekko
 import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport._
 import pekko.http.scaladsl.marshalling._
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server._
 import pekko.testkit.EventFilter
 

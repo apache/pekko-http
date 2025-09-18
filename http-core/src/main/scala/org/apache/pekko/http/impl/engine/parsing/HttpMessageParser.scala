@@ -25,7 +25,7 @@ import pekko.util.ByteString
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.model.{ ParsingException => _, _ }
-import headers._
+import pekko.http.scaladsl.model.headers._
 import HttpProtocols._
 import ParserOutput._
 import pekko.annotation.InternalApi

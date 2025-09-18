@@ -15,9 +15,9 @@ package org.apache.pekko.http.scaladsl.server
 package directives
 
 import StatusCodes.OK
-import headers._
 
 import org.apache.pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
 
 class CookieDirectivesSpec extends RoutingSpec {
 

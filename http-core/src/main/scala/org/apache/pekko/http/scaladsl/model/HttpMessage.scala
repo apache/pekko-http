@@ -33,7 +33,7 @@ import pekko.util.{ ByteString, HashCode, OptionVal }
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.util.FastFuture._
-import headers._
+import pekko.http.scaladsl.model.headers._
 
 import scala.annotation.tailrec
 import scala.concurrent.duration._

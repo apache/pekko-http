@@ -28,7 +28,7 @@ import pekko.http.scaladsl.model._
 import pekko.http.impl.util._
 import RenderSupport._
 import pekko.annotation.InternalApi
-import headers._
+import pekko.http.scaladsl.model.headers._
 
 /**
  * INTERNAL API
