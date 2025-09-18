@@ -15,14 +15,15 @@ package org.apache.pekko.http.scaladsl.marshallers.sprayjson
 
 import java.lang.StringBuilder
 
+import scala.collection.immutable.ListMap
+
+import spray.json.{ DefaultJsonProtocol, JsValue, JsonPrinter, PrettyPrinter }
+import spray.json.RootJsonFormat
+
 import org.apache.pekko
 import pekko.http.scaladsl.marshallers.{ Employee, JsonSupportSpec }
 import pekko.http.scaladsl.marshalling.ToEntityMarshaller
 import pekko.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-import spray.json.{ DefaultJsonProtocol, JsValue, JsonPrinter, PrettyPrinter }
-
-import scala.collection.immutable.ListMap
-import spray.json.RootJsonFormat
 
 class SprayJsonSupportSpec extends JsonSupportSpec {
   object EmployeeJsonProtocol extends DefaultJsonProtocol {

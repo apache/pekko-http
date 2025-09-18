@@ -14,9 +14,10 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.collection.immutable
+
 import org.apache.pekko
 import pekko.http.scaladsl.model._
-import scala.collection.immutable
 
 /**
  * @groupname response Response directives

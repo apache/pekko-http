@@ -13,17 +13,18 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
+import scala.concurrent.Future
+
+import headers.HttpEncoding
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.model._
 import pekko.stream.{ FlowShape, Materializer }
+import pekko.stream.scaladsl.{ Flow, Sink, Source }
 import pekko.stream.stage.GraphStage
 import pekko.util.ByteString
-import headers.HttpEncoding
-import pekko.stream.scaladsl.{ Flow, Sink, Source }
-
-import scala.concurrent.Future
 
 trait Decoder {
   def encoding: HttpEncoding

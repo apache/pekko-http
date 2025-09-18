@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.annotation.nowarn
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes }
@@ -20,7 +22,7 @@ import pekko.http.scaladsl.server.Directives.complete
 import pekko.stream.Materializer
 import pekko.stream.scaladsl.Flow
 import pekko.testkit.TestKit
-import scala.annotation.nowarn
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

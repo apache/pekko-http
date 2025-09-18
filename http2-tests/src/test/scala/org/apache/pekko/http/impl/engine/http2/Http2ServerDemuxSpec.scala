@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.collection.immutable.Seq
+
 import org.apache.pekko
 import pekko.http.impl.engine.http2.FrameEvent.{ ParsedHeadersFrame, Setting, SettingsFrame }
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
@@ -21,8 +23,6 @@ import pekko.http.scaladsl.settings.Http2ServerSettings
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep }
 import pekko.stream.testkit.scaladsl.{ TestSink, TestSource }
 import pekko.util.{ ByteString, OptionVal }
-
-import scala.collection.immutable.Seq
 
 /**
  * low-level tests testing Http2ServerDemux in isolation

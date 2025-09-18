@@ -13,17 +13,18 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.collection.immutable.VectorBuilder
+
 import org.apache.pekko
 import pekko.http.impl.engine.http2.hpack.ByteStringInputStream
-import pekko.http.scaladsl.model.headers.RawHeader
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.RawHeader
 import pekko.http.shaded.com.twitter.hpack._
 import pekko.stream.Materializer
 import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
-import org.scalatest.concurrent.ScalaFutures
 
-import scala.collection.immutable.VectorBuilder
+import org.scalatest.concurrent.ScalaFutures
 
 /** Helper that allows automatic HPACK encoding/decoding for wire sends / expectations */
 trait Http2FrameHpackSupport extends Http2FrameProbeDelegator with Http2FrameSending with HPackEncodingSupport

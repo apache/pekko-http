@@ -15,6 +15,7 @@ package org.apache.pekko.http.scaladsl.server
 package directives
 
 import org.apache.pekko.http.scaladsl.model.headers.Host
+
 import org.scalatest.freespec.AnyFreeSpec
 
 class HostDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec {

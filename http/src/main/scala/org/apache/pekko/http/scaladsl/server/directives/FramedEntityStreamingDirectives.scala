@@ -17,8 +17,8 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.scaladsl.common.EntityStreamingSupport
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import pekko.http.scaladsl.unmarshalling.{ Unmarshaller, _ }
+import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import pekko.http.scaladsl.util.FastFuture
 import pekko.stream.scaladsl.{ Flow, Keep, Source }
 import pekko.util.ByteString

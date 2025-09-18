@@ -17,9 +17,10 @@ package directives
 import scala.collection.immutable
 import scala.concurrent.Future
 import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
-import pekko.http.scaladsl.common._
 import pekko.http.impl.util._
+import pekko.http.scaladsl.common._
 
 /**
  * @groupname param Parameter directives
@@ -75,6 +76,7 @@ object ParameterDirectives extends ParameterDirectives {
       }
 
     import Impl._
+
     import pekko.http.scaladsl.unmarshalling.{ FromStringUnmarshaller => FSU }
 
     // regular
@@ -113,8 +115,9 @@ object ParameterDirectives extends ParameterDirectives {
   /** Actual directive implementations shared between old and new API */
   private object Impl {
     import BasicDirectives._
-    import RouteDirectives._
     import FutureDirectives._
+    import RouteDirectives._
+
     import pekko.http.scaladsl.unmarshalling.{ FromStringUnmarshaller => FSU, _ }
     type FSOU[T] = Unmarshaller[Option[String], T]
 

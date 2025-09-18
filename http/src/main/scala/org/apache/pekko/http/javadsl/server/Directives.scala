@@ -15,12 +15,12 @@ package org.apache.pekko.http.javadsl.server
 
 import java.util.function.{ BiFunction, Function, Supplier }
 
+import scala.annotation.nowarn
+import scala.annotation.varargs
+
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
 import pekko.http.javadsl.server.directives.FramedEntityStreamingDirectives
-import scala.annotation.nowarn
-
-import scala.annotation.varargs
 
 abstract class AllDirectives extends FramedEntityStreamingDirectives
 

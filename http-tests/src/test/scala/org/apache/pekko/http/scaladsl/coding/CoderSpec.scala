@@ -14,26 +14,26 @@
 package org.apache.pekko.http.scaladsl.coding
 
 import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream }
+import java.util.concurrent.ThreadLocalRandom
 import java.util.zip.DataFormatException
+
+import scala.annotation.nowarn
+import scala.annotation.tailrec
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.util.control.NoStackTrace
 
 import org.apache.pekko
 import pekko.NotUsed
-
-import scala.annotation.tailrec
-import scala.concurrent.duration._
-import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
-import java.util.concurrent.ThreadLocalRandom
-
-import scala.util.control.NoStackTrace
-import org.scalatest.Inspectors
-import pekko.util.ByteString
-import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.http.impl.util._
 import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest }
 import pekko.http.scaladsl.model.HttpMethods._
-import pekko.http.impl.util._
+import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.testkit._
-import scala.annotation.nowarn
+import pekko.util.ByteString
+
+import org.scalatest.Inspectors
 import org.scalatest.wordspec.AnyWordSpec
 
 @nowarn("msg=deprecated .* is internal API")

@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.concurrent.{ ExecutionContextExecutor, Future }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ClassicActorSystemProvider
@@ -20,10 +22,8 @@ import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import pekko.http.scaladsl.server.directives.BasicDirectives
 import pekko.http.scaladsl.settings.{ ParserSettings, RoutingSettings }
 import pekko.http.scaladsl.util.FastFuture._
-import pekko.stream.scaladsl.Flow
 import pekko.stream.{ Materializer, SystemMaterializer }
-
-import scala.concurrent.{ ExecutionContextExecutor, Future }
+import pekko.stream.scaladsl.Flow
 
 object Route {
 

@@ -14,9 +14,10 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import org.apache.pekko.http.scaladsl.model._
 import StatusCodes._
 import headers._
+
+import org.apache.pekko.http.scaladsl.model._
 
 class CacheConditionDirectivesSpec extends RoutingSpec {
 

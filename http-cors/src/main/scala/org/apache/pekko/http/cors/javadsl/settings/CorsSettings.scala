@@ -18,13 +18,15 @@
 package org.apache.pekko.http.cors.javadsl.settings
 
 import java.util.OptionalLong
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.DoNotInherit
-import pekko.http.javadsl.model.HttpMethod
 import pekko.http.cors.javadsl.model.{ HttpHeaderRange, HttpOriginMatcher }
 import pekko.http.cors.scaladsl
 import pekko.http.cors.scaladsl.settings.CorsSettingsImpl
+import pekko.http.javadsl.model.HttpMethod
+
 import com.typesafe.config.Config
 
 /**

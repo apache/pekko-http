@@ -13,21 +13,17 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
-import org.apache.pekko
-import pekko.NotUsed
-
 import scala.concurrent.duration._
 
-import pekko.util.ByteString
-
+import org.apache.pekko
+import pekko.NotUsed
 import pekko.actor.ActorSystem
-
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model.ws.{ BinaryMessage, Message, TextMessage }
 import pekko.stream.Materializer
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
-
-import pekko.http.impl.util._
-import pekko.http.scaladsl.model.ws.{ BinaryMessage, Message, TextMessage }
+import pekko.util.ByteString
 
 /**
  * A WSProbe is a probe that implements a `Flow[Message, Message, Unit]` for testing

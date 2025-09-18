@@ -13,8 +13,9 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import org.apache.pekko
 import scala.jdk.CollectionConverters._
+
+import org.apache.pekko
 
 class RejectionSpec extends RoutingSpec {
 

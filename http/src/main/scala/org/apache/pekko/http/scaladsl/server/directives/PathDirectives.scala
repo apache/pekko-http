@@ -29,8 +29,8 @@ import pekko.http.scaladsl.server.directives.PathDirectives.TrailingRetryRejecti
 trait PathDirectives extends PathMatchers with ImplicitPathMatcherConstruction with ToNameReceptacleEnhancements {
 
   import BasicDirectives._
-  import RouteDirectives._
   import PathMatcher._
+  import RouteDirectives._
 
   /**
    * Applies the given [[PathMatcher]] to the remaining unmatched path after consuming a leading slash.

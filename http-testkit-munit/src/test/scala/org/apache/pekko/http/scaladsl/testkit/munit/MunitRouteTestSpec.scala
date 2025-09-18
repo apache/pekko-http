@@ -20,15 +20,16 @@ package org.apache.pekko.http.scaladsl.testkit.munit
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-import org.apache.pekko
-import pekko.http.scaladsl.model._
+import Directives._
 import HttpMethods._
 import StatusCodes._
-import pekko.http.scaladsl.server._
-import Directives._
 import munit.FailException
-import pekko.http.scaladsl.model.headers.{ `X-Forwarded-Proto`, RawHeader }
+
+import org.apache.pekko
 import pekko.actor.ActorRef
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.{ `X-Forwarded-Proto`, RawHeader }
+import pekko.http.scaladsl.server._
 import pekko.pattern.ask
 import pekko.stream.scaladsl.Source
 import pekko.testkit._

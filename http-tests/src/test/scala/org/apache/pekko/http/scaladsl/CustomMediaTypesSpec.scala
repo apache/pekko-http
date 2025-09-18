@@ -13,15 +13,17 @@
 
 package org.apache.pekko.http.scaladsl
 
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.scaladsl.client.RequestBuilding
-import pekko.http.scaladsl.model.MediaType.WithFixedCharset
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.MediaType.WithFixedCharset
 import pekko.http.scaladsl.server.Directives
 import pekko.testkit._
 import pekko.util.ByteString
+
 import org.scalatest.concurrent.ScalaFutures
-import scala.concurrent.duration._
 
 class CustomMediaTypesSpec extends PekkoSpec with ScalaFutures
     with Directives with RequestBuilding {
@@ -44,10 +46,8 @@ class CustomMediaTypesSpec extends PekkoSpec with ScalaFutures
 
     "allow registering custom media type" in {
       import system.dispatcher
-      // #application-custom
 
-      // similarly in Java: `org.apache.pekko.http.javadsl.settings.[...]`
-      import org.apache.pekko
+      // #application-custom      // similarly in Java: `org.apache.pekko.http.javadsl.settings.[...]`      import org.apache.pekko
       import pekko.http.scaladsl.settings.ParserSettings
       import pekko.http.scaladsl.settings.ServerSettings
 

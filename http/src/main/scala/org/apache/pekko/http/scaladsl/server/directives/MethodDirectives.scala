@@ -24,9 +24,9 @@ import pekko.http.scaladsl.model.HttpMethods._
  */
 trait MethodDirectives {
   import BasicDirectives._
-  import RouteDirectives._
-  import ParameterDirectives._
   import MethodDirectives._
+  import ParameterDirectives._
+  import RouteDirectives._
 
   /**
    * Rejects all non-DELETE requests.

@@ -14,13 +14,14 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import EntityTag._
+import HttpMethods._
+import StatusCodes._
+import headers._
+
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.DateTime
-import headers._
-import HttpMethods._
-import StatusCodes._
-import EntityTag._
 
 /**
  * @groupname cachecondition Cache condition directives

@@ -13,19 +13,21 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import scala.concurrent.{ Await, Future, Promise }
+import scala.concurrent.duration._
+
+import StatusCodes._
+import headers._
+
 import org.apache.pekko
 import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport
-
-import scala.concurrent.{ Await, Future, Promise }
-import scala.concurrent.duration._
-import pekko.testkit.EventFilter
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport._
 import pekko.http.scaladsl.marshalling._
-import pekko.http.scaladsl.server._
 import pekko.http.scaladsl.model._
-import headers._
-import StatusCodes._
+import pekko.http.scaladsl.server._
+import pekko.testkit.EventFilter
+
 import org.scalatest.wordspec.AnyWordSpec
 
 class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
@@ -110,8 +112,8 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
                   // Needs to avoid importing more implicits accidentally from DefaultJsonProtocol to avoid ambiguity in
                   // Scala 2
                   implicit val mapFormat: spray.json.RootJsonFormat[Map[String, String]] = {
-                    import spray.json.DefaultJsonProtocol
                     import DefaultJsonProtocol._
+                    import spray.json.DefaultJsonProtocol
                     DefaultJsonProtocol.mapFormat
                   }
                   StatusCodes.BadRequest -> Map[String, String]("error" -> "User already Registered")
@@ -280,9 +282,9 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
 
   case class Data(name: String, age: Int)
   object Data {
-    import spray.json.DefaultJsonProtocol._
-    import SprayJsonSupport._
     import ScalaXmlSupport._
+    import SprayJsonSupport._
+    import spray.json.DefaultJsonProtocol._
 
     val jsonMarshaller: ToEntityMarshaller[Data] = jsonFormat2(Data.apply)
 

@@ -15,13 +15,16 @@ package org.apache.pekko.http.scaladsl.marshallers.xml
 
 import java.io.{ ByteArrayInputStream, InputStreamReader }
 import javax.xml.parsers.{ SAXParser, SAXParserFactory }
+
 import scala.collection.immutable
 import scala.xml.{ NodeSeq, XML }
+
+import MediaTypes._
+
 import org.apache.pekko
-import pekko.http.scaladsl.unmarshalling._
 import pekko.http.scaladsl.marshalling._
 import pekko.http.scaladsl.model._
-import MediaTypes._
+import pekko.http.scaladsl.unmarshalling._
 
 trait ScalaXmlSupport {
   implicit def defaultNodeSeqMarshaller: ToEntityMarshaller[NodeSeq] =

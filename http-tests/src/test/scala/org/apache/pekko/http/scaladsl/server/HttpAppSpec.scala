@@ -15,26 +15,28 @@ package org.apache.pekko.http.scaladsl.server
 
 import java.net.InetSocketAddress
 import java.net.ServerSocket
+import java.net.SocketException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import java.net.SocketException
+
+import scala.concurrent.{ Await, ExecutionContext, Future, Promise }
+import scala.concurrent.duration.Duration
+import scala.util.Try
 
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.ActorSystem
 import pekko.http.impl.util.PekkoSpecWithMaterializer
-import pekko.http.scaladsl.Http.ServerBinding
 import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.Http.ServerBinding
 import pekko.http.scaladsl.client.RequestBuilding
 import pekko.http.scaladsl.model.{ HttpRequest, StatusCodes }
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.testkit.EventFilter
-import com.typesafe.config.ConfigFactory
+
 import org.scalatest.concurrent.Eventually
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{ Await, ExecutionContext, Future, Promise }
-import scala.util.Try
+import com.typesafe.config.ConfigFactory
 
 class HttpAppSpec extends PekkoSpecWithMaterializer with RequestBuilding with Eventually {
   import system.dispatcher

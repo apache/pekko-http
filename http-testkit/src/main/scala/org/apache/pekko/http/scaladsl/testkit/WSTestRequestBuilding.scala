@@ -13,13 +13,14 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
+import scala.collection.immutable
+
 import org.apache.pekko
 import pekko.http.impl.engine.server.InternalCustomHeader
-import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Protocol`, Upgrade, UpgradeProtocol }
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes, Uri }
-import pekko.http.scaladsl.model.ws.{ Message, WebSocketUpgrade }
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
-import scala.collection.immutable
+import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Protocol`, Upgrade, UpgradeProtocol }
+import pekko.http.scaladsl.model.ws.{ Message, WebSocketUpgrade }
 import pekko.stream.{ FlowShape, Graph, Materializer }
 import pekko.stream.scaladsl.Flow
 

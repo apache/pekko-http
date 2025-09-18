@@ -15,21 +15,21 @@ package org.apache.pekko.http.javadsl.server.directives
 
 import java.util.concurrent.CompletionStage
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.{ ActorSystem, ClassicActorSystemProvider }
 import pekko.annotation.InternalApi
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.HttpRequest
 import pekko.http.javadsl.model.HttpResponse
-import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.server.{ ExceptionHandler, RejectionHandler, Route }
 import pekko.http.scaladsl
 import pekko.http.scaladsl.server.RouteConcatenation._
 import pekko.japi.function.Function
 import pekko.stream.{ javadsl, Materializer }
 import pekko.stream.scaladsl.Flow
-
-import scala.concurrent.Future
 
 /** INTERNAL API */
 @InternalApi

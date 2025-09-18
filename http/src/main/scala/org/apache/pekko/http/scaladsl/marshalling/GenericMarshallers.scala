@@ -15,8 +15,10 @@ package org.apache.pekko.http.scaladsl.marshalling
 
 import scala.concurrent.Future
 import scala.util.{ Failure, Success, Try }
-import org.apache.pekko.http.scaladsl.util.FastFuture
+
 import FastFuture._
+
+import org.apache.pekko.http.scaladsl.util.FastFuture
 
 trait GenericMarshallers extends LowPriorityToResponseMarshallerImplicits {
 

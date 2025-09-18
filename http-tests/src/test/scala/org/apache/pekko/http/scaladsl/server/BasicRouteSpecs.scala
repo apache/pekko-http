@@ -13,10 +13,11 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import org.apache.pekko
-import pekko.http.scaladsl.model
 import model.HttpMethods._
 import model.StatusCodes
+
+import org.apache.pekko
+import pekko.http.scaladsl.model
 import pekko.testkit.EventFilter
 
 object BasicRouteSpecs {

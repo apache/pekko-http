@@ -13,19 +13,20 @@
 
 package org.apache.pekko.http.scaladsl.unmarshalling
 
+import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.impl.util._
-import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.util.FastFuture._
 import pekko.stream.scaladsl._
 import pekko.testkit._
 import pekko.util.ByteString
-import org.scalatest.matchers.Matcher
 
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, ExecutionContext, Future }
+import org.scalatest.matchers.Matcher
 
 trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
   implicit val ec: ExecutionContext = system.dispatcher

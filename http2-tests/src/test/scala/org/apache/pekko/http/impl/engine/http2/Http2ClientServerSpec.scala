@@ -13,10 +13,15 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.collection.immutable
+import scala.concurrent.{ Future, Promise }
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.impl.engine.HttpIdleTimeoutException
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
+import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{
   headers,
   AttributeKey,
@@ -34,19 +39,15 @@ import pekko.http.scaladsl.model.{
 }
 import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.http.scaladsl.settings.ClientConnectionSettings
-import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.settings.ServerSettings
+import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.stream.StreamTcpException
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.testkit.TestProbe
 import pekko.util.ByteString
-import org.scalatest.concurrent.ScalaFutures
 
-import scala.collection.immutable
-import scala.concurrent.duration._
-import scala.concurrent.{ Future, Promise }
+import org.scalatest.concurrent.ScalaFutures
 
 class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       """pekko.http.server.http2.log-frames = on

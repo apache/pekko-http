@@ -13,6 +13,13 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.util.concurrent.{ CountDownLatch, TimeUnit }
+
+import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.duration._
+
+import org.openjdk.jmh.annotations._
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
@@ -24,12 +31,8 @@ import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
 import pekko.stream.TLSProtocol.{ SslTlsInbound, SslTlsOutbound }
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Sink, Source }
 import pekko.util.ByteString
-import com.typesafe.config.ConfigFactory
-import org.openjdk.jmh.annotations._
 
-import java.util.concurrent.{ CountDownLatch, TimeUnit }
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, ExecutionContext, Future }
+import com.typesafe.config.ConfigFactory
 
 /**
  * Test converting a HttpRequest to bytes at the client and back to a request at the server, and vice-versa

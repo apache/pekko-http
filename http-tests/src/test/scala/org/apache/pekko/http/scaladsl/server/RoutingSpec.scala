@@ -18,6 +18,7 @@ import pekko.http.impl.util.WithLogCapturing
 import pekko.http.scaladsl.model.HttpResponse
 import pekko.http.scaladsl.testkit.ScalatestRouteTest
 import pekko.testkit.TestKitBase
+
 import org.scalatest.Suite
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers

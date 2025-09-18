@@ -17,15 +17,11 @@
 
 package org.apache.pekko.http.impl.engine
 
-import com.typesafe.config.ConfigFactory
+import java.util.concurrent.TimeUnit
 
-import org.apache.pekko
-import pekko.{ BenchTestSourceSameElement, NotUsed }
-import pekko.actor.ActorSystem
-import pekko.http.impl.engine.ws.FrameEvent
-import pekko.http.impl.engine.ws.Protocol.Opcode
-import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
-import pekko.util.ByteString
+import scala.concurrent.Await
+import scala.concurrent.duration.{ Duration, DurationInt }
+
 import org.openjdk.jmh.annotations.{
   Benchmark,
   BenchmarkMode,
@@ -37,9 +33,15 @@ import org.openjdk.jmh.annotations.{
   TearDown
 }
 
-import java.util.concurrent.TimeUnit
-import scala.concurrent.Await
-import scala.concurrent.duration.{ Duration, DurationInt }
+import org.apache.pekko
+import pekko.{ BenchTestSourceSameElement, NotUsed }
+import pekko.actor.ActorSystem
+import pekko.http.impl.engine.ws.FrameEvent
+import pekko.http.impl.engine.ws.Protocol.Opcode
+import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
+import pekko.util.ByteString
+
+import com.typesafe.config.ConfigFactory
 
 object MessageToFrameRendererBenchmark {
   final val OperationsPerInvocation = 100000

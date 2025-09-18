@@ -14,14 +14,15 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.http.scaladsl.coding.Coders
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.HttpEncodings._
 import pekko.http.scaladsl.model.headers._
-
-import scala.concurrent.Future
+import pekko.http.scaladsl.model.headers.HttpEncodings._
 import pekko.testkit.EventFilter
+
 import org.scalatest.matchers.Matcher
 
 class ExecutionDirectivesSpec extends RoutingSpec {

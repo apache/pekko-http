@@ -20,8 +20,8 @@ import pekko.http.javadsl.marshalling.Marshaller
 import pekko.http.javadsl.model.{ HttpEntity, _ }
 import pekko.http.javadsl.server.Route
 import pekko.http.javadsl.unmarshalling.Unmarshaller
-import pekko.http.scaladsl.marshalling.ToResponseMarshaller
 import pekko.http.scaladsl.marshalling.ToResponseMarshallable
+import pekko.http.scaladsl.marshalling.ToResponseMarshaller
 import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.stream.javadsl.Source
 import pekko.util.ByteString
@@ -29,8 +29,8 @@ import pekko.util.ByteString
 /** EXPERIMENTAL API */
 abstract class FramedEntityStreamingDirectives extends TimeoutDirectives {
 
-  import pekko.http.javadsl.server.RoutingJavaMapping.Implicits._
   import pekko.http.javadsl.server.RoutingJavaMapping._
+  import pekko.http.javadsl.server.RoutingJavaMapping.Implicits._
 
   @CorrespondsTo("asSourceOf")
   def entityAsSourceOf[T](um: Unmarshaller[ByteString, T], support: EntityStreamingSupport,

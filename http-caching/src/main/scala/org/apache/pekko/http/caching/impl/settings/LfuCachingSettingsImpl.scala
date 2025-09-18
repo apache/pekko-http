@@ -13,14 +13,15 @@
 
 package org.apache.pekko.http.caching.impl.settings
 
+import scala.concurrent.duration.Duration
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.caching.scaladsl.LfuCacheSettings
-import pekko.http.impl.util.SettingsCompanionImpl
 import pekko.http.impl.util._
-import com.typesafe.config.Config
+import pekko.http.impl.util.SettingsCompanionImpl
 
-import scala.concurrent.duration.Duration
+import com.typesafe.config.Config
 
 /** INTERNAL API */
 @InternalApi

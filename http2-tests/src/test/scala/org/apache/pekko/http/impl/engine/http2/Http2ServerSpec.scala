@@ -13,6 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import javax.net.ssl.SSLContext
+
+import scala.collection.immutable
+import scala.concurrent.{ Await, Promise }
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.impl.engine.http2.FrameEvent._
@@ -25,20 +31,14 @@ import pekko.http.scaladsl.model.headers.{ CacheDirectives, RawHeader }
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.OverflowStrategy
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Source, SourceQueueWithComplete }
+import pekko.stream.testkit.TestPublisher
 import pekko.stream.testkit.TestPublisher.ManualProbe
 import pekko.stream.testkit.scaladsl.StreamTestKit
-import pekko.stream.testkit.TestPublisher
 import pekko.testkit._
 import pekko.util.ByteString
 
 import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
-
-import javax.net.ssl.SSLContext
-
-import scala.collection.immutable
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, Promise }
 
 /**
  * This tests the http2 server protocol logic.

@@ -15,14 +15,14 @@ package org.apache.pekko.http.scaladsl.coding
 
 import java.util.zip.{ Deflater, Inflater }
 
+import scala.annotation.tailrec
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.stream.Attributes
 import pekko.stream.impl.io.ByteStringParser
 import pekko.stream.impl.io.ByteStringParser.{ ParseResult, ParseStep }
 import pekko.util.{ ByteString, ByteStringBuilder }
-
-import scala.annotation.tailrec
 
 /** Internal API */
 @InternalApi

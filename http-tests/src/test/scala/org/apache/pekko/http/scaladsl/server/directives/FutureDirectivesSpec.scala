@@ -14,15 +14,15 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.scaladsl.model.StatusCodes
 import pekko.pattern.CircuitBreaker
-
-import scala.concurrent.Future
 import pekko.testkit._
-import org.scalatest.Inside
 
-import scala.concurrent.duration._
+import org.scalatest.Inside
 
 class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
 

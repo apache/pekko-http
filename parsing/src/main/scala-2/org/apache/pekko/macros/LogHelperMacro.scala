@@ -13,9 +13,9 @@
 
 package org.apache.pekko.macros
 
-import org.apache.pekko.annotation.InternalApi
-
 import scala.reflect.macros.blackbox
+
+import org.apache.pekko.annotation.InternalApi
 
 /** INTERNAL API */
 @InternalApi

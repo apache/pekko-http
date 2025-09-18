@@ -13,14 +13,22 @@
 
 package org.apache.pekko.http.javadsl.server.directives
 
+import java.lang.{ Iterable => JIterable }
+import java.time.{ Duration => JDuration }
+import java.util.{ List => JList }
+import java.util.concurrent.CompletionStage
+import java.util.function.{ Function => JFunction }
+import java.util.function.Predicate
+import java.util.function.Supplier
+
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
+import scala.concurrent.duration.FiniteDuration
+import scala.jdk.DurationConverters._
+import scala.jdk.FutureConverters._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.LoggingAdapter
-import pekko.japi.Util
-import pekko.stream.Materializer
-import pekko.stream.javadsl.Source
-import pekko.util.ByteString
-
 import pekko.http.impl.model.JavaUri
 import pekko.http.impl.util.JavaMapping
 import pekko.http.impl.util.Util.convertIterable
@@ -39,23 +47,15 @@ import pekko.http.javadsl.settings.{ ParserSettings, RoutingSettings }
 import pekko.http.scaladsl
 import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.http.scaladsl.util.FastFuture._
-
-import java.lang.{ Iterable => JIterable }
-import java.time.{ Duration => JDuration }
-import java.util.{ List => JList }
-import java.util.concurrent.CompletionStage
-import java.util.function.{ Function => JFunction }
-import java.util.function.Predicate
-import java.util.function.Supplier
-
-import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
-import scala.concurrent.duration.FiniteDuration
-import scala.jdk.DurationConverters._
-import scala.jdk.FutureConverters._
+import pekko.japi.Util
+import pekko.stream.Materializer
+import pekko.stream.javadsl.Source
+import pekko.util.ByteString
 
 abstract class BasicDirectives {
-  import pekko.http.impl.util.JavaMapping.Implicits._
   import RoutingJavaMapping._
+
+  import pekko.http.impl.util.JavaMapping.Implicits._
 
   def mapRequest(f: JFunction[HttpRequest, HttpRequest], inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRequest(rq => f.apply(rq.asJava).asScala) { inner.get.delegate }

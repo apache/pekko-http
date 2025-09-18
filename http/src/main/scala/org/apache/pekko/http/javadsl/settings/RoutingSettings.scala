@@ -17,6 +17,7 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.settings.RoutingSettingsImpl
+
 import com.typesafe.config.Config
 
 /**

@@ -17,8 +17,8 @@ import java.util.function.Supplier
 
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
-import pekko.http.caching.javadsl.{ Cache, CachingSettings }
 import pekko.http.caching.{ CacheJavaMapping, LfuCache }
+import pekko.http.caching.javadsl.{ Cache, CachingSettings }
 import pekko.http.impl.util.JavaMapping
 import pekko.http.javadsl.server.{ RequestContext, Route, RouteResult }
 

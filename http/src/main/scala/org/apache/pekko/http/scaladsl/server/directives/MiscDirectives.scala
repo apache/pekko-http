@@ -14,11 +14,12 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import headers._
+
 import org.apache.pekko
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.server.directives.BasicDirectives._
 import pekko.http.scaladsl.server.RequestEntityExpectedRejection
-import headers._
+import pekko.http.scaladsl.server.directives.BasicDirectives._
 
 /**
  * @groupname misc Miscellaneous directives

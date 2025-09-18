@@ -14,9 +14,9 @@
 package org.apache.pekko.http.scaladsl.unmarshalling
 
 import org.apache.pekko
-import pekko.util.ByteString
-import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.util.FastFuture
+import pekko.util.ByteString
 
 trait PredefinedFromEntityUnmarshallers extends MultipartUnmarshallers {
 

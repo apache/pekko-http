@@ -16,16 +16,17 @@ package org.apache.pekko.http.scaladsl.unmarshalling.sse
 import java.nio.file.{ Files, Path }
 import java.util.concurrent.TimeUnit
 
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration._
+
+import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.infra.Blackhole
+
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.ActorSystem
 import pekko.stream.scaladsl.{ FileIO, Keep, RunnableGraph, Sink, Source }
 import pekko.util.ByteString
-import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.Blackhole
-
-import scala.concurrent.{ Await, Future }
-import scala.concurrent.duration._
 
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

@@ -13,25 +13,27 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
-import scala.concurrent.duration._
-import org.apache.pekko
-import pekko.testkit._
-import pekko.util.{ ByteString, Timeout }
-import pekko.pattern.ask
-import pekko.http.scaladsl.model.headers.RawHeader
-import pekko.http.scaladsl.server._
-import pekko.http.scaladsl.model._
-import StatusCodes._
-import HttpMethods._
-import Directives._
-import pekko.actor.ActorRef
-import pekko.stream.scaladsl.Source
-import org.scalatest.exceptions.TestFailedException
-import headers.`X-Forwarded-Proto`
-import org.scalatest.concurrent.ScalaFutures
-
 import scala.concurrent.Await
 import scala.concurrent.Future
+import scala.concurrent.duration._
+
+import Directives._
+import HttpMethods._
+import StatusCodes._
+import headers.`X-Forwarded-Proto`
+
+import org.apache.pekko
+import pekko.actor.ActorRef
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.RawHeader
+import pekko.http.scaladsl.server._
+import pekko.pattern.ask
+import pekko.stream.scaladsl.Source
+import pekko.testkit._
+import pekko.util.{ ByteString, Timeout }
+
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 

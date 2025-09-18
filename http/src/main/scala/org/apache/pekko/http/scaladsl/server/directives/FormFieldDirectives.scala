@@ -14,6 +14,13 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.annotation.tailrec
+import scala.collection.immutable
+import scala.concurrent.Future
+import scala.util.{ Failure, Success }
+
+import BasicDirectives._
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
@@ -21,12 +28,6 @@ import pekko.http.scaladsl.common._
 import pekko.http.scaladsl.server.directives.RouteDirectives._
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import pekko.http.scaladsl.util.FastFuture._
-
-import scala.annotation.tailrec
-import scala.collection.immutable
-import scala.concurrent.Future
-import scala.util.{ Failure, Success }
-import BasicDirectives._
 
 /**
  * @groupname form Form field directives
@@ -61,6 +62,7 @@ object FormFieldDirectives extends FormFieldDirectives {
 
   private val _formFieldSeq: Directive1[immutable.Seq[(String, String)]] = {
     import FutureDirectives._
+
     import pekko.http.scaladsl.unmarshalling._
 
     extract { ctx =>
@@ -117,6 +119,7 @@ object FormFieldDirectives extends FormFieldDirectives {
     }
 
     import Impl._
+
     import pekko.http.scaladsl.unmarshalling.{ FromStrictFormFieldUnmarshaller => FSFFU, _ }
     type FSFFOU[T] = Unmarshaller[Option[StrictForm.Field], T]
 
@@ -160,6 +163,7 @@ object FormFieldDirectives extends FormFieldDirectives {
     import BasicDirectives._
     import FutureDirectives._
     import RouteDirectives._
+
     import pekko.http.scaladsl.unmarshalling.{ FromStrictFormFieldUnmarshaller => FSFFU, _ }
 
     type SFU = FromEntityUnmarshaller[StrictForm]

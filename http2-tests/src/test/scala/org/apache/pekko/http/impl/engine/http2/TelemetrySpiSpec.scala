@@ -13,11 +13,18 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.util.UUID
+
+import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.util.Failure
+import scala.util.Success
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
-import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.impl.util.ExampleHttpContexts
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.AttributeKey
@@ -37,15 +44,11 @@ import pekko.stream.scaladsl.Source
 import pekko.stream.scaladsl.Tcp
 import pekko.testkit.TestKit
 import pekko.testkit.TestProbe
-import com.typesafe.config.ConfigFactory
+
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 
-import java.util.UUID
-import scala.concurrent.Future
-import scala.concurrent.duration._
-import scala.util.Failure
-import scala.util.Success
+import com.typesafe.config.ConfigFactory
 
 object TestTelemetryImpl {
   @volatile var delegate: Option[TelemetrySpi] = None

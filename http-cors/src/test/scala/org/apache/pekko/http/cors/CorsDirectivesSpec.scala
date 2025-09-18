@@ -17,21 +17,23 @@
 
 package org.apache.pekko.http.cors
 
+import scala.collection.immutable.Seq
+
 import org.apache.pekko
+import pekko.http.cors.scaladsl.CorsRejection
+import pekko.http.cors.scaladsl.model.{ HttpHeaderRange, HttpOriginMatcher }
+import pekko.http.cors.scaladsl.settings.CorsSettings
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server.{ Directives, Route }
 import pekko.http.scaladsl.testkit.ScalatestRouteTest
-import pekko.http.cors.scaladsl.CorsRejection
-import pekko.http.cors.scaladsl.model.{ HttpHeaderRange, HttpOriginMatcher }
-import pekko.http.cors.scaladsl.settings.CorsSettings
 
-import scala.collection.immutable.Seq
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with ScalatestRouteTest {
   import HttpMethods._
+
   import pekko.http.cors.scaladsl.CorsDirectives._
 
   val actual = "actual"

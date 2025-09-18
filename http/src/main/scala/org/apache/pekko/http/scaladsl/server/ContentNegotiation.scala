@@ -13,11 +13,12 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import HttpCharsets.`UTF-8`
+
 import org.apache.pekko
 import pekko.http.scaladsl.model
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
-import HttpCharsets.`UTF-8`
 
 final class MediaTypeNegotiator(requestHeaders: Seq[HttpHeader]) {
 

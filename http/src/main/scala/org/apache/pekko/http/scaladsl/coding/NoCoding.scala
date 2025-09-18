@@ -13,14 +13,15 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
+import headers.HttpEncodings
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.http.scaladsl.model._
 import pekko.http.impl.util.StreamUtils
+import pekko.http.scaladsl.model._
 import pekko.stream.FlowShape
 import pekko.stream.stage.GraphStage
 import pekko.util.ByteString
-import headers.HttpEncodings
 
 /**
  * An encoder and decoder for the HTTP 'identity' encoding.

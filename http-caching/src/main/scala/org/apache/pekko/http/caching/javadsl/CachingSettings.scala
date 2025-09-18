@@ -18,6 +18,7 @@ import pekko.actor.ActorSystem
 import pekko.annotation.DoNotInherit
 import pekko.http.caching.impl.settings.CachingSettingsImpl
 import pekko.http.javadsl.settings.SettingsCompanion
+
 import com.typesafe.config.Config
 
 /**
@@ -29,8 +30,8 @@ abstract class CachingSettings private[http] () { self: CachingSettingsImpl =>
 
   // overloads for idiomatic Scala use
   def withLfuCacheSettings(newSettings: LfuCacheSettings): CachingSettings = {
-    import pekko.http.impl.util.JavaMapping.Implicits._
     import pekko.http.caching.CacheJavaMapping.Implicits._
+    import pekko.http.impl.util.JavaMapping.Implicits._
 
     self.copy(lfuCacheSettings = newSettings.asScala)
   }

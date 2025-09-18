@@ -14,7 +14,13 @@
 package org.apache.pekko.http.scaladsl.server
 
 import java.util.concurrent.{ CountDownLatch, TimeUnit }
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
+import org.apache.pekko.stream.Materializer
 import pekko.actor.ActorSystem
 import pekko.event.{ LogSource, Logging }
 import pekko.http.impl.util.WithLogCapturing
@@ -23,15 +29,12 @@ import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, Uri }
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.stream.testkit.Utils.assertAllStagesStopped
 import pekko.testkit.TestKit
-import com.typesafe.config.ConfigFactory
-import org.apache.pekko.stream.Materializer
-import org.scalatest.BeforeAndAfterAll
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.util.{ Failure, Success, Try }
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+
+import com.typesafe.config.ConfigFactory
 
 abstract class DontLeakActorsOnFailingConnectionSpecs(poolImplementation: String)
     extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with WithLogCapturing {

@@ -16,22 +16,23 @@ package directives
 
 import scala.concurrent.Future
 import scala.util.{ Failure, Try }
-
 import scala.xml.NodeSeq
-import org.scalatest.Inside
-import org.apache.pekko
-import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport
-import pekko.http.scaladsl.unmarshalling._
-import pekko.http.scaladsl.marshalling._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import spray.json.DefaultJsonProtocol._
-import MediaTypes._
+
 import HttpCharsets._
+import MediaTypes._
 import headers._
 import org.xml.sax.SAXParseException
+import spray.json.DefaultJsonProtocol._
 
+import org.apache.pekko
+import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport
+import pekko.http.scaladsl.marshalling._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.unmarshalling._
 import pekko.testkit.EventFilter
+
+import org.scalatest.Inside
 
 class MarshallingDirectivesSpec extends RoutingSpec with Inside {
   import ScalaXmlSupport._

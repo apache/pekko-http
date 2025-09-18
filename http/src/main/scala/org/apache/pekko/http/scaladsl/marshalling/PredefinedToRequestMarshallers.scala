@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.marshalling
 
 import scala.collection.immutable
+
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.util.FastFuture._

@@ -19,6 +19,7 @@ import pekko.http.scaladsl.client.RequestBuilding
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.server.Directives
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
+
 import org.scalatest.concurrent.ScalaFutures
 
 class CustomStatusCodesSpec extends PekkoSpecWithMaterializer with ScalaFutures

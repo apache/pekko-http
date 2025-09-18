@@ -13,27 +13,27 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.collection.immutable
+import scala.concurrent.{ ExecutionContext, Future }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.event.Logging
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.server.ServerTerminator
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
-import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.impl.util.LogByteStringTools
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.stream.Attributes.LogLevels
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Sink, Source }
+import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.stream.testkit.TestPublisher.Probe
 import pekko.stream.testkit.scaladsl.StreamTestKit
-import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.util.ByteString
-
-import scala.collection.immutable
-import scala.concurrent.{ ExecutionContext, Future }
 
 abstract class Http2SpecWithMaterializer(configOverrides: String) extends PekkoSpecWithMaterializer(configOverrides) {
   implicit class InWithStoppedStages(name: String) {

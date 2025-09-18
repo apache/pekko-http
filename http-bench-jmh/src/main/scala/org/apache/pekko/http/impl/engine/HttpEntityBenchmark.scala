@@ -15,16 +15,18 @@ package org.apache.pekko.http.impl.engine
 
 import java.util.concurrent.CountDownLatch
 
+import scala.concurrent.ExecutionContext
+
+import org.openjdk.jmh.annotations.{ Benchmark, Param, Setup, TearDown }
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.CommonBenchmark
 import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity }
 import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
-import com.typesafe.config.ConfigFactory
-import org.openjdk.jmh.annotations.{ Benchmark, Param, Setup, TearDown }
 
-import scala.concurrent.ExecutionContext
+import com.typesafe.config.ConfigFactory
 
 class HttpEntityBenchmark extends CommonBenchmark {
   @Param(Array("strict", "default"))

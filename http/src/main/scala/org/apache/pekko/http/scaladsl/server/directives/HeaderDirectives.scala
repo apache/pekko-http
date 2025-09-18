@@ -14,13 +14,13 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.reflect.ClassTag
+import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
-
-import scala.reflect.ClassTag
-import scala.util.control.NonFatal
 
 /**
  * @groupname header Header directives

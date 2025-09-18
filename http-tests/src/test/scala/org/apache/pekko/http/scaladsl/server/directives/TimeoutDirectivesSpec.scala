@@ -13,14 +13,14 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import scala.concurrent.{ Future, Promise }
+import scala.concurrent.duration._
+
 import org.apache.pekko
-import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
 import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.testkit._
-
-import scala.concurrent.duration._
-import scala.concurrent.{ Future, Promise }
 
 class TimeoutDirectivesSpec extends RoutingSpec {
 

@@ -16,20 +16,22 @@ package org.apache.pekko.http.impl.engine
 import java.net.InetSocketAddress
 import java.util.concurrent.CountDownLatch
 
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.{ Failure, Success }
+
+import org.openjdk.jmh.annotations._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.CommonBenchmark
 import pekko.http.impl.util.enhanceString_
+import pekko.http.scaladsl.{ ClientTransport, Http }
 import pekko.http.scaladsl.model.HttpRequest
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
-import pekko.http.scaladsl.{ ClientTransport, Http }
 import pekko.stream.scaladsl.Flow
 import pekko.util.ByteString
-import com.typesafe.config.ConfigFactory
-import org.openjdk.jmh.annotations._
 
-import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.{ Failure, Success }
+import com.typesafe.config.ConfigFactory
 
 /**
  * A benchmark that tries to stress the pool and the client infrastructure (but nothing else)

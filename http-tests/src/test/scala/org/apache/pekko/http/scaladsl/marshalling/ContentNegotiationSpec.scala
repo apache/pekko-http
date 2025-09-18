@@ -15,16 +15,19 @@ package org.apache.pekko.http.scaladsl.marshalling
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import org.apache.pekko
-import pekko.http.scaladsl.server.MediaTypeNegotiator
-import pekko.http.scaladsl.server.ContentNegotiator.Alternative
-import pekko.util.ByteString
-import pekko.http.scaladsl.util.FastFuture._
-import pekko.http.scaladsl.model._
-import pekko.http.impl.util._
-import MediaTypes._
+
 import HttpCharsets._
+import MediaTypes._
+
+import org.apache.pekko
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.ContentNegotiator.Alternative
+import pekko.http.scaladsl.server.MediaTypeNegotiator
 import pekko.http.scaladsl.server.util.VarArgsFunction1
+import pekko.http.scaladsl.util.FastFuture._
+import pekko.util.ByteString
+
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 

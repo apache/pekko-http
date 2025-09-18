@@ -13,19 +13,19 @@
 
 package org.apache.pekko.http.scaladsl.unmarshalling
 
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
+import scala.util.control.{ NoStackTrace, NonFatal }
+
 import org.apache.pekko
 import pekko.event.Logging
 import pekko.http.{ javadsl => jm }
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
-import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.stream.Materializer
-
-import scala.jdk.CollectionConverters._
-import scala.jdk.OptionConverters._
-import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.control.{ NoStackTrace, NonFatal }
 
 trait Unmarshaller[-A, B] extends jm.unmarshalling.Unmarshaller[A, B] {
 

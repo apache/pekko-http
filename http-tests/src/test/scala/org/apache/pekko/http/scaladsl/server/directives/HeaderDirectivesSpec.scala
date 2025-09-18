@@ -13,15 +13,17 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
-import org.apache.pekko
-import pekko.http.scaladsl.model._
-import headers._
-import pekko.http.scaladsl.server._
-import directives.HeaderDirectivesSpec.XCustomHeader
-
-import org.scalatest.Inside
 import scala.reflect.ClassTag
 import scala.util.Try
+
+import directives.HeaderDirectivesSpec.XCustomHeader
+import headers._
+
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server._
+
+import org.scalatest.Inside
 
 class HeaderDirectivesSpec extends RoutingSpec with Inside {
 

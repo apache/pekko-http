@@ -14,12 +14,14 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import scala.concurrent.Future
 import scala.collection.immutable
+import scala.concurrent.Future
+
+import StatusCodes._
+
 import org.apache.pekko
 import pekko.http.scaladsl.marshalling.{ ToEntityMarshaller, ToResponseMarshallable }
 import pekko.http.scaladsl.model._
-import StatusCodes._
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
 

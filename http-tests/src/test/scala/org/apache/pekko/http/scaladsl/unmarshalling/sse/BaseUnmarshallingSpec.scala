@@ -16,11 +16,13 @@ package scaladsl
 package unmarshalling
 package sse
 
-import org.apache.pekko
-import pekko.actor.ActorSystem
-import org.scalatest.{ BeforeAndAfterAll, Suite }
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
+
+import org.apache.pekko
+import pekko.actor.ActorSystem
+
+import org.scalatest.{ BeforeAndAfterAll, Suite }
 
 trait BaseUnmarshallingSpec extends BeforeAndAfterAll { this: Suite =>
 

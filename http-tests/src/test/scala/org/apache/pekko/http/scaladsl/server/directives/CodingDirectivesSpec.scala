@@ -14,26 +14,28 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import org.scalatest.Inside
-import org.scalatest.matchers.Matcher
-import org.apache.pekko
-import pekko.util.ByteString
-import pekko.stream.scaladsl.{ Sink, Source }
-import pekko.http.impl.util._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.coding.Encoder
-import pekko.http.scaladsl.coding.Coders._
-import pekko.testkit._
-import headers._
-import HttpEntity.{ Chunk, ChunkStreamPart }
+import scala.concurrent.duration._
+
+import ContentTypes.`application/octet-stream`
 import HttpCharsets._
 import HttpEncodings._
+import HttpEntity.{ Chunk, ChunkStreamPart }
 import MediaTypes._
 import StatusCodes._
-import ContentTypes.`application/octet-stream`
-import pekko.http.scaladsl.testkit.RouteTestTimeout
+import headers._
 
-import scala.concurrent.duration._
+import org.apache.pekko
+import pekko.http.impl.util._
+import pekko.http.scaladsl.coding.Coders._
+import pekko.http.scaladsl.coding.Encoder
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.testkit.RouteTestTimeout
+import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.testkit._
+import pekko.util.ByteString
+
+import org.scalatest.Inside
+import org.scalatest.matchers.Matcher
 
 class CodingDirectivesSpec extends RoutingSpec with Inside {
 

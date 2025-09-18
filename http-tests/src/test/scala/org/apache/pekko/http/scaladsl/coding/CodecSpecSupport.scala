@@ -13,11 +13,12 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
-import org.scalatest.{ BeforeAndAfterAll, Suite }
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.testkit.TestKit
 import pekko.util.ByteString
+
+import org.scalatest.{ BeforeAndAfterAll, Suite }
 import org.scalatest.matchers.should.Matchers
 
 trait CodecSpecSupport extends Matchers with BeforeAndAfterAll { self: Suite =>

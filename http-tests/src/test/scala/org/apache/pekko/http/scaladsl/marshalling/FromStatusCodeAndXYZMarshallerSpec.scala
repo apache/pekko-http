@@ -13,13 +13,14 @@
 
 package org.apache.pekko.http.scaladsl.marshalling
 
+import spray.json.RootJsonFormat
+
 import org.apache.pekko
 import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import pekko.http.scaladsl.model.{ ContentTypes, MediaRanges, MediaTypes }
 import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model.headers.Accept
-import pekko.http.scaladsl.model.{ ContentTypes, MediaRanges, MediaTypes }
 import pekko.http.scaladsl.server.{ Route, RoutingSpec }
-import spray.json.RootJsonFormat
 
 class FromStatusCodeAndXYZMarshallerSpec extends RoutingSpec {
   case class ErrorInfo(errorMessage: String)

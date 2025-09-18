@@ -13,25 +13,27 @@
 
 package org.apache.pekko.http.scaladsl.marshalling
 
+import scala.collection.immutable
+import scala.collection.immutable.ListMap
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.impl.util._
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport._
+import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpCharsets._
 import pekko.http.scaladsl.model.MediaTypes._
-import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.testkit.MarshallingTestUtils
 import pekko.stream.scaladsl.Source
 import pekko.testkit.TestKit
 import pekko.util.ByteString
-import com.typesafe.config.ConfigFactory
-import org.scalatest.BeforeAndAfterAll
 
-import scala.collection.immutable
-import scala.collection.immutable.ListMap
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+
+import com.typesafe.config.ConfigFactory
 
 class MarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll with MultipartMarshallers
     with MarshallingTestUtils {

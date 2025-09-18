@@ -16,9 +16,11 @@ package org.apache.pekko.http.scaladsl.server.directives
 import java.util.concurrent.atomic.AtomicInteger
 
 import scala.collection.immutable.ListMap
+
 import org.apache.pekko
 import pekko.http.scaladsl.model.StatusCodes
 import pekko.http.scaladsl.server._
+
 import org.scalatest.Inside
 
 class PathDirectivesSpec extends RoutingSpec with Inside {
@@ -608,8 +610,8 @@ class PathDirectivesSpec extends RoutingSpec with Inside {
     }
   }
 
-  import pekko.http.scaladsl.model.headers.Location
   import pekko.http.scaladsl.model.Uri
+  import pekko.http.scaladsl.model.headers.Location
 
   private def checkRedirectTo(expectedUri: Uri) =
     check {

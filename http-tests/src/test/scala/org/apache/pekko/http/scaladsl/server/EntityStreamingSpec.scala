@@ -16,6 +16,8 @@ package org.apache.pekko.http.scaladsl.server
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
+import spray.json.{ DefaultJsonProtocol, RootJsonFormat }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.scaladsl.common.{ EntityStreamingSupport, JsonEntityStreamingSupport }
@@ -27,7 +29,6 @@ import pekko.testkit._
 import pekko.util.ByteString
 
 import org.scalatest.concurrent.ScalaFutures
-import spray.json.{ DefaultJsonProtocol, RootJsonFormat }
 
 class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
   implicit override val patience: PatienceConfig = PatienceConfig(5.seconds.dilated(system), 200.millis)
@@ -111,10 +112,11 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
   "client-consume-streaming-json" in {
     // #json-streaming-client-example
     import MyJsonProtocol._
+
     import org.apache.pekko
-    import pekko.http.scaladsl.unmarshalling._
     import pekko.http.scaladsl.common.EntityStreamingSupport
     import pekko.http.scaladsl.common.JsonEntityStreamingSupport
+    import pekko.http.scaladsl.unmarshalling._
 
     implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
       EntityStreamingSupport.json()
@@ -147,10 +149,11 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
   "client-consume-streaming-json-raw" in {
     // #json-streaming-client-example-raw
     import MyJsonProtocol._
+
     import org.apache.pekko
-    import pekko.http.scaladsl.unmarshalling._
     import pekko.http.scaladsl.common.EntityStreamingSupport
     import pekko.http.scaladsl.common.JsonEntityStreamingSupport
+    import pekko.http.scaladsl.unmarshalling._
 
     implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
       EntityStreamingSupport.json()

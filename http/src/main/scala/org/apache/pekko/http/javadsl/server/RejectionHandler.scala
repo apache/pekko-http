@@ -15,13 +15,13 @@ package org.apache.pekko.http.javadsl.server
 
 import java.util.function
 
+import scala.jdk.CollectionConverters._
+import scala.reflect.ClassTag
+
 import org.apache.pekko
 import pekko.http.impl.util.JavaMapping
 import pekko.http.javadsl.model.HttpResponse
 import pekko.http.scaladsl.server
-
-import scala.reflect.ClassTag
-import scala.jdk.CollectionConverters._
 
 object RejectionHandler {
 

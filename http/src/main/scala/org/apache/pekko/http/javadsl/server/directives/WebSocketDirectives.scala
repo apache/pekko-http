@@ -20,9 +20,9 @@ import java.util.function.{ Function => JFunction }
 
 import org.apache.pekko
 import pekko.NotUsed
-import pekko.http.scaladsl.model.{ ws => s }
 import pekko.http.javadsl.model.ws.Message
 import pekko.http.javadsl.model.ws.WebSocketUpgrade
+import pekko.http.scaladsl.model.{ ws => s }
 import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.stream.javadsl.Flow
 import pekko.stream.scaladsl

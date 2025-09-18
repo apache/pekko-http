@@ -13,22 +13,24 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.net.InetAddress
+import java.net.InetSocketAddress
+
+import FrameEvent._
+
 import org.apache.pekko
+import pekko.http.impl.engine.http2.hpack.HeaderDecompression
 import pekko.http.impl.engine.parsing.HttpHeaderParser
+import pekko.http.impl.engine.server.HttpAttributes
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ Accept, Cookie, Host }
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.util.{ ByteString, OptionVal }
-import org.scalatest.{ Inside, Inspectors }
-import FrameEvent._
-import pekko.http.impl.engine.http2.hpack.HeaderDecompression
-import pekko.http.impl.engine.server.HttpAttributes
-import pekko.http.impl.util.PekkoSpecWithMaterializer
 
-import java.net.InetAddress
-import java.net.InetSocketAddress
+import org.scalatest.{ Inside, Inspectors }
 
 class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Inspectors {
   "RequestParsing" should {

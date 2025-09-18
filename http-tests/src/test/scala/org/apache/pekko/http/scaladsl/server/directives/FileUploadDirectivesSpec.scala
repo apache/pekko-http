@@ -15,18 +15,19 @@ package org.apache.pekko.http.scaladsl.server.directives
 
 import java.io.File
 
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.scaladsl.model.{ Multipart, _ }
 import pekko.http.scaladsl.server.{ MissingFormFieldRejection, Route, RoutingSpec }
 import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.stream.scaladsl.Source
-import pekko.util.ByteString
 import pekko.testkit._
-import org.scalatest.concurrent.Eventually
+import pekko.util.ByteString
 
-import scala.concurrent.Future
-import scala.concurrent.duration._
+import org.scalatest.concurrent.Eventually
 
 class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
 
@@ -473,11 +474,10 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
 
 /** Mock Path implementation that allows to create a FileChannel that fails writes */
 class MockFailingWritePath extends java.nio.file.Path { selfPath =>
+  import java.{ lang, util }
   import java.net.URI
   import java.nio.{ ByteBuffer, MappedByteBuffer }
   import java.nio.channels.{ FileChannel, FileLock, ReadableByteChannel, SeekableByteChannel, WritableByteChannel }
-  import java.nio.file.attribute.{ BasicFileAttributes, FileAttribute, FileAttributeView, UserPrincipalLookupService }
-  import java.nio.file.spi.FileSystemProvider
   import java.nio.file.{
     AccessMode,
     CopyOption,
@@ -492,7 +492,8 @@ class MockFailingWritePath extends java.nio.file.Path { selfPath =>
     WatchKey,
     WatchService
   }
-  import java.{ lang, util }
+  import java.nio.file.attribute.{ BasicFileAttributes, FileAttribute, FileAttributeView, UserPrincipalLookupService }
+  import java.nio.file.spi.FileSystemProvider
 
   override def getFileSystem: FileSystem =
     new FileSystem {

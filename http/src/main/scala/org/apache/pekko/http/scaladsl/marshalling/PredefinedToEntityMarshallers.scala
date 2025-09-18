@@ -16,9 +16,9 @@ package org.apache.pekko.http.scaladsl.marshalling
 import java.nio.CharBuffer
 
 import org.apache.pekko
-import pekko.http.scaladsl.model.MediaTypes._
-import pekko.http.scaladsl.model.ContentTypes.`text/plain(UTF-8)`
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.ContentTypes.`text/plain(UTF-8)`
+import pekko.http.scaladsl.model.MediaTypes._
 import pekko.util.ByteString
 
 trait PredefinedToEntityMarshallers extends MultipartMarshallers {

@@ -16,6 +16,10 @@ package org.apache.pekko.http.javadsl.server
 import java.util.concurrent.CompletionStage
 import java.util.function.{ Function => JFunction }
 
+import scala.annotation.varargs
+import scala.concurrent.ExecutionContextExecutor
+import scala.jdk.FutureConverters._
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
@@ -26,17 +30,13 @@ import pekko.http.javadsl.model.HttpResponse
 import pekko.http.javadsl.model.StatusCode
 import pekko.http.javadsl.model.Uri
 import pekko.http.javadsl.model.headers.Location
-import pekko.http.javadsl.settings.RoutingSettings
 import pekko.http.javadsl.settings.ParserSettings
+import pekko.http.javadsl.settings.RoutingSettings
 import pekko.http.scaladsl
 import pekko.http.scaladsl.marshalling.ToResponseMarshallable
 import pekko.http.scaladsl.model.Uri.Path
 import pekko.http.scaladsl.util.FastFuture._
 import pekko.stream.Materializer
-
-import scala.annotation.varargs
-import scala.concurrent.ExecutionContextExecutor
-import scala.jdk.FutureConverters._
 
 class RequestContext private (val delegate: scaladsl.server.RequestContext) {
   import RequestContext._

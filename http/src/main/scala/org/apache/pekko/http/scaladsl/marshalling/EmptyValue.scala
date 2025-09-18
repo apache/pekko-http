@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.marshalling
 
 import scala.collection.immutable
+
 import org.apache.pekko.http.scaladsl.model._
 
 class EmptyValue[+T] private (val emptyValue: T)

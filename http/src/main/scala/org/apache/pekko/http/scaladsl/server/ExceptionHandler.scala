@@ -13,12 +13,14 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import scala.util.control.NonFatal
-import org.apache.pekko
-import pekko.http.scaladsl.settings.RoutingSettings
-import pekko.http.scaladsl.model._
-import StatusCodes._
 import scala.language.implicitConversions
+import scala.util.control.NonFatal
+
+import StatusCodes._
+
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.settings.RoutingSettings
 
 trait ExceptionHandler extends ExceptionHandler.PF {
 

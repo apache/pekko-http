@@ -13,17 +13,18 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.concurrent.Future
+import scala.io.StdIn
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
 import pekko.actor._
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, Uri }
-import pekko.stream.scaladsl.{ Flow, Sink, Source }
 import pekko.stream.OverflowStrategy
-import com.typesafe.config.{ Config, ConfigFactory }
+import pekko.stream.scaladsl.{ Flow, Sink, Source }
 
-import scala.concurrent.Future
-import scala.io.StdIn
-import scala.util.{ Failure, Success, Try }
+import com.typesafe.config.{ Config, ConfigFactory }
 
 object ConnectionTestApp {
   val testConf: Config = ConfigFactory.parseString("""

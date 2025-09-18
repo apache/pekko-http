@@ -14,6 +14,9 @@
 package org.apache.pekko.http.impl.engine
 
 import java.util.concurrent.CountDownLatch
+
+import org.openjdk.jmh.annotations._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.NoLogging
@@ -27,8 +30,8 @@ import pekko.stream.scaladsl.Flow
 import pekko.stream.scaladsl.Source
 import pekko.stream.scaladsl.TLSPlacebo
 import pekko.util.ByteString
+
 import com.typesafe.config.ConfigFactory
-import org.openjdk.jmh.annotations._
 
 class ServerProcessingBenchmark extends CommonBenchmark {
   val request = ByteString("GET / HTTP/1.1\r\nHost: localhost\r\nUser-Agent: test\r\n\r\n")

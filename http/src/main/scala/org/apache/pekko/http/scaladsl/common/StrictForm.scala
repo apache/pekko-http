@@ -17,13 +17,15 @@ import scala.annotation.implicitNotFound
 import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
-import org.apache.pekko
-import pekko.stream.Materializer
-import pekko.http.scaladsl.unmarshalling._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.util.FastFuture
+
 import FastFuture._
+
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.unmarshalling._
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
+import pekko.http.scaladsl.util.FastFuture
+import pekko.stream.Materializer
 
 /**
  * Read-only abstraction on top of `application/x-www-form-urlencoded` and multipart form data,

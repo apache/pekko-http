@@ -17,16 +17,17 @@
 
 package org.apache.pekko.http.cors.scaladsl
 
+import java.util
+
+import scala.collection.immutable.Seq
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
+import pekko.http.cors.javadsl
 import pekko.http.javadsl.model.headers
 import pekko.http.scaladsl.model.HttpMethod
 import pekko.http.scaladsl.model.headers.HttpOrigin
 import pekko.http.scaladsl.server.Rejection
-import pekko.http.cors.javadsl
-
-import java.util
-import scala.collection.immutable.Seq
-import scala.jdk.CollectionConverters._
 
 /**
  * Rejection created by the CORS directives. Signal the CORS request was rejected. The reason of the rejection is

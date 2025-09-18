@@ -13,22 +13,24 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.io.StdIn
+
+import spray.json.RootJsonFormat
+
 import org.apache.pekko
 import pekko.NotUsed
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.common.EntityStreamingSupport
 import pekko.http.scaladsl.common.JsonEntityStreamingSupport
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport
 import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
 import pekko.http.scaladsl.server.directives.Credentials
-import com.typesafe.config.{ Config, ConfigFactory }
-import pekko.actor.ActorSystem
 import pekko.stream.scaladsl._
-import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.common.EntityStreamingSupport
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
-import scala.io.StdIn
-import spray.json.RootJsonFormat
+import com.typesafe.config.{ Config, ConfigFactory }
 
 object TestServer extends App {
   val testConf: Config = ConfigFactory.parseString("""
@@ -41,14 +43,15 @@ object TestServer extends App {
   implicit val ec: ExecutionContext = system.dispatcher
 
   import spray.json.DefaultJsonProtocol._
+
   import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   final case class Tweet(message: String)
   implicit val tweetFormat: RootJsonFormat[Tweet] = jsonFormat1(Tweet.apply)
 
   implicit val jsonStreaming: JsonEntityStreamingSupport = EntityStreamingSupport.json()
 
-  import ScalaXmlSupport._
   import Directives._
+  import ScalaXmlSupport._
 
   def auth: AuthenticatorPF[String] = {
     case p @ Credentials.Provided(name) if p.verify(name + "-password") => name

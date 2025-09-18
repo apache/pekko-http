@@ -13,16 +13,16 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.collection.immutable
+import scala.concurrent.Future
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ClassicActorSystemProvider
 import pekko.http.javadsl
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import pekko.stream.scaladsl.Flow
-
-import scala.collection.immutable
-import scala.concurrent.Future
-import scala.jdk.CollectionConverters._
 
 /**
  * The result of handling a request.

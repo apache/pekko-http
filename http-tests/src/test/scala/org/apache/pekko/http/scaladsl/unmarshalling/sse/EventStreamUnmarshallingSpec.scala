@@ -16,6 +16,10 @@ package scaladsl
 package unmarshalling
 package sse
 
+import java.util.{ List => JList }
+
+import scala.collection.immutable.Seq
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.scaladsl.model.HttpEntity
@@ -24,8 +28,6 @@ import pekko.http.scaladsl.model.sse.ServerSentEvent
 import pekko.http.scaladsl.settings.ServerSentEventSettings
 import pekko.stream.scaladsl.{ Sink, Source }
 
-import java.util.{ List => JList }
-import scala.collection.immutable.Seq
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 
@@ -49,6 +51,7 @@ object EventStreamUnmarshallingSpec {
 
 final class EventStreamUnmarshallingSpec extends AsyncWordSpec with Matchers with BaseUnmarshallingSpec {
   import EventStreamUnmarshallingSpec._
+
   import pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling._
 
   "A HTTP entity with media-type text/event-stream" should {

@@ -13,18 +13,19 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
-import org.apache.pekko
-import pekko.util.ByteString
-import pekko.http.scaladsl.model._
-import headers._
-import HttpMethods.POST
-
-import scala.concurrent.duration._
-import pekko.http.impl.util._
-import pekko.testkit._
-import org.scalatest.wordspec.AnyWordSpec
-
 import scala.annotation.nowarn
+import scala.concurrent.duration._
+
+import HttpMethods.POST
+import headers._
+
+import org.apache.pekko
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
+import pekko.testkit._
+import pekko.util.ByteString
+
+import org.scalatest.wordspec.AnyWordSpec
 
 class EncoderSpec extends AnyWordSpec with CodecSpecSupport {
 
