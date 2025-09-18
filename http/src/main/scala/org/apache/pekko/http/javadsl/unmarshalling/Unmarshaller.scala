@@ -24,10 +24,10 @@ import scala.jdk.FutureConverters._
 import org.apache.pekko
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.InternalApi
+import pekko.http.{ javadsl => jm }
 import pekko.http.impl.model.JavaQuery
 import pekko.http.impl.util.JavaMapping
 import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.http.{ javadsl => jm }
 import pekko.http.javadsl.model._
 import pekko.http.scaladsl.model.{ ContentTypeRange, ContentTypes }
 import pekko.http.scaladsl.unmarshalling

@@ -24,8 +24,8 @@ import pekko.http.impl.util._
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model._
 import pekko.http.javadsl.server.{ Rejection, RoutingJavaMapping }
-import pekko.http.javadsl.server.RoutingJavaMapping._
 import pekko.http.javadsl.server.RouteResult
+import pekko.http.javadsl.server.RoutingJavaMapping._
 import pekko.http.javadsl.unmarshalling.Unmarshaller
 import pekko.http.scaladsl
 import pekko.http.scaladsl.model.HttpResponse
