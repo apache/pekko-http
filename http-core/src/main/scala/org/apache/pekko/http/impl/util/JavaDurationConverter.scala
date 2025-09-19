@@ -22,7 +22,6 @@ import java.time.temporal.ChronoUnit
 import org.apache.pekko
 import pekko.annotation.InternalApi
 
-import scala.concurrent.duration.FiniteDuration
 import scala.jdk.DurationConverters._
 
 /**
