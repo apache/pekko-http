@@ -60,18 +60,18 @@ private final class LineParser(maxLineSize: Int,
       setHandlers(in, out, this)
 
       override def onPush() = {
-        def handleLineOversized(lineLength: Int, line: String): Option[String] = {
+        def handleLineOversized(lineByteSize: Int, line: String): Option[String] = {
           oversizedStrategy match {
             case OversizedSseStrategy.FailStream =>
               failStage(new IllegalStateException(
-                s"SSE line size: $lineLength exceeds max-line-size: $maxLineSize. " +
+                s"SSE line size: $lineByteSize exceeds max-line-size: $maxLineSize. " +
                 s"Configure pekko.http.sse.max-line-size or use oversized-message-handling setting."))
               None
             case OversizedSseStrategy.LogAndSkip =>
-              log.warning("Skipping oversized SSE message: {} bytes > {} max-line-size", lineLength, maxLineSize)
+              log.warning("Skipping oversized SSE message: {} bytes > {} max-line-size", lineByteSize, maxLineSize)
               None
             case OversizedSseStrategy.Truncate =>
-              log.info("Truncating oversized SSE message: {} bytes > {} max-line-size", lineLength, maxLineSize)
+              log.info("Truncating oversized SSE message: {} bytes > {} max-line-size", lineByteSize, maxLineSize)
               Some(line.take(maxLineSize))
             case OversizedSseStrategy.DeadLetter =>
               materializer.system.deadLetters ! OversizedSseLine(line)
@@ -92,10 +92,10 @@ private final class LineParser(maxLineSize: Int,
             bs(at) match {
               case CR if at < bs.length - 1 && bs(at + 1) == LF =>
                 // Lookahead for LF after CR
-                val lineLength = at - from
+                val lineByteSize = at - from
                 val line = bs.slice(from, at).utf8String
-                val processedLine = if (maxLineSize > 0 && lineLength > maxLineSize) {
-                  handleLineOversized(lineLength, line)
+                val processedLine = if (maxLineSize > 0 && lineByteSize > maxLineSize) {
+                  handleLineOversized(lineByteSize, line)
                 } else {
                   Some(line)
                 }
@@ -103,10 +103,10 @@ private final class LineParser(maxLineSize: Int,
                 parseLines(bs, at + 2, at + 2, newParsedLines, lastCharWasCr = false)
               case CR =>
                 // if is a CR but we don't know the next character, slice it but flag that the last character was a CR so if the next happens to be a LF we just ignore
-                val lineLength = at - from
+                val lineByteSize = at - from
                 val line = bs.slice(from, at).utf8String
-                val processedLine = if (maxLineSize > 0 && lineLength > maxLineSize) {
-                  handleLineOversized(lineLength, line)
+                val processedLine = if (maxLineSize > 0 && lineByteSize > maxLineSize) {
+                  handleLineOversized(lineByteSize, line)
                 } else {
                   Some(line)
                 }
@@ -117,10 +117,10 @@ private final class LineParser(maxLineSize: Int,
                 parseLines(bs, at + 1, at + 1, parsedLines, lastCharWasCr = false)
               case LF =>
                 // a LF that wasn't preceded by a CR means we found a new slice
-                val lineLength = at - from
+                val lineByteSize = at - from
                 val line = bs.slice(from, at).utf8String
-                val processedLine = if (maxLineSize > 0 && lineLength > maxLineSize) {
-                  handleLineOversized(lineLength, line)
+                val processedLine = if (maxLineSize > 0 && lineByteSize > maxLineSize) {
+                  handleLineOversized(lineByteSize, line)
                 } else {
                   Some(line)
                 }
