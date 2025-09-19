@@ -20,7 +20,6 @@ package org.apache.pekko.http.impl.util
 import java.time.temporal.ChronoUnit
 
 import org.apache.pekko
-import pekko.util.JavaDurationConverters._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -30,36 +29,30 @@ class JavaDurationConverterSpec extends AnyWordSpec with Matchers {
 
   "JavaDurationConverter" must {
 
-    "convert from java.time.Duration to scala.concurrent.duration.FiniteDuration" in {
-      val javaDuration = java.time.Duration.ofSeconds(5, 3)
-      val scalaDuration: FiniteDuration = javaDuration.asScala
-      scalaDuration should ===(5.seconds + 3.nanoseconds)
-    }
-
     "convert from scala.concurrent.duration.FiniteDuration to java.time.Duration" in {
       val scalaDuration: FiniteDuration = 5.seconds + 3.nanoseconds
-      val javaDuration: java.time.Duration = scalaDuration.asJava
+      val javaDuration: java.time.Duration = JavaDurationConverter.toJava(scalaDuration)
       javaDuration should ===(java.time.Duration.ofSeconds(5, 3))
     }
 
     "convert from Duration.Zero to java.time.Duration" in {
-      val javaDuration: java.time.Duration = Duration.Zero.asJava
+      val javaDuration: java.time.Duration = JavaDurationConverter.toJava(Duration.Zero)
       javaDuration should ===(java.time.Duration.ZERO)
     }
 
     "convert infinite duration to java.time.Duration" in {
       val scalaDuration: Duration = Duration.Inf
-      scalaDuration.asJava should ===(ChronoUnit.FOREVER.getDuration)
+      JavaDurationConverter.toJava(scalaDuration) should ===(ChronoUnit.FOREVER.getDuration)
     }
 
     "convert minus infinite duration to java.time.Duration" in {
       val scalaDuration: Duration = Duration.MinusInf
-      scalaDuration.asJava should ===(ChronoUnit.FOREVER.getDuration().negated())
+      JavaDurationConverter.toJava(scalaDuration) should ===(ChronoUnit.FOREVER.getDuration().negated())
     }
 
     "convert undefined duration to java.time.Duration" in {
       val scalaDuration: Duration = Duration.Undefined
-      scalaDuration.asJava should ===(ChronoUnit.FOREVER.getDuration())
+      JavaDurationConverter.toJava(scalaDuration) should ===(ChronoUnit.FOREVER.getDuration())
     }
 
   }
