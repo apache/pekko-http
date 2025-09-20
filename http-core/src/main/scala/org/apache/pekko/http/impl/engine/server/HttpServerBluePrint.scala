@@ -22,7 +22,6 @@ import pekko.annotation.InternalApi
 import pekko.japi.function.Function
 import pekko.event.LoggingAdapter
 import pekko.util.ByteString
-import pekko.util.JavaDurationConverters._
 import pekko.stream._
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl._
@@ -49,6 +48,7 @@ import pekko.http.impl.util.LogByteStringTools._
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.concurrent.duration.{ Deadline, Duration, FiniteDuration }
 import scala.collection.immutable
+import scala.jdk.DurationConverters._
 import scala.util.Failure
 import scala.util.control.{ NoStackTrace, NonFatal }
 
@@ -407,12 +407,12 @@ private[http] object HttpServerBluePrint {
 
     /** JAVA API * */
     override def updateTimeout(timeout: java.time.Duration): Unit =
-      update(timeout.asScala, null: HttpRequest => HttpResponse)
+      update(timeout.toScala, null: HttpRequest => HttpResponse)
     override def update(timeout: Duration, handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
       update(timeout, handler(_: HttpRequest).asScala)
     override def update(
         timeout: java.time.Duration, handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
-      update(timeout.asScala, handler(_: HttpRequest).asScala)
+      update(timeout.toScala, handler(_: HttpRequest).asScala)
     override def updateHandler(handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
       updateHandler(handler(_: HttpRequest).asScala)
 

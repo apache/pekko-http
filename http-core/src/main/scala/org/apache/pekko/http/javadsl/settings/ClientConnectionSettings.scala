@@ -14,6 +14,7 @@
 package org.apache.pekko.http.javadsl.settings
 
 import java.net.InetSocketAddress
+import java.time.{ Duration => JDuration }
 import java.util.function.Supplier
 import java.util.{ Optional, Random }
 
@@ -23,6 +24,7 @@ import pekko.actor.ActorSystem
 import pekko.annotation.ApiMayChange
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.settings.ClientConnectionSettingsImpl
+import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.ClientTransport
 import pekko.http.javadsl.model.headers.UserAgent
@@ -30,6 +32,7 @@ import pekko.io.Inet.SocketOption
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.jdk.CollectionConverters._
+import scala.jdk.DurationConverters._
 import scala.jdk.OptionConverters._
 
 /**
@@ -39,13 +42,27 @@ import scala.jdk.OptionConverters._
 abstract class ClientConnectionSettings private[pekko] () { self: ClientConnectionSettingsImpl =>
 
   /* JAVA APIs */
-  final def getConnectingTimeout: FiniteDuration = connectingTimeout
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
+   * to `java.time.Duration`.
+   */
+  final def getConnectingTimeout: JDuration = connectingTimeout.toJava
   final def getParserSettings: ParserSettings = parserSettings
-  final def getIdleTimeout: Duration = idleTimeout
+
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
+   * to `java.time.Duration`.
+   */
+  final def getIdleTimeout: JDuration = JavaDurationConverter.toJava(idleTimeout)
   final def getSocketOptions: java.lang.Iterable[SocketOption] = socketOptions.asJava
   final def getUserAgentHeader: Optional[UserAgent] = (userAgentHeader: Option[UserAgent]).asJava
   final def getLogUnencryptedNetworkBytes: Optional[Int] = (logUnencryptedNetworkBytes: Option[Int]).asJava
-  final def getStreamCancellationDelay: FiniteDuration = streamCancellationDelay
+
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
+   * to `java.time.Duration`.
+   */
+  final def getStreamCancellationDelay: JDuration = streamCancellationDelay.toJava
   final def getRequestHeaderSizeHint: Int = requestHeaderSizeHint
   final def getWebsocketSettings: WebSocketSettings = websocketSettings
   final def getWebsocketRandomFactory: Supplier[Random] = new Supplier[Random] {

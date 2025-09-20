@@ -18,14 +18,15 @@ import java.time.{ Duration => JDuration }
 import com.typesafe.config.Config
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.jdk.DurationConverters._
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.http.impl.settings.ConnectionPoolSettingsImpl
+import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.ClientTransport
-import pekko.util.JavaDurationConverters._
 
 /**
  * Public API but not intended for subclassing
@@ -37,15 +38,40 @@ abstract class ConnectionPoolSettings private[pekko] () { self: ConnectionPoolSe
   def getMaxRetries: Int = maxRetries
   def getMaxOpenRequests: Int = maxOpenRequests
   def getPipeliningLimit: Int = pipeliningLimit
-  def getMaxConnectionLifetime: JDuration = maxConnectionLifetime.asJava
-  def getBaseConnectionBackoff: FiniteDuration = baseConnectionBackoff
-  def getMaxConnectionBackoff: FiniteDuration = maxConnectionBackoff
-  def getIdleTimeout: Duration = idleTimeout
-  def getKeepAliveTimeout: Duration = keepAliveTimeout
+  def getMaxConnectionLifetime: JDuration = JavaDurationConverter.toJava(maxConnectionLifetime)
+
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.FiniteDuration`
+   * to `java.time.Duration`.
+   */
+  def getBaseConnectionBackoff: JDuration = baseConnectionBackoff.toJava
+
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.FiniteDuration`
+   * to `java.time.Duration`.
+   */
+  def getMaxConnectionBackoff: JDuration = maxConnectionBackoff.toJava
+
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.FiniteDuration`
+   * to `java.time.Duration`.
+   */
+  def getIdleTimeout: JDuration = JavaDurationConverter.toJava(idleTimeout)
+
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.FiniteDuration`
+   * to `java.time.Duration`.
+   */
+  def getKeepAliveTimeout: JDuration = JavaDurationConverter.toJava(keepAliveTimeout)
   def getConnectionSettings: ClientConnectionSettings = connectionSettings
 
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.FiniteDuration`
+   * to `java.time.Duration`.
+   */
   @ApiMayChange
-  def getResponseEntitySubscriptionTimeout: Duration = responseEntitySubscriptionTimeout
+  def getResponseEntitySubscriptionTimeout: JDuration =
+    JavaDurationConverter.toJava(responseEntitySubscriptionTimeout)
 
   // ---
 
@@ -108,6 +134,12 @@ abstract class ConnectionPoolSettings private[pekko] () { self: ConnectionPoolSe
 
   @ApiMayChange
   def withResponseEntitySubscriptionTimeout(newValue: Duration): ConnectionPoolSettings
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withResponseEntitySubscriptionTimeout(newValue: java.time.Duration): ConnectionPoolSettings
 
   def withTransport(newValue: ClientTransport): ConnectionPoolSettings =
     withUpdatedConnectionSettings(_.withTransport(newValue.asScala))

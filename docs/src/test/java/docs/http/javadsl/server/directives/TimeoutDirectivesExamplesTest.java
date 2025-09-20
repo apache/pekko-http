@@ -23,7 +23,6 @@ import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.testkit.TestKit;
-import org.apache.pekko.util.JavaDurationConverters;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.After;
@@ -35,6 +34,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+
+import scala.jdk.javaapi.DurationConverters;
 
 public class TimeoutDirectivesExamplesTest extends AllDirectives {
   // #testSetup
@@ -211,12 +212,9 @@ public class TimeoutDirectivesExamplesTest extends AllDirectives {
                                     () ->
                                         extractRequestTimeout(
                                             t2 -> {
-                                              if (t1.equals(
-                                                      JavaDurationConverters.asFiniteDuration(
-                                                          timeout1))
+                                              if (t1.equals(DurationConverters.toScala(timeout1))
                                                   && t2.equals(
-                                                      JavaDurationConverters.asFiniteDuration(
-                                                          timeout2)))
+                                                      DurationConverters.toScala(timeout2)))
                                                 return complete(StatusCodes.OK);
                                               else
                                                 return complete(StatusCodes.INTERNAL_SERVER_ERROR);

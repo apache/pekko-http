@@ -34,7 +34,7 @@ trait TimeoutDirectives {
    */
   def extractRequestTimeout: Directive1[Duration] = Directive { inner => ctx =>
     val timeout = ctx.request.header[`Timeout-Access`] match {
-      case Some(t) => t.timeoutAccess.getTimeout
+      case Some(t) => t.timeoutAccess.timeout
       case _ =>
         ctx.log.warning("extractRequestTimeout was used in route however no request-timeout is set!")
         Duration.Inf
