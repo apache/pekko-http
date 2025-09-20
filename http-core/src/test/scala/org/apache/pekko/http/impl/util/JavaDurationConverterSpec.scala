@@ -19,7 +19,6 @@ package org.apache.pekko.http.impl.util
 
 import java.time.temporal.ChronoUnit
 
-import org.apache.pekko
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
