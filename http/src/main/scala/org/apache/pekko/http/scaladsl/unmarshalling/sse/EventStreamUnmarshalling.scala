@@ -24,7 +24,7 @@ import pekko.http.impl.settings.ServerSentEventSettingsImpl
 import pekko.http.scaladsl.model.HttpEntity
 import pekko.http.scaladsl.model.MediaTypes.`text/event-stream`
 import pekko.http.scaladsl.model.sse.ServerSentEvent
-import pekko.http.scaladsl.settings.ServerSentEventSettings
+import pekko.http.scaladsl.settings.{ OversizedSseStrategy, ServerSentEventSettings }
 import pekko.stream.scaladsl.{ Keep, Source }
 
 /**
@@ -83,13 +83,44 @@ trait EventStreamUnmarshalling {
    * Lets an `HttpEntity` with a `text/event-stream` media type be unmarshalled to a source of `ServerSentEvent`s.
    * @param settings overrides the default unmarshalling behavior.
    */
-  def fromEventsStream(settings: ServerSentEventSettings): FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] = {
-    fromEventsStream(settings.maxLineSize, settings.maxEventSize, settings.emitEmptyEvents)
-  }
+  final def fromEventsStream(
+      settings: ServerSentEventSettings): FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] =
+    fromEventsStream(
+      settings.maxLineSize,
+      settings.maxEventSize,
+      settings.emitEmptyEvents,
+      settings.oversizedLineStrategy,
+      settings.oversizedEventStrategy)
 
   private final def fromEventsStream(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean)
+      : FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] =
+    fromEventsStream(maxLineSize, maxEventSize, emitEmptyEvents, "fail-stream")
+
+  private final def fromEventsStream(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean,
+      oversizedStrategy: String): FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] =
+    fromEventsStreamInternal(maxLineSize, maxEventSize, emitEmptyEvents, oversizedStrategy)
+
+  private final def fromEventsStream(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean,
+      oversizedStrategy: OversizedSseStrategy): FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] =
+    fromEventsStream(maxLineSize, maxEventSize, emitEmptyEvents, oversizedStrategy, oversizedStrategy)
+
+  private final def fromEventsStream(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean,
+      oversizedLineStrategy: OversizedSseStrategy, oversizedEventStrategy: OversizedSseStrategy)
       : FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] = {
-    val eventStreamParser = EventStreamParser(maxLineSize, maxEventSize, emitEmptyEvents)
+    val eventStreamParser =
+      EventStreamParser(maxLineSize, maxEventSize, emitEmptyEvents, oversizedLineStrategy, oversizedEventStrategy)
+    def unmarshal(entity: HttpEntity) =
+      entity
+        .withoutSizeLimit // Because of streaming: the server keeps the response open and potentially streams huge amounts of data
+        .dataBytes
+        .viaMat(eventStreamParser)(Keep.none)
+
+    Unmarshaller.strict(unmarshal).forContentTypes(`text/event-stream`)
+  }
+
+  private final def fromEventsStreamInternal(maxLineSize: Int, maxEventSize: Int, emitEmptyEvents: Boolean,
+      oversizedStrategy: String): FromEntityUnmarshaller[Source[ServerSentEvent, NotUsed]] = {
+    val eventStreamParser = EventStreamParser(maxLineSize, maxEventSize, emitEmptyEvents, oversizedStrategy)
     def unmarshal(entity: HttpEntity) =
       entity
         .withoutSizeLimit // Because of streaming: the server keeps the response open and potentially streams huge amounts of data
