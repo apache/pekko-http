@@ -20,7 +20,6 @@ import pekko.annotation.InternalApi
 import pekko.http.impl.engine.ws.Randoms
 import pekko.http.impl.util._
 import pekko.util.ByteString
-import pekko.util.JavaDurationConverters._
 import com.typesafe.config.Config
 
 import scala.concurrent.duration.Duration
@@ -40,7 +39,7 @@ private[pekko] final case class WebSocketSettingsImpl(
     s"Unsupported keep-alive mode detected! Was [$periodicKeepAliveMode], yet only: ${WebSocketSettingsImpl.KeepAliveModes} are supported.")
 
   override def getPeriodicKeepAliveMaxIdle: java.time.Duration =
-    periodicKeepAliveMaxIdle.asJava
+    JavaDurationConverter.toJava(periodicKeepAliveMaxIdle)
   override def productPrefix = "WebSocketSettings"
 
 }
