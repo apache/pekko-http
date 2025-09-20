@@ -20,10 +20,10 @@ import org.apache.pekko
 import pekko.Done
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.DoNotInherit
-import pekko.util.JavaDurationConverters._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
+import scala.jdk.DurationConverters._
 import scala.jdk.FutureConverters._
 
 /**
@@ -103,7 +103,7 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
    */
   def whenTerminationSignalIssued: CompletionStage[java.time.Duration] =
     delegate.whenTerminationSignalIssued
-      .map(deadline => deadline.time.asJava)(ExecutionContext.parasitic)
+      .map(deadline => deadline.time.toJava)(ExecutionContext.parasitic)
       .asJava
 
   /**
@@ -131,8 +131,7 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
    */
   def addToCoordinatedShutdown(
       hardTerminationDeadline: java.time.Duration, system: ClassicActorSystemProvider): ServerBinding = {
-    import pekko.util.JavaDurationConverters._
-    delegate.addToCoordinatedShutdown(hardTerminationDeadline.asScala)(system)
+    delegate.addToCoordinatedShutdown(hardTerminationDeadline.toScala)(system)
     this
   }
 }
