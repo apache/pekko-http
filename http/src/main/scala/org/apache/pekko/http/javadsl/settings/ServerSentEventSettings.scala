@@ -18,6 +18,7 @@ import pekko.actor.ActorSystem
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.http.impl.settings.ServerSentEventSettingsImpl
 import pekko.http.scaladsl.settings.{ OversizedSseStrategy => ScalaOversizedSseStrategy }
+
 import com.typesafe.config.Config
 
 /**
