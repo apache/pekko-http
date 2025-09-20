@@ -19,21 +19,23 @@ package org.apache.pekko.http.cors
 
 import java.util.concurrent.TimeUnit
 
-import org.apache.pekko
-import pekko.actor.ActorSystem
-import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.Http.ServerBinding
-import pekko.http.scaladsl.model.headers.{ `Access-Control-Request-Method`, Origin }
-import pekko.http.scaladsl.model.{ HttpMethods, HttpRequest }
-import pekko.http.scaladsl.server.Directives
-import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.http.cors.scaladsl.CorsDirectives
-import pekko.http.cors.scaladsl.settings.CorsSettings
-import com.typesafe.config.ConfigFactory
+import scala.concurrent.{ Await, ExecutionContext }
+import scala.concurrent.duration._
+
 import org.openjdk.jmh.annotations._
 
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, ExecutionContext }
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.cors.scaladsl.CorsDirectives
+import pekko.http.cors.scaladsl.settings.CorsSettings
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.Http.ServerBinding
+import pekko.http.scaladsl.model.{ HttpMethods, HttpRequest }
+import pekko.http.scaladsl.model.headers.{ `Access-Control-Request-Method`, Origin }
+import pekko.http.scaladsl.server.Directives
+import pekko.http.scaladsl.unmarshalling.Unmarshal
+
+import com.typesafe.config.ConfigFactory
 
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.SECONDS)

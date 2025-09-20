@@ -13,9 +13,10 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
-import com.typesafe.config.ConfigFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
+import com.typesafe.config.ConfigFactory
 
 class RoutingSettingsEqualitySpec extends AnyWordSpec with Matchers {
 

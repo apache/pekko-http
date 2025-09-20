@@ -13,25 +13,24 @@
 
 package org.apache.pekko.http.javadsl.testkit
 
-import org.apache.pekko
-import pekko.http.impl.util._
-import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.http.javadsl.model._
-import pekko.http.javadsl.server.RouteResult
-import pekko.http.javadsl.server.{ Rejection, RoutingJavaMapping }
-import pekko.http.javadsl.unmarshalling.Unmarshaller
-import RoutingJavaMapping._
-import pekko.http.scaladsl
-import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.http.scaladsl.model.HttpResponse
-import pekko.stream.Materializer
-import pekko.util.ByteString
-
 import scala.annotation.varargs
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
+
+import org.apache.pekko
+import pekko.http.impl.util._
+import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.javadsl.model._
+import pekko.http.javadsl.server.{ Rejection, RouteResult }
+import pekko.http.javadsl.server.RoutingJavaMapping._
+import pekko.http.javadsl.unmarshalling.Unmarshaller
+import pekko.http.scaladsl
+import pekko.http.scaladsl.model.HttpResponse
+import pekko.http.scaladsl.unmarshalling.Unmarshal
+import pekko.stream.Materializer
+import pekko.util.ByteString
 
 /**
  * A wrapper for route results.

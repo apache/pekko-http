@@ -13,14 +13,16 @@
 
 package org.apache.pekko.http.scaladsl
 
-import org.apache.pekko
-import pekko.http.scaladsl.model.HttpRequest
-import pekko.util.ByteString
-import com.typesafe.config.{ Config, ConfigFactory }
-import pekko.actor.ActorSystem
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.io.StdIn
+
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.model.HttpRequest
+import pekko.util.ByteString
+
+import com.typesafe.config.{ Config, ConfigFactory }
 
 object TestSingleRequest extends App {
   val testConf: Config = ConfigFactory.parseString("""

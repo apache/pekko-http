@@ -19,6 +19,7 @@ package sse
 import org.apache.pekko
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.util.ByteString
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 

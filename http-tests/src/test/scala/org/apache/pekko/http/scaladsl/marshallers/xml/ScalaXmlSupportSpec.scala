@@ -16,20 +16,22 @@ package org.apache.pekko.http.scaladsl.marshallers.xml
 import java.io.File
 import java.nio.file.Files
 
-import org.xml.sax.SAXParseException
-
-import scala.xml.NodeSeq
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
-import org.scalatest.Inside
+import scala.xml.NodeSeq
+
+import org.xml.sax.SAXParseException
+
 import org.apache.pekko
-import pekko.util.ByteString
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.testkit.ScalatestRouteTest
 import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.http.scaladsl.model._
-import pekko.testkit._
-import MediaTypes._
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
+import pekko.testkit._
+import pekko.util.ByteString
+
+import org.scalatest.Inside
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 

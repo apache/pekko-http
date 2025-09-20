@@ -15,14 +15,16 @@ package org.apache.pekko.http.scaladsl.server
 
 import java.net.InetSocketAddress
 
+import scala.io.StdIn
+
 import org.apache.pekko
 import pekko.actor.{ ActorSystem, ActorSystemImpl }
 import pekko.event.Logging
-import pekko.stream.scaladsl._
 import pekko.stream.ActorAttributes
+import pekko.stream.scaladsl._
 import pekko.util.ByteString
+
 import com.typesafe.config.{ Config, ConfigFactory }
-import scala.io.StdIn
 
 object TcpLeakApp extends App {
   val testConf: Config = ConfigFactory.parseString(

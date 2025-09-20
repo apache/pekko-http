@@ -15,6 +15,9 @@ package org.apache.pekko.http.impl.engine
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+
+import org.openjdk.jmh.annotations._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.NoLogging
@@ -32,8 +35,8 @@ import pekko.stream.scaladsl.Sink
 import pekko.stream.scaladsl.Source
 import pekko.stream.scaladsl.TLSPlacebo
 import pekko.util.ByteString
+
 import com.typesafe.config.ConfigFactory
-import org.openjdk.jmh.annotations._
 
 @Warmup(iterations = 5, time = 2, timeUnit = TimeUnit.SECONDS)
 class StreamServerProcessingBenchmark extends CommonBenchmark {

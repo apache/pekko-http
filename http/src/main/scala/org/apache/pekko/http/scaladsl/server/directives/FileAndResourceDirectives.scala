@@ -17,33 +17,33 @@ package directives
 import java.io.File
 import java.net.{ URI, URL }
 
+import scala.annotation.tailrec
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.LoggingAdapter
 import pekko.http.impl.util._
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl
 import pekko.http.javadsl.{ marshalling, model }
-import JavaMapping.Implicits._
 import pekko.http.javadsl.server.RoutingJavaMapping
 import pekko.http.scaladsl.marshalling.{ Marshaller, ToEntityMarshaller }
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.stream.scaladsl.{ FileIO, StreamConverters }
 
-import scala.annotation.tailrec
-import scala.jdk.CollectionConverters._
-
 /**
  * @groupname fileandresource File and resource directives
  * @groupprio fileandresource 70
  */
 trait FileAndResourceDirectives {
-  import CacheConditionDirectives._
-  import MethodDirectives._
-  import FileAndResourceDirectives._
-  import RouteDirectives._
   import BasicDirectives._
+  import CacheConditionDirectives._
+  import FileAndResourceDirectives._
+  import MethodDirectives._
   import RouteConcatenation._
+  import RouteDirectives._
 
   /**
    * Completes GET requests with the content of the given file.

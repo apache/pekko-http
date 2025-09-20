@@ -16,9 +16,9 @@ package directives
 
 import org.apache.pekko
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.server.directives.BasicDirectives._
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server.RequestEntityExpectedRejection
-import headers._
+import pekko.http.scaladsl.server.directives.BasicDirectives._
 
 /**
  * @groupname misc Miscellaneous directives

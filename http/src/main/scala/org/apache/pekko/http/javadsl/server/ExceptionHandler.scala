@@ -13,12 +13,13 @@
 
 package org.apache.pekko.http.javadsl.server
 
-import org.apache.pekko
-import pekko.http.scaladsl.server
-import pekko.http.javadsl.settings.RoutingSettings
-import pekko.http.impl.util.JavaMapping.Implicits._
 import RoutingJavaMapping._
+
+import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.javadsl.settings.RoutingSettings
+import pekko.http.scaladsl.server
 
 object ExceptionHandler {
 

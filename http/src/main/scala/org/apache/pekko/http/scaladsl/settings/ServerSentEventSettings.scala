@@ -16,6 +16,7 @@ package org.apache.pekko.http.scaladsl.settings
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.http.impl.settings.ServerSentEventSettingsImpl
+
 import com.typesafe.config.Config
 
 /**

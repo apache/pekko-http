@@ -15,6 +15,11 @@ package org.apache.pekko.http.scaladsl.server
 
 import java.util.concurrent.atomic.AtomicReference
 
+import scala.concurrent.{ blocking, Await, ExecutionContext, ExecutionContextExecutor, Future, Promise }
+import scala.concurrent.duration.Duration
+import scala.io.StdIn
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.ActorSystem
@@ -22,12 +27,8 @@ import pekko.event.Logging
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.Http.ServerBinding
 import pekko.http.scaladsl.settings.ServerSettings
-import com.typesafe.config.ConfigFactory
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{ blocking, Await, ExecutionContext, ExecutionContextExecutor, Future, Promise }
-import scala.io.StdIn
-import scala.util.{ Failure, Success, Try }
+import com.typesafe.config.ConfigFactory
 
 /**
  * DEPRECATED, consider https://github.com/apache/pekko-http-quickstart-scala.g8 instead

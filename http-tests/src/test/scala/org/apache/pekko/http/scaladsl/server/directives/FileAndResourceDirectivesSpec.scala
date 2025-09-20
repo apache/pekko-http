@@ -21,13 +21,13 @@ import scala.concurrent.duration._
 import scala.util.Properties
 
 import org.apache.pekko
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model.Uri.Path
-import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.settings.RoutingSettings
 import pekko.http.scaladsl.testkit.RouteTestTimeout
-import pekko.http.impl.util._
 import pekko.testkit._
 
 import org.scalatest.{ Inside, Inspectors }

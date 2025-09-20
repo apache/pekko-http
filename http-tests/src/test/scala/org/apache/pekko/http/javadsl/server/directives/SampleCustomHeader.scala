@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.javadsl.server.directives
 
-import org.apache.pekko.http.scaladsl.model.headers.{ ModeledCustomHeader, ModeledCustomHeaderCompanion }
-
 import scala.util.{ Success, Try }
+
+import org.apache.pekko.http.scaladsl.model.headers.{ ModeledCustomHeader, ModeledCustomHeaderCompanion }
 
 // no support for modeled headers in the Java DSL yet, so this has to live here
 

@@ -17,6 +17,7 @@ import java.util.function.Supplier
 
 import org.apache.pekko
 import pekko.http.javadsl.server.Route
+
 import org.scalatest.wordspec.AnyWordSpec
 
 class RouteJavaScalaDslConversionSpec extends AnyWordSpec {

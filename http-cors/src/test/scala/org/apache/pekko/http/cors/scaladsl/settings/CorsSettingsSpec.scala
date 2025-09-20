@@ -18,13 +18,15 @@
 package org.apache.pekko.http.cors.scaladsl.settings
 
 import org.apache.pekko
-import pekko.http.scaladsl.model.headers.HttpOrigin
-import pekko.http.scaladsl.model.{ HttpMethod, HttpMethods }
-import pekko.http.scaladsl.testkit.ScalatestRouteTest
 import pekko.http.cors.scaladsl.model.{ HttpHeaderRange, HttpOriginMatcher }
-import com.typesafe.config.{ ConfigFactory, ConfigValueFactory }
+import pekko.http.scaladsl.model.{ HttpMethod, HttpMethods }
+import pekko.http.scaladsl.model.headers.HttpOrigin
+import pekko.http.scaladsl.testkit.ScalatestRouteTest
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
+import com.typesafe.config.{ ConfigFactory, ConfigValueFactory }
 
 class CorsSettingsSpec extends AnyWordSpec with Matchers with ScalatestRouteTest {
   import HttpMethods._

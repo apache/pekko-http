@@ -13,15 +13,17 @@
 
 package org.apache.pekko.http.scaladsl
 
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.scaladsl.client.RequestBuilding
-import pekko.http.scaladsl.model.MediaType.WithFixedCharset
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.MediaType.WithFixedCharset
 import pekko.http.scaladsl.server.Directives
 import pekko.testkit._
 import pekko.util.ByteString
+
 import org.scalatest.concurrent.ScalaFutures
-import scala.concurrent.duration._
 
 class CustomMediaTypesSpec extends PekkoSpec with ScalaFutures
     with Directives with RequestBuilding {
@@ -32,22 +34,21 @@ class CustomMediaTypesSpec extends PekkoSpec with ScalaFutures
       set.add(MediaTypes.`application/vnd.ms-excel`)
       set.add(MediaTypes.`application/vnd.ms-powerpoint`)
       set.add(MediaTypes.`application/msword`)
-      set.add(MediaType.customBinary("application", "x-Akka-TEST", MediaType.NotCompressible))
+      set.add(MediaType.customBinary("application", "x-Pekko-TEST", MediaType.NotCompressible))
 
       set.contains(MediaType.parse("application/msword").right.get) should ===(true)
       set.contains(MediaType.parse("application/MsWord").right.get) should ===(true)
       set.contains(MediaType.parse("application/vnd.ms-POWERPOINT").right.get) should ===(true)
       set.contains(MediaType.parse("application/VnD.MS-eXceL").right.get) should ===(true)
-      set.contains(MediaType.parse("application/x-akka-test").right.get) should ===(true)
-      set.contains(MediaType.parse("application/x-Akka-TEST").right.get) should ===(true)
+      set.contains(MediaType.parse("application/x-pekko-test").right.get) should ===(true)
+      set.contains(MediaType.parse("application/x-Pekko-TEST").right.get) should ===(true)
     }
 
     "allow registering custom media type" in {
-      import system.dispatcher
       // #application-custom
 
-      // similarly in Java: `org.apache.pekko.http.javadsl.settings.[...]`
-      import org.apache.pekko
+      import system.dispatcher
+
       import pekko.http.scaladsl.settings.ParserSettings
       import pekko.http.scaladsl.settings.ServerSettings
 

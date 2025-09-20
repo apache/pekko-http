@@ -13,11 +13,11 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
 import pekko.http.scaladsl.model.{ HttpRequest, StatusCodes }
 import pekko.http.scaladsl.model.headers._
-
-import scala.util.{ Failure, Success, Try }
 
 object ModeledCustomHeaderSpec {
 

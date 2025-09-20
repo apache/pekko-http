@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.client
 
 import scala.concurrent.{ ExecutionContext, Future }
+
 import org.apache.pekko.event.{ Logging, LoggingAdapter }
 
 trait TransformerPipelineSupport {

@@ -15,8 +15,8 @@ package org.apache.pekko.http.scaladsl.coding
 
 import org.apache.pekko
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, RequestEntity, ResponseEntity }
-import pekko.util.ByteString
 import pekko.stream.scaladsl.Flow
+import pekko.util.ByteString
 
 /** An abstraction to transform data bytes of HttpMessages or HttpEntities */
 sealed trait DataMapper[T] {

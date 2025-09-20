@@ -17,8 +17,8 @@ package directives
 import org.apache.pekko
 import pekko.event.Logging._
 import pekko.event.LoggingAdapter
-import pekko.http.scaladsl.model._
 import pekko.http.javadsl
+import pekko.http.scaladsl.model._
 
 /**
  * @groupname debugging Debugging directives

@@ -14,8 +14,8 @@
 package org.apache.pekko.http.scaladsl.server
 
 import org.apache.pekko
-import pekko.event.LoggingAdapter
 import pekko.actor.{ ActorContext, ActorSystem }
+import pekko.event.LoggingAdapter
 import pekko.http.scaladsl.model.HttpRequest
 
 trait RoutingLog {

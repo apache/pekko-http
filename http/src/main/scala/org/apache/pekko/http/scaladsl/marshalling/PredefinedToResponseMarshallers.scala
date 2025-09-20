@@ -13,6 +13,9 @@
 
 package org.apache.pekko.http.scaladsl.marshalling
 
+import scala.collection.immutable
+import scala.reflect.ClassTag
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.common.EntityStreamingSupport
@@ -20,12 +23,9 @@ import pekko.http.scaladsl.marshalling.Marshal.selectMarshallingForContentType
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
-import pekko.util.ConstantFun
 import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
-
-import scala.collection.immutable
-import scala.reflect.ClassTag
+import pekko.util.ConstantFun
 
 trait PredefinedToResponseMarshallers extends LowPriorityToResponseMarshallerImplicits {
   import PredefinedToResponseMarshallers._

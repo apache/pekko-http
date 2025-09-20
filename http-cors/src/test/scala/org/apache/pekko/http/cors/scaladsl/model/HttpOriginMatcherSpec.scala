@@ -18,6 +18,7 @@
 package org.apache.pekko.http.cors.scaladsl.model
 
 import org.apache.pekko.http.scaladsl.model.headers.HttpOrigin
+
 import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

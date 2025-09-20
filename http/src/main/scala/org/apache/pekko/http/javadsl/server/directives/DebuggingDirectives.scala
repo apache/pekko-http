@@ -13,8 +13,10 @@
 
 package org.apache.pekko.http.javadsl.server.directives
 
-import java.util.function.{ BiFunction, Function => JFunction, Supplier }
 import java.util.{ List => JList, Optional }
+import java.util.function.{ BiFunction, Function => JFunction, Supplier }
+
+import scala.jdk.CollectionConverters._
 
 import org.apache.pekko
 import pekko.event.Logging
@@ -22,14 +24,13 @@ import pekko.event.Logging.LogLevel
 import pekko.http.javadsl.model.{ HttpRequest, HttpResponse }
 import pekko.http.javadsl.server.{ Rejection, Route, RoutingJavaMapping }
 import pekko.http.scaladsl
-import pekko.http.scaladsl.server.directives.LoggingMagnet
 import pekko.http.scaladsl.server.{ Directives => D, RouteResult }
-
-import scala.jdk.CollectionConverters._
+import pekko.http.scaladsl.server.directives.LoggingMagnet
 
 abstract class DebuggingDirectives extends CookieDirectives {
-  import pekko.http.impl.util.JavaMapping.Implicits._
   import RoutingJavaMapping._
+
+  import pekko.http.impl.util.JavaMapping.Implicits._
 
   /**
    * Produces a log entry for every incoming request.

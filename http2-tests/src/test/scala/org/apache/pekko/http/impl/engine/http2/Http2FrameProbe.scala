@@ -13,6 +13,10 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.annotation.tailrec
+import scala.concurrent.duration.FiniteDuration
+import scala.reflect.ClassTag
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.impl.engine.http2.FrameEvent.SettingsFrame
@@ -26,11 +30,7 @@ import pekko.stream.impl.io.ByteStringParser.ByteReader
 import pekko.stream.scaladsl.Sink
 import pekko.util.ByteString
 
-import scala.annotation.tailrec
 import org.scalatest.matchers.should.Matchers
-
-import scala.concurrent.duration.FiniteDuration
-import scala.reflect.ClassTag
 
 private[http2] trait Http2FrameProbe {
   def sink: Sink[ByteString, Any]

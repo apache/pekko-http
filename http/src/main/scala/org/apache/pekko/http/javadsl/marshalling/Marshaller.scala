@@ -15,6 +15,9 @@ package org.apache.pekko.http.javadsl.marshalling
 
 import java.util.{ function, Optional }
 
+import scala.annotation.unchecked.uncheckedVariance
+import scala.concurrent.ExecutionContext
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util.JavaMapping
@@ -24,9 +27,6 @@ import pekko.http.scaladsl.marshalling
 import pekko.http.scaladsl.marshalling._
 import pekko.http.scaladsl.model.{ FormData, HttpCharset }
 import pekko.util.ByteString
-
-import scala.concurrent.ExecutionContext
-import scala.annotation.unchecked.uncheckedVariance
 
 object Marshaller {
 

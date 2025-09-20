@@ -13,12 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.nio.ByteOrder
+
 import org.apache.pekko
 import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.http.impl.engine.http2.framing.FrameRenderer
 import pekko.util.ByteStringBuilder
-
-import java.nio.ByteOrder
 
 /**
  * This tests the http2 server throttle support for rapid resets is disabled by default.

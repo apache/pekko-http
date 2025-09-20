@@ -13,6 +13,13 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import javax.net.ssl.SSLContext
+
+import scala.collection.immutable
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.event.Logging
@@ -22,17 +29,16 @@ import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
-import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.impl.util.LogByteStringTools
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.client.RequestBuilding.Post
+import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpEntity.Chunk
 import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.model.HttpEntity.Chunked
 import pekko.http.scaladsl.model.HttpEntity.LastChunk
 import pekko.http.scaladsl.model.HttpMethods.GET
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.model.headers.{
   `Access-Control-Allow-Origin`,
   `Cache-Control`,
@@ -40,6 +46,7 @@ import pekko.http.scaladsl.model.headers.{
   `Content-Type`,
   RawHeader
 }
+import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.stream.Attributes
 import pekko.stream.Attributes.LogLevels
@@ -54,14 +61,9 @@ import pekko.stream.testkit.scaladsl.TestSink
 import pekko.testkit.EventFilter
 import pekko.testkit.TestDuration
 import pekko.util.ByteString
+
 import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
-
-import javax.net.ssl.SSLContext
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.concurrent.duration._
-import scala.collection.immutable
 
 /**
  * This tests the http2 client protocol logic.
@@ -185,8 +187,9 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
       })
 
       "Three consecutive GET requests".inAssertAllStagesStopped(new SimpleRequestResponseRoundtripSetup {
-        import pekko.http.scaladsl.model.headers.CacheDirectives._
         import headers.`Cache-Control`
+
+        import pekko.http.scaladsl.model.headers.CacheDirectives._
         val requestHeaders = defaultExpectedHeaders
         requestResponseRoundtrip(
           streamId = 1,

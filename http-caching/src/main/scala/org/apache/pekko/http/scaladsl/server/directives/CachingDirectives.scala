@@ -13,17 +13,17 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.ApiMayChange
-import pekko.http.caching.scaladsl.{ Cache, CachingSettings }
 import pekko.http.caching.LfuCache
-import pekko.http.scaladsl.server.Directive0
-import pekko.http.scaladsl.server._
+import pekko.http.caching.scaladsl.{ Cache, CachingSettings }
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.model.headers.CacheDirectives._
-
-import scala.concurrent.Future
+import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.server.Directive0
 
 @ApiMayChange
 trait CachingDirectives {

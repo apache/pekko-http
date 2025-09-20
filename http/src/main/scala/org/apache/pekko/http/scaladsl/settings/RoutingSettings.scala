@@ -16,6 +16,7 @@ package org.apache.pekko.http.scaladsl.settings
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.settings.RoutingSettingsImpl
+
 import com.typesafe.config.Config
 
 /**

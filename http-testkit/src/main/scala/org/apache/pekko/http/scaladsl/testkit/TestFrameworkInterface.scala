@@ -14,8 +14,9 @@
 package org.apache.pekko.http.scaladsl.testkit
 
 import org.apache.pekko.http.scaladsl.server.ExceptionHandler
-import org.scalatest.exceptions.TestFailedException
+
 import org.scalatest.{ BeforeAndAfterAll, Suite }
+import org.scalatest.exceptions.TestFailedException
 
 //#source-quote
 trait TestFrameworkInterface {

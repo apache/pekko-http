@@ -22,9 +22,9 @@ import scala.util.Try
 
 import org.apache.pekko
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server.util.VarArgsFunction1
 import pekko.testkit._
-import headers._
 
 class MiscDirectivesSpec extends RoutingSpec {
 

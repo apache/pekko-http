@@ -13,18 +13,19 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
+import scala.concurrent.{ Await, ExecutionContext }
+import scala.concurrent.duration._
+import scala.util.Try
+
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.marshalling._
-import pekko.http.scaladsl.model.headers.Accept
 import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest, HttpResponse, MediaRange }
+import pekko.http.scaladsl.model.headers.Accept
 import pekko.http.scaladsl.unmarshalling.{ FromEntityUnmarshaller, Unmarshal }
 import pekko.stream.Materializer
-import com.typesafe.config.Config
 
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, ExecutionContext }
-import scala.util.Try
+import com.typesafe.config.Config
 
 trait MarshallingTestUtils {
 

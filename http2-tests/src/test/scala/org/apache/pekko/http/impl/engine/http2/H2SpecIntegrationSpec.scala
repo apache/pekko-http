@@ -15,17 +15,19 @@ package org.apache.pekko.http.impl.engine.http2
 
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.sys.process._
+
 import org.apache.pekko
 import pekko.http.impl.util.{ ExampleHttpContexts, WithLogCapturing }
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.server.Directives
 import pekko.testkit._
 import pekko.util.ByteString
-import org.scalatest.concurrent.ScalaFutures
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
-import scala.sys.process._
+import org.scalatest.concurrent.ScalaFutures
 
 class H2SpecIntegrationSpec extends PekkoFreeSpec(
       """

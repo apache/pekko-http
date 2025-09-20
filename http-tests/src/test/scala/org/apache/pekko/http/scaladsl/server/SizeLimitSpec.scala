@@ -13,29 +13,31 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.collection.immutable
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding
 import pekko.http.scaladsl.coding.{ Coders, Decoder }
-import pekko.http.scaladsl.model.HttpEntity.Chunk
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpEntity.Chunk
 import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncoding, HttpEncodings }
 import pekko.http.scaladsl.server.Directives._
 import pekko.stream.scaladsl.{ Flow, Source }
 import pekko.testkit.TestKit
 import pekko.util.ByteString
-import com.typesafe.config.{ Config, ConfigFactory }
+
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.collection.immutable
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
+import com.typesafe.config.{ Config, ConfigFactory }
 
 class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with BeforeAndAfterAll with ScalaFutures {
 

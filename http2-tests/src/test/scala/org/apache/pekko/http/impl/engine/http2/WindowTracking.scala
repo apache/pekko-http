@@ -13,12 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.concurrent.duration.FiniteDuration
+
 import org.apache.pekko
 import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.stream.impl.io.ByteStringParser.ByteReader
 import pekko.util.ByteString
-
-import scala.concurrent.duration.FiniteDuration
 
 trait WindowTracking extends Http2FrameProbeDelegator with Http2FrameSending {
   override def sendDATA(streamId: Int, endStream: Boolean, data: ByteString): Unit = {

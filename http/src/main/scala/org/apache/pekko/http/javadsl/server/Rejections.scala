@@ -13,24 +13,24 @@
 
 package org.apache.pekko.http.javadsl.server
 
+import java.lang.{ Iterable => JIterable }
 import java.util.Optional
 import java.util.function.{ Function => JFunction }
-import java.lang.{ Iterable => JIterable }
-
-import org.apache.pekko
-import pekko.annotation.DoNotInherit
-import pekko.http.impl.util.JavaMapping
-import pekko.http.javadsl.model._
-import pekko.http.javadsl.model.headers.{ ByteRange, HttpChallenge, HttpEncoding }
-import pekko.http.scaladsl
-import pekko.http.scaladsl.server.ContentNegotiator.Alternative
-import pekko.http.scaladsl.server._
-import pekko.http.impl.util.Util
-import pekko.pattern.CircuitBreakerOpenException
 
 import scala.collection.immutable
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
+
+import org.apache.pekko
+import pekko.annotation.DoNotInherit
+import pekko.http.impl.util.JavaMapping
+import pekko.http.impl.util.Util
+import pekko.http.javadsl.model._
+import pekko.http.javadsl.model.headers.{ ByteRange, HttpChallenge, HttpEncoding }
+import pekko.http.scaladsl
+import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.server.ContentNegotiator.Alternative
+import pekko.pattern.CircuitBreakerOpenException
 
 /**
  * A rejection encapsulates a specific reason why a Route was not able to handle a request. Rejections are gathered
@@ -359,9 +359,10 @@ trait RejectionError extends RuntimeException {
 }
 
 object Rejections {
-  import pekko.http.scaladsl.{ server => s }
   import JavaMapping.Implicits._
   import RoutingJavaMapping._
+
+  import pekko.http.scaladsl.{ server => s }
 
   def method(supported: HttpMethod): MethodRejection =
     s.MethodRejection(JavaMapping.toScala(supported))

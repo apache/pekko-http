@@ -15,20 +15,22 @@ package org.apache.pekko.http.impl.engine.http2
 
 import java.time.format.DateTimeFormatter
 
-import com.typesafe.config.ConfigFactory
+import scala.collection.immutable
+import scala.collection.immutable.Seq
+import scala.collection.immutable.VectorBuilder
+import scala.util.Try
+
 import org.apache.pekko
 import pekko.event.NoLogging
 import pekko.http.impl.engine.rendering.DateHeaderRendering
-import pekko.http.scaladsl.model.headers.{ Trailer => _, _ }
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.{ Trailer => _, _ }
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.collection.immutable.VectorBuilder
-import scala.collection.immutable.Seq
-import scala.collection.immutable
-import scala.util.Try
+import com.typesafe.config.ConfigFactory
 
 object MyCustomHeader extends ModeledCustomHeaderCompanion[MyCustomHeader] {
   override def name: String = "custom-header"

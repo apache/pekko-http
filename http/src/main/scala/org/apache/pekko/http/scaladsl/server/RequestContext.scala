@@ -13,16 +13,16 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.concurrent.{ ExecutionContextExecutor, Future }
+
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
-
-import scala.concurrent.{ ExecutionContextExecutor, Future }
-import pekko.stream.Materializer
 import pekko.event.LoggingAdapter
 import pekko.http.scaladsl.marshalling.ToResponseMarshallable
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.settings.{ ParserSettings, RoutingSettings }
+import pekko.stream.Materializer
 
 /**
  * This class is not meant to be extended by user code.

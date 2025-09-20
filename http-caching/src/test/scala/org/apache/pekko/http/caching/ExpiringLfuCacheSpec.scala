@@ -16,14 +16,15 @@ package org.apache.pekko.http.caching
 import java.util.Random
 import java.util.concurrent.CountDownLatch
 
+import scala.concurrent.{ Await, Future, Promise }
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.caching.scaladsl.CachingSettings
 import pekko.testkit.TestKit
-import org.scalatest.BeforeAndAfterAll
 
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future, Promise }
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

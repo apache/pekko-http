@@ -12,6 +12,7 @@ package scaladsl
 package settings
 
 import org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

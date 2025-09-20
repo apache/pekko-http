@@ -15,17 +15,16 @@ package org.apache.pekko.http.javadsl.server
 package directives
 
 import java.lang.{ Iterable => JIterable }
-import java.util.function.BooleanSupplier
 import java.util.function.{ Function => JFunction }
+import java.util.function.BooleanSupplier
 import java.util.function.Supplier
 
 import scala.jdk.CollectionConverters._
 
 import org.apache.pekko
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.RemoteAddress
 import pekko.http.javadsl.model.headers.Language
-import pekko.http.impl.util.JavaMapping.Implicits._
-
 import pekko.http.scaladsl.server.{ Directives => D }
 
 abstract class MiscDirectives extends MethodDirectives {

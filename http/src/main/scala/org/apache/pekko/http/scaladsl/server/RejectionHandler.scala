@@ -13,17 +13,17 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import org.apache.pekko
-import pekko.http.scaladsl.marshalling.ToResponseMarshallable
-import pekko.http.scaladsl.model.StatusCodes._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers._
-import pekko.http.scaladsl.server.AuthenticationFailedRejection._
-import pekko.http.scaladsl.server.directives.BasicDirectives
-
 import scala.annotation.tailrec
 import scala.collection.immutable
 import scala.reflect.ClassTag
+
+import org.apache.pekko
+import pekko.http.scaladsl.marshalling.ToResponseMarshallable
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.server.AuthenticationFailedRejection._
+import pekko.http.scaladsl.server.directives.BasicDirectives
 
 trait RejectionHandler extends (immutable.Seq[Rejection] => Option[Route]) { self =>
   import RejectionHandler._

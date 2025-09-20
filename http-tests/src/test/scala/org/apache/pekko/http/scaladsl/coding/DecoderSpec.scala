@@ -13,19 +13,20 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
+import scala.annotation.nowarn
+import scala.concurrent.duration._
+
 import org.apache.pekko
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpMethods.POST
+import pekko.http.scaladsl.model.headers._
 import pekko.stream.{ Attributes, FlowShape }
 import pekko.stream.impl.fusing.GraphStages.SimpleLinearGraphStage
-
-import scala.concurrent.duration._
-import pekko.util.ByteString
 import pekko.stream.stage._
-import pekko.http.scaladsl.model._
-import pekko.http.impl.util._
 import pekko.testkit._
-import headers._
-import HttpMethods.POST
-import scala.annotation.nowarn
+import pekko.util.ByteString
+
 import org.scalatest.wordspec.AnyWordSpec
 
 class DecoderSpec extends AnyWordSpec with CodecSpecSupport {

@@ -13,11 +13,12 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import scala.concurrent.duration.Duration
+
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.`Timeout-Access`
 import pekko.http.scaladsl.server.{ Directive, Directive0, Directive1 }
-import scala.concurrent.duration.Duration
 
 /**
  * @groupname timeout Timeout directives

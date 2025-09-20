@@ -13,23 +13,26 @@
 
 package org.apache.pekko.http.impl.model.parser
 
+import java.net.InetAddress
+
+import scala.collection.immutable.Seq
+
 import org.apache.pekko
 import pekko.http.scaladsl.settings.ParserSettings.CookieParsingMode
 import pekko.http.impl.model.parser.HeaderParser.Settings
 import org.scalatest.matchers.{ MatchResult, Matcher }
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model.{ HttpHeader, _ }
-import headers.{ Trailer => `Trailer`, _ }
-import CacheDirectives._
-import MediaTypes._
-import MediaRanges._
-import HttpCharsets._
-import HttpEncodings._
-import HttpMethods._
-
-import java.net.InetAddress
-import scala.collection.immutable.Seq
+import pekko.http.scaladsl.model.MediaRanges._
 import pekko.http.scaladsl.model.MediaType.WithOpenCharset
+import pekko.http.scaladsl.model.MediaTypes._
+import pekko.http.scaladsl.model.HttpCharsets._
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.model.headers.{ Trailer => `Trailer`, _ }
+import pekko.http.scaladsl.model.headers.CacheDirectives._
+import pekko.http.scaladsl.model.headers.CacheDirectives._
+import pekko.http.scaladsl.model.headers.HttpEncodings._
+
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers

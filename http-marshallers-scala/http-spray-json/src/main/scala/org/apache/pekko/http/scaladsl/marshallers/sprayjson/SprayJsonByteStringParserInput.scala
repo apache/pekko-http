@@ -15,10 +15,11 @@ package org.apache.pekko.http.scaladsl.marshallers.sprayjson
 
 import java.nio.charset.StandardCharsets
 
+import spray.json.ParserInput.IndexedBytesParserInput
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.util.ByteString
-import spray.json.ParserInput.IndexedBytesParserInput
 
 /**
  * INTERNAL API

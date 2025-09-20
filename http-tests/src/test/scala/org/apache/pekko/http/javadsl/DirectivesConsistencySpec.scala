@@ -15,11 +15,12 @@ package org.apache.pekko.http.javadsl
 
 import java.lang.reflect.{ Method, Modifier }
 
+import scala.util.control.NoStackTrace
+
 import org.apache.pekko
 import pekko.http.javadsl.server.directives.CorrespondsTo
-import org.scalatest.exceptions.TestPendingException
 
-import scala.util.control.NoStackTrace
+import org.scalatest.exceptions.TestPendingException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

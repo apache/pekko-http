@@ -20,23 +20,24 @@ package org.apache.pekko.http.cors.scaladsl.settings
 import java.util.OptionalLong
 import java.util.concurrent.TimeUnit
 
+import scala.collection.immutable.Seq
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
+import scala.util.Try
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.DoNotInherit
 import pekko.http.cors.javadsl
-import pekko.http.cors.scaladsl.model.{ HttpHeaderRange, HttpOriginMatcher }
 import pekko.http.cors.javadsl.{ model => jmcorsmodel }
+import pekko.http.cors.scaladsl.model.{ HttpHeaderRange, HttpOriginMatcher }
 import pekko.http.impl.util.SettingsCompanionImpl
 import pekko.http.javadsl.{ model => jmmodel }
-import pekko.http.scaladsl.model.headers.HttpOrigin
 import pekko.http.scaladsl.model.{ HttpHeader, HttpMethod, HttpMethods }
-import com.typesafe.config.ConfigException.{ Missing, WrongType }
-import com.typesafe.config.Config
+import pekko.http.scaladsl.model.headers.HttpOrigin
 
-import scala.jdk.CollectionConverters._
-import scala.collection.immutable.Seq
-import scala.jdk.OptionConverters._
-import scala.util.Try
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigException.{ Missing, WrongType }
 
 /**
  * Settings used by the CORS directives.

@@ -25,10 +25,10 @@ import pekko.http.javadsl.model.HttpRequest
 import pekko.http.javadsl.model.HttpResponse
 import pekko.http.scaladsl
 import pekko.http.scaladsl.server
+import pekko.japi.function.Function
 import pekko.stream.Materializer
 import pekko.stream.SystemMaterializer
 import pekko.stream.javadsl.Flow
-import pekko.japi.function.Function
 
 /**
  * In the Java DSL, a Route can only consist of combinations of the built-in directives. A Route can not be

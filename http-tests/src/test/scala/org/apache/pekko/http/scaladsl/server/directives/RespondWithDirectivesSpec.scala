@@ -15,8 +15,7 @@ package org.apache.pekko.http.scaladsl.server.directives
 
 import org.apache.pekko
 import pekko.http.scaladsl.model._
-import headers._
-
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server._
 
 class RespondWithDirectivesSpec extends RoutingSpec {

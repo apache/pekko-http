@@ -21,8 +21,8 @@ import pekko.annotation.InternalApi
 import pekko.event.Logging
 import pekko.http.scaladsl.model.sse.ServerSentEvent
 import pekko.http.scaladsl.settings.OversizedSseStrategy
-import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
+import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 
 /** INTERNAL API */
 @InternalApi

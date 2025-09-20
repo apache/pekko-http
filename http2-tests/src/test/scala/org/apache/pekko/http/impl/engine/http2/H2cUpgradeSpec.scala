@@ -13,18 +13,18 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.annotation.tailrec
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier._
 import pekko.http.impl.util._
-import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
 import pekko.http.scaladsl.HttpConnectionContext
+import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
 import pekko.stream.scaladsl.{ Source, Tcp }
 import pekko.util.ByteString
-
-import scala.annotation.tailrec
-import scala.concurrent.Future
-import scala.concurrent.duration._
 
 class H2cUpgradeSpec extends PekkoSpecWithMaterializer("""
     pekko.http.server.preview.enable-http2 = on

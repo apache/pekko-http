@@ -20,12 +20,12 @@ package org.apache.pekko.http.cors.javadsl
 import java.util.function.Supplier
 
 import org.apache.pekko
-import pekko.http.javadsl.server.{ RejectionHandler, Route }
-import pekko.http.javadsl.server.directives.RouteAdapter
 import pekko.http.cors.CorsJavaMapping.Implicits._
 import pekko.http.cors.javadsl.settings.CorsSettings
 import pekko.http.cors.scaladsl
 import pekko.http.impl.util.JavaMapping
+import pekko.http.javadsl.server.{ RejectionHandler, Route }
+import pekko.http.javadsl.server.directives.RouteAdapter
 
 object CorsDirectives {
 

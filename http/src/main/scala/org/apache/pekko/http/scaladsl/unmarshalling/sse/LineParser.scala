@@ -16,14 +16,15 @@ package scaladsl
 package unmarshalling
 package sse
 
+import scala.annotation.tailrec
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.Logging
 import pekko.http.scaladsl.settings.OversizedSseStrategy
-import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
+import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import pekko.util.ByteString
-import scala.annotation.tailrec
 
 /** INTERNAL API */
 @InternalApi

@@ -15,14 +15,14 @@ package org.apache.pekko.http.scaladsl.server
 package directives
 
 import scala.collection.immutable
+import scala.util.control.NonFatal
+
 import org.apache.pekko
-import pekko.http.scaladsl.model.headers.{ HttpEncoding, HttpEncodings }
-import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.coding._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.{ HttpEncoding, HttpEncodings }
 import pekko.stream.scaladsl.Flow
 import pekko.util.ByteString
-
-import scala.util.control.NonFatal
 
 /**
  * @groupname coding Coding directives
@@ -30,9 +30,9 @@ import scala.util.control.NonFatal
  */
 trait CodingDirectives {
   import BasicDirectives._
+  import CodingDirectives._
   import MiscDirectives._
   import RouteDirectives._
-  import CodingDirectives._
 
   // encoding
 

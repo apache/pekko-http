@@ -17,17 +17,17 @@
 
 package org.apache.pekko.http.cors.scaladsl
 
+import scala.collection.immutable.Seq
+
 import org.apache.pekko
-import pekko.http.scaladsl.model.HttpMethods._
-import pekko.http.scaladsl.model.headers._
-import pekko.http.scaladsl.model.{ HttpMethod, HttpResponse, StatusCodes }
-import pekko.http.scaladsl.server._
-import pekko.http.scaladsl.server.directives._
 import pekko.http.cors.javadsl
 import pekko.http.cors.scaladsl.model.HttpOriginMatcher
 import pekko.http.cors.scaladsl.settings.CorsSettings
-
-import scala.collection.immutable.Seq
+import pekko.http.scaladsl.model.{ HttpMethod, HttpResponse, StatusCodes }
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.server.directives._
 
 /**
  * Provides directives that implement the CORS mechanism, enabling cross origin requests.

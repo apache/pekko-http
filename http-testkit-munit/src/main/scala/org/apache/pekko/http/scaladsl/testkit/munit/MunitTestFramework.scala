@@ -18,6 +18,7 @@
 package org.apache.pekko.http.scaladsl.testkit.munit
 
 import munit.FunSuite
+
 import org.apache.pekko.http.scaladsl.server.ExceptionHandler
 import org.apache.pekko.http.scaladsl.testkit.TestFrameworkInterface
 

@@ -18,16 +18,16 @@ import java.util.concurrent.CompletionStage
 import java.util.function.{ Function => JFunction }
 import java.util.function.Supplier
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.jdk.FutureConverters._
+import scala.util.Try
+
 import org.apache.pekko
 import pekko.http.javadsl.marshalling.Marshaller
 import pekko.http.javadsl.model.RequestEntity
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.server.directives.{ CompleteOrRecoverWithMagnet, FutureDirectives => D }
 import pekko.pattern.CircuitBreaker
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.jdk.FutureConverters._
-import scala.util.Try
 
 abstract class FutureDirectives extends FormFieldDirectives {
 

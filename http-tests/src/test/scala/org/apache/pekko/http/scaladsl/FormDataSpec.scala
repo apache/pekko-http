@@ -14,9 +14,9 @@
 package org.apache.pekko.http.scaladsl
 
 import org.apache.pekko
-import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.http.scaladsl.marshalling.Marshal
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.testkit.PekkoSpec
 
 class FormDataSpec extends PekkoSpec {

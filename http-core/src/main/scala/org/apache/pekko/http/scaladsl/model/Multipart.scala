@@ -26,8 +26,8 @@ import pekko.http.impl.util.{ DefaultNoLogging, Util }
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.util.FastFuture
+import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.scaladsl.model.headers._
-import FastFuture._
 import pekko.stream.Materializer
 import pekko.stream.javadsl.{ Source => JSource }
 import pekko.stream.scaladsl._

@@ -21,13 +21,12 @@ import pekko.NotUsed
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
+import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.ws._
 import pekko.stream._
 import pekko.stream.scaladsl.{ Flow, Source }
 
 import com.typesafe.config.{ Config, ConfigFactory }
-
-import HttpMethods._
 
 import scala.io.StdIn
 

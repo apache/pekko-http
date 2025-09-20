@@ -16,21 +16,20 @@ package org.apache.pekko.http.scaladsl.server.directives
 import java.io.File
 import java.nio.file.Files
 
+import scala.collection.immutable
+import scala.concurrent.{ Future, Promise }
+import scala.util.{ Failure, Success }
+
 import org.apache.pekko
 import pekko.Done
 import pekko.annotation.ApiMayChange
 import pekko.http.impl.util.StreamUtils
-import pekko.http.scaladsl.server.{ Directive, Directive1, MissingFormFieldRejection }
-import pekko.http.scaladsl.model.{ ContentType, Multipart }
-import pekko.util.ByteString
-
-import scala.collection.immutable
-import scala.concurrent.{ Future, Promise }
-import pekko.stream.scaladsl._
 import pekko.http.javadsl
+import pekko.http.scaladsl.model.{ ContentType, Multipart }
+import pekko.http.scaladsl.server.{ Directive, Directive1, MissingFormFieldRejection }
 import pekko.http.scaladsl.server.RouteResult
-
-import scala.util.{ Failure, Success }
+import pekko.stream.scaladsl._
+import pekko.util.ByteString
 
 /**
  * @groupname fileupload File upload directives
@@ -122,8 +121,8 @@ trait FileUploadDirectives {
   def fileUpload(fieldName: String): Directive1[(FileInfo, Source[ByteString, Any])] =
     entity(as[Multipart.FormData]).flatMap { formData =>
       Directive[Tuple1[(FileInfo, Source[ByteString, Any])]] { inner => ctx =>
-        import ctx.materializer
         import ctx.executionContext
+        import ctx.materializer
 
         // We complete the directive through this promise as soon as we encounter the
         // selected part. This way the inner directive can consume it, after which we will

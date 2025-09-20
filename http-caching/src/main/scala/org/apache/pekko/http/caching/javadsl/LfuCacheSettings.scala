@@ -13,14 +13,15 @@
 
 package org.apache.pekko.http.caching.javadsl
 
+import scala.concurrent.duration.Duration
+import scala.jdk.DurationConverters._
+
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.caching.impl.settings.LfuCachingSettingsImpl
 import pekko.http.javadsl.settings.SettingsCompanion
-import com.typesafe.config.Config
 
-import scala.concurrent.duration.Duration
-import scala.jdk.DurationConverters._
+import com.typesafe.config.Config
 
 /**
  * Public API but not intended for subclassing

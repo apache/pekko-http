@@ -13,11 +13,11 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
+import scala.annotation.nowarn
+import scala.collection.immutable
+
 import org.apache.pekko
 import pekko.http.scaladsl.model.HttpMessage
-import scala.annotation.nowarn
-
-import scala.collection.immutable
 
 @nowarn("msg=in package coding is deprecated")
 object Coders {

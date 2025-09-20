@@ -13,6 +13,13 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.util.concurrent.{ CountDownLatch, TimeUnit }
+
+import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.duration._
+
+import org.openjdk.jmh.annotations._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.CommonBenchmark
@@ -22,11 +29,6 @@ import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.TLSProtocol.{ SslTlsInbound, SslTlsOutbound }
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.util.ByteString
-import org.openjdk.jmh.annotations._
-
-import java.util.concurrent.{ CountDownLatch, TimeUnit }
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, ExecutionContext, Future }
 
 class H2ServerProcessingBenchmark extends CommonBenchmark with H2RequestResponseBenchmark {
 

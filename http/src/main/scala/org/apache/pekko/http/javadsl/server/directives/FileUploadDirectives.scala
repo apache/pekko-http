@@ -20,7 +20,6 @@ import java.util.function.{ BiFunction, Function => JFunction }
 
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
-
 import pekko.http.javadsl.model.ContentType
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.server.{ Directives => D }

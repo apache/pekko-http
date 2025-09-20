@@ -13,11 +13,11 @@
 
 package org.apache.pekko.http.fix
 
-import scalafix.lint.LintSeverity
-import scalafix.v1._
-
 import scala.meta._
 import scala.util.Try
+
+import scalafix.lint.LintSeverity
+import scalafix.v1._
 
 class MigrateToServerBuilder extends SemanticRule("MigrateToServerBuilder") {
 

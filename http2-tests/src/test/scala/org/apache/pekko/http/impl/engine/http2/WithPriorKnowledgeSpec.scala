@@ -15,16 +15,16 @@ package org.apache.pekko.http.impl.engine.http2
 
 import java.util.Base64
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{ HttpProtocols, HttpRequest, HttpResponse, StatusCodes }
 import pekko.stream.OverflowStrategy
-import pekko.stream.scaladsl.Sink
 import pekko.stream.scaladsl.{ Keep, Source, Tcp }
+import pekko.stream.scaladsl.Sink
 import pekko.util.ByteString
-
-import scala.concurrent.Future
 
 class WithPriorKnowledgeSpec extends PekkoSpecWithMaterializer("""
     pekko.http.server.preview.enable-http2 = on

@@ -14,6 +14,9 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.concurrent.Future
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
 import pekko.http.scaladsl.marshalling.ToResponseMarshaller
 import pekko.http.scaladsl.server.Directives._
@@ -21,9 +24,6 @@ import pekko.http.scaladsl.server.util.Tupler
 import pekko.http.scaladsl.util.FastFuture._
 import pekko.pattern.{ CircuitBreaker, CircuitBreakerOpenException }
 import pekko.stream.scaladsl.Sink
-
-import scala.concurrent.Future
-import scala.util.{ Failure, Success, Try }
 
 // format: OFF
 

@@ -24,7 +24,7 @@ import pekko.actor.ActorSystem
 import pekko.http.scaladsl.model._
 import pekko.stream.scaladsl._
 import pekko.testkit._
-import headers._
+import pekko.http.scaladsl.model.headers._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

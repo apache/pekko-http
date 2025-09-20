@@ -14,6 +14,7 @@
 package org.apache.pekko.http.javadsl.server
 
 import org.apache.pekko
+import pekko.http.impl.util.{ JavaMapping, Util }
 import pekko.http.javadsl.model.HttpResponse
 
 trait RouteResult {}
@@ -27,10 +28,10 @@ trait Rejected extends RouteResult {
 }
 
 object RouteResults {
-  import pekko.http.scaladsl.{ server => s }
-  import pekko.http.impl.util.{ JavaMapping, Util }
   import JavaMapping.Implicits._
-  import RoutingJavaMapping._
+
+  import pekko.http.javadsl.server.RoutingJavaMapping._
+  import pekko.http.scaladsl.{ server => s }
 
   def complete(response: HttpResponse): Complete = {
     s.RouteResult.Complete(JavaMapping.toScala(response))

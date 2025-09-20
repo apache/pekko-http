@@ -18,16 +18,16 @@ import java.util.concurrent.CompletionStage
 import java.util.function.{ Function => JFunction }
 import java.util.function.Supplier
 
+import scala.concurrent.{ ExecutionContextExecutor, Future }
+import scala.jdk.FutureConverters._
+import scala.jdk.OptionConverters._
+
 import org.apache.pekko
 import pekko.http.javadsl.model.headers.HttpChallenge
 import pekko.http.javadsl.model.headers.HttpCredentials
 import pekko.http.javadsl.server.{ RequestContext, Route }
 import pekko.http.scaladsl
 import pekko.http.scaladsl.server.{ Directives => D }
-
-import scala.concurrent.{ ExecutionContextExecutor, Future }
-import scala.jdk.FutureConverters._
-import scala.jdk.OptionConverters._
 
 object SecurityDirectives {
 
@@ -58,6 +58,7 @@ object SecurityDirectives {
 
 abstract class SecurityDirectives extends SchemeDirectives {
   import SecurityDirectives._
+
   import pekko.http.impl.util.JavaMapping.Implicits._
 
   /**

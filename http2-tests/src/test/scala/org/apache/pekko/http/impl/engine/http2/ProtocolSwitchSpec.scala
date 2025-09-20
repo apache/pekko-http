@@ -14,6 +14,8 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.duration.FiniteDuration
+
 import org.apache.pekko
 import pekko.Done
 import pekko.http.impl.engine.server.ServerTerminator
@@ -23,15 +25,14 @@ import pekko.stream.QueueOfferResult.Enqueued
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl.Flow
 import pekko.stream.scaladsl.Keep
-import pekko.stream.scaladsl.Source
 import pekko.stream.scaladsl.Sink
+import pekko.stream.scaladsl.Source
 import pekko.stream.scaladsl.TLSPlacebo
-import pekko.util.ByteString
 import pekko.testkit.PekkoSpec
+import pekko.util.ByteString
+
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.time.{ Milliseconds, Seconds, Span }
-
-import scala.concurrent.duration.FiniteDuration
 
 class ProtocolSwitchSpec extends PekkoSpec {
   override implicit val patience: PatienceConfig =

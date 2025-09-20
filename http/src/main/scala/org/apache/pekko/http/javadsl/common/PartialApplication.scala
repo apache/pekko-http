@@ -13,8 +13,9 @@
 
 package org.apache.pekko.http.javadsl.common
 
-import org.apache.pekko.annotation.ApiMayChange
 import java.util.function.{ BiFunction, Function }
+
+import org.apache.pekko.annotation.ApiMayChange
 
 /**
  * Contains helpful methods to partially apply Functions for Java

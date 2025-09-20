@@ -13,12 +13,18 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
+import scala.collection.immutable
+import scala.concurrent.{ Await, ExecutionContext, ExecutionContextExecutor, Future }
+import scala.concurrent.duration._
+import scala.reflect.ClassTag
+import scala.util.DynamicVariable
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding
-import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Protocol`, Host, Upgrade }
 import pekko.http.scaladsl.server._
 import pekko.http.scaladsl.settings.ParserSettings
@@ -30,13 +36,8 @@ import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.stream.scaladsl.Source
 import pekko.testkit.TestKit
 import pekko.util.ConstantFun
-import com.typesafe.config.{ Config, ConfigFactory }
 
-import scala.collection.immutable
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, ExecutionContext, ExecutionContextExecutor, Future }
-import scala.reflect.ClassTag
-import scala.util.DynamicVariable
+import com.typesafe.config.{ Config, ConfigFactory }
 
 trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTestResultComponent
     with MarshallingTestUtils {

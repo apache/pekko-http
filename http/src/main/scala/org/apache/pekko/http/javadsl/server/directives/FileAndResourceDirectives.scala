@@ -15,15 +15,15 @@ package org.apache.pekko.http.javadsl.server.directives
 
 import java.io.File
 
+import scala.annotation.varargs
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
 import pekko.http.javadsl.marshalling.Marshaller
 import pekko.http.javadsl.model.ContentType
 import pekko.http.javadsl.model.RequestEntity
 import pekko.http.javadsl.server.{ Route, RoutingJavaMapping }
 import pekko.http.scaladsl.server.{ Directives => D }
-
-import scala.annotation.varargs
-import scala.jdk.CollectionConverters._
 
 abstract class DirectoryListing {
   def getPath: String
@@ -42,8 +42,9 @@ trait DirectoryRenderer {
  * the pekko.actor.ActorSystem class.
  */
 abstract class FileAndResourceDirectives extends ExecutionDirectives {
-  import pekko.http.impl.util.JavaMapping.Implicits._
   import RoutingJavaMapping._
+
+  import pekko.http.impl.util.JavaMapping.Implicits._
 
   /**
    * Completes GET requests with the content of the given resource loaded from the default ClassLoader,

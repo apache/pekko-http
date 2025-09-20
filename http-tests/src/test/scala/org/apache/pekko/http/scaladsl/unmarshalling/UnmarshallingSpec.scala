@@ -16,21 +16,23 @@ package org.apache.pekko.http.scaladsl.unmarshalling
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
-import org.apache.pekko
-import pekko.http.scaladsl.unmarshalling.Unmarshaller.EitherUnmarshallingException
-import org.scalatest.BeforeAndAfterAll
-import pekko.http.scaladsl.testkit.ScalatestUtils
-import pekko.actor.ActorSystem
-import pekko.http.scaladsl.model.MediaType.WithFixedCharset
-import pekko.http.scaladsl.model._
-import pekko.testkit._
-import com.typesafe.config.ConfigFactory
-
-import scala.concurrent.duration._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.MediaType.WithFixedCharset
+import pekko.http.scaladsl.testkit.ScalatestUtils
+import pekko.http.scaladsl.unmarshalling.Unmarshaller.EitherUnmarshallingException
+import pekko.testkit._
+
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+
+import com.typesafe.config.ConfigFactory
 
 class UnmarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll with ScalatestUtils {
   implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName)

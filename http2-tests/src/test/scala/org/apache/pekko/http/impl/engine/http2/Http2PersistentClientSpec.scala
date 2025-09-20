@@ -13,11 +13,18 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.net.InetSocketAddress
+
+import scala.collection.immutable
+import scala.concurrent.{ Future, Promise }
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.Logging
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
+import pekko.http.scaladsl.{ ClientTransport, Http }
 import pekko.http.scaladsl.model.{
   headers,
   AttributeKey,
@@ -37,21 +44,16 @@ import pekko.http.scaladsl.model.{
 import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.Http2ClientSettings
-import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.http.scaladsl.{ ClientTransport, Http }
 import pekko.http.scaladsl.settings.ServerSettings
+import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.stream.{ KillSwitches, StreamTcpException, UniqueKillSwitch }
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
-import pekko.stream.testkit.scaladsl.StreamTestKit
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
+import pekko.stream.testkit.scaladsl.StreamTestKit
 import pekko.testkit.TestProbe
 import pekko.util.ByteString
-import org.scalatest.concurrent.ScalaFutures
 
-import java.net.InetSocketAddress
-import scala.collection.immutable
-import scala.concurrent.duration._
-import scala.concurrent.{ Future, Promise }
+import org.scalatest.concurrent.ScalaFutures
 
 class Http2PersistentClientTlsSpec extends Http2PersistentClientSpec(true)
 class Http2PersistentClientPlaintextSpec extends Http2PersistentClientSpec(false)

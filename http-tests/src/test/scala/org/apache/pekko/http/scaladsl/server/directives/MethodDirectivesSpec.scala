@@ -13,13 +13,13 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
 import org.apache.pekko
 import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpMethods, StatusCodes }
 import pekko.http.scaladsl.server._
 import pekko.stream.scaladsl.Source
-
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 
 class MethodDirectivesSpec extends RoutingSpec {
 

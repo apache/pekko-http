@@ -18,14 +18,16 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+
 import org.apache.pekko
-import pekko.http.scaladsl.model.StatusCodes._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers._
 import pekko.stream.scaladsl.{ Sink, Source }
-import pekko.util.ByteString
 import pekko.testkit._
+import pekko.util.ByteString
+
 import org.scalatest.{ Inside, Inspectors }
 
 class RangeDirectivesSpec extends RoutingSpec with Inspectors with Inside {

@@ -13,20 +13,21 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
+import scala.concurrent.duration._
+
+import org.specs2.mutable.Specification
+
 import org.apache.pekko
 import pekko.actor.ActorRef
+import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.StatusCodes._
-import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.RawHeader
-import pekko.http.scaladsl.server.Directives._
 import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.server.Directives._
 import pekko.pattern.ask
 import pekko.testkit.TestProbe
 import pekko.util.Timeout
-import org.specs2.mutable.Specification
-
-import scala.concurrent.duration._
 
 class Specs2RouteTestSpec extends Specification with Specs2RouteTest {
 

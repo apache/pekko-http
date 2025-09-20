@@ -13,6 +13,9 @@
 
 package org.apache.pekko.http.javadsl.testkit
 
+import scala.concurrent.duration._
+import scala.jdk.DurationConverters._
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
@@ -23,9 +26,6 @@ import pekko.stream.Materializer
 import pekko.stream.javadsl.Flow
 import pekko.stream.scaladsl
 import pekko.util.ByteString
-
-import scala.concurrent.duration._
-import scala.jdk.DurationConverters._
 
 /**
  * A WSProbe is a probe that implements a `Flow[Message, Message, Unit]` for testing

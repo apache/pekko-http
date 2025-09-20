@@ -15,22 +15,23 @@ package org.apache.pekko.http.scaladsl
 
 import java.nio.file.Paths
 
-import org.apache.pekko
-import pekko.actor.ActorSystem
-import pekko.http.impl.util.ExampleHttpContexts
-import pekko.http.scaladsl.model.HttpMethods._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.stream.scaladsl.FileIO
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.io.StdIn
 import scala.util.Random
+
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.impl.util.ExampleHttpContexts
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.unmarshalling.Unmarshal
+import pekko.stream.scaladsl.FileIO
+
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 
 /**
  * App to manually test an HTTP2 server

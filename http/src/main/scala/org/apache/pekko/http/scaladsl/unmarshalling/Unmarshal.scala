@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.scaladsl.unmarshalling
 
-import org.apache.pekko.stream.Materializer
-
 import scala.concurrent.{ ExecutionContext, Future }
+
+import org.apache.pekko.stream.Materializer
 
 object Unmarshal {
   def apply[T](value: T): Unmarshal[T] = new Unmarshal(value)

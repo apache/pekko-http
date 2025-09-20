@@ -19,8 +19,8 @@ import scala.util.{ Failure, Success }
 
 import org.apache.pekko
 import pekko.http.impl.util._
-import pekko.http.scaladsl.model.ExceptionWithErrorInfo
 import pekko.http.scaladsl.marshalling.ToResponseMarshaller
+import pekko.http.scaladsl.model.ExceptionWithErrorInfo
 import pekko.http.scaladsl.unmarshalling.{ FromRequestUnmarshaller, Unmarshaller }
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 

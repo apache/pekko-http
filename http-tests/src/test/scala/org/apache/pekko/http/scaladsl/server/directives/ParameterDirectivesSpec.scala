@@ -14,10 +14,11 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import org.scalatest.Inside
 import org.apache.pekko
-import pekko.http.scaladsl.unmarshalling.Unmarshaller, Unmarshaller._
 import pekko.http.scaladsl.model.StatusCodes
+import pekko.http.scaladsl.unmarshalling.Unmarshaller, Unmarshaller._
+
+import org.scalatest.Inside
 import org.scalatest.freespec.AnyFreeSpec
 
 class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with Inside {

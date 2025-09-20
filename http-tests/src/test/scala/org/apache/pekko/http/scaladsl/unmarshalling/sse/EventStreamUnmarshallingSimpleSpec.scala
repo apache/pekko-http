@@ -12,6 +12,8 @@ package scaladsl
 package unmarshalling
 package sse
 
+import scala.concurrent.ExecutionContext
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.scaladsl.model.HttpEntity
@@ -19,10 +21,9 @@ import pekko.http.scaladsl.model.MediaTypes.`text/event-stream`
 import pekko.http.scaladsl.model.sse.ServerSentEvent
 import pekko.http.scaladsl.settings.{ OversizedSseStrategy, ServerSentEventSettings }
 import pekko.stream.scaladsl.{ Sink, Source }
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
-
-import scala.concurrent.ExecutionContext
 
 final class EventStreamUnmarshallingSimpleSpec extends AsyncWordSpec with Matchers with BaseUnmarshallingSpec {
   implicit val ec: ExecutionContext = system.dispatcher
