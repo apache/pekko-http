@@ -359,11 +359,30 @@ private[http] object BodyPartParser {
 
     override def defineOnce(byteString: ByteString): EndOfLineConfiguration = {
       // Hypothesis: There is either CRLF or LF as EOL, no mix possible
-      val crLfNeedle = ByteString(s"$boundary\r\n")
-      val lfNeedle = ByteString(s"$boundary\n")
-      if (byteString.containsSlice(crLfNeedle)) DefinedEndOfLineConfiguration("\r\n", boundary)
-      else if (byteString.containsSlice(lfNeedle)) DefinedEndOfLineConfiguration("\n", boundary)
-      else this
+      checkForBoundary(byteString) match {
+        case CR => DefinedEndOfLineConfiguration("\r\n", boundary)
+        case LF => DefinedEndOfLineConfiguration("\n", boundary)
+        case _  => this
+      }
+    }
+
+    private val CR = '\r'.toByte
+    private val LF = '\n'.toByte
+
+    // returns CR for CRLF, LF for LF, 0 otherwise
+    private def checkForBoundary(byteString: ByteString): Byte = {
+      var index = byteString.indexOfSlice(ByteString(boundary))
+      if (index != -1) {
+        try {
+          index += boundary.length
+          byteAt(byteString, index) match {
+            case CR =>
+              if (byteAt(byteString, index + 1) == LF) LF else 0
+            case LF => LF
+            case _  => 0
+          }
+        } catch { case NotEnoughDataException => 0 }
+      } else 0
     }
   }
 }
