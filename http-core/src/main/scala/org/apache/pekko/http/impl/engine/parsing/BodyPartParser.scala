@@ -355,8 +355,8 @@ private[http] object BodyPartParser {
 
   case class UndefinedEndOfLineConfiguration(boundary: String) extends EndOfLineConfiguration {
     override def eol: String = "\r\n"
-    private val CR: Byte = 13
-    private val LF: Byte = 10
+    private final val CR: Byte = 13
+    private final val LF: Byte = 10
 
     override def defineOnce(byteString: ByteString): EndOfLineConfiguration = {
       // Hypothesis: There is either CRLF or LF as EOL, no mix possible
