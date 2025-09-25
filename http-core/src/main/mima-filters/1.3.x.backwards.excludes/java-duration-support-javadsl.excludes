@@ -27,3 +27,4 @@ ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.java
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings.withIdleTimeout")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings.withKeepAliveTimeout")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings.withMaxConnectionLifetime")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings.withResponseEntitySubscriptionTimeout")
