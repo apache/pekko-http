@@ -363,32 +363,29 @@ private[http] object BodyPartParser {
       checkForBoundary(byteString) match {
         case CR => DefinedEndOfLineConfiguration("\r\n", boundary)
         case LF => DefinedEndOfLineConfiguration("\n", boundary)
-        case _  =>
-          // fail over to the old behavior
-          // this is needed for edge cases like very short boundaries that might be part of the content
-          // this check means the code is slower if the boundary is missing or one that only matches here
-          val crLfNeedle = ByteString(s"$boundary\r\n")
-          val lfNeedle = ByteString(s"$boundary\n")
-          if (byteString.containsSlice(crLfNeedle)) DefinedEndOfLineConfiguration("\r\n", boundary)
-          else if (byteString.containsSlice(lfNeedle)) DefinedEndOfLineConfiguration("\n", boundary)
-          else this
+        case _  => this
       }
     }
 
     // returns CR for CRLF, LF for LF, 0 otherwise
     private def checkForBoundary(byteString: ByteString): Byte = {
-      var index = byteString.indexOfSlice(ByteString(boundary))
-      if (index != -1) {
-        try {
-          index += boundary.length
-          byteAt(byteString, index) match {
+      val check = ByteString(boundary)
+      @tailrec def findBoundary(offset: Int): Byte = {
+        val index = byteString.indexOfSlice(check, offset)
+        if (index != -1) {
+          val newIndex = index + boundary.length
+          byteAt(byteString, newIndex) match {
             case CR =>
-              if (byteAt(byteString, index + 1) == LF) CR else 0
+              if (byteAt(byteString, newIndex + 1) == LF) CR else 0
             case LF => LF
-            case _  => 0
+            case _  => findBoundary(index + 1)
           }
-        } catch { case NotEnoughDataException => 0 }
-      } else 0
+        } else 0
+      }
+      try findBoundary(0)
+      catch {
+        case NotEnoughDataException => 0
+      }
     }
   }
 }
