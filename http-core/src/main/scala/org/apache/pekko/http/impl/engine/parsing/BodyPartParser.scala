@@ -363,7 +363,15 @@ private[http] object BodyPartParser {
       checkForBoundary(byteString) match {
         case CR => DefinedEndOfLineConfiguration("\r\n", boundary)
         case LF => DefinedEndOfLineConfiguration("\n", boundary)
-        case _  => this
+        case _  =>
+          // fail over to the old behavior
+          // this is needed for edge cases like very short boundaries that might be part of the content
+          // this check means the code is slower if the boundary is missing or one that only matches here
+          val crLfNeedle = ByteString(s"$boundary\r\n")
+          val lfNeedle = ByteString(s"$boundary\n")
+          if (byteString.containsSlice(crLfNeedle)) DefinedEndOfLineConfiguration("\r\n", boundary)
+          else if (byteString.containsSlice(lfNeedle)) DefinedEndOfLineConfiguration("\n", boundary)
+          else this
       }
     }
 
