@@ -16,17 +16,18 @@ package org.apache.pekko.http.impl.engine.parsing
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
+
+import scala.annotation.tailrec
 import pekko.event.LoggingAdapter
-import pekko.http.impl.util._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers._
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
+import org.parboiled2.CharPredicate
 import pekko.stream.scaladsl.Source
 import pekko.stream.stage._
 import pekko.util.ByteString
-import org.parboiled2.CharPredicate
+import pekko.http.scaladsl.model._
+import pekko.http.impl.util._
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
+import pekko.http.scaladsl.model.headers._
 
-import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -354,38 +355,34 @@ private[http] object BodyPartParser {
   }
 
   case class UndefinedEndOfLineConfiguration(boundary: String) extends EndOfLineConfiguration {
-    import HttpConstants._
-
     override def eol: String = "\r\n"
 
     override def defineOnce(byteString: ByteString): EndOfLineConfiguration = {
       // Hypothesis: There is either CRLF or LF as EOL, no mix possible
       checkForBoundary(byteString) match {
-        case CR_BYTE => DefinedEndOfLineConfiguration("\r\n", boundary)
-        case LF_BYTE => DefinedEndOfLineConfiguration("\n", boundary)
-        case _       => this
+        case CR => DefinedEndOfLineConfiguration("\r\n", boundary)
+        case LF => DefinedEndOfLineConfiguration("\n", boundary)
+        case _  => this
       }
     }
 
+    private val CR = '\r'.toByte
+    private val LF = '\n'.toByte
+
     // returns CR for CRLF, LF for LF, 0 otherwise
     private def checkForBoundary(byteString: ByteString): Byte = {
-      val check = ByteString(boundary)
-      @tailrec def findBoundary(offset: Int): Byte = {
-        val index = byteString.indexOfSlice(check, offset)
-        if (index != -1) {
-          val newIndex = index + boundary.length
-          byteAt(byteString, newIndex) match {
-            case CR_BYTE =>
-              if (byteAt(byteString, newIndex + 1) == LF_BYTE) CR_BYTE else findBoundary(index + 1)
-            case LF_BYTE => LF_BYTE
-            case _       => findBoundary(index + 1)
+      var index = byteString.indexOfSlice(ByteString(boundary))
+      if (index != -1) {
+        try {
+          index += boundary.length
+          byteAt(byteString, index) match {
+            case CR =>
+              if (byteAt(byteString, index + 1) == LF) LF else 0
+            case LF => LF
+            case _  => 0
           }
-        } else 0
-      }
-      try findBoundary(0)
-      catch {
-        case NotEnoughDataException => 0
-      }
+        } catch { case NotEnoughDataException => 0 }
+      } else 0
     }
   }
 }
