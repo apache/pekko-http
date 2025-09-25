@@ -376,7 +376,7 @@ private[http] object BodyPartParser {
           val newIndex = index + boundary.length
           byteAt(byteString, newIndex) match {
             case CR =>
-              if (byteAt(byteString, newIndex + 1) == LF) CR else 0
+              if (byteAt(byteString, newIndex + 1) == LF) CR else findBoundary(index + 1)
             case LF => LF
             case _  => findBoundary(index + 1)
           }
