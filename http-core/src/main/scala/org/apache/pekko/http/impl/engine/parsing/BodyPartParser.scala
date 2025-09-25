@@ -16,18 +16,17 @@ package org.apache.pekko.http.impl.engine.parsing
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
-
-import scala.annotation.tailrec
 import pekko.event.LoggingAdapter
-import org.parboiled2.CharPredicate
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.scaladsl.Source
 import pekko.stream.stage._
 import pekko.util.ByteString
-import pekko.http.scaladsl.model._
-import pekko.http.impl.util._
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
-import pekko.http.scaladsl.model.headers._
+import org.parboiled2.CharPredicate
 
+import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -356,6 +355,8 @@ private[http] object BodyPartParser {
 
   case class UndefinedEndOfLineConfiguration(boundary: String) extends EndOfLineConfiguration {
     override def eol: String = "\r\n"
+    private val CR: Byte = 13
+    private val LF: Byte = 10
 
     override def defineOnce(byteString: ByteString): EndOfLineConfiguration = {
       // Hypothesis: There is either CRLF or LF as EOL, no mix possible
@@ -366,9 +367,6 @@ private[http] object BodyPartParser {
       }
     }
 
-    private val CR = '\r'.toByte
-    private val LF = '\n'.toByte
-
     // returns CR for CRLF, LF for LF, 0 otherwise
     private def checkForBoundary(byteString: ByteString): Byte = {
       var index = byteString.indexOfSlice(ByteString(boundary))
@@ -377,7 +375,7 @@ private[http] object BodyPartParser {
           index += boundary.length
           byteAt(byteString, index) match {
             case CR =>
-              if (byteAt(byteString, index + 1) == LF) LF else 0
+              if (byteAt(byteString, index + 1) == LF) CR else 0
             case LF => LF
             case _  => 0
           }
