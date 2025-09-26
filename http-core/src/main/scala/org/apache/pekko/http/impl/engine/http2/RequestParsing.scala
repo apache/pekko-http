@@ -193,8 +193,8 @@ private[http2] object RequestParsing {
     import HttpHeader.ParsingResult
     HttpHeader.parse(name, value, httpHeaderParser.settings) match {
       case ParsingResult.Ok(header, errors) if errors.isEmpty => header
-      case ParsingResult.Ok(_, errors) => throw ParsingException(errors.head)
-      case ParsingResult.Error(info) => throw ParsingException(info)
+      case ParsingResult.Ok(_, errors)                        => throw ParsingException(errors.head)
+      case ParsingResult.Error(info)                          => throw ParsingException(info)
     }
   }
 
