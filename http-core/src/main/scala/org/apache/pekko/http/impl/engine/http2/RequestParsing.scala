@@ -192,9 +192,9 @@ private[http2] object RequestParsing {
   private[http2] def parseHeaderPair(httpHeaderParser: HttpHeaderParser, name: String, value: String): HttpHeader = {
     import HttpHeader.ParsingResult
     HttpHeader.parse(name, value, httpHeaderParser.settings) match {
-      case ParsingResult.Ok(header, errors) if errors.isEmpty => header
-      case ParsingResult.Ok(_, errors)                        => throw ParsingException(errors.head)
-      case ParsingResult.Error(info)                          => throw ParsingException(info)
+      case ParsingResult.Ok(header, errors) => header // don't care about errors here
+      // case ParsingResult.Ok(_, errors)                        => throw ParsingException(errors.head)
+      case ParsingResult.Error(info) => throw ParsingException(info)
     }
   }
 
