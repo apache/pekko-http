@@ -18,6 +18,7 @@ import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.util._
+import pekko.http.impl.util.HttpConstants._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
@@ -281,7 +282,7 @@ private[http] final class BodyPartParser(
       def done(): StateResult = null // StateResult is a phantom type
 
       def doubleDash(input: ByteString, offset: Int): Boolean =
-        byteChar(input, offset) == '-' && byteChar(input, offset + 1) == '-'
+        byteAt(input, offset) == DASH_BYTE && byteAt(input, offset + 1) == DASH_BYTE
     }
 }
 
@@ -354,7 +355,6 @@ private[http] object BodyPartParser {
   }
 
   case class UndefinedEndOfLineConfiguration(boundary: String) extends EndOfLineConfiguration {
-    import HttpConstants._
 
     override def eol: String = "\r\n"
 
