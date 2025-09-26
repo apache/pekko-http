@@ -354,16 +354,16 @@ private[http] object BodyPartParser {
   }
 
   case class UndefinedEndOfLineConfiguration(boundary: String) extends EndOfLineConfiguration {
+    import HttpConstants._
+
     override def eol: String = "\r\n"
-    private final val CR: Byte = 13
-    private final val LF: Byte = 10
 
     override def defineOnce(byteString: ByteString): EndOfLineConfiguration = {
       // Hypothesis: There is either CRLF or LF as EOL, no mix possible
       checkForBoundary(byteString) match {
-        case CR => DefinedEndOfLineConfiguration("\r\n", boundary)
-        case LF => DefinedEndOfLineConfiguration("\n", boundary)
-        case _  => this
+        case CR_BYTE => DefinedEndOfLineConfiguration("\r\n", boundary)
+        case LF_BYTE => DefinedEndOfLineConfiguration("\n", boundary)
+        case _       => this
       }
     }
 
@@ -375,10 +375,10 @@ private[http] object BodyPartParser {
         if (index != -1) {
           val newIndex = index + boundary.length
           byteAt(byteString, newIndex) match {
-            case CR =>
-              if (byteAt(byteString, newIndex + 1) == LF) CR else findBoundary(index + 1)
-            case LF => LF
-            case _  => findBoundary(index + 1)
+            case CR_BYTE =>
+              if (byteAt(byteString, newIndex + 1) == LF_BYTE) CR_BYTE else findBoundary(index + 1)
+            case LF_BYTE => LF_BYTE
+            case _       => findBoundary(index + 1)
           }
         } else 0
       }
