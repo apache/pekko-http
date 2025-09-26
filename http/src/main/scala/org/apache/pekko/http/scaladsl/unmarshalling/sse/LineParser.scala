@@ -21,17 +21,11 @@ import scala.annotation.tailrec
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.Logging
+import pekko.http.impl.util.HttpConstants._
 import pekko.http.scaladsl.settings.OversizedSseStrategy
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import pekko.util.ByteString
-
-/** INTERNAL API */
-@InternalApi
-private object LineParser {
-  val CR = '\r'.toByte
-  val LF = '\n'.toByte
-}
 
 /**
  * A wrapper for an SSE line which exceeds the configured limit. Used for pattern matching.
@@ -51,7 +45,6 @@ private final class LineParser(maxLineSize: Int,
 
   override def createLogic(attributes: Attributes) =
     new GraphStageLogic(shape) with InHandler with OutHandler {
-      import LineParser._
       import shape._
 
       private var buffer = ByteString.empty
@@ -91,7 +84,7 @@ private final class LineParser(maxLineSize: Int,
             (bs.drop(from), parsedLines, lastCharWasCr)
           else
             bs(at) match {
-              case CR if at < bs.length - 1 && bs(at + 1) == LF =>
+              case CR_BYTE if at < bs.length - 1 && bs(at + 1) == LF_BYTE =>
                 // Lookahead for LF after CR
                 val lineByteSize = at - from
                 val line = bs.slice(from, at).utf8String
@@ -102,7 +95,7 @@ private final class LineParser(maxLineSize: Int,
                 }
                 val newParsedLines = processedLine.fold(parsedLines)(parsedLines :+ _)
                 parseLines(bs, at + 2, at + 2, newParsedLines, lastCharWasCr = false)
-              case CR =>
+              case CR_BYTE =>
                 // if is a CR but we don't know the next character, slice it but flag that the last character was a CR so if the next happens to be a LF we just ignore
                 val lineByteSize = at - from
                 val line = bs.slice(from, at).utf8String
@@ -113,10 +106,10 @@ private final class LineParser(maxLineSize: Int,
                 }
                 val newParsedLines = processedLine.fold(parsedLines)(parsedLines :+ _)
                 parseLines(bs, at + 1, at + 1, newParsedLines, lastCharWasCr = true)
-              case LF if lastCharWasCr =>
+              case LF_BYTE if lastCharWasCr =>
                 // if is a LF and we just sliced a CR then we simply advance
                 parseLines(bs, at + 1, at + 1, parsedLines, lastCharWasCr = false)
-              case LF =>
+              case LF_BYTE =>
                 // a LF that wasn't preceded by a CR means we found a new slice
                 val lineByteSize = at - from
                 val line = bs.slice(from, at).utf8String

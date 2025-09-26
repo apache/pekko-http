@@ -19,21 +19,22 @@ import javax.net.ssl.SSLSession
 import scala.annotation.{ switch, tailrec }
 
 import org.apache.pekko
-import pekko.http.scaladsl.settings.{ ParserSettings, WebSocketSettings }
-import pekko.util.ByteString
-import pekko.util.OptionVal
+import pekko.annotation.InternalApi
+import pekko.http.impl.engine.server.HttpAttributes
+import pekko.http.impl.util.ByteStringParserInput
+import pekko.http.impl.util.HttpConstants._
 import pekko.http.impl.engine.ws.Handshake
 import pekko.http.impl.model.parser.{ CharacterClasses, UriParser }
 import pekko.http.scaladsl.model.{ ParsingException => _, _ }
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.settings.{ ParserSettings, WebSocketSettings }
 import ParserOutput._
-import pekko.annotation.InternalApi
-import pekko.http.impl.engine.server.HttpAttributes
-import pekko.http.impl.util.ByteStringParserInput
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.TLSProtocol.SessionBytes
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
+import pekko.util.ByteString
+import pekko.util.OptionVal
 import org.parboiled2.ParserInput
 
 /**
@@ -91,9 +92,9 @@ private[http] final class HttpRequestParser(
           var cursor = parseMethod(input, offset)
           cursor = parseRequestTarget(input, cursor)
           cursor = parseProtocol(input, cursor)
-          if (byteChar(input, cursor) == '\r' && byteChar(input, cursor + 1) == '\n')
+          if (byteAt(input, cursor) == CR_BYTE && byteAt(input, cursor + 1) == LF_BYTE)
             parseHeaderLines(input, cursor + 2)
-          else if (byteChar(input, cursor) == '\n')
+          else if (byteAt(input, cursor) == LF_BYTE)
             parseHeaderLines(input, cursor + 1)
           else onBadProtocol(input.drop(cursor))
         } else
@@ -125,7 +126,7 @@ private[http] final class HttpRequestParser(
 
         @tailrec def parseMethod(meth: HttpMethod, ix: Int = 1): Int =
           if (ix == meth.value.length)
-            if (byteChar(input, cursor + ix) == ' ') {
+            if (byteAt(input, cursor + ix) == SPACE_BYTE) {
               method = meth
               cursor + ix + 1
             } else parseCustomMethod()
