@@ -24,7 +24,6 @@ import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.`Tls-Session-Info`
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
-import pekko.util.ByteString
 import pekko.util.OptionVal
 
 import scala.annotation.tailrec
@@ -191,13 +190,12 @@ private[http2] object RequestParsing {
   }
 
   private[http2] def parseHeaderPair(httpHeaderParser: HttpHeaderParser, name: String, value: String): HttpHeader = {
-    // FIXME: later modify by adding HttpHeaderParser.parseHttp2Header that would use (name, value) pair directly
-    //        or use a separate, simpler, parser for Http2
-    // The odd-looking 'x' below is a by-product of how current parser and HTTP/1.1 work.
-    // Without '\r\n\x' (x being any additional byte) parsing will fail. See HttpHeaderParserSpec for examples.
-    val concHeaderLine = name + ": " + value + "\r\nx"
-    httpHeaderParser.parseHeaderLine(ByteString(concHeaderLine))()
-    httpHeaderParser.resultHeader
+    import HttpHeader.ParsingResult
+    HttpHeader.parse(name, value, httpHeaderParser.settings) match {
+      case ParsingResult.Ok(header, errors) if errors.isEmpty => header
+      case ParsingResult.Ok(_, errors) => throw ParsingException(errors.head)
+      case ParsingResult.Error(info) => throw ParsingException(info)
+    }
   }
 
   private[http2] def checkRequiredPseudoHeader(name: String, value: AnyRef): Unit =
