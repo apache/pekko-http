@@ -16,4 +16,6 @@
 # under the License.
 
 # changes needed to uptake Pekko Core 2.0.0
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.client.PoolInterface#Logic.onDownstreamFinish")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.http2.Http2StreamHandling#IncomingStreamBuffer.onDownstreamFinish")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.http2.hpack.HandleOrPassOnStage#State.onDownstreamFinish")
