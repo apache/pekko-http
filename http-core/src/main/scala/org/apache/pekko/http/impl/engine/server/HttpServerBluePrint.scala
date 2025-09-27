@@ -724,7 +724,7 @@ private[http] object HttpServerBluePrint {
       private val timeout: FiniteDuration = {
         inheritedAttributes.get[ActorAttributes.StreamSubscriptionTimeout] match {
           case Some(attr) => attr.timeout
-          case None       => 5.minutes // should not happen
+          case None       => throw new IllegalStateException("No StreamSubscriptionTimeout attribute found")
         }
       }
       private def addTimeout(s: SubscriptionTimeout): Unit = {
