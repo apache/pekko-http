@@ -20,21 +20,22 @@ import java.lang.{ StringBuilder => JStringBuilder }
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
+import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.settings.ParserSettings.{
+  ErrorLoggingVerbosity,
   IllegalResponseHeaderNameProcessingMode,
   IllegalResponseHeaderValueProcessingMode
 }
-import pekko.http.scaladsl.settings.ParserSettings.ErrorLoggingVerbosity
-import pekko.http.scaladsl.settings.ParserSettings
-
-import scala.annotation.tailrec
-import pekko.util.ByteString
 import pekko.http.ccompat._
 import pekko.http.impl.util._
+import pekko.http.impl.util.HttpConstants._
 import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
 import pekko.http.scaladsl.model.headers.{ EmptyHeader, RawHeader }
 import pekko.http.impl.model.parser.HeaderParser
 import pekko.http.impl.model.parser.CharacterClasses._
+import pekko.util.ByteString
+
+import scala.annotation.tailrec
 
 /**
  * INTERNAL API
@@ -600,7 +601,7 @@ private[http] object HttpHeaderParser {
     if (ix < limit)
       byteChar(input, ix) match {
         case '\t' => scanHeaderValue(hhp, input, start, limit, log, mode)(appended(' '), ix + 1)
-        case '\r' if byteChar(input, ix + 1) == '\n' =>
+        case '\r' if byteAt(input, ix + 1) == LF_BYTE =>
           if (WSP(byteChar(input, ix + 2))) scanHeaderValue(hhp, input, start, limit, log, mode)(appended(' '), ix + 3)
           else (if (sb != null) sb.toString else asciiString(input, start, ix), ix + 2)
         case '\n' =>

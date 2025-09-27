@@ -29,4 +29,6 @@ import org.apache.pekko.annotation.InternalApi
 private[http] object HttpConstants {
   final val CR_BYTE: Byte = 13
   final val LF_BYTE: Byte = 10
+  final val SPACE_BYTE: Byte = 32
+  final val DASH_BYTE: Byte = 45 // '-' (minus, dash, hyphen)
 }
