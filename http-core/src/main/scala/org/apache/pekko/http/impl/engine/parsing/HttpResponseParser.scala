@@ -17,14 +17,16 @@ import javax.net.ssl.SSLSession
 import scala.annotation.tailrec
 import scala.concurrent.Promise
 import scala.util.control.{ NoStackTrace, NonFatal }
+
 import org.apache.pekko
+import pekko.annotation.InternalApi
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.impl.model.parser.CharacterClasses
+import pekko.http.impl.util.HttpConstants._
 import pekko.util.ByteString
 import pekko.http.scaladsl.model.{ ParsingException => _, _ }
 import pekko.http.scaladsl.model.headers._
 import ParserOutput._
-import pekko.annotation.InternalApi
 import pekko.http.impl.util.LogByteStringTools
 import pekko.stream.scaladsl.Source
 
@@ -61,7 +63,7 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
   override protected def parseMessage(input: ByteString, offset: Int): StateResult =
     if (contextForCurrentResponse.isDefined) {
       var cursor = parseProtocol(input, offset)
-      if (byteChar(input, cursor) == ' ') {
+      if (byteAt(input, cursor) == SPACE_BYTE) {
         cursor = parseStatus(input, cursor + 1)
         parseHeaderLines(input, cursor)
       } else onBadProtocol(input.drop(cursor))
@@ -104,8 +106,8 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
       }
     }
 
-    def isLF(idx: Int) = byteChar(input, idx) == '\n'
-    def isCRLF(idx: Int) = byteChar(input, idx) == '\r' && isLF(idx + 1)
+    def isLF(idx: Int) = byteAt(input, idx) == LF_BYTE
+    def isCRLF(idx: Int) = byteAt(input, idx) == CR_BYTE && isLF(idx + 1)
     def isNewLine(idx: Int) = isLF(idx) || isCRLF(idx)
 
     def skipNewLine(idx: Int) = {
@@ -114,7 +116,7 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
       else idx
     }
 
-    if (byteChar(input, cursor + 3) == ' ') {
+    if (byteAt(input, cursor + 3) == SPACE_BYTE) {
       val startIdx = cursor + 4
       @tailrec def scanNewLineIdx(idx: Int): Int =
         if (idx - startIdx <= maxResponseReasonLength)

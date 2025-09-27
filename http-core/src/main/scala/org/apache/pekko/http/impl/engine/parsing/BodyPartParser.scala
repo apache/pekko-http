@@ -16,18 +16,19 @@ package org.apache.pekko.http.impl.engine.parsing
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
-
-import scala.annotation.tailrec
 import pekko.event.LoggingAdapter
-import org.parboiled2.CharPredicate
+import pekko.http.impl.util._
+import pekko.http.impl.util.HttpConstants._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.scaladsl.Source
 import pekko.stream.stage._
 import pekko.util.ByteString
-import pekko.http.scaladsl.model._
-import pekko.http.impl.util._
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import headers._
+import org.parboiled2.CharPredicate
 
+import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -282,7 +283,7 @@ private[http] final class BodyPartParser(
       def done(): StateResult = null // StateResult is a phantom type
 
       def doubleDash(input: ByteString, offset: Int): Boolean =
-        byteChar(input, offset) == '-' && byteChar(input, offset + 1) == '-'
+        byteAt(input, offset) == DASH_BYTE && byteAt(input, offset + 1) == DASH_BYTE
     }
 }
 
