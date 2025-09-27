@@ -49,7 +49,7 @@ import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.actor.AbstractActor;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
-import static org.apache.pekko.pattern.PatternsCS.pipe;
+import static org.apache.pekko.pattern.Patterns.pipe;
 
 // #single-request-in-actor-example
 
