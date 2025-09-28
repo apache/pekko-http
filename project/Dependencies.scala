@@ -77,7 +77,7 @@ object Dependencies {
     object Test {
       val sprayJson = Compile.sprayJson % "test"
       val junit = Compile.junit % "test"
-      val specs2 = "org.specs2" %% "specs2-core" % "4.21.0"
+      val specs2 = "org.specs2" %% "specs2-core" % "4.22.0"
       val munit = "org.scalameta" %% "munit" % "1.2.0"
 
       val scalacheck = "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
