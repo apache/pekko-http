@@ -45,9 +45,9 @@ import pekko.http.scaladsl.model.headers.`Timeout-Access`
 import pekko.http.scaladsl.model._
 import pekko.http.impl.util.LogByteStringTools._
 
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.concurrent.duration.{ Deadline, Duration, FiniteDuration }
 import scala.collection.immutable
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.duration.{ Deadline, Duration, DurationLong, FiniteDuration }
 import scala.jdk.DurationConverters._
 import scala.util.Failure
 import scala.util.control.{ NoStackTrace, NonFatal }
@@ -721,7 +721,12 @@ private[http] object HttpServerBluePrint {
         })
 
       private var activeTimers = 0
-      private def timeout = materializer.settings.subscriptionTimeoutSettings.timeout
+      private val timeout: FiniteDuration = {
+        inheritedAttributes.get[ActorAttributes.StreamSubscriptionTimeout] match {
+          case Some(attr) => attr.timeout
+          case None       => 5.minutes // should not happen
+        }
+      }
       private def addTimeout(s: SubscriptionTimeout): Unit = {
         if (activeTimers == 0) setKeepGoing(true)
         activeTimers += 1

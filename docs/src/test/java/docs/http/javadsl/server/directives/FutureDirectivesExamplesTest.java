@@ -27,7 +27,6 @@ import org.apache.pekko.pattern.CircuitBreaker;
 import org.apache.pekko.testkit.javadsl.TestKit;
 import org.junit.Ignore;
 import org.junit.Test;
-import scala.concurrent.duration.FiniteDuration;
 
 import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
@@ -165,8 +164,8 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
     // import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
     final int maxFailures = 1;
-    final FiniteDuration callTimeout = FiniteDuration.create(5, TimeUnit.SECONDS);
-    final FiniteDuration resetTimeout = FiniteDuration.create(1, TimeUnit.SECONDS);
+    final Duration callTimeout = Duration.ofSeconds(5);
+    final Duration resetTimeout = Duration.ofSeconds(1);
     final CircuitBreaker breaker =
         CircuitBreaker.create(system().scheduler(), maxFailures, callTimeout, resetTimeout);
 
