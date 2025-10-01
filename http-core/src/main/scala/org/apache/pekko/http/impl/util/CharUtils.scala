@@ -18,9 +18,10 @@ import pekko.annotation.InternalApi
 
 @InternalApi
 private[http] object CharUtils {
+
   /**
    * Internal Pekko HTTP Use only.
-   * 
+   *
    * Efficiently lower-cases the given character.
    * Note: only works for 7-bit ASCII letters (which is enough for header names)
    */
