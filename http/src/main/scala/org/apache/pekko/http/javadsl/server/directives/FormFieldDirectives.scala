@@ -83,7 +83,7 @@ abstract class FormFieldDirectives extends FileUploadDirectives {
    * Extracts HTTP form fields from the request as a ``Map<String, List<String>>``.
    */
   def formFieldMultiMap(inner: JFunction[JMap[String, JList[String]], Route]): Route = RouteAdapter {
-    D.formFieldMultiMap { map => inner.apply(map.mapValues { l => l.asJava }.toMap.asJava).delegate }
+    D.formFieldMultiMap { map => inner.apply(map.view.mapValues { l => l.asJava }.toMap.asJava).delegate }
   }
 
   /**
