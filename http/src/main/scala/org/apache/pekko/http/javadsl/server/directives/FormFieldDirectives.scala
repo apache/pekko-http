@@ -37,7 +37,7 @@ abstract class FormFieldDirectives extends FileUploadDirectives {
   @CorrespondsTo("formField")
   def formFieldOptional(name: String, inner: JFunction[Optional[String], Route]): Route = RouteAdapter(
     D.formField(name.optional) { value =>
-      inner.apply(value.asJava).delegate
+      inner.apply(value.toJava).delegate
     })
 
   @CorrespondsTo("formFieldSeq")
