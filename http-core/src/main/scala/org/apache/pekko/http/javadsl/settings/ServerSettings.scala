@@ -59,7 +59,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   // ---
 
   def withServerHeader(newValue: Optional[Server]): ServerSettings =
-    self.copy(serverHeader = newValue.asScala.map(_.asScala))
+    self.copy(serverHeader = newValue.toScala.map(_.asScala))
   def withPreviewServerSettings(newValue: PreviewServerSettings): ServerSettings =
     self.copy(previewServerSettings = newValue.asScala)
   def withTimeouts(newValue: ServerSettings.Timeouts): ServerSettings = self.copy(timeouts = newValue.asScala)

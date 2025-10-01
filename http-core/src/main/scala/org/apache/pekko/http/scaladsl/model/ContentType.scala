@@ -129,7 +129,7 @@ object ContentType {
    * `Left(errors)` otherwise.
    */
   def parse(value: String): Either[List[ErrorInfo], ContentType] =
-    headers.`Content-Type`.parseFromValueString(value).right.map(_.contentType)
+    headers.`Content-Type`.parseFromValueString(value).map(_.contentType)
 
   private[http] case object `; charset=` extends SingletonValueRenderable
 }
