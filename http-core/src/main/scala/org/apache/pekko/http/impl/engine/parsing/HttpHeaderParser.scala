@@ -20,18 +20,18 @@ import java.lang.{ StringBuilder => JStringBuilder }
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
-import pekko.http.scaladsl.settings.ParserSettings
+import pekko.http.impl.model.parser.CharacterClasses._
+import pekko.http.impl.model.parser.HeaderParser
+import pekko.http.impl.util._
+import pekko.http.impl.util.CharUtils.toLowerCase
+import pekko.http.impl.util.HttpConstants._
+import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
+import pekko.http.scaladsl.model.headers.{ EmptyHeader, RawHeader }
 import pekko.http.scaladsl.settings.ParserSettings.{
   ErrorLoggingVerbosity,
   IllegalResponseHeaderNameProcessingMode,
   IllegalResponseHeaderValueProcessingMode
 }
-import pekko.http.impl.util._
-import pekko.http.impl.util.HttpConstants._
-import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
-import pekko.http.scaladsl.model.headers.{ EmptyHeader, RawHeader }
-import pekko.http.impl.model.parser.HeaderParser
-import pekko.http.impl.model.parser.CharacterClasses._
 import pekko.util.ByteString
 
 import scala.annotation.tailrec
@@ -643,13 +643,13 @@ private[http] object HttpHeaderParser {
               }
             } else {
               mode match {
-                case ParserSettings.IllegalResponseHeaderValueProcessingMode.Error =>
+                case IllegalResponseHeaderValueProcessingMode.Error =>
                   fail(s"Illegal character '${escape(c)}' in header value")
-                case ParserSettings.IllegalResponseHeaderValueProcessingMode.Warn =>
+                case IllegalResponseHeaderValueProcessingMode.Warn =>
                   // ignore the illegal character and log a warning message
                   log.warning(s"Illegal character '${escape(c)}' in header value")
                   sb
-                case ParserSettings.IllegalResponseHeaderValueProcessingMode.Ignore =>
+                case IllegalResponseHeaderValueProcessingMode.Ignore =>
                   // just ignore the illegal character
                   sb
               }
@@ -682,11 +682,4 @@ private[http] object HttpHeaderParser {
     def withValueCountIncreased = copy(valueCount = valueCount + 1)
     def spaceLeft = valueCount < parser.maxValueCount
   }
-
-  /**
-   * Efficiently lower-cases the given character.
-   * Note: only works for 7-bit ASCII letters (which is enough for header names)
-   */
-  private[HttpHeaderParser] def toLowerCase(c: Char): Char =
-    if (c >= 'A' && c <= 'Z') (c + 0x20 /* - 'A' + 'a' */ ).toChar else c
 }
