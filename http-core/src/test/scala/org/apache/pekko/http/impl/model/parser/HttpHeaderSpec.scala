@@ -30,7 +30,6 @@ import pekko.http.scaladsl.model.HttpCharsets._
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.headers.{ Trailer => `Trailer`, _ }
 import pekko.http.scaladsl.model.headers.CacheDirectives._
-import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.model.headers.HttpEncodings._
 
 import org.scalatest.exceptions.TestFailedException
