@@ -28,6 +28,7 @@ import pekko.http.scaladsl.settings.ParserSettings.{
 }
 import pekko.http.ccompat._
 import pekko.http.impl.util._
+import pekko.http.impl.util.CharUtils.toLowerCase
 import pekko.http.impl.util.HttpConstants._
 import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
 import pekko.http.scaladsl.model.headers.{ EmptyHeader, RawHeader }
@@ -683,11 +684,4 @@ private[http] object HttpHeaderParser {
     def withValueCountIncreased = copy(valueCount = valueCount + 1)
     def spaceLeft = valueCount < parser.maxValueCount
   }
-
-  /**
-   * Efficiently lower-cases the given character.
-   * Note: only works for 7-bit ASCII letters (which is enough for header names)
-   */
-  private[HttpHeaderParser] def toLowerCase(c: Char): Char =
-    if (c >= 'A' && c <= 'Z') (c + 0x20 /* - 'A' + 'a' */ ).toChar else c
 }
