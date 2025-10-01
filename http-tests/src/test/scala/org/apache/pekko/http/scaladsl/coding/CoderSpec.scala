@@ -159,7 +159,7 @@ abstract class CoderSpec extends AnyWordSpec with CodecSpecSupport with Inspecto
         ByteString(Array.fill(size)(1.toByte))
 
       val sizesAfterRoundtrip =
-        Source.fromIterator(() => sizes.toIterator.map(createByteString))
+        Source.fromIterator(() => sizes.iterator.map(createByteString))
           .via(Coder.encoderFlow)
           .via(Coder.decoderFlow)
           .runFold(Seq.empty[Int])(_ :+ _.size)

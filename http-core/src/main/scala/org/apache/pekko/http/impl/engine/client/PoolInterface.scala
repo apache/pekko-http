@@ -225,7 +225,7 @@ private[http] object PoolInterface {
       requestCallback.invokeWithFeedback((request, responsePromise)).failed.foreach { _ =>
         debug(
           "Request was sent to pool which was already closed, retrying through the master to create new pool instance")
-        responsePromise.tryCompleteWith(master.dispatchRequest(poolId, request)(materializer))
+        responsePromise.completeWith(master.dispatchRequest(poolId, request)(materializer))
       }
     override def shutdown()(implicit ec: ExecutionContext): Future[ShutdownReason] = {
       shutdownCallback.invoke(())
