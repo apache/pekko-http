@@ -158,13 +158,13 @@ final class HttpCookie private[http] (
   def getSameSite: Optional[jm.headers.SameSite] = sameSite.map(_.asJava).toJava
 
   /** Java API */
-  def getExtension: Optional[String] = extension.asJava
+  def getExtension: Optional[String] = extension.toJava
 
   /** Java API */
-  def getPath: Optional[String] = path.asJava
+  def getPath: Optional[String] = path.toJava
 
   /** Java API */
-  def getDomain: Optional[String] = domain.asJava
+  def getDomain: Optional[String] = domain.toJava
 
   /** Java API */
   def getMaxAge: OptionalLong = maxAge.toJavaPrimitive

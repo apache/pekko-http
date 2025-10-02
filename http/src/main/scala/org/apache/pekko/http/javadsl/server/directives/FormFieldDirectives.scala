@@ -37,7 +37,7 @@ abstract class FormFieldDirectives extends FileUploadDirectives {
   @CorrespondsTo("formField")
   def formFieldOptional(name: String, inner: JFunction[Optional[String], Route]): Route = RouteAdapter(
     D.formField(name.optional) { value =>
-      inner.apply(value.asJava).delegate
+      inner.apply(value.toJava).delegate
     })
 
   @CorrespondsTo("formFieldSeq")
@@ -83,7 +83,7 @@ abstract class FormFieldDirectives extends FileUploadDirectives {
    * Extracts HTTP form fields from the request as a ``Map<String, List<String>>``.
    */
   def formFieldMultiMap(inner: JFunction[JMap[String, JList[String]], Route]): Route = RouteAdapter {
-    D.formFieldMultiMap { map => inner.apply(map.mapValues { l => l.asJava }.toMap.asJava).delegate }
+    D.formFieldMultiMap { map => inner.apply(map.view.mapValues { l => l.asJava }.toMap.asJava).delegate }
   }
 
   /**

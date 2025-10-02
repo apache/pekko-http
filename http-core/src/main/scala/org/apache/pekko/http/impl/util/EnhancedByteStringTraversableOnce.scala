@@ -22,5 +22,5 @@ import pekko.util.ByteString
  */
 @InternalApi
 private[http] class EnhancedByteStringTraversableOnce(val byteStrings: IterableOnce[ByteString]) extends AnyVal {
-  def join: ByteString = byteStrings.foldLeft(ByteString.empty)(_ ++ _)
+  def join: ByteString = byteStrings.iterator.foldLeft(ByteString.empty)(_ ++ _)
 }

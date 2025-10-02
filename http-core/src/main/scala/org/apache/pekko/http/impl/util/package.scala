@@ -50,7 +50,7 @@ package object util {
   private[http] implicit def enhanceString_(s: String): EnhancedString = new EnhancedString(s)
   private[http] implicit def enhanceRegex(regex: Regex): EnhancedRegex = new EnhancedRegex(regex)
   private[http] implicit def enhanceByteStrings(
-      byteStrings: TraversableOnce[ByteString]): EnhancedByteStringTraversableOnce =
+      byteStrings: IterableOnce[ByteString]): EnhancedByteStringTraversableOnce =
     new EnhancedByteStringTraversableOnce(byteStrings)
   private[http] implicit def enhanceByteStringsMat[Mat](
       byteStrings: Source[ByteString, Mat]): EnhancedByteStringSource[Mat] =

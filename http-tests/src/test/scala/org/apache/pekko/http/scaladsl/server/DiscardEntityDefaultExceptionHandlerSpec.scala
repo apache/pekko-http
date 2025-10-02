@@ -43,7 +43,7 @@ class DiscardEntityDefaultExceptionHandlerSpec extends RoutingSpec with ScalaFut
   trait Fixture {
     @volatile
     var streamConsumed = false
-    val thousandElements: Stream[ByteString] = Stream.continually(ByteString("foo")).take(999).lazyAppendedAll {
+    val thousandElements: LazyList[ByteString] = LazyList.continually(ByteString("foo")).take(999).lazyAppendedAll {
       streamConsumed = true
       Seq(ByteString("end"))
     }

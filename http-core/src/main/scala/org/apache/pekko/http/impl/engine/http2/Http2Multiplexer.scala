@@ -17,7 +17,6 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.http2.FrameEvent._
-import pekko.http.ccompat._
 import pekko.http.scaladsl.settings.Http2CommonSettings
 import pekko.macros.LogHelper
 import pekko.stream.stage.GraphStageLogic

@@ -90,8 +90,6 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
 
   // ** SERVER ** //
 
-  private[this] final val DefaultPortForProtocol = -1 // any negative value
-
   // Date header rendering is shared across the system, so that date is only rendered once a second
   private[http] val dateHeaderRendering = DateHeaderRendering()
 

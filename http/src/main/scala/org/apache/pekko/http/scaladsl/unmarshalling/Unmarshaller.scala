@@ -175,7 +175,7 @@ object Unmarshaller
 
     val supported: Set[ContentTypeRange] =
       _supported.asScala.toSet.asInstanceOf[Set[pekko.http.scaladsl.model.ContentTypeRange]]
-    val actualContentType: Option[ContentType] = _actualContentType.asScala.map(_.asScala)
+    val actualContentType: Option[ContentType] = _actualContentType.toScala.map(_.asScala)
 
     def this(supported: Set[ContentTypeRange], actualContentType: Option[ContentType]) =
       this(supported.asJava.asInstanceOf[java.util.Set[jm.model.ContentTypeRange]],

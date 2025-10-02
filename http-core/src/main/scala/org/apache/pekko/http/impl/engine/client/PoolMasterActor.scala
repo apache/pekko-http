@@ -187,12 +187,12 @@ private[http] final class PoolMasterActor extends Actor with ActorLogging {
           // to this actor by the pool actor, they will be retried once the shutdown
           // has completed.
           val completed = pool.shutdown()(context.dispatcher)
-          shutdownCompletedPromise.tryCompleteWith(
+          shutdownCompletedPromise.completeWith(
             completed.map(_ => Done)(ExecutionContext.parasitic))
           statusById += poolId -> PoolInterfaceShuttingDown(shutdownCompletedPromise)
         case Some(PoolInterfaceShuttingDown(formerPromise)) =>
           // Pool is already shutting down, mirror the existing promise.
-          shutdownCompletedPromise.tryCompleteWith(formerPromise.future)
+          shutdownCompletedPromise.completeWith(formerPromise.future)
         case None =>
           // Pool does not exist, shutdown is not needed.
           shutdownCompletedPromise.trySuccess(Done)
