@@ -103,7 +103,9 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
             // this is signalled by the decoder when it failed, we want to react to this by rendering a GOAWAY frame
             fail(eventsOut,
               new Http2Compliance.Http2ProtocolException(ErrorCode.COMPRESSION_ERROR, "Decompression failed."))
-        } finally bis.close()
+        } finally {
+          bis.close()
+        }
       }
 
       object Idle extends State {
