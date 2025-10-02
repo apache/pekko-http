@@ -38,7 +38,7 @@ object EventStreamUnmarshallingSpec {
   // Also used by EventStreamUnmarshallingTest.java
   val eventsAsJava: JList[javadsl.model.sse.ServerSentEvent] = {
     import JavaConverters._
-    events.map(_.asInstanceOf[javadsl.model.sse.ServerSentEvent]).asJava
+    events.asJava.asInstanceOf[JList[javadsl.model.sse.ServerSentEvent]]
   }
 
   // Also used by EventStreamUnmarshallingTest.java
