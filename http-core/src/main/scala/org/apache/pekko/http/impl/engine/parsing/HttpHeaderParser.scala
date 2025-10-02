@@ -20,7 +20,6 @@ import java.lang.{ StringBuilder => JStringBuilder }
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
-import pekko.http.ccompat._
 import pekko.http.impl.model.parser.HeaderParser
 import pekko.http.impl.model.parser.CharacterClasses._
 import pekko.http.impl.util._
