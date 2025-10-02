@@ -192,6 +192,9 @@ private[http2] object RequestParsing {
   private[http2] def parseHeaderPair(httpHeaderParser: HttpHeaderParser, name: String, value: String): HttpHeader = {
     import HttpHeader.ParsingResult
     if (name.startsWith(":")) {
+      // HttpHeader.parse used in `else` block does not support pseudo-headers (that have ':' prefix in header name)
+      // The odd-looking 'x' below is a by-product of how current parser and HTTP/1.1 work.
+      // Without '\r\n\x' (x being any additional byte) parsing will fail. See HttpHeaderParserSpec for examples.
       val concHeaderLine = s"$name: $value\r\nx"
       httpHeaderParser.parseHeaderLine(pekko.util.ByteString(concHeaderLine))()
       httpHeaderParser.resultHeader
