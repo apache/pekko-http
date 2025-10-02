@@ -207,7 +207,7 @@ object MediaType {
    * Returns `Right(mediaType)` if successful and `Left(errors)` otherwise.
    */
   def parse(value: String): Either[List[ErrorInfo], MediaType] =
-    ContentType.parse(value).right.map(_.mediaType)
+    ContentType.parse(value).map(_.mediaType)
 
   def unapply(mediaType: MediaType): Option[String] = Some(mediaType.value)
 

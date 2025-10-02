@@ -37,7 +37,7 @@ class DiscardEntityDefaultRejectionHandlerSpec extends RoutingSpec with ScalaFut
     ByteString("Foo")
   }
 
-  private val ThousandElements: Stream[ByteString] = Stream.continually(gimmeElement()).take(numElems)
+  private val ThousandElements: LazyList[ByteString] = LazyList.continually(gimmeElement()).take(numElems)
   private val RequestToNotHandled = Get("/bar", HttpEntity(`text/plain(UTF-8)`, Source[ByteString](ThousandElements)))
 
   "Default RejectionHandler" should {

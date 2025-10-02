@@ -25,18 +25,11 @@ object Common extends AutoPlugin {
       "-encoding", "UTF-8", // yes, this is 2 args
       "-unchecked",
       "-Ywarn-dead-code",
-      // Silence deprecation notices for changes introduced in Scala 2.12
-      // Can be removed when we drop support for Scala 2.12:
-      "-Wconf:msg=object JavaConverters in package collection is deprecated:s",
-      "-Wconf:msg=is deprecated \\(since 2\\.13\\.:s",
       "-Wconf:msg=reached max recursion depth:s",
       "-Wconf:msg=Prefer the Scala annotation over Java's `@Deprecated`:s",
       "-release:" + javacTarget),
     scalacOptions ++= onlyOnScala2(Seq(
       "-Xlint",
-      // Silence deprecation notices for changes introduced in Scala 2.12
-      // Can be removed when we drop support for Scala 2.12:
-      "-Wconf:cat=unused-imports&origin=org.apache.pekko.http.ccompat.*:s",
       // Exhaustivity checking is only useful for simple sealed hierarchies and matches without filters.
       // In all other cases, the warning is non-actionable: you get spurious warnings that need to be suppressed
       // verbosely. So, opt out of those in general.

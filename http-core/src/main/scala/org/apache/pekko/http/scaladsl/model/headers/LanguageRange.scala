@@ -15,6 +15,7 @@ package org.apache.pekko.http.scaladsl.model.headers
 
 import scala.language.implicitConversions
 import scala.collection.immutable
+
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model.WithQValue
@@ -79,7 +80,7 @@ object Language {
   implicit def apply(compoundTag: String): Language =
     if (compoundTag.indexOf('-') >= 0) {
       val tags = compoundTag.split('-')
-      new Language(tags.head, immutable.Seq(tags.tail: _*))
+      new Language(tags.head, immutable.ArraySeq.unsafeWrapArray(tags.tail))
     } else new Language(compoundTag, immutable.Seq.empty)
   def apply(primaryTag: String, firstSubTag: String, otherSubTags: String*): Language =
     new Language(primaryTag, firstSubTag +: otherSubTags)

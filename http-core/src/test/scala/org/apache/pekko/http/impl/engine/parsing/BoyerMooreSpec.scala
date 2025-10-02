@@ -38,7 +38,7 @@ class BoyerMooreSpec extends AnyWordSpec with Matchers {
       val haystackLen = 1000
       (0 to 9).foreach { run =>
         val alphabet = alphabetBase.take(4 + random.nextInt(5)) // 4 to 8 distinct alphanumeric chars
-        val randomAlphabetChars = Stream.continually(alphabet(random.nextInt(alphabet.length)))
+        val randomAlphabetChars = LazyList.continually(alphabet(random.nextInt(alphabet.length)))
         def randomBytes(num: Int): ByteString = ByteString(randomAlphabetChars.take(num): _*)
         val haystack = randomBytes(haystackLen)
         val needle = randomBytes(run / 3 + 3) // 3 to 6 random alphabet chars

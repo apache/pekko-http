@@ -405,7 +405,7 @@ object Rejections {
       contentType: Optional[ContentType]): UnsupportedRequestContentTypeRejection =
     s.UnsupportedRequestContentTypeRejection(
       supported = supported.asScala.map((m: MediaType) => scaladsl.model.ContentTypeRange(m.asScala)).toSet,
-      contentType = contentType.asScala.map((c: ContentType) => c.asScala))
+      contentType = contentType.toScala.map((c: ContentType) => c.asScala))
 
   // for backwards compatibility
   def unsupportedRequestContentType(supported: java.lang.Iterable[MediaType]): UnsupportedRequestContentTypeRejection =

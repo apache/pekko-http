@@ -55,8 +55,8 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
    */
   final def getIdleTimeout: JDuration = JavaDurationConverter.toJava(idleTimeout)
   final def getSocketOptions: java.lang.Iterable[SocketOption] = socketOptions.asJava
-  final def getUserAgentHeader: Optional[UserAgent] = (userAgentHeader: Option[UserAgent]).asJava
-  final def getLogUnencryptedNetworkBytes: Optional[Int] = (logUnencryptedNetworkBytes: Option[Int]).asJava
+  final def getUserAgentHeader: Optional[UserAgent] = (userAgentHeader: Option[UserAgent]).toJava
+  final def getLogUnencryptedNetworkBytes: Optional[Int] = logUnencryptedNetworkBytes.toJava
 
   /**
    * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
@@ -68,7 +68,7 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
   final def getWebsocketRandomFactory: Supplier[Random] = new Supplier[Random] {
     override def get(): Random = websocketRandomFactory()
   }
-  final def getLocalAddress: Optional[InetSocketAddress] = (localAddress: Option[InetSocketAddress]).asJava
+  final def getLocalAddress: Optional[InetSocketAddress] = localAddress.toJava
 
   /** The underlying transport used to connect to hosts. By default [[ClientTransport.TCP]] is used. */
   @ApiMayChange
@@ -102,9 +102,9 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
   def withStreamCancellationDelay(newValue: java.time.Duration): ClientConnectionSettings
 
   def withUserAgentHeader(newValue: Optional[UserAgent]): ClientConnectionSettings =
-    self.copy(userAgentHeader = (newValue.asScala: Option[UserAgent]).map(_.asScala))
+    self.copy(userAgentHeader = newValue.toScala.map(_.asScala))
   def withLogUnencryptedNetworkBytes(newValue: Optional[Int]): ClientConnectionSettings =
-    self.copy(logUnencryptedNetworkBytes = newValue.asScala)
+    self.copy(logUnencryptedNetworkBytes = newValue.toScala)
   def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ClientConnectionSettings =
     self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
       override def get(): Random = newValue.get()
@@ -116,7 +116,7 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
   def withParserSettings(newValue: ParserSettings): ClientConnectionSettings =
     self.copy(parserSettings = newValue.asScala)
   def withLocalAddress(newValue: Optional[InetSocketAddress]): ClientConnectionSettings =
-    self.copy(localAddress = newValue.asScala)
+    self.copy(localAddress = newValue.toScala)
 
   @ApiMayChange
   def withTransport(newValue: ClientTransport): ClientConnectionSettings = self.copy(transport = newValue.asScala)

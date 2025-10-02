@@ -54,13 +54,13 @@ private[http] class EnhancedString(val underlying: String) extends AnyVal {
    * leading and trailing delimiters are NOT ignored, i.e. they trigger the inclusion of an
    * empty leading or trailing empty string (respectively).
    */
-  def lazySplit(delimiter: Char): Stream[String] = {
-    def split(start: Int = 0): Stream[String] = {
+  def lazySplit(delimiter: Char): LazyList[String] = {
+    def split(start: Int = 0): LazyList[String] = {
       val ix = underlying.indexOf(delimiter, start)
       if (ix < 0)
-        Stream.cons(underlying.substring(start), Stream.Empty)
+        LazyList.cons(underlying.substring(start), LazyList.empty[String])
       else
-        Stream.cons(underlying.substring(start, ix), split(ix + 1))
+        LazyList.cons(underlying.substring(start, ix), split(ix + 1))
     }
     split()
   }

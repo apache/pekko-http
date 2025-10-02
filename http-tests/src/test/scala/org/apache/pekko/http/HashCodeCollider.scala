@@ -21,9 +21,9 @@ package org.apache.pekko.http
  */
 object HashCodeCollider {
   val visibleChars = (33 until 127).filterNot(c => c == '\\' || c == '"')
-  def asciiChars: Iterator[Int] = visibleChars.toIterator
+  def asciiChars: Iterator[Int] = visibleChars.iterator
   def asciiCharsAndHash(previousHash: Int): Iterator[(Int, Int)] =
-    visibleChars.toIterator.map(c => c -> (previousHash + c) * 31)
+    visibleChars.iterator.map(c => c -> (previousHash + c) * 31)
 
   /** Creates an iterator of Strings that all have hashCode == 0 */
   def zeroHashCodeIterator(): Iterator[String] =

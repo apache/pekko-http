@@ -86,7 +86,7 @@ trait WithLogCapturing extends SuiteMixin { this: TestSuite =>
       flushLog()
       res
     } else if (failOnSevereMessages && events.exists(isSevere)) {
-      val stats = events.groupBy(_.level).mapValues(_.size).toMap.withDefaultValue(0)
+      val stats = events.groupBy(_.level).view.mapValues(_.size).toMap.withDefaultValue(0)
       flushLog()
 
       Failed(new AssertionError(
@@ -96,7 +96,7 @@ trait WithLogCapturing extends SuiteMixin { this: TestSuite =>
       val severeEvents = events.filter(isSevere(_))
       val matchingEvents = severeEvents.filter(_.message.toString.contains(expectSevereLogsOnlyToMatch.get))
       if (severeEvents.isEmpty || matchingEvents != severeEvents) {
-        val stats = events.groupBy(_.level).mapValues(_.size).toMap.withDefaultValue(0)
+        val stats = events.groupBy(_.level).view.mapValues(_.size).toMap.withDefaultValue(0)
         flushLog()
 
         Failed(new AssertionError(

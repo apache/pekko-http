@@ -26,7 +26,7 @@ class DateTimeSpec extends AnyWordSpec with Matchers {
   val startClicks = DateTime(1800, 1, 1, 0, 0, 0).clicks
   val maxClickDelta = DateTime(2199, 12, 31, 23, 59, 59).clicks - startClicks
   val random = new Random()
-  val httpDateTimes = Stream.continually {
+  val httpDateTimes = LazyList.continually {
     DateTime(startClicks + math.abs(random.nextLong()) % maxClickDelta)
   }
 

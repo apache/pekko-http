@@ -385,7 +385,7 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
     }
 
     def strictEqualify[T](x: Either[T, HttpResponse]): Either[T, StrictEqualHttpResponse] =
-      x.right.map(new StrictEqualHttpResponse(_))
+      x.map(new StrictEqualHttpResponse(_))
 
     def parseTo(expected: HttpResponse*): Matcher[String] = parseTo(GET, expected: _*)
     def parseTo(requestMethod: HttpMethod, expected: HttpResponse*): Matcher[String] =
