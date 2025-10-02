@@ -20,18 +20,19 @@ import java.lang.{ StringBuilder => JStringBuilder }
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
+import pekko.http.impl.model.parser.HeaderParser
+import pekko.http.impl.model.parser.CharacterClasses._
+import pekko.http.impl.util._
+import pekko.http.impl.util.CharUtils.toLowerCase
+import pekko.http.impl.util.HttpConstants._
+import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
+import pekko.http.scaladsl.model.headers.{ EmptyHeader, RawHeader }
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.settings.ParserSettings.{
   ErrorLoggingVerbosity,
   IllegalResponseHeaderNameProcessingMode,
   IllegalResponseHeaderValueProcessingMode
 }
-import pekko.http.impl.util._
-import pekko.http.impl.util.HttpConstants._
-import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
-import pekko.http.scaladsl.model.headers.{ EmptyHeader, RawHeader }
-import pekko.http.impl.model.parser.HeaderParser
-import pekko.http.impl.model.parser.CharacterClasses._
 import pekko.util.ByteString
 
 import scala.annotation.tailrec
@@ -242,8 +243,8 @@ private[engine] final class HttpHeaderParser private (
   private def insert(input: ByteString, value: AnyRef)(cursor: Int = 0, endIx: Int = input.length, nodeIx: Int = 0,
       colonIx: Int = 0): Unit = {
     val char =
-      if (cursor < colonIx) toLowerCase((input(cursor) & 0xFF).toChar)
-      else if (cursor < endIx) (input(cursor) & 0xFF).toChar
+      if (cursor < colonIx) toLowerCase(byteChar(input, cursor))
+      else if (cursor < endIx) byteChar(input, cursor)
       else '\u0000'
     val node = nodes(nodeIx)
     if (char == node) insert(input, value)(cursor + 1, endIx, nodeIx + 1, colonIx) // fast match, descend into only subnode
@@ -290,7 +291,7 @@ private[engine] final class HttpHeaderParser private (
       endIx: Int = input.length, valueIx: Int = newValueIndex, colonIx: Int = 0): Unit = {
     val newNodeIx = newNodeIndex
     if (cursor < endIx) {
-      val c = (input(cursor) & 0xFF).toChar
+      val c = byteChar(input, cursor)
       val char = if (cursor < colonIx) toLowerCase(c) else c
       nodes(newNodeIx) = char
       insertRemainingCharsAsNewNodes(input, value)(cursor + 1, endIx, valueIx, colonIx)
@@ -682,11 +683,4 @@ private[http] object HttpHeaderParser {
     def withValueCountIncreased = copy(valueCount = valueCount + 1)
     def spaceLeft = valueCount < parser.maxValueCount
   }
-
-  /**
-   * Efficiently lower-cases the given character.
-   * Note: only works for 7-bit ASCII letters (which is enough for header names)
-   */
-  private[HttpHeaderParser] def toLowerCase(c: Char): Char =
-    if (c >= 'A' && c <= 'Z') (c + 0x20 /* - 'A' + 'a' */ ).toChar else c
 }
