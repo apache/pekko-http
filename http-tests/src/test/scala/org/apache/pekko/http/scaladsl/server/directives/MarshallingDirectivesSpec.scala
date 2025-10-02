@@ -256,8 +256,8 @@ class MarshallingDirectivesSpec extends RoutingSpec with Inside {
         rejection shouldEqual UnacceptedResponseContentTypeRejection(Set(ContentType(`application/json`)))
       }
     }
-    val acceptHeaderUtf = Accept.parseFromValueString("application/json;charset=utf8").right.get
-    val acceptHeaderNonUtf = Accept.parseFromValueString("application/json;charset=ISO-8859-1").right.get
+    val acceptHeaderUtf = Accept.parseFromValueString("application/json;charset=utf8").toOption.get
+    val acceptHeaderNonUtf = Accept.parseFromValueString("application/json;charset=ISO-8859-1").toOption.get
     "render JSON response when `Accept` header is present with the `charset` parameter ignoring it" in {
       Get().withHeaders(acceptHeaderUtf) ~> complete(foo) ~> check {
         responseEntity shouldEqual HttpEntity(`application/json`, foo.toJson.compactPrint)

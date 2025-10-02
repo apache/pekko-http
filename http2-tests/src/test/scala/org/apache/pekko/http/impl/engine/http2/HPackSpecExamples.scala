@@ -174,7 +174,7 @@ object HPackSpecExamples {
       302,
       headers = Vector(
         headers.`Cache-Control`(CacheDirectives.`private`()),
-        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:21 GMT").right.get,
+        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:21 GMT").toOption.get,
         headers.Location("https://www.example.com")),
       entity = HttpEntity.CloseDelimited(ContentTypes.NoContentType, Source.empty),
       protocol = HttpProtocols.`HTTP/2.0`)
@@ -187,7 +187,7 @@ object HPackSpecExamples {
       307,
       headers = Vector(
         headers.`Cache-Control`(CacheDirectives.`private`()),
-        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:21 GMT").right.get,
+        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:21 GMT").toOption.get,
         headers.Location("https://www.example.com")),
       entity = HttpEntity.CloseDelimited(ContentTypes.NoContentType, Source.empty),
       protocol = HttpProtocols.`HTTP/2.0`)
@@ -200,7 +200,7 @@ object HPackSpecExamples {
       200,
       headers = Vector(
         headers.`Cache-Control`(CacheDirectives.`private`()),
-        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:22 GMT").right.get,
+        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:22 GMT").toOption.get,
         headers.Location("https://www.example.com"),
         headers.`Content-Encoding`(HttpEncodings.gzip),
         // The RFC example spells 'max-age' in lowercase, while the modeled `Set-Cookie` header renders it uppercase.
