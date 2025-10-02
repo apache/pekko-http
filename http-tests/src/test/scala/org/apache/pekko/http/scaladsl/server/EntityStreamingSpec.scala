@@ -383,7 +383,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
         complete(r)
       }
 
-    val `Accept:application/example` = Accept(MediaRange(MediaType.parse("application/example").right.get))
+    val `Accept:application/example` = Accept(MediaRange(MediaType.parse("application/example").toOption.get))
     Get("/").addHeader(`Accept:application/example`) ~> eventsRoute ~> check {
       val res = responseAs[String]
 

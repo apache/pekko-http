@@ -341,7 +341,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         val manyChunks = (oneChunk * numChunks) + s"0${newLine}"
 
         val result = multiParse(newParser)(Seq(prep(start + manyChunks)))
-        val HttpEntity.Chunked(_, chunks) = result.head.right.get.req.entity
+        val HttpEntity.Chunked(_, chunks) = result.head.toOption.get.req.entity
         val strictChunks = chunks.limit(100000).runWith(Sink.seq).awaitResult(awaitAtMost)
         strictChunks.size shouldEqual numChunks
       }
@@ -766,7 +766,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
     }
 
     def strictEqualify[T](x: Either[T, HttpRequest]): Either[T, StrictEqualHttpRequest] =
-      x.right.map(new StrictEqualHttpRequest(_))
+      x.map(new StrictEqualHttpRequest(_))
 
     def parseTo(expected: HttpRequest*): Matcher[String] =
       multiParseTo(expected: _*).compose(_ :: Nil)

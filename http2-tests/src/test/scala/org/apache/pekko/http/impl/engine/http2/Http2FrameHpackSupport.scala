@@ -78,7 +78,7 @@ trait Http2FrameHpackSupport extends Http2FrameProbeDelegator with Http2FrameSen
         case ("content-length", value) if value.toLong == 0 => old.withEntity(HttpEntity.Empty)
         case ("content-length", value) =>
           old.withEntity(HttpEntity.Default(old.entity.contentType, value.toLong, Source.empty))
-        case ("content-type", value) => old.withEntity(old.entity.withContentType(ContentType.parse(value).right.get))
+        case ("content-type", value) => old.withEntity(old.entity.withContentType(ContentType.parse(value).toOption.get))
         case (name, value)           => old.addHeader(RawHeader(name, value)) // FIXME: decode to modeled headers
       })
 }
