@@ -92,8 +92,9 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
             }
           }
         }
+        val bis = ByteStringInputStream(payload)
         try {
-          decoder.decode(ByteStringInputStream(payload), Receiver)
+          decoder.decode(bis, Receiver)
           decoder.endHeaderBlock() // TODO: do we have to check the result here?
 
           push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo))
@@ -102,6 +103,8 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
             // this is signalled by the decoder when it failed, we want to react to this by rendering a GOAWAY frame
             fail(eventsOut,
               new Http2Compliance.Http2ProtocolException(ErrorCode.COMPRESSION_ERROR, "Decompression failed."))
+        } finally {
+          bis.close()
         }
       }
 
