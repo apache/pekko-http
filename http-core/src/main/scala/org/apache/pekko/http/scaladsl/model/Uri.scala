@@ -505,7 +505,8 @@ object Uri {
     def apply(byte1: Byte, byte2: Byte, byte3: Byte, byte4: Byte): IPv4Host = apply(Array(byte1, byte2, byte3, byte4))
     def apply(bytes: Array[Byte]): IPv4Host = apply(bytes, bytes.map(_ & 0xFF).mkString("."))
 
-    private[http] def apply(bytes: Array[Byte], address: String): IPv4Host = IPv4Host(immutable.ArraySeq.unsafeWrapArray(bytes), address)
+    private[http] def apply(bytes: Array[Byte], address: String): IPv4Host =
+      IPv4Host(immutable.ArraySeq.unsafeWrapArray(bytes), address)
   }
   final case class IPv6Host private (bytes: immutable.Seq[Byte], address: String) extends NonEmptyHost {
     require(bytes.length == 16, "bytes array must have length 16")
@@ -527,7 +528,8 @@ object Uri {
       require(bytes.length == 32, "`bytes` must be a 32 character hex string")
       apply(bytes.toCharArray.grouped(2).map(s => (hex(s(0)) * 16 + hex(s(1))).toByte).toArray, address)
     }
-    private[http] def apply(bytes: Array[Byte], address: String): IPv6Host = apply(immutable.ArraySeq.unsafeWrapArray(bytes), address)
+    private[http] def apply(bytes: Array[Byte], address: String): IPv6Host =
+      apply(immutable.ArraySeq.unsafeWrapArray(bytes), address)
   }
   final case class NamedHost(address: String) extends NonEmptyHost {
     def equalsIgnoreCase(other: Host): Boolean = other match {
