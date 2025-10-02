@@ -191,10 +191,16 @@ private[http2] object RequestParsing {
 
   private[http2] def parseHeaderPair(httpHeaderParser: HttpHeaderParser, name: String, value: String): HttpHeader = {
     import HttpHeader.ParsingResult
-    HttpHeader.parse(name, value, httpHeaderParser.settings) match {
-      case ParsingResult.Ok(header, errors) if errors.isEmpty => header
-      case ParsingResult.Ok(_, errors)                        => throw ParsingException(errors.head)
-      case ParsingResult.Error(info)                          => throw ParsingException(info)
+    if (name.startsWith(":")) {
+      val concHeaderLine = s"$name: $value\r\nx"
+      httpHeaderParser.parseHeaderLine(pekko.util.ByteString(concHeaderLine))()
+      httpHeaderParser.resultHeader
+    } else {
+      HttpHeader.parse(name, value, httpHeaderParser.settings) match {
+        case ParsingResult.Ok(header, errors) if errors.isEmpty => header
+        case ParsingResult.Ok(_, errors)                        => throw ParsingException(errors.head)
+        case ParsingResult.Error(info)                          => throw ParsingException(info)
+      }
     }
   }
 
