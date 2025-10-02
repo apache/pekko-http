@@ -23,13 +23,13 @@ import scala.collection.{ immutable, mutable }
 
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
-import org.parboiled2.{ CharPredicate, CharUtils, ParserInput }
 import pekko.http.ccompat.{ Builder, QuerySeqOptimized }
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.model.parser.UriParser
 import pekko.http.impl.model.parser.CharacterClasses._
 import pekko.http.impl.util._
 import Uri._
+import org.parboiled2.{ CharPredicate, CharUtils, ParserInput }
 
 /**
  * An immutable model of an internet URI as defined by https://tools.ietf.org/html/rfc3986.
@@ -506,7 +506,7 @@ object Uri {
     def apply(bytes: Array[Byte]): IPv4Host = apply(bytes, bytes.map(_ & 0xFF).mkString("."))
 
     private[http] def apply(bytes: Array[Byte], address: String): IPv4Host =
-      IPv4Host(immutable.ArraySeq.unsafeWrapArray(bytes), address)
+      IPv4Host(bytes.toSeq, address)
   }
   final case class IPv6Host private (bytes: immutable.Seq[Byte], address: String) extends NonEmptyHost {
     require(bytes.length == 16, "bytes array must have length 16")
@@ -526,10 +526,10 @@ object Uri {
     private[http] def apply(bytes: String, address: String): IPv6Host = {
       import CharUtils.{ hexValue => hex }
       require(bytes.length == 32, "`bytes` must be a 32 character hex string")
-      apply(bytes.toCharArray.grouped(2).map(s => (hex(s(0)) * 16 + hex(s(1))).toByte).toArray, address)
+      apply(bytes.toCharArray.grouped(2).map(s => (hex(s(0)) * 16 + hex(s(1))).toByte).toSeq, address)
     }
     private[http] def apply(bytes: Array[Byte], address: String): IPv6Host =
-      apply(immutable.ArraySeq.unsafeWrapArray(bytes), address)
+      apply(bytes.toSeq, address)
   }
   final case class NamedHost(address: String) extends NonEmptyHost {
     def equalsIgnoreCase(other: Host): Boolean = other match {
