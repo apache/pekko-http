@@ -89,8 +89,8 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
 
   def terminate(hardDeadline: java.time.Duration): CompletionStage[HttpTerminated] = {
     delegate.terminate(FiniteDuration.apply(hardDeadline.toMillis, TimeUnit.MILLISECONDS))
-      .map(_.asInstanceOf[HttpTerminated])(ExecutionContext.parasitic)
       .asJava
+      .asInstanceOf[CompletionStage[HttpTerminated]]
   }
 
   /**
@@ -120,8 +120,8 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
    */
   def whenTerminated: CompletionStage[HttpTerminated] =
     delegate.whenTerminated
-      .map(_.asInstanceOf[HttpTerminated])(ExecutionContext.parasitic)
       .asJava
+      .asInstanceOf[CompletionStage[HttpTerminated]]
 
   /**
    * Adds this `ServerBinding` to the actor system's coordinated shutdown, so that [[unbind]] and [[terminate]] get
