@@ -44,7 +44,7 @@ object Http2ServerTest extends App {
     pekko.actor.serialize-messages = off
     #pekko.actor.default-dispatcher.throughput = 1000
     pekko.actor.default-dispatcher.fork-join-executor.parallelism-max=8
-    pekko.http.server.preview.enable-http2 = true
+    pekko.http.server.enable-http2 = true
                                                    """)
   implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
   implicit val ec: ExecutionContext = system.dispatcher

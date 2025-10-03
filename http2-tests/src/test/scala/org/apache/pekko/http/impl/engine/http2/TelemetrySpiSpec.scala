@@ -68,7 +68,7 @@ class TelemetrySpiCypherSpec extends TelemetrySpiSpec(true)
 
 abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializer(
       """
-     pekko.http.server.preview.enable-http2 = on
+     pekko.http.server.enable-http2 = on
      pekko.actor.serialize-messages = false
      pekko.http.http2-telemetry-class = "org.apache.pekko.http.impl.engine.http2.TestTelemetryImpl"
   """) with ScalaFutures with BeforeAndAfterAll {

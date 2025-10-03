@@ -58,7 +58,7 @@ class ClientServerHttp2EnabledSpec extends ClientServerSpecBase(http2 = true)
 
 abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMaterializer(
       s"""
-     pekko.http.server.preview.enable-http2 = $http2
+     pekko.http.server.enable-http2 = $http2
      pekko.http.server.request-timeout = infinite
      pekko.http.server.log-unencrypted-network-bytes = 200
      pekko.http.client.log-unencrypted-network-bytes = 200
