@@ -60,6 +60,8 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   /**
    * Configures the Http extension to bind using HTTP/2 if given an
    * [[pekko.http.scaladsl.HttpsConnectionContext]]. Otherwise binds as plain HTTP.
+   *
+   * @since 1.3.0
    */
   def enableHttp2: Boolean
 
@@ -95,6 +97,10 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def withParsingErrorHandler(newValue: String): ServerSettings = self.copy(parsingErrorHandler = parsingErrorHandler)
   def withStreamCancellationDelay(newValue: FiniteDuration): ServerSettings =
     self.copy(streamCancellationDelay = newValue)
+
+  /**
+   * @since 1.3.0
+   */
   def withEnableHttp2(newValue: Boolean): ServerSettings = self.copy(enableHttp2 = newValue)
 }
 
