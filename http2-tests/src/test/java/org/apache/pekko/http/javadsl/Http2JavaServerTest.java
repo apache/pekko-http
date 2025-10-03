@@ -35,7 +35,7 @@ public class Http2JavaServerTest {
                 + "pekko.actor.serialize-messages = off\n"
                 + "#pekko.actor.default-dispatcher.throughput = 1000\n"
                 + "pekko.actor.default-dispatcher.fork-join-executor.parallelism-max=8\n"
-                + "pekko.http.server.preview.enable-http2 = on\n");
+                + "pekko.http.server.enable-http2 = on\n");
     ActorSystem system = ActorSystem.create("ServerTest", testConf);
 
     Function<HttpRequest, CompletionStage<HttpResponse>> handler =

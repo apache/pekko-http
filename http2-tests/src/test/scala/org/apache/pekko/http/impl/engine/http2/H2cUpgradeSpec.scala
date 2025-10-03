@@ -27,7 +27,7 @@ import pekko.stream.scaladsl.{ Source, Tcp }
 import pekko.util.ByteString
 
 class H2cUpgradeSpec extends PekkoSpecWithMaterializer("""
-    pekko.http.server.preview.enable-http2 = on
+    pekko.http.server.enable-http2 = on
     pekko.http.server.http2.log-frames = on
   """) {
 
