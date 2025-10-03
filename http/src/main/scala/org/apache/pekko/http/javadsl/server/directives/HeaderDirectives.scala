@@ -144,7 +144,7 @@ abstract class HeaderDirectives extends FutureDirectives {
    */
   def optionalHeaderValueByName(headerName: String, inner: jf.Function[Optional[String], Route]) = RouteAdapter {
     D.optionalHeaderValueByName(headerName) { value =>
-      inner.apply(value.asJava).delegate
+      inner.apply(value.toJava).delegate
     }
   }
 

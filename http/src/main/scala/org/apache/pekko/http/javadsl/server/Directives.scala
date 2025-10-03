@@ -15,7 +15,6 @@ package org.apache.pekko.http.javadsl.server
 
 import java.util.function.{ BiFunction, Function, Supplier }
 
-import scala.annotation.nowarn
 import scala.annotation.varargs
 
 import org.apache.pekko
@@ -36,7 +35,6 @@ object Directives extends AllDirectives {
 
   @Deprecated
   @varargs
-  @nowarn("msg=route in class RouteDirectives is deprecated")
   override def route(alternatives: Route*): Route =
     super.route(alternatives: _*)
 

@@ -16,13 +16,10 @@ package org.apache.pekko.http.scaladsl.coding
 import java.io.{ InputStream, OutputStream }
 import java.util.zip.{ GZIPInputStream, GZIPOutputStream, ZipException }
 
-import scala.annotation.nowarn
-
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.util.ByteString
 
-@nowarn("msg=deprecated .* is internal API")
 class GzipSpec extends CoderSpec {
   protected def Coder: Coder = Coders.Gzip(compressionLevel = 9)
 
