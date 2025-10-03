@@ -56,6 +56,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def getTerminationDeadlineExceededResponse: pekko.http.javadsl.model.HttpResponse
   def getParsingErrorHandler: String
   def getStreamCancellationDelay: FiniteDuration
+
   /**
    * Configures the Http extension to bind using HTTP/2 if given an
    * [[pekko.http.scaladsl.HttpsConnectionContext]]. Otherwise binds as plain HTTP.

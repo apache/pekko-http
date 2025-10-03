@@ -60,17 +60,19 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   def terminationDeadlineExceededResponse: HttpResponse
   def parsingErrorHandler: String
   def streamCancellationDelay: FiniteDuration
+
   /**
-    * @since 2.0.0
-    */
+   * @since 2.0.0
+   */
   def enableHttp2: Boolean
 
   /* Java APIs */
 
   override def getBacklog = this.backlog
+
   /**
-    * @deprecated the preview server settings are now integrated into the main server settings (since 2.0.0)
-    */
+   * @deprecated the preview server settings are now integrated into the main server settings (since 2.0.0)
+   */
   @Deprecated
   @deprecated("the preview server settings are now integrated into the main server settings", "2.0.0")
   override def getPreviewServerSettings: pekko.http.javadsl.settings.PreviewServerSettings = this.previewServerSettings

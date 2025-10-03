@@ -24,7 +24,7 @@ import com.typesafe.config.Config
  * Options that are in "preview" or "early access" mode.
  * These options may change and/or be removed within patch releases
  * without early notice (e.g. by moving them into a stable supported place).
- * 
+ *
  * @deprecated PreviewServerSettings is deprecated, use pekko.http.scaladsl.settings.ServerSettings instead (since 2.0.0)
  */
 @ApiMayChange @DoNotInherit
