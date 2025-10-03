@@ -34,7 +34,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
  */
 @DoNotInherit abstract class ServerSettings { self: ServerSettingsImpl =>
   def getServerHeader: Optional[Server]
-  @deprecated("the preview server settings are now integrated into the main server settings", "2.0.0")
+  @deprecated("the preview server settings are now integrated into the main server settings", "1.3.0")
   def getPreviewServerSettings: PreviewServerSettings
   def getTimeouts: ServerSettings.Timeouts
   def getMaxConnections: Int
@@ -67,7 +67,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
 
   def withServerHeader(newValue: Optional[Server]): ServerSettings =
     self.copy(serverHeader = newValue.toScala.map(_.asScala))
-  @deprecated("the preview server settings are now integrated into the main server settings", "2.0.0")
+  @deprecated("the preview server settings are now integrated into the main server settings", "1.3.0")
   def withPreviewServerSettings(newValue: PreviewServerSettings): ServerSettings =
     self.copy(previewServerSettings = newValue.asScala)
   def withTimeouts(newValue: ServerSettings.Timeouts): ServerSettings = self.copy(timeouts = newValue.asScala)

@@ -26,11 +26,11 @@ import com.typesafe.config.Config
  * These options may change and/or be removed within patch releases
  * without early notice (e.g. by moving them into a stable supported place).
  *
- * @deprecated PreviewServerSettings is deprecated, use pekko.http.javadsl.settings.ServerSettings instead (since 2.0.0)
+ * @deprecated PreviewServerSettings is deprecated, use pekko.http.javadsl.settings.ServerSettings instead (since 1.3.0)
  */
 @ApiMayChange @DoNotInherit
 @Deprecated
-@deprecated("PreviewServerSettings is deprecated, use pekko.http.javadsl.settings.ServerSettings instead", "2.0.0")
+@deprecated("PreviewServerSettings is deprecated, use pekko.http.javadsl.settings.ServerSettings instead", "1.3.0")
 abstract class PreviewServerSettings private[pekko] () { self: PreviewServerSettingsImpl =>
 
   /**
