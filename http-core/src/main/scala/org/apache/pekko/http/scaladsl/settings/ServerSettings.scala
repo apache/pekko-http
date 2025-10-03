@@ -62,6 +62,9 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   def streamCancellationDelay: FiniteDuration
 
   /**
+   * Configures the Http extension to bind using HTTP/2 if given an
+   * [[pekko.http.scaladsl.HttpsConnectionContext]]. Otherwise binds as plain HTTP.
+   *
    * @since 1.3.0
    */
   def enableHttp2: Boolean
