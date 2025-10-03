@@ -13,6 +13,7 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
+import com.typesafe.config.ConfigFactory
 import org.apache.pekko.testkit.PekkoSpec
 
 class ServerSettingsSpec extends PekkoSpec {
@@ -31,6 +32,38 @@ class ServerSettingsSpec extends PekkoSpec {
         serverSettings.withParserSettings(parserSettings)
       }
       e.getMessage should include("does not contain the server-specific settings")
+    }
+    "default enableHttp2 to false" in {
+      val serverSettings = ServerSettings(system)
+      serverSettings.enableHttp2 should ===(false)
+    }
+    "set enableHttp2 to true if preview.enable-http2 is on" in {
+      val cfg = ConfigFactory.parseString("""
+        pekko.http.server {
+          preview.enable-http2 = on
+        }
+      """).withFallback(system.settings.config)
+      val serverSettings = ServerSettings(cfg)
+      serverSettings.enableHttp2 should ===(true)
+    }
+    "set enableHttp2 to true if enable-http2 is on" in {
+      val cfg = ConfigFactory.parseString("""
+        pekko.http.server {
+          enable-http2 = on
+        }
+      """).withFallback(system.settings.config)
+      val serverSettings = ServerSettings(cfg)
+      serverSettings.enableHttp2 should ===(true)
+    }
+    "set enableHttp2 to true if enable-http2 is on and preview.enable-http2 is off" in {
+      val cfg = ConfigFactory.parseString("""
+        pekko.http.server {
+          enable-http2 = on
+          preview.enable-http2 = off
+        }
+      """).withFallback(system.settings.config)
+      val serverSettings = ServerSettings(cfg)
+      serverSettings.enableHttp2 should ===(true)
     }
   }
 }
