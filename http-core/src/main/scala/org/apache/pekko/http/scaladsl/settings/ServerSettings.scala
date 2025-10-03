@@ -60,10 +60,19 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   def terminationDeadlineExceededResponse: HttpResponse
   def parsingErrorHandler: String
   def streamCancellationDelay: FiniteDuration
+  /**
+    * @since 2.0.0
+    */
+  def enableHttp2: Boolean
 
   /* Java APIs */
 
   override def getBacklog = this.backlog
+  /**
+    * @deprecated the preview server settings are now integrated into the main server settings (since 2.0.0)
+    */
+  @Deprecated
+  @deprecated("the preview server settings are now integrated into the main server settings", "2.0.0")
   override def getPreviewServerSettings: pekko.http.javadsl.settings.PreviewServerSettings = this.previewServerSettings
   override def getDefaultHostHeader = this.defaultHostHeader.asJava
   override def getPipeliningLimit = this.pipeliningLimit
@@ -87,6 +96,11 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   // ---
 
   // override for more specific return type
+  /**
+   * @deprecated the preview server settings are now integrated into the main server settings (since 2.0.0)
+   */
+  @Deprecated
+  @deprecated("the preview server settings are now integrated into the main server settings", "2.0.0")
   def withPreviewServerSettings(newValue: PreviewServerSettings): ServerSettings =
     self.copy(previewServerSettings = newValue)
   override def withMaxConnections(newValue: Int): ServerSettings = self.copy(maxConnections = newValue)
@@ -110,6 +124,7 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   override def withParsingErrorHandler(newValue: String): ServerSettings = self.copy(parsingErrorHandler = newValue)
   override def withStreamCancellationDelay(newValue: FiniteDuration): ServerSettings =
     self.copy(streamCancellationDelay = newValue)
+  override def withEnableHttp2(newValue: Boolean): ServerSettings = self.copy(enableHttp2 = newValue)
 
   // overloads for Scala idiomatic use
   def withTimeouts(newValue: ServerSettings.Timeouts): ServerSettings = self.copy(timeouts = newValue)

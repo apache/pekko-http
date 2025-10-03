@@ -34,6 +34,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
  */
 @DoNotInherit abstract class ServerSettings { self: ServerSettingsImpl =>
   def getServerHeader: Optional[Server]
+  @deprecated("the preview server settings are now integrated into the main server settings", "2.0.0")
   def getPreviewServerSettings: PreviewServerSettings
   def getTimeouts: ServerSettings.Timeouts
   def getMaxConnections: Int
@@ -55,11 +56,17 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def getTerminationDeadlineExceededResponse: pekko.http.javadsl.model.HttpResponse
   def getParsingErrorHandler: String
   def getStreamCancellationDelay: FiniteDuration
+  /**
+   * Configures the Http extension to bind using HTTP/2 if given an
+   * [[pekko.http.scaladsl.HttpsConnectionContext]]. Otherwise binds as plain HTTP.
+   */
+  def enableHttp2: Boolean
 
   // ---
 
   def withServerHeader(newValue: Optional[Server]): ServerSettings =
     self.copy(serverHeader = newValue.toScala.map(_.asScala))
+  @deprecated("the preview server settings are now integrated into the main server settings", "2.0.0")
   def withPreviewServerSettings(newValue: PreviewServerSettings): ServerSettings =
     self.copy(previewServerSettings = newValue.asScala)
   def withTimeouts(newValue: ServerSettings.Timeouts): ServerSettings = self.copy(timeouts = newValue.asScala)
@@ -87,6 +94,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def withParsingErrorHandler(newValue: String): ServerSettings = self.copy(parsingErrorHandler = parsingErrorHandler)
   def withStreamCancellationDelay(newValue: FiniteDuration): ServerSettings =
     self.copy(streamCancellationDelay = newValue)
+  def withEnableHttp2(newValue: Boolean): ServerSettings = self.copy(enableHttp2 = newValue)
 }
 
 object ServerSettings extends SettingsCompanion[ServerSettings] {
