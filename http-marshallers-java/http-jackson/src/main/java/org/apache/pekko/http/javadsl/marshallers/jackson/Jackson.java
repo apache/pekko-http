@@ -37,9 +37,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
-/**
- * A JSON marshaller/unmarshaller using the Jackson library.
- */
+/** A JSON marshaller/unmarshaller using the Jackson library. */
 public class Jackson {
   private static final ObjectMapper defaultObjectMapper =
       createMapper().enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY);
