@@ -25,7 +25,6 @@ import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.scaladsl.Source
 import pekko.stream.stage._
 import pekko.util.ByteString
-import headers._
 import org.parboiled2.CharPredicate
 
 import scala.annotation.tailrec
@@ -360,11 +359,32 @@ private[http] object BodyPartParser {
 
     override def defineOnce(byteString: ByteString): EndOfLineConfiguration = {
       // Hypothesis: There is either CRLF or LF as EOL, no mix possible
-      val crLfNeedle = ByteString(s"$boundary\r\n")
-      val lfNeedle = ByteString(s"$boundary\n")
-      if (byteString.containsSlice(crLfNeedle)) DefinedEndOfLineConfiguration("\r\n", boundary)
-      else if (byteString.containsSlice(lfNeedle)) DefinedEndOfLineConfiguration("\n", boundary)
-      else this
+      checkForBoundary(byteString) match {
+        case CR_BYTE => DefinedEndOfLineConfiguration("\r\n", boundary)
+        case LF_BYTE => DefinedEndOfLineConfiguration("\n", boundary)
+        case _       => this
+      }
+    }
+
+    // returns CR for CRLF, LF for LF, 0 otherwise
+    private def checkForBoundary(byteString: ByteString): Byte = {
+      val check = ByteString(boundary)
+      @tailrec def findBoundary(offset: Int): Byte = {
+        val index = byteString.indexOfSlice(check, offset)
+        if (index != -1) {
+          val newIndex = index + boundary.length
+          byteAt(byteString, newIndex) match {
+            case CR_BYTE =>
+              if (byteAt(byteString, newIndex + 1) == LF_BYTE) CR_BYTE else findBoundary(index + 1)
+            case LF_BYTE => LF_BYTE
+            case _       => findBoundary(index + 1)
+          }
+        } else 0
+      }
+      try findBoundary(0)
+      catch {
+        case NotEnoughDataException => 0
+      }
     }
   }
 }
