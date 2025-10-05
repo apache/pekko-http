@@ -18,6 +18,7 @@ package sse
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.util.HttpConstants
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.util.ByteString
@@ -26,8 +27,8 @@ import scala.annotation.tailrec
 /** INTERNAL API */
 @InternalApi
 private object LineParser {
-  val CR = '\r'.toByte
-  val LF = '\n'.toByte
+  val CR = HttpConstants.CR_BYTE
+  val LF = HttpConstants.LF_BYTE
 }
 
 /** INTERNAL API */

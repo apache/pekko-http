@@ -15,21 +15,23 @@ package org.apache.pekko.http.impl.engine.parsing
 
 import javax.net.ssl.SSLSession
 
-import org.apache.pekko
-import pekko.stream.TLSProtocol._
-
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
+
 import org.parboiled2.CharUtils
-import pekko.util.ByteString
+
+import org.apache.pekko
+import pekko.annotation.InternalApi
 import pekko.http.impl.model.parser.CharacterClasses
-import pekko.http.scaladsl.settings.ParserSettings
+import pekko.http.impl.util.HttpConstants._
 import pekko.http.scaladsl.model.{ ParsingException => _, _ }
 import headers._
 import HttpProtocols._
 import ParserOutput._
-import pekko.annotation.InternalApi
+import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.settings.ParserSettings.ConflictingContentTypeHeaderProcessingMode
+import pekko.stream.TLSProtocol._
+import pekko.util.ByteString
 
 /**
  * INTERNAL API
@@ -288,20 +290,20 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
           emit(EntityChunk(HttpEntity.Chunk(input.slice(cursor, chunkBodyEnd).compact, extension)))
           Trampoline(_ => parseChunk(input, chunkBodyEnd + terminatorLen, isLastMessage, totalBytesRead + chunkSize))
         }
-        byteChar(input, chunkBodyEnd) match {
-          case '\r' if byteChar(input, chunkBodyEnd + 1) == '\n' => result(2)
-          case '\n'                                              => result(1)
-          case x                                                 => failEntityStream("Illegal chunk termination")
+        byteAt(input, chunkBodyEnd) match {
+          case CR_BYTE if byteAt(input, chunkBodyEnd + 1) == LF_BYTE => result(2)
+          case LF_BYTE                                               => result(1)
+          case x                                                     => failEntityStream("Illegal chunk termination")
         }
       } else parseTrailer(extension, cursor)
 
     @tailrec def parseChunkExtensions(chunkSize: Int, cursor: Int)(startIx: Int = cursor): StateResult =
       if (cursor - startIx <= settings.maxChunkExtLength) {
         def extension = asciiString(input, startIx, cursor)
-        byteChar(input, cursor) match {
-          case '\r' if byteChar(input, cursor + 1) == '\n' => parseChunkBody(chunkSize, extension, cursor + 2)
-          case '\n'                                        => parseChunkBody(chunkSize, extension, cursor + 1)
-          case _                                           => parseChunkExtensions(chunkSize, cursor + 1)(startIx)
+        byteAt(input, cursor) match {
+          case CR_BYTE if byteAt(input, cursor + 1) == LF_BYTE => parseChunkBody(chunkSize, extension, cursor + 2)
+          case LF_BYTE                                         => parseChunkBody(chunkSize, extension, cursor + 1)
+          case _                                               => parseChunkExtensions(chunkSize, cursor + 1)(startIx)
         }
       } else failEntityStream(
         s"HTTP chunk extension length exceeds configured limit of ${settings.maxChunkExtLength} characters")
@@ -314,7 +316,7 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
             failEntityStream(
               s"HTTP chunk of $size bytes exceeds the configured limit of ${settings.maxChunkSize} bytes")
           case ';' if cursor > offset => parseChunkExtensions(size.toInt, cursor + 1)()
-          case '\r' if cursor > offset && byteChar(input, cursor + 1) == '\n' =>
+          case '\r' if cursor > offset && byteAt(input, cursor + 1) == LF_BYTE =>
             parseChunkBody(size.toInt, "", cursor + 2)
           case '\n' if cursor > offset      => parseChunkBody(size.toInt, "", cursor + 1)
           case c if CharacterClasses.WSP(c) => parseSize(cursor + 1, size) // illegal according to the spec but can happen, see issue #1812
