@@ -242,8 +242,8 @@ private[engine] final class HttpHeaderParser private (
   private def insert(input: ByteString, value: AnyRef)(cursor: Int = 0, endIx: Int = input.length, nodeIx: Int = 0,
       colonIx: Int = 0): Unit = {
     val char =
-      if (cursor < colonIx) toLowerCase((input(cursor) & 0xFF).toChar)
-      else if (cursor < endIx) (input(cursor) & 0xFF).toChar
+      if (cursor < colonIx) toLowerCase(byteChar(input, cursor))
+      else if (cursor < endIx) byteChar(input, cursor)
       else '\u0000'
     val node = nodes(nodeIx)
     if (char == node) insert(input, value)(cursor + 1, endIx, nodeIx + 1, colonIx) // fast match, descend into only subnode
@@ -290,7 +290,7 @@ private[engine] final class HttpHeaderParser private (
       endIx: Int = input.length, valueIx: Int = newValueIndex, colonIx: Int = 0): Unit = {
     val newNodeIx = newNodeIndex
     if (cursor < endIx) {
-      val c = (input(cursor) & 0xFF).toChar
+      val c = byteChar(input, cursor)
       val char = if (cursor < colonIx) toLowerCase(c) else c
       nodes(newNodeIx) = char
       insertRemainingCharsAsNewNodes(input, value)(cursor + 1, endIx, valueIx, colonIx)
