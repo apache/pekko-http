@@ -36,6 +36,13 @@ package object parsing {
     case x                              => x.toString
   }
 
+  /**
+   * Like `byteChar` but doesn't throw `NotEnoughDataException` if the index is out of bounds.
+   * Used in places where we know that the index is valid because we checked the length beforehand.
+   */
+  private[http] inline def safeByteChar(input: ByteString, ix: Int): Char =
+    (input(ix) & 0xFF).toChar
+
   private[http] inline def byteChar(input: ByteString, ix: Int): Char = (byteAt(input, ix) & 0xFF).toChar
 
   private[http] inline def byteAt(input: ByteString, ix: Int): Byte =

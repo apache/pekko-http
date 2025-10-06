@@ -28,6 +28,7 @@ import scala.annotation.tailrec
  */
 package object parsing {
 
+  @inline
   private[http] def escape(c: Char): String = c match {
     case '\t'                           => "\\t"
     case '\r'                           => "\\r"
@@ -35,6 +36,14 @@ package object parsing {
     case x if Character.isISOControl(x) => "\\u%04x".format(c.toInt)
     case x                              => x.toString
   }
+
+  /**
+   * Like `byteChar` but doesn't throw `NotEnoughDataException` if the index is out of bounds.
+   * Used in places where we know that the index is valid because we checked the length beforehand.
+   */
+  @inline
+  private[http] def safeByteChar(input: ByteString, ix: Int): Char =
+    (input(ix) & 0xFF).toChar
 
   @inline
   private[http] def byteChar(input: ByteString, ix: Int): Char = (byteAt(input, ix) & 0xFF).toChar
