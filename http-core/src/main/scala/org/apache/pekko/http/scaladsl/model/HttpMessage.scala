@@ -13,31 +13,29 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import org.apache.pekko
-import pekko.stream.scaladsl.Flow
-import pekko.stream.{ FlowShape, Graph, Materializer, SystemMaterializer }
 import java.io.File
 import java.nio.file.Path
 import java.lang.{ Iterable => JIterable }
 import java.util.Optional
 import java.util.concurrent.{ CompletionStage, Executor }
 
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.annotation.tailrec
 import scala.collection.immutable
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.duration._
+import scala.jdk.FutureConverters._
 import scala.reflect.{ classTag, ClassTag }
+
+import org.apache.pekko
 import pekko.Done
 import pekko.actor.ClassicActorSystemProvider
-import org.parboiled2.CharUtils
 import pekko.util.{ ByteString, HashCode, OptionVal }
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.scaladsl.model.headers._
-
-import scala.annotation.tailrec
-import scala.concurrent.duration._
-import scala.jdk.FutureConverters._
+import pekko.stream.scaladsl.Flow
+import pekko.stream.{ FlowShape, Graph, Materializer, SystemMaterializer }
 
 /**
  * Common base class of HttpRequest and HttpResponse.
