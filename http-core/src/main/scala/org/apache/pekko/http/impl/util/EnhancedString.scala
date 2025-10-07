@@ -46,26 +46,6 @@ private[http] class EnhancedString(val underlying: String) extends AnyVal {
   }
 
   /**
-   * Lazily splits the underlying string into the segments that are delimited by the given character.
-   * Only the segments that are actually accessed are computed.
-   * The delimiter itself is never a part of any segment. If the string does not contain the
-   * delimiter the result is a single-element stream containing only the underlying string.
-   * Note that this implementation differs from the original String.split(...) method in that
-   * leading and trailing delimiters are NOT ignored, i.e. they trigger the inclusion of an
-   * empty leading or trailing empty string (respectively).
-   */
-  def lazySplit(delimiter: Char): LazyList[String] = {
-    def split(start: Int = 0): LazyList[String] = {
-      val ix = underlying.indexOf(delimiter, start)
-      if (ix < 0)
-        LazyList.cons(underlying.substring(start), LazyList.empty[String])
-      else
-        LazyList.cons(underlying.substring(start, ix), split(ix + 1))
-    }
-    split()
-  }
-
-  /**
    * Returns Some(String) if the underlying string is non-empty, None otherwise
    */
   def toOption: Option[String] =
