@@ -19,6 +19,7 @@ import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.RequestParsing._
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.server.HttpAttributes
+import pekko.http.impl.util._
 import pekko.http.scaladsl.model
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.`Tls-Session-Info`
@@ -102,7 +103,7 @@ private[http2] object ResponseParsing {
             rec(remainingHeaders.tail, status, contentType, contentLengthValue, seenRegularHeader, headers)
           } else malformedRequest("HTTP message must not contain more than one content-length header")
 
-        case (name, _) if name.startsWith(":") =>
+        case (name, _) if name.startsWith(':') =>
           malformedRequest(s"Unexpected pseudo-header '$name' in response")
 
         case (_, httpHeader: HttpHeader) =>

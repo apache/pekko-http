@@ -107,7 +107,7 @@ trait FileAndResourceDirectives {
    */
   def getFromResource(
       resourceName: String, contentType: ContentType, classLoader: ClassLoader = _defaultClassLoader): Route =
-    if (!resourceName.endsWith("/"))
+    if (!resourceName.endsWith('/'))
       get {
         Option(classLoader.getResource(resourceName)).flatMap(ResourceFile.apply) match {
           case Some(ResourceFile(url, length, lastModified)) =>
@@ -222,7 +222,7 @@ object FileAndResourceDirectives extends FileAndResourceDirectives {
     RangeDirectives.withRangeSupport &
     CodingDirectives.withPrecompressedMediaTypeSupport
 
-  private def withTrailingSlash(path: String): String = if (path.endsWith("/")) path else path + '/'
+  private def withTrailingSlash(path: String): String = if (path.endsWith('/')) path else path + '/'
 
   /**
    * Given a base directory and a (Uri) path, returns a path to a location contained in the base directory,

@@ -472,7 +472,7 @@ final case class `Content-Disposition`(dispositionType: ContentDispositionType, 
       case (k, v) if k == "filename" =>
         r ~~ "; " ~~ k ~~ '=' ~~ '"'
         r.putReplaced(v, keep = safeChars, placeholder = '?') ~~ '"'
-      case (k, v) if k.endsWith("*") =>
+      case (k, v) if k.endsWith('*') =>
         r ~~ "; " ~~ k ~~ '=' ~~ "UTF-8''"
         UriRendering.encode(r, v, UTF8, keep = `attr-char`, replaceSpaces = false)
       case (k, v) => r ~~ "; " ~~ k ~~ '=' ~~#! v

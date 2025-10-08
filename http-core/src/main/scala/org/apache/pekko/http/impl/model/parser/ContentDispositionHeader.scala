@@ -16,13 +16,12 @@ package org.apache.pekko.http.impl.model.parser
 import scala.collection.immutable.TreeMap
 
 import org.apache.pekko
-import org.parboiled2.Parser
 import pekko.http.scaladsl.model.headers._
-import pekko.http.impl.util.ISO88591
-import pekko.http.impl.util.UTF8
+import pekko.http.impl.util._
 import pekko.http.impl.model.parser.CharacterClasses.`attr-char`
 import pekko.http.impl.model.parser.CharacterClasses.HEXDIG
 import pekko.http.scaladsl.model.Uri
+import org.parboiled2.Parser
 
 import java.nio.charset.Charset
 
@@ -58,7 +57,7 @@ private[parser] trait ContentDispositionHeader { this: Parser with CommonRules w
     | `ext-token` ~ ws('=') ~ `ext-value`)
 
   def `ext-token` = rule { // token which ends with '*'
-    token ~> (s => test(s.endsWith("*")) ~ push(s))
+    token ~> (s => test(s.endsWith('*')) ~ push(s))
   }
 
   // https://tools.ietf.org/html/rfc5987#section-3.2.1
