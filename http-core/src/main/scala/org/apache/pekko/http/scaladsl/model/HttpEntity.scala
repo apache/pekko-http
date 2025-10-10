@@ -648,7 +648,7 @@ object HttpEntity {
 
         @nowarn("msg=deprecated") // Attributes.getFirst is deprecated, but we need to use it here
         override def preStart(): Unit = {
-          _attributes.getFirst[SizeLimit] match {
+          _attributes.get[SizeLimit] match {
             case Some(limit: SizeLimit) if limit.isDisabled =>
             // "no limit"
             case Some(SizeLimit(bytes, cl @ Some(contentLength))) =>
