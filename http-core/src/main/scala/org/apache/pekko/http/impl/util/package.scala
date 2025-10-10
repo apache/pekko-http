@@ -126,46 +126,43 @@ package util {
 
     override val shape = FlowShape(byteStringIn, httpEntityOut)
 
-    override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new TimerGraphStageLogic(shape) {
-      val bytes = ByteString.newBuilder
-      private var emptyStream = false
+    override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+      new TimerGraphStageLogic(shape) with InHandler with OutHandler {
+        private val bytes = ByteString.newBuilder
+        private var emptyStream = false
 
-      override def preStart(): Unit = scheduleOnce("ToStrictTimeoutTimer", timeout)
+        override def preStart(): Unit = scheduleOnce("ToStrictTimeoutTimer", timeout)
 
-      setHandler(httpEntityOut,
-        new OutHandler {
-          override def onPull(): Unit = {
-            if (emptyStream) {
-              push(httpEntityOut, HttpEntity.Strict(contentType, ByteString.empty))
-              completeStage()
-            } else pull(byteStringIn)
+        override def onPull(): Unit = {
+          if (emptyStream) {
+            push(httpEntityOut, HttpEntity.Strict(contentType, ByteString.empty))
+            completeStage()
+          } else pull(byteStringIn)
+        }
+
+        override def onPush(): Unit = {
+          bytes ++= grab(byteStringIn)
+          maxBytes match {
+            case Some(max) if bytes.length > max =>
+              failStage(new EntityStreamException(new ErrorInfo("Request too large",
+                s"Request was longer than the maximum of $max")))
+            case _ =>
+              pull(byteStringIn)
           }
-        })
+        }
+        override def onUpstreamFinish(): Unit = {
+          if (isAvailable(httpEntityOut)) {
+            push(httpEntityOut, HttpEntity.Strict(contentType, bytes.result()))
+            completeStage()
+          } else emptyStream = true
+        }
 
-      setHandler(byteStringIn,
-        new InHandler {
-          override def onPush(): Unit = {
-            bytes ++= grab(byteStringIn)
-            maxBytes match {
-              case Some(max) if bytes.length > max =>
-                failStage(new EntityStreamException(new ErrorInfo("Request too large",
-                  s"Request was longer than the maximum of $max")))
-              case _ =>
-                pull(byteStringIn)
-            }
-          }
-          override def onUpstreamFinish(): Unit = {
-            if (isAvailable(httpEntityOut)) {
-              push(httpEntityOut, HttpEntity.Strict(contentType, bytes.result()))
-              completeStage()
-            } else emptyStream = true
-          }
-        })
+        setHandlers(byteStringIn, httpEntityOut, this)
 
-      override def onTimer(key: Any): Unit =
-        failStage(new java.util.concurrent.TimeoutException(
-          s"HttpEntity.toStrict timed out after $timeout while still waiting for outstanding data"))
-    }
+        override def onTimer(key: Any): Unit =
+          failStage(new java.util.concurrent.TimeoutException(
+            s"HttpEntity.toStrict timed out after $timeout while still waiting for outstanding data"))
+      }
 
     override def toString = "ToStrict"
   }
