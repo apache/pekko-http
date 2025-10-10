@@ -32,52 +32,52 @@ private[http] final class FrameEventRenderer extends GraphStage[FlowShape[FrameE
   val out = Outlet[ByteString]("FrameEventRenderer.out")
   override val shape = FlowShape(in, out)
 
-  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+    new GraphStageLogic(shape) with OutHandler {
 
-    val Initial = new InHandler {
-      override def onPush(): Unit = grab(in) match {
-        case start @ FrameStart(header, data) =>
-          require(header.length >= data.size)
-          if (!start.lastPart && header.length > 0)
-            setHandler(in, renderData(header.length - data.length, this))
+      val Initial = new InHandler {
+        override def onPush(): Unit = grab(in) match {
+          case start @ FrameStart(header, data) =>
+            require(header.length >= data.size)
+            if (!start.lastPart && header.length > 0)
+              setHandler(in, renderData(header.length - data.length, this))
 
-          push(out, renderStart(start))
+            push(out, renderStart(start))
 
-        case f: FrameData =>
-          fail(out, new IllegalStateException("unexpected FrameData (need FrameStart first)"))
-      }
-    }
-
-    def renderData(initialRemaining: Long, nextState: InHandler): InHandler =
-      new InHandler {
-        var remaining: Long = initialRemaining
-
-        override def onPush(): Unit = {
-          grab(in) match {
-            case FrameData(data, lastPart) =>
-              if (data.size > remaining)
-                throw new IllegalStateException(s"Expected $remaining frame bytes but got ${data.size}")
-              else if (data.size == remaining) {
-                if (!lastPart) throw new IllegalStateException(s"Frame data complete but `lastPart` flag not set")
-                setHandler(in, nextState)
-                push(out, data)
-              } else {
-                remaining -= data.size
-                push(out, data)
-              }
-
-            case f: FrameStart =>
-              fail(out, new IllegalStateException("unexpected FrameStart (need more FrameData first)"))
-          }
+          case _: FrameData =>
+            fail(out, new IllegalStateException("unexpected FrameData (need FrameStart first)"))
         }
       }
 
-    setHandler(in, Initial)
-    setHandler(out,
-      new OutHandler {
-        override def onPull(): Unit = pull(in)
-      })
-  }
+      def renderData(initialRemaining: Long, nextState: InHandler): InHandler =
+        new InHandler {
+          var remaining: Long = initialRemaining
+
+          override def onPush(): Unit = {
+            grab(in) match {
+              case FrameData(data, lastPart) =>
+                if (data.size > remaining)
+                  throw new IllegalStateException(s"Expected $remaining frame bytes but got ${data.size}")
+                else if (data.size == remaining) {
+                  if (!lastPart) throw new IllegalStateException(s"Frame data complete but `lastPart` flag not set")
+                  setHandler(in, nextState)
+                  push(out, data)
+                } else {
+                  remaining -= data.size
+                  push(out, data)
+                }
+
+              case f: FrameStart =>
+                fail(out, new IllegalStateException("unexpected FrameStart (need more FrameData first)"))
+            }
+          }
+        }
+
+      override def onPull(): Unit = pull(in)
+
+      setHandler(in, Initial)
+      setHandler(out, this)
+    }
 
   private def renderStart(start: FrameStart): ByteString = renderHeader(start.header) ++ start.data
 
