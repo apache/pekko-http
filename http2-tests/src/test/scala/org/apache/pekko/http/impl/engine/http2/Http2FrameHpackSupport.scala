@@ -16,7 +16,6 @@ package org.apache.pekko.http.impl.engine.http2
 import scala.collection.immutable.VectorBuilder
 
 import org.apache.pekko
-import pekko.http.impl.engine.http2.hpack.ByteStringInputStream
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.RawHeader
 import pekko.http.shaded.com.twitter.hpack._
