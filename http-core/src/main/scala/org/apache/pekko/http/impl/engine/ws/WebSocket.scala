@@ -225,24 +225,25 @@ private[http] object WebSocket {
 
     val shape = new FanOutShape2(outputIn, bypassOut, messageOut)
 
-    def createLogic(effectiveAttributes: Attributes) =
-      new GraphStageLogic(shape) with InHandler {
+    def createLogic(effectiveAttributes: Attributes) = new GraphStageLogic(shape) with InHandler {
 
-        override def onPush(): Unit = {
-          grab(outputIn) match {
-            case b: BypassEvent with MessagePart => emit(bypassOut, b, () => emit(messageOut, b, pullIn))
-            case b: BypassEvent                  => emit(bypassOut, b, pullIn)
-            case m: MessagePart                  => emit(messageOut, m, pullIn)
-          }
+      override def onPush(): Unit = {
+        grab(outputIn) match {
+          case b: BypassEvent with MessagePart => emit(bypassOut, b, () => emit(messageOut, b, pullIn))
+          case b: BypassEvent                  => emit(bypassOut, b, pullIn)
+          case m: MessagePart                  => emit(messageOut, m, pullIn)
         }
-
-        setHandler(outputIn, this)
-
-        setHandler(bypassOut, eagerTerminateOutput)
-        setHandler(messageOut, ignoreTerminateOutput)
-
-        override def preStart(): Unit = tryPull(outputIn)
       }
+
+      val pullIn = () => tryPull(outputIn)
+
+      setHandler(outputIn, this)
+
+      setHandler(bypassOut, eagerTerminateOutput)
+      setHandler(messageOut, ignoreTerminateOutput)
+
+      override def preStart(): Unit = tryPull(outputIn)
+    }
   }
 
   private case object BypassMerge extends GraphStage[FanInShape3[BypassEvent, AnyRef, Tick.type, AnyRef]] {
