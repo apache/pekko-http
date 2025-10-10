@@ -4,14 +4,12 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
  * Copyright (C) 2017-2020 Lightbend Inc. <https://www.lightbend.com>
  */
-
-package org.apache.pekko
 
 import sbt._
 import sbt.Keys._
@@ -46,7 +44,7 @@ object VersionGenerator {
 
   def generateVersion(dir: SettingKey[File], locate: File => File, template: String) = Def.task[Seq[File]] {
     val file = locate(dir.value)
-    val content = template.stripMargin.format(version.value, PekkoDependency.minimumExpectedPekkoVersion)
+    val content = template.stripMargin.format(version.value, PekkoCoreDependency.minVersion)
     if (!file.exists || IO.read(file) != content) IO.write(file, content)
     Seq(file)
   }

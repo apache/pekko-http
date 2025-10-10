@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,7 +17,6 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpMethods._
-import pekko.stream.ActorMaterializer
 import com.typesafe.config.{ Config, ConfigFactory }
 import scala.concurrent.duration._
 import scala.concurrent.Await
@@ -34,8 +33,7 @@ class ClientSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
     windows-connection-abort-workaround-enabled = auto
     pekko.log-dead-letters = OFF
     pekko.http.server.request-timeout = infinite""")
-  implicit val system = ActorSystem(getClass.getSimpleName, testConf)
-  implicit val materializer = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
 
   override def afterAll() = TestKit.shutdownActorSystem(system)
 

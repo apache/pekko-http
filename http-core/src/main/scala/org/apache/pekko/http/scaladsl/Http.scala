@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,11 +16,12 @@ package org.apache.pekko.http.scaladsl
 import java.net.InetSocketAddress
 import java.util.concurrent.CompletionStage
 import javax.net.ssl._
+
+import com.typesafe.config.Config
 import org.apache.pekko
 import pekko.actor._
 import pekko.annotation.{ DoNotInherit, InternalApi, InternalStableApi }
-import pekko.dispatch.ExecutionContexts
-import pekko.event.{ Logging, LoggingAdapter }
+import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.HttpConnectionIdleTimeoutBidi
 import pekko.http.impl.engine.client._
 import pekko.http.impl.engine.http2.Http2
@@ -45,29 +46,20 @@ import pekko.stream.scaladsl._
 import pekko.util.ByteString
 import pekko.util.ManifestInfo
 
-import scala.annotation.nowarn
-import com.typesafe.config.Config
-import com.typesafe.sslconfig.pekko._
-import com.typesafe.sslconfig.pekko.util.PekkoLoggerFactory
-import com.typesafe.sslconfig.ssl.ConfigSSLContextBuilder
-
 import scala.concurrent._
+import scala.concurrent.duration._
+import scala.jdk.FutureConverters._
 import scala.util.{ Success, Try }
 import scala.util.control.NonFatal
-import scala.compat.java8.FutureConverters._
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.concurrent.duration._
 
 /**
- * Akka extension for HTTP which serves as the main entry point into pekko-http.
+ * Pekko extension for HTTP which serves as the main entry point into pekko-http.
  *
  * Use as `Http().bindAndHandle` etc. with an implicit [[ActorSystem]] in scope.
  */
-@nowarn("msg=DefaultSSLContextCreation in package scaladsl is deprecated")
 @DoNotInherit
 class HttpExt @InternalStableApi /* constructor signature is hardcoded in Telemetry */ private[http] (
-    private val config: Config)(implicit val system: ExtendedActorSystem) extends pekko.actor.Extension
-    with DefaultSSLContextCreation {
+    private val config: Config)(implicit val system: ExtendedActorSystem) extends pekko.actor.Extension {
 
   pekko.http.Version.check(system.settings.config)
   pekko.PekkoVersion.require("pekko-http", pekko.http.Version.supportedPekkoVersion)
@@ -79,13 +71,14 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     "pekko-http",
     "pekko-http-caching",
     "pekko-http-testkit",
+    "pekko-http-testkit-munit",
     "pekko-http-marshallers-scala",
     "pekko-http-marshallers-java",
     "pekko-http-spray-json",
     "pekko-http-xml",
     "pekko-http-jackson")
 
-  ManifestInfo(system).checkSameVersion("Akka HTTP", allModules, logWarning = true)
+  ManifestInfo(system).checkSameVersion("Pekko HTTP", allModules, logWarning = true)
 
   import Http._
 
@@ -94,11 +87,8 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   // configured default HttpsContext for the client-side
   // SYNCHRONIZED ACCESS ONLY!
   private[this] var _defaultClientHttpsConnectionContext: HttpsConnectionContext = _
-  private[this] var _defaultServerConnectionContext: ConnectionContext = _
 
   // ** SERVER ** //
-
-  private[this] final val DefaultPortForProtocol = -1 // any negative value
 
   // Date header rendering is shared across the system, so that date is only rendered once a second
   private[http] val dateHeaderRendering = DateHeaderRendering()
@@ -136,20 +126,20 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
         .watchTermination() { (termWatchBefore, termWatchAfter) =>
           // flag termination when the user handler has gotten (or has emitted) termination
           // signals in both directions
-          termWatchBefore.flatMap(_ => termWatchAfter)(ExecutionContexts.sameThreadExecutionContext)
+          termWatchBefore.flatMap(_ => termWatchAfter)(ExecutionContext.parasitic)
         }
         .joinMat(baseFlow)(Keep.both))
 
   private def tcpBind(interface: String, port: Int, settings: ServerSettings)
       : Source[Tcp.IncomingConnection, Future[Tcp.ServerBinding]] =
-    Tcp()
+    Tcp(system)
       .bind(
         interface,
         port,
         settings.backlog,
         settings.socketOptions,
         halfClose = false,
-        idleTimeout = Duration.Inf // we knowingly disable idle-timeout on TCP level, as we handle it explicitly in Akka HTTP itself
+        idleTimeout = Duration.Inf // we knowingly disable idle-timeout on TCP level, as we handle it explicitly in Pekko HTTP itself
       )
 
   private def choosePort(port: Int, connectionContext: ConnectionContext, settings: ServerSettings) =
@@ -186,14 +176,10 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * To configure additional settings for a server started using this method,
    * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    */
-  @deprecated(
-    "Use Http().newServerAt(...)...connectionSource() to create a source that can be materialized to a binding.",
-    since = "10.2.0")
-  @nowarn("msg=deprecated")
-  def bind(interface: String, port: Int = DefaultPortForProtocol,
-      connectionContext: ConnectionContext = defaultServerHttpContext,
-      settings: ServerSettings = ServerSettings(system),
-      log: LoggingAdapter = system.log): Source[Http.IncomingConnection, Future[ServerBinding]] = {
+  private[http] def bindImpl(interface: String, port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      log: LoggingAdapter): Source[Http.IncomingConnection, Future[ServerBinding]] = {
     if (settings.previewServerSettings.enableHttp2)
       log.warning(
         s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port]")
@@ -218,14 +204,6 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       }
   }
 
-  // forwarder to allow internal code to call deprecated method without warning
-  @nowarn("msg=deprecated")
-  private[http] def bindImpl(interface: String, port: Int,
-      connectionContext: ConnectionContext,
-      settings: ServerSettings,
-      log: LoggingAdapter): Source[Http.IncomingConnection, Future[ServerBinding]] =
-    bind(interface, port, connectionContext, settings, log)
-
   /**
    * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
    * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
@@ -237,14 +215,12 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * To configure additional settings for a server started using this method,
    * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
    */
-  @deprecated("Use Http().newServerAt(...)...bindFlow() to create server bindings.", since = "10.2.0")
-  @nowarn("msg=deprecated")
-  def bindAndHandle(
+  private[http] def bindAndHandleImpl(
       handler: Flow[HttpRequest, HttpResponse, Any],
-      interface: String, port: Int = DefaultPortForProtocol,
-      connectionContext: ConnectionContext = defaultServerHttpContext,
-      settings: ServerSettings = ServerSettings(system),
-      log: LoggingAdapter = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] = {
+      interface: String, port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] = {
     if (settings.previewServerSettings.enableHttp2)
       log.warning(
         s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port].")
@@ -280,7 +256,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
               // from the TCP layer through the HTTP layer to the Http.IncomingConnection.flow.
               // See https://github.com/akka/akka/issues/17992
               case NonFatal(ex) => Done
-            }(ExecutionContexts.sameThreadExecutionContext)
+            }(ExecutionContext.parasitic)
         } catch {
           case NonFatal(e) =>
             log.error(e, "Could not materialize handling flow for {}", incoming)
@@ -299,64 +275,13 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   }
 
   // forwarder to allow internal code to call deprecated method without warning
-  @nowarn("msg=deprecated")
-  private[http] def bindAndHandleImpl(
-      handler: Flow[HttpRequest, HttpResponse, Any],
+  private[http] def bindAndHandleAsyncImpl(
+      handler: HttpRequest => Future[HttpResponse],
       interface: String, port: Int,
       connectionContext: ConnectionContext,
       settings: ServerSettings,
-      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
-    bindAndHandle(handler, interface, port, connectionContext, settings, log)(fm)
-
-  /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * To configure additional settings for a server started using this method,
-   * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
-   */
-  @deprecated("Use Http().newServerAt(...)...bindSync() to create server bindings.", since = "10.2.0")
-  @nowarn("msg=deprecated")
-  def bindAndHandleSync(
-      handler: HttpRequest => HttpResponse,
-      interface: String, port: Int = DefaultPortForProtocol,
-      connectionContext: ConnectionContext = defaultServerHttpContext,
-      settings: ServerSettings = ServerSettings(system),
-      log: LoggingAdapter = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] =
-    bindAndHandleAsync(req => FastFuture.successful(handler(req)), interface, port, connectionContext, settings,
-      parallelism = 0, log)(fm)
-
-  /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * [[pekko.stream.scaladsl.Flow]] for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * To configure additional settings for a server started using this method,
-   * use the `pekko.http.server` config section or pass in a [[pekko.http.scaladsl.settings.ServerSettings]] explicitly.
-   *
-   * Parameter `parallelism` specifies how many requests are attempted to be handled concurrently per connection. In HTTP/1
-   * this makes only sense if HTTP pipelining is enabled (which is not recommended). The default value of `0` means that
-   * the value is taken from the `pekko.http.server.pipelining-limit` setting from the configuration. In HTTP/2,
-   * the default value is taken from `pekko.http.server.http2.max-concurrent-streams`.
-   *
-   * Any other value for `parallelism` overrides the setting.
-   */
-  @deprecated("Use Http().newServerAt(...)...bind() to create server bindings.", since = "10.2.0")
-  @nowarn("msg=deprecated")
-  def bindAndHandleAsync(
-      handler: HttpRequest => Future[HttpResponse],
-      interface: String, port: Int = DefaultPortForProtocol,
-      connectionContext: ConnectionContext = defaultServerHttpContext,
-      settings: ServerSettings = ServerSettings(system),
-      parallelism: Int = 0,
-      log: LoggingAdapter = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] = {
+      parallelism: Int,
+      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] = {
     if (settings.previewServerSettings.enableHttp2) {
       log.debug("Binding server using HTTP/2")
 
@@ -375,23 +300,11 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     }
   }
 
-  // forwarder to allow internal code to call deprecated method without warning
-  @nowarn("msg=deprecated")
-  private[http] def bindAndHandleAsyncImpl(
-      handler: HttpRequest => Future[HttpResponse],
-      interface: String, port: Int,
-      connectionContext: ConnectionContext,
-      settings: ServerSettings,
-      parallelism: Int,
-      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
-    bindAndHandleAsync(handler, interface, port, connectionContext, settings, parallelism, log)(fm)
-
   type ServerLayer = Http.ServerLayer
 
   /**
    * Constructs a [[pekko.http.scaladsl.Http.ServerLayer]] stage using the given [[pekko.http.scaladsl.settings.ServerSettings]]. The returned [[pekko.stream.scaladsl.BidiFlow]] isn't reusable and
-   * can only be materialized once. The `remoteAddress`, if provided, will be added as a header to each [[pekko.http.scaladsl.model.HttpRequest]]
-   * this layer produces if the `pekko.http.server.remote-address-header` configuration option is enabled.
+   * can only be materialized once.
    */
   def serverLayer(
       settings: ServerSettings = ServerSettings(system),
@@ -758,28 +671,6 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   def shutdownAllConnectionPools(): Future[Unit] = poolMaster.shutdownAll().map(_ => ())(system.dispatcher)
 
   /**
-   * Gets the current default server-side [[ConnectionContext]] – defaults to plain HTTP.
-   * Can be modified using [[setDefaultServerHttpContext]], and will then apply for servers bound after that call has completed.
-   */
-  @deprecated("Set context explicitly when binding", since = "10.2.0")
-  def defaultServerHttpContext: ConnectionContext =
-    synchronized {
-      if (_defaultServerConnectionContext == null)
-        _defaultServerConnectionContext = ConnectionContext.noEncryption()
-      _defaultServerConnectionContext
-    }
-
-  /**
-   * Sets the default server-side [[ConnectionContext]].
-   * If it is an instance of [[HttpsConnectionContext]] then the server will be bound using HTTPS.
-   */
-  @deprecated("Set context explicitly when binding", since = "10.2.0")
-  def setDefaultServerHttpContext(context: ConnectionContext): Unit =
-    synchronized {
-      _defaultServerConnectionContext = context
-    }
-
-  /**
    * Gets the current default client-side [[HttpsConnectionContext]].
    * Defaults used here can be configured using ssl-config or the context can be replaced using [[setDefaultClientHttpsContext]]
    */
@@ -833,7 +724,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     val parallelism = settings.pipeliningLimit * settings.maxConnections
     Flow[(HttpRequest, T)].mapAsyncUnordered(parallelism) {
       case (request, userContext) => poolInterface(request).transform(response => Success(response -> userContext))(
-          ExecutionContexts.sameThreadExecutionContext)
+          ExecutionContext.parasitic)
     }
   }
 
@@ -844,16 +735,11 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   private[http] def sslTlsServerStage(connectionContext: ConnectionContext) =
     sslTlsStage(connectionContext, Server, None)
 
+  // TODO find an alternative way to do this
   private def sslTlsStage(connectionContext: ConnectionContext, role: TLSRole, hostInfo: Option[(String, Int)]) =
     connectionContext match {
       case hctx: HttpsConnectionContext =>
-        hctx.sslContextData match {
-          case Left(ssl) =>
-            TLS(ssl.sslContext, ssl.sslConfig, ssl.firstSession, role, hostInfo = hostInfo,
-              closing = TLSClosing.eagerClose)
-          case Right(engineCreator) =>
-            TLS(() => engineCreator(hostInfo), TLSClosing.eagerClose)
-        }
+        TLS(() => hctx.engineCreator(hostInfo), TLSClosing.eagerClose)
       case other =>
         TLSPlacebo() // if it's not HTTPS, we don't enable SSL/TLS
     }
@@ -948,7 +834,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
      * Note: rather than unbinding explicitly you can also use [[addToCoordinatedShutdown]] to add this task to Akka's coordinated shutdown.
      */
     def unbind(): Future[Done] =
-      unbindAction().map(_ => Done)(ExecutionContexts.sameThreadExecutionContext)
+      unbindAction().map(_ => Done)(ExecutionContext.parasitic)
 
     /**
      * Triggers "graceful" termination request being handled on this connection.
@@ -998,7 +884,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
 
       _whenTerminationSignalIssued.trySuccess(hardDeadline.fromNow)
       val terminated =
-        unbindAction().flatMap(_ => terminateAction(hardDeadline))(ExecutionContexts.sameThreadExecutionContext)
+        unbindAction().flatMap(_ => terminateAction(hardDeadline))(ExecutionContext.parasitic)
       _whenTerminated.completeWith(terminated)
       whenTerminated
     }
@@ -1039,7 +925,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
         unbind()
       }
       shutdown.addTask(CoordinatedShutdown.PhaseServiceRequestsDone, s"http-terminate-${localAddress}") { () =>
-        terminate(hardTerminationDeadline).map(_ => Done)(ExecutionContexts.sameThreadExecutionContext)
+        terminate(hardTerminationDeadline).map(_ => Done)(ExecutionContext.parasitic)
       }
       this
     }
@@ -1106,15 +992,13 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
 
     private[http] def toJava = new pekko.http.javadsl.HostConnectionPool {
       override def setup = HostConnectionPool.this.setup
-      def shutdown(): CompletionStage[Done] = HostConnectionPool.this.shutdown().toJava
+      def shutdown(): CompletionStage[Done] = HostConnectionPool.this.shutdown().asJava
     }
 
     override def productArity: Int = 1
     override def productElement(n: Int): Any = if (n == 0) setup else throw new IllegalArgumentException
     override def canEqual(that: Any): Boolean = that.isInstanceOf[HostConnectionPool]
   }
-  @deprecated("Not needed any more. Kept for binary compatibility.", "10.2.0")
-  private[http] object HostConnectionPool
 
   /** INTERNAL API */
   @InternalApi
@@ -1138,10 +1022,9 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
   def createExtension(system: ExtendedActorSystem): HttpExt =
     new HttpExt(system.settings.config.getConfig("pekko.http"))(system)
 
-  @nowarn("msg=use remote-address-attribute instead")
   @InternalApi
   private[pekko] def prepareAttributes(settings: ServerSettings, incoming: Tcp.IncomingConnection) =
-    if (settings.remoteAddressHeader || settings.remoteAddressAttribute)
+    if (settings.remoteAddressAttribute)
       HttpAttributes.remoteAddress(incoming.remoteAddress)
     else HttpAttributes.empty
 
@@ -1153,89 +1036,4 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
         case d             => AfterDelay(d, FailStage)
       }
     })
-}
-
-/**
- * TLS configuration for an HTTPS server binding or client connection.
- * For the sslContext please refer to the com.typeasfe.ssl-config library.
- * The remaining four parameters configure the initial session that will
- * be negotiated, see [[pekko.stream.TLSProtocol.NegotiateNewSession]] for details.
- */
-@deprecated("use ConnectionContext.httpsServer and httpsClient directly", since = "10.2.0")
-trait DefaultSSLContextCreation {
-
-  protected def system: ActorSystem
-  def sslConfig = PekkoSSLConfig(system)
-
-  // --- log warnings ---
-  private[this] def log = system.log
-
-  @deprecated("PekkoSSLConfig usage is deprecated", since = "10.2.0")
-  def validateAndWarnAboutLooseSettings() = ()
-  // --- end of log warnings ---
-
-  @deprecated("use ConnectionContext.httpServer instead", since = "10.2.0")
-  def createDefaultClientHttpsContext(): HttpsConnectionContext =
-    createClientHttpsContext(PekkoSSLConfig(system))
-
-  @deprecated("use ConnectionContext.httpServer instead", since = "10.2.0")
-  def createServerHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext = {
-    log.warning("Automatic server-side configuration is not supported yet, will attempt to use client-side settings. " +
-      "Instead it is recommended to construct the Servers HttpsConnectionContext manually (via SSLContext).")
-    createClientHttpsContext(sslConfig)
-  }
-
-  @deprecated("use ConnectionContext.httpClient(sslContext) instead", since = "10.2.0")
-  def createClientHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext = {
-    val config = sslConfig.config
-
-    val log = Logging(system, getClass)
-    val mkLogger = new PekkoLoggerFactory(system)
-
-    // initial ssl context!
-    val sslContext = if (sslConfig.config.default) {
-      log.debug("buildSSLContext: ssl-config.default is true, using default SSLContext")
-      sslConfig.validateDefaultTrustManager(config)
-      SSLContext.getDefault
-    } else {
-      // break out the static methods as much as we can...
-      val keyManagerFactory = sslConfig.buildKeyManagerFactory(config)
-      val trustManagerFactory = sslConfig.buildTrustManagerFactory(config)
-      new ConfigSSLContextBuilder(mkLogger, config, keyManagerFactory, trustManagerFactory).build()
-    }
-
-    // protocols!
-    val defaultParams = sslContext.getDefaultSSLParameters
-    val defaultProtocols = defaultParams.getProtocols
-    val protocols = sslConfig.configureProtocols(defaultProtocols, config)
-    defaultParams.setProtocols(protocols)
-
-    // ciphers!
-    val defaultCiphers = defaultParams.getCipherSuites
-    val cipherSuites = sslConfig.configureCipherSuites(defaultCiphers, config)
-    defaultParams.setCipherSuites(cipherSuites)
-
-    // auth!
-    import com.typesafe.sslconfig.ssl.{ ClientAuth => SslClientAuth }
-    val clientAuth = config.sslParametersConfig.clientAuth match {
-      case SslClientAuth.Default => None
-      case SslClientAuth.Want    => Some(TLSClientAuth.Want)
-      case SslClientAuth.Need    => Some(TLSClientAuth.Need)
-      case SslClientAuth.None    => Some(TLSClientAuth.None)
-    }
-
-    // hostname!
-    if (!sslConfig.config.loose.disableHostnameVerification) {
-      defaultParams.setEndpointIdentificationAlgorithm("https")
-    }
-
-    new HttpsConnectionContext(
-      sslContext,
-      Some(sslConfig),
-      Some(cipherSuites.toList),
-      Some(defaultProtocols.toList),
-      clientAuth,
-      Some(defaultParams))
-  }
-
 }

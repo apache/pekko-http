@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -28,7 +28,7 @@ class IllegalHeadersIntegrationSpec extends RoutingSpec {
       complete(s"Accept:${req.header[Accept]}, byName:${req.headers.find(_.is("accept"))}")
     }
 
-    // see: https://github.com/apache/incubator-pekko-http/issues/1072
+    // see: https://github.com/akka/akka-http/issues/1072
     "not StackOverflow but be rejected properly" in {
       val theIllegalHeader = RawHeader("Accept", "*/xml")
       Get().addHeader(theIllegalHeader) ~!> route ~> check {

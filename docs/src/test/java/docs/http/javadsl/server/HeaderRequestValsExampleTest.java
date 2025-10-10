@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -21,55 +21,49 @@ import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 
-//#by-class
+// #by-class
 import static org.apache.pekko.http.javadsl.server.Directives.extractHost;
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
-//#by-class
-//#by-name
+// #by-class
+// #by-name
 import static org.apache.pekko.http.javadsl.server.Directives.headerValueByName;
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
-//#by-name
+// #by-name
 
 public class HeaderRequestValsExampleTest extends JUnitRouteTest {
 
   @Test
   public void testHeaderVals() {
-    //#by-class
+    // #by-class
 
-    final Route route =
-      extractHost(host ->
-        complete(String.format("Host header was: %s", host))
-      );
+    final Route route = extractHost(host -> complete(String.format("Host header was: %s", host)));
 
     // tests:
     final HttpRequest request =
-      HttpRequest
-        .GET("http://pekko.apache.org/")
-      .addHeader(Host.create("pekko.apache.org"));
+        HttpRequest.GET("http://pekko.apache.org/").addHeader(Host.create("pekko.apache.org"));
     testRoute(route).run(request).assertEntity("Host header was: pekko.apache.org");
 
-    //#by-class
+    // #by-class
   }
 
   @Test
   public void testHeaderByName() {
-    //#by-name
+    // #by-name
 
     final Route route =
-      // extract the `value` of the header:
-      headerValueByName("X-Fish-Name", xFishName ->
-        complete(String.format("The `X-Fish-Name` header's value was: %s", xFishName))
-      );
+        // extract the `value` of the header:
+        headerValueByName(
+            "X-Fish-Name",
+            xFishName ->
+                complete(String.format("The `X-Fish-Name` header's value was: %s", xFishName)));
 
     // tests:
     final HttpRequest request =
-      HttpRequest
-        .GET("/")
-        .addHeader(RawHeader.create("X-Fish-Name", "Blippy"));
+        HttpRequest.GET("/").addHeader(RawHeader.create("X-Fish-Name", "Blippy"));
     testRoute(route).run(request).assertEntity("The `X-Fish-Name` header's value was: Blippy");
 
-    //#by-name
+    // #by-name
   }
 }

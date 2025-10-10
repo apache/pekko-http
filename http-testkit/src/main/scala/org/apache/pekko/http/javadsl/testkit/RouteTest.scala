@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,18 +17,19 @@ import scala.annotation.varargs
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.impl.util.JavaMapping.Implicits.AddAsScala
 import pekko.http.javadsl.model.HttpRequest
 import pekko.http.javadsl.model.headers.Host
 import pekko.http.javadsl.server.{ AllDirectives, Directives, Route, RouteResult, RouteResults }
+import pekko.http.scaladsl
 import pekko.http.scaladsl.server
 import pekko.http.scaladsl.server.{ ExceptionHandler, Route => ScalaRoute }
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.settings.RoutingSettings
 import pekko.http.scaladsl.settings.ServerSettings
-import pekko.http.scaladsl
 import pekko.http.scaladsl.util.FastFuture
 import pekko.stream.Materializer
 import pekko.testkit.TestDuration

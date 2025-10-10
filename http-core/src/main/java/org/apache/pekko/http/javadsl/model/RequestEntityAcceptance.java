@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,9 +14,9 @@
 package org.apache.pekko.http.javadsl.model;
 
 /**
- * @see RequestEntityAcceptances for convenience access to often used values.
- * Do not extend this to a concrete Java class,
- * as implementation of RequestEntityAcceptation should only exist in Scala
+ * @see RequestEntityAcceptances for convenience access to often used values. Do not extend this to
+ *     a concrete Java class, as implementation of RequestEntityAcceptation should only exist in
+ *     Scala
  */
 public abstract class RequestEntityAcceptance {
   public abstract boolean isEntityAccepted();

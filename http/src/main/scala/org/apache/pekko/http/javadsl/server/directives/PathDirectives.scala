@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,24 +13,22 @@
 
 package org.apache.pekko.http.javadsl.server.directives
 
-import java.util.function.BiFunction
 import java.util.function.{ Function => JFunction }
+import java.util.function.BiFunction
 import java.util.function.Supplier
-
-import org.apache.pekko
-import pekko.http.javadsl.unmarshalling.Unmarshaller
 
 import scala.util.Failure
 import scala.util.Success
 
+import org.apache.pekko
 import pekko.http.javadsl.model.StatusCode
 import pekko.http.javadsl.server.PathMatcher0
 import pekko.http.javadsl.server.PathMatcher1
 import pekko.http.javadsl.server.PathMatcher2
 import pekko.http.javadsl.server.Route
+import pekko.http.javadsl.unmarshalling.Unmarshaller
 import pekko.http.scaladsl.model.StatusCodes.Redirection
 import pekko.http.scaladsl.server.{ Directives => D }
-
 import pekko.http.scaladsl.server.PathMatchers
 
 /**
@@ -292,7 +290,7 @@ abstract class PathDirectives extends ParameterDirectives {
     D.ignoreTrailingSlash { inner.get.delegate }
   }
 
-  private def unmarshal[T](t: Unmarshaller[String, T], inner: JFunction[T, Route]) = { element: String =>
+  private def unmarshal[T](t: Unmarshaller[String, T], inner: JFunction[T, Route]) = { (element: String) =>
     D.extractRequestContext { ctx =>
       import ctx.executionContext
       import ctx.materializer

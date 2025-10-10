@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -42,16 +42,12 @@ final class DynamicTable {
   private int size;
   private int capacity = -1; // ensure setCapacity creates the array
 
-  /**
-   * Creates a new dynamic table with the specified initial capacity.
-   */
+  /** Creates a new dynamic table with the specified initial capacity. */
   DynamicTable(int initialCapacity) {
     setCapacity(initialCapacity);
   }
 
-  /**
-   * Return the number of header fields in the dynamic table.
-   */
+  /** Return the number of header fields in the dynamic table. */
   public int length() {
     int length;
     if (head < tail) {
@@ -62,24 +58,18 @@ final class DynamicTable {
     return length;
   }
 
-  /**
-   * Return the current size of the dynamic table.
-   * This is the sum of the size of the entries.
-   */
+  /** Return the current size of the dynamic table. This is the sum of the size of the entries. */
   public int size() {
     return size;
   }
 
-  /**
-   * Return the maximum allowable size of the dynamic table.
-   */
+  /** Return the maximum allowable size of the dynamic table. */
   public int capacity() {
     return capacity;
   }
 
   /**
-   * Return the header field at the given index.
-   * The first and newest entry is always at index 1,
+   * Return the header field at the given index. The first and newest entry is always at index 1,
    * and the oldest entry is at the index length().
    */
   public HeaderField getEntry(int index) {
@@ -95,11 +85,10 @@ final class DynamicTable {
   }
 
   /**
-   * Add the header field to the dynamic table.
-   * Entries are evicted from the dynamic table until the size of the table
-   * and the new header field is less than or equal to the table's capacity.
-   * If the size of the new entry is larger than the table's capacity,
-   * the dynamic table will be cleared.
+   * Add the header field to the dynamic table. Entries are evicted from the dynamic table until the
+   * size of the table and the new header field is less than or equal to the table's capacity. If
+   * the size of the new entry is larger than the table's capacity, the dynamic table will be
+   * cleared.
    */
   public void add(HeaderField header) {
     int headerSize = header.size();
@@ -117,9 +106,7 @@ final class DynamicTable {
     }
   }
 
-  /**
-   * Remove and return the oldest header field from the dynamic table.
-   */
+  /** Remove and return the oldest header field from the dynamic table. */
   public HeaderField remove() {
     HeaderField removed = headerFields[tail];
     if (removed == null) {
@@ -133,9 +120,7 @@ final class DynamicTable {
     return removed;
   }
 
-  /**
-   * Remove all entries from the dynamic table.
-   */
+  /** Remove all entries from the dynamic table. */
   public void clear() {
     while (tail != head) {
       headerFields[tail++] = null;
@@ -149,13 +134,12 @@ final class DynamicTable {
   }
 
   /**
-   * Set the maximum size of the dynamic table.
-   * Entries are evicted from the dynamic table until the size of the table
-   * is less than or equal to the maximum size.
+   * Set the maximum size of the dynamic table. Entries are evicted from the dynamic table until the
+   * size of the table is less than or equal to the maximum size.
    */
   public void setCapacity(int capacity) {
     if (capacity < 0) {
-      throw new IllegalArgumentException("Illegal Capacity: "+ capacity);
+      throw new IllegalArgumentException("Illegal Capacity: " + capacity);
     }
 
     // initially capacity will be -1 so init won't return here

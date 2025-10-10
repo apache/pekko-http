@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,9 +16,9 @@ package org.apache.pekko.http.javadsl.server.directives
 import java.util.function
 
 import org.apache.pekko
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.HttpMethod
 import pekko.http.javadsl.server.Route
-import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.scaladsl.server.directives.{ MethodDirectives => D }
 
 abstract class MethodDirectives extends MarshallingDirectives {

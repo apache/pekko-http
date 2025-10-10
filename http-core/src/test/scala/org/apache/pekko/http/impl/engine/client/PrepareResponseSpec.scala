@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -24,7 +24,7 @@ import pekko.http.impl.engine.parsing.ParserOutput.{
 }
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.ParserSettings
-import pekko.stream.{ ActorMaterializer, Attributes }
+import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.util.ByteString
@@ -63,8 +63,6 @@ class PrepareResponseSpec extends PekkoSpec {
   "The PrepareRequest stage" should {
 
     "not lose demand that comes in while streaming entity" in {
-      implicit val mat = ActorMaterializer()
-
       val inProbe = TestPublisher.manualProbe[ParserOutput.ResponseOutput]()
       val responseProbe = TestSubscriber.manualProbe[HttpResponse]()
 
@@ -108,8 +106,6 @@ class PrepareResponseSpec extends PekkoSpec {
     }
 
     "not lose demand that comes in while handling strict entity" in {
-      implicit val mat = ActorMaterializer()
-
       val inProbe = TestPublisher.manualProbe[ParserOutput.ResponseOutput]()
       val responseProbe = TestSubscriber.manualProbe[HttpResponse]()
 
@@ -144,8 +140,6 @@ class PrepareResponseSpec extends PekkoSpec {
     "complete entity stream then complete stage when downstream cancels" in {
       // to make it possible to cancel a big file download for example
       // without downloading the entire response first
-      implicit val mat = ActorMaterializer()
-
       val inProbe = TestPublisher.manualProbe[ParserOutput.ResponseOutput]()
       val responseProbe = TestSubscriber.manualProbe[HttpResponse]()
 
@@ -185,8 +179,6 @@ class PrepareResponseSpec extends PekkoSpec {
     }
 
     "complete stage when downstream cancels before end of strict request has arrived" in {
-      implicit val mat = ActorMaterializer()
-
       val inProbe = TestPublisher.manualProbe[ParserOutput.ResponseOutput]()
       val responseProbe = TestSubscriber.manualProbe[HttpResponse]()
 
@@ -213,8 +205,6 @@ class PrepareResponseSpec extends PekkoSpec {
     }
 
     "cancel entire stage when the entity stream is canceled" in {
-      implicit val mat = ActorMaterializer()
-
       val inProbe = TestPublisher.manualProbe[ParserOutput.ResponseOutput]()
       val responseProbe = TestSubscriber.manualProbe[HttpResponse]()
 

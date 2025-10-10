@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -23,6 +23,7 @@ import com.typesafe.config.Config
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
+import scala.jdk.CollectionConverters._
 
 /**
  * INTERNAL API
@@ -102,6 +103,18 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def pingTimeout: FiniteDuration
   def withPingTimeout(timeout: FiniteDuration): Http2ServerSettings = copy(pingTimeout = timeout)
 
+  def frameTypeThrottleFrameTypes: Set[String]
+  def withFrameTypeThrottleFrameTypes(frameTypes: Set[String]) = copy(frameTypeThrottleFrameTypes = frameTypes)
+
+  def frameTypeThrottleCost: Int
+  def withFrameTypeThrottleCost(cost: Int) = copy(frameTypeThrottleCost = cost)
+
+  def frameTypeThrottleBurst: Int
+  def withFrameTypeThrottleBurst(burst: Int) = copy(frameTypeThrottleBurst = burst)
+
+  def frameTypeThrottleInterval: FiniteDuration
+  def withFrameTypeThrottleInterval(interval: FiniteDuration) = copy(frameTypeThrottleInterval = interval)
+
   @InternalApi
   private[http] def internalSettings: Option[Http2InternalServerSettings]
   @InternalApi
@@ -124,6 +137,10 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       logFrames: Boolean,
       pingInterval: FiniteDuration,
       pingTimeout: FiniteDuration,
+      frameTypeThrottleFrameTypes: Set[String],
+      frameTypeThrottleCost: Int,
+      frameTypeThrottleBurst: Int,
+      frameTypeThrottleInterval: FiniteDuration,
       internalSettings: Option[Http2InternalServerSettings])
       extends Http2ServerSettings {
     require(maxConcurrentStreams >= 0, "max-concurrent-streams must be >= 0")
@@ -136,6 +153,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
     require(minCollectStrictEntitySize <= (incomingConnectionLevelBufferSize / maxConcurrentStreams),
       "min-collect-strict-entity-size <= incoming-connection-level-buffer-size / max-concurrent-streams")
     require(outgoingControlFrameBufferSize > 0, "outgoing-control-frame-buffer-size must be > 0")
+    require(frameTypeThrottleInterval.toMillis > 0, "frame-type-throttle.interval must be a positive duration")
     Http2CommonSettings.validate(this)
   }
 
@@ -151,6 +169,10 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       logFrames = c.getBoolean("log-frames"),
       pingInterval = c.getFiniteDuration("ping-interval"),
       pingTimeout = c.getFiniteDuration("ping-timeout"),
+      frameTypeThrottleFrameTypes = c.getStringList("frame-type-throttle.frame-types").asScala.toSet,
+      frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),
+      frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),
+      frameTypeThrottleInterval = c.getFiniteDuration("frame-type-throttle.interval"),
       None // no possibility to configure internal settings with config
     )
   }

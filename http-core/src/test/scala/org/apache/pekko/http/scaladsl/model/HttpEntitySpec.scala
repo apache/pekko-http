@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -92,7 +92,7 @@ class HttpEntitySpec extends PekkoSpecWithMaterializer {
       "Infinite data stream" in {
         val neverCompleted = Promise[ByteString]()
         intercept[TimeoutException] {
-          Await.result(Default(tpe, 42, Source.fromFuture(neverCompleted.future)).toStrict(100.millis), awaitAtMost)
+          Await.result(Default(tpe, 42, Source.future(neverCompleted.future)).toStrict(100.millis), awaitAtMost)
         }.getMessage should be(
           "HttpEntity.toStrict timed out after 100 milliseconds while still waiting for outstanding data")
       }
@@ -304,7 +304,7 @@ class HttpEntitySpec extends PekkoSpecWithMaterializer {
     }
 
   def renderStrictDataAs(dataRendering: String): Matcher[Strict] =
-    Matcher { strict: Strict =>
+    Matcher { (strict: Strict) =>
       val expectedRendering = s"${strict.productPrefix}(${strict.contentType},$dataRendering)"
       MatchResult(
         strict.toString == expectedRendering,

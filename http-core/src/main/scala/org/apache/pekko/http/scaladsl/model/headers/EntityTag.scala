@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -37,7 +37,7 @@ sealed abstract class EntityTagRange extends jm.headers.EntityTagRange with Valu
 object EntityTagRange {
   def apply(tags: EntityTag*) = Default(immutable.Seq(tags: _*))
 
-  implicit val tagsRenderer = Renderer.defaultSeqRenderer[EntityTag] // cache
+  implicit val tagsRenderer: Renderer[immutable.Iterable[EntityTag]] = Renderer.defaultSeqRenderer[EntityTag] // cache
 
   case object `*` extends EntityTagRange {
     def render[R <: Rendering](r: R): r.type = r ~~ '*'

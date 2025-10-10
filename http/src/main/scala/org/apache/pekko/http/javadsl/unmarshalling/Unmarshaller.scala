@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,11 +13,18 @@
 
 package org.apache.pekko.http.javadsl.unmarshalling
 
+import java.util.Optional
 import java.util.concurrent.CompletionStage
+
+import scala.annotation.nowarn
+import scala.concurrent.ExecutionContext
+import scala.jdk.CollectionConverters._
+import scala.jdk.FutureConverters._
 
 import org.apache.pekko
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.InternalApi
+import pekko.http.{ javadsl => jm }
 import pekko.http.impl.model.JavaQuery
 import pekko.http.impl.util.JavaMapping
 import pekko.http.impl.util.JavaMapping.Implicits._
@@ -25,20 +32,13 @@ import pekko.http.javadsl.model._
 import pekko.http.scaladsl.model.{ ContentTypeRange, ContentTypes }
 import pekko.http.scaladsl.unmarshalling
 import pekko.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-import pekko.http.scaladsl.unmarshalling.Unmarshaller.{
-  EnhancedFromEntityUnmarshaller,
-  UnsupportedContentTypeException
-}
+import pekko.http.scaladsl.unmarshalling.Unmarshaller.EnhancedFromEntityUnmarshaller
 import pekko.http.scaladsl.util.FastFuture
 import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.util.ByteString
-import scala.annotation.nowarn
-
-import scala.collection.JavaConverters._
-import scala.compat.java8.FutureConverters._
-import scala.concurrent.ExecutionContext
 
 object Unmarshaller extends pekko.http.javadsl.unmarshalling.Unmarshallers {
+
   implicit def fromScala[A, B](scalaUnmarshaller: unmarshalling.Unmarshaller[A, B]): Unmarshaller[A, B] =
     scalaUnmarshaller
 
@@ -55,7 +55,7 @@ object Unmarshaller extends pekko.http.javadsl.unmarshalling.Unmarshallers {
    * Creates an unmarshaller from an asynchronous Java function.
    */
   override def async[A, B](f: java.util.function.Function[A, CompletionStage[B]]): Unmarshaller[A, B] =
-    unmarshalling.Unmarshaller[A, B] { ctx => a => f(a).toScala }
+    unmarshalling.Unmarshaller[A, B] { ctx => a => f(a).asScala }
 
   /**
    * Creates an unmarshaller from a Java function.
@@ -85,8 +85,9 @@ object Unmarshaller extends pekko.http.javadsl.unmarshalling.Unmarshallers {
         val mediaType = t.asScala
         if (entity.contentType == ContentTypes.NoContentType || mediaType.matches(entity.contentType.mediaType)) {
           um.asScala(entity)
-        } else FastFuture.failed(UnsupportedContentTypeException(Some(entity.contentType),
-          ContentTypeRange(t.toRange.asScala)))
+        } else FastFuture.failed(
+          pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException(Some(entity.contentType),
+            ContentTypeRange(t.toRange.asScala)))
       }
     }
   }
@@ -119,10 +120,44 @@ object Unmarshaller extends pekko.http.javadsl.unmarshalling.Unmarshallers {
     unmarshalling.Unmarshaller.firstOf(u1.asScala, u2.asScala, u3.asScala, u4.asScala, u5.asScala)
   }
 
-  @nowarn("msg=parameter value mi in method adaptInputToJava is never used")
+  @nowarn("msg=mi in method adaptInputToJava is never used")
   private implicit def adaptInputToJava[JI, SI, O](um: unmarshalling.Unmarshaller[SI, O])(
       implicit mi: JavaMapping[JI, SI]): unmarshalling.Unmarshaller[JI, O] =
     um.asInstanceOf[unmarshalling.Unmarshaller[JI, O]] // since guarantee provided by existence of `mi`
+
+  class UnsupportedContentTypeException(
+      private val _supported: java.util.Set[jm.model.ContentTypeRange],
+      private val _actualContentType: Optional[jm.model.ContentType])
+      extends RuntimeException(_supported.asScala.mkString(
+        s"Unsupported Content-Type [${_actualContentType.asScala}], supported: ", ", ", "")) {
+
+    def this(supported: jm.model.ContentTypeRange*) = {
+      this(supported.toSet.asJava, Optional.empty[jm.model.ContentType]())
+    }
+
+    def this(supported: java.util.Set[jm.model.ContentTypeRange]) = {
+      this(supported, Optional.empty[jm.model.ContentType]())
+    }
+
+    def this(contentType: Optional[jm.model.ContentType], supported: jm.model.ContentTypeRange*) = {
+      this(supported.toSet.asJava, contentType)
+    }
+
+    def toScala(): pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException =
+      pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException(
+        _supported.asScala.toSet.asInstanceOf[Set[pekko.http.scaladsl.model.ContentTypeRange]],
+        _actualContentType.asScala)
+
+    def getSupported(): java.util.Set[jm.model.ContentTypeRange] = _supported
+
+    def getActualContentType(): Optional[jm.model.ContentType] = _actualContentType
+
+    override def equals(that: Any): Boolean = that match {
+      case that: UnsupportedContentTypeException =>
+        that._supported == this._supported && that._actualContentType == this._actualContentType
+      case _ => false
+    }
+  }
 
 }
 
@@ -144,7 +179,7 @@ abstract class Unmarshaller[-A, B] extends UnmarshallerBase[A, B] {
    * Apply this Unmarshaller to the given value.
    */
   def unmarshal(value: A, ec: ExecutionContext, mat: Materializer): CompletionStage[B] =
-    asScala.apply(value)(ec, mat).toJava
+    asScala.apply(value)(ec, mat).asJava
 
   /**
    * Apply this Unmarshaller to the given value. Uses the default materializer [[ExecutionContext]].
@@ -173,7 +208,7 @@ abstract class Unmarshaller[-A, B] extends UnmarshallerBase[A, B] {
   def thenApply[C](f: java.util.function.Function[B, C]): Unmarshaller[A, C] = asScala.map(f.apply)
 
   def flatMap[C](f: java.util.function.Function[B, CompletionStage[C]]): Unmarshaller[A, C] =
-    asScala.flatMap { ctx => mat => b => f.apply(b).toScala }
+    asScala.flatMap { ctx => mat => b => f.apply(b).asScala }
 
   def flatMap[C](u: Unmarshaller[_ >: B, C]): Unmarshaller[A, C] =
     asScala.flatMap { ctx => mat => b => u.asScala.apply(b)(ctx, mat) }

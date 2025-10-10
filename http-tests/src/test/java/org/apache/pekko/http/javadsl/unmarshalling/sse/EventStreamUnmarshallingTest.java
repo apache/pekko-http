@@ -16,43 +16,41 @@
 
 package org.apache.pekko.http.javadsl.unmarshalling.sse;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.model.HttpEntity;
-import org.apache.pekko.stream.ActorMaterializer;
-import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.http.javadsl.model.sse.ServerSentEvent;
 import org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshallingSpec;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 import org.scalatestplus.junit.JUnitSuite;
-import static scala.compat.java8.FutureConverters.toJava;
+
+import static scala.jdk.javaapi.FutureConverters.asJava;
 
 public class EventStreamUnmarshallingTest extends JUnitSuite {
 
-    @Test
-    public void testFromEventsStream() throws Exception {
-        ActorSystem system = ActorSystem.create();
-        try {
-            Materializer mat = ActorMaterializer.create(system);
+  @Test
+  public void testFromEventsStream() throws Exception {
+    ActorSystem system = ActorSystem.create();
+    try {
+      List<ServerSentEvent> events = EventStreamUnmarshallingSpec.eventsAsJava();
+      HttpEntity entity = EventStreamUnmarshallingSpec.entity();
 
-            List<ServerSentEvent> events = EventStreamUnmarshallingSpec.eventsAsJava();
-            HttpEntity entity = EventStreamUnmarshallingSpec.entity();
+      // #event-stream-unmarshalling-example
+      List<ServerSentEvent> unmarshalledEvents =
+          EventStreamUnmarshalling.fromEventsStream(system)
+              .unmarshal(entity, system)
+              .thenCompose(source -> source.runWith(Sink.seq(), system))
+              .toCompletableFuture()
+              .get(3000, TimeUnit.SECONDS);
+      // #event-stream-unmarshalling-example
 
-            //#event-stream-unmarshalling-example
-            List<ServerSentEvent> unmarshalledEvents =
-                    EventStreamUnmarshalling.fromEventsStream(system)
-                            .unmarshal(entity, system)
-                            .thenCompose(source -> source.runWith(Sink.seq(), mat))
-                            .toCompletableFuture()
-                            .get(3000, TimeUnit.SECONDS);
-            //#event-stream-unmarshalling-example
-
-            Assert.assertEquals(events, unmarshalledEvents);
-        } finally {
-            toJava(system.terminate()).toCompletableFuture().get(42, TimeUnit.SECONDS);
-        }
+      Assert.assertEquals(events, unmarshalledEvents);
+    } finally {
+      asJava(system.terminate()).toCompletableFuture().get(42, TimeUnit.SECONDS);
     }
+  }
 }

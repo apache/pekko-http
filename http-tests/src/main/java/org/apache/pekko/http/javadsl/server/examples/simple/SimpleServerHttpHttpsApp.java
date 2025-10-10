@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -25,7 +25,7 @@ import java.io.IOException;
 public class SimpleServerHttpHttpsApp {
 
   public Route createRoute() {
-    return get( () -> complete("Hello World!") );
+    return get(() -> complete("Hello World!"));
   }
 
   // ** STARTING THE SERVER ** //
@@ -36,17 +36,17 @@ public class SimpleServerHttpHttpsApp {
     final SimpleServerApp app = new SimpleServerApp();
     final Route route = app.createRoute();
 
-    //#both-https-and-http
+    // #both-https-and-http
     final Http http = Http.get(system);
-    //Run HTTP server firstly
+    // Run HTTP server firstly
     http.newServerAt("localhost", 80).bind(route);
 
-    //get configured HTTPS context
+    // get configured HTTPS context
     HttpsConnectionContext httpsContext = SimpleServerApp.createHttpsContext(system);
 
-    //Then run HTTPS server
+    // Then run HTTPS server
     http.newServerAt("localhost", 443).enableHttps(httpsContext).bind(route);
-    //#both-https-and-http
+    // #both-https-and-http
 
     System.out.println("Type RETURN to exit");
     System.in.read();

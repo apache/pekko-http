@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -23,7 +23,6 @@ import pekko.actor.{
   ExtensionIdProvider
 }
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.HttpConnectionIdleTimeoutBidi
 import pekko.http.impl.engine.server.{
@@ -44,7 +43,6 @@ import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.stream.TLSClosing
 import pekko.stream.TLSProtocol.{ SslTlsInbound, SslTlsOutbound }
-import pekko.stream.impl.io.TlsUtils
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source, TLS, TLSPlacebo, Tcp }
 import pekko.stream.{ IgnoreComplete, Materializer }
 import pekko.util.ByteString
@@ -52,7 +50,7 @@ import pekko.Done
 
 import javax.net.ssl.SSLEngine
 import scala.collection.immutable
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success }
@@ -75,6 +73,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
   val telemetry = TelemetrySpi.create(system)
 
   // TODO: split up similarly to what `Http` does into `serverLayer`, `bindAndHandle`, etc.
+  @noinline // Not inlined to permit instrumentation to pass params (interface, port) as context to constructed implementation flows
   def bindAndHandleAsync(
       handler: HttpRequest => Future[HttpResponse],
       interface: String, port: Int = DefaultPortForProtocol,
@@ -100,10 +99,11 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 
     val masterTerminator = new MasterServerTerminator(log)
 
-    Tcp().bind(interface, effectivePort, settings.backlog, settings.socketOptions, halfClose = false, Duration.Inf) // we knowingly disable idle-timeout on TCP level, as we handle it explicitly in Akka HTTP itself
+    Tcp(system).bind(interface, effectivePort, settings.backlog, settings.socketOptions, halfClose = false,
+      Duration.Inf) // we knowingly disable idle-timeout on TCP level, as we handle it explicitly in Pekko HTTP itself
       .via(if (telemetry == NoOpTelemetry) Flow[Tcp.IncomingConnection] else telemetry.serverBinding)
       .mapAsyncUnordered(settings.maxConnections) {
-        incoming: Tcp.IncomingConnection =>
+        (incoming: Tcp.IncomingConnection) =>
           try {
             httpPlusSwitching(http1, http2).addAttributes(prepareServerAttributes(settings, incoming))
               .watchTermination() {
@@ -124,7 +124,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
                 // See https://github.com/akka/akka/issues/17992
                 case NonFatal(ex) =>
                   Done
-              }(ExecutionContexts.sameThreadExecutionContext)
+              }(ExecutionContext.parasitic)
           } catch {
             case NonFatal(e) =>
               log.error(e, "Could not materialize handling flow for {}", incoming)
@@ -217,17 +217,12 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 
     var eng: Option[SSLEngine] = None
     def createEngine(): SSLEngine = {
-      val engine = httpsContext.sslContextData match {
-        case Left(ssl) =>
-          val e = ssl.sslContext.createSSLEngine()
-          TlsUtils.applySessionParameters(e, ssl.firstSession)
-          e
-        case Right(e) => e(None)
-      }
+      val engine = httpsContext.engineCreator(None)
       eng = Some(engine)
       engine.setUseClientMode(false)
       Http2AlpnSupport.enableForServer(engine, setChosenProtocol)
     }
+    // TODO find an alternative way to do this
     val tls = TLS(() => createEngine(), _ => Success(()), IgnoreComplete)
 
     ProtocolSwitch(_ => getChosenProtocol(), http1, http2).join(
@@ -237,15 +232,9 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
   def outgoingConnection(host: String, port: Int, connectionContext: HttpsConnectionContext,
       clientConnectionSettings: ClientConnectionSettings, log: LoggingAdapter)
       : Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
+    // TODO find an alternative way to do this
     def createEngine(): SSLEngine = {
-      val engine = connectionContext.sslContextData match {
-        // TODO FIXME configure hostname verification for this case
-        case Left(ssl) =>
-          val e = ssl.sslContext.createSSLEngine(host, port)
-          TlsUtils.applySessionParameters(e, ssl.firstSession)
-          e
-        case Right(e) => e(Some((host, port)))
-      }
+      val engine = connectionContext.engineCreator(Some((host, port)))
       engine.setUseClientMode(true)
       Http2AlpnSupport.clientSetApplicationProtocols(engine, Array("h2"))
       engine

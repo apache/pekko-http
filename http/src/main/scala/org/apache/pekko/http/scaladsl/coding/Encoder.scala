@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -18,15 +18,13 @@ import scala.concurrent.Future
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
-import pekko.http.scaladsl.model._
 import pekko.http.impl.util.StreamUtils
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
 import pekko.stream.{ FlowShape, Materializer }
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
 import pekko.stream.stage.GraphStage
 import pekko.util.ByteString
-import headers._
-
-import scala.annotation.nowarn
 
 trait Encoder {
   def encoding: HttpEncoding
@@ -43,7 +41,7 @@ trait Encoder {
     mapper.transformDataBytes(t, Flow.fromGraph(singleUseEncoderFlow()))
 
   def encoderFlow: Flow[ByteString, ByteString, NotUsed] =
-    Flow.setup { (_, _) => Flow.fromGraph(singleUseEncoderFlow()) }
+    Flow.fromMaterializer { (_, _) => Flow.fromGraph(singleUseEncoderFlow()) }
       .mapMaterializedValue(_ => NotUsed)
 
   @InternalApi
@@ -56,15 +54,9 @@ trait Encoder {
     Source.single(input).via(singleUseEncoderFlow()).runWith(Sink.fold(ByteString.empty)(_ ++ _))
 
   @InternalApi
-  @deprecated("newCompressor is internal API", since = "Akka HTTP 10.2.0")
-  def newCompressor: Compressor
-
-  @InternalApi
-  @deprecated("newEncodeTransformer is internal API", since = "Akka HTTP 10.2.0")
-  def newEncodeTransformer(): GraphStage[FlowShape[ByteString, ByteString]] = singleUseEncoderFlow()
+  private[http] def newCompressor: Compressor
 
   private def singleUseEncoderFlow(): GraphStage[FlowShape[ByteString, ByteString]] = {
-    @nowarn("msg=deprecated")
     val compressor = newCompressor
 
     def encodeChunk(bytes: ByteString): ByteString = compressor.compressAndFlush(bytes)

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -34,8 +34,8 @@ package org.apache.pekko.http.shaded.com.twitter.hpack;
 public interface HeaderListener {
 
   /**
-   * emitHeader is called by the decoder during header field emission.
-   * The name and value byte arrays must not be modified.
+   * emitHeader is called by the decoder during header field emission. The name and value byte
+   * arrays must not be modified.
    */
   public Object addHeader(String name, String value, Object parsed, boolean sensitive);
 }

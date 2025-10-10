@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -40,11 +40,13 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
   def getTweets = Source(tweets)
 
   // #tweet-format
+  import spray.json.RootJsonFormat
+
   object MyTweetJsonProtocol
       extends pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
       with spray.json.DefaultJsonProtocol {
 
-    implicit val tweetFormat = jsonFormat2(Tweet.apply)
+    implicit val tweetFormat: RootJsonFormat[Tweet] = jsonFormat2(Tweet.apply)
   }
   // #tweet-format
 
@@ -96,7 +98,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // {"example":1000}
     val newline = ByteString("\n")
 
-    implicit val jsonStreamingSupport = EntityStreamingSupport.json()
+    implicit val jsonStreamingSupport: EntityStreamingSupport = EntityStreamingSupport.json()
       .withFramingRenderer(Flow[ByteString].map(bs => bs ++ newline))
 
     val route =
@@ -131,7 +133,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
     }
 
     // [2] enable csv streaming:
-    implicit val csvStreaming = EntityStreamingSupport.csv()
+    implicit val csvStreaming: EntityStreamingSupport = EntityStreamingSupport.csv()
 
     val route =
       path("tweets") {
@@ -187,11 +189,13 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
   // #measurement-model
 
   // #measurement-format
+  import spray.json.RootJsonFormat
+
   object MyMeasurementJsonProtocol
       extends pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
       with spray.json.DefaultJsonProtocol {
 
-    implicit val measurementFormat = jsonFormat2(Measurement.apply)
+    implicit val measurementFormat: RootJsonFormat[Measurement] = jsonFormat2(Measurement.apply)
   }
   // #measurement-format
 
@@ -201,7 +205,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
     import MyMeasurementJsonProtocol._
 
     // [2] enable Json Streaming
-    implicit val jsonStreamingSupport = EntityStreamingSupport.json()
+    implicit val jsonStreamingSupport: EntityStreamingSupport = EntityStreamingSupport.json()
 
     // prepare your persisting logic here
     val persistMetrics = Flow[Measurement]
@@ -218,7 +222,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
               .runFold(0) { (cnt, _) => cnt + 1 }
 
           complete {
-            measurementsSubmitted.map(n => Map("msg" -> s"""Total metrics received: $n"""))
+            measurementsSubmitted.map(n => s"""Total metrics received: $n""")
           }
         }
       }
@@ -235,7 +239,7 @@ class JsonStreamingExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Post("/metrics", entity = data) ~> route ~> check {
       status should ===(StatusCodes.OK)
-      responseAs[String] should ===("""{"msg":"Total metrics received: 2"}""")
+      responseAs[String] should ===("Total metrics received: 2")
     }
 
     // the FramingWithContentType will reject any content type that it does not understand:

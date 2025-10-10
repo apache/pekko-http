@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,10 +17,10 @@ package directives
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.DateTime
-import headers._
-import HttpMethods._
-import StatusCodes._
-import EntityTag._
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.model.headers.EntityTag._
 
 /**
  * @groupname cachecondition Cache condition directives

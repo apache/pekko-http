@@ -55,13 +55,13 @@ the Routing DSL will look like:
 
 ## Getting started
 
-The project template in @scala[[Apache Pekko HTTP Quickstart for Scala](https://developer.lightbend.com/guides/akka-http-quickstart-scala/)]@java[[Apache Pekko HTTP Quickstart for Java](https://developer.lightbend.com/guides/akka-http-quickstart-java/)] will help you to get a working Apache Pekko HTTP server running.
+The project template in @scala[[Apache Pekko HTTP Quickstart for Scala](https://github.com/apache/pekko-http-quickstart-scala.g8)]@java[[Apache Pekko HTTP Quickstart for Java](https://github.com/apache/pekko-http-quickstart-java.g8)] will help you to get a working Apache Pekko HTTP server running.
 
 ## Compared with Play framework routes
 
 If you have been using Play framework's routes file notation before this @ref[Play comparison](play-comparison.md) may help you to get started with Apache Pekko HTTP routing.
 
-<a name="interaction-with-akka-typed">
+<a name="interaction-with-pekko-typed">
 ## Interaction with Actors
 
 The following example shows how to use Apache Pekko HTTP with Apache Pekko Actors.
@@ -73,7 +73,7 @@ First let's start by defining the @apidoc[Behavior] that will act as a repositor
 strictly needed for our sample, but just to have an actual actor to interact with:
 
 Scala
-:  @@snip [HttpServerWithActorsSample.scala](/docs/src/test/scala/docs/http/scaladsl/HttpServerWithActorsSample.scala) { #akka-typed-behavior }
+:  @@snip [HttpServerWithActorsSample.scala](/docs/src/test/scala/docs/http/scaladsl/HttpServerWithActorsSample.scala) { #pekko-typed-behavior }
 
 Java
 :  @@snip [JobRepository.scala](/docs/src/test/java/docs/http/javadsl/JobRepository.java) { #behavior }
@@ -83,7 +83,7 @@ Java
 Then, let's define the JSON marshaller and unmarshallers for the HTTP routes:
 
 Scala
-:  @@snip [HttpServerWithActorsSample.scala](/docs/src/test/scala/docs/http/scaladsl/HttpServerWithActorsSample.scala) { #akka-typed-json }
+:  @@snip [HttpServerWithActorsSample.scala](/docs/src/test/scala/docs/http/scaladsl/HttpServerWithActorsSample.scala) { #pekko-typed-json }
 
 @@@
 
@@ -94,7 +94,7 @@ that will communicate with the previously defined behavior
 and handle all its possible responses:
 
 Scala
-:  @@snip [HttpServerWithActorsSample.scala](/docs/src/test/scala/docs/http/scaladsl/HttpServerWithActorsSample.scala) { #akka-typed-route }
+:  @@snip [HttpServerWithActorsSample.scala](/docs/src/test/scala/docs/http/scaladsl/HttpServerWithActorsSample.scala) { #pekko-typed-route }
 
 Java
 :  @@snip [JobRoutes.scala](/docs/src/test/java/docs/http/javadsl/JobRoutes.java) { #route }
@@ -102,7 +102,7 @@ Java
 Finally, we create a @apidoc[Behavior] that bootstraps the web server and use it as the root behavior of our actor system:
 
 Scala
-:  @@snip [HttpServerWithActorsSample.scala](/docs/src/test/scala/docs/http/scaladsl/HttpServerWithActorsSample.scala) { #akka-typed-bootstrap }
+:  @@snip [HttpServerWithActorsSample.scala](/docs/src/test/scala/docs/http/scaladsl/HttpServerWithActorsSample.scala) { #pekko-typed-bootstrap }
 
 Java
 :  @@snip [HttpServerWithActorsSample.java](/docs/src/test/java/docs/http/javadsl/HttpServerWithActorsSample.java) { #bootstrap }

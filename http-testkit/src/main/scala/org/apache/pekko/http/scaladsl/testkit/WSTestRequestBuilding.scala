@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,13 +13,14 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
+import scala.collection.immutable
+
 import org.apache.pekko
 import pekko.http.impl.engine.server.InternalCustomHeader
-import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Protocol`, Upgrade, UpgradeProtocol }
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes, Uri }
-import pekko.http.scaladsl.model.ws.{ Message, UpgradeToWebSocket, WebSocketUpgrade }
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
-import scala.collection.immutable
+import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Protocol`, Upgrade, UpgradeProtocol }
+import pekko.http.scaladsl.model.ws.{ Message, WebSocketUpgrade }
 import pekko.stream.{ FlowShape, Graph, Materializer }
 import pekko.stream.scaladsl.Flow
 
@@ -27,7 +28,7 @@ trait WSTestRequestBuilding {
   def WS(uri: Uri, clientSideHandler: Flow[Message, Message, Any], subprotocols: Seq[String] = Nil)(
       implicit materializer: Materializer): HttpRequest = {
     val upgrade =
-      new InternalCustomHeader("UpgradeToWebSocketTestHeader") with UpgradeToWebSocket with WebSocketUpgrade {
+      new InternalCustomHeader("UpgradeToWebSocketTestHeader") with WebSocketUpgrade {
         def requestedProtocols: immutable.Seq[String] = subprotocols.toList
 
         def handleMessages(

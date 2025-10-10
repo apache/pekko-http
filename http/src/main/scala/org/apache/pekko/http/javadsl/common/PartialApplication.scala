@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,8 +13,9 @@
 
 package org.apache.pekko.http.javadsl.common
 
-import org.apache.pekko.annotation.ApiMayChange
 import java.util.function.{ BiFunction, Function }
+
+import org.apache.pekko.annotation.ApiMayChange
 
 /**
  * Contains helpful methods to partially apply Functions for Java

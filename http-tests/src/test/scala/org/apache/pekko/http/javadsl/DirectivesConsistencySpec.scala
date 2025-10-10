@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,11 +15,12 @@ package org.apache.pekko.http.javadsl
 
 import java.lang.reflect.{ Method, Modifier }
 
+import scala.util.control.NoStackTrace
+
 import org.apache.pekko
 import pekko.http.javadsl.server.directives.CorrespondsTo
-import org.scalatest.exceptions.TestPendingException
 
-import scala.util.control.NoStackTrace
+import org.scalatest.exceptions.TestPendingException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

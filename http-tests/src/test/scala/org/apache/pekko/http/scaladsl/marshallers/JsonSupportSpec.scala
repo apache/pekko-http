@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,11 +14,12 @@
 package org.apache.pekko.http.scaladsl.marshallers
 
 import org.apache.pekko
+import pekko.http.impl.util._
 import pekko.http.scaladsl.marshalling.ToEntityMarshaller
 import pekko.http.scaladsl.model.{ HttpCharsets, HttpEntity, MediaTypes }
 import pekko.http.scaladsl.testkit.ScalatestRouteTest
 import pekko.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-import pekko.http.impl.util._
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

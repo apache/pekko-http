@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,9 +16,10 @@ package docs.http.scaladsl.server.directives
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.server._
+import pekko.util.ByteString
 import headers._
-import java.net.InetAddress
 
+import java.net.InetAddress
 import docs.CompileOnlySpec
 
 class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
@@ -131,14 +132,14 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // tests:
     def entityOfSize(size: Int) =
-      HttpEntity(ContentTypes.`text/plain(UTF-8)`, "0" * size)
+      HttpEntity(ContentTypes.`text/plain(UTF-8)`, List.fill(size)('0').mkString)
 
     Post("/abc", entityOfSize(500)) ~> route ~> check {
       status shouldEqual StatusCodes.OK
     }
 
     Post("/abc", entityOfSize(501)) ~> Route.seal(route) ~> check {
-      status shouldEqual StatusCodes.PayloadTooLarge
+      status shouldEqual StatusCodes.ContentTooLarge
     }
 
     // #withSizeLimit-example
@@ -152,7 +153,7 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // tests:
     def entityOfSize(size: Int) =
-      HttpEntity(ContentTypes.`text/plain(UTF-8)`, "0" * size)
+      HttpEntity(ContentTypes.`text/plain(UTF-8)`, List.fill(size)('0').mkString)
 
     Post("/abc", entityOfSize(500)) ~> route ~> check {
       status shouldEqual StatusCodes.OK
@@ -177,13 +178,13 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // tests:
     def entityOfSize(size: Int) =
-      HttpEntity(ContentTypes.`text/plain(UTF-8)`, "0" * size)
+      HttpEntity(ContentTypes.`text/plain(UTF-8)`, List.fill(size)('0').mkString)
     Post("/abc", entityOfSize(800)) ~> route ~> check {
       status shouldEqual StatusCodes.OK
     }
 
     Post("/abc", entityOfSize(801)) ~> Route.seal(route) ~> check {
-      status shouldEqual StatusCodes.PayloadTooLarge
+      status shouldEqual StatusCodes.ContentTooLarge
     }
     // #withSizeLimit-nested-example
   }
@@ -199,7 +200,7 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // tests:
     def entityOfSize(size: Int) =
-      HttpEntity(ContentTypes.`text/plain(UTF-8)`, "0" * size)
+      HttpEntity(ContentTypes.`text/plain(UTF-8)`, List.fill(size)('0').mkString)
 
     // will work even if you have configured pekko.http.parsing.max-content-length = 500
     Post("/abc", entityOfSize(501)) ~> route ~> check {

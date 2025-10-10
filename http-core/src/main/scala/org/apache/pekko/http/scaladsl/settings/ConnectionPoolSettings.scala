@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -48,15 +48,9 @@ abstract class ConnectionPoolSettings extends js.ConnectionPoolSettings { self: 
    * the first matching set of overrides is selected.
    */
   private[pekko] def forHost(host: String): ConnectionPoolSettings =
-    hostOverrides.collectFirst {
+    self.hostOverrides.collectFirst {
       case (regex, overrides) if regex.pattern.matcher(host).matches() => overrides
     }.getOrElse(this)
-
-  /**
-   * The underlying transport used to connect to hosts. By default [[ClientTransport.TCP]] is used.
-   */
-  @deprecated("Deprecated in favor of connectionSettings.transport", "Akka HTTP 10.1.0")
-  def transport: ClientTransport = connectionSettings.transport
 
   /** The time after which the pool will drop an entity automatically if it wasn't read or discarded */
   @ApiMayChange
@@ -70,7 +64,7 @@ abstract class ConnectionPoolSettings extends js.ConnectionPoolSettings { self: 
 
   @ApiMayChange
   def appendHostOverride(hostPattern: String, settings: ConnectionPoolSettings): ConnectionPoolSettings =
-    self.copy(hostOverrides = hostOverrides :+ (ConnectionPoolSettingsImpl.hostRegex(hostPattern) -> settings))
+    self.copy(hostOverrides = self.hostOverrides :+ (ConnectionPoolSettingsImpl.hostRegex(hostPattern) -> settings))
 
   override def withMaxConnections(n: Int): ConnectionPoolSettings =
     self.copyDeep(_.withMaxConnections(n), maxConnections = n)
@@ -99,11 +93,11 @@ abstract class ConnectionPoolSettings extends js.ConnectionPoolSettings { self: 
     self.copyDeep(_.withResponseEntitySubscriptionTimeout(newValue), responseEntitySubscriptionTimeout = newValue)
 
   /**
-   * Since 10.1.0, the transport is configured in [[ClientConnectionSettings]]. This method is a shortcut for
+   * Since Akka HTTP 10.1.0, the transport is configured in [[ClientConnectionSettings]]. This method is a shortcut for
    * `withUpdatedConnectionSettings(_.withTransport(newTransport))`.
    */
   def withTransport(newValue: ClientTransport): ConnectionPoolSettings =
-    withUpdatedConnectionSettings(_.withTransport(newValue))
+    self.withUpdatedConnectionSettings(_.withTransport(newValue))
 
   def withUpdatedConnectionSettings(f: ClientConnectionSettings => ClientConnectionSettings): ConnectionPoolSettings
 }
@@ -111,7 +105,7 @@ abstract class ConnectionPoolSettings extends js.ConnectionPoolSettings { self: 
 object ConnectionPoolSettings extends SettingsCompanion[ConnectionPoolSettings] {
 
   override def apply(config: Config): ConnectionPoolSettingsImpl = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     val hostOverrides =
       config.getConfigList("pekko.http.host-connection-pool.per-host-override").asScala.toList.map { cfg =>

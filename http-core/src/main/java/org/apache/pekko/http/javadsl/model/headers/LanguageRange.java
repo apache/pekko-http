@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,9 +14,13 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 public interface LanguageRange {
-    public abstract String primaryTag();
-    public abstract float qValue();
-    public abstract boolean matches(Language language);
-    public abstract Iterable<String> getSubTags();
-    public abstract LanguageRange withQValue(float qValue);
+  public abstract String primaryTag();
+
+  public abstract float qValue();
+
+  public abstract boolean matches(Language language);
+
+  public abstract Iterable<String> getSubTags();
+
+  public abstract LanguageRange withQValue(float qValue);
 }

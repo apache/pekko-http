@@ -1,0 +1,39 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
+name: Launch Scala Steward
+
+jobs:
+  scala-steward:
+    runs-on: ubuntu-22.04
+    name: Launch Scala Steward
+    if: github.repository == 'apache/pekko-http'
+    steps:
+      - name: Launch Scala Steward
+        uses: scala-steward-org/scala-steward-action@5021652c555c5724af574758b78ea5be49640007 # v2.75.0
+        env:
+          JAVA_OPTS: "-Xmx4g"
+        with:
+          github-app-id: ${{ secrets.SCALA_STEWARD_APP_ID }}
+          github-app-installation-id: ${{ secrets.SCALA_STEWARD_INSTALLATION_ID }}
+          github-app-key: ${{ secrets.SCALA_STEWARD_PRIVATE_KEY }}
+          github-app-auth-only: true

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -21,7 +21,7 @@ class SchemeDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // #example-1
     val route =
       extractScheme { scheme =>
-        complete(s"The scheme is '${scheme}'")
+        complete(s"The scheme is '$scheme'")
       }
 
     // tests:

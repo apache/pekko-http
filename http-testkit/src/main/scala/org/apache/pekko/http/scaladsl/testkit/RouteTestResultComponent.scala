@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,13 +17,14 @@ import java.util.concurrent.CountDownLatch
 
 import scala.collection.immutable
 import scala.concurrent.duration._
+
 import org.apache.pekko
-import pekko.stream.Materializer
-import pekko.stream.scaladsl._
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.server._
-import pekko.http.scaladsl.model._
-import pekko.http.impl.util._
+import pekko.stream.Materializer
+import pekko.stream.scaladsl._
 
 trait RouteTestResultComponent {
 

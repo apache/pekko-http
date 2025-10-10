@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -29,7 +29,7 @@ final case class HttpChallenge(scheme: String, realm: String,
   def render[R <: Rendering](r: R): r.type = {
     r ~~ scheme
 
-    val paramsNoToken = params.filterKeys(_ != "")
+    val paramsNoToken = params.view.filterKeys(_ != "")
 
     if (params.contains("")) r ~~ " " ~~ params("")
     if (realm != null) r ~~ " realm=" ~~#! realm

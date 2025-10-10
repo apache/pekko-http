@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -43,7 +43,8 @@ final class HuffmanDecoder {
 
   /**
    * Creates a new Huffman decoder with the specified Huffman coding.
-   * @param codes   the Huffman codes indexed by symbol
+   *
+   * @param codes the Huffman codes indexed by symbol
    * @param lengths the length of each Huffman code
    */
   HuffmanDecoder(int[] codes, byte[] lengths) {
@@ -55,11 +56,11 @@ final class HuffmanDecoder {
 
   /**
    * Decompresses the given Huffman coded string literal.
-   * @param  buf the string literal to be decoded
+   *
+   * @param buf the string literal to be decoded
    * @return the output stream for the compressed data
-   * @throws IOException if an I/O error occurs. In particular,
-   *         an <code>IOException</code> may be thrown if the
-   *         output stream has been closed.
+   * @throws IOException if an I/O error occurs. In particular, an <code>IOException</code> may be
+   *     thrown if the output stream has been closed.
    */
   public byte[] decode(byte[] buf) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -110,13 +111,11 @@ final class HuffmanDecoder {
 
   private static final class Node {
 
-    private final int symbol;      // terminal nodes have a symbol
-    private final int bits;        // number of bits matched by the node
+    private final int symbol; // terminal nodes have a symbol
+    private final int bits; // number of bits matched by the node
     private final Node[] children; // internal nodes have children
 
-    /**
-     * Construct an internal node
-     */
+    /** Construct an internal node */
     private Node() {
       symbol = 0;
       bits = 8;
@@ -125,11 +124,12 @@ final class HuffmanDecoder {
 
     /**
      * Construct a terminal node
+     *
      * @param symbol the symbol the node represents
-     * @param bits   the number of bits matched by this node
+     * @param bits the number of bits matched by this node
      */
     private Node(int symbol, int bits) {
-      assert(bits > 0 && bits <= 8);
+      assert (bits > 0 && bits <= 8);
       this.symbol = symbol;
       this.bits = bits;
       children = null;

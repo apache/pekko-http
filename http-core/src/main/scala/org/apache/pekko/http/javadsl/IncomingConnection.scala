@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,7 +13,9 @@
 
 package org.apache.pekko.http.javadsl
 
+import java.util.concurrent.CompletionStage
 import java.net.InetSocketAddress
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.japi.function.Function
@@ -21,9 +23,9 @@ import pekko.stream.Materializer
 import pekko.stream.javadsl.Flow
 import pekko.http.javadsl.model._
 import pekko.http.scaladsl.{ model => sm }
-import java.util.concurrent.CompletionStage
+
 import scala.concurrent.Future
-import scala.compat.java8.FutureConverters._
+import scala.jdk.FutureConverters._
 
 /**
  * Represents one accepted incoming HTTP connection.
@@ -66,13 +68,13 @@ class IncomingConnection private[http] (delegate: pekko.http.scaladsl.Http.Incom
    */
   def handleWithAsyncHandler(
       handler: Function[HttpRequest, CompletionStage[HttpResponse]], materializer: Materializer): Unit =
-    delegate.handleWithAsyncHandler(handler.apply(_).toScala.asInstanceOf[Future[sm.HttpResponse]])(materializer)
+    delegate.handleWithAsyncHandler(handler.apply(_).asScala.asInstanceOf[Future[sm.HttpResponse]])(materializer)
 
   /**
    * Handles the connection with the given handler function.
    */
   def handleWithAsyncHandler(handler: Function[HttpRequest, CompletionStage[HttpResponse]], parallelism: Int,
       materializer: Materializer): Unit =
-    delegate.handleWithAsyncHandler(handler.apply(_).toScala.asInstanceOf[Future[sm.HttpResponse]], parallelism)(
+    delegate.handleWithAsyncHandler(handler.apply(_).asScala.asInstanceOf[Future[sm.HttpResponse]], parallelism)(
       materializer)
 }

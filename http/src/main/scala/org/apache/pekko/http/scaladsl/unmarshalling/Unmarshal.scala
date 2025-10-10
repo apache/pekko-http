@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.scaladsl.unmarshalling
 
-import org.apache.pekko.stream.Materializer
-
 import scala.concurrent.{ ExecutionContext, Future }
+
+import org.apache.pekko.stream.Materializer
 
 object Unmarshal {
   def apply[T](value: T): Unmarshal[T] = new Unmarshal(value)

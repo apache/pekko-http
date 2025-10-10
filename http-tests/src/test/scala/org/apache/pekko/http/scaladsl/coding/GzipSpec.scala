@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -19,9 +19,7 @@ import java.util.zip.{ GZIPInputStream, GZIPOutputStream, ZipException }
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.util.ByteString
-import scala.annotation.nowarn
 
-@nowarn("msg=deprecated .* is internal API")
 class GzipSpec extends CoderSpec {
   protected def Coder: Coder = Coders.Gzip(compressionLevel = 9)
 

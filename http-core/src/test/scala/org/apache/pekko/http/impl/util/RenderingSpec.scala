@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -19,7 +19,7 @@ import pekko.http.scaladsl.model.headers.RawHeader
 import pekko.testkit.EventFilter
 import org.scalatest.matchers.should.Matchers
 
-import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import scala.reflect.{ classTag, ClassTag }
 
 class RenderingSpec extends PekkoSpecWithMaterializer with Matchers {
@@ -70,7 +70,7 @@ class RenderingSpec extends PekkoSpecWithMaterializer with Matchers {
       setup(new StringRendering)(_.get),
       setup(new ByteArrayRendering(1000, Logging(system, "test").warning))(r => new String(r.get)),
       setup(new ByteStringRendering(1000, Logging(system, "test").warning))(_.get.utf8String),
-      setup(new CustomCharsetByteStringRendering(Charset.forName("ISO-8859-1"), 1000))(_.get.utf8String))
+      setup(new CustomCharsetByteStringRendering(StandardCharsets.ISO_8859_1, 1000))(_.get.utf8String))
 
     renderings.foreach { setup =>
       setup.tag should {

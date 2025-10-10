@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -24,7 +24,7 @@ import scala.concurrent.duration._
 /**
  * Support trait allowing trivially recording perf metrics from [[MultiNodeSpec]]s
  */
-private[pekko] trait PerfFlamesSupport { _: MultiNodeSpec =>
+private[pekko] trait PerfFlamesSupport { multiNodeSpec: MultiNodeSpec =>
 
   /**
    * Runs `perf-java-flames` script on given node (JVM process).

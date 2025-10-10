@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -53,6 +53,7 @@ class HeaderField implements Comparable<HeaderField> {
     this.name = requireNonNull(name);
     this.value = requireNonNull(value);
   }
+
   HeaderField(String name, String value, Object parsedValue) {
     this.name = requireNonNull(name);
     this.value = requireNonNull(value);
@@ -81,11 +82,10 @@ class HeaderField implements Comparable<HeaderField> {
     if (obj == this) {
       return true;
     }
-    if (!(obj instanceof HeaderField)) {
-      return false;
+    if (obj instanceof HeaderField other) {
+      return name.equals(other.name) && value.equals(other.value);
     }
-    HeaderField other = (HeaderField) obj;
-    return name.equals(other.name) && value.equals(other.value);
+    return false;
   }
 
   @Override

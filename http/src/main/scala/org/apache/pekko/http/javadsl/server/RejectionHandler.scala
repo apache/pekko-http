@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,15 +13,15 @@
 
 package org.apache.pekko.http.javadsl.server
 
-import org.apache.pekko
-import pekko.http.scaladsl.server
-import pekko.http.impl.util.JavaMapping
 import java.util.function
 
-import pekko.http.javadsl.model.HttpResponse
-
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
-import scala.collection.JavaConverters._
+
+import org.apache.pekko
+import pekko.http.impl.util.JavaMapping
+import pekko.http.javadsl.model.HttpResponse
+import pekko.http.scaladsl.server
 
 object RejectionHandler {
 
@@ -69,7 +69,7 @@ class RejectionHandlerBuilder(asScala: server.RejectionHandler.Builder) {
    */
   def handleAll[T <: Rejection](
       t: Class[T], handler: function.Function[java.util.List[T], Route]): RejectionHandlerBuilder = {
-    asScala.handleAll { rejections: collection.immutable.Seq[T] => handler.apply(rejections.asJava).delegate }(
+    asScala.handleAll { (rejections: collection.immutable.Seq[T]) => handler.apply(rejections.asJava).delegate }(
       ClassTag(t))
     this
   }

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,46 +13,32 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import java.net.InetSocketAddress
+import javax.net.ssl.SSLContext
+
+import scala.collection.immutable
+import scala.concurrent.{ Await, Promise }
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.NotUsed
-import pekko.event.Logging
 import pekko.http.impl.engine.http2.FrameEvent._
-import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
-import pekko.http.impl.engine.http2.Http2Protocol.Flags
-import pekko.http.impl.engine.http2.Http2Protocol.FrameType
-import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
+import pekko.http.impl.engine.http2.Http2Protocol.{ ErrorCode, Flags, FrameType, SettingIdentifier }
 import pekko.http.impl.engine.server.{ HttpAttributes, ServerTerminator }
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
-import pekko.http.impl.util.PekkoSpecWithMaterializer
-import pekko.http.impl.util.LogByteStringTools
-import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.CacheDirectives
-import pekko.http.scaladsl.model.headers.RawHeader
+import pekko.http.scaladsl.model.headers.{ CacheDirectives, RawHeader }
 import pekko.http.scaladsl.settings.ServerSettings
-import pekko.stream.Attributes
-import pekko.stream.Attributes.LogLevels
 import pekko.stream.OverflowStrategy
-import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Sink, Source, SourceQueueWithComplete }
-import pekko.stream.testkit.TestPublisher.{ ManualProbe, Probe }
-import pekko.stream.testkit.scaladsl.StreamTestKit
+import pekko.stream.scaladsl.{ BidiFlow, Flow, Source, SourceQueueWithComplete }
 import pekko.stream.testkit.TestPublisher
-import pekko.stream.testkit.TestSubscriber
+import pekko.stream.testkit.TestPublisher.ManualProbe
+import pekko.stream.testkit.scaladsl.StreamTestKit
 import pekko.testkit._
 import pekko.util.ByteString
 
-import scala.annotation.nowarn
-import javax.net.ssl.SSLContext
 import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
-
-import scala.collection.immutable
-import scala.concurrent.duration._
-import scala.concurrent.Await
-import scala.concurrent.Future
-import scala.concurrent.Promise
 
 /**
  * This tests the http2 server protocol logic.
@@ -63,11 +49,10 @@ import scala.concurrent.Promise
  * * if applicable: provide application-level response
  * * validate the produced response frames
  */
-class Http2ServerSpec extends PekkoSpecWithMaterializer("""
-    pekko.http.server.remote-address-header = on
+class Http2ServerSpec extends Http2SpecWithMaterializer("""
     pekko.http.server.http2.log-frames = on
   """)
-    with WithInPendingUntilFixed with Eventually {
+    with Eventually {
   override def failOnSevereMessages: Boolean = true
 
   "The Http/2 server implementation" should {
@@ -392,7 +377,7 @@ class Http2ServerSpec extends PekkoSpecWithMaterializer("""
 
           receivedRequest.entity.contentType should ===(ContentTypes.`application/json`)
           // FIXME: contentLength is not reported in all cases with HTTP/2
-          // see https://github.com/apache/incubator-pekko-http/issues/3843
+          // see https://github.com/akka/akka-http/issues/3843
           // receivedRequest.entity.isIndefiniteLength should ===(false)
           // receivedRequest.entity.contentLengthOption should ===(Some(1337L))
           entityDataIn.expectBytes(ByteString("x" * 1337))
@@ -417,7 +402,7 @@ class Http2ServerSpec extends PekkoSpecWithMaterializer("""
               // error is not surfaced anywhere
             })
 
-        // Reproducing https://github.com/apache/incubator-pekko-http/issues/2957
+        // Reproducing https://github.com/akka/akka-http/issues/2957
         "close the stream when we receive a RST after we have half-closed ourselves as well".inAssertAllStagesStopped(
           new WaitingForRequestData {
             // Client sends the request, but doesn't close the stream yet. This is a bit weird, but it's what grpcurl does ;)
@@ -820,7 +805,7 @@ class Http2ServerSpec extends PekkoSpecWithMaterializer("""
           network.sendSETTING(Http2Protocol.SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, bytesToSend)
           network.updateFromServerWindows(TheStreamId, _ + missingWindow) // test probe doesn't automatically update window
           network.expectDATA(TheStreamId, false, missingWindow)
-          network.expectSettingsAck() // FIXME: bug: we must send ACK before making use of the new setting, see https://github.com/apache/incubator-pekko-http/issues/3553
+          network.expectSettingsAck() // FIXME: bug: we must send ACK before making use of the new setting, see https://github.com/akka/akka-http/issues/3553
 
           entityDataOut.sendComplete()
           network.expectDATA(TheStreamId, true, 0)
@@ -1511,13 +1496,14 @@ class Http2ServerSpec extends PekkoSpecWithMaterializer("""
         })
       "reject incoming frames on already half-closed substream" in pending
 
-      "reject even-numbered client-initiated substreams".inPendingUntilFixed(new SimpleRequestResponseRoundtripSetup {
+      "reject even-numbered client-initiated substreams" in pending /* new SimpleRequestResponseRoundtripSetup {
         network.sendHEADERS(2, endStream = true, endHeaders = true, HPackSpecExamples.C41FirstRequestWithHuffman)
         network.expectGOAWAY()
         // after GOAWAY we expect graceful completion after x amount of time
         // TODO: completion logic, wait?!
         expectGracefulCompletion()
-      })
+      }
+       */
 
       "reject all other frames while waiting for CONTINUATION frames" in pending
 
@@ -1551,26 +1537,6 @@ class Http2ServerSpec extends PekkoSpecWithMaterializer("""
     }
 
     "expose synthetic headers" should {
-      "expose Remote-Address".inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
-
-        lazy val theAddress = "127.0.0.1"
-        lazy val thePort = 1337
-        override def modifyServer(
-            server: BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator]) =
-          BidiFlow.fromGraph(server.withAttributes(
-            HttpAttributes.remoteAddress(new InetSocketAddress(theAddress, thePort))))
-
-        val target = Uri("http://www.example.com/")
-        network.sendRequest(1, HttpRequest(uri = target))
-        user.requestIn.ensureSubscription()
-
-        val request = user.expectRequestRaw()
-        @nowarn("msg=deprecated")
-        val remoteAddressHeader = request.header[headers.`Remote-Address`].get
-        remoteAddressHeader.address.getAddress.get().toString shouldBe ("/" + theAddress)
-        remoteAddressHeader.address.getPort shouldBe thePort
-      })
-
       "expose Tls-Session-Info".inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
         override def settings: ServerSettings =
           super.settings.withParserSettings(super.settings.parserSettings.withIncludeTlsSessionInfoHeader(true))
@@ -1791,100 +1757,4 @@ class Http2ServerSpec extends PekkoSpecWithMaterializer("""
     }
   }
 
-  implicit class InWithStoppedStages(name: String) {
-    def inAssertAllStagesStopped(runTest: => TestSetup) =
-      name in StreamTestKit.assertAllStagesStopped {
-        val setup = runTest
-
-        // force connection to shutdown (in case it is an invalid state)
-        setup.network.fromNet.sendError(new RuntimeException)
-        setup.network.toNet.cancel()
-
-        // and then assert that all stages, substreams in particular, are stopped
-      }
-  }
-
-  protected /* To make ByteFlag warnings go away */ abstract class TestSetupWithoutHandshake {
-    implicit def ec = system.dispatcher
-
-    private val framesOut: Http2FrameProbe = Http2FrameProbe()
-    private val toNet = framesOut.plainDataProbe
-    private val fromNet = TestPublisher.probe[ByteString]()
-
-    def handlerFlow: Flow[HttpRequest, HttpResponse, NotUsed]
-
-    // hook to modify server, for example add attributes
-    def modifyServer(server: BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator]) = server
-
-    // hook to modify server settings
-    def settings: ServerSettings = ServerSettings(system).withServerHeader(None)
-
-    final def theServer: BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] =
-      modifyServer(Http2Blueprint.serverStack(settings, system.log, telemetry = NoOpTelemetry,
-        dateHeaderRendering = Http().dateHeaderRendering))
-        .atop(LogByteStringTools.logByteStringBidi("network-plain-text").addAttributes(
-          Attributes(LogLevels(Logging.DebugLevel, Logging.DebugLevel, Logging.DebugLevel))))
-
-    val serverTerminator =
-      handlerFlow
-        .joinMat(theServer)(Keep.right)
-        .join(Flow.fromSinkAndSource(toNet.sink, Source.fromPublisher(fromNet)))
-        .withAttributes(Attributes.inputBuffer(1, 1))
-        .run()
-
-    val network = new NetworkSide(fromNet, toNet, framesOut) with Http2FrameHpackSupport
-  }
-
-  class NetworkSide(val fromNet: Probe[ByteString], val toNet: ByteStringSinkProbe, val framesOut: Http2FrameProbe)
-      extends WindowTracking {
-    override def frameProbeDelegate = framesOut
-
-    def sendBytes(bytes: ByteString): Unit = fromNet.sendNext(bytes)
-
-  }
-
-  /** Basic TestSetup that has already passed the exchange of the connection preface */
-  abstract class TestSetup(initialClientSettings: Setting*) extends TestSetupWithoutHandshake {
-    network.sendBytes(Http2Protocol.ClientConnectionPreface)
-    network.expectSETTINGS()
-
-    network.sendFrame(SettingsFrame(immutable.Seq.empty ++ initialClientSettings))
-    network.expectSettingsAck()
-  }
-
-  /** Provides the user handler flow as `requestIn` and `responseOut` probes for manual stream interaction */
-  trait RequestResponseProbes extends TestSetupWithoutHandshake {
-    private lazy val requestIn = TestSubscriber.probe[HttpRequest]()
-    private lazy val responseOut = TestPublisher.probe[HttpResponse]()
-
-    def handlerFlow: Flow[HttpRequest, HttpResponse, NotUsed] =
-      Flow.fromSinkAndSource(Sink.fromSubscriber(requestIn), Source.fromPublisher(responseOut))
-
-    lazy val user = new UserSide(requestIn, responseOut)
-
-    def expectGracefulCompletion(): Unit = {
-      network.toNet.expectComplete()
-      user.requestIn.expectComplete()
-    }
-  }
-
-  class UserSide(val requestIn: TestSubscriber.Probe[HttpRequest], val responseOut: TestPublisher.Probe[HttpResponse]) {
-    def expectRequest(): HttpRequest = requestIn.requestNext().removeAttribute(Http2.streamId)
-    def expectRequestRaw(): HttpRequest = requestIn.requestNext() // TODO, make it so that internal headers are not listed in `headers` etc?
-    def emitResponse(streamId: Int, response: HttpResponse): Unit =
-      responseOut.sendNext(response.addAttribute(Http2.streamId, streamId))
-
-  }
-
-  /** Provides the user handler flow as a handler function */
-  trait HandlerFunctionSupport extends TestSetupWithoutHandshake {
-    def parallelism: Int = 2
-    def handler: HttpRequest => Future[HttpResponse] =
-      _ => Future.successful(HttpResponse())
-
-    def handlerFlow: Flow[HttpRequest, HttpResponse, NotUsed] =
-      Http2Blueprint.handleWithStreamIdHeader(parallelism)(handler)
-  }
-
-  def bytes(num: Int, byte: Byte): ByteString = ByteString(Array.fill[Byte](num)(byte))
 }

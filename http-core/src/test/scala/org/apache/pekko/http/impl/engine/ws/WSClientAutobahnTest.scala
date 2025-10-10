@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -20,16 +20,14 @@ import scala.concurrent.Future
 import scala.util.{ Failure, Success, Try }
 import spray.json._
 import pekko.actor.ActorSystem
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl._
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.Uri
 import pekko.http.scaladsl.model.ws._
 
 object WSClientAutobahnTest extends App {
-  implicit val system = ActorSystem()
+  implicit val system: ActorSystem = ActorSystem()
   import system.dispatcher
-  implicit val materializer = ActorMaterializer()
 
   val Agent = "pekko-http"
   val Parallelism = 4

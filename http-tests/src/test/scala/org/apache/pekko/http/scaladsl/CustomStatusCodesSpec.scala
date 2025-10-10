@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -19,6 +19,7 @@ import pekko.http.scaladsl.client.RequestBuilding
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.server.Directives
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
+
 import org.scalatest.concurrent.ScalaFutures
 
 class CustomStatusCodesSpec extends PekkoSpecWithMaterializer with ScalaFutures

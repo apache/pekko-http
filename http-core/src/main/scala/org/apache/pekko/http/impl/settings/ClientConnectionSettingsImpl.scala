@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -29,6 +29,7 @@ import com.typesafe.config.Config
 
 import scala.collection.immutable
 import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.jdk.DurationConverters._
 import scala.util.Try
 
 /** INTERNAL API */
@@ -54,6 +55,17 @@ private[pekko] final case class ClientConnectionSettingsImpl(
     Try { parserSettings.maxContentLength }.isSuccess,
     "The provided ParserSettings is a generic object that does not contain the client-specific settings.")
   override def productPrefix = "ClientConnectionSettings"
+
+  override def withConnectingTimeout(
+      newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
+    withConnectingTimeout(newValue.toScala)
+
+  override def withIdleTimeout(newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
+    withIdleTimeout(newValue.toScala)
+
+  override def withStreamCancellationDelay(
+      newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
+    withStreamCancellationDelay(newValue.toScala)
 
   override def websocketRandomFactory: () => Random = websocketSettings.randomFactory
 }

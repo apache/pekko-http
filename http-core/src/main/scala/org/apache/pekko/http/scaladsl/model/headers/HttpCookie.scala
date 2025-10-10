@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,17 +13,17 @@
 
 package org.apache.pekko.http.scaladsl.model.headers
 
-import org.apache.pekko
-import pekko.http.impl.model.parser.CharacterClasses
-import org.parboiled2.CharPredicate
 import java.util.{ Optional, OptionalLong }
 
-import pekko.http.scaladsl.model.DateTime
+import org.apache.pekko
+import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.impl.util._
-import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.javadsl.{ model => jm }
+import pekko.http.scaladsl.model.DateTime
+import org.parboiled2.CharPredicate
 
-import scala.compat.java8.OptionConverters._
+import scala.jdk.OptionConverters._
 
 /**
  * for a full definition of the http cookie header fields, see
@@ -69,43 +69,17 @@ object HttpCookiePair {
  * http://tools.ietf.org/html/rfc6265
  */
 final class HttpCookie private[http] (
-    name: String,
-    value: String,
+    val name: String,
+    val value: String,
     val expires: Option[DateTime],
     val maxAge: Option[Long],
     val domain: Option[String],
     val path: Option[String],
-    secure: Boolean,
-    httpOnly: Boolean,
+    val secure: Boolean,
+    val httpOnly: Boolean,
     val extension: Option[String],
     val sameSite: Option[SameSite]) extends jm.headers.HttpCookie with ToStringRenderable with Product with Serializable
     with Equals {
-
-  @deprecated("Please use HttpCookie(name, value).withXxx()", "Akka HTTP 10.2.0")
-  def this(
-      name: String,
-      value: String,
-      expires: Option[DateTime] = None,
-      maxAge: Option[Long] = None,
-      domain: Option[String] = None,
-      path: Option[String] = None,
-      secure: Boolean = false,
-      httpOnly: Boolean = false,
-      extension: Option[String] = None) =
-    this(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
-
-  @deprecated("for binary compatibility", since = "Akka HTTP 10.2.0")
-  private[headers] def copy(
-      name: String,
-      value: String,
-      expires: Option[DateTime],
-      maxAge: Option[Long],
-      domain: Option[String],
-      path: Option[String],
-      secure: Boolean,
-      httpOnly: Boolean,
-      extension: Option[String]): HttpCookie = copy(name = name, value = value, expires = expires, maxAge = maxAge,
-    domain = domain, path = path, secure = secure, httpOnly = httpOnly, extension = extension, sameSite = sameSite)
 
   private[headers] def copy(
       name: String = this.name,
@@ -180,28 +154,23 @@ final class HttpCookie private[http] (
     r
   }
 
-  override def name(): String = this.name
-  override def value(): String = this.value
-  override def secure(): Boolean = this.secure
-  override def httpOnly(): Boolean = this.httpOnly
+  /** Java API */
+  def getSameSite: Optional[jm.headers.SameSite] = sameSite.map(_.asJava).toJava
 
   /** Java API */
-  def getSameSite: Optional[jm.headers.SameSite] = sameSite.map(_.asJava).asJava
+  def getExtension: Optional[String] = extension.toJava
 
   /** Java API */
-  def getExtension: Optional[String] = extension.asJava
+  def getPath: Optional[String] = path.toJava
 
   /** Java API */
-  def getPath: Optional[String] = path.asJava
+  def getDomain: Optional[String] = domain.toJava
 
   /** Java API */
-  def getDomain: Optional[String] = domain.asJava
+  def getMaxAge: OptionalLong = maxAge.toJavaPrimitive
 
   /** Java API */
-  def getMaxAge: OptionalLong = maxAge.asPrimitive
-
-  /** Java API */
-  def getExpires: Optional[jm.DateTime] = expires.map(_.asJava).asJava
+  def getExpires: Optional[jm.DateTime] = expires.map(_.asJava).toJava
 
   def withName(name: String): HttpCookie = copy(name = name)
   def withValue(value: String): HttpCookie = copy(value = value)
@@ -225,7 +194,7 @@ final class HttpCookie private[http] (
   /** Java API */
   def withSameSite(sameSite: jm.headers.SameSite): HttpCookie = copy(sameSite = Option(sameSite.asScala()))
   def withSameSite(sameSite: Optional[jm.headers.SameSite]): HttpCookie =
-    copy(sameSite = sameSite.asScala.map(_.asScala()))
+    copy(sameSite = sameSite.toScala.map(_.asScala()))
 
   def withExtension(extension: String): HttpCookie = copy(extension = Some(extension))
 }
@@ -247,32 +216,6 @@ object HttpCookie {
       httpOnly: Boolean = false,
       extension: Option[String] = None) =
     new HttpCookie(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
-
-  @deprecated(
-    "Pattern matching on HttpCookie is deprecated because of the big number of fields and potential future compatibility hazards. Please use other means to check the fields.",
-    since = "Akka HTTP 10.2.0")
-  def unapply(cookie: HttpCookie) = Option((
-    cookie.name(),
-    cookie.value(),
-    cookie.expires,
-    cookie.maxAge,
-    cookie.domain,
-    cookie.path,
-    cookie.secure(),
-    cookie.httpOnly(),
-    cookie.extension))
-
-  @deprecated("Use HttpCookiePair.toCookie and withXxx methods instead", "Akka HTTP 10.2.0")
-  def fromPair(
-      pair: HttpCookiePair,
-      expires: Option[DateTime] = None,
-      maxAge: Option[Long] = None,
-      domain: Option[String] = None,
-      path: Option[String] = None,
-      secure: Boolean = false,
-      httpOnly: Boolean = false,
-      extension: Option[String] = None): HttpCookie =
-    new HttpCookie(pair.name, pair.value, expires, maxAge, domain, path, secure, httpOnly, extension, None)
 
   import pekko.http.impl.model.parser.CharacterClasses._
 

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -12,7 +12,7 @@
  */
 
 package docs.http.javadsl;
-//#minimal-routing-example
+// #minimal-routing-example
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.Http;
@@ -30,12 +30,11 @@ public class HttpServerMinimalExampleTest extends AllDirectives {
 
     final Http http = Http.get(system);
 
-    //In order to access all directives we need an instance where the routes are define.
+    // In order to access all directives we need an instance where the routes are define.
     HttpServerMinimalExampleTest app = new HttpServerMinimalExampleTest();
 
     final CompletionStage<ServerBinding> binding =
-      http.newServerAt("localhost", 8080)
-          .bind(app.createRoute());
+        http.newServerAt("localhost", 8080).bind(app.createRoute());
 
     System.out.println("Server online at http://localhost:8080/\nPress RETURN to stop...");
     System.in.read(); // let it run until user presses return
@@ -46,10 +45,7 @@ public class HttpServerMinimalExampleTest extends AllDirectives {
   }
 
   private Route createRoute() {
-    return concat(
-        path("hello", () ->
-            get(() ->
-                complete("<h1>Say hello to pekko-http</h1>"))));
+    return concat(path("hello", () -> get(() -> complete("<h1>Say hello to pekko-http</h1>"))));
   }
 }
-//#minimal-routing-example
+// #minimal-routing-example

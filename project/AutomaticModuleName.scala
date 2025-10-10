@@ -4,14 +4,12 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /**
  * Copyright (C) 2016-2020 Lightbend Inc. <https://www.lightbend.com>
  */
-
-package org.apache.pekko
 
 import sbt.{ Def, _ }
 import sbt.Keys._

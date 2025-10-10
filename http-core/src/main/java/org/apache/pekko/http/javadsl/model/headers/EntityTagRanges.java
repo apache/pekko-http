@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,7 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 public final class EntityTagRanges {
-    private EntityTagRanges() { }
+  private EntityTagRanges() {}
 
-    public static final EntityTagRange ALL = org.apache.pekko.http.scaladsl.model.headers.EntityTagRange.$times$.MODULE$;
+  public static final EntityTagRange ALL =
+      org.apache.pekko.http.scaladsl.model.headers.EntityTagRange.$times$.MODULE$;
 }

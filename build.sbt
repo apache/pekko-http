@@ -1,9 +1,17 @@
-import org.apache.pekko
-import pekko._
-import pekko.ValidatePullRequest._
-import PekkoDependency._
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, which was derived from Akka.
+ */
+
+import ValidatePullRequest._
+import net.bzzt.reproduciblebuilds.ReproducibleBuildsPlugin.reproducibleBuildsCheckResolver
+import com.github.pjfanning.pekkobuild._
 import Dependencies.{ h2specExe, h2specName }
-import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
+import com.typesafe.sbt.MultiJvmPlugin.autoImport._
 import java.nio.file.Files
 import java.nio.file.attribute.{ PosixFileAttributeView, PosixFilePermission }
 
@@ -11,14 +19,22 @@ import sbtdynver.GitDescribeOutput
 import spray.boilerplate.BoilerplatePlugin
 import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
 
-sourceDistName := "incubator-pekko-http"
+sourceDistName := "apache-pekko-http"
+sourceDistIncubating := false
+
+ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
+
+addCommandAlias("verifyCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; +headerCheckAll; javafmtCheckAll")
+addCommandAlias("applyCodeStyle", "+headerCreateAll; scalafmtAll; scalafmtSbt; javafmtAll")
+addCommandAlias(name = "sortImports", value = ";scalafixEnable; scalafixAll SortImports; scalafmtAll")
+
 inThisBuild(Def.settings(
   apiURL := {
     val apiVersion = if (isSnapshot.value) "current" else version.value
     Some(url(s"https://pekko.apache.org/api/pekko-http/$apiVersion/"))
   },
   scmInfo := Some(
-    ScmInfo(url("https://github.com/apache/incubator-pekko-http"), "git@github.com:apache/incubator-pekko-http.git")),
+    ScmInfo(url("https://github.com/apache/pekko-http"), "git@github.com:apache/pekko-http.git")),
   description := "Apache Pekko Http: Modern, fast, asynchronous, streaming-first HTTP server and client.",
   testOptions ++= Seq(
     Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
@@ -28,11 +44,11 @@ inThisBuild(Def.settings(
   concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
   onLoad in Global := {
     sLog.value.info(
-      s"Building Pekko HTTP ${version.value} against Pekko ${PekkoDependency.pekkoVersion} on Scala ${(httpCore / scalaVersion).value}")
+      s"Building Pekko HTTP ${version.value} against Pekko ${PekkoCoreDependency.version} on Scala ${(httpCore / scalaVersion).value}")
     (onLoad in Global).value
   },
-  scalafixScalaBinaryVersion := scalaBinaryVersion.value,
-  apacheSonatypeProjectProfile := "pekko"))
+  projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
+  versionScheme := Some(VersionScheme.SemVerSpec)))
 
 // When this is updated the set of modules in Http.allModules should also be updated
 lazy val userProjects: Seq[ProjectReference] = List[ProjectReference](
@@ -41,7 +57,9 @@ lazy val userProjects: Seq[ProjectReference] = List[ProjectReference](
   http2Tests,
   http,
   httpCaching,
+  httpCors,
   httpTestkit,
+  httpTestkitMunit,
   httpMarshallersScala,
   httpMarshallersJava,
   httpSprayJson,
@@ -58,7 +76,7 @@ lazy val aggregatedProjects: Seq[ProjectReference] = userProjects ++ List[Projec
 lazy val root = Project(
   id = "pekko-http",
   base = file("."))
-  .enablePlugins(UnidocRoot, NoPublish, AggregatePRValidation)
+  .enablePlugins(UnidocRoot, NoPublish, AggregatePRValidation, NoScala3)
   .disablePlugins(MimaPlugin)
   .settings(
     name := "pekko-http-root",
@@ -71,74 +89,46 @@ lazy val root = Project(
     Compile / headerCreate / unmanagedSources := (baseDirectory.value / "project").**("*.scala").get)
   .aggregate(aggregatedProjects: _*)
 
-/**
- * Adds a `src/.../scala-2.13+` source directory for Scala 2.13 and newer
- * and a `src/.../scala-2.13-` source directory for Scala version older than 2.13
- */
-def add213CrossDirs(config: Configuration): Seq[Setting[_]] = Seq(
-  config / unmanagedSourceDirectories += {
-    val sourceDir = (config / sourceDirectory).value
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, n)) if n >= 13 => sourceDir / "scala-2.13+"
-      case _                       => sourceDir / "scala-2.13-"
-    }
-  })
-
-val commonSettings =
-  add213CrossDirs(Compile) ++
-  add213CrossDirs(Test)
-
 val scalaMacroSupport = Seq(
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, n)) if n >= 13 =>
+      case Some((2, n)) =>
         Seq("-Ymacro-annotations")
       case _ =>
         Seq.empty
     }
-  },
-  libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, n)) if n < 13 =>
-      Seq(compilerPlugin(("org.scalamacros" % "paradise" % "2.1.1").cross(CrossVersion.full)))
-    case _ => Seq.empty
-  }))
+  })
 
 lazy val parsing = project("parsing")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.parsing"))
-  .addPekkoModuleDependency("pekko-actor", "provided")
+  .addPekkoModuleDependency("pekko-actor", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.parsing)
-  .settings(
-    scalacOptions --= Seq("-Xfatal-warnings", "-Xlint", "-Ywarn-dead-code"), // disable warnings for parboiled code
-    scalacOptions += "-language:_")
+  .settings(scalacOptions += "-language:_")
   .settings(scalaMacroSupport)
   .enablePlugins(ScaladocNoVerificationOfDiagrams)
   .enablePlugins(ReproducibleBuildsPlugin)
   .disablePlugins(MimaPlugin)
 
 lazy val httpCore = project("http-core")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.core"))
   .settings(AddMetaInfLicenseFiles.httpCoreSettings)
-  .dependsOn(parsing, httpScalafixRules % ScalafixConfig)
-  .addPekkoModuleDependency("pekko-stream", "provided")
+  .dependsOn(parsing /*, httpScalafixRules % ScalafixConfig*/ )
+  .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency(
     "pekko-stream-testkit",
     "test",
-    pekko =
-      if (System.getProperty("pekko.http.test-against-pekko-main", "false") == "true") PekkoDependency.mainSnapshot
-      else PekkoDependency.default)
+    PekkoCoreDependency.default)
   .settings(Dependencies.httpCore)
   .settings(VersionGenerator.versionSettings)
   .settings(scalaMacroSupport)
   .enablePlugins(BootstrapGenjavadoc)
   .enablePlugins(ReproducibleBuildsPlugin)
+  .disablePlugins(ScalafixPlugin)
 
 lazy val http = project("http")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http"))
   .dependsOn(httpCore)
-  .addPekkoModuleDependency("pekko-stream", "provided")
+  .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.http)
   .settings(
     Compile / scalacOptions += "-language:_")
@@ -147,11 +137,10 @@ lazy val http = project("http")
   .enablePlugins(ReproducibleBuildsPlugin)
 
 lazy val http2Tests = project("http2-tests")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.http2"))
   .dependsOn(httpCore, httpTestkit % "test", httpCore % "test->test")
-  .addPekkoModuleDependency("pekko-stream", "provided")
-  .addPekkoModuleDependency("pekko-stream-testkit", "test")
+  .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
+  .addPekkoModuleDependency("pekko-stream-testkit", "test", PekkoCoreDependency.default)
   .settings(Dependencies.http2Tests)
   .settings {
     lazy val h2specPath = Def.task {
@@ -170,7 +159,10 @@ lazy val http2Tests = project("http2-tests")
           log.info("Extracting h2spec to " + h2spec)
 
           for (zip <- (Test / update).value.select(artifact = artifactFilter(name = h2specName, extension = "zip")))
-            IO.unzip(zip, (Test / target).value)
+            IO.unzip(zip, (Test / target).value / h2specName)
+
+          for (tarGz <- (Test / update).value.select(artifact = artifactFilter(name = h2specName, extension = "gz")))
+            Untar.unTarGz(tarGz, (Test / target).value / h2specName)
 
           // Set the executable bit on the expected path to fail if it doesn't exist
           for (view <- Option(Files.getFileAttributeView(h2spec.toPath, classOf[PosixFileAttributeView]))) {
@@ -186,11 +178,10 @@ lazy val http2Tests = project("http2-tests")
   .disablePlugins(MimaPlugin) // experimental module still
 
 lazy val httpTestkit = project("http-testkit")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.testkit"))
   .dependsOn(http)
-  .addPekkoModuleDependency("pekko-stream-testkit", "provided")
-  .addPekkoModuleDependency("pekko-testkit", "provided")
+  .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
+  .addPekkoModuleDependency("pekko-testkit", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.httpTestkit)
   .settings(
     // don't ignore Suites which is the default for the junit-interface
@@ -201,8 +192,15 @@ lazy val httpTestkit = project("http-testkit")
   .enablePlugins(ReproducibleBuildsPlugin)
   .disablePlugins(MimaPlugin) // testkit, no bin compat guaranteed
 
+lazy val httpTestkitMunit = project("http-testkit-munit")
+  .settings(AutomaticModuleName.settings("pekko.http.testkit.munit"))
+  .dependsOn(http, httpTestkit)
+  .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
+  .addPekkoModuleDependency("pekko-testkit", "provided", PekkoCoreDependency.default)
+  .settings(Dependencies.httpTestkitMunit)
+  .disablePlugins(MimaPlugin) // testkit, no bin compat guaranteed
+
 lazy val httpTests = project("http-tests")
-  .settings(commonSettings)
   .settings(Dependencies.httpTests)
   .dependsOn(httpSprayJson, httpXml, httpJackson,
     httpTestkit % "test", httpCore % "test->test",
@@ -210,10 +208,9 @@ lazy val httpTests = project("http-tests")
   .enablePlugins(NoPublish) // don't release tests
   .enablePlugins(MultiNode)
   .disablePlugins(MimaPlugin) // this is only tests
-  .configs(MultiJvm)
   .settings(headerSettings(MultiJvm))
-  .addPekkoModuleDependency("pekko-stream", "provided")
-  .addPekkoModuleDependency("pekko-multi-node-testkit", "test")
+  .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
+  .addPekkoModuleDependency("pekko-multi-node-testkit", "test", PekkoCoreDependency.default)
   .settings(
     // Fix to reenable scala-steward, see https://gitter.im/scala-steward-org/scala-steward?at=6183bb66d78911028a1b7cd8
     // Putting that jar file with the complicated name into the git tree directly breaks if something in the environment
@@ -230,15 +227,13 @@ lazy val httpTests = project("http-tests")
     })
 
 lazy val httpJmhBench = project("http-bench-jmh")
-  .settings(commonSettings)
-  .dependsOn(http, http2Tests % "compile->compile,test")
-  .addPekkoModuleDependency("pekko-stream")
+  .dependsOn(http, httpCors, http2Tests % "compile->compile,test")
+  .addPekkoModuleDependency("pekko-stream", "", PekkoCoreDependency.default)
   .enablePlugins(JmhPlugin)
   .enablePlugins(NoPublish) // don't release benchs
   .disablePlugins(MimaPlugin)
 
 lazy val httpMarshallersScala = project("http-marshallers-scala")
-  .settings(commonSettings)
   .enablePlugins(NoPublish /*, AggregatePRValidation*/ )
   .disablePlugins(MimaPlugin)
   .aggregate(httpSprayJson, httpXml)
@@ -246,17 +241,16 @@ lazy val httpMarshallersScala = project("http-marshallers-scala")
 lazy val httpXml =
   httpMarshallersScalaSubproject("xml")
     .settings(AutomaticModuleName.settings("pekko.http.marshallers.scalaxml"))
-    .addPekkoModuleDependency("pekko-stream", "provided")
+    .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
     .settings(Dependencies.httpXml)
 
 lazy val httpSprayJson =
   httpMarshallersScalaSubproject("spray-json")
     .settings(AutomaticModuleName.settings("pekko.http.marshallers.sprayjson"))
-    .addPekkoModuleDependency("pekko-stream", "provided")
+    .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
     .settings(Dependencies.httpSprayJson)
 
 lazy val httpMarshallersJava = project("http-marshallers-java")
-  .settings(commonSettings)
   .enablePlugins(NoPublish /*, AggregatePRValidation*/ )
   .disablePlugins(MimaPlugin)
   .aggregate(httpJackson)
@@ -264,8 +258,8 @@ lazy val httpMarshallersJava = project("http-marshallers-java")
 lazy val httpJackson =
   httpMarshallersJavaSubproject("jackson")
     .settings(AutomaticModuleName.settings("pekko.http.marshallers.jackson"))
-    .addPekkoModuleDependency("pekko-stream", "provided")
-    .addPekkoModuleDependency("pekko-stream-testkit", "test")
+    .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
+    .addPekkoModuleDependency("pekko-stream-testkit", "test", PekkoCoreDependency.default)
     .dependsOn(httpTestkit % "test")
     .settings(Dependencies.httpJackson)
     .enablePlugins(ScaladocNoVerificationOfDiagrams)
@@ -273,11 +267,21 @@ lazy val httpJackson =
 lazy val httpCaching = project("http-caching")
   .settings(
     name := "pekko-http-caching")
-  .settings(commonSettings)
   .settings(AutomaticModuleName.settings("pekko.http.caching"))
-  .addPekkoModuleDependency("pekko-stream", "provided")
-  .addPekkoModuleDependency("pekko-stream-testkit", "provided")
+  .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
+  .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.httpCaching)
+  .dependsOn(http, httpCore, httpTestkit % "test")
+  .enablePlugins(BootstrapGenjavadoc)
+
+lazy val httpCors = project("http-cors")
+  .settings(
+    name := "pekko-http-cors")
+  .settings(AutomaticModuleName.settings("pekko.http.cors"))
+  .settings(AddMetaInfLicenseFiles.httpCorsSettings)
+  .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
+  .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
+  .settings(Dependencies.httpCors)
   .dependsOn(http, httpCore, httpTestkit % "test")
   .enablePlugins(BootstrapGenjavadoc)
 
@@ -292,7 +296,6 @@ def httpMarshallersScalaSubproject(moduleName: String) =
     .dependsOn(http)
     .settings(
       name := s"pekko-http-$moduleName")
-    .settings(commonSettings)
     .enablePlugins(BootstrapGenjavadoc)
     .enablePlugins(ReproducibleBuildsPlugin)
 
@@ -303,12 +306,11 @@ def httpMarshallersJavaSubproject(moduleName: String) =
     .settings(
       name := s"pekko-http-$moduleName")
     .dependsOn(http)
-    .settings(commonSettings)
     .enablePlugins(BootstrapGenjavadoc)
     .enablePlugins(ReproducibleBuildsPlugin)
 
 lazy val httpScalafix = project("http-scalafix")
-  .enablePlugins(NoPublish)
+  .enablePlugins(NoPublish, NoScala3)
   .disablePlugins(MimaPlugin)
   .aggregate(httpScalafixRules, httpScalafixTestInput, httpScalafixTestOutput, httpScalafixTests)
 
@@ -317,13 +319,14 @@ lazy val httpScalafixRules =
     .settings(
       name := "pekko-http-scalafix-rules",
       libraryDependencies += Dependencies.Compile.scalafix)
+    .enablePlugins(NoScala3)
     .disablePlugins(MimaPlugin) // tooling, no bin compat guaranteed
 
 lazy val httpScalafixTestInput =
   Project(id = "http-scalafix-test-input", base = file("http-scalafix/scalafix-test-input"))
     .dependsOn(http)
-    .addPekkoModuleDependency("pekko-stream")
-    .enablePlugins(NoPublish)
+    .addPekkoModuleDependency("pekko-stream", "", PekkoCoreDependency.default)
+    .enablePlugins(NoPublish, NoScala3)
     .disablePlugins(MimaPlugin, HeaderPlugin /* because it gets confused about metaheader required for tests */ )
     .settings(
       addCompilerPlugin(scalafixSemanticdb),
@@ -336,13 +339,13 @@ lazy val httpScalafixTestInput =
 lazy val httpScalafixTestOutput =
   Project(id = "http-scalafix-test-output", base = file("http-scalafix/scalafix-test-output"))
     .dependsOn(http)
-    .addPekkoModuleDependency("pekko-stream")
-    .enablePlugins(NoPublish)
+    .addPekkoModuleDependency("pekko-stream", "", PekkoCoreDependency.default)
+    .enablePlugins(NoPublish, NoScala3)
     .disablePlugins(MimaPlugin, HeaderPlugin /* because it gets confused about metaheader required for tests */ )
 
 lazy val httpScalafixTests =
   Project(id = "http-scalafix-tests", base = file("http-scalafix/scalafix-tests"))
-    .enablePlugins(NoPublish)
+    .enablePlugins(NoPublish, NoScala3)
     .disablePlugins(MimaPlugin)
     .settings(
       name := "pekko-http-scalafix-tests",
@@ -362,27 +365,30 @@ lazy val httpScalafixTests =
 
 lazy val docs = project("docs")
   .enablePlugins(ParadoxPlugin, PekkoParadoxPlugin, NoPublish)
-  .disablePlugins(MimaPlugin)
-  .addPekkoModuleDependency("pekko-stream", "provided", PekkoDependency.docs)
-  .addPekkoModuleDependency("pekko-actor-typed", "provided", PekkoDependency.docs)
-  .addPekkoModuleDependency("pekko-multi-node-testkit", "provided", PekkoDependency.docs)
-  .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoDependency.docs)
-  .addPekkoModuleDependency("pekko-actor-testkit-typed", "provided", PekkoDependency.docs)
+  .disablePlugins(MimaPlugin, ScalafixPlugin)
+  .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
+  .addPekkoModuleDependency("pekko-actor-typed", "provided", PekkoCoreDependency.default)
+  .addPekkoModuleDependency("pekko-multi-node-testkit", "provided", PekkoCoreDependency.default)
+  .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
+  .addPekkoModuleDependency("pekko-actor-testkit-typed", "provided", PekkoCoreDependency.default)
   .dependsOn(
-    httpCore, http, httpXml, http2Tests, httpMarshallersJava, httpMarshallersScala, httpCaching,
+    httpCore, http, httpXml, http2Tests, httpMarshallersJava, httpMarshallersScala, httpCaching, httpCors,
     httpTests % "compile;test->test", httpTestkit % "compile;test->test", httpScalafixRules % ScalafixConfig)
   .settings(Dependencies.docs)
   .settings(
     name := "pekko-http-docs",
-    resolvers += Resolver.jcenterRepo,
     scalacOptions ++= Seq(
       // Make sure we don't accidentally keep documenting deprecated calls
       "-Xfatal-warnings",
-      // In docs adding an unused variable can be helpful, for example
-      // to show its type
-      "-Xlint:-unused",
       // Does not appear to lead to problems
       "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s"),
+    scalacOptions ++= (
+      if (scalaVersion.value.startsWith("3")) Seq.empty
+      else Seq(
+        // In docs adding an unused variable can be helpful, for example
+        // to show its type
+        "-Xlint:-unused")
+    ),
     scalacOptions --= Seq(
       // Code after ??? can be considered 'dead',  but still useful for docs
       "-Ywarn-dead-code"),
@@ -394,24 +400,18 @@ lazy val docs = project("docs")
     Compile / paradoxProperties ++= Map(
       "project.name" -> "Apache Pekko HTTP",
       "canonical.base_url" -> "https://pekko.apache.org/docs/pekko-http/current",
-      "pekko.version" -> PekkoDependency.docs.version,
+      "pekko.version" -> PekkoCoreDependency.version,
       "jackson.xml.version" -> Dependencies.jacksonXmlVersion,
       "scalafix.version" -> _root_.scalafix.sbt.BuildInfo.scalafixVersion, // grab from scalafix plugin directly
-      "extref.pekko-docs.base_url" -> s"https://pekko.apache.org/docs/pekko/current/%s",
+      "extref.pekko-docs.base_url" -> s"https://pekko.apache.org/docs/pekko/${PekkoCoreDependency.default.link}/%s",
       "javadoc.java.base_url" -> "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/",
       "javadoc.java.link_style" -> "direct",
-      "javadoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/japi/pekko/${PekkoDependency.docs.link}",
+      "javadoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/japi/pekko/${PekkoCoreDependency.default.link}",
       "javadoc.org.apache.pekko.link_style" -> "direct",
-      "scaladoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/api/pekko/${PekkoDependency.docs.link}",
+      "scaladoc.org.apache.pekko.base_url" -> s"https://pekko.apache.org/api/pekko/${PekkoCoreDependency.default.link}",
       "scaladoc.org.apache.pekko.link_style" -> "direct",
-      "javadoc.org.apache.pekko.http.base_url" -> {
-        val v = if (!isSnapshot.value) "current" else version.value
-        s"https://pekko.apache.org/api/pekko-http/$v"
-      },
-      "scaladoc.org.apache.pekko.http.base_url" -> {
-        val v = if (!isSnapshot.value) "current" else version.value
-        s"https://pekko.apache.org/japi/pekko-http/$v"
-      },
+      "javadoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/japi/pekko-http/${projectInfoVersion.value}",
+      "scaladoc.org.apache.pekko.http.base_url" -> s"https://pekko.apache.org/api/pekko-http/${projectInfoVersion.value}",
       "github.base_url" -> GitHub.url(version.value, isSnapshot.value)),
     apidocRootPackage := "org.apache.pekko",
     ValidatePR / additionalTasks += Compile / paradox)
@@ -419,9 +419,9 @@ lazy val docs = project("docs")
 
 /*
 lazy val compatibilityTests = Project("http-compatibility-tests", file("http-compatibility-tests"))
-  .enablePlugins(NoPublish)
+  .enablePlugins(NoPublish, NoScala3)
   .disablePlugins(MimaPlugin)
-  .addPekkoModuleDependency("pekko-stream", "provided")
+  .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .settings(
     libraryDependencies ++= Seq(
       "org.apache.pekko" %% "pekko-http" % MiMa.latest101Version % "provided",
@@ -429,7 +429,7 @@ lazy val compatibilityTests = Project("http-compatibility-tests", file("http-com
     (Test / dependencyClasspath) := {
       // HACK: We'd like to use `dependsOn(http % "test->compile")` to upgrade the explicit dependency above to the
       //       current version but that fails. So, this is a manual `dependsOn` which works as expected.
-      (Test / dependencyClasspath).value.filterNot(_.data.getName contains "akka") ++
+      (Test / dependencyClasspath).value.filterNot(_.data.getName contains "pekko") ++
       (httpTests / Test / fullClasspath).value
     }
   )

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,6 +15,11 @@ package org.apache.pekko.http.scaladsl.server
 
 import java.util.concurrent.atomic.AtomicReference
 
+import scala.concurrent.{ blocking, Await, ExecutionContext, ExecutionContextExecutor, Future, Promise }
+import scala.concurrent.duration.Duration
+import scala.io.StdIn
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.ActorSystem
@@ -22,20 +27,16 @@ import pekko.event.Logging
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.Http.ServerBinding
 import pekko.http.scaladsl.settings.ServerSettings
+
 import com.typesafe.config.ConfigFactory
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{ blocking, Await, ExecutionContext, ExecutionContextExecutor, Future, Promise }
-import scala.io.StdIn
-import scala.util.{ Failure, Success, Try }
-
 /**
- * DEPRECATED, consider https://developer.lightbend.com/guides/akka-http-quickstart-scala/ instead
+ * DEPRECATED, consider https://github.com/apache/pekko-http-quickstart-scala.g8 instead
  *
- * Bootstrap trait for Http Server. It helps booting up an akka-http server by only defining the desired routes.
+ * Bootstrap trait for Http Server. It helps booting up a pekko-http server by only defining the desired routes.
  * It offers additional hooks to modify the default behavior.
  */
-@deprecated("HttpApp this doesn't reflect the latest Akka APIs", "Akka HTTP 10.2.0")
+@deprecated("HttpApp this doesn't reflect the latest APIs", "Akka HTTP 10.2.0")
 abstract class HttpApp extends Directives {
 
   private val serverBinding = new AtomicReference[ServerBinding]()

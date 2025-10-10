@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,14 +14,16 @@
 package org.apache.pekko.http.scaladsl.server
 
 import java.util.UUID
-import scala.util.matching.Regex
+
 import scala.annotation.tailrec
+import scala.util.matching.Regex
+
 import org.apache.pekko
-import pekko.http.scaladsl.server.util.Tuple
-import pekko.http.scaladsl.server.util.TupleOps._
+import pekko.http.impl.util._
 import pekko.http.scaladsl.common.NameOptionReceptacle
 import pekko.http.scaladsl.model.Uri.Path
-import pekko.http.impl.util._
+import pekko.http.scaladsl.server.util.Tuple
+import pekko.http.scaladsl.server.util.TupleOps._
 
 /**
  * A PathMatcher tries to match a prefix of a given string and returns either a PathMatcher.Matched instance

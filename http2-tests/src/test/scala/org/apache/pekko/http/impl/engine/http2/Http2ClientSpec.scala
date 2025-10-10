@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -12,6 +12,13 @@
  */
 
 package org.apache.pekko.http.impl.engine.http2
+
+import javax.net.ssl.SSLContext
+
+import scala.collection.immutable
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.concurrent.duration._
 
 import org.apache.pekko
 import pekko.NotUsed
@@ -22,17 +29,16 @@ import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
-import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.impl.util.LogByteStringTools
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.client.RequestBuilding.Post
+import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpEntity.Chunk
 import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.model.HttpEntity.Chunked
 import pekko.http.scaladsl.model.HttpEntity.LastChunk
 import pekko.http.scaladsl.model.HttpMethods.GET
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.model.headers.{
   `Access-Control-Allow-Origin`,
   `Cache-Control`,
@@ -40,6 +46,7 @@ import pekko.http.scaladsl.model.headers.{
   `Content-Type`,
   RawHeader
 }
+import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.stream.Attributes
 import pekko.stream.Attributes.LogLevels
@@ -54,13 +61,9 @@ import pekko.stream.testkit.scaladsl.TestSink
 import pekko.testkit.EventFilter
 import pekko.testkit.TestDuration
 import pekko.util.ByteString
+
 import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
-
-import javax.net.ssl.SSLContext
-import scala.collection.immutable
-import scala.concurrent.Future
-import scala.concurrent.duration._
 
 /**
  * This tests the http2 client protocol logic.
@@ -72,13 +75,12 @@ import scala.concurrent.duration._
  * * validate the produced application-level responses
  */
 class Http2ClientSpec extends PekkoSpecWithMaterializer("""
-    pekko.http.client.remote-address-header = on
     pekko.http.client.http2.log-frames = on
     pekko.http.client.http2.completion-timeout = 500ms
   """)
-    with WithInPendingUntilFixed with Eventually {
+    with Eventually {
 
-  override implicit val patience = PatienceConfig(5.seconds, 5.seconds)
+  override implicit val patience: PatienceConfig = PatienceConfig(5.seconds, 5.seconds)
   override def failOnSevereMessages: Boolean = true
 
   "The Http/2 client implementation" should {
@@ -185,8 +187,9 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
       })
 
       "Three consecutive GET requests".inAssertAllStagesStopped(new SimpleRequestResponseRoundtripSetup {
-        import pekko.http.scaladsl.model.headers.CacheDirectives._
         import headers.`Cache-Control`
+
+        import pekko.http.scaladsl.model.headers.CacheDirectives._
         val requestHeaders = defaultExpectedHeaders
         requestResponseRoundtrip(
           streamId = 1,
@@ -326,7 +329,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         response.entity.contentType should ===(ContentTypes.`application/json`)
 
         // FIXME: contentLength is not reported in all cases with HTTP/2
-        // see https://github.com/apache/incubator-pekko-http/issues/3843
+        // see https://github.com/akka/akka-http/issues/3843
         // response.entity.isIndefiniteLength should ===(false)
         // response.entity.contentLengthOption should ===(Some(2000L))
 
@@ -968,7 +971,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
   }
 
   protected /* To make ByteFlag warnings go away */ abstract class TestSetupWithoutHandshake {
-    implicit def ec = system.dispatcher
+    implicit def ec: ExecutionContext = system.dispatcher
 
     private lazy val responseIn = TestSubscriber.probe[HttpResponse]()
     private lazy val requestOut = TestPublisher.probe[HttpRequest]()

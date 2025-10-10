@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,24 +16,23 @@ package org.apache.pekko.http.scaladsl.unmarshalling.sse
 import java.nio.file.{ Files, Path }
 import java.util.concurrent.TimeUnit
 
-import org.apache.pekko
-import pekko.Done
-import pekko.actor.ActorSystem
-import pekko.stream.ActorMaterializer
-import pekko.stream.scaladsl.{ FileIO, Keep, RunnableGraph, Sink, Source }
-import pekko.util.ByteString
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration._
+
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
-import scala.concurrent.{ Await, Future }
-import scala.concurrent.duration._
+import org.apache.pekko
+import pekko.Done
+import pekko.actor.ActorSystem
+import pekko.stream.scaladsl.{ FileIO, Keep, RunnableGraph, Sink, Source }
+import pekko.util.ByteString
 
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @BenchmarkMode(Array(Mode.AverageTime))
 class LineParserBenchmark {
   implicit val system: ActorSystem = ActorSystem("line-parser-benchmark")
-  implicit val mat: ActorMaterializer = ActorMaterializer()
 
   // @formatter:off
   @Param(Array(

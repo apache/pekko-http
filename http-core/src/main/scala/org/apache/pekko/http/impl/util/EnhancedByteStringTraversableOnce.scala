@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,7 +15,6 @@ package org.apache.pekko.http.impl.util
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.http.ccompat._
 import pekko.util.ByteString
 
 /**
@@ -23,5 +22,5 @@ import pekko.util.ByteString
  */
 @InternalApi
 private[http] class EnhancedByteStringTraversableOnce(val byteStrings: IterableOnce[ByteString]) extends AnyVal {
-  def join: ByteString = byteStrings.foldLeft(ByteString.empty)(_ ++ _)
+  def join: ByteString = byteStrings.iterator.foldLeft(ByteString.empty)(_ ++ _)
 }

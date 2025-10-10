@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,7 +17,6 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.server.InternalCustomHeader
 import pekko.http.scaladsl.model.HttpResponse
-import pekko.http.scaladsl.model.ws.UpgradeToWebSocket
 import pekko.http.scaladsl.model.ws.WebSocketUpgrade
 import pekko.stream.{ FlowShape, Graph }
 
@@ -28,7 +27,7 @@ import pekko.stream.{ FlowShape, Graph }
  */
 @InternalApi
 private[http] abstract class UpgradeToWebSocketLowLevel extends InternalCustomHeader("UpgradeToWebSocket")
-    with UpgradeToWebSocket with WebSocketUpgrade {
+    with WebSocketUpgrade {
 
   /**
    * The low-level interface to create WebSocket server based on "frames".

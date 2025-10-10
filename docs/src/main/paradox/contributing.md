@@ -4,19 +4,19 @@
 
 We follow the standard GitHub [fork & pull](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests#fork--pull) approach to pull requests. Just fork the official repo, develop in a branch, and submit a PR!
 
-For a more detailed description of our process, please refer to the [CONTRIBUTING.md](https://github.com/apache/incubator-pekko-http/blob/main/CONTRIBUTING.md) page on the github project.
+For a more detailed description of our process, please refer to the [CONTRIBUTING.md](https://github.com/apache/pekko-http/blob/main/CONTRIBUTING.md) page on the github project.
 
 ## Snapshots
 
 Testing snapshot versions can help us find bugs before a release. We publish snapshot versions for every commit to the `main` branch.
 
-The latest published snapshot version can be found in [SonatypeSnapshots].
+The latest published snapshot version can be found in [ApacheSnapshotRepository].
 
 ### Configure repository
 
 sbt
 :   ```scala
-    resolvers += "pekko-http-snapshot-repository" at "https://repository.apache.org/content/repositories/snapshots"
+    resolvers += "apache-snapshot-repository" at "https://repository.apache.org/content/repositories/snapshots"
     ```
 
 Maven
@@ -25,7 +25,7 @@ Maven
     ...
       <repositories>
         <repository>
-          <id>pekko-http-snapshots</id>
+          <id>apache-http-snapshots</id>
           <name>Pekko HTTP Snapshots</name>
           <url>https://repository.apache.org/content/repositories/snapshots</url>
         </repository>
@@ -43,4 +43,4 @@ Gradle
     }
     ```
 
-[SonatypeSnapshots]:        https://repository.apache.org/content/repositories/snapshots/org/apache/pekko/pekko-http-core_2.13/
+[ApacheSnapshotRepository]:        https://repository.apache.org/content/repositories/snapshots/org/apache/pekko/pekko-http-core_2.13/

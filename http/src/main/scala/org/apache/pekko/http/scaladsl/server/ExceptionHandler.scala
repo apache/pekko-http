@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,12 +13,13 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import scala.util.control.NonFatal
-import org.apache.pekko
-import pekko.http.scaladsl.settings.RoutingSettings
-import pekko.http.scaladsl.model._
-import StatusCodes._
 import scala.language.implicitConversions
+import scala.util.control.NonFatal
+
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.settings.RoutingSettings
 
 trait ExceptionHandler extends ExceptionHandler.PF {
 
@@ -63,9 +64,9 @@ object ExceptionHandler {
           ctx.complete((status, info.format(settings.verboseErrorMessages)))
         }
       case e: EntityStreamSizeException => ctx => {
-          ctx.log.error(e, ErrorMessageTemplate, e, PayloadTooLarge)
+          ctx.log.error(e, ErrorMessageTemplate, e, ContentTooLarge)
           ctx.request.discardEntityBytes(ctx.materializer)
-          ctx.complete((PayloadTooLarge, e.getMessage))
+          ctx.complete((ContentTooLarge, e.getMessage))
         }
       case e: ExceptionWithErrorInfo => ctx => {
           ctx.log.error(e, ErrorMessageTemplate, e.info.formatPretty, InternalServerError)

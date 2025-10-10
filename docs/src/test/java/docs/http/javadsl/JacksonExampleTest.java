@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -12,12 +12,11 @@
  */
 
 package docs.http.javadsl;
-//#second-jackson-example
+// #second-jackson-example
 import org.apache.pekko.Done;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
-import org.apache.pekko.http.javadsl.ConnectHttp;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
@@ -45,19 +44,18 @@ public class JacksonExampleTest extends AllDirectives {
 
     final Http http = Http.get(system);
 
-    //In order to access all directives we need an instance where the routes are define.
+    // In order to access all directives we need an instance where the routes are define.
     JacksonExampleTest app = new JacksonExampleTest();
 
     final CompletionStage<ServerBinding> binding =
-        http.newServerAt("localhost", 8080)
-            .bind(app.createRoute());
+        http.newServerAt("localhost", 8080).bind(app.createRoute());
 
     System.out.println("Server online at http://localhost:8080/\nPress RETURN to stop...");
     System.in.read(); // let it run until user presses return
 
     binding
-      .thenCompose(ServerBinding::unbind) // trigger unbinding from the port
-      .thenAccept(unbound -> system.terminate()); // and shutdown when done
+        .thenCompose(ServerBinding::unbind) // trigger unbinding from the port
+        .thenAccept(unbound -> system.terminate()); // and shutdown when done
   }
 
   // (fake) async database query api
@@ -73,24 +71,34 @@ public class JacksonExampleTest extends AllDirectives {
   private Route createRoute() {
 
     return concat(
-      get(() ->
-        pathPrefix("item", () ->
-          path(longSegment(), (Long id) -> {
-            final CompletionStage<Optional<Item>> futureMaybeItem = fetchItem(id);
-            return onSuccess(futureMaybeItem, maybeItem ->
-              maybeItem.map(item -> completeOK(item, Jackson.marshaller()))
-                .orElseGet(() -> complete(StatusCodes.NOT_FOUND, "Not Found"))
-            );
-          }))),
-      post(() ->
-        path("create-order", () ->
-          entity(Jackson.unmarshaller(Order.class), order -> {
-            CompletionStage<Done> futureSaved = saveOrder(order);
-            return onSuccess(futureSaved, done ->
-              complete("order created")
-            );
-          })))
-    );
+        get(
+            () ->
+                pathPrefix(
+                    "item",
+                    () ->
+                        path(
+                            longSegment(),
+                            (Long id) -> {
+                              final CompletionStage<Optional<Item>> futureMaybeItem = fetchItem(id);
+                              return onSuccess(
+                                  futureMaybeItem,
+                                  maybeItem ->
+                                      maybeItem
+                                          .map(item -> completeOK(item, Jackson.marshaller()))
+                                          .orElseGet(
+                                              () -> complete(StatusCodes.NOT_FOUND, "Not Found")));
+                            }))),
+        post(
+            () ->
+                path(
+                    "create-order",
+                    () ->
+                        entity(
+                            Jackson.unmarshaller(Order.class),
+                            order -> {
+                              CompletionStage<Done> futureSaved = saveOrder(order);
+                              return onSuccess(futureSaved, done -> complete("order created"));
+                            }))));
   }
 
   private static class Item {
@@ -99,8 +107,7 @@ public class JacksonExampleTest extends AllDirectives {
     final long id;
 
     @JsonCreator
-    Item(@JsonProperty("name") String name,
-         @JsonProperty("id") long id) {
+    Item(@JsonProperty("name") String name, @JsonProperty("id") long id) {
       this.name = name;
       this.id = id;
     }
@@ -128,4 +135,4 @@ public class JacksonExampleTest extends AllDirectives {
     }
   }
 }
-//#second-jackson-example
+// #second-jackson-example

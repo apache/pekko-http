@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,14 +16,15 @@ package org.apache.pekko.http.caching
 import java.util.Random
 import java.util.concurrent.CountDownLatch
 
+import scala.concurrent.{ Await, Future, Promise }
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.caching.scaladsl.CachingSettings
 import pekko.testkit.TestKit
-import org.scalatest.BeforeAndAfterAll
 
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future, Promise }
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -59,11 +60,14 @@ class ExpiringLfuCacheSpec extends AnyWordSpec with Matchers with BeforeAndAfter
       val cache = lfuCache[String]()
       val latch = new CountDownLatch(1)
       val future1 = cache(1,
-        (promise: Promise[String]) =>
+        { (promise: Promise[String]) =>
           Future {
             latch.await()
             promise.success("A")
-          })
+          }
+          // (block autoformat)
+          () // provide Unit result automatically to hand-hold Scala 3 overload selection
+        })
       val future2 = cache.get(1, () => "")
 
       latch.countDown()
@@ -162,7 +166,7 @@ class ExpiringLfuCacheSpec extends AnyWordSpec with Matchers with BeforeAndAfter
           }
         }, 10.second)
 
-      views.transpose.foreach { ints: Seq[Int] =>
+      views.transpose.foreach { (ints: Seq[Int]) =>
         ints.filter(_ != 0).reduceLeft((a, b) => if (a == b) a else 0) should not be 0
       }
     }

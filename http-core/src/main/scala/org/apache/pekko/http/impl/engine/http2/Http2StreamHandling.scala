@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -35,12 +35,12 @@ import scala.util.control.NoStackTrace
  *
  * Handles HTTP/2 stream states
  * Accepts `FrameEvent`s from the network side and emits `ByteHttp2SubStream`s for streams
- * to be handled by the Akka HTTP layer.
+ * to be handled by the Pekko HTTP layer.
  *
  * Mixed into the Http2ServerDemux graph logic.
  */
 @InternalApi
-private[http2] trait Http2StreamHandling { self: GraphStageLogic with LogHelper =>
+private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper { self =>
   // required API from demux
   def isServer: Boolean
   def multiplexer: Http2Multiplexer
@@ -254,7 +254,7 @@ private[http2] trait Http2StreamHandling { self: GraphStageLogic with LogHelper 
    *   * Open -> HalfClosedRemoteSendingData: on receiving response DATA with endStream = true before request has been fully sent out (uncommon)
    *   * HalfClosedRemoteSendingData -> Closed: on sending out request DATA with endStream = true
    */
-  sealed abstract class StreamState { _: Product =>
+  sealed abstract class StreamState { self: Product =>
     def handle(event: StreamFrameEvent): StreamState
 
     def stateName: String = productPrefix
@@ -262,24 +262,24 @@ private[http2] trait Http2StreamHandling { self: GraphStageLogic with LogHelper 
     /** Called when we receive a user-created stream (that is open for more data) */
     def handleOutgoingCreated(outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
       warning(
-        s"handleOutgoingCreated received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+        s"handleOutgoingCreated received unexpectedly in state $stateName. This indicates a bug in Pekko HTTP, please report it to the issue tracker.")
       this
     }
 
     /** Called when we receive a user-created stream that is already closed */
     def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
       warning(
-        s"handleOutgoingCreatedAndFinished received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+        s"handleOutgoingCreatedAndFinished received unexpectedly in state $stateName. This indicates a bug in Pekko HTTP, please report it to the issue tracker.")
       this
     }
     def handleOutgoingEnded(): StreamState = {
       warning(
-        s"handleOutgoingEnded received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+        s"handleOutgoingEnded received unexpectedly in state $stateName. This indicates a bug in Pekko HTTP, please report it to the issue tracker.")
       this
     }
     def handleOutgoingFailed(cause: Throwable): StreamState = {
       warning(
-        s"handleOutgoingFailed received unexpectedly in state $stateName. This indicates a bug in Akka HTTP, please report it to the issue tracker.")
+        s"handleOutgoingFailed received unexpectedly in state $stateName. This indicates a bug in Pekko HTTP, please report it to the issue tracker.")
       this
     }
     def receivedUnexpectedFrame(e: StreamFrameEvent): StreamState = {
@@ -386,7 +386,7 @@ private[http2] trait Http2StreamHandling { self: GraphStageLogic with LogHelper 
 
     override def incrementWindow(delta: Int): StreamState = copy(extraInitialWindow = extraInitialWindow + delta)
   }
-  trait Sending extends StreamState { _: Product =>
+  trait Sending extends StreamState { self: Product =>
     protected def outStream: OutStream
 
     override def pullNextFrame(maxSize: Int): (StreamState, PullFrameResult) = {
@@ -401,7 +401,7 @@ private[http2] trait Http2StreamHandling { self: GraphStageLogic with LogHelper 
         }
 
       val nextState =
-        if (outStream.isDone) handleOutgoingEnded()
+        if (outStream.isDone) this.handleOutgoingEnded()
         else this
 
       (nextState, res)
@@ -446,10 +446,10 @@ private[http2] trait Http2StreamHandling { self: GraphStageLogic with LogHelper 
         // We're not planning on sending any data on this stream anymore, so we don't care about window updates.
         this
       case _ =>
-        expectIncomingStream(event, Closed, HalfClosedLocal, correlationAttributes)
+        expectIncomingStream(event, Closed, HalfClosedLocal(_), correlationAttributes)
     }
   }
-  sealed abstract class ReceivingData extends StreamState { _: Product =>
+  sealed abstract class ReceivingData extends StreamState { self: Product =>
     def handle(event: StreamFrameEvent): StreamState = event match {
       case d: DataFrame =>
         outstandingConnectionLevelWindow -= d.sizeInWindow
@@ -488,7 +488,7 @@ private[http2] trait Http2StreamHandling { self: GraphStageLogic with LogHelper 
     protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit
   }
   sealed abstract class ReceivingDataWithBuffer(afterEndStreamReceived: StreamState) extends ReceivingData {
-    _: Product =>
+    self: Product =>
     protected def buffer: IncomingStreamBuffer
 
     override protected def onDataFrame(dataFrame: DataFrame): StreamState = {
@@ -598,7 +598,7 @@ private[http2] trait Http2StreamHandling { self: GraphStageLogic with LogHelper 
     outlet.setHandler(this)
 
     def onPull(): Unit = incomingStreamPulled(streamId)
-    override def onDownstreamFinish(): Unit = {
+    override def onDownstreamFinish(cause: Throwable): Unit = {
       debug(s"Incoming side of stream [$streamId]: cancelling because downstream finished")
       multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
       // FIXME: go through state machine and don't manipulate vars directly here

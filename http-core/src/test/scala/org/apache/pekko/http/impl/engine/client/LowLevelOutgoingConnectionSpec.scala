@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,10 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.client
 
-import com.typesafe.config.ConfigFactory
+import scala.concurrent.ExecutionContext
 
+import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
+
 import org.scalatest.Inside
 import org.apache.pekko
 import pekko.http.scaladsl.settings.ClientConnectionSettings
@@ -34,7 +36,7 @@ import pekko.http.impl.util._
 import pekko.testkit._
 
 class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Inside {
-  implicit val dispatcher = system.dispatcher
+  implicit val dispatcher: ExecutionContext = system.dispatcher
 
   "The connection-level client implementation" should {
 
@@ -510,11 +512,8 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
         info.summary shouldEqual "HTTP message had declared Content-Length 8 but entity data stream amounts to 2 bytes less"
         netInSub.sendComplete()
         responsesSub.request(1)
-        responses.expectError().getMessage should (
-          equal("HTTP message had declared Content-Length 8 but entity data stream amounts to 2 bytes less").or( // with Akka 2.6
-            equal(
-              "The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests")) // with Akka 2.5
-        )
+        responses.expectError().getMessage should equal(
+          "HTTP message had declared Content-Length 8 but entity data stream amounts to 2 bytes less")
       }
 
       "catch the request entity stream being longer than the Content-Length" in new TestSetup {
@@ -541,11 +540,8 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
         info.summary shouldEqual "HTTP message had declared Content-Length 8 but entity data stream amounts to more bytes"
         netInSub.sendComplete()
         responsesSub.request(1)
-        responses.expectError().getMessage should (
-          equal("HTTP message had declared Content-Length 8 but entity data stream amounts to more bytes").or( // with Akka 2.6
-            equal(
-              "The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests")) // with Akka 2.5
-        )
+        responses.expectError().getMessage should equal(
+          "HTTP message had declared Content-Length 8 but entity data stream amounts to more bytes")
       }
 
       "catch illegal response starts" in new TestSetup {
@@ -1023,14 +1019,13 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
       val netIn = TestPublisher.manualProbe[ByteString]()
 
       RunnableGraph.fromGraph(GraphDSL.createGraph(OutgoingConnectionBlueprint(Host("example.com"), settings,
-        NoLogging)) {
-        implicit b => client =>
-          import GraphDSL.Implicits._
-          Source.fromPublisher(netIn)    ~> Flow[ByteString].map(SessionBytes(null, _))             ~> client.in2
-          client.out1                    ~> Flow[SslTlsOutbound].collect { case SendBytes(x) => x } ~> Sink.fromSubscriber(netOut)
-          Source.fromPublisher(requests) ~> client.in1
-          client.out2                    ~> Sink.fromSubscriber(responses)
-          ClosedShape
+        NoLogging)) { implicit b => client =>
+        import GraphDSL.Implicits._
+        Source.fromPublisher(netIn)    ~> Flow[ByteString].map(SessionBytes(null, _))             ~> client.in2
+        client.out1                    ~> Flow[SslTlsOutbound].collect { case SendBytes(x) => x } ~> Sink.fromSubscriber(netOut)
+        Source.fromPublisher(requests) ~> client.in1
+        client.out2                    ~> Sink.fromSubscriber(responses)
+        ClosedShape
       }).run()
 
       netOut -> netIn

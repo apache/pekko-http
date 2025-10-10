@@ -4,22 +4,19 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
  * Copyright (C) 2018-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.pekko
-
 import sbt._, Keys._
-import de.heikoseeberger.sbtheader.{ CommentCreator, HeaderPlugin, NewLine }
+import sbtheader.{ CommentCreator, HeaderPlugin, NewLine }
 import org.apache.commons.lang3.StringUtils
 
 object CopyrightHeader extends AutoPlugin {
   import HeaderPlugin.autoImport._
-  import ValidatePullRequest.{ additionalTasks, ValidatePR }
 
   override def requires = HeaderPlugin
   override def trigger = allRequirements
@@ -33,16 +30,34 @@ object CopyrightHeader extends AutoPlugin {
             HeaderFileType.scala -> cStyleComment,
             HeaderFileType.java -> cStyleComment,
             HeaderFileType.conf -> hashLineComment,
-            HeaderFileType("template") -> cStyleComment)))
+            HeaderFileType("template") -> cStyleComment),
+          headerSources ++= (sourceDirectory.value ** "*.scala.template").get))
     })
 
-  val apacheHeader: String =
+  val apacheFromAkkaSourceHeader: String =
     """Licensed to the Apache Software Foundation (ASF) under one or more
       |license agreements; and to You under the Apache License, version 2.0:
       |
       |  https://www.apache.org/licenses/LICENSE-2.0
       |
-      |This file is part of the Apache Pekko project, derived from Akka.
+      |This file is part of the Apache Pekko project, which was derived from Akka.
+      |""".stripMargin
+
+  val apacheHeader: String =
+    """Licensed to the Apache Software Foundation (ASF) under one or more
+      |contributor license agreements. See the NOTICE file distributed with
+      |this work for additional information regarding copyright ownership.
+      |The ASF licenses this file to You under the Apache License, Version 2.0
+      |(the "License"); you may not use this file except in compliance with
+      |the License. You may obtain a copy of the License at
+      |
+      |   http://www.apache.org/licenses/LICENSE-2.0
+      |
+      |Unless required by applicable law or agreed to in writing, software
+      |distributed under the License is distributed on an "AS IS" BASIS,
+      |WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      |See the License for the specific language governing permissions and
+      |limitations under the License.
       |""".stripMargin
 
   val apacheSpdxHeader: String = "SPDX-License-Identifier: Apache-2.0"
@@ -51,12 +66,14 @@ object CopyrightHeader extends AutoPlugin {
 
     override def apply(text: String, existingText: Option[String]): String = {
       val formatted = existingText match {
-        case Some(currentText) if isApacheCopyrighted(currentText) || isGenerated(currentText) =>
+        case Some(currentText)
+            if isApacheCopyrighted(currentText) || isGenerated(currentText) || isSbt012Licensed(currentText) =>
           currentText
         case Some(currentText) if isOnlyLightbendCopyrightAnnotated(currentText) =>
-          HeaderCommentStyle.cStyleBlockComment.commentCreator(text, existingText) + NewLine * 2 + currentText
+          HeaderCommentStyle.cStyleBlockComment.commentCreator(apacheFromAkkaSourceHeader,
+            existingText) + NewLine * 2 + currentText
         case Some(currentText) =>
-          throw new IllegalStateException(s"Unable to detect copyright for header: [${currentText}]")
+          throw new IllegalStateException(s"Unable to detect copyright for header: [$currentText]")
         case None =>
           HeaderCommentStyle.cStyleBlockComment.commentCreator(text, existingText)
       }
@@ -94,4 +111,7 @@ object CopyrightHeader extends AutoPlugin {
   private def isOnlyLightbendCopyrightAnnotated(text: String): Boolean = {
     isLightbendCopyrighted(text) && !isApacheCopyrighted(text)
   }
+
+  private def isSbt012Licensed(text: String): Boolean =
+    StringUtils.containsIgnoreCase(text, "sbt -- Simple Build Tool")
 }

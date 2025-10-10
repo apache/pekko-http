@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,24 +13,25 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
-import scala.concurrent.duration._
-import org.apache.pekko
-import pekko.testkit._
-import pekko.util.{ ByteString, Timeout }
-import pekko.pattern.ask
-import pekko.http.scaladsl.model.headers.RawHeader
-import pekko.http.scaladsl.server._
-import pekko.http.scaladsl.model._
-import StatusCodes._
-import HttpMethods._
-import Directives._
-import pekko.stream.scaladsl.Source
-import org.scalatest.exceptions.TestFailedException
-import headers.`X-Forwarded-Proto`
-import org.scalatest.concurrent.ScalaFutures
-
 import scala.concurrent.Await
 import scala.concurrent.Future
+import scala.concurrent.duration._
+
+import org.apache.pekko
+import pekko.actor.ActorRef
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers.{ `X-Forwarded-Proto`, RawHeader }
+import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.server.Directives._
+import pekko.pattern.ask
+import pekko.stream.scaladsl.Source
+import pekko.testkit._
+import pekko.util.{ ByteString, Timeout }
+
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -96,10 +97,10 @@ class ScalatestRouteTestSpec extends AnyFreeSpec with Matchers with ScalatestRou
       }
     }
 
-    "running on akka dispatcher threads" in Await.result(Future {
-        // https://github.com/apache/incubator-pekko-http/pull/2526
+    "running on pekko dispatcher threads" in Await.result(Future {
+        // https://github.com/akka/akka-http/pull/2526
         // Check will block while waiting on the response, this might lead to starvation
-        // on the BatchingExecutor of akka's dispatcher if the blocking is not managed properly.
+        // on the BatchingExecutor of pekko's dispatcher if the blocking is not managed properly.
         Get() ~> complete(Future(HttpResponse())) ~> check {
           status shouldEqual OK
         }
@@ -111,7 +112,7 @@ class ScalatestRouteTestSpec extends AnyFreeSpec with Matchers with ScalatestRou
       case object Command
       val service = TestProbe()
       val handler = TestProbe()
-      implicit def serviceRef = service.ref
+      implicit def serviceRef: ActorRef = service.ref
       implicit val askTimeout: Timeout = 1.second.dilated
 
       val result =

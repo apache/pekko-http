@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -24,9 +24,9 @@ import pekko.http.scaladsl.model.HttpMethods._
  */
 trait MethodDirectives {
   import BasicDirectives._
-  import RouteDirectives._
-  import ParameterDirectives._
   import MethodDirectives._
+  import ParameterDirectives._
+  import RouteDirectives._
 
   /**
    * Rejects all non-DELETE requests.

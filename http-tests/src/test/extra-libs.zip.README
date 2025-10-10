@@ -1,0 +1,24 @@
+# extra-libs.zip
+
+This zip file contains a jar file that is added to the testing classpath (via build.sbt). The jar file has a name with
+non-ascii characters (to test against filename encoding issues). It was wrapped into a zip file to avoid issues with
+tooling which cannot handle non-ascii characters in filenames (in this case, Scala Steward, but also other tools had
+problems with this file).
+
+```
+Archive:  http-tests/src/test/extra-libs.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+      488  2017-06-14 16:05   i have späces.jar
+---------                     -------
+      488                     1 file
+
+Archive:  i have späces.jar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2015-07-02 15:11   META-INF/
+       68  2015-07-02 15:11   META-INF/MANIFEST.MF
+       19  2015-07-02 15:11   test-resource.txt
+---------                     -------
+       87                     3 files
+```

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,7 +14,8 @@
 package org.apache.pekko.http.javadsl.model;
 
 public final class RemoteAddresses {
-    private RemoteAddresses() { }
+  private RemoteAddresses() {}
 
-    public static final RemoteAddress UNKNOWN = org.apache.pekko.http.scaladsl.model.RemoteAddress.Unknown$.MODULE$;
+  public static final RemoteAddress UNKNOWN =
+      org.apache.pekko.http.scaladsl.model.RemoteAddress.Unknown$.MODULE$;
 }

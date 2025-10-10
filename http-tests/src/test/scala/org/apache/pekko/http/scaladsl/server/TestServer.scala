@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,21 +13,24 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import org.apache.pekko
-import pekko.NotUsed
-import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport
-import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
-import pekko.http.scaladsl.server.directives.Credentials
-import com.typesafe.config.{ Config, ConfigFactory }
-import pekko.actor.ActorSystem
-import pekko.stream._
-import pekko.stream.scaladsl._
-import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.common.EntityStreamingSupport
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.io.StdIn
+
+import spray.json.RootJsonFormat
+
+import org.apache.pekko
+import pekko.NotUsed
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.common.EntityStreamingSupport
+import pekko.http.scaladsl.common.JsonEntityStreamingSupport
+import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport
+import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
+import pekko.http.scaladsl.server.directives.Credentials
+import pekko.stream.scaladsl._
+
+import com.typesafe.config.{ Config, ConfigFactory }
 
 object TestServer extends App {
   val testConf: Config = ConfigFactory.parseString("""
@@ -36,19 +39,19 @@ object TestServer extends App {
     pekko.stream.materializer.debug.fuzzing-mode = off
     """)
 
-  implicit val system = ActorSystem("ServerTest", testConf)
+  implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
   implicit val ec: ExecutionContext = system.dispatcher
-  implicit val materializer = ActorMaterializer()
 
   import spray.json.DefaultJsonProtocol._
+
   import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   final case class Tweet(message: String)
-  implicit val tweetFormat = jsonFormat1(Tweet)
+  implicit val tweetFormat: RootJsonFormat[Tweet] = jsonFormat1(Tweet.apply)
 
-  implicit val jsonStreaming = EntityStreamingSupport.json()
+  implicit val jsonStreaming: JsonEntityStreamingSupport = EntityStreamingSupport.json()
 
-  import ScalaXmlSupport._
   import Directives._
+  import ScalaXmlSupport._
 
   def auth: AuthenticatorPF[String] = {
     case p @ Credentials.Provided(name) if p.verify(name + "-password") => name

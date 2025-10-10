@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,11 +15,11 @@ package org.apache.pekko.http.javadsl.server.directives
 
 import java.io.File
 
+import scala.annotation.varargs
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
 import pekko.http.javadsl.marshalling.Marshaller
-
-import scala.annotation.varargs
-import scala.collection.JavaConverters._
 import pekko.http.javadsl.model.ContentType
 import pekko.http.javadsl.model.RequestEntity
 import pekko.http.javadsl.server.{ Route, RoutingJavaMapping }
@@ -42,8 +42,9 @@ trait DirectoryRenderer {
  * the pekko.actor.ActorSystem class.
  */
 abstract class FileAndResourceDirectives extends ExecutionDirectives {
-  import pekko.http.impl.util.JavaMapping.Implicits._
   import RoutingJavaMapping._
+
+  import pekko.http.impl.util.JavaMapping.Implicits._
 
   /**
    * Completes GET requests with the content of the given resource loaded from the default ClassLoader,

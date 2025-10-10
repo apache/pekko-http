@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -49,7 +49,6 @@ private[http] object ProtocolSwitch {
           val terminatorPromise = Promise[ServerTerminator]()
 
           object Logic extends GraphStageLogic(shape) {
-            logic =>
 
             // --- inner ports, bound to actual server in install call ---
             val serverDataIn = new SubSinkInlet[SslTlsOutbound]("ServerImpl.netIn")
@@ -62,11 +61,12 @@ private[http] object ProtocolSwitch {
               new InHandler {
                 def onPush(): Unit =
                   grab(netIn) match {
-                    case first @ SessionBytes(session, bytes) =>
+                    case first: SessionBytes =>
                       val chosen = chosenProtocolAccessor(first)
                       chosen match {
-                        case "h2" => install(http2Stack.addAttributes(HttpAttributes.tlsSessionInfo(session)), first)
-                        case _    => install(http1Stack, first)
+                        case "h2" =>
+                          install(http2Stack.addAttributes(HttpAttributes.tlsSessionInfo(first.session)), first)
+                        case _ => install(http1Stack, first)
                       }
                     case SessionTruncated =>
                       failStage(new SSLException("TLS session was truncated (probably missing a close_notify packet)."))
@@ -106,7 +106,7 @@ private[http] object ProtocolSwitch {
                 new OutHandler {
                   override def onPull(): Unit = pull(in)
 
-                  override def onDownstreamFinish(): Unit = cancel(in)
+                  override def onDownstreamFinish(cause: Throwable): Unit = cancel(in)
                 }
 
               val firstHandler =
@@ -151,9 +151,9 @@ private[http] object ProtocolSwitch {
               val outHandler = new OutHandler {
                 override def onPull(): Unit = in.pull()
 
-                override def onDownstreamFinish(): Unit = {
+                override def onDownstreamFinish(cause: Throwable): Unit = {
                   in.cancel()
-                  super.onDownstreamFinish()
+                  super.onDownstreamFinish(cause)
                 }
               }
               in.setHandler(handler)

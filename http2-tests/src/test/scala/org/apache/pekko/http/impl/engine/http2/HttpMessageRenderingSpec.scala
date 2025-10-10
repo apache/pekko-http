@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,19 +14,23 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import java.time.format.DateTimeFormatter
-import org.apache.pekko
-import pekko.event.NoLogging
-import pekko.http.impl.engine.rendering.DateHeaderRendering
-import pekko.http.scaladsl.model.headers._
-import pekko.http.scaladsl.model.{ ContentTypes, DateTime, HttpHeader, TransferEncodings }
 
+import scala.collection.immutable
 import scala.collection.immutable.Seq
 import scala.collection.immutable.VectorBuilder
 import scala.util.Try
+
+import org.apache.pekko
+import pekko.event.NoLogging
+import pekko.http.impl.engine.rendering.DateHeaderRendering
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.{ Trailer => _, _ }
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.collection.immutable
+import com.typesafe.config.ConfigFactory
 
 object MyCustomHeader extends ModeledCustomHeaderCompanion[MyCustomHeader] {
   override def name: String = "custom-header"
@@ -147,6 +151,22 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       value1.exists(_._1 == "date") shouldBe false
     }
 
+    "handle empty trailer" in {
+      val config = ConfigFactory.load("reference.conf")
+      Try {
+        val rendering = new RequestRendering(ClientConnectionSettings(config), NoLogging)
+        rendering(HttpRequest().withAttributes(Map(AttributeKeys.trailer -> Trailer())))
+      }.isSuccess shouldBe true
+      Try {
+        val rendering = new ResponseRendering(ServerSettings(config), NoLogging, dateHeaderRendering)
+        rendering(
+          HttpResponse().withAttributes(
+            Map(
+              AttributeKeys.trailer -> Trailer(),
+              Http2.streamId -> 0)))
+      }.isSuccess shouldBe true
+    }
+
   }
 
   private def renderClientHeaders(headers: immutable.Seq[HttpHeader], builder: VectorBuilder[(String, String)],
@@ -158,10 +178,12 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       peerIdHeader: Option[(String, String)] = None): Unit =
     HttpMessageRendering.renderHeaders(headers, builder, peerIdHeader, NoLogging, isServer = true,
       shouldRenderAutoHeaders = true,
-      dateHeaderRendering = new DateHeaderRendering {
-        // fake date rendering
-        override def renderHeaderPair(): (String, String) = "date" -> DateTime.now.toRfc1123DateTimeString
-        override def renderHeaderBytes(): Array[Byte] = ???
-        override def renderHeaderValue(): String = ???
-      })
+      dateHeaderRendering = dateHeaderRendering)
+
+  private lazy val dateHeaderRendering: DateHeaderRendering = new DateHeaderRendering {
+    // fake date rendering
+    override def renderHeaderPair(): (String, String) = "date" -> DateTime.now.toRfc1123DateTimeString
+    override def renderHeaderBytes(): Array[Byte] = ???
+    override def renderHeaderValue(): String = ???
+  }
 }

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -22,6 +22,7 @@ import com.typesafe.config.Config
 import scala.collection.immutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
+import scala.jdk.DurationConverters._
 import scala.util.matching.Regex
 
 /** INTERNAL API */
@@ -59,10 +60,28 @@ private[pekko] final case class ConnectionPoolSettingsImpl(
 
   override def productPrefix = "ConnectionPoolSettings"
 
+  override def withBaseConnectionBackoff(newValue: java.time.Duration): ConnectionPoolSettings =
+    withBaseConnectionBackoff(newValue.toScala)
+
+  override def withMaxConnectionBackoff(newValue: java.time.Duration): ConnectionPoolSettings =
+    withMaxConnectionBackoff(newValue.toScala)
+
+  override def withIdleTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
+    withIdleTimeout(newValue.toScala)
+
+  override def withKeepAliveTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
+    withKeepAliveTimeout(newValue.toScala)
+
+  override def withMaxConnectionLifetime(newValue: java.time.Duration): ConnectionPoolSettings =
+    withMaxConnectionLifetime(newValue.toScala)
+
   def withUpdatedConnectionSettings(
       f: ClientConnectionSettings => ClientConnectionSettings): ConnectionPoolSettingsImpl =
     copy(connectionSettings = f(connectionSettings),
       hostOverrides = hostOverrides.map { case (k, v) => k -> v.withUpdatedConnectionSettings(f) })
+
+  override def withResponseEntitySubscriptionTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
+    withResponseEntitySubscriptionTimeout(newValue.toScala)
 
   /** INTERNAL API */
   private[http] def copyDeep(

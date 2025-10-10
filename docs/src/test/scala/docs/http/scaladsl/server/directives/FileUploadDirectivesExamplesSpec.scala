@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -35,7 +35,7 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
   """
 
   // test touches disk, so give it some time
-  implicit val routeTimeout = RouteTestTimeout(7.seconds.dilated)
+  implicit val routeTimeout: RouteTestTimeout = RouteTestTimeout(7.seconds.dilated)
 
   "storeUploadedFile" in {
     // #storeUploadedFile

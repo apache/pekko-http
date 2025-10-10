@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -47,17 +47,10 @@ object EventStreamUnmarshalling {
   def fromEventsStream(settings: ServerSentEventSettings): Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]] =
     asHttpEntityUnmarshaller(pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling.fromEventsStream(settings))
 
-  // for binary-compatibility, since Akka HTTP 10.1.7
-  @deprecated(
-    "Binary compatibility method. Invocations should have an implicit ActorSystem in scope to provide access to configuration",
-    "Akka HTTP 10.1.8")
-  val fromEventStream: Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]] =
-    asHttpEntityUnmarshaller(pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling.fromEventStream)
-
   private def asHttpEntityUnmarshaller(value: FromEntityUnmarshaller[scaladsl.Source[sse.ServerSentEvent, NotUsed]])
       : Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]] = {
     value
-      .map(_.map(_.asInstanceOf[ServerSentEvent]).asJava)
+      .map(_.asJava)
       .asInstanceOf[Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]]]
   }
 

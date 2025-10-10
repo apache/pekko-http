@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,7 +13,7 @@
 
 package docs.http.javadsl.server;
 
-//#binding-failure-high-level-example
+// #binding-failure-high-level-example
 
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
@@ -34,13 +34,14 @@ public class HighLevelServerBindFailureExample {
     final CompletionStage<ServerBinding> binding =
         Http.get(system).newServerAt("127.0.0.1", 8080).bind(route);
 
-    binding.exceptionally(failure -> {
-      System.err.println("Something very bad happened! " + failure.getMessage());
-      system.terminate();
-      return null;
-    });
+    binding.exceptionally(
+        failure -> {
+          System.err.println("Something very bad happened! " + failure.getMessage());
+          system.terminate();
+          return null;
+        });
 
     system.terminate();
   }
 }
-//#binding-failure-high-level-example
+// #binding-failure-high-level-example

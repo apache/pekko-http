@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,13 +13,13 @@
 
 package org.apache.pekko.http.scaladsl.unmarshalling
 
+import scala.concurrent.Future
+import scala.reflect.ClassTag
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.EitherUnmarshallingException
 import pekko.http.scaladsl.util.FastFuture
-
-import scala.concurrent.Future
-import scala.reflect.ClassTag
 
 trait GenericUnmarshallers extends LowerPriorityGenericUnmarshallers {
 

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,32 +13,35 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.collection.immutable
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding
 import pekko.http.scaladsl.coding.{ Coders, Decoder }
-import pekko.http.scaladsl.model.HttpEntity.Chunk
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpEntity.Chunk
 import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncoding, HttpEncodings }
 import pekko.http.scaladsl.server.Directives._
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.{ Flow, Source }
 import pekko.testkit.TestKit
 import pekko.util.ByteString
-import scala.annotation.nowarn
-import com.typesafe.config.{ Config, ConfigFactory }
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Millis, Seconds, Span }
-import org.scalatest.BeforeAndAfterAll
 
-import scala.collection.immutable
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.time.{ Millis, Seconds, Span }
 import org.scalatest.wordspec.AnyWordSpec
 
-@nowarn("msg=synchronous compression with `encode` is not supported in the future any more")
+import com.typesafe.config.{ Config, ConfigFactory }
+
 class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with BeforeAndAfterAll with ScalaFutures {
+
+  import pekko.http.ccompat.ImplicitUtils._
 
   val maxContentLength = 800
   // Protect network more than memory:
@@ -51,18 +54,17 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
     pekko.http.server.parsing.max-content-length = $maxContentLength
     pekko.http.routing.decode-max-size = $decodeMaxSize
     """)
-  implicit val system = ActorSystem(getClass.getSimpleName, testConf)
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
   import system.dispatcher
-  implicit val materializer = ActorMaterializer()
   val random = new scala.util.Random(42)
 
-  implicit val defaultPatience = PatienceConfig(timeout = Span(2, Seconds), interval = Span(5, Millis))
+  implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = Span(2, Seconds), interval = Span(5, Millis))
 
   "a normal route" should {
     val route = path("noDirective") {
       post {
         entity(as[String]) { _ =>
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to Pekko HTTP</h1>"))
         }
       }
     }
@@ -76,7 +78,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
 
     "not accept entities bigger than configured with pekko.http.parsing.max-content-length" in {
       Http().singleRequest(Post(s"http:/${binding.localAddress}/noDirective", entityOfSize(maxContentLength + 1)))
-        .futureValue.status shouldEqual StatusCodes.PayloadTooLarge
+        .futureValue.status shouldEqual StatusCodes.ContentTooLarge
     }
   }
 
@@ -103,7 +105,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
 
     "reject a small request that decodes into a large entity" in {
       val data = ByteString.fromString("0" * (decodeMaxSize + 1))
-      val zippedData = Coders.Gzip.encode(data)
+      val zippedData = Await.result(Coders.Gzip.encodeAsync(data), 10.seconds)
       val request = HttpRequest(
         HttpMethods.POST,
         s"http:/${binding.localAddress}/noDirective",
@@ -114,7 +116,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
       data.size should be > decodeMaxSize
 
       Http().singleRequest(request)
-        .futureValue.status shouldEqual StatusCodes.PayloadTooLarge
+        .futureValue.status shouldEqual StatusCodes.ContentTooLarge
     }
   }
 
@@ -137,7 +139,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
       val request =
         Post(s"http:/${binding.localAddress}/noDirective", "x").withHeaders(`Content-Encoding`(HttpEncoding("custom")))
       val response = Http().singleRequest(request).futureValue
-      response.status shouldEqual StatusCodes.PayloadTooLarge
+      response.status shouldEqual StatusCodes.ContentTooLarge
     }
   }
 
@@ -160,7 +162,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
       val request =
         Post(s"http:/${binding.localAddress}/noDirective", "x").withHeaders(`Content-Encoding`(HttpEncoding("custom")))
       val response = Http().singleRequest(request).futureValue
-      response.status shouldEqual StatusCodes.PayloadTooLarge
+      response.status shouldEqual StatusCodes.ContentTooLarge
     }
   }
 
@@ -187,7 +189,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
 
     "accept a small request that decodes into a large entity" in {
       val data = ByteString.fromString("0" * (decodeMaxSize + 1))
-      val zippedData = Coders.Gzip.encode(data)
+      val zippedData = Await.result(Coders.Gzip.encodeAsync(data), 10.seconds)
       val request = HttpRequest(
         HttpMethods.POST,
         s"http:/${binding.localAddress}/noDirective",
@@ -206,7 +208,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
     "accept a large request that decodes into a large entity" in {
       val data = new Array[Byte](decodeMaxSize)
       random.nextBytes(data)
-      val zippedData = Coders.Gzip.encode(ByteString(data))
+      val zippedData = Await.result(Coders.Gzip.encodeAsync(ByteString(data)), 3.seconds)
       val request = HttpRequest(
         HttpMethods.POST,
         s"http:/${binding.localAddress}/noDirective",
@@ -226,7 +228,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
       post {
         withoutSizeLimit {
           entity(as[String]) { _ =>
-            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
+            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to Pekko HTTP</h1>"))
           }
         }
       }

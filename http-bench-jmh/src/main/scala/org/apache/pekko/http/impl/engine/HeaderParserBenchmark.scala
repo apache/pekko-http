@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,17 +15,19 @@ package org.apache.pekko.http.impl.engine
 
 import java.util.concurrent.TimeUnit
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
+import org.openjdk.jmh.annotations._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.settings.ParserSettingsImpl
 import pekko.http.scaladsl.model.MediaType
 import pekko.util.ByteString
-import com.typesafe.config.ConfigFactory
-import org.openjdk.jmh.annotations._
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import com.typesafe.config.ConfigFactory
 
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

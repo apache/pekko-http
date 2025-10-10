@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -19,6 +19,7 @@ import pekko.annotation.InternalApi
 import scala.annotation.tailrec
 import pekko.util.ByteString
 import pekko.http.impl.model.parser.CharacterClasses._
+import pekko.http.impl.util.HttpConstants._
 import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader }
 import pekko.http.scaladsl.model.headers.`Content-Length`
 
@@ -39,7 +40,7 @@ private[parsing] object SpecializedHeaderValueParsers {
         if (result < 0) fail("`Content-Length` header value must not exceed 63-bit integer range")
         else if (DIGIT(c)) recurse(ix + 1, result * 10 + c - '0')
         else if (WSP(c)) recurse(ix + 1, result)
-        else if (c == '\r' && byteChar(input, ix + 1) == '\n') (`Content-Length`(result), ix + 2)
+        else if (c == '\r' && byteAt(input, ix + 1) == LF_BYTE) (`Content-Length`(result), ix + 2)
         else if (c == '\n') (`Content-Length`(result), ix + 1)
         else fail("Illegal `Content-Length` header value")
       }

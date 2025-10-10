@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,27 +13,27 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.util.concurrent.{ CountDownLatch, TimeUnit }
+
+import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.duration._
+
+import org.openjdk.jmh.annotations._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.CommonBenchmark
 import pekko.http.impl.engine.server.ServerTerminator
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.settings.ServerSettings
-import pekko.stream.ActorMaterializer
 import pekko.stream.TLSProtocol.{ SslTlsInbound, SslTlsOutbound }
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.util.ByteString
-import org.openjdk.jmh.annotations._
-
-import java.util.concurrent.{ CountDownLatch, TimeUnit }
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, ExecutionContext, Future }
 
 class H2ServerProcessingBenchmark extends CommonBenchmark with H2RequestResponseBenchmark {
 
   var httpFlow: Flow[ByteString, ByteString, Any] = _
   implicit var system: ActorSystem = _
-  implicit var mat: ActorMaterializer = _
 
   val packedResponse = ByteString(1, 5, 0, 0) // a HEADERS frame with end_stream == true
 
@@ -70,8 +70,7 @@ class H2ServerProcessingBenchmark extends CommonBenchmark with H2RequestResponse
   def setup(): Unit = {
     initRequestResponse()
 
-    system = ActorSystem("AkkaHttpBenchmarkSystem", config)
-    mat = ActorMaterializer()
+    system = ActorSystem("PekkoHttpBenchmarkSystem", config)
     val settings = implicitly[ServerSettings]
     val log = system.log
     implicit val ec = system.dispatcher

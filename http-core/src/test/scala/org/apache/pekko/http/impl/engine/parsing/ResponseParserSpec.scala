@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,32 +13,33 @@
 
 package org.apache.pekko.http.impl.engine.parsing
 
-import org.apache.pekko
-import pekko.NotUsed
-import pekko.http.scaladsl.settings.ParserSettings
-import pekko.http.scaladsl.util.FastFuture
-import pekko.stream.TLSProtocol._
-
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
-import org.scalatest.matchers.Matcher
+
+import org.apache.pekko
+import pekko.NotUsed
+import pekko.stream.TLSProtocol._
 import pekko.util.ByteString
 import pekko.stream.scaladsl._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
-import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.impl.util._
+import pekko.http.impl.engine.parsing.ParserOutput._
+import pekko.http.scaladsl.settings.ParserSettings
+import pekko.http.scaladsl.util.FastFuture
+import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.scaladsl.model._
-import headers._
-import MediaTypes._
-import HttpMethods._
-import HttpProtocols._
-import StatusCodes._
-import HttpEntity._
-import ParserOutput._
+import pekko.http.scaladsl.model.HttpEntity._
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.model.HttpProtocols._
 import pekko.http.scaladsl.model.MediaType.WithOpenCharset
+import pekko.http.scaladsl.model.MediaTypes._
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.settings.ParserSettings.ConflictingContentTypeHeaderProcessingMode
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import pekko.testkit._
+
+import org.scalatest.matchers.Matcher
 
 abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSpecWithMaterializer(
       """
@@ -384,7 +385,7 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
     }
 
     def strictEqualify[T](x: Either[T, HttpResponse]): Either[T, StrictEqualHttpResponse] =
-      x.right.map(new StrictEqualHttpResponse(_))
+      x.map(new StrictEqualHttpResponse(_))
 
     def parseTo(expected: HttpResponse*): Matcher[String] = parseTo(GET, expected: _*)
     def parseTo(requestMethod: HttpMethod, expected: HttpResponse*): Matcher[String] =
@@ -408,7 +409,7 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
     def generalRawMultiParseTo(
         requestMethod: HttpMethod, expected: Either[ResponseOutput, HttpResponse]*): Matcher[Seq[String]] =
       equal(expected.map(strictEqualify))
-        .matcher[Seq[Either[ResponseOutput, StrictEqualHttpResponse]]].compose { input: Seq[String] =>
+        .matcher[Seq[Either[ResponseOutput, StrictEqualHttpResponse]]].compose { (input: Seq[String]) =>
           collectBlocking {
             rawParse(requestMethod, input: _*)
               .mapAsync(1) {
@@ -434,7 +435,7 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         }.concatSubstreams
 
     def collectBlocking[T](source: Source[T, Any]): Seq[T] =
-      Await.result(source.limit(100000).runWith(Sink.seq), 1000.millis.dilated)
+      Await.result(source.limit(100000).runWith(Sink.seq), 2000.millis.dilated)
 
     protected def parserSettings: ParserSettings = ParserSettings(system)
 

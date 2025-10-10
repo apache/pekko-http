@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -21,7 +21,6 @@ import scala.concurrent.duration._
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.ws.{ BinaryMessage, Message, TextMessage }
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl._
 import pekko.util.ByteString
 
@@ -32,9 +31,8 @@ import scala.util.{ Failure, Success }
  * An example App that runs a quick test against the websocket server at wss://echo.websocket.org
  */
 object EchoTestClientApp extends App {
-  implicit val system = ActorSystem()
+  implicit val system: ActorSystem = ActorSystem()
   import system.dispatcher
-  implicit val materializer = ActorMaterializer()
 
   def delayedCompletion(delay: FiniteDuration): Source[Nothing, NotUsed] =
     Source.single(1)

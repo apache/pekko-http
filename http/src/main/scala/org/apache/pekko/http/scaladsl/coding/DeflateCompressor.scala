@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,6 +15,8 @@ package org.apache.pekko.http.scaladsl.coding
 
 import java.util.zip.{ Deflater, Inflater }
 
+import scala.annotation.tailrec
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.stream.Attributes
@@ -22,12 +24,9 @@ import pekko.stream.impl.io.ByteStringParser
 import pekko.stream.impl.io.ByteStringParser.{ ParseResult, ParseStep }
 import pekko.util.{ ByteString, ByteStringBuilder }
 
-import scala.annotation.tailrec
-
 /** Internal API */
 @InternalApi
-@deprecated("DeflateCompressor is internal API and will be moved or removed in the future", since = "Akka HTTP 10.2.0")
-class DeflateCompressor private[coding] (compressionLevel: Int) extends Compressor {
+private[coding] class DeflateCompressor private[coding] (compressionLevel: Int) extends Compressor {
   require(compressionLevel >= 0 && compressionLevel <= 9, "Compression level needs to be between 0 and 9")
   import DeflateCompressor._
 
@@ -51,7 +50,7 @@ class DeflateCompressor private[coding] (compressionLevel: Int) extends Compress
 
   protected def compressWithBuffer(input: ByteString, buffer: Array[Byte]): ByteString = {
     require(deflater.needsInput())
-    deflater.setInput(input.toArray)
+    deflater.setInput(input.toArrayUnsafe())
     drainDeflater(deflater, buffer)
   }
   protected def flushWithBuffer(buffer: Array[Byte]): ByteString = {

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,10 +13,15 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.collection.immutable
+import scala.concurrent.{ Future, Promise }
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.impl.engine.HttpIdleTimeoutException
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
+import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{
   headers,
   AttributeKey,
@@ -34,23 +39,18 @@ import pekko.http.scaladsl.model.{
 }
 import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.http.scaladsl.settings.ClientConnectionSettings
-import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.settings.ServerSettings
+import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.stream.StreamTcpException
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.testkit.TestProbe
 import pekko.util.ByteString
+
 import org.scalatest.concurrent.ScalaFutures
 
-import scala.collection.immutable
-import scala.concurrent.duration._
-import scala.concurrent.{ Future, Promise }
-
 class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
-      """pekko.http.server.remote-address-header = on
-     pekko.http.server.http2.log-frames = on
+      """pekko.http.server.http2.log-frames = on
      pekko.http.server.log-unencrypted-network-bytes = 100
      pekko.http.server.preview.enable-http2 = on
      pekko.http.client.http2.log-frames = on
@@ -169,7 +169,7 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
         .withSettings(serverSettings)
         .bind(handler).futureValue
     lazy val clientFlow =
-      Http().connectionTo("akka.example.org")
+      Http().connectionTo("pekko.example.org")
         .withCustomHttpsConnectionContext(ExampleHttpContexts.exampleClientContext)
         .withClientConnectionSettings(
           clientSettings.withTransport(ExampleHttpContexts.proxyTransport(binding.localAddress)))

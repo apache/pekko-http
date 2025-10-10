@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,26 +13,27 @@
 
 package org.apache.pekko.http.impl.model.parser
 
-import org.scalatest.exceptions.TestFailedException
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.matchers.{ MatchResult, Matcher }
+import java.net.InetAddress
+
+import scala.collection.immutable.Seq
 
 import org.apache.pekko
 import pekko.http.scaladsl.settings.ParserSettings.CookieParsingMode
 import pekko.http.impl.model.parser.HeaderParser.Settings
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model.{ HttpHeader, _ }
-import headers._
-import CacheDirectives._
-import MediaTypes._
-import MediaRanges._
-import HttpCharsets._
-import HttpEncodings._
-import HttpMethods._
-
-import java.net.InetAddress
+import pekko.http.scaladsl.model.MediaRanges._
 import pekko.http.scaladsl.model.MediaType.WithOpenCharset
+import pekko.http.scaladsl.model.MediaTypes._
+import pekko.http.scaladsl.model.HttpCharsets._
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.model.headers.{ Trailer => `Trailer`, _ }
+import pekko.http.scaladsl.model.headers.CacheDirectives._
+import pekko.http.scaladsl.model.headers.HttpEncodings._
+
+import org.scalatest.exceptions.TestFailedException
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 class HttpHeaderSpec extends AnyFreeSpec with Matchers {
   val `application/vnd.spray` = MediaType.applicationBinary("vnd.spray", MediaType.Compressible)
@@ -377,9 +378,12 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     }
 
     "If-Match dispatching" in {
-      // https://github.com/apache/incubator-pekko-http/issues/443 Check dispatching for "if-match" does not throw "RuleNotFound"
+      // https://github.com/akka/akka-http/issues/443 Check dispatching for "if-match" does not throw "RuleNotFound"
       import scala.util._
-      val Failure(cause) = Try(HeaderParser.dispatch(null, "if-match"))
+      import org.parboiled2.DynamicRuleHandler
+      import org.parboiled2.support.hlist.{ ::, HNil }
+      val Failure(cause) =
+        Try(HeaderParser.dispatch(null.asInstanceOf[DynamicRuleHandler[HeaderParser, HttpHeader :: HNil]], "if-match"))
       cause.getClass should be(classOf[NullPointerException])
     }
 
@@ -779,7 +783,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     "X-Forwarded-Proto" in {
       "X-Forwarded-Proto: http" =!= `X-Forwarded-Proto`("http")
       "X-Forwarded-Proto: https" =!= `X-Forwarded-Proto`("https")
-      "X-Forwarded-Proto: akka" =!= `X-Forwarded-Proto`("akka")
+      "X-Forwarded-Proto: pekko" =!= `X-Forwarded-Proto`("pekko")
     }
 
     "X-Real-Ip" in {
@@ -817,6 +821,26 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         ErrorInfo(
           "Illegal HTTP header 'X-Real-Ip': Invalid input 'p', expected ip-v4-address or ip-v6-address (line 1, column 1)",
           "pekko.apache.org\n^")
+    }
+
+    "Trailer" in {
+      "Trailer: one" =!= `Trailer`(Seq("one"))
+      "Trailer: one, two" =!= `Trailer`(Seq("one", "two"))
+      "Trailer: ignore,spacing,          between,    values" =!=> "ignore, spacing, between, values"
+      "Trailer: Content-MD5 , ETag,  X-Custom-Field" =!= `Trailer`(Seq("Content-MD5", "ETag", "X-Custom-Field"))
+        .renderedTo("Content-MD5, ETag, X-Custom-Field")
+      "Trailer: content-md5, ETAG, X-Custom-Field" =!= `Trailer`(Seq("content-md5", "ETAG", "X-Custom-Field"))
+      "Trailer: " =!= ErrorInfo(
+        summary = "Illegal HTTP header 'Trailer': Trailer values must not be empty",
+        detail = "No valid header names specified")
+      "Trailer: X-Custom-Hash, X-Custom-Signature" =!= `Trailer`(Seq("X-Custom-Hash", "X-Custom-Signature"))
+      "Trailer: Content@Md5" =!= ErrorInfo(
+        summary =
+          "Illegal HTTP header 'Trailer': Invalid input '@', expected tchar, OWS, listSep or 'EOI' (line 1, column 8)",
+        detail = "Content@Md5\n       ^")
+      "Trailer: Content-Length" =!= ErrorInfo(
+        summary = "Illegal HTTP header 'Trailer': Trailer values must not contain forbidden header names",
+        detail = "Trailer contained [Content-Length]")
     }
 
     "RawHeader" in {
@@ -875,6 +899,13 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       parse("User-Agent", "(" * 10000).errors.head shouldEqual
       ErrorInfo("Illegal HTTP header 'User-Agent': Illegal header value", "Header comment nested too deeply")
     }
+
+    "not break when header-value is null" in {
+      val errors = parse("Content-Disposition", null).errors
+      errors should have size 1
+      errors.head shouldBe an[ErrorInfo]
+    }
+
   }
 
   implicit class TestLine(line: String) {

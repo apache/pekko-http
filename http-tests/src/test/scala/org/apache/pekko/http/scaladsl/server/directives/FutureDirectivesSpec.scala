@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,15 +14,15 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.scaladsl.model.StatusCodes
 import pekko.pattern.CircuitBreaker
-
-import scala.concurrent.Future
 import pekko.testkit._
-import org.scalatest.Inside
 
-import scala.concurrent.duration._
+import org.scalatest.Inside
 
 class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
 
@@ -139,7 +139,7 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
     "propagate the exception in the failure case" in EventFilter[TestException.type](
       occurrences = 1,
       message = BasicRouteSpecs.defaultExnHandler500Error("XXX")).intercept {
-      Get() ~> onSuccess(Future.failed(TestException)) { echoComplete } ~> check {
+      Get() ~> onSuccess(Future.failed[Int](TestException)) { echoComplete } ~> check {
         status shouldEqual StatusCodes.InternalServerError
       }
     }
@@ -152,7 +152,7 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
     "catch an exception in the failure case" in EventFilter[TestException.type](
       occurrences = 1,
       message = BasicRouteSpecs.defaultExnHandler500Error("XXX")).intercept {
-      Get() ~> onSuccess(Future.failed(TestException)) { throwTestException("EX when ") } ~> check {
+      Get() ~> onSuccess(Future.failed[Unit](TestException)) { throwTestException("EX when ") } ~> check {
         status shouldEqual StatusCodes.InternalServerError
         responseAs[String] shouldEqual "There was an internal server error."
       }

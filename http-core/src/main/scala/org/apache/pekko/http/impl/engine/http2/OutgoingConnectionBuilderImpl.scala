@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -18,7 +18,6 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.http2.client.PersistentConnection
 import pekko.http.scaladsl.Http.OutgoingConnection
@@ -34,7 +33,7 @@ import pekko.http.scaladsl.HttpsConnectionContext
 import pekko.http.scaladsl.OutgoingConnectionBuilder
 import pekko.stream.javadsl.{ Flow => JFlow }
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
 /**
  * INTERNAL API
@@ -76,21 +75,23 @@ private[pekko] object OutgoingConnectionBuilderImpl {
 
     override def http(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
       // http/1.1 plaintext
-      Http(system).outgoingConnectionUsingContext(host, port.getOrElse(80), ConnectionContext.noEncryption(),
-        clientConnectionSettings, log)
+      Http(system.classicSystem).outgoingConnectionUsingContext(host, port.getOrElse(80),
+        ConnectionContext.noEncryption(), clientConnectionSettings, log)
     }
 
     override def https(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
       // http/1.1 tls
-      Http(system).outgoingConnectionHttps(host, port.getOrElse(443),
-        connectionContext.getOrElse(Http(system).defaultClientHttpsContext), None, clientConnectionSettings, log)
+      Http(system.classicSystem).outgoingConnectionHttps(host, port.getOrElse(443),
+        connectionContext.getOrElse(Http(system.classicSystem).defaultClientHttpsContext), None,
+        clientConnectionSettings, log)
     }
 
     override def http2(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
       // http/2 tls
       val port = this.port.getOrElse(443)
-      Http2(system).outgoingConnection(host, port, connectionContext.getOrElse(Http(system).defaultClientHttpsContext),
-        clientConnectionSettings, log)
+      Http2(system.classicSystem).outgoingConnection(host, port,
+        connectionContext.getOrElse(Http(system.classicSystem).defaultClientHttpsContext), clientConnectionSettings,
+        log)
     }
 
     override def managedPersistentHttp2(): Flow[HttpRequest, HttpResponse, NotUsed] =
@@ -100,7 +101,8 @@ private[pekko] object OutgoingConnectionBuilderImpl {
 
     override def http2WithPriorKnowledge(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
       // http/2 prior knowledge plaintext
-      Http2(system).outgoingConnectionPriorKnowledge(host, port.getOrElse(80), clientConnectionSettings, log)
+      Http2(system.classicSystem).outgoingConnectionPriorKnowledge(host, port.getOrElse(80), clientConnectionSettings,
+        log)
     }
 
     override def managedPersistentHttp2WithPriorKnowledge(): Flow[HttpRequest, HttpResponse, NotUsed] =
@@ -156,9 +158,9 @@ private[pekko] object OutgoingConnectionBuilderImpl {
 
     private def javaFlow(flow: Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]])
         : JFlow[javadsl.model.HttpRequest, javadsl.model.HttpResponse, CompletionStage[javadsl.OutgoingConnection]] = {
-      import scala.compat.java8.FutureConverters.toJava
+      import scala.jdk.FutureConverters._
       javaFlowKeepMatVal(flow.mapMaterializedValue(f =>
-        toJava(f.map(oc => new javadsl.OutgoingConnection(oc))(ExecutionContexts.parasitic))))
+        f.map(oc => new javadsl.OutgoingConnection(oc))(ExecutionContext.parasitic).asJava))
     }
 
     private def javaFlowKeepMatVal[M](

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,13 +14,15 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * The model of an HTTP header. In its most basic form headers are simple name-value pairs. Header names
- * are compared in a case-insensitive way.
+ * The model of an HTTP header. In its most basic form headers are simple name-value pairs. Header
+ * names are compared in a case-insensitive way.
  *
- * Implement {@link ModeledCustomHeader} and {@link ModeledCustomHeaderFactory} instead of {@link CustomHeader} to be
- * able to use the convenience methods that allow parsing the custom user-defined header from {@link org.apache.pekko.http.javadsl.model.HttpHeader}.
+ * <p>Implement {@link ModeledCustomHeader} and {@link ModeledCustomHeaderFactory} instead of {@link
+ * CustomHeader} to be able to use the convenience methods that allow parsing the custom
+ * user-defined header from {@link org.apache.pekko.http.javadsl.model.HttpHeader}.
  */
 public abstract class CustomHeader extends org.apache.pekko.http.scaladsl.model.HttpHeader {
-    public abstract String name();
-    public abstract String value();
+  public abstract String name();
+
+  public abstract String value();
 }

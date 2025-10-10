@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,13 +13,14 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import java.nio.charset.StandardCharsets
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.util.ByteString
 import pekko.stream.scaladsl.{ Flow, Source }
 import Protocol.Opcode
 import pekko.annotation.InternalApi
-import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.model.ws._
 
 /**
@@ -35,26 +36,16 @@ private[http] object MessageToFrameRenderer {
       Source.single(FrameEvent.fullFrame(opcode, None, data, fin = true))
 
     def streamedFrames[M](opcode: Opcode, data: Source[ByteString, M]): Source[FrameStart, Any] =
-      data.via(StreamUtils.statefulMap(() => {
-        var isFirst = true
-
-        { data =>
-          val frameOpcode =
-            if (isFirst) {
-              isFirst = false
-              opcode
-            } else Opcode.Continuation
-
-          FrameEvent.fullFrame(frameOpcode, None, data, fin = false)
-        }
-      })) ++
-      Source.single(FrameEvent.emptyLastContinuationFrame)
+      data.statefulMap(() => true)((isFirst, data) => {
+          val frameOpcode = if (isFirst) opcode else Opcode.Continuation
+          (false, FrameEvent.fullFrame(frameOpcode, None, data, fin = false))
+        }, _ => None) ++ Source.single(FrameEvent.emptyLastContinuationFrame)
 
     Flow[Message]
       .flatMapConcat {
         case BinaryMessage.Strict(data) => strictFrames(Opcode.Binary, data)
         case bm: BinaryMessage          => streamedFrames(Opcode.Binary, bm.dataStream)
-        case TextMessage.Strict(text)   => strictFrames(Opcode.Text, ByteString(text, "UTF-8"))
+        case TextMessage.Strict(text)   => strictFrames(Opcode.Text, ByteString(text, StandardCharsets.UTF_8))
         case tm: TextMessage            => streamedFrames(Opcode.Text, tm.textStream.via(Utf8Encoder))
       }
   }

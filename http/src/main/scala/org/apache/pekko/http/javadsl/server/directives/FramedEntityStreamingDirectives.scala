@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -21,6 +21,7 @@ import pekko.http.javadsl.model.{ HttpEntity, _ }
 import pekko.http.javadsl.server.Route
 import pekko.http.javadsl.unmarshalling.Unmarshaller
 import pekko.http.scaladsl.marshalling.ToResponseMarshallable
+import pekko.http.scaladsl.marshalling.ToResponseMarshaller
 import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.stream.javadsl.Source
 import pekko.util.ByteString
@@ -28,14 +29,14 @@ import pekko.util.ByteString
 /** EXPERIMENTAL API */
 abstract class FramedEntityStreamingDirectives extends TimeoutDirectives {
 
-  import pekko.http.javadsl.server.RoutingJavaMapping.Implicits._
   import pekko.http.javadsl.server.RoutingJavaMapping._
+  import pekko.http.javadsl.server.RoutingJavaMapping.Implicits._
 
   @CorrespondsTo("asSourceOf")
   def entityAsSourceOf[T](um: Unmarshaller[ByteString, T], support: EntityStreamingSupport,
       inner: java.util.function.Function[Source[T, NotUsed], Route]): Route = RouteAdapter {
     val umm = D.asSourceOf(um.asScala, support.asScala)
-    D.entity(umm) { s: pekko.stream.scaladsl.Source[T, NotUsed] =>
+    D.entity(umm) { (s: pekko.stream.scaladsl.Source[T, NotUsed]) =>
       inner(s.asJava).delegate
     }
   }
@@ -59,7 +60,8 @@ abstract class FramedEntityStreamingDirectives extends TimeoutDirectives {
     // don't try this at home:
     val mm = m.asScalaCastOutput[pekko.http.scaladsl.model.RequestEntity].map(
       _.httpEntity.asInstanceOf[pekko.http.scaladsl.model.RequestEntity])
-    implicit val mmm = fromEntityStreamingSupportAndEntityMarshaller[T, M](support.asScala, mm, null)
+    implicit val mmm: ToResponseMarshaller[pekko.stream.scaladsl.Source[T, M]] =
+      fromEntityStreamingSupportAndEntityMarshaller[T, M](support.asScala, mm, null)
     val response = ToResponseMarshallable(source.asScala)
     D.complete(response)
   }

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,17 +14,22 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- *  Model for the `Strict-Transport-Security` header.
- *  Specification: https://tools.ietf.org/html/rfc6797
+ * Model for the `Strict-Transport-Security` header. Specification:
+ * https://tools.ietf.org/html/rfc6797
  */
-public abstract class StrictTransportSecurity extends org.apache.pekko.http.scaladsl.model.HttpHeader {
-    public abstract long maxAge();
-    public abstract boolean includeSubDomains();
+public abstract class StrictTransportSecurity
+    extends org.apache.pekko.http.scaladsl.model.HttpHeader {
+  public abstract long maxAge();
 
-    public static StrictTransportSecurity create(long maxAge) {
-        return new org.apache.pekko.http.scaladsl.model.headers.Strict$minusTransport$minusSecurity(maxAge, false);
-    }
-    public static StrictTransportSecurity create(long maxAge, boolean includeSubDomains) {
-        return new org.apache.pekko.http.scaladsl.model.headers.Strict$minusTransport$minusSecurity(maxAge, includeSubDomains);
-    }
+  public abstract boolean includeSubDomains();
+
+  public static StrictTransportSecurity create(long maxAge) {
+    return new org.apache.pekko.http.scaladsl.model.headers.Strict$minusTransport$minusSecurity(
+        maxAge, false);
+  }
+
+  public static StrictTransportSecurity create(long maxAge, boolean includeSubDomains) {
+    return new org.apache.pekko.http.scaladsl.model.headers.Strict$minusTransport$minusSecurity(
+        maxAge, includeSubDomains);
+  }
 }

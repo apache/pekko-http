@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -34,7 +34,8 @@ import static org.junit.Assert.assertEquals;
 public class EntityDiscardingTest extends JUnitSuite {
 
   private ActorSystem sys = ActorSystem.create("test");
-  private Iterable<ByteString> testData = Arrays.asList(ByteString.fromString("abc"), ByteString.fromString("def"));
+  private Iterable<ByteString> testData =
+      Arrays.asList(ByteString.fromString("abc"), ByteString.fromString("def"));
 
   @Test
   public void testHttpRequestDiscardEntity() {
@@ -70,10 +71,8 @@ public class EntityDiscardingTest extends JUnitSuite {
     return new Procedure<Try<Done>>() {
       @Override
       public void apply(Try<Done> t) throws Exception {
-        if(t.isSuccess())
-          p.complete(Done.getInstance());
-        else
-          p.completeExceptionally(t.failed().get());
+        if (t.isSuccess()) p.complete(Done.getInstance());
+        else p.completeExceptionally(t.failed().get());
       }
     };
   }

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -26,15 +26,12 @@ import pekko.actor.{
   Props
 }
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.http.impl.engine.client.PoolInterface.ShutdownReason
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import pekko.stream.Materializer
 
-import scala.concurrent.{ Future, Promise }
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.util.{ Failure, Success, Try }
 
 /**
  * INTERNAL API
@@ -190,12 +187,12 @@ private[http] final class PoolMasterActor extends Actor with ActorLogging {
           // to this actor by the pool actor, they will be retried once the shutdown
           // has completed.
           val completed = pool.shutdown()(context.dispatcher)
-          shutdownCompletedPromise.tryCompleteWith(
-            completed.map(_ => Done)(ExecutionContexts.sameThreadExecutionContext))
+          shutdownCompletedPromise.completeWith(
+            completed.map(_ => Done)(ExecutionContext.parasitic))
           statusById += poolId -> PoolInterfaceShuttingDown(shutdownCompletedPromise)
         case Some(PoolInterfaceShuttingDown(formerPromise)) =>
           // Pool is already shutting down, mirror the existing promise.
-          shutdownCompletedPromise.tryCompleteWith(formerPromise.future)
+          shutdownCompletedPromise.completeWith(formerPromise.future)
         case None =>
           // Pool does not exist, shutdown is not needed.
           shutdownCompletedPromise.trySuccess(Done)
@@ -204,7 +201,7 @@ private[http] final class PoolMasterActor extends Actor with ActorLogging {
     // Shutdown all known pools and signal their termination.
     case ShutdownAll(shutdownCompletedPromise) =>
       import context.dispatcher
-      // FIXME: shutdown pools directly without going through message, https://github.com/apache/incubator-pekko-http/issues/3184
+      // FIXME: shutdown pools directly without going through message, https://github.com/akka/akka-http/issues/3184
       Future.traverse(statusById.keys)(thisMaster.shutdown)
         .onComplete(_ => shutdownCompletedPromise.trySuccess(Done))
 

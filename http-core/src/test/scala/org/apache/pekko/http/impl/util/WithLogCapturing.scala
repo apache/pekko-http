@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -33,6 +33,12 @@ trait WithLogCapturing extends SuiteMixin { this: TestSuite =>
    * the execution of the test
    */
   protected def failOnSevereMessages: Boolean = false
+
+  /**
+   * We expect a severe message but the message should contain this text. If there are any other severe messages,
+   * the test will fail.
+   */
+  protected val expectSevereLogsOnlyToMatch: Option[String] = None
 
   /**
    * Can be overridden to adapt which events should be considered as severe if `failOnSevereMessages` is
@@ -80,12 +86,25 @@ trait WithLogCapturing extends SuiteMixin { this: TestSuite =>
       flushLog()
       res
     } else if (failOnSevereMessages && events.exists(isSevere)) {
-      val stats = events.groupBy(_.level).mapValues(_.size).toMap.withDefaultValue(0)
+      val stats = events.groupBy(_.level).view.mapValues(_.size).toMap.withDefaultValue(0)
       flushLog()
 
       Failed(new AssertionError(
         s"No severe log messages should be emitted during test run but got [${stats(
             Logging.WarningLevel)}] warnings and [${stats(Logging.ErrorLevel)}] errors (see marked lines above)"))
+    } else if (expectSevereLogsOnlyToMatch.nonEmpty) {
+      val severeEvents = events.filter(isSevere(_))
+      val matchingEvents = severeEvents.filter(_.message.toString.contains(expectSevereLogsOnlyToMatch.get))
+      if (severeEvents.isEmpty || matchingEvents != severeEvents) {
+        val stats = events.groupBy(_.level).view.mapValues(_.size).toMap.withDefaultValue(0)
+        flushLog()
+
+        Failed(new AssertionError(
+          s"Expected an error during test run but got unexpected results - got [${
+              stats(
+                Logging.WarningLevel)
+            }] warnings and [${stats(Logging.ErrorLevel)}] errors (see marked lines above)"))
+      } else res
     } else res
 
   }
@@ -98,7 +117,7 @@ trait WithLogCapturing extends SuiteMixin { this: TestSuite =>
         override def write(b: Int): Unit = oldOut.write(b)
       }) {
         override def println(x: Any): Unit =
-          oldOut.println(prefix + String.valueOf(x).replaceAllLiterally("\n", s"\n$prefix"))
+          oldOut.println(prefix + String.valueOf(x).replace("\n", s"\n$prefix"))
       }
 
     Console.withOut(prefixingOut) {

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,10 +14,11 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import org.scalatest.Inside
 import org.apache.pekko
-import pekko.http.scaladsl.unmarshalling.Unmarshaller, Unmarshaller._
 import pekko.http.scaladsl.model.StatusCodes
+import pekko.http.scaladsl.unmarshalling.Unmarshaller, Unmarshaller._
+
+import org.scalatest.Inside
 import org.scalatest.freespec.AnyFreeSpec
 
 class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with Inside {
@@ -65,7 +66,7 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
     "supply chaining of unmarshallers" in {
       case class UserId(id: Int)
       case class AnotherUserId(id: Int)
-      val UserIdUnmarshaller = Unmarshaller.strict[Int, UserId](UserId)
+      val UserIdUnmarshaller = Unmarshaller.strict[Int, UserId](UserId.apply)
       implicit val AnotherUserIdUnmarshaller =
         Unmarshaller.strict[UserId, AnotherUserId](userId => AnotherUserId(userId.id))
       Get("/?id=45") ~> {
@@ -289,7 +290,7 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
     "extract a parameter value as Case Class" in {
       case class Color(red: Int, green: Int, blue: Int)
       Get("/?red=90&green=50&blue=0") ~> {
-        parameters("red".as[Int], "green".as[Int], "blue".as[Int]).as(Color) { color =>
+        parameters("red".as[Int], "green".as[Int], "blue".as[Int]).as(Color.apply _) { color =>
           complete(s"${color.red} ${color.green} ${color.blue}")
         }
       } ~> check { responseAs[String] shouldEqual "90 50 0" }
@@ -301,7 +302,7 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
         require(0 <= blue && blue <= 255)
       }
       Get("/?red=500&green=0&blue=0") ~> {
-        parameters("red".as[Int], "green".as[Int], "blue".as[Int]).as(Color) { color =>
+        parameters("red".as[Int], "green".as[Int], "blue".as[Int]).as(Color.apply _) { color =>
           complete(s"${color.red} ${color.green} ${color.blue}")
         }
       } ~> check {
@@ -315,7 +316,7 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
         require(0 <= blue && blue <= 255)
       }
       Get("/?red=0&green=0&blue=0") ~> {
-        parameters("red".as[Int], "green".as[Int], "blue".as[Int]).as(Color) { _ =>
+        parameters("red".as[Int], "green".as[Int], "blue".as[Int]).as(Color.apply _) { _ =>
           throw new IllegalArgumentException
         }
       } ~> check {

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -38,6 +38,8 @@ private[pekko] final case class WebSocketSettingsImpl(
     WebSocketSettingsImpl.KeepAliveModes contains periodicKeepAliveMode,
     s"Unsupported keep-alive mode detected! Was [$periodicKeepAliveMode], yet only: ${WebSocketSettingsImpl.KeepAliveModes} are supported.")
 
+  override def getPeriodicKeepAliveMaxIdle: java.time.Duration =
+    JavaDurationConverter.toJava(periodicKeepAliveMaxIdle)
   override def productPrefix = "WebSocketSettings"
 
 }

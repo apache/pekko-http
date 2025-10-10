@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -26,13 +26,13 @@ import org.junit.Test;
 
 import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
 
-//#handleExceptions
+// #handleExceptions
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.handleExceptions;
 import static org.apache.pekko.http.javadsl.server.Directives.path;
 
-//#handleExceptions
-//#handleRejections
+// #handleExceptions
+// #handleRejections
 import org.apache.pekko.http.javadsl.server.Directives;
 
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
@@ -40,8 +40,8 @@ import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
 import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 import static org.apache.pekko.http.javadsl.server.Directives.reject;
 
-//#handleRejections
-//#handleNotFoundWithDefails
+// #handleRejections
+// #handleNotFoundWithDefails
 import org.apache.pekko.http.javadsl.server.Directives;
 
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
@@ -49,95 +49,109 @@ import static org.apache.pekko.http.javadsl.server.Directives.extractUnmatchedPa
 import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
 import static org.apache.pekko.http.javadsl.server.Directives.reject;
 
-//#handleNotFoundWithDefails
+// #handleNotFoundWithDefails
 
 public class ExecutionDirectivesExamplesTest extends JUnitRouteTest {
 
   @Test
   public void testHandleExceptions() {
-    //#handleExceptions
-    final ExceptionHandler divByZeroHandler = ExceptionHandler.newBuilder()
-      .match(ArithmeticException.class, x ->
-        complete(StatusCodes.BAD_REQUEST, "You've got your arithmetic wrong, fool!"))
-      .build();
+    // #handleExceptions
+    final ExceptionHandler divByZeroHandler =
+        ExceptionHandler.newBuilder()
+            .match(
+                ArithmeticException.class,
+                x -> complete(StatusCodes.BAD_REQUEST, "You've got your arithmetic wrong, fool!"))
+            .build();
 
     final Route route =
-      path(PathMatchers.segment("divide").slash(integerSegment()).slash(integerSegment()), (a, b) ->
-        handleExceptions(divByZeroHandler, () -> complete("The result is " + (a / b)))
-      );
+        path(
+            PathMatchers.segment("divide").slash(integerSegment()).slash(integerSegment()),
+            (a, b) ->
+                handleExceptions(divByZeroHandler, () -> complete("The result is " + (a / b))));
 
     // tests:
-    testRoute(route).run(HttpRequest.GET("/divide/10/5"))
-      .assertEntity("The result is 2");
-    testRoute(route).run(HttpRequest.GET("/divide/10/0"))
-      .assertStatusCode(StatusCodes.BAD_REQUEST)
-      .assertEntity("You've got your arithmetic wrong, fool!");
-    //#handleExceptions
+    testRoute(route).run(HttpRequest.GET("/divide/10/5")).assertEntity("The result is 2");
+    testRoute(route)
+        .run(HttpRequest.GET("/divide/10/0"))
+        .assertStatusCode(StatusCodes.BAD_REQUEST)
+        .assertEntity("You've got your arithmetic wrong, fool!");
+    // #handleExceptions
   }
 
   @Test
   public void testHandleRejections() {
-    //#handleRejections
-    final RejectionHandler totallyMissingHandler = RejectionHandler.newBuilder()
-      .handleNotFound(complete(StatusCodes.NOT_FOUND, "Oh man, what you are looking for is long gone."))
-      .handle(ValidationRejection.class, r -> complete(StatusCodes.INTERNAL_SERVER_ERROR, r.message()))
-      .build();
+    // #handleRejections
+    final RejectionHandler totallyMissingHandler =
+        RejectionHandler.newBuilder()
+            .handleNotFound(
+                complete(StatusCodes.NOT_FOUND, "Oh man, what you are looking for is long gone."))
+            .handle(
+                ValidationRejection.class,
+                r -> complete(StatusCodes.INTERNAL_SERVER_ERROR, r.message()))
+            .build();
 
-    final Route route = pathPrefix("handled", () ->
-      handleRejections(totallyMissingHandler, () ->
-        Directives.concat(
-          path("existing", () -> complete("This path exists")),
-          path("boom", () -> reject(Rejections.validationRejection("This didn't work.")))
-        )
-      )
-    );
+    final Route route =
+        pathPrefix(
+            "handled",
+            () ->
+                handleRejections(
+                    totallyMissingHandler,
+                    () ->
+                        Directives.concat(
+                            path("existing", () -> complete("This path exists")),
+                            path(
+                                "boom",
+                                () ->
+                                    reject(Rejections.validationRejection("This didn't work."))))));
 
     // tests:
-    testRoute(route).run(HttpRequest.GET("/handled/existing"))
-      .assertEntity("This path exists");
+    testRoute(route).run(HttpRequest.GET("/handled/existing")).assertEntity("This path exists");
     // applies default handler
-    testRoute(route).run(HttpRequest.GET("/missing"))
-      .assertStatusCode(StatusCodes.NOT_FOUND)
-      .assertEntity("The requested resource could not be found.");
-    testRoute(route).run(HttpRequest.GET("/handled/missing"))
-      .assertStatusCode(StatusCodes.NOT_FOUND)
-      .assertEntity("Oh man, what you are looking for is long gone.");
-    testRoute(route).run(HttpRequest.GET("/handled/boom"))
-      .assertStatusCode(StatusCodes.INTERNAL_SERVER_ERROR)
-      .assertEntity("This didn't work.");
-    //#handleRejections
+    testRoute(route)
+        .run(HttpRequest.GET("/missing"))
+        .assertStatusCode(StatusCodes.NOT_FOUND)
+        .assertEntity("The requested resource could not be found.");
+    testRoute(route)
+        .run(HttpRequest.GET("/handled/missing"))
+        .assertStatusCode(StatusCodes.NOT_FOUND)
+        .assertEntity("Oh man, what you are looking for is long gone.");
+    testRoute(route)
+        .run(HttpRequest.GET("/handled/boom"))
+        .assertStatusCode(StatusCodes.INTERNAL_SERVER_ERROR)
+        .assertEntity("This didn't work.");
+    // #handleRejections
   }
-  
+
   @Test
-    public void testHandleRejectionsWithDefails() {
-      //#handleNotFoundWithDefails
-      final RejectionHandler totallyMissingHandler = RejectionHandler.newBuilder()
-        .handleNotFound(
-          extractUnmatchedPath(path ->
-            complete(StatusCodes.NOT_FOUND, "The path " + path + " was not found!")
-          )
-        )
-        .build();
-  
-      final Route route = 
-        handleRejections(totallyMissingHandler, () ->
-        pathPrefix("handled", () ->
-          Directives.concat(
-            path("existing", () -> complete("This path exists"))
-          )
-        )
-      );
-  
-      // tests:
-      testRoute(route).run(HttpRequest.GET("/handled/existing"))
-        .assertEntity("This path exists");
-      // applies default handler
-      testRoute(route).run(HttpRequest.GET("/missing"))
+  public void testHandleRejectionsWithDefails() {
+    // #handleNotFoundWithDefails
+    final RejectionHandler totallyMissingHandler =
+        RejectionHandler.newBuilder()
+            .handleNotFound(
+                extractUnmatchedPath(
+                    path ->
+                        complete(StatusCodes.NOT_FOUND, "The path " + path + " was not found!")))
+            .build();
+
+    final Route route =
+        handleRejections(
+            totallyMissingHandler,
+            () ->
+                pathPrefix(
+                    "handled",
+                    () -> Directives.concat(path("existing", () -> complete("This path exists")))));
+
+    // tests:
+    testRoute(route).run(HttpRequest.GET("/handled/existing")).assertEntity("This path exists");
+    // applies default handler
+    testRoute(route)
+        .run(HttpRequest.GET("/missing"))
         .assertStatusCode(StatusCodes.NOT_FOUND)
         .assertEntity("The path /missing was not found!");
-      testRoute(route).run(HttpRequest.GET("/handled/missing"))
+    testRoute(route)
+        .run(HttpRequest.GET("/handled/missing"))
         .assertStatusCode(StatusCodes.NOT_FOUND)
         .assertEntity("The path /handled/missing was not found!");
-      //#handleNotFoundWithDefails
-    }
+    // #handleNotFoundWithDefails
+  }
 }

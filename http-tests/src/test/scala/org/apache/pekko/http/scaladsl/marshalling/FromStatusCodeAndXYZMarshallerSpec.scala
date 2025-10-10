@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,11 +13,13 @@
 
 package org.apache.pekko.http.scaladsl.marshalling
 
+import spray.json.RootJsonFormat
+
 import org.apache.pekko
 import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import pekko.http.scaladsl.model.{ ContentTypes, MediaRanges, MediaTypes }
 import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model.headers.Accept
-import pekko.http.scaladsl.model.{ ContentTypes, MediaRanges, MediaTypes }
 import pekko.http.scaladsl.server.{ Route, RoutingSpec }
 
 class FromStatusCodeAndXYZMarshallerSpec extends RoutingSpec {
@@ -25,7 +27,7 @@ class FromStatusCodeAndXYZMarshallerSpec extends RoutingSpec {
   // a somewhat arbitrary ErrorInfo marshaller that can either return a text or an application/json response
   implicit val errorInfoMarshaller: ToEntityMarshaller[ErrorInfo] = {
     import spray.json.DefaultJsonProtocol._
-    implicit val errorInfoFormat = jsonFormat1(ErrorInfo.apply _)
+    implicit val errorInfoFormat: RootJsonFormat[ErrorInfo] = jsonFormat1(ErrorInfo.apply _)
     Marshaller.oneOf(
       Marshaller.StringMarshaller.compose[ErrorInfo](_.errorMessage),
       SprayJsonSupport.sprayJsonMarshaller(errorInfoFormat))

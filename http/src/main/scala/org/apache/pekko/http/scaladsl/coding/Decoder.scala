@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,17 +13,17 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.HttpEncoding
 import pekko.stream.{ FlowShape, Materializer }
+import pekko.stream.scaladsl.{ Flow, Sink, Source }
 import pekko.stream.stage.GraphStage
 import pekko.util.ByteString
-import headers.HttpEncoding
-import pekko.stream.scaladsl.{ Flow, Sink, Source }
-
-import scala.concurrent.Future
 
 trait Decoder {
   def encoding: HttpEncoding

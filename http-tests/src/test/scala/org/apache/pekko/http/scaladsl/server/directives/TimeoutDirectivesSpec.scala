@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,18 +13,18 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import scala.concurrent.{ Future, Promise }
+import scala.concurrent.duration._
+
 import org.apache.pekko
-import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
 import pekko.http.scaladsl.server.RoutingSpec
+import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.testkit._
-
-import scala.concurrent.duration._
-import scala.concurrent.{ Future, Promise }
 
 class TimeoutDirectivesSpec extends RoutingSpec {
 
-  implicit val routeTestTimeout = RouteTestTimeout(5.seconds.dilated)
+  implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(5.seconds.dilated)
 
   "Request Timeout" should {
     "be configurable in routing layer" in {

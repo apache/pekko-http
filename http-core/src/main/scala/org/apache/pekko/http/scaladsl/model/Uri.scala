@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -20,15 +20,16 @@ import java.nio.charset.Charset
 
 import scala.annotation.tailrec
 import scala.collection.{ immutable, mutable }
+
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
-import org.parboiled2.{ CharPredicate, CharUtils, ParserInput }
 import pekko.http.ccompat.{ Builder, QuerySeqOptimized }
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.model.parser.UriParser
 import pekko.http.impl.model.parser.CharacterClasses._
 import pekko.http.impl.util._
 import Uri._
+import org.parboiled2.{ CharPredicate, CharUtils, ParserInput }
 
 /**
  * An immutable model of an internet URI as defined by https://tools.ietf.org/html/rfc3986.
@@ -129,7 +130,8 @@ sealed abstract case class Uri(scheme: String, authority: Authority, path: Path,
   /**
    * Returns a copy of this Uri with the given query.
    */
-  def withQuery(query: Query): Uri = copy(rawQueryString = if (query.isEmpty) None else Some(query.toString))
+  def withQuery(query: Query): Uri =
+    createUnsafe(scheme, authority, path, if (query.isEmpty) None else Some(query.toString), fragment)
 
   /**
    * Returns a copy of this Uri with the given query string.
@@ -503,7 +505,8 @@ object Uri {
     def apply(byte1: Byte, byte2: Byte, byte3: Byte, byte4: Byte): IPv4Host = apply(Array(byte1, byte2, byte3, byte4))
     def apply(bytes: Array[Byte]): IPv4Host = apply(bytes, bytes.map(_ & 0xFF).mkString("."))
 
-    private[http] def apply(bytes: Array[Byte], address: String): IPv4Host = IPv4Host(immutable.Seq(bytes: _*), address)
+    private[http] def apply(bytes: Array[Byte], address: String): IPv4Host =
+      IPv4Host(bytes.toSeq, address)
   }
   final case class IPv6Host private (bytes: immutable.Seq[Byte], address: String) extends NonEmptyHost {
     require(bytes.length == 16, "bytes array must have length 16")
@@ -523,9 +526,10 @@ object Uri {
     private[http] def apply(bytes: String, address: String): IPv6Host = {
       import CharUtils.{ hexValue => hex }
       require(bytes.length == 32, "`bytes` must be a 32 character hex string")
-      apply(bytes.toCharArray.grouped(2).map(s => (hex(s(0)) * 16 + hex(s(1))).toByte).toArray, address)
+      apply(bytes.toCharArray.grouped(2).map(s => (hex(s(0)) * 16 + hex(s(1))).toByte).toSeq, address)
     }
-    private[http] def apply(bytes: Array[Byte], address: String): IPv6Host = apply(immutable.Seq(bytes: _*), address)
+    private[http] def apply(bytes: Array[Byte], address: String): IPv6Host =
+      apply(bytes.toSeq, address)
   }
   final case class NamedHost(address: String) extends NonEmptyHost {
     def equalsIgnoreCase(other: Host): Boolean = other match {

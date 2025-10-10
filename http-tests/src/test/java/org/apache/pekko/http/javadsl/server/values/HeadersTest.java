@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -33,29 +33,27 @@ public class HeadersTest extends JUnitRouteTest {
     TestRoute route = testRoute(headerValueByName("X-Test-Header", value -> complete(value)));
 
     route
-      .run(HttpRequest.create())
-      .assertStatusCode(400)
-      .assertEntity("Request is missing required HTTP header 'X-Test-Header'");
+        .run(HttpRequest.create())
+        .assertStatusCode(400)
+        .assertEntity("Request is missing required HTTP header 'X-Test-Header'");
 
     route
-      .run(HttpRequest.create().addHeader(testHeaderInstance))
-      .assertStatusCode(200)
-      .assertEntity("abcdef-test");
+        .run(HttpRequest.create().addHeader(testHeaderInstance))
+        .assertStatusCode(200)
+        .assertEntity("abcdef-test");
   }
 
   @Test
   public void testOptionalValueByName() {
-    TestRoute route = testRoute(optionalHeaderValueByName("X-Test-Header", value -> complete(value.toString())));
+    TestRoute route =
+        testRoute(optionalHeaderValueByName("X-Test-Header", value -> complete(value.toString())));
+
+    route.run(HttpRequest.create()).assertStatusCode(200).assertEntity("Optional.empty");
 
     route
-      .run(HttpRequest.create())
-      .assertStatusCode(200)
-      .assertEntity("Optional.empty");
-
-    route
-      .run(HttpRequest.create().addHeader(testHeaderInstance))
-      .assertStatusCode(200)
-      .assertEntity("Optional[abcdef-test]");
+        .run(HttpRequest.create().addHeader(testHeaderInstance))
+        .assertStatusCode(200)
+        .assertEntity("Optional[abcdef-test]");
   }
 
   @Test
@@ -63,28 +61,26 @@ public class HeadersTest extends JUnitRouteTest {
     TestRoute route = testRoute(headerValueByType(Age.class, age -> complete(age.value())));
 
     route
-      .run(HttpRequest.create())
-      .assertStatusCode(400)
-      .assertEntity("Request is missing required HTTP header 'Age'");
+        .run(HttpRequest.create())
+        .assertStatusCode(400)
+        .assertEntity("Request is missing required HTTP header 'Age'");
 
     route
-      .run(HttpRequest.create().addHeader(ageHeaderInstance))
-      .assertStatusCode(200)
-      .assertEntity("1000");
+        .run(HttpRequest.create().addHeader(ageHeaderInstance))
+        .assertStatusCode(200)
+        .assertEntity("1000");
   }
 
   @Test
   public void testOptionalValueByClass() {
-    TestRoute route = testRoute(optionalHeaderValueByType(Age.class, age -> complete(age.toString())));
+    TestRoute route =
+        testRoute(optionalHeaderValueByType(Age.class, age -> complete(age.toString())));
+
+    route.run(HttpRequest.create()).assertStatusCode(200).assertEntity("Optional.empty");
 
     route
-      .run(HttpRequest.create())
-      .assertStatusCode(200)
-      .assertEntity("Optional.empty");
-
-    route
-      .run(HttpRequest.create().addHeader(ageHeaderInstance))
-      .assertStatusCode(200)
-      .assertEntity("Optional[Age: 1000]");
+        .run(HttpRequest.create().addHeader(ageHeaderInstance))
+        .assertStatusCode(200)
+        .assertEntity("Optional[Age: 1000]");
   }
 }

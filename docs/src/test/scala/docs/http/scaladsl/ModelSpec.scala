@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -89,7 +89,7 @@ class ModelSpec extends PekkoSpec {
     // a method that extracts basic HTTP credentials from a request
     def credentialsOfRequest(req: HttpRequest): Option[User] =
       for {
-        Authorization(BasicHttpCredentials(user, pass)) <- req.header[Authorization]
+        case Authorization(BasicHttpCredentials(user, pass)) <- req.header[Authorization]
       } yield User(user, pass)
     // #headers
 

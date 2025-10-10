@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -29,14 +29,14 @@ public class SchemeDirectivesTest extends JUnitRouteTest {
     TestRoute route = testRoute(scheme("http", () -> complete("OK!")));
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("OK!");
+        .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("OK!");
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("https://example.org")))
-      .assertStatusCode(StatusCodes.BAD_REQUEST)
-      .assertEntity("Uri scheme not allowed, supported schemes: http");
+        .run(HttpRequest.create().withUri(Uri.create("https://example.org")))
+        .assertStatusCode(StatusCodes.BAD_REQUEST)
+        .assertEntity("Uri scheme not allowed, supported schemes: http");
   }
 
   @Test
@@ -44,15 +44,13 @@ public class SchemeDirectivesTest extends JUnitRouteTest {
     TestRoute route = testRoute(extractScheme(Directives::complete));
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("http");
+        .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("http");
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("https://example.org")))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("https");
+        .run(HttpRequest.create().withUri(Uri.create("https://example.org")))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("https");
   }
-
-
 }

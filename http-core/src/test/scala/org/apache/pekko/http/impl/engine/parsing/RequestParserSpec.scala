@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -21,7 +21,6 @@ import scala.concurrent.duration._
 import com.typesafe.config.{ Config, ConfigFactory }
 import pekko.util.ByteString
 import pekko.actor.ActorSystem
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl._
 import pekko.stream.TLSProtocol._
 import org.scalatest.matchers.Matcher
@@ -55,11 +54,10 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
     pekko.http.parsing.max-header-value-length = 32
     pekko.http.parsing.max-uri-length = 40
     pekko.http.parsing.max-content-length = infinite""")
-  implicit val system = ActorSystem(getClass.getSimpleName, testConf)
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
   import system.dispatcher
 
   val BOLT = HttpMethod.custom("BOLT", safe = false, idempotent = true, requestEntityAcceptance = Expected)
-  implicit val materializer = ActorMaterializer()
 
   s"The request parsing logic should (mode: $mode)" - {
     "properly parse a request" - {
@@ -343,7 +341,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         val manyChunks = (oneChunk * numChunks) + s"0${newLine}"
 
         val result = multiParse(newParser)(Seq(prep(start + manyChunks)))
-        val HttpEntity.Chunked(_, chunks) = result.head.right.get.req.entity
+        val HttpEntity.Chunked(_, chunks) = result.head.toOption.get.req.entity
         val strictChunks = chunks.limit(100000).runWith(Sink.seq).awaitResult(awaitAtMost)
         strictChunks.size shouldEqual numChunks
       }
@@ -533,13 +531,24 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
-      "too-large chunk size" in new Test {
+      "too-large chunk size (> Int.MaxValue)" in new Test {
         Seq(
           start,
           """1a2b3c4d5e
             |""") should generalMultiParseTo(
           Right(baseRequest),
-          Left(EntityStreamError(ErrorInfo("HTTP chunk size exceeds the configured limit of 1048576 bytes"))))
+          Left(EntityStreamError(ErrorInfo("HTTP chunk size exceeds Integer.MAX_VALUE (2147483647) bytes"))))
+        closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
+      "too-large chunk size" in new Test {
+        Seq(
+          start,
+          """1400000
+            |""") should generalMultiParseTo(
+          Right(baseRequest),
+          Left(
+            EntityStreamError(ErrorInfo("HTTP chunk of 20971520 bytes exceeds the configured limit of 1048576 bytes"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
@@ -757,7 +766,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
     }
 
     def strictEqualify[T](x: Either[T, HttpRequest]): Either[T, StrictEqualHttpRequest] =
-      x.right.map(new StrictEqualHttpRequest(_))
+      x.map(new StrictEqualHttpRequest(_))
 
     def parseTo(expected: HttpRequest*): Matcher[String] =
       multiParseTo(expected: _*).compose(_ :: Nil)
@@ -801,7 +810,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         }
         .concatSubstreams
         .flatMapConcat { x =>
-          Source.fromFuture {
+          Source.future {
             x match {
               case Right(request) => compactEntity(request.entity).fast.map(x => Right(request.withEntity(x)))
               case Left(error)    => FastFuture.successful(Left(error))

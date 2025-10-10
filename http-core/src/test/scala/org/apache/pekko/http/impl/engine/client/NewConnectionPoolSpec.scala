@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -247,7 +247,7 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
 
       val crashingEntity =
         Source.fromIterator(() => Iterator.fill(10)(ByteString("abc")))
-          .concat(Source.fromFuture(errorOnConnection1.future))
+          .concat(Source.future(errorOnConnection1.future))
           .log("response-entity-stream")
           .addAttributes(Attributes.logLevels(Logging.InfoLevel, Logging.InfoLevel, Logging.InfoLevel))
 
@@ -554,7 +554,8 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
       }
 
       val requestSourceQueuePromise = Promise[SourceQueueWithComplete[_]]()
-      val requestSource = Source.queue(8, OverflowStrategy.fail).mapMaterializedValue(requestSourceQueuePromise.success)
+      val requestSource = Source.queue[HttpEntity.ChunkStreamPart](8, OverflowStrategy.fail)
+        .mapMaterializedValue(requestSourceQueuePromise.success)
       val slowRequestEntity = Chunked(ContentTypes.`text/plain(UTF-8)`, requestSource)
       val request =
         HttpRequest(uri = s"http://$serverHostName:$serverPort/abc?query#fragment", entity = slowRequestEntity)
@@ -698,7 +699,7 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
       else Sink.fromSubscriber(incomingConnections)
 
       val binding =
-        Tcp()
+        Tcp(system)
           .bind("localhost", 0, idleTimeout = serverSettings.timeouts.idleTimeout)
           .map { c =>
             val layer = Http().serverLayer(serverSettings, log = log)

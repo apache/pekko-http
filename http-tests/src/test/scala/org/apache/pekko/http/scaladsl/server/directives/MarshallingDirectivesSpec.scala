@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,22 +16,23 @@ package directives
 
 import scala.concurrent.Future
 import scala.util.{ Failure, Try }
-
 import scala.xml.NodeSeq
-import org.scalatest.Inside
+
+import org.xml.sax.SAXParseException
+import spray.json.DefaultJsonProtocol._
+
 import org.apache.pekko
+import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport
-import pekko.http.scaladsl.unmarshalling._
 import pekko.http.scaladsl.marshalling._
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import spray.json.DefaultJsonProtocol._
-import MediaTypes._
-import HttpCharsets._
-import headers._
-import org.xml.sax.SAXParseException
-
+import pekko.http.scaladsl.model.HttpCharsets._
+import pekko.http.scaladsl.model.MediaTypes._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.unmarshalling._
 import pekko.testkit.EventFilter
+
+import org.scalatest.Inside
 
 class MarshallingDirectivesSpec extends RoutingSpec with Inside {
   import ScalaXmlSupport._
@@ -137,7 +138,7 @@ class MarshallingDirectivesSpec extends RoutingSpec with Inside {
     }
     "properly extract with a super-unmarshaller" in {
       case class Person(name: String)
-      val jsonUnmarshaller: FromEntityUnmarshaller[Person] = jsonFormat1(Person)
+      val jsonUnmarshaller: FromEntityUnmarshaller[Person] = jsonFormat1(Person.apply)
       val xmlUnmarshaller: FromEntityUnmarshaller[Person] =
         ScalaXmlSupport.nodeSeqUnmarshaller(`text/xml`).map(seq => Person(seq.text))
 
@@ -237,7 +238,7 @@ class MarshallingDirectivesSpec extends RoutingSpec with Inside {
   "The marshalling infrastructure for JSON" should {
     import spray.json._
     case class Foo(name: String)
-    implicit val fooFormat = jsonFormat1(Foo)
+    implicit val fooFormat: RootJsonFormat[Foo] = jsonFormat1(Foo.apply)
     val foo = Foo("Hällö")
 
     "render JSON with UTF-8 encoding if no `Accept-Charset` request header is present" in {
@@ -250,8 +251,13 @@ class MarshallingDirectivesSpec extends RoutingSpec with Inside {
         rejection shouldEqual UnacceptedResponseContentTypeRejection(Set(ContentType(`application/json`)))
       }
     }
-    val acceptHeaderUtf = Accept.parseFromValueString("application/json;charset=utf8").right.get
-    val acceptHeaderNonUtf = Accept.parseFromValueString("application/json;charset=ISO-8859-1").right.get
+    "reject JSON rendering if an `Accept-Charset` request header requests an unknown encoding" in {
+      Get() ~> `Accept-Charset`(HttpCharset("unknown")(Nil)) ~> complete(foo) ~> check {
+        rejection shouldEqual UnacceptedResponseContentTypeRejection(Set(ContentType(`application/json`)))
+      }
+    }
+    val acceptHeaderUtf = Accept.parseFromValueString("application/json;charset=utf8").toOption.get
+    val acceptHeaderNonUtf = Accept.parseFromValueString("application/json;charset=ISO-8859-1").toOption.get
     "render JSON response when `Accept` header is present with the `charset` parameter ignoring it" in {
       Get().withHeaders(acceptHeaderUtf) ~> complete(foo) ~> check {
         responseEntity shouldEqual HttpEntity(`application/json`, foo.toJson.compactPrint)
@@ -272,6 +278,45 @@ class MarshallingDirectivesSpec extends RoutingSpec with Inside {
       val acceptHeader = Accept(MediaRange(`application/json`))
       Get().withHeaders(acceptHeader) ~> complete(foo) ~> check {
         responseEntity shouldEqual HttpEntity(`application/json`, foo.toJson.compactPrint)
+      }
+    }
+  }
+
+  "The marshalling infrastructure for text" should {
+    val foo = "Hällö"
+    "render text with UTF-8 encoding if no `Accept-Charset` request header is present" in {
+      Get() ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/plain`, `UTF-8`), foo)
+      }
+    }
+    "render text with requested encoding if an `Accept-Charset` request header requests a non-UTF-8 encoding" in {
+      Get() ~> `Accept-Charset`(`ISO-8859-1`) ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/plain`, `ISO-8859-1`), foo)
+      }
+    }
+    "render text with UTF-8 encoding if an `Accept-Charset` request header requests an unknown encoding" in {
+      Get() ~> `Accept-Charset`(HttpCharset("unknown")(Nil)) ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/plain`, `UTF-8`), foo)
+      }
+    }
+  }
+
+  "The marshalling infrastructure for text/xml" should {
+    val foo = <foo>Hällö</foo>
+    "render XML with UTF-8 encoding if no `Accept-Charset` request header is present" in {
+      Get() ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/xml`, `UTF-8`), foo.toString)
+      }
+    }
+    "render XML with requested encoding if an `Accept-Charset` request header requests a non-UTF-8 encoding" in {
+      Get() ~> `Accept-Charset`(`ISO-8859-1`) ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/xml`, `ISO-8859-1`), foo.toString)
+      }
+    }
+    "render XML with UTF-8 encoding if an `Accept-Charset` request header requests an unknown encoding" ignore {
+      // still returns Content-Type: text/xml; charset=unknown
+      Get() ~> `Accept-Charset`(HttpCharset("unknown")(Nil)) ~> complete(foo) ~> check {
+        responseEntity shouldEqual HttpEntity(ContentType(`text/xml`, `UTF-8`), foo.toString)
       }
     }
   }

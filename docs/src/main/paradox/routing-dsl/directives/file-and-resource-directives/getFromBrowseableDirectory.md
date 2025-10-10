@@ -37,7 +37,7 @@ providing one in-scope for the directives to use, so you can build your custom d
 The default renderer is `org.apache.pekko.http.scaladsl.server.directives.FileAndResourceDirectives.defaultDirectoryRenderer`,
 and renders a listing which looks like this:
 
-![akka-http-file-listing.png](../../../akka-http-file-listing.png)
+![pekko-http-file-listing.png](../../../pekko-http-file-listing.png)
 > 
 Example page rendered by the `defaultDirectoryRenderer`.
 

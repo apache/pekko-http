@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,8 +16,6 @@ package directives
 
 import java.util.Optional
 import java.util.function.Supplier
-
-import scala.compat.java8.OptionConverters._
 
 import org.apache.pekko
 import pekko.http.javadsl.model.DateTime
@@ -85,7 +83,7 @@ abstract class CacheConditionDirectives extends BasicDirectives {
    */
   def conditional(eTag: Optional[EntityTag], lastModified: Optional[DateTime], inner: Supplier[Route]): Route =
     RouteAdapter {
-      D.conditional(eTag.asScala.map(_.asScala), lastModified.asScala.map(_.asScala)) { inner.get.delegate }
+      D.conditional(eTag.asScala, lastModified.asScala) { inner.get.delegate }
     }
 
 }

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,17 +13,17 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import org.apache.pekko
-import pekko.http.scaladsl.marshalling.ToResponseMarshallable
-import pekko.http.scaladsl.model.StatusCodes._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers._
-import pekko.http.scaladsl.server.AuthenticationFailedRejection._
-import pekko.http.scaladsl.server.directives.BasicDirectives
-
 import scala.annotation.tailrec
 import scala.collection.immutable
 import scala.reflect.ClassTag
+
+import org.apache.pekko
+import pekko.http.scaladsl.marshalling.ToResponseMarshallable
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.server.AuthenticationFailedRejection._
+import pekko.http.scaladsl.server.directives.BasicDirectives
 
 trait RejectionHandler extends (immutable.Seq[Rejection] => Option[Route]) { self =>
   import RejectionHandler._
@@ -202,7 +202,7 @@ object RejectionHandler {
         case MalformedRequestContentRejection(msg, throwable) => {
           val rejectionMessage = "The request content was malformed:\n" + msg
           throwable match {
-            case _: EntityStreamSizeException => rejectRequestEntityAndComplete((PayloadTooLarge, rejectionMessage))
+            case _: EntityStreamSizeException => rejectRequestEntityAndComplete((ContentTooLarge, rejectionMessage))
             case _                            => rejectRequestEntityAndComplete((BadRequest, rejectionMessage))
           }
         }

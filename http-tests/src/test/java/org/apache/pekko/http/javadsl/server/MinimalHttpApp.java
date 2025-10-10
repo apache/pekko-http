@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -26,16 +26,13 @@ public class MinimalHttpApp extends HttpApp {
   CompletableFuture<Done> shutdownTrigger = new CompletableFuture<>();
   CompletableFuture<ServerBinding> bindingPromise = new CompletableFuture<>();
 
-
   public void shutdown() {
     shutdownTrigger.complete(Done.getInstance());
   }
-    
+
   @Override
   protected Route routes() {
-    return path("foo", () ->
-        complete("bar")
-      );
+    return path("foo", () -> complete("bar"));
   }
 
   @Override

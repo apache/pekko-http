@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,11 +13,18 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.util.UUID
+
+import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.util.Failure
+import scala.util.Success
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
-import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.impl.util.ExampleHttpContexts
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.AttributeKey
@@ -37,15 +44,11 @@ import pekko.stream.scaladsl.Source
 import pekko.stream.scaladsl.Tcp
 import pekko.testkit.TestKit
 import pekko.testkit.TestProbe
-import com.typesafe.config.ConfigFactory
+
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 
-import java.util.UUID
-import scala.concurrent.Future
-import scala.concurrent.duration._
-import scala.util.Failure
-import scala.util.Success
+import com.typesafe.config.ConfigFactory
 
 object TestTelemetryImpl {
   @volatile var delegate: Option[TelemetrySpi] = None
@@ -94,13 +97,13 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializ
 
     val http2ClientFlow =
       if (useTls) {
-        Http().connectionTo("akka.example.org")
+        Http().connectionTo("pekko.example.org")
           .withCustomHttpsConnectionContext(ExampleHttpContexts.exampleClientContext)
           .withClientConnectionSettings(ClientConnectionSettings(system).withTransport(
             ExampleHttpContexts.proxyTransport(serverBinding.localAddress)))
           .http2()
       } else {
-        Http().connectionTo("akka.example.org")
+        Http().connectionTo("pekko.example.org")
           .withClientConnectionSettings(ClientConnectionSettings(system).withTransport(
             ExampleHttpContexts.proxyTransport(serverBinding.localAddress)))
           .http2WithPriorKnowledge()
@@ -150,7 +153,7 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializ
       val (requestQueue, _) =
         Source.queue(10, OverflowStrategy.fail)
           .viaMat(http2ClientFow)(Keep.left)
-          .toMat(Sink.actorRef(responseProbe.ref, "done"))(Keep.both)
+          .toMat(Sink.actorRef(responseProbe.ref, "done", (t: Throwable) => t.toString))(Keep.both)
           .run()
       requestQueue.offer(HttpRequest())
 
@@ -217,7 +220,7 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializ
       val (requestQueue, _) =
         Source.queue(10, OverflowStrategy.fail)
           .viaMat(http2ClientFlow)(Keep.left)
-          .toMat(Sink.actorRef(responseProbe.ref, "onCompleteMessage"))(Keep.both)
+          .toMat(Sink.actorRef(responseProbe.ref, "onCompleteMessage", (t: Throwable) => t.toString))(Keep.both)
           .run()
       requestQueue.offer(HttpRequest())
 
@@ -226,7 +229,8 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializ
       val connId = telemetryProbe.expectMsgType[ConnectionId]
       // ... and a request flies in via _that_ connection.
       telemetryProbe.expectMsg("request-seen")
-      telemetryProbe.expectMsgType[ConnectionId] should ===(connId)
+      val requestConnId = telemetryProbe.expectMsgType[ConnectionId]
+      requestConnId should ===(connId)
 
       // The server sends the response...
       telemetryProbe.expectMsg("response-seen")

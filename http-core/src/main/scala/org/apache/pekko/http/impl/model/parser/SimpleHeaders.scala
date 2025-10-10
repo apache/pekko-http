@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -25,7 +25,8 @@ import pekko.http.scaladsl.model.headers._
  * All header rules that require more than one single rule are modelled in their own trait.
  */
 @InternalApi
-private[parser] trait SimpleHeaders { this: Parser with CommonRules with CommonActions with IpAddressParsing =>
+private[parser] trait SimpleHeaders {
+  this: Parser with CommonRules with CommonActions with IpAddressParsing =>
 
   // http://tools.ietf.org/html/rfc7233#section-2.3
   def `accept-ranges` = rule {
@@ -111,14 +112,14 @@ private[parser] trait SimpleHeaders { this: Parser with CommonRules with CommonA
 
   // http://tools.ietf.org/html/rfc7233#section-4.2
   def `content-range` = rule {
-    (`byte-content-range` | `other-content-range`) ~ EOI ~> (`Content-Range`(_, _))
+    `byte-content-range` ~ EOI ~> (`Content-Range`(_, _)) | `other-content-range` ~ EOI ~> (`Content-Range`(_, _))
   }
 
   // https://tools.ietf.org/html/rfc6265#section-4.2
   def `cookie` = rule {
     oneOrMore(`optional-cookie-pair`).separatedBy(';' ~ OWS) ~ EOI ~> { pairs =>
       val validPairs = pairs.collect { case Some(p) => p }
-      `Cookie` {
+      `Cookie`.apply {
         if (validPairs.nonEmpty) validPairs
         // Parsing infrastructure requires to return an HttpHeader value here but it is not possible
         // to create a Cookie header without elements, so we throw here. This will 1) log a warning
@@ -283,4 +284,7 @@ private[parser] trait SimpleHeaders { this: Parser with CommonRules with CommonA
     (`ip-v4-address` | `ip-v6-address`) ~ EOI ~> (b => `X-Real-Ip`(RemoteAddress(b)))
   }
 
+  def trailer = rule {
+    zeroOrMore(token).separatedBy(listSep) ~ EOI ~> (Trailer(_))
+  }
 }

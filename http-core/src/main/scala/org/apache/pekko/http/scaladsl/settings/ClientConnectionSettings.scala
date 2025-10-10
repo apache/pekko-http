@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -68,7 +68,7 @@ abstract class ClientConnectionSettings private[pekko] ()
   def withWebsocketSettings(newValue: WebSocketSettings): ClientConnectionSettings =
     self.copy(websocketSettings = newValue)
   def withWebsocketRandomFactory(newValue: () => Random): ClientConnectionSettings =
-    withWebsocketSettings(websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
+    withWebsocketSettings(self.websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
       override def get(): Random = newValue()
     }))
   def withUserAgentHeader(newValue: Option[`User-Agent`]): ClientConnectionSettings =
@@ -87,7 +87,7 @@ abstract class ClientConnectionSettings private[pekko] ()
 
   // Scala-only lenses
   def mapHttp2Settings(f: Http2ClientSettings => Http2ClientSettings): ClientConnectionSettings =
-    withHttp2Settings(f(http2Settings))
+    withHttp2Settings(f(self.http2Settings))
 
   /**
    * Returns a new instance with the given local address set if the given override is `Some(address)`, otherwise

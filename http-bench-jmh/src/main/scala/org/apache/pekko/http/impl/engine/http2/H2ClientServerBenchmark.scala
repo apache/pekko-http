@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -12,6 +12,13 @@
  */
 
 package org.apache.pekko.http.impl.engine.http2
+
+import java.util.concurrent.{ CountDownLatch, TimeUnit }
+
+import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.duration._
+
+import org.openjdk.jmh.annotations._
 
 import org.apache.pekko
 import pekko.NotUsed
@@ -21,15 +28,11 @@ import pekko.http.impl.engine.server.ServerTerminator
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
-import pekko.stream.ActorMaterializer
 import pekko.stream.TLSProtocol.{ SslTlsInbound, SslTlsOutbound }
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Sink, Source }
 import pekko.util.ByteString
-import org.openjdk.jmh.annotations._
 
-import java.util.concurrent.{ CountDownLatch, TimeUnit }
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, ExecutionContext, Future }
+import com.typesafe.config.ConfigFactory
 
 /**
  * Test converting a HttpRequest to bytes at the client and back to a request at the server, and vice-versa
@@ -38,9 +41,11 @@ import scala.concurrent.{ Await, ExecutionContext, Future }
 class H2ClientServerBenchmark extends CommonBenchmark with H2RequestResponseBenchmark {
   var httpFlow: Flow[HttpRequest, HttpResponse, Any] = _
   implicit var system: ActorSystem = _
-  implicit var mat: ActorMaterializer = _
 
   val numRequests = 1000
+
+  @Param(Array("[]", "[\"reset\"]"))
+  var frameTypeThrottleFrameTypes: String = _
 
   @Benchmark
   @OperationsPerInvocation(1000) // should be same as numRequest
@@ -71,8 +76,9 @@ class H2ClientServerBenchmark extends CommonBenchmark with H2RequestResponseBenc
   def setup(): Unit = {
     initRequestResponse()
 
-    system = ActorSystem("AkkaHttpBenchmarkSystem", config)
-    mat = ActorMaterializer()
+    val throttleConfig = ConfigFactory.parseString(
+      s"pekko.http.server.http2.frame-type-throttle.frame-types=$frameTypeThrottleFrameTypes")
+    system = ActorSystem("PekkoHttpBenchmarkSystem", throttleConfig.withFallback(config))
     val settings = implicitly[ServerSettings]
     val log = system.log
     implicit val ec = system.dispatcher

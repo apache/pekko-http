@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,6 +14,13 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.annotation.tailrec
+import scala.collection.immutable
+import scala.concurrent.Future
+import scala.util.{ Failure, Success }
+
+import BasicDirectives._
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
@@ -21,14 +28,6 @@ import pekko.http.scaladsl.common._
 import pekko.http.scaladsl.server.directives.RouteDirectives._
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import pekko.http.scaladsl.util.FastFuture._
-
-import scala.annotation.tailrec
-import scala.collection.immutable
-import scala.concurrent.Future
-import scala.util.{ Failure, Success }
-import BasicDirectives._
-import pekko.http.ccompat.pre213
-import pekko.http.ccompat.since213
 
 /**
  * @groupname form Form field directives
@@ -57,58 +56,13 @@ trait FormFieldDirectives extends FormFieldDirectivesInstances with ToNameRecept
    * @group form
    */
   def formFieldSeq: Directive1[immutable.Seq[(String, String)]] = _formFieldSeq
-
-  /**
-   * Extracts an HTTP form field from the request.
-   * Rejects the request if the defined form field matcher(s) don't match.
-   *
-   * @group form
-   */
-  @pre213
-  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
-    "Akka HTTP 10.2.0")
-  private[http] def formField(pdm: FieldMagnet): pdm.Out = formFields(pdm)
-
-  /**
-   * Extracts an HTTP form field from the request.
-   * Rejects the request if the defined form field matcher(s) don't match.
-   *
-   * @group form
-   */
-  @since213
-  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
-    "Akka HTTP 10.2.0")
-  private[http] def formField(pdm: FieldMagnet): Directive[pdm.U] = formFields(pdm)
-
-  /**
-   * Extracts a number of HTTP form field from the request.
-   * Rejects the request if the defined form field matcher(s) don't match.
-   *
-   * @group form
-   */
-  @pre213
-  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
-    "Akka HTTP 10.2.0")
-  private[http] def formFields(pdm: FieldMagnet): pdm.Out =
-    pdm.convert(toStrictEntity(StrictForm.toStrictTimeout).wrap { pdm() })
-
-  /**
-   * Extracts a number of HTTP form field from the request.
-   * Rejects the request if the defined form field matcher(s) don't match.
-   *
-   * @group form
-   */
-  @since213
-  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
-    "Akka HTTP 10.2.0")
-  private[http] def formFields(pdm: FieldMagnet): Directive[pdm.U] =
-    toStrictEntity(StrictForm.toStrictTimeout).wrap { pdm() }
 }
 
 object FormFieldDirectives extends FormFieldDirectives {
 
   private val _formFieldSeq: Directive1[immutable.Seq[(String, String)]] = {
     import FutureDirectives._
+
     import pekko.http.scaladsl.unmarshalling._
 
     extract { ctx =>
@@ -165,6 +119,7 @@ object FormFieldDirectives extends FormFieldDirectives {
     }
 
     import Impl._
+
     import pekko.http.scaladsl.unmarshalling.{ FromStrictFormFieldUnmarshaller => FSFFU, _ }
     type FSFFOU[T] = Unmarshaller[Option[StrictForm.Field], T]
 
@@ -203,124 +158,12 @@ object FormFieldDirectives extends FormFieldDirectives {
       FieldSpec(repeatedFilter(name, fsu))
   }
 
-  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
-    since = "Akka HTTP 10.2.0")
-  sealed trait FieldMagnet {
-    type U
-    def apply(): Directive[U]
-
-    // Compatibility helper:
-    // type R = Directive[U]
-    // but we don't put it in here, so the compiler will produce AnyRef instead of `Directive` as the result type
-    // of the `formFields` directives above for compatibility reasons. We also need to provide a type-safe conversion function.
-    type Out
-    def convert(d: Directive[U]): Out
-  }
-
-  @deprecated("Use new `formField` overloads with FieldSpec parameters. Kept for binary compatibility",
-    since = "Akka HTTP 10.2.0")
-  object FieldMagnet {
-    implicit def apply[T](value: T)(
-        implicit fdef: FieldDef[T]): FieldMagnet { type U = fdef.U; type Out = Directive[fdef.U] } =
-      new FieldMagnet {
-        type U = fdef.U
-        def apply(): Directive[U] = fdef(value)
-
-        type Out = Directive[fdef.U]
-        def convert(d: Directive[fdef.U]): Directive[fdef.U] = d
-      }
-  }
-
-  @deprecated("Use new `formFields` overloads with FieldSpec parameters. Kept for binary compatibility",
-    since = "Akka HTTP 10.2.0")
-  type FieldDefAux[A, B] = FieldDef[A] { type U = B }
-
-  @deprecated("Use new `formFields` overloads with FieldSpec parameters. Kept for binary compatibility",
-    since = "Akka HTTP 10.2.0")
-  sealed trait FieldDef[T] {
-    type U
-    def apply(value: T): Directive[U]
-  }
-  @deprecated("Use new `formFields` overloads with FieldSpec parameters. Kept for binary compatibility",
-    since = "Akka HTTP 10.2.0")
-  object FieldDef {
-    protected def fieldDef[A, B](f: A => Directive[B]): FieldDefAux[A, B] =
-      new FieldDef[A] {
-        type U = B
-        def apply(value: A): Directive[B] = f(value)
-      }
-
-    import Impl._
-    import pekko.http.scaladsl.unmarshalling.{ FromStrictFormFieldUnmarshaller => FSFFU, _ }
-
-    type SFU = FromEntityUnmarshaller[StrictForm]
-    type FSFFOU[T] = Unmarshaller[Option[StrictForm.Field], T]
-
-    protected def extractField[A, B](f: A => Directive1[B]): FieldDefAux[A, Tuple1[B]] = fieldDef(f)
-
-    def forString: FieldDefAux[String, Tuple1[String]] =
-      extractField[String, String] { fieldName => filter(fieldName, stringFromStrictForm) }
-    def forSymbol: FieldDefAux[Symbol, Tuple1[String]] =
-      extractField[Symbol, String] { symbol => filter(symbol.name, stringFromStrictForm) }
-    def forNR[T](implicit fu: FSFFU[T]): FieldDefAux[NameReceptacle[T], Tuple1[T]] =
-      extractField[NameReceptacle[T], T] { nr => filter(nr.name, fu) }
-    def forNUR[T]: FieldDefAux[NameUnmarshallerReceptacle[T], Tuple1[T]] =
-      extractField[NameUnmarshallerReceptacle[T], T] { nr =>
-        filter(nr.name, StrictForm.Field.unmarshallerFromFSU(nr.um))
-      }
-    def forNOR[T](implicit fu: FSFFOU[T]): FieldDefAux[NameOptionReceptacle[T], Tuple1[Option[T]]] =
-      extractField[NameOptionReceptacle[T], Option[T]] { nr => filter[Option[T]](nr.name, fu) }
-    def forNDR[T](implicit fu: FSFFOU[T]): FieldDefAux[NameDefaultReceptacle[T], Tuple1[T]] =
-      extractField[NameDefaultReceptacle[T], T] { nr => filter(nr.name, fu.withDefaultValue(nr.default)) }
-    def forNOUR[T]: FieldDefAux[NameOptionUnmarshallerReceptacle[T], Tuple1[Option[T]]] =
-      extractField[NameOptionUnmarshallerReceptacle[T], Option[T]] { nr =>
-        filter[Option[T]](nr.name, StrictForm.Field.unmarshallerFromFSU(nr.um): FSFFOU[T])
-      }
-    def forNDUR[T]: FieldDefAux[NameDefaultUnmarshallerReceptacle[T], Tuple1[T]] =
-      extractField[NameDefaultUnmarshallerReceptacle[T], T] { nr =>
-        filter(nr.name, (StrictForm.Field.unmarshallerFromFSU(nr.um): FSFFOU[T]).withDefaultValue(nr.default))
-      }
-
-    //////////////////// required formField support ////////////////////
-
-    def forRVR[T](implicit fu: FSFFU[T]): FieldDefAux[RequiredValueReceptacle[T], Unit] =
-      fieldDef[RequiredValueReceptacle[T], Unit] { rvr => requiredFilter(rvr.name, fu, rvr.requiredValue) }
-    def forRVDR[T]: FieldDefAux[RequiredValueUnmarshallerReceptacle[T], Unit] =
-      fieldDef[RequiredValueUnmarshallerReceptacle[T], Unit] { rvr =>
-        requiredFilter(rvr.name, StrictForm.Field.unmarshallerFromFSU(rvr.um), rvr.requiredValue)
-      }
-
-    //////////////////// repeated formField support ////////////////////
-
-    def forRepVR[T](implicit fu: FSFFU[T]): FieldDefAux[RepeatedValueReceptacle[T], Tuple1[Iterable[T]]] =
-      extractField[RepeatedValueReceptacle[T], Iterable[T]] { rvr => repeatedFilter(rvr.name, fu) }
-    def forRepVDR[T]: FieldDefAux[RepeatedValueUnmarshallerReceptacle[T], Tuple1[Iterable[T]]] =
-      extractField[RepeatedValueUnmarshallerReceptacle[T], Iterable[T]] { rvr =>
-        repeatedFilter(rvr.name, StrictForm.Field.unmarshallerFromFSU(rvr.um))
-      }
-
-    //////////////////// tuple support ////////////////////
-
-    import pekko.http.scaladsl.server.util.BinaryPolyFunc
-    import pekko.http.scaladsl.server.util.TupleOps._
-
-    def forTuple[T, O](implicit fold: FoldLeft[Directive0, T, ConvertFieldDefAndConcatenate.type] {
-          type Out = Directive[O]
-        }): FieldDefAux[T, O] =
-      fieldDef(fold(pass, _))
-
-    object ConvertFieldDefAndConcatenate extends BinaryPolyFunc {
-      implicit def from[P, TA, TB](implicit fdef: FieldDefAux[P, TB], ev: Join[TA, TB])
-          : BinaryPolyFunc.Case[Directive[TA], P, ConvertFieldDefAndConcatenate.type] { type Out = Directive[ev.Out] } =
-        at[Directive[TA], P].apply[Directive[ev.Out]] { (a, t) => a & fdef(t) }
-    }
-  }
-
   @InternalApi
   private[http] object Impl {
     import BasicDirectives._
     import FutureDirectives._
     import RouteDirectives._
+
     import pekko.http.scaladsl.unmarshalling.{ FromStrictFormFieldUnmarshaller => FSFFU, _ }
 
     type SFU = FromEntityUnmarshaller[StrictForm]

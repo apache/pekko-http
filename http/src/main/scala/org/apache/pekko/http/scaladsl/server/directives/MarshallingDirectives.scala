@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -19,8 +19,8 @@ import scala.util.{ Failure, Success }
 
 import org.apache.pekko
 import pekko.http.impl.util._
-import pekko.http.scaladsl.model.ExceptionWithErrorInfo
 import pekko.http.scaladsl.marshalling.ToResponseMarshaller
+import pekko.http.scaladsl.model.ExceptionWithErrorInfo
 import pekko.http.scaladsl.unmarshalling.{ FromRequestUnmarshaller, Unmarshaller }
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 

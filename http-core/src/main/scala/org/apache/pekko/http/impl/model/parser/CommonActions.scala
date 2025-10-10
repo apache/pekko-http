@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -80,7 +80,7 @@ private[parser] trait CommonActions {
         val char2 = str2.charAt(at)
 
         (char1 | char2) < 0x80 &&
-        Character.toLowerCase(char1) == Character.toLowerCase(char2) &&
+        CharUtils.toLowerCase(char1) == CharUtils.toLowerCase(char2) &&
         stringEquals(at + 1, length)
       } else true
 

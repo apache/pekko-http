@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,29 +14,27 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.duration.FiniteDuration
+
 import org.apache.pekko
 import pekko.Done
 import pekko.http.impl.engine.server.ServerTerminator
 import pekko.http.scaladsl.Http
-import pekko.stream.ActorMaterializer
 import pekko.stream.OverflowStrategy
 import pekko.stream.QueueOfferResult.Enqueued
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl.Flow
 import pekko.stream.scaladsl.Keep
-import pekko.stream.scaladsl.Source
 import pekko.stream.scaladsl.Sink
+import pekko.stream.scaladsl.Source
 import pekko.stream.scaladsl.TLSPlacebo
-import pekko.util.ByteString
 import pekko.testkit.PekkoSpec
+import pekko.util.ByteString
+
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.time.{ Milliseconds, Seconds, Span }
 
-import scala.concurrent.duration.FiniteDuration
-
 class ProtocolSwitchSpec extends PekkoSpec {
-  implicit val mat = ActorMaterializer()
-
   override implicit val patience: PatienceConfig =
     PatienceConfig(timeout = Span(2, Seconds), interval = Span(50, Milliseconds))
 

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,11 +13,11 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
 import pekko.http.scaladsl.model.{ HttpRequest, StatusCodes }
 import pekko.http.scaladsl.model.headers._
-
-import scala.util.{ Failure, Success, Try }
 
 object ModeledCustomHeaderSpec {
 

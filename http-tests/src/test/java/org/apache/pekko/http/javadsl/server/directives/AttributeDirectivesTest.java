@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -26,17 +26,16 @@ public class AttributeDirectivesTest extends JUnitRouteTest {
 
   @Test
   public void testAttribute() {
-    TestRoute route = testRoute(attribute(key, value -> complete("Completed with value [" + value + "]")));
+    TestRoute route =
+        testRoute(attribute(key, value -> complete("Completed with value [" + value + "]")));
 
     route
-      .run(HttpRequest.create().addAttribute(key, "the-value"))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("Completed with value [the-value]");
+        .run(HttpRequest.create().addAttribute(key, "the-value"))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("Completed with value [the-value]");
 
     // A missing attribute is a programming error:
-    route
-      .run(HttpRequest.create())
-      .assertStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+    route.run(HttpRequest.create()).assertStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
   }
 
   @Test
@@ -44,14 +43,10 @@ public class AttributeDirectivesTest extends JUnitRouteTest {
     TestRoute route = testRoute(optionalAttribute(key, (opt) -> complete(opt.toString())));
 
     route
-      .run(HttpRequest.create().addAttribute(key, "the-value"))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("Optional[the-value]");
+        .run(HttpRequest.create().addAttribute(key, "the-value"))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("Optional[the-value]");
 
-    route
-      .run(HttpRequest.create())
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("Optional.empty");
+    route.run(HttpRequest.create()).assertStatusCode(StatusCodes.OK).assertEntity("Optional.empty");
   }
-
 }

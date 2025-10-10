@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -25,7 +25,7 @@ import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, Connection, HttpE
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.{ ConnectionPoolSettings, ServerSettings }
 import pekko.stream.scaladsl._
-import pekko.stream.testkit.TestSubscriber.{ OnComplete, OnError }
+import pekko.stream.testkit.TestSubscriber.OnError
 import pekko.stream.testkit.scaladsl.{ StreamTestKit, TestSink }
 import pekko.stream.{ Server => _, _ }
 import pekko.testkit._
@@ -34,7 +34,7 @@ import org.scalactic.Tolerance
 import org.scalatest.concurrent.Eventually
 
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future, Promise }
+import scala.concurrent.{ Await, ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success, Try }
 
 class GracefulTerminationSpec
@@ -45,9 +45,9 @@ class GracefulTerminationSpec
     pekko.http.client.log-unencrypted-network-bytes = 200
                                                    """)
     with Tolerance with Eventually {
-  implicit lazy val dispatcher = system.dispatcher
+  implicit lazy val dispatcher: ExecutionContext = system.dispatcher
 
-  implicit override val patience = PatienceConfig(5.seconds.dilated(system), 200.millis)
+  implicit override val patience: PatienceConfig = PatienceConfig(5.seconds.dilated(system), 200.millis)
 
   "Unbinding" should {
     "not allow new connections" in new TestSetup {
@@ -107,7 +107,7 @@ class GracefulTerminationSpec
             val termination = serverBinding.terminate(hardDeadline = 1.second)
             // Right now graceful terminate will immediately kill the connection
             // even if a streamed response is still ongoing
-            // FIXME: https://github.com/apache/incubator-pekko-http/issues/3209
+            // FIXME: https://github.com/akka/akka-http/issues/3209
             eventually {
               responseEntity.expectEvent() shouldBe a[OnError]
             }
@@ -187,7 +187,7 @@ class GracefulTerminationSpec
       ensureServerDeliveredRequest(r1) // we want the request to be in the server user's hands before we cause termination
       serverBinding.terminate(hardDeadline = time)
       // avoid race condition between termination and sending out response
-      // FIXME: https://github.com/apache/incubator-pekko-http/issues/4060
+      // FIXME: https://github.com/akka/akka-http/issues/4060
       Thread.sleep(500)
       reply(_ => HttpResponse(StatusCodes.OK))
 
@@ -202,7 +202,7 @@ class GracefulTerminationSpec
       ensureServerDeliveredRequest(r1) // we want the request to be in the server user's hands before we cause termination
       serverBinding.terminate(hardDeadline = time)
       // avoid race condition between termination and sending out response
-      // FIXME: https://github.com/apache/incubator-pekko-http/issues/4060
+      // FIXME: https://github.com/akka/akka-http/issues/4060
       Thread.sleep(500)
       reply(_ => HttpResponse(StatusCodes.OK))
       r1.futureValue.status should ===(StatusCodes.OK)
@@ -324,7 +324,7 @@ class GracefulTerminationSpec
     var idleTimeoutBaseForUniqueness = 10
 
     def nextRequest() =
-      HttpRequest(uri = s"https://akka.example.org/${counter.incrementAndGet()}", entity = "hello-from-client")
+      HttpRequest(uri = s"https://pekko.example.org/${counter.incrementAndGet()}", entity = "hello-from-client")
     val serverConnectionContext = ExampleHttpContexts.exampleServerContext
     val clientConnectionContext = ExampleHttpContexts.exampleClientContext
 

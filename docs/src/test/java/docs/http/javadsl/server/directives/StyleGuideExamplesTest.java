@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -31,198 +31,135 @@ import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 
 public class StyleGuideExamplesTest {
 
-    public void pathShouldBeOutermost() {
-        // #path-outermost
-        // prefer
-        Route prefer =
-            path(segment("item").slash("listing"), () ->
-                get(() ->
-                    complete("")
-                )
-            );
-        // over
-        Route over =
-            get(() ->
-                path(segment("item").slash("listing"), () ->
-                    complete("")
-                )
-            );
-        // #path-outermost
-    }
-
-    public void pathShouldUsePrefix() {
-        // #path-prefix
-        // prefer
-        Route prefer =
-            pathPrefix("item", () ->
-                concat(
-                    path("listing", () ->
-                        get(() ->
-                            complete("")
-                        )
-                    ),
-                    path(segment("show").slash(segment()), itemId ->
-                        get(() ->
-                            complete("")
-                        )
-                    )
-                )
-            );
-        // over
-        Route over = concat(
-            path(segment("item").slash("listing"), () ->
-                get(() ->
-                    complete("")
-                )),
-            path(segment("item").slash("show").slash(segment()), itemId ->
-                get(() ->
-                    complete("")
-                )
-            )
-        );
-        // #path-prefix
-    }
-
-    public void pathShouldSplit() {
-        // #path-compose
-        // prefer
-        // 1. First, create partial matchers (with a relative path)
-        Route itemRoutes =
-            concat(
-                path("listing", () ->
-                    get(() ->
-                        complete("")
-                    )
-                ),
-                path(segment("show").slash(segment()), itemId ->
-                    get(() ->
-                        complete("")
-                    )
-                )
-            );
-
-        Route customerRoutes =
-            concat(
-                path(integerSegment(), customerId ->
-                    complete("")
-                )
-                // ...
-            );
-
-        // 2. Then compose the relative routes under their corresponding path prefix
-        Route prefer =
-            concat(
-                pathPrefix("item", () -> itemRoutes),
-                pathPrefix("customer", () -> customerRoutes)
-            );
-
-        // over
-        Route over = concat(
-            pathPrefix("item", () ->
-                concat(
-                    path("listing", () ->
-                        get(() ->
-                            complete("")
-                        )
-                    ),
-                    path(segment("show").slash(segment()), itemId ->
-                        get(() ->
-                            complete("")
-                        )
-                    )
-                )
-            ),
-            pathPrefix("customer", () ->
-                concat(
-                    path(integerSegment(), customerId ->
-                        complete("")
-                    )
-                    // ...
-                )
-            )
-        );
-        // #path-compose
-    }
-
-    // #directives-combine
+  public void pathShouldBeOutermost() {
+    // #path-outermost
     // prefer
-    Route getOrPost(Supplier<Route> inner) {
-        return get(inner)
-            .orElse(post(inner));
-    }
+    Route prefer = path(segment("item").slash("listing"), () -> get(() -> complete("")));
+    // over
+    Route over = get(() -> path(segment("item").slash("listing"), () -> complete("")));
+    // #path-outermost
+  }
 
-    Route withCustomerId(Function<Long, Route> useCustomerId) {
-        return parameter(StringUnmarshallers.LONG, "customerId", useCustomerId);
-    }
+  public void pathShouldUsePrefix() {
+    // #path-prefix
+    // prefer
+    Route prefer =
+        pathPrefix(
+            "item",
+            () ->
+                concat(
+                    path("listing", () -> get(() -> complete(""))),
+                    path(segment("show").slash(segment()), itemId -> get(() -> complete("")))));
+    // over
+    Route over =
+        concat(
+            path(segment("item").slash("listing"), () -> get(() -> complete(""))),
+            path(
+                segment("item").slash("show").slash(segment()), itemId -> get(() -> complete(""))));
+    // #path-prefix
+  }
 
+  public void pathShouldSplit() {
+    // #path-compose
+    // prefer
+    // 1. First, create partial matchers (with a relative path)
+    Route itemRoutes =
+        concat(
+            path("listing", () -> get(() -> complete(""))),
+            path(segment("show").slash(segment()), itemId -> get(() -> complete(""))));
+
+    Route customerRoutes =
+        concat(
+            path(integerSegment(), customerId -> complete(""))
+            // ...
+            );
+
+    // 2. Then compose the relative routes under their corresponding path prefix
+    Route prefer =
+        concat(pathPrefix("item", () -> itemRoutes), pathPrefix("customer", () -> customerRoutes));
+
+    // over
+    Route over =
+        concat(
+            pathPrefix(
+                "item",
+                () ->
+                    concat(
+                        path("listing", () -> get(() -> complete(""))),
+                        path(segment("show").slash(segment()), itemId -> get(() -> complete(""))))),
+            pathPrefix(
+                "customer",
+                () ->
+                    concat(
+                        path(integerSegment(), customerId -> complete(""))
+                        // ...
+                        )));
+    // #path-compose
+  }
+
+  // #directives-combine
+  // prefer
+  Route getOrPost(Supplier<Route> inner) {
+    return get(inner).orElse(post(inner));
+  }
+
+  Route withCustomerId(Function<Long, Route> useCustomerId) {
+    return parameter(StringUnmarshallers.LONG, "customerId", useCustomerId);
+  }
+
+  // #directives-combine
+
+  public void directivesCombine() {
     // #directives-combine
+    Function<Long, Route> useCustomerIdForResponse =
+        (customerId) -> complete(customerId.toString());
+    Supplier<Route> completeWithResponse = () -> complete("");
 
-    public void directivesCombine() {
-        // #directives-combine
-        Function<Long, Route> useCustomerIdForResponse = (customerId) -> complete(customerId.toString());
-        Supplier<Route> completeWithResponse = () -> complete("");
-
-        Route prefer =
-            concat(
-                pathPrefix("data", () ->
+    Route prefer =
+        concat(
+            pathPrefix(
+                "data",
+                () ->
                     concat(
-                        path("customer", () ->
-                            withCustomerId(useCustomerIdForResponse)
-                        ),
-                        path("engagement", () ->
-                            withCustomerId(useCustomerIdForResponse)
-                        )
-                    )
-                ),
-                pathPrefix("pages", () ->
+                        path("customer", () -> withCustomerId(useCustomerIdForResponse)),
+                        path("engagement", () -> withCustomerId(useCustomerIdForResponse)))),
+            pathPrefix(
+                "pages",
+                () ->
                     concat(
-                        path("page1", () ->
-                            getOrPost(completeWithResponse)
-                        ),
-                        path("page2", () ->
-                            getOrPost(completeWithResponse)
-                        )
-                    )
-                )
-            );
-        // over
-        Route over =
-            concat(
-                pathPrefix("data", () ->
+                        path("page1", () -> getOrPost(completeWithResponse)),
+                        path("page2", () -> getOrPost(completeWithResponse)))));
+    // over
+    Route over =
+        concat(
+            pathPrefix(
+                "data",
+                () ->
                     concat(
-                        pathPrefix("customer", () ->
-                            parameter(StringUnmarshallers.LONG, "customerId", customerId ->
-                                complete(customerId.toString())
-                            )
-                        ),
-                        pathPrefix("engagement", () ->
-                            parameter(StringUnmarshallers.LONG, "customerId", customerId ->
-                                complete(customerId.toString())
-                            )
-                        )
-                    )
-                ),
-                pathPrefix("pages", () ->
+                        pathPrefix(
+                            "customer",
+                            () ->
+                                parameter(
+                                    StringUnmarshallers.LONG,
+                                    "customerId",
+                                    customerId -> complete(customerId.toString()))),
+                        pathPrefix(
+                            "engagement",
+                            () ->
+                                parameter(
+                                    StringUnmarshallers.LONG,
+                                    "customerId",
+                                    customerId -> complete(customerId.toString()))))),
+            pathPrefix(
+                "pages",
+                () ->
                     concat(
-                        path("page1", () ->
-                            concat(
-                                get(() ->
-                                    complete("")
-                                ),
-                                post(() ->
-                                    complete("")
-                                )
-                            )
-                        ),
-                        path("page2", () ->
-                            get(() ->
-                                complete("")
-                            ).orElse(post(() ->
-                                complete("")))
-                        )
-                    )
-                )
-            );
-        // #directives-combine
-    }
+                        path(
+                            "page1",
+                            () -> concat(get(() -> complete("")), post(() -> complete("")))),
+                        path(
+                            "page2",
+                            () -> get(() -> complete("")).orElse(post(() -> complete("")))))));
+    // #directives-combine
+  }
 }

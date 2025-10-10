@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -52,7 +52,7 @@ private[http] case class JavaUri(uri: sm.Uri) extends jm.Uri {
       case Segment(head, tail) => head :: gatherSegments(tail)
       case Slash(tail)         => gatherSegments(tail)
     }
-    import collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     gatherSegments(uri.path).asJava
   }
 

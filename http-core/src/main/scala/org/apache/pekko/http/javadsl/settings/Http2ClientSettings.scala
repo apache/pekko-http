@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,7 +16,8 @@ package org.apache.pekko.http.javadsl.settings
 import java.time.Duration
 
 import org.apache.pekko.http.scaladsl
-import scala.concurrent.duration._
+
+import scala.concurrent.duration.DurationLong
 
 trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2ClientSettingsImpl =>
   def requestEntityChunkSize: Int

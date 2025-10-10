@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -28,7 +28,7 @@ import pekko.http.scaladsl.model._
 
 //#complete-examples
 import pekko.http.scaladsl.model.ContentTypes._
-import pekko.http.scaladsl.model.headers.`Content-Type`
+import pekko.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
 
 //#complete-examples
 
@@ -59,10 +59,10 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
           complete(201 -> "bar")
         },
         path("e") {
-          complete(StatusCodes.Created, List(`Content-Type`(`text/plain(UTF-8)`)), "bar")
+          complete(StatusCodes.Created, List(`Access-Control-Allow-Origin`.`*`), "bar")
         },
         path("f") {
-          complete(201, List(`Content-Type`(`text/plain(UTF-8)`)), "bar")
+          complete(201, List(`Access-Control-Allow-Origin`.`*`), "bar")
         },
         path("g") {
           complete(Future { StatusCodes.Created -> "bar" })
@@ -93,13 +93,13 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Get("/e") ~> route ~> check {
       status shouldEqual StatusCodes.Created
-      header[`Content-Type`] shouldEqual Some(`Content-Type`(`text/plain(UTF-8)`))
+      header[`Access-Control-Allow-Origin`] shouldEqual Some(`Access-Control-Allow-Origin`.`*`)
       responseAs[String] shouldEqual "bar"
     }
 
     Get("/f") ~> route ~> check {
       status shouldEqual StatusCodes.Created
-      header[`Content-Type`] shouldEqual Some(`Content-Type`(`text/plain(UTF-8)`))
+      header[`Access-Control-Allow-Origin`] shouldEqual Some(`Access-Control-Allow-Origin`.`*`)
       responseAs[String] shouldEqual "bar"
     }
 

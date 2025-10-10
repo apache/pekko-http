@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -21,13 +21,12 @@ import pekko.NotUsed
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
+import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.ws._
 import pekko.stream._
 import pekko.stream.scaladsl.{ Flow, Source }
 
 import com.typesafe.config.{ Config, ConfigFactory }
-
-import HttpMethods._
 
 import scala.io.StdIn
 
@@ -40,13 +39,12 @@ object TestServer extends App {
     pekko.actor.serialize-messages = off
     pekko.actor.default-dispatcher.throughput = 1000
     """)
-  implicit val system = ActorSystem("ServerTest", testConf)
+  implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
 
   val settings = ActorMaterializerSettings(system)
-    .withFuzzing(false)
     //    .withSyncProcessingLimit(Int.MaxValue)
     .withInputBuffer(128, 128)
-  implicit val fm = ActorMaterializer(settings)
+  implicit val fm: Materializer = ActorMaterializer(settings)
   try {
     val binding = Http().newServerAt("localhost", 9001).bindSync {
       case req @ HttpRequest(GET, Uri.Path("/"), _, _, _) =>

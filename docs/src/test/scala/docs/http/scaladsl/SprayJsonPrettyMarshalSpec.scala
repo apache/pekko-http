@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -30,8 +30,8 @@ class SprayJsonPrettyMarshalSpec extends RoutingSpec with CompileOnlySpec {
 
     object PrettyJsonFormatSupport {
       import DefaultJsonProtocol._
-      implicit val printer = PrettyPrinter
-      implicit val prettyPrintedItemFormat = jsonFormat2(PrettyPrintedItem)
+      implicit val printer: JsonPrinter = PrettyPrinter
+      implicit val prettyPrintedItemFormat: RootJsonFormat[PrettyPrintedItem] = jsonFormat2(PrettyPrintedItem.apply)
     }
 
     // use it wherever json (un)marshalling is needed
@@ -43,7 +43,7 @@ class SprayJsonPrettyMarshalSpec extends RoutingSpec with CompileOnlySpec {
         get {
           pathSingleSlash {
             complete {
-              PrettyPrintedItem("akka", 42) // will render as JSON
+              PrettyPrintedItem("pekko", 42) // will render as JSON
             }
           }
         }
@@ -57,7 +57,7 @@ class SprayJsonPrettyMarshalSpec extends RoutingSpec with CompileOnlySpec {
       responseAs[String] shouldEqual
       """{""" + "\n" +
       """  "id": 42,""" + "\n" +
-      """  "name": "akka"""" + "\n" +
+      """  "name": "pekko"""" + "\n" +
       """}"""
     }
     // #example

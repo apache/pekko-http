@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,13 +14,14 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- *  Model for the `Access-Control-Max-Age` header.
- *  Specification: http://www.w3.org/TR/cors/#access-control-max-age-response-header
+ * Model for the `Access-Control-Max-Age` header. Specification:
+ * http://www.w3.org/TR/cors/#access-control-max-age-response-header
  */
 public abstract class AccessControlMaxAge extends org.apache.pekko.http.scaladsl.model.HttpHeader {
-    public abstract long deltaSeconds();
+  public abstract long deltaSeconds();
 
-    public static AccessControlMaxAge create(long deltaSeconds) {
-        return new org.apache.pekko.http.scaladsl.model.headers.Access$minusControl$minusMax$minusAge(deltaSeconds);
-    }
+  public static AccessControlMaxAge create(long deltaSeconds) {
+    return new org.apache.pekko.http.scaladsl.model.headers.Access$minusControl$minusMax$minusAge(
+        deltaSeconds);
+  }
 }

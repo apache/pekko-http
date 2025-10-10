@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,26 +17,26 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Optional;
 
-import org.apache.pekko.http.javadsl.model.headers.HttpEncodingRanges;
-import scala.compat.java8.OptionConverters;
+import scala.jdk.javaapi.OptionConverters;
 
 public abstract class RemoteAddress {
-    public abstract boolean isUnknown();
+  public abstract boolean isUnknown();
 
-    public abstract Optional<InetAddress> getAddress();
+  public abstract Optional<InetAddress> getAddress();
 
-    /**
-     * Returns a port if defined or 0 otherwise.
-     */
-    public abstract int getPort();
+  /** Returns a port if defined or 0 otherwise. */
+  public abstract int getPort();
 
-    public static RemoteAddress create(InetAddress address) {
-        return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(address, OptionConverters.toScala(Optional.empty()));
-    }
-    public static RemoteAddress create(InetSocketAddress address) {
-        return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(address);
-    }
-    public static RemoteAddress create(byte[] address) {
-        return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(address);
-    }
+  public static RemoteAddress create(InetAddress address) {
+    return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(
+        address, OptionConverters.toScala(Optional.empty()));
+  }
+
+  public static RemoteAddress create(InetSocketAddress address) {
+    return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(address);
+  }
+
+  public static RemoteAddress create(byte[] address) {
+    return org.apache.pekko.http.scaladsl.model.RemoteAddress.apply(address);
+  }
 }

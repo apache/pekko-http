@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,11 +14,11 @@
 package org.apache.pekko.http.scaladsl
 
 import org.apache.pekko
-import pekko.http.impl.util.AkkaSpecWithMaterializer
+import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.stream.scaladsl.{ Keep, Sink, Source }
 import example.HostConnectionPoolCompat
 
-class HostConnectionPoolCompatSpec extends AkkaSpecWithMaterializer {
+class HostConnectionPoolCompatSpec extends PekkoSpecWithMaterializer {
   "HostConnectionPool" should {
     "be compatible" in {
       val hcp0 =

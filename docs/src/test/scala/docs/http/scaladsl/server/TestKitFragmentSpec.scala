@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -68,6 +68,6 @@ class TestKitTimeoutSpec extends AnyWordSpec with ScalatestRouteTest {
   import pekko.http.scaladsl.testkit.RouteTestTimeout
   import pekko.testkit.TestDuration
 
-  implicit val timeout = RouteTestTimeout(5.seconds.dilated)
+  implicit val timeout: RouteTestTimeout = RouteTestTimeout(5.seconds.dilated)
   //#timeout-setting
 }

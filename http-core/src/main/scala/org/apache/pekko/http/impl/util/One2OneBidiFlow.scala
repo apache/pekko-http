@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -49,8 +49,8 @@ private[http] object One2OneBidiFlow {
    */
   def apply[I, O](
       maxPending: Int,
-      outputTruncationException: Int => Throwable = OutputTruncationException,
-      unexpectedOutputException: Any => Throwable = UnexpectedOutputException): BidiFlow[I, I, O, O, NotUsed] =
+      outputTruncationException: Int => Throwable = OutputTruncationException(_),
+      unexpectedOutputException: Any => Throwable = UnexpectedOutputException(_)): BidiFlow[I, I, O, O, NotUsed] =
     BidiFlow.fromGraph(new One2OneBidi[I, O](maxPending, outputTruncationException, unexpectedOutputException))
 
   /*
@@ -92,7 +92,7 @@ private[http] object One2OneBidiFlow {
           override def onPull(): Unit =
             if (insideWrappedFlow < maxPending || maxPending == -1) pull(in)
             else pullSuppressed = true
-          override def onDownstreamFinish(): Unit = cancel(in)
+          override def onDownstreamFinish(cause: Throwable): Unit = cancel(in)
         })
 
       setHandler(fromWrapped,
@@ -117,7 +117,7 @@ private[http] object One2OneBidiFlow {
       setHandler(out,
         new OutHandler {
           override def onPull(): Unit = pull(fromWrapped)
-          override def onDownstreamFinish(): Unit = cancel(fromWrapped)
+          override def onDownstreamFinish(cause: Throwable): Unit = cancel(fromWrapped)
         })
     }
   }

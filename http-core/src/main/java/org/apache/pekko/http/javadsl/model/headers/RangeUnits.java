@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,7 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 public final class RangeUnits {
-    private RangeUnits() {}
+  private RangeUnits() {}
 
-    public static final RangeUnit BYTES = org.apache.pekko.http.scaladsl.model.headers.RangeUnits.Bytes$.MODULE$;
+  public static final RangeUnit BYTES =
+      org.apache.pekko.http.scaladsl.model.headers.RangeUnits.Bytes$.MODULE$;
 }

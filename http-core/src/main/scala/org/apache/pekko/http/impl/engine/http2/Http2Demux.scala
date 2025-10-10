@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -32,12 +32,12 @@ import pekko.stream.Attributes
 import pekko.stream.BidiShape
 import pekko.stream.Inlet
 import pekko.stream.Outlet
-import pekko.stream.impl.io.ByteStringParser.ParsingException
 import pekko.stream.scaladsl.Source
 import pekko.stream.stage.{
   GraphStageLogic,
   GraphStageWithMaterializedValue,
   InHandler,
+  OutHandler,
   StageLogging,
   TimerGraphStageLogic
 }
@@ -127,12 +127,12 @@ private[http2] object ConfigurablePing {
     def sendingPing(): Unit = ()
     def pingAckOverdue(): Boolean = false
   }
-  final class EnabledPingState(tickInterval: FiniteDuration, pingEveryNTickWithoutData: Long) extends PingState {
+  final class EnabledPingState(_tickInterval: FiniteDuration, pingEveryNTickWithoutData: Long) extends PingState {
     private var ticksWithoutData = 0L
     private var ticksSincePing = 0L
     private var pingInFlight = false
 
-    def tickInterval(): Option[FiniteDuration] = Some(tickInterval)
+    def tickInterval(): Option[FiniteDuration] = Some(_tickInterval)
 
     def onDataFrameSeen(): Unit = {
       ticksWithoutData = 0L
@@ -286,7 +286,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         push(frameOut, event)
       }
 
-      val multiplexer = createMultiplexer(StreamPrioritizer.First)
+      val multiplexer: Http2Multiplexer with OutHandler = createMultiplexer(StreamPrioritizer.First)
       setHandler(frameOut, multiplexer)
 
       val pingState = ConfigurablePing.PingState(http2Settings)
@@ -313,7 +313,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
         pingState.tickInterval().foreach(interval =>
           // to limit overhead rather than constantly rescheduling a timer and looking at system time we use a constant timer
-          schedulePeriodically(ConfigurablePing.Tick, interval))
+          scheduleAtFixedRate(ConfigurablePing.Tick, interval, interval))
       }
 
       override def pushGOAWAY(errorCode: ErrorCode, debug: String): Unit = {
@@ -409,12 +409,6 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
               case e: Http2Compliance.Http2ProtocolStreamException =>
                 resetStream(e.streamId, e.errorCode)
-
-              case e: ParsingException =>
-                e.getCause match {
-                  case null  => super.onUpstreamFailure(e) // fail with the raw parsing exception
-                  case cause => onUpstreamFailure(cause) // unwrap the cause, which should carry ComplianceException and recurse
-                }
 
               // handle every unhandled exception
               case NonFatal(e) =>

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,13 +16,13 @@ package org.apache.pekko.http.impl.model.parser
 import java.nio.charset.Charset
 
 import org.apache.pekko
-import org.parboiled2._
-import pekko.http.impl.util.{ enhanceString_, StringRendering }
+import pekko.annotation.InternalApi
+import pekko.http.impl.util.{ enhanceString_, CharUtils => CU, StringRendering }
 import pekko.http.scaladsl.model.{ Uri, UriRendering }
 import pekko.http.scaladsl.model.headers.HttpOrigin
-import Parser.DeliveryScheme.Either
 import Uri._
-import pekko.annotation.InternalApi
+import org.parboiled2._
+import org.parboiled2.Parser.DeliveryScheme.Either
 
 /**
  * INTERNAL API
@@ -278,7 +278,7 @@ private[http] final class UriParser(
     // has a max value-stack depth of 3
     def keyValuePairsWithLimitedStackUse: Rule1[Query] = rule {
       keyValuePair ~> { (key, value) => Query.Cons(key, value, Query.Empty) } ~ {
-        zeroOrMore('&' ~ keyValuePair ~> { (prefix: Query, key, value) => Query.Cons(key, value, prefix) }) ~>
+        zeroOrMore('&' ~ keyValuePair ~> { (prefix: Query.Cons, key, value) => Query.Cons(key, value, prefix) }) ~>
         (_.reverse)
       }
     }
@@ -365,7 +365,7 @@ private[http] final class UriParser(
 
   ///////////// helpers /////////////
 
-  private def appendLowered(): Rule0 = rule { run(sb.append(CharUtils.toLowerCase(lastChar))) }
+  private def appendLowered(): Rule0 = rule { run(sb.append(CU.toLowerCase(lastChar))) }
 
   private def savePath() = rule { run(setPath(Path(sb.toString, uriParsingCharset))) }
 

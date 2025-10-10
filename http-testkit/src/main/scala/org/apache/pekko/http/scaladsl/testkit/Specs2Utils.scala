@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,18 +13,19 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.Try
+
+import org.specs2.concurrent.ExecutionEnv
+import org.specs2.matcher.AnyMatchers._
+import org.specs2.matcher.ExceptionMatchers._
+import org.specs2.matcher.FutureMatchers._
+import org.specs2.matcher.Matcher
+
 import org.apache.pekko
 import pekko.http.scaladsl.model.HttpEntity
 import pekko.http.scaladsl.unmarshalling._
 import pekko.stream.Materializer
-import org.specs2.concurrent.ExecutionEnv
-import org.specs2.matcher.ExceptionMatchers._
-import org.specs2.matcher.FutureMatchers._
-import org.specs2.matcher.AnyMatchers._
-import org.specs2.matcher.Matcher
-
-import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.Try
 
 trait Specs2Utils extends MarshallingTestUtils {
 

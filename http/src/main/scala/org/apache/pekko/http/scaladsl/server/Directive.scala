@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,13 +15,14 @@ package org.apache.pekko.http.scaladsl.server
 
 import scala.collection.immutable
 import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.util._
 import pekko.http.scaladsl.server.directives.RouteDirectives
 import pekko.http.scaladsl.server.util._
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
-import pekko.http.impl.util._
 
 /**
  * A directive that provides a tuple of values of type `L` to create an inner route.

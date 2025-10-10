@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -27,7 +27,7 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
         """)
 
       settings.connectionSettings.userAgentHeader shouldEqual Some(
-        `User-Agent`.parseFromValueString("serva/0.0").right.get)
+        `User-Agent`.parseFromValueString("serva/0.0").toOption.get)
     }
     "allow overriding client settings with pekko.http.host-connection-pool.client" in {
       val settings = config(
@@ -38,7 +38,7 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
         """)
 
       settings.connectionSettings.userAgentHeader shouldEqual Some(
-        `User-Agent`.parseFromValueString("serva/5.7").right.get)
+        `User-Agent`.parseFromValueString("serva/5.7").toOption.get)
       settings.connectionSettings.requestHeaderSizeHint shouldEqual 1024 // still fall back
     }
     "allow max-open-requests = 1" in {

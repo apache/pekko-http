@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,13 +15,15 @@ package org.apache.pekko.http.scaladsl.marshallers.xml
 
 import java.io.{ ByteArrayInputStream, InputStreamReader }
 import javax.xml.parsers.{ SAXParser, SAXParserFactory }
+
 import scala.collection.immutable
 import scala.xml.{ NodeSeq, XML }
+
 import org.apache.pekko
-import pekko.http.scaladsl.unmarshalling._
 import pekko.http.scaladsl.marshalling._
 import pekko.http.scaladsl.model._
-import MediaTypes._
+import pekko.http.scaladsl.model.MediaTypes._
+import pekko.http.scaladsl.unmarshalling._
 
 trait ScalaXmlSupport {
   implicit def defaultNodeSeqMarshaller: ToEntityMarshaller[NodeSeq] =

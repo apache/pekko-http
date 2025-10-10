@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -189,7 +189,7 @@ private final class HttpsProxyGraphStage(
             }
           }
 
-          override def onDownstreamFinish(): Unit = cancel(sslIn)
+          override def onDownstreamFinish(cause: Throwable): Unit = cancel(sslIn)
 
         })
 
@@ -199,7 +199,7 @@ private final class HttpsProxyGraphStage(
             pull(bytesIn)
           }
 
-          override def onDownstreamFinish(): Unit = cancel(bytesIn)
+          override def onDownstreamFinish(cause: Throwable): Unit = cancel(bytesIn)
 
         })
 

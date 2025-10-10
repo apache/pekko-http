@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,6 +17,7 @@ package directives
 import scala.collection.immutable
 import scala.concurrent.Future
 import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -12,22 +12,17 @@
  */
 
 package docs.http.javadsl.server.testkit;
-//#source-quote
+// #source-quote
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
 
 public class MyAppFragment extends AllDirectives {
 
-    public Route createRoute() {
-        return
-                //#fragment
-                pathEnd(() ->
-                        get(() ->
-                                complete("Fragments of imagination")
-                        )
-                );
-                //#fragment
-    }
-
+  public Route createRoute() {
+    return
+    // #fragment
+    pathEnd(() -> get(() -> complete("Fragments of imagination")));
+    // #fragment
+  }
 }
-//#source-quote
+// #source-quote

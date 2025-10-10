@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,12 +13,18 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
+import scala.collection.immutable
+import scala.concurrent.{ Await, ExecutionContext, ExecutionContextExecutor, Future }
+import scala.concurrent.duration._
+import scala.reflect.ClassTag
+import scala.util.DynamicVariable
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding
-import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Protocol`, Host, Upgrade }
 import pekko.http.scaladsl.server._
 import pekko.http.scaladsl.settings.ParserSettings
@@ -26,17 +32,12 @@ import pekko.http.scaladsl.settings.RoutingSettings
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.http.scaladsl.unmarshalling._
 import pekko.http.scaladsl.util.FastFuture._
-import pekko.stream.SystemMaterializer
+import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.stream.scaladsl.Source
 import pekko.testkit.TestKit
 import pekko.util.ConstantFun
-import com.typesafe.config.{ Config, ConfigFactory }
 
-import scala.collection.immutable
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, ExecutionContext, Future }
-import scala.reflect.ClassTag
-import scala.util.DynamicVariable
+import com.typesafe.config.{ Config, ConfigFactory }
 
 trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTestResultComponent
     with MarshallingTestUtils {
@@ -58,9 +59,9 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
     val config = if (source.isEmpty) ConfigFactory.empty() else ConfigFactory.parseString(source)
     config.withFallback(ConfigFactory.load())
   }
-  implicit val system = createActorSystem()
-  implicit def executor = system.dispatcher
-  implicit val materializer = SystemMaterializer(system).materializer
+  implicit val system: ActorSystem = createActorSystem()
+  implicit def executor: ExecutionContextExecutor = system.dispatcher
+  implicit val materializer: Materializer = SystemMaterializer(system).materializer
 
   def cleanUp(): Unit = TestKit.shutdownActorSystem(system)
 

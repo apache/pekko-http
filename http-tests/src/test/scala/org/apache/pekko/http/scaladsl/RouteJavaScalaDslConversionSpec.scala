@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,6 +17,7 @@ import java.util.function.Supplier
 
 import org.apache.pekko
 import pekko.http.javadsl.server.Route
+
 import org.scalatest.wordspec.AnyWordSpec
 
 class RouteJavaScalaDslConversionSpec extends AnyWordSpec {

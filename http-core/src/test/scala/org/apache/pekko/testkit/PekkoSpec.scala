@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,7 +16,7 @@ package org.apache.pekko.testkit
 import org.scalactic.{ CanEqual, TypeCheckedTripleEquals }
 
 import language.postfixOps
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{ BeforeAndAfterAll, TestSuite }
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.{ Logging, LoggingAdapter }
@@ -27,6 +27,7 @@ import com.typesafe.config.{ Config, ConfigFactory }
 import pekko.dispatch.Dispatchers
 import pekko.testkit.TestEvent._
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.freespec.AnyFreeSpecLike
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -50,13 +51,13 @@ object PekkoSpec {
                                                    """)
 
   def mapToConfig(map: Map[String, Any]): Config = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     ConfigFactory.parseMap(map.asJava)
   }
 
   def getCallerName(clazz: Class[_]): String = {
     val s = Thread.currentThread.getStackTrace.map(_.getClassName).drop(1)
-      .dropWhile(_.matches("(java.lang.Thread|.*AkkaSpec.?$|.*StreamSpec.?$)"))
+      .dropWhile(_.matches("(java.lang.Thread|.*PekkoSpec.?$|.*StreamSpec.?$)"))
     val reduced = s.lastIndexWhere(_ == clazz.getName) match {
       case -1 => s
       case z  => s.drop(z + 1)
@@ -66,12 +67,8 @@ object PekkoSpec {
 
 }
 
-abstract class PekkoSpec(_system: ActorSystem)
-    extends TestKit(_system) with AnyWordSpecLike with Matchers with BeforeAndAfterAll with WatchedByCoroner
-    with TypeCheckedTripleEquals with ScalaFutures {
-
-  implicit val patience = PatienceConfig(testKitSettings.DefaultTimeout.duration)
-
+abstract class PekkoSpec(_system: ActorSystem) extends PekkoBaseSpec(_system) with AnyWordSpecLike
+    with BeforeAndAfterAll {
   def this(config: Config) = this(ActorSystem(
     PekkoSpec.getCallerName(getClass),
     ConfigFactory.load(config.withFallback(PekkoSpec.testConf))))
@@ -81,8 +78,6 @@ abstract class PekkoSpec(_system: ActorSystem)
   def this(configMap: Map[String, _]) = this(PekkoSpec.mapToConfig(configMap))
 
   def this() = this(ActorSystem(PekkoSpec.getCallerName(getClass), PekkoSpec.testConf))
-
-  val log: LoggingAdapter = Logging(system, this.getClass)
 
   override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = true
 
@@ -97,6 +92,53 @@ abstract class PekkoSpec(_system: ActorSystem)
     afterTermination()
     stopCoroner()
   }
+}
+
+// FreeSpec version of PekkoSpec, unfortunately, some boilerplate is needed to make it work
+abstract class PekkoFreeSpec(_system: ActorSystem) extends PekkoBaseSpec(_system) with AnyFreeSpecLike
+    with BeforeAndAfterAll {
+  def this(config: Config) = this(ActorSystem(
+    PekkoSpec.getCallerName(getClass),
+    ConfigFactory.load(config.withFallback(PekkoSpec.testConf))))
+
+  def this(s: String) = this(ConfigFactory.parseString(s))
+
+  def this(configMap: Map[String, _]) = this(PekkoSpec.mapToConfig(configMap))
+
+  def this() = this(ActorSystem(PekkoSpec.getCallerName(getClass), PekkoSpec.testConf))
+
+  override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = true
+
+  final override def beforeAll(): Unit = {
+    startCoroner()
+    atStartup()
+  }
+
+  final override def afterAll(): Unit = {
+    beforeTermination()
+    shutdown()
+    afterTermination()
+    stopCoroner()
+  }
+}
+
+abstract class PekkoBaseSpec(_system: ActorSystem)
+    extends TestKit(_system) with Matchers with WatchedByCoroner
+    with TypeCheckedTripleEquals with ScalaFutures with TestSuite {
+
+  implicit val patience: PatienceConfig = PatienceConfig(testKitSettings.DefaultTimeout.duration)
+
+  def this(config: Config) = this(ActorSystem(
+    PekkoSpec.getCallerName(getClass),
+    ConfigFactory.load(config.withFallback(PekkoSpec.testConf))))
+
+  def this(s: String) = this(ConfigFactory.parseString(s))
+
+  def this(configMap: Map[String, _]) = this(PekkoSpec.mapToConfig(configMap))
+
+  def this() = this(ActorSystem(PekkoSpec.getCallerName(getClass), PekkoSpec.testConf))
+
+  val log: LoggingAdapter = Logging(system, this.getClass.asInstanceOf[Class[Any]])
 
   protected def atStartup(): Unit = {}
 

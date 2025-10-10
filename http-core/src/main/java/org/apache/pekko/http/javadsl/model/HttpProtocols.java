@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,12 +13,12 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-/**
- * Contains constants of the supported Http protocols.
- */
+/** Contains constants of the supported Http protocols. */
 public final class HttpProtocols {
-    private HttpProtocols() {}
+  private HttpProtocols() {}
 
-    public final static HttpProtocol HTTP_1_0 = org.apache.pekko.http.scaladsl.model.HttpProtocols.HTTP$div1$u002E0();
-    public final static HttpProtocol HTTP_1_1 = org.apache.pekko.http.scaladsl.model.HttpProtocols.HTTP$div1$u002E1();
+  public static final HttpProtocol HTTP_1_0 =
+      org.apache.pekko.http.scaladsl.model.HttpProtocols.HTTP$div1$u002E0();
+  public static final HttpProtocol HTTP_1_1 =
+      org.apache.pekko.http.scaladsl.model.HttpProtocols.HTTP$div1$u002E1();
 }

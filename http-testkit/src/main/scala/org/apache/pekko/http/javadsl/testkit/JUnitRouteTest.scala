@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,6 +13,12 @@
 
 package org.apache.pekko.http.javadsl.testkit
 
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration._
+
+import org.junit.{ Assert, Rule }
+import org.junit.rules.ExternalResource
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.Logging
@@ -20,11 +26,8 @@ import pekko.http.javadsl.model.HttpRequest
 import pekko.http.javadsl.server._
 import pekko.stream.Materializer
 import pekko.stream.SystemMaterializer
+
 import com.typesafe.config.{ Config, ConfigFactory }
-import org.junit.rules.ExternalResource
-import org.junit.{ Assert, Rule }
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future }
 
 /**
  * A RouteTest that uses JUnit assertions. ActorSystem and Materializer are provided as an [[org.junit.rules.ExternalResource]]

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,9 +14,9 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 public abstract class HttpEncoding {
-    public abstract String value();
+  public abstract String value();
 
-    public HttpEncodingRange toRange() {
-        return HttpEncodingRange.create(this);
-    }
+  public HttpEncodingRange toRange() {
+    return HttpEncodingRange.create(this);
+  }
 }

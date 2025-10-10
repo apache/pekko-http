@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,22 +13,20 @@
 
 package org.apache.pekko.http.javadsl.settings
 
+import java.{ util => ju }
 import java.util.Optional
 
 import org.apache.pekko
 import pekko.actor.{ ActorSystem, ClassicActorSystemProvider }
+import pekko.annotation.DoNotInherit
 import pekko.http.impl.engine.parsing.BodyPartParser
 import pekko.http.impl.settings.ParserSettingsImpl
-import java.{ util => ju }
-
-import pekko.annotation.DoNotInherit
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.javadsl.model.{ HttpMethod, MediaType, StatusCode, Uri }
+import com.typesafe.config.Config
 
 import scala.annotation.varargs
-import scala.collection.JavaConverters._
-import pekko.http.javadsl.model.{ HttpMethod, MediaType, StatusCode, Uri }
-import scala.annotation.nowarn
-import com.typesafe.config.Config
+import scala.jdk.CollectionConverters._
 
 /**
  * Public API but not intended for subclassing
@@ -138,7 +136,6 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
    */
   @Deprecated
   @deprecated("Use forServer or forClient instead", since = "Akka HTTP 10.2.0")
-  @nowarn("msg=create overrides concrete, non-deprecated symbol")
   override def create(system: ActorSystem): ParserSettings = create(system.settings.config)
 
   def forServer(system: ClassicActorSystemProvider): ParserSettings =

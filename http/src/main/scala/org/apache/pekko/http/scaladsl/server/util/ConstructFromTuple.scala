@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,6 +16,7 @@ package org.apache.pekko.http.scaladsl.server.util
 /**
  * Constructor for instances of type `R` which can be created from a tuple of type `T`.
  */
+@FunctionalInterface
 trait ConstructFromTuple[T, R] extends (T => R)
 
 object ConstructFromTuple extends ConstructFromTupleInstances

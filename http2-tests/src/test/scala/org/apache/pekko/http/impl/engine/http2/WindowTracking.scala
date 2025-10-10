@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,12 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.concurrent.duration.FiniteDuration
+
 import org.apache.pekko
 import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.stream.impl.io.ByteStringParser.ByteReader
 import pekko.util.ByteString
-
-import scala.concurrent.duration.FiniteDuration
 
 trait WindowTracking extends Http2FrameProbeDelegator with Http2FrameSending {
   override def sendDATA(streamId: Int, endStream: Boolean, data: ByteString): Unit = {

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,7 +16,6 @@ package org.apache.pekko.http.impl.engine.http2.client
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.http.scaladsl.Http.OutgoingConnection
 import pekko.http.scaladsl.model.{ AttributeKey, HttpRequest, HttpResponse, RequestResponseAssociation, StatusCodes }
 import pekko.http.scaladsl.settings.Http2ClientSettings
@@ -27,10 +26,8 @@ import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet, StreamTcpException }
 import pekko.util.PrettyDuration
 
 import java.util.concurrent.ThreadLocalRandom
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration.DurationLong
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ Future, Promise }
+import scala.concurrent.duration.{ Duration, DurationLong, FiniteDuration }
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success }
 
 /** INTERNAL API */
@@ -117,13 +114,13 @@ private[http2] object PersistentConnection {
               onConnected.invoke(())
             case Failure(cause) =>
               onFailed.invoke(cause)
-          }(ExecutionContexts.parasitic)
+          }(ExecutionContext.parasitic)
 
           var requestOutPulled = false
           requestOut.setHandler(new OutHandler {
             override def onPull(): Unit =
               requestOutPulled = true
-            override def onDownstreamFinish(): Unit = ()
+            override def onDownstreamFinish(cause: Throwable): Unit = ()
           })
           responseIn.setHandler(new InHandler {
             override def onPush(): Unit = throw new IllegalStateException("no response push expected while connecting")
@@ -196,7 +193,7 @@ private[http2] object PersistentConnection {
               if (!isAvailable(requestIn)) pull(requestIn)
               else dispatchRequest(grab(requestIn))
 
-            override def onDownstreamFinish(): Unit = onDisconnected()
+            override def onDownstreamFinish(cause: Throwable): Unit = onDisconnected()
           })
           responseIn.setHandler(new InHandler {
             override def onPush(): Unit = {
@@ -253,10 +250,10 @@ private[http2] object PersistentConnection {
             responseIn.cancel()
             failStage(ex)
           }
-          override def onDownstreamFinish(): Unit = {
+          override def onDownstreamFinish(cause: Throwable): Unit = {
             requestOut.complete()
             responseIn.cancel()
-            super.onDownstreamFinish()
+            super.onDownstreamFinish(cause)
           }
         }
       }

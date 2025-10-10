@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,15 +15,17 @@ package org.apache.pekko.http.scaladsl.marshallers.sprayjson
 
 import scala.concurrent.ExecutionContext
 
+import spray.json.{ JsArray, JsString, JsValue }
+import spray.json.RootJsonFormat
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.marshalling.Marshal
 import pekko.http.scaladsl.model.MessageEntity
 import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.stream.ActorMaterializer
 import pekko.util.ByteString
+
 import org.scalatest.concurrent.ScalaFutures
-import spray.json.{ JsArray, JsString, JsValue }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -32,9 +34,8 @@ class SprayJsonSupportSpec extends AnyWordSpec with Matchers with ScalaFutures {
   import SprayJsonSupportSpec._
   import spray.json.DefaultJsonProtocol._
 
-  implicit val exampleFormat = jsonFormat1(Example.apply)
-  implicit val sys = ActorSystem("SprayJsonSupportSpec")
-  implicit val mat = ActorMaterializer()
+  implicit val exampleFormat: RootJsonFormat[Example] = jsonFormat1(Example.apply)
+  implicit val sys: ActorSystem = ActorSystem("SprayJsonSupportSpec")
   implicit val ec: ExecutionContext = sys.dispatcher
 
   val TestString =

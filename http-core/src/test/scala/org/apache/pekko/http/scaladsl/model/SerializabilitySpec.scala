@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,10 +14,14 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.io._
-import headers._
-import org.scalatest.matchers.{ MatchResult, Matcher }
+
 import scala.util.Try
-import org.apache.pekko.util.ByteString
+
+import org.apache.pekko
+import pekko.util.ByteString
+import pekko.http.scaladsl.model.headers._
+
+import org.scalatest.matchers.{ MatchResult, Matcher }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

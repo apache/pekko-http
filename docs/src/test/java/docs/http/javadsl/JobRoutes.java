@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,7 +13,7 @@
 
 package docs.http.javadsl;
 
-//#route
+// #route
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -29,9 +29,7 @@ import org.apache.pekko.http.javadsl.server.Route;
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 import static org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers.LONG;
 
-/**
- * Routes for use with the HttpServerWithActorsSample
- */
+/** Routes for use with the HttpServerWithActorsSample */
 public class JobRoutes {
   private final ActorSystem<?> system;
   private final ActorRef<JobRepository.Command> buildJobRepository;
@@ -43,16 +41,17 @@ public class JobRoutes {
 
   private Route addOrDelete() {
     return concat(
-            post(() ->
-                    entity(Jackson.unmarshaller(JobRepository.Job.class), job ->
-                      onSuccess(add(job), r -> complete("Job added"))
-                    )),
-            delete(() -> onSuccess(deleteAll(), r -> complete("Jobs cleared")))
-    );
+        post(
+            () ->
+                entity(
+                    Jackson.unmarshaller(JobRepository.Job.class),
+                    job -> onSuccess(add(job), r -> complete("Job added")))),
+        delete(() -> onSuccess(deleteAll(), r -> complete("Jobs cleared"))));
   }
 
   private CompletionStage<JobRepository.OK> add(JobRepository.Job job) {
-    return handleKO(AskPattern.ask(
+    return handleKO(
+        AskPattern.ask(
             buildJobRepository,
             replyTo -> new JobRepository.AddJob(job, replyTo),
             Duration.ofSeconds(3),
@@ -60,7 +59,8 @@ public class JobRoutes {
   }
 
   private CompletionStage<JobRepository.OK> deleteAll() {
-    return handleKO(AskPattern.ask(
+    return handleKO(
+        AskPattern.ask(
             buildJobRepository,
             JobRepository.ClearJobs::new,
             Duration.ofSeconds(3),
@@ -68,42 +68,50 @@ public class JobRoutes {
   }
 
   public Route jobRoutes() {
-    return pathPrefix("jobs", () ->
+    return pathPrefix(
+        "jobs",
+        () ->
             concat(
-                    pathEnd(this::addOrDelete),
-                    get(() ->
-                            path(LONG, jobId ->
-                              onSuccess(getJob(jobId), jobOption -> {
-                                if (jobOption.isPresent()) {
-                                  return complete(StatusCodes.OK, jobOption.get(), Jackson.<JobRepository.Job>marshaller());
-                                } else {
-                                  return complete(StatusCodes.NOT_FOUND);
-                                }
-                              })
-                            )
-                    )
-            )
-    );
+                pathEnd(this::addOrDelete),
+                get(
+                    () ->
+                        path(
+                            LONG,
+                            jobId ->
+                                onSuccess(
+                                    getJob(jobId),
+                                    jobOption -> {
+                                      if (jobOption.isPresent()) {
+                                        return complete(
+                                            StatusCodes.OK,
+                                            jobOption.get(),
+                                            Jackson.<JobRepository.Job>marshaller());
+                                      } else {
+                                        return complete(StatusCodes.NOT_FOUND);
+                                      }
+                                    })))));
   }
 
   private CompletionStage<Optional<JobRepository.Job>> getJob(Long jobId) {
     return AskPattern.ask(
-            buildJobRepository,
-            replyTo -> new JobRepository.GetJobById(jobId, replyTo),
-            Duration.ofSeconds(3),
-            system.scheduler());
+        buildJobRepository,
+        replyTo -> new JobRepository.GetJobById(jobId, replyTo),
+        Duration.ofSeconds(3),
+        system.scheduler());
   }
 
-  private CompletionStage<JobRepository.OK> handleKO(CompletionStage<JobRepository.Response> stage) {
-    return stage.thenApply(response -> {
-      if (response instanceof JobRepository.OK) {
-        return (JobRepository.OK)response;
-      } else if (response instanceof JobRepository.KO) {
-        throw new IllegalStateException(((JobRepository.KO) response).reason);
-      } else {
-        throw new IllegalStateException("Invalid response");
-      }
-    });
+  private CompletionStage<JobRepository.OK> handleKO(
+      CompletionStage<JobRepository.Response> stage) {
+    return stage.thenApply(
+        response -> {
+          if (response instanceof JobRepository.OK ok) {
+            return ok;
+          } else if (response instanceof JobRepository.KO ko) {
+            throw new IllegalStateException(ko.reason);
+          } else {
+            throw new IllegalStateException("Invalid response");
+          }
+        });
   }
 }
-//#route
+// #route

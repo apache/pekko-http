@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,12 +16,14 @@ package scaladsl
 package model
 package sse
 
+import java.nio.charset.StandardCharsets.UTF_8
+
 import org.apache.pekko
 import pekko.http.javadsl.model
 import pekko.util.ByteString
-import java.nio.charset.StandardCharsets.UTF_8
+
 import scala.annotation.tailrec
-import scala.compat.java8.OptionConverters.RichOptionForJava8
+import scala.jdk.OptionConverters._
 
 object ServerSentEvent {
 
@@ -133,9 +135,9 @@ final case class ServerSentEvent(
 
   override def getData = data
 
-  override def getEventType = eventType.asJava
+  override def getEventType = eventType.toJava
 
-  override def getId = id.asJava
+  override def getId = id.toJava
 
-  override def getRetry = retry.asPrimitive
+  override def getRetry = retry.toJavaPrimitive
 }

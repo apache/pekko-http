@@ -4,14 +4,12 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
  * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
  */
-
-package org.apache.pekko
 
 import sbt._
 import sbt.Keys._
@@ -20,8 +18,7 @@ import sbtunidoc.{ GenJavadocPlugin, JavaUnidocPlugin, ScalaUnidocPlugin }
 import sbtunidoc.BaseUnidocPlugin.autoImport.{ unidoc, unidocProjectFilter }
 import sbtunidoc.JavaUnidocPlugin.autoImport.JavaUnidoc
 import sbtunidoc.ScalaUnidocPlugin.autoImport.ScalaUnidoc
-import sbtunidoc.GenJavadocPlugin.autoImport.{ unidocGenjavadocVersion, Genjavadoc }
-import Common.isJdk8
+import sbtunidoc.GenJavadocPlugin.autoImport.unidocGenjavadocVersion
 
 object Doc {
   val BinVer = """(\d+\.\d+)\.\d+""".r
@@ -30,8 +27,8 @@ object Doc {
 object Scaladoc extends AutoPlugin {
 
   object CliOptions {
-    val scaladocDiagramsEnabled = CliOption("akka.scaladoc.diagrams", true)
-    val scaladocAutoAPI = CliOption("akka.scaladoc.autoapi", true)
+    val scaladocDiagramsEnabled = CliOption("pekko.scaladoc.diagrams", true)
+    val scaladocAutoAPI = CliOption("pekko.scaladoc.autoapi", true)
   }
 
   override def trigger = allRequirements
@@ -71,12 +68,17 @@ object Scaladoc extends AutoPlugin {
       "-groups",
       "-doc-source-url", urlString,
       "-sourcepath", base.getAbsolutePath,
-      "-doc-title", "Akka HTTP",
+      "-doc-title", "Apache Pekko HTTP",
       "-doc-version", ver,
       // Workaround https://issues.scala-lang.org/browse/SI-10028
-      "-skip-packages", "org.apache.pekko.pattern:org.specs2",
       "-doc-canonical-base-url", "https://pekko.apache.org/api/pekko-http/current/") ++
-      plugins.map(plugin => "-Xplugin:" + plugin)
+      plugins.map(plugin => "-Xplugin:" + plugin) ++
+      // Workaround https://issues.scala-lang.org/browse/SI-10028
+      (if (scalaBinaryVersion == "3")
+         // https://github.com/lampepfl/dotty/issues/14939
+         List("-skip-packages:org.apache.pekko.pattern:org.specs2")
+       else
+         List("-skip-packages", "org.apache.pekko.pattern:org.specs2"))
     CliOptions.scaladocDiagramsEnabled.ifTrue("-diagrams").toList ::: opts
   }
 
@@ -147,12 +149,11 @@ object UnidocRoot extends AutoPlugin {
   override def requires =
     ScalaUnidocPlugin && CliOptions.genjavadocEnabled.ifTrue(JavaUnidocPlugin).getOrElse(plugins.JvmPlugin)
 
-  val akkaSettings = UnidocRoot.CliOptions.genjavadocEnabled.ifTrue(Seq(
-    JavaUnidoc / unidoc / javacOptions ++= (
-      if (isJdk8) Seq("-Xdoclint:none")
-      else Seq("-Xdoclint:none", "--ignore-source-errors")),
+  val pekkoSettings = UnidocRoot.CliOptions.genjavadocEnabled.ifTrue(Seq(
+    JavaUnidoc / unidoc / javacOptions ++=
+      Seq("-Xdoclint:none", "--ignore-source-errors"),
     // genjavadoc needs to generate synthetic methods since the java code uses them
-    // fails since 10.0.11 disabled to get the doc gen to pass, see #1584
+    // fails since Akka HTTP 10.0.11 disabled to get the doc gen to pass, see #1584
     // scalacOptions += "-P:genjavadoc:suppressSynthetic=false",
     // FIXME: see https://github.com/akka/akka-http/issues/230
     JavaUnidoc / unidoc / sources ~= (_.filterNot(
@@ -164,7 +165,7 @@ object UnidocRoot extends AutoPlugin {
 
   override lazy val projectSettings =
     settings ++
-    akkaSettings
+    pekkoSettings
 }
 
 /**
@@ -181,5 +182,5 @@ object BootstrapGenjavadoc extends AutoPlugin {
       test / javacOptions += "-Xdoclint:none",
       doc / javacOptions += "-Xdoclint:none",
       Compile / scalacOptions += "-P:genjavadoc:fabricateParams=true",
-      unidocGenjavadocVersion in Global := "0.18")).getOrElse(Seq.empty)
+      unidocGenjavadocVersion in Global := "0.19")).getOrElse(Seq.empty)
 }

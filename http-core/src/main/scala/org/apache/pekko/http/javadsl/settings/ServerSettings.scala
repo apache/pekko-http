@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,22 +13,20 @@
 
 package org.apache.pekko.http.javadsl.settings
 
-import java.util.function.Supplier
-import java.util.{ Optional, Random }
+import java.util.Optional
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.{ DoNotInherit, InternalApi }
 import pekko.http.impl.settings.ServerSettingsImpl
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.headers.Host
 import pekko.http.javadsl.model.headers.Server
 import pekko.io.Inet.SocketOption
-import pekko.http.impl.util.JavaMapping.Implicits._
 import com.typesafe.config.Config
 
-import scala.collection.JavaConverters._
-import scala.compat.java8.OptionConverters
-import scala.compat.java8.OptionConverters._
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 /**
@@ -40,13 +38,6 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def getTimeouts: ServerSettings.Timeouts
   def getMaxConnections: Int
   def getPipeliningLimit: Int
-
-  /**
-   * @deprecated since Akka HTTP 10.2.0, use remoteAddressAttribute instead
-   */
-  @Deprecated
-  @deprecated("Use remoteAddressAttribute instead", since = "Akka HTTP 10.2.0")
-  def getRemoteAddressHeader: Boolean
   def getRemoteAddressAttribute: Boolean
   def getRawRequestUriHeader: Boolean
   def getTransparentHeadRequests: Boolean
@@ -55,9 +46,6 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def getBacklog: Int
   def getSocketOptions: java.lang.Iterable[SocketOption]
   def getDefaultHostHeader: Host
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.getRandomFactory instead",
-    since = "Akka HTTP 10.2.0")
-  def getWebsocketRandomFactory: java.util.function.Supplier[Random]
   def getWebsocketSettings: WebSocketSettings
   def getParserSettings: ParserSettings
   def getLogUnencryptedNetworkBytes: Optional[Int]
@@ -71,13 +59,12 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   // ---
 
   def withServerHeader(newValue: Optional[Server]): ServerSettings =
-    self.copy(serverHeader = newValue.asScala.map(_.asScala))
+    self.copy(serverHeader = newValue.toScala.map(_.asScala))
   def withPreviewServerSettings(newValue: PreviewServerSettings): ServerSettings =
     self.copy(previewServerSettings = newValue.asScala)
   def withTimeouts(newValue: ServerSettings.Timeouts): ServerSettings = self.copy(timeouts = newValue.asScala)
   def withMaxConnections(newValue: Int): ServerSettings = self.copy(maxConnections = newValue)
   def withPipeliningLimit(newValue: Int): ServerSettings = self.copy(pipeliningLimit = newValue)
-  def withRemoteAddressHeader(newValue: Boolean): ServerSettings = self.copy(remoteAddressHeader = newValue)
   def withRemoteAddressAttribute(newValue: Boolean): ServerSettings = self.copy(remoteAddressAttribute = newValue)
   def withRawRequestUriHeader(newValue: Boolean): ServerSettings = self.copy(rawRequestUriHeader = newValue)
   def withTransparentHeadRequests(newValue: Boolean): ServerSettings = self.copy(transparentHeadRequests = newValue)
@@ -88,16 +75,10 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
     self.copy(socketOptions = newValue.asScala.toList)
   def withDefaultHostHeader(newValue: Host): ServerSettings = self.copy(defaultHostHeader = newValue.asScala)
   def withParserSettings(newValue: ParserSettings): ServerSettings = self.copy(parserSettings = newValue.asScala)
-  @Deprecated @deprecated("Kept for binary compatibility; Use websocketSettings.withRandomFactoryFactory instead",
-    since = "Akka HTTP 10.2.0")
-  def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ServerSettings =
-    self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
-      override def get(): Random = newValue.get()
-    }))
   def withWebsocketSettings(newValue: WebSocketSettings): ServerSettings =
     self.copy(websocketSettings = newValue.asScala)
   def withLogUnencryptedNetworkBytes(newValue: Optional[Int]): ServerSettings =
-    self.copy(logUnencryptedNetworkBytes = OptionConverters.toScala(newValue))
+    self.copy(logUnencryptedNetworkBytes = newValue.toScala)
   def withHttp2Settings(newValue: Http2ServerSettings): ServerSettings = self.copy(http2Settings = newValue.asScala)
   def withDefaultHttpPort(newValue: Int): ServerSettings = self.copy(defaultHttpPort = newValue)
   def withDefaultHttpsPort(newValue: Int): ServerSettings = self.copy(defaultHttpPort = newValue)

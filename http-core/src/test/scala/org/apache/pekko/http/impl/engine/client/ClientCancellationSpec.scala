@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -42,7 +42,7 @@ class ClientCancellationSpec extends PekkoSpecWithMaterializer {
     "support cancellation in simple outgoing connection with TLS" in Utils.assertAllStagesStopped(new TestSetup {
       pending
       testCase(
-        Http().connectionTo("akka.example.org")
+        Http().connectionTo("pekko.example.org")
           .withClientConnectionSettings(settingsWithProxyTransport)
           .withCustomHttpsConnectionContext(ExampleHttpContexts.exampleClientContext)
           .https())
@@ -52,7 +52,7 @@ class ClientCancellationSpec extends PekkoSpecWithMaterializer {
       testCase(
         Flow[HttpRequest]
           .map((_, ()))
-          .via(Http().cachedHostConnectionPoolHttps("akka.example.org", 443,
+          .via(Http().cachedHostConnectionPoolHttps("pekko.example.org", 443,
             settings = ConnectionPoolSettings(system).withConnectionSettings(settingsWithProxyTransport),
             connectionContext = ExampleHttpContexts.exampleClientContext))
           .map(_._1.get))

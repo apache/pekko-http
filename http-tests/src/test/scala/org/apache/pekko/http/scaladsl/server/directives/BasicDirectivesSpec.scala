@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,12 +16,12 @@ package directives
 
 import java.util.concurrent.{ ThreadLocalRandom, TimeoutException }
 
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
-
-import scala.concurrent.duration._
 
 class BasicDirectivesSpec extends RoutingSpec {
 

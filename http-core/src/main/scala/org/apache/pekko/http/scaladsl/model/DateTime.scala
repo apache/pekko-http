@@ -4,7 +4,14 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
+ */
+
+/*
+ * Contains code based on code by Tim Kienzle with his permission to use it under an Apache License
+ * (see https://lists.apache.org/thread/v61twg09h0spcdzk2v8hb5cccs2krn12).
+ *
+ * (C) 2000 by Tim Kientzle <kientzle@acm.org>
  */
 
 /*

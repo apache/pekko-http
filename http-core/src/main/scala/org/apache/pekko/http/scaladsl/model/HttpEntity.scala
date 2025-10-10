@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,16 +13,24 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import java.util.OptionalLong
-import language.implicitConversions
 import java.io.File
 import java.nio.file.{ Files, Path }
 import java.lang.{ Iterable => JIterable }
-import scala.util.control.NonFatal
+import java.util.OptionalLong
+import java.util.concurrent.CompletionStage
+
+import scala.language.implicitConversions
+import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.collection.immutable
+import scala.jdk.FutureConverters._
+import scala.jdk.OptionConverters._
+import scala.util.control.NonFatal
+
 import org.apache.pekko
+import pekko.actor.ClassicActorSystemProvider
+import pekko.annotation.{ DoNotInherit, InternalApi }
 import pekko.util.ByteString
 import pekko.stream.scaladsl._
 import pekko.stream.stage._
@@ -33,20 +41,10 @@ import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.util.{ JavaMapping, StreamUtils }
 import pekko.http.impl.util.JavaMapping.Implicits._
 
-import scala.compat.java8.OptionConverters._
-import scala.compat.java8.FutureConverters._
-import java.util.concurrent.CompletionStage
-import pekko.actor.ClassicActorSystemProvider
-import pekko.annotation.{ DoNotInherit, InternalApi }
-
-import scala.annotation.nowarn
-import scala.compat.java8.FutureConverters
-
 /**
  * Models the entity (aka "body" or "content") of an HTTP message.
  */
 sealed trait HttpEntity extends jm.HttpEntity {
-  import language.implicitConversions
   private implicit def completionStageCovariant[T, U >: T](in: CompletionStage[T]): CompletionStage[U] =
     in.asInstanceOf[CompletionStage[U]]
 
@@ -85,7 +83,7 @@ sealed trait HttpEntity extends jm.HttpEntity {
    */
   def toStrict(timeout: FiniteDuration)(implicit fm: Materializer): Future[HttpEntity.Strict] = {
     import pekko.http.impl.util._
-    val config = fm.asInstanceOf[ActorMaterializer].system.settings.config
+    val config = fm.system.settings.config
     toStrict(timeout, config.getPossiblyInfiniteBytes("pekko.http.parsing.max-to-strict-bytes"))
   }
 
@@ -192,7 +190,7 @@ sealed trait HttpEntity extends jm.HttpEntity {
     stream.javadsl.Source.fromGraph(dataBytes.asInstanceOf[Source[ByteString, AnyRef]])
 
   /** Java API */
-  override def getContentLengthOption: OptionalLong = contentLengthOption.asPrimitive
+  override def getContentLengthOption: OptionalLong = contentLengthOption.toJavaPrimitive
 
   // default implementations, should be overridden
   override def isCloseDelimited: Boolean = false
@@ -203,22 +201,22 @@ sealed trait HttpEntity extends jm.HttpEntity {
 
   /** Java API */
   override def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[jm.HttpEntity.Strict] =
-    toStrict(timeoutMillis.millis)(materializer).toJava
+    toStrict(timeoutMillis.millis)(materializer).asJava
 
   /** Java API */
   override def toStrict(
       timeoutMillis: Long, maxBytes: Long, materializer: Materializer): CompletionStage[jm.HttpEntity.Strict] =
-    toStrict(timeoutMillis.millis, maxBytes)(materializer).toJava
+    toStrict(timeoutMillis.millis, maxBytes)(materializer).asJava
 
   /** Java API */
   override def toStrict(
       timeoutMillis: Long, system: ClassicActorSystemProvider): CompletionStage[jm.HttpEntity.Strict] =
-    toStrict(timeoutMillis.millis)(SystemMaterializer(system).materializer).toJava
+    toStrict(timeoutMillis.millis)(SystemMaterializer(system).materializer).asJava
 
   /** Java API */
   override def toStrict(
       timeoutMillis: Long, maxBytes: Long, system: ClassicActorSystemProvider): CompletionStage[jm.HttpEntity.Strict] =
-    toStrict(timeoutMillis.millis, maxBytes)(SystemMaterializer(system).materializer).toJava
+    toStrict(timeoutMillis.millis, maxBytes)(SystemMaterializer(system).materializer).asJava
 
   /** Java API */
   override def withContentType(contentType: jm.ContentType): HttpEntity = {
@@ -630,20 +628,6 @@ object HttpEntity {
   }
   object LastChunk extends LastChunk("", Nil)
 
-  /**
-   * Deprecated: no-op, not explicitly needed any more.
-   */
-  @deprecated("Not needed explicitly any more. ", "Akka HTTP 10.1.5")
-  def limitableByteSource[Mat](source: Source[ByteString, Mat]): Source[ByteString, Mat] =
-    source
-
-  /**
-   * Deprecated: no-op, not explicitly needed any more.
-   */
-  @deprecated("Not needed explicitly any more. ", "Akka HTTP 10.1.5")
-  def limitableChunkSource[Mat](source: Source[ChunkStreamPart, Mat]): Source[ChunkStreamPart, Mat] =
-    source
-
   private final case class SizeLimit(maxBytes: Long, contentLength: Option[Long] = None) extends Attributes.Attribute {
     def isDisabled = maxBytes < 0
   }
@@ -657,14 +641,14 @@ object HttpEntity {
     override val shape = FlowShape.of(in, out)
     override protected val initialAttributes: Attributes = Limitable.limitableDefaults
 
-    override def createLogic(attributes: Attributes): GraphStageLogic =
+    override def createLogic(_attributes: Attributes): GraphStageLogic =
       new GraphStageLogic(shape) with InHandler with OutHandler {
         private var maxBytes = -1L
         private var bytesLeft = Long.MaxValue
 
         @nowarn("msg=getFirst in class Attributes is deprecated") // there's no valid alternative right now
         override def preStart(): Unit = {
-          attributes.getFirst[SizeLimit] match {
+          _attributes.getFirst[SizeLimit] match {
             case Some(limit: SizeLimit) if limit.isDisabled =>
             // "no limit"
             case Some(SizeLimit(bytes, cl @ Some(contentLength))) =>
@@ -729,7 +713,7 @@ object HttpEntity {
      * This future completes successfully once the underlying entity stream has been
      * successfully drained (and fails otherwise).
      */
-    def completionStage: CompletionStage[Done] = FutureConverters.toJava(f)
+    def completionStage: CompletionStage[Done] = f.asJava
   }
 
   /** Adds Scala DSL idiomatic methods to [[HttpEntity]], e.g. versions of methods with an implicit [[Materializer]]. */

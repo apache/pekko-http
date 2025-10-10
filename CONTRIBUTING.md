@@ -4,13 +4,9 @@ We follow the standard GitHub [fork & pull](https://help.github.com/articles/usi
 
 You're always welcome to submit your PR straight away and start the discussion (without reading the rest of this wonderful doc, or the README.md). The goal of these notes is to make your experience contributing to Pekko HTTP as smooth and pleasant as possible. We're happy to guide you through the process once you've submitted your PR.
 
-# The Apache Pekko Community
+# Introduction
 
-If you have questions about the contribution process or discuss specific issues, please interact with the community using the following resources.
-
-- [GitHub discussions](https://github.com/apache/incubator-pekko-http/discussions): for questions and general discussion.
-- [Pekko dev mailing list](https://lists.apache.org/list.html?dev@pekko.apache.org): for Pekko development discussions.
-- [GitHub issues](https://github.com/apache/incubator-pekko-http/issues): for bug reports and feature requests. Please search the existing issues before creating new ones. If you are unsure whether you have found a bug, consider asking in GitHub discussions or the mailing list first.
+The [README](README.md) has details about the Pekko Community and building from source. 
 
 # Navigating around the project & codebase
 
@@ -26,27 +22,27 @@ Pekko HTTP uses tags to categorise issues into groups or mark their phase in dev
 
 Most notably many tags start `t:` prefix (as in `topic:`), which categorises issues in terms of which module they relate to. Examples are:
 
-- [t:http:core](https://github.com/apache/incubator-pekko-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Acore)
-- [t:server:dsl](https://github.com/apache/incubator-pekko-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Aserver%3Adsl)
-- see [all tags here](https://github.com/apache/incubator-pekko-http/labels)
+- [t:http:core](https://github.com/apache/pekko-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Acore)
+- [t:server:dsl](https://github.com/apache/pekko-http/issues?q=is%3Aopen+is%3Aissue+label%3At%3Ahttp%3Aserver%3Adsl)
+- see [all tags here](https://github.com/apache/pekko-http/labels)
 
 In general *all issues are open for anyone working on them*, however if you're new to the project and looking for an issue
 that will be accepted and likely is a nice one to get started you should check out the following tags:
 
-- [help wanted](https://github.com/apache/incubator-pekko-http/labels/help%20wanted) - which identifies issues that the core team will likely not have time to work on, or the issue is a nice entry level ticket. If you're not sure how to solve a ticket but would like to work on it feel free to ask in the issue about clarification or tips.
-- [nice-to-have (low-priority)](https://github.com/apache/incubator-pekko-http/labels/nice-to-have%20%28low-prio%29) - are tasks which make sense, however are not very high priority (in face of other very high priority issues). If you see something interesting in this list, a contribution would be really wonderful!
+- [help wanted](https://github.com/apache/pekko-http/labels/help%20wanted) - which identifies issues that the core team will likely not have time to work on, or the issue is a nice entry level ticket. If you're not sure how to solve a ticket but would like to work on it feel free to ask in the issue about clarification or tips.
+- [nice-to-have (low-priority)](https://github.com/apache/pekko-http/labels/nice-to-have%20%28low-prio%29) - are tasks which make sense, however are not very high priority (in face of other very high priority issues). If you see something interesting in this list, a contribution would be really wonderful!
 
 Another group of tickets are those which start from a number. They're used to signal in what phase of development an issue is:
 
-- [0 - new](https://github.com/apache/incubator-pekko-http/labels/0%20-%20new) - is assigned when a ticket is unclear on it's purpose or if it is valid or not. Sometimes the additional tag `discuss` is used to mark such tickets, if they propose large scale changed and need more discussion before moving into triaged (or being closed as invalid)
-- [1 - triaged](https://github.com/apache/incubator-pekko-http/labels/1%20-%20triaged) - roughly speaking means "this ticket makes sense". Triaged tickets are safe to pick up for contributing in terms of likeliness of a patch for it being accepted. It is not recommended to start working on a ticket that is not triaged.
-- [2 - pick next](https://github.com/apache/incubator-pekko-http/labels/2%20-%20pick%20next) - used to mark issues which are next up in the queue to be worked on. Sometimes it's also used to mark which PRs are expected to be reviewed/merged for the next release. The tag is non-binding, and mostly used as organisational helper.
-- [3 - in progress](https://github.com/apache/incubator-pekko-http/labels/3%20-%20in%20progress) - means someone is working on this ticket. If you see a ticket that has the tag, however seems inactive, it could have been an omission with removing the tag, feel free to ping the ticket then if it's still being worked on.
+- [0 - new](https://github.com/apache/pekko-http/labels/0%20-%20new) - is assigned when a ticket is unclear on it's purpose or if it is valid or not. Sometimes the additional tag `discuss` is used to mark such tickets, if they propose large scale changed and need more discussion before moving into triaged (or being closed as invalid)
+- [1 - triaged](https://github.com/apache/pekko-http/labels/1%20-%20triaged) - roughly speaking means "this ticket makes sense". Triaged tickets are safe to pick up for contributing in terms of likeliness of a patch for it being accepted. It is not recommended to start working on a ticket that is not triaged.
+- [2 - pick next](https://github.com/apache/pekko-http/labels/2%20-%20pick%20next) - used to mark issues which are next up in the queue to be worked on. Sometimes it's also used to mark which PRs are expected to be reviewed/merged for the next release. The tag is non-binding, and mostly used as organisational helper.
+- [3 - in progress](https://github.com/apache/pekko-http/labels/3%20-%20in%20progress) - means someone is working on this ticket. If you see a ticket that has the tag, however seems inactive, it could have been an omission with removing the tag, feel free to ping the ticket then if it's still being worked on.
 
 The last group of special tags indicate specific states a ticket is in:
 
-- [bug](https://github.com/apache/incubator-pekko-http/labels/bug) - bugs take priority in being fixed above features. The core team dedicates a number of days to working on bugs each sprint. Bugs which have reproducers are also great for community contributions as they're well isolated. Sometimes we're not as lucky to have reproducers though, then a bugfix should also include a test reproducing the original error along with the fix.
-- [failed](https://github.com/apache/incubator-pekko-http/labels/failed) - tickets indicate a Jenkins failure (for example from a nightly build). These tickets usually start with the `FAILED: ...` message, and include a stacktrace + link to the Jenkins failure. The tickets are collected and worked on with priority to keep the build stable and healthy. Often times it may be simple timeout issues (Jenkins boxes are slow), though sometimes real bugs are discovered this way.
+- [bug](https://github.com/apache/pekko-http/labels/bug) - bugs take priority in being fixed above features. The core team dedicates a number of days to working on bugs each sprint. Bugs which have reproducers are also great for community contributions as they're well isolated. Sometimes we're not as lucky to have reproducers though, then a bugfix should also include a test reproducing the original error along with the fix.
+- [failed](https://github.com/apache/pekko-http/labels/failed) - tickets indicate a Jenkins failure (for example from a nightly build). These tickets usually start with the `FAILED: ...` message, and include a stacktrace + link to the Jenkins failure. The tickets are collected and worked on with priority to keep the build stable and healthy. Often times it may be simple timeout issues (Jenkins boxes are slow), though sometimes real bugs are discovered this way.
 
 Pull Request validation states:
 
@@ -54,8 +50,8 @@ Pull Request validation states:
 
 # Pekko HTTP contributing guidelines
 
-These guidelines apply to all Apache Pekko projects, by which we mean both the `apache/incubator-pekko` repository,
-as well as any plugins or additional repos located under the Pekko GitHub organisation, e.g. `apache/incubator-pekko-http` and others.
+These guidelines apply to all Apache Pekko projects, by which we mean both the `apache/pekko` repository,
+as well as any plugins or additional repos located under the Pekko GitHub organisation, e.g. `apache/pekko-http` and others.
 
 These guidelines are meant to be a living document that should be changed and adapted as needed.
 We encourage changes that make it easier to achieve our goals in an efficient way.
@@ -68,9 +64,9 @@ You can read its full text here: [ASF Code of Conduct](https://www.apache.org/fo
 The below steps are how to get a patch into a `main` development branch.
 The steps are exactly the same for everyone involved in the project (be it core team, or first time contributor).
 
-1. To avoid duplicated effort, it might be good to check the [issue tracker](https://github.com/apache/incubator-pekko-http/issues) and [existing pull requests](https://github.com/apache/incubator-pekko-http/pulls) for existing work.
-   - If there is no ticket yet, feel free to [create one](https://github.com/apache/incubator-pekko-http/issues/new) to discuss the problem and the approach you want to take to solve it.
-1. [Fork the project](https://github.com/apache/incubator-pekko-http#fork-destination-box) on GitHub. You'll need to create a feature-branch for your work on your fork, as this way you'll be able to submit a PullRequest against the mainline Pekko HTTP.
+1. To avoid duplicated effort, it might be good to check the [issue tracker](https://github.com/apache/pekko-http/issues) and [existing pull requests](https://github.com/apache/pekko-http/pulls) for existing work.
+   - If there is no ticket yet, feel free to [create one](https://github.com/apache/pekko-http/issues/new) to discuss the problem and the approach you want to take to solve it.
+1. [Fork the project](https://github.com/apache/pekko-http#fork-destination-box) on GitHub. You'll need to create a feature-branch for your work on your fork, as this way you'll be able to submit a PullRequest against the mainline Pekko HTTP.
 1. Create a branch on your fork and work on the feature. For example: `git checkout -b wip-custom-headers-pekko-http`
    - Please make sure to follow the general quality guidelines (specified below) when developing your patch.
    - Please write additional tests covering your feature and adjust existing ones if needed before submitting your Pull Request. The `validatePullRequest` sbt task ([explained below](#the-validatepullrequest-task)) may come in handy to verify your changes are correct.
@@ -87,7 +83,7 @@ The steps are exactly the same for everyone involved in the project (be it core 
 
 The TL;DR; of the above very precise workflow version is:
 
-1. Fork incubator-pekko-http
+1. Fork pekko-http
 2. Hack and test on your feature (on a branch)
 3. Submit a PR
 4. Sign the ASF CLA if necessary
@@ -127,13 +123,13 @@ Pekko HTTP codebase is currently built with snapshot versions of the Pekko core 
 
 Since Pekko HTTP is released separately to Pekko "core", yet some features require changes in Pekko itself, it is sometimes very useful
 to be able to develop Pekko HTTP with Pekko's sources used directly instead of the binary dependency. You can check out the Pekko 
-repository and run sbt with `-Dpekko.sources=$HOME/akka` to develop Pekko HTTP with Pekko as a source dependency instead of a binary one.
+repository and run sbt with `-Dpekko.sources=$HOME/pekko` to develop Pekko HTTP with Pekko as a source dependency instead of a binary one.
 
 This allows simple and fast iterations on changes that would need to be introduced in Pekko to develop a feature in HTTP that would require those.
 
 ## Binary compatibility
 Binary compatibility rules and guarantees are described in depth in the [Binary Compatibility Rules
-](https://doc.akka.io/docs/akka/current/common/binary-compatibility-rules.html) section of the documentation.
+](https://pekko.apache.org/docs/pekko/current/common/binary-compatibility-rules.html) section of the documentation.
 
 Pekko HTTP uses MiMa (which is short for [Lightbend Migration Manager](https://github.com/lightbend/migration-manager)) to
 validate binary compatibility of incoming Pull Requests. If your PR fails due to binary compatibility issues, you may see 
@@ -153,7 +149,7 @@ Situations where it may be fine to ignore a MiMa issued warning include:
 - if it is touching any class marked as `private[pekko]`, `/** INTERNAL API*/` or similar markers
 - if it is concerning internal classes (often recognizable by package names like `dungeon`, `impl`, `internal` etc.)
 - if it is adding API to classes / traits which are only meant for extension by Pekko itself, i.e. should not be extended by end-users
-- if it is touching any class marked with the `@InternalApi`, `@DoNotInherit`, and `@ApiMayChange`. See [API stability annotations and comments](https://doc.akka.io/docs/akka/current/common/binary-compatibility-rules.html#api-stability-annotations-and-comments)
+- if it is touching any class marked with the `@InternalApi`, `@DoNotInherit`, and `@ApiMayChange`. See [API stability annotations and comments](https://pekko.apache.org/docs/pekko/current/common/binary-compatibility-rules.html#api-stability-annotations-and-comments)
 - other tricky situations
 
 If it turns out that the change can be safely ignored, please add the filter to a file with the issue number in the filename, placed in the submodule's `src/main/mima-filters/<last-released-version>.backwards.excludes` directory.
@@ -170,7 +166,7 @@ For a Pull Request to be considered at all, it has to meet these requirements:
 1. The commit messages must properly describe the changes, see further below.
 1. All Apache projects must include Apache copyright notices.  Each project can choose between one of two approaches:
 
-    1. All source files in the project must have a Apache copyright notice in the file header.
+    1. All source files in the project must have an Apache copyright notice in the file header.
     1. The Notices file for the project includes the Apache copyright notice and no other files contain copyright notices.  See https://www.apache.org/legal/src-headers.html for instructions for managing this approach for copyrights.
 
     Pekko HTTP uses the first choice, having copyright notices in every file header.
@@ -265,6 +261,12 @@ Example:
     * Details 2
     * Details 3
 
+## Applying code style to the project
+
+The project uses [scalafmt](https://scalameta.org/scalafmt/) to ensure code quality which is automatically checked on
+every PR. If you would like to check for any potential code style problems locally you can run `sbt checkCodeStyle`
+and if you want to apply the code style then you can run `sbt applyCodeStyle`.
+
 ### Ignoring formatting commits in git blame
 
 Throughout the history of the codebase various formatting commits have been applied as the scalafmt style has evolved over time, if desired
@@ -317,7 +319,7 @@ There is a number of ways timeouts can be defined in Pekko tests. The following 
 
 Special care should be given `expectNoMessage` calls, which indeed will wait the entire timeout before continuing, therefore a shorter timeout should be used in those, for example `200` or `300.millis`.
 
-You can read up on remaining and friends in [TestKit.scala](https://github.com/apache/incubator-pekko/blob/main/akka-testkit/src/main/scala/org/apache/pekko/testkit/TestKit.scala)
+You can read up on remaining and friends in [TestKit.scala](https://github.com/apache/pekko/blob/main/pekko-testkit/src/main/scala/org/apache/pekko/testkit/TestKit.scala)
 
 # Supporting infrastructure
 
@@ -332,7 +334,7 @@ We do not yet publish snapshots.
 ## Related links
 
 * [Apache Contributor License Agreement](https://www.apache.org/licenses/contributor-agreements.html)
-* [Pekko HTTP Issue Tracker](https://github.com/apache/incubator-pekko-http/issues)
+* [Pekko HTTP Issue Tracker](https://github.com/apache/pekko-http/issues)
 * [Scalariform](https://github.com/scala-ide/scalariform)
 
 # Development tools
@@ -346,8 +348,8 @@ A great tool to inspect HTTP/2 frames of real-world connections is
 
 When analyzing an HTTPS connection, you need a way to see the plaintext
 payloads. You can enable logging those on the Pekko HTTP side with
-`akka.http.server.log-unencrypted-network-bytes = 100` or
-`akka.http.server.http2.log-frames = true` (same for client-side).
+`pekko.http.server.log-unencrypted-network-bytes = 100` or
+`pekko.http.server.http2.log-frames = true` (same for client-side).
 
 To see the traffic in Wireshark, some clients can be configured to dump an
 `SSLKEYLOGFILE` that Wireshark

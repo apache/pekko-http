@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,8 +17,8 @@ import java.util.function.Supplier
 
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
-import pekko.http.caching.javadsl.{ Cache, CachingSettings }
 import pekko.http.caching.{ CacheJavaMapping, LfuCache }
+import pekko.http.caching.javadsl.{ Cache, CachingSettings }
 import pekko.http.impl.util.JavaMapping
 import pekko.http.javadsl.server.{ RequestContext, Route, RouteResult }
 
@@ -27,7 +27,8 @@ object CachingDirectives {
 
   import pekko.http.scaladsl.server.directives.{ CachingDirectives => D }
 
-  private implicit def routeResultCacheMapping[K] =
+  private implicit def routeResultCacheMapping[K]: JavaMapping[Cache[K, RouteResult], pekko.http.caching.scaladsl.Cache[
+      K, pekko.http.scaladsl.server.RouteResult]] =
     CacheJavaMapping.cacheMapping[K, RouteResult, K, pekko.http.scaladsl.server.RouteResult]
 
   /**

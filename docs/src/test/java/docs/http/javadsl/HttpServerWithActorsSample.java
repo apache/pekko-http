@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -20,7 +20,7 @@ package docs.http.javadsl;
 // curl -X POST -H "Content-Type: application/json" -d "{ \"id\": 42 }" localhost:8080/jobs
 // curl localhost:8080/jobs/42
 
-//#bootstrap
+// #bootstrap
 
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
@@ -57,33 +57,41 @@ public class HttpServerWithActorsSample {
   private static final class Stop implements Message {}
 
   public static Behavior<Message> create(String host, Integer port) {
-    return Behaviors.setup(ctx -> {
-      ActorSystem<Void> system = ctx.getSystem();
-      ActorRef<JobRepository.Command> buildJobRepository = ctx.spawn(JobRepository.create(), "JobRepository");
-      Route routes = new JobRoutes(buildJobRepository, ctx.getSystem()).jobRoutes();
+    return Behaviors.setup(
+        ctx -> {
+          ActorSystem<Void> system = ctx.getSystem();
+          ActorRef<JobRepository.Command> buildJobRepository =
+              ctx.spawn(JobRepository.create(), "JobRepository");
+          Route routes = new JobRoutes(buildJobRepository, ctx.getSystem()).jobRoutes();
 
-      CompletionStage<ServerBinding> serverBinding =
-              Http.get(system)
-                .newServerAt(host, port)
-                .bind(routes);
+          CompletionStage<ServerBinding> serverBinding =
+              Http.get(system).newServerAt(host, port).bind(routes);
 
-      ctx.pipeToSelf(serverBinding, (binding, failure) -> {
-        if (binding != null) return new Started(binding);
-        else return new StartFailed(failure);
-      });
+          ctx.pipeToSelf(
+              serverBinding,
+              (binding, failure) -> {
+                if (binding != null) return new Started(binding);
+                else return new StartFailed(failure);
+              });
 
-      return starting(false);
-    });
+          return starting(false);
+        });
   }
 
   private static Behavior<Message> starting(boolean wasStopped) {
-    return Behaviors.setup(ctx ->
+    return Behaviors.setup(
+        ctx ->
             BehaviorBuilder.<Message>create()
-                    .onMessage(StartFailed.class, failed -> {
+                .onMessage(
+                    StartFailed.class,
+                    failed -> {
                       throw new RuntimeException("Server failed to start", failed.ex);
                     })
-                    .onMessage(Started.class, msg -> {
-                      ctx.getLog().info(
+                .onMessage(
+                    Started.class,
+                    msg -> {
+                      ctx.getLog()
+                          .info(
                               "Server online at http://{}:{}",
                               msg.binding.localAddress().getAddress(),
                               msg.binding.localAddress().getPort());
@@ -92,27 +100,31 @@ public class HttpServerWithActorsSample {
 
                       return running(msg.binding);
                     })
-                    .onMessage(Stop.class, s -> {
+                .onMessage(
+                    Stop.class,
+                    s -> {
                       // we got a stop message but haven't completed starting yet,
                       // we cannot stop until starting has completed
                       return starting(true);
                     })
-                    .build());
+                .build());
   }
 
   private static Behavior<Message> running(ServerBinding binding) {
     return BehaviorBuilder.<Message>create()
-            .onMessage(Stop.class, msg -> Behaviors.stopped())
-            .onSignal(PostStop.class, msg -> {
+        .onMessage(Stop.class, msg -> Behaviors.stopped())
+        .onSignal(
+            PostStop.class,
+            msg -> {
               binding.unbind();
               return Behaviors.same();
             })
-            .build();
+        .build();
   }
 
   public static void main(String[] args) {
-    ActorSystem<Message> system = ActorSystem.create(
-            HttpServerWithActorsSample.create("localhost", 8080), "BuildJobsServer");
+    ActorSystem<Message> system =
+        ActorSystem.create(HttpServerWithActorsSample.create("localhost", 8080), "BuildJobsServer");
   }
 }
-//#bootstrap
+// #bootstrap

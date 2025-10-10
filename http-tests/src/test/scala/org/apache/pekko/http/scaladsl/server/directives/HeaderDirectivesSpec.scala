@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,15 +13,16 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
-import org.apache.pekko
-import pekko.http.scaladsl.model._
-import headers._
-import pekko.http.scaladsl.server._
-import directives.HeaderDirectivesSpec.XCustomHeader
-
-import org.scalatest.Inside
 import scala.reflect.ClassTag
 import scala.util.Try
+
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.server.directives.HeaderDirectivesSpec.XCustomHeader
+
+import org.scalatest.Inside
 
 class HeaderDirectivesSpec extends RoutingSpec with Inside {
 
@@ -99,17 +100,6 @@ class HeaderDirectivesSpec extends RoutingSpec with Inside {
       }
     }
 
-    "extract a header with Symbol name" in {
-      lazy val symbolRoute =
-        headerValueByName(Symbol("Referer")) { referer =>
-          complete(s"The symbol referer was $referer")
-        }
-
-      Get("abc") ~> RawHeader("Referer", "http://example.com/symbol") ~> symbolRoute ~> check {
-        responseAs[String] shouldEqual "The symbol referer was http://example.com/symbol"
-      }
-    }
-
     "reject a request if no header of the given type is present" in {
       Get("abc") ~> route ~> check {
         inside(rejection) {
@@ -128,17 +118,6 @@ class HeaderDirectivesSpec extends RoutingSpec with Inside {
     "extract a header if the name is matching" in {
       Get("abc") ~> RawHeader("Referer", "http://example.com") ~> route ~> check {
         responseAs[String] shouldEqual "The referer was Some(http://example.com)"
-      }
-    }
-
-    "extract a header with Symbol name" in {
-      lazy val symbolRoute =
-        optionalHeaderValueByName(Symbol("Referer")) { referer =>
-          complete(s"The symbol referer was $referer")
-        }
-
-      Get("abc") ~> RawHeader("Referer", "http://example.com/symbol") ~> symbolRoute ~> check {
-        responseAs[String] shouldEqual "The symbol referer was Some(http://example.com/symbol)"
       }
     }
 
@@ -243,7 +222,7 @@ class HeaderDirectivesSpec extends RoutingSpec with Inside {
 }
 
 object HeaderDirectivesSpec {
-  final object XCustomHeader extends ModeledCustomHeaderCompanion[XCustomHeader] {
+  object XCustomHeader extends ModeledCustomHeaderCompanion[XCustomHeader] {
     override def name: String = "X-Custom-Header"
     override def parse(value: String): Try[XCustomHeader] = Try(new XCustomHeader)
   }

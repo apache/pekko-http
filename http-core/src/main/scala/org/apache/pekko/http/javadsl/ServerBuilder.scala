@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,7 +17,6 @@ import java.util.concurrent.CompletionStage
 
 import org.apache.pekko
 import pekko.actor.ClassicActorSystemProvider
-import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.{ HttpRequest, HttpResponse }
@@ -29,8 +28,8 @@ import pekko.japi.function.Function
 import pekko.stream.javadsl.{ Flow, Source }
 import pekko.stream.{ Materializer, SystemMaterializer }
 
-import scala.compat.java8.FutureConverters._
 import scala.concurrent.ExecutionContext
+import scala.jdk.FutureConverters._
 
 /**
  * Builder API to create server bindings.
@@ -162,7 +161,7 @@ object ServerBuilder {
       system: ClassicActorSystemProvider,
       materializer: Materializer) extends ServerBuilder {
     private implicit def executionContext: ExecutionContext = system.classicSystem.dispatcher
-    private def http: scaladsl.HttpExt = scaladsl.Http(system)
+    private def http: scaladsl.HttpExt = scaladsl.Http(system.classicSystem)
 
     def onInterface(newInterface: String): ServerBuilder = copy(interface = newInterface)
     def onPort(newPort: Int): ServerBuilder = copy(port = newPort)
@@ -174,9 +173,9 @@ object ServerBuilder {
 
     def bind(handler: Function[HttpRequest, CompletionStage[HttpResponse]]): CompletionStage[ServerBinding] =
       http.bindAndHandleAsyncImpl(
-        handler.apply(_).asScala,
+        handler.apply(_).asScala.map(_.asScala),
         interface, port, context.asScala, settings.asScala, parallelism = 0, log = log)(materializer)
-        .map(new ServerBinding(_)).toJava
+        .map(new ServerBinding(_)).asJava
 
     def bind(handlerProvider: HandlerProvider): CompletionStage[ServerBinding] = bind(handlerProvider.handler(system))
 
@@ -184,17 +183,17 @@ object ServerBuilder {
       http.bindAndHandleAsyncImpl(
         req => FastFuture.successful(handler(req).asScala),
         interface, port, context.asScala, settings.asScala, parallelism = 0, log)(materializer)
-        .map(new ServerBinding(_)).toJava
+        .map(new ServerBinding(_)).asJava
 
     def bindFlow(handlerFlow: Flow[HttpRequest, HttpResponse, _]): CompletionStage[ServerBinding] =
       http.bindAndHandleImpl(
         handlerFlow.asInstanceOf[Flow[sm.HttpRequest, sm.HttpResponse, _]].asScala,
         interface, port, context.asScala, settings.asScala, log)(materializer)
-        .map(new ServerBinding(_)).toJava
+        .map(new ServerBinding(_)).asJava
 
     def connectionSource(): Source[IncomingConnection, CompletionStage[ServerBinding]] =
       http.bindImpl(interface, port, context.asScala, settings.asScala, log)
         .map(new IncomingConnection(_))
-        .mapMaterializedValue(_.map(new ServerBinding(_))(ExecutionContexts.sameThreadExecutionContext).toJava).asJava
+        .mapMaterializedValue(_.map(new ServerBinding(_))(ExecutionContext.parasitic).asJava).asJava
   }
 }

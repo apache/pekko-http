@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -60,7 +60,7 @@ private[pekko] object Http2HeaderParsing {
   }
   object ContentType extends HeaderParser[model.ContentType]("content-type") {
     override def parse(name: String, value: String, parserSettings: ParserSettings): model.ContentType =
-      model.ContentType.parse(value).right.getOrElse(malformedRequest(s"Invalid content-type: '$value'"))
+      model.ContentType.parse(value).getOrElse(malformedRequest(s"Invalid content-type: '$value'"))
   }
   object ContentLength extends Verbatim("content-length")
   object Cookie extends Verbatim("cookie")

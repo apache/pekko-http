@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -22,52 +22,56 @@ import org.apache.pekko.http.scaladsl.coding.Gzip$;
 import org.apache.pekko.http.scaladsl.coding.NoCoding$;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.util.ByteString;
-import scala.compat.java8.FutureConverters;
 
-/**
- * A coder is an implementation of the predefined encoders/decoders defined for HTTP.
- */
+import scala.jdk.javaapi.FutureConverters;
+
+/** A coder is an implementation of the predefined encoders/decoders defined for HTTP. */
 public enum Coder {
-    NoCoding(NoCoding$.MODULE$), Deflate(Deflate$.MODULE$), Gzip(Gzip$.MODULE$),
-    DeflateLevel1(Deflate$.MODULE$.withLevel(1)),
-    DeflateLevel9(Deflate$.MODULE$.withLevel(9)),
-    GzipLevel1(Gzip$.MODULE$.withLevel(1)),
-    GzipLevel9(Gzip$.MODULE$.withLevel(9));
+  NoCoding(NoCoding$.MODULE$),
+  Deflate(Deflate$.MODULE$),
+  Gzip(Gzip$.MODULE$),
+  DeflateLevel1(Deflate$.MODULE$.withLevel(1)),
+  DeflateLevel9(Deflate$.MODULE$.withLevel(9)),
+  GzipLevel1(Gzip$.MODULE$.withLevel(1)),
+  GzipLevel9(Gzip$.MODULE$.withLevel(9));
 
-    private org.apache.pekko.http.scaladsl.coding.Coder underlying;
+  private org.apache.pekko.http.scaladsl.coding.Coder underlying;
 
-    Coder(org.apache.pekko.http.scaladsl.coding.Coder underlying) {
-        this.underlying = underlying;
-    }
+  Coder(org.apache.pekko.http.scaladsl.coding.Coder underlying) {
+    this.underlying = underlying;
+  }
 
-    public HttpResponse encodeMessage(HttpResponse message) {
-        return (HttpResponse) underlying.encodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);
-    }
+  public HttpResponse encodeMessage(HttpResponse message) {
+    return (HttpResponse)
+        underlying.encodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);
+  }
 
-    public HttpRequest encodeMessage(HttpRequest message) {
-        return (HttpRequest) underlying.encodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);
-    }
+  public HttpRequest encodeMessage(HttpRequest message) {
+    return (HttpRequest)
+        underlying.encodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);
+  }
 
-    /**
-     * @deprecated Synchronous encoding is deprecated since Akka HTTP 10.2.0
-     */
-    @Deprecated
-    public ByteString encode(ByteString input) {
-        return underlying.encode(input);
-    }
+  /** @deprecated Synchronous encoding is deprecated since Akka HTTP 10.2.0 */
+  @Deprecated
+  public ByteString encode(ByteString input) {
+    return underlying.encode(input);
+  }
 
-    public HttpResponse decodeMessage(HttpResponse message) {
-        return (HttpResponse) underlying.decodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);
-    }
+  public HttpResponse decodeMessage(HttpResponse message) {
+    return (HttpResponse)
+        underlying.decodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);
+  }
 
-    public HttpRequest decodeMessage(HttpRequest message) {
-        return (HttpRequest) underlying.decodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);
-    }
+  public HttpRequest decodeMessage(HttpRequest message) {
+    return (HttpRequest)
+        underlying.decodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);
+  }
 
-    public CompletionStage<ByteString> decode(ByteString input, Materializer mat) {
-        return FutureConverters.toJava(underlying.decode(input, mat));
-    }
-    public org.apache.pekko.http.scaladsl.coding.Coder _underlyingScalaCoder() {
-        return underlying;
-    }
+  public CompletionStage<ByteString> decode(ByteString input, Materializer mat) {
+    return FutureConverters.asJava(underlying.decode(input, mat));
+  }
+
+  public org.apache.pekko.http.scaladsl.coding.Coder _underlyingScalaCoder() {
+    return underlying;
+  }
 }

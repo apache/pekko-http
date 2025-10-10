@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -25,7 +25,7 @@ class PathDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     "foo" / "bar" / "X" ~ IntNumber.? / ("edit" | "create")
 
   val route: Route =
-    path(matcher) { i: Option[Int] =>
+    path(matcher) { (i: Option[Int]) =>
       complete(s"Matched X${i.getOrElse("")}")
     }
   // #path-matcher

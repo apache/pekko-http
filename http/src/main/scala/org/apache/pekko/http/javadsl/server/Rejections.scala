@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,24 +13,24 @@
 
 package org.apache.pekko.http.javadsl.server
 
-import org.apache.pekko
-import pekko.http.impl.util.JavaMapping
-import pekko.http.scaladsl.server.ContentNegotiator.Alternative
-import pekko.http.scaladsl.server._
-import pekko.http.javadsl.model._
-import pekko.http.javadsl.model.headers.{ ByteRange, HttpChallenge, HttpEncoding }
+import java.lang.{ Iterable => JIterable }
 import java.util.Optional
 import java.util.function.{ Function => JFunction }
-import java.lang.{ Iterable => JIterable }
 
-import pekko.annotation.DoNotInherit
-import pekko.http.scaladsl
-import pekko.japi.Util
-import pekko.pattern.CircuitBreakerOpenException
-
-import scala.compat.java8.OptionConverters._
 import scala.collection.immutable
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
+
+import org.apache.pekko
+import pekko.annotation.DoNotInherit
+import pekko.http.impl.util.JavaMapping
+import pekko.http.impl.util.Util
+import pekko.http.javadsl.model._
+import pekko.http.javadsl.model.headers.{ ByteRange, HttpChallenge, HttpEncoding }
+import pekko.http.scaladsl
+import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.server.ContentNegotiator.Alternative
+import pekko.pattern.CircuitBreakerOpenException
 
 /**
  * A rejection encapsulates a specific reason why a Route was not able to handle a request. Rejections are gathered
@@ -359,9 +359,10 @@ trait RejectionError extends RuntimeException {
 }
 
 object Rejections {
-  import pekko.http.scaladsl.{ server => s }
   import JavaMapping.Implicits._
   import RoutingJavaMapping._
+
+  import pekko.http.scaladsl.{ server => s }
 
   def method(supported: HttpMethod): MethodRejection =
     s.MethodRejection(JavaMapping.toScala(supported))
@@ -380,7 +381,7 @@ object Rejections {
     s.MalformedQueryParamRejection(parameterName, errorMsg)
   def malformedQueryParam(
       parameterName: String, errorMsg: String, cause: Optional[Throwable]): MalformedQueryParamRejection =
-    s.MalformedQueryParamRejection(parameterName, errorMsg, cause.asScala)
+    s.MalformedQueryParamRejection(parameterName, errorMsg, cause.toScala)
 
   def missingFormField(fieldName: String): MissingFormFieldRejection =
     s.MissingFormFieldRejection(fieldName)
@@ -389,7 +390,7 @@ object Rejections {
     s.MalformedFormFieldRejection(fieldName, errorMsg)
   def malformedFormField(
       fieldName: String, errorMsg: String, cause: Optional[Throwable]): s.MalformedFormFieldRejection =
-    s.MalformedFormFieldRejection(fieldName, errorMsg, cause.asScala)
+    s.MalformedFormFieldRejection(fieldName, errorMsg, cause.toScala)
 
   def missingHeader(headerName: String): MissingHeaderRejection =
     s.MissingHeaderRejection(headerName)
@@ -397,26 +398,27 @@ object Rejections {
   def malformedHeader(headerName: String, errorMsg: String): MalformedHeaderRejection =
     s.MalformedHeaderRejection(headerName, errorMsg)
   def malformedHeader(headerName: String, errorMsg: String, cause: Optional[Throwable]): s.MalformedHeaderRejection =
-    s.MalformedHeaderRejection(headerName, errorMsg, cause.asScala)
+    s.MalformedHeaderRejection(headerName, errorMsg, cause.toScala)
 
   def unsupportedRequestContentType(
       supported: java.lang.Iterable[MediaType],
       contentType: Optional[ContentType]): UnsupportedRequestContentTypeRejection =
     s.UnsupportedRequestContentTypeRejection(
-      supported = supported.asScala.map(m => scaladsl.model.ContentTypeRange(m.asScala)).toSet,
-      contentType = contentType.asScala.map(_.asScala))
+      supported = supported.asScala.map((m: MediaType) => scaladsl.model.ContentTypeRange(m.asScala)).toSet,
+      contentType = contentType.toScala.map((c: ContentType) => c.asScala))
 
   // for backwards compatibility
   def unsupportedRequestContentType(supported: java.lang.Iterable[MediaType]): UnsupportedRequestContentTypeRejection =
     s.UnsupportedRequestContentTypeRejection(
-      supported = supported.asScala.map(m => scaladsl.model.ContentTypeRange(m.asScala)).toSet,
+      supported = supported.asScala.map((m: MediaType) => scaladsl.model.ContentTypeRange(m.asScala)).toSet,
       contentType = None)
 
   def unsupportedRequestEncoding(supported: HttpEncoding): UnsupportedRequestEncodingRejection =
     s.UnsupportedRequestEncodingRejection(supported.asScala)
 
   def unsatisfiableRange(unsatisfiableRanges: java.lang.Iterable[ByteRange], actualEntityLength: Long) =
-    UnsatisfiableRangeRejection(Util.immutableSeq(unsatisfiableRanges).map(_.asScala), actualEntityLength)
+    UnsatisfiableRangeRejection(Util.convertIterable[ByteRange, ByteRange](unsatisfiableRanges).map(_.asScala),
+      actualEntityLength)
 
   def tooManyRanges(maxRanges: Int) = TooManyRangesRejection(maxRanges)
 
@@ -428,17 +430,17 @@ object Rejections {
   def unacceptedResponseContentType(
       supportedContentTypes: java.lang.Iterable[ContentType],
       supportedMediaTypes: java.lang.Iterable[MediaType]): UnacceptedResponseContentTypeRejection = {
-    val s1: Set[Alternative] =
-      supportedContentTypes.asScala.map(_.asScala).map(ct => ContentNegotiator.Alternative(ct)).toSet
+    val s1: Set[Alternative] = supportedContentTypes.asScala.map((c: ContentType) => c.asScala).map(ct =>
+      ContentNegotiator.Alternative(ct)).toSet
     val s2: Set[Alternative] =
-      supportedMediaTypes.asScala.map(_.asScala).map(mt => ContentNegotiator.Alternative(mt)).toSet
+      supportedMediaTypes.asScala.map((m: MediaType) => m.asScala).map(mt => ContentNegotiator.Alternative(mt)).toSet
     s.UnacceptedResponseContentTypeRejection(s1 ++ s2)
   }
 
   def unacceptedResponseEncoding(supported: HttpEncoding) =
     s.UnacceptedResponseEncodingRejection(supported.asScala)
   def unacceptedResponseEncoding(supported: java.lang.Iterable[HttpEncoding]) =
-    s.UnacceptedResponseEncodingRejection(supported.asScala.map(_.asScala).toSet)
+    s.UnacceptedResponseEncodingRejection(supported.asScala.map((h: HttpEncoding) => h.asScala).toSet)
 
   def authenticationCredentialsMissing(challenge: HttpChallenge): AuthenticationFailedRejection =
     s.AuthenticationFailedRejection(s.AuthenticationFailedRejection.CredentialsMissing, challenge.asScala)
@@ -457,7 +459,7 @@ object Rejections {
   def validationRejection(message: String) =
     s.ValidationRejection(message)
   def validationRejection(message: String, cause: Optional[Throwable]) =
-    s.ValidationRejection(message, cause.asScala)
+    s.ValidationRejection(message, cause.toScala)
 
   def transformationRejection(f: java.util.function.Function[java.util.List[Rejection], java.util.List[Rejection]]) =
     s.TransformationRejection(rejections => f.apply(rejections.map(_.asJava).asJava).asScala.toVector.map(_.asScala)) // TODO this is maddness

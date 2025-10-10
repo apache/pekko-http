@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,18 +14,16 @@
 package org.apache.pekko.http.impl.util
 
 import org.apache.pekko
-import pekko.stream.{ ActorMaterializer, Attributes }
+import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.util.ByteString
 import pekko.testkit._
 import org.scalatest.concurrent.ScalaFutures
-
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Failure
 
 class StreamUtilsSpec extends PekkoSpec with ScalaFutures {
-  implicit val materializer = ActorMaterializer()
 
   "captureTermination" should {
     "signal completion" when {

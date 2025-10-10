@@ -4,16 +4,14 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
  * Copyright (C) 2016-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.pekko
-
-import java.io.{ File, FileNotFoundException }
+import java.io.FileNotFoundException
 
 import sbt._
 import Keys._
@@ -22,6 +20,7 @@ import com.lightbend.paradox.sbt.ParadoxPlugin.autoImport._
 import org.apache.pekko.PekkoParadoxPlugin.autoImport._
 import org.pegdown.Printer
 import org.pegdown.ast.{ DirectiveNode, HtmlBlockNode, VerbatimNode, Visitor }
+import sbtlicensereport.SbtLicenseReport.autoImportImpl.dumpLicenseReportAggregate
 
 import scala.collection.JavaConverters._
 import scala.io.{ Codec, Source }
@@ -30,8 +29,15 @@ object ParadoxSupport {
   val paradoxWithCustomDirectives = Seq(
     paradoxDirectives += ((context: Writer.Context) =>
       new SignatureDirective(context.location.tree.label, context.properties, context)),
-    resolvers += "Apache Nexus Snapshots".at("https://repository.apache.org/content/repositories/snapshots/"),
-    pekkoParadoxGithub := Some("https://github.com/apache/incubator-pekko-http"))
+    pekkoParadoxGithub := Some("https://github.com/apache/pekko-http"),
+    Global / pekkoParadoxIncubatorNotice := None,
+    Compile / paradoxMarkdownToHtml / sourceGenerators += Def.taskDyn {
+      val targetFile = (Compile / paradox / sourceManaged).value / "license-report.md"
+
+      (LocalRootProject / dumpLicenseReportAggregate).map { dir =>
+        IO.copy(List(dir / "pekko-http-root-licenses.md" -> targetFile)).toList
+      }
+    }.taskValue)
 
   class SignatureDirective(
       page: Page, variables: Map[String, String], ctx: Writer.Context) extends LeafBlockDirective("signature") {

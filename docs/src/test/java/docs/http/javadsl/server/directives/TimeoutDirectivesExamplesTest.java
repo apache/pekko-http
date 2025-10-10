@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -28,164 +28,199 @@ import com.typesafe.config.ConfigFactory;
 import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
-import scala.concurrent.duration.Duration;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import scala.jdk.javaapi.DurationConverters;
+
 public class TimeoutDirectivesExamplesTest extends AllDirectives {
-    //#testSetup
-    private final Config testConf = ConfigFactory.parseString("pekko.loggers = [\"org.apache.pekko.testkit.TestEventListener\"]\n"
-            + "pekko.loglevel = ERROR\n"
-            + "pekko.stdout-loglevel = ERROR\n"
-            + "windows-connection-abort-workaround-enabled = auto\n"
-            + "pekko.log-dead-letters = OFF\n"
-            + "akka.http.server.request-timeout = 1000s");
-    // large timeout - 1000s (please note - setting to infinite will disable Timeout-Access header
-    // and withRequestTimeout will not work)
+  // #testSetup
+  private final Config testConf =
+      ConfigFactory.parseString(
+          "pekko.loggers = [\"org.apache.pekko.testkit.TestEventListener\"]\n"
+              + "pekko.loglevel = ERROR\n"
+              + "pekko.stdout-loglevel = ERROR\n"
+              + "windows-connection-abort-workaround-enabled = auto\n"
+              + "pekko.log-dead-letters = OFF\n"
+              + "pekko.http.server.request-timeout = 1000s");
+  // large timeout - 1000s (please note - setting to infinite will disable Timeout-Access header
+  // and withRequestTimeout will not work)
 
-    private final ActorSystem system = ActorSystem.create("TimeoutDirectivesExamplesTest", testConf);
+  private final ActorSystem system = ActorSystem.create("TimeoutDirectivesExamplesTest", testConf);
 
-    private final Http http = Http.get(system);
+  private final Http http = Http.get(system);
 
-    private void shutdown(ServerBinding b) throws Exception {
-        System.out.println(String.format("Unbinding from %s", b.localAddress()));
+  private void shutdown(ServerBinding b) throws Exception {
+    System.out.println(String.format("Unbinding from %s", b.localAddress()));
 
-        b.unbind().toCompletableFuture().get(3, TimeUnit.SECONDS);
+    b.unbind().toCompletableFuture().get(3, TimeUnit.SECONDS);
+  }
+
+  private Optional<HttpResponse> runRoute(Route route, String routePath) throws Exception {
+    final ServerBinding binding =
+        http.newServerAt("localhost", 0).bind(route).toCompletableFuture().get();
+
+    final CompletionStage<HttpResponse> responseCompletionStage =
+        http.singleRequest(
+            HttpRequest.create(
+                "http://localhost:" + binding.localAddress().getPort() + "/" + routePath));
+
+    CompletableFuture<HttpResponse> responseFuture = responseCompletionStage.toCompletableFuture();
+
+    Optional<HttpResponse> responseOptional;
+    try {
+      responseOptional = Optional.of(responseFuture.get(3, TimeUnit.SECONDS)); // patienceConfig
+    } catch (Exception e) {
+      responseOptional = Optional.empty();
     }
 
-    private Optional<HttpResponse> runRoute(Route route, String routePath) throws Exception {
-        final ServerBinding binding = http.newServerAt("localhost", 0).bind(route).toCompletableFuture().get();
+    shutdown(binding);
 
-        final CompletionStage<HttpResponse> responseCompletionStage = http.singleRequest(HttpRequest.create("http://localhost:" + binding.localAddress().getPort() + "/" + routePath));
+    return responseOptional;
+  }
+  // #testSetup
 
-        CompletableFuture<HttpResponse> responseFuture = responseCompletionStage.toCompletableFuture();
+  @After
+  public void shutDown() {
+    TestKit.shutdownActorSystem(
+        system, scala.concurrent.duration.Duration.create(1, TimeUnit.SECONDS), false);
+  }
 
-        Optional<HttpResponse> responseOptional;
-        try {
-            responseOptional = Optional.of(responseFuture.get(3, TimeUnit.SECONDS)); // patienceConfig
-        } catch (Exception e) {
-            responseOptional = Optional.empty();
-        }
+  @Test
+  public void testRequestTimeoutIsConfigurable() throws Exception {
+    // #withRequestTimeout-plain
+    final Duration timeout = Duration.ofSeconds(1);
+    CompletionStage<String> slowFuture = new CompletableFuture<>();
 
-        shutdown(binding);
+    final Route route =
+        path(
+            "timeout",
+            () ->
+                withRequestTimeout(
+                    timeout,
+                    () -> {
+                      return completeOKWithFutureString(slowFuture); // very slow
+                    }));
 
-        return responseOptional;
-    }
-    //#testSetup
+    // test:
+    StatusCode statusCode = runRoute(route, "timeout").get().status();
+    assert (StatusCodes.SERVICE_UNAVAILABLE.equals(statusCode));
+    // #withRequestTimeout-plain
+  }
 
-    @After
-    public void shutDown() {
-        TestKit.shutdownActorSystem(system, Duration.create(1, TimeUnit.SECONDS), false);
-    }
+  @Test
+  public void testRequestWithoutTimeoutCancelsTimeout() throws Exception {
+    // #withoutRequestTimeout-1
+    CompletionStage<String> slowFuture = new CompletableFuture<>();
 
-    @Test
-    public void testRequestTimeoutIsConfigurable() throws Exception {
-        //#withRequestTimeout-plain
-        final Duration timeout = Duration.create(1, TimeUnit.SECONDS);
-        CompletionStage<String> slowFuture = new CompletableFuture<>();
+    final Route route =
+        path(
+            "timeout",
+            () ->
+                withoutRequestTimeout(
+                    () -> {
+                      return completeOKWithFutureString(slowFuture); // very slow
+                    }));
 
-        final Route route = path("timeout", () ->
-                withRequestTimeout(timeout, () -> {
-                    return completeOKWithFutureString(slowFuture); // very slow
-                })
-        );
+    // test:
+    Boolean receivedReply = runRoute(route, "timeout").isPresent();
+    assert (!receivedReply); // timed-out
+    // #withoutRequestTimeout-1
+  }
 
-        // test:
-        StatusCode statusCode = runRoute(route, "timeout").get().status();
-        assert (StatusCodes.SERVICE_UNAVAILABLE.equals(statusCode));
-        //#withRequestTimeout-plain
-    }
+  @Test
+  public void testRequestTimeoutAllowsCustomResponse() throws Exception {
+    // #withRequestTimeout-with-handler
+    final Duration timeout = Duration.ofMillis(1);
+    CompletionStage<String> slowFuture = new CompletableFuture<>();
 
-    @Test
-    public void testRequestWithoutTimeoutCancelsTimeout() throws Exception {
-        //#withoutRequestTimeout-1
-        CompletionStage<String> slowFuture = new CompletableFuture<>();
+    HttpResponse enhanceYourCalmResponse =
+        HttpResponse.create()
+            .withStatus(StatusCodes.ENHANCE_YOUR_CALM)
+            .withEntity("Unable to serve response within time limit, please enhance your calm.");
 
-        final Route route = path("timeout", () ->
-                withoutRequestTimeout(() -> {
-                    return completeOKWithFutureString(slowFuture); // very slow
-                })
-        );
+    final Route route =
+        path(
+            "timeout",
+            () ->
+                withRequestTimeout(
+                    timeout,
+                    (request) -> enhanceYourCalmResponse,
+                    () -> {
+                      return completeOKWithFutureString(slowFuture); // very slow
+                    }));
 
-        // test:
-        Boolean receivedReply = runRoute(route, "timeout").isPresent();
-        assert (!receivedReply); // timed-out
-        //#withoutRequestTimeout-1
-    }
+    // test:
+    StatusCode statusCode = runRoute(route, "timeout").get().status();
+    assert (StatusCodes.ENHANCE_YOUR_CALM.equals(statusCode));
+    // #withRequestTimeout-with-handler
+  }
 
-    @Test
-    public void testRequestTimeoutAllowsCustomResponse() throws Exception {
-        //#withRequestTimeout-with-handler
-        final Duration timeout = Duration.create(1, TimeUnit.MILLISECONDS);
-        CompletionStage<String> slowFuture = new CompletableFuture<>();
+  // make it compile only to avoid flaking in slow builds
+  @Ignore("Compile only test")
+  @Test
+  public void testRequestTimeoutCustomResponseCanBeAddedSeparately() throws Exception {
+    // #withRequestTimeoutResponse
+    final Duration timeout = Duration.ofMillis(100);
+    CompletionStage<String> slowFuture = new CompletableFuture<>();
 
-        HttpResponse enhanceYourCalmResponse = HttpResponse.create()
-                .withStatus(StatusCodes.ENHANCE_YOUR_CALM)
-                .withEntity("Unable to serve response within time limit, please enhance your calm.");
+    HttpResponse enhanceYourCalmResponse =
+        HttpResponse.create()
+            .withStatus(StatusCodes.ENHANCE_YOUR_CALM)
+            .withEntity("Unable to serve response within time limit, please enhance your calm.");
 
-        final Route route = path("timeout", () ->
-                withRequestTimeout(timeout, (request) -> enhanceYourCalmResponse, () -> {
-                    return completeOKWithFutureString(slowFuture); // very slow
-                })
-        );
-
-        // test:
-        StatusCode statusCode = runRoute(route, "timeout").get().status();
-        assert (StatusCodes.ENHANCE_YOUR_CALM.equals(statusCode));
-        //#withRequestTimeout-with-handler
-    }
-
-    // make it compile only to avoid flaking in slow builds
-    @Ignore("Compile only test")
-    @Test
-    public void testRequestTimeoutCustomResponseCanBeAddedSeparately() throws Exception {
-        //#withRequestTimeoutResponse
-        final Duration timeout = Duration.create(100, TimeUnit.MILLISECONDS);
-        CompletionStage<String> slowFuture = new CompletableFuture<>();
-
-        HttpResponse enhanceYourCalmResponse = HttpResponse.create()
-                .withStatus(StatusCodes.ENHANCE_YOUR_CALM)
-                .withEntity("Unable to serve response within time limit, please enhance your calm.");
-
-        final Route route = path("timeout", () ->
-                withRequestTimeout(timeout, () ->
+    final Route route =
+        path(
+            "timeout",
+            () ->
+                withRequestTimeout(
+                    timeout,
+                    () ->
                         // racy! for a very short timeout like 1.milli you can still get 503
-                        withRequestTimeoutResponse((request) -> enhanceYourCalmResponse, () -> {
-                            return completeOKWithFutureString(slowFuture); // very slow
-                        }))
-        );
+                        withRequestTimeoutResponse(
+                            (request) -> enhanceYourCalmResponse,
+                            () -> {
+                              return completeOKWithFutureString(slowFuture); // very slow
+                            })));
 
-        // test:
-        StatusCode statusCode = runRoute(route, "timeout").get().status();
-        assert (StatusCodes.ENHANCE_YOUR_CALM.equals(statusCode));
-        //#withRequestTimeoutResponse
-    }
+    // test:
+    StatusCode statusCode = runRoute(route, "timeout").get().status();
+    assert (StatusCodes.ENHANCE_YOUR_CALM.equals(statusCode));
+    // #withRequestTimeoutResponse
+  }
 
-    @Test
-    public void extractRequestTimeout() throws Exception {
-        //#extractRequestTimeout
-        Duration timeout1 = Duration.create(500, TimeUnit.MILLISECONDS);
-        Duration timeout2 = Duration.create(1000, TimeUnit.MILLISECONDS);
-        Route route =
-          path("timeout", () ->
-            withRequestTimeout(timeout1, () ->
-              extractRequestTimeout( t1 ->
-                withRequestTimeout(timeout2, () ->
-                  extractRequestTimeout( t2 -> {
-                    if (t1 == timeout1 && t2 == timeout2)
-                      return complete(StatusCodes.OK);
-                    else
-                      return complete(StatusCodes.INTERNAL_SERVER_ERROR);
-                  })
-                )
-              )
-            )
-          );
-        //#extractRequestTimeout
-        StatusCode statusCode = runRoute(route, "timeout").get().status();
-        assert (StatusCodes.OK.equals(statusCode));
-    }
+  @Test
+  public void extractRequestTimeout() throws Exception {
+    // #extractRequestTimeout
+    Duration timeout1 = Duration.ofMillis(500);
+    Duration timeout2 = Duration.ofMillis(1000);
+    Route route =
+        path(
+            "timeout",
+            () ->
+                withRequestTimeout(
+                    timeout1,
+                    () ->
+                        extractRequestTimeout(
+                            t1 ->
+                                withRequestTimeout(
+                                    timeout2,
+                                    () ->
+                                        extractRequestTimeout(
+                                            t2 -> {
+                                              if (t1.equals(DurationConverters.toScala(timeout1))
+                                                  && t2.equals(
+                                                      DurationConverters.toScala(timeout2)))
+                                                return complete(StatusCodes.OK);
+                                              else
+                                                return complete(StatusCodes.INTERNAL_SERVER_ERROR);
+                                            })))));
+    // #extractRequestTimeout
+    StatusCode statusCode = runRoute(route, "timeout").get().status();
+    assert (StatusCodes.OK.equals(statusCode));
+  }
 }

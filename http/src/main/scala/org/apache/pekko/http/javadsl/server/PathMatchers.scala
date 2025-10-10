@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,14 +16,13 @@ package org.apache.pekko.http.javadsl.server
 import java.util.UUID
 import java.util.regex.Pattern
 
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
+import pekko.http.javadsl.common.RegexConverters.toScala
 import pekko.http.scaladsl.model.Uri.Path
-
-import scala.collection.JavaConverters._
-
 import pekko.http.scaladsl.server.{ PathMatcher => SPathMatcher }
 import pekko.http.scaladsl.server.{ PathMatchers => SPathMatchers }
-import pekko.http.javadsl.common.RegexConverters.toScala
 
 final class PathMatchers
 

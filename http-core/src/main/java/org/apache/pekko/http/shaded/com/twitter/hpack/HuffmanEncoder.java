@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -41,7 +41,8 @@ final class HuffmanEncoder {
 
   /**
    * Creates a new Huffman encoder with the specified Huffman coding.
-   * @param codes   the Huffman codes indexed by symbol
+   *
+   * @param codes the Huffman codes indexed by symbol
    * @param lengths the length of each Huffman code
    */
   HuffmanEncoder(int[] codes, byte[] lengths) {
@@ -51,13 +52,10 @@ final class HuffmanEncoder {
 
   /**
    * Compresses the input string literal using the Huffman coding.
-   * @param  out  the output stream for the compressed data
-   * @param  data the string literal to be Huffman encoded
-   * @param  off  the start offset in the data
-   * @param  len  the number of bytes to encode
-   * @throws IOException if an I/O error occurs. In particular,
-   *         an <code>IOException</code> may be thrown if the
-   *         output stream has been closed.
+   *
+   * @param out the output stream for the compressed data
+   * @throws IOException if an I/O error occurs. In particular, an <code>IOException</code> may be
+   *     thrown if the output stream has been closed.
    */
   public void encode(OutputStream out, String string) throws IOException {
     if (out == null) {
@@ -81,20 +79,21 @@ final class HuffmanEncoder {
 
       while (n >= 8) {
         n -= 8;
-        out.write(((int)(current >> n)));
+        out.write(((int) (current >> n)));
       }
     }
 
     if (n > 0) {
       current <<= (8 - n);
       current |= (0xFF >>> n); // this should be EOS symbol
-      out.write((int)current);
+      out.write((int) current);
     }
   }
 
   /**
    * Returns the number of bytes required to Huffman encode the input string literal.
-   * @param  data the string literal to be Huffman encoded
+   *
+   * @param data the string literal to be Huffman encoded
    * @return the number of bytes required to Huffman encode <code>data</code>
    */
   public int getEncodedLength(String data) {
@@ -105,6 +104,6 @@ final class HuffmanEncoder {
     for (int i = 0; i < data.length(); i++) {
       len += lengths[data.charAt(i) & 0xFF];
     }
-    return (int)((len + 7) >> 3);
+    return (int) ((len + 7) >> 3);
   }
 }

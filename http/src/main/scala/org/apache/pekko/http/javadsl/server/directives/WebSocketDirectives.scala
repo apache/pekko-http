@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -20,11 +20,9 @@ import java.util.function.{ Function => JFunction }
 
 import org.apache.pekko
 import pekko.NotUsed
-import scala.collection.JavaConverters._
-import pekko.http.scaladsl.model.{ ws => s }
 import pekko.http.javadsl.model.ws.Message
-import pekko.http.javadsl.model.ws.UpgradeToWebSocket
 import pekko.http.javadsl.model.ws.WebSocketUpgrade
+import pekko.http.scaladsl.model.{ ws => s }
 import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.stream.javadsl.Flow
 import pekko.stream.scaladsl
@@ -33,20 +31,7 @@ abstract class WebSocketDirectives extends SecurityDirectives {
   import pekko.http.impl.util.JavaMapping.Implicits._
 
   /**
-   * Extract the [[UpgradeToWebSocket]] header if existent. Rejects with an [[ExpectedWebSocketRequestRejection]], otherwise.
-   *
-   * @deprecated use `webSocketUpgrade` instead since Akka HTTP 10.2.0
-   */
-  @Deprecated
-  @deprecated("use `extractWebSocketUpgrade` instead", since = "Akka HTTP 10.2.0")
-  def extractUpgradeToWebSocket(inner: JFunction[UpgradeToWebSocket, Route]): Route = RouteAdapter {
-    D.extractUpgradeToWebSocket { header =>
-      inner.apply(header).delegate
-    }
-  }
-
-  /**
-   * Extract the UpgradeToWebSocket attribute if this is a WebSocket request.
+   * Extract the WebSocketUpgrade attribute if this is a WebSocket request.
    * Rejects with an [[ExpectedWebSocketRequestRejection]], otherwise.
    */
   def extractWebSocketUpgrade(inner: JFunction[WebSocketUpgrade, Route]): Route = RouteAdapter {
@@ -60,7 +45,8 @@ abstract class WebSocketDirectives extends SecurityDirectives {
    * this is a WebSocket request. Rejects with an [[ExpectedWebSocketRequestRejection]], otherwise.
    */
   def extractOfferedWsProtocols(inner: JFunction[JList[String], Route]): Route = RouteAdapter {
-    D.extractOfferedWsProtocols { list =>
+    import scala.jdk.CollectionConverters._
+    D.extractOfferedWsProtocols { (list: Seq[String]) =>
       inner.apply(list.asJava).delegate
     }
   }

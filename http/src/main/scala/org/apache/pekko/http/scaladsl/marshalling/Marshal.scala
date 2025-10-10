@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,13 +14,12 @@
 package org.apache.pekko.http.scaladsl.marshalling
 
 import scala.concurrent.{ ExecutionContext, Future }
-import org.apache.pekko
-import pekko.http.ccompat._
-import pekko.http.scaladsl.server.ContentNegotiator
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.util.FastFuture._
-
 import scala.util.control.NoStackTrace
+
+import org.apache.pekko
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.ContentNegotiator
+import pekko.http.scaladsl.util.FastFuture._
 
 object Marshal {
   def apply[T](value: T): Marshal[T] = new Marshal(value)

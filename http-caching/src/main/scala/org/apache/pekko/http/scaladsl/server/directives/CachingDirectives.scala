@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,17 +13,17 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.ApiMayChange
-import pekko.http.caching.scaladsl.{ Cache, CachingSettings }
 import pekko.http.caching.LfuCache
-import pekko.http.scaladsl.server.Directive0
-import pekko.http.scaladsl.server._
+import pekko.http.caching.scaladsl.{ Cache, CachingSettings }
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.model.headers.CacheDirectives._
-
-import scala.concurrent.Future
+import pekko.http.scaladsl.server._
+import pekko.http.scaladsl.server.Directive0
 
 @ApiMayChange
 trait CachingDirectives {

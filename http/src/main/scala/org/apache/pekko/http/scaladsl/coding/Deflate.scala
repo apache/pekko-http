@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -27,7 +27,7 @@ class Deflate private[http] (compressionLevel: Int, val messageFilter: HttpMessa
   }
 
   val encoding = HttpEncodings.deflate
-  def newCompressor = new DeflateCompressor(compressionLevel)
+  private[http] def newCompressor = new DeflateCompressor(compressionLevel)
   def newDecompressorStage(maxBytesPerChunk: Int) = () => new DeflateDecompressor(maxBytesPerChunk)
 
   @deprecated("Use Coders.Deflate(compressionLevel = ...) instead", since = "Akka HTTP 10.2.0")

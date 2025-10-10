@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,21 +16,21 @@ package org.apache.pekko.http.caching
 import java.util.concurrent.{ CompletableFuture, Executor, TimeUnit }
 import java.util.function.BiFunction
 
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.duration.Duration
+import scala.jdk.CollectionConverters._
+import scala.jdk.FunctionConverters._
+import scala.jdk.FutureConverters._
+
+import com.github.benmanes.caffeine.cache.{ AsyncCache, Caffeine }
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.{ ApiMayChange, InternalApi }
-
-import scala.collection.JavaConverters._
-import scala.concurrent.duration.Duration
-import scala.concurrent.{ ExecutionContext, Future }
-import com.github.benmanes.caffeine.cache.{ AsyncCache, Caffeine }
+import pekko.http.caching.CacheJavaMapping.Implicits._
 import pekko.http.caching.LfuCache.toJavaMappingFunction
 import pekko.http.caching.scaladsl.Cache
 import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.http.caching.CacheJavaMapping.Implicits._
-
-import scala.compat.java8.FutureConverters._
-import scala.compat.java8.FunctionConverters._
 
 @ApiMayChange
 object LfuCache {
@@ -102,20 +102,20 @@ object LfuCache {
   }
 
   def toJavaMappingFunction[K, V](genValue: () => Future[V]): BiFunction[K, Executor, CompletableFuture[V]] =
-    asJavaBiFunction[K, Executor, CompletableFuture[V]]((k, e) => genValue().toJava.toCompletableFuture)
+    ((_: K, _: Executor) => genValue().asJava.toCompletableFuture: CompletableFuture[V]).asJava
 
   def toJavaMappingFunction[K, V](loadValue: K => Future[V]): BiFunction[K, Executor, CompletableFuture[V]] =
-    asJavaBiFunction[K, Executor, CompletableFuture[V]]((k, e) => loadValue(k).toJava.toCompletableFuture)
+    ((k: K, _: Executor) => loadValue(k).asJava.toCompletableFuture: CompletableFuture[V]).asJava
 }
 
 /** INTERNAL API */
 @InternalApi
 private[caching] class LfuCache[K, V](val store: AsyncCache[K, V]) extends Cache[K, V] {
 
-  def get(key: K): Option[Future[V]] = Option(store.getIfPresent(key)).map(_.toScala)
+  def get(key: K): Option[Future[V]] = Option(store.getIfPresent(key)).map(_.asScala)
 
   def apply(key: K, genValue: () => Future[V]): Future[V] =
-    store.get(key, toJavaMappingFunction[K, V](genValue)).toScala
+    store.get(key, toJavaMappingFunction[K, V](genValue)).asScala
 
   /**
    * Multiple call to put method for the same key may result in a race condition,
@@ -126,17 +126,17 @@ private[caching] class LfuCache[K, V](val store: AsyncCache[K, V]) extends Cache
 
     previouslyCacheValue match {
       case None =>
-        store.put(key, toJava(mayBeValue).toCompletableFuture)
+        store.put(key, mayBeValue.asJava.toCompletableFuture)
         mayBeValue
       case _ => mayBeValue.map { value =>
-          store.put(key, toJava(Future.successful(value)).toCompletableFuture)
+          store.put(key, Future.successful(value).asJava.toCompletableFuture)
           value
         }
     }
   }
 
   def getOrLoad(key: K, loadValue: K => Future[V]): Future[V] =
-    store.get(key, toJavaMappingFunction[K, V](loadValue)).toScala
+    store.get(key, toJavaMappingFunction[K, V](loadValue)).asScala
 
   def remove(key: K): Unit = store.synchronous().invalidate(key)
 

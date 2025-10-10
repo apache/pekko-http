@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,25 +13,25 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.annotation.tailrec
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier._
 import pekko.http.impl.util._
-import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
 import pekko.http.scaladsl.HttpConnectionContext
+import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
 import pekko.stream.scaladsl.{ Source, Tcp }
 import pekko.util.ByteString
-
-import scala.annotation.tailrec
-import scala.concurrent.Future
-import scala.concurrent.duration._
 
 class H2cUpgradeSpec extends PekkoSpecWithMaterializer("""
     pekko.http.server.preview.enable-http2 = on
     pekko.http.server.http2.log-frames = on
   """) {
 
-  override implicit val patience = PatienceConfig(5.seconds, 5.seconds)
+  override implicit val patience: PatienceConfig = PatienceConfig(5.seconds, 5.seconds)
 
   "An HTTP/1.1 server without TLS that allows upgrading to cleartext HTTP/2" should {
     val binding = Http2().bindAndHandleAsync(
@@ -59,7 +59,7 @@ class H2cUpgradeSpec extends PekkoSpecWithMaterializer("""
       testWith(settings)
     }
 
-    def testWith(settings: String) {
+    def testWith(settings: String) = {
       val upgradeRequest =
         s"""GET / HTTP/1.1
 Host: localhost
@@ -70,7 +70,7 @@ HTTP2-Settings: $settings
       val frameProbe = Http2FrameProbe()
 
       Source.single(ByteString(upgradeRequest)).concat(Source.maybe)
-        .via(Tcp().outgoingConnection(binding.localAddress.getHostName, binding.localAddress.getPort))
+        .via(Tcp(system).outgoingConnection(binding.localAddress.getHostName, binding.localAddress.getPort))
         .runWith(frameProbe.sink)
 
       @tailrec def readToEndOfHeader(currentlyRead: String = ""): String =

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -29,8 +29,8 @@ import pekko.http.scaladsl.server.directives.PathDirectives.TrailingRetryRejecti
 trait PathDirectives extends PathMatchers with ImplicitPathMatcherConstruction with ToNameReceptacleEnhancements {
 
   import BasicDirectives._
-  import RouteDirectives._
   import PathMatcher._
+  import RouteDirectives._
 
   /**
    * Applies the given [[PathMatcher]] to the remaining unmatched path after consuming a leading slash.
@@ -61,7 +61,7 @@ trait PathDirectives extends PathMatchers with ImplicitPathMatcherConstruction w
   def rawPathPrefix[L](pm: PathMatcher[L]): Directive[L] = {
     implicit val LIsTuple = pm.ev
     extract(ctx => pm(ctx.unmatchedPath)).flatMap {
-      case Matched(rest, values) => tprovide(values) & mapRequestContext(_.withUnmatchedPath(rest))
+      case Matched(rest, values) => tprovide(values)(LIsTuple) & mapRequestContext(_.withUnmatchedPath(rest))
       case Unmatched             => reject
     }
   }
@@ -100,7 +100,7 @@ trait PathDirectives extends PathMatchers with ImplicitPathMatcherConstruction w
   def pathSuffix[L](pm: PathMatcher[L]): Directive[L] = {
     implicit val LIsTuple = pm.ev
     extract(ctx => pm(ctx.unmatchedPath.reverse)).flatMap {
-      case Matched(rest, values) => tprovide(values) & mapRequestContext(_.withUnmatchedPath(rest.reverse))
+      case Matched(rest, values) => tprovide(values)(LIsTuple) & mapRequestContext(_.withUnmatchedPath(rest.reverse))
       case Unmatched             => reject
     }
   }

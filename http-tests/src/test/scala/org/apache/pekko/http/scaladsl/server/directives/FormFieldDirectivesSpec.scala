@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,18 +14,21 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.xml.NodeSeq
+
 import org.apache.pekko
-import pekko.stream.scaladsl.Source
 import pekko.http.HashCodeCollider
+import pekko.http.impl.util.BenchUtils
 import pekko.http.scaladsl.common.StrictForm
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport
-import pekko.http.scaladsl.unmarshalling.Unmarshaller.HexInt
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.MediaTypes._
-import pekko.http.impl.util.BenchUtils
+import pekko.http.scaladsl.unmarshalling.FromEntityUnmarshaller
+import pekko.http.scaladsl.unmarshalling.Unmarshaller.HexInt
+import pekko.stream.scaladsl.Source
 
 class FormFieldDirectivesSpec extends RoutingSpec {
-  implicit val nodeSeqUnmarshaller =
+  implicit val nodeSeqUnmarshaller: FromEntityUnmarshaller[NodeSeq] =
     ScalaXmlSupport.nodeSeqUnmarshaller(`text/xml`, `text/html`, `text/plain`)
 
   val nodeSeq: xml.NodeSeq = <b>yes</b>

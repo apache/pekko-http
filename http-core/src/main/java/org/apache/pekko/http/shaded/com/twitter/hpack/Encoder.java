@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -54,22 +54,17 @@ public final class Encoder {
   private int size;
   private int capacity;
 
-  /**
-   * Creates a new encoder.
-   */
+  /** Creates a new encoder. */
   public Encoder(int maxHeaderTableSize) {
     this(maxHeaderTableSize, true, false, false);
   }
 
-  /**
-   * Constructor for testing only.
-   */
+  /** Constructor for testing only. */
   Encoder(
       int maxHeaderTableSize,
       boolean useIndexing,
       boolean forceHuffmanOn,
-      boolean forceHuffmanOff
-  ) {
+      boolean forceHuffmanOff) {
     if (maxHeaderTableSize < 0) {
       throw new IllegalArgumentException("Illegal Capacity: " + maxHeaderTableSize);
     }
@@ -80,10 +75,9 @@ public final class Encoder {
     head.before = head.after = head;
   }
 
-  /**
-   * Encode the header field into the header block.
-   */
-  public void encodeHeader(OutputStream out,String name, String value, boolean sensitive) throws IOException {
+  /** Encode the header field into the header block. */
+  public void encodeHeader(OutputStream out, String name, String value, boolean sensitive)
+      throws IOException {
 
     // If the header value is sensitive then it must never be indexed
     if (sensitive) {
@@ -136,9 +130,7 @@ public final class Encoder {
     }
   }
 
-  /**
-   * Set the maximum table size.
-   */
+  /** Set the maximum table size. */
   public void setMaxHeaderTableSize(OutputStream out, int maxHeaderTableSize) throws IOException {
     if (maxHeaderTableSize < 0) {
       throw new IllegalArgumentException("Illegal Capacity: " + maxHeaderTableSize);
@@ -151,16 +143,12 @@ public final class Encoder {
     encodeInteger(out, 0x20, 5, maxHeaderTableSize);
   }
 
-  /**
-   * Return the maximum table size.
-   */
+  /** Return the maximum table size. */
   public int getMaxHeaderTableSize() {
     return capacity;
   }
 
-  /**
-   * Encode integer according to Section 5.1.
-   */
+  /** Encode integer according to Section 5.1. */
   private static void encodeInteger(OutputStream out, int mask, int n, int i) throws IOException {
     if (n < 0 || n > 8) {
       throw new IllegalArgumentException("N: " + n);
@@ -183,9 +171,7 @@ public final class Encoder {
     }
   }
 
-  /**
-   * Encode string literal according to Section 5.2.
-   */
+  /** Encode string literal according to Section 5.2. */
   private void encodeStringLiteral(OutputStream out, String string) throws IOException {
     int length = string.length();
     int huffmanLength = Huffman.ENCODER.getEncodedLength(string);
@@ -199,28 +185,27 @@ public final class Encoder {
     }
   }
 
-  /**
-   * Encode literal header field according to Section 6.2.
-   */
-  private void encodeLiteral(OutputStream out, String name, String value, IndexType indexType, int nameIndex)
+  /** Encode literal header field according to Section 6.2. */
+  private void encodeLiteral(
+      OutputStream out, String name, String value, IndexType indexType, int nameIndex)
       throws IOException {
     int mask;
     int prefixBits;
-    switch(indexType) {
-    case INCREMENTAL:
-      mask = 0x40;
-      prefixBits = 6;
-      break;
-    case NONE:
-      mask = 0x00;
-      prefixBits = 4;
-      break;
-    case NEVER:
-      mask = 0x10;
-      prefixBits = 4;
-      break;
-    default:
-      throw new IllegalStateException("should not reach here");
+    switch (indexType) {
+      case INCREMENTAL:
+        mask = 0x40;
+        prefixBits = 6;
+        break;
+      case NONE:
+        mask = 0x00;
+        prefixBits = 4;
+        break;
+      case NEVER:
+        mask = 0x10;
+        prefixBits = 4;
+        break;
+      default:
+        throw new IllegalStateException("should not reach here");
     }
     encodeInteger(out, mask, prefixBits, nameIndex == -1 ? 0 : nameIndex);
     if (nameIndex == -1) {
@@ -241,8 +226,8 @@ public final class Encoder {
   }
 
   /**
-   * Ensure that the dynamic table has enough room to hold 'headerSize' more bytes.
-   * Removes the oldest entry from the dynamic table until sufficient space is available.
+   * Ensure that the dynamic table has enough room to hold 'headerSize' more bytes. Removes the
+   * oldest entry from the dynamic table until sufficient space is available.
    */
   private void ensureCapacity(int headerSize) throws IOException {
     while (size + headerSize > capacity) {
@@ -254,37 +239,28 @@ public final class Encoder {
     }
   }
 
-  /**
-   * Return the number of header fields in the dynamic table.
-   * Exposed for testing.
-   */
+  /** Return the number of header fields in the dynamic table. Exposed for testing. */
   int length() {
     return size == 0 ? 0 : head.after.index - head.before.index + 1;
   }
 
-  /**
-   * Return the size of the dynamic table.
-   * Exposed for testing.
-   */
+  /** Return the size of the dynamic table. Exposed for testing. */
   int size() {
     return size;
   }
 
-  /**
-   * Return the header field at the given index.
-   * Exposed for testing.
-   */
+  /** Return the header field at the given index. Exposed for testing. */
   HeaderField getHeaderField(int index) {
     HeaderEntry entry = head;
-    while(index-- >= 0) {
+    while (index-- >= 0) {
       entry = entry.before;
     }
     return entry;
   }
 
   /**
-   * Returns the header entry with the lowest index value for the header field.
-   * Returns null if header field is not in the dynamic table.
+   * Returns the header entry with the lowest index value for the header field. Returns null if
+   * header field is not in the dynamic table.
    */
   private HeaderEntry getEntry(String name, String value) {
     if (length() == 0 || name == null || value == null) {
@@ -293,9 +269,7 @@ public final class Encoder {
     int h = hash(name);
     int i = index(h);
     for (HeaderEntry e = headerFields[i]; e != null; e = e.next) {
-      if (e.hash == h &&
-          name.equals( e.name) &&
-          value.equals( e.value)) {
+      if (e.hash == h && name.equals(e.name) && value.equals(e.value)) {
         return e;
       }
     }
@@ -303,8 +277,8 @@ public final class Encoder {
   }
 
   /**
-   * Returns the lowest index value for the header field name in the dynamic table.
-   * Returns -1 if the header field name is not in the dynamic table.
+   * Returns the lowest index value for the header field name in the dynamic table. Returns -1 if
+   * the header field name is not in the dynamic table.
    */
   private int getIndex(String name) {
     if (length() == 0 || name == null) {
@@ -314,7 +288,7 @@ public final class Encoder {
     int i = index(h);
     int index = -1;
     for (HeaderEntry e = headerFields[i]; e != null; e = e.next) {
-      if (e.hash == h && name.equals( e.name)) {
+      if (e.hash == h && name.equals(e.name)) {
         index = e.index;
         break;
       }
@@ -322,9 +296,7 @@ public final class Encoder {
     return getIndex(index);
   }
 
-  /**
-   * Compute the index into the dynamic table given the index in the header entry.
-   */
+  /** Compute the index into the dynamic table given the index in the header entry. */
   private int getIndex(int index) {
     if (index == -1) {
       return index;
@@ -333,11 +305,9 @@ public final class Encoder {
   }
 
   /**
-   * Add the header field to the dynamic table.
-   * Entries are evicted from the dynamic table until the size of the table
-   * and the new header field is less than the table's capacity.
-   * If the size of the new entry is larger than the table's capacity,
-   * the dynamic table will be cleared.
+   * Add the header field to the dynamic table. Entries are evicted from the dynamic table until the
+   * size of the table and the new header field is less than the table's capacity. If the size of
+   * the new entry is larger than the table's capacity, the dynamic table will be cleared.
    */
   private void add(String name, String value) {
     int headerSize = HeaderField.sizeOf(name, value);
@@ -362,9 +332,7 @@ public final class Encoder {
     size += headerSize;
   }
 
-  /**
-   * Remove and return the oldest header field from the dynamic table.
-   */
+  /** Remove and return the oldest header field from the dynamic table. */
   private HeaderField remove() {
     if (size == 0) {
       return null;
@@ -392,18 +360,14 @@ public final class Encoder {
     return null;
   }
 
-  /**
-   * Remove all entries from the dynamic table.
-   */
+  /** Remove all entries from the dynamic table. */
   private void clear() {
     Arrays.fill(headerFields, null);
     head.before = head.after = head;
     this.size = 0;
   }
 
-  /**
-   * Returns the hash code for the given header field name.
-   */
+  /** Returns the hash code for the given header field name. */
   private static int hash(String name) {
     int h = name.hashCode();
     if (h > 0) {
@@ -415,16 +379,12 @@ public final class Encoder {
     }
   }
 
-  /**
-   * Returns the index into the hash table for the hash code h.
-   */
+  /** Returns the index into the hash table for the hash code h. */
   private static int index(int h) {
     return h % BUCKET_SIZE;
   }
 
-  /**
-   * A linked hash map HeaderField entry.
-   */
+  /** A linked hash map HeaderField entry. */
   private static class HeaderEntry extends HeaderField {
     // These fields comprise the doubly linked list used for iteration.
     HeaderEntry before, after;
@@ -436,9 +396,7 @@ public final class Encoder {
     // This is used to compute the index in the dynamic table.
     int index;
 
-    /**
-     * Creates new entry.
-     */
+    /** Creates new entry. */
     HeaderEntry(int hash, String name, String value, int index, HeaderEntry next) {
       super(name, value);
       this.index = index;
@@ -446,22 +404,18 @@ public final class Encoder {
       this.next = next;
     }
 
-    /**
-     * Removes this entry from the linked list.
-     */
+    /** Removes this entry from the linked list. */
     private void remove() {
       before.after = after;
       after.before = before;
       before = null; // null reference to prevent nepotism with generational GC.
-      after = null;  // null reference to prevent nepotism with generational GC.
-      next = null;   // null reference to prevent nepotism with generational GC.
+      after = null; // null reference to prevent nepotism with generational GC.
+      next = null; // null reference to prevent nepotism with generational GC.
     }
 
-    /**
-     * Inserts this entry before the specified existing entry in the list.
-     */
+    /** Inserts this entry before the specified existing entry in the list. */
     private void addBefore(HeaderEntry existingEntry) {
-      after  = existingEntry;
+      after = existingEntry;
       before = existingEntry.before;
       before.after = this;
       after.before = this;

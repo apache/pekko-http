@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,13 +16,13 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.scaladsl.model.headers.HttpOriginRange$;
 import org.apache.pekko.http.impl.util.Util;
 
-/**
- * @see HttpOriginRanges for convenience access to often used values.
- */
+/** @see HttpOriginRanges for convenience access to often used values. */
 public abstract class HttpOriginRange {
   public abstract boolean matches(HttpOrigin origin);
 
   public static HttpOriginRange create(HttpOrigin... origins) {
-    return HttpOriginRange$.MODULE$.apply(Util.<HttpOrigin, org.apache.pekko.http.scaladsl.model.headers.HttpOrigin>convertArray(origins));
+    return HttpOriginRange$.MODULE$.apply(
+        Util.<HttpOrigin, org.apache.pekko.http.scaladsl.model.headers.HttpOrigin>convertArray(
+            origins));
   }
 }

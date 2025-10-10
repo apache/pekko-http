@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,27 +13,24 @@
 
 package org.apache.pekko.http.impl.settings
 
-import java.util.Random
-
-import org.apache.pekko
-import pekko.http.scaladsl.settings.{ SettingsCompanion => _, _ }
-import com.typesafe.config.Config
-
 import scala.language.implicitConversions
 import scala.collection.immutable
 import scala.concurrent.duration._
-import pekko.http.javadsl.{ settings => js }
+import scala.util.Try
+
+import com.typesafe.config.Config
+import org.apache.pekko
 import pekko.ConfigurationException
 import pekko.actor.{ ActorSystem, ExtendedActorSystem }
 import pekko.annotation.InternalApi
 import pekko.http.ParsingErrorHandler
-import pekko.io.Inet.SocketOption
 import pekko.http.impl.util._
+import pekko.http.javadsl.{ settings => js }
 import pekko.http.scaladsl.model.{ HttpHeader, HttpResponse, StatusCodes }
 import pekko.http.scaladsl.model.headers.{ Host, Server }
+import pekko.http.scaladsl.settings.{ SettingsCompanion => _, _ }
 import pekko.http.scaladsl.settings.ServerSettings.LogUnencryptedNetworkBytes
-
-import scala.util.Try
+import pekko.io.Inet.SocketOption
 
 /** INTERNAL API */
 @InternalApi
@@ -43,7 +40,6 @@ private[pekko] final case class ServerSettingsImpl(
     timeouts: ServerSettings.Timeouts,
     maxConnections: Int,
     pipeliningLimit: Int,
-    remoteAddressHeader: Boolean,
     remoteAddressAttribute: Boolean,
     rawRequestUriHeader: Boolean,
     transparentHeadRequests: Boolean,
@@ -69,8 +65,6 @@ private[pekko] final case class ServerSettingsImpl(
   require(
     Try { parserSettings.maxContentLength }.isSuccess,
     "The provided ParserSettings is a generic object that does not contain the server-specific settings.")
-
-  override def websocketRandomFactory: () => Random = websocketSettings.randomFactory
 
   override def productPrefix = "ServerSettings"
 
@@ -107,7 +101,6 @@ private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSett
         c.getPotentiallyInfiniteDuration("linger-timeout")),
       c.getInt("max-connections"),
       c.getInt("pipelining-limit"),
-      c.getBoolean("remote-address-header"),
       c.getBoolean("remote-address-attribute"),
       c.getBoolean("raw-request-uri-header"),
       c.getBoolean("transparent-head-requests"),

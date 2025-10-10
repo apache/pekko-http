@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -21,9 +21,9 @@ import org.reflections.scanners.{ MethodAnnotationsScanner, Scanners, TypeAnnota
 import org.reflections.util.{ ClasspathHelper, ConfigurationBuilder }
 import org.scalatest.Assertion
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.io.Source
+import scala.jdk.CollectionConverters._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

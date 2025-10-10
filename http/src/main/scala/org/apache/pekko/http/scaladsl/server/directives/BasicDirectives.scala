@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,25 +16,24 @@ package directives
 
 import java.util.concurrent.TimeoutException
 
+import scala.collection.immutable
+import scala.concurrent.{ ExecutionContextExecutor, Future }
+import scala.concurrent.duration.FiniteDuration
+import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
+import pekko.event.LoggingAdapter
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.Uri.Path
+import pekko.http.scaladsl.server.util.Tuple
+import pekko.http.scaladsl.settings.{ ParserSettings, RoutingSettings }
+import pekko.http.scaladsl.util.FastFuture
+import pekko.http.scaladsl.util.FastFuture._
+import pekko.stream.Materializer
 import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
-
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ ExecutionContextExecutor, Future }
-import scala.collection.immutable
-import pekko.event.LoggingAdapter
-import pekko.http.scaladsl.model.Uri.Path
 import pekko.util.ConstantFun.scalaIdentityFunction
-import pekko.stream.{ ActorMaterializerHelper, Materializer }
-import pekko.http.scaladsl.settings.{ ParserSettings, RoutingSettings }
-import pekko.http.scaladsl.server.util.Tuple
-import pekko.http.scaladsl.util.FastFuture
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.util.FastFuture._
-
-import scala.util.control.NonFatal
 
 /**
  * @groupname basic Basic directives
@@ -266,13 +265,13 @@ trait BasicDirectives {
   def extractMaterializer: Directive1[Materializer] = BasicDirectives._extractMaterializer
 
   /**
-   * Extracts the [[pekko.actor.ActorSystem]] if the available Materializer is an [[pekko.stream.ActorMaterializer]].
+   * Extracts the [[pekko.actor.ActorSystem]] if the Materializer is available.
    * Otherwise throws an exception as it won't be able to extract the system from arbitrary materializers.
    *
    * @group basic
    */
   def extractActorSystem: Directive1[ActorSystem] = extract { ctx =>
-    ActorMaterializerHelper.downcast(ctx.materializer).system
+    ctx.materializer.system
   }
 
   /**

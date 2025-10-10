@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,26 +13,23 @@
 
 package org.apache.pekko.remote.testkit
 
-import language.implicitConversions
 import java.net.{ InetAddress, InetSocketAddress }
 
 import com.typesafe.config.{ Config, ConfigFactory, ConfigObject }
 
+import language.implicitConversions
 import scala.concurrent.{ Await, Awaitable }
-import scala.util.control.NonFatal
+import scala.concurrent.duration._
 import scala.collection.immutable
+import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.actor._
-import pekko.util.Timeout
-import pekko.http.ccompat._
-import pekko.remote.testconductor.{ TestConductor, TestConductorExt }
+import pekko.event.{ LogSource, Logging, LoggingAdapter }
+import pekko.remote.testconductor.{ RoleName, TestConductor, TestConductorExt }
 import pekko.testkit._
 import pekko.testkit.TestEvent._
-
-import scala.concurrent.duration._
-import pekko.remote.testconductor.RoleName
-import pekko.actor.RootActorPath
-import pekko.event.{ Logging, LoggingAdapter }
+import pekko.util.Timeout
 
 /**
  * Configure the role names and participants of the test, including configuration settings.
@@ -242,7 +239,7 @@ object MultiNodeSpec {
       """)
 
   private def mapToConfig(map: Map[String, Any]): Config = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     ConfigFactory.parseMap(map.asJava)
   }
 
@@ -275,13 +272,13 @@ abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles:
       ActorSystem(MultiNodeSpec.getCallerName(classOf[MultiNodeSpec]), ConfigFactory.load(config.config)),
       config.roles, config.deployments)
 
-  val log: LoggingAdapter = Logging(system, this.getClass)
+  val log: LoggingAdapter = Logging(system, this.getClass)(LogSource.fromClass)
 
   /**
    * Enrich `.await()` onto all Awaitables, using remaining duration from the innermost
    * enclosing `within` block or QueryTimeout.
    */
-  implicit def awaitHelper[T](w: Awaitable[T]) = new AwaitHelper(w)
+  implicit def awaitHelper[T](w: Awaitable[T]): AwaitHelper[T] = new AwaitHelper(w)
   class AwaitHelper[T](w: Awaitable[T]) {
     def await: T = Await.result(w, remainingOr(testConductor.Settings.QueryTimeout.duration))
   }
@@ -446,7 +443,7 @@ abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles:
             base.replace(tag, replaceWith)
         }
       }
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       ConfigFactory.parseString(deployString).root.asScala.foreach {
         case (key, value: ConfigObject) => deployer.parseConfig(key, value.toConfig).foreach(deployer.deploy)
         case (key, x) =>

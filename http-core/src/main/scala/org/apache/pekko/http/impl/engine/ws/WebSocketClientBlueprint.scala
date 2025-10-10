@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -182,5 +182,5 @@ private[http] object WebSocketClientBlueprint {
   def simpleTls: BidiFlow[SslTlsInbound, ByteString, ByteString, SendBytes, NotUsed] =
     BidiFlow.fromFlowsMat(
       Flow[SslTlsInbound].collect { case SessionBytes(_, bytes) => bytes },
-      Flow[ByteString].map(SendBytes))(Keep.none)
+      Flow[ByteString].map(SendBytes(_)))(Keep.none)
 }

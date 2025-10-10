@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,47 +16,50 @@ package docs.http.javadsl;
 import static org.junit.Assert.assertEquals;
 import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 
-import org.apache.pekko.util.ByteString;
-import org.apache.pekko.stream.ActorMaterializer;
-import org.apache.pekko.stream.Materializer;
 import org.junit.Test;
 
-//#imports
-import org.apache.pekko.http.javadsl.model.*;
+// #imports
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
-//#imports
+// #imports
 
 @SuppressWarnings("unused")
-  public class UnmarshalTest extends JUnitRouteTest {
+public class UnmarshalTest extends JUnitRouteTest {
 
   @Test
   public void useUnmarshal() throws Exception {
-    //#use-unmarshal
-    CompletionStage<Integer> integerStage =
-      StringUnmarshallers.INTEGER.unmarshal("42", system());
-    int integer = integerStage.toCompletableFuture().get(1, TimeUnit.SECONDS); // don't block in non-test code!
+    // #use-unmarshal
+    CompletionStage<Integer> integerStage = StringUnmarshallers.INTEGER.unmarshal("42", system());
+    int integer =
+        integerStage
+            .toCompletableFuture()
+            .get(1, TimeUnit.SECONDS); // don't block in non-test code!
     assertEquals(integer, 42);
 
-    CompletionStage<Boolean> boolStage =
-      StringUnmarshallers.BOOLEAN.unmarshal("off", system());
-    boolean bool = boolStage.toCompletableFuture().get(1, TimeUnit.SECONDS); // don't block in non-test code!
+    CompletionStage<Boolean> boolStage = StringUnmarshallers.BOOLEAN.unmarshal("off", system());
+    boolean bool =
+        boolStage.toCompletableFuture().get(1, TimeUnit.SECONDS); // don't block in non-test code!
     assertEquals(bool, false);
-    //#use-unmarshal
+    // #use-unmarshal
   }
 
   @Test
   public void useUnmarshalWithExecutionContext() throws Exception {
-    CompletionStage<Integer> integerStage = StringUnmarshallers.INTEGER.unmarshal("42", system().dispatcher(), system());
-    int integer = integerStage.toCompletableFuture().get(1, TimeUnit.SECONDS); // don't block in non-test code!
+    CompletionStage<Integer> integerStage =
+        StringUnmarshallers.INTEGER.unmarshal("42", system().dispatcher(), system());
+    int integer =
+        integerStage
+            .toCompletableFuture()
+            .get(1, TimeUnit.SECONDS); // don't block in non-test code!
     assertEquals(integer, 42);
 
-    CompletionStage<Boolean> boolStage = StringUnmarshallers.BOOLEAN.unmarshal("off", system().dispatcher(), system());
-    boolean bool = boolStage.toCompletableFuture().get(1, TimeUnit.SECONDS); // don't block in non-test code!
+    CompletionStage<Boolean> boolStage =
+        StringUnmarshallers.BOOLEAN.unmarshal("off", system().dispatcher(), system());
+    boolean bool =
+        boolStage.toCompletableFuture().get(1, TimeUnit.SECONDS); // don't block in non-test code!
     assertEquals(bool, false);
   }
 }

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -89,7 +89,7 @@ class CodingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // #decodeRequest
     val route =
       decodeRequest {
-        entity(as[String]) { content: String =>
+        entity(as[String]) { (content: String) =>
           complete(s"Request content: '$content'")
         }
       }
@@ -110,7 +110,7 @@ class CodingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // #decodeRequestWith
     val route =
       decodeRequestWith(Coders.Gzip) {
-        entity(as[String]) { content: String =>
+        entity(as[String]) { (content: String) =>
           complete(s"Request content: '$content'")
         }
       }
@@ -131,7 +131,7 @@ class CodingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // #decodeRequestWith
     val route =
       decodeRequestWith(Coders.Gzip, Coders.NoCoding) {
-        entity(as[String]) { content: String =>
+        entity(as[String]) { (content: String) =>
           complete(s"Request content: '$content'")
         }
       }

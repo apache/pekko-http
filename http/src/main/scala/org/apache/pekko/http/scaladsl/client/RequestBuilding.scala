@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,13 +17,14 @@ import scala.collection.immutable
 import scala.concurrent.{ Await, ExecutionContext }
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
+
 import org.apache.pekko
-import pekko.util.Timeout
 import pekko.event.{ Logging, LoggingAdapter }
 import pekko.http.scaladsl.marshalling._
 import pekko.http.scaladsl.model._
-import headers.HttpCredentials
-import HttpMethods._
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.model.headers.HttpCredentials
+import pekko.util.Timeout
 
 trait RequestBuilding extends TransformerPipelineSupport {
   type RequestTransformer = HttpRequest => HttpRequest

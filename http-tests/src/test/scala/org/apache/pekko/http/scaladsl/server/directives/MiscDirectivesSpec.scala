@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,20 +14,21 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import java.net.InetAddress
+
 import scala.concurrent.{ Await, Promise }
 import scala.concurrent.duration._
 import scala.util.Try
+
 import org.apache.pekko
 import pekko.http.scaladsl.model._
-import pekko.testkit._
-import headers._
-import java.net.InetAddress
-
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server.util.VarArgsFunction1
-import scala.annotation.nowarn
+import pekko.testkit._
 
-@nowarn("msg=use remote-address-attribute instead")
 class MiscDirectivesSpec extends RoutingSpec {
+
+  import pekko.http.ccompat.ImplicitUtils._
 
   "the extractClientIP directive" should {
     "extract from a X-Forwarded-For header" in {
@@ -35,18 +36,8 @@ class MiscDirectivesSpec extends RoutingSpec {
         extractClientIP { echoComplete }
       } ~> check { responseAs[String] shouldEqual "2.3.4.5" }
     }
-    "extract from a (synthetic) Remote-Address header" in {
-      Get() ~> addHeader(`Remote-Address`(remoteAddress("1.2.3.4"))) ~> {
-        extractClientIP { echoComplete }
-      } ~> check { responseAs[String] shouldEqual "1.2.3.4" }
-    }
     "extract from a X-Real-IP header" in {
       Get() ~> addHeader(`X-Real-Ip`(remoteAddress("1.2.3.4"))) ~> {
-        extractClientIP { echoComplete }
-      } ~> check { responseAs[String] shouldEqual "1.2.3.4" }
-    }
-    "select X-Real-Ip when both X-Real-Ip and Remote-Address headers are present" in {
-      Get() ~> addHeaders(`X-Real-Ip`(remoteAddress("1.2.3.4")), `Remote-Address`(remoteAddress("5.6.7.8"))) ~> {
         extractClientIP { echoComplete }
       } ~> check { responseAs[String] shouldEqual "1.2.3.4" }
     }
@@ -115,7 +106,7 @@ class MiscDirectivesSpec extends RoutingSpec {
       }
 
       Post("/abc", entityOfSize(501)) ~> Route.seal(route) ~> check {
-        status shouldEqual StatusCodes.PayloadTooLarge
+        status shouldEqual StatusCodes.ContentTooLarge
         entityAs[String] should include("exceeded size limit")
       }
     }
@@ -133,7 +124,7 @@ class MiscDirectivesSpec extends RoutingSpec {
       }
 
       Post("/abc", formDataOfSize(128)) ~> Route.seal(route) ~> check {
-        status shouldEqual StatusCodes.PayloadTooLarge
+        status shouldEqual StatusCodes.ContentTooLarge
         responseAs[String] shouldEqual "The request content was malformed:\n" +
         "EntityStreamSizeException: incoming entity size (134) " +
         "exceeded size limit (64 bytes)! " +
@@ -158,7 +149,7 @@ class MiscDirectivesSpec extends RoutingSpec {
       }
 
       Post("/abc", entityOfSize(801)) ~> Route.seal(route) ~> check {
-        status shouldEqual StatusCodes.PayloadTooLarge
+        status shouldEqual StatusCodes.ContentTooLarge
         entityAs[String] should include("exceeded size limit")
       }
 
@@ -176,7 +167,7 @@ class MiscDirectivesSpec extends RoutingSpec {
       }
 
       Post("/abc", entityOfSize(401)) ~> Route.seal(route2) ~> check {
-        status shouldEqual StatusCodes.PayloadTooLarge
+        status shouldEqual StatusCodes.ContentTooLarge
         entityAs[String] should include("exceeded size limit")
       }
     }

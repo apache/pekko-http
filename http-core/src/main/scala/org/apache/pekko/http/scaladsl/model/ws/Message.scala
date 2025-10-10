@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -22,7 +22,7 @@ import pekko.util.{ ByteString, ByteStringBuilder }
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.compat.java8.FutureConverters._
+import scala.jdk.FutureConverters._
 
 //#message-model
 /**
@@ -60,7 +60,7 @@ sealed trait TextMessage extends pekko.http.javadsl.model.ws.TextMessage with Me
   override def getStreamedText: javadsl.Source[String, _] = textStream.asJava
   override def asScala: TextMessage = this
   override def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[TextMessage.Strict] =
-    toStrict(timeoutMillis.millis)(materializer).toJava
+    toStrict(timeoutMillis.millis)(materializer).asJava
 }
 //#message-model
 object TextMessage {
@@ -120,7 +120,7 @@ sealed trait BinaryMessage extends pekko.http.javadsl.model.ws.BinaryMessage wit
   override def getStreamedData: javadsl.Source[ByteString, _] = dataStream.asJava
   override def asScala: BinaryMessage = this
   override def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[BinaryMessage.Strict] =
-    toStrict(timeoutMillis.millis)(materializer).toJava
+    toStrict(timeoutMillis.millis)(materializer).asJava
 }
 //#message-model
 object BinaryMessage {

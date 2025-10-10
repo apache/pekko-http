@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,9 +14,11 @@
 package org.apache.pekko.http.impl.engine.server
 
 import org.apache.pekko
+import pekko.actor.ActorSystem
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ `Timeout-Access`, Connection }
+import pekko.stream.Materializer
 import pekko.stream.testkit.Utils.assertAllStagesStopped
 import pekko.testkit.ExplicitlyTriggeredScheduler
 import org.scalatest.Inside
@@ -173,8 +175,8 @@ class HttpServerWithExplicitSchedulerSpec extends PekkoSpecWithMaterializer(
   }
 
   class TestSetup(maxContentLength: Int = -1) extends HttpServerTestSetupBase {
-    implicit def system = spec.system
-    implicit def materializer = spec.materializer
+    implicit def system: ActorSystem = spec.system
+    implicit def materializer: Materializer = spec.materializer
     lazy val scheduler = spec.system.scheduler.asInstanceOf[ExplicitlyTriggeredScheduler]
 
     override def settings = {

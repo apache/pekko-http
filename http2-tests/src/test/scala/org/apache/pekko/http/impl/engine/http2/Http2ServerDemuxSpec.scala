@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -12,6 +12,8 @@
  */
 
 package org.apache.pekko.http.impl.engine.http2
+
+import scala.collection.immutable.Seq
 
 import org.apache.pekko
 import pekko.http.impl.engine.http2.FrameEvent.{ ParsedHeadersFrame, Setting, SettingsFrame }
@@ -22,13 +24,10 @@ import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep }
 import pekko.stream.testkit.scaladsl.{ TestSink, TestSource }
 import pekko.util.{ ByteString, OptionVal }
 
-import scala.collection.immutable.Seq
-
 /**
  * low-level tests testing Http2ServerDemux in isolation
  */
 class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
-    pekko.http.server.remote-address-header = on
     pekko.http.server.http2.log-frames = on
     pekko.stream.materializer.debug.fuzzing-mode = on
   """) {
@@ -62,11 +61,11 @@ class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
         Left(ByteString.empty),
         Map.empty))
 
-      frameConsumer.expectNext shouldBe an[SettingsFrame]
+      frameConsumer.expectNext() shouldBe an[SettingsFrame]
       // The client could send an 'ack' here, but doesn't need to
       // frameProducer.sendNext(SettingsAckFrame(frame.asInstanceOf[SettingsFrame].settings))
 
-      frameConsumer.expectNext shouldBe response
+      frameConsumer.expectNext() shouldBe response
     }
   }
 }

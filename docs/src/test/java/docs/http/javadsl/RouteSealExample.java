@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -22,30 +22,26 @@ import org.apache.pekko.http.javadsl.server.Route;
 
 import java.util.concurrent.CompletionStage;
 
-//#route-seal-example
+// #route-seal-example
 public class RouteSealExample extends AllDirectives {
 
-  public static void main(String [] args) {
+  public static void main(String[] args) {
     RouteSealExample app = new RouteSealExample();
     app.runServer();
   }
 
-  public void runServer(){
+  public void runServer() {
     ActorSystem system = ActorSystem.create();
 
-    Route sealedRoute = get(
-      () -> pathSingleSlash( () ->
-        complete("Captain on the bridge!")
-      )
-    ).seal();
+    Route sealedRoute = get(() -> pathSingleSlash(() -> complete("Captain on the bridge!"))).seal();
 
-    Route route = respondWithHeader(
-      RawHeader.create("special-header", "you always have this even in 404"),
-      () -> sealedRoute
-    );
+    Route route =
+        respondWithHeader(
+            RawHeader.create("special-header", "you always have this even in 404"),
+            () -> sealedRoute);
 
     final Http http = Http.get(system);
     final CompletionStage<ServerBinding> binding = http.newServerAt("localhost", 8080).bind(route);
   }
 }
-//#route-seal-example
+// #route-seal-example

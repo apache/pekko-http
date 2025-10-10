@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,14 +13,16 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.annotation.nowarn
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes }
 import pekko.http.scaladsl.server.Directives.complete
-import pekko.stream.{ Materializer, SystemMaterializer }
+import pekko.stream.Materializer
 import pekko.stream.scaladsl.Flow
 import pekko.testkit.TestKit
-import scala.annotation.nowarn
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -36,11 +38,11 @@ class RouteResultSpec extends AnyWordSpec with Matchers {
       TestKit.shutdownActorSystem(system, verifySystemShutdown = true)
     }
 
-    "provide a conversion from Route to Flow when a Materializer is implicitly available" in {
-      val system = ActorSystem("RouteResultSpec1")
-      implicit val materializer: Materializer = SystemMaterializer(system).materializer
+    "provide a conversion from Route to Flow when an ActorSystem is implicitly available" in {
+      implicit val system = ActorSystem("RouteResultSpec1")
 
-      @nowarn("msg=deprecated")
+      // In Pekko-Http 1.x this tested having an implicit Materializer in scope,
+      // but that was deprecated with the suggestion to use the ActorSystem instead.
       val flow: Flow[HttpRequest, HttpResponse, Any] = route
 
       TestKit.shutdownActorSystem(system, verifySystemShutdown = true)

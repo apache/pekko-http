@@ -1,0 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * license agreements; and to You under the Apache License, version 2.0:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * This file is part of the Apache Pekko project, which was derived from Akka.
+ */
+
+/*
+ * Copyright (C) 2009-2020 Lightbend Inc. <http://www.lightbend.com>
+ */
+
+package org.apache.pekko.http.scaladsl.server.util
+
+private[util] abstract class ConstructFromTupleInstances {
+  [#implicit def instance1[[#T1#], R](construct: ([#T1#]) => R): ConstructFromTuple[Tuple1[[#T1#]], R] =
+    new ConstructFromTuple[Tuple1[[#T1#]], R] {
+      def apply(tup: Tuple1[[#T1#]]): R = construct([#tup._1#])
+    }#
+  ]
+}

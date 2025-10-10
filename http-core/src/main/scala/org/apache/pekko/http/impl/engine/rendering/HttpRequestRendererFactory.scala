@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -28,7 +28,7 @@ import pekko.http.scaladsl.model._
 import pekko.http.impl.util._
 import RenderSupport._
 import pekko.annotation.InternalApi
-import headers._
+import pekko.http.scaladsl.model.headers._
 
 /**
  * INTERNAL API
@@ -136,7 +136,7 @@ private[http] class HttpRequestRendererFactory(
       val stream = ctx.sendEntityTrigger match {
         case None => headerPart ++ body
         case Some(future) =>
-          val barrier = Source.fromFuture(future).drop(1).asInstanceOf[Source[ByteString, Any]]
+          val barrier = Source.future(future).drop(1).asInstanceOf[Source[ByteString, Any]]
           (headerPart ++ barrier ++ body).recoverWithRetries(-1,
             { case HttpResponseParser.OneHundredContinueError => Source.empty })
       }

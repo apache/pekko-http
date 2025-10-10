@@ -4,18 +4,16 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
  * Copyright (C) 2009-2020 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.pekko
-
 import java.io._
 
-import org.apache.pekko.MimaWithPrValidation.{ MimaResult, NoErrors, Problems }
+import MimaWithPrValidation.{ MimaResult, NoErrors, Problems }
 import net.virtualvoid.sbt.graph.ModuleGraph
 import net.virtualvoid.sbt.graph.backend.SbtUpdateReport
 import org.kohsuke.github.GHIssueComment
@@ -160,7 +158,7 @@ object ValidatePullRequest extends AutoPlugin {
         try {
           import scala.collection.JavaConverters._
           val gh = GitHubBuilder.fromEnvironment().withOAuthToken(GitHub.envTokenOrThrow).build()
-          val comments = gh.getRepository("apache/incubator-pekko-http").getIssue(prId).getComments.asScala
+          val comments = gh.getRepository("apache/pekko-http").getIssue(prId).getComments.asScala
 
           def triggersBuildAll(c: GHIssueComment): Boolean = buildAllMagicPhrase.findFirstIn(c.getBody).isDefined
           comments.collectFirst {

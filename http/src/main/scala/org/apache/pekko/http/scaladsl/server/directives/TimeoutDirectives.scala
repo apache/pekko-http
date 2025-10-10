@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,11 +13,12 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import scala.concurrent.duration.Duration
+
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.`Timeout-Access`
 import pekko.http.scaladsl.server.{ Directive, Directive0, Directive1 }
-import scala.concurrent.duration.Duration
 
 /**
  * @groupname timeout Timeout directives
@@ -34,7 +35,7 @@ trait TimeoutDirectives {
    */
   def extractRequestTimeout: Directive1[Duration] = Directive { inner => ctx =>
     val timeout = ctx.request.header[`Timeout-Access`] match {
-      case Some(t) => t.timeoutAccess.getTimeout
+      case Some(t) => t.timeoutAccess.timeout
       case _ =>
         ctx.log.warning("extractRequestTimeout was used in route however no request-timeout is set!")
         Duration.Inf

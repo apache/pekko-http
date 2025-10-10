@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,6 +14,7 @@
 package org.apache.pekko.http.impl.engine.server
 
 import org.apache.pekko
+import pekko.actor.ActorSystem
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.model.HttpEntity.Chunked
 import pekko.http.scaladsl.model.HttpMethods._
@@ -35,7 +36,7 @@ class HttpServerBug21008Spec extends PekkoSpecWithMaterializer(
 
     "not cause internal graph failures when consuming a `100 Continue` entity triggers a failure" in assertAllStagesStopped(
       new HttpServerTestSetupBase {
-        override implicit def system = HttpServerBug21008Spec.this.system
+        override implicit def system: ActorSystem = HttpServerBug21008Spec.this.system
         override implicit def materializer: Materializer = HttpServerBug21008Spec.this.materializer
 
         send("""POST / HTTP/1.1

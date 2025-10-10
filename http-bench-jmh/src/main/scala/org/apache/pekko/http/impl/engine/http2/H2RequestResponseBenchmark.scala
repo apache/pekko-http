@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,10 +13,11 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import org.openjdk.jmh.annotations.Param
+
 import org.apache.pekko
 import pekko.http.impl.engine.http2.FrameEvent.{ DataFrame, HeadersFrame }
 import pekko.http.impl.engine.http2.framing.FrameRenderer
-import pekko.http.scaladsl.model.HttpEntity.{ Chunk, LastChunk }
 import pekko.http.scaladsl.model.{
   AttributeKeys,
   ContentTypes,
@@ -26,11 +27,12 @@ import pekko.http.scaladsl.model.{
   HttpResponse,
   Trailer
 }
+import pekko.http.scaladsl.model.HttpEntity.{ Chunk, LastChunk }
 import pekko.http.scaladsl.model.headers.RawHeader
 import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
+
 import com.typesafe.config.ConfigFactory
-import org.openjdk.jmh.annotations.Param
 
 trait H2RequestResponseBenchmark extends HPackEncodingSupport {
   @Param(Array("1"))

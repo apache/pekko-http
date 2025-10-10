@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -21,10 +21,10 @@ import org.scalatestplus.junit.JUnitSuite;
 
 public class RoutingSettingsTest extends JUnitSuite {
 
-    @Test
-    public void testCreateWithActorSystem() {
-        Config config = ConfigFactory.load().resolve();
-        ActorSystem sys = ActorSystem.create("test", config);
-        RoutingSettings settings = RoutingSettings.create(sys);
-    }
+  @Test
+  public void testCreateWithActorSystem() {
+    Config config = ConfigFactory.load().resolve();
+    ActorSystem sys = ActorSystem.create("test", config);
+    RoutingSettings settings = RoutingSettings.create(sys);
+  }
 }

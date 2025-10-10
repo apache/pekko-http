@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -99,7 +99,7 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
       r.attribute(AttributeKeys.trailer) match {
         case Some(trailer) if trailer.headers.nonEmpty =>
           OptionVal.Some(ParsedHeadersFrame(streamId, endStream = true, trailer.headers, None))
-        case None => OptionVal.None
+        case _ => OptionVal.None
       }
 
     Http2SubStream(r.entity, headersFrame, trailingHeadersFrame,

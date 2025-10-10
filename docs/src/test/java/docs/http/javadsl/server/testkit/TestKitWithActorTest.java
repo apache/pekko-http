@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,7 +13,7 @@
 
 package docs.http.javadsl.server.testkit;
 
-//#testkit-actor-integration
+// #testkit-actor-integration
 import org.apache.pekko.actor.testkit.typed.javadsl.TestProbe;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Adapter;
@@ -26,19 +26,20 @@ import org.junit.Test;
 
 public class TestKitWithActorTest extends JUnitRouteTest {
 
-    @Test
-    public void returnPongForGetPing() {
-        // This test does not use the classic APIs,
-        // so it needs to adapt the system:
-        ActorSystem<Void> system = Adapter.toTyped(system());
+  @Test
+  public void returnPongForGetPing() {
+    // This test does not use the classic APIs,
+    // so it needs to adapt the system:
+    ActorSystem<Void> system = Adapter.toTyped(system());
 
-        TestProbe<MyAppWithActor.Ping> probe = TestProbe.create(system);
-        TestRoute testRoute = testRoute(new MyAppWithActor().createRoute(probe.getRef(), system.scheduler()));
+    TestProbe<MyAppWithActor.Ping> probe = TestProbe.create(system);
+    TestRoute testRoute =
+        testRoute(new MyAppWithActor().createRoute(probe.getRef(), system.scheduler()));
 
-        TestRouteResult result = testRoute.run(HttpRequest.GET("/ping"));
-        MyAppWithActor.Ping ping = probe.expectMessageClass(MyAppWithActor.Ping.class);
-        ping.replyTo.tell("PONG!");
-        result.assertEntity("PONG!");
-    }
+    TestRouteResult result = testRoute.run(HttpRequest.GET("/ping"));
+    MyAppWithActor.Ping ping = probe.expectMessageClass(MyAppWithActor.Ping.class);
+    ping.replyTo.tell("PONG!");
+    result.assertEntity("PONG!");
+  }
 }
-//#testkit-actor-integration
+// #testkit-actor-integration

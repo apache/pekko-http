@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,22 +13,22 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.concurrent.{ ExecutionContextExecutor, Future }
+
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
-
-import scala.concurrent.{ ExecutionContextExecutor, Future }
-import pekko.stream.Materializer
 import pekko.event.LoggingAdapter
 import pekko.http.scaladsl.marshalling.ToResponseMarshallable
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.settings.{ ParserSettings, RoutingSettings }
+import pekko.stream.Materializer
 
 /**
  * This class is not meant to be extended by user code.
  *
  * Immutable object encapsulating the context of an [[pekko.http.scaladsl.model.HttpRequest]]
- * as it flows through a akka-http Route structure.
+ * as it flows through a pekko-http Route structure.
  */
 @DoNotInherit
 trait RequestContext {

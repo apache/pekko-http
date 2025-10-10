@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -143,12 +143,12 @@ object MediaType {
     val _params = params
     new Binary(renderValue(mainType, subType, params), mainType, subType, comp, fileExtensions) {
       override def params = _params
-      override def isApplication = mainType == "application"
-      override def isAudio = mainType == "audio"
-      override def isImage = mainType == "image"
-      override def isMessage = mainType == "message"
-      override def isText = mainType == "text"
-      override def isVideo = mainType == "video"
+      override def isApplication = this.mainType == "application"
+      override def isAudio = this.mainType == "audio"
+      override def isImage = this.mainType == "image"
+      override def isMessage = this.mainType == "message"
+      override def isText = this.mainType == "text"
+      override def isVideo = this.mainType == "video"
     }
   }
 
@@ -162,12 +162,12 @@ object MediaType {
     val _params = params
     new WithFixedCharset(renderValue(mainType, subType, params), mainType, subType, charset, fileExtensions) {
       override def params = _params
-      override def isApplication = mainType == "application"
-      override def isAudio = mainType == "audio"
-      override def isImage = mainType == "image"
-      override def isMessage = mainType == "message"
-      override def isText = mainType == "text"
-      override def isVideo = mainType == "video"
+      override def isApplication = this.mainType == "application"
+      override def isAudio = this.mainType == "audio"
+      override def isImage = this.mainType == "image"
+      override def isMessage = this.mainType == "message"
+      override def isText = this.mainType == "text"
+      override def isVideo = this.mainType == "video"
     }
   }
 
@@ -180,12 +180,12 @@ object MediaType {
     val _params = params
     new NonMultipartWithOpenCharset(renderValue(mainType, subType, params), mainType, subType, fileExtensions) {
       override def params = _params
-      override def isApplication = mainType == "application"
-      override def isAudio = mainType == "audio"
-      override def isImage = mainType == "image"
-      override def isMessage = mainType == "message"
-      override def isText = mainType == "text"
-      override def isVideo = mainType == "video"
+      override def isApplication = this.mainType == "application"
+      override def isAudio = this.mainType == "audio"
+      override def isImage = this.mainType == "image"
+      override def isMessage = this.mainType == "message"
+      override def isText = this.mainType == "text"
+      override def isVideo = this.mainType == "video"
     }
   }
 
@@ -207,7 +207,7 @@ object MediaType {
    * Returns `Right(mediaType)` if successful and `Left(errors)` otherwise.
    */
   def parse(value: String): Either[List[ErrorInfo], MediaType] =
-    ContentType.parse(value).right.map(_.mediaType)
+    ContentType.parse(value).map(_.mediaType)
 
   def unapply(mediaType: MediaType): Option[String] = Some(mediaType.value)
 
@@ -340,7 +340,7 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
     mediaType
   }
 
-  private def register[T <: MediaType](mediaType: T): T = {
+  private def register(mediaType: MediaType): mediaType.type = {
     registerFileExtensions(mediaType)
     register(mediaType.mainType.toRootLowerCase -> mediaType.subType.toRootLowerCase, mediaType)
   }
@@ -367,13 +367,9 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
   val `application/atom+xml`                                                      = awoc("atom+xml", "atom")
   val `application/base64`                                                        = awoc("base64", "mm", "mme")
   val `application/cbor`                                                          = abin("cbor", Compressible, "cbor")
-  @deprecated("This format is unofficial and should not be used. Use application/vnd.ms-excel instead.", "Akka HTTP 10.1.6")
-  val `application/excel`                                                         = abin("excel", NotCompressible)
-  @deprecated("This format is unofficial and should not be used. Use font/woff instead.", "Akka HTTP 10.1.7")
-  val `application/font-woff`                                                     = abin("font-woff", NotCompressible)
   val `application/gnutar`                                                        = abin("gnutar", NotCompressible, "tgz")
   val `application/java-archive`                                                  = abin("java-archive", NotCompressible, "jar", "war", "ear")
-  val `application/javascript`                                                    = awoc("javascript", "js")
+  val `application/javascript`                                                    = awoc("javascript", "js", "mjs")
   val `application/json`                                                          = awfc("json", HttpCharsets.`UTF-8`, "json")
   val `application/json-patch+json`                                               = awfc("json-patch+json", HttpCharsets.`UTF-8`)
   val `application/merge-patch+json`                                              = awfc("merge-patch+json", HttpCharsets.`UTF-8`)
@@ -381,8 +377,6 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
   val `application/grpc+proto`                                                    = abin("grpc+proto", NotCompressible)
   val `application/lha`                                                           = abin("lha", NotCompressible, "lha")
   val `application/lzx`                                                           = abin("lzx", NotCompressible, "lzx")
-  @deprecated("This format is unofficial and should not be used. Use application/vnd.ms-powerpoint instead.", "Akka HTTP 10.1.6")
-  val `application/mspowerpoint`                                                  = abin("mspowerpoint", NotCompressible)
   val `application/msword`                                                        = abin("msword", NotCompressible, "doc", "dot", "w6w", "wiz", "word", "wri")
   val `application/octet-stream`                                                  = abin("octet-stream", NotCompressible, "a", "bin", "class", "dump", "exe", "lhx", "lzh", "o", "psd", "saveme", "zoo")
   val `application/pdf`                                                           = abin("pdf", NotCompressible, "pdf")

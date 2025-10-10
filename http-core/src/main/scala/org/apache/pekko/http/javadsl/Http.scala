@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -18,10 +18,9 @@ import java.util.Optional
 import java.util.concurrent.CompletionStage
 
 import scala.concurrent.Future
-import scala.compat.java8.FutureConverters._
-import scala.compat.java8.OptionConverters._
+import scala.jdk.FutureConverters._
 import scala.util.Try
-import com.typesafe.sslconfig.pekko.PekkoSSLConfig
+
 import org.apache.pekko
 import pekko.{ stream, NotUsed }
 import pekko.actor.{ ActorSystem, ClassicActorSystemProvider, ExtendedActorSystem, ExtensionId, ExtensionIdProvider }
@@ -37,7 +36,7 @@ import pekko.http.javadsl.settings.{ ClientConnectionSettings, ConnectionPoolSet
 import pekko.japi.Pair
 import pekko.stream.TLSProtocol._
 import pekko.stream.Materializer
-import pekko.stream.javadsl.{ BidiFlow, Flow, Source }
+import pekko.stream.javadsl.{ BidiFlow, Flow }
 import pekko.stream.scaladsl.Keep
 
 object Http extends ExtensionId[Http] with ExtensionIdProvider {
@@ -48,13 +47,11 @@ object Http extends ExtensionId[Http] with ExtensionIdProvider {
 }
 
 class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
-  import pekko.dispatch.ExecutionContexts.{ sameThreadExecutionContext => ec }
+  import scala.concurrent.ExecutionContext.{ parasitic => ec }
 
   import language.implicitConversions
   private implicit def completionStageCovariant[T, U >: T](in: CompletionStage[T]): CompletionStage[U] =
     in.asInstanceOf[CompletionStage[U]]
-  private implicit def javaModelIsScalaModel[J <: AnyRef, S <: J](in: Future[J])(
-      implicit ev: JavaMapping.Inherited[J, S]): Future[S] = ev.downcast(in)
 
   private lazy val delegate = pekko.http.scaladsl.Http(system)
 
@@ -75,8 +72,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
 
   /**
    * Constructs a server layer stage using the given [[pekko.http.javadsl.settings.ServerSettings]]. The returned [[pekko.stream.javadsl.BidiFlow]] isn't reusable and
-   * can only be materialized once. The `remoteAddress`, if provided, will be added as a header to each [[HttpRequest]]
-   * this layer produces if the `pekko.http.server.remote-address-header` configuration option is enabled.
+   * can only be materialized once.
    */
   def serverLayer(
       settings: ServerSettings,
@@ -86,8 +82,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
 
   /**
    * Constructs a server layer stage using the given [[ServerSettings]]. The returned [[pekko.stream.javadsl.BidiFlow]] isn't reusable and
-   * can only be materialized once. The remoteAddress, if provided, will be added as a header to each [[HttpRequest]]
-   * this layer produces if the `pekko.http.server.remote-address-header` configuration option is enabled.
+   * can only be materialized once.
    */
   def serverLayer(
       settings: ServerSettings,
@@ -102,248 +97,6 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * @param port The port to bind to or `0` if the port should be automatically assigned.
    */
   def newServerAt(interface: String, port: Int): ServerBuilder = ServerBuilder(interface, port, system)
-
-  /**
-   * Creates a [[pekko.stream.javadsl.Source]] of [[IncomingConnection]] instances which represents a prospective HTTP server binding
-   * on the given `endpoint`.
-   *
-   * If the given port is 0 the resulting source can be materialized several times. Each materialization will
-   * then be assigned a new local port by the operating system, which can then be retrieved by the materialized
-   * [[ServerBinding]].
-   *
-   * If the given port is non-zero subsequent materialization attempts of the produced source will immediately
-   * fail, unless the first materialization has already been unbound. Unbinding can be triggered via the materialized
-   * [[ServerBinding]].
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).connectionSource() instead
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bind(connect: ConnectHttp): Source[IncomingConnection, CompletionStage[ServerBinding]] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    new Source(delegate.bind(connect.host, connect.port, connectionContext)
-      .map(new IncomingConnection(_))
-      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).toJava))
-  }
-
-  /**
-   * Creates a [[pekko.stream.javadsl.Source]] of [[IncomingConnection]] instances which represents a prospective HTTP server binding
-   * on the given `endpoint`.
-   *
-   * If the given port is 0 the resulting source can be materialized several times. Each materialization will
-   * then be assigned a new local port by the operating system, which can then be retrieved by the materialized
-   * [[ServerBinding]].
-   *
-   * If the given port is non-zero subsequent materialization attempts of the produced source will immediately
-   * fail, unless the first materialization has already been unbound. Unbinding can be triggered via the materialized
-   * [[ServerBinding]].
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).connectionSource() instead
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bind(
-      connect: ConnectHttp,
-      settings: ServerSettings): Source[IncomingConnection, CompletionStage[ServerBinding]] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    new Source(delegate.bind(connect.host, connect.port, settings = settings.asScala,
-      connectionContext = connectionContext)
-      .map(new IncomingConnection(_))
-      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).toJava))
-  }
-
-  /**
-   * Creates a [[pekko.stream.javadsl.Source]] of [[IncomingConnection]] instances which represents a prospective HTTP server binding
-   * on the given `endpoint`.
-   *
-   * If the given port is 0 the resulting source can be materialized several times. Each materialization will
-   * then be assigned a new local port by the operating system, which can then be retrieved by the materialized
-   * [[ServerBinding]].
-   *
-   * If the given port is non-zero subsequent materialization attempts of the produced source will immediately
-   * fail, unless the first materialization has already been unbound. Unbinding can be triggered via the materialized
-   * [[ServerBinding]].
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).logTo(log).connectionSource() instead
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bind(
-      connect: ConnectHttp,
-      settings: ServerSettings,
-      log: LoggingAdapter): Source[IncomingConnection, CompletionStage[ServerBinding]] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    new Source(delegate.bind(connect.host, connect.port, connectionContext, settings.asScala, log)
-      .map(new IncomingConnection(_))
-      .mapMaterializedValue(_.map(new ServerBinding(_))(ec).toJava))
-  }
-
-  /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * [[pekko.stream.javadsl.Flow]] for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).bindFlow(handler) instead.
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bindAndHandle(
-      handler: Flow[HttpRequest, HttpResponse, _],
-      connect: ConnectHttp,
-      materializer: Materializer): CompletionStage[ServerBinding] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    delegate.bindAndHandle(
-      handler.asInstanceOf[Flow[sm.HttpRequest, sm.HttpResponse, _]].asScala,
-      connect.host, connect.port, connectionContext)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
-  }
-
-  /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * [[pekko.stream.javadsl.Flow]] for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).logTo(log).bindFlow(handler) instead.
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bindAndHandle(
-      handler: Flow[HttpRequest, HttpResponse, _],
-      connect: ConnectHttp,
-      settings: ServerSettings,
-      log: LoggingAdapter,
-      materializer: Materializer): CompletionStage[ServerBinding] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    delegate.bindAndHandle(
-      handler.asInstanceOf[Flow[sm.HttpRequest, sm.HttpResponse, _]].asScala,
-      connect.host, connect.port, connectionContext, settings.asScala, log)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
-  }
-
-  /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * function for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).bindSync(handler) instead
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bindAndHandleSync(
-      handler: pekko.japi.Function[HttpRequest, HttpResponse],
-      connect: ConnectHttp,
-      materializer: Materializer): CompletionStage[ServerBinding] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    delegate.bindAndHandleSync(handler.apply(_).asScala, connect.host, connect.port, connectionContext)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
-  }
-
-  /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * function for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).logTo(log).bindSync(handler) instead
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bindAndHandleSync(
-      handler: pekko.japi.Function[HttpRequest, HttpResponse],
-      connect: ConnectHttp,
-      settings: ServerSettings,
-      log: LoggingAdapter,
-      materializer: Materializer): CompletionStage[ServerBinding] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    delegate.bindAndHandleSync(
-      handler.apply(_).asScala,
-      connect.host, connect.port, connectionContext, settings.asScala, log)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
-  }
-
-  /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * function for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).bind(handler) instead
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bindAndHandleAsync(
-      handler: pekko.japi.Function[HttpRequest, CompletionStage[HttpResponse]],
-      connect: ConnectHttp,
-      materializer: Materializer): CompletionStage[ServerBinding] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    delegate.bindAndHandleAsync(handler.apply(_).toScala, connect.host, connect.port, connectionContext)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
-  }
-
-  /**
-   * Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
-   * function for processing all incoming connections.
-   *
-   * The number of concurrently accepted connections can be configured by overriding
-   * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
-   * information about what kind of guarantees to expect.
-   *
-   * The server will be bound using HTTPS if the [[ConnectHttp]] object is configured with an [[HttpsConnectionContext]],
-   * or the [[defaultServerHttpContext]] has been configured to be an [[HttpsConnectionContext]].
-   *
-   * @deprecated since Akka HTTP 10.2.0: Use Http.get(system).newServerAt(interface, port).withSettings(settings).logTo(log).bind(handler) instead
-   */
-  @Deprecated
-  @deprecated("Use newServerAt instead", since = "Akka HTTP 10.2.0")
-  def bindAndHandleAsync(
-      handler: pekko.japi.Function[HttpRequest, CompletionStage[HttpResponse]],
-      connect: ConnectHttp,
-      settings: ServerSettings,
-      parallelism: Int, log: LoggingAdapter,
-      materializer: Materializer): CompletionStage[ServerBinding] = {
-    val connectionContext = connect.effectiveConnectionContext(defaultServerHttpContext).asScala
-    delegate.bindAndHandleAsync(
-      handler.apply(_).toScala,
-      connect.host, connect.port, connectionContext, settings.asScala, parallelism, log)(materializer)
-      .map(new ServerBinding(_))(ec).toJava
-  }
 
   /**
    * Constructs a client layer stage using the configured default [[pekko.http.javadsl.settings.ClientConnectionSettings]].
@@ -641,7 +394,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * the future will be completed with an error.
    */
   def singleRequest(request: HttpRequest): CompletionStage[HttpResponse] =
-    delegate.singleRequest(request.asScala).toJava
+    delegate.singleRequest(request.asScala).asJava
 
   /**
    * Fires a single [[HttpRequest]] across the (cached) host connection pool for the request's
@@ -653,7 +406,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * the future will be completed with an error.
    */
   def singleRequest(request: HttpRequest, connectionContext: HttpsConnectionContext): CompletionStage[HttpResponse] =
-    delegate.singleRequest(request.asScala, connectionContext.asScala).toJava
+    delegate.singleRequest(request.asScala, connectionContext.asScala).asJava
 
   /**
    * Fires a single [[HttpRequest]] across the (cached) host connection pool for the request's
@@ -669,7 +422,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
       connectionContext: HttpsConnectionContext,
       settings: ConnectionPoolSettings,
       log: LoggingAdapter): CompletionStage[HttpResponse] =
-    delegate.singleRequest(request.asScala, connectionContext.asScala, settings.asScala, log).toJava
+    delegate.singleRequest(request.asScala, connectionContext.asScala, settings.asScala, log).asJava
 
   /**
    * Constructs a WebSocket [[pekko.stream.javadsl.BidiFlow]].
@@ -796,27 +549,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * If existing pool client flows are re-used or new ones materialized concurrently with or after this
    * method call the respective connection pools will be restarted and not contribute to the returned future.
    */
-  def shutdownAllConnectionPools(): CompletionStage[Unit] = delegate.shutdownAllConnectionPools().toJava
-
-  /**
-   * Gets the current default server-side [[ConnectionContext]] – defaults to plain HTTP.
-   * Can be modified using [[setDefaultServerHttpContext]], and will then apply for servers bound after that call has completed.
-   *
-   * @deprecated since Akka HTTP 10.2.0: set context explicitly when binding
-   */
-  @Deprecated @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
-  def defaultServerHttpContext: ConnectionContext =
-    delegate.defaultServerHttpContext
-
-  /**
-   * Sets the default server-side [[ConnectionContext]].
-   * If it is an instance of [[HttpsConnectionContext]] then the server will be bound using HTTPS.
-   *
-   * @deprecated since Akka HTTP 10.2.0: set context explicitly when binding
-   */
-  @Deprecated @deprecated("Set context explicitly when binding", since = "Akka HTTP 10.2.0")
-  def setDefaultServerHttpContext(context: ConnectionContext): Unit =
-    delegate.setDefaultServerHttpContext(context.asScala)
+  def shutdownAllConnectionPools(): CompletionStage[Unit] = delegate.shutdownAllConnectionPools().asJava
 
   /**
    * Gets the current default client-side [[ConnectionContext]].
@@ -829,22 +562,10 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
   def setDefaultClientHttpsContext(context: HttpsConnectionContext): Unit =
     delegate.setDefaultClientHttpsContext(context.asScala)
 
-  @deprecated("use ConnectionContext.httpsServer", since = "10.2.0")
-  def createServerHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext =
-    delegate.createServerHttpsContext(sslConfig)
-
-  @deprecated("use ConnectionContext.httpsClient", since = "10.2.0")
-  def createClientHttpsContext(sslConfig: PekkoSSLConfig): HttpsConnectionContext =
-    delegate.createClientHttpsContext(sslConfig)
-
-  @deprecated("use ConnectionContext.httpsClient", since = "10.2.0")
-  def createDefaultClientHttpsContext(): HttpsConnectionContext =
-    delegate.createDefaultClientHttpsContext()
-
   private def adaptTupleFlow[T, Mat](
       scalaFlow: stream.scaladsl.Flow[(scaladsl.model.HttpRequest, T), (Try[scaladsl.model.HttpResponse], T), Mat])
       : Flow[Pair[HttpRequest, T], Pair[Try[HttpResponse], T], Mat] = {
-    implicit def id[X] = JavaMapping.identity[X]
+    implicit def id[X]: JavaMapping[X, X] = JavaMapping.identity[X]
     JavaMapping.toJava(scalaFlow)(JavaMapping.flowMapping[Pair[HttpRequest, T], (scaladsl.model.HttpRequest, T), Pair[
         Try[HttpResponse], T], (Try[scaladsl.model.HttpResponse], T), Mat, Mat])
   }
@@ -855,7 +576,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     Flow.fromGraph {
       pekko.stream.scaladsl.Flow[HttpRequest].map(_.asScala)
         .viaMat(scalaFlow)(Keep.right)
-        .mapMaterializedValue(_.map(new OutgoingConnection(_))(ec).toJava)
+        .mapMaterializedValue(_.map(new OutgoingConnection(_))(ec).asJava)
     }
 
   private def adaptServerLayer(serverLayer: scaladsl.Http.ServerLayer)
@@ -897,5 +618,5 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     }
   private def adaptWsUpgradeResponse(
       responseFuture: Future[scaladsl.model.ws.WebSocketUpgradeResponse]): CompletionStage[WebSocketUpgradeResponse] =
-    responseFuture.map(WebSocketUpgradeResponse.adapt)(system.dispatcher).toJava
+    responseFuture.map(WebSocketUpgradeResponse.adapt)(system.dispatcher).asJava
 }

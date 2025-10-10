@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,22 +13,23 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.caching.scaladsl.{ CachingSettings, LfuCacheSettings }
 import pekko.http.impl.util._
-import pekko.http.scaladsl.model.HttpMethods.GET
-import pekko.http.scaladsl.model.headers.CacheDirectives._
-import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.model.{ HttpResponse, Uri }
-import pekko.http.scaladsl.server.Directives._
+import pekko.http.scaladsl.model.HttpMethods.GET
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.server.{ ExceptionHandler, RequestContext, RouteResult }
+import pekko.http.scaladsl.server.Directives._
 import pekko.http.scaladsl.testkit.ScalatestRouteTest
 import pekko.testkit._
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-
-import scala.concurrent.Future
-import scala.concurrent.duration._
 
 class CachingDirectivesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest with CachingDirectives {
 

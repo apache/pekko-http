@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,9 +17,10 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.{ ActorSystem, ClassicActorSystemProvider }
 import pekko.annotation.InternalApi
+import pekko.http.impl.util.LogByteStringTools
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.stream.testkit.TestSubscriber
-import pekko.util.{ ByteString, PrettyByteString }
+import pekko.util.ByteString
 
 import scala.annotation.tailrec
 import scala.concurrent.duration.FiniteDuration
@@ -82,8 +83,8 @@ private[http] object ByteStringSinkProbe {
           catch {
             case ex if ex.getMessage.contains("Expected OnNext") =>
               throw new AssertionError(
-                s"Expected [$length] bytes but only got [${inBuffer.size}] bytes\n${PrettyByteString.asPretty(
-                    inBuffer).prettyPrint(1024)}")
+                s"Expected [$length] bytes but only got [${inBuffer.size}] bytes\n${LogByteStringTools.printByteString(
+                    inBuffer, 1024)}")
           }
           expectBytes(length)
         }
@@ -92,10 +93,10 @@ private[http] object ByteStringSinkProbe {
         val got = expectBytes(expected.length)
         val details =
           "Expected: \n" +
-          PrettyByteString.asPretty(expected).prettyPrint(1024) +
+          LogByteStringTools.printByteString(expected, 1024) +
           "\n" +
           "But got: \n" +
-          PrettyByteString.asPretty(got).prettyPrint(1024)
+          LogByteStringTools.printByteString(got, 1024)
 
         assert(got == expected, s"expected ${expected.length} bytes, but got ${got.length} bytes \n$details")
       }

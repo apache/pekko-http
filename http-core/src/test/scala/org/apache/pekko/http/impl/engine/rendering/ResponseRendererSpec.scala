@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -23,12 +23,11 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.NoLogging
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpEntity._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util._
 import pekko.util.ByteString
 import pekko.stream.scaladsl._
-import pekko.stream.ActorMaterializer
-import HttpEntity._
 import pekko.http.impl.engine.rendering.ResponseRenderingContext.CloseRequested
 import pekko.http.impl.util.Rendering.CrLf
 import pekko.testkit._
@@ -39,12 +38,11 @@ import scala.util.{ Success, Try }
 
 class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll {
   val testConf: Config = ConfigFactory.parseString("""
-    pekko.event-handlers = ["org.apache.pekko.testkit.TestEventListener"]
+    pekko.event-handlers = ["pekko.testkit.TestEventListener"]
     pekko.loglevel = WARNING""")
-  implicit val system = ActorSystem(getClass.getSimpleName, testConf)
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
 
   val ServerOnTheMove = StatusCodes.custom(330, "Server on the move")
-  implicit val materializer = ActorMaterializer()
 
   "The response preparation logic should properly render" - {
     "a response with no body," - {

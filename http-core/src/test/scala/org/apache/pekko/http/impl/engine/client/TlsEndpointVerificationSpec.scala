@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -41,24 +41,24 @@ class TlsEndpointVerificationSpec extends PekkoSpecWithMaterializer("""
 
   "The client implementation" should {
     "not accept certificates signed by unknown CA" in {
-      val pipe = pipeline(Http().defaultClientHttpsContext, hostname = "akka.example.org") // default context doesn't include custom CA
+      val pipe = pipeline(Http().defaultClientHttpsContext, hostname = "pekko.example.org") // default context doesn't include custom CA
 
-      whenReady(pipe(HttpRequest(uri = "https://akka.example.org/")).failed, timeout) { e =>
+      whenReady(pipe(HttpRequest(uri = "https://pekko.example.org/")).failed, timeout) { e =>
         e shouldBe an[Exception]
       }
     }
     "accept certificates signed by known CA" in {
-      val pipe = pipeline(ExampleHttpContexts.exampleClientContext, hostname = "akka.example.org") // example context does include custom CA
+      val pipe = pipeline(ExampleHttpContexts.exampleClientContext, hostname = "pekko.example.org") // example context does include custom CA
 
-      whenReady(pipe(HttpRequest(uri = "https://akka.example.org:8080/")), timeout) { response =>
+      whenReady(pipe(HttpRequest(uri = "https://pekko.example.org:8080/")), timeout) { response =>
         response.status shouldEqual StatusCodes.OK
         val tlsInfo = response.attribute(AttributeKeys.sslSession).get
-        tlsInfo.peerPrincipal.get.getName shouldEqual "CN=akka.example.org,O=Internet Widgits Pty Ltd,ST=Some-State,C=AU"
+        tlsInfo.peerPrincipal.get.getName shouldEqual "CN=pekko.example.org,O=Apache Foundation"
       }
     }
     "not accept certificates for foreign hosts" in {
       // We try to connect to 'hijack.de', but this connection is hijacked by a suspicious server
-      // identifying as akka.example.org ;)
+      // identifying as pekko.example.org ;)
       val pipe = pipeline(ExampleHttpContexts.exampleClientContext, hostname = "hijack.de") // example context does include custom CA
 
       whenReady(pipe(HttpRequest(uri = "https://hijack.de/")).failed, timeout) { e =>
@@ -99,13 +99,13 @@ class TlsEndpointVerificationSpec extends PekkoSpecWithMaterializer("""
       val clientConnectionContext = ConnectionContext.httpsClient(createInsecureSslEngine _)
 
       // We try to connect to 'hijack.de', and even though this connection is hijacked by a suspicious server
-      // identifying as akka.example.org we want to connect anyway
+      // identifying as pekko.example.org we want to connect anyway
       val pipe = pipeline(clientConnectionContext, hostname = "hijack.de")
 
       whenReady(pipe(HttpRequest(uri = "https://hijack.de:8080/")), timeout) { response =>
         response.status shouldEqual StatusCodes.OK
         val tlsInfo = response.attribute(AttributeKeys.sslSession).get
-        tlsInfo.peerPrincipal.get.getName shouldEqual "CN=akka.example.org,O=Internet Widgits Pty Ltd,ST=Some-State,C=AU"
+        tlsInfo.peerPrincipal.get.getName shouldEqual "CN=pekko.example.org,O=Apache Foundation"
       }
     }
 
@@ -146,7 +146,7 @@ class TlsEndpointVerificationSpec extends PekkoSpecWithMaterializer("""
     val handler: HttpRequest => HttpResponse = { req =>
       // verify Tls-Session-Info header information
       val name = req.attribute(AttributeKeys.sslSession).flatMap(_.localPrincipal).map(_.getName)
-      if (name.exists(_ == "CN=akka.example.org,O=Internet Widgits Pty Ltd,ST=Some-State,C=AU")) HttpResponse()
+      if (name.contains("CN=pekko.example.org,O=Apache Foundation")) HttpResponse()
       else HttpResponse(StatusCodes.BadRequest, entity = "Tls-Session-Info header verification failed")
     }
 

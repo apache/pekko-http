@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -24,49 +24,44 @@ import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.Provid
 import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.apache.pekko.http.scaladsl.model.headers.Authorization;
 
-//#basic-authenticator-java
+// #basic-authenticator-java
 import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasic;
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
-//#basic-authenticator-java
+// #basic-authenticator-java
 
 public class HttpBasicAuthenticatorExample extends JUnitRouteTest {
 
-    private final String hardcodedPassword = "correcthorsebatterystaple";
-    
-    private Optional<String> authenticate(Optional<ProvidedCredentials> creds) {
-        // this is where your actual authentication logic would go
-        return creds
-            .filter(c -> c.verify(hardcodedPassword))  // Only allow users that provide the right password
-            .map(c -> c.identifier());                 // Provide the username down to the inner route
-    }
+  private final String hardcodedPassword = "correcthorsebatterystaple";
 
-    @Test
-    public void testBasicAuthenticator() {
-        //#basic-authenticator-java
+  private Optional<String> authenticate(Optional<ProvidedCredentials> creds) {
+    // this is where your actual authentication logic would go
+    return creds
+        .filter(
+            c -> c.verify(hardcodedPassword)) // Only allow users that provide the right password
+        .map(c -> c.identifier()); // Provide the username down to the inner route
+  }
 
-        final Route route =
-            authenticateBasic("My realm", this::authenticate, user ->
-                complete("Hello " + user + "!")
-            );
+  @Test
+  public void testBasicAuthenticator() {
+    // #basic-authenticator-java
 
-        // tests:
-        final HttpRequest okRequest =
-            HttpRequest
-                .GET("http://pekko.apache.org/")
-                .addHeader(Host.create("pekko.apache.org"))
-                .addHeader(Authorization.basic("randal", "correcthorsebatterystaple"));
-        testRoute(route).run(okRequest).assertEntity("Hello randal!");
+    final Route route =
+        authenticateBasic("My realm", this::authenticate, user -> complete("Hello " + user + "!"));
 
-        final HttpRequest badRequest =
-                HttpRequest
-                        .GET("http://pekko.apache.org/")
-                        .addHeader(Host.create("pekko.apache.org"))
-                        .addHeader(Authorization.basic("randal", "123abc"));
-        testRoute(route).run(badRequest).assertStatusCode(401);
+    // tests:
+    final HttpRequest okRequest =
+        HttpRequest.GET("http://pekko.apache.org/")
+            .addHeader(Host.create("pekko.apache.org"))
+            .addHeader(Authorization.basic("randal", "correcthorsebatterystaple"));
+    testRoute(route).run(okRequest).assertEntity("Hello randal!");
 
-        //#basic-authenticator-java
-    }
+    final HttpRequest badRequest =
+        HttpRequest.GET("http://pekko.apache.org/")
+            .addHeader(Host.create("pekko.apache.org"))
+            .addHeader(Authorization.basic("randal", "123abc"));
+    testRoute(route).run(badRequest).assertStatusCode(401);
 
-
+    // #basic-authenticator-java
+  }
 }

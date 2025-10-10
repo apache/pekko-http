@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,6 +16,9 @@ package scaladsl
 package marshalling
 package sse
 
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+
 import org.apache.pekko
 import pekko.http.scaladsl.model.MediaTypes.`text/event-stream`
 import pekko.http.scaladsl.model.sse.ServerSentEvent
@@ -23,13 +26,13 @@ import pekko.http.scaladsl.server.Directives
 import pekko.http.scaladsl.testkit.RouteTest
 import pekko.http.scaladsl.testkit.TestFrameworkInterface.Scalatest
 import pekko.stream.scaladsl.{ Sink, Source }
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 final class EventStreamMarshallingSpec extends AnyWordSpec with Matchers with RouteTest with Scalatest {
   import Directives._
+
   import pekko.http.scaladsl.marshalling.sse.EventStreamMarshalling._
 
   "A source of ServerSentEvents" should {

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,8 +14,10 @@
 package org.apache.pekko.http.impl.engine.ws
 
 import org.apache.pekko
+import pekko.actor.ActorSystem
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
+import pekko.stream.Materializer
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.stream.testkit.Utils
 import pekko.util.ByteString
@@ -186,8 +188,8 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
   }
 
   class TestSetup extends HttpServerTestSetupBase with WSTestSetupBase {
-    implicit def system = spec.system
-    implicit def materializer = spec.materializer
+    implicit def system: ActorSystem = spec.system
+    implicit def materializer: Materializer = spec.materializer
 
     def expectBytes(length: Int): ByteString = netOut.expectBytes(length)
     def expectBytes(bytes: ByteString): Unit = netOut.expectBytes(bytes)

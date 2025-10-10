@@ -43,27 +43,25 @@ choose an Apache Pekko version to run against and add a manual dependency to `pe
   group3="org.apache.pekko" artifact3="pekko-http_$scala.binary.version$" version3="PekkoHttpVersion"
 }
 
-You can bootstrap a new project with Apache Pekko HTTP already configured using the [Giter8](http://www.foundweekends.org/giter8/) template directly via sbt:
+You can bootstrap a new project with Apache Pekko HTTP already configured using the [Giter8](https://www.foundweekends.org/giter8/) template directly via sbt:
 
 @@@ div { .group-scala }
 For Scala (sbt)
 :  ```sh
-    sbt new theiterators/pekko-http-quickstart-scala.g8
+    sbt new apache/pekko-http-quickstart-scala.g8
     ```
 @@@
 @@@ div { .group-java }
 For Java (Maven or Gradle)
 :  ```sh
-    sbt new akka/akka-http-quickstart-java.g8
+    sbt new apache/pekko-http-quickstart-java.g8
     ```
 From there on the prepared project can be built using Gradle or Maven.
-Unfortunately, we do not yet have a Java template but it should be easy to migrate an Akka project to use
-Pekko instead.
 @@@
 
 More instructions can be found on the @scala[[template
-project](https://github.com/theiterators/pekko-http-quickstart-scala.g8)]@java[[template
-project](https://github.com/akka/akka-http-quickstart-java.g8)].
+project](https://github.com/apache/pekko-http-quickstart-scala.g8)]@java[[template
+project](https://github.com/apache/pekko-http-quickstart-java.g8)].
 
 ## Routing DSL for HTTP servers
 

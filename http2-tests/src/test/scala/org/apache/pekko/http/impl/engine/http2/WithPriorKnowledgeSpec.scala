@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,16 +15,16 @@ package org.apache.pekko.http.impl.engine.http2
 
 import java.util.Base64
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{ HttpProtocols, HttpRequest, HttpResponse, StatusCodes }
 import pekko.stream.OverflowStrategy
-import pekko.stream.scaladsl.Sink
 import pekko.stream.scaladsl.{ Keep, Source, Tcp }
+import pekko.stream.scaladsl.Sink
 import pekko.util.ByteString
-
-import scala.concurrent.Future
 
 class WithPriorKnowledgeSpec extends PekkoSpecWithMaterializer("""
     pekko.http.server.preview.enable-http2 = on
@@ -51,7 +51,7 @@ class WithPriorKnowledgeSpec extends PekkoSpecWithMaterializer("""
       val source =
         Source.queue[String](1000, OverflowStrategy.fail)
           .map(str => ByteString(Base64.getDecoder.decode(str)))
-          .via(Tcp().outgoingConnection(host, port))
+          .via(Tcp(system).outgoingConnection(host, port))
           .toMat(fromServer.sink)(Keep.left)
           .run()
 

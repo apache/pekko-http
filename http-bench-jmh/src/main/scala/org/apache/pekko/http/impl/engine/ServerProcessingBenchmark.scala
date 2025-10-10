@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,6 +14,9 @@
 package org.apache.pekko.http.impl.engine
 
 import java.util.concurrent.CountDownLatch
+
+import org.openjdk.jmh.annotations._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.NoLogging
@@ -23,13 +26,12 @@ import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.HttpRequest
 import pekko.http.scaladsl.model.HttpResponse
 import pekko.http.scaladsl.settings.ServerSettings
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.Flow
 import pekko.stream.scaladsl.Source
 import pekko.stream.scaladsl.TLSPlacebo
 import pekko.util.ByteString
+
 import com.typesafe.config.ConfigFactory
-import org.openjdk.jmh.annotations._
 
 class ServerProcessingBenchmark extends CommonBenchmark {
   val request = ByteString("GET / HTTP/1.1\r\nHost: localhost\r\nUser-Agent: test\r\n\r\n")
@@ -37,7 +39,6 @@ class ServerProcessingBenchmark extends CommonBenchmark {
 
   var httpFlow: Flow[ByteString, ByteString, Any] = _
   implicit var system: ActorSystem = _
-  implicit var mat: ActorMaterializer = _
 
   @Benchmark
   @OperationsPerInvocation(10000)
@@ -61,8 +62,8 @@ class ServerProcessingBenchmark extends CommonBenchmark {
            pekko.http.server.server-header = "pekko-http-bench"
         """)
         .withFallback(ConfigFactory.load())
-    system = ActorSystem("AkkaHttpBenchmarkSystem", config)
-    mat = ActorMaterializer()
+    system = ActorSystem("PekkoHttpBenchmarkSystem", config)
+
     httpFlow =
       Flow[HttpRequest].map(_ => response).join(
         HttpServerBluePrint(ServerSettings(system), NoLogging, false, Http().dateHeaderRendering).atop(

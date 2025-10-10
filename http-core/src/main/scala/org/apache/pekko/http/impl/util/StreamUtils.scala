@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,7 +17,6 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.http.scaladsl.model.HttpEntity
 import pekko.http.scaladsl.util.FastFuture
 import pekko.stream._
@@ -89,7 +88,7 @@ private[http] object StreamUtils {
             killResult.future.value match {
               case Some(res) => handleKill(res)
               case None =>
-                killResult.future.onComplete(killCallback.invoke)(ExecutionContexts.sameThreadExecutionContext)
+                killResult.future.onComplete(killCallback.invoke)(ExecutionContext.parasitic)
             }
           }
 
@@ -202,7 +201,7 @@ private[http] object StreamUtils {
   object OneTimeValve {
     def apply(): OneTimeValve = new OneTimeValve {
       val promise = Promise[Unit]()
-      val _source = Source.fromFuture(promise.future).drop(1) // we are only interested in the completion event
+      val _source = Source.future(promise.future).drop(1) // we are only interested in the completion event
 
       def source[T]: Source[T, NotUsed] = _source.asInstanceOf[Source[T, NotUsed]] // safe, because source won't generate any elements
       def open(): Unit = promise.success(())
@@ -226,7 +225,7 @@ private[http] object StreamUtils {
 
         var timeout: OptionVal[Cancellable] = OptionVal.None
 
-        override def onDownstreamFinish(): Unit = {
+        override def onDownstreamFinish(cause: Throwable): Unit = {
           cancelAfter match {
             case finite: FiniteDuration =>
               log.debug(s"Delaying cancellation for $finite")
@@ -261,15 +260,6 @@ private[http] object StreamUtils {
   }
 
   /**
-   * Similar idea than [[FlowOps.statefulMapConcat]] but for a simple map.
-   */
-  def statefulMap[T, U](functionConstructor: () => T => U): Flow[T, U, NotUsed] =
-    Flow[T].statefulMapConcat { () =>
-      val f = functionConstructor()
-      i => f(i) :: Nil
-    }
-
-  /**
    * Lifts the streams attributes into an element and passes them to the function for each passed through element.
    * Similar idea than [[FlowOps.statefulMapConcat]] but for a simple map.
    *
@@ -278,7 +268,7 @@ private[http] object StreamUtils {
   def statefulAttrsMap[T, U](functionConstructor: Attributes => T => U): Flow[T, U, NotUsed] =
     Flow[T].via(ExposeAttributes[T, U](functionConstructor))
 
-  trait ScheduleSupport { self: GraphStageLogic =>
+  trait ScheduleSupport extends GraphStageLogic { self =>
 
     /**
      * Schedule a block to be run once after the given duration in the context of this graph stage.

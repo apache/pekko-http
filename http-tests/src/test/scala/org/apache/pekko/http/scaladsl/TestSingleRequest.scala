@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,15 +13,16 @@
 
 package org.apache.pekko.http.scaladsl
 
-import org.apache.pekko
-import pekko.http.scaladsl.model.HttpRequest
-import pekko.util.ByteString
-import com.typesafe.config.{ Config, ConfigFactory }
-import pekko.actor.ActorSystem
-import pekko.stream._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.io.StdIn
+
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.model.HttpRequest
+import pekko.util.ByteString
+
+import com.typesafe.config.{ Config, ConfigFactory }
 
 object TestSingleRequest extends App {
   val testConf: Config = ConfigFactory.parseString("""
@@ -29,8 +30,7 @@ object TestSingleRequest extends App {
     pekko.log-dead-letters = off
     pekko.stream.materializer.debug.fuzzing-mode = off
     """)
-  implicit val system = ActorSystem("ServerTest", testConf)
-  implicit val materializer = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
   import system.dispatcher
 
   val url = StdIn.readLine("url? ")

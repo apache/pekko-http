@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,7 +15,6 @@ package docs.http.javadsl.server;
 
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.ConnectionContext;
-import com.typesafe.sslconfig.pekko.PekkoSSLConfig;
 import org.junit.Test;
 import org.scalatestplus.junit.JUnitSuite;
 
@@ -33,16 +32,17 @@ public class HttpsServerExampleTest extends JUnitSuite {
   void requireClientAuth() {
     final ActorSystem system = ActorSystem.create();
     SSLContext sslContext = null;
-    //#require-client-auth
-    ConnectionContext.httpsServer(() -> {
-            SSLEngine engine = sslContext.createSSLEngine();
-            engine.setUseClientMode(false);
+    // #require-client-auth
+    ConnectionContext.httpsServer(
+        () -> {
+          SSLEngine engine = sslContext.createSSLEngine();
+          engine.setUseClientMode(false);
 
-            engine.setNeedClientAuth(true);
-            // or: engine.setWantClientAuth(true);
+          engine.setNeedClientAuth(true);
+          // or: engine.setWantClientAuth(true);
 
-            return engine;
-    });
-    //#require-client-auth
+          return engine;
+        });
+    // #require-client-auth
   }
 }

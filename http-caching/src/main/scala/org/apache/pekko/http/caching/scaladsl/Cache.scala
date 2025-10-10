@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,14 +16,14 @@ package org.apache.pekko.http.caching.scaladsl
 import java.util.Optional
 import java.util.concurrent.{ CompletableFuture, CompletionStage }
 
+import scala.collection.immutable
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.jdk.CollectionConverters._
+import scala.jdk.FutureConverters._
+
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
-import pekko.japi.{ Creator, Procedure }
-
-import scala.collection.JavaConverters._
-import scala.collection.immutable
-import scala.compat.java8.FutureConverters.{ toJava => futureToJava, toScala => futureToScala }
-import scala.concurrent.{ ExecutionContext, Future, Promise }
+import pekko.japi.function.{ Creator, Procedure }
 
 /**
  * API MAY CHANGE
@@ -66,7 +66,7 @@ abstract class Cache[K, V] extends pekko.http.caching.javadsl.Cache[K, V] {
    */
   def get(key: K): Option[Future[V]]
   override def getOptional(key: K): Optional[CompletionStage[V]] =
-    Optional.ofNullable(get(key).map(f => futureToJava(f)).orNull)
+    Optional.ofNullable(get(key).map(f => f.asJava).orNull)
 
   /**
    * Cache the given future if not cached previously.
@@ -96,21 +96,21 @@ abstract class Cache[K, V] extends pekko.http.caching.javadsl.Cache[K, V] {
   override def getKeys: java.util.Set[K] = keys.asJava
 
   final override def getFuture(key: K, genValue: Creator[CompletionStage[V]]): CompletionStage[V] =
-    futureToJava(apply(key, () => futureToScala(genValue.create())))
+    apply(key, () => genValue.create().asScala).asJava
 
   final override def getOrFulfil(key: K, f: Procedure[CompletableFuture[V]]): CompletionStage[V] =
-    futureToJava(apply(key,
+    apply(key,
       promise => {
         val completableFuture = new CompletableFuture[V]
         f(completableFuture)
-        promise.completeWith(futureToScala(completableFuture))
-      }))
+        promise.completeWith(completableFuture.asScala)
+      }).asJava
 
   /**
    * Returns either the cached CompletionStage for the given key or the given value as a CompletionStage
    */
   override def getOrCreateStrict(key: K, block: Creator[V]): CompletionStage[V] =
-    futureToJava(get(key, () => block.create()))
+    get(key, () => block.create()).asJava
 
   /**
    * Returns the upper bound for the number of currently cached entries.

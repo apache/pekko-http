@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -41,26 +41,6 @@ private[http] class EnhancedString(val underlying: String) extends AnyVal {
         underlying.substring(0, end) :: elements
       else
         split(ix, underlying.substring(ix + 1, end) :: elements)
-    }
-    split()
-  }
-
-  /**
-   * Lazily splits the underlying string into the segments that are delimited by the given character.
-   * Only the segments that are actually accessed are computed.
-   * The delimiter itself is never a part of any segment. If the string does not contain the
-   * delimiter the result is a single-element stream containing only the underlying string.
-   * Note that this implementation differs from the original String.split(...) method in that
-   * leading and trailing delimiters are NOT ignored, i.e. they trigger the inclusion of an
-   * empty leading or trailing empty string (respectively).
-   */
-  def lazySplit(delimiter: Char): Stream[String] = {
-    def split(start: Int = 0): Stream[String] = {
-      val ix = underlying.indexOf(delimiter, start)
-      if (ix < 0)
-        Stream.cons(underlying.substring(start), Stream.Empty)
-      else
-        Stream.cons(underlying.substring(start, ix), split(ix + 1))
     }
     split()
   }

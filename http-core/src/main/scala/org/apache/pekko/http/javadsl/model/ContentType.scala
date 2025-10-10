@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -12,6 +12,8 @@
  */
 
 package org.apache.pekko.http.javadsl.model
+
+import org.apache.pekko.annotation.DoNotInherit
 
 import java.util.Optional
 
@@ -45,6 +47,7 @@ object ContentType {
  *
  * See [[ContentTypes]] for convenience access to often used values.
  */
+@DoNotInherit
 trait ContentType {
 
   /**
@@ -61,4 +64,10 @@ trait ContentType {
    * Returns the charset if this ContentType is non-binary.
    */
   def getCharsetOption: Optional[HttpCharset]
+
+  /**
+   * Returns the string representation of this ContentType
+   * @since 1.2.0
+   */
+  def value: String
 }

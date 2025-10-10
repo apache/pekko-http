@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,6 +15,7 @@ package org.apache.pekko.http.scaladsl.marshalling
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.util.FastFuture
@@ -32,7 +33,7 @@ sealed abstract class Marshaller[-A, +B] {
    * Reuses this Marshaller's logic to produce a new Marshaller from another type `C` which overrides
    * the [[pekko.http.scaladsl.model.MediaType]] of the marshalling result with the given one.
    * Note that not all wrappings are legal. f the underlying [[pekko.http.scaladsl.model.MediaType]] has constraints with regard to the
-   * charsets it allows the new [[pekko.http.scaladsl.model.MediaType]] must be compatible, since akka-http will never recode entities.
+   * charsets it allows the new [[pekko.http.scaladsl.model.MediaType]] must be compatible, since pekko-http will never recode entities.
    * If the wrapping is illegal the [[scala.concurrent.Future]] produced by the resulting marshaller will contain a [[RuntimeException]].
    */
   def wrap[C, D >: B](newMediaType: MediaType)(f: C => A)(implicit mto: ContentTypeOverrider[D]): Marshaller[C, D] =
@@ -42,7 +43,7 @@ sealed abstract class Marshaller[-A, +B] {
    * Reuses this Marshaller's logic to produce a new Marshaller from another type `C` which overrides
    * the [[pekko.http.scaladsl.model.MediaType]] of the marshalling result with the given one.
    * Note that not all wrappings are legal. f the underlying [[pekko.http.scaladsl.model.MediaType]] has constraints with regard to the
-   * charsets it allows the new [[pekko.http.scaladsl.model.MediaType]] must be compatible, since akka-http will never recode entities.
+   * charsets it allows the new [[pekko.http.scaladsl.model.MediaType]] must be compatible, since pekko-http will never recode entities.
    * If the wrapping is illegal the [[scala.concurrent.Future]] produced by the resulting marshaller will contain a [[RuntimeException]].
    */
   def wrapWithEC[C, D >: B](newMediaType: MediaType)(f: ExecutionContext => C => A)(
@@ -116,8 +117,8 @@ object Marshaller
    *
    * Please note that all marshallers will actually be invoked in order to get the Marshalling object
    * out of them, and later decide which of the marshallings should be returned. This is by-design,
-   * however in ticket as discussed in ticket https://github.com/apache/incubator-pekko-http/issues/243 it MAY be
-   * changed in later versions of Akka HTTP.
+   * however in ticket as discussed in ticket https://github.com/akka/akka-http/issues/243 it MAY be
+   * changed in later versions of Pekko HTTP.
    */
   def oneOf[A, B](marshallers: Marshaller[A, B]*): Marshaller[A, B] =
     Marshaller { implicit ec => a => FastFuture.sequence(marshallers.map(_(a))).fast.map(_.flatten.toList) }
@@ -128,8 +129,8 @@ object Marshaller
    *
    * Please note that all marshallers will actually be invoked in order to get the Marshalling object
    * out of them, and later decide which of the marshallings should be returned. This is by-design,
-   * however in ticket as discussed in ticket https://github.com/apache/incubator-pekko-http/issues/243 it MAY be
-   * changed in later versions of Akka HTTP.
+   * however in ticket as discussed in ticket https://github.com/akka/akka-http/issues/243 it MAY be
+   * changed in later versions of Pekko HTTP.
    */
   def oneOf[T, A, B](values: T*)(f: T => Marshaller[A, B]): Marshaller[A, B] =
     oneOf(values.map(f): _*)

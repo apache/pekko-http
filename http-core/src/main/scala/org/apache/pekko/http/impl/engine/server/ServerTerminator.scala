@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -35,7 +35,7 @@ import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success }
 
 /**
- * INTERNAL API: Used to start the termination process of an Akka HTTP server.
+ * INTERNAL API: Used to start the termination process of a Pekko HTTP server.
  */
 // "Hasta la vista, baby."
 @InternalApi
@@ -282,7 +282,7 @@ private[http] final class GracefulTerminatorStage(settings: ServerSettings)
 
       def installTerminationHandlers(deadline: Deadline): Unit = {
         // when no inflight requests, fail stage right away, could probably be a complete
-        // when https://github.com/apache/incubator-pekko-http/issues/3209 is fixed
+        // when https://github.com/akka/akka-http/issues/3209 is fixed
         if (!pendingUserHandlerResponse) failStage(new ServerTerminationDeadlineReached)
 
         setHandler(fromUser,

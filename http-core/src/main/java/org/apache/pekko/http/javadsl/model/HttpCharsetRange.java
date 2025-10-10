@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -21,18 +21,12 @@ package org.apache.pekko.http.javadsl.model;
  */
 public abstract class HttpCharsetRange {
 
-    /**
-     * The qValue for this range.
-     */
-    public abstract float qValue();
+  /** The qValue for this range. */
+  public abstract float qValue();
 
-    /**
-     * Returns if the given charset matches this range.
-     */
-    public abstract boolean matches(HttpCharset charset);
+  /** Returns if the given charset matches this range. */
+  public abstract boolean matches(HttpCharset charset);
 
-    /**
-     * Returns a copy of this range with the given qValue.
-     */
-    public abstract HttpCharsetRange withQValue(float qValue);
+  /** Returns a copy of this range with the given qValue. */
+  public abstract HttpCharsetRange withQValue(float qValue);
 }

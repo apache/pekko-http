@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,33 +13,29 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import org.apache.pekko
-import pekko.stream.scaladsl.Flow
-import pekko.stream.{ FlowShape, Graph, Materializer, SystemMaterializer }
 import java.io.File
 import java.nio.file.Path
 import java.lang.{ Iterable => JIterable }
 import java.util.Optional
 import java.util.concurrent.{ CompletionStage, Executor }
 
-import scala.compat.java8.FutureConverters
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.annotation.tailrec
 import scala.collection.immutable
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.duration._
+import scala.jdk.FutureConverters._
 import scala.reflect.{ classTag, ClassTag }
+
+import org.apache.pekko
 import pekko.Done
 import pekko.actor.ClassicActorSystemProvider
-import org.parboiled2.CharUtils
 import pekko.util.{ ByteString, HashCode, OptionVal }
-import pekko.http.ccompat.{ pre213, since213 }
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.util.FastFuture._
-import headers._
-
-import scala.annotation.tailrec
-import scala.compat.java8.FutureConverters._
-import scala.concurrent.duration._
+import pekko.http.scaladsl.model.headers._
+import pekko.stream.scaladsl.Flow
+import pekko.stream.{ FlowShape, Graph, Materializer, SystemMaterializer }
 
 /**
  * Common base class of HttpRequest and HttpResponse.
@@ -83,23 +79,18 @@ sealed trait HttpMessage extends jm.HttpMessage {
     entity.discardBytes()(SystemMaterializer(system).materializer)
 
   /** Returns a copy of this message with the list of headers set to the given ones. */
-  @pre213
-  def withHeaders(headers: HttpHeader*): Self = withHeaders(headers.toList)
+  def withHeaders(firstHeader: HttpHeader, otherHeaders: HttpHeader*): Self =
+    withHeaders(firstHeader +: otherHeaders.toList)
 
   /** Returns a copy of this message with the list of headers set to the given ones. */
   def withHeaders(headers: immutable.Seq[HttpHeader]): Self
-
-  /** Returns a copy of this message with the list of headers set to the given ones. */
-  @since213
-  def withHeaders(firstHeader: HttpHeader, otherHeaders: HttpHeader*): Self =
-    withHeaders(firstHeader +: otherHeaders.toList)
 
   /**
    * Returns a new message that contains all of the given default headers which didn't already
    * exist (by case-insensitive header name) in this message.
    */
-  @pre213
-  def withDefaultHeaders(defaultHeaders: HttpHeader*): Self = withDefaultHeaders(defaultHeaders.toList)
+  def withDefaultHeaders(firstHeader: HttpHeader, otherHeaders: HttpHeader*): Self =
+    withDefaultHeaders(firstHeader +: otherHeaders.toList)
 
   /**
    * Returns a new message that contains all of the given default headers which didn't already
@@ -110,10 +101,6 @@ sealed trait HttpMessage extends jm.HttpMessage {
       if (headers.isEmpty) defaultHeaders
       else defaultHeaders.foldLeft(headers) { (acc, h) => if (headers.exists(_.is(h.lowercaseName))) acc else h +: acc }
     }
-
-  @since213
-  def withDefaultHeaders(firstHeader: HttpHeader, otherHeaders: HttpHeader*): Self =
-    withDefaultHeaders(firstHeader +: otherHeaders.toList)
 
   /** Returns a copy of this message with the attributes set to the given ones. */
   def withAttributes(headers: Map[AttributeKey[_], _]): Self
@@ -163,7 +150,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
   }
 
   def attribute[T](key: jm.AttributeKey[T])(implicit ev: JavaMapping[jm.AttributeKey[T], AttributeKey[T]]): Option[T] =
-    attributes.get(ev.toScala(key)).map(_.asInstanceOf[T])
+    attributes.get(ev.toScala(key)).asInstanceOf[Option[T]]
 
   /**
    * Returns true if this message is an:
@@ -211,7 +198,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
 
   def transformEntityDataBytes[M](transformer: Graph[FlowShape[ByteString, ByteString], M]): Self
 
-  import collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
 
   /** Java API */
   def getHeaders: JIterable[jm.HttpHeader] = (headers: immutable.Seq[jm.HttpHeader]).asJava
@@ -239,10 +226,8 @@ sealed trait HttpMessage extends jm.HttpMessage {
     withHeaders(this.headers ++ headers.asScala.asInstanceOf[Iterable[HttpHeader]])
 
   /** Java API */
-  def withHeaders(headers: JIterable[jm.HttpHeader]): Self = {
-    import JavaMapping.Implicits._
-    withHeaders(headers.asScala.toVector.map(_.asScala))
-  }
+  def withHeaders(headers: JIterable[jm.HttpHeader]): Self =
+    withHeaders(headers.asScala.toVector.map(x => JavaMapping.toScala(x)))
 
   /** Java API */
   def getAttribute[T](attributeKey: jm.AttributeKey[T]): Optional[T] =
@@ -251,23 +236,23 @@ sealed trait HttpMessage extends jm.HttpMessage {
   /** Java API */
   def toStrict(timeoutMillis: Long, ec: Executor, materializer: Materializer): CompletionStage[Self] = {
     val ex = ExecutionContext.fromExecutor(ec)
-    toStrict(timeoutMillis.millis)(ex, materializer).toJava
+    toStrict(timeoutMillis.millis)(ex, materializer).asJava
   }
 
   /** Java API */
   def toStrict(timeoutMillis: Long, maxBytes: Long, ec: Executor, materializer: Materializer): CompletionStage[Self] = {
     val ex = ExecutionContext.fromExecutor(ec)
-    toStrict(timeoutMillis.millis, maxBytes)(ex, materializer).toJava
+    toStrict(timeoutMillis.millis, maxBytes)(ex, materializer).asJava
   }
 
   /** Java API */
   def toStrict(timeoutMillis: Long, system: ClassicActorSystemProvider): CompletionStage[Self] =
-    toStrict(timeoutMillis.millis)(system.classicSystem.dispatcher, SystemMaterializer(system).materializer).toJava
+    toStrict(timeoutMillis.millis)(system.classicSystem.dispatcher, SystemMaterializer(system).materializer).asJava
 
   /** Java API */
   def toStrict(timeoutMillis: Long, maxBytes: Long, system: ClassicActorSystemProvider): CompletionStage[Self] =
     toStrict(timeoutMillis.millis, maxBytes)(system.classicSystem.dispatcher,
-      SystemMaterializer(system).materializer).toJava
+      SystemMaterializer(system).materializer).asJava
 }
 
 object HttpMessage {
@@ -294,7 +279,7 @@ object HttpMessage {
      * This future completes successfully once the underlying entity stream has been
      * successfully drained (and fails otherwise).
      */
-    def completionStage: CompletionStage[Done] = FutureConverters.toJava(f)
+    def completionStage: CompletionStage[Done] = f.asJava
   }
   val AlreadyDiscardedEntity = new DiscardedEntity(Future.successful(Done))
 
@@ -351,11 +336,6 @@ final class HttpRequest(
   override def isRequest = true
   override def isResponse = false
 
-  @deprecated("use the constructor that includes an attributes parameter instead", "Akka HTTP 10.2.0")
-  private[model] def this(method: HttpMethod, uri: Uri, headers: immutable.Seq[HttpHeader], entity: RequestEntity,
-      protocol: HttpProtocol) =
-    this(method, uri, headers, Map.empty, entity, protocol)
-
   /**
    * Resolve this request's URI according to the logic defined at
    * http://tools.ietf.org/html/rfc7230#section-5.5
@@ -376,7 +356,7 @@ final class HttpRequest(
   /**
    * All cookies provided by the client in one or more `Cookie` headers.
    */
-  def cookies: immutable.Seq[HttpCookiePair] = for (`Cookie`(cookies) <- headers; cookie <- cookies) yield cookie
+  def cookies: immutable.Seq[HttpCookiePair] = for (case `Cookie`(cookies) <- headers; cookie <- cookies) yield cookie
 
   /**
    * Determines whether this request can be safely retried, which is the case only of the request method is idempotent.
@@ -415,14 +395,6 @@ final class HttpRequest(
   override def withUri(uri: jm.Uri): HttpRequest = copyImpl(uri = uri.asScala)
 
   /* Manual Case Class things, to easen bin-compat */
-
-  @deprecated("Use the `withXYZ` methods instead. Kept for binary compatibility", "Akka HTTP 10.2.0")
-  def copy(
-      method: HttpMethod = method,
-      uri: Uri = uri,
-      headers: immutable.Seq[HttpHeader] = headers,
-      entity: RequestEntity = entity,
-      protocol: HttpProtocol = protocol) = copyImpl(method, uri, headers, entity = entity, protocol = protocol)
 
   private def copyImpl(
       method: HttpMethod = method,
@@ -563,11 +535,6 @@ final class HttpResponse(
   override def isRequest = false
   override def isResponse = true
 
-  @deprecated("use the constructor that includes an attributes parameter instead", "Akka HTTP 10.2.0")
-  private[model] def this(status: StatusCode, headers: immutable.Seq[HttpHeader], entity: ResponseEntity,
-      protocol: HttpProtocol) =
-    this(status, headers, Map.empty, entity, protocol)
-
   override def withHeaders(headers: immutable.Seq[HttpHeader]): HttpResponse =
     if (headers eq this.headers) this else copyImpl(headers = headers)
 
@@ -594,14 +561,6 @@ final class HttpResponse(
 
   def transformEntityDataBytes[T](transformer: Graph[FlowShape[ByteString, ByteString], T]): HttpResponse =
     copyImpl(entity = entity.transformDataBytes(Flow.fromGraph(transformer)))
-
-  /* Manual Case Class things, to ease bin-compat */
-  @deprecated("Use the `withXYZ` methods instead", "Akka HTTP 10.2.0")
-  def copy(
-      status: StatusCode = status,
-      headers: immutable.Seq[HttpHeader] = headers,
-      entity: ResponseEntity = entity,
-      protocol: HttpProtocol = protocol) = copyImpl(status, headers, entity = entity, protocol = protocol)
 
   private def copyImpl(
       status: StatusCode = status,

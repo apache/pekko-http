@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,19 +13,20 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import scala.concurrent.{ Await, Future, Promise }
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport
-
-import scala.concurrent.{ Await, Future, Promise }
-import scala.concurrent.duration._
-import pekko.testkit.EventFilter
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport._
 import pekko.http.scaladsl.marshalling._
-import pekko.http.scaladsl.server._
 import pekko.http.scaladsl.model._
-import headers._
-import StatusCodes._
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.server._
+import pekko.testkit.EventFilter
+
 import org.scalatest.wordspec.AnyWordSpec
 
 class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
@@ -104,9 +105,16 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
               registerUser(name).map[ToResponseMarshallable] {
                 case Registered(_) => HttpEntity.Empty
                 case AlreadyRegistered =>
-                  import spray.json.DefaultJsonProtocol._
                   import SprayJsonSupport._
-                  StatusCodes.BadRequest -> Map("error" -> "User already Registered")
+
+                  // FIXME: Scala 3 workaround, which cannot figure out the implicit itself
+                  // Needs to avoid importing more implicits accidentally from DefaultJsonProtocol to avoid ambiguity in
+                  // Scala 2
+                  implicit val mapFormat: spray.json.RootJsonFormat[Map[String, String]] = {
+                    import spray.json.DefaultJsonProtocol._
+                    spray.json.DefaultJsonProtocol.mapFormat
+                  }
+                  StatusCodes.BadRequest -> Map[String, String]("error" -> "User already Registered")
               }
             }
           }
@@ -272,9 +280,9 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
 
   case class Data(name: String, age: Int)
   object Data {
-    import spray.json.DefaultJsonProtocol._
-    import SprayJsonSupport._
     import ScalaXmlSupport._
+    import SprayJsonSupport._
+    import spray.json.DefaultJsonProtocol._
 
     val jsonMarshaller: ToEntityMarshaller[Data] = jsonFormat2(Data.apply)
 

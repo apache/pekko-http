@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -241,7 +241,7 @@ private[pool] object SlotState {
       Connecting(requestContext)
 
     override def onConnectionAttemptFailed(ctx: SlotContext, cause: Throwable): SlotState = {
-      // TODO: register failed connection attempt to be able to backoff (see https://github.com/apache/incubator-pekko-http/issues/1391)
+      // TODO: register failed connection attempt to be able to backoff (see https://github.com/akka/akka-http/issues/1391)
       onConnectionFailure(ctx, "connection attempt failed", cause)
     }
     override def onConnectionFailed(ctx: SlotContext, cause: Throwable): SlotState =
@@ -358,7 +358,7 @@ private[pool] object SlotState {
       WaitingForEndOfResponseEntity(ongoingRequest, ongoingResponse, waitingForEndOfRequestEntity = false)
     }
   }
-  final case object WaitingForEndOfRequestEntity extends ConnectedState {
+  case object WaitingForEndOfRequestEntity extends ConnectedState {
     final override def isIdle = false
 
     override def onRequestEntityCompleted(ctx: SlotContext): SlotState =

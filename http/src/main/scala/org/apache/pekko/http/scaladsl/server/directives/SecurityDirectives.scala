@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,16 +14,16 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import scala.reflect.ClassTag
 import scala.concurrent.Future
+import scala.reflect.ClassTag
+import scala.util.Success
+
 import org.apache.pekko
 import pekko.http.impl.util._
-import pekko.http.scaladsl.util.FastFuture
-import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server.AuthenticationFailedRejection.{ CredentialsMissing, CredentialsRejected }
-
-import scala.util.Success
+import pekko.http.scaladsl.util.FastFuture
+import pekko.http.scaladsl.util.FastFuture._
 
 /**
  * Provides directives for securing an inner route using the standard Http authentication headers [[`WWW-Authenticate`]]
@@ -38,8 +38,8 @@ import scala.util.Success
  */
 trait SecurityDirectives {
   import BasicDirectives._
-  import HeaderDirectives._
   import FutureDirectives._
+  import HeaderDirectives._
   import RouteDirectives._
 
   // #authentication-result
@@ -158,7 +158,7 @@ trait SecurityDirectives {
     extractExecutionContext.flatMap { implicit ec =>
       def extractAccessTokenParameterAsBearerToken = {
         import pekko.http.scaladsl.server.Directives._
-        parameter("access_token".optional).map(_.map(OAuth2BearerToken))
+        parameter("access_token".optional).map(_.map(OAuth2BearerToken.apply))
       }
       val extractCreds: Directive1[Option[OAuth2BearerToken]] =
         extractCredentials.flatMap {

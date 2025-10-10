@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -20,15 +20,13 @@ import scala.concurrent.duration.FiniteDuration;
 import java.util.concurrent.TimeUnit;
 
 public class WithTimeoutTest extends JUnitRouteTest {
-    //#timeout-setting
-    @Override
-    public FiniteDuration awaitDuration() {
-        return FiniteDuration.create(5, TimeUnit.SECONDS);
-    }
-    //#timeout-setting
+  // #timeout-setting
+  @Override
+  public FiniteDuration awaitDuration() {
+    return FiniteDuration.create(5, TimeUnit.SECONDS);
+  }
+  // #timeout-setting
 
-    @Test
-    public void dummy() {
-
-    }
+  @Test
+  public void dummy() {}
 }

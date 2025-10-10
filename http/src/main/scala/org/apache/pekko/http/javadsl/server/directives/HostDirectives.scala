@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -20,7 +20,7 @@ import java.util.function.Predicate
 import java.util.function.Supplier
 import java.util.regex.Pattern
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import org.apache.pekko
 import pekko.http.javadsl.common.RegexConverters.toScala

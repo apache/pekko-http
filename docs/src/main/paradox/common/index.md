@@ -20,5 +20,6 @@ which are specific to one side only.
 * [xml-support](sse-support.md)
 * [timeouts](timeouts.md)
 * [caching](caching.md)
+* [cors](cors.md)
 
 @@@

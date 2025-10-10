@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.concurrent.{ ExecutionContextExecutor, Future }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ClassicActorSystemProvider
@@ -20,10 +22,8 @@ import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import pekko.http.scaladsl.server.directives.BasicDirectives
 import pekko.http.scaladsl.settings.{ ParserSettings, RoutingSettings }
 import pekko.http.scaladsl.util.FastFuture._
+import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.stream.scaladsl.Flow
-import pekko.stream.{ ActorMaterializerHelper, Materializer, SystemMaterializer }
-
-import scala.concurrent.{ ExecutionContextExecutor, Future }
 
 object Route {
 
@@ -45,12 +45,10 @@ object Route {
    */
   def seal(route: Route)(implicit
       routingSettings: RoutingSettings = null,
-      @deprecated("For binary compatibility. parserSettings is never used",
-        since = "Akka HTTP 10.1.8") parserSettings: ParserSettings = null,
       rejectionHandler: RejectionHandler = RejectionHandler.default,
       exceptionHandler: ExceptionHandler = null): Route = {
     import directives.ExecutionDirectives._
-    // optimized as this is the root handler for all akka-http applications
+    // optimized as this is the root handler for all pekko-http applications
     BasicDirectives.extractSettings { theSettings =>
       val effectiveRoutingSettings = if (routingSettings eq null) theSettings else routingSettings
 
@@ -70,20 +68,6 @@ object Route {
   def toFlow(route: Route)(implicit system: ClassicActorSystemProvider): Flow[HttpRequest, HttpResponse, NotUsed] =
     Flow[HttpRequest].mapAsync(1)(toFunction(route))
 
-  /**
-   * Turns a `Route` into a server flow.
-   */
-  @deprecated("Replaced by `toFlow` that takes an implicit ActorSystem.", "Akka HTTP 10.2.0")
-  def handlerFlow(route: Route)(implicit
-      routingSettings: RoutingSettings,
-      parserSettings: ParserSettings,
-      materializer: Materializer,
-      routingLog: RoutingLog,
-      executionContext: ExecutionContextExecutor = null,
-      rejectionHandler: RejectionHandler = RejectionHandler.default,
-      exceptionHandler: ExceptionHandler = null): Flow[HttpRequest, HttpResponse, NotUsed] =
-    Flow[HttpRequest].mapAsync(1)(asyncHandler(route))
-
   def toFunction(route: Route)(implicit system: ClassicActorSystemProvider): HttpRequest => Future[HttpResponse] = {
     val routingLog = RoutingLog(system.classicSystem.log)
     val routingSettings = RoutingSettings(system)
@@ -98,26 +82,6 @@ object Route {
 
     createAsyncHandler(sealedRoute, routingLog, routingSettings, parserSettings)(system.classicSystem.dispatcher,
       SystemMaterializer(system).materializer)
-  }
-
-  /**
-   * Turns a `Route` into an async handler function.
-   */
-  @deprecated(
-    "Use `toFunction` instead, which only requires an implicit ActorSystem and no rejection/exception handlers. Use directives to specify custom exceptions or rejection handlers",
-    "Akka HTTP 10.2.0")
-  def asyncHandler(route: Route)(implicit
-      routingSettings: RoutingSettings,
-      parserSettings: ParserSettings,
-      materializer: Materializer,
-      routingLog: RoutingLog,
-      executionContext: ExecutionContextExecutor = null,
-      rejectionHandler: RejectionHandler = RejectionHandler.default,
-      exceptionHandler: ExceptionHandler = null): HttpRequest => Future[HttpResponse] = {
-    val effectiveEC = if (executionContext ne null) executionContext else materializer.executionContext
-    val effectiveParserSettings = if (parserSettings ne null) parserSettings
-    else ParserSettings(ActorMaterializerHelper.downcast(materializer).system)
-    createAsyncHandler(seal(route), routingLog, routingSettings, effectiveParserSettings)(effectiveEC, materializer)
   }
 
   private def createAsyncHandler(sealedRoute: Route, routingLog: RoutingLog, routingSettings: RoutingSettings,

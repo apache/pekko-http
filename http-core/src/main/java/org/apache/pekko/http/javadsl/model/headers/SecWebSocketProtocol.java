@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,15 +15,12 @@ package org.apache.pekko.http.javadsl.model.headers;
 
 import org.apache.pekko.http.impl.util.Util;
 
-/**
- *  Model for the `Sec-WebSocket-Protocol` header.
- */
+/** Model for the `Sec-WebSocket-Protocol` header. */
 public abstract class SecWebSocketProtocol extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<String> getProtocols();
 
   public static SecWebSocketProtocol create(String... protocols) {
-    return new org.apache.pekko.http.scaladsl.model.headers.Sec$minusWebSocket$minusProtocol(Util.convertArray(protocols));
+    return new org.apache.pekko.http.scaladsl.model.headers.Sec$minusWebSocket$minusProtocol(
+        Util.convertArray(protocols));
   }
-
 }
-

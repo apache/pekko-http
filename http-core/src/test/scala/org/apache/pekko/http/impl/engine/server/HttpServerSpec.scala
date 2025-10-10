@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,11 +13,8 @@
 
 package org.apache.pekko.http.impl.engine.server
 
-import scala.annotation.nowarn
-
-import java.net.{ InetAddress, InetSocketAddress }
-
 import org.apache.pekko
+import pekko.actor.ActorSystem
 import pekko.event.LoggingAdapter
 import pekko.http.ParsingErrorHandler
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
@@ -32,16 +29,14 @@ import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.scaladsl._
 import pekko.stream.testkit.Utils.assertAllStagesStopped
 import pekko.stream.testkit._
-import pekko.stream.ActorMaterializer
-import pekko.stream.Attributes
-import pekko.stream.Outlet
-import pekko.stream.SourceShape
+import pekko.stream.{ Attributes, Materializer, Outlet, SourceShape }
 import pekko.stream.stage.GraphStage
 import pekko.stream.stage.GraphStageLogic
 import pekko.testkit._
 import pekko.util.ByteString
 import org.scalatest.Inside
 
+import java.net.{ InetAddress, InetSocketAddress }
 import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -59,7 +54,7 @@ class HttpServerSpec extends PekkoSpec(
      pekko.http.server.log-unencrypted-network-bytes = 100
      pekko.http.server.request-timeout = infinite
   """) with Inside with WithLogCapturing { spec =>
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer: Materializer = Materializer(system)
 
   "The server implementation" should {
     "deliver an empty request as soon as all headers are received" in assertAllStagesStopped(new TestSetup {
@@ -1169,33 +1164,6 @@ class HttpServerSpec extends PekkoSpec(
       netOut.expectComplete()
     })
 
-    "support remote-address-header when blueprint not constructed with it" in assertAllStagesStopped(new TestSetup {
-      // coverage for #21130
-      lazy val theAddress = InetAddress.getByName("127.5.2.1")
-
-      override def settings: ServerSettings =
-        super.settings.withRemoteAddressHeader(true)
-
-      // this is the normal behavior for bindAndHandle(flow), it will set an attribute
-      // with remote ip before flow is materialized, rather than from the blueprint apply method
-      override def modifyServer(server: ServerLayer): ServerLayer = {
-        BidiFlow.fromGraph(server.withAttributes(
-          HttpAttributes.remoteAddress(new InetSocketAddress(theAddress, 8080))))
-      }
-
-      send("""GET / HTTP/1.1
-             |Host: example.com
-             |
-             |""".stripMarginWithNewline("\r\n"))
-
-      val request = expectRequest()
-
-      request.headers should contain(`Remote-Address`(RemoteAddress(theAddress, Some(8080)))): @nowarn(
-        "msg=Remote-Address in package headers is deprecated")
-
-      shutdownBlueprint()
-    })
-
     "support remote-address-attribute" in assertAllStagesStopped(new TestSetup {
       lazy val theAddress = InetAddress.getByName("127.5.2.1")
 
@@ -1393,7 +1361,7 @@ class HttpServerSpec extends PekkoSpec(
                 responses.sendError(error.asInstanceOf[Exception])
 
                 expectResponseWithWipedDate(
-                  s"""HTTP/1.1 413 Payload Too Large
+                  s"""HTTP/1.1 413 Content Too Large
                       |Server: pekko-http/test
                       |Date: XXXX
                       |Connection: close
@@ -1417,7 +1385,7 @@ class HttpServerSpec extends PekkoSpec(
                 responses.sendError(error.asInstanceOf[Exception])
 
                 expectResponseWithWipedDate(
-                  s"""HTTP/1.1 413 Payload Too Large
+                  s"""HTTP/1.1 413 Content Too Large
                     |Server: pekko-http/test
                     |Date: XXXX
                     |Connection: close
@@ -1633,8 +1601,8 @@ class HttpServerSpec extends PekkoSpec(
     })
   }
   class TestSetup(maxContentLength: Int = -1) extends HttpServerTestSetupBase {
-    implicit def system = spec.system
-    implicit def materializer = spec.materializer
+    implicit def system: ActorSystem = spec.system
+    implicit def materializer: Materializer = spec.materializer
 
     override def settings = {
       val s = super.settings

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -24,7 +24,6 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.Http
 import pekko.macros.LogHelper
-import pekko.stream.ActorMaterializer
 import pekko.stream.Attributes
 import pekko.stream.FlowShape
 import pekko.stream.Inlet
@@ -38,9 +37,7 @@ import pekko.stream.stage.TimerGraphStageLogic
 import pekko.stream.{ BufferOverflowException, Materializer }
 
 import java.util
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.concurrent.Promise
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success, Try }
 
@@ -69,7 +66,7 @@ private[http] object PoolInterface {
     import poolId.hcps
     import hcps._
     import setup.{ connectionContext, settings }
-    implicit val system = fm.asInstanceOf[ActorMaterializer].system
+    implicit val system = fm.system
     val log: LoggingAdapter = Logging(system, poolId)(PoolLogSource)
 
     log.debug("Creating pool.")
@@ -228,7 +225,7 @@ private[http] object PoolInterface {
       requestCallback.invokeWithFeedback((request, responsePromise)).failed.foreach { _ =>
         debug(
           "Request was sent to pool which was already closed, retrying through the master to create new pool instance")
-        responsePromise.tryCompleteWith(master.dispatchRequest(poolId, request)(materializer))
+        responsePromise.completeWith(master.dispatchRequest(poolId, request)(materializer))
       }
     override def shutdown()(implicit ec: ExecutionContext): Future[ShutdownReason] = {
       shutdownCallback.invoke(())

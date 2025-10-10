@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,25 +15,27 @@ package org.apache.pekko.http.scaladsl.server
 package directives
 
 import java.io.File
-
-import org.apache.pekko
-import pekko.http.scaladsl.settings.RoutingSettings
-import pekko.http.scaladsl.testkit.RouteTestTimeout
+import java.nio.charset.StandardCharsets
 
 import scala.concurrent.duration._
 import scala.util.Properties
-import org.scalatest.{ Inside, Inspectors }
-import pekko.http.scaladsl.model.MediaTypes._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers._
+
+import org.apache.pekko
 import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model.Uri.Path
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.settings.RoutingSettings
+import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.testkit._
+
+import org.scalatest.{ Inside, Inspectors }
 
 class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Inside {
 
   // operations touch files, can be randomly hit by slowness
-  implicit val routeTestTimeout = RouteTestTimeout(3.seconds.dilated)
+  implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(3.seconds.dilated)
 
   // need to serve from the src directory, when sbt copies the resource directory over to the
   // target directory it will resolve symlinks in the process
@@ -45,7 +47,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
   """
 
   def writeAllText(text: String, file: File): Unit =
-    java.nio.file.Files.write(file.toPath, text.getBytes("UTF-8"))
+    java.nio.file.Files.write(file.toPath, text.getBytes(StandardCharsets.UTF_8))
 
   "getFromFile" should {
     "reject non-GET requests" in {
@@ -58,7 +60,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       Get() ~> getFromFile(Properties.javaHome) ~> check { handled shouldEqual false }
     }
     "return the file content with the MediaType matching the file extension" in {
-      val file = File.createTempFile("akka Http Test", ".PDF")
+      val file = File.createTempFile("pekko Http Test", ".PDF")
       try {
         writeAllText("This is PDF", file)
         Get() ~> getFromFile(file.getPath) ~> check {
@@ -70,7 +72,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       } finally file.delete
     }
     "return the file content with MediaType 'application/octet-stream' on unknown file extensions" in {
-      val file = File.createTempFile("akkaHttpTest", null)
+      val file = File.createTempFile("pekkoHttpTest", null)
       try {
         writeAllText("Some content", file)
         Get() ~> getFromFile(file) ~> check {
@@ -81,7 +83,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     }
 
     "return a single range from a file" in {
-      val file = File.createTempFile("akkaHttpTest", null)
+      val file = File.createTempFile("pekkoHttpTest", null)
       try {
         writeAllText("ABCDEFGHIJKLMNOPQRSTUVWXYZ", file)
         Get() ~> addHeader(Range(ByteRange(0, 10))) ~> getFromFile(file) ~> check {
@@ -93,7 +95,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     }
 
     "return multiple ranges from a file at once" in {
-      val file = File.createTempFile("akkaHttpTest", null)
+      val file = File.createTempFile("pekkoHttpTest", null)
       try {
         writeAllText("ABCDEFGHIJKLMNOPQRSTUVWXYZ", file)
         val rangeHeader = Range(ByteRange(1, 10), ByteRange.suffix(10))
@@ -110,7 +112,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     }
 
     "properly handle zero-byte files" in {
-      val file = File.createTempFile("akkaHttpTest", null)
+      val file = File.createTempFile("pekkoHttpTest", null)
       try {
         Get() ~> getFromFile(file) ~> check {
           mediaType shouldEqual NoMediaType
@@ -120,7 +122,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     }
 
     "support precompressed files with registered MediaType" in {
-      val file = File.createTempFile("akkaHttpTest", ".svgz")
+      val file = File.createTempFile("pekkoHttpTest", ".svgz")
       try {
         writeAllText("123", file)
         Get() ~> getFromFile(file) ~> check {
@@ -132,7 +134,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     }
 
     "support files with registered MediaType and .gz suffix" in {
-      val file = File.createTempFile("akkaHttpTest", ".js.gz")
+      val file = File.createTempFile("pekkoHttpTest", ".js.gz")
       try {
         writeAllText("456", file)
         Get() ~> getFromFile(file) ~> check {
@@ -208,16 +210,6 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
         responseAs[String] shouldEqual "This is PDF"
         val lastModified = new File(testRoot, "sübdir/sample späce.PDF").lastModified()
         headers should contain(`Last-Modified`(DateTime(lastModified)))
-      }
-    }
-    "not follow symbolic links to find a file" in {
-      EventFilter.warning(pattern = ".* points to a location that is not part of .*", occurrences = 1).intercept {
-        Get("linked-dir/empty.pdf") ~> _getFromDirectory("dirWithLink") ~> check {
-          handled shouldBe false
-          /* TODO: resurrect following links under an option
-          responseAs[String] shouldEqual "123"
-          mediaType shouldEqual `application/pdf`*/
-        }
       }
     }
   }
@@ -333,7 +325,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
   }
 
   "listDirectoryContents" should {
-    val base = new File(getClass.getClassLoader.getResource("").toURI).getPath
+    val base = testRoot.getPath
     new File(base, "subDirectory/emptySub").mkdir()
     def eraseDateTime(s: String) = s.replaceAll("""\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d""", "xxxx-xx-xx xx:xx:xx")
     val settings = RoutingSettings.default.withRenderVanityFooter(false)

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -68,7 +68,7 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
       subprotocol: Option[String] = None): HttpResponse =
     handleMessages(scaladsl.Flow.fromSinkAndSource(inSink, outSource), subprotocol)
 
-  import scala.collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
 
   /**
    * Java API

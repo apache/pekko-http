@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,17 +13,18 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.collection.immutable.VectorBuilder
+
 import org.apache.pekko
-import pekko.http.scaladsl.model.headers.RawHeader
+import pekko.http.impl.engine.http2.hpack.ByteStringInputStream
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.RawHeader
 import pekko.http.shaded.com.twitter.hpack._
 import pekko.stream.Materializer
 import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
-import org.scalatest.concurrent.ScalaFutures
 
-import java.io.ByteArrayInputStream
-import scala.collection.immutable.VectorBuilder
+import org.scalatest.concurrent.ScalaFutures
 
 /** Helper that allows automatic HPACK encoding/decoding for wire sends / expectations */
 trait Http2FrameHpackSupport extends Http2FrameProbeDelegator with Http2FrameSending with HPackEncodingSupport
@@ -58,16 +59,17 @@ trait Http2FrameHpackSupport extends Http2FrameProbeDelegator with Http2FrameSen
   val decoder = new Decoder(Http2Protocol.InitialMaxHeaderListSize, Http2Protocol.InitialMaxHeaderTableSize)
 
   def decodeHeaders(bytes: ByteString): Seq[(String, String)] = {
-    val bis = new ByteArrayInputStream(bytes.toArray)
     val hs = new VectorBuilder[(String, String)]()
-
-    decoder.decode(bis,
-      new HeaderListener {
-        def addHeader(name: String, value: String, parsedValue: AnyRef, sensitive: Boolean): AnyRef = {
-          hs += name -> value
-          parsedValue
-        }
-      })
+    val bis = ByteStringInputStream(bytes)
+    try
+      decoder.decode(bis,
+        new HeaderListener {
+          def addHeader(name: String, value: String, parsedValue: AnyRef, sensitive: Boolean): AnyRef = {
+            hs += name -> value
+            parsedValue
+          }
+        })
+    finally bis.close()
     hs.result()
   }
   def decodeHeadersToResponse(bytes: ByteString): HttpResponse =
@@ -77,7 +79,8 @@ trait Http2FrameHpackSupport extends Http2FrameProbeDelegator with Http2FrameSen
         case ("content-length", value) if value.toLong == 0 => old.withEntity(HttpEntity.Empty)
         case ("content-length", value) =>
           old.withEntity(HttpEntity.Default(old.entity.contentType, value.toLong, Source.empty))
-        case ("content-type", value) => old.withEntity(old.entity.withContentType(ContentType.parse(value).right.get))
-        case (name, value)           => old.addHeader(RawHeader(name, value)) // FIXME: decode to modeled headers
+        case ("content-type", value) =>
+          old.withEntity(old.entity.withContentType(ContentType.parse(value).toOption.get))
+        case (name, value) => old.addHeader(RawHeader(name, value)) // FIXME: decode to modeled headers
       })
 }

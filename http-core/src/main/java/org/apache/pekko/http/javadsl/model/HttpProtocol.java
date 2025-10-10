@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,14 +14,12 @@
 package org.apache.pekko.http.javadsl.model;
 
 /**
- * Represents an Http protocol (currently only HTTP/1.0 or HTTP/1.1). See {@link HttpProtocols}
- * for the predefined constants for the supported protocols.
+ * Represents an Http protocol (currently only HTTP/1.0 or HTTP/1.1). See {@link HttpProtocols} for
+ * the predefined constants for the supported protocols.
  *
  * @see HttpProtocols for convenience access to often used values.
  */
 public abstract class HttpProtocol {
-    /**
-     * Returns the String representation of this protocol.
-     */
-    public abstract String value();
+  /** Returns the String representation of this protocol. */
+  public abstract String value();
 }

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -35,7 +35,7 @@ import pekko.http.scaladsl.settings.{
   ParserSettings,
   ServerSettings
 }
-import pekko.stream.{ BidiShape, Graph, StreamTcpException }
+import pekko.stream.{ BidiShape, Graph, StreamTcpException, ThrottleMode }
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Source }
 import pekko.util.ByteString
@@ -122,12 +122,20 @@ private[http] object Http2Blueprint {
       telemetry: TelemetrySpi,
     dateHeaderRendering: DateHeaderRendering): BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] = {
     val masterHttpHeaderParser = HttpHeaderParser(settings.parserSettings, log) // FIXME: reuse for framing
-    telemetry.serverConnection atop
+    
+    val initialFlow = telemetry.serverConnection atop
       httpLayer(settings, log, dateHeaderRendering) atopKeepRight
       serverDemux(settings.http2Settings, initialDemuxerSettings, upgraded) atop
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames) atop // enable for debugging
-      hpackCoding(masterHttpHeaderParser, settings.parserSettings) atop
-      framing(log) atop
+      hpackCoding(masterHttpHeaderParser, settings.parserSettings)
+
+    val frameTypesForThrottle = getFrameTypesForThrottle(settings.http2Settings)
+    
+    val flowWithPossibleThrottle = if (frameTypesForThrottle.nonEmpty) {
+      initialFlow atop rapidResetMitigation(settings.http2Settings, frameTypesForThrottle) atopKeepLeft framing(log)
+    } else initialFlow atop framing(log)
+
+    flowWithPossibleThrottle atop
       errorHandling(log) atop
       idleTimeoutIfConfigured(settings.idleTimeout)
   }
@@ -154,10 +162,8 @@ private[http] object Http2Blueprint {
   def httpLayerClient(masterHttpHeaderParser: HttpHeaderParser, settings: ClientConnectionSettings, log: LoggingAdapter)
       : BidiFlow[HttpRequest, Http2SubStream, Http2SubStream, HttpResponse, NotUsed] =
     BidiFlow.fromFlows(
-      Flow[HttpRequest].statefulMapConcat { () =>
-        val renderer = new RequestRendering(settings, log)
-        request => renderer(request) :: Nil
-      },
+      Flow[HttpRequest].statefulMap(() => new RequestRendering(settings, log))((renderer, request) =>
+          (renderer, renderer(request)), _ => None),
       StreamUtils.statefulAttrsMap[Http2SubStream, HttpResponse] { attrs =>
         val headerParser = masterHttpHeaderParser.createShallowCopy()
         stream => ResponseParsing.parseResponse(headerParser, settings.parserSettings, attrs)(stream)
@@ -197,6 +203,41 @@ private[http] object Http2Blueprint {
     BidiFlow.fromFlows(
       Flow[FrameEvent].map(FrameRenderer.render).prepend(Source.single(Http2Protocol.ClientConnectionPreface)),
       Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = false, log)))
+
+  private def rapidResetMitigation(settings: Http2ServerSettings,
+      frameTypesForThrottle: Set[String]): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] = {
+    def frameCost(event: FrameEvent): Int = {
+      if (frameTypesForThrottle.contains(event.frameTypeName)) 1 else 0
+    }
+
+    BidiFlow.fromFlows(
+      Flow[FrameEvent],
+      Flow[FrameEvent].throttle(settings.frameTypeThrottleCost, settings.frameTypeThrottleInterval,
+        settings.frameTypeThrottleBurst, frameCost, ThrottleMode.Enforcing))
+  }
+
+  private def getFrameTypesForThrottle(settings: Http2ServerSettings): Set[String] = {
+    val set = settings.frameTypeThrottleFrameTypes
+    if (set.isEmpty) {
+      Set.empty
+    } else {
+      set.flatMap(frameTypeAliasToFrameTypeName)
+    }
+  }
+
+  private[http2] def frameTypeAliasToFrameTypeName(frameType: String): Option[String] = {
+    frameType.toLowerCase match {
+      case "reset"         => Some("RstStreamFrame")
+      case "headers"       => Some("HeadersFrame")
+      case "continuation"  => Some("ContinuationFrame")
+      case "go-away"       => Some("GoAwayFrame")
+      case "priority"      => Some("PriorityFrame")
+      case "ping"          => Some("PingFrame")
+      case "push-promise"  => Some("PushPromiseFrame")
+      case "window-update" => Some("WindowUpdateFrame")
+      case _               => None
+    }
+  }
 
   /**
    * Runs hpack encoding and decoding. Incoming frames that are processed are HEADERS and CONTINUATION.
@@ -255,6 +296,7 @@ private[http] object Http2Blueprint {
    * Returns a flow that handles `parallelism` requests in parallel, automatically keeping track of the
    * Http2StreamIdHeader between request and responses.
    */
+  @noinline // Not inlined so that we can instrument the produced flow with e.g. tracing downstream
   def handleWithStreamIdHeader(parallelism: Int)(handler: HttpRequest => Future[HttpResponse])(
       implicit ec: ExecutionContext): Flow[HttpRequest, HttpResponse, NotUsed] =
     Flow[HttpRequest]
@@ -281,7 +323,7 @@ private[http] object Http2Blueprint {
     }
 
   private[http] val unwrapTls: BidiFlow[ByteString, SslTlsOutbound, SslTlsInbound, ByteString, NotUsed] =
-    BidiFlow.fromFlows(Flow[ByteString].map(SendBytes),
+    BidiFlow.fromFlows(Flow[ByteString].map(SendBytes(_)),
       Flow[SslTlsInbound].collect {
         case SessionBytes(_, bytes) => bytes
       })
@@ -290,5 +332,9 @@ private[http] object Http2Blueprint {
     def atopKeepRight[OO1, II2, Mat2](
         other: Graph[BidiShape[O1, OO1, II2, I2], Mat2]): BidiFlow[I1, OO1, II2, O2, Mat2] =
       bidi.atopMat(other)(Keep.right)
+
+    def atopKeepLeft[OO1, II2, Mat2](
+        other: Graph[BidiShape[O1, OO1, II2, I2], Mat2]): BidiFlow[I1, OO1, II2, O2, Mat] =
+      bidi.atopMat(other)(Keep.left)
   }
 }

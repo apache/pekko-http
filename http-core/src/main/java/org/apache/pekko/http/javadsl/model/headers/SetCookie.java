@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,14 +13,12 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
-/**
- *  Model for the `Set-Cookie` header.
- *  Specification: https://tools.ietf.org/html/rfc6265
- */
+/** Model for the `Set-Cookie` header. Specification: https://tools.ietf.org/html/rfc6265 */
 public abstract class SetCookie extends org.apache.pekko.http.scaladsl.model.HttpHeader {
-    public abstract HttpCookie cookie();
+  public abstract HttpCookie cookie();
 
-    public static SetCookie create(HttpCookie cookie) {
-        return new org.apache.pekko.http.scaladsl.model.headers.Set$minusCookie(((org.apache.pekko.http.scaladsl.model.headers.HttpCookie) cookie));
-    }
+  public static SetCookie create(HttpCookie cookie) {
+    return new org.apache.pekko.http.scaladsl.model.headers.Set$minusCookie(
+        ((org.apache.pekko.http.scaladsl.model.headers.HttpCookie) cookie));
+  }
 }

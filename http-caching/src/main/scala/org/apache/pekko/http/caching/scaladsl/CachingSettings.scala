@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -18,6 +18,7 @@ import pekko.annotation.DoNotInherit
 import pekko.http.caching.impl.settings.CachingSettingsImpl
 import pekko.http.caching.javadsl
 import pekko.http.scaladsl.settings.SettingsCompanion
+
 import com.typesafe.config.Config
 
 /**

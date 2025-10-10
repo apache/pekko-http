@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,6 +15,9 @@ package org.apache.pekko.http.javadsl.marshalling
 
 import java.util.{ function, Optional }
 
+import scala.annotation.unchecked.uncheckedVariance
+import scala.concurrent.ExecutionContext
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util.JavaMapping
@@ -24,9 +27,6 @@ import pekko.http.scaladsl.marshalling
 import pekko.http.scaladsl.marshalling._
 import pekko.http.scaladsl.model.{ FormData, HttpCharset }
 import pekko.util.ByteString
-
-import scala.concurrent.ExecutionContext
-import scala.annotation.unchecked.uncheckedVariance
 
 object Marshaller {
 
@@ -79,7 +79,7 @@ object Marshaller {
   def wrapEntity[A, C](f: function.BiFunction[ExecutionContext, C, A], m: Marshaller[A, RequestEntity],
       mediaType: MediaType): Marshaller[C, RequestEntity] = {
     val scalaMarshaller = m.asScalaCastOutput
-    fromScala(scalaMarshaller.wrapWithEC(mediaType.asScala) { ctx => c: C => f(ctx, c) }(
+    fromScala(scalaMarshaller.wrapWithEC(mediaType.asScala) { ctx => (c: C) => f(ctx, c) }(
       ContentTypeOverrider.forEntity))
   }
 
@@ -115,8 +115,8 @@ object Marshaller {
    *
    * Please note that all passed in marshallers will actually be invoked in order to get the Marshalling object
    * out of them, and later decide which of the marshallings should be returned. This is by-design,
-   * however in ticket as discussed in ticket https://github.com/apache/incubator-pekko-http/issues/243 it MAY be
-   * changed in later versions of Akka HTTP.
+   * however in ticket as discussed in ticket https://github.com/akka/akka-http/issues/243 it MAY be
+   * changed in later versions of Pekko HTTP.
    */
   def oneOf[A, B](ms: Marshaller[A, B]*): Marshaller[A, B] = {
     fromScala(marshalling.Marshaller.oneOf[A, B](ms.map(_.asScala): _*))
@@ -128,8 +128,8 @@ object Marshaller {
    *
    * Please note that all marshallers will actually be invoked in order to get the Marshalling object
    * out of them, and later decide which of the marshallings should be returned. This is by-design,
-   * however in ticket as discussed in ticket https://github.com/apache/incubator-pekko-http/issues/243 it MAY be
-   * changed in later versions of Akka HTTP.
+   * however in ticket as discussed in ticket https://github.com/akka/akka-http/issues/243 it MAY be
+   * changed in later versions of Pekko HTTP.
    */
   def oneOf[A, B](m1: Marshaller[A, B], m2: Marshaller[A, B]): Marshaller[A, B] = {
     fromScala(marshalling.Marshaller.oneOf(m1.asScala, m2.asScala))
@@ -141,8 +141,8 @@ object Marshaller {
    *
    * Please note that all marshallers will actually be invoked in order to get the Marshalling object
    * out of them, and later decide which of the marshallings should be returned. This is by-design,
-   * however in ticket as discussed in ticket https://github.com/apache/incubator-pekko-http/issues/243 it MAY be
-   * changed in later versions of Akka HTTP.
+   * however in ticket as discussed in ticket https://github.com/akka/akka-http/issues/243 it MAY be
+   * changed in later versions of Pekko HTTP.
    */
   def oneOf[A, B](m1: Marshaller[A, B], m2: Marshaller[A, B], m3: Marshaller[A, B]): Marshaller[A, B] = {
     fromScala(marshalling.Marshaller.oneOf(m1.asScala, m2.asScala, m3.asScala))
@@ -154,8 +154,8 @@ object Marshaller {
    *
    * Please note that all marshallers will actually be invoked in order to get the Marshalling object
    * out of them, and later decide which of the marshallings should be returned. This is by-design,
-   * however in ticket as discussed in ticket https://github.com/apache/incubator-pekko-http/issues/243 it MAY be
-   * changed in later versions of Akka HTTP.
+   * however in ticket as discussed in ticket https://github.com/akka/akka-http/issues/243 it MAY be
+   * changed in later versions of Pekko HTTP.
    */
   def oneOf[A, B](
       m1: Marshaller[A, B], m2: Marshaller[A, B], m3: Marshaller[A, B], m4: Marshaller[A, B]): Marshaller[A, B] = {
@@ -168,8 +168,8 @@ object Marshaller {
    *
    * Please note that all marshallers will actually be invoked in order to get the Marshalling object
    * out of them, and later decide which of the marshallings should be returned. This is by-design,
-   * however in ticket as discussed in ticket https://github.com/apache/incubator-pekko-http/issues/243 it MAY be
-   * changed in later versions of Akka HTTP.
+   * however in ticket as discussed in ticket https://github.com/akka/akka-http/issues/243 it MAY be
+   * changed in later versions of Pekko HTTP.
    */
   def oneOf[A, B](m1: Marshaller[A, B], m2: Marshaller[A, B], m3: Marshaller[A, B], m4: Marshaller[A, B],
       m5: Marshaller[A, B]): Marshaller[A, B] = {

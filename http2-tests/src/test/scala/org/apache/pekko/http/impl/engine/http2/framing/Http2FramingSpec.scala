@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,23 +14,25 @@
 package org.apache.pekko.http.impl.engine.http2
 package framing
 
+import scala.collection.immutable
+import scala.concurrent.duration._
+
+import FrameEvent._
+
 import org.apache.pekko
 import pekko.event.Logging
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.ws.BitBuilder
 import pekko.http.impl.util._
 import pekko.stream.scaladsl.{ Sink, Source }
-import pekko.util.ByteString
 import pekko.testkit._
+import pekko.util.ByteString
+
 import org.scalatest.matchers.Matcher
-
-import scala.collection.immutable
-import scala.concurrent.duration._
-
-import FrameEvent._
 
 class Http2FramingSpec extends PekkoSpecWithMaterializer {
   import BitBuilder._
+
   import pekko.http.impl.engine.http2._
 
   "The HTTP/2 parser/renderer round-trip should work for" should {
@@ -508,8 +510,8 @@ class Http2FramingSpec extends PekkoSpecWithMaterializer {
     }
 
   private def parseToEvents(bytes: Seq[ByteString]): immutable.Seq[FrameEvent] =
-    Source(bytes.toVector).via(new Http2FrameParsing(shouldReadPreface = false, Logging(system, getClass))).runWith(
-      Sink.seq)
+    Source(bytes.toVector).via(new Http2FrameParsing(shouldReadPreface = false,
+      Logging(system, classOf[Http2FramingSpec]))).runWith(Sink.seq)
       .awaitResult(1.second.dilated)
   private def renderToByteString(events: immutable.Seq[FrameEvent]): ByteString =
     Source(events).map(FrameRenderer.render).runFold(ByteString.empty)(_ ++ _)

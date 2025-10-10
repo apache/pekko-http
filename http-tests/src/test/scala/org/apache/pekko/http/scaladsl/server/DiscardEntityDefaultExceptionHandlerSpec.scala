@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.http.impl.util.WithLogCapturing
 import pekko.http.scaladsl.model.ContentTypes.`text/plain(UTF-8)`
@@ -20,11 +22,9 @@ import pekko.http.scaladsl.model.HttpEntity
 import pekko.http.scaladsl.model.StatusCodes.InternalServerError
 import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
+
 import org.scalatest.concurrent.Eventually._
 import org.scalatest.concurrent.ScalaFutures
-import pekko.http.ccompat.imm._
-
-import scala.concurrent.Future
 
 class DiscardEntityDefaultExceptionHandlerSpec extends RoutingSpec with ScalaFutures with WithLogCapturing {
 
@@ -43,7 +43,7 @@ class DiscardEntityDefaultExceptionHandlerSpec extends RoutingSpec with ScalaFut
   trait Fixture {
     @volatile
     var streamConsumed = false
-    val thousandElements: Stream[ByteString] = Stream.continually(ByteString("foo")).take(999).lazyAppendedAll {
+    val thousandElements: LazyList[ByteString] = LazyList.continually(ByteString("foo")).take(999).lazyAppendedAll {
       streamConsumed = true
       Seq(ByteString("end"))
     }

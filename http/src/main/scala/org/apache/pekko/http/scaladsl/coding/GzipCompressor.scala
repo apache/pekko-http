@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -41,7 +41,7 @@ private[coding] class GzipCompressor(compressionLevel: Int) extends DeflateCompr
     header() ++ super.finishWithBuffer(buffer) ++ trailer()
 
   private def updateCrc(input: ByteString): Unit = {
-    checkSum.update(input.toArray)
+    checkSum.update(input.toArrayUnsafe())
     bytesRead += input.length
   }
   private def header(): ByteString =
@@ -72,7 +72,7 @@ private[coding] class GzipDecompressor(
     maxBytesPerChunk: Int = Decoder.MaxBytesPerChunkDefault) extends DeflateDecompressorBase(maxBytesPerChunk) {
   override def createLogic(attr: Attributes) = new ParsingLogic {
     private[this] val inflater = new Inflater(true)
-    private[this] var crc32: CRC32 = new CRC32
+    private[this] val crc32: CRC32 = new CRC32
 
     trait Step extends ParseStep[ByteString] {
       override def onTruncation(): Unit = failStage(new ZipException("Truncated GZIP stream"))
@@ -117,7 +117,7 @@ private[coding] class GzipDecompressor(
   }
   private def crc16(data: ByteString) = {
     val crc = new CRC32
-    crc.update(data.toArray)
+    crc.update(data.toArrayUnsafe())
     crc.getValue.toInt & 0xFFFF
   }
 }

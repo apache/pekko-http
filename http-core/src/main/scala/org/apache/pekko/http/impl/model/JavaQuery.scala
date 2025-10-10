@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -27,7 +27,7 @@ import pekko.http.scaladsl.{ model => sm }
 import pekko.japi.Pair
 import org.parboiled2.CharPredicate
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import pekko.http.impl.util.JavaMapping.Implicits._
 
 /** INTERNAL API */

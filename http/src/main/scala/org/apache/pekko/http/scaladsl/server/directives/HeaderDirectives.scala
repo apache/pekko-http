@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,13 +14,13 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.reflect.ClassTag
+import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
-
-import scala.reflect.ClassTag
-import scala.util.control.NonFatal
 
 /**
  * @groupname header Header directives
@@ -75,17 +75,6 @@ trait HeaderDirectives {
   def headerValuePF[T](pf: PartialFunction[HttpHeader, T]): Directive1[T] = headerValue(pf.lift)
 
   /**
-   * Extracts the value of the first HTTP request header with the given name.
-   * If no header with a matching name is found the request is rejected with a [[pekko.http.scaladsl.server.MissingHeaderRejection]].
-   *
-   * @group header
-   */
-  @deprecated(
-    "Use string argument version or `headerValueByType`, e.g. instead of `headerValueByName('Referer)` use `headerValueByType(Referer)`",
-    since = "Akka HTTP 10.2.0")
-  def headerValueByName(headerName: Symbol): Directive1[String] = headerValueByName(headerName.name)
-
-  /**
    * Extracts the value of the HTTP request header with the given name.
    * If no header with a matching name is found the request is rejected with a [[pekko.http.scaladsl.server.MissingHeaderRejection]].
    *
@@ -129,17 +118,6 @@ trait HeaderDirectives {
    */
   def optionalHeaderValuePF[T](pf: PartialFunction[HttpHeader, T]): Directive1[Option[T]] =
     optionalHeaderValue(pf.lift)
-
-  /**
-   * Extracts the value of the optional HTTP request header with the given name.
-   *
-   * @group header
-   */
-  @deprecated(
-    "Use string argument version or `headerValueByType`, e.g. instead of `optionalHeaderValueByName('Referer)` use `optionalHeaderValueByType(Referer)`",
-    since = "Akka HTTP 10.2.0")
-  def optionalHeaderValueByName(headerName: Symbol): Directive1[Option[String]] =
-    optionalHeaderValueByName(headerName.name)
 
   /**
    * Extracts the value of the optional HTTP request header with the given name.
@@ -193,13 +171,6 @@ object HeaderMagnet extends LowPriorityHeaderMagnetImplicits {
       companion: ModeledCustomHeaderCompanion[T])(implicit tag: ClassTag[T]): HeaderMagnet[T] =
     fromClassTagForModeledCustomHeader[T, H](tag, companion)
 
-  @deprecated(
-    "Pass the companion object to headerValueByType as a parameter instead, e.g. `headerValueByType(Origin)` instead of `headerValueByType[Origin](())`",
-    since = "Akka HTTP 10.2.0")
-  implicit def fromUnitForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](
-      u: Unit)(implicit tag: ClassTag[T], companion: ModeledCustomHeaderCompanion[T]): HeaderMagnet[T] =
-    fromClassTagForModeledCustomHeader[T, H](tag, companion)
-
   implicit def fromClassForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](
       clazz: Class[T], companion: ModeledCustomHeaderCompanion[T]): HeaderMagnet[T] =
     fromClassTagForModeledCustomHeader(ClassTag(clazz), companion)
@@ -233,12 +204,6 @@ trait LowPriorityHeaderMagnetImplicits {
 
   implicit def fromCompanionNormalHeader[T <: HttpHeader](companion: ModeledCompanion[T])(
       implicit tag: ClassTag[T]): HeaderMagnet[T] =
-    fromClassTagNormalHeader(tag)
-
-  @deprecated(
-    "Pass the companion object to headerValueByType as a parameter instead, e.g. `headerValueByType(Origin)` instead of `headerValueByType[Origin](())`",
-    since = "Akka HTTP 10.2.0")
-  implicit def fromUnitNormalHeader[T <: HttpHeader](u: Unit)(implicit tag: ClassTag[T]): HeaderMagnet[T] =
     fromClassTagNormalHeader(tag)
 
   implicit def fromClassTagNormalHeader[T <: HttpHeader](tag: ClassTag[T]): HeaderMagnet[T] =

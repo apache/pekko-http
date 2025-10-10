@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -29,6 +29,8 @@ import pekko.stream.stage.GraphStage
 import pekko.stream._
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
 
+import scala.collection.immutable
+
 /**
  * INTERNAL API
  */
@@ -51,17 +53,17 @@ private[http] object RenderSupport {
   private val TextHtmlContentType = preRenderContentType(`text/html(UTF-8)`)
   private val TextCsvContentType = preRenderContentType(`text/csv(UTF-8)`)
 
-  implicit val trailerRenderer = Renderer.genericSeqRenderer[Renderable, HttpHeader](Rendering.CrLf, Rendering.Empty)
+  implicit val trailerRenderer: Renderer[immutable.Iterable[HttpHeader]] =
+    Renderer.genericSeqRenderer[Renderable, HttpHeader](Rendering.CrLf, Rendering.Empty)
 
   val defaultLastChunkBytes: ByteString = renderChunk(HttpEntity.LastChunk)
 
-  def CancelSecond[T, Mat](first: Source[T, Mat], second: Source[T, Any]): Source[T, Mat] = {
+  def CancelSecond[T, Mat](first: Source[T, Mat], second: Source[T, Any]): Source[T, Mat] =
     Source.fromGraph(GraphDSL.createGraph(first) { implicit b => frst =>
       import GraphDSL.Implicits._
       second ~> Sink.cancelled
       SourceShape(frst.out)
     })
-  }
 
   def renderEntityContentType(r: Rendering, entity: HttpEntity): r.type = {
     val ct = entity.contentType

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -52,7 +52,7 @@ object MyRejectionHandler {
         .handleNotFound { complete((NotFound, "Not here!")) }
         .result()
 
-    implicit val system = ActorSystem()
+    implicit val system: ActorSystem = ActorSystem()
 
     val route: Route = handleRejections(myRejectionHandler) {
       // ... some route structure
@@ -72,11 +72,11 @@ object HandleNotFoundWithThePath {
   import pekko.http.scaladsl.server._
   import Directives._
 
-  implicit def myRejectionHandler =
+  implicit def myRejectionHandler: RejectionHandler =
     RejectionHandler.newBuilder()
       .handleNotFound {
         extractUnmatchedPath { p =>
-          complete(NotFound, s"The path you requested [${p}] does not exist.")
+          complete(NotFound, s"The path you requested [$p] does not exist.")
         }
       }
       .result()
@@ -110,11 +110,11 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
     import pekko.http.scaladsl.model._
     import pekko.http.scaladsl.server.RejectionHandler
 
-    implicit def myRejectionHandler =
+    implicit def myRejectionHandler: RejectionHandler =
       RejectionHandler.default
         .mapRejectionResponse {
           case res @ HttpResponse(_, _, ent: HttpEntity.Strict, _) =>
-            // since all Akka default rejection responses are Strict this will handle all rejections
+            // since all Pekko default rejection responses are Strict this will handle all rejections
             val message = ent.data.utf8String.replaceAll("\"", """\"""")
 
             // we copy the response in order to keep all headers and status code, wrapping the message as hand rolled JSON
@@ -143,11 +143,11 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
     import pekko.http.scaladsl.model._
     import pekko.http.scaladsl.server.RejectionHandler
 
-    implicit def myRejectionHandler =
+    implicit def myRejectionHandler: RejectionHandler =
       RejectionHandler.default
         .mapRejectionResponse {
           case res @ HttpResponse(_, _, ent: HttpEntity.Strict, _) =>
-            // since all Akka default rejection responses are Strict this will handle all rejections
+            // since all Pekko default rejection responses are Strict this will handle all rejections
             val message = ent.data.utf8String.replaceAll("\"", """\"""")
 
             // we copy the response in order to keep all headers and status code, wrapping the message as hand rolled JSON
@@ -178,7 +178,7 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
     import pekko.http.scaladsl.server._
     import pekko.http.scaladsl.model.StatusCodes.BadRequest
 
-    implicit def myRejectionHandler = RejectionHandler.newBuilder().handle {
+    implicit def myRejectionHandler: RejectionHandler = RejectionHandler.newBuilder().handle {
       case MissingCookieRejection(_) => complete(HttpResponse(BadRequest, entity = "No cookies, no service!!!"))
     }.result()
 

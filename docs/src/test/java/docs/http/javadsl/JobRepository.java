@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,7 +13,7 @@
 
 package docs.http.javadsl;
 
-//#behavior
+// #behavior
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -23,26 +23,31 @@ import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.*;
 import com.fasterxml.jackson.annotation.*;
 
-/**
- * Actor for use with the HttpServerWithActorsSample
- */
+/** Actor for use with the HttpServerWithActorsSample */
 public class JobRepository extends AbstractBehavior<JobRepository.Command> {
 
   @JsonFormat
   public static final class Job {
     @JsonProperty("id")
     final Long id;
+
     @JsonProperty("project-name")
     final String projectName;
+
     @JsonProperty("status")
     final String status;
+
     @JsonProperty("duration")
     final Long duration;
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public Job(@JsonProperty("id") Long id, @JsonProperty("project-name") String projectName, @JsonProperty("duration") Long duration) {
+    public Job(
+        @JsonProperty("id") Long id,
+        @JsonProperty("project-name") String projectName,
+        @JsonProperty("duration") Long duration) {
       this(id, projectName, "Success", duration);
     }
+
     public Job(Long id, String projectName, String status, Long duration) {
       this.id = id;
       this.projectName = projectName;
@@ -122,15 +127,14 @@ public class JobRepository extends AbstractBehavior<JobRepository.Command> {
   @Override
   public Receive<Command> createReceive() {
     return newReceiveBuilder()
-            .onMessage(AddJob.class, this::addJob)
-            .onMessage(GetJobById.class, this::getJobById)
-            .onMessage(ClearJobs.class, this::clearJobs)
-            .build();
+        .onMessage(AddJob.class, this::addJob)
+        .onMessage(GetJobById.class, this::getJobById)
+        .onMessage(ClearJobs.class, this::clearJobs)
+        .build();
   }
 
   private Behavior<Command> addJob(AddJob msg) {
-    if (jobs.containsKey(msg.job.id))
-      msg.replyTo.tell(new KO("Job already exists"));
+    if (jobs.containsKey(msg.job.id)) msg.replyTo.tell(new KO("Job already exists"));
     else {
       jobs.put(msg.job.id, msg.job);
       msg.replyTo.tell(OK.getInstance());
@@ -153,4 +157,4 @@ public class JobRepository extends AbstractBehavior<JobRepository.Command> {
     return Behaviors.same();
   }
 }
-//#behavior
+// #behavior

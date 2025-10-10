@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -22,9 +22,6 @@ import org.apache.pekko
 import pekko.japi.Pair
 import pekko.stream.{ javadsl, scaladsl, FlowShape, Graph }
 
-import scala.collection.immutable
-import scala.compat.java8.{ FutureConverters, OptionConverters }
-import scala.reflect.ClassTag
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.impl.model.{ JavaQuery, JavaUri }
@@ -38,7 +35,11 @@ import pekko.http.javadsl.{
 import pekko.http.{ javadsl => jdsl, scaladsl => sdsl }
 import pekko.http.scaladsl.{ model => sm }
 
+import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.jdk.FutureConverters._
+import scala.jdk.OptionConverters._
+import scala.reflect.ClassTag
 import scala.util.Try
 
 /** INTERNAL API */
@@ -121,22 +122,22 @@ private[http] object JavaMapping {
   implicit def iterableMapping[_J, _S](
       implicit mapping: JavaMapping[_J, _S]): JavaMapping[jl.Iterable[_J], immutable.Seq[_S]] =
     new JavaMapping[jl.Iterable[_J], immutable.Seq[_S]] {
-      import collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
 
       def toJava(scalaObject: immutable.Seq[_S]): jl.Iterable[_J] = scalaObject.map(mapping.toJava).asJavaCollection
       def toScala(javaObject: jl.Iterable[_J]): immutable.Seq[_S] =
-        Implicits.convertSeqToScala(iterableAsScalaIterableConverter(javaObject).asScala.toSeq)
+        Implicits.convertSeqToScala(javaObject.asScala.toSeq)
     }
   implicit def map[K, V]: JavaMapping[ju.Map[K, V], immutable.Map[K, V]] =
     new JavaMapping[ju.Map[K, V], immutable.Map[K, V]] {
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       def toScala(javaObject: ju.Map[K, V]): immutable.Map[K, V] = javaObject.asScala.toMap
       def toJava(scalaObject: immutable.Map[K, V]): ju.Map[K, V] = scalaObject.asJava
     }
   implicit def option[_J, _S](implicit mapping: JavaMapping[_J, _S]): JavaMapping[Optional[_J], Option[_S]] =
     new JavaMapping[Optional[_J], Option[_S]] {
-      def toScala(javaObject: Optional[_J]): Option[_S] = OptionConverters.toScala(javaObject).map(mapping.toScala)
-      def toJava(scalaObject: Option[_S]): Optional[_J] = OptionConverters.toJava(scalaObject.map(mapping.toJava))
+      def toScala(javaObject: Optional[_J]): Option[_S] = javaObject.toScala.map(mapping.toScala)
+      def toJava(scalaObject: Option[_S]): Optional[_J] = scalaObject.map(mapping.toJava).toJava
     }
 
   implicit def flowMapping[JIn, SIn, JOut, SOut, JM, SM](implicit inMapping: JavaMapping[JIn, SIn],
@@ -191,9 +192,9 @@ private[http] object JavaMapping {
       implicit mapping: JavaMapping[_J, _S], ec: ExecutionContext): JavaMapping[CompletionStage[_J], Future[_S]] =
     new JavaMapping[CompletionStage[_J], Future[_S]] {
       def toJava(scalaObject: Future[_S]): CompletionStage[_J] =
-        FutureConverters.toJava(scalaObject.map(mapping.toJava))
+        scalaObject.map(mapping.toJava).asJava
       def toScala(javaObject: CompletionStage[_J]): Future[_S] =
-        FutureConverters.toScala(javaObject).map(mapping.toScala)
+        javaObject.asScala.map(mapping.toScala)
     }
 
   implicit object StringIdentity extends Identity[String]
@@ -257,7 +258,8 @@ private[http] object JavaMapping {
   implicit object InetSocketAddress extends Identity[java.net.InetSocketAddress]
   implicit object ByteString extends Identity[pekko.util.ByteString]
 
-  implicit val AttributeKey = new Inherited[jm.AttributeKey[_], sm.AttributeKey[_]]
+  implicit val AttributeKey: Inherited[jm.AttributeKey[_], sm.AttributeKey[_]] =
+    new Inherited[jm.AttributeKey[_], sm.AttributeKey[_]]
   implicit def attributeKey[T]: Inherited[jm.AttributeKey[T], sm.AttributeKey[T]] =
     AttributeKey.asInstanceOf[Inherited[jm.AttributeKey[T], sm.AttributeKey[T]]]
   implicit object ContentType extends Inherited[jm.ContentType, sm.ContentType]

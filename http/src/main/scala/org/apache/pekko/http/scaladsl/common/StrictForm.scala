@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,14 +17,14 @@ import scala.annotation.implicitNotFound
 import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
+
 import org.apache.pekko
-import pekko.stream.Materializer
-import pekko.http.ccompat._
-import pekko.http.scaladsl.unmarshalling._
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.util.FastFuture
-import FastFuture._
+import pekko.http.scaladsl.unmarshalling._
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
+import pekko.http.scaladsl.util.FastFuture
+import pekko.http.scaladsl.util.FastFuture._
+import pekko.stream.Materializer
 
 /**
  * Read-only abstraction on top of `application/x-www-form-urlencoded` and multipart form data,

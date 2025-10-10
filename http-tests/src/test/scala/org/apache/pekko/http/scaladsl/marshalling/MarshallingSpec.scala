@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,31 +13,31 @@
 
 package org.apache.pekko.http.scaladsl.marshalling
 
+import scala.collection.immutable
+import scala.collection.immutable.ListMap
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.impl.util._
 import pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport._
+import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpCharsets._
 import pekko.http.scaladsl.model.MediaTypes._
-import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.testkit.MarshallingTestUtils
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.Source
 import pekko.testkit.TestKit
 import pekko.util.ByteString
-import com.typesafe.config.ConfigFactory
-import org.scalatest.BeforeAndAfterAll
 
-import scala.collection.immutable
-import scala.collection.immutable.ListMap
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.typesafe.config.ConfigFactory
+
 class MarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll with MultipartMarshallers
     with MarshallingTestUtils {
-  implicit val system = ActorSystem(getClass.getSimpleName)
-  implicit val materializer = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName)
   import system.dispatcher
 
   override val testConfig = ConfigFactory.load()
@@ -55,6 +55,23 @@ class MarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll w
     "FormDataMarshaller should marshal FormData instances to application/x-www-form-urlencoded content" in {
       marshal(FormData(Map("name" -> "Bob", "pass" -> "hällo", "admin" -> ""))) shouldEqual
       HttpEntity(`application/x-www-form-urlencoded`, "name=Bob&pass=h%C3%A4llo&admin=")
+    }
+  }
+
+  "The PredefinedToEntityMarshallers" - {
+    "StringMarshaller should marshal response to `text/plain` content in UTF-8 when accept-charset is invalid" in {
+      val invalidAcceptCharsetHeader = `Accept-Charset`(HttpCharsetRange(HttpCharset.custom("invalid")))
+      val request = HttpRequest().withHeaders(invalidAcceptCharsetHeader)
+      val responseEntity = marshalToResponse("Ha“llo", request).entity
+      responseEntity.contentType.charsetOption shouldEqual Some(HttpCharsets.`UTF-8`)
+      responseEntity.contentType.mediaType shouldEqual MediaTypes.`text/plain`
+    }
+    "CharArrayMarshaller should marshal response to `text/plain` content in UTF-8 when accept-charset is invalid" in {
+      val invalidAcceptCharsetHeader = `Accept-Charset`(HttpCharsetRange(HttpCharset.custom("invalid")))
+      val request = HttpRequest().withHeaders(invalidAcceptCharsetHeader)
+      val responseEntity = marshalToResponse("Ha“llo".toCharArray(), request).entity
+      responseEntity.contentType.charsetOption shouldEqual Some(HttpCharsets.`UTF-8`)
+      responseEntity.contentType.mediaType shouldEqual MediaTypes.`text/plain`
     }
   }
 

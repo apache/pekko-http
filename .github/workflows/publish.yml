@@ -1,67 +1,89 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
 name: Publish nightly snapshots and documentation
 
 on:
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "30 1 * * *"
   workflow_dispatch:
 
 jobs:
   publish-artifacts:
     name: Publish artifacts to Apache Nexus
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          fetch-tags: true
 
-      - name: Set up JDK 8
-        uses: actions/setup-java@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
-          java-version: 8
+          java-version: 17
+
+      - name: Install sbt
+        uses: sbt/setup-sbt@6c68d2fe8dfbc0a0534d70101baa2e0420e1a506 # v1.1.9
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@4e2615869d13561d626ed48655e1a39e5b192b3c # v6.4.7
 
       - name: Install graphviz
         run: sudo apt-get install -y graphviz
-
-      - name: Enable jvm-opts
-        run: cp .jvmopts-ci .jvmopts
 
       - name: Publish to Apache Maven repo
         run: sbt +publish
         env:
           NEXUS_USER: ${{ secrets.NEXUS_USER }}
           NEXUS_PW: ${{ secrets.NEXUS_PW }}
+          JAVA_OPTS: "-verbose:gc -Xmx4g"
 
   publish-docs:
     name: Publish documentation to nightlies.apache.org
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          fetch-tags: true
 
-      - name: Set up JDK 8
-        uses: actions/setup-java@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
-          java-version: 8
+          java-version: 17
+
+      - name: Install sbt
+        uses: sbt/setup-sbt@6c68d2fe8dfbc0a0534d70101baa2e0420e1a506 # v1.1.9
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6
-
-      - name: Enable jvm-opts
-        run: cp .jvmopts-ci .jvmopts
+        uses: coursier/cache-action@4e2615869d13561d626ed48655e1a39e5b192b3c # v6.4.7
 
       - name: Build Documentation
         run: |-
           sbt -Dpekko.genjavadoc.enabled=true docs/paradox unidoc
+        env:
+          JAVA_OPTS: "-verbose:gc -Xmx4g"
 
       # Create directory structure upfront since rsync does not create intermediate directories otherwise
       - name: Create nightly directory structure
@@ -76,7 +98,7 @@ jobs:
         with:
           upload: true
           switches: --archive --compress --update --delete --progress --relative
-          local_path: target/nightly-docs/./docs/pekko-http/ # The intermediate dot is to show `--relative` which paths to operate on
+          local_path: target/nightly-docs/./docs/pekko-http/${{ github.ref_name }}-snapshot # The intermediate dot is to show `--relative` which paths to operate on
           remote_path: ${{ secrets.NIGHTLIES_RSYNC_PATH }}/pekko/
           remote_host: ${{ secrets.NIGHTLIES_RSYNC_HOST }}
           remote_port: ${{ secrets.NIGHTLIES_RSYNC_PORT }}

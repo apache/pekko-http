@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -24,18 +24,16 @@ import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.ws.Message
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.Flow
 
 import scala.io.StdIn
 
 object WSServerAutobahnTest extends App {
-  implicit val system = ActorSystem("WSServerTest")
-  implicit val fm = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem("WSServerTest")
 
-  val host = System.getProperty("akka.ws-host", "127.0.0.1")
-  val port = System.getProperty("akka.ws-port", "9001").toInt
-  val mode = System.getProperty("akka.ws-mode", "read") // read or sleep
+  val host = System.getProperty("pekko.ws-host", "127.0.0.1")
+  val port = System.getProperty("pekko.ws-port", "9001").toInt
+  val mode = System.getProperty("pekko.ws-mode", "read") // read or sleep
 
   try {
     val binding = Http().newServerAt(host, port).bindSync {
@@ -52,7 +50,7 @@ object WSServerAutobahnTest extends App {
     mode match {
       case "sleep" => while (true) Thread.sleep(1.minute.toMillis)
       case "read"  => StdIn.readLine("Press RETURN to stop...")
-      case _       => throw new Exception("akka.ws-mode MUST be sleep or read.")
+      case _       => throw new Exception("pekko.ws-mode MUST be sleep or read.")
     }
   } finally {
     system.terminate()

@@ -207,3 +207,108 @@ pekko-http-core contains the sources of Twitter HPACK runtime support,
 moved into the source package `org.apache.pekko.http.shaded.com.twitter.hpack`
 so as to avoid version conflicts. This code is under an Apache 2.0 license.
 Copyright 2014 Twitter, Inc.
+
+---------------
+
+pekko-http-core contains code from https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+in `org.apache.pekko.http.impl.engine.ws.Utf8Decoder.scala` that was distributed under a MIT license.
+
+Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial
+portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+---------------
+
+pekko-http-core and pekko-http-tests contain code from jsoniter-scala
+<https://github.com/plokhotnyuk/jsoniter-scala> that was distributed under a MIT license.
+- http-core/src/test/scala/org/apache/pekko/http/HashCodeCollider.scala
+- http-tests/src/test/scala/org/apache/pekko/http/HashCodeCollider.scala
+
+MIT License
+
+Copyright (c) 2017 Andriy Plokhotnyuk, and respective contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------
+
+pekko-http-core contains code based on code by Tim Kienzle with his permission to use it under an Apache License
+(see https://lists.apache.org/thread/v61twg09h0spcdzk2v8hb5cccs2krn12).
+
+ - http-core/src/main/scala/org/apache/pekko/http/scaladsl/model/DateTime.scala
+
+(C) 2000 by Tim Kientzle <kientzle@acm.org>
+
+---------------
+
+pekko-http-core and pekko-http-tests contain code based on akka-sse <https://github.com/hseeberger/akka-sse>
+distributed under the Apache 2.0 license.
+
+  - http-tests/src/test/java/org/apache/pekko/http/javadsl/marshalling/sse/EventStreamMarshallingTest.java
+  - http-tests/src/test/java/org/apache/pekko/http/javadsl/unmarshalling/sse/EventStreamUnmarshallingTest.java
+  - http-core/src/test/java/org/apache/pekko/http/javadsl/model/sse/ServerSentEventTest.java
+  - http-core/src/main/java/org/apache/pekko/http/javadsl/model/sse/ServerSentEvent.java
+  - http-core/src/main/java/org/apache/pekko/http/javadsl/model/headers/LastEventId.java
+
+Copyright 2015 Heiko Seeberger
+
+---------------
+
+pekko-http-core contains code from sbt 0.12 which was distributed under a BSD-style license
+<https://github.com/sbt/sbt/blob/0.12/LICENSE>.
+
+ - http-core/src/main/scala/org/apache/pekko/http/impl/engine/http2/util/AsciiTreeLayout.scala
+
+Copyright (c) 2008, 2009, 2010 Steven Blundy, Josh Cough, Mark Harrah, Stuart Roebuck, Tony Sloane, Vesa Vilhonen, Jason Zaugg
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the author may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

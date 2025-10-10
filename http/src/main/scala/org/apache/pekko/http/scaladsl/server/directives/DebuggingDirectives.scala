@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,8 +17,8 @@ package directives
 import org.apache.pekko
 import pekko.event.Logging._
 import pekko.event.LoggingAdapter
-import pekko.http.scaladsl.model._
 import pekko.http.javadsl
+import pekko.http.scaladsl.model._
 
 /**
  * @groupname debugging Debugging directives

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,14 +14,18 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- *  Model for the `Content-Range` header.
- *  Specification: http://tools.ietf.org/html/draft-ietf-httpbis-p5-range-26#section-4.2
+ * Model for the `Content-Range` header. Specification:
+ * http://tools.ietf.org/html/draft-ietf-httpbis-p5-range-26#section-4.2
  */
 public abstract class ContentRange extends org.apache.pekko.http.scaladsl.model.HttpHeader {
-    public abstract RangeUnit rangeUnit();
-    public abstract org.apache.pekko.http.javadsl.model.ContentRange contentRange();
+  public abstract RangeUnit rangeUnit();
 
-    public static ContentRange create(RangeUnit rangeUnit, org.apache.pekko.http.javadsl.model.ContentRange contentRange) {
-        return new org.apache.pekko.http.scaladsl.model.headers.Content$minusRange(((org.apache.pekko.http.scaladsl.model.headers.RangeUnit) rangeUnit), ((org.apache.pekko.http.scaladsl.model.ContentRange) contentRange));
-    }
+  public abstract org.apache.pekko.http.javadsl.model.ContentRange contentRange();
+
+  public static ContentRange create(
+      RangeUnit rangeUnit, org.apache.pekko.http.javadsl.model.ContentRange contentRange) {
+    return new org.apache.pekko.http.scaladsl.model.headers.Content$minusRange(
+        ((org.apache.pekko.http.scaladsl.model.headers.RangeUnit) rangeUnit),
+        ((org.apache.pekko.http.scaladsl.model.ContentRange) contentRange));
+  }
 }

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -27,7 +27,7 @@ class Gzip private[http] (compressionLevel: Int, val messageFilter: HttpMessage 
   }
 
   val encoding = HttpEncodings.gzip
-  def newCompressor = new GzipCompressor(compressionLevel)
+  private[http] def newCompressor = new GzipCompressor(compressionLevel)
   def newDecompressorStage(maxBytesPerChunk: Int) = () => new GzipDecompressor(maxBytesPerChunk)
 
   @deprecated("Use Coders.Gzip(compressionLevel = ...) instead", since = "Akka HTTP 10.2.0")

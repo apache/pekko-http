@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,11 +15,13 @@ package org.apache.pekko.http.scaladsl.model.headers
 
 import org.apache.pekko
 import pekko.http.impl.util._
-import java.net.InetAddress
 
-import pekko.http.scaladsl.model.{ headers, _ }
+import java.net.InetAddress
+import pekko.http.scaladsl.model.{ headers, Trailer => _, _ }
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+
+import scala.collection.immutable
 
 class HeaderSpec extends AnyFreeSpec with Matchers {
   "ModeledCompanion should" - {
@@ -180,11 +182,12 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
         TE(TransferEncodings.trailers),
         `Transfer-Encoding`(TransferEncodings.chunked),
         Upgrade(Vector(UpgradeProtocol("HTTP", Some("2.0")))),
-        `User-Agent`("Akka HTTP Client 2.4"),
+        `User-Agent`("Pekko HTTP Client 2.4"),
         `X-Forwarded-For`(RemoteAddress(InetAddress.getByName("192.168.0.1"))),
         `X-Forwarded-Host`(Uri.Host(InetAddress.getByName("192.168.0.2"))),
         `X-Forwarded-Proto`("https"),
-        `X-Real-Ip`(RemoteAddress(InetAddress.getByName("192.168.1.1"))))
+        `X-Real-Ip`(RemoteAddress(InetAddress.getByName("192.168.1.1"))),
+        Trailer(immutable.Seq("X-My-Trailer", "X-My-Other-Trailer")))
 
       requestHeaders.foreach { header =>
         header shouldBe Symbol("renderInRequests")
@@ -222,12 +225,13 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
         `Sec-WebSocket-Accept`("dGhlIHNhbXBsZSBub25jZQ"),
         `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("foo"))),
         `Sec-WebSocket-Version`(Vector(13)),
-        Server("Akka-HTTP/2.4"),
+        Server("Pekko-HTTP/2.4"),
         `Set-Cookie`(HttpCookie("sessionId", "b0eb8b8b3ad246")),
         `Transfer-Encoding`(TransferEncodings.chunked),
         Upgrade(Vector(UpgradeProtocol("HTTP", Some("2.0")))),
         `WWW-Authenticate`(HttpChallenge("Basic", Some("example.com"))),
-        `Retry-After`(120))
+        `Retry-After`(120),
+        Trailer(immutable.Seq("X-My-Trailer", "X-My-Other-Trailer")))
 
       responseHeaders.foreach { header =>
         header shouldBe Symbol("renderInResponses")

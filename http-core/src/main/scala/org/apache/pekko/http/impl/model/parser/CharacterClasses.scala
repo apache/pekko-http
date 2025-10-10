@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -23,15 +23,15 @@ private[http] object CharacterClasses {
   def ALPHA = CharPredicate.Alpha
   def LOWER_ALPHA = CharPredicate.LowerAlpha
   def UPPER_ALPHA = CharPredicate.UpperAlpha
-  def CR = '\r'
+  final val CR = '\r'
   val CTL = CharPredicate('\u0000' to '\u001F', '\u007F')
   def DIGIT = CharPredicate.Digit
   def ALPHANUM = CharPredicate.AlphaNum
-  def DQUOTE = '"'
+  final val DQUOTE = '"'
   def HEXDIG = CharPredicate.HexDigit
-  def HTAB = '\t'
-  def LF = '\n'
-  def SP = ' '
+  final val HTAB = '\t'
+  final val LF = '\n'
+  final val SP = ' '
   def VCHAR = CharPredicate.Visible
   val WSP = CharPredicate(SP, HTAB)
   val WSPCRLF = WSP ++ CR ++ LF

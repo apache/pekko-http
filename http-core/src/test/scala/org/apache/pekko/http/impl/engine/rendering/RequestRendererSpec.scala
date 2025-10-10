@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -25,24 +25,21 @@ import pekko.actor.ActorSystem
 import pekko.event.NoLogging
 import pekko.util.ByteString
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpEntity._
+import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.util._
 import pekko.stream.scaladsl._
-import pekko.stream.ActorMaterializer
-import HttpEntity._
-import HttpMethods._
 import pekko.testkit._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll {
   val testConf: Config = ConfigFactory.parseString("""
-    pekko.event-handlers = ["org.apache.pekko.testkit.TestEventListener"]
+    pekko.event-handlers = ["pekko.testkit.TestEventListener"]
     pekko.loglevel = WARNING""")
-  implicit val system = ActorSystem(getClass.getSimpleName, testConf)
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
   import system.dispatcher
-
-  implicit val materializer = ActorMaterializer()
 
   "The request preparation logic should" - {
     "properly render an unchunked" - {

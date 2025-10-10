@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,21 +17,21 @@ import java.lang.Iterable
 import java.util.Optional
 import java.util.function.Function
 
+import scala.collection.immutable
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
+import scala.runtime.AbstractFunction1
+
 import org.apache.pekko
-import pekko.japi.Util
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.{ ByteRange, HttpChallenge, HttpEncoding }
-import pekko.http.javadsl.{ model, server => jserver }
 import pekko.http.impl.util.JavaMapping._
 import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.pattern.CircuitBreakerOpenException
+import pekko.http.impl.util.Util
+import pekko.http.javadsl.{ model, server => jserver }
 import pekko.http.javadsl.model.headers.{ HttpOrigin => JHttpOrigin }
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.{ ByteRange, HttpChallenge, HttpEncoding }
 import pekko.http.scaladsl.model.headers.{ HttpOrigin => SHttpOrigin }
-
-import scala.collection.JavaConverters._
-import scala.collection.immutable
-import scala.compat.java8.OptionConverters
-import scala.runtime.AbstractFunction1
+import pekko.pattern.CircuitBreakerOpenException
 
 /**
  * A rejection encapsulates a specific reason why a Route was not able to handle a request. Rejections are gathered
@@ -41,7 +41,7 @@ import scala.runtime.AbstractFunction1
 trait Rejection extends pekko.http.javadsl.server.Rejection
 
 trait RejectionWithOptionalCause extends Rejection {
-  final def getCause: Optional[Throwable] = OptionConverters.toJava(cause)
+  final def getCause: Optional[Throwable] = cause.toJava
   def cause: Option[Throwable]
 }
 
@@ -137,23 +137,6 @@ final class UnsupportedRequestContentTypeRejection(
 
   override def getSupported: java.util.Set[model.ContentTypeRange] =
     scala.collection.mutable.Set(supported.map(_.asJava).toVector: _*).asJava // TODO optimise
-
-  @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
-  def this(supported: Set[ContentTypeRange]) = this(supported, None)
-
-  @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
-  def copy(supported: Set[ContentTypeRange]) =
-    new UnsupportedRequestContentTypeRejection(supported, this.contentType)
-
-  @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
-  def copy$default$1(supported: Set[ContentTypeRange]) =
-    new UnsupportedRequestContentTypeRejection(supported, this.contentType)
-
-  @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
-  def copy(
-      supported: Set[ContentTypeRange] = this.supported,
-      contentType: Option[ContentType] = this.contentType) =
-    UnsupportedRequestContentTypeRejection(supported, contentType)
 
   override def canEqual(that: Any): Boolean = that.isInstanceOf[UnsupportedRequestContentTypeRejection]
 
@@ -335,7 +318,9 @@ final case class TransformationRejection(transform: immutable.Seq[Rejection] => 
     override def apply(t: Iterable[jserver.Rejection]): Iterable[jserver.Rejection] = {
       // explicit collects assignment is because of unidoc failing compilation on .asScala and .asJava here
       val transformed: Seq[jserver.Rejection] =
-        transform(Util.immutableSeq(t).collect { case r: Rejection => r }).collect { case j: jserver.Rejection => j }
+        transform(Util.convertIterable[jserver.Rejection, jserver.Rejection](t).collect { case r: Rejection =>
+          r
+        }).collect { case j: jserver.Rejection => j }
       transformed.asJava // TODO "asJavaDeep" and optimise?
     }
   }

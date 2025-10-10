@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,22 +13,21 @@
 
 package org.apache.pekko.http.scaladsl.unmarshalling
 
+import scala.collection.immutable
+import scala.collection.immutable.VectorBuilder
+
 import org.apache.pekko
 import pekko.event.{ LoggingAdapter, NoLogging }
 import pekko.http.impl.engine.parsing.BodyPartParser
 import pekko.http.impl.util.StreamUtils
+import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpCharsets._
 import pekko.http.scaladsl.model.MediaRanges._
 import pekko.http.scaladsl.model.MediaTypes._
-import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import pekko.http.scaladsl.util.FastFuture
-import pekko.stream.ActorMaterializerHelper
 import pekko.stream.scaladsl._
-
-import scala.collection.immutable
-import scala.collection.immutable.VectorBuilder
 
 /**
  * Provides [[pekko.http.scaladsl.model.Multipart]] marshallers.
@@ -47,8 +46,8 @@ trait MultipartUnmarshallers {
       defaultContentType = MediaTypes.`text/plain`.withCharset(defaultCharset),
       createBodyPart = Multipart.General.BodyPart(_, _),
       createStreamed = Multipart.General(_, _),
-      createStrictBodyPart = Multipart.General.BodyPart.Strict,
-      createStrict = Multipart.General.Strict)
+      createStrictBodyPart = Multipart.General.BodyPart.Strict.apply,
+      createStrict = Multipart.General.Strict.apply)
 
   implicit def multipartFormDataUnmarshaller(implicit log: LoggingAdapter = NoLogging,
       parserSettings: ParserSettings = null): FromEntityUnmarshaller[Multipart.FormData] =
@@ -93,7 +92,7 @@ trait MultipartUnmarshallers {
           case Some(boundary) =>
             import BodyPartParser._
             val effectiveParserSettings =
-              Option(parserSettings).getOrElse(ParserSettings(ActorMaterializerHelper.downcast(mat).system))
+              Option(parserSettings).getOrElse(ParserSettings(mat.system))
             val parser = new BodyPartParser(defaultContentType, boundary, log, effectiveParserSettings)
 
             entity match {

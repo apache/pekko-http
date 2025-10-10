@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -167,40 +167,40 @@ object HPackSpecExamples {
        9587 3160 65c0 03ed 4ee5 b106 3d50 07""".parseHexByteString
 
   /**
-   * akka-http model representation of first request (as encoded in C.5.1 and C.6.1)
+   * pekko-http model representation of first request (as encoded in C.5.1 and C.6.1)
    */
   val FirstResponse =
     HttpResponse(
       302,
       headers = Vector(
         headers.`Cache-Control`(CacheDirectives.`private`()),
-        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:21 GMT").right.get,
+        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:21 GMT").toOption.get,
         headers.Location("https://www.example.com")),
       entity = HttpEntity.CloseDelimited(ContentTypes.NoContentType, Source.empty),
       protocol = HttpProtocols.`HTTP/2.0`)
 
   /**
-   * akka-http model representation of second request (as encoded in C.5.2 and C.6.2)
+   * pekko-http model representation of second request (as encoded in C.5.2 and C.6.2)
    */
   val SecondResponse =
     HttpResponse(
       307,
       headers = Vector(
         headers.`Cache-Control`(CacheDirectives.`private`()),
-        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:21 GMT").right.get,
+        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:21 GMT").toOption.get,
         headers.Location("https://www.example.com")),
       entity = HttpEntity.CloseDelimited(ContentTypes.NoContentType, Source.empty),
       protocol = HttpProtocols.`HTTP/2.0`)
 
   /**
-   * akka-http model representation of second request (as encoded in C.5.3 and C.6.3)
+   * pekko-http model representation of second request (as encoded in C.5.3 and C.6.3)
    */
   val ThirdResponse =
     HttpResponse(
       200,
       headers = Vector(
         headers.`Cache-Control`(CacheDirectives.`private`()),
-        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:22 GMT").right.get,
+        headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:22 GMT").toOption.get,
         headers.Location("https://www.example.com"),
         headers.`Content-Encoding`(HttpEncodings.gzip),
         // The RFC example spells 'max-age' in lowercase, while the modeled `Set-Cookie` header renders it uppercase.

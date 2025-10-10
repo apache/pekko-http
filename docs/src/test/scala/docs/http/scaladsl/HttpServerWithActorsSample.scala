@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,7 +15,7 @@ package docs.http.scaladsl
 
 object HttpServerWithActorsSample {
 
-  // #akka-typed-behavior
+  // #pekko-typed-behavior
   import org.apache.pekko
   import pekko.actor.typed.{ ActorRef, Behavior }
   import pekko.actor.typed.scaladsl.Behaviors
@@ -57,12 +57,13 @@ object HttpServerWithActorsSample {
     }
 
   }
-  // #akka-typed-behavior
+  // #pekko-typed-behavior
 
-  // #akka-typed-json
+  // #pekko-typed-json
   import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
   import spray.json.DefaultJsonProtocol
   import spray.json.DeserializationException
+  import spray.json.JsonFormat
   import spray.json.JsString
   import spray.json.JsValue
   import spray.json.RootJsonFormat
@@ -85,11 +86,11 @@ object HttpServerWithActorsSample {
       }
     }
 
-    implicit val jobFormat = jsonFormat4(Job)
+    implicit val jobFormat: RootJsonFormat[Job] = jsonFormat4(Job.apply)
   }
-  // #akka-typed-json
+  // #pekko-typed-json
 
-  // #akka-typed-route
+  // #pekko-typed-route
   import org.apache.pekko
   import pekko.actor.typed.ActorSystem
   import pekko.util.Timeout
@@ -144,9 +145,9 @@ object HttpServerWithActorsSample {
           })
       }
   }
-  // #akka-typed-route
+  // #pekko-typed-route
 
-  // #akka-typed-bootstrap
+  // #pekko-typed-bootstrap
   import org.apache.pekko
   import pekko.actor.typed.PostStop
   import pekko.http.scaladsl.Http.ServerBinding
@@ -213,5 +214,5 @@ object HttpServerWithActorsSample {
     val system: ActorSystem[Server.Message] =
       ActorSystem(Server("localhost", 8080), "BuildJobsServer")
   }
-  // #akka-typed-bootstrap
+  // #pekko-typed-bootstrap
 }

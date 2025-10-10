@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -18,13 +18,13 @@ import java.util.concurrent.{ CompletionStage, TimeUnit }
 
 import org.apache.pekko
 import pekko.Done
-import pekko.annotation.DoNotInherit
-import pekko.dispatch.ExecutionContexts
-import pekko.util.JavaDurationConverters._
-
-import scala.compat.java8.FutureConverters._
-import scala.concurrent.duration.FiniteDuration
 import pekko.actor.ClassicActorSystemProvider
+import pekko.annotation.DoNotInherit
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.FiniteDuration
+import scala.jdk.DurationConverters._
+import scala.jdk.FutureConverters._
 
 /**
  * Represents a prospective HTTP server binding.
@@ -43,7 +43,7 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
    * The produced [[java.util.concurrent.CompletionStage]] is fulfilled when the unbinding has been completed.
    */
   def unbind(): CompletionStage[Done] =
-    delegate.unbind().toJava
+    delegate.unbind().asJava
 
   /**
    * Triggers "graceful" termination request being handled on this connection.
@@ -89,8 +89,8 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
 
   def terminate(hardDeadline: java.time.Duration): CompletionStage[HttpTerminated] = {
     delegate.terminate(FiniteDuration.apply(hardDeadline.toMillis, TimeUnit.MILLISECONDS))
-      .map(_.asInstanceOf[HttpTerminated])(ExecutionContexts.sameThreadExecutionContext)
-      .toJava
+      .asJava
+      .asInstanceOf[CompletionStage[HttpTerminated]]
   }
 
   /**
@@ -103,8 +103,8 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
    */
   def whenTerminationSignalIssued: CompletionStage[java.time.Duration] =
     delegate.whenTerminationSignalIssued
-      .map(deadline => deadline.time.asJava)(ExecutionContexts.sameThreadExecutionContext)
-      .toJava
+      .map(deadline => deadline.time.toJava)(ExecutionContext.parasitic)
+      .asJava
 
   /**
    * This completion stage completes when the termination process, as initiated by an [[terminate]] call has completed.
@@ -113,15 +113,15 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
    * This signal can for example be used to safely terminate the underlying ActorSystem.
    *
    * Note: This mechanism is currently NOT hooked into the Coordinated Shutdown mechanisms of Akka.
-   *       TODO: This feature request is tracked by: https://github.com/apache/incubator-pekko-http/issues/1210
+   *       TODO: This feature request is tracked by: https://github.com/akka/akka-http/issues/1210
    *
    * Note that this signal may be used for Coordinated Shutdown to proceed to next steps in the shutdown.
    * You may also explicitly depend on this completion stage to perform your next shutting down steps.
    */
   def whenTerminated: CompletionStage[HttpTerminated] =
     delegate.whenTerminated
-      .map(_.asInstanceOf[HttpTerminated])(ExecutionContexts.sameThreadExecutionContext)
-      .toJava
+      .asJava
+      .asInstanceOf[CompletionStage[HttpTerminated]]
 
   /**
    * Adds this `ServerBinding` to the actor system's coordinated shutdown, so that [[unbind]] and [[terminate]] get
@@ -131,8 +131,7 @@ class ServerBinding private[http] (delegate: pekko.http.scaladsl.Http.ServerBind
    */
   def addToCoordinatedShutdown(
       hardTerminationDeadline: java.time.Duration, system: ClassicActorSystemProvider): ServerBinding = {
-    import pekko.util.JavaDurationConverters._
-    delegate.addToCoordinatedShutdown(hardTerminationDeadline.asScala)(system)
+    delegate.addToCoordinatedShutdown(hardTerminationDeadline.toScala)(system)
     this
   }
 }

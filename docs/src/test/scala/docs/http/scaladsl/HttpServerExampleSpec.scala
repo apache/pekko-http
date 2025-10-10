@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,7 +17,9 @@ import org.apache.pekko
 import pekko.event.LoggingAdapter
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.StatusCodes
-import pekko.http.scaladsl.server.Route
+import pekko.http.scaladsl.server.{ Directive, Route }
+import pekko.http.scaladsl.server.directives.FormFieldDirectives.FieldSpec
+import pekko.http.scaladsl.server.util.ConstructFromTuple
 import pekko.testkit.TestActors
 import scala.annotation.nowarn
 import docs.CompileOnlySpec
@@ -192,8 +194,8 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
         println("Accepted new connection from " + connection.remoteAddress)
 
         connection.handleWithSyncHandler(requestHandler)
-      // this is equivalent to
-      // connection handleWith { Flow[HttpRequest] map requestHandler }
+        // this is equivalent to
+        // connection handleWith { Flow[HttpRequest] map requestHandler }
       }).run()
     // #full-server-example
   }
@@ -277,8 +279,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
         pathEnd {
           concat(
             put {
-              // form extraction from multipart or www-url-encoded forms
-              formFields("email", "total".as[Money]).as(Order) { order =>
+              formFields("email", "total".as[Money]).as(Order.apply _) { (order: Order) =>
                 complete {
                   // complete with serialized Future result
                   (myDbActor ? Update(order)).mapTo[TransactionResult]
@@ -300,7 +301,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
           get {
             // parameters to case class extraction
             parameters("size".as[Int], "color".optional, "dangerous".withDefault("no"))
-              .as(OrderItem) { orderItem =>
+              .as(OrderItem.apply _) { (orderItem: OrderItem) =>
                 // ... route using case class instance created from
                 // required and optional query parameters
                 complete("") // #hide
@@ -325,20 +326,21 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     import pekko.http.scaladsl.server.Directives._
     import pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
     import spray.json.DefaultJsonProtocol._
+    import spray.json.RootJsonFormat
 
-    implicit val system = ActorSystem()
+    implicit val system: ActorSystem = ActorSystem()
     // needed for the future flatMap/onComplete in the end
-    implicit val executionContext = system.dispatcher
+    implicit val executionContext: ExecutionContext = system.dispatcher
 
     final case class Bid(userId: String, bid: Int)
 
     // these are from spray-json
-    implicit val bidFormat = jsonFormat2(Bid)
+    implicit val bidFormat: RootJsonFormat[Bid] = jsonFormat2(Bid.apply)
 
     val route =
       path("bid") {
         put {
-          entity(as[Bid]) { bid =>
+          entity(as[Bid]) { (bid: Bid) =>
             // incoming entity is fully consumed and converted into a Bid
             complete("The bid was: " + bid)
           }
@@ -389,7 +391,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     val route =
       (put & path("lines")) {
         withoutSizeLimit {
-          extractRequest { r: HttpRequest =>
+          extractRequest { (r: HttpRequest) =>
             val finishedWriting = r.discardEntityBytes().future
 
             // we only want to respond once the incoming data has been handled:
@@ -441,11 +443,11 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     import spray.json.DefaultJsonProtocol._
     import spray.json._
 
-    implicit val system = ActorSystem()
+    implicit val system: ActorSystem = ActorSystem()
 
     // #dynamic-routing-example
     case class MockDefinition(path: String, requests: Seq[JsValue], responses: Seq[JsValue])
-    implicit val format = jsonFormat3(MockDefinition)
+    implicit val format: RootJsonFormat[MockDefinition] = jsonFormat3(MockDefinition.apply)
 
     @volatile var state = Map.empty[String, Map[JsValue, JsValue]]
 

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,48 +13,49 @@
 
 package org.apache.pekko.http.javadsl.server.directives
 
+import java.lang.{ Iterable => JIterable }
+import java.time.{ Duration => JDuration }
+import java.util.{ List => JList }
+import java.util.concurrent.CompletionStage
 import java.util.function.{ Function => JFunction }
+import java.util.function.Predicate
+import java.util.function.Supplier
+
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
+import scala.concurrent.duration.FiniteDuration
+import scala.jdk.DurationConverters._
+import scala.jdk.FutureConverters._
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
+import pekko.event.LoggingAdapter
+import pekko.http.impl.model.JavaUri
 import pekko.http.impl.util.JavaMapping
-import pekko.http.javadsl.settings.ParserSettings
-import pekko.http.javadsl.settings.RoutingSettings
+import pekko.http.impl.util.Util.convertIterable
+import pekko.http.javadsl.model.{
+  HttpEntity,
+  HttpHeader,
+  HttpRequest,
+  HttpResponse,
+  RequestEntity,
+  ResponseEntity,
+  Uri
+}
+import pekko.http.javadsl.server
+import pekko.http.javadsl.server._
+import pekko.http.javadsl.settings.{ ParserSettings, RoutingSettings }
+import pekko.http.scaladsl
+import pekko.http.scaladsl.server.{ Directives => D }
+import pekko.http.scaladsl.util.FastFuture._
 import pekko.japi.Util
+import pekko.stream.Materializer
 import pekko.stream.javadsl.Source
 import pekko.util.ByteString
 
-import scala.concurrent.ExecutionContextExecutor
-import pekko.http.impl.model.JavaUri
-import pekko.http.javadsl.model.HttpRequest
-import pekko.http.javadsl.model.HttpEntity
-import pekko.http.javadsl.model.RequestEntity
-import pekko.http.javadsl.model.Uri
-import pekko.http.javadsl.server._
-import pekko.http.scaladsl.server.{ Directives => D }
-import pekko.http.scaladsl
-import pekko.stream.Materializer
-import java.util.function.Supplier
-import java.util.{ List => JList }
-
-import pekko.http.javadsl.model.HttpResponse
-import pekko.http.javadsl.model.ResponseEntity
-import pekko.http.javadsl.model.HttpHeader
-import pekko.http.scaladsl.util.FastFuture._
-import java.lang.{ Iterable => JIterable }
-import java.util.concurrent.CompletionStage
-import java.util.function.Predicate
-
-import pekko.dispatch.ExecutionContexts
-import pekko.event.LoggingAdapter
-import pekko.http.javadsl.server
-
-import scala.compat.java8.FutureConverters._
-import scala.concurrent.duration.FiniteDuration
-
 abstract class BasicDirectives {
-  import pekko.http.impl.util.JavaMapping.Implicits._
   import RoutingJavaMapping._
+
+  import pekko.http.impl.util.JavaMapping.Implicits._
 
   def mapRequest(f: JFunction[HttpRequest, HttpRequest], inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRequest(rq => f.apply(rq.asJava).asScala) { inner.get.delegate }
@@ -66,7 +67,8 @@ abstract class BasicDirectives {
 
   def mapRejections(f: JFunction[JList[Rejection], JList[Rejection]], inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRejections(rejections =>
-      Util.immutableSeq(f.apply(Util.javaArrayList(rejections.map(_.asJava)))).map(_.asScala)) { inner.get.delegate }
+      convertIterable[Rejection, Rejection](f.apply(Util.javaArrayList(rejections.map(_.asJava)))).map(
+        _.asScala)) { inner.get.delegate }
   }
 
   def mapResponse(f: JFunction[HttpResponse, HttpResponse], inner: Supplier[Route]): Route = RouteAdapter {
@@ -79,7 +81,10 @@ abstract class BasicDirectives {
 
   def mapResponseHeaders(f: JFunction[JList[HttpHeader], JList[HttpHeader]], inner: Supplier[Route]): Route =
     RouteAdapter {
-      D.mapResponseHeaders(l => Util.immutableSeq(f.apply(Util.javaArrayList(l))).map(_.asScala)) { inner.get.delegate } // TODO try to remove map()
+      D.mapResponseHeaders(l =>
+        convertIterable[HttpHeader, HttpHeader](f.apply(Util.javaArrayList(l))).map(_.asScala)) {
+        inner.get.delegate
+      } // TODO try to remove map()
     }
 
   def mapInnerRoute(f: JFunction[Route, Route], inner: Supplier[Route]): Route = RouteAdapter {
@@ -97,22 +102,25 @@ abstract class BasicDirectives {
   def mapRouteResultFuture(f: JFunction[CompletionStage[RouteResult], CompletionStage[RouteResult]],
       inner: Supplier[Route]): Route = RouteAdapter {
     D.mapRouteResultFuture(stage =>
-      f(toJava(stage.fast.map(_.asJava)(ExecutionContexts.sameThreadExecutionContext))).toScala.fast.map(_.asScala)(
-        ExecutionContexts.sameThreadExecutionContext)) {
+      CompletionStageOps(
+        f(stage.fast.map(_.asJava)(ExecutionContext.parasitic).asJava)).asScala.fast.map(_.asScala)(
+        ExecutionContext.parasitic)) {
       inner.get.delegate
     }
   }
 
   def mapRouteResultWith(f: JFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route =
     RouteAdapter {
-      D.mapRouteResultWith(r => f(r.asJava).toScala.fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) {
+      D.mapRouteResultWith(r =>
+        CompletionStageOps(f(r.asJava)).asScala.fast.map(_.asScala)(ExecutionContext.parasitic)) {
         inner.get.delegate
       }
     }
 
   def mapRouteResultWithPF(
       f: PartialFunction[RouteResult, CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
-    D.mapRouteResultWith(r => f(r.asJava).toScala.fast.map(_.asScala)(ExecutionContexts.sameThreadExecutionContext)) {
+    D.mapRouteResultWith(r =>
+      CompletionStageOps(f(r.asJava)).asScala.fast.map(_.asScala)(ExecutionContext.parasitic)) {
       inner.get.delegate
     }
   }
@@ -152,7 +160,7 @@ abstract class BasicDirectives {
    * to the list of rejections potentially coming back from the inner route.
    */
   def cancelRejections(classes: JIterable[Class[_]], inner: Supplier[Route]): Route = RouteAdapter {
-    D.cancelRejections(Util.immutableSeq(classes): _*) { inner.get.delegate }
+    D.cancelRejections(convertIterable[Class[_], Class[_]](classes): _*) { inner.get.delegate }
   }
 
   /**
@@ -170,8 +178,8 @@ abstract class BasicDirectives {
   def recoverRejectionsWith(
       f: JFunction[JIterable[Rejection], CompletionStage[RouteResult]], inner: Supplier[Route]): Route = RouteAdapter {
     D.recoverRejectionsWith(rs =>
-      f.apply(Util.javaArrayList(rs.map(_.asJava))).toScala.fast.map(_.asScala)(
-        ExecutionContexts.sameThreadExecutionContext)) { inner.get.delegate }
+      CompletionStageOps(f.apply(Util.javaArrayList(rs.map(_.asJava)))).asScala.fast.map(_.asScala)(
+        ExecutionContext.parasitic)) { inner.get.delegate }
   }
 
   /**
@@ -234,7 +242,7 @@ abstract class BasicDirectives {
     D.extractMaterializer { m => inner.apply(m).delegate })
 
   /**
-   * Extracts the [[pekko.actor.ActorSystem]] if the available Materializer is an [[pekko.stream.ActorMaterializer]].
+   * Extracts the [[pekko.actor.ActorSystem]] if the Materializer is available.
    * Otherwise throws an exception as it won't be able to extract the system from arbitrary materializers.
    */
   def extractActorSystem(inner: JFunction[ActorSystem, Route]): Route = RouteAdapter(
@@ -340,7 +348,10 @@ abstract class BasicDirectives {
    * entire request body within the timeout.
    *
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
    */
+  @Deprecated
+  @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def extractStrictEntity(timeout: FiniteDuration, inner: JFunction[HttpEntity.Strict, Route]): Route = RouteAdapter {
     D.extractStrictEntity(timeout) { strict => inner.apply(strict).delegate }
   }
@@ -356,10 +367,48 @@ abstract class BasicDirectives {
    * entire request body within the timeout.
    *
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @since 1.3.0
    */
+  def extractStrictEntity(timeout: JDuration, inner: JFunction[HttpEntity.Strict, Route]): Route = RouteAdapter {
+    D.extractStrictEntity(timeout.toScala) { strict => inner.apply(strict).delegate }
+  }
+
+  /**
+   * WARNING: This will read the entire request entity into memory and effectively disable streaming.
+   *
+   * To help protect against excessive memory use, the request will be aborted if the request is larger
+   * than allowed by the `pekko.http.parsing.max-to-strict-bytes` configuration setting.
+   *
+   * Converts the HttpEntity from the [[pekko.http.javadsl.server.RequestContext]] into an
+   * [[pekko.http.javadsl.model.HttpEntity.Strict]] and extracts it, or fails the route if unable to drain the
+   * entire request body within the timeout.
+   *
+   * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
+   */
+  @Deprecated
+  @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def extractStrictEntity(timeout: FiniteDuration, maxBytes: Long, inner: JFunction[HttpEntity.Strict, Route]): Route =
     RouteAdapter {
       D.extractStrictEntity(timeout, maxBytes) { strict => inner.apply(strict).delegate }
+    }
+
+  /**
+   * WARNING: This will read the entire request entity into memory and effectively disable streaming.
+   *
+   * To help protect against excessive memory use, the request will be aborted if the request is larger
+   * than allowed by the `pekko.http.parsing.max-to-strict-bytes` configuration setting.
+   *
+   * Converts the HttpEntity from the [[pekko.http.javadsl.server.RequestContext]] into an
+   * [[pekko.http.javadsl.model.HttpEntity.Strict]] and extracts it, or fails the route if unable to drain the
+   * entire request body within the timeout.
+   *
+   * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @since 1.3.0
+   */
+  def extractStrictEntity(timeout: JDuration, maxBytes: Long, inner: JFunction[HttpEntity.Strict, Route]): Route =
+    RouteAdapter {
+      D.extractStrictEntity(timeout.toScala, maxBytes) { strict => inner.apply(strict).delegate }
     }
 
   /**
@@ -372,7 +421,10 @@ abstract class BasicDirectives {
    * or fails the route if unable to drain the entire request body within the timeout.
    *
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
    */
+  @Deprecated
+  @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def toStrictEntity(timeout: FiniteDuration, inner: Supplier[Route]): Route = RouteAdapter {
     D.toStrictEntity(timeout) { inner.get.delegate }
   }
@@ -387,9 +439,43 @@ abstract class BasicDirectives {
    * or fails the route if unable to drain the entire request body within the timeout.
    *
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @since 1.3.0
    */
+  def toStrictEntity(timeout: JDuration, inner: Supplier[Route]): Route = RouteAdapter {
+    D.toStrictEntity(timeout.toScala) { inner.get.delegate }
+  }
+
+  /**
+   * WARNING: This will read the entire request entity into memory and effectively disable streaming.
+   *
+   * To help protect against excessive memory use, the request will be aborted if the request is larger
+   * than allowed by the `pekko.http.parsing.max-to-strict-bytes` configuration setting.
+   *
+   * Extracts the [[pekko.http.javadsl.server.RequestContext]] itself with the strict HTTP entity,
+   * or fails the route if unable to drain the entire request body within the timeout.
+   *
+   * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
+   */
+  @Deprecated
+  @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def toStrictEntity(timeout: FiniteDuration, maxBytes: Long, inner: Supplier[Route]): Route = RouteAdapter {
     D.toStrictEntity(timeout, maxBytes) { inner.get.delegate }
   }
 
+  /**
+   * WARNING: This will read the entire request entity into memory and effectively disable streaming.
+   *
+   * To help protect against excessive memory use, the request will be aborted if the request is larger
+   * than allowed by the `pekko.http.parsing.max-to-strict-bytes` configuration setting.
+   *
+   * Extracts the [[pekko.http.javadsl.server.RequestContext]] itself with the strict HTTP entity,
+   * or fails the route if unable to drain the entire request body within the timeout.
+   *
+   * @param timeout The directive is failed if the stream isn't completed after the given timeout.
+   * @since 1.3.0
+   */
+  def toStrictEntity(timeout: JDuration, maxBytes: Long, inner: Supplier[Route]): Route = RouteAdapter {
+    D.toStrictEntity(timeout.toScala, maxBytes) { inner.get.delegate }
+  }
 }

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -18,18 +18,14 @@ import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.Optional
 import java.util.function.{ Function => JFunction }
 
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
+
 import org.apache.pekko
-import pekko.http.javadsl.unmarshalling.Unmarshaller
-
-import scala.collection.JavaConverters._
-import pekko.http.impl.util.JavaMapping.Implicits._
-
 import pekko.http.javadsl.server.Route
-
+import pekko.http.javadsl.unmarshalling.Unmarshaller
 import pekko.http.scaladsl.server.{ Directives => D }
 import pekko.http.scaladsl.server.directives.ParameterDirectives._
-
-import scala.compat.java8.OptionConverters
 
 abstract class FormFieldDirectives extends FileUploadDirectives {
 
@@ -41,7 +37,7 @@ abstract class FormFieldDirectives extends FileUploadDirectives {
   @CorrespondsTo("formField")
   def formFieldOptional(name: String, inner: JFunction[Optional[String], Route]): Route = RouteAdapter(
     D.formField(name.optional) { value =>
-      inner.apply(value.asJava).delegate
+      inner.apply(value.toJava).delegate
     })
 
   @CorrespondsTo("formFieldSeq")
@@ -63,7 +59,7 @@ abstract class FormFieldDirectives extends FileUploadDirectives {
     import t.asScala
     RouteAdapter(
       D.formField(name.as[T].optional) { value =>
-        inner.apply(OptionConverters.toJava(value)).delegate
+        inner.apply(value.toJava).delegate
       })
   }
 
@@ -87,7 +83,7 @@ abstract class FormFieldDirectives extends FileUploadDirectives {
    * Extracts HTTP form fields from the request as a ``Map<String, List<String>>``.
    */
   def formFieldMultiMap(inner: JFunction[JMap[String, JList[String]], Route]): Route = RouteAdapter {
-    D.formFieldMultiMap { map => inner.apply(map.mapValues { l => l.asJava }.toMap.asJava).delegate }
+    D.formFieldMultiMap { map => inner.apply(map.view.mapValues { l => l.asJava }.toMap.asJava).delegate }
   }
 
   /**

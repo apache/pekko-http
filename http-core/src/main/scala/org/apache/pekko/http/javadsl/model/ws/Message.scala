@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -23,7 +23,7 @@ import pekko.stream.javadsl.Source
 import pekko.util.ByteString
 
 import scala.concurrent.duration._
-import scala.compat.java8.FutureConverters._
+import scala.jdk.FutureConverters._
 
 /**
  * Represents a WebSocket message. A message can either be a binary message or a text message.
@@ -100,7 +100,7 @@ object TextMessage {
 
       def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.TextMessage.Strict] = asScala
         .toStrict(timeoutMillis.millis)(materializer)
-        .toJava
+        .asJava
 
       def asScala: sm.ws.TextMessage = sm.ws.TextMessage.Strict(text)
     }
@@ -116,7 +116,7 @@ object TextMessage {
 
       def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.TextMessage.Strict] = asScala
         .toStrict(timeoutMillis.millis)(materializer)
-        .toJava
+        .asJava
 
       def asScala: sm.ws.TextMessage = sm.ws.TextMessage(textStream.asScala)
     }
@@ -165,7 +165,7 @@ object BinaryMessage {
       def toStrict(
           timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.BinaryMessage.Strict] = asScala
         .toStrict(timeoutMillis.millis)(materializer)
-        .toJava
+        .asJava
 
       def asScala: sm.ws.BinaryMessage = sm.ws.BinaryMessage.Strict(data)
     }
@@ -182,7 +182,7 @@ object BinaryMessage {
       def toStrict(
           timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.BinaryMessage.Strict] = asScala
         .toStrict(timeoutMillis.millis)(materializer)
-        .toJava
+        .asJava
 
       def asScala: sm.ws.BinaryMessage = sm.ws.BinaryMessage(dataStream.asScala)
     }

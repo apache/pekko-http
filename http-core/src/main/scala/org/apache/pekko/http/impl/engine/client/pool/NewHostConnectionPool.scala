@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -20,7 +20,6 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.client.PoolFlow.{ RequestContext, ResponseContext }
 import pekko.http.impl.engine.client.pool.SlotState._
@@ -33,9 +32,9 @@ import pekko.stream._
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 
-import scala.collection.JavaConverters._
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 import scala.util.control.{ NoStackTrace, NonFatal }
 import scala.util.{ Failure, Random, Success, Try }
 
@@ -357,7 +356,7 @@ private[client] object NewHostConnectionPool {
                 case NonFatal(ex) =>
                   error(
                     ex,
-                    "Slot execution failed. That's probably a bug. Please file a bug at https://github.com/apache/incubator-pekko-http/issues. Slot is restarted.")
+                    "Slot execution failed. That's probably a bug. Please file a bug at https://github.com/apache/pekko-http/issues. Slot is restarted.")
 
                   try {
                     cancelCurrentTimeout()
@@ -385,7 +384,7 @@ private[client] object NewHostConnectionPool {
               else
                 throw new IllegalStateException(
                   "State transition loop exceeded maximum number of loops. The pool will shutdown itself. " +
-                  "That's probably a bug. Please file a bug at https://github.com/apache/incubator-pekko-http/issues. ")
+                  "That's probably a bug. Please file a bug at https://github.com/apache/pekko-http/issues. ")
 
             loop(event, arg, 10)
           }
@@ -469,7 +468,7 @@ private[client] object NewHostConnectionPool {
                   entityComplete.onComplete(safely {
                     case Success(_)     => withSlot(_.onRequestEntityCompleted())
                     case Failure(cause) => withSlot(_.onRequestEntityFailed(cause))
-                  })(ExecutionContexts.sameThreadExecutionContext)
+                  })(ExecutionContext.parasitic)
                   request.withEntity(newEntity)
               }
 
@@ -524,9 +523,9 @@ private[client] object NewHostConnectionPool {
                       ongoingResponseEntity = None
                       ongoingResponseEntityKillSwitch = None
                     }
-                  }(ExecutionContexts.sameThreadExecutionContext)
+                  }(ExecutionContext.parasitic)
                 case Failure(_) => throw new IllegalStateException("Should never fail")
-              })(ExecutionContexts.sameThreadExecutionContext)
+              })(ExecutionContext.parasitic)
 
               withSlot(_.onResponseReceived(response.withEntity(newEntity)))
             }
@@ -545,13 +544,13 @@ private[client] object NewHostConnectionPool {
                 slot.debug("Connection failed")
                 slot.onConnectionFailed(ex)
               }
-            // otherwise, rely on connection.onComplete to fail below
-            // (connection error is sent through matValue future and through the stream)
+              // otherwise, rely on connection.onComplete to fail below
+              // (connection error is sent through matValue future and through the stream)
             }
 
           def onPull(): Unit = () // emitRequests makes sure not to push too early
 
-          override def onDownstreamFinish(): Unit =
+          override def onDownstreamFinish(cause: Throwable): Unit =
             withSlot { slot =>
               slot.debug("Connection cancelled")
               // Let's use StreamTcpException for now.
@@ -574,7 +573,7 @@ private[client] object NewHostConnectionPool {
                   requestOut.setHandler(connection)
                 }
 
-                override def onDownstreamFinish(): Unit = connection.onDownstreamFinish()
+                override def onDownstreamFinish(cause: Throwable): Unit = connection.onDownstreamFinish(cause)
               })
         }
         def openConnection(slot: Slot): SlotConnection = {
@@ -609,7 +608,7 @@ private[client] object NewHostConnectionPool {
                 onConnectionAttemptFailed(currentEmbargoLevel)
                 sl.onConnectionAttemptFailed(cause)
               }
-          })(ExecutionContexts.sameThreadExecutionContext)
+          })(ExecutionContext.parasitic)
 
           slotCon
         }
@@ -622,9 +621,9 @@ private[client] object NewHostConnectionPool {
           log.debug("Pool upstream failed with {}", ex)
           super.onUpstreamFailure(ex)
         }
-        override def onDownstreamFinish(): Unit = {
+        override def onDownstreamFinish(cause: Throwable): Unit = {
           log.debug("Pool downstream cancelled")
-          super.onDownstreamFinish()
+          super.onDownstreamFinish(cause)
         }
         override def postStop(): Unit = {
           slots.foreach(_.shutdown())

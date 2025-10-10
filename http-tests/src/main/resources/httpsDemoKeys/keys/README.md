@@ -25,7 +25,7 @@ openssl req -x509 -new -nodes -key rootCA.key -days 3560 -out rootCA.crt
 openssl genrsa -out server.key 2048
 ```
 
-# Create server CSR (you need to set the common name CN to "akka.example.org"):
+# Create server CSR (you need to set the common name CN to "pekko.example.org"):
 
 ```
 openssl req -new -key server.key -out server.csr

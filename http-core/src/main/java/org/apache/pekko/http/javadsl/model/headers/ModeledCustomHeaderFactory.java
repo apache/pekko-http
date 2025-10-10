@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -19,8 +19,8 @@ import org.apache.pekko.util.Helpers;
 import java.util.Optional;
 
 /**
- * Companion class for the {@link ModeledCustomHeader} class. It offers methods to create {@link ModeledCustomHeader}
- * from {@link String} or {@link HttpHeader}.
+ * Companion class for the {@link ModeledCustomHeader} class. It offers methods to create {@link
+ * ModeledCustomHeader} from {@link String} or {@link HttpHeader}.
  */
 public abstract class ModeledCustomHeaderFactory<H extends ModeledCustomHeader> {
 
@@ -30,10 +30,7 @@ public abstract class ModeledCustomHeaderFactory<H extends ModeledCustomHeader> 
     return Helpers.toRootLowerCase(name());
   }
 
-  /**
-   * Parses the value checking that the format is correct.
-   * It may throw if value is not correct
-   */
+  /** Parses the value checking that the format is correct. It may throw if value is not correct */
   protected abstract H parse(final String value);
 
   /**
@@ -45,8 +42,8 @@ public abstract class ModeledCustomHeaderFactory<H extends ModeledCustomHeader> 
   }
 
   /**
-   * Transforms an {@code HttpHeader} to this {@code ModeledCustomHeader} if the name and value are correct.
-   * It may throw in case of malformed headers 
+   * Transforms an {@code HttpHeader} to this {@code ModeledCustomHeader} if the name and value are
+   * correct. It may throw in case of malformed headers
    */
   public Optional<H> from(final HttpHeader header) {
     if (header.lowercaseName().equals(lowercaseName())) {

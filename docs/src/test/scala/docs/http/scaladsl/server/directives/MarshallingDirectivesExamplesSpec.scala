@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -19,15 +19,16 @@ import pekko.http.scaladsl.model.MediaTypes.`application/json`
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
-import spray.json.{ DefaultJsonProtocol, JsValue }
 
 //#person-case-class
 case class Person(name: String, favoriteNumber: Int)
 //#person-case-class
 
 //#person-json-support
+import spray.json.{ DefaultJsonProtocol, RootJsonFormat }
+
 object PersonJsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
-  implicit val PortofolioFormats = jsonFormat2(Person)
+  implicit val personFormat: RootJsonFormat[Person] = jsonFormat2(Person.apply)
 }
 //#person-json-support
 
@@ -53,6 +54,7 @@ class MarshallingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec
 
   "example-entity-with-raw-json" in {
     // #example-entity-with-raw-json
+    import spray.json.JsValue
     import PersonJsonSupport._
 
     val route = post {

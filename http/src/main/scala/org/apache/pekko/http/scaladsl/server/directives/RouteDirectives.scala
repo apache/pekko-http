@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,12 +14,13 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import scala.concurrent.Future
 import scala.collection.immutable
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.http.scaladsl.marshalling.{ ToEntityMarshaller, ToResponseMarshallable }
 import pekko.http.scaladsl.model._
-import StatusCodes._
+import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
 
@@ -92,7 +93,7 @@ trait RouteDirectives {
    * @group route
    */
   def handle(handler: HttpRequest => Future[HttpResponse]): StandardRoute = { ctx =>
-    handler(ctx.request).fast.map(RouteResult.Complete)(ctx.executionContext)
+    handler(ctx.request).fast.map(RouteResult.Complete.apply)(ctx.executionContext)
   }
 
   /**
@@ -108,7 +109,7 @@ trait RouteDirectives {
    * Handle the request using an asynchronous partial function.
    *
    * This directive can be used to include external components request processing components defined as PartialFunction
-   * (like those provided by akka-grpc) into a routing tree defined as routes.
+   * (like those provided by pekko-grpc) into a routing tree defined as routes.
    *
    * When the partial function is not defined for a request, the request is rejected with an empty list of rejections
    * which is equivalent to a "Not Found" rejection.
@@ -122,7 +123,7 @@ trait RouteDirectives {
    * Handle the request using an asynchronous partial function.
    *
    * This directive can be used to include external components request processing components defined as PartialFunction
-   * (like those provided by akka-grpc) into a routing tree defined as routes.
+   * (like those provided by pekko-grpc) into a routing tree defined as routes.
    *
    * @param rejections The list of rejections to reject with if the handler is not defined for a request.
    *
@@ -131,7 +132,7 @@ trait RouteDirectives {
   def handle(
       handler: PartialFunction[HttpRequest, Future[HttpResponse]], rejections: Seq[Rejection]): StandardRoute = { ctx =>
     handler
-      .andThen(_.fast.map(RouteResult.Complete)(ctx.executionContext))
+      .andThen(_.fast.map(RouteResult.Complete.apply)(ctx.executionContext))
       .applyOrElse[HttpRequest, Future[RouteResult]](ctx.request, _ => ctx.reject(rejections: _*))
   }
 
@@ -139,7 +140,7 @@ trait RouteDirectives {
    * Handle the request using a synchronous partial function.
    *
    * This directive can be used to include external components request processing components defined as PartialFunction
-   * (like those provided by akka-grpc) into a routing tree defined as routes.
+   * (like those provided by pekko-grpc) into a routing tree defined as routes.
    *
    * When the partial function is not defined for a request, the request is rejected with an empty list of rejections
    * which is equivalent to a "Not Found" rejection.
@@ -153,7 +154,7 @@ trait RouteDirectives {
    * Handle the request using a synchronous partial function.
    *
    * This directive can be used to include external components request processing components defined as PartialFunction
-   * (like those provided by akka-grpc) into a routing tree defined as routes.
+   * (like those provided by pekko-grpc) into a routing tree defined as routes.
    *
    * @param rejections The list of rejections to reject with if the handler is not defined for a request.
    *

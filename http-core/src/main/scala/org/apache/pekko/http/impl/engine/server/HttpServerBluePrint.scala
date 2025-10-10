@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,23 +14,19 @@
 package org.apache.pekko.http.impl.engine.server
 
 import java.util.concurrent.atomic.AtomicReference
-import scala.concurrent.{ Future, Promise }
-import scala.concurrent.duration.{ Deadline, Duration, FiniteDuration }
-import scala.collection.immutable
-import scala.util.control.{ NoStackTrace, NonFatal }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
-import pekko.dispatch.ExecutionContexts
-import pekko.japi.Function
+import pekko.japi.function.Function
 import pekko.event.LoggingAdapter
-import pekko.http.ParsingErrorHandler
 import pekko.util.ByteString
 import pekko.stream._
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl._
 import pekko.stream.stage._
+import pekko.http.ParsingErrorHandler
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.http.impl.engine.parsing.ParserOutput._
 import pekko.http.impl.engine.parsing._
@@ -42,15 +38,19 @@ import pekko.http.impl.engine.rendering.{
   ResponseRenderingOutput
 }
 import pekko.http.impl.util._
+import pekko.http.javadsl.model
 import pekko.http.scaladsl.util.FastFuture.EnhancedFuture
 import pekko.http.scaladsl.{ Http, TimeoutAccess }
 import pekko.http.scaladsl.model.headers.`Timeout-Access`
-import pekko.http.javadsl.model
 import pekko.http.scaladsl.model._
 import pekko.http.impl.util.LogByteStringTools._
 
-import scala.annotation.nowarn
+import scala.collection.immutable
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.duration.{ Deadline, Duration, DurationLong, FiniteDuration }
+import scala.jdk.DurationConverters._
 import scala.util.Failure
+import scala.util.control.{ NoStackTrace, NonFatal }
 
 /**
  * INTERNAL API
@@ -86,7 +86,7 @@ private[http] object HttpServerBluePrint {
       logTLSBidiBySetting("server-plain-text", settings.logUnencryptedNetworkBytes))
 
   val tlsSupport: BidiFlow[ByteString, SslTlsOutbound, SslTlsInbound, SessionBytes, NotUsed] =
-    BidiFlow.fromFlows(Flow[ByteString].map(SendBytes), Flow[SslTlsInbound].collect { case x: SessionBytes => x })
+    BidiFlow.fromFlows(Flow[ByteString].map(SendBytes(_)), Flow[SslTlsInbound].collect { case x: SessionBytes => x })
 
   def websocketSupport(settings: ServerSettings, log: LoggingAdapter)
       : BidiFlow[ResponseRenderingOutput, ByteString, SessionBytes, SessionBytes, NotUsed] =
@@ -135,7 +135,7 @@ private[http] object HttpServerBluePrint {
         }
 
         // optimization: this callback is used to handle entity substream cancellation to avoid allocating a dedicated handler
-        override def onDownstreamFinish(): Unit = {
+        override def onDownstreamFinish(cause: Throwable): Unit = {
           if (entitySource ne null) {
             // application layer has cancelled or only partially consumed response entity:
             // connection will be closed
@@ -159,14 +159,8 @@ private[http] object HttpServerBluePrint {
             val effectiveMethod = if (method == HttpMethods.HEAD && settings.transparentHeadRequests) HttpMethods.GET
             else method
 
-            @nowarn("msg=use remote-address-attribute instead")
-            val effectiveHeaders =
-              if (settings.remoteAddressHeader && remoteAddressOpt.isDefined)
-                headers.`Remote-Address`(RemoteAddress(remoteAddressOpt.get)) +: hdrs
-              else hdrs
-
             val entity = createEntity(entityCreator).withSizeLimit(settings.parserSettings.maxContentLength)
-            val httpRequest = HttpRequest(effectiveMethod, uri, effectiveHeaders, entity, protocol)
+            val httpRequest = HttpRequest(effectiveMethod, uri, hdrs, entity, protocol)
               .withAttributes(attrs)
 
             val effectiveHttpRequest = if (settings.remoteAddressAttribute) {
@@ -235,7 +229,7 @@ private[http] object HttpServerBluePrint {
               // so can pull downstream then
               downstreamPullWaiting = true
             }
-            override def onDownstreamFinish(): Unit = {
+            override def onDownstreamFinish(cause: Throwable): Unit = {
               // downstream signalled not wanting any more requests
               // we should keep processing the entity stream and then
               // when it completes complete the stage
@@ -320,14 +314,14 @@ private[http] object HttpServerBluePrint {
             openTimeouts = openTimeouts.enqueue(access)
             push(requestOut, request.addHeader(`Timeout-Access`(access)).withEntity(entity))
           }
-          override def onUpstreamFinish() = complete(requestOut)
-          override def onUpstreamFailure(ex: Throwable) = fail(requestOut, ex)
+          override def onUpstreamFinish(): Unit = complete(requestOut)
+          override def onUpstreamFailure(ex: Throwable): Unit = fail(requestOut, ex)
         })
       // TODO: provide and use default impl for simply connecting an input and an output port as we do here
       setHandler(requestOut,
         new OutHandler {
           def onPull(): Unit = pull(requestIn)
-          override def onDownstreamFinish() = cancel(requestIn)
+          override def onDownstreamFinish(cause: Throwable): Unit = cancel(requestIn)
         })
       setHandler(responseIn,
         new InHandler {
@@ -336,13 +330,13 @@ private[http] object HttpServerBluePrint {
             openTimeouts = openTimeouts.tail
             push(responseOut, grab(responseIn))
           }
-          override def onUpstreamFinish() = complete(responseOut)
-          override def onUpstreamFailure(ex: Throwable) = fail(responseOut, ex)
+          override def onUpstreamFinish(): Unit = complete(responseOut)
+          override def onUpstreamFailure(ex: Throwable): Unit = fail(responseOut, ex)
         })
       setHandler(responseOut,
         new OutHandler {
           def onPull(): Unit = pull(responseIn)
-          override def onDownstreamFinish() = cancel(responseIn)
+          override def onDownstreamFinish(cause: Throwable): Unit = cancel(responseIn)
         })
     }
   }
@@ -388,7 +382,8 @@ private[http] object HttpServerBluePrint {
       get.fast.foreach(setup => if (setup.scheduledTask ne null) setup.scheduledTask.cancel())
 
     override def updateTimeout(timeout: Duration): Unit = update(timeout, null: HttpRequest => HttpResponse)
-    override def updateHandler(handler: HttpRequest => HttpResponse): Unit = update(null, handler)
+    override def updateHandler(handler: HttpRequest => HttpResponse): Unit =
+      update(null.asInstanceOf[Duration], handler)
     override def update(timeout: Duration, handler: HttpRequest => HttpResponse): Unit = {
       val promise = Promise[TimeoutSetup]()
       for (old <- getAndSet(promise.future).fast)
@@ -411,9 +406,14 @@ private[http] object HttpServerBluePrint {
     import pekko.http.impl.util.JavaMapping.Implicits._
 
     /** JAVA API * */
-    def update(timeout: Duration, handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
+    override def updateTimeout(timeout: java.time.Duration): Unit =
+      update(timeout.toScala, null: HttpRequest => HttpResponse)
+    override def update(timeout: Duration, handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
       update(timeout, handler(_: HttpRequest).asScala)
-    def updateHandler(handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
+    override def update(
+        timeout: java.time.Duration, handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
+      update(timeout.toScala, handler(_: HttpRequest).asScala)
+    override def updateHandler(handler: Function[model.HttpRequest, model.HttpResponse]): Unit =
       updateHandler(handler(_: HttpRequest).asScala)
 
     def timeout = currentTimeout
@@ -434,7 +434,7 @@ private[http] object HttpServerBluePrint {
         outerMaterializer: Materializer) =
       new GraphStageLogic(shape) {
         val parsingErrorHandler: ParsingErrorHandler =
-          settings.parsingErrorHandlerInstance(ActorMaterializerHelper.downcast(outerMaterializer).system)
+          settings.parsingErrorHandlerInstance(outerMaterializer.system)
         val pullHttpResponseIn = () => tryPull(httpResponseIn)
         var openRequests = immutable.Queue[RequestStart]()
         var oneHundredContinueResponsePending = false
@@ -481,7 +481,7 @@ private[http] object HttpServerBluePrint {
             def onPull(): Unit =
               if (oneHundredContinueResponsePending) pullSuppressed = true
               else if (!hasBeenPulled(requestParsingIn)) pull(requestParsingIn)
-            override def onDownstreamFinish(): Unit =
+            override def onDownstreamFinish(cause: Throwable): Unit =
               if (openRequests.isEmpty) completeStage()
               else failStage(
                 new IllegalStateException("User handler flow was cancelled with ongoing request") with NoStackTrace)
@@ -503,7 +503,7 @@ private[http] object HttpServerBluePrint {
                       log.error(ex,
                         s"Response stream for [${requestStart.debugString}] failed with '${ex.getMessage}'. Aborting connection.")
                     case _ => // ignore
-                  }(ExecutionContexts.sameThreadExecutionContext)
+                  }(ExecutionContext.parasitic)
                   newEntity
                 }
 
@@ -546,7 +546,7 @@ private[http] object HttpServerBluePrint {
                   }
                   val info =
                     ErrorInfo(summary, "Consider increasing the value of pekko.http.server.parsing.max-content-length")
-                  finishWithIllegalRequestError(StatusCodes.PayloadTooLarge, info)
+                  finishWithIllegalRequestError(StatusCodes.ContentTooLarge, info)
 
                 case IllegalUriException(errorInfo) =>
                   finishWithIllegalRequestError(StatusCodes.BadRequest, errorInfo)
@@ -705,7 +705,7 @@ private[http] object HttpServerBluePrint {
       setHandler(toNet,
         new OutHandler {
           override def onPull(): Unit = pull(fromHttp)
-          override def onDownstreamFinish(): Unit = completeStage()
+          override def onDownstreamFinish(cause: Throwable): Unit = completeStage()
         })
 
       setHandler(fromNet,
@@ -717,11 +717,16 @@ private[http] object HttpServerBluePrint {
       setHandler(toHttp,
         new OutHandler {
           override def onPull(): Unit = pull(fromNet)
-          override def onDownstreamFinish(): Unit = cancel(fromNet)
+          override def onDownstreamFinish(cause: Throwable): Unit = cancel(fromNet)
         })
 
       private var activeTimers = 0
-      private def timeout = ActorMaterializerHelper.downcast(materializer).settings.subscriptionTimeoutSettings.timeout
+      private val timeout: FiniteDuration = {
+        inheritedAttributes.get[ActorAttributes.StreamSubscriptionTimeout] match {
+          case Some(attr) => attr.timeout
+          case None       => 5.minutes // should not happen
+        }
+      }
       private def addTimeout(s: SubscriptionTimeout): Unit = {
         if (activeTimers == 0) setKeepGoing(true)
         activeTimers += 1
@@ -753,7 +758,7 @@ private[http] object HttpServerBluePrint {
           setHandler(toNet,
             new OutHandler {
               override def onPull(): Unit = sinkIn.pull()
-              override def onDownstreamFinish(): Unit = {
+              override def onDownstreamFinish(cause: Throwable): Unit = {
                 completeStage()
                 sinkIn.cancel()
               }
@@ -771,7 +776,7 @@ private[http] object HttpServerBluePrint {
           setHandler(toNet,
             new OutHandler {
               override def onPull(): Unit = sinkIn.pull()
-              override def onDownstreamFinish(): Unit = {
+              override def onDownstreamFinish(cause: Throwable): Unit = {
                 completeStage()
                 sinkIn.cancel()
                 sourceOut.complete()
@@ -801,10 +806,10 @@ private[http] object HttpServerBluePrint {
 
               sourceOut.setHandler(new OutHandler {
                 override def onPull(): Unit = if (!hasBeenPulled(fromNet)) pull(fromNet)
-                override def onDownstreamFinish(): Unit = cancel(fromNet)
+                override def onDownstreamFinish(cause: Throwable): Unit = cancel(fromNet)
               })
             }
-            override def onDownstreamFinish(): Unit = cancel(fromNet)
+            override def onDownstreamFinish(cause: Throwable): Unit = cancel(fromNet)
           })
 
           // disable the old handlers, at this point we might still get something due to cancellation delay which we need to ignore
@@ -814,7 +819,7 @@ private[http] object HttpServerBluePrint {
               override def onPull(): Unit = ()
               override def onUpstreamFinish(): Unit = ()
               override def onUpstreamFailure(ex: Throwable): Unit = ()
-              override def onDownstreamFinish(): Unit = ()
+              override def onDownstreamFinish(cause: Throwable): Unit = ()
             })
 
           newFlow.runWith(sourceOut.source, sinkIn.sink)(subFusingMaterializer)

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,12 +15,12 @@ package org.apache.pekko.http.scaladsl.coding
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.http.scaladsl.model._
 import pekko.http.impl.util.StreamUtils
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.stream.FlowShape
 import pekko.stream.stage.GraphStage
 import pekko.util.ByteString
-import headers.HttpEncodings
 
 /**
  * An encoder and decoder for the HTTP 'identity' encoding.
@@ -36,7 +36,7 @@ object NoCoding extends Coder with StreamDecoder {
 
   val messageFilter: HttpMessage => Boolean = _ => false
 
-  def newCompressor = NoCodingCompressor
+  private[http] def newCompressor = NoCodingCompressor
 
   def newDecompressorStage(maxBytesPerChunk: Int): () => GraphStage[FlowShape[ByteString, ByteString]] =
     () => StreamUtils.limitByteChunksStage(maxBytesPerChunk)
@@ -44,8 +44,7 @@ object NoCoding extends Coder with StreamDecoder {
 
 /** Internal API */
 @InternalApi
-@deprecated("NoCodingCompressor is internal API and will be moved or removed in the future", since = "Akka HTTP 10.2.0")
-object NoCodingCompressor extends Compressor {
+private[coding] object NoCodingCompressor extends Compressor {
   def compress(input: ByteString): ByteString = input
   def flush() = ByteString.empty
   def finish() = ByteString.empty

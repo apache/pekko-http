@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -19,10 +19,14 @@ import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.scaladsl
 import com.typesafe.config.Config
-import scala.concurrent.duration._
+
+import scala.concurrent.duration.DurationLong
+import scala.jdk.CollectionConverters._
 
 @DoNotInherit
-trait Http2ServerSettings { self: scaladsl.settings.Http2ServerSettings =>
+trait Http2ServerSettings {
+  self: scaladsl.settings.Http2ServerSettings
+    with pekko.http.scaladsl.settings.Http2ServerSettings.Http2ServerSettingsImpl =>
   def getRequestEntityChunkSize: Int = requestEntityChunkSize
   def withRequestEntityChunkSize(newRequestEntityChunkSize: Int): Http2ServerSettings
 
@@ -49,6 +53,14 @@ trait Http2ServerSettings { self: scaladsl.settings.Http2ServerSettings =>
 
   def getPingTimeout: Duration = Duration.ofMillis(pingTimeout.toMillis)
   def withPingTimeout(timeout: Duration): Http2ServerSettings = withPingTimeout(timeout.toMillis.millis)
+
+  def getFrameTypeThrottleFrameTypes(): java.util.Set[String] = frameTypeThrottleFrameTypes.asJava
+  def getFrameTypeThrottleCost(): Int = frameTypeThrottleCost
+  def getFrameTypeThrottleBurst(): Int = frameTypeThrottleBurst
+  def getFrameTypeThrottleInterval: Duration = Duration.ofMillis(frameTypeThrottleInterval.toMillis)
+
+  def withFrameTypeThrottleInterval(interval: Duration): Http2ServerSettings =
+    withFrameTypeThrottleInterval(interval.toMillis.millis)
 }
 object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
   def create(config: Config): Http2ServerSettings = scaladsl.settings.Http2ServerSettings(config)

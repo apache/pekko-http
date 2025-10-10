@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,9 +16,9 @@ package org.apache.pekko.http.scaladsl.marshalling
 import java.nio.CharBuffer
 
 import org.apache.pekko
-import pekko.http.scaladsl.model.MediaTypes._
-import pekko.http.scaladsl.model.ContentTypes.`text/plain(UTF-8)`
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.ContentTypes.`text/plain(UTF-8)`
+import pekko.http.scaladsl.model.MediaTypes._
 import pekko.util.ByteString
 
 trait PredefinedToEntityMarshallers extends MultipartMarshallers {
@@ -34,7 +34,9 @@ trait PredefinedToEntityMarshallers extends MultipartMarshallers {
   implicit val CharArrayMarshaller: ToEntityMarshaller[Array[Char]] = charArrayMarshaller(`text/plain`)
   def charArrayMarshaller(mediaType: MediaType.WithOpenCharset): ToEntityMarshaller[Array[Char]] =
     Marshaller.withOpenCharset(mediaType) { (value, charset) =>
-      marshalCharArray(value, mediaType.withCharset(charset))
+      // https://github.com/apache/pekko-http/issues/300
+      // ignore issues with invalid charset - use UTF-8 instead
+      marshalCharArray(value, mediaType.withCharset(charset.charsetWithUtf8Failover))
     }
   def charArrayMarshaller(mediaType: MediaType.WithFixedCharset): ToEntityMarshaller[Array[Char]] =
     Marshaller.withFixedContentType(mediaType) { value => marshalCharArray(value, mediaType) }
@@ -55,7 +57,11 @@ trait PredefinedToEntityMarshallers extends MultipartMarshallers {
 
   implicit val StringMarshaller: ToEntityMarshaller[String] = stringMarshaller(`text/plain`)
   def stringMarshaller(mediaType: MediaType.WithOpenCharset): ToEntityMarshaller[String] =
-    Marshaller.withOpenCharset(mediaType) { (s, cs) => HttpEntity(mediaType.withCharset(cs), s) }
+    Marshaller.withOpenCharset(mediaType) { (s, cs) =>
+      // https://github.com/apache/pekko-http/issues/300
+      // ignore issues with invalid charset - use UTF-8 instead
+      HttpEntity(mediaType.withCharset(cs.charsetWithUtf8Failover), s)
+    }
   def stringMarshaller(mediaType: MediaType.WithFixedCharset): ToEntityMarshaller[String] =
     Marshaller.withFixedContentType(mediaType) { s => HttpEntity(mediaType, s) }
 

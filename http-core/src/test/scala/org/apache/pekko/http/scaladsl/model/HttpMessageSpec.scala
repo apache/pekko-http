@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,7 +17,7 @@ import java.net.InetAddress
 
 import org.apache.pekko
 import pekko.util.ByteString
-import headers._
+import pekko.http.scaladsl.model.headers._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import pekko.http.javadsl.{ model => jm }

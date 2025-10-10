@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,13 +13,15 @@
 
 package org.apache.pekko.http.caching.javadsl
 
+import scala.concurrent.duration.Duration
+import scala.jdk.DurationConverters._
+
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.caching.impl.settings.LfuCachingSettingsImpl
 import pekko.http.javadsl.settings.SettingsCompanion
-import com.typesafe.config.Config
 
-import scala.concurrent.duration.Duration
+import com.typesafe.config.Config
 
 /**
  * Public API but not intended for subclassing
@@ -30,13 +32,43 @@ abstract class LfuCacheSettings private[http] () { self: LfuCachingSettingsImpl 
   /* JAVA APIs */
   def getMaxCapacity: Int
   def getInitialCapacity: Int
-  def getTimeToLive: Duration
-  def getTimeToIdle: Duration
+
+  /**
+   * Java API
+   * <p>
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
+   * to `java.time.Duration`.
+   * </p>
+   */
+  def getTimeToLive: java.time.Duration
+
+  /**
+   * Java API
+   * <p>
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
+   * to `java.time.Duration`.
+   * </p>
+   */
+  def getTimeToIdle: java.time.Duration
 
   def withMaxCapacity(newMaxCapacity: Int): LfuCacheSettings = self.copy(maxCapacity = newMaxCapacity)
   def withInitialCapacity(newInitialCapacity: Int): LfuCacheSettings = self.copy(initialCapacity = newInitialCapacity)
   def withTimeToLive(newTimeToLive: Duration): LfuCacheSettings = self.copy(timeToLive = newTimeToLive)
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withTimeToLive(newTimeToLive: java.time.Duration): LfuCacheSettings =
+    self.copy(timeToLive = newTimeToLive.toScala)
   def withTimeToIdle(newTimeToIdle: Duration): LfuCacheSettings = self.copy(timeToIdle = newTimeToIdle)
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withTimeToIdle(newTimeToIdle: java.time.Duration): LfuCacheSettings =
+    self.copy(timeToIdle = newTimeToIdle.toScala)
 }
 
 object LfuCacheSettings extends SettingsCompanion[LfuCacheSettings] {

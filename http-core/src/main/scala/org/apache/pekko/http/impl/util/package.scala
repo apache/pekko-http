@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,7 +14,7 @@
 package org.apache.pekko.http.impl
 
 import language.implicitConversions
-import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 
 import com.typesafe.config.Config
 import org.apache.pekko
@@ -32,9 +32,9 @@ import pekko.http.impl.engine.parsing.ParserOutput.RequestStart
 import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest, HttpResponse }
 
 package object util {
-  private[http] val UTF8 = Charset.forName("UTF8")
-  private[http] val ASCII = Charset.forName("ASCII")
-  private[http] val ISO88591 = Charset.forName("ISO-8859-1")
+  private[http] val UTF8 = StandardCharsets.UTF_8
+  private[http] val ASCII = StandardCharsets.US_ASCII
+  private[http] val ISO88591 = StandardCharsets.ISO_8859_1
 
   private[http] val EmptyByteArray = Array.empty[Byte]
 
@@ -50,7 +50,7 @@ package object util {
   private[http] implicit def enhanceString_(s: String): EnhancedString = new EnhancedString(s)
   private[http] implicit def enhanceRegex(regex: Regex): EnhancedRegex = new EnhancedRegex(regex)
   private[http] implicit def enhanceByteStrings(
-      byteStrings: TraversableOnce[ByteString]): EnhancedByteStringTraversableOnce =
+      byteStrings: IterableOnce[ByteString]): EnhancedByteStringTraversableOnce =
     new EnhancedByteStringTraversableOnce(byteStrings)
   private[http] implicit def enhanceByteStringsMat[Mat](
       byteStrings: Source[ByteString, Mat]): EnhancedByteStringSource[Mat] =
@@ -68,7 +68,7 @@ package object util {
   private[http] def installEventStreamLoggerFor[T](implicit ct: ClassTag[T], system: ActorSystem): Unit =
     installEventStreamLoggerFor(ct.runtimeClass)
 
-  private[http] implicit class AddFutureAwaitResult[T](future: Future[T]) {
+  private[http] implicit class AddFutureAwaitResult[T](val future: Future[T]) extends AnyVal {
 
     /** "Safe" Await.result that doesn't throw away half of the stacktrace */
     def awaitResult(atMost: Duration): T = {

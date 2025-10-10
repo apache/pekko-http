@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,17 +13,16 @@
 
 package org.apache.pekko.http.javadsl.testkit
 
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
-import pekko.http.javadsl.model.ws.Message
-import pekko.http.javadsl.model.{ HttpRequest, Uri }
-import pekko.http.scaladsl.{ model => sm }
-import pekko.stream.javadsl.Flow
-
-import pekko.http.scaladsl.{ testkit => st }
-
 import pekko.http.impl.util.JavaMapping.Implicits._
-import scala.collection.JavaConverters._
+import pekko.http.javadsl.model.{ HttpRequest, Uri }
+import pekko.http.javadsl.model.ws.Message
+import pekko.http.scaladsl.{ model => sm }
+import pekko.http.scaladsl.{ testkit => st }
 import pekko.stream.{ scaladsl, Materializer }
+import pekko.stream.javadsl.Flow
 
 trait WSTestRequestBuilding {
 

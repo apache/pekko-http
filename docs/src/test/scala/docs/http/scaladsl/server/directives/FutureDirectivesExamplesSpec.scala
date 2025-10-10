@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -30,12 +30,12 @@ import docs.CompileOnlySpec
 class FutureDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   object TestException extends Throwable
 
-  implicit val myExceptionHandler =
+  implicit val myExceptionHandler: ExceptionHandler =
     ExceptionHandler {
       case TestException => complete(InternalServerError -> "Unsuccessful future!")
     }
 
-  implicit val responseTimeout = Timeout(2, TimeUnit.SECONDS)
+  implicit val responseTimeout: Timeout = Timeout(2, TimeUnit.SECONDS)
 
   "onComplete" in {
     // #onComplete

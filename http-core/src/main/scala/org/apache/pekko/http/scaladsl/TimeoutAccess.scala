@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,9 +15,10 @@ package org.apache.pekko.http.scaladsl
 
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
+import pekko.http.impl.util.JavaDurationConverter
+import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 
 import scala.concurrent.duration.Duration
-import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 
 /**
  * Enables programmatic access to the server-side request timeout logic.
@@ -37,8 +38,7 @@ trait TimeoutAccess extends pekko.http.javadsl.TimeoutAccess {
    */
   def timeout: Duration
 
-  /** Java API */
-  def getTimeout: Duration = timeout
+  override def getTimeout: java.time.Duration = JavaDurationConverter.toJava(timeout)
 
   /**
    * Tries to set a new timeout.

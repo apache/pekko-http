@@ -1,3 +1,11 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# license agreements; and to You under the Apache License, version 2.0:
+#
+#   https://www.apache.org/licenses/LICENSE-2.0
+#
+# This file is part of the Apache Pekko project, which was derived from Akka.
+#
+
 name: Validate and test
 
 on:
@@ -15,31 +23,40 @@ jobs:
   formatting-check:
     name: Checks
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'apache/pekko-http'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
-      - name: Set up Scala on JDK 8
-        uses: actions/setup-java@v3
+      - name: Set up Scala on JDK 17
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
-          java-version: 8
+          java-version: 17
+
+      - name: Install sbt
+        uses: sbt/setup-sbt@6c68d2fe8dfbc0a0534d70101baa2e0420e1a506 # v1.1.9
 
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@4e2615869d13561d626ed48655e1a39e5b192b3c # v6.4.7
 
       - name: Cache Build Target
-        uses: actions/cache@v2
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: project/**/target
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
+
+      - name: Check code is formatted
+        run: sbt javafmtCheckAll
 
       - name: Check for missing formatting
         run: git diff --exit-code --color
 
       #- name: FOSSA policy check
-      #  if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'apache/incubator-pekko-http' }}
+      #  if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == 'apache/pekko-http' }}
       #  run: |-
       #    curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/spectrometer/master/install.sh | bash
       #    fossa analyze && fossa test
@@ -49,29 +66,33 @@ jobs:
   compile-and-test:
     name: Compile and test
     runs-on: ubuntu-latest
-    if: github.repository == 'apache/incubator-pekko-http'
+    if: github.repository == 'apache/pekko-http'
     strategy:
       fail-fast: false
       matrix:
-        SCALA_VERSION: [2.12, 2.13]
-        JDK: [8, 11]
+        SCALA_VERSION: [2.13, 3.3]
+        JDK: [17]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          fetch-tags: true
 
       - name: Set up JDK ${{ matrix.JDK }}
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
           java-version: ${{ matrix.JDK }}
 
+      - name: Install sbt
+        uses: sbt/setup-sbt@6c68d2fe8dfbc0a0534d70101baa2e0420e1a506 # v1.1.9
+
       - name: Cache Coursier cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@4e2615869d13561d626ed48655e1a39e5b192b3c # v6.4.7
 
       - name: Cache Build Target
-        uses: actions/cache@v2
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: project/**/target
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
@@ -85,15 +106,15 @@ jobs:
       # Quick testing for PR validation
       - name: Validate pull request for JDK ${{ matrix.JDK }}, Scala ${{ matrix.SCALA_VERSION }}
         if: ${{ github.event_name == 'pull_request' }}
-        run: sbt -Dpekko.http.parallelExecution=false -Dakka.test.timefactor=2 ++${{ matrix.SCALA_VERSION }} validatePullRequest
+        run: sbt -Dpekko.http.parallelExecution=false -Dpekko.test.timefactor=2 ++${{ matrix.SCALA_VERSION }} validatePullRequest
 
       # Full testing for pushes
       - name: Run all tests JDK ${{ matrix.JDK }}, Scala ${{ matrix.SCALA_VERSION }}
         if: ${{ github.event_name == 'push' }}
-        run: sbt -Dpekko.http.parallelExecution=false -Dakka.test.timefactor=2 ++${{ matrix.SCALA_VERSION }} mimaReportBinaryIssues test
+        run: sbt -Dpekko.http.parallelExecution=false -Dpekko.test.timefactor=2 ++${{ matrix.SCALA_VERSION }} mimaReportBinaryIssues test
 
       - name: Upload test results
-        uses: actions/upload-artifact@v2  # upload test results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: success() || failure()        # run this step even if previous step failed
         with:
           name: test-results-${{ matrix.JDK }}-${{ matrix.SCALA_VERSION }}

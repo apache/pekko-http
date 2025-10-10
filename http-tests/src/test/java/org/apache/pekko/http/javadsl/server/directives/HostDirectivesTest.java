@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -32,13 +32,13 @@ public class HostDirectivesTest extends JUnitRouteTest {
     TestRoute route = testRoute(host("example.org", () -> complete("OK!")));
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("OK!");
+        .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("OK!");
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("https://other.org")))
-      .assertStatusCode(StatusCodes.NOT_FOUND);
+        .run(HttpRequest.create().withUri(Uri.create("https://other.org")))
+        .assertStatusCode(StatusCodes.NOT_FOUND);
   }
 
   @Test
@@ -49,59 +49,55 @@ public class HostDirectivesTest extends JUnitRouteTest {
     TestRoute route = testRoute(host(hosts, () -> complete("OK!")));
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("OK!");
+        .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("OK!");
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("http://example2.org")))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("OK!");
+        .run(HttpRequest.create().withUri(Uri.create("http://example2.org")))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("OK!");
 
-    route
-      .run(HttpRequest.create().withUri(Uri.create("https://other.org")))
-      .assertStatusCode(404);
+    route.run(HttpRequest.create().withUri(Uri.create("https://other.org"))).assertStatusCode(404);
   }
 
   @Test
   public void testHostFilterByPredicate() {
-    TestRoute route = testRoute(host(hostName -> hostName.contains("ample"), () -> complete("OK!")));
+    TestRoute route =
+        testRoute(host(hostName -> hostName.contains("ample"), () -> complete("OK!")));
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("OK!");
+        .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("OK!");
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("https://other.org")))
-      .assertStatusCode(StatusCodes.NOT_FOUND);
+        .run(HttpRequest.create().withUri(Uri.create("https://other.org")))
+        .assertStatusCode(StatusCodes.NOT_FOUND);
   }
-
 
   @Test
   public void testHostExtraction() {
     TestRoute route = testRoute(extractHost(Directives::complete));
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("example.org");
+        .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("example.org");
   }
 
   @Test
   public void testHostPatternExtraction() {
-    TestRoute route =
-      testRoute(host(Pattern.compile(".*\\.([^.]*)"), Directives::complete));
+    TestRoute route = testRoute(host(Pattern.compile(".*\\.([^.]*)"), Directives::complete));
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("org");
+        .run(HttpRequest.create().withUri(Uri.create("http://example.org")))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("org");
 
     route
-      .run(HttpRequest.create().withUri(Uri.create("http://example.de")))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntity("de");
+        .run(HttpRequest.create().withUri(Uri.create("http://example.de")))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntity("de");
   }
-
 }

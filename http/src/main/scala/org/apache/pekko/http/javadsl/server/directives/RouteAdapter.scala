@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,13 +15,15 @@ package org.apache.pekko.http.javadsl.server.directives
 
 import java.util.concurrent.CompletionStage
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.{ ActorSystem, ClassicActorSystemProvider }
 import pekko.annotation.InternalApi
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.HttpRequest
 import pekko.http.javadsl.model.HttpResponse
-import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.server.{ ExceptionHandler, RejectionHandler, Route }
 import pekko.http.scaladsl
 import pekko.http.scaladsl.server.RouteConcatenation._
@@ -37,10 +39,9 @@ final class RouteAdapter(val delegate: pekko.http.scaladsl.server.Route) extends
     scalaFlow(system, materializer).asJava
 
   override def handler(system: ClassicActorSystemProvider): Function[HttpRequest, CompletionStage[HttpResponse]] = {
-    import scala.compat.java8.FutureConverters.toJava
-    import pekko.http.impl.util.JavaMapping._
+    import scala.jdk.FutureConverters._
     val scalaFunction = scaladsl.server.Route.toFunction(delegate)(system)
-    request => toJava(scalaFunction(request.asScala))
+    request => (scalaFunction(request.asScala): Future[HttpResponse]).asJava
   }
 
   private def scalaFlow(system: ActorSystem, materializer: Materializer): Flow[HttpRequest, HttpResponse, NotUsed] = {

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -109,7 +109,7 @@ private[http] object OutgoingConnectionBlueprint {
       val logger =
         b.add(Flow[ByteString].mapError { case t => log.debug(s"Outgoing request stream error {}", t); t }.named(
           "errorLogger"))
-      val wrapTls = b.add(Flow[ByteString].map(SendBytes))
+      val wrapTls = b.add(Flow[ByteString].map(SendBytes(_)))
 
       val collectSessionBytes = b.add(Flow[SslTlsInbound].collect { case s: SessionBytes => s })
 
@@ -212,7 +212,7 @@ private[http] object OutgoingConnectionBlueprint {
           if (!entitySubstreamStarted) pull(responseOutputIn)
         }
 
-        override def onDownstreamFinish(): Unit = {
+        override def onDownstreamFinish(cause: Throwable): Unit = {
           // if downstream cancels while streaming entity,
           // make sure we also cancel the entity source, but
           // after being done with streaming the entity

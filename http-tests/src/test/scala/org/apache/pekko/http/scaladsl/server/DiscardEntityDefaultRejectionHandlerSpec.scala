@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -19,6 +19,7 @@ import pekko.http.scaladsl.model.HttpEntity
 import pekko.http.scaladsl.model.StatusCodes.NotFound
 import pekko.stream.scaladsl.Source
 import pekko.util.ByteString
+
 import org.scalatest.concurrent.Eventually._
 import org.scalatest.concurrent.ScalaFutures
 
@@ -36,7 +37,7 @@ class DiscardEntityDefaultRejectionHandlerSpec extends RoutingSpec with ScalaFut
     ByteString("Foo")
   }
 
-  private val ThousandElements: Stream[ByteString] = Stream.continually(gimmeElement()).take(numElems)
+  private val ThousandElements: LazyList[ByteString] = LazyList.continually(gimmeElement()).take(numElems)
   private val RequestToNotHandled = Get("/bar", HttpEntity(`text/plain(UTF-8)`, Source[ByteString](ThousandElements)))
 
   "Default RejectionHandler" should {

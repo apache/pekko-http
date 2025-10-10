@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,15 +14,8 @@
 package org.apache.pekko.http.scaladsl.server.directives
 
 import org.apache.pekko
-import pekko.util.ByteString
-
-import pekko.stream.OverflowStrategy
-import pekko.stream.scaladsl.{ Flow, Sink, Source }
-
-import pekko.http.scaladsl.testkit.WSProbe
-
-import pekko.http.scaladsl.model.headers.`Sec-WebSocket-Protocol`
 import pekko.http.scaladsl.model.StatusCodes
+import pekko.http.scaladsl.model.headers.`Sec-WebSocket-Protocol`
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.server.{
   ExpectedWebSocketRequestRejection,
@@ -30,6 +23,10 @@ import pekko.http.scaladsl.server.{
   RoutingSpec,
   UnsupportedWebSocketSubprotocolRejection
 }
+import pekko.http.scaladsl.testkit.WSProbe
+import pekko.stream.OverflowStrategy
+import pekko.stream.scaladsl.{ Flow, Sink, Source }
+import pekko.util.ByteString
 
 class WebSocketDirectivesSpec extends RoutingSpec {
   "the handleWebSocketMessages directive" should {

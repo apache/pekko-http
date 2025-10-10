@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,16 +15,16 @@ package org.apache.pekko.http.javadsl.model.headers;
 
 import org.apache.pekko.http.scaladsl.model.headers.HttpEncodingRange$;
 
-/**
- * @see HttpEncodingRanges for convenience access to often used values.
- */
+/** @see HttpEncodingRanges for convenience access to often used values. */
 public abstract class HttpEncodingRange {
-    public abstract float qValue();
-    public abstract boolean matches(HttpEncoding encoding);
+  public abstract float qValue();
 
-    public abstract HttpEncodingRange withQValue(float qValue);
+  public abstract boolean matches(HttpEncoding encoding);
 
-    public static HttpEncodingRange create(HttpEncoding encoding) {
-        return HttpEncodingRange$.MODULE$.apply((org.apache.pekko.http.scaladsl.model.headers.HttpEncoding) encoding);
-    }
+  public abstract HttpEncodingRange withQValue(float qValue);
+
+  public static HttpEncodingRange create(HttpEncoding encoding) {
+    return HttpEncodingRange$.MODULE$.apply(
+        (org.apache.pekko.http.scaladsl.model.headers.HttpEncoding) encoding);
+  }
 }

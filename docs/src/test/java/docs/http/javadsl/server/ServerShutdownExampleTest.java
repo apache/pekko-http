@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -25,37 +25,38 @@ import java.util.concurrent.CompletionStage;
 
 public class ServerShutdownExampleTest {
 
-    public void mountCoordinatedShutdown() {
-        ActorSystem<?> system = ActorSystem.create(Behaviors.empty(), "http-server");
+  public void mountCoordinatedShutdown() {
+    ActorSystem<?> system = ActorSystem.create(Behaviors.empty(), "http-server");
 
-        Route routes = null;
+    Route routes = null;
 
-        // #suggested
-        CompletionStage<ServerBinding> bindingFuture = Http
-            .get(system)
+    // #suggested
+    CompletionStage<ServerBinding> bindingFuture =
+        Http.get(system)
             .newServerAt("localhost", 8080)
             .bind(routes)
             .thenApply(binding -> binding.addToCoordinatedShutdown(Duration.ofSeconds(10), system));
-        // #suggested
+    // #suggested
 
-        bindingFuture.exceptionally(cause -> {
-            system.log().error("Error starting the server: " + cause.getMessage(), cause);
-            return null;
+    bindingFuture.exceptionally(
+        cause -> {
+          system.log().error("Error starting the server: " + cause.getMessage(), cause);
+          return null;
         });
 
-        // #shutdown
-        // shut down with `ActorSystemTerminateReason`
-        system.terminate();
+    // #shutdown
+    // shut down with `ActorSystemTerminateReason`
+    system.terminate();
 
-        // or define a specific reason
-        final class UserInitiatedShutdown implements CoordinatedShutdown.Reason {
-            @Override
-            public String toString() {
-                return "UserInitiatedShutdown";
-            }
-        }
-
-        CoordinatedShutdown.get(system).run(new UserInitiatedShutdown());
-        // #shutdown
+    // or define a specific reason
+    final class UserInitiatedShutdown implements CoordinatedShutdown.Reason {
+      @Override
+      public String toString() {
+        return "UserInitiatedShutdown";
+      }
     }
+
+    CoordinatedShutdown.get(system).run(new UserInitiatedShutdown());
+    // #shutdown
+  }
 }

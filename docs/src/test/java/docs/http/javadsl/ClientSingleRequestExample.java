@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,12 +13,12 @@
 
 package docs.http.javadsl;
 
-//#unmarshall-response-body
+// #unmarshall-response-body
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 
-//#unmarshall-response-body
+// #unmarshall-response-body
 
-//#single-request-example
+// #single-request-example
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.Http;
@@ -34,24 +34,23 @@ public class ClientSingleRequestExample {
     final ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "SingleRequest");
 
     final CompletionStage<HttpResponse> responseFuture =
-      Http.get(system)
-        .singleRequest(HttpRequest.create("https://pekko.apache.org"));
+        Http.get(system).singleRequest(HttpRequest.create("https://pekko.apache.org"));
   }
 }
-//#single-request-example
+// #single-request-example
 
 class OtherRequestResponseExamples {
   public void request() {
-    //#create-simple-request
+    // #create-simple-request
     HttpRequest.create("https://pekko.apache.org");
 
     // with query params
     HttpRequest.create("https://pekko.apache.org?foo=bar");
-    //#create-simple-request
-    //#create-post-request
+    // #create-simple-request
+    // #create-post-request
     HttpRequest.POST("https://userservice.example/users")
-      .withEntity(HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8, "data"));
-    //#create-post-request
+        .withEntity(HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8, "data"));
+    // #create-post-request
 
     // TODO should we have an API to create an Entity via a Marshaller?
   }
@@ -59,8 +58,8 @@ class OtherRequestResponseExamples {
   public void response() {
     ActorSystem<Void> system = null;
     HttpResponse response = null;
-    //#unmarshal-response-body
+    // #unmarshal-response-body
     CompletionStage<Pet> pet = Jackson.unmarshaller(Pet.class).unmarshal(response.entity(), system);
-    //#unmarshal-response-body
+    // #unmarshal-response-body
   }
 }

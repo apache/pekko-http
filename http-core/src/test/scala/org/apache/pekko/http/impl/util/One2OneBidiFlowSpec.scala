@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,19 +17,16 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.pekko
 import pekko.NotUsed
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.stream.testkit.Utils._
 import pekko.stream.testkit._
-
 import scala.concurrent.Await
 import scala.concurrent.duration._
+
 import pekko.testkit._
 import org.scalatest.concurrent.Eventually
 
 class One2OneBidiFlowSpec extends PekkoSpec with Eventually {
-  implicit val materializer = ActorMaterializer()
-
   "A One2OneBidiFlow" must {
 
     def test(flow: Flow[Int, Int, NotUsed]) =

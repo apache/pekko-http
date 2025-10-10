@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,12 +13,12 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
-import org.scalatest.{ BeforeAndAfterAll, Suite }
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.stream.ActorMaterializer
 import pekko.testkit.TestKit
 import pekko.util.ByteString
+
+import org.scalatest.{ BeforeAndAfterAll, Suite }
 import org.scalatest.matchers.should.Matchers
 
 trait CodecSpecSupport extends Matchers with BeforeAndAfterAll { self: Suite =>
@@ -82,8 +82,7 @@ voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita ka
 est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy e""".replace(
       "\r\n", "\n")
 
-  implicit val system = ActorSystem(getClass.getSimpleName)
-  implicit val materializer = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName)
 
   override def afterAll() = TestKit.shutdownActorSystem(system)
 }

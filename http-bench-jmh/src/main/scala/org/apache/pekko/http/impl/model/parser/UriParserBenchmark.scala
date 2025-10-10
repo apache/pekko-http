@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,11 +15,12 @@ package org.apache.pekko.http.impl.model.parser
 
 import java.util.concurrent.TimeUnit
 
-import org.apache.pekko
-import pekko.http.scaladsl.model.Uri
-import org.parboiled2.UTF8
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
+import org.parboiled2.UTF8
+
+import org.apache.pekko
+import pekko.http.scaladsl.model.Uri
 
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

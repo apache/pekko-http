@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,11 +13,18 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.net.InetSocketAddress
+
+import scala.collection.immutable
+import scala.concurrent.{ Future, Promise }
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.Logging
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
+import pekko.http.scaladsl.{ ClientTransport, Http }
 import pekko.http.scaladsl.model.{
   headers,
   AttributeKey,
@@ -37,28 +44,23 @@ import pekko.http.scaladsl.model.{
 import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.Http2ClientSettings
-import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.http.scaladsl.{ ClientTransport, Http }
 import pekko.http.scaladsl.settings.ServerSettings
+import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.stream.{ KillSwitches, StreamTcpException, UniqueKillSwitch }
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
-import pekko.stream.testkit.scaladsl.StreamTestKit
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
+import pekko.stream.testkit.scaladsl.StreamTestKit
 import pekko.testkit.TestProbe
 import pekko.util.ByteString
-import org.scalatest.concurrent.ScalaFutures
 
-import java.net.InetSocketAddress
-import scala.collection.immutable
-import scala.concurrent.duration._
-import scala.concurrent.{ Future, Promise }
+import org.scalatest.concurrent.ScalaFutures
 
 class Http2PersistentClientTlsSpec extends Http2PersistentClientSpec(true)
 class Http2PersistentClientPlaintextSpec extends Http2PersistentClientSpec(false)
 
 abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMaterializer(
       // FIXME: would rather use remote-address-attribute, but that doesn't work with HTTP/2
-      // see https://github.com/apache/incubator-pekko-http/issues/3707
+      // see https://github.com/akka/akka-http/issues/3707
       """pekko.http.server.remote-address-attribute = on
      pekko.http.server.preview.enable-http2 = on
      pekko.http.client.http2.log-frames = on
@@ -72,7 +74,7 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
   private val notSevere = Set("ChannelReadable", "WriteAck")
   override protected def isSevere(event: Logging.LogEvent): Boolean =
     event.level <= Logging.WarningLevel &&
-    // fix for https://github.com/apache/incubator-pekko-http/issues/3732 / https://github.com/akka/akka/issues/29330
+    // fix for https://github.com/akka/akka-http/issues/3732 / https://github.com/akka/akka/issues/29330
     !notSevere.exists(cand => event.message.toString.contains(cand))
 
   case class RequestId(id: String) extends RequestResponseAssociation
@@ -404,7 +406,7 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
     object client {
 
       lazy val clientFlow = {
-        val builder = Http().connectionTo("akka.example.org")
+        val builder = Http().connectionTo("pekko.example.org")
           .withCustomHttpsConnectionContext(ExampleHttpContexts.exampleClientContext)
           .withClientConnectionSettings(clientSettings)
 

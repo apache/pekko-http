@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,8 +14,6 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import org.apache.pekko
-import pekko.http.ccompat._
-
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.http2.FrameEvent._
@@ -24,7 +22,6 @@ import pekko.macros.LogHelper
 import pekko.stream.stage.GraphStageLogic
 import pekko.stream.stage.OutHandler
 import pekko.stream.stage.StageLogging
-import scala.annotation.nowarn
 
 import scala.collection.mutable
 
@@ -65,7 +62,7 @@ private[http2] object PullFrameResult {
  * INTERNAL API
  *
  * Multiplexes the outgoing side of the streams on a HTTP/2 connection.
- * Accepts the streams from the Akka HTTP side and turns them into `FrameEvent`s
+ * Accepts the streams from the Pekko HTTP side and turns them into `FrameEvent`s
  * to be passed to the network side.
  *
  * The main interface between stream handling and multiplexing is this:
@@ -133,9 +130,9 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
       /** Network pulls in new frames */
       def onPull(): Unit = updateState(_.onPull())
 
-      override def onDownstreamFinish(): Unit = {
+      override def onDownstreamFinish(cause: Throwable): Unit = {
         frameOutFinished()
-        super.onDownstreamFinish()
+        super.onDownstreamFinish(cause)
       }
 
       private var _state: MultiplexerState = Idle
@@ -167,7 +164,6 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
         def name: String = productPrefix
 
         def onPull(): MultiplexerState
-        @nowarn("msg=references private")
         def pushControlFrame(frame: FrameEvent): MultiplexerState
         def connectionWindowAvailable(): MultiplexerState
         def enqueueOutStream(streamId: Int): MultiplexerState

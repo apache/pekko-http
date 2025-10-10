@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -350,7 +350,7 @@ private[http] object Http2Protocol {
      */
     case object HTTP_1_1_REQUIRED extends ErrorCode(0xD)
 
-    case class Unknown private (override val id: Int) extends ErrorCode(id)
+    case class Unknown private[ErrorCode] (override val id: Int) extends ErrorCode(id)
 
     val All =
       Array( // must start with id = 0 and don't have holes between ids

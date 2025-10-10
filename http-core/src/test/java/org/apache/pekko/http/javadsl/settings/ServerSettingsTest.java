@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -19,9 +19,9 @@ import org.scalatestplus.junit.JUnitSuite;
 
 public class ServerSettingsTest extends JUnitSuite {
 
-    @Test
-    public void testCreateWithActorSystem() {
-        ActorSystem sys = ActorSystem.create("test");
-        ServerSettings settings = ServerSettings.create(sys);
-    }
+  @Test
+  public void testCreateWithActorSystem() {
+    ActorSystem sys = ActorSystem.create("test");
+    ServerSettings settings = ServerSettings.create(sys);
+  }
 }

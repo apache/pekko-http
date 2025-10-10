@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,17 +15,16 @@ package org.apache.pekko.http.javadsl.server
 package directives
 
 import java.lang.{ Iterable => JIterable }
-import java.util.function.BooleanSupplier
 import java.util.function.{ Function => JFunction }
+import java.util.function.BooleanSupplier
 import java.util.function.Supplier
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import org.apache.pekko
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.RemoteAddress
 import pekko.http.javadsl.model.headers.Language
-import pekko.http.impl.util.JavaMapping.Implicits._
-
 import pekko.http.scaladsl.server.{ Directives => D }
 
 abstract class MiscDirectives extends MethodDirectives {

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,28 +13,25 @@
 
 package org.apache.pekko.http.impl.engine.rendering
 
+import scala.annotation.tailrec
+import scala.collection.immutable
+import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.NotUsed
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
-
-import scala.collection.immutable
-import scala.annotation.tailrec
-import pekko.event.LoggingAdapter
-import pekko.util.ByteString
-import pekko.stream.scaladsl.{ Flow, Source }
-import pekko.stream.stage._
-import pekko.http.scaladsl.model._
-import pekko.http.impl.util._
-import pekko.util.OptionVal
-import RenderSupport._
-import HttpProtocols._
 import pekko.annotation.InternalApi
-import ResponseRenderingContext.CloseRequested
+import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.server.UpgradeToOtherProtocolResponseHeader
-import pekko.stream.scaladsl.Sink
-import headers._
-
-import scala.util.control.NonFatal
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpProtocols._
+import pekko.http.scaladsl.model.headers._
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
+import pekko.stream.scaladsl.{ Flow, Sink, Source }
+import pekko.stream.stage._
+import pekko.util.{ ByteString, OptionVal }
+import RenderSupport._
+import ResponseRenderingContext.CloseRequested
 
 /**
  * INTERNAL API
@@ -129,7 +126,7 @@ private[http] class HttpResponseRendererFactory(
               override def onPull(): Unit =
                 if (!headersSent) sendHeaders()
                 else sinkIn.pull()
-              override def onDownstreamFinish(): Unit = {
+              override def onDownstreamFinish(cause: Throwable): Unit = {
                 completeStage()
                 stopTransfer()
               }

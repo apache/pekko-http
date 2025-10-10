@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -35,14 +35,14 @@ private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActi
   }
 
   def `link-param` = rule(
-    ws("rel") ~ ws('=') ~ `relation-types`                                               ~> LinkParams.rel
-    | ws("anchor") ~ ws('=') ~ ws('"') ~ UriReference('"') ~ ws('"')                     ~> LinkParams.anchor
-    | ws("rev") ~ ws('=') ~ `relation-types`                                             ~> LinkParams.rev
-    | ws("hreflang") ~ ws('=') ~ language                                                ~> LinkParams.hreflang
-    | ws("media") ~ ws('=') ~ word                                                       ~> LinkParams.media
-    | ws("title") ~ ws('=') ~ word                                                       ~> LinkParams.title
-    | ws("title*") ~ ws('=') ~ word                                                      ~> LinkParams.`title*` // support full `ext-value` notation from http://tools.ietf.org/html/rfc5987#section-3.2.1
-    | ws("type") ~ ws('=') ~ (ws('"') ~ `link-media-type` ~ ws('"') | `link-media-type`) ~> LinkParams.`type`)
+    ws("rel") ~ ws('=') ~ `relation-types`                                                ~> LinkParams.rel.apply _
+    | ws("anchor") ~ ws('=') ~ ws('"') ~ UriReference('"') ~ ws('"')                      ~> LinkParams.anchor.apply _
+    | ws("rev") ~ ws('=') ~ `relation-types`                                              ~> LinkParams.rev.apply _
+    | ws("hreflang") ~ ws('=') ~ language                                                 ~> LinkParams.hreflang.apply _
+    | ws("media") ~ ws('=') ~ word                                                        ~> LinkParams.media.apply _
+    | ws("title") ~ ws('=') ~ word                                                        ~> LinkParams.title.apply _
+    | ws("title*") ~ ws('=') ~ word                                                       ~> LinkParams.`title*`.apply _ // support full `ext-value` notation from http://tools.ietf.org/html/rfc5987#section-3.2.1
+    | (ws("type") ~ ws('=') ~ (ws('"') ~ `link-media-type` ~ ws('"') | `link-media-type`) ~> LinkParams.`type`.apply _))
   // TODO: support `link-extension`
 
   def `relation-types` = rule(

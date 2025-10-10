@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -26,19 +26,19 @@ import java.time.Duration;
 public class MyAppWithActor extends AllDirectives {
   public static class Ping {
     public final ActorRef<String> replyTo;
+
     public Ping(ActorRef<String> replyTo) {
       this.replyTo = replyTo;
     }
   }
 
-    public Route createRoute(ActorRef<Ping> actorRef, Scheduler scheduler) {
-      Duration timeout = Duration.ofSeconds(3);
-      return
-        path("ping", () ->
-          onSuccess(AskPattern.ask(actorRef, Ping::new, timeout, scheduler), result ->
-            complete(result)
-          )
-        );
-    }
-
+  public Route createRoute(ActorRef<Ping> actorRef, Scheduler scheduler) {
+    Duration timeout = Duration.ofSeconds(3);
+    return path(
+        "ping",
+        () ->
+            onSuccess(
+                AskPattern.ask(actorRef, Ping::new, timeout, scheduler),
+                result -> complete(result)));
+  }
 }

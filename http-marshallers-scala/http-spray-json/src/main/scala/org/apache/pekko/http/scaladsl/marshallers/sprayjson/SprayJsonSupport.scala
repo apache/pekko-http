@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,22 +13,23 @@
 
 package org.apache.pekko.http.scaladsl.marshallers.sprayjson
 
+import scala.language.implicitConversions
+
+import spray.json._
+
 import org.apache.pekko
-import pekko.http.javadsl.{ common, model => jm }
 import pekko.NotUsed
 import pekko.event.Logging
+import pekko.http.javadsl.{ common, model => jm }
 import pekko.http.scaladsl.common.EntityStreamingSupport
 import pekko.http.scaladsl.marshalling._
-import pekko.http.scaladsl.model.MediaTypes.`application/json`
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
+import pekko.http.scaladsl.model.MediaTypes.`application/json`
 import pekko.http.scaladsl.unmarshalling.{ FromByteStringUnmarshaller, FromEntityUnmarshaller, Unmarshaller }
+import pekko.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import pekko.http.scaladsl.util.FastFuture
 import pekko.stream.scaladsl.{ Flow, Keep, Source }
 import pekko.util.ByteString
-import spray.json._
-
-import scala.language.implicitConversions
 
 /**
  * A trait providing automatic to and from JSON marshalling/unmarshalling using an in-scope *spray-json* protocol.

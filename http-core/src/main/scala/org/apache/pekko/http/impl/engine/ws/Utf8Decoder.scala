@@ -4,30 +4,14 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
  * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
-package org.apache.pekko.http.impl.engine.ws
-
-import org.apache.pekko
-import pekko.annotation.InternalApi
-import pekko.util.ByteString
-
-import scala.util.Try
-
-/**
- * A Utf8 -> Utf16 (= Java char) decoder.
- *
- * This decoder is based on the one of Bjoern Hoehrmann from
- *
- * http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
- *
- * which is licensed under this license:
- *
+/*
  * Copyright (C) 2008-2017 Bjoern Hoehrmann <bjoern@hoehrmann.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -46,6 +30,21 @@ import scala.util.Try
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+package org.apache.pekko.http.impl.engine.ws
+
+import org.apache.pekko
+import pekko.annotation.InternalApi
+import pekko.util.ByteString
+
+import scala.util.Try
+
+/**
+ * A Utf8 -> Utf16 (= Java char) decoder.
+ *
+ * This decoder is based on the one of Bjoern Hoehrmann from
+ * https://bjoern.hoehrmann.de/utf-8/decoder/dfa/ (MIT License).
  *
  * INTERNAL API
  */

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,23 +17,25 @@ import java.lang.{ StringBuilder => JStringBuilder }
 import javax.net.ssl.SSLSession
 
 import scala.annotation.{ switch, tailrec }
+
 import org.apache.pekko
-import pekko.http.scaladsl.settings.{ ParserSettings, WebSocketSettings }
-import pekko.util.ByteString
-import pekko.util.OptionVal
-import pekko.http.impl.engine.ws.Handshake
-import pekko.http.impl.model.parser.{ CharacterClasses, UriParser }
-import pekko.http.scaladsl.model.{ ParsingException => _, _ }
-import headers._
-import StatusCodes._
-import ParserOutput._
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util.ByteStringParserInput
-import org.parboiled2.ParserInput
+import pekko.http.impl.util.HttpConstants._
+import pekko.http.impl.engine.ws.Handshake
+import pekko.http.impl.model.parser.{ CharacterClasses, UriParser }
+import pekko.http.scaladsl.model.{ ParsingException => _, _ }
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.settings.{ ParserSettings, WebSocketSettings }
+import ParserOutput._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.TLSProtocol.SessionBytes
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
+import pekko.util.ByteString
+import pekko.util.OptionVal
+import org.parboiled2.ParserInput
 
 /**
  * INTERNAL API
@@ -90,9 +92,9 @@ private[http] final class HttpRequestParser(
           var cursor = parseMethod(input, offset)
           cursor = parseRequestTarget(input, cursor)
           cursor = parseProtocol(input, cursor)
-          if (byteChar(input, cursor) == '\r' && byteChar(input, cursor + 1) == '\n')
+          if (byteAt(input, cursor) == CR_BYTE && byteAt(input, cursor + 1) == LF_BYTE)
             parseHeaderLines(input, cursor + 2)
-          else if (byteChar(input, cursor) == '\n')
+          else if (byteAt(input, cursor) == LF_BYTE)
             parseHeaderLines(input, cursor + 1)
           else onBadProtocol(input.drop(cursor))
         } else
@@ -124,7 +126,7 @@ private[http] final class HttpRequestParser(
 
         @tailrec def parseMethod(meth: HttpMethod, ix: Int = 1): Int =
           if (ix == meth.value.length)
-            if (byteChar(input, cursor + ix) == ' ') {
+            if (byteAt(input, cursor + ix) == SPACE_BYTE) {
               method = meth
               cursor + ix + 1
             } else parseCustomMethod()
@@ -228,7 +230,7 @@ private[http] final class HttpRequestParser(
               setCompletionHandling(HttpMessageParser.CompletionOk)
               startNewMessage(input, bodyStart)
             } else if (!method.isEntityAccepted) {
-              failMessageStart(UnprocessableEntity, s"${method.name} requests must not have an entity")
+              failMessageStart(UnprocessableContent, s"${method.name} requests must not have an entity")
             } else if (contentLength <= input.size - bodyStart) {
               val cl = contentLength.toInt
               emitRequestStart(strictEntity(cth, input, bodyStart, cl))
@@ -240,7 +242,7 @@ private[http] final class HttpRequestParser(
             }
           } else {
             if (!method.isEntityAccepted) {
-              failMessageStart(UnprocessableEntity, s"${method.name} requests must not have an entity")
+              failMessageStart(UnprocessableContent, s"${method.name} requests must not have an entity")
             } else {
               if (clh.isEmpty) {
                 emitRequestStart(chunkedEntity(cth), headers)

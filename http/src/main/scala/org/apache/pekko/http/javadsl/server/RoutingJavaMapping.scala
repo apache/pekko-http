@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,17 +15,17 @@ package org.apache.pekko.http.javadsl.server
 
 import java.util.concurrent.CompletionStage
 
+import scala.collection.immutable
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.http.impl.util.JavaMapping._
-import pekko.http.impl.util._
-import pekko.http.javadsl.common.EntityStreamingSupport
 import pekko.http.{ javadsl, scaladsl }
-import pekko.http.scaladsl.server.{ directives => sdirectives }
-import pekko.http.scaladsl.{ common => scommon }
+import pekko.http.impl.util._
+import pekko.http.impl.util.JavaMapping._
+import pekko.http.javadsl.common.EntityStreamingSupport
 import pekko.http.javadsl.server.{ directives => jdirectives }
-
-import scala.collection.immutable
+import pekko.http.scaladsl.{ common => scommon }
+import pekko.http.scaladsl.server.{ directives => sdirectives }
 
 /**
  * INTERNAL API
@@ -99,7 +99,7 @@ private[http] object RoutingJavaMapping {
   //  val javaToScalaResponseEntity extends Inherited[javadsl.model.ResponseEntity, scaladsl.model.ResponseEntity]
 
   implicit final class ConvertCompletionStage[T](val stage: CompletionStage[T]) extends AnyVal {
-    import scala.compat.java8.FutureConverters._
-    def asScala = stage.toScala
+    import scala.jdk.FutureConverters._
+    def asScala = CompletionStageOps(stage).asScala
   }
 }

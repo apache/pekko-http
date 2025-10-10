@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,7 +13,7 @@
 
 package docs.http.javadsl;
 
-//#explicit-handler-example
+// #explicit-handler-example
 
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
@@ -35,19 +35,21 @@ public class ExceptionHandlerExample extends AllDirectives {
 
     final ExceptionHandlerExample app = new ExceptionHandlerExample();
 
-    final CompletionStage<ServerBinding> binding = http.newServerAt("localhost", 8080).bind(app.createRoute());
+    final CompletionStage<ServerBinding> binding =
+        http.newServerAt("localhost", 8080).bind(app.createRoute());
   }
-
 
   public Route createRoute() {
-    final ExceptionHandler divByZeroHandler = ExceptionHandler.newBuilder()
-      .match(ArithmeticException.class, x ->
-        complete(StatusCodes.BAD_REQUEST, "You've got your arithmetic wrong, fool!"))
-      .build();
+    final ExceptionHandler divByZeroHandler =
+        ExceptionHandler.newBuilder()
+            .match(
+                ArithmeticException.class,
+                x -> complete(StatusCodes.BAD_REQUEST, "You've got your arithmetic wrong, fool!"))
+            .build();
 
-    return path(PathMatchers.segment("divide").slash(integerSegment()).slash(integerSegment()), (a, b) ->
-      handleExceptions(divByZeroHandler, () -> complete("The result is " + (a / b)))
-    );
+    return path(
+        PathMatchers.segment("divide").slash(integerSegment()).slash(integerSegment()),
+        (a, b) -> handleExceptions(divByZeroHandler, () -> complete("The result is " + (a / b))));
   }
 }
-//#explicit-handler-example
+// #explicit-handler-example

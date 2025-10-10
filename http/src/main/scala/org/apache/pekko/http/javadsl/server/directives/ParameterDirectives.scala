@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,18 +13,18 @@
 
 package org.apache.pekko.http.javadsl.server.directives
 
+import java.util.{ List => JList, Map => JMap, Optional }
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.function.{ Function => JFunction }
-import java.util.{ List => JList, Map => JMap, Optional }
+
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 
 import org.apache.pekko
 import pekko.http.javadsl.server.Route
 import pekko.http.javadsl.unmarshalling.Unmarshaller
-import pekko.http.scaladsl.server.directives.ParameterDirectives._
 import pekko.http.scaladsl.server.directives.{ ParameterDirectives => D }
-
-import scala.collection.JavaConverters._
-import scala.compat.java8.OptionConverters._
+import pekko.http.scaladsl.server.directives.ParameterDirectives._
 
 abstract class ParameterDirectives extends MiscDirectives {
 
@@ -37,7 +37,7 @@ abstract class ParameterDirectives extends MiscDirectives {
   def parameterOptional(
       name: String, inner: java.util.function.Function[Optional[String], Route]): Route = RouteAdapter(
     D.parameter(name.optional) { value =>
-      inner.apply(value.asJava).delegate
+      inner.apply(value.toJava).delegate
     })
 
   @CorrespondsTo("parameter")
@@ -69,7 +69,7 @@ abstract class ParameterDirectives extends MiscDirectives {
     import t.asScala
     RouteAdapter(
       D.parameter(name.as[T].optional) { value =>
-        inner.apply(value.asJava).delegate
+        inner.apply(value.toJava).delegate
       })
   }
 
@@ -98,7 +98,7 @@ abstract class ParameterDirectives extends MiscDirectives {
   }
 
   def parameterMultiMap(inner: JFunction[JMap[String, JList[String]], Route]): Route = RouteAdapter {
-    D.parameterMultiMap { map => inner.apply(map.mapValues { l => l.asJava }.toMap.asJava).delegate }
+    D.parameterMultiMap { map => inner.apply(map.view.mapValues { l => l.asJava }.toMap.asJava).delegate }
   }
 
   @CorrespondsTo("parameterSeq")

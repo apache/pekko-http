@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,8 +15,12 @@ package org.apache.pekko.http.javadsl.server
 
 import java.net.InetSocketAddress
 import java.net.ServerSocket
-import java.util.concurrent.{ TimeUnit, TimeoutException }
 import java.net.SocketException
+import java.util.concurrent.{ TimeUnit, TimeoutException }
+
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration.Duration
+
 import org.apache.pekko
 import pekko.Done
 import pekko.http.impl.util.PekkoSpecWithMaterializer
@@ -26,11 +30,10 @@ import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding
 import pekko.http.scaladsl.model.{ HttpRequest, StatusCodes }
 import pekko.testkit.EventFilter
-import com.typesafe.config.ConfigFactory
+
 import org.scalatest.concurrent.Eventually
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{ Await, Future }
+import com.typesafe.config.ConfigFactory
 
 class HttpAppSpec extends PekkoSpecWithMaterializer with RequestBuilding with Eventually {
   import system.dispatcher

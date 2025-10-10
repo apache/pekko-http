@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,22 +15,23 @@ package org.apache.pekko.http.scaladsl
 
 import java.nio.file.Paths
 
-import org.apache.pekko
-import pekko.actor.ActorSystem
-import pekko.http.impl.util.ExampleHttpContexts
-import pekko.http.scaladsl.model.HttpMethods._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.stream.scaladsl.FileIO
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.io.StdIn
 import scala.util.Random
+
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.impl.util.ExampleHttpContexts
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpMethods._
+import pekko.http.scaladsl.unmarshalling.Unmarshal
+import pekko.stream.scaladsl.FileIO
+
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 
 /**
  * App to manually test an HTTP2 server
@@ -45,7 +46,7 @@ object Http2ServerTest extends App {
     pekko.actor.default-dispatcher.fork-join-executor.parallelism-max=8
     pekko.http.server.preview.enable-http2 = true
                                                    """)
-  implicit val system = ActorSystem("ServerTest", testConf)
+  implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
   implicit val ec: ExecutionContext = system.dispatcher
 
   def slowDown[T](millis: Int): T => Future[T] = { t =>

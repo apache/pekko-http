@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,17 +13,18 @@
 
 package org.apache.pekko.http.scaladsl.server
 
+import scala.concurrent.Future
+import scala.io.StdIn
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
 import pekko.actor._
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, Uri }
+import pekko.stream.OverflowStrategy
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
-import pekko.stream.{ ActorMaterializer, OverflowStrategy }
-import com.typesafe.config.{ Config, ConfigFactory }
 
-import scala.concurrent.Future
-import scala.io.StdIn
-import scala.util.{ Failure, Success, Try }
+import com.typesafe.config.{ Config, ConfigFactory }
 
 object ConnectionTestApp {
   val testConf: Config = ConfigFactory.parseString("""
@@ -37,16 +38,16 @@ object ConnectionTestApp {
     }
     """)
 
-  implicit val system = ActorSystem("ConnectionTest", testConf)
+  implicit val system: ActorSystem = ActorSystem("ConnectionTest", testConf)
   import system.dispatcher
-  implicit val materializer = ActorMaterializer()
 
   val clientFlow = Http().superPool[Int]()
 
-  val sourceActor = {
+  val sourceQueue = {
     // Our superPool expects (HttpRequest, Int) as input
     val source =
-      Source.actorRef[(HttpRequest, Int)](10000, OverflowStrategy.dropNew).buffer(20000, OverflowStrategy.fail)
+      Source.queue[(HttpRequest, Int)](10000)
+        .buffer(20000, OverflowStrategy.fail)
     val sink = Sink.foreach[(Try[HttpResponse], Int)] {
       case (resp, id) => handleResponse(resp, id)
     }
@@ -55,7 +56,7 @@ object ConnectionTestApp {
   }
 
   def sendPoolFlow(uri: Uri, id: Int): Unit = {
-    sourceActor ! ((buildRequest(uri), id))
+    sourceQueue.offer((buildRequest(uri), id))
   }
 
   def sendPoolFuture(uri: Uri, id: Int): Unit = {

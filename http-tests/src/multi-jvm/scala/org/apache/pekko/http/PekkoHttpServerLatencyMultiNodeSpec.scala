@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -38,7 +38,7 @@ object PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeConfig {
 
   commonConfig(ConfigFactory.parseString(
     """
-      akka {
+      pekko {
         actor.default-mailbox.mailbox-type = "org.apache.pekko.dispatch.UnboundedMailbox"
         actor.provider = "org.apache.pekko.remote.RemoteActorRefProvider"
         actor.warn-about-java-serializer-usage = off
@@ -256,7 +256,7 @@ class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerL
     runOn(loadGenerator) {
       info(s"${id} => running: $cmd")
       import pekko.pattern.ask
-      implicit val timeout = Timeout(30.minutes) // we don't want to timeout here
+      implicit val timeout: Timeout = Timeout(30.minutes) // we don't want to timeout here
 
       val res = (loadGeneratorActor ? LoadGenCommand(cmd)).mapTo[LoadGenResults]
       val results = Await.result(res, timeout.duration)

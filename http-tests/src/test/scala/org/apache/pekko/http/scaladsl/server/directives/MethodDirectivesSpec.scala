@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,13 +13,13 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
 import org.apache.pekko
 import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpMethods, StatusCodes }
 import pekko.http.scaladsl.server._
 import pekko.stream.scaladsl.Source
-
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 
 class MethodDirectivesSpec extends RoutingSpec {
 

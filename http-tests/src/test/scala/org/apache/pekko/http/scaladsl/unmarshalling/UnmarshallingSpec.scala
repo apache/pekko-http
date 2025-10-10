@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,28 +13,29 @@
 
 package org.apache.pekko.http.scaladsl.unmarshalling
 
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 
-import org.apache.pekko
-import pekko.http.scaladsl.unmarshalling.Unmarshaller.EitherUnmarshallingException
-import org.scalatest.BeforeAndAfterAll
-import pekko.http.scaladsl.testkit.ScalatestUtils
-import pekko.actor.ActorSystem
-import pekko.http.scaladsl.model.MediaType.WithFixedCharset
-import pekko.stream.ActorMaterializer
-import pekko.http.scaladsl.model._
-import pekko.testkit._
-import com.typesafe.config.ConfigFactory
-
-import scala.concurrent.duration._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.MediaType.WithFixedCharset
+import pekko.http.scaladsl.testkit.ScalatestUtils
+import pekko.http.scaladsl.unmarshalling.Unmarshaller.EitherUnmarshallingException
+import pekko.testkit._
+
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.typesafe.config.ConfigFactory
+
 class UnmarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll with ScalatestUtils {
-  implicit val system = ActorSystem(getClass.getSimpleName)
-  implicit val materializer = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName)
 
   override val testConfig = ConfigFactory.load()
 
@@ -43,7 +44,7 @@ class UnmarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll
       Unmarshal(HttpEntity("Hällö")).to[String] should evaluateTo("Hällö")
     }
     "stringUnmarshaller should assume UTF-8 for textual content type with missing charset" in {
-      Unmarshal(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hällö".getBytes("UTF-8"))).to[
+      Unmarshal(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hällö".getBytes(StandardCharsets.UTF_8))).to[
         String] should evaluateTo("Hällö")
     }
     "charArrayUnmarshaller should unmarshal `text/plain` content in UTF-8 to char arrays" in {
@@ -118,7 +119,7 @@ class UnmarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll
 
     "should handle media ranges of types with missing charset by assuming UTF-8 charset when matching" in {
       val um = Unmarshaller.stringUnmarshaller.forContentTypes(MediaTypes.`text/plain`)
-      Await.result(um(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hêllö".getBytes("utf-8"))),
+      Await.result(um(HttpEntity(MediaTypes.`text/plain`.withMissingCharset, "Hêllö".getBytes(StandardCharsets.UTF_8))),
         1.second.dilated) should ===("Hêllö")
     }
 

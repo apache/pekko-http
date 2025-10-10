@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,6 +16,8 @@ package org.apache.pekko.http.scaladsl.server
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
+import spray.json.{ DefaultJsonProtocol, RootJsonFormat }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.scaladsl.common.{ EntityStreamingSupport, JsonEntityStreamingSupport }
@@ -25,10 +27,11 @@ import pekko.http.scaladsl.model.headers._
 import pekko.stream.scaladsl._
 import pekko.testkit._
 import pekko.util.ByteString
+
 import org.scalatest.concurrent.ScalaFutures
 
 class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
-  implicit override val patience = PatienceConfig(5.seconds.dilated(system), 200.millis)
+  implicit override val patience: PatienceConfig = PatienceConfig(5.seconds.dilated(system), 200.millis)
 
   // #models
   case class Tweet(uid: Int, txt: String)
@@ -45,8 +48,8 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
       extends pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
       with spray.json.DefaultJsonProtocol {
 
-    implicit val tweetFormat = jsonFormat2(Tweet.apply)
-    implicit val measurementFormat = jsonFormat2(Measurement.apply)
+    implicit val tweetFormat: RootJsonFormat[Tweet] = jsonFormat2(Tweet.apply)
+    implicit val measurementFormat: RootJsonFormat[Measurement] = jsonFormat2(Measurement.apply)
   }
 
   "spray-json-response-streaming" in {
@@ -109,10 +112,11 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
   "client-consume-streaming-json" in {
     // #json-streaming-client-example
     import MyJsonProtocol._
+
     import org.apache.pekko
-    import pekko.http.scaladsl.unmarshalling._
     import pekko.http.scaladsl.common.EntityStreamingSupport
     import pekko.http.scaladsl.common.JsonEntityStreamingSupport
+    import pekko.http.scaladsl.unmarshalling._
 
     implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
       EntityStreamingSupport.json()
@@ -129,7 +133,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
 
     // flatten the Future[Source[]] into a Source[]:
     val source: Source[Tweet, Future[NotUsed]] =
-      Source.fromFutureSource(unmarshalled)
+      Source.futureSource(unmarshalled)
 
     // #json-streaming-client-example
     // tests ------------------------------------------------------------
@@ -145,10 +149,11 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
   "client-consume-streaming-json-raw" in {
     // #json-streaming-client-example-raw
     import MyJsonProtocol._
+
     import org.apache.pekko
-    import pekko.http.scaladsl.unmarshalling._
     import pekko.http.scaladsl.common.EntityStreamingSupport
     import pekko.http.scaladsl.common.JsonEntityStreamingSupport
+    import pekko.http.scaladsl.unmarshalling._
 
     implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
       EntityStreamingSupport.json()
@@ -292,7 +297,10 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
               .runFold(0) { (cnt, _) => cnt + 1 }
 
           complete {
-            measurementsSubmitted.map(n => Map("msg" -> s"""Total metrics received: $n"""))
+            // FIXME: workaround for Scala 3 which cannot figure out the right implicit for some reason
+            // Needs same name to avoid ambiguity in Scala 2
+            implicit val mapFormat: RootJsonFormat[Map[String, String]] = DefaultJsonProtocol.mapFormat
+            measurementsSubmitted.map((n: Int) => Map[String, String]("msg" -> s"""Total metrics received: $n"""))
           }
         }
       }
@@ -375,7 +383,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
         complete(r)
       }
 
-    val `Accept:application/example` = Accept(MediaRange(MediaType.parse("application/example").right.get))
+    val `Accept:application/example` = Accept(MediaRange(MediaType.parse("application/example").toOption.get))
     Get("/").addHeader(`Accept:application/example`) ~> eventsRoute ~> check {
       val res = responseAs[String]
 

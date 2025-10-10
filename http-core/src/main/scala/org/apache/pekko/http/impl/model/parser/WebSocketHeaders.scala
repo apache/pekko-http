@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -18,7 +18,7 @@ import pekko.http.scaladsl.model.headers._
 import org.parboiled2._
 
 // see grammar at http://tools.ietf.org/html/rfc6455#section-4.3
-private[parser] trait WebSocketHeaders { this: Parser with CommonRules with CommonActions =>
+private[parser] trait WebSocketHeaders { this: Parser with CommonRules with CommonActions with StringBuilding =>
   import CharacterClasses._
   import Base64Parsing.rfc2045Alphabet
 

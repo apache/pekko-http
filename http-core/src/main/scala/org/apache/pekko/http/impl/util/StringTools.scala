@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,7 +15,7 @@ package org.apache.pekko.http.impl.util
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.util.Unsafe
+
 import scala.annotation.nowarn
 
 /**
@@ -30,8 +30,8 @@ private[http] object StringTools {
     new String(bytes, 0)
 
   def asciiStringBytes(string: String): Array[Byte] = {
-    val bytes = new Array[Byte](string.length)
-    Unsafe.copyUSAsciiStrToBytes(string, bytes)
-    bytes
+    // this is as fast as Unsafe.copyUSAsciiStrToBytes for recent JDK versions
+    // and avoids the use of deprecated Unsafe methods
+    string.getBytes(java.nio.charset.StandardCharsets.US_ASCII)
   }
 }

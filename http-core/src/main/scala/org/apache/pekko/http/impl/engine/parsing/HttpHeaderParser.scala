@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -20,22 +20,21 @@ import java.lang.{ StringBuilder => JStringBuilder }
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
+import pekko.http.impl.model.parser.CharacterClasses._
+import pekko.http.impl.model.parser.HeaderParser
+import pekko.http.impl.util._
+import pekko.http.impl.util.CharUtils.toLowerCase
+import pekko.http.impl.util.HttpConstants._
+import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
+import pekko.http.scaladsl.model.headers.{ EmptyHeader, RawHeader }
 import pekko.http.scaladsl.settings.ParserSettings.{
+  ErrorLoggingVerbosity,
   IllegalResponseHeaderNameProcessingMode,
   IllegalResponseHeaderValueProcessingMode
 }
-import pekko.http.scaladsl.settings.ParserSettings.ErrorLoggingVerbosity
-import pekko.http.scaladsl.settings.ParserSettings
+import pekko.util.ByteString
 
 import scala.annotation.tailrec
-import org.parboiled2.CharUtils
-import pekko.util.ByteString
-import pekko.http.ccompat._
-import pekko.http.impl.util._
-import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
-import pekko.http.scaladsl.model.headers.{ EmptyHeader, RawHeader }
-import pekko.http.impl.model.parser.HeaderParser
-import pekko.http.impl.model.parser.CharacterClasses._
 
 /**
  * INTERNAL API
@@ -147,7 +146,7 @@ private[engine] final class HttpHeaderParser private (
           case EmptyHeader                    => resultHeader = EmptyHeader; cursor
         }
       case nodeChar =>
-        val char = CharUtils.toLowerCase(byteChar(input, cursor))
+        val char = toLowerCase(byteChar(input, cursor))
         if (char == node) // fast match, advance and descend
           parseHeaderLine(input, lineStart)(cursor + 1, nodeIx + 1)
         else node >>> 8 match {
@@ -243,7 +242,7 @@ private[engine] final class HttpHeaderParser private (
   private def insert(input: ByteString, value: AnyRef)(cursor: Int = 0, endIx: Int = input.length, nodeIx: Int = 0,
       colonIx: Int = 0): Unit = {
     val char =
-      if (cursor < colonIx) CharUtils.toLowerCase((input(cursor) & 0xFF).toChar)
+      if (cursor < colonIx) toLowerCase((input(cursor) & 0xFF).toChar)
       else if (cursor < endIx) (input(cursor) & 0xFF).toChar
       else '\u0000'
     val node = nodes(nodeIx)
@@ -292,7 +291,7 @@ private[engine] final class HttpHeaderParser private (
     val newNodeIx = newNodeIndex
     if (cursor < endIx) {
       val c = (input(cursor) & 0xFF).toChar
-      val char = if (cursor < colonIx) CharUtils.toLowerCase(c) else c
+      val char = if (cursor < colonIx) toLowerCase(c) else c
       nodes(newNodeIx) = char
       insertRemainingCharsAsNewNodes(input, value)(cursor + 1, endIx, valueIx, colonIx)
     } else {
@@ -439,7 +438,7 @@ private[engine] final class HttpHeaderParser private (
     charBuffer.flip()
     val result =
       if (coderResult.isUnderflow & charBuffer.hasRemaining) {
-        val c = charBuffer.get()
+        val c = charBuffer.get().toInt
         if (charBuffer.hasRemaining) (charBuffer.get() << 16) | c else c
       } else -1
     byteBuffer.clear()
@@ -601,7 +600,7 @@ private[http] object HttpHeaderParser {
     if (ix < limit)
       byteChar(input, ix) match {
         case '\t' => scanHeaderValue(hhp, input, start, limit, log, mode)(appended(' '), ix + 1)
-        case '\r' if byteChar(input, ix + 1) == '\n' =>
+        case '\r' if byteAt(input, ix + 1) == LF_BYTE =>
           if (WSP(byteChar(input, ix + 2))) scanHeaderValue(hhp, input, start, limit, log, mode)(appended(' '), ix + 3)
           else (if (sb != null) sb.toString else asciiString(input, start, ix), ix + 2)
         case '\n' =>
@@ -644,13 +643,13 @@ private[http] object HttpHeaderParser {
               }
             } else {
               mode match {
-                case ParserSettings.IllegalResponseHeaderValueProcessingMode.Error =>
+                case IllegalResponseHeaderValueProcessingMode.Error =>
                   fail(s"Illegal character '${escape(c)}' in header value")
-                case ParserSettings.IllegalResponseHeaderValueProcessingMode.Warn =>
+                case IllegalResponseHeaderValueProcessingMode.Warn =>
                   // ignore the illegal character and log a warning message
                   log.warning(s"Illegal character '${escape(c)}' in header value")
                   sb
-                case ParserSettings.IllegalResponseHeaderValueProcessingMode.Ignore =>
+                case IllegalResponseHeaderValueProcessingMode.Ignore =>
                   // just ignore the illegal character
                   sb
               }

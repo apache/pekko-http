@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,14 +15,16 @@ package org.apache.pekko.http.scaladsl.server
 
 import java.net.InetSocketAddress
 
+import scala.io.StdIn
+
 import org.apache.pekko
 import pekko.actor.{ ActorSystem, ActorSystemImpl }
 import pekko.event.Logging
+import pekko.stream.ActorAttributes
 import pekko.stream.scaladsl._
-import pekko.stream.{ ActorAttributes, ActorMaterializer }
 import pekko.util.ByteString
+
 import com.typesafe.config.{ Config, ConfigFactory }
-import scala.io.StdIn
 
 object TcpLeakApp extends App {
   val testConf: Config = ConfigFactory.parseString(
@@ -30,12 +32,11 @@ object TcpLeakApp extends App {
     pekko.loglevel = DEBUG
     pekko.log-dead-letters = on
     pekko.io.tcp.trace-logging = on""")
-  implicit val system = ActorSystem("ServerTest", testConf)
-  implicit val fm = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
 
   import system.dispatcher
 
-  val tcpFlow = Tcp().outgoingConnection(new InetSocketAddress("127.0.0.1", 1234)).named("TCP-outgoingConnection")
+  val tcpFlow = Tcp(system).outgoingConnection(new InetSocketAddress("127.0.0.1", 1234)).named("TCP-outgoingConnection")
   List
     .fill(100)(
       Source

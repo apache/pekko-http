@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -18,10 +18,10 @@ import java.util.Optional
 import java.util.function.{ Function => JFunction }
 import java.util.function.Supplier
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
 import pekko.http.impl.util.JavaMapping.Implicits._
-
 import pekko.http.javadsl.model.headers.HttpCookie
 import pekko.http.javadsl.model.headers.HttpCookiePair
 import pekko.http.javadsl.server.Route

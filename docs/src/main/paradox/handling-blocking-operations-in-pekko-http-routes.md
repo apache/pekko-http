@@ -30,12 +30,14 @@ including in Actors etc.
 
 In the thread state diagrams below the colours have the following meaning:
 
- * Turquoise - Sleeping state
- * Orange - Waiting state
- * Green - Runnable state
+ * White - The thread has yet to be created
+ * Blue - `Java Thread Sleep`
+ * Gray - `Java Thread Park`
+ * Green - The thread is running
 
-The thread information was recorded using the YourKit profiler, however any good JVM profiler 
-has this feature (including the free and bundled with the Oracle JDK VisualVM, as well as Oracle Flight Recorder). 
+The thread information was recorded using the
+[JDK Mission Control](https://www.oracle.com/java/technologies/jdk-mission-control.html)
+toolset, however any good JVM profiler has this feature.
 
 ### Problem example: blocking the default dispatcher
 
@@ -46,9 +48,9 @@ Java
 :   @@snip [BlockingInHttpExamples.java](/docs/src/test/java/docs/http/javadsl/server/BlockingInHttpExamples.java) { #blocking-example-in-default-dispatcher }
 
 Here the app is exposed to a load of continuous GET requests and large numbers
-of pekko.actor.default-dispatcher threads are handling requests. The orange
+of pekko.actor.default-dispatcher threads are handling requests. The gray
 portion of the thread shows that it is idle. Idle threads are fine -
-they're ready to accept new work. However, large amounts of Turquoise (sleeping) threads are very bad!
+they're ready to accept new work. However, large amounts of Blue (sleeping) threads are very bad!
 
 ![DispatcherBehaviourOnBadCode.png](DispatcherBehaviourOnBadCode.png)
 
@@ -63,8 +65,8 @@ provided dispatcher would be used. Both these dispatchers are ForkJoin pools by 
 not best suited for blocking operations.
 @@@
 For example, the above screenshot shows an Apache Pekko FJP dispatchers threads,
-named "`default-akka.default-dispatcher2,3,4`" going into the blocking state, after having been idle. 
-It can be observed that the number of new threads increases, "`default-akka.actor.default-dispatcher 18,19,20,...`" 
+named "`default-pekko.actor.default-dispatcher-16,15`" going into the blocking state, after having been idle. 
+It can be observed that the number of new threads increases, "`default-pekko.actor.default-dispatcher-18`" 
 however they go to sleep state immediately, thus wasting the resources.
 @java[The same happens to the global @javadoc[ForkJoinPool](java.util.concurrent.ForkJoinPool) when using Java Futures.]
 

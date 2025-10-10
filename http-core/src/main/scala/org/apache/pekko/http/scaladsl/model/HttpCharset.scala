@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -66,6 +66,19 @@ final case class HttpCharset private[http] (override val value: String)(val alia
   /** Returns the Charset for this charset if available or throws an exception otherwise */
   def nioCharset: Charset = _nioCharset.get
 
+  /**
+   * @return this HttpCharset instance if this charset can be parsed to a
+   * <code>java.nio.charset.Charset</code> instance, otherwise returns the UTF-8 charset.
+   * @since 1.1.0
+   */
+  def charsetWithUtf8Failover: HttpCharset = {
+    if (_nioCharset.isSuccess) {
+      this
+    } else {
+      HttpCharsets.`UTF-8`
+    }
+  }
+
   private def readObject(in: java.io.ObjectInputStream): Unit = {
     in.defaultReadObject()
     _nioCharset = HttpCharset.findNioCharset(value)
@@ -76,7 +89,7 @@ final case class HttpCharset private[http] (override val value: String)(val alia
 
   /** Java API */
   def getAliases: JIterable[String] = {
-    import collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     aliases.asJava
   }
 }

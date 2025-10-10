@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.io.ByteArrayOutputStream
+
 import org.apache.pekko
 import pekko.http.impl.util.StringRendering
 import pekko.http.scaladsl.model.{ HttpHeader, HttpRequest, HttpResponse }
@@ -20,9 +22,7 @@ import pekko.http.scaladsl.model.headers.RawHeader
 import pekko.http.shaded.com.twitter.hpack.Encoder
 import pekko.util.ByteString
 
-import java.io.ByteArrayOutputStream
-
-/** Helps with a encoding headers to HPACK from Akka HTTP model */
+/** Helps with a encoding headers to HPACK from Pekko HTTP model */
 trait HPackEncodingSupport {
   lazy val encoder = new Encoder(Http2Protocol.InitialMaxHeaderTableSize)
 

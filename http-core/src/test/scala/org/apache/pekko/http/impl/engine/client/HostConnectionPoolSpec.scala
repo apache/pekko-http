@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -83,7 +83,7 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
   testSet(clientServerImplementation = PassThrough)
   testSet(clientServerImplementation = PekkoHttpEngineNoNetwork)
   testSet(clientServerImplementation = PekkoHttpEngineTCP)
-  // testSet(poolImplementation = NewPoolImplementation, clientServerImplementation = AkkaHttpEngineTLS)
+  // testSet(poolImplementation = NewPoolImplementation, clientServerImplementation = PekkoHttpEngineTLS)
 
   def testSet(clientServerImplementation: ClientServerImplementation) =
     s"NewPoolImplementation on $clientServerImplementation" should {
@@ -577,7 +577,7 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
         lazy val requestIn = TestPublisher.probe[RequestContext]()
         lazy val responseOut = TestSubscriber.probe[ResponseContext]()
 
-        protected val server: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]]
+        protected def server: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]]
 
         protected def settings: ConnectionPoolSettings
 
@@ -738,7 +738,7 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
           connection.acceptConnectionPromise.future
         }
 
-        protected override lazy val server =
+        protected override lazy val server: Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] =
           Flow.fromSinkAndSourceMat(
             // buffer is needed because the async subscriber/publisher boundary will otherwise request > 1
             Flow[HttpRequest].buffer(1, OverflowStrategy.backpressure)
@@ -803,7 +803,7 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
             super.onUpstreamFailure(ex)
           }
 
-          override def onDownstreamFinish(): Unit = failStage(new RuntimeException("was cancelled"))
+          override def onDownstreamFinish(cause: Throwable): Unit = failStage(new RuntimeException("was cancelled"))
         }
         setHandlers(reqIn, reqOut, new MonitorMessage(reqIn, reqOut))
         setHandlers(resIn, resOut, new MonitorMessage(resIn, resOut))
@@ -849,16 +849,17 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
   /**
    * Transport that uses actual top-level Http APIs to establish a HTTPS connection
    *
-   * Currently requires an /etc/hosts entry that points akka.example.org to a locally bindable address.
+   * Currently requires an /etc/hosts entry that points pekko.example.org to a locally bindable address.
    */
   case object PekkoHttpEngineTLS extends TopLevelApiClientServerImplementation {
     protected override def bindServerSource =
-      Http().newServerAt("akka.example.org", 0).enableHttps(ExampleHttpContexts.exampleServerContext).connectionSource()
+      Http().newServerAt("pekko.example.org", 0).enableHttps(
+        ExampleHttpContexts.exampleServerContext).connectionSource()
     protected def clientConnectionFlow(serverBinding: ServerBinding, connectionKillSwitch: SharedKillSwitch)
         : Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] = {
       val clientConnectionSettings =
         ClientConnectionSettings(system).withTransport(new KillSwitchedClientTransport(connectionKillSwitch))
-      Http().outgoingConnectionUsingContext(host = "akka.example.org", port = serverBinding.localAddress.getPort,
+      Http().outgoingConnectionUsingContext(host = "pekko.example.org", port = serverBinding.localAddress.getPort,
         connectionContext = ExampleHttpContexts.exampleClientContext, settings = clientConnectionSettings)
     }
   }

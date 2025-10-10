@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,9 +16,9 @@ package directives
 
 import org.apache.pekko
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.server.directives.BasicDirectives._
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server.RequestEntityExpectedRejection
-import headers._
+import pekko.http.scaladsl.server.directives.BasicDirectives._
 
 /**
  * @groupname misc Miscellaneous directives
@@ -119,7 +119,6 @@ object MiscDirectives extends MiscDirectives {
   private val _extractClientIP: Directive1[RemoteAddress] =
     headerValuePF { case `X-Forwarded-For`(Seq(address, _*)) => address } |
     headerValuePF { case `X-Real-Ip`(address) => address } |
-    headerValuePF { case `Remote-Address`(address) => address } |
     extractRequest.map { request =>
       request.attribute(AttributeKeys.remoteAddress).getOrElse(RemoteAddress.Unknown)
     }

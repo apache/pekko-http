@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,24 +14,26 @@
 package org.apache.pekko.http.javadsl.settings
 
 import java.net.InetSocketAddress
+import java.time.{ Duration => JDuration }
 import java.util.function.Supplier
 import java.util.{ Optional, Random }
 
+import com.typesafe.config.Config
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.ApiMayChange
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.settings.ClientConnectionSettingsImpl
+import pekko.http.impl.util.JavaDurationConverter
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.ClientTransport
 import pekko.http.javadsl.model.headers.UserAgent
 import pekko.io.Inet.SocketOption
-import com.typesafe.config.Config
-import pekko.http.impl.util.JavaMapping.Implicits._
 
-import scala.collection.JavaConverters._
-import scala.compat.java8.OptionConverters
-import scala.compat.java8.OptionConverters._
 import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.jdk.CollectionConverters._
+import scala.jdk.DurationConverters._
+import scala.jdk.OptionConverters._
 
 /**
  * Public API but not intended for subclassing
@@ -40,19 +42,33 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
 abstract class ClientConnectionSettings private[pekko] () { self: ClientConnectionSettingsImpl =>
 
   /* JAVA APIs */
-  final def getConnectingTimeout: FiniteDuration = connectingTimeout
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
+   * to `java.time.Duration`.
+   */
+  final def getConnectingTimeout: JDuration = connectingTimeout.toJava
   final def getParserSettings: ParserSettings = parserSettings
-  final def getIdleTimeout: Duration = idleTimeout
+
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
+   * to `java.time.Duration`.
+   */
+  final def getIdleTimeout: JDuration = JavaDurationConverter.toJava(idleTimeout)
   final def getSocketOptions: java.lang.Iterable[SocketOption] = socketOptions.asJava
-  final def getUserAgentHeader: Optional[UserAgent] = OptionConverters.toJava(userAgentHeader)
-  final def getLogUnencryptedNetworkBytes: Optional[Int] = OptionConverters.toJava(logUnencryptedNetworkBytes)
-  final def getStreamCancellationDelay: FiniteDuration = streamCancellationDelay
+  final def getUserAgentHeader: Optional[UserAgent] = (userAgentHeader: Option[UserAgent]).toJava
+  final def getLogUnencryptedNetworkBytes: Optional[Int] = logUnencryptedNetworkBytes.toJava
+
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.Duration`
+   * to `java.time.Duration`.
+   */
+  final def getStreamCancellationDelay: JDuration = streamCancellationDelay.toJava
   final def getRequestHeaderSizeHint: Int = requestHeaderSizeHint
   final def getWebsocketSettings: WebSocketSettings = websocketSettings
   final def getWebsocketRandomFactory: Supplier[Random] = new Supplier[Random] {
     override def get(): Random = websocketRandomFactory()
   }
-  final def getLocalAddress: Optional[InetSocketAddress] = OptionConverters.toJava(localAddress)
+  final def getLocalAddress: Optional[InetSocketAddress] = localAddress.toJava
 
   /** The underlying transport used to connect to hosts. By default [[ClientTransport.TCP]] is used. */
   @ApiMayChange
@@ -67,10 +83,28 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
 
   // Java API versions of mutators
 
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withConnectingTimeout(newValue: java.time.Duration): ClientConnectionSettings
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withIdleTimeout(newValue: java.time.Duration): ClientConnectionSettings
+
+  /**
+   * Java API
+   * @since 1.3.0
+   */
+  def withStreamCancellationDelay(newValue: java.time.Duration): ClientConnectionSettings
+
   def withUserAgentHeader(newValue: Optional[UserAgent]): ClientConnectionSettings =
-    self.copy(userAgentHeader = newValue.asScala.map(_.asScala))
+    self.copy(userAgentHeader = newValue.toScala.map(_.asScala))
   def withLogUnencryptedNetworkBytes(newValue: Optional[Int]): ClientConnectionSettings =
-    self.copy(logUnencryptedNetworkBytes = OptionConverters.toScala(newValue))
+    self.copy(logUnencryptedNetworkBytes = newValue.toScala)
   def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ClientConnectionSettings =
     self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
       override def get(): Random = newValue.get()
@@ -82,7 +116,7 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
   def withParserSettings(newValue: ParserSettings): ClientConnectionSettings =
     self.copy(parserSettings = newValue.asScala)
   def withLocalAddress(newValue: Optional[InetSocketAddress]): ClientConnectionSettings =
-    self.copy(localAddress = OptionConverters.toScala(newValue))
+    self.copy(localAddress = newValue.toScala)
 
   @ApiMayChange
   def withTransport(newValue: ClientTransport): ClientConnectionSettings = self.copy(transport = newValue.asScala)

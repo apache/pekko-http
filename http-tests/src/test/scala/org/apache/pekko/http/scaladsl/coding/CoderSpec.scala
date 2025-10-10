@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,30 +13,28 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
-import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream }
+import java.io.{ ByteArrayOutputStream, InputStream, OutputStream }
+import java.util.concurrent.ThreadLocalRandom
 import java.util.zip.DataFormatException
+
+import scala.annotation.tailrec
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.util.control.NoStackTrace
 
 import org.apache.pekko
 import pekko.NotUsed
-
-import scala.annotation.tailrec
-import scala.concurrent.duration._
-import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
-import java.util.concurrent.ThreadLocalRandom
-
-import scala.util.control.NoStackTrace
-import org.scalatest.Inspectors
-import pekko.util.ByteString
-import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.http.impl.util._
 import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest }
 import pekko.http.scaladsl.model.HttpMethods._
-import pekko.http.impl.util._
+import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.testkit._
-import scala.annotation.nowarn
+import pekko.util.ByteString
+
+import org.scalatest.Inspectors
 import org.scalatest.wordspec.AnyWordSpec
 
-@nowarn("msg=deprecated .* is internal API")
 abstract class CoderSpec extends AnyWordSpec with CodecSpecSupport with Inspectors {
   protected def Coder: Coder
   protected def newDecodedInputStream(underlying: InputStream): InputStream
@@ -159,7 +157,7 @@ abstract class CoderSpec extends AnyWordSpec with CodecSpecSupport with Inspecto
         ByteString(Array.fill(size)(1.toByte))
 
       val sizesAfterRoundtrip =
-        Source.fromIterator(() => sizes.toIterator.map(createByteString))
+        Source.fromIterator(() => sizes.iterator.map(createByteString))
           .via(Coder.encoderFlow)
           .via(Coder.decoderFlow)
           .runFold(Seq.empty[Int])(_ :+ _.size)
@@ -191,7 +189,7 @@ abstract class CoderSpec extends AnyWordSpec with CodecSpecSupport with Inspecto
 
   def streamDecode(bytes: ByteString): ByteString = {
     val output = new ByteArrayOutputStream()
-    val input = newDecodedInputStream(new ByteArrayInputStream(bytes.toArray))
+    val input = newDecodedInputStream(bytes.asInputStream)
 
     val buffer = new Array[Byte](500)
     @tailrec def copy(from: InputStream, to: OutputStream): Unit = {
@@ -203,7 +201,7 @@ abstract class CoderSpec extends AnyWordSpec with CodecSpecSupport with Inspecto
     }
 
     copy(input, output)
-    ByteString(output.toByteArray)
+    ByteString.fromArrayUnsafe(output.toByteArray)
   }
 
   def decodeChunks(input: Source[ByteString, NotUsed]): ByteString =

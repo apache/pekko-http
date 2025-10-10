@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,17 +15,19 @@ package org.apache.pekko.http.scaladsl.marshallers.sprayjson
 
 import java.lang.StringBuilder
 
+import scala.collection.immutable.ListMap
+
+import spray.json.{ DefaultJsonProtocol, JsValue, JsonPrinter, PrettyPrinter }
+import spray.json.RootJsonFormat
+
 import org.apache.pekko
 import pekko.http.scaladsl.marshallers.{ Employee, JsonSupportSpec }
 import pekko.http.scaladsl.marshalling.ToEntityMarshaller
 import pekko.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-import spray.json.{ DefaultJsonProtocol, JsValue, JsonPrinter, PrettyPrinter }
-
-import scala.collection.immutable.ListMap
 
 class SprayJsonSupportSpec extends JsonSupportSpec {
   object EmployeeJsonProtocol extends DefaultJsonProtocol {
-    implicit val employeeFormat = jsonFormat5(Employee.apply)
+    implicit val employeeFormat: RootJsonFormat[Employee] = jsonFormat5(Employee.apply)
   }
   import EmployeeJsonProtocol._
 

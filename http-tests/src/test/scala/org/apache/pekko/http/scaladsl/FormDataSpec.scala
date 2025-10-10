@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,14 +14,12 @@
 package org.apache.pekko.http.scaladsl
 
 import org.apache.pekko
-import pekko.stream.ActorMaterializer
-import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.http.scaladsl.marshalling.Marshal
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.testkit.PekkoSpec
 
 class FormDataSpec extends PekkoSpec {
-  implicit val materializer = ActorMaterializer()
   import system.dispatcher
 
   val formData = FormData(Map("surname" -> "Smith", "age" -> "42"))

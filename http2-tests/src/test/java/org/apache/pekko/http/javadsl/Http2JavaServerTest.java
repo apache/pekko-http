@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -26,24 +26,26 @@ import java.util.concurrent.CompletionStage;
 
 public class Http2JavaServerTest {
   public static void main(String[] args) {
-    Config testConf = ConfigFactory.parseString(
-      "pekko.loglevel = INFO\n" +
-      "pekko.log-dead-letters = off\n" +
-      "pekko.stream.materializer.debug.fuzzing-mode = off\n" +
-      "pekko.actor.serialize-creators = off\n" +
-      "pekko.actor.serialize-messages = off\n" +
-      "#pekko.actor.default-dispatcher.throughput = 1000\n" +
-      "pekko.actor.default-dispatcher.fork-join-executor.parallelism-max=8\n" +
-      "pekko.http.server.preview.enable-http2 = on\n"
-    );
+    Config testConf =
+        ConfigFactory.parseString(
+            "pekko.loglevel = INFO\n"
+                + "pekko.log-dead-letters = off\n"
+                + "pekko.stream.materializer.debug.fuzzing-mode = off\n"
+                + "pekko.actor.serialize-creators = off\n"
+                + "pekko.actor.serialize-messages = off\n"
+                + "#pekko.actor.default-dispatcher.throughput = 1000\n"
+                + "pekko.actor.default-dispatcher.fork-join-executor.parallelism-max=8\n"
+                + "pekko.http.server.preview.enable-http2 = on\n");
     ActorSystem system = ActorSystem.create("ServerTest", testConf);
 
     Function<HttpRequest, CompletionStage<HttpResponse>> handler =
-      request -> CompletableFuture.completedFuture(HttpResponse.create().withEntity(request.entity()));
+        request ->
+            CompletableFuture.completedFuture(HttpResponse.create().withEntity(request.entity()));
 
     HttpsConnectionContext httpsConnectionContext = ExampleHttpContexts.getExampleServerContext();
 
-    Http.get(system).newServerAt("localhost", 9001)
+    Http.get(system)
+        .newServerAt("localhost", 9001)
         .enableHttps(httpsConnectionContext)
         .bind(handler);
 

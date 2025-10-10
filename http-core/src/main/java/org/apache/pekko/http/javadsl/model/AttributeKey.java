@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -17,7 +17,7 @@ import org.apache.pekko.annotation.DoNotInherit;
 
 @DoNotInherit
 public abstract class AttributeKey<T> {
-    public static <U> AttributeKey<U> create(String name, Class<U> clazz) {
-        return new org.apache.pekko.http.scaladsl.model.AttributeKey<U>(name, clazz);
-    }
+  public static <U> AttributeKey<U> create(String name, Class<U> clazz) {
+    return new org.apache.pekko.http.scaladsl.model.AttributeKey<U>(name, clazz);
+  }
 }

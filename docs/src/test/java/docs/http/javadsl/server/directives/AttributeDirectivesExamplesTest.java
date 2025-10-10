@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -24,41 +24,42 @@ public class AttributeDirectivesExamplesTest extends JUnitRouteTest {
 
   @Test
   public void attribute() {
-    //#attribute
+    // #attribute
     AttributeKey<String> userId = AttributeKey.create("user-id", String.class);
 
-    final Route route = attribute(userId, id ->
-      complete("The user is " + id)
-    );
+    final Route route = attribute(userId, id -> complete("The user is " + id));
 
     // tests:
-    testRoute(route).run(HttpRequest.GET("/").addAttribute(userId, "Joe42"))
-      .assertEntity("The user is Joe42");
+    testRoute(route)
+        .run(HttpRequest.GET("/").addAttribute(userId, "Joe42"))
+        .assertEntity("The user is Joe42");
 
-    testRoute(route).run(HttpRequest.GET("/"))
-      .assertStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-    //#attribute
+    testRoute(route).run(HttpRequest.GET("/")).assertStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+    // #attribute
   }
 
   @Test
   public void testOptionalAttribute() {
-    //#optionalAttribute
+    // #optionalAttribute
     AttributeKey<String> userId = AttributeKey.create("user-id", String.class);
 
-    final Route route = optionalAttribute(userId, id -> {
-      if (id.isPresent()) {
-        return complete("The user is " + id.get());
-      } else {
-        return complete("No user was provided");
-      }
-    });
+    final Route route =
+        optionalAttribute(
+            userId,
+            id -> {
+              if (id.isPresent()) {
+                return complete("The user is " + id.get());
+              } else {
+                return complete("No user was provided");
+              }
+            });
 
     // tests:
-    testRoute(route).run(HttpRequest.GET("/").addAttribute(userId, "Joe42"))
-      .assertEntity("The user is Joe42");
+    testRoute(route)
+        .run(HttpRequest.GET("/").addAttribute(userId, "Joe42"))
+        .assertEntity("The user is Joe42");
 
     testRoute(route).run(HttpRequest.GET("/")).assertEntity("No user was provided");
-    //#optionalAttribute
+    // #optionalAttribute
   }
-
 }

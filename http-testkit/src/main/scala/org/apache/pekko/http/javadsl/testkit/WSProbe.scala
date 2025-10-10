@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,20 +13,19 @@
 
 package org.apache.pekko.http.javadsl.testkit
 
+import scala.concurrent.duration._
+import scala.jdk.DurationConverters._
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.ws.Message
+import pekko.http.scaladsl.{ testkit => st }
 import pekko.stream.Materializer
 import pekko.stream.javadsl.Flow
 import pekko.stream.scaladsl
 import pekko.util.ByteString
-
-import pekko.http.scaladsl.{ testkit => st }
-
-import pekko.http.impl.util.JavaMapping.Implicits._
-
-import scala.concurrent.duration._
 
 /**
  * A WSProbe is a probe that implements a `Flow[Message, Message, Unit]` for testing
@@ -89,6 +88,12 @@ class WSProbe(delegate: st.WSProbe) {
    * Expect no message on the input side of the flow for the given maximum duration.
    */
   def expectNoMessage(max: FiniteDuration): Unit = delegate.expectNoMessage(max)
+
+  /**
+   * Expect no message on the input side of the flow for the given maximum duration.
+   * @since 1.3.0
+   */
+  def expectNoMessage(max: java.time.Duration): Unit = delegate.expectNoMessage(max.toScala)
 
   /**
    * Expect completion on the input side of the flow.

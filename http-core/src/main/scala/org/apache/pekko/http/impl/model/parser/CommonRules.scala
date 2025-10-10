@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -22,7 +22,9 @@ import pekko.http.scaladsl.model.headers._
 import org.parboiled2._
 import org.parboiled2.support.hlist._
 
-private[parser] trait CommonRules { this: HeaderParser with Parser with StringBuilding =>
+private[parser] trait CommonRules extends StringBuilding { this: Parser =>
+  protected def maxCommentParsingDepth: Int
+
   import CharacterClasses._
 
   // ******************************************************************************************
@@ -242,7 +244,7 @@ private[parser] trait CommonRules { this: HeaderParser with Parser with StringBu
 
   // http://tools.ietf.org/html/rfc6750#section-2.1
   def `oauth2-bearer-token` = rule {
-    ignoreCase("bearer") ~ OWS ~ `token68` ~> OAuth2BearerToken
+    ignoreCase("bearer") ~ OWS ~ `token68` ~> (OAuth2BearerToken(_))
   }
 
   def `generic-credentials` = rule {
@@ -263,7 +265,7 @@ private[parser] trait CommonRules { this: HeaderParser with Parser with StringBu
   }
 
   def `cookie-pair`: Rule1[HttpCookiePair] = rule {
-    `cookie-name` ~ ws('=') ~ `cookie-value` ~> (createCookiePair _)
+    `cookie-name` ~ ws('=') ~ this.`cookie-value` ~> (this.createCookiePair _)
   }
 
   def `cookie-name` = rule { token }
@@ -391,11 +393,11 @@ private[parser] trait CommonRules { this: HeaderParser with Parser with StringBu
 
   def `other-content-range` = rule { `other-range-unit` ~ `other-range-resp` }
 
-  def `other-range-resp` = rule { capture(zeroOrMore(ANY)) ~> ContentRange.Other }
+  def `other-range-resp` = rule { capture(zeroOrMore(ANY)) ~> (ContentRange.Other(_)) }
 
   def `other-range-set` = rule { oneOrMore(VCHAR) ~ OWS }
 
-  def `other-range-unit` = rule { token ~> RangeUnits.Other }
+  def `other-range-unit` = rule { token ~> (RangeUnits.Other(_)) }
 
   def `other-ranges-specifier` = rule { `other-range-unit` ~ ws('=') ~ `other-range-set` }
 
@@ -491,5 +493,5 @@ private[parser] trait CommonRules { this: HeaderParser with Parser with StringBu
   }
 
   def newUriParser(input: ParserInput): UriParser
-  def uriReference: Rule1[Uri] = rule { runSubParser(newUriParser(_).`URI-reference-pushed`) }
+  def uriReference: Rule1[Uri] = rule { runSubParser(this.newUriParser(_).`URI-reference-pushed`) }
 }

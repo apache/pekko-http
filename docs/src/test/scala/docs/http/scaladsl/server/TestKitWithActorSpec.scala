@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -18,8 +18,9 @@ import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 
 import org.apache.pekko
+import pekko.{ actor => untyped }
 import pekko.actor.testkit.typed.scaladsl.TestProbe
-import pekko.actor.typed.{ ActorRef, Scheduler }
+import pekko.actor.typed.{ ActorRef, ActorSystem, Scheduler }
 import pekko.actor.typed.scaladsl.AskPattern._
 import pekko.http.scaladsl.server.Directives._
 import pekko.http.scaladsl.testkit.ScalatestRouteTest
@@ -34,7 +35,7 @@ object RouteUnderTest {
   // Your route under test, scheduler is only needed as ask is used
   def route(someActor: ActorRef[Ping])(implicit scheduler: Scheduler, timeout: Timeout) = get {
     path("ping") {
-      complete(someActor ? Ping)
+      complete(someActor ? Ping.apply)
     }
   }
 }
@@ -45,9 +46,9 @@ class TestKitWithActorSpec extends AnyWordSpec with Matchers with ScalatestRoute
   // This test does not use the classic APIs,
   // so it needs to adapt the system:
   import pekko.actor.typed.scaladsl.adapter._
-  implicit val typedSystem = system.toTyped
-  implicit val timeout = Timeout(500.milliseconds)
-  implicit val scheduler = system.scheduler
+  implicit val typedSystem: ActorSystem[_] = system.toTyped
+  implicit val timeout: Timeout = Timeout(500.milliseconds)
+  implicit val scheduler: untyped.Scheduler = system.scheduler
 
   "The service" should {
     "return a 'PONG!' response for GET requests to /ping" in {

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,7 +13,7 @@
 
 package docs.http.javadsl.server;
 
-//#websocket-example-using-core
+// #websocket-example-using-core
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.http.impl.util.JavaMapping;
-import org.apache.pekko.http.javadsl.ConnectHttp;
 import org.apache.pekko.http.javadsl.ConnectionContext;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.ws.WebSocketRequest;
@@ -35,7 +34,6 @@ import org.apache.pekko.http.scaladsl.model.AttributeKeys;
 import org.apache.pekko.japi.JavaPartialFunction;
 import org.apache.pekko.japi.function.Function;
 
-import org.apache.pekko.stream.ActorMaterializer;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Source;
@@ -53,25 +51,28 @@ import org.apache.pekko.util.ByteString;
 @SuppressWarnings({"Convert2MethodRef", "ConstantConditions"})
 public class WebSocketCoreExample {
 
-  //#websocket-handling
+  // #websocket-handling
   public static HttpResponse handleRequest(HttpRequest request) {
     System.out.println("Handling request to " + request.getUri());
 
     if (request.getUri().path().equals("/greeter")) {
-      return request.getAttribute(AttributeKeys.webSocketUpgrade())
-        .map(upgrade -> {
-          Flow<Message, Message, NotUsed> greeterFlow = greeter();
-          HttpResponse response = upgrade.handleMessagesWith(greeterFlow);
-          return response;
-        })
-        .orElse(
-          HttpResponse.create().withStatus(StatusCodes.BAD_REQUEST).withEntity("Expected WebSocket request")
-        );
+      return request
+          .getAttribute(AttributeKeys.webSocketUpgrade())
+          .map(
+              upgrade -> {
+                Flow<Message, Message, NotUsed> greeterFlow = greeter();
+                HttpResponse response = upgrade.handleMessagesWith(greeterFlow);
+                return response;
+              })
+          .orElse(
+              HttpResponse.create()
+                  .withStatus(StatusCodes.BAD_REQUEST)
+                  .withEntity("Expected WebSocket request"));
     } else {
       return HttpResponse.create().withStatus(404);
     }
   }
-  //#websocket-handling
+  // #websocket-handling
 
   public static void main(String[] args) throws Exception {
     ActorSystem system = ActorSystem.create();
@@ -79,9 +80,7 @@ public class WebSocketCoreExample {
     try {
       final Function<HttpRequest, HttpResponse> handler = request -> handleRequest(request);
       CompletionStage<ServerBinding> serverBindingFuture =
-          Http.get(system)
-              .newServerAt("localhost", 8080)
-              .bindSync(handler);
+          Http.get(system).newServerAt("localhost", 8080).bindSync(handler);
 
       // will throw if binding fails
       serverBindingFuture.toCompletableFuture().get(1, TimeUnit.SECONDS);
@@ -92,29 +91,28 @@ public class WebSocketCoreExample {
     }
   }
 
-  //#websocket-handler
+  // #websocket-handler
 
   /**
-   * A handler that treats incoming messages as a name,
-   * and responds with a greeting to that name
+   * A handler that treats incoming messages as a name, and responds with a greeting to that name
    */
   public static Flow<Message, Message, NotUsed> greeter() {
-    return
-      Flow.<Message>create()
-        .collect(new JavaPartialFunction<Message, Message>() {
-          @Override
-          public Message apply(Message msg, boolean isCheck) throws Exception {
-            if (isCheck) {
-              if (msg.isText()) {
-                return null;
-              } else {
-                throw noMatch();
+    return Flow.<Message>create()
+        .collect(
+            new JavaPartialFunction<Message, Message>() {
+              @Override
+              public Message apply(Message msg, boolean isCheck) throws Exception {
+                if (isCheck) {
+                  if (msg.isText()) {
+                    return null;
+                  } else {
+                    throw noMatch();
+                  }
+                } else {
+                  return handleTextMessage(msg.asTextMessage());
+                }
               }
-            } else {
-              return handleTextMessage(msg.asTextMessage());
-            }
-          }
-        });
+            });
   }
 
   public static TextMessage handleTextMessage(TextMessage msg) {
@@ -126,44 +124,48 @@ public class WebSocketCoreExample {
       return TextMessage.create(Source.single("Hello ").concat(msg.getStreamedText()));
     }
   }
-  //#websocket-handler
+  // #websocket-handler
 
   {
     ActorSystem system = null;
     Flow<HttpRequest, HttpResponse, NotUsed> handler = null;
-    //#websocket-ping-payload-server
+    // #websocket-ping-payload-server
     ServerSettings defaultSettings = ServerSettings.create(system);
 
     AtomicInteger pingCounter = new AtomicInteger();
 
-    WebSocketSettings customWebsocketSettings = defaultSettings.getWebsocketSettings()
-        .withPeriodicKeepAliveData(() ->
-            ByteString.fromString(String.format("debug-%d", pingCounter.incrementAndGet()))
-        );
+    WebSocketSettings customWebsocketSettings =
+        defaultSettings
+            .getWebsocketSettings()
+            .withPeriodicKeepAliveData(
+                () ->
+                    ByteString.fromString(
+                        String.format("debug-%d", pingCounter.incrementAndGet())));
 
-
-    ServerSettings customServerSettings = defaultSettings.withWebsocketSettings(customWebsocketSettings);
+    ServerSettings customServerSettings =
+        defaultSettings.withWebsocketSettings(customWebsocketSettings);
 
     Http http = Http.get(system);
-    http.newServerAt("127.0.0.1", 8080)
-        .withSettings(customServerSettings)
-        .bindFlow(handler);
-    //#websocket-ping-payload-server
+    http.newServerAt("127.0.0.1", 8080).withSettings(customServerSettings).bindFlow(handler);
+    // #websocket-ping-payload-server
   }
 
   {
     ActorSystem system = null;
     Materializer materializer = null;
     Flow<Message, Message, NotUsed> clientFlow = null;
-    //#websocket-client-ping-payload
+    // #websocket-client-ping-payload
     ClientConnectionSettings defaultSettings = ClientConnectionSettings.create(system);
 
     AtomicInteger pingCounter = new AtomicInteger();
 
-    WebSocketSettings customWebsocketSettings = defaultSettings.getWebsocketSettings()
-        .withPeriodicKeepAliveData(() ->
-            ByteString.fromString(String.format("debug-%d", pingCounter.incrementAndGet()))
-        );
+    WebSocketSettings customWebsocketSettings =
+        defaultSettings
+            .getWebsocketSettings()
+            .withPeriodicKeepAliveData(
+                () ->
+                    ByteString.fromString(
+                        String.format("debug-%d", pingCounter.incrementAndGet())));
 
     ClientConnectionSettings customSettings =
         defaultSettings.withWebsocketSettings(customWebsocketSettings);
@@ -176,9 +178,8 @@ public class WebSocketCoreExample {
         Optional.empty(),
         customSettings,
         system.log(),
-        materializer
-    );
-    //#websocket-client-ping-payload
+        materializer);
+    // #websocket-client-ping-payload
   }
 }
-//#websocket-example-using-core
+// #websocket-example-using-core

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -18,13 +18,13 @@ import java.net.{ BindException, Socket }
 import java.security.{ KeyStore, SecureRandom }
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
+import javax.net.ssl.{ SNIMatcher, SNIServerName, SSLContext, SSLEngine, TrustManagerFactory }
+
 import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future, Promise }
 import scala.util.{ Success, Try }
-import com.typesafe.sslconfig.pekko.PekkoSSLConfig
-import com.typesafe.sslconfig.ssl.SSLConfigSettings
-import com.typesafe.sslconfig.ssl.SSLLooseConfig
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.Logging
@@ -46,10 +46,8 @@ import pekko.stream.testkit._
 import pekko.stream._
 import pekko.testkit._
 import pekko.util.ByteString
-import scala.annotation.nowarn
 import com.typesafe.config.{ Config, ConfigFactory }
 
-import javax.net.ssl.{ SSLContext, TrustManagerFactory }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.concurrent.Eventually.eventually
 
@@ -192,53 +190,6 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
       diff should be > 1000000000L // the diff must be at least the time to complete the first request and to close the first connection
 
       Await.result(b1.unbind(), 1.second.dilated)
-    }
-
-    // The Remote-Address header is deprecated, but we still want to test it works
-    "Remote-Address header" should {
-      def handler(req: HttpRequest): HttpResponse = {
-        @nowarn("msg=deprecated")
-        val entity = req.header[headers.`Remote-Address`].flatMap(_.address.toIP).flatMap(_.port).toString
-        HttpResponse(entity = entity)
-      }
-
-      "be added when using bind API" in new RemoteAddressTestScenario {
-        def createBinding(): Future[ServerBinding] =
-          Http().newServerAt("localhost", 0).withSettings(settings).connectionSource()
-            .map(_.flow.join(Flow[HttpRequest].map(handler)).run())
-            .to(Sink.ignore)
-            .run()
-      }
-
-      "be added when using bindFlow API" in new RemoteAddressTestScenario {
-        def createBinding(): Future[ServerBinding] =
-          Http().newServerAt("localhost", 0).withSettings(settings).bindFlow(Flow[HttpRequest].map(handler))
-      }
-
-      "be added when using bindSync API" in new RemoteAddressTestScenario {
-        def createBinding(): Future[ServerBinding] =
-          Http().newServerAt("localhost", 0).withSettings(settings).bindSync(handler)
-      }
-
-      abstract class RemoteAddressTestScenario {
-        val settings = ServerSettings(system).withRemoteAddressHeader(true)
-        def createBinding(): Future[ServerBinding]
-
-        val binding = createBinding()
-        val b1 = Await.result(binding, 3.seconds.dilated)
-
-        val (conn, response) =
-          Source.single(HttpRequest(uri = "/abc"))
-            .viaMat(Http().outgoingConnection("localhost", b1.localAddress.getPort))(Keep.right)
-            .toMat(Sink.head)(Keep.both)
-            .run()
-
-        val r = Await.result(response, 1.second.dilated)
-        val c = Await.result(conn, 1.second.dilated)
-        Await.result(b1.unbind(), 1.second.dilated)
-
-        toStrict(r.entity).data.utf8String shouldBe s"Some(${c.localAddress.getPort})"
-      }
     }
 
     "timeouts" should {
@@ -651,7 +602,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
 
     "complete a request/response when request has `Connection: close` set" in Utils.assertAllStagesStopped {
       // FIXME: There seems to be a potential connection leak here in the ProtocolSwitch stage?
-      // https://github.com/apache/incubator-pekko-http/issues/3963
+      // https://github.com/akka/akka-http/issues/3963
       if (http2) pending
 
       // In akka/akka#19542 / akka/akka-http#459 it was observed that when an akka-http closes the connection after
@@ -705,7 +656,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
     "complete a request/response when the request side immediately closes the connection after sending the request" in Utils.assertAllStagesStopped {
       // FIXME: with HTTP/2 enabled the connection is closed directly after receiving closing from client (i.e. half-closed
       // HTTP connections are not allowed (whether they should be is a completely different question))
-      // https://github.com/apache/incubator-pekko-http/issues/3964
+      // https://github.com/akka/akka-http/issues/3964
       if (http2) pending
 
       val (hostname, port) = ("localhost", 8080)
@@ -723,7 +674,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
 Host: example.com
 
 """))
-          .via(Tcp().outgoingConnection(hostname, port))
+          .via(Tcp(system).outgoingConnection(hostname, port))
           .runWith(Sink.reduce[ByteString](_ ++ _))
         Try(Await.result(result, 2.seconds).utf8String) match {
           case scala.util.Success(body)                => fail(body)
@@ -745,9 +696,6 @@ Host: example.com
         Http().newServerAt("localhost", 0).enableHttps(serverConnectionContext).bindFlow(handlerFlow)
           .futureValue
 
-      // Disable hostname verification as ExampleHttpContexts.exampleClientContext sets hostname as akka.example.org
-      val sslConfigSettings = SSLConfigSettings().withLoose(SSLLooseConfig().withDisableHostnameVerification(true))
-      val sslConfig = PekkoSSLConfig().withSettings(sslConfigSettings)
       val sslContext = {
         val certStore = KeyStore.getInstance(KeyStore.getDefaultType)
         certStore.load(null, null)
@@ -762,9 +710,27 @@ Host: example.com
         context
       }
 
-      // This approach is deprecated, but we still want to check it works
-      @nowarn("msg=deprecated")
-      val clientConnectionContext = ConnectionContext.https(sslContext, Some(sslConfig))
+      // Disable hostname verification as ExampleHttpContexts.exampleClientContext sets hostname as pekko.example.org
+      val createInsecureSslEngine: (String, Int) => SSLEngine = (host, port) => {
+        val engine = sslContext.createSSLEngine(host, port)
+        engine.setUseClientMode(true)
+
+        // WARNING: this creates an SSL Engine without enabling endpoint identification/verification procedures
+        // Disabling host name verification is a very bad idea, please don't unless you have a very good reason to.
+        // When in doubt, use the `ConnectionContext.httpsClient` that takes an `SSLContext` instead, or enable with:
+        engine.setSSLParameters {
+          val params = engine.getSSLParameters
+          val sniMatcher = new SNIMatcher(0) {
+            override def matches(serverName: SNIServerName): Boolean = true
+          }
+          params.setSNIMatchers(java.util.Collections.singletonList(sniMatcher))
+          params
+        }
+
+        engine
+      }
+
+      val clientConnectionContext = ConnectionContext.httpsClient(createInsecureSslEngine)
 
       val request = HttpRequest(uri = s"https:/${serverBinding.localAddress}")
       Http()
@@ -779,7 +745,7 @@ Host: example.com
     "complete a request/response over https when request has `Connection: close` set" in Utils.assertAllStagesStopped {
       // akka/akka-http#1219
       val serverToClientNetworkBufferSize = 1000
-      val request = HttpRequest(uri = s"https://akka.example.org", headers = headers.Connection("close") :: Nil)
+      val request = HttpRequest(uri = s"https://pekko.example.org", headers = headers.Connection("close") :: Nil)
 
       // settings adapting network buffer sizes
       val serverSettings =
@@ -828,7 +794,7 @@ Host: example.com
           Source.fromPublisher(source)))
 
       val serverSideTls = Http().sslTlsServerStage(ExampleHttpContexts.exampleServerContext)
-      val clientSideTls = Http().sslTlsClientStage(ExampleHttpContexts.exampleClientContext, "akka.example.org", 8080)
+      val clientSideTls = Http().sslTlsClientStage(ExampleHttpContexts.exampleClientContext, "pekko.example.org", 8080)
 
       val server: Flow[ByteString, ByteString, Any] =
         Http().serverLayer()
@@ -837,7 +803,7 @@ Host: example.com
           .join(Flow[HttpRequest].map(handler))
 
       val client =
-        Http().clientLayer(Host("akka.example.org", 8080))
+        Http().clientLayer(Host("pekko.example.org", 8080))
           .atop(clientSideTls)
 
       val killSwitch = KillSwitches.shared("kill-transport")
@@ -873,8 +839,8 @@ Host: example.com
     "complete a request/response over https when server closes connection without close_notify" in Utils.assertAllStagesStopped {
       new CloseDelimitedTLSSetup {
         killSwitch.shutdown() // simulate FIN in server -> client direction
-        // akka-http is currently lenient wrt TLS truncation which is *not* reported to the user
-        // FIXME: if https://github.com/apache/incubator-pekko-http/issues/235 is ever fixed, expect an error here
+        // pekko-http is currently lenient wrt TLS truncation which is *not* reported to the user
+        // FIXME: if https://github.com/akka/akka-http/issues/235 is ever fixed, expect an error here
         sinkProbe.expectComplete()
       }
     }
@@ -980,7 +946,7 @@ Host: example.com
     }
 
     "produce a useful error message when connecting to a HTTP endpoint over HTTPS" in Utils.assertAllStagesStopped {
-      // FIXME: it would be better if this wouldn't be necessary, see https://github.com/apache/incubator-pekko-http/issues/3159#issuecomment-628605844
+      // FIXME: it would be better if this wouldn't be necessary, see https://github.com/akka/akka-http/issues/3159#issuecomment-628605844
       val settings = ConnectionPoolSettings(system).withUpdatedConnectionSettings(_.withIdleTimeout(100.millis))
       val dummyFlow = Flow[HttpRequest].map(_ => ???)
 
@@ -1002,7 +968,7 @@ Host: example.com
       val settings = ConnectionPoolSettings(system).withUpdatedConnectionSettings(_.withIdleTimeout(100.millis))
 
       val binding =
-        Tcp().bindAndHandle(Flow[ByteString].map(_ => ByteString("hello world!")), "127.0.0.1", 0).futureValue
+        Tcp(system).bindAndHandle(Flow[ByteString].map(_ => ByteString("hello world!")), "127.0.0.1", 0).futureValue
       val uri = "http://" + binding.localAddress.getHostString + ":" + binding.localAddress.getPort
 
       val ex = the[IllegalResponseException] thrownBy Await.result(Http().singleRequest(HttpRequest(uri = uri,

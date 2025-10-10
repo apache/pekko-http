@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -27,7 +27,7 @@ import org.junit.Test;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.io.File;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,30 +39,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static scala.compat.java8.JFunction.func;
-
-//#storeUploadedFile
+// #storeUploadedFile
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.storeUploadedFile;
 
-//#storeUploadedFile
-//#storeUploadedFiles
+// #storeUploadedFile
+// #storeUploadedFiles
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.storeUploadedFiles;
 
-//#storeUploadedFiles
-//#fileUpload
+// #storeUploadedFiles
+// #fileUpload
 import static org.apache.pekko.http.javadsl.server.Directives.extractRequestContext;
 import static org.apache.pekko.http.javadsl.server.Directives.fileUpload;
 import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
 
-//#fileUpload
-//#fileUploadAll
+// #fileUpload
+// #fileUploadAll
 import static org.apache.pekko.http.javadsl.server.Directives.extractRequestContext;
 import static org.apache.pekko.http.javadsl.server.Directives.fileUploadAll;
 import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
 
-//#fileUploadAll
+// #fileUploadAll
 
 public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
 
@@ -73,58 +71,72 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
 
   @Test
   public void testStoreUploadedFile() {
-    //#storeUploadedFile
-    final Function<FileInfo, File> temporaryDestination = (info) -> {
-      try {
-        return File.createTempFile(info.getFileName(), ".tmp");
-      } catch (Exception e) {
-        return null;
-      }
-    };
+    // #storeUploadedFile
+    final Function<FileInfo, File> temporaryDestination =
+        (info) -> {
+          try {
+            return File.createTempFile(info.getFileName(), ".tmp");
+          } catch (Exception e) {
+            return null;
+          }
+        };
 
-    final Route route = storeUploadedFile("csv", temporaryDestination, (info, file) -> {
-      // do something with the file and file metadata ...
-      file.delete();
-      return complete(StatusCodes.OK);
-    });
+    final Route route =
+        storeUploadedFile(
+            "csv",
+            temporaryDestination,
+            (info, file) -> {
+              // do something with the file and file metadata ...
+              file.delete();
+              return complete(StatusCodes.OK);
+            });
 
     Map<String, String> filenameMapping = new HashMap<>();
     filenameMapping.put("filename", "primes.csv");
 
     org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
-      Multiparts.createStrictFormDataFromParts(Multiparts.createFormDataBodyPartStrict("csv",
-        HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8,
-          "2,3,5\n7,11,13,17,23\n29,31,37\n"), filenameMapping));
+        Multiparts.createStrictFormDataFromParts(
+            Multiparts.createFormDataBodyPartStrict(
+                "csv",
+                HttpEntities.create(
+                    ContentTypes.TEXT_PLAIN_UTF8, "2,3,5\n7,11,13,17,23\n29,31,37\n"),
+                filenameMapping));
 
     // test:
-    testRoute(route).run(HttpRequest.POST("/")
-      .withEntity(
-        multipartForm.toEntity(BodyPartRenderer
-		  .randomBoundaryWithDefaults())))
-      .assertStatusCode(StatusCodes.OK);
-    //#storeUploadedFile
+    testRoute(route)
+        .run(
+            HttpRequest.POST("/")
+                .withEntity(multipartForm.toEntity(BodyPartRenderer.randomBoundaryWithDefaults())))
+        .assertStatusCode(StatusCodes.OK);
+    // #storeUploadedFile
   }
 
   @Test
   public void testStoreUploadedFiles() {
-    //#storeUploadedFiles
-    final Function<FileInfo, File> temporaryDestination = info -> {
-      try {
-        return File.createTempFile(info.getFileName(), ".tmp");
-      } catch (Exception e) {
-        return null;
-      }
-    };
+    // #storeUploadedFiles
+    final Function<FileInfo, File> temporaryDestination =
+        info -> {
+          try {
+            return File.createTempFile(info.getFileName(), ".tmp");
+          } catch (Exception e) {
+            return null;
+          }
+        };
 
-    final Route route = storeUploadedFiles("csv", temporaryDestination, files -> {
-      files.forEach(item -> {
-        // do something with the file and file metadata ...
-        FileInfo info = item.getKey();
-        File file = item.getValue();
-        file.delete();
-      });
-      return complete(StatusCodes.OK);
-    });
+    final Route route =
+        storeUploadedFiles(
+            "csv",
+            temporaryDestination,
+            files -> {
+              files.forEach(
+                  item -> {
+                    // do something with the file and file metadata ...
+                    FileInfo info = item.getKey();
+                    File file = item.getValue();
+                    file.delete();
+                  });
+              return complete(StatusCodes.OK);
+            });
 
     Map<String, String> filenameMappingA = new HashMap<>();
     Map<String, String> filenameMappingB = new HashMap<>();
@@ -132,77 +144,98 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
     filenameMappingB.put("filename", "primesB.csv");
 
     org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
-      Multiparts.createStrictFormDataFromParts(
-        Multiparts.createFormDataBodyPartStrict("csv",
-          HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8,
-            "2,3,5\n7,11,13,17,23\n29,31,37\n"), filenameMappingA),
-        Multiparts.createFormDataBodyPartStrict("csv",
-          HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8,
-            "41,43,47\n53,59,61,67,71\n73,79,83\n"), filenameMappingB));
+        Multiparts.createStrictFormDataFromParts(
+            Multiparts.createFormDataBodyPartStrict(
+                "csv",
+                HttpEntities.create(
+                    ContentTypes.TEXT_PLAIN_UTF8, "2,3,5\n7,11,13,17,23\n29,31,37\n"),
+                filenameMappingA),
+            Multiparts.createFormDataBodyPartStrict(
+                "csv",
+                HttpEntities.create(
+                    ContentTypes.TEXT_PLAIN_UTF8, "41,43,47\n53,59,61,67,71\n73,79,83\n"),
+                filenameMappingB));
 
     // test:
-    testRoute(route).run(HttpRequest.POST("/")
-      .withEntity(
-        multipartForm.toEntity(BodyPartRenderer
-		  .randomBoundaryWithDefaults())))
-      .assertStatusCode(StatusCodes.OK);
-    //#storeUploadedFiles
+    testRoute(route)
+        .run(
+            HttpRequest.POST("/")
+                .withEntity(multipartForm.toEntity(BodyPartRenderer.randomBoundaryWithDefaults())))
+        .assertStatusCode(StatusCodes.OK);
+    // #storeUploadedFiles
   }
 
   @Test
   public void testFileUpload() {
-    //#fileUpload
-    final Route route = extractRequestContext(ctx -> {
-      return fileUpload("csv", (metadata, byteSource) -> {
-        // sum the numbers as they arrive
-        CompletionStage<Integer> sumF = byteSource.via(Framing.delimiter(
-          ByteString.fromString("\n"), 1024))
-            .mapConcat(bs -> Arrays.asList(bs.utf8String().split(",")))
-            .map(s -> Integer.parseInt(s))
-            .runFold(0, (acc, n) -> acc + n, ctx.getMaterializer());
-        return onSuccess(sumF, sum -> complete("Sum: " + sum));
-      });
-    });
+    // #fileUpload
+    final Route route =
+        extractRequestContext(
+            ctx -> {
+              return fileUpload(
+                  "csv",
+                  (metadata, byteSource) -> {
+                    // sum the numbers as they arrive
+                    CompletionStage<Integer> sumF =
+                        byteSource
+                            .via(Framing.delimiter(ByteString.fromString("\n"), 1024))
+                            .mapConcat(bs -> Arrays.asList(bs.utf8String().split(",")))
+                            .map(s -> Integer.parseInt(s))
+                            .runFold(0, (acc, n) -> acc + n, ctx.getMaterializer());
+                    return onSuccess(sumF, sum -> complete("Sum: " + sum));
+                  });
+            });
 
     Map<String, String> filenameMapping = new HashMap<>();
     filenameMapping.put("filename", "primes.csv");
 
     org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
-      Multiparts.createStrictFormDataFromParts(
-        Multiparts.createFormDataBodyPartStrict("csv",
-          HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8,
-            "2,3,5\n7,11,13,17,23\n29,31,37\n"), filenameMapping));
+        Multiparts.createStrictFormDataFromParts(
+            Multiparts.createFormDataBodyPartStrict(
+                "csv",
+                HttpEntities.create(
+                    ContentTypes.TEXT_PLAIN_UTF8, "2,3,5\n7,11,13,17,23\n29,31,37\n"),
+                filenameMapping));
 
     // test:
-    testRoute(route).run(HttpRequest.POST("/").withEntity(
-      multipartForm.toEntity(BodyPartRenderer.randomBoundaryWithDefaults())))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntityAs(Unmarshaller.entityToString(), "Sum: 178");
-    //#fileUpload
+    testRoute(route)
+        .run(
+            HttpRequest.POST("/")
+                .withEntity(multipartForm.toEntity(BodyPartRenderer.randomBoundaryWithDefaults())))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntityAs(Unmarshaller.entityToString(), "Sum: 178");
+    // #fileUpload
   }
 
   @Test
   public void testFileUploadAll() {
-    //#fileUploadAll
-    final Route route = extractRequestContext(ctx -> {
-      return fileUploadAll("csv", byteSources -> {
-        // accumulate the sum of each file
-        CompletionStage<Integer> sumF = byteSources.stream()
-          .map(item -> {
-            // sum the numbers as they arrive
-            return item.getValue().via(Framing.delimiter(
-              ByteString.fromString("\n"), 1024))
-                .mapConcat(bs -> Arrays.asList(bs.utf8String().split(",")))
-                .map(s -> Integer.parseInt(s))
-                .runFold(0, (acc, n) -> acc + n, ctx.getMaterializer());
-          })
-          .reduce(CompletableFuture.completedFuture(0), (accF, intF) -> {
-            return accF.thenCombine(intF, (a, b) -> a + b);
-          });
+    // #fileUploadAll
+    final Route route =
+        extractRequestContext(
+            ctx -> {
+              return fileUploadAll(
+                  "csv",
+                  byteSources -> {
+                    // accumulate the sum of each file
+                    CompletionStage<Integer> sumF =
+                        byteSources.stream()
+                            .map(
+                                item -> {
+                                  // sum the numbers as they arrive
+                                  return item.getValue()
+                                      .via(Framing.delimiter(ByteString.fromString("\n"), 1024))
+                                      .mapConcat(bs -> Arrays.asList(bs.utf8String().split(",")))
+                                      .map(s -> Integer.parseInt(s))
+                                      .runFold(0, (acc, n) -> acc + n, ctx.getMaterializer());
+                                })
+                            .reduce(
+                                CompletableFuture.completedFuture(0),
+                                (accF, intF) -> {
+                                  return accF.thenCombine(intF, (a, b) -> a + b);
+                                });
 
-        return onSuccess(sumF, sum -> complete("Sum: " + sum));
-      });
-    });
+                    return onSuccess(sumF, sum -> complete("Sum: " + sum));
+                  });
+            });
 
     Map<String, String> filenameMappingA = new HashMap<>();
     Map<String, String> filenameMappingB = new HashMap<>();
@@ -210,39 +243,49 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
     filenameMappingB.put("filename", "primesB.csv");
 
     org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
-      Multiparts.createStrictFormDataFromParts(
-        Multiparts.createFormDataBodyPartStrict("csv",
-          HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8,
-            "2,3,5\n7,11,13,17,23\n29,31,37\n"), filenameMappingA),
-        Multiparts.createFormDataBodyPartStrict("csv",
-          HttpEntities.create(ContentTypes.TEXT_PLAIN_UTF8,
-            "41,43,47\n53,59,61,67,71\n73,79,83\n"), filenameMappingB));
+        Multiparts.createStrictFormDataFromParts(
+            Multiparts.createFormDataBodyPartStrict(
+                "csv",
+                HttpEntities.create(
+                    ContentTypes.TEXT_PLAIN_UTF8, "2,3,5\n7,11,13,17,23\n29,31,37\n"),
+                filenameMappingA),
+            Multiparts.createFormDataBodyPartStrict(
+                "csv",
+                HttpEntities.create(
+                    ContentTypes.TEXT_PLAIN_UTF8, "41,43,47\n53,59,61,67,71\n73,79,83\n"),
+                filenameMappingB));
 
     // test:
-    testRoute(route).run(HttpRequest.POST("/").withEntity(
-      multipartForm.toEntity(BodyPartRenderer.randomBoundaryWithDefaults())))
-      .assertStatusCode(StatusCodes.OK)
-      .assertEntityAs(Unmarshaller.entityToString(), "Sum: 855");
-    //#fileUploadAll
+    testRoute(route)
+        .run(
+            HttpRequest.POST("/")
+                .withEntity(multipartForm.toEntity(BodyPartRenderer.randomBoundaryWithDefaults())))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntityAs(Unmarshaller.entityToString(), "Sum: 855");
+    // #fileUploadAll
   }
 
   @Ignore("compileOnly")
   @Test
   public void testFileProcessing() {
-    //#fileProcessing
-    final Route route = extractRequestContext(ctx -> {
-      // function (FileInfo, Source<ByteString,Object>) => Route to process the file contents
-      BiFunction<FileInfo, Source<ByteString, Object>, Route> processUploadedFile =
-        (metadata, byteSource) -> {
-          CompletionStage<Integer> sumF = byteSource.via(Framing.delimiter(
-            ByteString.fromString("\n"), 1024))
-            .mapConcat(bs -> Arrays.asList(bs.utf8String().split(",")))
-            .map(s -> Integer.parseInt(s))
-            .runFold(0, (acc, n) -> acc + n, ctx.getMaterializer());
-          return onSuccess(sumF, sum -> complete("Sum: " + sum));
-        };
-      return fileUpload("csv", processUploadedFile);
-    });
+    // #fileProcessing
+    final Route route =
+        extractRequestContext(
+            ctx -> {
+              // function (FileInfo, Source<ByteString,Object>) => Route to process the file
+              // contents
+              BiFunction<FileInfo, Source<ByteString, Object>, Route> processUploadedFile =
+                  (metadata, byteSource) -> {
+                    CompletionStage<Integer> sumF =
+                        byteSource
+                            .via(Framing.delimiter(ByteString.fromString("\n"), 1024))
+                            .mapConcat(bs -> Arrays.asList(bs.utf8String().split(",")))
+                            .map(s -> Integer.parseInt(s))
+                            .runFold(0, (acc, n) -> acc + n, ctx.getMaterializer());
+                    return onSuccess(sumF, sum -> complete("Sum: " + sum));
+                  };
+              return fileUpload("csv", processUploadedFile);
+            });
 
     Map<String, String> filenameMapping = new HashMap<>();
     filenameMapping.put("filename", "primes.csv");
@@ -254,19 +297,24 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
     try {
       tempFile = File.createTempFile(prefix, suffix);
       tempFile.deleteOnExit();
-      Files.write(tempFile.toPath(), Arrays.asList("2,3,5", "7,11,13,17,23", "29,31,37"), Charset.forName("UTF-8"));
+      Files.write(
+          tempFile.toPath(),
+          Arrays.asList("2,3,5", "7,11,13,17,23", "29,31,37"),
+          StandardCharsets.UTF_8);
     } catch (Exception e) {
       // ignore
     }
 
-
     org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
-      Multiparts.createFormDataFromPath("csv", ContentTypes.TEXT_PLAIN_UTF8, tempFile.toPath());
+        Multiparts.createFormDataFromPath("csv", ContentTypes.TEXT_PLAIN_UTF8, tempFile.toPath());
 
     // test:
-    testRoute(route).run(HttpRequest.POST("/").withEntity(
-      multipartForm.toEntity(BodyPartRenderer.randomBoundaryWithDefaults())))
-      .assertStatusCode(StatusCodes.OK).assertEntityAs(Unmarshaller.entityToString(), "Sum: 178");
-    //#fileProcessing
+    testRoute(route)
+        .run(
+            HttpRequest.POST("/")
+                .withEntity(multipartForm.toEntity(BodyPartRenderer.randomBoundaryWithDefaults())))
+        .assertStatusCode(StatusCodes.OK)
+        .assertEntityAs(Unmarshaller.entityToString(), "Sum: 178");
+    // #fileProcessing
   }
 }

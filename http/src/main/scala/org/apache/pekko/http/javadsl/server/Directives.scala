@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,12 +15,11 @@ package org.apache.pekko.http.javadsl.server
 
 import java.util.function.{ BiFunction, Function, Supplier }
 
+import scala.annotation.varargs
+
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
 import pekko.http.javadsl.server.directives.FramedEntityStreamingDirectives
-import scala.annotation.nowarn
-
-import scala.annotation.varargs
 
 abstract class AllDirectives extends FramedEntityStreamingDirectives
 
@@ -36,7 +35,6 @@ object Directives extends AllDirectives {
 
   @Deprecated
   @varargs
-  @nowarn("msg=route in class RouteDirectives is deprecated")
   override def route(alternatives: Route*): Route =
     super.route(alternatives: _*)
 

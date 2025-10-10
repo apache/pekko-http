@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -14,10 +14,12 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.util.{ Optional, OptionalLong }
+
 import org.apache.pekko
 import pekko.http.impl.util.{ Rendering, ValueRenderable }
 import pekko.http.javadsl.{ model => jm }
-import scala.compat.java8.OptionConverters._
+
+import scala.jdk.OptionConverters._
 
 sealed trait ContentRange extends jm.ContentRange with ValueRenderable {
   // default implementations to override
@@ -35,7 +37,7 @@ sealed trait ByteContentRange extends ContentRange {
   def isByteContentRange: Boolean = true
 
   /** Java API */
-  def getInstanceLength: OptionalLong = instanceLength.asPrimitive
+  def getInstanceLength: OptionalLong = instanceLength.toJavaPrimitive
 }
 
 // http://tools.ietf.org/html/rfc7233#section-4.2

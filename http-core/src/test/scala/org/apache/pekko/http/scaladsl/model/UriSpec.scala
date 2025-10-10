@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -817,6 +817,12 @@ class UriSpec extends AnyWordSpec with Matchers {
       uri.withQuery(Query("param1" -> "val\"ue1")) shouldEqual Uri("http://host/path?param1=val%22ue1#fragment")
       uri.withRawQueryString("param1=val%22ue1") shouldEqual Uri("http://host/path?param1=val%22ue1#fragment")
       uri.withRawQueryString("param1=val\"ue1") shouldEqual Uri("http://host/path?param1=val%22ue1#fragment")
+
+      uri.withQuery(Query("param1=val\"ue1")) shouldEqual Uri("http://host/path?param1=val%22ue1#fragment")
+      uri.withQuery(Query(("param1", "val\"ue1"))) shouldEqual Uri("http://host/path?param1=val%22ue1#fragment")
+      uri.withQuery(Query(Some("param1=val\"ue1"))) shouldEqual Uri("http://host/path?param1=val%22ue1#fragment")
+      val query = Query.newBuilder.+=("param1" -> "val\"ue1").result()
+      uri.withQuery(query) shouldEqual Uri("http://host/path?param1=val%22ue1#fragment")
 
       uri.withFragment("otherFragment") shouldEqual Uri("http://host/path?query#otherFragment")
     }

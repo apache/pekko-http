@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,22 +16,22 @@ package org.apache.pekko.http.impl.engine
 import java.net.InetSocketAddress
 import java.util.concurrent.CountDownLatch
 
-import org.apache.pekko
-import pekko.actor.ActorSystem
-import pekko.dispatch.ExecutionContexts
-import pekko.http.CommonBenchmark
-import pekko.http.impl.util.enhanceString_
-import pekko.http.scaladsl.model.HttpRequest
-import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
-import pekko.http.scaladsl.{ ClientTransport, Http }
-import pekko.stream.ActorMaterializer
-import pekko.stream.scaladsl.Flow
-import pekko.util.ByteString
-import com.typesafe.config.ConfigFactory
-import org.openjdk.jmh.annotations._
-
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success }
+
+import org.openjdk.jmh.annotations._
+
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.http.CommonBenchmark
+import pekko.http.impl.util.enhanceString_
+import pekko.http.scaladsl.{ ClientTransport, Http }
+import pekko.http.scaladsl.model.HttpRequest
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings }
+import pekko.stream.scaladsl.Flow
+import pekko.util.ByteString
+
+import com.typesafe.config.ConfigFactory
 
 /**
  * A benchmark that tries to stress the pool and the client infrastructure (but nothing else)
@@ -43,7 +43,6 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
   var maxConnections: String = _
 
   implicit var system: ActorSystem = _
-  implicit var mat: ActorMaterializer = _
   implicit def ec: ExecutionContext = system.dispatcher
 
   private var poolSettings: ConnectionPoolSettings = _
@@ -59,7 +58,7 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
         .onComplete {
           case Success(_) => latch.countDown()
           case Failure(_) => throw new IllegalStateException
-        }(ExecutionContexts.parasitic)
+        }(ExecutionContext.parasitic)
     }
 
     latch.await()
@@ -76,8 +75,7 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
            pekko.http.client.user-agent = pekko-http-bench
         """)
         .withFallback(ConfigFactory.load())
-    system = ActorSystem("AkkaHttpBenchmarkSystem", config)
-    mat = ActorMaterializer()
+    system = ActorSystem("PekkoHttpBenchmarkSystem", config)
 
     val responseBytes = ByteString(
       """HTTP/1.1 200 OK

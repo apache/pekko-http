@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,12 +15,12 @@ package org.apache.pekko.http.javadsl.server.directives
 
 import java.util.{ function => jf, Optional }
 
+import scala.jdk.OptionConverters._
+
 import org.apache.pekko
 import pekko.http.javadsl.model.AttributeKey
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.server.directives.{ AttributeDirectives => D }
-
-import scala.compat.java8.OptionConverters._
 
 abstract class AttributeDirectives extends HeaderDirectives {
   import pekko.http.impl.util.JavaMapping._
@@ -30,7 +30,7 @@ abstract class AttributeDirectives extends HeaderDirectives {
    * If no attribute is found the request is rejected with a [[pekko.http.javadsl.server.MissingAttributeRejection]].
    */
   def attribute[T](key: AttributeKey[T], inner: jf.Function[T, Route]) = RouteAdapter {
-    D.attribute(toScala(key)) { value: T =>
+    D.attribute(toScala(key)) { (value: T) =>
       inner.apply(value).delegate
     }
   }
@@ -40,7 +40,7 @@ abstract class AttributeDirectives extends HeaderDirectives {
    */
   def optionalAttribute[T](key: AttributeKey[T], inner: jf.Function[Optional[T], Route]) = RouteAdapter {
     D.optionalAttribute(toScala(key)) { value =>
-      inner.apply(value.asJava).delegate
+      inner.apply(value.toJava).delegate
     }
   }
 

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,19 +13,10 @@
 
 package org.apache.pekko.http.scaladsl
 
-import java.util.{ Collection => JCollection, Optional }
+import javax.net.ssl._
 
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, InternalApi }
-import pekko.stream.TLSClientAuth
-import pekko.stream.TLSProtocol._
-import scala.annotation.nowarn
-import com.typesafe.sslconfig.pekko.PekkoSSLConfig
-import javax.net.ssl._
-
-import scala.collection.JavaConverters._
-import scala.collection.immutable
-import scala.compat.java8.OptionConverters._
 
 trait ConnectionContext extends pekko.http.javadsl.ConnectionContext {
   @deprecated("Internal method, left for binary compatibility", since = "Akka HTTP 10.2.0")
@@ -50,11 +41,11 @@ object ConnectionContext {
    */
   @ApiMayChange
   def httpsServer(createSSLEngine: () => SSLEngine): HttpsConnectionContext =
-    new HttpsConnectionContext(Right({
+    new HttpsConnectionContext({
       case None => createSSLEngine()
       case Some(_) =>
         throw new IllegalArgumentException("host and port supplied for connection based on server connection context")
-    }: Option[(String, Int)] => SSLEngine))
+    }: Option[(String, Int)] => SSLEngine)
 
   // #https-client-context-creation
   /**
@@ -83,36 +74,13 @@ object ConnectionContext {
    */
   @ApiMayChange
   def httpsClient(createSSLEngine: (String, Int) => SSLEngine): HttpsConnectionContext = // ...
-    new HttpsConnectionContext(Right({
+    new HttpsConnectionContext({
       case None =>
         throw new IllegalArgumentException("host and port missing for connection based on client connection context")
       case Some((host, port)) => createSSLEngine(host, port)
-    }: Option[(String, Int)] => SSLEngine))
-
-  @deprecated("use httpsClient, httpsServer, or the lower-level SSLEngine-based constructor", "Akka HTTP 10.2.0")
-  def https(
-      sslContext: SSLContext,
-      sslConfig: Option[PekkoSSLConfig] = None,
-      enabledCipherSuites: Option[immutable.Seq[String]] = None,
-      enabledProtocols: Option[immutable.Seq[String]] = None,
-      clientAuth: Option[TLSClientAuth] = None,
-      sslParameters: Option[SSLParameters] = None) =
-    new HttpsConnectionContext(Left(DeprecatedSslContextParameters(sslContext, sslConfig, enabledCipherSuites,
-      enabledProtocols, clientAuth, sslParameters)))
+    }: Option[(String, Int)] => SSLEngine)
 
   def noEncryption() = HttpConnectionContext
-}
-
-@deprecated("here to be able to keep supporting the old API", since = "Akka HTTP 10.2.0")
-private[http] case class DeprecatedSslContextParameters(
-    sslContext: SSLContext,
-    sslConfig: Option[PekkoSSLConfig],
-    enabledCipherSuites: Option[immutable.Seq[String]],
-    enabledProtocols: Option[immutable.Seq[String]],
-    clientAuth: Option[TLSClientAuth],
-    sslParameters: Option[SSLParameters]) {
-  def firstSession: NegotiateNewSession =
-    NegotiateNewSession(enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)
 }
 
 /**
@@ -121,57 +89,17 @@ private[http] case class DeprecatedSslContextParameters(
  * This constructor is INTERNAL API, use ConnectionContext.https instead
  */
 @InternalApi
-@nowarn("msg=since Akka HTTP 10.2.0")
 final class HttpsConnectionContext private[http] (
-    private[http] val sslContextData: Either[DeprecatedSslContextParameters, Option[(String, Int)] => SSLEngine])
+    private[http] val engineCreator: Option[(String, Int)] => SSLEngine)
     extends pekko.http.javadsl.HttpsConnectionContext with ConnectionContext {
   protected[http] override final def defaultPort: Int = 443
-
-  @deprecated("prefer ConnectionContext.httpsClient or ConnectionContext.httpsServer", "Akka HTTP 10.2.0")
-  def this(
-      sslContext: SSLContext,
-      sslConfig: Option[PekkoSSLConfig] = None,
-      enabledCipherSuites: Option[immutable.Seq[String]] = None,
-      enabledProtocols: Option[immutable.Seq[String]] = None,
-      clientAuth: Option[TLSClientAuth] = None,
-      sslParameters: Option[SSLParameters] = None) = this(Left(DeprecatedSslContextParameters(sslContext, sslConfig,
-    enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)))
-
-  @deprecated("not always available", "Akka HTTP 10.2.0") def sslContext: SSLContext =
-    sslContextData.left.get.sslContext
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def sslConfig: Option[PekkoSSLConfig] =
-    sslContextData.left.get.sslConfig
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def enabledCipherSuites
-      : Option[immutable.Seq[String]] = sslContextData.left.get.enabledCipherSuites
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def enabledProtocols
-      : Option[immutable.Seq[String]] =
-    sslContextData.left.get.enabledProtocols
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def clientAuth: Option[TLSClientAuth] =
-    sslContextData.left.get.clientAuth
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0") def sslParameters: Option[SSLParameters] =
-    sslContextData.left.get.sslParameters
-
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
-  private[http] def firstSession = NegotiateNewSession(enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)
-
-  @deprecated("not always available", "Akka HTTP 10.2.0")
-  override def getSslContext = sslContext
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
-  override def getEnabledCipherSuites: Optional[JCollection[String]] =
-    enabledCipherSuites.map(_.asJavaCollection).asJava
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
-  override def getEnabledProtocols: Optional[JCollection[String]] = enabledProtocols.map(_.asJavaCollection).asJava
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
-  override def getClientAuth: Optional[TLSClientAuth] = clientAuth.asJava
-  @deprecated("here for binary compatibility", since = "Akka HTTP 10.2.0")
-  override def getSslParameters: Optional[SSLParameters] = sslParameters.asJava
 }
 
 sealed class HttpConnectionContext extends pekko.http.javadsl.HttpConnectionContext with ConnectionContext {
   protected[http] override final def defaultPort: Int = 80
 }
 
-final object HttpConnectionContext extends HttpConnectionContext {
+object HttpConnectionContext extends HttpConnectionContext {
 
   /** Java API */
   def getInstance() = this

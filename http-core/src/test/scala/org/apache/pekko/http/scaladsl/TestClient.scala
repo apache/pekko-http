@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -21,7 +21,7 @@ import com.typesafe.config.{ Config, ConfigFactory }
 import scala.util.{ Failure, Success }
 import org.apache.pekko
 import pekko.actor.{ ActorSystem, UnhandledMessage }
-import pekko.stream.{ ActorMaterializer, IOResult }
+import pekko.stream.IOResult
 import pekko.stream.scaladsl.{ FileIO, Sink, Source }
 import pekko.http.scaladsl.model._
 import pekko.http.impl.util._
@@ -35,8 +35,7 @@ object TestClient extends App {
     pekko.loglevel = DEBUG
     pekko.log-dead-letters = off
     pekko.io.tcp.trace-logging = off""")
-  implicit val system = ActorSystem("ServerTest", testConf)
-  implicit val fm = ActorMaterializer()
+  implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
   import system.dispatcher
 
   installEventStreamLoggerFor[UnhandledMessage]
@@ -80,7 +79,7 @@ object TestClient extends App {
     }
   }
 
-  // for gathering dumps of entity and headers from akka http client
+  // for gathering dumps of entity and headers from pekko http client
   // and curl in parallel to compare
   def fetchAndStoreABunchOfUrlsWithHttpAndCurl(urls: Seq[String]): Unit = {
     assert(urls.nonEmpty)
@@ -96,8 +95,8 @@ object TestClient extends App {
       val done = Future.traverse(urls.zipWithIndex) {
         case (url, index) =>
           Http().singleRequest(HttpRequest(uri = url)).map { response =>
-            val path = new File(s"/tmp/client-dumps/akka-body-$index.dump").toPath
-            val headersPath = new File(s"/tmp/client-dumps/akka-headers-$index.dump").toPath
+            val path = new File(s"/tmp/client-dumps/pekko-body-$index.dump").toPath
+            val headersPath = new File(s"/tmp/client-dumps/pekko-headers-$index.dump").toPath
 
             import scala.sys.process._
             (s"""curl -D /tmp/client-dumps/curl-headers-$index.dump $url""" #> new File(

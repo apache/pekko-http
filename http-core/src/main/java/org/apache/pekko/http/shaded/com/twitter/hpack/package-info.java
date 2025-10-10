@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -29,7 +29,5 @@
  * limitations under the License.
  */
 
-/**
- * <a href="http://tools.ietf.org/html/rfc7541">HPACK: Header Compression for HTTP/2</a>
- */
+/** <a href="http://tools.ietf.org/html/rfc7541">HPACK: Header Compression for HTTP/2</a> */
 package org.apache.pekko.http.shaded.com.twitter.hpack;

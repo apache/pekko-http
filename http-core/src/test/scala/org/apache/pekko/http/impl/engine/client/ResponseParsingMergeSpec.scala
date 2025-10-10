@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -23,7 +23,7 @@ import pekko.http.scaladsl.settings.ParserSettings
 import pekko.stream.TLSProtocol.SessionBytes
 import pekko.stream.scaladsl.{ GraphDSL, RunnableGraph, Sink, Source }
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
-import pekko.stream.{ ActorMaterializer, Attributes, ClosedShape }
+import pekko.stream.{ Attributes, ClosedShape }
 import pekko.testkit.PekkoSpec
 import pekko.util.ByteString
 
@@ -34,8 +34,6 @@ class ResponseParsingMergeSpec extends PekkoSpec {
   "The ResponseParsingMerge stage" should {
 
     "not lose entity truncation errors on upstream finish" in {
-      implicit val mat = ActorMaterializer()
-
       val inBypassProbe = TestPublisher.manualProbe[OutgoingConnectionBlueprint.BypassData]()
       val inSessionBytesProbe = TestPublisher.manualProbe[SessionBytes]()
       val responseProbe = TestSubscriber.manualProbe[List[ParserOutput.ResponseOutput]]()

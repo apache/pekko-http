@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,20 +13,20 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
-import org.apache.pekko
-import pekko.util.ByteString
 import java.io.{ InputStream, OutputStream }
 import java.util.zip._
 
-import pekko.http.scaladsl.model.HttpMethods.POST
-import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest }
+import scala.annotation.nowarn
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+
+import org.apache.pekko
 import pekko.http.impl.util._
+import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest }
+import pekko.http.scaladsl.model.HttpMethods.POST
 import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncodings }
 import pekko.testkit._
-import scala.annotation.nowarn
-
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
+import pekko.util.ByteString
 
 class DeflateSpec extends CoderSpec {
   protected def Coder: Coder = Coders.Deflate

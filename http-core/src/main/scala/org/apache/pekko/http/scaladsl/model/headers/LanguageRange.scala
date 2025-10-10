@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -15,12 +15,12 @@ package org.apache.pekko.http.scaladsl.model.headers
 
 import scala.language.implicitConversions
 import scala.collection.immutable
+
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model.WithQValue
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.http.ccompat.{ pre213, since213 }
 
 sealed trait LanguageRange extends jm.headers.LanguageRange with ValueRenderable with WithQValue[LanguageRange] {
   def qValue: Float
@@ -80,12 +80,8 @@ object Language {
   implicit def apply(compoundTag: String): Language =
     if (compoundTag.indexOf('-') >= 0) {
       val tags = compoundTag.split('-')
-      new Language(tags.head, immutable.Seq(tags.tail: _*))
+      new Language(tags.head, immutable.ArraySeq.unsafeWrapArray(tags.tail))
     } else new Language(compoundTag, immutable.Seq.empty)
-  @pre213
-  def apply(primaryTag: String, subTags: String*): Language =
-    new Language(primaryTag, immutable.Seq(subTags: _*))
-  @since213
   def apply(primaryTag: String, firstSubTag: String, otherSubTags: String*): Language =
     new Language(primaryTag, firstSubTag +: otherSubTags)
 

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -20,7 +20,6 @@ import java.util.function.{ BiFunction, Function => JFunction }
 
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
-
 import pekko.http.javadsl.model.ContentType
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.server.{ Directives => D }

@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,6 +16,10 @@ package scaladsl
 package unmarshalling
 package sse
 
+import java.util.{ List => JList }
+
+import scala.collection.immutable.Seq
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.scaladsl.model.HttpEntity
@@ -24,9 +28,6 @@ import pekko.http.scaladsl.model.sse.ServerSentEvent
 import pekko.http.scaladsl.settings.ServerSentEventSettings
 import pekko.stream.scaladsl.{ Sink, Source }
 
-import java.util.{ List => JList }
-import scala.collection.JavaConverters
-import scala.collection.immutable.Seq
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 
@@ -37,8 +38,8 @@ object EventStreamUnmarshallingSpec {
 
   // Also used by EventStreamUnmarshallingTest.java
   val eventsAsJava: JList[javadsl.model.sse.ServerSentEvent] = {
-    import JavaConverters._
-    events.map(_.asInstanceOf[javadsl.model.sse.ServerSentEvent]).asJava
+    import scala.jdk.CollectionConverters._
+    events.asJava.asInstanceOf[JList[javadsl.model.sse.ServerSentEvent]]
   }
 
   // Also used by EventStreamUnmarshallingTest.java
@@ -50,6 +51,7 @@ object EventStreamUnmarshallingSpec {
 
 final class EventStreamUnmarshallingSpec extends AsyncWordSpec with Matchers with BaseUnmarshallingSpec {
   import EventStreamUnmarshallingSpec._
+
   import pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling._
 
   "A HTTP entity with media-type text/event-stream" should {

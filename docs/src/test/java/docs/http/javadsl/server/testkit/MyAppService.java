@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -13,7 +13,7 @@
 
 package docs.http.javadsl.server.testkit;
 
-//#simple-app
+// #simple-app
 
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
@@ -31,18 +31,22 @@ public class MyAppService extends AllDirectives {
   }
 
   public Route createRoute() {
-    return
-      get(() ->
-        pathPrefix("calculator", () ->
-          path("add", () ->
-            parameter(StringUnmarshallers.DOUBLE, "x", x ->
-              parameter(StringUnmarshallers.DOUBLE, "y", y ->
-                complete(add(x, y))
-              )
-            )
-          )
-        )
-      );
+    return get(
+        () ->
+            pathPrefix(
+                "calculator",
+                () ->
+                    path(
+                        "add",
+                        () ->
+                            parameter(
+                                StringUnmarshallers.DOUBLE,
+                                "x",
+                                x ->
+                                    parameter(
+                                        StringUnmarshallers.DOUBLE,
+                                        "y",
+                                        y -> complete(add(x, y)))))));
   }
 
   public static void main(String[] args) throws IOException {
@@ -56,4 +60,4 @@ public class MyAppService extends AllDirectives {
     system.terminate();
   }
 }
-//#simple-app
+// #simple-app

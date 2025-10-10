@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,6 +16,7 @@ package org.apache.pekko.http.impl.settings
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
+
 import com.typesafe.config.Config
 
 /** INTERNAL API */
@@ -28,11 +29,6 @@ private[http] final case class RoutingSettingsImpl(
     rangeCoalescingThreshold: Long,
     decodeMaxBytesPerChunk: Int,
     decodeMaxSize: Long) extends pekko.http.scaladsl.settings.RoutingSettings {
-
-  @deprecated(
-    "binary compatibility method. Use `pekko.stream.materializer.blocking-io-dispatcher` to configure the dispatcher",
-    since = "Akka HTTP 10.1.6")
-  override def fileIODispatcher: String = ""
 
   override def productPrefix = "RoutingSettings"
 }

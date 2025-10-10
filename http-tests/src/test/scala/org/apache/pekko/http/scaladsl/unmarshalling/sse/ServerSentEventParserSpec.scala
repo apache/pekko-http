@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -19,6 +19,7 @@ package sse
 import org.apache.pekko
 import pekko.http.scaladsl.model.sse.ServerSentEvent
 import pekko.stream.scaladsl.{ Sink, Source }
+
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 

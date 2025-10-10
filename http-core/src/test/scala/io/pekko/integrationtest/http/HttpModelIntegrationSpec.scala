@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -21,27 +21,25 @@ import org.scalatest.BeforeAndAfterAll
 import org.apache.pekko
 import pekko.util.ByteString
 import pekko.actor.ActorSystem
-import pekko.http.ccompat._
 import pekko.http.scaladsl.model._
-import pekko.stream.ActorMaterializer
 import pekko.stream.scaladsl._
 import pekko.testkit._
-import headers._
+import pekko.http.scaladsl.model.headers._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 /**
  * Integration test for external HTTP libraries that are built on top of
- * Akka HTTP core. An example of an external library is Play Framework.
- * The way these libraries use Akka HTTP core may be different to how
- * normal users would use Akka HTTP core. For example the libraries may
- * need direct access to some model objects that users who use Akka HTTP
+ * Pekko HTTP core. An example of an external library is Play Framework.
+ * The way these libraries use Pekko HTTP core may be different to how
+ * normal users would use Pekko HTTP core. For example the libraries may
+ * need direct access to some model objects that users who use Pekko HTTP
  * directly would not require.
  *
  * This test is designed to capture the needs of these external libaries.
  * Each test gives a use case of an external library and then checks that
  * it can be fulfilled. A typical example of a use case is converting
- * between one library's HTTP model and the Akka HTTP core HTTP model.
+ * between one library's HTTP model and the Pekko HTTP core HTTP model.
  *
  * This test is located a different package (io.pekko vs org.apache.pekko) in order to
  * check for any visibility issues when Pekko HTTP core is used by third
@@ -50,13 +48,11 @@ import org.scalatest.wordspec.AnyWordSpec
 class HttpModelIntegrationSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
 
   val testConf: Config = ConfigFactory.parseString("""
-    pekko.event-handlers = ["org.apache.pekko.testkit.TestEventListener"]
+    pekko.event-handlers = ["pekko.testkit.TestEventListener"]
     pekko.loglevel = WARNING""")
-  implicit val system = ActorSystem(getClass.getSimpleName, testConf)
+  implicit val system: ActorSystem = ActorSystem(getClass.getSimpleName, testConf)
 
   override def afterAll() = TestKit.shutdownActorSystem(system)
-
-  implicit val materializer = ActorMaterializer()
 
   "External HTTP libraries" should {
 
@@ -109,7 +105,7 @@ class HttpModelIntegrationSpec extends AnyWordSpec with Matchers with BeforeAndA
     "be able to build an HttpResponse from String headers and Array[Byte] body" in {
 
       // External HTTP libraries (such as Play) will model HTTP differently
-      // to Akka HTTP. One model uses a Seq[(String, String)] for headers and
+      // to Pekko HTTP. One model uses a Seq[(String, String)] for headers and
       // an Array[Byte] for a body. The following data structures show an
       // example simple model of an HTTP response.
 
@@ -119,8 +115,8 @@ class HttpModelIntegrationSpec extends AnyWordSpec with Matchers with BeforeAndA
         "X-Greeting" -> "Hello")
       val byteArrayBody: Array[Byte] = "foo".getBytes
 
-      // Now we need to convert this model to Akka HTTP's model. To do that
-      // we use Akka HTTP's HeaderParser to parse the headers, giving us a
+      // Now we need to convert this model to Pekko HTTP's model. To do that
+      // we use Pekko HTTP's HeaderParser to parse the headers, giving us a
       // List[HttpHeader].
 
       val parsingResults = textHeaders.map { case (name, value) => HttpHeader.parse(name, value) }
@@ -128,7 +124,7 @@ class HttpModelIntegrationSpec extends AnyWordSpec with Matchers with BeforeAndA
       val parseErrors = parsingResults.flatMap(_.errors)
       parseErrors shouldBe empty
 
-      // Most of these headers are modeled by Akka HTTP as a Seq[HttpHeader],
+      // Most of these headers are modeled by Pekko HTTP as a Seq[HttpHeader],
       // but the Content-Type and Content-Length are special: their
       // values relate to the HttpEntity and so they're modeled as part of
       // the HttpEntity. These headers need to be stripped out of the main
@@ -167,8 +163,8 @@ class HttpModelIntegrationSpec extends AnyWordSpec with Matchers with BeforeAndA
     "be able to wrap HttpHeaders with custom typed headers" in {
 
       // TODO potentially use the integration for Play / Lagom APIs?
-      // This HTTP model is typed. It uses Akka HTTP types internally, but
-      // no Akka HTTP types are visible to users. This typed model is a
+      // This HTTP model is typed. It uses Pekko HTTP types internally, but
+      // no Pekko HTTP types are visible to users. This typed model is a
       // model that Play Framework may eventually move to.
 
       object ExampleLibrary {

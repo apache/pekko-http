@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -26,7 +26,7 @@ class DateTimeSpec extends AnyWordSpec with Matchers {
   val startClicks = DateTime(1800, 1, 1, 0, 0, 0).clicks
   val maxClickDelta = DateTime(2199, 12, 31, 23, 59, 59).clicks - startClicks
   val random = new Random()
-  val httpDateTimes = Stream.continually {
+  val httpDateTimes = LazyList.continually {
     DateTime(startClicks + math.abs(random.nextLong()) % maxClickDelta)
   }
 
@@ -42,7 +42,7 @@ class DateTimeSpec extends AnyWordSpec with Matchers {
         fmt
       }
       def rfc1123Format(dt: DateTime) = Rfc1123Format.format(new java.util.Date(dt.clicks))
-      val matchSimpleDateFormat: Matcher[DateTime] = Matcher { dt: DateTime =>
+      val matchSimpleDateFormat: Matcher[DateTime] = Matcher { (dt: DateTime) =>
         MatchResult(
           dt.toRfc1123DateTimeString == rfc1123Format(dt),
           dt.toRfc1123DateTimeString + " != " + rfc1123Format(dt),
@@ -88,7 +88,7 @@ class DateTimeSpec extends AnyWordSpec with Matchers {
   "The two DateTime implementations" should {
     "allow for transparent round-trip conversions" in {
       def roundTrip(dt: DateTime) = DateTime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
-      val roundTripOk: Matcher[DateTime] = Matcher { dt: DateTime =>
+      val roundTripOk: Matcher[DateTime] = Matcher { (dt: DateTime) =>
         MatchResult(
           { val rt = roundTrip(dt); dt == rt && dt.weekday == rt.weekday },
           dt.toRfc1123DateTimeString + " != " + roundTrip(dt).toRfc1123DateTimeString,

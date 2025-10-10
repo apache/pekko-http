@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -20,7 +20,7 @@ import org.openjdk.jmh.runner.options.CommandLineOptions
 object BenchRunner {
 
   def main(args: Array[String]): Unit = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     // @formatter:off
     val args2 = args.toList.flatMap {
@@ -34,7 +34,7 @@ object BenchRunner {
     val opts = new CommandLineOptions(args2: _*)
     val results = new Runner(opts).run()
 
-    val report = results.asScala.map { result: RunResult =>
+    val report = results.asScala.map { (result: RunResult) =>
       val bench = result.getParams.getBenchmark
       val params =
         result.getParams.getParamsKeys.asScala.map(key => s"$key=${result.getParams.getParam(key)}").mkString("_")

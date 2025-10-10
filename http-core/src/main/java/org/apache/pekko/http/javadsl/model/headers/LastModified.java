@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -16,13 +16,14 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.javadsl.model.DateTime;
 
 /**
- *  Model for the `Last-Modified` header.
- *  Specification: http://tools.ietf.org/html/draft-ietf-httpbis-p4-conditional-26#section-2.2
+ * Model for the `Last-Modified` header. Specification:
+ * http://tools.ietf.org/html/draft-ietf-httpbis-p4-conditional-26#section-2.2
  */
 public abstract class LastModified extends org.apache.pekko.http.scaladsl.model.HttpHeader {
-    public abstract DateTime date();
+  public abstract DateTime date();
 
-    public static LastModified create(DateTime date) {
-        return new org.apache.pekko.http.scaladsl.model.headers.Last$minusModified(((org.apache.pekko.http.scaladsl.model.DateTime) date));
-    }
+  public static LastModified create(DateTime date) {
+    return new org.apache.pekko.http.scaladsl.model.headers.Last$minusModified(
+        ((org.apache.pekko.http.scaladsl.model.DateTime) date));
+  }
 }

@@ -4,14 +4,14 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
  * Copyright (C) 2017-2022 Lightbend Inc. <https://www.lightbend.com>
  *
- * Copied and adapted from akka-remote
- * https://github.com/akka/akka/blob/c90121485fcfc44a3cee62a0c638e1982d13d812/akka-remote/src/main/scala/akka/remote/artery/StageLogging.scala
+ * Copied and adapted from pekko-stream
+ * https://github.com/apache/pekko/blob/bd1af56fcead435cb3d730e759223dcb2b0fb4c6/stream/src/main/scala/org/apache/pekko/stream/stage/StageLogging.scala
  */
 
 package org.apache.pekko.http.impl.util
@@ -19,18 +19,17 @@ package org.apache.pekko.http.impl.util
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.stream.stage.GraphStageLogic
-import pekko.event.LoggingAdapter
+import pekko.event.{ LogSource, LoggingAdapter, NoLogging }
 import pekko.stream.ActorMaterializer
-import pekko.event.NoLogging
 
-// TODO Try to reconcile with what Akka provides in StageLogging.
+// TODO Try to reconcile with what Pekko provides in StageLogging.
 // We thought this could be removed when https://github.com/akka/akka/issues/18793 had been implemented
 // but we need a few more changes to be able to override the default logger. So for now we keep it here.
 /**
  * INTERNAL API
  */
 @InternalApi
-private[pekko] trait StageLoggingWithOverride { self: GraphStageLogic =>
+private[pekko] trait StageLoggingWithOverride extends GraphStageLogic {
   def logOverride: LoggingAdapter = DefaultNoLogging
 
   private var _log: LoggingAdapter = null
@@ -45,7 +44,7 @@ private[pekko] trait StageLoggingWithOverride { self: GraphStageLogic =>
           logOverride match {
             case DefaultNoLogging =>
               materializer match {
-                case a: ActorMaterializer => pekko.event.Logging(a.system, logSource)
+                case a: ActorMaterializer => pekko.event.Logging(a.system, logSource)(LogSource.fromClass)
                 case _                    => NoLogging
               }
             case x => x

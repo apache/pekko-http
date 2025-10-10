@@ -4,7 +4,7 @@
  *
  *   https://www.apache.org/licenses/LICENSE-2.0
  *
- * This file is part of the Apache Pekko project, derived from Akka.
+ * This file is part of the Apache Pekko project, which was derived from Akka.
  */
 
 /*
@@ -89,7 +89,7 @@ private[http2] object ResponseParsing {
         case ("content-type", ct: String) =>
           if (contentType.isEmpty) {
             val contentTypeValue =
-              ContentType.parse(ct).right.getOrElse(malformedRequest(s"Invalid content-type: '$ct'"))
+              ContentType.parse(ct).getOrElse(malformedRequest(s"Invalid content-type: '$ct'"))
             rec(remainingHeaders.tail, status, OptionVal.Some(contentTypeValue), contentLength, seenRegularHeader,
               headers)
           } else malformedRequest("HTTP message must not contain more than one content-type header")
