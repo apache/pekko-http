@@ -225,9 +225,6 @@ Details can be found in sections @ref[Core Server API](server-side/low-level-api
 pekko-http-testkit
 : A test harness and set of utilities for verifying server-side service implementations
 
-pekko-http2-support
-: The HTTP/2 implementation to be included only if @ref[HTTP/2 support](server-side/http2.md) is needed.
-
 
 @@@ div { .group-scala }
 pekko-http-spray-json
