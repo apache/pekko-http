@@ -20,6 +20,8 @@ To make use of the support module for (un)marshalling from and to JSON with [Jac
   version="PekkoHttpVersion"
 }
 
+`pekko-http-jackson` supports Jackson v2 while `pekko-http-jackson3` supports Jackson v3 (see below for details).
+
 Use `org.apache.pekko.http.javadsl.marshallers.jackson.Jackson.unmarshaller(T.class)` to create an @apidoc[Unmarshaller[HttpEntity,T]] which expects the request
 body (HttpEntity) to be of type `application/json` and converts it to `T` using Jackson.
 
@@ -30,7 +32,26 @@ Use `org.apache.pekko.http.javadsl.marshallers.jackson.Jackson.marshaller(T.clas
 
 @@snip [PetStoreExample.java](/http-tests/src/main/java/org/apache/pekko/http/javadsl/server/examples/petstore/PetStoreExample.java) { #imports #marshall }
 
+`pekko-http-jackson` uses a Jackson `ObjectMapper` config that closely matches the Jackson default config.
+If you want to control the setup of the `ObjectMapper` yourself, you can build your own
+using the Jackson APIs. There are methods in `org.apache.pekko.http.javadsl.marshallers.jackson.Jackson`
+that can take an `ObjectMapper` instance as input instead of having `pekko-http-jackson` build one for you.
+
 Refer to @github[this file](/http-tests/src/main/java/org/apache/pekko/http/javadsl/server/examples/petstore/PetStoreExample.java) in the sources for the complete example.
+
+We also now support Jackson v3. 
+
+@@dependency [sbt,Gradle,Maven] {
+  bomGroup2="org.apache.pekko" bomArtifact2="pekko-http-bom_$scala.binary.version$" bomVersionSymbols2="PekkoHttpVersion"
+  symbol="PekkoHttpVersion"
+  value="$project.version$"
+  group="org.apache.pekko"
+  artifact="pekko-http-jackson3_$scala.binary.version$"
+  version="PekkoHttpVersion"
+}
+
+`pekko-http-jackson3` works in much the same way as `pekko-http-jackson` but uses the newer
+version of Jackson libs (`tool.jackson` jars). This lib has a class called `org.apache.pekko.http.javadsl.marshallers.jackson3.Jackson`.
 
 @@@
 

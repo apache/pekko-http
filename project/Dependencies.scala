@@ -19,6 +19,7 @@ object Dependencies {
   import DependencyHelpers._
 
   val jacksonDatabindVersion = "2.20.0"
+  val jacksonDatabind3Version = "3.0.0"
   val jacksonXmlVersion = jacksonDatabindVersion
   val junitVersion = "4.13.2"
   val h2specVersion = "2.6.0"
@@ -57,6 +58,9 @@ object Dependencies {
 
     // For pekko-http-jackson support
     val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion
+
+    // For pekko-http-jackson3 support
+    val jacksonDatabind3 = "tools.jackson.core" % "jackson-databind" % jacksonDatabind3Version
 
     // For pekko-http-testkit-java
     val junit = "junit" % "junit" % junitVersion
@@ -138,6 +142,8 @@ object Dependencies {
     libraryDependencies += Test.scalatest)
 
   lazy val httpJackson = l ++= Seq(jacksonDatabind, Test.scalatestplusJUnit, Test.junit, Test.junitIntf)
+
+  lazy val httpJackson3 = l ++= Seq(jacksonDatabind3, Test.scalatestplusJUnit, Test.junit, Test.junitIntf)
 
   lazy val docs = l ++= Seq(Docs.sprayJson, Docs.gson, Docs.jacksonXml, Docs.reflections)
 }
