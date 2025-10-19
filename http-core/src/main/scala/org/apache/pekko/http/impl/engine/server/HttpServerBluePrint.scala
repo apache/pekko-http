@@ -721,12 +721,11 @@ private[http] object HttpServerBluePrint {
         })
 
       private var activeTimers = 0
-      private val timeout: FiniteDuration = {
+      private val timeout: FiniteDuration =
         inheritedAttributes.get[ActorAttributes.StreamSubscriptionTimeout] match {
           case Some(attr) => attr.timeout
           case None       => 5.minutes // should not happen
         }
-      }
       private def addTimeout(s: SubscriptionTimeout): Unit = {
         if (activeTimers == 0) setKeepGoing(true)
         activeTimers += 1
