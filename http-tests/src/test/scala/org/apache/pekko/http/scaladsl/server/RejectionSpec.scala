@@ -24,7 +24,7 @@ class RejectionSpec extends RoutingSpec {
       import pekko.http.javadsl.{ server => jserver }
       val rejections = List(RequestEntityExpectedRejection)
       val jrejections: java.lang.Iterable[jserver.Rejection] =
-        rejections.map(_.asInstanceOf[jserver.Rejection]).asJava
+        rejections.asJava.asInstanceOf[java.lang.Iterable[jserver.Rejection]]
       val jresult = TransformationRejection(identity).getTransform.apply(jrejections)
 
       val result = jresult.asScala.map(r => r.asInstanceOf[Rejection])

@@ -32,7 +32,7 @@ object EventStreamMarshalling {
    */
   val toEventStream: Marshaller[Source[ServerSentEvent, NotUsed], RequestEntity] = {
     def asScala(eventStream: Source[ServerSentEvent, NotUsed]) =
-      eventStream.asScala.map(_.asInstanceOf[scaladsl.model.sse.ServerSentEvent])
+      eventStream.asScala.asInstanceOf[pekko.stream.scaladsl.Source[scaladsl.model.sse.ServerSentEvent, NotUsed]]
     Marshaller.fromScala(scaladsl.marshalling.sse.EventStreamMarshalling.toEventStream.compose(asScala))
   }
 }

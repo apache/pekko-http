@@ -57,7 +57,7 @@ object EventStreamUnmarshalling {
   private def asHttpEntityUnmarshaller(value: FromEntityUnmarshaller[scaladsl.Source[sse.ServerSentEvent, NotUsed]])
       : Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]] = {
     value
-      .map(_.map(_.asInstanceOf[ServerSentEvent]).asJava)
+      .map(_.asJava)
       .asInstanceOf[Unmarshaller[HttpEntity, Source[ServerSentEvent, NotUsed]]]
   }
 

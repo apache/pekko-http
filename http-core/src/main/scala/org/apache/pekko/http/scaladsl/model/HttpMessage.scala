@@ -162,7 +162,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
   }
 
   def attribute[T](key: jm.AttributeKey[T])(implicit ev: JavaMapping[jm.AttributeKey[T], AttributeKey[T]]): Option[T] =
-    attributes.get(ev.toScala(key)).map(_.asInstanceOf[T])
+    attributes.get(ev.toScala(key)).asInstanceOf[Option[T]]
 
   /**
    * Returns true if this message is an:
