@@ -14,7 +14,6 @@
 package org.apache.pekko.http.impl.settings
 
 import scala.language.implicitConversions
-import scala.annotation.nowarn
 import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.util.Try
@@ -37,7 +36,6 @@ import pekko.io.Inet.SocketOption
 @InternalApi
 private[pekko] final case class ServerSettingsImpl(
     serverHeader: Option[Server],
-    @nowarn("msg=deprecated") previewServerSettings: PreviewServerSettings,
     timeouts: ServerSettings.Timeouts,
     maxConnections: Int,
     pipeliningLimit: Int,
@@ -92,10 +90,8 @@ private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSett
 
   def fromSubConfig(root: Config, c: Config) = {
     val parserSettings = ParserSettingsImpl.fromSubConfig(root, c.getConfig("parsing"))
-    val previewSettings = PreviewServerSettingsImpl.fromSubConfig(root, c.getConfig("preview"))
     new ServerSettingsImpl(
       c.getString("server-header").toOption.map(Server(_)),
-      previewSettings,
       Timeouts(
         c.getPotentiallyInfiniteDuration("idle-timeout"),
         if (c.getString("request-timeout") == "off") Duration.Zero
@@ -127,7 +123,7 @@ private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSett
       terminationDeadlineExceededResponseFrom(c),
       c.getString("parsing.error-handler"),
       c.getFiniteDuration("stream-cancellation-delay"),
-      c.getBoolean("enable-http2") || previewSettings.enableHttp2)
+      c.getBoolean("enable-http2") || c.getBoolean("preview.enable-http2"))
   }
 
   private def terminationDeadlineExceededResponseFrom(c: Config): HttpResponse = {

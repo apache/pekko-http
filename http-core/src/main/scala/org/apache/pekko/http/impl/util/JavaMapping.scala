@@ -234,8 +234,6 @@ private[http] object JavaMapping {
       extends Inherited[js.ParserSettings.ErrorLoggingVerbosity,
         pekko.http.scaladsl.settings.ParserSettings.ErrorLoggingVerbosity]
   implicit object ServerSettings extends Inherited[js.ServerSettings, pekko.http.scaladsl.settings.ServerSettings]
-  implicit object PreviewServerSettings
-      extends Inherited[js.PreviewServerSettings, pekko.http.scaladsl.settings.PreviewServerSettings]
   implicit object ServerSettingsT
       extends Inherited[js.ServerSettings.Timeouts, pekko.http.scaladsl.settings.ServerSettings.Timeouts]
   implicit object Http2ServerSettingT

@@ -39,7 +39,6 @@ import scala.language.implicitConversions
 abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.settings.ServerSettings {
   self: ServerSettingsImpl =>
   def serverHeader: Option[Server]
-  def previewServerSettings: PreviewServerSettings
   def timeouts: ServerSettings.Timeouts
   def maxConnections: Int
   def pipeliningLimit: Int
@@ -73,12 +72,6 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
 
   override def getBacklog = this.backlog
 
-  /**
-   * @deprecated the preview server settings are now integrated into the main server settings (since 1.3.0)
-   */
-  @Deprecated
-  @deprecated("the preview server settings are now integrated into the main server settings", "1.3.0")
-  override def getPreviewServerSettings: pekko.http.javadsl.settings.PreviewServerSettings = this.previewServerSettings
   override def getDefaultHostHeader = this.defaultHostHeader.asJava
   override def getPipeliningLimit = this.pipeliningLimit
   override def getParserSettings: js.ParserSettings = this.parserSettings
@@ -101,13 +94,6 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   // ---
 
   // override for more specific return type
-  /**
-   * @deprecated the preview server settings are now integrated into the main server settings (since 1.3.0)
-   */
-  @Deprecated
-  @deprecated("the preview server settings are now integrated into the main server settings", "1.3.0")
-  def withPreviewServerSettings(newValue: PreviewServerSettings): ServerSettings =
-    self.copy(previewServerSettings = newValue)
   override def withMaxConnections(newValue: Int): ServerSettings = self.copy(maxConnections = newValue)
   override def withPipeliningLimit(newValue: Int): ServerSettings = self.copy(pipeliningLimit = newValue)
   override def withRemoteAddressAttribute(newValue: Boolean): ServerSettings =
@@ -147,8 +133,6 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
     withHttp2Settings(f(this.http2Settings))
   def mapParserSettings(f: ParserSettings => ParserSettings): ServerSettings =
     withParserSettings(f(this.parserSettings))
-  def mapPreviewServerSettings(f: PreviewServerSettings => PreviewServerSettings): ServerSettings =
-    withPreviewServerSettings(f(this.previewServerSettings))
   def mapWebsocketSettings(f: WebSocketSettings => WebSocketSettings): ServerSettings =
     withWebsocketSettings(f(this.websocketSettings))
   def mapTimeouts(f: ServerSettings.Timeouts => ServerSettings.Timeouts): ServerSettings =

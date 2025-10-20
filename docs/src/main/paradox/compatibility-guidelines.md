@@ -81,7 +81,6 @@ Scala
     org.apache.pekko.http.scaladsl.settings.HostOverride
     org.apache.pekko.http.scaladsl.settings.Http2ServerSettings
     org.apache.pekko.http.scaladsl.settings.Http2ClientSettings
-    org.apache.pekko.http.scaladsl.settings.PreviewServerSettings
     org.apache.pekko.http.scaladsl.settings.ServerSentEventSettings
     org.apache.pekko.http.scaladsl.model.headers.CacheDirectives.immutableDirective
     org.apache.pekko.http.scaladsl.model.headers.X-Forwarded-Host
@@ -107,7 +106,6 @@ Java
     org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings#withPoolImplementation
     org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings#withResponseEntitySubscriptionTimeout
     org.apache.pekko.http.javadsl.settings.PoolImplementation
-    org.apache.pekko.http.javadsl.settings.PreviewServerSettings
     org.apache.pekko.http.javadsl.settings.ServerSentEventSettings
     ```
   
