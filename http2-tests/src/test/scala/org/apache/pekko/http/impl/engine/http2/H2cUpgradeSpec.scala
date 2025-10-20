@@ -27,7 +27,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class H2cUpgradeSpec extends PekkoSpecWithMaterializer("""
-    pekko.http.server.preview.enable-http2 = on
+    pekko.http.server.enable-http2 = on
     pekko.http.server.http2.log-frames = on
   """) {
 

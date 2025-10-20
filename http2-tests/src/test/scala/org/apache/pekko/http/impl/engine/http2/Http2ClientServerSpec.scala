@@ -52,7 +52,7 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       """pekko.http.server.remote-address-header = on
      pekko.http.server.http2.log-frames = on
      pekko.http.server.log-unencrypted-network-bytes = 100
-     pekko.http.server.preview.enable-http2 = on
+     pekko.http.server.enable-http2 = on
      pekko.http.client.http2.log-frames = on
      pekko.http.client.log-unencrypted-network-bytes = 100
      pekko.actor.serialize-messages = false

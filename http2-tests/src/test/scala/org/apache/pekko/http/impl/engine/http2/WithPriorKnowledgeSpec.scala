@@ -27,7 +27,7 @@ import pekko.util.ByteString
 import scala.concurrent.Future
 
 class WithPriorKnowledgeSpec extends PekkoSpecWithMaterializer("""
-    pekko.http.server.preview.enable-http2 = on
+    pekko.http.server.enable-http2 = on
     pekko.http.server.http2.log-frames = on
   """) {
 

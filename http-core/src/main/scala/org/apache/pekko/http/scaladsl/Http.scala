@@ -194,7 +194,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       connectionContext: ConnectionContext = defaultServerHttpContext,
       settings: ServerSettings = ServerSettings(system),
       log: LoggingAdapter = system.log): Source[Http.IncomingConnection, Future[ServerBinding]] = {
-    if (settings.previewServerSettings.enableHttp2)
+    if (settings.enableHttp2)
       log.warning(
         s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port]")
 
@@ -244,7 +244,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       connectionContext: ConnectionContext = defaultServerHttpContext,
       settings: ServerSettings = ServerSettings(system),
       log: LoggingAdapter = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] = {
-    if (settings.previewServerSettings.enableHttp2)
+    if (settings.enableHttp2)
       log.warning(
         s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port].")
 
@@ -354,7 +354,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       settings: ServerSettings = ServerSettings(system),
       parallelism: Int = 0,
       log: LoggingAdapter = system.log)(implicit fm: Materializer = systemMaterializer): Future[ServerBinding] = {
-    if (settings.previewServerSettings.enableHttp2) {
+    if (settings.enableHttp2) {
       log.debug("Binding server using HTTP/2")
 
       val definitiveSettings =
