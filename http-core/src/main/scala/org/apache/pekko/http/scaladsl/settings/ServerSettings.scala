@@ -180,7 +180,7 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
     withHttp2Settings(f(this.http2Settings))
   def mapParserSettings(f: ParserSettings => ParserSettings): ServerSettings =
     withParserSettings(f(this.parserSettings))
-  @Deprecated @deprecated("PreviewServerSettings will be removed in 2.0.0, use ServerSettings directly",
+  @Deprecated @deprecated("the preview server settings are now integrated into the main server settings",
     since = "1.3.0")
   def mapPreviewServerSettings(f: PreviewServerSettings => PreviewServerSettings): ServerSettings =
     withPreviewServerSettings(f(this.previewServerSettings))
