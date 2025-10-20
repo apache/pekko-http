@@ -14,6 +14,7 @@
 package org.apache.pekko.http.impl.settings
 
 import scala.language.implicitConversions
+import scala.annotation.nowarn
 import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.util.Try
@@ -36,7 +37,7 @@ import pekko.io.Inet.SocketOption
 @InternalApi
 private[pekko] final case class ServerSettingsImpl(
     serverHeader: Option[Server],
-    previewServerSettings: PreviewServerSettings,
+    @nowarn("msg=deprecated") previewServerSettings: PreviewServerSettings,
     timeouts: ServerSettings.Timeouts,
     maxConnections: Int,
     pipeliningLimit: Int,
@@ -56,7 +57,8 @@ private[pekko] final case class ServerSettingsImpl(
     defaultHttpsPort: Int,
     terminationDeadlineExceededResponse: HttpResponse,
     parsingErrorHandler: String,
-    streamCancellationDelay: FiniteDuration) extends ServerSettings {
+    streamCancellationDelay: FiniteDuration,
+    enableHttp2: Boolean) extends ServerSettings {
 
   require(0 < maxConnections, "max-connections must be > 0")
   require(0 < pipeliningLimit && pipeliningLimit <= 1024, "pipelining-limit must be > 0 and <= 1024")
@@ -90,9 +92,10 @@ private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSett
 
   def fromSubConfig(root: Config, c: Config) = {
     val parserSettings = ParserSettingsImpl.fromSubConfig(root, c.getConfig("parsing"))
+    val previewSettings = PreviewServerSettingsImpl.fromSubConfig(root, c.getConfig("preview"))
     new ServerSettingsImpl(
       c.getString("server-header").toOption.map(Server(_)),
-      PreviewServerSettingsImpl.fromSubConfig(root, c.getConfig("preview")),
+      previewSettings,
       Timeouts(
         c.getPotentiallyInfiniteDuration("idle-timeout"),
         if (c.getString("request-timeout") == "off") Duration.Zero
@@ -123,7 +126,8 @@ private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSett
       c.getInt("default-https-port"),
       terminationDeadlineExceededResponseFrom(c),
       c.getString("parsing.error-handler"),
-      c.getFiniteDuration("stream-cancellation-delay"))
+      c.getFiniteDuration("stream-cancellation-delay"),
+      c.getBoolean("enable-http2") || previewSettings.enableHttp2)
   }
 
   private def terminationDeadlineExceededResponseFrom(c: Config): HttpResponse = {
