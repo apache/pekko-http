@@ -4,7 +4,7 @@
 
 Release notes for Apache Pekko HTTP 1.2.0. See [GitHub Milestone for 1.2.0](https://github.com/apache/pekko-http/milestone/7?closed=1) and [GitHub Milestone for 1.1.1](https://github.com/apache/pekko-http/milestone/3?closed=1) for a fuller list of changes.
 
-It is strongly recommended that you avoid using Pekko 1.0.x jars with this release, you should use Pekko 1.1.x jars where possible. We don't expect there to be problems running with Pekko 1.0.x jars but Pekko HTTP 1.2 jars are built with Pekko 1.1 jars.
+It is strongly recommended that you avoid using Pekko 1.0.x jars with this release, you should use Pekko 1.1.x jars (or later 1.x releases) where possible. We don't expect there to be problems running with Pekko 1.0.x jars but Pekko HTTP 1.2 jars are built with Pekko 1.1 jars.
 
 ### Bug Fix
 * fix partial match in HTTP2 HttpMessageRendering class ([PR622](https://github.com/apache/pekko-http/pull/622))

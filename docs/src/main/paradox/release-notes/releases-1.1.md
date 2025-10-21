@@ -4,7 +4,7 @@
 
 Release notes for Apache Pekko HTTP 1.1.0. See [GitHub Milestone for 1.1.0-M1](https://github.com/apache/pekko-http/milestone/1?closed=1) and [GitHub Milestone for 1.1.0](https://github.com/apache/pekko-http/milestone/4?closed=1) for a fuller list of changes.
 
-It is strongly recommended that you avoid using Pekko 1.0.x jars with this release, you should use Pekko 1.1.x jars where possible. We don't expect there to be problems running with Pekko 1.0.x jars but Pekko HTTP 1.1 jars are built with Pekko 1.1 jars.
+It is strongly recommended that you avoid using Pekko 1.0.x jars with this release, you should use Pekko 1.1.x jars (or later 1.x releases) where possible. We don't expect there to be problems running with Pekko 1.0.x jars but Pekko HTTP 1.1 jars are built with Pekko 1.1 jars.
 
 All the changes in the @ref:[1.0.x releases](releases-1.0.md) up to and including v1.0.1.
 
