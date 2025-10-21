@@ -10,7 +10,7 @@ It is strongly recommended that you avoid using Pekko 1.0.x jars with this relea
 * Avoid using deprecated methods from Pekko Core libs
 * Deprecate some methods that will be removed in 2.0.0 ([PR758](https://github.com/apache/pekko-http/pull/758))
 * Add mjs extension for javascript media type ([PR683](https://github.com/apache/pekko-http/pull/683))
-* avoid sun.misc.Unsafe in StringTools ([PR690](https://github.com/apache/pekko-http/pull/690))
+* Avoid sun.misc.Unsafe in StringTools ([PR690](https://github.com/apache/pekko-http/pull/690))
 * HttpChallenge: avoid pekko Java API Option class ([PR709](https://github.com/apache/pekko-http/pull/709))
 * Avoid Scala classes in Java example ([PR741](https://github.com/apache/pekko-http/pull/741))
 * Small improvements to ByteString usage ([PR799](https://github.com/apache/pekko-http/pull/799), [PR821](https://github.com/apache/pekko-http/pull/821), [PR827](https://github.com/apache/pekko-http/pull/827))
