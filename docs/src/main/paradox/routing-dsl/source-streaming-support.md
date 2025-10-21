@@ -57,7 +57,8 @@ like to stream a different content type (for example plists or protobuf).
 
 Firstly, we'll need to get some additional marshalling infrastructure set up, that is able to marshal to and from an
 Apache Pekko Streams @apidoc[Source[T, ?]]. Here we'll use the `Jackson` helper class from `pekko-http-jackson` (a separate library
-that you should add as a dependency if you want to use Jackson with Apache Pekko HTTP).
+that you should add as a dependency if you want to use Jackson v2.x with Apache Pekko HTTP).
+There is also `pekko-http-jackson3` if you prefer Jackson v3.x.
 
 First we enable JSON Streaming by making an implicit @apidoc[EntityStreamingSupport] instance available (Step 1).
 
