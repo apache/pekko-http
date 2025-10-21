@@ -239,5 +239,9 @@ Details can be found here: @ref[XML Support](common/xml-support.md)
 @@@
 @@@ div { .group-java }
 pekko-http-jackson
-: Predefined glue-code for (de)serializing custom types from/to JSON with [jackson](https://github.com/FasterXML/jackson)
+: Predefined glue-code for (de)serializing custom types from/to JSON with [jackson v2.x](https://github.com/FasterXML/jackson)
+@@@
+@@@ div { .group-java }
+pekko-http-jackson3
+: Predefined glue-code for (de)serializing custom types from/to JSON with [jackson v3.x](https://github.com/FasterXML/jackson)
 @@@

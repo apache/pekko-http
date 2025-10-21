@@ -291,6 +291,7 @@ lazy val httpMarshallersJava = project("http-marshallers-java")
   .enablePlugins(NoPublish /*, AggregatePRValidation*/ )
   .disablePlugins(MimaPlugin)
   .aggregate(httpJackson)
+  .aggregate(httpJackson3)
 
 lazy val httpJackson =
   httpMarshallersJavaSubproject("jackson")
@@ -300,6 +301,16 @@ lazy val httpJackson =
     .dependsOn(httpTestkit % "test")
     .settings(Dependencies.httpJackson)
     .enablePlugins(ScaladocNoVerificationOfDiagrams)
+
+lazy val httpJackson3 =
+  httpMarshallersJavaSubproject("jackson3")
+    .settings(AutomaticModuleName.settings("pekko.http.marshallers.jackson3"))
+    .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
+    .addPekkoModuleDependency("pekko-stream-testkit", "test", PekkoCoreDependency.default)
+    .dependsOn(httpTestkit % "test")
+    .settings(Dependencies.httpJackson3)
+    .enablePlugins(ScaladocNoVerificationOfDiagrams)
+    .disablePlugins(MimaPlugin)
 
 lazy val httpCaching = project("http-caching")
   .settings(
