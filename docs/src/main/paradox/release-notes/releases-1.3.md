@@ -25,5 +25,5 @@ It is strongly recommended that you avoid using Pekko 1.0.x jars with this relea
 
 Most of the dependency changes are small patch level upgrades. Some exceptions include:
 
-* Jackson 2.19.2
+* Jackson 2.20.0
 * scala-xml 2.4.0
