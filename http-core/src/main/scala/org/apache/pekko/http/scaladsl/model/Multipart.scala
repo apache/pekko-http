@@ -218,8 +218,7 @@ object Multipart {
 
   private def strictify[BP <: Multipart.BodyPart, BPS <: Multipart.BodyPart.Strict](parts: Source[BP, Any])(
       f: BP => Future[BPS])(implicit fm: Materializer): Future[Seq[BPS]] = {
-    import fm.executionContext
-    parts.mapAsync(Int.MaxValue)(f).runWith(Sink.seq).fast
+    parts.mapAsync(Int.MaxValue)(f).runWith(Sink.seq)
   }
 
   //////////////////////// CONCRETE multipart types /////////////////////////
