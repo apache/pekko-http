@@ -13,24 +13,21 @@
 
 package org.apache.pekko.http.impl.engine.http2.hpack
 
-import java.io.{ ByteArrayInputStream, InputStream }
+import java.io.InputStream
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.util.ByteString
-import pekko.util.ByteString.ByteString1C
 
 /** INTERNAL API */
 @InternalApi
 private[http2] object ByteStringInputStream {
-
-  def apply(bs: ByteString): InputStream =
-    bs match {
-      case cs: ByteString1C =>
-        // TODO optimise, ByteString needs to expose InputStream (esp if array backed, nice!)
-        new ByteArrayInputStream(cs.toArrayUnsafe())
-      case _ =>
-        // NOTE: We actually measured recently, and compact + use array was pretty good usually
-        apply(bs.compact)
-    }
+  def apply(bs: ByteString): InputStream = bs match {
+    case bss: ByteString.ByteStrings =>
+      // bss.asInputStream would create a SequenceInputStream which does not support mark/reset
+      bss.compact.asInputStream
+    case _ =>
+      // returns a ByteArrayInputStream (twitter hpack needs mark/reset support)
+      bs.asInputStream
+  }
 }
