@@ -65,7 +65,7 @@ object Dependencies {
     // For pekko-http-testkit-java
     val junit = "junit" % "junit" % junitVersion
 
-    val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % "3.2.2"
+    val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % "3.2.3"
 
     val scalafix = "ch.epfl.scala" %% "scalafix-core" % Dependencies.scalafixVersion
 
