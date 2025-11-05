@@ -25,7 +25,7 @@ private[http] object CharUtils {
    * Efficiently lower-cases the given character.
    * Note: only works for 7-bit ASCII letters (which is enough for header names)
    */
-  final def toLowerCase(c: Char): Char =
+  inline def toLowerCase(c: Char): Char =
     if (c >= 'A' && c <= 'Z') (c + 0x20 /* - 'A' + 'a' */ ).toChar else c
 
 }
