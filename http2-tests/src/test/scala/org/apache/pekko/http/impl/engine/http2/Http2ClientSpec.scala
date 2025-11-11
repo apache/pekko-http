@@ -293,6 +293,24 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           val dynamicTableUpdateTo8192 = ByteString(63, 225, 63)
           headerPayload.take(3) shouldBe dynamicTableUpdateTo8192
         })
+      "close stream if peer sends RST_STREAM frame with REFUSED_STREAM".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          val data = ByteString("abcd")
+          user.emitRequest(Post("/", HttpEntity(data)))
+          val TheStreamId = network.expect[HeadersFrame]().streamId
+          network.expectDATA(TheStreamId, endStream = true, data)
+
+          network.sendRST_STREAM(TheStreamId, ErrorCode.REFUSED_STREAM)
+
+          val response = user.expectResponse()
+          response.status should be(StatusCodes.TooManyRequests)
+
+          val entityDataIn = ByteStringSinkProbe(response.entity.dataBytes)
+          val error = entityDataIn.expectError()
+          error.getMessage shouldBe "Stream with ID [1] was closed by peer with code REFUSED_STREAM(0x07)"
+
+          connectionShouldStillBeUsable()
+        })
     }
 
     "support stream for response data" should {
