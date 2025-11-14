@@ -59,7 +59,7 @@ class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
 
       val (response, sink) = Http().singleWebSocketRequest(
         WebSocketRequest("ws://127.0.0.1:" + myPort),
-        Flow.fromSinkAndSourceMat(TestSink.probe[Message], Source.empty)(Keep.left))
+        Flow.fromSinkAndSourceMat(TestSink[Message](), Source.empty)(Keep.left))
 
       response.futureValue.response.status.isSuccess should ===(true)
       sink
@@ -119,7 +119,7 @@ class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
                 Tcp(system).outgoingConnection(new InetSocketAddress("localhost", myPort), halfClose = true)))(
                 Keep.both)
           }(Keep.right)
-          .toMat(TestSink.probe[Message])(Keep.both)
+          .toMat(TestSink[Message]())(Keep.both)
           .run()
 
       response.futureValue.response.status.isSuccess should ===(true)
