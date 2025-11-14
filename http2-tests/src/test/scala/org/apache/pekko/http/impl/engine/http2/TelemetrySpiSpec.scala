@@ -126,7 +126,7 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializ
               attrs.get[TelemetryAttributes.ClientMeta].foreach(probe.ref ! _)
               probe.ref ! requestId
               request.addAttribute(requestIdAttr, requestId).addHeader(headers.RawHeader("request-id", requestId.id))
-            }.watchTermination() { (_, done) =>
+            }.watchTermination { (_, done) =>
               done.onComplete {
                 case Success(_) => probe.ref ! "close-seen" // this is the expected case
                 case Failure(t) => probe.ref ! t.getMessage // useful to diagnose cases where there's a failure
@@ -193,7 +193,7 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializ
               telemetryProbe.ref ! "connection-seen"
               telemetryProbe.ref ! connId
               conn.copy(flow = conn.flow.addAttributes(Attributes(connId)))
-            }.watchTermination() { (notUsed, done) =>
+            }.watchTermination { (notUsed, done) =>
               done.onComplete(_ => telemetryProbe.ref ! "unbind-seen")(system.dispatcher)
               notUsed
             }
@@ -203,7 +203,7 @@ abstract class TelemetrySpiSpec(useTls: Boolean) extends PekkoSpecWithMaterializ
             Flow[HttpResponse].map { response =>
               telemetryProbe.ref ! "response-seen"
               response
-            }.watchTermination() { (_, done) =>
+            }.watchTermination { (_, done) =>
               done.foreach(_ => telemetryProbe.ref ! "close-seen")(system.dispatcher)
             },
             StreamUtils.statefulAttrsMap[HttpRequest, HttpRequest](attributes => { request =>

@@ -111,7 +111,7 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     val failureMonitor: ActorRef = system.actorOf(MyExampleMonitoringActor.props)
 
     val reactToTopLevelFailures = Flow[IncomingConnection]
-      .watchTermination()((_, termination) =>
+      .watchTermination((_, termination) =>
         termination.failed.foreach {
           cause => failureMonitor ! cause
         })

@@ -700,7 +700,7 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
               Sink.fromSubscriber(serverRequests),
               Source.fromPublisher(serverResponses))
               .joinMat(clientServerImplementation.get(killSwitch))(Keep.right)
-              .watchTermination()(Keep.both)
+              .watchTermination(Keep.both)
               .join(
                 Flow.fromSinkAndSource(
                   Sink.fromSubscriber(responseSubscriber),

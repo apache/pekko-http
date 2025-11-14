@@ -106,7 +106,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
         (incoming: Tcp.IncomingConnection) =>
           try {
             httpPlusSwitching(http1, http2).addAttributes(prepareServerAttributes(settings, incoming))
-              .watchTermination() {
+              .watchTermination {
                 case (connectionTerminatorF, future) =>
                   connectionTerminatorF.foreach { connectionTerminator =>
                     masterTerminator.registerConnection(connectionTerminator)(fm.executionContext)
@@ -170,7 +170,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 
             val serverLayer: Flow[ByteString, ByteString, Future[Done]] = Flow.fromGraph(
               Flow[HttpRequest]
-                .watchTermination()(Keep.right)
+                .watchTermination(Keep.right)
                 .prepend(injectedRequest)
                 .via(Http2Blueprint.handleWithStreamIdHeader(settings.http2Settings.maxConcurrentStreams)(handler)(
                   system.dispatcher))
