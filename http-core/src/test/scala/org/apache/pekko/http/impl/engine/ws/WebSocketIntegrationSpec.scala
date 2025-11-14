@@ -210,7 +210,7 @@ class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
       val handlerTermination = Promise[Done]()
 
       val handler = Flow[Message]
-        .watchTermination()(Keep.right)
+        .watchTermination(Keep.right)
         .mapMaterializedValue(handlerTermination.completeWith(_))
         .map(m => TextMessage.Strict(s"Echo [${m.asTextMessage.getStrictText}]"))
 
