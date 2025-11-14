@@ -101,7 +101,7 @@ class GracefulTerminationSpec
             // start reading the response
             val responseEntity = r1.futureValue.entity.dataBytes
               .via(Framing.delimiter(ByteString(","), 20))
-              .runWith(TestSink.probe[ByteString])(SystemMaterializer(clientSystem).materializer)
+              .runWith(TestSink[ByteString]())(SystemMaterializer(clientSystem).materializer)
             responseEntity.requestNext().utf8String should ===("reply1")
 
             val termination = serverBinding.terminate(hardDeadline = 1.second)
@@ -132,7 +132,7 @@ class GracefulTerminationSpec
       // start reading the response
       val response = r1.futureValue.entity.dataBytes
         .via(Framing.delimiter(ByteString(","), 20))
-        .runWith(TestSink.probe[ByteString])
+        .runWith(TestSink[ByteString]())
       response.requestNext().utf8String should ===("reply1")
 
       try {

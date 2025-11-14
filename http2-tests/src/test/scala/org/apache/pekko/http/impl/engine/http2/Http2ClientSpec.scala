@@ -426,7 +426,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         val chunksIn =
           user.expectResponse()
             .entity.asInstanceOf[Chunked]
-            .chunks.runWith(TestSink.probe[ChunkStreamPart](system.classicSystem))
+            .chunks.runWith(TestSink[ChunkStreamPart]()(system.classicSystem))
         val data1 = ByteString("abcdef")
         network.sendDATA(TheStreamId, endStream = false, data1)
         chunksIn.request(2)

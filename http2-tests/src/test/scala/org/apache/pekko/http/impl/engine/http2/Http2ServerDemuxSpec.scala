@@ -40,10 +40,10 @@ class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
         (SettingIdentifier.SETTINGS_ENABLE_PUSH, 0))
       val bidi = BidiFlow.fromGraph(new Http2ServerDemux(settings, initialRemoteSettings, upgraded = true))
 
-      val ((substreamProducer, (frameConsumer, frameProducer)), substreamConsumer) = TestSource.probe[Http2SubStream]
-        .viaMat(bidi.joinMat(Flow.fromSinkAndSourceMat(TestSink.probe[FrameEvent], TestSource.probe[FrameEvent])(
+      val ((substreamProducer, (frameConsumer, frameProducer)), substreamConsumer) = TestSource[Http2SubStream]()
+        .viaMat(bidi.joinMat(Flow.fromSinkAndSourceMat(TestSink[FrameEvent](), TestSource[FrameEvent]())(
           Keep.both))(Keep.right))(Keep.both)
-        .toMat(TestSink.probe[Http2SubStream])(Keep.both)
+        .toMat(TestSink[Http2SubStream]())(Keep.both)
         .run()
 
       frameConsumer.request(1000)
