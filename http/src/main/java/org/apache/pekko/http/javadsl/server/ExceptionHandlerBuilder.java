@@ -13,7 +13,8 @@
 
 package org.apache.pekko.http.javadsl.server;
 
-import org.apache.pekko.japi.pf.FI;
+import org.apache.pekko.japi.function.Function;
+import org.apache.pekko.japi.function.Predicate;
 import org.apache.pekko.japi.pf.PFBuilder;
 
 public class ExceptionHandlerBuilder {
@@ -35,7 +36,7 @@ public class ExceptionHandlerBuilder {
    * @return a builder with the case statement added
    */
   public <P extends Throwable> ExceptionHandlerBuilder match(
-      final Class<P> type, FI.Apply<P, Route> apply) {
+      final Class<P> type, final Function<P, Route> apply) {
     delegate.match(type, apply);
     return this;
   }
@@ -50,7 +51,7 @@ public class ExceptionHandlerBuilder {
    * @return a builder with the case statement added
    */
   public <P extends Throwable> ExceptionHandlerBuilder match(
-      final Class<P> type, final FI.TypedPredicate<P> predicate, final FI.Apply<P, Route> apply) {
+      final Class<P> type, final Predicate<P> predicate, final Function<P, Route> apply) {
     delegate.match(type, predicate, apply);
     return this;
   }
@@ -63,7 +64,7 @@ public class ExceptionHandlerBuilder {
    * @return a builder with the case statement added
    */
   public <P extends Throwable> ExceptionHandlerBuilder matchEquals(
-      final P object, final FI.Apply<P, Route> apply) {
+      final P object, final Function<P, Route> apply) {
     delegate.matchEquals(object, apply);
     return this;
   }
@@ -74,7 +75,7 @@ public class ExceptionHandlerBuilder {
    * @param apply an action to apply to the argument
    * @return a builder with the case statement added
    */
-  public ExceptionHandlerBuilder matchAny(final FI.Apply<Throwable, Route> apply) {
+  public ExceptionHandlerBuilder matchAny(final Function<Throwable, Route> apply) {
     delegate.matchAny(apply);
     return this;
   }
