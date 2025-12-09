@@ -22,7 +22,7 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.rendering.BodyPartRenderer
-import pekko.http.impl.util.{ DefaultNoLogging, Util }
+import pekko.http.impl.util.DefaultNoLogging
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.util.FastFuture
@@ -31,7 +31,7 @@ import pekko.http.scaladsl.model.headers._
 import pekko.stream.Materializer
 import pekko.stream.javadsl.{ Source => JSource }
 import pekko.stream.scaladsl._
-import pekko.util.ConstantFun
+import pekko.util.{ ConstantFun, OptionalUtil }
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.Future
@@ -189,13 +189,13 @@ object Multipart {
 
     /** Java API */
     def getContentDispositionHeader: Optional[jm.headers.ContentDisposition] =
-      Util.convertOption(contentDispositionHeader)
+      OptionalUtil.convertOption(contentDispositionHeader)
 
     /** Java API */
     def getDispositionParams: java.util.Map[String, String] = dispositionParams.asJava
 
     /** Java API */
-    def getDispositionType: Optional[jm.headers.ContentDispositionType] = Util.convertOption(dispositionType)
+    def getDispositionType: Optional[jm.headers.ContentDispositionType] = OptionalUtil.convertOption(dispositionType)
 
     /** Java API */
     def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[_ <: jm.Multipart.BodyPart.Strict] =

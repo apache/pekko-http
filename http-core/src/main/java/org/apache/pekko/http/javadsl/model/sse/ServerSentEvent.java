@@ -22,7 +22,7 @@ import java.util.OptionalInt;
 import scala.Option;
 import scala.jdk.javaapi.OptionConverters;
 
-import org.apache.pekko.http.impl.util.Util;
+import org.apache.pekko.util.OptionalUtil;
 
 /**
  * Representation of a server-sent event. According to the specification, an empty data field
@@ -30,9 +30,9 @@ import org.apache.pekko.http.impl.util.Util;
  */
 public abstract class ServerSentEvent {
 
-  private static final Option<String> stringNone = Util.scalaNone();
+  private static final Option<String> stringNone = OptionalUtil.scalaNone();
 
-  private static final Option<Object> intNone = Util.scalaNone();
+  private static final Option<Object> intNone = OptionalUtil.scalaNone();
 
   /** Provides a [[ServerSentEvent]] with empty data which can be used as a heartbeat */
   public static ServerSentEvent heartbeat() {
@@ -94,7 +94,7 @@ public abstract class ServerSentEvent {
         data,
         OptionConverters.toScala(type),
         OptionConverters.toScala(id),
-        Util.convertOptionalToScala(retry));
+        OptionalUtil.convertOptionalToScala(retry));
   }
 
   /** Data, may span multiple lines. */
