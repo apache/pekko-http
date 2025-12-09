@@ -121,9 +121,9 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       handler: Flow[HttpRequest, HttpResponse, Any]): ServerLayerFlow =
     Flow.fromGraph(
       Flow[HttpRequest]
-        .watchTermination()(Keep.right)
+        .watchTermination(Keep.right)
         .via(handler)
-        .watchTermination() { (termWatchBefore, termWatchAfter) =>
+        .watchTermination { (termWatchBefore, termWatchAfter) =>
           // flag termination when the user handler has gotten (or has emitted) termination
           // signals in both directions
           termWatchBefore.flatMap(_ => termWatchAfter)(ExecutionContext.parasitic)
@@ -234,7 +234,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       .mapAsyncUnordered(settings.maxConnections) { incoming =>
         try {
           fullLayer
-            .watchTermination() {
+            .watchTermination {
               case ((done, connectionTerminator), whenTerminates) =>
                 whenTerminates.onComplete { _ =>
                   masterTerminator.removeConnection(connectionTerminator)

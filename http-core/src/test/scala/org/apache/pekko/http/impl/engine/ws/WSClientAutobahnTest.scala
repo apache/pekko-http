@@ -173,7 +173,7 @@ object WSClientAutobahnTest extends App {
     Http().singleWebSocketRequest(uri, clientFlow)._2
 
   def completionSignal[T]: Flow[T, T, Future[Done]] =
-    Flow[T].watchTermination()((_, res) => res)
+    Flow[T].watchTermination((_, res) => res)
 
   /**
    * The autobahn tests define a weird API where every request must be a WebSocket request and
