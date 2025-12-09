@@ -36,6 +36,7 @@ import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.scaladsl.model.headers._
 import pekko.stream.scaladsl.Flow
 import pekko.stream.{ FlowShape, Graph, Materializer, SystemMaterializer }
+import pekko.util.OptionalUtil
 
 /**
  * Common base class of HttpRequest and HttpResponse.
@@ -218,7 +219,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
   /** Java API */
   def getHeader(headerName: String): Optional[jm.HttpHeader] = {
     val lowerCased = headerName.toRootLowerCase
-    Util.convertOption(headers.find(_.is(lowerCased))) // Upcast because of invariance
+    OptionalUtil.convertOption(headers.find(_.is(lowerCased))) // Upcast because of invariance
   }
 
   /** Java API */
@@ -231,7 +232,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
 
   /** Java API */
   def getAttribute[T](attributeKey: jm.AttributeKey[T]): Optional[T] =
-    Util.convertOption(attribute(attributeKey))
+    OptionalUtil.convertOption(attribute(attributeKey))
 
   /** Java API */
   def toStrict(timeoutMillis: Long, ec: Executor, materializer: Materializer): CompletionStage[Self] = {

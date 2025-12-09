@@ -15,7 +15,7 @@ package org.apache.pekko.http.javadsl.model.headers;
 
 import org.apache.pekko.annotation.DoNotInherit;
 import org.apache.pekko.http.javadsl.model.DateTime;
-import org.apache.pekko.http.impl.util.Util;
+import org.apache.pekko.util.OptionalUtil;
 
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -50,14 +50,14 @@ public abstract class HttpCookie {
     return new org.apache.pekko.http.scaladsl.model.headers.HttpCookie(
         name,
         value,
-        Util.<org.apache.pekko.http.scaladsl.model.DateTime>scalaNone(),
-        Util.scalaNone(),
-        Util.<String>scalaNone(),
-        Util.<String>scalaNone(),
+        OptionalUtil.<org.apache.pekko.http.scaladsl.model.DateTime>scalaNone(),
+        OptionalUtil.scalaNone(),
+        OptionalUtil.<String>scalaNone(),
+        OptionalUtil.<String>scalaNone(),
         false,
         false,
-        Util.<String>scalaNone(),
-        Util.<org.apache.pekko.http.scaladsl.model.headers.SameSite>scalaNone());
+        OptionalUtil.<String>scalaNone(),
+        OptionalUtil.<org.apache.pekko.http.scaladsl.model.headers.SameSite>scalaNone());
   }
 
   public static HttpCookie create(
@@ -65,14 +65,14 @@ public abstract class HttpCookie {
     return new org.apache.pekko.http.scaladsl.model.headers.HttpCookie(
         name,
         value,
-        Util.<org.apache.pekko.http.scaladsl.model.DateTime>scalaNone(),
-        Util.scalaNone(),
+        OptionalUtil.<org.apache.pekko.http.scaladsl.model.DateTime>scalaNone(),
+        OptionalUtil.scalaNone(),
         OptionConverters.toScala(domain),
         OptionConverters.toScala(path),
         false,
         false,
-        Util.<String>scalaNone(),
-        Util.<org.apache.pekko.http.scaladsl.model.headers.SameSite>scalaNone());
+        OptionalUtil.<String>scalaNone(),
+        OptionalUtil.<org.apache.pekko.http.scaladsl.model.headers.SameSite>scalaNone());
   }
 
   @SuppressWarnings("unchecked")
@@ -90,9 +90,10 @@ public abstract class HttpCookie {
     return new org.apache.pekko.http.scaladsl.model.headers.HttpCookie(
         name,
         value,
-        Util.<DateTime, org.apache.pekko.http.scaladsl.model.DateTime>convertOptionalToScala(
-            expires),
-        Util.convertOptionalToScala(maxAge),
+        OptionalUtil
+            .<DateTime, org.apache.pekko.http.scaladsl.model.DateTime>convertOptionalToScala(
+                expires),
+        OptionalUtil.convertOptionalToScala(maxAge),
         OptionConverters.toScala(domain),
         OptionConverters.toScala(path),
         secure,

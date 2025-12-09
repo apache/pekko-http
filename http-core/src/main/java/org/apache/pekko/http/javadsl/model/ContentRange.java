@@ -17,7 +17,7 @@ import org.apache.pekko.http.scaladsl.model.ContentRange$;
 
 import java.util.Optional;
 import java.util.OptionalLong;
-import org.apache.pekko.http.impl.util.Util;
+import org.apache.pekko.util.OptionalUtil;
 
 public abstract class ContentRange {
   public abstract boolean isByteContentRange();
@@ -44,7 +44,8 @@ public abstract class ContentRange {
 
   @SuppressWarnings("unchecked")
   public static ContentRange create(long first, long last, OptionalLong instanceLength) {
-    return ContentRange$.MODULE$.apply(first, last, Util.convertOptionalToScala(instanceLength));
+    return ContentRange$.MODULE$.apply(
+        first, last, OptionalUtil.convertOptionalToScala(instanceLength));
   }
 
   public static ContentRange createUnsatisfiable(long length) {

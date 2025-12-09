@@ -13,7 +13,7 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-import org.apache.pekko.http.impl.util.Util;
+import org.apache.pekko.util.OptionalUtil;
 
 import java.util.Optional;
 
@@ -90,7 +90,7 @@ public abstract class DateTime {
    * if parsing has failed.
    */
   public static Optional<DateTime> fromIsoDateTimeString(String isoDateTimeString) {
-    return Util.<DateTime, org.apache.pekko.http.scaladsl.model.DateTime>convertOption(
+    return OptionalUtil.<DateTime, org.apache.pekko.http.scaladsl.model.DateTime>convertOption(
         org.apache.pekko.http.scaladsl.model.DateTime.fromIsoDateTimeString(isoDateTimeString));
   }
 
