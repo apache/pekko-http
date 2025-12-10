@@ -212,6 +212,9 @@ lazy val httpTests = project("http-tests")
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-multi-node-testkit", "test", PekkoCoreDependency.default)
   .settings(
+    // following is needed by Agrona lib (PekkoHttpServerLatencyMultiNodeSpec)
+    // https://github.com/aeron-io/agrona/wiki/Change-Log#200-2024-12-17
+    MultiJvm / jvmOptions += "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED",
     // Fix to reenable scala-steward, see https://gitter.im/scala-steward-org/scala-steward?at=6183bb66d78911028a1b7cd8
     // Putting that jar file with the complicated name into the git tree directly breaks if something in the environment
     // has unicode path names configured wrongly. So, we wrap it into an extra zip file which is extracted before
