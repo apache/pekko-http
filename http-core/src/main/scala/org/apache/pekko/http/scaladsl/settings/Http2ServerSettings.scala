@@ -17,9 +17,9 @@ import org.apache.pekko
 import pekko.annotation.ApiMayChange
 import pekko.annotation.DoNotInherit
 import pekko.annotation.InternalApi
+import pekko.http.ccompat.JavaConverters._
 import pekko.http.impl.util._
 import pekko.http.javadsl
-import pekko.util.ccompat.JavaConverters._
 import com.typesafe.config.Config
 
 import scala.concurrent.duration.Duration

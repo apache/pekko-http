@@ -53,6 +53,8 @@ package object ccompat {
     // missing in 2.12
     def -=(element: T): Unit = queue.dequeueAll(_ == element)
   }
+
+  object JavaConverters extends scala.collection.convert.DecorateAsJava with scala.collection.convert.DecorateAsScala
 }
 
 /**

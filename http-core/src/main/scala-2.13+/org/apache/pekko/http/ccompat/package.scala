@@ -19,6 +19,12 @@ package org.apache.pekko.http
 package object ccompat {
 
   type Builder[-A, +To] = scala.collection.mutable.Builder[A, To]
+
+  // When we drop support for 2.12 we can delete this concept
+  // and import scala.jdk.CollectionConverters.Ops._ instead
+  object JavaConverters
+      extends scala.collection.convert.AsJavaExtensions
+      with scala.collection.convert.AsScalaExtensions
 }
 
 /**
