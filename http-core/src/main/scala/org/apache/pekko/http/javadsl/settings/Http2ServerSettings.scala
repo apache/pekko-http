@@ -17,8 +17,8 @@ import java.time.Duration
 
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
+import pekko.http.ccompat.JavaConverters._
 import pekko.http.scaladsl
-import pekko.util.ccompat.JavaConverters._
 import com.typesafe.config.Config
 
 import scala.concurrent.duration.DurationLong
