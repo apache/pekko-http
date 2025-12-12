@@ -6,7 +6,7 @@
 # This file is part of the Apache Pekko project, which was derived from Akka.
 #
 
-name: Nightly Builds (1.4.x)
+name: Nightly Builds (1.x)
 
 on:
   schedule:
