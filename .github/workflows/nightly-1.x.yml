@@ -6,7 +6,7 @@
 # This file is part of the Apache Pekko project, which was derived from Akka.
 #
 
-name: Nightly Builds (1.3.x)
+name: Nightly Builds (1.x)
 
 on:
   schedule:
@@ -30,7 +30,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-          ref: 1.3.x
+          ref: 1.4.x
 
       - name: Set up JDK ${{ matrix.JDK }}
         uses: actions/setup-java@f2beeb24e141e01a676f977032f5a29d81c9e27e # v5.1.0
