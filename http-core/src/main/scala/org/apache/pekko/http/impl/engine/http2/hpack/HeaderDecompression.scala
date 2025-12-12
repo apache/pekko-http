@@ -92,9 +92,9 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
             }
           }
         }
-        val bis = ByteStringInputStream(payload)
+        val stream = payload.compact.asInputStream
         try {
-          decoder.decode(bis, Receiver)
+          decoder.decode(stream, Receiver) // only compact ByteString supports InputStream with mark/reset
           decoder.endHeaderBlock() // TODO: do we have to check the result here?
 
           push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo))
@@ -104,7 +104,7 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
             fail(eventsOut,
               new Http2Compliance.Http2ProtocolException(ErrorCode.COMPRESSION_ERROR, "Decompression failed."))
         } finally {
-          bis.close()
+          stream.close()
         }
       }
 
