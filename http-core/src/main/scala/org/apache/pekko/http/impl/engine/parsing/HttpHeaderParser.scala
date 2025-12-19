@@ -227,8 +227,8 @@ private[engine] final class HttpHeaderParser private (
             case IllegalResponseHeaderNameProcessingMode.Warn =>
               log.warning(s"Header key contains illegal character '${escape(c)}'")
               check(ix + 1)
-            case IllegalResponseHeaderNameProcessingMode.Ignore =>
-              ()
+            case _ =>
+              check(ix + 1)
           }
         }
       }
