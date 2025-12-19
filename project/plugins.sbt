@@ -25,7 +25,7 @@ addSbtPlugin("org.apache.pekko" % "pekko-sbt-paradox" % "1.0.1")
 
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.10.0")
 addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.32")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.4")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.5")
 addSbtPlugin("com.github.pjfanning" % "sbt-source-dist" % "0.1.13")
 addSbtPlugin("com.github.pjfanning" % "sbt-pekko-build" % "0.4.7")
 addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.7.0")
