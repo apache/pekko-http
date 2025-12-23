@@ -165,37 +165,77 @@ private[engine] final class HttpHeaderParser private (
   }
 
   private def parseRawHeader(input: ByteString, lineStart: Int, cursor: Int, nodeIx: Int): Int = {
-    val colonIx = scanHeaderNameAndReturnIndexOfColon(input, lineStart, lineStart + 1 + maxHeaderNameLength)(cursor)
-    val headerName = asciiString(input, lineStart, colonIx)
-    try {
-      val valueParser = new RawHeaderValueParser(headerName, maxHeaderValueLength,
-        headerValueCacheLimit(headerName), log, illegalResponseHeaderValueProcessingMode)
-      insert(input, valueParser)(cursor, colonIx + 1, nodeIx, colonIx)
-      parseHeaderLine(input, lineStart)(cursor, nodeIx)
-    } catch {
-      case OutOfTrieSpaceException => // if we cannot insert we drop back to simply creating new header instances
-        val (headerValue, endIx) = scanHeaderValue(this, input, colonIx + 1, colonIx + maxHeaderValueLength + 3,
-          log, settings.illegalResponseHeaderValueProcessingMode)()
-        resultHeader = RawHeader(headerName, headerValue.trim)
-        endIx
+    val colonIx = input.indexOf(':', cursor, lineStart + 1 + maxHeaderNameLength)
+    if (colonIx == -1) {
+      scanIllegalHeaderNameCharacters(input, cursor, lineStart + 1 + maxHeaderNameLength)
+      fail(s"HTTP header name exceeds the configured limit of $maxHeaderNameLength characters",
+        StatusCodes.RequestHeaderFieldsTooLarge)
+    } else {
+      val headerName = scanAsciiString(input, lineStart, colonIx)
+      try {
+        val valueParser = new RawHeaderValueParser(headerName, maxHeaderValueLength,
+          headerValueCacheLimit(headerName), log, illegalResponseHeaderValueProcessingMode)
+        insert(input, valueParser)(cursor, colonIx + 1, nodeIx, colonIx)
+        parseHeaderLine(input, lineStart)(cursor, nodeIx)
+      } catch {
+        case OutOfTrieSpaceException => // if we cannot insert we drop back to simply creating new header instances
+          val (headerValue, endIx) = scanHeaderValue(this, input, colonIx + 1, colonIx + maxHeaderValueLength + 3,
+            log, settings.illegalResponseHeaderValueProcessingMode)()
+          resultHeader = RawHeader(headerName, headerValue.trim)
+          endIx
+      }
     }
   }
 
-  @tailrec private def scanHeaderNameAndReturnIndexOfColon(input: ByteString, start: Int, limit: Int)(ix: Int): Int =
-    if (ix < limit)
-      (byteChar(input, ix), settings.illegalResponseHeaderNameProcessingMode) match {
-        case (':', _)           => ix
-        case (c, _) if tchar(c) => scanHeaderNameAndReturnIndexOfColon(input, start, limit)(ix + 1)
-        case (c, IllegalResponseHeaderNameProcessingMode.Error) =>
-          fail(s"Illegal character '${escape(c)}' in header name")
-        case (c, IllegalResponseHeaderNameProcessingMode.Warn) =>
-          log.warning(s"Header key contains illegal character '${escape(c)}'")
-          scanHeaderNameAndReturnIndexOfColon(input, start, limit)(ix + 1)
-        case (c, IllegalResponseHeaderNameProcessingMode.Ignore) =>
-          scanHeaderNameAndReturnIndexOfColon(input, start, limit)(ix + 1)
+  // similar to asciiString function but it checks for illegal characters
+  private def scanAsciiString(input: ByteString, start: Int, end: Int): String = {
+    @tailrec def build(ix: Int = start, sb: JStringBuilder = new JStringBuilder(end - start)): String =
+      if (ix == end) {
+        sb.toString
+      } else {
+        val c = byteChar(input, ix)
+        if (tchar(c)) {
+          build(ix + 1, sb.append(c))
+        } else {
+          settings.illegalResponseHeaderNameProcessingMode match {
+            case IllegalResponseHeaderNameProcessingMode.Error =>
+              fail(s"Illegal character '${escape(c)}' in header name")
+            case IllegalResponseHeaderNameProcessingMode.Warn =>
+              log.warning(s"Header key contains illegal character '${escape(c)}'")
+              build(ix + 1, sb.append(c))
+            case IllegalResponseHeaderNameProcessingMode.Ignore =>
+              build(ix + 1, sb.append(c))
+          }
+        }
       }
-    else fail(s"HTTP header name exceeds the configured limit of ${limit - start - 1} characters",
-      StatusCodes.RequestHeaderFieldsTooLarge)
+    if (start == end) "" else build()
+  }
+
+  // similar to scanAsciiString but only scans for illegal characters and fails or warns if it finds one
+  private def scanIllegalHeaderNameCharacters(input: ByteString, start: Int, end: Int): Unit = {
+    @tailrec def check(ix: Int = start): Unit =
+      if (ix == end) {
+        ()
+      } else {
+        val c = byteChar(input, ix)
+        if (tchar(c)) {
+          check(ix + 1)
+        } else {
+          settings.illegalResponseHeaderNameProcessingMode match {
+            case IllegalResponseHeaderNameProcessingMode.Error =>
+              fail(s"Illegal character '${escape(c)}' in header name")
+            case IllegalResponseHeaderNameProcessingMode.Warn =>
+              log.warning(s"Header key contains illegal character '${escape(c)}'")
+              check(ix + 1)
+            case _ =>
+              check(ix + 1)
+          }
+        }
+      }
+    if (start == end || settings.illegalResponseHeaderNameProcessingMode == IllegalResponseHeaderNameProcessingMode.Ignore)
+      ()
+    else check()
+  }
 
   @tailrec
   private def parseHeaderValue(input: ByteString, valueStart: Int, branch: ValueBranch)(cursor: Int = valueStart,
