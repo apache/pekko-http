@@ -104,11 +104,12 @@ jobs:
           cd dist
 
           export RC_VERSION=$(echo $REF | tail -c +2)
+          export DIR="HTTP-$RC_VERSION"
 
-          mkdir $RC_VERSION
-          cp ../archive/* $RC_VERSION
-          svn add $RC_VERSION
-          svn commit --username "$PEKKO_SVN_DEV_USERNAME" --password "$PEKKO_SVN_DEV_PASSWORD" --message "Stage Pekko $RC_VERSION" $RC_VERSION
+          mkdir $DIR
+          cp ../archive/* $DIR
+          svn add $DIR
+          svn commit --username "$PEKKO_SVN_DEV_USERNAME" --password "$PEKKO_SVN_DEV_PASSWORD" --message "Stage Pekko HTTP $RC_VERSION" $DIR
         env:
           PEKKO_SVN_DEV_USERNAME: ${{ secrets.PEKKO_SVN_DEV_USERNAME }}
           PEKKO_SVN_DEV_PASSWORD: ${{ secrets.PEKKO_SVN_DEV_PASSWORD }}
@@ -253,7 +254,7 @@ jobs:
           export SENDER=$(curl "https://api.github.com/users/$ACTOR" | jq .name | tr -d \")
           echo "SENDER=$SENDER"
 
-          echo "This template can be used to start a vote, either via manual email or via https://release-test.apache.org/compose/pekko/$VERSION"
+          echo "This template can be used to start a vote, either via manual email or via https://release-test.apache.org/compose/pekko-http/$VERSION"
           echo
           cat <<EOF;
           Subject: [VOTE] Release Apache $MODULE $RC_VERSION
@@ -268,8 +269,8 @@ jobs:
           
           The release candidate:
           
-          https://dist.apache.org/repos/dist/dev/pekko/$RC_VERSION
-          https://release-test.apache.org/vote/pekko/$VERSION
+          https://dist.apache.org/repos/dist/dev/pekko/HTTP-$RC_VERSION
+          https://release-test.apache.org/vote/pekko-http/$VERSION
           
           This release has been signed with a PGP key available here:
           
@@ -327,7 +328,7 @@ jobs:
           
           https://pekko.apache.org/download.html#verifying-downloads
           
-          You can vote on ATR at https://release-test.apache.org/vote/pekko/$VERSION
+          You can vote on ATR at https://release-test.apache.org/vote/pekko-http/$VERSION
           or manually by replying to this email.
 
           
