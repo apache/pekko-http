@@ -148,8 +148,10 @@ jobs:
           persist-credentials: false
 
       - name: Generate source archive
+        id: generate-source-archive
         run: |-
           VERSION=$(echo $REF | sed -e "s/.\(.*\)-.*/\\1/")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           PREFIX=apache-pekko-http-$VERSION
           DATE=$(git log -n1 --format=%cs | tr -d -)
           TARBALL=$PREFIX-src-$DATE.tgz
@@ -172,7 +174,7 @@ jobs:
         uses: apache/tooling-actions/upload-to-atr@ca6ed9e095c40db61c42a90db2599bb2fbc2319f
         with:
           project: pekko-http
-          version: ${{ env.VERSION }}
+          version: ${{ steps.generate-source-archive.outputs.version }}
 
   stage-jars-to-nexus:
     runs-on: ubuntu-24.04
