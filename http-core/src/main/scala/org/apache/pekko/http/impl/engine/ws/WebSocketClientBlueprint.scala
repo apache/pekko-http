@@ -113,7 +113,7 @@ private[http] object WebSocketClientBlueprint {
 
           override def onPush(): Unit = {
             parser.parseBytes(grab(in)) match {
-              case NeedMoreData => pull(in)
+              case NeedMoreData                                                        => pull(in)
               case ResponseStart(status, protocol, attributes, headers, entity, close) =>
                 val response = new HttpResponse(status, headers, attributes, HttpEntity.Empty, protocol)
                 Handshake.Client.validateResponse(response, subprotocols, key) match {
@@ -132,7 +132,7 @@ private[http] object WebSocketClientBlueprint {
                     parser.onPull() match {
                       case NeedMoreData          => pull(in)
                       case RemainingBytes(bytes) => push(out, bytes)
-                      case other =>
+                      case other                 =>
                         throw new IllegalStateException(s"unexpected element of type ${other.getClass}")
                     }
                   case Left(problem) =>

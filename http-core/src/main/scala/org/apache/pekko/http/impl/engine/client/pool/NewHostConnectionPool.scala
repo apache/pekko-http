@@ -463,7 +463,7 @@ private[client] object NewHostConnectionPool {
             val newRequest =
               request.entity match {
                 case _: HttpEntity.Strict => request
-                case e =>
+                case e                    =>
                   val (newEntity, entityComplete) = HttpEntity.captureTermination(request.entity)
                   entityComplete.onComplete(safely {
                     case Success(_)     => withSlot(_.onRequestEntityCompleted())

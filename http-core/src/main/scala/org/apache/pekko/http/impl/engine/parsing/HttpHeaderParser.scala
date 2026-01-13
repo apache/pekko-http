@@ -184,8 +184,8 @@ private[engine] final class HttpHeaderParser private (
   @tailrec private def scanHeaderNameAndReturnIndexOfColon(input: ByteString, start: Int, limit: Int)(ix: Int): Int =
     if (ix < limit)
       (byteChar(input, ix), settings.illegalResponseHeaderNameProcessingMode) match {
-        case (':', _)           => ix
-        case (c, _) if tchar(c) => scanHeaderNameAndReturnIndexOfColon(input, start, limit)(ix + 1)
+        case (':', _)                                           => ix
+        case (c, _) if tchar(c)                                 => scanHeaderNameAndReturnIndexOfColon(input, start, limit)(ix + 1)
         case (c, IllegalResponseHeaderNameProcessingMode.Error) =>
           fail(s"Illegal character '${escape(c)}' in header name")
         case (c, IllegalResponseHeaderNameProcessingMode.Warn) =>
@@ -206,7 +206,9 @@ private[engine] final class HttpHeaderParser private (
         try {
           insert(input, header)(cursor, endIx, nodeIx, colonIx = 0)
           values(branch.valueIx) = branch.withValueCountIncreased
-        } catch { case OutOfTrieSpaceException => /* if we cannot insert then we simply don't */ }
+        } catch {
+          case OutOfTrieSpaceException => /* if we cannot insert then we simply don't */
+        }
       resultHeader = header
       endIx
     }
@@ -215,7 +217,7 @@ private[engine] final class HttpHeaderParser private (
     if (char == node) // fast match, descend
       parseHeaderValue(input, valueStart, branch)(cursor + 1, nodeIx + 1)
     else node >>> 8 match {
-      case 0 => parseAndInsertHeader()
+      case 0   => parseAndInsertHeader()
       case msb => node & 0xFF match {
           case 0 => // leaf node
             resultHeader = values(msb - 1).asInstanceOf[HttpHeader]
@@ -223,7 +225,7 @@ private[engine] final class HttpHeaderParser private (
           case nodeChar => // branching node
             val signum = math.signum(char - nodeChar)
             branchData(rowIx(msb) + 1 + signum) match {
-              case 0 => parseAndInsertHeader() // header doesn't exist yet
+              case 0         => parseAndInsertHeader() // header doesn't exist yet
               case subNodeIx => // descend into branch and advance on char matches (otherwise descend but don't advance)
                 parseHeaderValue(input, valueStart, branch)(cursor + 1 - math.abs(signum), subNodeIx)
             }
@@ -353,7 +355,7 @@ private[engine] final class HttpHeaderParser private (
       val node = nodes(nodeIx)
       val char = escape((node & 0xFF).toChar)
       node >>> 8 match {
-        case 0 => recurseAndPrefixLines(nodeIx + 1, "  ", char + "-", "  ")
+        case 0   => recurseAndPrefixLines(nodeIx + 1, "  ", char + "-", "  ")
         case msb => node & 0xFF match {
             case 0 => values(msb - 1) match {
                 case ValueBranch(_, valueParser, branchRootNodeIx, _) =>
@@ -392,7 +394,7 @@ private[engine] final class HttpHeaderParser private (
     def build(nodeIx: Int = 0): Map[String, Int] = {
       val node = nodes(nodeIx)
       node >>> 8 match {
-        case 0 => build(nodeIx + 1)
+        case 0                         => build(nodeIx + 1)
         case msb if (node & 0xFF) == 0 =>
           values(msb - 1) match {
             case ValueBranch(_, parser, _, count) => Map(parser.headerName -> count)
@@ -568,7 +570,7 @@ private[http] object HttpHeaderParser {
         settings.illegalResponseHeaderValueProcessingMode)()
       val trimmedHeaderValue = headerValue.trim
       val header = parser(trimmedHeaderValue) match {
-        case HeaderParser.Success(h) => h
+        case HeaderParser.Success(h)     => h
         case HeaderParser.Failure(error) =>
           onIllegalHeader(error.withSummaryPrepended(s"Illegal '$headerName' header").withErrorHeaderName(headerName))
           RawHeader(headerName, trimmedHeaderValue)
@@ -599,7 +601,7 @@ private[http] object HttpHeaderParser {
     def appended2(c: Int) = if ((c >> 16) != 0) appended(c.toChar).append((c >> 16).toChar) else appended(c.toChar)
     if (ix < limit)
       byteChar(input, ix) match {
-        case '\t' => scanHeaderValue(hhp, input, start, limit, log, mode)(appended(' '), ix + 1)
+        case '\t'                                     => scanHeaderValue(hhp, input, start, limit, log, mode)(appended(' '), ix + 1)
         case '\r' if byteAt(input, ix + 1) == LF_BYTE =>
           if (WSP(byteChar(input, ix + 2))) scanHeaderValue(hhp, input, start, limit, log, mode)(appended(' '), ix + 3)
           else (if (sb != null) sb.toString else asciiString(input, start, ix), ix + 2)

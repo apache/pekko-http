@@ -142,11 +142,11 @@ private[http] final class HttpRequestParser(
               case 'A' => parseMethod(PATCH, 2)
               case _   => parseCustomMethod()
             }
-          case 'D' => parseMethod(DELETE)
-          case 'H' => parseMethod(HEAD)
-          case 'O' => parseMethod(OPTIONS)
-          case 'T' => parseMethod(TRACE)
-          case 'C' => parseMethod(CONNECT)
+          case 'D'  => parseMethod(DELETE)
+          case 'H'  => parseMethod(HEAD)
+          case 'O'  => parseMethod(OPTIONS)
+          case 'T'  => parseMethod(TRACE)
+          case 'C'  => parseMethod(CONNECT)
           case 0x16 =>
             throw new ParsingException(
               BadRequest,

@@ -215,7 +215,7 @@ trait SecurityDirectives {
       authenticator: Option[C] => Future[AuthenticationResult[T]]): AuthenticationDirective[T] =
     extractCredentials.flatMap { cred =>
       onSuccess(authenticator(cred)).flatMap {
-        case Right(user) => provide(user)
+        case Right(user)     => provide(user)
         case Left(challenge) =>
           val cause = if (cred.isEmpty) CredentialsMissing else CredentialsRejected
           reject(AuthenticationFailedRejection(cause, challenge)): Directive1[T]

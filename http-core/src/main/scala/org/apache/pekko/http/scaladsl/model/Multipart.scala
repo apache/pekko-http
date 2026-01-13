@@ -296,7 +296,7 @@ object Multipart {
         val params = dispositionParams
         params.get("name") match {
           case Some(name) => Success(f(name, params - "name", headers.filterNot(_.is("content-disposition"))))
-          case None => Failure(IllegalHeaderException(
+          case None       => Failure(IllegalHeaderException(
               "multipart/form-data part must contain `Content-Disposition` header with `name` parameter"))
         }
       }

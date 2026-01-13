@@ -104,7 +104,7 @@ trait MultipartUnmarshallers {
                       case BodyPartStart(headers, createEntity) =>
                         val entity = createEntity(Source.empty) match {
                           case x: HttpEntity.Strict => x
-                          case x =>
+                          case x                    =>
                             throw new IllegalStateException("Unexpected entity type from strict BodyPartParser: " + x)
                         }
                         builder += createStrictBodyPart(entity, headers)

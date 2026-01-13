@@ -65,8 +65,8 @@ private[http2] object FrameLogger {
 
     def entryForFrame(frameEvent: FrameEvent): LogEntry =
       frameEvent match {
-        case PingFrame(false, data) => LogEntry(0, "PING", hex(data))
-        case PingFrame(true, data)  => LogEntry(0, "PONG", hex(data))
+        case PingFrame(false, data)                                       => LogEntry(0, "PING", hex(data))
+        case PingFrame(true, data)                                        => LogEntry(0, "PONG", hex(data))
         case HeadersFrame(streamId, endStream, endHeaders, payload, prio) =>
           val prioInfo = if (prio.isDefined) display(entryForFrame(prio.get)) + " " else ""
 

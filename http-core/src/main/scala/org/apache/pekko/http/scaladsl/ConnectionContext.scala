@@ -42,7 +42,7 @@ object ConnectionContext {
   @ApiMayChange
   def httpsServer(createSSLEngine: () => SSLEngine): HttpsConnectionContext =
     new HttpsConnectionContext({
-      case None => createSSLEngine()
+      case None    => createSSLEngine()
       case Some(_) =>
         throw new IllegalArgumentException("host and port supplied for connection based on server connection context")
     }: Option[(String, Int)] => SSLEngine)

@@ -710,7 +710,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
             Source.single(ctx),
             rendererFactory.renderer.named("renderer")
               .map {
-                case ResponseRenderingOutput.HttpData(bytes) => bytes
+                case ResponseRenderingOutput.HttpData(bytes)          => bytes
                 case _: ResponseRenderingOutput.SwitchToOtherProtocol =>
                   throw new IllegalStateException("Didn't expect protocol switch response")
               })

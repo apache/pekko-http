@@ -104,7 +104,7 @@ private[http] final class BodyPartParser(
         @tailrec def loop(): Unit =
           trampoline match {
             case null =>
-            case f =>
+            case f    =>
               trampoline = null
               f()
               loop()

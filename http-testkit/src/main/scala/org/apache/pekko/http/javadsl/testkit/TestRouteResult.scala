@@ -42,7 +42,7 @@ abstract class TestRouteResult(_result: Future[RouteResult], awaitAtMost: Finite
     materializer: Materializer) {
 
   private def _response = _result.awaitResult(awaitAtMost) match {
-    case scaladsl.server.RouteResult.Complete(r) => r
+    case scaladsl.server.RouteResult.Complete(r)          => r
     case scaladsl.server.RouteResult.Rejected(rejections) =>
       doFail("Expected route to complete, but was instead rejected with " + rejections)
   }

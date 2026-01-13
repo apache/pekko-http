@@ -304,11 +304,12 @@ class H2SpecIntegrationSpec extends PekkoFreeSpec(
       val stdout = new StringBuffer()
       val stderr = new StringBuffer()
 
-      val command = Seq( // need to use Seq[String] form for command because executable path may contain spaces
-        executable,
-        "-k", "-t",
-        "-p", port.toString,
-        "-j", junitOutput.getPath) ++
+      val command =
+        Seq( // need to use Seq[String] form for command because executable path may contain spaces
+          executable,
+          "-k", "-t",
+          "-p", port.toString,
+          "-j", junitOutput.getPath) ++
         specSectionNumber.toList.map(number => s"http2/$number")
 
       log.debug(s"Executing h2spec: $command")

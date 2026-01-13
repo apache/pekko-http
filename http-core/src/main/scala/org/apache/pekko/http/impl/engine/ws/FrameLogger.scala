@@ -65,7 +65,7 @@ private[ws] object FrameLogger {
       case f @ FrameStart(header, data) => displayLogEntry(header.opcode.short, header.length, hex(data), f.lastPart,
           flag(header.fin, "FIN"), flag(header.rsv1, "RSV1"), flag(header.rsv2, "RSV2"), flag(header.rsv3, "RSV3"))
       case FrameData(data, lastPart) => displayLogEntry("DATA", 0, hex(data), lastPart)
-      case FrameError(ex) =>
+      case FrameError(ex)            =>
         f"${RED}Error: ${ex.getMessage}$RESET"
     }
   }

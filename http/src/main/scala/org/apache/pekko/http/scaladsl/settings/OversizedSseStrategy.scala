@@ -44,7 +44,7 @@ object OversizedSseStrategy {
     case "log-and-skip" => LogAndSkip
     case "truncate"     => Truncate
     case "dead-letter"  => DeadLetter
-    case _ => throw new IllegalArgumentException(
+    case _              => throw new IllegalArgumentException(
         s"Invalid oversized-message-handling: '$value'. Valid options are: fail-stream, log-and-skip, truncate, dead-letter")
   }
 

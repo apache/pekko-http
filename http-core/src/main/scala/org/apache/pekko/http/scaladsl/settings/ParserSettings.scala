@@ -195,7 +195,7 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
         case "error"  => Error
         case "warn"   => Warn
         case "ignore" => Ignore
-        case x => throw new IllegalArgumentException(
+        case x        => throw new IllegalArgumentException(
             s"[$x] is not a legal `illegal-response-header-value-processing-mode` setting")
       }
   }
@@ -212,7 +212,7 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
         case "error"  => Error
         case "warn"   => Warn
         case "ignore" => Ignore
-        case x => throw new IllegalArgumentException(
+        case x        => throw new IllegalArgumentException(
             s"[$x] is not a legal `illegal-response-header-name-processing-mode` setting")
       }
   }
@@ -231,7 +231,7 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
         case "first"           => First
         case "last"            => Last
         case "no-content-type" => NoContentType
-        case x => throw new IllegalArgumentException(
+        case x                 => throw new IllegalArgumentException(
             s"[$x] is not a legal `conflicting-content-type-header-processing-mode` setting")
       }
   }

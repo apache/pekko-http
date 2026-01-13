@@ -426,7 +426,7 @@ abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles:
       val deployString = replacements.foldLeft(str) { (base, r) =>
         val tag = r.tag
         base.indexOf(tag) match {
-          case -1 => base
+          case -1    => base
           case start =>
             val replaceWith =
               try
@@ -446,7 +446,7 @@ abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles:
       import scala.jdk.CollectionConverters._
       ConfigFactory.parseString(deployString).root.asScala.foreach {
         case (key, value: ConfigObject) => deployer.parseConfig(key, value.toConfig).foreach(deployer.deploy)
-        case (key, x) =>
+        case (key, x)                   =>
           throw new IllegalArgumentException(s"key $key must map to deployment section, not simple value $x")
       }
     }

@@ -134,7 +134,7 @@ private[http] class HttpRequestRendererFactory(
     def renderStreamed(body: Source[ByteString, Any]): RequestRenderingOutput = {
       val headerPart = Source.single(r.get)
       val stream = ctx.sendEntityTrigger match {
-        case None => headerPart ++ body
+        case None         => headerPart ++ body
         case Some(future) =>
           val barrier = Source.future(future).drop(1).asInstanceOf[Source[ByteString, Any]]
           (headerPart ++ barrier ++ body).recoverWithRetries(-1,
@@ -172,7 +172,7 @@ private[http] class HttpRequestRendererFactory(
   def renderStrict(ctx: RequestRenderingContext): ByteString =
     render(ctx) match {
       case RequestRenderingOutput.Strict(bytes) => bytes
-      case _: RequestRenderingOutput.Streamed =>
+      case _: RequestRenderingOutput.Streamed   =>
         throw new IllegalArgumentException(
           s"Request entity was not Strict but ${ctx.request.entity.getClass.getSimpleName}")
     }

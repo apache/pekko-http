@@ -108,7 +108,7 @@ class MigrateToServerBuilder extends SemanticRule("MigrateToServerBuilder") {
 
       case t @ q"$http.bindAndHandle(..$params)" if isHttpExt(http)     => patch(t, http, bindAndHandleTargetMethod)
       case t @ q"$http.bindAndHandleSync(..$params)" if isHttpExt(http) => patch(t, http, _ => "bindSync")
-      case t @ q"$http.bind(..$params)" if isHttpExt(http) =>
+      case t @ q"$http.bind(..$params)" if isHttpExt(http)              =>
         val args = Seq("interface", "port", "connectionContext", "settings", "log")
         val argExps = namedArgMap(args, params)
 

@@ -451,7 +451,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       }
     }
     "properly render a sub directory with a path prefix" in {
-      Get("/files/sub/") ~> withSettings(settings)(
+      Get("/files/sub/")                                               ~> withSettings(settings)(
         pathPrefix("files")(listDirectoryContents(base + "/someDir"))) ~> check {
         eraseDateTime(responseAs[String]) shouldEqual prep {
           """<html>
@@ -471,7 +471,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       }
     }
     "properly render an empty top-level directory with a path prefix" in {
-      Get("/files/") ~> withSettings(settings)(
+      Get("/files/")                                                                 ~> withSettings(settings)(
         pathPrefix("files")(listDirectoryContents(base + "/subDirectory/emptySub"))) ~> check {
         eraseDateTime(responseAs[String]) shouldEqual prep {
           """<html>

@@ -478,7 +478,7 @@ object Uri {
     def apply(address: InetAddress): Host = address match {
       case ipv4: Inet4Address => apply(ipv4)
       case ipv6: Inet6Address => apply(ipv6)
-      case _ =>
+      case _                  =>
         throw new IllegalArgumentException(s"Unexpected address type(${address.getClass.getSimpleName}): $address")
     }
     def apply(address: Inet4Address): IPv4Host = IPv4Host(address.getAddress, address.getHostAddress)
@@ -904,7 +904,7 @@ object Uri {
         case Path.Empty                       => output.reverse
         case Segment("." | "..", Slash(tail)) => process(tail, output)
         case Slash(Segment(".", tail))        => process(if (tail.isEmpty) Path./ else tail, output)
-        case Slash(Segment("..", tail)) => process(
+        case Slash(Segment("..", tail))       => process(
             input = if (tail.isEmpty) Path./ else tail,
             output =
               if (output.startsWithSegment)
@@ -1024,8 +1024,8 @@ object UriRendering {
   def renderPath[R <: Rendering](
       r: R, path: Path, charset: Charset, encodeFirstSegmentColons: Boolean = false): r.type =
     path match {
-      case Path.Empty       => r
-      case Path.Slash(tail) => renderPath(r ~~ '/', tail, charset, false)
+      case Path.Empty               => r
+      case Path.Slash(tail)         => renderPath(r ~~ '/', tail, charset, false)
       case Path.Segment(head, tail) =>
         val keep = if (encodeFirstSegmentColons) `pchar-base-nc` else `pchar-base`
         renderPath(encode(r, head, charset, keep), tail, charset, false)
@@ -1036,7 +1036,7 @@ object UriRendering {
     def enc(s: String): Unit = encode(r, s, charset, keep, replaceSpaces = true)
     @tailrec def append(q: Query): r.type =
       q match {
-        case Query.Empty => r
+        case Query.Empty                  => r
         case Query.Cons(key, value, tail) =>
           if (q ne query) r ~~ '&'
           enc(key)
@@ -1058,7 +1058,7 @@ object UriRendering {
           case c if keep(c)                     => { r ~~ c; 1 }
           case ' ' if replaceSpaces             => { r ~~ '+'; 1 }
           case c if c <= 127 && asciiCompatible => { appendEncoded(c.toByte); 1 }
-          case c =>
+          case c                                =>
             def append(s: String) = s.getBytes(charset).foreach(appendEncoded)
             if (Character.isHighSurrogate(c)) { append(new String(Array(string.codePointAt(ix)), 0, 1)); 2 }
             else { append(c.toString); 1 }

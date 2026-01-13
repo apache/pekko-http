@@ -229,8 +229,8 @@ class MarshallingDirectivesSpec extends RoutingSpec with Inside {
 
     "result in an UnacceptedResponseContentTypeRejection rejection if there is no marshaller supporting the requests Accept-Charset header" in (
       Put("/", HttpEntity(ContentTypes.`text/html(UTF-8)`, "<int>42</int>")) ~> addHeaders(Accept(`text/xxml`),
-        `Accept-Charset`(`UTF-16`)) ~>
-      handleWith(times2) ~> check {
+        `Accept-Charset`(`UTF-16`))                                          ~>
+      handleWith(times2)                                                     ~> check {
         rejection shouldEqual UnacceptedResponseContentTypeRejection(Set(`application/xhtml+xml`, `text/xxml`))
       })
   }

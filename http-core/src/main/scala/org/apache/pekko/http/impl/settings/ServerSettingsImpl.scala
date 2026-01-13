@@ -111,7 +111,7 @@ private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSett
       defaultHostHeader =
         HttpHeader.parse("Host", c.getString("default-host-header"), parserSettings) match {
           case HttpHeader.ParsingResult.Ok(x: Host, Nil) => x
-          case result =>
+          case result                                    =>
             val info = result.errors.head.withSummary("Configured `default-host-header` is illegal")
             throw new ConfigurationException(info.formatPretty)
         },

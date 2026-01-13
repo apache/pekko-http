@@ -171,7 +171,7 @@ object CodingDirectives extends CodingDirectives {
       val bestEncoder = negotiator.pickEncoding(encodings).flatMap(be => encoders.find(_.encoding == be))
       bestEncoder match {
         case Some(encoder) => mapResponse(encoder.encodeMessage(_))
-        case _ =>
+        case _             =>
           if (encoders.contains(Coders.NoCoding) && !negotiator.hasMatchingFor(HttpEncodings.identity)) pass
           else reject(UnacceptedResponseEncodingRejection(encodings.toSet))
       }

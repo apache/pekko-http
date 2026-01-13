@@ -71,7 +71,7 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
         Unmarshaller.strict[UserId, AnotherUserId](userId => AnotherUserId(userId.id))
       Get("/?id=45") ~> {
         parameter("id".as[Int].as(UserIdUnmarshaller)) { echoComplete }
-      } ~> check { responseAs[String] shouldEqual "UserId(45)" }
+      }              ~> check { responseAs[String] shouldEqual "UserId(45)" }
       Get("/?id=45") ~> {
         parameter("id".as[Int].as(UserIdUnmarshaller).as[AnotherUserId]) { echoComplete }
       } ~> check { responseAs[String] shouldEqual "AnotherUserId(45)" }
@@ -150,7 +150,7 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
     "extract parameter values as Boolean" in {
       Get("/?really=true") ~> {
         parameter("really".as[Boolean]) { echoComplete }
-      } ~> check { responseAs[String] shouldEqual "true" }
+      }                  ~> check { responseAs[String] shouldEqual "true" }
       Get("/?really=no") ~> {
         parameter("really".as[Boolean]) { echoComplete }
       } ~> check { responseAs[String] shouldEqual "false" }
@@ -158,7 +158,7 @@ class ParameterDirectivesSpec extends AnyFreeSpec with GenericRoutingSpec with I
     "extract numeric parameter value as Boolean" in {
       Get("/?really=1") ~> {
         parameter("really".as[Boolean]) { echoComplete }
-      } ~> check { responseAs[String] shouldEqual "true" }
+      }                 ~> check { responseAs[String] shouldEqual "true" }
       Get("/?really=0") ~> {
         parameter("really".as[Boolean]) { echoComplete }
       } ~> check { responseAs[String] shouldEqual "false" }

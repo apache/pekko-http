@@ -136,7 +136,7 @@ class HttpsProxyGraphStageSpec extends PekkoSpecWithMaterializer {
 
         sink.expectError() match {
           case _: ProxyConnectionFailedException =>
-          case e =>
+          case e                                 =>
             fail(s"should be ProxyConnectionFailedException, caught ${e.getClass.getName} instead")
         }
       }

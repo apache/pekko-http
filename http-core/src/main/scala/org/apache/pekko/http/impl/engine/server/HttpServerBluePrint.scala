@@ -541,7 +541,7 @@ private[http] object HttpServerBluePrint {
                 case EntityStreamSizeException(limit, contentLength) =>
                   val summary = contentLength match {
                     case Some(cl) => s"Request Content-Length of $cl bytes exceeds the configured limit of $limit bytes"
-                    case None =>
+                    case None     =>
                       s"Aggregated data length of request entity exceeds the configured limit of $limit bytes"
                   }
                   val info =
@@ -692,7 +692,7 @@ private[http] object HttpServerBluePrint {
         new InHandler {
           override def onPush(): Unit =
             grab(fromHttp) match {
-              case HttpData(b) => push(toNet, b)
+              case HttpData(b)                               => push(toNet, b)
               case SwitchToOtherProtocol(bytes, handlerFlow) =>
                 push(toNet, bytes)
                 complete(toHttp)

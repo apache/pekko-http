@@ -109,8 +109,8 @@ private[http] object FrameHandler {
           def handleRegularFrameStart(start: FrameStart): Unit
 
           override def handleFrameStart(start: FrameStart): Unit = start.header match {
-            case h: FrameHeader if h.mask.isDefined && !server => pushProtocolError()
-            case h: FrameHeader if h.rsv1 || h.rsv2 || h.rsv3  => pushProtocolError()
+            case h: FrameHeader if h.mask.isDefined && !server                                      => pushProtocolError()
+            case h: FrameHeader if h.rsv1 || h.rsv2 || h.rsv3                                       => pushProtocolError()
             case FrameHeader(op, _, length, fin, _, _, _) if op.isControl && (length > 125 || !fin) =>
               pushProtocolError()
             case h: FrameHeader if h.opcode.isControl =>
@@ -152,7 +152,7 @@ private[http] object FrameHandler {
                 setHandler(in, WaitForPeerTcpClose)
                 push(out, PeerClosed.parse(data))
               case Opcode.Other(o) => closeWithCode(Protocol.CloseCodes.ProtocolError, "Unsupported opcode")
-              case other => failStage(
+              case other           => failStage(
                   new IllegalStateException(
                     s"unexpected message of type [${other.getClass.getName}] when expecting ControlFrame"))
             }

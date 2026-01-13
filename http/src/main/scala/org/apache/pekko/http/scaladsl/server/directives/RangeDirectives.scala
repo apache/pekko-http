@@ -147,7 +147,7 @@ trait RangeDirectives {
                   ranges.filter(satisfiable(length)) match {
                     case Nil                   => ctx.reject(UnsatisfiableRangeRejection(ranges, length))
                     case Seq(satisfiableRange) => ctx.complete(rangeResponse(satisfiableRange, entity, length, headers))
-                    case satisfiableRanges =>
+                    case satisfiableRanges     =>
                       ctx.complete((PartialContent, headers, multipartRanges(satisfiableRanges, entity)))
                   }
                 case None =>

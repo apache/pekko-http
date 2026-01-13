@@ -137,7 +137,7 @@ object ParameterDirectives extends ParameterDirectives {
         import ctx.materializer
         onComplete(fsou(ctx.request.uri.query().get(paramName))).flatMap {
           case Success(value) if value == requiredValue => pass
-          case Success(value) =>
+          case Success(value)                           =>
             reject(InvalidRequiredValueForQueryParamRejection(paramName, requiredValue.toString, value.toString))
           case _ => reject(MissingQueryParamRejection(paramName))
         }

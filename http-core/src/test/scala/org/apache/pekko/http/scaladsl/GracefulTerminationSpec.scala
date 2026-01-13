@@ -225,7 +225,7 @@ class GracefulTerminationSpec
                 .mapMaterializedValue { conn =>
                   val result = Promise[Http.OutgoingConnection]()
                   conn.onComplete {
-                    case Success(s) => result.trySuccess(s)
+                    case Success(s)  => result.trySuccess(s)
                     case Failure(ex) =>
                       log.debug(s"Delaying failure ${ex.getMessage}")
                       system.scheduler.scheduleOnce(100.millis)(result.tryFailure(ex))

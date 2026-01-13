@@ -52,8 +52,8 @@ object TestServer extends App {
           case Some(upgrade) => upgrade.handleMessages(echoWebSocketService) // needed for running the autobahn test suite
           case None          => index
         }
-      case HttpRequest(GET, Uri.Path("/ping"), _, _, _)  => HttpResponse(entity = "PONG!")
-      case HttpRequest(GET, Uri.Path("/crash"), _, _, _) => sys.error("BOOM!")
+      case HttpRequest(GET, Uri.Path("/ping"), _, _, _)             => HttpResponse(entity = "PONG!")
+      case HttpRequest(GET, Uri.Path("/crash"), _, _, _)            => sys.error("BOOM!")
       case req @ HttpRequest(GET, Uri.Path("/ws-greeter"), _, _, _) =>
         req.attribute(webSocketUpgrade) match {
           case Some(upgrade) => upgrade.handleMessages(greeterWebSocketService)

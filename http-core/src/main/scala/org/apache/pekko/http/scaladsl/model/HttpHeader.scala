@@ -93,7 +93,7 @@ object HttpHeader {
         case Success(preProcessedValue) =>
           HeaderParser.parseFull(name.toLowerCase, preProcessedValue, settings) match {
             case HeaderParser.Success(header) => ParsingResult.Ok(header, Nil)
-            case HeaderParser.Failure(info) =>
+            case HeaderParser.Failure(info)   =>
               val errors = info.withSummaryPrepended(s"Illegal HTTP header '$name'") :: Nil
               ParsingResult.Ok(RawHeader(name, preProcessedValue), errors)
             case HeaderParser.RuleNotFound => ParsingResult.Ok(RawHeader(name, preProcessedValue), Nil)

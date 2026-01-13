@@ -517,11 +517,11 @@ class PathDirectivesSpec extends RoutingSpec with Inside {
     }
 
     "redirect with the given redirection status code" in {
-      Get("/foo/bar") ~>
+      Get("/foo/bar")                                                   ~>
       redirectToTrailingSlashIfMissing(MovedPermanently) { completeOk } ~>
       check { status shouldEqual MovedPermanently }
 
-      Get("/foo/bar/") ~>
+      Get("/foo/bar/")                                                  ~>
       redirectToTrailingSlashIfMissing(MovedPermanently) { completeOk } ~>
       check { status shouldEqual StatusCodes.OK }
     }
@@ -547,7 +547,7 @@ class PathDirectivesSpec extends RoutingSpec with Inside {
     }
 
     "redirect with the given redirection status code" in {
-      Get("/foo/bar/") ~>
+      Get("/foo/bar/")                                                    ~>
       redirectToNoTrailingSlashIfPresent(MovedPermanently) { completeOk } ~>
       check { status shouldEqual MovedPermanently }
     }

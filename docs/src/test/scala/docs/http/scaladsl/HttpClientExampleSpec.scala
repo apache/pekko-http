@@ -192,8 +192,8 @@ class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySp
       Source.queue[(HttpRequest, Promise[HttpResponse])](QueueSize)
         .via(poolClientFlow)
         .to(Sink.foreach {
-          case ((Success(resp), p)) => p.success(resp)
-          case ((Failure(e), p))    => p.failure(e)
+          case (Success(resp), p) => p.success(resp)
+          case (Failure(e), p)    => p.failure(e)
         })
         .run()
 

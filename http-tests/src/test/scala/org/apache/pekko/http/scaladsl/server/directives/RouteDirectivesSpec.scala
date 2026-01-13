@@ -103,7 +103,7 @@ class RouteDirectivesSpec extends AnyWordSpec with GenericRoutingSpec {
             }
             complete {
               registerUser(name).map[ToResponseMarshallable] {
-                case Registered(_) => HttpEntity.Empty
+                case Registered(_)     => HttpEntity.Empty
                 case AlreadyRegistered =>
                   import SprayJsonSupport._
 

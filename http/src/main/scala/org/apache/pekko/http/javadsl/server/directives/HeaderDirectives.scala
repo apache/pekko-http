@@ -44,7 +44,7 @@ abstract class HeaderDirectives extends FutureDirectives {
   def checkSameOrigin(allowed: HttpOriginRange, inner: jf.Supplier[Route]): Route =
     allowed match {
       case HttpOriginRanges.ALL | pekko.http.scaladsl.model.headers.HttpOriginRange.`*` => pass(inner)
-      case _ => RouteAdapter {
+      case _                                                                            => RouteAdapter {
           // safe, we know it's not the `*` header
           val default = allowed.asInstanceOf[pekko.http.scaladsl.model.headers.HttpOriginRange.Default]
           D.checkSameOrigin(default) { inner.get().delegate }
