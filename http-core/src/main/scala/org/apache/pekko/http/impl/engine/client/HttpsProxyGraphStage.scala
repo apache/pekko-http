@@ -141,7 +141,7 @@ private final class HttpsProxyGraphStage(
                       s"parseResult should be MessageEnd but was $parseResult")
                     parser.onPull() match {
                       // NeedMoreData is what we emit in overridden `parseMessage` in case input.size == offset
-                      case NeedMoreData =>
+                      case NeedMoreData          =>
                       case RemainingBytes(bytes) =>
                         push(sslOut, bytes) // parser already read more than expected, forward that data directly
                         pushed = true

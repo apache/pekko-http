@@ -48,7 +48,7 @@ sealed trait TextMessage extends pekko.http.javadsl.model.ws.TextMessage with Me
    */
   def toStrict(timeout: FiniteDuration)(implicit fm: Materializer): Future[TextMessage.Strict] =
     this match {
-      case TextMessage.Strict(text) => Future.successful(TextMessage.Strict(text))
+      case TextMessage.Strict(text)         => Future.successful(TextMessage.Strict(text))
       case TextMessage.Streamed(textStream) => textStream
           .completionTimeout(timeout)
           .runFold(new StringBuilder())((b, s) => b.append(s))
@@ -108,7 +108,7 @@ sealed trait BinaryMessage extends pekko.http.javadsl.model.ws.BinaryMessage wit
    */
   def toStrict(timeout: FiniteDuration)(implicit fm: Materializer): Future[BinaryMessage.Strict] =
     this match {
-      case BinaryMessage.Strict(binary) => Future.successful(BinaryMessage.Strict(binary))
+      case BinaryMessage.Strict(binary)         => Future.successful(BinaryMessage.Strict(binary))
       case BinaryMessage.Streamed(binaryStream) => binaryStream
           .completionTimeout(timeout)
           .runFold(new ByteStringBuilder())((b, e) => b.append(e))

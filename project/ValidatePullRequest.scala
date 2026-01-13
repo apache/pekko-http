@@ -186,7 +186,7 @@ object ValidatePullRequest extends AutoPlugin {
             l.startsWith("http") ||
             l.startsWith("parsing") ||
             l.startsWith("docs") ||
-            BuildFilesAndDirectories.exists(l startsWith))
+            BuildFilesAndDirectories.exists(l.startsWith))
           .map(l => l.takeWhile(_ != '/'))
           .toSet
 
@@ -462,7 +462,7 @@ object AggregatePRValidation extends AutoPlugin {
                 .map { case i @ Incomplete(node, tpe, message, causes, directCause) =>
                   def nodeName: String = node match {
                     case Some(key: ScopedKey[_]) => showKey(key)
-                    case Some(t: Task[_]) =>
+                    case Some(t: Task[_])        =>
                       t.info.name
                         .orElse(t.info.attributes.get(taskDefinitionKey).map(showKey))
                         .getOrElse(t.info.toString)

@@ -51,7 +51,7 @@ package object parsing {
       settings: ParserSettings.ErrorLoggingVerbosity,
       ignoreHeaderNames: Set[String] = Set.empty): Unit =
     settings match {
-      case ParserSettings.ErrorLoggingVerbosity.Off => // nothing to do
+      case ParserSettings.ErrorLoggingVerbosity.Off    => // nothing to do
       case ParserSettings.ErrorLoggingVerbosity.Simple =>
         if (!ignoreHeaderNames.contains(info.errorHeaderName))
           log.warning(info.summary)

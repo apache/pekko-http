@@ -35,13 +35,13 @@ private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActi
   }
 
   def `link-param` = rule(
-    ws("rel") ~ ws('=') ~ `relation-types`                                                ~> LinkParams.rel.apply _
-    | ws("anchor") ~ ws('=') ~ ws('"') ~ UriReference('"') ~ ws('"')                      ~> LinkParams.anchor.apply _
-    | ws("rev") ~ ws('=') ~ `relation-types`                                              ~> LinkParams.rev.apply _
-    | ws("hreflang") ~ ws('=') ~ language                                                 ~> LinkParams.hreflang.apply _
-    | ws("media") ~ ws('=') ~ word                                                        ~> LinkParams.media.apply _
-    | ws("title") ~ ws('=') ~ word                                                        ~> LinkParams.title.apply _
-    | ws("title*") ~ ws('=') ~ word                                                       ~> LinkParams.`title*`.apply _ // support full `ext-value` notation from http://tools.ietf.org/html/rfc5987#section-3.2.1
+    ws("rel") ~ ws('=') ~ `relation-types`                           ~> LinkParams.rel.apply _
+    | ws("anchor") ~ ws('=') ~ ws('"') ~ UriReference('"') ~ ws('"') ~> LinkParams.anchor.apply _
+    | ws("rev") ~ ws('=') ~ `relation-types`                         ~> LinkParams.rev.apply _
+    | ws("hreflang") ~ ws('=') ~ language                            ~> LinkParams.hreflang.apply _
+    | ws("media") ~ ws('=') ~ word                                   ~> LinkParams.media.apply _
+    | ws("title") ~ ws('=') ~ word                                   ~> LinkParams.title.apply _
+    | ws("title*") ~ ws('=') ~ word                                  ~> LinkParams.`title*`.apply _ // support full `ext-value` notation from http://tools.ietf.org/html/rfc5987#section-3.2.1
     | (ws("type") ~ ws('=') ~ (ws('"') ~ `link-media-type` ~ ws('"') | `link-media-type`) ~> LinkParams.`type`.apply _))
   // TODO: support `link-extension`
 

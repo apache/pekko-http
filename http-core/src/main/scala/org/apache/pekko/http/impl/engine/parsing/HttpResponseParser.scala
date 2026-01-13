@@ -88,10 +88,10 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
       }
       val code = intValue(0) * 100 + intValue(1) * 10 + intValue(2)
       statusCode = code match {
-        case 200 => StatusCodes.OK
+        case 200  => StatusCodes.OK
         case code => StatusCodes.getForKey(code) match {
             case Some(x) => x
-            case None => customStatusCodes(code).getOrElse {
+            case None    => customStatusCodes(code).getOrElse {
                 // A client must understand the class of any status code, as indicated by the first digit, and
                 // treat an unrecognized status code as being equivalent to the x00 status code of that class
                 // https://tools.ietf.org/html/rfc7231#section-6
@@ -153,7 +153,7 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
 
       val close =
         contextForCurrentResponse.get.oneHundredContinueTrigger match {
-          case None => closeAfterResponseCompletion
+          case None                                  => closeAfterResponseCompletion
           case Some(trigger) if statusCode.isSuccess =>
             trigger.trySuccess(())
             closeAfterResponseCompletion

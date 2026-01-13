@@ -100,7 +100,7 @@ abstract class DebuggingDirectives extends CookieDirectives {
       showRejection: BiFunction[HttpRequest, JList[Rejection], LogEntry],
       inner: Supplier[Route]) = RouteAdapter {
     D.logRequestResult(LoggingMagnet.forRequestResponseFromFullShow(request => {
-      case RouteResult.Complete(response) => Some(showSuccess.apply(request, response).asScala)
+      case RouteResult.Complete(response)   => Some(showSuccess.apply(request, response).asScala)
       case RouteResult.Rejected(rejections) =>
         Some(showRejection.apply(request, rejections.map(_.asJava).asJava).asScala)
     })) {

@@ -242,7 +242,8 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
 
     "produce an error message for lines with a too-long header value" in new TestSetup() {
       noException should be thrownBy parseLine(s"foo: ${nextRandomString(nextRandomAlphaNumChar _, 1000)}${newLine}x")
-      (the[ParsingException] thrownBy parseLine(s"foo: ${nextRandomString(nextRandomAlphaNumChar _, 1001)}${newLine}x") should have).message(
+      (the[ParsingException] thrownBy parseLine(
+        s"foo: ${nextRandomString(nextRandomAlphaNumChar _, 1001)}${newLine}x") should have).message(
         "HTTP header value exceeds the configured limit of 1000 characters")
     }
 

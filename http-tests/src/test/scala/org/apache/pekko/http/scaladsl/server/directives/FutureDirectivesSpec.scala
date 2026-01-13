@@ -65,7 +65,7 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
       }
     }
     "catch an exception in the failure case" in {
-      Get() ~> showEx(
+      Get()                                                                                               ~> showEx(
         onComplete(Future.failed[String](new RuntimeException("no"))) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         responseAs[String] shouldEqual s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Failure(java.lang.RuntimeException: no)"
@@ -114,7 +114,7 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
         }, breakerResetTimeout + 1.second)
     }
     "catch an exception in the success case" in new TestWithCircuitBreaker {
-      Get() ~> showEx(
+      Get()                                                                                         ~> showEx(
         onCompleteWithBreaker(breaker)(Future.successful("ok")) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         responseAs[String] shouldEqual s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Success(ok)"
@@ -181,7 +181,7 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
       }
     }
     "catch an exception during recovery" in {
-      Get() ~> showEx(
+      Get()                                                                                             ~> showEx(
         completeOrRecoverWith(Future.failed[String](TestException)) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
         responseAs[String] shouldEqual s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException$$: XXX"

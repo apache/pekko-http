@@ -43,7 +43,8 @@ object Route {
    *  - Consequently, no route alternatives will be tried that were combined with this route
    *    using the ``~`` on routes or the [[Directive.|]] operator on directives.
    */
-  def seal(route: Route)(implicit
+  def seal(route: Route)(
+      implicit
       routingSettings: RoutingSettings = null,
       rejectionHandler: RejectionHandler = RejectionHandler.default,
       exceptionHandler: ExceptionHandler = null): Route = {

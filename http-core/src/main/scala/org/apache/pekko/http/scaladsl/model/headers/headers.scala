@@ -116,7 +116,7 @@ abstract class ModeledCustomHeaderCompanion[H <: ModeledCustomHeader[H]] {
   def apply(value: String): H =
     parse(value) match {
       case Success(parsed) => parsed
-      case Failure(ex) =>
+      case Failure(ex)     =>
         throw new IllegalArgumentException(s"Unable to construct custom header by parsing: '$value'", ex)
     }
 

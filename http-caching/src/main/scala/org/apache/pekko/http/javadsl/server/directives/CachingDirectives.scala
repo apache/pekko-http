@@ -27,7 +27,8 @@ object CachingDirectives {
 
   import pekko.http.scaladsl.server.directives.{ CachingDirectives => D }
 
-  private implicit def routeResultCacheMapping[K]: JavaMapping[Cache[K, RouteResult], pekko.http.caching.scaladsl.Cache[
+  private implicit def routeResultCacheMapping[K]: JavaMapping[Cache[K, RouteResult],
+    pekko.http.caching.scaladsl.Cache[
       K, pekko.http.scaladsl.server.RouteResult]] =
     CacheJavaMapping.cacheMapping[K, RouteResult, K, pekko.http.scaladsl.server.RouteResult]
 

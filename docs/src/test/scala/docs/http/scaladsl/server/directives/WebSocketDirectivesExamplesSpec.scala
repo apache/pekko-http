@@ -94,7 +94,7 @@ class WebSocketDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     // WS creates a WebSocket request for testing
     WS("/services", wsClient.flow, List("other", "echo")) ~>
-    websocketMultipleProtocolRoute ~>
+    websocketMultipleProtocolRoute                        ~>
     check {
       expectWebSocketUpgradeWithProtocol { protocol =>
         protocol shouldEqual "echo"

@@ -631,7 +631,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
     val ctx = uri.scheme match {
       case "ws"                                => ConnectionContext.noEncryption()
       case "wss" if connectionContext.isSecure => connectionContext
-      case "wss" => throw new IllegalArgumentException(
+      case "wss"                               => throw new IllegalArgumentException(
           "Provided connectionContext is not secure, yet request to secure `wss` endpoint detected!")
       case scheme =>
         throw new IllegalArgumentException(s"Illegal URI scheme '$scheme' in '$uri' for WebSocket request. " +

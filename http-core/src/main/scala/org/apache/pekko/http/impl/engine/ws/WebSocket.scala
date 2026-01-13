@@ -76,11 +76,11 @@ private[http] object WebSocket {
         val noCustomData = WebSocketSettingsImpl.hasNoCustomPeriodicKeepAliveData(settings)
         val mkFrame = settings.periodicKeepAliveMode match {
           case "ping" if noCustomData => mkDirectAnswerPing // sending Ping should result in a Pong back
-          case "ping" =>
+          case "ping"                 =>
             () => DirectAnswer(FrameEvent.fullFrame(Opcode.Ping, None, settings.periodicKeepAliveData(), fin = true))
 
           case "pong" if noCustomData => mkDirectAnswerPong // sending Pong means we do not expect a reply
-          case "pong" =>
+          case "pong"                 =>
             () => DirectAnswer(FrameEvent.fullFrame(Opcode.Pong, None, settings.periodicKeepAliveData(), fin = true))
 
           case other => throw new IllegalArgumentException(s"Unsupported periodic-keep-alive-mode. " +

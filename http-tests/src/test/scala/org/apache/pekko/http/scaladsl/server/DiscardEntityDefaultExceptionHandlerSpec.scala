@@ -54,7 +54,7 @@ class DiscardEntityDefaultExceptionHandlerSpec extends RoutingSpec with ScalaFut
     "rejectEntity by default" in new Fixture {
       streamConsumed shouldBe false
       Get("/crash", HttpEntity(`text/plain(UTF-8)`, Source[ByteString](thousandElements))) ~> Route.seal(
-        route) ~> check {
+        route)                                                                             ~> check {
         status shouldBe InternalServerError
         eventually { // Stream will be eventually consumed, once all the stream bytes are successfully discarded
           streamConsumed shouldBe true
@@ -65,7 +65,7 @@ class DiscardEntityDefaultExceptionHandlerSpec extends RoutingSpec with ScalaFut
     "rejectEntity by default even if consumed already" in new Fixture {
       streamConsumed shouldBe false
       Get("/crashAfterConsuming", HttpEntity(`text/plain(UTF-8)`, Source[ByteString](thousandElements))) ~> Route.seal(
-        route) ~> check {
+        route)                                                                                           ~> check {
         // Stream should be consumed immediately after the request finishes
         streamConsumed shouldBe true
         status shouldBe InternalServerError

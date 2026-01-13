@@ -356,7 +356,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
               case WindowUpdateFrame(streamId, increment)
                   if streamId == 0 /* else fall through to StreamFrameEvent */ =>
                 multiplexer.updateConnectionLevelWindow(increment)
-              case p: PriorityFrame => multiplexer.updatePriority(p)
+              case p: PriorityFrame    => multiplexer.updatePriority(p)
               case s: StreamFrameEvent =>
                 if (!terminating)
                   handleStreamEvent(s)

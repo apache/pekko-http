@@ -103,7 +103,7 @@ class WebSocketDirectivesSpec extends RoutingSpec {
 
   def greeter: Flow[Message, Message, Any] =
     Flow[Message].mapConcat {
-      case tm: TextMessage => TextMessage(Source.single("Hello ") ++ tm.textStream ++ Source.single("!")) :: Nil
+      case tm: TextMessage   => TextMessage(Source.single("Hello ") ++ tm.textStream ++ Source.single("!")) :: Nil
       case bm: BinaryMessage => // ignore binary messages
         bm.dataStream.runWith(Sink.ignore)
         Nil

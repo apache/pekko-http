@@ -48,7 +48,7 @@ trait RejectionHandler extends (immutable.Seq[Rejection] => Option[Route]) { sel
    */
   def withFallback(that: RejectionHandler): RejectionHandler =
     (this, that) match {
-      case (a: BuiltRejectionHandler, _) if a.isDefault => this // the default handler already handles everything
+      case (a: BuiltRejectionHandler, _) if a.isDefault         => this // the default handler already handles everything
       case (a: BuiltRejectionHandler, b: BuiltRejectionHandler) =>
         new BuiltRejectionHandler(a.cases ++ b.cases, a.notFound.orElse(b.notFound), b.isDefault)
       case _ => new RejectionHandler {

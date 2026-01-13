@@ -92,7 +92,7 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
     private class WaitingForUserHandlerClosed(closeFrame: FrameStart) extends InHandler {
       def onPush() =
         grab(in) match {
-          case UserHandlerCompleted => sendOutLastFrame()
+          case UserHandlerCompleted   => sendOutLastFrame()
           case UserHandlerErredOut(e) =>
             log.error(e, s"Websocket handler failed while waiting for handler completion with ${e.getMessage}")
             sendOutLastFrame()
@@ -183,7 +183,7 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
             becomeSendOutCloseFrameAndComplete(FrameEvent.closeFrame(Protocol.CloseCodes.ProtocolError))
             absorbTermination()
           case x if x.getCause ne null => onUpstreamFailure(x.getCause)
-          case _ =>
+          case _                       =>
             super.onUpstreamFailure(cause)
         }
     }

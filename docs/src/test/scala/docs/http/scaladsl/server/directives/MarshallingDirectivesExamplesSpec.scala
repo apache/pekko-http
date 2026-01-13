@@ -46,7 +46,7 @@ class MarshallingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec
 
     // tests:
     Post("/", HttpEntity(`application/json`, """{ "name": "Jane", "favoriteNumber" : 42 }""")) ~>
-    route ~> check {
+    route                                                                                      ~> check {
       responseAs[String] shouldEqual "Person: Jane - favorite number: 42"
     }
     // #example-entity-with-json
@@ -66,7 +66,7 @@ class MarshallingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec
 
     // tests:
     Post("/", HttpEntity(`application/json`, """{ "name": "Jane", "favoriteNumber" : 42 }""")) ~>
-    route ~> check {
+    route                                                                                      ~> check {
       responseAs[String] shouldEqual """Person: "Jane" - favorite number: 42"""
     }
     // #example-entity-with-raw-json
@@ -115,7 +115,7 @@ class MarshallingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec
 
     // tests:
     Post("/", HttpEntity(`application/json`, """{ "name": "Jane", "favoriteNumber" : 42 }""")) ~>
-    route ~> check {
+    route                                                                                      ~> check {
       mediaType shouldEqual `application/json`
       responseAs[String] should include(""""name":"Jane"""")
       responseAs[String] should include(""""favoriteNumber":42""")

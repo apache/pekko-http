@@ -83,7 +83,7 @@ class BitSpecParser(val input: ParserInput) extends parboiled2.Parser {
   import Bits._
   def parseBits(): Try[Bits] =
     bits.run() match {
-      case s: Success[Bits] => s
+      case s: Success[Bits]       => s
       case Failure(e: ParseError) =>
         Failure(new RuntimeException(formatError(e, new ErrorFormatter(showTraces = true))))
       case _ => throw new IllegalStateException()

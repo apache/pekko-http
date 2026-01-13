@@ -294,7 +294,7 @@ class FormFieldDirectivesSpec extends RoutingSpec {
     "reject with MalformedRequestContentRejection if request entity fails" in {
       val failedSource = Source.failed(new IllegalStateException("Form was stapled wrongly"))
       Post("/", HttpEntity(`application/x-www-form-urlencoded`, failedSource)) ~>
-      formFieldSeq { echoComplete } ~>
+      formFieldSeq { echoComplete }                                            ~>
       check {
         rejection shouldBe a[MalformedRequestContentRejection]
       }

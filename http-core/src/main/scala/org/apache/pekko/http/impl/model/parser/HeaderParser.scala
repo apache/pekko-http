@@ -126,7 +126,7 @@ private[http] object HeaderParser {
       val parser = new HeaderParser(v, settings)
       dispatch(parser, headerName) match {
         case r @ Success(_) if parser.cursor == v.length => r
-        case r @ Success(_) =>
+        case r @ Success(_)                              =>
           Failure(ErrorInfo(
             "Header parsing error",
             s"Rule for $headerName accepted trailing garbage. Is the parser missing a trailing EOI?"))

@@ -73,7 +73,7 @@ object StrictForm {
       Unmarshaller.withMaterializer(implicit ec =>
         implicit mat => {
           case FromString(value) => fsu(value)
-          case FromPart(value) =>
+          case FromPart(value)   =>
             val charsetName = value.entity.contentType.asInstanceOf[ContentType.NonBinary].charset.nioCharset.name
             fsu(value.entity.data.decodeString(charsetName))
         })
@@ -123,7 +123,8 @@ object StrictForm {
     }
   }
 
-  implicit def unmarshaller(implicit
+  implicit def unmarshaller(
+      implicit
       formDataUM: FromEntityUnmarshaller[FormData],
       multipartUM: FromEntityUnmarshaller[Multipart.FormData]): FromEntityUnmarshaller[StrictForm] =
     Unmarshaller.withMaterializer { implicit ec => implicit fm => entity =>

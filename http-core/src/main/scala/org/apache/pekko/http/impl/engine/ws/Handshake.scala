@@ -171,7 +171,7 @@ private[http] object Handshake {
         handler: Either[Graph[FlowShape[FrameEvent, FrameEvent], Any], Graph[FlowShape[Message, Message], Any]],
         subprotocol: Option[String], settings: WebSocketSettings, log: LoggingAdapter): HttpResponse = {
       val frameHandler = handler match {
-        case Left(frameHandler) => frameHandler
+        case Left(frameHandler)    => frameHandler
         case Right(messageHandler) =>
           WebSocket.stack(serverSide = true, settings, log = log).join(messageHandler)
       }

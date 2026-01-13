@@ -52,7 +52,7 @@ class FastFuture[A](val future: Future[A]) extends AnyVal {
     future match {
       case FulfilledFuture(a) => strictTransform(a, s)
       case ErrorFuture(e)     => strictTransform(e, f)
-      case _ => future.value match {
+      case _                  => future.value match {
           case None =>
             val p = Promise[B]()
             future.onComplete {

@@ -87,7 +87,7 @@ private[http] object StreamUtils {
             materializationPromise.trySuccess(())
             killResult.future.value match {
               case Some(res) => handleKill(res)
-              case None =>
+              case None      =>
                 killResult.future.onComplete(killCallback.invoke)(ExecutionContext.parasitic)
             }
           }
@@ -289,11 +289,11 @@ private[http] object StreamUtils {
    */
   def cancelSource(source: Source[_, _])(implicit materializer: Materializer): Unit = source match {
     case EmptySource => // nothing to do with empty source
-    case x =>
+    case x           =>
       val mat =
         GraphInterpreter.currentInterpreterOrNull match {
           case null if materializer ne null => materializer
-          case null => throw new IllegalStateException(
+          case null                         => throw new IllegalStateException(
               "Need to pass materializer to cancelSource if not run from GraphInterpreter context.")
           case x => x.subFusingMaterializer // try to use fuse if already running in interpreter context
         }
@@ -326,7 +326,7 @@ private[http] object StreamUtils {
 
   def transformEntityStream[T <: HttpEntity, M](entity: T, streamOp: EntityStreamOp[M]): (T, M) =
     entity match {
-      case x: HttpEntity.Strict => x.asInstanceOf[T] -> streamOp.strictM
+      case x: HttpEntity.Strict  => x.asInstanceOf[T] -> streamOp.strictM
       case x: HttpEntity.Default =>
         val (newData, whenCompleted) = streamOp(x.data)
         x.copy(data = newData).asInstanceOf[T] -> whenCompleted

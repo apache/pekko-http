@@ -101,7 +101,7 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
 
   protected final def doPull(): Output =
     result match {
-      case null => if (terminated) StreamEnd else NeedMoreData
+      case null                                  => if (terminated) StreamEnd else NeedMoreData
       case buffer: ListBuffer[Output] @unchecked =>
         val head = buffer.head
         buffer.remove(0) // faster than `ListBuffer::drop`
@@ -311,11 +311,11 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
     @tailrec def parseSize(cursor: Int, size: Long): StateResult =
       if (size <= Int.MaxValue) {
         byteChar(input, cursor) match {
-          case c if CharacterClasses.HEXDIG(c) => parseSize(cursor + 1, size * 16 + CharUtils.hexValue(c))
+          case c if CharacterClasses.HEXDIG(c)   => parseSize(cursor + 1, size * 16 + CharUtils.hexValue(c))
           case c if size > settings.maxChunkSize =>
             failEntityStream(
               s"HTTP chunk of $size bytes exceeds the configured limit of ${settings.maxChunkSize} bytes")
-          case ';' if cursor > offset => parseChunkExtensions(size.toInt, cursor + 1)()
+          case ';' if cursor > offset                                          => parseChunkExtensions(size.toInt, cursor + 1)()
           case '\r' if cursor > offset && byteAt(input, cursor + 1) == LF_BYTE =>
             parseChunkBody(size.toInt, "", cursor + 2)
           case '\n' if cursor > offset      => parseChunkBody(size.toInt, "", cursor + 1)
@@ -333,7 +333,7 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
   protected def emit(output: Output): Unit = result match {
     case null                                  => result = output
     case buffer: ListBuffer[Output] @unchecked => buffer += output
-    case old: Output @unchecked =>
+    case old: Output @unchecked                =>
       val buffer = new ListBuffer[Output]
       buffer += old
       buffer += output

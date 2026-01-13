@@ -156,7 +156,7 @@ trait FileAndResourceDirectives {
 
           val dirs = directories.flatMap { dir =>
             safeDirectoryChildPath(withTrailingSlash(dir), remainingPath, ctx.log) match {
-              case "" => None
+              case ""       => None
               case fileName =>
                 val file = new File(fileName)
                 if (file.isDirectory && file.canRead) Some(file) else None
@@ -247,8 +247,8 @@ object FileAndResourceDirectives extends FileAndResourceDirectives {
     import java.lang.StringBuilder
     @tailrec def rec(p: Uri.Path, result: StringBuilder = new StringBuilder(base)): String =
       p match {
-        case Uri.Path.Empty       => result.toString
-        case Uri.Path.Slash(tail) => rec(tail, result.append(separator))
+        case Uri.Path.Empty               => result.toString
+        case Uri.Path.Slash(tail)         => rec(tail, result.append(separator))
         case Uri.Path.Segment(head, tail) =>
           if (head.indexOf('/') >= 0 || head.indexOf('\\') >= 0 || head == "..") {
             log.warning("File-system path for base [{}] and Uri.Path [{}] contains suspicious path segment [{}], " +

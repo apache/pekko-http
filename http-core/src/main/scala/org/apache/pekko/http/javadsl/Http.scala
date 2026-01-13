@@ -566,12 +566,14 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
       scalaFlow: stream.scaladsl.Flow[(scaladsl.model.HttpRequest, T), (Try[scaladsl.model.HttpResponse], T), Mat])
       : Flow[Pair[HttpRequest, T], Pair[Try[HttpResponse], T], Mat] = {
     implicit def id[X]: JavaMapping[X, X] = JavaMapping.identity[X]
-    JavaMapping.toJava(scalaFlow)(JavaMapping.flowMapping[Pair[HttpRequest, T], (scaladsl.model.HttpRequest, T), Pair[
+    JavaMapping.toJava(scalaFlow)(JavaMapping.flowMapping[Pair[HttpRequest, T], (scaladsl.model.HttpRequest, T),
+      Pair[
         Try[HttpResponse], T], (Try[scaladsl.model.HttpResponse], T), Mat, Mat])
   }
 
   private def adaptOutgoingFlow[T, Mat](
-      scalaFlow: stream.scaladsl.Flow[scaladsl.model.HttpRequest, scaladsl.model.HttpResponse, Future[
+      scalaFlow: stream.scaladsl.Flow[scaladsl.model.HttpRequest, scaladsl.model.HttpResponse,
+        Future[
           scaladsl.Http.OutgoingConnection]]): Flow[HttpRequest, HttpResponse, CompletionStage[OutgoingConnection]] =
     Flow.fromGraph {
       pekko.stream.scaladsl.Flow[HttpRequest].map(_.asScala)

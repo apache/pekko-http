@@ -273,7 +273,7 @@ class BasicDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       private def nonSuccessToEmptyJsonEntity(response: HttpResponse): HttpResponse =
         response.status match {
           case code if code.isSuccess => response
-          case code =>
+          case code                   =>
             log.warning("Dropping response entity since response status code was: {}", code)
             response.withEntity(NullJsonEntity)
         }

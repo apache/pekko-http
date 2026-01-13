@@ -54,9 +54,9 @@ object Http2ServerTest extends App {
   }
 
   val syncHandler: HttpRequest => HttpResponse = {
-    case HttpRequest(GET, Uri.Path("/"), _, _, _)           => index
-    case HttpRequest(GET, Uri.Path("/ping"), _, _, _)       => HttpResponse(entity = "PONG!")
-    case HttpRequest(GET, Uri.Path("/image-page"), _, _, _) => imagePage
+    case HttpRequest(GET, Uri.Path("/"), _, _, _)                                          => index
+    case HttpRequest(GET, Uri.Path("/ping"), _, _, _)                                      => HttpResponse(entity = "PONG!")
+    case HttpRequest(GET, Uri.Path("/image-page"), _, _, _)                                => imagePage
     case HttpRequest(GET, Uri(_, _, p, _, _), _, _, _) if p.toString.startsWith("/image1") =>
       HttpResponse(entity = HttpEntity(MediaTypes.`image/jpeg`,
         FileIO.fromPath(Paths.get("bigimage.jpg"), 100000).mapAsync(1)(slowDown(1))))

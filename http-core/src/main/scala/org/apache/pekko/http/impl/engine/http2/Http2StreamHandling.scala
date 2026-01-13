@@ -194,7 +194,9 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
 
     debug(
-      s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne null) s"($eventArg)" else ""}]")
+      s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne null)
+          s"($eventArg)"
+        else ""}]")
 
     stateMachineRunning = false
     if (deferredStreamToEnqueue != -1) {
@@ -821,8 +823,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     // external callbacks, need to make sure that potential stream state changing events are run through the state machine
     override def onPush(): Unit = {
       inlet.grab() match {
-        case newData: ByteString          => buffer ++= newData
-        case HttpEntity.Chunk(newData, _) => buffer ++= newData
+        case newData: ByteString              => buffer ++= newData
+        case HttpEntity.Chunk(newData, _)     => buffer ++= newData
         case HttpEntity.LastChunk(_, headers) =>
           if (headers.nonEmpty && !trailer.isEmpty)
             log.warning(

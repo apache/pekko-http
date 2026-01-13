@@ -280,7 +280,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
     "reject pre-flight requests with invalid header" in {
       val settings = referenceSettings.withAllowedHeaders(HttpHeaderRange())
       val invalidHeader = "X-header"
-      Options() ~> Origin(exampleOrigin) ~> `Access-Control-Request-Method`(GET) ~>
+      Options()                                       ~> Origin(exampleOrigin) ~> `Access-Control-Request-Method`(GET) ~>
       `Access-Control-Request-Headers`(invalidHeader) ~> {
         route(settings)
       } ~> check {
@@ -351,7 +351,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
     }
 
     "handle a pre-flight request with invalid headers" in {
-      Options() ~> Origin(exampleOrigin) ~> `Access-Control-Request-Method`(GET) ~>
+      Options()                                      ~> Origin(exampleOrigin) ~> `Access-Control-Request-Method`(GET) ~>
       `Access-Control-Request-Headers`("X-a", "X-b") ~> {
         sealedRoute
       } ~> check {
@@ -361,7 +361,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
     }
 
     "handle multiple CORS rejections" in {
-      Options() ~> Origin(HttpOrigin("http://invalid.com")) ~> `Access-Control-Request-Method`(PATCH) ~>
+      Options()                                      ~> Origin(HttpOrigin("http://invalid.com")) ~> `Access-Control-Request-Method`(PATCH) ~>
       `Access-Control-Request-Headers`("X-a", "X-b") ~> {
         sealedRoute
       } ~> check {

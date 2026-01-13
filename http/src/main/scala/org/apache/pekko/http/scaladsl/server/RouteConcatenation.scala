@@ -53,7 +53,7 @@ object RouteConcatenation extends RouteConcatenation {
     def ~(other: Route): Route = { ctx =>
       import ctx.executionContext
       route(ctx).fast.flatMap {
-        case x: RouteResult.Complete => FastFuture.successful(x)
+        case x: RouteResult.Complete               => FastFuture.successful(x)
         case RouteResult.Rejected(outerRejections) =>
           other(ctx).fast.map {
             case x: RouteResult.Complete               => x
