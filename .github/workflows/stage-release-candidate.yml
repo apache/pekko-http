@@ -104,11 +104,12 @@ jobs:
           cd dist
 
           export RC_VERSION=$(echo $REF | tail -c +2)
+          export DIR="HTTP-$RC_VERSION"
 
-          mkdir $RC_VERSION
-          cp ../archive/* $RC_VERSION
-          svn add $RC_VERSION
-          svn commit --username "$PEKKO_SVN_DEV_USERNAME" --password "$PEKKO_SVN_DEV_PASSWORD" --message "Stage Pekko $RC_VERSION" $RC_VERSION
+          mkdir $DIR
+          cp ../archive/* $DIR
+          svn add $DIR
+          svn commit --username "$PEKKO_SVN_DEV_USERNAME" --password "$PEKKO_SVN_DEV_PASSWORD" --message "Stage Pekko HTTP $RC_VERSION" $DIR
         env:
           PEKKO_SVN_DEV_USERNAME: ${{ secrets.PEKKO_SVN_DEV_USERNAME }}
           PEKKO_SVN_DEV_PASSWORD: ${{ secrets.PEKKO_SVN_DEV_PASSWORD }}
@@ -147,8 +148,10 @@ jobs:
           persist-credentials: false
 
       - name: Generate source archive
+        id: generate-source-archive
         run: |-
           VERSION=$(echo $REF | sed -e "s/.\(.*\)-.*/\\1/")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           PREFIX=apache-pekko-http-$VERSION
           DATE=$(git log -n1 --format=%cs | tr -d -)
           TARBALL=$PREFIX-src-$DATE.tgz
@@ -171,7 +174,7 @@ jobs:
         uses: apache/tooling-actions/upload-to-atr@ca6ed9e095c40db61c42a90db2599bb2fbc2319f
         with:
           project: pekko-http
-          version: ${{ env.VERSION }}
+          version: ${{ steps.generate-source-archive.outputs.version }}
 
   stage-jars-to-nexus:
     runs-on: ubuntu-24.04
@@ -253,7 +256,7 @@ jobs:
           export SENDER=$(curl "https://api.github.com/users/$ACTOR" | jq .name | tr -d \")
           echo "SENDER=$SENDER"
 
-          echo "This template can be used to start a vote, either via manual email or via https://release-test.apache.org/compose/pekko/$VERSION"
+          echo "This template can be used to start a vote, either via manual email or via https://release-test.apache.org/compose/pekko-http/$VERSION"
           echo
           cat <<EOF;
           Subject: [VOTE] Release Apache $MODULE $RC_VERSION
@@ -268,8 +271,8 @@ jobs:
           
           The release candidate:
           
-          https://dist.apache.org/repos/dist/dev/pekko/$RC_VERSION
-          https://release-test.apache.org/vote/pekko/$VERSION
+          https://dist.apache.org/repos/dist/dev/pekko/HTTP-$RC_VERSION
+          https://release-test.apache.org/vote/pekko-http/$VERSION
           
           This release has been signed with a PGP key available here:
           
@@ -327,7 +330,7 @@ jobs:
           
           https://pekko.apache.org/download.html#verifying-downloads
           
-          You can vote on ATR at https://release-test.apache.org/vote/pekko/$VERSION
+          You can vote on ATR at https://release-test.apache.org/vote/pekko-http/$VERSION
           or manually by replying to this email.
 
           
