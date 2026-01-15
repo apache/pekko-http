@@ -26,6 +26,15 @@ public final class FormData {
     this.fields = fields;
   }
 
+  /**
+   * Returns the fields of this FormData instance.
+   * @return the fields
+   * @since 2.0.0
+   */
+  public Query getFields() {
+    return fields;
+  }
+
   /** Converts this FormData to a RequestEntity using UTF8 encoding. */
   public RequestEntity toEntity() {
     return HttpEntities.create(
