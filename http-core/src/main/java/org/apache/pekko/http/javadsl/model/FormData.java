@@ -28,6 +28,7 @@ public final class FormData {
 
   /**
    * Returns the fields of this FormData instance.
+   *
    * @return the fields
    * @since 2.0.0
    */
