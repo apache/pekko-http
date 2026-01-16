@@ -27,7 +27,6 @@ import pekko.stream.scaladsl.Sink
 import pekko.util.ByteString
 
 class WithPriorKnowledgeSpec extends PekkoSpecWithMaterializer("""
-    pekko.http.server.enable-http2 = on
     pekko.http.server.http2.log-frames = on
   """) {
 

@@ -35,7 +35,6 @@ class H2SpecIntegrationSpec extends PekkoFreeSpec(
        loglevel = DEBUG
        loggers = ["org.apache.pekko.http.impl.util.SilenceAllTestEventListener"]
        http.server.log-unencrypted-network-bytes = 100
-       http.server.enable-http2 = on
        http.server.http2.log-frames = on
 
        actor.serialize-creators = off
