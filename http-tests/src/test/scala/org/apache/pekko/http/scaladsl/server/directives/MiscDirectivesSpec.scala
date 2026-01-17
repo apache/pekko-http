@@ -125,7 +125,8 @@ class MiscDirectivesSpec extends RoutingSpec {
 
       Post("/abc", formDataOfSize(128)) ~> Route.seal(route) ~> check {
         status shouldEqual StatusCodes.ContentTooLarge
-        responseAs[String] shouldEqual "The request content was malformed:\n" +
+        responseAs[String] shouldEqual
+        "The request content was malformed:\n" +
         "EntityStreamSizeException: incoming entity size (134) " +
         "exceeded size limit (64 bytes)! " +
         "This may have been a parser limit (set via `pekko.http.[server|client].parsing.max-content-length`), " +

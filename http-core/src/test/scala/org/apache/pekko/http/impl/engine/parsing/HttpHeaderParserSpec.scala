@@ -28,8 +28,7 @@ import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.impl.util._
 import pekko.http.scaladsl.settings.ParserSettings.{
-  IllegalResponseHeaderNameProcessingMode,
-  IllegalResponseHeaderValueProcessingMode
+  IllegalResponseHeaderNameProcessingMode, IllegalResponseHeaderValueProcessingMode
 }
 import pekko.testkit.EventFilter
 
@@ -195,7 +194,8 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
       RawHeader("4-UTF8-Bytes", "Surrogate pairs: \uD801\uDC1B\uD801\uDC04\uD801\uDC1B!")
     }
 
-    "parse multiple header lines subsequently with UTF-8 characters one after another without crashing" in new TestSetup {
+    "parse multiple header lines subsequently with UTF-8 characters one after another without crashing" in
+    new TestSetup {
       parseLine(s"""Content-Disposition: form-data; name="test"; filename="λ"${newLine}x""")
       // The failing parsing line is one that must share a prefix with the utf-8 line up to the non-ascii char. The next character
       // doesn't even have to be a non-ascii char.

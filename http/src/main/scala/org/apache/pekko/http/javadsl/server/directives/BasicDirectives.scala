@@ -33,13 +33,7 @@ import pekko.http.impl.model.JavaUri
 import pekko.http.impl.util.JavaMapping
 import pekko.http.impl.util.Util.convertIterable
 import pekko.http.javadsl.model.{
-  HttpEntity,
-  HttpHeader,
-  HttpRequest,
-  HttpResponse,
-  RequestEntity,
-  ResponseEntity,
-  Uri
+  HttpEntity, HttpHeader, HttpRequest, HttpResponse, RequestEntity, ResponseEntity, Uri
 }
 import pekko.http.javadsl.server
 import pekko.http.javadsl.server._

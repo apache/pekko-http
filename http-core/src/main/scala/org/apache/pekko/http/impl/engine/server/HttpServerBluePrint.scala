@@ -32,10 +32,7 @@ import pekko.http.impl.engine.parsing.ParserOutput._
 import pekko.http.impl.engine.parsing._
 import pekko.http.impl.engine.rendering.ResponseRenderingContext.CloseRequested
 import pekko.http.impl.engine.rendering.{
-  DateHeaderRendering,
-  HttpResponseRendererFactory,
-  ResponseRenderingContext,
-  ResponseRenderingOutput
+  DateHeaderRendering, HttpResponseRendererFactory, ResponseRenderingContext, ResponseRenderingOutput
 }
 import pekko.http.impl.util._
 import pekko.http.javadsl.model
@@ -513,8 +510,7 @@ private[http] object HttpServerBluePrint {
                   s"Sending an 2xx 'early' response before end of request for ${requestStart.uri} received... " +
                   "Note that the connection will be closed after this response. Also, many clients will not read early responses! " +
                   "Consider only issuing this response after the request data has been completely read!")
-              val forceClose =
-                (requestStart.expect100Continue && oneHundredContinueResponsePending) ||
+              val forceClose = (requestStart.expect100Continue && oneHundredContinueResponsePending) ||
                 (isClosed(requestParsingIn) && openRequests.isEmpty) ||
                 isEarlyResponse
 

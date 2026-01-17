@@ -74,8 +74,10 @@ private[http] object Protocol {
     def isError(code: Int): Boolean = !(code == Regular || code == GoingAway)
     def isValid(code: Int): Boolean =
       ((code >= 1000) && (code <= 1003)) ||
-      (code >= 1007) && (code <= 1011) ||
-      (code >= 3000) && (code <= 4999)
+      (code >= 1007) &&
+      (code <= 1011) ||
+      (code >= 3000) &&
+      (code <= 4999)
 
     val Regular = 1000
     val GoingAway = 1001

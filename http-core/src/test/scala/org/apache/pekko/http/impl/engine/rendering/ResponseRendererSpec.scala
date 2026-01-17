@@ -158,7 +158,8 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
               |""", close = false)
       }
 
-      "to a HEAD request setting a custom Content-Type and Content-Length (default response entity)" in new TestSetup() {
+      "to a HEAD request setting a custom Content-Type and Content-Length (default response entity)" in
+      new TestSetup() {
         ResponseRenderingContext(
           requestMethod = HttpMethods.HEAD,
           response = HttpResponse(

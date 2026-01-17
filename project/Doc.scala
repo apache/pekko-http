@@ -156,8 +156,9 @@ object UnidocRoot extends AutoPlugin {
     // fails since Akka HTTP 10.0.11 disabled to get the doc gen to pass, see #1584
     // scalacOptions += "-P:genjavadoc:suppressSynthetic=false",
     // FIXME: see https://github.com/akka/akka-http/issues/230
-    JavaUnidoc / unidoc / sources ~= (_.filterNot(
-      _.getPath.contains("Access$minusControl$minusAllow$minusOrigin"))))).getOrElse(Nil)
+    JavaUnidoc / unidoc / sources ~=
+      (_.filterNot(
+        _.getPath.contains("Access$minusControl$minusAllow$minusOrigin"))))).getOrElse(Nil)
 
   val settings = inTask(unidoc)(Seq(
     ScalaUnidoc / unidocProjectFilter := inAnyProject -- inProjects(unidocProjectExcludes.value: _*),

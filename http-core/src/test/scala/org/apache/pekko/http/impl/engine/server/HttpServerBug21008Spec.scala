@@ -34,7 +34,8 @@ class HttpServerBug21008Spec extends PekkoSpecWithMaterializer(
    pekko.test.filter-leeway=1s""") with Inside { spec =>
   "The HttpServer" should {
 
-    "not cause internal graph failures when consuming a `100 Continue` entity triggers a failure" in assertAllStagesStopped(
+    "not cause internal graph failures when consuming a `100 Continue` entity triggers a failure" in
+    assertAllStagesStopped(
       new HttpServerTestSetupBase {
         override implicit def system: ActorSystem = HttpServerBug21008Spec.this.system
         override implicit def materializer: Materializer = HttpServerBug21008Spec.this.materializer

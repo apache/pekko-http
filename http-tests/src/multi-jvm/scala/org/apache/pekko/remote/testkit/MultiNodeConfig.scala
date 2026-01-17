@@ -120,7 +120,8 @@ abstract class MultiNodeConfig {
       else ConfigFactory.empty
 
     val configs = _nodeConf.get(
-      myself).toList ::: _commonConf.toList ::: transportConfig :: MultiNodeSpec.nodeConfig :: MultiNodeSpec.baseConfig :: Nil
+      myself).toList ::: _commonConf.toList ::: transportConfig :: MultiNodeSpec.nodeConfig ::
+      MultiNodeSpec.baseConfig :: Nil
     configs.reduceLeft(_ withFallback _)
   }
 

@@ -42,7 +42,8 @@ final class ErrorInfo(
 
   override def equals(that: Any): Boolean = that match {
     case that: ErrorInfo => that.canEqual(
-        this) && that.summary == this.summary && that.detail == this.detail && that.errorHeaderName == this.errorHeaderName
+        this) && that.summary == this.summary && that.detail == this.detail &&
+      that.errorHeaderName == this.errorHeaderName
     case _ => false
   }
 

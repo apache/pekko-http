@@ -202,7 +202,8 @@ object ValidatePullRequest extends AutoPlugin {
               BuildFilesAndDirectories.contains(dir))
             .toSet
           log.info(
-            "Detected uncommitted changes in directories (including in dependency analysis): " + dirtyDirectories.mkString(
+            "Detected uncommitted changes in directories (including in dependency analysis): " +
+            dirtyDirectories.mkString(
               "[", ",", "]"))
           dirtyDirectories
         }
@@ -255,10 +256,12 @@ object ValidatePullRequest extends AutoPlugin {
 
       buildMode.log(name.value, log)
 
-      val validationTasks: Seq[TaskKey[Any]] = (buildMode.task.toSeq ++ (buildMode match {
-        case BuildSkip => Seq.empty // do not run the additional task if project is skipped during pr validation
-        case _         => (ValidatePR / additionalTasks).value
-      })).asInstanceOf[Seq[TaskKey[Any]]]
+      val validationTasks: Seq[TaskKey[Any]] =
+        (buildMode.task.toSeq ++
+        (buildMode match {
+          case BuildSkip => Seq.empty // do not run the additional task if project is skipped during pr validation
+          case _         => (ValidatePR / additionalTasks).value
+        })).asInstanceOf[Seq[TaskKey[Any]]]
 
       val thisProject = Def.resolvedScoped.value.scope.project.toOption.get
 
@@ -532,17 +535,18 @@ object MimaWithPrValidation extends AutoPlugin {
           Ordering[(Int, Int, Int)].on[String] { case VersionRegex(x, y, z) => (int(x), int(y), int(z)) }
         }
         def isReported(module: ModuleID, verionedFilters: Map[String, Seq[core.ProblemFilter]])(
-            problem: core.Problem) = (verionedFilters.collect {
-          // get all filters that apply to given module version or any version after it
-          case f @ (version, filters) if versionOrdering.gteq(version, module.revision) => filters
-        }.flatten ++ filters).forall { f =>
-          if (f(problem)) {
-            true
-          } else {
-            // log(projectName + ": filtered out: " + problem.description + "\n  filtered by: " + f)
-            false
+            problem: core.Problem) =
+          (verionedFilters.collect {
+            // get all filters that apply to given module version or any version after it
+            case f @ (version, filters) if versionOrdering.gteq(version, module.revision) => filters
+          }.flatten ++ filters).forall { f =>
+            if (f(problem)) {
+              true
+            } else {
+              // log(projectName + ": filtered out: " + problem.description + "\n  filtered by: " + f)
+              false
+            }
           }
-        }
 
         val backErrors = backward.filter(isReported(module, backwardFilters))
         val forwErrors = forward.filter(isReported(module, forwardFilters))

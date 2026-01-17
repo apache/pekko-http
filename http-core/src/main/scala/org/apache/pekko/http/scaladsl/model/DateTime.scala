@@ -118,7 +118,7 @@ final case class DateTime private (
    */
   def renderRfc1123DateTimeString[R <: Rendering](r: R): r.type =
     put_##(put_##(put_##(put_##(r ~~ weekdayStr ~~ ',' ~~ ' ', day) ~~ ' ' ~~ monthStr ~~ ' ' ~~ year ~~ ' ',
-          hour) ~~ ':', minute) ~~ ':', second) ~~ " GMT"
+      hour) ~~ ':', minute) ~~ ':', second) ~~ " GMT"
 
   /**
    * RFC1123 date string, e.g. `Sun, 06 Nov 1994 08:49:37 GMT`
@@ -246,12 +246,11 @@ object DateTime {
       isLeapYear = isLeap)
   }
 
-  private def isLeapYear(year: Int): Boolean =
-    ((year & 0x03) == 0) && {
-      val q = year / 100
-      val r = year % 100
-      r != 0 || (q & 0x03) == 0
-    }
+  private def isLeapYear(year: Int): Boolean = ((year & 0x03) == 0) && {
+    val q = year / 100
+    val r = year % 100
+    r != 0 || (q & 0x03) == 0
+  }
 
   /**
    * Creates a new `DateTime` instance for the current point in time.

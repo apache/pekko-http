@@ -61,7 +61,8 @@ sealed abstract class MediaRange extends jm.MediaRange with Renderable with With
 object MediaRange {
   private[http] def splitOffQValue(params: Map[String, String], defaultQ: Float = 1.0f): (Map[String, String], Float) =
     params.get("q") match {
-      case Some(x) => (params - "q") -> (try x.toFloat
+      case Some(x) => (params - "q") ->
+        (try x.toFloat
         catch { case _: NumberFormatException => 1.0f })
       case None => params -> defaultQ
     }

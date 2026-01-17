@@ -476,7 +476,8 @@ class MessageSpec extends PekkoSpecWithMaterializer(
       List("ping", "pong").foreach { keepAliveMode =>
         def expectedOpcode = if (keepAliveMode == "ping") Opcode.Ping else Opcode.Pong
 
-        s"automatically send keep-alive [$keepAliveMode] frames, with empty data, when configured on the server side" in new ServerTestSetup {
+        s"automatically send keep-alive [$keepAliveMode] frames, with empty data, when configured on the server side" in
+        new ServerTestSetup {
           override def websocketSettings: WebSocketSettings = // configures server to do keep-alive
             super.websocketSettings
               .withPeriodicKeepAliveMode(keepAliveMode)
@@ -486,7 +487,8 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           expectFrameOnNetwork(expectedOpcode, ByteString.empty, fin = true)
           expectFrameOnNetwork(expectedOpcode, ByteString.empty, fin = true)
         }
-        s"automatically send keep-alive [$keepAliveMode] frames, with data payload, when configured on the server side" in new ServerTestSetup {
+        s"automatically send keep-alive [$keepAliveMode] frames, with data payload, when configured on the server side" in
+        new ServerTestSetup {
           val counter = new AtomicInteger()
           override def websocketSettings: WebSocketSettings = // configures server to do keep-alive
             super.websocketSettings
@@ -499,7 +501,8 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           expectFrameOnNetwork(expectedOpcode, ByteString("ping-3"), fin = true)
         }
 
-        s"automatically send keep-alive [$keepAliveMode] frames, with empty data, when configured on the client side" in new ClientTestSetup {
+        s"automatically send keep-alive [$keepAliveMode] frames, with empty data, when configured on the client side" in
+        new ClientTestSetup {
           override def websocketSettings: WebSocketSettings = // configures client to do keep-alive
             super.websocketSettings
               .withPeriodicKeepAliveMode(keepAliveMode)
@@ -509,7 +512,8 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           expectFrameOnNetwork(expectedOpcode, ByteString.empty, fin = true)
           expectFrameOnNetwork(expectedOpcode, ByteString.empty, fin = true)
         }
-        s"automatically send keep-alive [$keepAliveMode] frames, with data payload, when configured on the client side" in new ClientTestSetup {
+        s"automatically send keep-alive [$keepAliveMode] frames, with data payload, when configured on the client side" in
+        new ClientTestSetup {
           val counter = new AtomicInteger()
           override def websocketSettings: WebSocketSettings = // configures client to do keep-alive
             super.websocketSettings

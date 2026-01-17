@@ -336,7 +336,8 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
           } finally Await.result(b1.unbind(), 1.second.dilated)
         }
 
-        "avoid client vs. server race-condition for persistent connections with keep-alive-timeout" in Utils.assertAllStagesStopped {
+        "avoid client vs. server race-condition for persistent connections with keep-alive-timeout" in
+        Utils.assertAllStagesStopped {
           def handler(request: HttpRequest): Future[HttpResponse] = Future.successful(HttpResponse())
           val serverSettings = ServerSettings(system).mapTimeouts(_.withIdleTimeout(300.millis))
           val binding = Http().newServerAt("127.0.0.1", 0).withSettings(serverSettings).bind(handler).futureValue
@@ -653,7 +654,8 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
       Http().shutdownAllConnectionPools().futureValue
     }
 
-    "complete a request/response when the request side immediately closes the connection after sending the request" in Utils.assertAllStagesStopped {
+    "complete a request/response when the request side immediately closes the connection after sending the request" in
+    Utils.assertAllStagesStopped {
       // FIXME: with HTTP/2 enabled the connection is closed directly after receiving closing from client (i.e. half-closed
       // HTTP connections are not allowed (whether they should be is a completely different question))
       // https://github.com/akka/akka-http/issues/3964
@@ -687,7 +689,8 @@ Host: example.com
       }
     }
 
-    "complete a request/response over https, disabling hostname verification with SSLConfigSettings" in Utils.assertAllStagesStopped {
+    "complete a request/response over https, disabling hostname verification with SSLConfigSettings" in
+    Utils.assertAllStagesStopped {
       val serverConnectionContext = ExampleHttpContexts.exampleServerContext
       val handlerFlow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest].map { _ =>
         HttpResponse(entity = "Okay")
@@ -836,7 +839,8 @@ Host: example.com
       }
     }
 
-    "complete a request/response over https when server closes connection without close_notify" in Utils.assertAllStagesStopped {
+    "complete a request/response over https when server closes connection without close_notify" in
+    Utils.assertAllStagesStopped {
       new CloseDelimitedTLSSetup {
         killSwitch.shutdown() // simulate FIN in server -> client direction
         // pekko-http is currently lenient wrt TLS truncation which is *not* reported to the user
@@ -845,7 +849,8 @@ Host: example.com
       }
     }
 
-    "properly complete a simple request/response cycle when `modeled-header-parsing = off`" in Utils.assertAllStagesStopped {
+    "properly complete a simple request/response cycle when `modeled-header-parsing = off`" in
+    Utils.assertAllStagesStopped {
       new TestSetup {
         override def configOverrides = "pekko.http.parsing.modeled-header-parsing = off"
 
@@ -878,7 +883,8 @@ Host: example.com
       }
     }
 
-    "properly complete a simple request/response cycle when `max-content-length` is set to 0" in Utils.assertAllStagesStopped {
+    "properly complete a simple request/response cycle when `max-content-length` is set to 0" in
+    Utils.assertAllStagesStopped {
       new TestSetup {
         override def configOverrides = """
             pekko.http.client.parsing.max-content-length = 0
@@ -964,7 +970,8 @@ Host: example.com
       Http().shutdownAllConnectionPools().futureValue
     }
 
-    "produce a useful error message when connecting to an endpoint speaking wrong protocol" in Utils.assertAllStagesStopped {
+    "produce a useful error message when connecting to an endpoint speaking wrong protocol" in
+    Utils.assertAllStagesStopped {
       val settings = ConnectionPoolSettings(system).withUpdatedConnectionSettings(_.withIdleTimeout(100.millis))
 
       val binding =
@@ -973,7 +980,8 @@ Host: example.com
 
       val ex = the[IllegalResponseException] thrownBy Await.result(Http().singleRequest(HttpRequest(uri = uri,
         method = HttpMethods.POST), settings = settings), 30.seconds)
-      ex.info.formatPretty shouldEqual "The server-side protocol or HTTP version is not supported: start of response: [68 65 6C 6C 6F 20 77 6F 72 6C 64 21              | hello world!]"
+      ex.info.formatPretty shouldEqual
+      "The server-side protocol or HTTP version is not supported: start of response: [68 65 6C 6C 6F 20 77 6F 72 6C 64 21              | hello world!]"
 
       Await.result(binding.unbind(), 10.seconds)
       Http().shutdownAllConnectionPools().futureValue

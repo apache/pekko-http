@@ -156,7 +156,8 @@ class ExecutionDirectivesSpec extends RoutingSpec {
       }
     }
 
-    "handle exceptions other than `IllegalRequestException` with appropriate block of `ErrorHandler`" in EventFilter[
+    "handle exceptions other than `IllegalRequestException` with appropriate block of `ErrorHandler`" in
+    EventFilter[
       RuntimeException](
       occurrences = 1,
       message = BasicRouteSpecs.defaultExnHandler500Error("re")).intercept {

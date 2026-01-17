@@ -142,7 +142,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
-      "a response with several conflicting Content-Type headers with conflicting-content-type-header-processing-mode = first" in new Test {
+      "a response with several conflicting Content-Type headers with conflicting-content-type-header-processing-mode = first" in
+      new Test {
         override def parserSettings: ParserSettings =
           super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
             ConflictingContentTypeHeaderProcessingMode.First)
@@ -156,7 +157,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
-      "a response with several conflicting Content-Type headers with conflicting-content-type-header-processing-mode = last" in new Test {
+      "a response with several conflicting Content-Type headers with conflicting-content-type-header-processing-mode = last" in
+      new Test {
         override def parserSettings: ParserSettings =
           super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
             ConflictingContentTypeHeaderProcessingMode.Last)
@@ -170,7 +172,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
-      "a response with several conflicting Content-Type headers with conflicting-content-type-header-processing-mode = no-content-type" in new Test {
+      "a response with several conflicting Content-Type headers with conflicting-content-type-header-processing-mode = no-content-type" in
+      new Test {
         override def parserSettings: ParserSettings =
           super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
             ConflictingContentTypeHeaderProcessingMode.NoContentType)

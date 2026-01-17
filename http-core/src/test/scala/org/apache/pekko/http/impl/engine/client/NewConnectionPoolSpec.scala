@@ -26,11 +26,7 @@ import pekko.http.impl.engine.server.ServerTerminator
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util._
 import pekko.http.scaladsl.Http.{
-  HostConnectionPool,
-  HostConnectionPoolImpl,
-  HttpServerTerminated,
-  HttpTerminated,
-  OutgoingConnection
+  HostConnectionPool, HostConnectionPoolImpl, HttpServerTerminated, HttpTerminated, OutgoingConnection
 }
 import pekko.http.scaladsl.model.HttpEntity.{ Chunk, ChunkStreamPart, Chunked, LastChunk }
 import pekko.http.scaladsl.model.{ HttpEntity, _ }
@@ -349,7 +345,8 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
       Await.result(gateway.poolStatus(), 1500.millis.dilated).get shouldBe a[PoolInterfaceRunning]
       awaitCond({ Await.result(gateway.poolStatus(), 1500.millis.dilated).isEmpty }, 2000.millis.dilated)
     }
-    "automatically shutdown after configured timeout periods but only after streaming response is finished" in new TestSetup() {
+    "automatically shutdown after configured timeout periods but only after streaming response is finished" in
+    new TestSetup() {
       val (requestIn, responseOut, responseOutSub, hcp) = cachedHostConnectionPool[Int](idleTimeout = 200.millis)
       val gateway = hcp.poolId
 

@@ -29,11 +29,7 @@ import pekko.http.impl.util.LogByteStringTools.logTLSBidiBySetting
 import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.{
-  ClientConnectionSettings,
-  Http2ClientSettings,
-  Http2ServerSettings,
-  ParserSettings,
-  ServerSettings
+  ClientConnectionSettings, Http2ClientSettings, Http2ServerSettings, ParserSettings, ServerSettings
 }
 import pekko.stream.{ BidiShape, Graph, StreamTcpException, ThrottleMode }
 import pekko.stream.TLSProtocol._

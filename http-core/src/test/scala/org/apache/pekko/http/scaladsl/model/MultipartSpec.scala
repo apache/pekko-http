@@ -44,7 +44,8 @@ class MultipartSpec extends PekkoSpecWithMaterializer {
       result.contentType shouldBe MediaTypes.`multipart/mixed`.withBoundary("boundary").toContentType
       val encoding = Await.result(result.dataBytes.runWith(Sink.seq), 1.second.dilated)
       encoding.map(
-        _.utf8String).mkString shouldBe "--boundary\r\nContent-Type: text/plain; charset=UTF-8\r\nETag: \"xzy\"\r\n\r\ndata\r\n--boundary--"
+        _.utf8String).mkString shouldBe
+      "--boundary\r\nContent-Type: text/plain; charset=UTF-8\r\nETag: \"xzy\"\r\n\r\ndata\r\n--boundary--"
     }
   }
 

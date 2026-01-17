@@ -149,7 +149,8 @@ class GracefulTerminationSpec
       }
     }
 
-    "provide whenTerminated future that completes once server has completed termination (no connections)" in new TestSetup {
+    "provide whenTerminated future that completes once server has completed termination (no connections)" in
+    new TestSetup {
       val time: FiniteDuration = 2.seconds
       val deadline: Deadline = time.fromNow
 
@@ -161,7 +162,8 @@ class GracefulTerminationSpec
       Await.result(serverBinding.whenTerminated, 3.seconds)
     }
 
-    "provide whenTerminated future that completes once server has completed termination (existing connection, no user reply)" in new TestSetup {
+    "provide whenTerminated future that completes once server has completed termination (existing connection, no user reply)" in
+    new TestSetup {
       val r1 = makeRequest() // establish connection
 
       val time: FiniteDuration = 1.second
@@ -180,7 +182,8 @@ class GracefulTerminationSpec
       Await.result(serverBinding.whenTerminated, 2.seconds)
     }
 
-    "provide whenTerminated future that completes once server has completed termination (existing connection, user reply)" in new TestSetup {
+    "provide whenTerminated future that completes once server has completed termination (existing connection, user reply)" in
+    new TestSetup {
       val r1 = makeRequest() // establish connection
       val time: FiniteDuration = 3.seconds
 
@@ -195,7 +198,8 @@ class GracefulTerminationSpec
 
       Await.result(serverBinding.whenTerminated, 3.seconds)
     }
-    "provide whenTerminated future that completes once server has completed termination (existing connection, user reply, terminate, no reply)" in new TestSetup {
+    "provide whenTerminated future that completes once server has completed termination (existing connection, user reply, terminate, no reply)" in
+    new TestSetup {
       val r1 = makeRequest() // establish connection
       val time: FiniteDuration = 3.seconds
 
@@ -214,7 +218,8 @@ class GracefulTerminationSpec
       Await.result(serverBinding.whenTerminated, 3.seconds)
     }
 
-    "in-flight request responses should include additional Connection: close header and connection should be closed" in new TestSetup {
+    "in-flight request responses should include additional Connection: close header and connection should be closed" in
+    new TestSetup {
       override val basePoolSettings: ConnectionPoolSettings =
         super.basePoolSettings
           .withTransport(new ClientTransport {

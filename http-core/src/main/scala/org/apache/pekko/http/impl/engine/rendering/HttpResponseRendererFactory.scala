@@ -159,7 +159,8 @@ private[http] class HttpResponseRendererFactory(
           def render(h: HttpHeader) = r ~~ h
 
           def mustRenderTransferEncodingChunkedHeader =
-            entity.isChunked && (!entity.isKnownEmpty || ctx.requestMethod == HttpMethods.HEAD) && (ctx.requestProtocol == `HTTP/1.1`)
+            entity.isChunked && (!entity.isKnownEmpty || ctx.requestMethod == HttpMethods.HEAD) &&
+            (ctx.requestProtocol == `HTTP/1.1`)
 
           def renderHeaders(headers: immutable.Seq[HttpHeader], alwaysClose: Boolean = false): Unit = {
             var connHeader: Connection = null

@@ -162,7 +162,8 @@ class RouteDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
 
     Get("/foo") ~> route ~> check {
       status shouldEqual StatusCodes.PermanentRedirect
-      responseAs[String] shouldEqual """The request, and all future requests should be repeated using <a href="/foo/">this URI</a>."""
+      responseAs[String] shouldEqual
+      """The request, and all future requests should be repeated using <a href="/foo/">this URI</a>."""
     }
     // #redirect-examples
   }

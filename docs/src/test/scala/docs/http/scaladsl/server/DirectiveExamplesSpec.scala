@@ -102,10 +102,9 @@ class DirectiveExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "example-6" in {
     // #example-6
     val getOrPut = get | put
-    val route =
-      (path("order" / IntNumber) & getOrPut & extractMethod) { (id, m) =>
-        complete(s"Received ${m.name} request for order $id")
-      }
+    val route = (path("order" / IntNumber) & getOrPut & extractMethod) { (id, m) =>
+      complete(s"Received ${m.name} request for order $id")
+    }
     verify(route) // #hide
     // #example-6
   }
