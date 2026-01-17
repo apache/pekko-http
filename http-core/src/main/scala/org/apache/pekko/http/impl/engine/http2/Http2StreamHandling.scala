@@ -194,7 +194,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
 
     debug(
-      s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne null)
+      s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne
+          null)
           s"($eventArg)"
         else ""}]")
 
@@ -794,7 +795,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       // TODO: Check that buffer is not too much over the limit (which we might warn the user about)
       //       The problem here is that backpressure will only work properly if batch elements like
       //       ByteString have a reasonable size.
-      if (!upstreamClosed && buffer.length < multiplexer.maxBytesToBufferPerSubstream && !inlet.hasBeenPulled && !inlet.isClosed)
+      if (!upstreamClosed && buffer.length < multiplexer.maxBytesToBufferPerSubstream && !inlet.hasBeenPulled &&
+        !inlet.isClosed)
         inlet.pull()
 
     /** Cleans up internal state (but not external) */

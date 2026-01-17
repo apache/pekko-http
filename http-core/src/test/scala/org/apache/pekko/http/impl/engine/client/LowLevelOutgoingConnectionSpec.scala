@@ -509,7 +509,8 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
         sub.sendComplete()
 
         val InvalidContentLengthException(info) = netOut.expectError()
-        info.summary shouldEqual "HTTP message had declared Content-Length 8 but entity data stream amounts to 2 bytes less"
+        info.summary shouldEqual
+        "HTTP message had declared Content-Length 8 but entity data stream amounts to 2 bytes less"
         netInSub.sendComplete()
         responsesSub.request(1)
         responses.expectError().getMessage should equal(
@@ -537,7 +538,8 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
         sub.sendNext(ByteString("XYZ"))
 
         val InvalidContentLengthException(info) = netOut.expectError()
-        info.summary shouldEqual "HTTP message had declared Content-Length 8 but entity data stream amounts to more bytes"
+        info.summary shouldEqual
+        "HTTP message had declared Content-Length 8 but entity data stream amounts to more bytes"
         netInSub.sendComplete()
         responsesSub.request(1)
         responses.expectError().getMessage should equal(
@@ -553,7 +555,8 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
 
         responsesSub.request(1)
         val error @ IllegalResponseException(info) = responses.expectError()
-        info.formatPretty shouldEqual "The server-side protocol or HTTP version is not supported: start of response: [48 54 54 50 2F 31 2E 32 20 32 30 30 20 4F 4B 0D  | HTTP/1.2 200 OK.]"
+        info.formatPretty shouldEqual
+        "The server-side protocol or HTTP version is not supported: start of response: [48 54 54 50 2F 31 2E 32 20 32 30 30 20 4F 4B 0D  | HTTP/1.2 200 OK.]"
         netOut.expectError(error)
         requestsSub.expectCancellation()
         netInSub.expectCancellation()

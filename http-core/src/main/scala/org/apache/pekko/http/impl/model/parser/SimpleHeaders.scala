@@ -30,7 +30,8 @@ private[parser] trait SimpleHeaders {
 
   // http://tools.ietf.org/html/rfc7233#section-2.3
   def `accept-ranges` = rule {
-    ("none" ~ push(Nil) | zeroOrMore(ws(',')) ~ oneOrMore(`range-unit`).separatedBy(listSep)) ~ EOI ~> (`Accept-Ranges`(
+    ("none" ~ push(Nil) | zeroOrMore(ws(',')) ~ oneOrMore(`range-unit`).separatedBy(listSep)) ~ EOI ~>
+    (`Accept-Ranges`(
       _))
   }
 

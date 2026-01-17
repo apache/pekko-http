@@ -528,7 +528,8 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
             network.fromNet.sendError(new RuntimeException("connection crashed"))
 
             // we have received all data for the stream, but the substream cannot push it any more because the owning stage is gone
-            entityDataIn.expectError().getMessage shouldBe "The HTTP/2 connection was shut down while the request was still ongoing"
+            entityDataIn.expectError().getMessage shouldBe
+            "The HTTP/2 connection was shut down while the request was still ongoing"
           })
         "fail if DATA frame arrives after incoming stream has already been closed (before response was sent)".inAssertAllStagesStopped(
           new WaitingForRequestData {
@@ -546,7 +547,8 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
             errorCode shouldEqual ErrorCode.PROTOCOL_ERROR
 
             // we have received all data for the stream, but the substream cannot push it any more because the owning stage is gone
-            entityDataIn.expectError().getMessage shouldBe "The HTTP/2 connection was shut down while the request was still ongoing"
+            entityDataIn.expectError().getMessage shouldBe
+            "The HTTP/2 connection was shut down while the request was still ongoing"
           })
         "fail entity stream if advertised content-length doesn't match" in pending
 
@@ -1243,7 +1245,8 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.fromNet.sendError(new RuntimeException("Connection broke"))
 
           // now all stream stages should be closed
-          reqProbe.expectError().getMessage shouldBe "The HTTP/2 connection was shut down while the request was still ongoing"
+          reqProbe.expectError().getMessage shouldBe
+          "The HTTP/2 connection was shut down while the request was still ongoing"
           responseEntityProbe.expectCancellation()
         }))
     }
@@ -1252,7 +1255,8 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
       "not exceed connection-level window while sending" in pending
       "not exceed stream-level window while sending" in pending
       "not exceed stream-level window while sending after SETTINGS_INITIAL_WINDOW_SIZE changed" in pending
-      "not exceed stream-level window while sending after SETTINGS_INITIAL_WINDOW_SIZE changed when window became negative through setting" in pending
+      "not exceed stream-level window while sending after SETTINGS_INITIAL_WINDOW_SIZE changed when window became negative through setting" in
+      pending
 
       "reject WINDOW_UPDATE for connection with zero increment with PROTOCOL_ERROR".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {

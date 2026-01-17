@@ -48,6 +48,7 @@ private[parser] trait AcceptHeader { this: Parser with CommonRules with CommonAc
   def `media-range-def` = rule {
     "*/*" ~ push("*") ~ push("*") |
     '*' ~ push("*") ~ push("*") |
-    `type` ~ '/' ~ ('*' ~ !tchar ~ push("*") | subtype)
+    `type` ~ '/' ~
+    ('*' ~ !tchar ~ push("*") | subtype)
   }
 }

@@ -203,8 +203,10 @@ private[http] final class UriParser(
     | `path-empty`)
 
   def scheme = rule(
-    'h' ~ 't' ~ 't' ~ 'p' ~ (&(':') ~ run(setScheme("http")) | 's' ~ &(':') ~ run(setScheme("https")))
-    | clearSB() ~ ALPHA ~ appendLowered() ~ zeroOrMore(`scheme-char` ~ appendLowered()) ~ &(':') ~ run(
+    'h' ~ 't' ~ 't' ~ 'p' ~
+    (&(':') ~ run(setScheme("http")) | 's' ~ &(':') ~ run(setScheme("https")))
+    | clearSB() ~ ALPHA ~ appendLowered() ~ zeroOrMore(`scheme-char` ~ appendLowered()) ~ &(':') ~
+    run(
       setScheme(sb.toString)))
 
   def `scheme-pushed` =

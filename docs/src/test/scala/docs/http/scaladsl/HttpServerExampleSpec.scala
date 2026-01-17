@@ -361,19 +361,18 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
 
-    val route =
-      (put & path("lines")) {
-        withoutSizeLimit {
-          extractDataBytes { bytes =>
-            val finishedWriting = bytes.runWith(FileIO.toPath(new File("/tmp/example.out").toPath))
+    val route = (put & path("lines")) {
+      withoutSizeLimit {
+        extractDataBytes { bytes =>
+          val finishedWriting = bytes.runWith(FileIO.toPath(new File("/tmp/example.out").toPath))
 
-            // we only want to respond once the incoming data has been handled:
-            onComplete(finishedWriting) { ioResult =>
-              complete("Finished writing data: " + ioResult)
-            }
+          // we only want to respond once the incoming data has been handled:
+          onComplete(finishedWriting) { ioResult =>
+            complete("Finished writing data: " + ioResult)
           }
         }
       }
+    }
     // #consume-raw-dataBytes
   }
 
@@ -388,19 +387,18 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
 
-    val route =
-      (put & path("lines")) {
-        withoutSizeLimit {
-          extractRequest { (r: HttpRequest) =>
-            val finishedWriting = r.discardEntityBytes().future
+    val route = (put & path("lines")) {
+      withoutSizeLimit {
+        extractRequest { (r: HttpRequest) =>
+          val finishedWriting = r.discardEntityBytes().future
 
-            // we only want to respond once the incoming data has been handled:
-            onComplete(finishedWriting) { done =>
-              complete("Drained all data from connection... (" + done + ")")
-            }
+          // we only want to respond once the incoming data has been handled:
+          onComplete(finishedWriting) { done =>
+            complete("Drained all data from connection... (" + done + ")")
           }
         }
       }
+    }
     // #discard-discardEntityBytes
   }
 
@@ -416,22 +414,21 @@ class HttpServerExampleSpec extends AnyWordSpec with Matchers
     // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
 
-    val route =
-      (put & path("lines")) {
-        withoutSizeLimit {
-          extractDataBytes { data =>
-            // Closing connections, method 1 (eager):
-            // we deem this request as illegal, and close the connection right away:
-            data.runWith(Sink.cancelled) // "brutally" closes the connection
+    val route = (put & path("lines")) {
+      withoutSizeLimit {
+        extractDataBytes { data =>
+          // Closing connections, method 1 (eager):
+          // we deem this request as illegal, and close the connection right away:
+          data.runWith(Sink.cancelled) // "brutally" closes the connection
 
-            // Closing connections, method 2 (graceful):
-            // consider draining connection and replying with `Connection: Close` header
-            // if you want the client to close after this request/reply cycle instead:
-            respondWithHeader(Connection("close"))
-            complete(StatusCodes.Forbidden -> "Not allowed!")
-          }
+          // Closing connections, method 2 (graceful):
+          // consider draining connection and replying with `Connection: Close` header
+          // if you want the client to close after this request/reply cycle instead:
+          respondWithHeader(Connection("close"))
+          complete(StatusCodes.Forbidden -> "Not allowed!")
         }
       }
+    }
     // #discard-close-connections
   }
 

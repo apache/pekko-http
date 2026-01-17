@@ -74,7 +74,8 @@ class One2OneBidiFlowSpec extends PekkoSpec with Eventually {
       downstreamProbe.expectError(One2OneBidiFlow.OutputTruncationException(1))
     }
 
-    "trigger an `UnexpectedOutputException` if the wrapped stream produces out-of-order elements" in assertAllStagesStopped {
+    "trigger an `UnexpectedOutputException` if the wrapped stream produces out-of-order elements" in
+    assertAllStagesStopped {
       new Test() {
         inIn.sendNext(1)
         inOut.requestNext() should ===(1)
@@ -104,7 +105,8 @@ class One2OneBidiFlowSpec extends PekkoSpec with Eventually {
       }
     }
 
-    "backpressure the input side if the maximum number of pending output elements has been reached" in assertAllStagesStopped {
+    "backpressure the input side if the maximum number of pending output elements has been reached" in
+    assertAllStagesStopped {
       val MAX_PENDING = 24
       val EMIT_ELEMENTS = 8
 

@@ -34,10 +34,9 @@ sealed private[pekko] trait Collect[T] {
 @InternalApi private[pekko] object CollectorStage {
   def resultAfterSourceElements[T, U](source: Source[T, Any], flow: Flow[T, U, Any])(
       implicit materializer: Materializer): Future[(Seq[U], Boolean)] = {
-    val collector =
-      (source ++ Source.maybe[T] /* Never complete*/ )
-        .via(flow)
-        .runWith(new CollectorStage[U])
+    val collector = (source ++ Source.maybe[T] /* Never complete*/ )
+      .via(flow)
+      .runWith(new CollectorStage[U])
     collector.collectAndCompleteNow()
   }
 }

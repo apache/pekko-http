@@ -158,7 +158,8 @@ class HttpServerSpec extends PekkoSpec(
       netIn.sendComplete()
     })
 
-    "deliver the request entity as it comes in strictly for an immediately completed Strict entity" in assertAllStagesStopped(
+    "deliver the request entity as it comes in strictly for an immediately completed Strict entity" in
+    assertAllStagesStopped(
       new TestSetup {
         send("""POST /strict HTTP/1.1
              |Host: example.com
@@ -434,7 +435,8 @@ class HttpServerSpec extends PekkoSpec(
       shutdownBlueprint()
     })
 
-    "report a truncated entity stream on the entity data stream and the main stream for a Default entity" in assertAllStagesStopped(
+    "report a truncated entity stream on the entity data stream and the main stream for a Default entity" in
+    assertAllStagesStopped(
       new TestSetup {
         send("""POST / HTTP/1.1
              |Host: example.com
@@ -450,12 +452,14 @@ class HttpServerSpec extends PekkoSpec(
             dataProbe.expectNext(ByteString("abcdef"))
             dataProbe.expectNoMessage(50.millis)
             closeNetworkInput()
-            dataProbe.expectError().getMessage shouldEqual "Entity stream truncation. The HTTP parser was receiving an entity when the underlying connection was closed unexpectedly."
+            dataProbe.expectError().getMessage shouldEqual
+            "Entity stream truncation. The HTTP parser was receiving an entity when the underlying connection was closed unexpectedly."
         }
         shutdownBlueprint()
       })
 
-    "report a truncated entity stream on the entity data stream and the main stream for a Chunked entity" in assertAllStagesStopped(
+    "report a truncated entity stream on the entity data stream and the main stream for a Chunked entity" in
+    assertAllStagesStopped(
       new TestSetup {
         send("""POST / HTTP/1.1
              |Host: example.com
@@ -473,7 +477,8 @@ class HttpServerSpec extends PekkoSpec(
             dataProbe.expectNext(Chunk(ByteString("abcdef")))
             dataProbe.expectNoMessage(50.millis)
             closeNetworkInput()
-            dataProbe.expectError().getMessage shouldEqual "Entity stream truncation. The HTTP parser was receiving an entity when the underlying connection was closed unexpectedly."
+            dataProbe.expectError().getMessage shouldEqual
+            "Entity stream truncation. The HTTP parser was receiving an entity when the underlying connection was closed unexpectedly."
         }
         shutdownBlueprint()
       })
@@ -501,7 +506,8 @@ class HttpServerSpec extends PekkoSpec(
       shutdownBlueprint()
     })
 
-    "not emit entities when responding to HEAD requests if transparent-head-requests is enabled (with Strict)" in assertAllStagesStopped(
+    "not emit entities when responding to HEAD requests if transparent-head-requests is enabled (with Strict)" in
+    assertAllStagesStopped(
       new TestSetup {
         override def settings = super.settings.withTransparentHeadRequests(true)
         send("""HEAD / HTTP/1.1
@@ -526,7 +532,8 @@ class HttpServerSpec extends PekkoSpec(
         netOut.expectComplete()
       })
 
-    "not emit entities when responding to HEAD requests if transparent-head-requests is enabled (with Default)" in assertAllStagesStopped(
+    "not emit entities when responding to HEAD requests if transparent-head-requests is enabled (with Default)" in
+    assertAllStagesStopped(
       new TestSetup {
         override def settings = super.settings.withTransparentHeadRequests(true)
         send("""HEAD / HTTP/1.1
@@ -554,7 +561,8 @@ class HttpServerSpec extends PekkoSpec(
         netOut.expectComplete()
       })
 
-    "not emit entities when responding to HEAD requests if transparent-head-requests is enabled (with CloseDelimited)" in assertAllStagesStopped(
+    "not emit entities when responding to HEAD requests if transparent-head-requests is enabled (with CloseDelimited)" in
+    assertAllStagesStopped(
       new TestSetup {
         override def settings = super.settings.withTransparentHeadRequests(true)
         send("""HEAD / HTTP/1.1
@@ -583,7 +591,8 @@ class HttpServerSpec extends PekkoSpec(
         netOut.expectComplete()
       })
 
-    "not emit entities when responding to HEAD requests if transparent-head-requests is enabled (with Chunked)" in assertAllStagesStopped(
+    "not emit entities when responding to HEAD requests if transparent-head-requests is enabled (with Chunked)" in
+    assertAllStagesStopped(
       new TestSetup {
         override def settings = super.settings.withTransparentHeadRequests(true)
         send("""HEAD / HTTP/1.1
@@ -673,7 +682,8 @@ class HttpServerSpec extends PekkoSpec(
       netOut.expectComplete()
     })
 
-    "produce a `100 Continue` response when requested by a `Default` entity and some data sent early" in assertAllStagesStopped(
+    "produce a `100 Continue` response when requested by a `Default` entity and some data sent early" in
+    assertAllStagesStopped(
       new TestSetup {
         send("""POST / HTTP/1.1
              |Host: example.com
@@ -743,7 +753,8 @@ class HttpServerSpec extends PekkoSpec(
         netOut.expectComplete()
       })
 
-    "not produce a `100 Continue` response if `Strict` entity is empty because `Content-Length` header is 0" in assertAllStagesStopped(
+    "not produce a `100 Continue` response if `Strict` entity is empty because `Content-Length` header is 0" in
+    assertAllStagesStopped(
       new TestSetup {
         send("""POST / HTTP/1.1
              |Host: example.com
@@ -768,7 +779,8 @@ class HttpServerSpec extends PekkoSpec(
         netOut.expectComplete()
       })
 
-    "not produce a `100 Continue` response if `Strict` entity is empty because `Content-Length` header is missing" in assertAllStagesStopped(
+    "not produce a `100 Continue` response if `Strict` entity is empty because `Content-Length` header is missing" in
+    assertAllStagesStopped(
       new TestSetup {
         send("""POST / HTTP/1.1
              |Host: example.com
@@ -866,7 +878,8 @@ class HttpServerSpec extends PekkoSpec(
         requests.expectError()
       })
 
-    "not fail with 'Cannot pull port (ControllerStage.requestParsingIn) twice' for early response to `100 Continue` request (after 100-Continue has been sent)" in assertAllStagesStopped(
+    "not fail with 'Cannot pull port (ControllerStage.requestParsingIn) twice' for early response to `100 Continue` request (after 100-Continue has been sent)" in
+    assertAllStagesStopped(
       new TestSetup {
         send("""POST / HTTP/1.1
              |Host: example.com
@@ -914,7 +927,8 @@ class HttpServerSpec extends PekkoSpec(
         netOut.expectComplete()
       })
 
-    "not fail with 'Cannot pull port (ControllerStage.requestParsingIn) twice' for early response to `100 Continue` request (before 100-Continue has been sent)" in assertAllStagesStopped(
+    "not fail with 'Cannot pull port (ControllerStage.requestParsingIn) twice' for early response to `100 Continue` request (before 100-Continue has been sent)" in
+    assertAllStagesStopped(
       new TestSetup {
         send("""POST / HTTP/1.1
              |Host: example.com
@@ -1277,7 +1291,8 @@ class HttpServerSpec extends PekkoSpec(
       netIn.sendComplete()
     })
 
-    "add `Connection: close` to early responses if HttpResponse includes `Connection: keep-alive` header" in assertAllStagesStopped(
+    "add `Connection: close` to early responses if HttpResponse includes `Connection: keep-alive` header" in
+    assertAllStagesStopped(
       new TestSetup {
         send("""POST / HTTP/1.1
              |Host: example.com
@@ -1552,7 +1567,8 @@ class HttpServerSpec extends PekkoSpec(
       netOut.expectComplete()
     })
 
-    "reject HTTP/1.1 requests with Host header that doesn't match absolute request target authority" in assertAllStagesStopped(
+    "reject HTTP/1.1 requests with Host header that doesn't match absolute request target authority" in
+    assertAllStagesStopped(
       new TestSetup {
         send("""GET http://www.example.com HTTP/1.1
              |Host: www.example.net

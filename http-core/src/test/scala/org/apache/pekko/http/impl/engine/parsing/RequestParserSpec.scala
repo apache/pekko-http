@@ -176,7 +176,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
-      "with several conflicting `Content-Type` headers with conflicting-content-type-header-processing-mode = first" in new Test {
+      "with several conflicting `Content-Type` headers with conflicting-content-type-header-processing-mode = first" in
+      new Test {
         override def parserSettings: ParserSettings =
           super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
             ConflictingContentTypeHeaderProcessingMode.First)
@@ -191,7 +192,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
-      "with several conflicting `Content-Type` headers with conflicting-content-type-header-processing-mode = last" in new Test {
+      "with several conflicting `Content-Type` headers with conflicting-content-type-header-processing-mode = last" in
+      new Test {
         override def parserSettings: ParserSettings =
           super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
             ConflictingContentTypeHeaderProcessingMode.Last)
@@ -206,7 +208,8 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
-      "with several conflicting `Content-Type` headers with conflicting-content-type-header-processing-mode = no-content-type" in new Test {
+      "with several conflicting `Content-Type` headers with conflicting-content-type-header-processing-mode = no-content-type" in
+      new Test {
         override def parserSettings: ParserSettings =
           super.parserSettings.withConflictingContentTypeHeaderProcessingMode(
             ConflictingContentTypeHeaderProcessingMode.NoContentType)

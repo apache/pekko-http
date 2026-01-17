@@ -18,10 +18,7 @@ import pekko.http.scaladsl.model.StatusCodes
 import pekko.http.scaladsl.model.headers.`Sec-WebSocket-Protocol`
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.server.{
-  ExpectedWebSocketRequestRejection,
-  Route,
-  RoutingSpec,
-  UnsupportedWebSocketSubprotocolRejection
+  ExpectedWebSocketRequestRejection, Route, RoutingSpec, UnsupportedWebSocketSubprotocolRejection
 }
 import pekko.http.scaladsl.testkit.WSProbe
 import pekko.stream.OverflowStrategy
@@ -80,7 +77,8 @@ class WebSocketDirectivesSpec extends RoutingSpec {
 
       WS("http://localhost/", Flow[Message], List("other")) ~> Route.seal(websocketMultipleProtocolRoute) ~> check {
         status shouldEqual StatusCodes.BadRequest
-        responseAs[String] shouldEqual "None of the websocket subprotocols offered in the request are supported. Supported are 'echo','greeter'."
+        responseAs[String] shouldEqual
+        "None of the websocket subprotocols offered in the request are supported. Supported are 'echo','greeter'."
         header[`Sec-WebSocket-Protocol`].get.protocols.toSet shouldEqual Set("greeter", "echo")
       }
     }

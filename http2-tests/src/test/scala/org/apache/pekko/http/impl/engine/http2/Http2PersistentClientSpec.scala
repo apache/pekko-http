@@ -26,20 +26,8 @@ import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
 import pekko.http.scaladsl.{ ClientTransport, Http }
 import pekko.http.scaladsl.model.{
-  headers,
-  AttributeKey,
-  AttributeKeys,
-  ContentTypes,
-  HttpEntity,
-  HttpHeader,
-  HttpMethod,
-  HttpMethods,
-  HttpRequest,
-  HttpResponse,
-  RequestResponseAssociation,
-  StatusCode,
-  StatusCodes,
-  Uri
+  headers, AttributeKey, AttributeKeys, ContentTypes, HttpEntity, HttpHeader, HttpMethod, HttpMethods, HttpRequest,
+  HttpResponse, RequestResponseAssociation, StatusCode, StatusCodes, Uri
 }
 import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.http.scaladsl.settings.ClientConnectionSettings

@@ -243,11 +243,12 @@ sealed trait SameSite extends Renderable {
     case SameSite.None   => jm.headers.SameSite.None
   }
 
-  override private[http] def render[R <: Rendering](r: R): r.type = r ~~ (this match {
-    case SameSite.Strict => "Strict"
-    case SameSite.Lax    => "Lax"
-    case SameSite.None   => "None"
-  })
+  override private[http] def render[R <: Rendering](r: R): r.type = r ~~
+    (this match {
+      case SameSite.Strict => "Strict"
+      case SameSite.Lax    => "Lax"
+      case SameSite.None   => "None"
+    })
 }
 
 object SameSite {

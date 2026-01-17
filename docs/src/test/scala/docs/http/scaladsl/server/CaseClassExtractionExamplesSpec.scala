@@ -55,12 +55,11 @@ class CaseClassExtractionExamplesSpec extends RoutingSpec with Inside {
     // #example-3
     case class Color(name: String, red: Int, green: Int, blue: Int)
 
-    val route =
-      (path("color" / Segment) & parameters("r".as[Int], "g".as[Int], "b".as[Int]))
-        .as(Color.apply _) { color =>
-          // ... route working with the `color` instance
-          doSomethingWith(color) // #hide
-        }
+    val route = (path("color" / Segment) & parameters("r".as[Int], "g".as[Int], "b".as[Int]))
+      .as(Color.apply _) { color =>
+        // ... route working with the `color` instance
+        doSomethingWith(color) // #hide
+      }
     Get("/color/abc?r=1&g=2&b=3") ~> route ~> check { responseAs[String] shouldEqual "Color(abc,1,2,3)" } // #hide
     // #example-3
   }
@@ -77,7 +76,7 @@ class CaseClassExtractionExamplesSpec extends RoutingSpec with Inside {
   "example 4 test" in {
     val route =
       (path("color" / Segment) &
-        parameters("r".as[Int], "g".as[Int], "b".as[Int])).as(Color.apply _) { color =>
+      parameters("r".as[Int], "g".as[Int], "b".as[Int])).as(Color.apply _) { color =>
         // ... route working with the `color` instance
         doSomethingWith(color) // #hide
       }

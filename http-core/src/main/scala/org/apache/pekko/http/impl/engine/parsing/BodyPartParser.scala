@@ -335,8 +335,8 @@ private[http] object BodyPartParser {
     val boyerMoore: BoyerMoore = new BoyerMoore(needle)
 
     def isBoundary(input: ByteString, offset: Int, ix: Int = eolLength): Boolean = {
-      @tailrec def process(input: ByteString, offset: Int, ix: Int): Boolean =
-        (ix == needle.length) || (byteAt(input, offset + ix - eol.length) == needle(ix)) && process(input, offset,
+      @tailrec def process(input: ByteString, offset: Int, ix: Int): Boolean = (ix == needle.length) ||
+        (byteAt(input, offset + ix - eol.length) == needle(ix)) && process(input, offset,
           ix + 1)
 
       process(input, offset, ix)

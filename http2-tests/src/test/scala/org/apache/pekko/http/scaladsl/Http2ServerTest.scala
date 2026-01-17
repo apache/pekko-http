@@ -74,7 +74,8 @@ object Http2ServerTest extends App {
           formData.parts.runFoldAsync("") { (msg, part) =>
             part.entity.dataBytes.runFold(0)(_ + _.size)
               .map(dataSize =>
-                msg + s"${part.name} ${part.filename} $dataSize ${part.entity.contentType} ${part.additionalDispositionParams}\n")
+                msg +
+                s"${part.name} ${part.filename} $dataSize ${part.entity.contentType} ${part.additionalDispositionParams}\n")
           }
         }
         .map { msg =>

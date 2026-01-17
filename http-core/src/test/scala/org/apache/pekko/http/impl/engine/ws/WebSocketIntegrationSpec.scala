@@ -76,7 +76,8 @@ class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
       binding.unbind()
     }
 
-    "not reset the connection when no data are flowing and the connection is closed from the client" in Utils.assertAllStagesStopped {
+    "not reset the connection when no data are flowing and the connection is closed from the client" in
+    Utils.assertAllStagesStopped {
       val source = TestPublisher.probe[Message]()
       val bindingFuture = Http().newServerAt("localhost", 0).bindSync {
         _.attribute(webSocketUpgrade).get.handleMessages(Flow.fromSinkAndSource(Sink.ignore,
@@ -161,7 +162,8 @@ class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
       binding.unbind()
     }
 
-    "send back 100 elements and then terminate without error even when not ordinarily closed" in Utils.assertAllStagesStopped {
+    "send back 100 elements and then terminate without error even when not ordinarily closed" in
+    Utils.assertAllStagesStopped {
       val N = 100
 
       val handler = Flow.fromGraph(GraphDSL.create() { implicit b =>

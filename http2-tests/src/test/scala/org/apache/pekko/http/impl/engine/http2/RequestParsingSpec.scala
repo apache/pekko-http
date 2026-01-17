@@ -221,12 +221,13 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
 
           val authorities = Seq("?", " ", "@", ":")
           forAll(authorities) { authority =>
-            val thrown = the[ParsingException] thrownBy (parse(
-              keyValuePairs = Vector(
-                ":method" -> "POST",
-                ":scheme" -> "https",
-                ":authority" -> authority,
-                ":path" -> "/")))
+            val thrown = the[ParsingException] thrownBy
+              (parse(
+                keyValuePairs = Vector(
+                  ":method" -> "POST",
+                  ":scheme" -> "https",
+                  ":authority" -> authority,
+                  ":path" -> "/")))
             thrown.getMessage should include("http2-authority-pseudo-header")
           }
         }
@@ -248,12 +249,13 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         val schemes = Seq("http", "https")
         forAll(schemes) { (scheme: String) =>
           forAll(authorities) { (authority: String) =>
-            val exception = the[Exception] thrownBy (parse(
-              keyValuePairs = Vector(
-                ":method" -> "POST",
-                ":scheme" -> scheme,
-                ":authority" -> authority,
-                ":path" -> "/")))
+            val exception = the[Exception] thrownBy
+              (parse(
+                keyValuePairs = Vector(
+                  ":method" -> "POST",
+                  ":scheme" -> scheme,
+                  ":authority" -> authority,
+                  ":path" -> "/")))
             exception.getMessage should startWith("Illegal http2-authority-pseudo-header")
           }
         }

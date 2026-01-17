@@ -23,14 +23,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.{ Duration, DurationInt }
 
 import org.openjdk.jmh.annotations.{
-  Benchmark,
-  BenchmarkMode,
-  Mode,
-  OperationsPerInvocation,
-  OutputTimeUnit,
-  Scope,
-  State,
-  TearDown
+  Benchmark, BenchmarkMode, Mode, OperationsPerInvocation, OutputTimeUnit, Scope, State, TearDown
 }
 
 import org.apache.pekko

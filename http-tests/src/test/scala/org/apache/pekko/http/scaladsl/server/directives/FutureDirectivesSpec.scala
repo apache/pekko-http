@@ -61,14 +61,16 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
     "catch an exception in the success case" in {
       Get() ~> showEx(onComplete(Future.successful("ok")) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
-        responseAs[String] shouldEqual s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Success(ok)"
+        responseAs[String] shouldEqual
+        s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Success(ok)"
       }
     }
     "catch an exception in the failure case" in {
       Get()                                                                                               ~> showEx(
         onComplete(Future.failed[String](new RuntimeException("no"))) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
-        responseAs[String] shouldEqual s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Failure(java.lang.RuntimeException: no)"
+        responseAs[String] shouldEqual
+        s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Failure(java.lang.RuntimeException: no)"
       }
     }
   }
@@ -117,7 +119,8 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
       Get()                                                                                         ~> showEx(
         onCompleteWithBreaker(breaker)(Future.successful("ok")) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
-        responseAs[String] shouldEqual s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Success(ok)"
+        responseAs[String] shouldEqual
+        s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Success(ok)"
       }
     }
     "catch an exception in the failure case" in new TestWithCircuitBreaker {
@@ -125,7 +128,8 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
         throwTestException("EX when ")
       }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
-        responseAs[String] shouldEqual s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Failure(java.lang.RuntimeException: no)"
+        responseAs[String] shouldEqual
+        s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when Failure(java.lang.RuntimeException: no)"
       }
     }
   }
@@ -146,7 +150,8 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
     "catch an exception in the success case" in {
       Get() ~> showEx(onSuccess(Future.successful("ok")) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
-        responseAs[String] shouldEqual s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when ok"
+        responseAs[String] shouldEqual
+        s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when ok"
       }
     }
     "catch an exception in the failure case" in EventFilter[TestException.type](
@@ -184,7 +189,8 @@ class FutureDirectivesSpec extends RoutingSpec with Inside with TestKitBase {
       Get()                                                                                             ~> showEx(
         completeOrRecoverWith(Future.failed[String](TestException)) { throwTestException("EX when ") }) ~> check {
         status shouldEqual StatusCodes.InternalServerError
-        responseAs[String] shouldEqual s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException$$: XXX"
+        responseAs[String] shouldEqual
+        s"Oops. org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException: EX when org.apache.pekko.http.scaladsl.server.directives.FutureDirectivesSpec$$TestException$$: XXX"
       }
     }
   }

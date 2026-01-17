@@ -52,8 +52,9 @@ object TcpLeakApp extends App {
       result =>
         println(s"Result: $result")
         Thread.sleep(10000)
-        println("===================== \n\n" + system.asInstanceOf[
-          ActorSystemImpl].printTree + "\n\n========================")
+        println("===================== \n\n" +
+          system.asInstanceOf[
+            ActorSystemImpl].printTree + "\n\n========================")
     }
 
   Thread.sleep(11000)

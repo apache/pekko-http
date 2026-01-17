@@ -71,10 +71,9 @@ class HeaderDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec with
       case _                                       => None
     }
 
-    val route =
-      (headerValue(extractExampleHeader) | provide("newValue")) { value =>
-        complete(s"headerValue $value")
-      }
+    val route = (headerValue(extractExampleHeader) | provide("newValue")) { value =>
+      complete(s"headerValue $value")
+    }
 
     // tests:
     Get("/") ~> RawHeader("exampleHeaderValue", "theHeaderValue") ~> route ~> check {

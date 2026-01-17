@@ -892,7 +892,8 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
           implicit builder => (resIn, reqOut, client) =>
             import GraphDSL.Implicits._
 
-            builder.materializedValue ~> Sink.foreach[
+            builder.materializedValue ~>
+            Sink.foreach[
               (Publisher[HttpResponse], Subscriber[HttpRequest], Future[Http.OutgoingConnection])] {
               case (resOut, reqIn, clientConn) =>
                 clientConn.foreach { _ =>

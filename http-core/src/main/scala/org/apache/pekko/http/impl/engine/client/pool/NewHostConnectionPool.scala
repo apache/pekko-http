@@ -313,7 +313,8 @@ private[client] object NewHostConnectionPool {
                   state = Unconnected
                 }
 
-                if (!previousState.isIdle && state.isIdle && !(state == Unconnected && currentEmbargo != Duration.Zero)) {
+                if (!previousState.isIdle && state.isIdle &&
+                  !(state == Unconnected && currentEmbargo != Duration.Zero)) {
                   debug("Slot became idle... Trying to pull")
                   idleSlots.add(this)
                   pullIfNeeded()
@@ -345,7 +346,8 @@ private[client] object NewHostConnectionPool {
                     OptionVal.Some(Event.onNewConnectionEmbargo.preApply(currentEmbargo))
                   // numConnectedSlots might be slow for big numbers of connections, so avoid calling if minConnections feature is disabled
                   case s
-                      if !s.isConnected && s.isIdle && settings.minConnections > 0 && numConnectedSlots < settings.minConnections =>
+                      if !s.isConnected && s.isIdle && settings.minConnections > 0 &&
+                      numConnectedSlots < settings.minConnections =>
                     debug(s"Preconnecting because number of connected slots fell down to $numConnectedSlots")
                     OptionVal.Some(Event.onPreConnect)
                   case _ => OptionVal.None
