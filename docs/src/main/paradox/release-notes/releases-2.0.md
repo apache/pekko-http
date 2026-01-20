@@ -10,5 +10,8 @@ by early adopters. This is experimental. This release should not be used in prod
 * Pekko 2.0.0-M1 is the new minimum Pekko version
 * Java 17 is the new minimum JRE version
 * Scala 2.12 support dropped
-* A lot of deprecated code removed
-* A lot of pekko.util classes for Scala version compatibility have been removed
+* A lot of deprecated code has been removed
+* A lot of util classes for Scala version compatibility have been removed
+* Dependency versions have been updated
+* Jackson3 is supported in a new pekko-http-jackson3 lib
+* Changed Java DSL methods that return Scala Durations to return Java Durations ([PR793](https://github.com/apache/pekko-http/issues/783))
