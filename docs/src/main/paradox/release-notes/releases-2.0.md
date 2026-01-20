@@ -14,4 +14,4 @@ by early adopters. This is experimental. This release should not be used in prod
 * A lot of util classes for Scala version compatibility have been removed
 * Dependency versions have been updated
 * Jackson3 is supported in a new pekko-http-jackson3 lib
-* Changed Java DSL methods that return Scala Durations to return Java Durations ([PR793](https://github.com/apache/pekko-http/issues/783))
+* Changed Java DSL methods that return Scala Durations to return Java Durations ([PR788](https://github.com/apache/pekko-http/pull/788))
