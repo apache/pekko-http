@@ -22,7 +22,13 @@ import org.apache.pekko
 import pekko.http.impl.model.JavaUri
 import pekko.http.javadsl.marshalling.Marshaller
 import pekko.http.javadsl.model.{
-  HttpHeader, HttpRequest, HttpResponse, RequestEntity, ResponseEntity, StatusCode, Uri
+  HttpHeader,
+  HttpRequest,
+  HttpResponse,
+  RequestEntity,
+  ResponseEntity,
+  StatusCode,
+  Uri
 }
 import pekko.http.javadsl.server.{ Rejection, Route, RoutingJavaMapping }
 import pekko.http.javadsl.server.RoutingJavaMapping._

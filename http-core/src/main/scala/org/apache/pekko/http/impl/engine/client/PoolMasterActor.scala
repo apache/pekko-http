@@ -16,7 +16,13 @@ package org.apache.pekko.http.impl.engine.client
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.{
-  Actor, ActorLogging, ActorRef, DeadLetterSuppression, Deploy, ExtendedActorSystem, NoSerializationVerificationNeeded,
+  Actor,
+  ActorLogging,
+  ActorRef,
+  DeadLetterSuppression,
+  Deploy,
+  ExtendedActorSystem,
+  NoSerializationVerificationNeeded,
   Props
 }
 import pekko.annotation.InternalApi

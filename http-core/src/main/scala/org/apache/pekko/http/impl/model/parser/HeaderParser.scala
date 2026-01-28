@@ -18,7 +18,8 @@ import pekko.annotation.InternalApi
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.settings.ParserSettings.CookieParsingMode
 import pekko.http.scaladsl.settings.ParserSettings.{
-  IllegalResponseHeaderNameProcessingMode, IllegalResponseHeaderValueProcessingMode
+  IllegalResponseHeaderNameProcessingMode,
+  IllegalResponseHeaderValueProcessingMode
 }
 import pekko.http.scaladsl.model.headers.HttpCookiePair
 import pekko.util.ConstantFun

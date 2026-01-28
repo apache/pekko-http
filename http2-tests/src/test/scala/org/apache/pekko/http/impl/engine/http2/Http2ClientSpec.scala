@@ -40,7 +40,11 @@ import pekko.http.scaladsl.model.HttpEntity.Chunked
 import pekko.http.scaladsl.model.HttpEntity.LastChunk
 import pekko.http.scaladsl.model.HttpMethods.GET
 import pekko.http.scaladsl.model.headers.{
-  `Access-Control-Allow-Origin`, `Cache-Control`, `Content-Length`, `Content-Type`, RawHeader
+  `Access-Control-Allow-Origin`,
+  `Cache-Control`,
+  `Content-Length`,
+  `Content-Type`,
+  RawHeader
 }
 import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.settings.ClientConnectionSettings

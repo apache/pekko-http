@@ -26,7 +26,11 @@ import pekko.http.impl.engine.server.ServerTerminator
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util._
 import pekko.http.scaladsl.Http.{
-  HostConnectionPool, HostConnectionPoolImpl, HttpServerTerminated, HttpTerminated, OutgoingConnection
+  HostConnectionPool,
+  HostConnectionPoolImpl,
+  HttpServerTerminated,
+  HttpTerminated,
+  OutgoingConnection
 }
 import pekko.http.scaladsl.model.HttpEntity.{ Chunk, ChunkStreamPart, Chunked, LastChunk }
 import pekko.http.scaladsl.model.{ HttpEntity, _ }

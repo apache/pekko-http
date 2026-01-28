@@ -17,7 +17,12 @@ import java.nio.ByteOrder
 
 import org.apache.pekko
 import pekko.http.impl.engine.http2.FrameEvent.{
-  ContinuationFrame, HeadersFrame, PriorityFrame, Setting, SettingsFrame, WindowUpdateFrame
+  ContinuationFrame,
+  HeadersFrame,
+  PriorityFrame,
+  Setting,
+  SettingsFrame,
+  WindowUpdateFrame
 }
 import pekko.http.impl.engine.http2.Http2Protocol.{ ErrorCode, Flags, FrameType, SettingIdentifier }
 import pekko.http.impl.engine.http2.framing.FrameRenderer

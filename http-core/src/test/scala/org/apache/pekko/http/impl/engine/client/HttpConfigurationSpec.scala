@@ -16,7 +16,11 @@ package org.apache.pekko.http.impl.engine.client
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.scaladsl.settings.{
-  ClientConnectionSettings, ConnectionPoolSettings, HttpsProxySettings, ParserSettings, ServerSettings
+  ClientConnectionSettings,
+  ConnectionPoolSettings,
+  HttpsProxySettings,
+  ParserSettings,
+  ServerSettings
 }
 import pekko.testkit.PekkoSpec
 import com.typesafe.config.ConfigFactory

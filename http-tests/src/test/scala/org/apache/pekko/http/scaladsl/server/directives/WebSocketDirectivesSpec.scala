@@ -18,7 +18,10 @@ import pekko.http.scaladsl.model.StatusCodes
 import pekko.http.scaladsl.model.headers.`Sec-WebSocket-Protocol`
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.server.{
-  ExpectedWebSocketRequestRejection, Route, RoutingSpec, UnsupportedWebSocketSubprotocolRejection
+  ExpectedWebSocketRequestRejection,
+  Route,
+  RoutingSpec,
+  UnsupportedWebSocketSubprotocolRejection
 }
 import pekko.http.scaladsl.testkit.WSProbe
 import pekko.stream.OverflowStrategy
