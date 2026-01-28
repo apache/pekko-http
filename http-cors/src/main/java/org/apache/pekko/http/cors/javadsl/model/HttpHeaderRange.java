@@ -17,12 +17,16 @@
 
 package org.apache.pekko.http.cors.javadsl.model;
 
+import org.apache.pekko.annotation.DoNotInherit;
 import org.apache.pekko.http.impl.util.Util;
 import org.apache.pekko.http.cors.scaladsl.model.HttpHeaderRange$;
 
 /** @see HttpHeaderRanges for convenience access to often used values. */
+@DoNotInherit
 public abstract class HttpHeaderRange {
   public abstract boolean matches(String header);
+
+  public abstract HttpHeaderRange concat(HttpHeaderRange range);
 
   public static HttpHeaderRange create(String... headers) {
     return HttpHeaderRange$.MODULE$.apply(Util.convertArray(headers));

@@ -47,6 +47,7 @@ abstract class CorsSettings { self: CorsSettingsImpl =>
   def withAllowCredentials(newValue: Boolean): CorsSettings
   def withAllowedOrigins(newValue: HttpOriginMatcher): CorsSettings
   def withAllowedHeaders(newValue: HttpHeaderRange): CorsSettings
+  def withAdditionalAllowedHeaders(newValue: HttpHeaderRange): CorsSettings
   def withAllowedMethods(newValue: java.lang.Iterable[HttpMethod]): CorsSettings
   def withExposedHeaders(newValue: java.lang.Iterable[String]): CorsSettings
   def withMaxAge(newValue: OptionalLong): CorsSettings

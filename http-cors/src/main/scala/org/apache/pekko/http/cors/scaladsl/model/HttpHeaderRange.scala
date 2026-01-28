@@ -23,16 +23,30 @@ import org.apache.pekko
 import pekko.http.cors.javadsl
 import pekko.util.Helpers
 
-abstract class HttpHeaderRange extends javadsl.model.HttpHeaderRange
+sealed abstract class HttpHeaderRange extends javadsl.model.HttpHeaderRange {
+  override def concat(range: javadsl.model.HttpHeaderRange): HttpHeaderRange
+
+  def ++(range: javadsl.model.HttpHeaderRange): HttpHeaderRange = concat(range)
+}
 
 object HttpHeaderRange {
   case object `*` extends HttpHeaderRange {
     def matches(header: String) = true
+
+    override def concat(range: javadsl.model.HttpHeaderRange): HttpHeaderRange = this
   }
 
   final case class Default(headers: Seq[String]) extends HttpHeaderRange {
     private val lowercaseHeaders: Seq[String] = headers.map(Helpers.toRootLowerCase)
     def matches(header: String): Boolean = lowercaseHeaders.contains(Helpers.toRootLowerCase(header))
+
+    override def concat(range: javadsl.model.HttpHeaderRange): HttpHeaderRange = {
+      range match {
+        case `*`              => `*`
+        case Default(headers) => Default(this.headers ++ headers)
+        case _                => throw new IllegalArgumentException(s"Unexpected header range implementation type ${range.getClass}")
+      }
+    }
   }
 
   def apply(headers: String*): Default = Default(Seq(headers: _*))
