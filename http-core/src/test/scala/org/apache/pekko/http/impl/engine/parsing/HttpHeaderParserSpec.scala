@@ -28,7 +28,8 @@ import pekko.http.scaladsl.model.headers._
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.impl.util._
 import pekko.http.scaladsl.settings.ParserSettings.{
-  IllegalResponseHeaderNameProcessingMode, IllegalResponseHeaderValueProcessingMode
+  IllegalResponseHeaderNameProcessingMode,
+  IllegalResponseHeaderValueProcessingMode
 }
 import pekko.testkit.EventFilter
 

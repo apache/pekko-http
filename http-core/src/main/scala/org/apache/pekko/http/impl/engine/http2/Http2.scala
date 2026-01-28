@@ -15,13 +15,21 @@ package org.apache.pekko.http.impl.engine.http2
 
 import org.apache.pekko
 import pekko.actor.{
-  ActorSystem, ClassicActorSystemProvider, ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider
+  ActorSystem,
+  ClassicActorSystemProvider,
+  ExtendedActorSystem,
+  Extension,
+  ExtensionId,
+  ExtensionIdProvider
 }
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.HttpConnectionIdleTimeoutBidi
 import pekko.http.impl.engine.server.{
-  GracefulTerminatorStage, MasterServerTerminator, ServerTerminator, UpgradeToOtherProtocolResponseHeader
+  GracefulTerminatorStage,
+  MasterServerTerminator,
+  ServerTerminator,
+  UpgradeToOtherProtocolResponseHeader
 }
 import pekko.http.impl.util.LogByteStringTools
 import pekko.http.scaladsl.Http.OutgoingConnection

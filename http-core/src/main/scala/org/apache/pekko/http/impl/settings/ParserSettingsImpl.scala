@@ -18,8 +18,11 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
 import pekko.http.scaladsl.settings.ParserSettings.{
-  ConflictingContentTypeHeaderProcessingMode, CookieParsingMode, ErrorLoggingVerbosity,
-  IllegalResponseHeaderNameProcessingMode, IllegalResponseHeaderValueProcessingMode
+  ConflictingContentTypeHeaderProcessingMode,
+  CookieParsingMode,
+  ErrorLoggingVerbosity,
+  IllegalResponseHeaderNameProcessingMode,
+  IllegalResponseHeaderValueProcessingMode
 }
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.ParserSettings

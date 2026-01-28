@@ -19,7 +19,13 @@ import org.apache.pekko
 import pekko.http.impl.engine.http2.FrameEvent.{ DataFrame, HeadersFrame }
 import pekko.http.impl.engine.http2.framing.FrameRenderer
 import pekko.http.scaladsl.model.{
-  AttributeKeys, ContentTypes, HttpEntity, HttpMethods, HttpRequest, HttpResponse, Trailer
+  AttributeKeys,
+  ContentTypes,
+  HttpEntity,
+  HttpMethods,
+  HttpRequest,
+  HttpResponse,
+  Trailer
 }
 import pekko.http.scaladsl.model.HttpEntity.{ Chunk, LastChunk }
 import pekko.http.scaladsl.model.headers.RawHeader

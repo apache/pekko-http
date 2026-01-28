@@ -28,7 +28,9 @@ import pekko.http.impl.util.HttpConstants._
 import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
 import pekko.http.scaladsl.model.headers.{ EmptyHeader, RawHeader }
 import pekko.http.scaladsl.settings.ParserSettings.{
-  ErrorLoggingVerbosity, IllegalResponseHeaderNameProcessingMode, IllegalResponseHeaderValueProcessingMode
+  ErrorLoggingVerbosity,
+  IllegalResponseHeaderNameProcessingMode,
+  IllegalResponseHeaderValueProcessingMode
 }
 import pekko.util.ByteString
 

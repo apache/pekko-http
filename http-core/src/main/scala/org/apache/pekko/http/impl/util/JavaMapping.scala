@@ -26,7 +26,11 @@ import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.impl.model.{ JavaQuery, JavaUri }
 import pekko.http.javadsl.{
-  model => jm, settings => js, ConnectionContext, HttpConnectionContext, HttpsConnectionContext
+  model => jm,
+  settings => js,
+  ConnectionContext,
+  HttpConnectionContext,
+  HttpsConnectionContext
 }
 import pekko.http.{ javadsl => jdsl, scaladsl => sdsl }
 import pekko.http.scaladsl.{ model => sm }

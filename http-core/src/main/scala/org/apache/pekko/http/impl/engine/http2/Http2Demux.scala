@@ -34,7 +34,12 @@ import pekko.stream.Inlet
 import pekko.stream.Outlet
 import pekko.stream.scaladsl.Source
 import pekko.stream.stage.{
-  GraphStageLogic, GraphStageWithMaterializedValue, InHandler, OutHandler, StageLogging, TimerGraphStageLogic
+  GraphStageLogic,
+  GraphStageWithMaterializedValue,
+  InHandler,
+  OutHandler,
+  StageLogging,
+  TimerGraphStageLogic
 }
 import pekko.util.ByteString
 import pekko.util.OptionVal

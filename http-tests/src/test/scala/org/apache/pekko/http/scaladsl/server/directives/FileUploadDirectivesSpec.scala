@@ -479,8 +479,18 @@ class MockFailingWritePath extends java.nio.file.Path { selfPath =>
   import java.nio.{ ByteBuffer, MappedByteBuffer }
   import java.nio.channels.{ FileChannel, FileLock, ReadableByteChannel, SeekableByteChannel, WritableByteChannel }
   import java.nio.file.{
-    AccessMode, CopyOption, DirectoryStream, FileStore, FileSystem, LinkOption, OpenOption, Path, PathMatcher,
-    WatchEvent, WatchKey, WatchService
+    AccessMode,
+    CopyOption,
+    DirectoryStream,
+    FileStore,
+    FileSystem,
+    LinkOption,
+    OpenOption,
+    Path,
+    PathMatcher,
+    WatchEvent,
+    WatchKey,
+    WatchService
   }
   import java.nio.file.attribute.{ BasicFileAttributes, FileAttribute, FileAttributeView, UserPrincipalLookupService }
   import java.nio.file.spi.FileSystemProvider

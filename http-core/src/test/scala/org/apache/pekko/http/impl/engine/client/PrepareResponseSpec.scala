@@ -17,7 +17,10 @@ import org.apache.pekko
 import pekko.http.impl.engine.client.OutgoingConnectionBlueprint.PrepareResponse
 import pekko.http.impl.engine.parsing.ParserOutput
 import pekko.http.impl.engine.parsing.ParserOutput.{
-  EntityChunk, EntityStreamError, StreamedEntityCreator, StrictEntityCreator
+  EntityChunk,
+  EntityStreamError,
+  StreamedEntityCreator,
+  StrictEntityCreator
 }
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.ParserSettings
