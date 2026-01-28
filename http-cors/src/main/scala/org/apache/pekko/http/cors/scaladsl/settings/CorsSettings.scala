@@ -158,6 +158,9 @@ abstract class CorsSettings private[pekko] () extends javadsl.settings.CorsSetti
   override def withAllowedHeaders(newValue: javadsl.model.HttpHeaderRange): CorsSettings = {
     copy(allowedHeaders = newValue.asInstanceOf[HttpHeaderRange])
   }
+  override def withAdditionalAllowedHeaders(newValue: javadsl.model.HttpHeaderRange): CorsSettings = {
+    copy(allowedHeaders = this.allowedHeaders.concat(newValue))
+  }
   override def withAllowedMethods(
       newValue: java.lang.Iterable[pekko.http.javadsl.model.HttpMethod]): CorsSettings = {
     copy(allowedMethods = newValue.asScala.toList.asInstanceOf[List[HttpMethod]])
