@@ -24,6 +24,8 @@ import org.apache.pekko.http.cors.scaladsl.model.HttpHeaderRange$;
 public abstract class HttpHeaderRange {
   public abstract boolean matches(String header);
 
+  public abstract HttpHeaderRange concat(HttpHeaderRange range);
+
   public static HttpHeaderRange create(String... headers) {
     return HttpHeaderRange$.MODULE$.apply(Util.convertArray(headers));
   }
