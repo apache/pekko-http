@@ -28,6 +28,11 @@ import pekko.util.Helpers
 sealed abstract class HttpHeaderRange extends javadsl.model.HttpHeaderRange {
   override def concat(range: javadsl.model.HttpHeaderRange): HttpHeaderRange
 
+  /**
+   * Operator alias for [[concat]].
+   *
+   * @since 2.0.0
+   */
   def ++(range: javadsl.model.HttpHeaderRange): HttpHeaderRange = concat(range)
 }
 

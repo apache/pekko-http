@@ -24,6 +24,11 @@ import org.apache.pekko.http.cors.scaladsl.model.HttpHeaderRange$;
 public abstract class HttpHeaderRange {
   public abstract boolean matches(String header);
 
+  /**
+   * Produces a new range that matches the headers of this range and the given range.
+   *
+   * @since 2.0.0
+   */
   public abstract HttpHeaderRange concat(HttpHeaderRange range);
 
   public static HttpHeaderRange create(String... headers) {
