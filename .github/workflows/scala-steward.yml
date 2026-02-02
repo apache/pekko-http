@@ -33,7 +33,7 @@ jobs:
     if: github.repository == 'apache/pekko-http'
     steps:
       - name: Launch Scala Steward
-        uses: scala-steward-org/scala-steward-action@91f0a480668e574d7d1b413b19ee8240c56cd629 # v2.81.0
+        uses: scala-steward-org/scala-steward-action@e47786bae0a964b4202df1d66b65c581a53257b0 # v2.83.0
         env:
           JAVA_OPTS: "-Xmx4g"
         with:
