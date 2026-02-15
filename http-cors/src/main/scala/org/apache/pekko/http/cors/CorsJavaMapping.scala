@@ -27,5 +27,8 @@ private[pekko] object CorsJavaMapping {
   object Implicits {
     implicit object CorsSettingsMapping
         extends JavaMapping.Inherited[javadsl.settings.CorsSettings, scaladsl.settings.CorsSettings]
+
+    implicit object HttpHeaderRangeMapping
+        extends JavaMapping.Inherited[javadsl.model.HttpHeaderRange, scaladsl.model.HttpHeaderRange]
   }
 }
