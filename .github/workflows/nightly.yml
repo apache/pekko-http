@@ -23,7 +23,7 @@ jobs:
       matrix:
         SCALA_VERSION: [2.13, 3]
         JDK: [17, 21, 25]
-        PEKKO_VERSION: ['default']
+        PEKKO_VERSION: ['main']
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
