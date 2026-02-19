@@ -123,7 +123,7 @@ private[http] object ServerSettingsImpl extends SettingsCompanionImpl[ServerSett
       terminationDeadlineExceededResponseFrom(c),
       c.getString("parsing.error-handler"),
       c.getFiniteDuration("stream-cancellation-delay"),
-      c.getBoolean("enable-http2") || c.getBoolean("preview.enable-http2"))
+      c.getBoolean("enable-http2") || (c.hasPath("preview.enable-http2") && c.getBoolean("preview.enable-http2")))
   }
 
   private def terminationDeadlineExceededResponseFrom(c: Config): HttpResponse = {

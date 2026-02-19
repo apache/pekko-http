@@ -59,10 +59,7 @@ class Http2PersistentClientTlsSpec extends Http2PersistentClientSpec(true)
 class Http2PersistentClientPlaintextSpec extends Http2PersistentClientSpec(false)
 
 abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMaterializer(
-      // FIXME: would rather use remote-address-attribute, but that doesn't work with HTTP/2
-      // see https://github.com/akka/akka-http/issues/3707
       """pekko.http.server.remote-address-attribute = on
-     pekko.http.server.enable-http2 = on
      pekko.http.client.http2.log-frames = on
      pekko.http.client.http2.max-persistent-attempts = 5
      pekko.http.client.log-unencrypted-network-bytes = 100
