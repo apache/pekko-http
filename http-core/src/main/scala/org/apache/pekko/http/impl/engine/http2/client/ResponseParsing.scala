@@ -91,7 +91,7 @@ private[http2] object ResponseParsing {
         case ("content-type", ct: String) =>
           if (contentType.isEmpty) {
             val contentTypeValue =
-              ContentType.parse(ct).right.getOrElse(malformedResponse(s"Invalid content-type: '$ct'"))
+              ContentType.parse(ct).getOrElse(malformedResponse(s"Invalid content-type: '$ct'"))
             rec(remainingHeaders.tail, status, OptionVal.Some(contentTypeValue), contentLength, seenRegularHeader,
               headers)
           } else malformedResponse("HTTP message must not contain more than one content-type header")

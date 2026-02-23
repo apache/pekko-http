@@ -26,7 +26,6 @@ import pekko.stream.Attributes
 import pekko.util.ByteString
 import pekko.util.OptionVal
 
-import scala.annotation.nowarn
 import scala.annotation.tailrec
 import scala.collection.immutable.VectorBuilder
 import scala.util.control.NoStackTrace
@@ -41,7 +40,6 @@ private[http2] object RequestParsing {
   final case class OkRequest(request: HttpRequest) extends ParseRequestResult
   final case class BadRequest(info: ErrorInfo, streamId: Int) extends ParseRequestResult
 
-  @nowarn("msg=use remote-address-attribute instead")
   def parseRequest(httpHeaderParser: HttpHeaderParser, serverSettings: ServerSettings, streamAttributes: Attributes)
       : Http2SubStream => ParseRequestResult = {
 

@@ -22,6 +22,7 @@ import org.apache.pekko
 import pekko.http.impl.engine.http2.hpack.HeaderDecompression
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.http2.Http2Compliance.Http2ProtocolException
+import pekko.http.impl.engine.http2.RequestParsing.ParseRequestResult
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.model._
@@ -30,7 +31,6 @@ import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.util.{ ByteString, OptionVal }
-import FrameEvent._
 
 import org.scalatest.{ Inside, Inspectors }
 import org.scalatest.exceptions.TestFailedException
