@@ -30,6 +30,7 @@ import pekko.http.scaladsl.model.{
   HttpHeader,
   HttpMethod,
   HttpMethods,
+  HttpProtocols,
   HttpRequest,
   HttpResponse,
   RequestResponseAssociation,
@@ -132,6 +133,17 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       clientRequestsOut.expectCancellation()
       // expect idle timeout exception to propagate to user
       clientResponsesIn.expectError() shouldBe a[HttpIdleTimeoutException]
+    }
+
+    "return bad request response when header parsing fails" in new TestSetup {
+      val badRequest = HttpRequest(
+        // easiest valid way to cause parsing to fail - unknown method
+        method = HttpMethod.custom("UNKNOWN_TO_SERVER"),
+        uri = "http://www.example.com/test"
+      )
+      sendClientRequest(badRequest)
+      val response = expectClientResponse()
+      response.status should be(StatusCodes.BadRequest)
     }
   }
 

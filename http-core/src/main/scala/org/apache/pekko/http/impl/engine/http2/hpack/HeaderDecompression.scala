@@ -21,6 +21,7 @@ import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.http2.RequestParsing.parseHeaderPair
 import pekko.http.impl.engine.http2._
 import pekko.http.impl.engine.parsing.HttpHeaderParser
+import pekko.http.scaladsl.model.ParsingException
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.shaded.com.twitter.hpack.HeaderListener
 import pekko.stream._
@@ -97,9 +98,12 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
           decoder.decode(stream, Receiver) // only compact ByteString supports InputStream with mark/reset
           decoder.endHeaderBlock() // TODO: do we have to check the result here?
 
-          push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo))
+          push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo, None))
         } catch {
-          case ex: IOException =>
+          case ex: ParsingException =>
+            // push details further and let RequestErrorFlow handle responding with bad request
+            push(eventsOut, ParsedHeadersFrame(streamId, endStream, Seq.empty, prioInfo, Some(ex.info)))
+          case _: IOException =>
             // this is signalled by the decoder when it failed, we want to react to this by rendering a GOAWAY frame
             fail(eventsOut,
               new Http2Compliance.Http2ProtocolException(ErrorCode.COMPRESSION_ERROR, "Decompression failed."))
