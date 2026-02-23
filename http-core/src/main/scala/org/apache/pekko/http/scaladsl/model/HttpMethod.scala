@@ -19,6 +19,7 @@ import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.RequestEntityAcceptance._
+import pekko.util.ConstantFun._
 
 sealed trait RequestEntityAcceptance extends jm.RequestEntityAcceptance {
   def isEntityAccepted: Boolean
@@ -61,7 +62,7 @@ object HttpMethod {
    * Create a custom method type.
    * @deprecated The created method will compute the presence of Content-Length headers based on deprecated logic.
    */
-  @deprecated("Use the overload with contentLengthAllowed parameter", since = "1.2.0")
+  @deprecated("Use the overload with contentLengthAllowed parameter", since = "1.4.0")
   def custom(name: String, safe: Boolean, idempotent: Boolean, requestEntityAcceptance: RequestEntityAcceptance)
       : HttpMethod = {
     require(name.nonEmpty, "value must be non-empty")
@@ -76,7 +77,7 @@ object HttpMethod {
       contentLengthAllowed: Boolean): HttpMethod = {
     require(name.nonEmpty, "value must be non-empty")
     require(!safe || idempotent, "An HTTP method cannot be safe without being idempotent")
-    apply(name, safe, idempotent, requestEntityAcceptance, if (contentLengthAllowed) _ => true else _ => false)
+    apply(name, safe, idempotent, requestEntityAcceptance, if (contentLengthAllowed) anyToTrue else anyToFalse)
   }
 
   /**
