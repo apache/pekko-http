@@ -8,26 +8,19 @@
  */
 
 /*
- * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.impl.engine.http2
 
-import org.apache.pekko.NotUsed
-import org.apache.pekko.annotation.InternalApi
-import org.apache.pekko.http.impl.engine.http2.RequestParsing.ParseRequestResult
-import org.apache.pekko.http.scaladsl.model.HttpRequest
-import org.apache.pekko.http.scaladsl.model.HttpResponse
-import org.apache.pekko.http.scaladsl.model.StatusCodes
-import org.apache.pekko.stream.Attributes
-import org.apache.pekko.stream.BidiShape
-import org.apache.pekko.stream.Inlet
-import org.apache.pekko.stream.Outlet
-import org.apache.pekko.stream.scaladsl.BidiFlow
-import org.apache.pekko.stream.stage.GraphStage
-import org.apache.pekko.stream.stage.GraphStageLogic
-import org.apache.pekko.stream.stage.InHandler
-import org.apache.pekko.stream.stage.OutHandler
+import org.apache.pekko
+import pekko.NotUsed
+import pekko.annotation.InternalApi
+import pekko.http.impl.engine.http2.RequestParsing.ParseRequestResult
+import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes }
+import pekko.stream.{ Attributes, BidiShape, Inlet, Outlet }
+import pekko.stream.scaladsl.BidiFlow
+import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 
 /**
  * INTERNAL API
