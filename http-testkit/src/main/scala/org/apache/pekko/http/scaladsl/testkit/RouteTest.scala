@@ -20,7 +20,7 @@ import scala.reflect.ClassTag
 import scala.util.DynamicVariable
 
 import org.apache.pekko
-import pekko.actor.ActorSystem
+import pekko.actor.{ ActorSystem, ClassicActorSystemProvider }
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding
 import pekko.http.scaladsl.model._
@@ -224,8 +224,23 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
       }
   }
 }
-private[http] object RouteTest {
-  def runRouteClientServer(request: HttpRequest, route: Route, serverSettings: ServerSettings)(
+object RouteTest {
+
+  /**
+   * Turn the route into a function for testing, but do not handle exceptions in any way, instead, they are bubbled
+   * out as is to the caller.
+   */
+  def toFunctionPassThroughExceptions(route: Route)(
+      implicit system: ClassicActorSystemProvider): HttpRequest => Future[HttpResponse] = {
+    val routingLog = RoutingLog(system.classicSystem.log)
+    val routingSettings = RoutingSettings(system)
+    val parserSettings = ParserSettings.forServer
+    implicit val ec: ExecutionContextExecutor = system.classicSystem.dispatcher
+    implicit val mat: Materializer = SystemMaterializer(system).materializer
+    Route.createAsyncHandler(route, routingLog, routingSettings, parserSettings)
+  }
+
+  private[http] def runRouteClientServer(request: HttpRequest, route: Route, serverSettings: ServerSettings)(
       implicit system: ActorSystem): Future[HttpResponse] = {
     import system.dispatcher
     for {
