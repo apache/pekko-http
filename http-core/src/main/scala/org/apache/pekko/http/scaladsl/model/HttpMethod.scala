@@ -93,7 +93,8 @@ object HttpMethods extends ObjectRegistry[String, HttpMethod] {
 
   // define requirements for content-length according to https://httpwg.org/specs/rfc9110.html#field.content-length
   // for CONNECT it is explicitly not allowed in the 2xx (Successful) range
-  private def contentLengthAllowedForConnect(forStatus: StatusCode): Boolean = forStatus.intValue < 200 || forStatus.intValue >= 300
+  private def contentLengthAllowedForConnect(forStatus: StatusCode): Boolean = forStatus.intValue < 200 ||
+    forStatus.intValue >= 300
   // for HEAD it is technically allowed, but must match the content-length of hypothetical GET request, so can not be anticipated
   private def contentLengthAllowedForHead(forStatus: StatusCode): Boolean = false
   // for other methods there are common rules:
