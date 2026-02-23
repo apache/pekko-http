@@ -63,7 +63,7 @@ private[pekko] object Http2HeaderParsing {
     override def parse(name: String, value: String, parserSettings: ParserSettings): model.ContentType =
       model.ContentType.parse(value) match {
         case Right(tpe) => tpe
-        case Left(_) =>
+        case Left(_)    =>
           parseError(s"Invalid content-type: '$value'", "content-type")
       }
   }

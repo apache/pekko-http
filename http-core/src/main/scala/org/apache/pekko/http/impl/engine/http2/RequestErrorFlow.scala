@@ -49,24 +49,26 @@ private[http2] final class RequestErrorFlow
     BidiShape(responseIn, responseOut, requestIn, requestOut)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-    setHandlers(requestIn, requestOut, new InHandler with OutHandler {
-      override def onPush(): Unit = {
-        grab(requestIn) match {
-          case RequestParsing.OkRequest(request) => push(requestOut, request)
-          case notOk: RequestParsing.BadRequest =>
-            emit(responseOut,
-              HttpResponse(StatusCodes.BadRequest, entity = notOk.info.summary).addAttribute(Http2.streamId,
-                notOk.streamId))
-            pull(requestIn)
+    setHandlers(requestIn, requestOut,
+      new InHandler with OutHandler {
+        override def onPush(): Unit = {
+          grab(requestIn) match {
+            case RequestParsing.OkRequest(request) => push(requestOut, request)
+            case notOk: RequestParsing.BadRequest  =>
+              emit(responseOut,
+                HttpResponse(StatusCodes.BadRequest, entity = notOk.info.summary).addAttribute(Http2.streamId,
+                  notOk.streamId))
+              pull(requestIn)
+          }
         }
-      }
 
-      override def onPull(): Unit = pull(requestIn)
-    })
-    setHandlers(responseIn, responseOut, new InHandler with OutHandler {
-      override def onPush(): Unit = push(responseOut, grab(responseIn))
-      override def onPull(): Unit = if (!hasBeenPulled(responseIn)) pull(responseIn)
-    })
+        override def onPull(): Unit = pull(requestIn)
+      })
+    setHandlers(responseIn, responseOut,
+      new InHandler with OutHandler {
+        override def onPush(): Unit = push(responseOut, grab(responseIn))
+        override def onPull(): Unit = if (!hasBeenPulled(responseIn)) pull(responseIn)
+      })
 
   }
 }

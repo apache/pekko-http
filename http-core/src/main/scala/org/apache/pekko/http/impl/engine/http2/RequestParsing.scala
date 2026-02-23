@@ -239,7 +239,8 @@ private[http2] object RequestParsing {
     throw new Http2Compliance.Http2ProtocolException(s"Malformed request: $summary")
 
   private[http2] def parseError(summary: String, headerName: String): Nothing =
-    throw new ParsingException(ErrorInfo(s"Malformed request: $summary").withErrorHeaderName(headerName)) with NoStackTrace
+    throw new ParsingException(ErrorInfo(s"Malformed request: $summary").withErrorHeaderName(headerName))
+      with NoStackTrace
 
   private def parseError(summary: String): Nothing =
     throw new ParsingException(ErrorInfo(s"Malformed request: $summary")) with NoStackTrace
