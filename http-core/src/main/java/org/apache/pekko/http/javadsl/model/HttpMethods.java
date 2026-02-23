@@ -36,9 +36,11 @@ public final class HttpMethods {
 
   /**
    * Create a custom method type.
-   * @deprecated The created method will compute the presence of Content-Length headers based on deprecated logic,
-   * use {@link #custom(String, boolean, boolean, org.apache.pekko.http.javadsl.model.RequestEntityAcceptance, boolean)} instead.
-   * Deprecated since 1.4.0.
+   *
+   * @deprecated The created method will compute the presence of Content-Length headers based on
+   *     deprecated logic, use {@link #custom(String, boolean, boolean,
+   *     org.apache.pekko.http.javadsl.model.RequestEntityAcceptance, boolean)} instead. Deprecated
+   *     since 1.4.0.
    */
   @Deprecated
   public static HttpMethod custom(
@@ -55,6 +57,7 @@ public final class HttpMethods {
 
   /**
    * Create a custom method type.
+   *
    * @since 1.4.0
    */
   public static HttpMethod custom(
