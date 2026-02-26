@@ -37,7 +37,7 @@ class CustomHttpMethodSpec extends PekkoSpec with ScalaFutures
 
       // define custom method type:
       val BOLT = HttpMethod.custom("BOLT", safe = false,
-        idempotent = true, requestEntityAcceptance = Expected)
+        idempotent = true, requestEntityAcceptance = Expected, contentLengthAllowed = true)
 
       // add custom method to parser settings:
       val parserSettings = ParserSettings.forServer(system).withCustomMethods(BOLT)
