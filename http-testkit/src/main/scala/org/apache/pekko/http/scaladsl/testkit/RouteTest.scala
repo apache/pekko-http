@@ -229,6 +229,7 @@ object RouteTest {
   /**
    * Turn the route into a function for testing, but do not handle exceptions in any way, instead, they are bubbled
    * out as is to the caller.
+   * @since 1.4.0
    */
   def toFunctionPassThroughExceptions(route: Route)(
       implicit system: ClassicActorSystemProvider): HttpRequest => Future[HttpResponse] = {
