@@ -2,11 +2,13 @@
 
 ## Enable HTTP/2 support
 
-HTTP/2 can then be enabled through configuration:
+HTTP/2 is enabled through configuration:
 
 ```
 pekko.http.server.enable-http2 = on
 ```
+
+Since Pekko HTTP 2.0.0, this defaults to `on`.
 
 ## Use `newServerAt(...).bind()` and HTTPS
 
