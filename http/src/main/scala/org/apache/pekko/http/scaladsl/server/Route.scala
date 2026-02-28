@@ -85,7 +85,7 @@ object Route {
       SystemMaterializer(system).materializer)
   }
 
-  private def createAsyncHandler(sealedRoute: Route, routingLog: RoutingLog, routingSettings: RoutingSettings,
+  private[pekko] def createAsyncHandler(sealedRoute: Route, routingLog: RoutingLog, routingSettings: RoutingSettings,
       parserSettings: ParserSettings)(
       implicit ec: ExecutionContextExecutor, mat: Materializer): HttpRequest => Future[HttpResponse] = {
     request =>
