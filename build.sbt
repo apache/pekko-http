@@ -73,7 +73,8 @@ lazy val aggregatedProjects: Seq[ProjectReference] = userProjects ++ List[Projec
   docs,
   // compatibilityTests,
   httpJmhBench,
-  billOfMaterials)
+  billOfMaterials,
+  httpScalafix)
 lazy val root = Project(
   id = "pekko-http",
   base = file("."))
