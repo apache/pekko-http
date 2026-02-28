@@ -21,6 +21,8 @@ import FrameEvent._
 import org.apache.pekko
 import pekko.http.impl.engine.http2.hpack.HeaderDecompression
 import pekko.http.impl.engine.parsing.HttpHeaderParser
+import pekko.http.impl.engine.http2.Http2Compliance.Http2ProtocolException
+import pekko.http.impl.engine.http2.RequestParsing.ParseRequestResult
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.model._
@@ -31,6 +33,7 @@ import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.util.{ ByteString, OptionVal }
 
 import org.scalatest.{ Inside, Inspectors }
+import org.scalatest.exceptions.TestFailedException
 
 class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Inspectors {
   "RequestParsing" should {
@@ -38,10 +41,10 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
     /** Helper to test parsing */
     def parse(
         keyValuePairs: Seq[(String, String)],
-        data: Source[ByteString, Any] = Source.empty,
-        attributes: Attributes = Attributes(),
-        uriParsingMode: Uri.ParsingMode = Uri.ParsingMode.Relaxed,
-        settings: ServerSettings = ServerSettings(system)): HttpRequest = {
+        data: Source[ByteString, Any],
+        attributes: Attributes,
+        uriParsingMode: Uri.ParsingMode,
+        settings: ServerSettings): RequestParsing.ParseRequestResult = {
       val (serverSettings, parserSettings) = {
         val ps = settings.parserSettings.withUriParsingMode(uriParsingMode)
         (settings.withParserSettings(ps), ps)
@@ -52,30 +55,59 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       val frame =
         HeadersFrame(1, data == Source.empty, endHeaders = true, encoder.encodeHeaderPairs(keyValuePairs), None)
 
-      val parseRequest: Http2SubStream => HttpRequest =
-        RequestParsing.parseRequest(headerParser, serverSettings, attributes)
+      val parseRequest: Http2SubStream => ParseRequestResult = RequestParsing.parseRequest(headerParser, serverSettings,
+        attributes)
 
-      try Source.single(frame)
-          .via(new HeaderDecompression(headerParser, parserSettings))
-          .map { // emulate demux
-            case headers: ParsedHeadersFrame =>
-              Http2SubStream(
-                initialHeaders = headers,
-                trailingHeaders = OptionVal.None,
-                data = Right(data),
-                correlationAttributes = Map.empty)
-          }
-          .map(parseRequest)
-          .runWith(Sink.head)
-          .futureValue
-      catch { case ex: Throwable => throw ex.getCause } // unpack futureValue exceptions
+      Source.single(frame)
+        .via(new HeaderDecompression(headerParser, parserSettings))
+        .map { // emulate demux
+          case headers: ParsedHeadersFrame =>
+            Http2SubStream(
+              initialHeaders = headers,
+              trailingHeaders = OptionVal.None,
+              data = Right(data),
+              correlationAttributes = Map.empty)
+        }
+        .map(parseRequest)
+        .runWith(Sink.head)
+        .futureValue
     }
 
-    def shouldThrowMalformedRequest[T](block: => T): Exception = {
-      val thrown = the[RuntimeException] thrownBy block
-      thrown.getMessage should startWith("Malformed request: ")
-      thrown
-    }
+    def parseExpectOk(
+        keyValuePairs: Seq[(String, String)],
+        data: Source[ByteString, Any] = Source.empty,
+        attributes: Attributes = Attributes(),
+        uriParsingMode: Uri.ParsingMode = Uri.ParsingMode.Relaxed,
+        settings: ServerSettings = ServerSettings(system)): HttpRequest =
+      parse(keyValuePairs, data, attributes, uriParsingMode, settings) match {
+        case RequestParsing.OkRequest(req)      => req
+        case RequestParsing.BadRequest(info, _) => fail(s"Failed parsing request: $info")
+      }
+
+    def parseExpectError(
+        keyValuePairs: Seq[(String, String)],
+        data: Source[ByteString, Any] = Source.empty,
+        attributes: Attributes = Attributes(),
+        uriParsingMode: Uri.ParsingMode = Uri.ParsingMode.Relaxed,
+        settings: ServerSettings = ServerSettings(system)): ErrorInfo =
+      parse(keyValuePairs, data, attributes, uriParsingMode, settings) match {
+        case RequestParsing.OkRequest(req)      => fail("Unexpectedly succeeded parsing request")
+        case RequestParsing.BadRequest(info, _) => info
+      }
+
+    def parseExpectProtocolError(
+        keyValuePairs: Seq[(String, String)],
+        data: Source[ByteString, Any] = Source.empty,
+        attributes: Attributes = Attributes(),
+        uriParsingMode: Uri.ParsingMode = Uri.ParsingMode.Relaxed,
+        settings: ServerSettings = ServerSettings(system)): Http2ProtocolException =
+      try {
+        parse(keyValuePairs, data, attributes, uriParsingMode, settings)
+        fail("expected parsing to throw")
+      } catch {
+        case futureValueEx: TestFailedException if futureValueEx.getCause.isInstanceOf[Http2ProtocolException] =>
+          futureValueEx.getCause.asInstanceOf[Http2ProtocolException]
+      }
 
     "follow RFC7540" should {
 
@@ -85,13 +117,13 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       // appear in requests.
 
       "not accept response pseudo-header fields in a request" in {
-        val thrown = shouldThrowMalformedRequest(parse(
+        val info = parseExpectError(
           keyValuePairs = Vector(
             ":scheme" -> "https",
             ":method" -> "GET",
             ":path" -> "/",
-            ":status" -> "200")))
-        thrown.getMessage should ===(
+            ":status" -> "200"))
+        info.summary should ===(
           "Malformed request: Pseudo-header ':status' is for responses only; it cannot appear in a request")
       }
 
@@ -109,7 +141,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           // Insert the Foo header so it occurs before at least one pseudo-header
           val (before, after) = pseudoHeaders.splitAt(insertPoint)
           val modified = before ++ Vector("Foo" -> "bar") ++ after
-          shouldThrowMalformedRequest(parse(modified))
+          parseExpectError(modified)
         }
       }
 
@@ -119,32 +151,30 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       // be treated as malformed...
 
       "not accept connection-specific headers" in {
-        shouldThrowMalformedRequest {
-          // Add Connection header to indicate that Foo is a connection-specific header
-          parse(Vector(
-            ":method" -> "GET",
-            ":scheme" -> "https",
-            ":path" -> "/",
-            "Connection" -> "foo",
-            "Foo" -> "bar"))
-        }
+        // Add Connection header to indicate that Foo is a connection-specific header
+        parseExpectError(Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":path" -> "/",
+          "Connection" -> "foo",
+          "Foo" -> "bar"))
       }
 
       "not accept TE with other values than 'trailers'" in {
-        shouldThrowMalformedRequest {
-          // The only exception to this is the TE header field, which MAY be
-          // present in an HTTP/2 request; when it is, it MUST NOT contain any
-          // value other than "trailers".
-          parse(Vector(
-            ":method" -> "GET",
-            ":scheme" -> "https",
-            ":path" -> "/",
-            "TE" -> "chunked"))
-        }
+
+        // The only exception to this is the TE header field, which MAY be
+        // present in an HTTP/2 request; when it is, it MUST NOT contain any
+        // value other than "trailers".
+        parseExpectError(Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":path" -> "/",
+          "TE" -> "chunked"))
+
       }
 
       "accept TE with 'trailers' as value" in {
-        parse(Vector(
+        parseExpectOk(Vector(
           ":method" -> "GET",
           ":scheme" -> "https",
           ":path" -> "/",
@@ -159,7 +189,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       "parse the ':method' pseudo-header correctly" in {
         val methods = Seq("GET", "POST", "DELETE", "OPTIONS")
         forAll(methods) { (method: String) =>
-          val request: HttpRequest = parse(
+          val request: HttpRequest = parseExpectOk(
             keyValuePairs = Vector(
               ":method" -> method,
               ":scheme" -> "https",
@@ -181,7 +211,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         // can't be constructed with any other schemes.
         val schemes = Seq("http", "https", "ws", "wss")
         forAll(schemes) { (scheme: String) =>
-          val request: HttpRequest = parse(
+          val request: HttpRequest = parseExpectOk(
             keyValuePairs = Vector(
               ":method" -> "POST",
               ":scheme" -> scheme,
@@ -206,7 +236,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
             ("example.com:8042", "example.com", Some(8042)))
           forAll(authorities) {
             case (authority, host, optPort) =>
-              val request: HttpRequest = parse(
+              val request: HttpRequest = parseExpectOk(
                 keyValuePairs = Vector(
                   ":method" -> "POST",
                   ":scheme" -> "https",
@@ -221,14 +251,13 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
 
           val authorities = Seq("?", " ", "@", ":")
           forAll(authorities) { authority =>
-            val thrown = the[ParsingException] thrownBy
-              (parse(
-                keyValuePairs = Vector(
-                  ":method" -> "POST",
-                  ":scheme" -> "https",
-                  ":authority" -> authority,
-                  ":path" -> "/")))
-            thrown.getMessage should include("http2-authority-pseudo-header")
+            val info = parseExpectError(
+              keyValuePairs = Vector(
+                ":method" -> "POST",
+                ":scheme" -> "https",
+                ":authority" -> authority,
+                ":path" -> "/"))
+            info.summary should include("http2-authority-pseudo-header")
           }
         }
       }
@@ -249,14 +278,14 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         val schemes = Seq("http", "https")
         forAll(schemes) { (scheme: String) =>
           forAll(authorities) { (authority: String) =>
-            val exception = the[Exception] thrownBy
-              (parse(
-                keyValuePairs = Vector(
-                  ":method" -> "POST",
-                  ":scheme" -> scheme,
-                  ":authority" -> authority,
-                  ":path" -> "/")))
-            exception.getMessage should startWith("Illegal http2-authority-pseudo-header")
+            val info = parseExpectError(
+              keyValuePairs = Vector(
+                ":method" -> "POST",
+                ":scheme" -> scheme,
+                ":authority" -> authority,
+                ":path" -> "/"
+              ))
+            info.summary should startWith("Illegal http2-authority-pseudo-header")
           }
         }
       }
@@ -269,8 +298,13 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       "follow RFC3986 for the ':path' pseudo-header" should {
 
         def parsePath(path: String, uriParsingMode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): Uri = {
-          parse(Seq(":method" -> "GET", ":scheme" -> "https", ":path" -> path), uriParsingMode = uriParsingMode).uri
+          parseExpectOk(Seq(":method" -> "GET", ":scheme" -> "https", ":path" -> path),
+            uriParsingMode = uriParsingMode).uri
         }
+
+        def parsePathExpectError(path: String, uriParsingMode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): ErrorInfo =
+          parseExpectError(Seq(":method" -> "GET", ":scheme" -> "https", ":path" -> path),
+            uriParsingMode = uriParsingMode)
 
         // sub-delims  = "!" / "$" / "&" / "'" / "(" / ")"
         //             / "*" / "+" / "," / ";" / "="
@@ -333,8 +367,8 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
             "?", "&", "=", "#", ":", "?", "#", "[", "]", "@", " ",
             "http://localhost/foo")
           forAll(invalidAbsolutePaths) { (absPath: String) =>
-            val exception = the[ParsingException] thrownBy (parsePath(absPath))
-            exception.getMessage should include("http2-path-pseudo-header")
+            val info = parsePathExpectError(absPath)
+            info.summary should include("http2-path-pseudo-header")
           }
         }
 
@@ -343,8 +377,8 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
             // Illegal for path-absolute in RFC3986 to start with multiple slashes
             "//", "//x")
           forAll(invalidAbsolutePaths) { (absPath: String) =>
-            val exception = the[ParsingException] thrownBy (parsePath(absPath, uriParsingMode = Uri.ParsingMode.Strict))
-            exception.getMessage should include("http2-path-pseudo-header")
+            val info = parsePathExpectError(absPath, uriParsingMode = Uri.ParsingMode.Strict)
+            info.summary should include("http2-path-pseudo-header")
           }
         }
 
@@ -386,10 +420,11 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         "reject a ':path' containing an invalid 'query'" in pendingUntilFixed {
           val invalidQueries: Seq[String] = Seq(
             ":", "/", "?", "#", "[", "]", "@", " ")
+
           forAll(absolutePaths.take(3)) {
             case (inputPath, _) =>
               forAll(invalidQueries) { (query: String) =>
-                shouldThrowMalformedRequest(parsePath(inputPath + "?" + query, uriParsingMode = Uri.ParsingMode.Strict))
+                parsePathExpectError(inputPath + "?" + query, uriParsingMode = Uri.ParsingMode.Strict)
               }
           }
         }
@@ -400,7 +435,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       // value '*' for the ":path" pseudo-header field.
 
       "handle a ':path' with an asterisk" in pendingUntilFixed {
-        val request: HttpRequest = parse(
+        val request: HttpRequest = parseExpectOk(
           keyValuePairs = Vector(
             ":method" -> "OPTIONS",
             ":scheme" -> "http",
@@ -411,14 +446,14 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       // [The ":path"] pseudo-header field MUST NOT be empty for "http" or "https"
       // URIs...
 
-      "reject empty ':path' pseudo-headers for http and https" in pendingUntilFixed {
+      "reject empty ':path' pseudo-headers for http and https" in {
         val schemes = Seq("http", "https")
         forAll(schemes) { (scheme: String) =>
-          shouldThrowMalformedRequest(parse(
+          parseExpectError(
             keyValuePairs = Vector(
               ":method" -> "POST",
               ":scheme" -> scheme,
-              ":path" -> "")))
+              ":path" -> ""))
         }
       }
 
@@ -439,12 +474,12 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       "reject requests without a mandatory pseudo-headers" in {
         val mandatoryPseudoHeaders = Seq(":method", ":scheme", ":path")
         forAll(mandatoryPseudoHeaders) { (name: String) =>
-          val thrown = shouldThrowMalformedRequest(parse(
+          val ex = parseExpectProtocolError(
             keyValuePairs = Vector(
               ":scheme" -> "https",
               ":method" -> "GET",
-              ":path" -> "/").filter(_._1 != name)))
-          thrown.getMessage should ===(s"Malformed request: Mandatory pseudo-header '$name' missing")
+              ":path" -> "/").filter(_._1 != name))
+          ex.getMessage should ===(s"Malformed request: Mandatory pseudo-header '$name' missing")
         }
       }
 
@@ -453,13 +488,13 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           Seq(":method" -> "POST", ":scheme" -> "http", ":path" -> "/other", ":authority" -> "example.org")
         forAll(pseudoHeaders) {
           case (name: String, alternative: String) =>
-            val thrown = shouldThrowMalformedRequest(parse(
+            val ex = parseExpectProtocolError(
               keyValuePairs = Vector(
                 ":scheme" -> "https",
                 ":method" -> "GET",
                 ":authority" -> "pekko.apache.org",
-                ":path" -> "/") :+ (name -> alternative)))
-            thrown.getMessage should ===(s"Malformed request: Pseudo-header '$name' must not occur more than once")
+                ":path" -> "/") :+ (name -> alternative))
+            ex.getMessage should ===(s"Malformed request: Pseudo-header '$name' must not occur more than once")
         }
       }
 
@@ -479,7 +514,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           Seq("a=b", "c=d; e=f") -> "a=b; c=d; e=f")
         forAll(cookieHeaders) {
           case (inValues, outValue) =>
-            val httpRequest: HttpRequest = parse(
+            val httpRequest: HttpRequest = parseExpectOk(
               Vector(
                 ":method" -> "GET",
                 ":scheme" -> "https",
@@ -495,7 +530,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       // 8.1.3.  Examples
 
       "parse GET example" in {
-        val request: HttpRequest = parse(
+        val request: HttpRequest = parseExpectOk(
           keyValuePairs = Vector(
             ":method" -> "GET",
             ":scheme" -> "https",
@@ -518,7 +553,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       }
 
       "parse POST example" in {
-        val request: HttpRequest = parse(
+        val request: HttpRequest = parseExpectOk(
           keyValuePairs = Vector(
             ":method" -> "POST",
             ":scheme" -> "https",
@@ -552,7 +587,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
     // Tests that don't come from an RFC document...
 
     "parse GET https://localhost:8000/ correctly" in {
-      val request: HttpRequest = parse(
+      val request: HttpRequest = parseExpectOk(
         keyValuePairs = Vector(
           ":method" -> "GET",
           ":scheme" -> "https",
@@ -571,42 +606,41 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
     }
 
     "reject requests with multiple content length headers" in {
-      val thrown = shouldThrowMalformedRequest(parse(
+      val info = parseExpectError(
         keyValuePairs = Vector(
           ":method" -> "GET",
           ":scheme" -> "https",
           ":authority" -> "localhost:8000",
           ":path" -> "/",
           "content-length" -> "123",
-          "content-length" -> "124")))
-      thrown.getMessage should ===(
+          "content-length" -> "124"))
+      info.summary should ===(
         s"Malformed request: HTTP message must not contain more than one content-length header")
     }
 
     "reject requests with multiple content type headers" in {
-      val thrown = shouldThrowMalformedRequest(parse(
+      val info = parseExpectError(
         keyValuePairs = Vector(
           ":method" -> "GET",
           ":scheme" -> "https",
           ":authority" -> "localhost:8000",
           ":path" -> "/",
           "content-type" -> "text/json",
-          "content-type" -> "text/json")))
-      thrown.getMessage should ===(
+          "content-type" -> "text/json"))
+      info.summary should ===(
         s"Malformed request: HTTP message must not contain more than one content-type header")
     }
 
     "reject requests with too many headers" in {
       val maxHeaderCount = ServerSettings(system).parserSettings.maxHeaderCount
-      val thrown = shouldThrowMalformedRequest(
-        parse((0 to (maxHeaderCount + 1)).map(n => s"x-my-header-$n" -> n.toString).toVector))
-      thrown.getMessage should ===(
+      val info = parseExpectError((0 to (maxHeaderCount + 1)).map(n => s"x-my-header-$n" -> n.toString).toVector)
+      info.summary should ===(
         s"Malformed request: HTTP message contains more than the configured limit of $maxHeaderCount headers")
     }
 
     "add remote address request attribute if enabled" in {
       val theAddress = InetAddress.getByName("127.5.2.1")
-      val request: HttpRequest = parse(
+      val request: HttpRequest = parseExpectOk(
         keyValuePairs = Vector(
           ":method" -> "GET",
           ":scheme" -> "https",

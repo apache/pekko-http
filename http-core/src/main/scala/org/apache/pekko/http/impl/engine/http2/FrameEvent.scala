@@ -18,6 +18,7 @@ import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
+import pekko.http.scaladsl.model.ErrorInfo
 import pekko.util.ByteString
 
 import scala.collection.immutable
@@ -112,11 +113,14 @@ private[http] object FrameEvent {
   /**
    * Convenience (logical) representation of a parsed HEADERS frame with zero, one or
    * many CONTINUATIONS Frames into a single, decompressed object.
+   *
+   * @param headerParseErrorDetails Only used server side, passes header errors from decompression into error response logic
    */
   final case class ParsedHeadersFrame(
       streamId: Int,
       endStream: Boolean,
       keyValuePairs: Seq[(String, AnyRef)],
-      priorityInfo: Option[PriorityFrame]) extends StreamFrameEvent
+      priorityInfo: Option[PriorityFrame],
+      headerParseErrorDetails: Option[ErrorInfo]) extends StreamFrameEvent
 
 }
