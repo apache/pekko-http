@@ -28,7 +28,7 @@ class MigrateToServerBuilder extends SemanticRule("MigrateToServerBuilder") {
         Try {
           val sig = t.parent.get.symbol.info.get.signature.asInstanceOf[MethodSignature]
           require(sig.parameterLists(1)(0).signature.toString == "Materializer")
-          (t.parent.get, t.parent.get.asInstanceOf[Term.Apply].args.head)
+          (t.parent.get, t.parent.get.asInstanceOf[Term.Apply].argClause.values.head)
         }.toOption
 
       val materializerLint: Option[Patch] = materializerAndTarget.map {
@@ -42,7 +42,8 @@ class MigrateToServerBuilder extends SemanticRule("MigrateToServerBuilder") {
       }
 
       val argExps =
-        namedArgMap(args, t.asInstanceOf[Term.Apply].args) ++ materializerAndTarget.map("materializer" -> _._2).toSeq
+        namedArgMap(args, t.asInstanceOf[Term.Apply].argClause.values) ++
+        materializerAndTarget.map("materializer" -> _._2).toSeq
       val targetTree = materializerAndTarget.map(_._1).getOrElse(t) // patch parent if materializer arg is found
 
       patchTree(targetTree, http, argExps, targetMethod(argExps("handler"))) + materializerLint
