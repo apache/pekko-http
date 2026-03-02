@@ -117,13 +117,13 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       // appear in requests.
 
       "not accept response pseudo-header fields in a request" in {
-        val info = parseExpectError(
+        val ex = parseExpectProtocolError(
           keyValuePairs = Vector(
             ":scheme" -> "https",
             ":method" -> "GET",
             ":path" -> "/",
             ":status" -> "200"))
-        info.summary should ===(
+        ex.getMessage should ===(
           "Malformed request: Pseudo-header ':status' is for responses only; it cannot appear in a request")
       }
 
@@ -141,7 +141,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           // Insert the Foo header so it occurs before at least one pseudo-header
           val (before, after) = pseudoHeaders.splitAt(insertPoint)
           val modified = before ++ Vector("Foo" -> "bar") ++ after
-          parseExpectError(modified)
+          parseExpectProtocolError(modified)
         }
       }
 
@@ -152,7 +152,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
 
       "not accept connection-specific headers" in {
         // Add Connection header to indicate that Foo is a connection-specific header
-        parseExpectError(Vector(
+        parseExpectProtocolError(Vector(
           ":method" -> "GET",
           ":scheme" -> "https",
           ":path" -> "/",
@@ -165,7 +165,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         // The only exception to this is the TE header field, which MAY be
         // present in an HTTP/2 request; when it is, it MUST NOT contain any
         // value other than "trailers".
-        parseExpectError(Vector(
+        parseExpectProtocolError(Vector(
           ":method" -> "GET",
           ":scheme" -> "https",
           ":path" -> "/",
@@ -457,7 +457,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       "reject empty ':path' pseudo-headers for http and https" in {
         val schemes = Seq("http", "https")
         forAll(schemes) { (scheme: String) =>
-          parseExpectError(
+          parseExpectProtocolError(
             keyValuePairs = Vector(
               ":method" -> "POST",
               ":scheme" -> scheme,

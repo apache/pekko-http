@@ -158,7 +158,7 @@ private[http2] object RequestParsing {
                 parseError("HTTP message must not contain more than one content-type header", "content-type")
 
             case ":status" =>
-              parseError("Pseudo-header ':status' is for responses only; it cannot appear in a request", ":status")
+              protocolError("Pseudo-header ':status' is for responses only; it cannot appear in a request")
 
             case "content-length" =>
               if (contentLength == -1) {
@@ -219,18 +219,18 @@ private[http2] object RequestParsing {
   private[http2] def checkUniquePseudoHeader(name: String, value: AnyRef): Unit =
     if (value ne null) protocolError(s"Pseudo-header '$name' must not occur more than once")
   private[http2] def checkNoRegularHeadersBeforePseudoHeader(name: String, seenRegularHeader: Boolean): Unit =
-    if (seenRegularHeader) parseError(s"Pseudo-header field '$name' must not appear after a regular header", name)
+    if (seenRegularHeader) protocolError(s"Pseudo-header field '$name' must not appear after a regular header")
   private[http2] def validateHeader(httpHeader: HttpHeader) = httpHeader.lowercaseName match {
     case "connection" =>
       // https://tools.ietf.org/html/rfc7540#section-8.1.2.2
-      parseError("Header 'Connection' must not be used with HTTP/2", "Connection")
+      protocolError("Header 'Connection' must not be used with HTTP/2")
     case "transfer-encoding" =>
       // https://tools.ietf.org/html/rfc7540#section-8.1.2.2
-      parseError("Header 'Transfer-Encoding' must not be used with HTTP/2", "Transfer-encoding")
+      protocolError("Header 'Transfer-Encoding' must not be used with HTTP/2")
     case "te" =>
       // https://tools.ietf.org/html/rfc7540#section-8.1.2.2
       if (httpHeader.value.compareToIgnoreCase("trailers") != 0)
-        parseError(s"Header 'TE' must not contain value other than 'trailers', value was '${httpHeader.value}", "TE")
+        protocolError(s"Header 'TE' must not contain value other than 'trailers', value was '${httpHeader.value}")
     case _ => // ok
   }
 
