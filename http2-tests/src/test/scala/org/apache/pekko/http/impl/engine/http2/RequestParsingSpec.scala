@@ -417,6 +417,14 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           }
         }
 
+        // Regression test for https://github.com/apache/pekko-http/issues/59
+        // '%_D' is invalid percent-encoding because '_' is not a hex digit;
+        // should return 400 Bad Request instead of terminating the connection
+        "reject a ':path' containing invalid percent-encoding" in {
+          val info = parsePathExpectError("/?param=%_D")
+          info.summary should include("http2-path-pseudo-header")
+        }
+
         "reject a ':path' containing an invalid 'query'" in pendingUntilFixed {
           val invalidQueries: Seq[String] = Seq(
             ":", "/", "?", "#", "[", "]", "@", " ")
