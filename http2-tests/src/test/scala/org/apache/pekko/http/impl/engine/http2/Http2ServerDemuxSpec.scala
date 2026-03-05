@@ -54,7 +54,7 @@ class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
       // The request is taken from the HTTP/1.1 request that had the Upgrade
       // header and is passed to the handler code 'directly', bypassing the demux stage,
       // so the first thing the demux stage sees of this request is the response:
-      val response = ParsedHeadersFrame(streamId = 1, endStream = true, Seq((":status", "200")), None)
+      val response = ParsedHeadersFrame(streamId = 1, endStream = true, Seq((":status", "200")), None, None)
       substreamProducer.sendNext(new Http2SubStream(
         response,
         OptionVal.None,

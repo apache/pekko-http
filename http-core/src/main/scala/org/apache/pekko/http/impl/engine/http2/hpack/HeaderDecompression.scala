@@ -21,6 +21,7 @@ import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.http2.RequestParsing.parseHeaderPair
 import pekko.http.impl.engine.http2._
 import pekko.http.impl.engine.parsing.HttpHeaderParser
+import pekko.http.scaladsl.model.ParsingException
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.shaded.com.twitter.hpack.HeaderListener
 import pekko.stream._
@@ -75,9 +76,12 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
               }
 
               name match {
-                case "content-type"   => handle(ContentType.parse(name, value, parserSettings))
-                case ":authority"     => handle(Authority.parse(name, value, parserSettings))
-                case ":path"          => handle(PathAndQuery.parse(name, value, parserSettings))
+                case "content-type" => handle(ContentType.parse(name, value, parserSettings))
+                case ":authority"   => handle(Authority.parse(name, value, parserSettings))
+                case ":path"        =>
+                  if (value.isEmpty)
+                    throw new Http2ProtocolException("Malformed request: ':path' must not be empty")
+                  handle(PathAndQuery.parse(name, value, parserSettings))
                 case ":method"        => handle(Method.parse(name, value, parserSettings))
                 case ":scheme"        => handle(Scheme.parse(name, value, parserSettings))
                 case "content-length" => handle(ContentLength.parse(name, value, parserSettings))
@@ -97,9 +101,12 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
           decoder.decode(stream, Receiver) // only compact ByteString supports InputStream with mark/reset
           decoder.endHeaderBlock() // TODO: do we have to check the result here?
 
-          push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo))
+          push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo, None))
         } catch {
-          case ex: IOException =>
+          case ex: ParsingException =>
+            // push details further and let RequestErrorFlow handle responding with bad request
+            push(eventsOut, ParsedHeadersFrame(streamId, endStream, Seq.empty, prioInfo, Some(ex.info)))
+          case _: IOException =>
             // this is signalled by the decoder when it failed, we want to react to this by rendering a GOAWAY frame
             fail(eventsOut,
               new Http2Compliance.Http2ProtocolException(ErrorCode.COMPRESSION_ERROR, "Decompression failed."))

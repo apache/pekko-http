@@ -16,6 +16,7 @@ package client
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.engine.http2.Http2Compliance.Http2ProtocolException
 import pekko.http.impl.engine.http2.RequestParsing._
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.server.HttpAttributes
@@ -85,26 +86,26 @@ private[http2] object ResponseParsing {
             rec(remainingHeaders.tail, status, OptionVal.Some(contentTypeValue), contentLength, seenRegularHeader,
               headers)
           else
-            malformedRequest("HTTP message must not contain more than one content-type header")
+            malformedResponse("HTTP message must not contain more than one content-type header")
 
         case ("content-type", ct: String) =>
           if (contentType.isEmpty) {
             val contentTypeValue =
-              ContentType.parse(ct).getOrElse(malformedRequest(s"Invalid content-type: '$ct'"))
+              ContentType.parse(ct).getOrElse(malformedResponse(s"Invalid content-type: '$ct'"))
             rec(remainingHeaders.tail, status, OptionVal.Some(contentTypeValue), contentLength, seenRegularHeader,
               headers)
-          } else malformedRequest("HTTP message must not contain more than one content-type header")
+          } else malformedResponse("HTTP message must not contain more than one content-type header")
 
         case ("content-length", length: String) =>
           if (contentLength == -1) {
             val contentLengthValue = length.toLong
             if (contentLengthValue < 0)
-              malformedRequest("HTTP message must not contain a negative content-length header")
+              malformedResponse("HTTP message must not contain a negative content-length header")
             rec(remainingHeaders.tail, status, contentType, contentLengthValue, seenRegularHeader, headers)
-          } else malformedRequest("HTTP message must not contain more than one content-length header")
+          } else malformedResponse("HTTP message must not contain more than one content-length header")
 
         case (name, _) if name.startsWith(':') =>
-          malformedRequest(s"Unexpected pseudo-header '$name' in response")
+          malformedResponse(s"Unexpected pseudo-header '$name' in response")
 
         case (_, httpHeader: HttpHeader) =>
           rec(remainingHeaders.tail, status, contentType, contentLength, seenRegularHeader = true,
@@ -119,4 +120,7 @@ private[http2] object ResponseParsing {
 
     rec(subStream.initialHeaders.keyValuePairs)
   }
+
+  private def malformedResponse(msg: String): Nothing =
+    throw new Http2ProtocolException(s"Malformed response: $msg")
 }
