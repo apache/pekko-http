@@ -214,6 +214,10 @@ jobs:
       - name: Install sbt
         uses: sbt/setup-sbt@1cad58d595b729a71ca2254cdf5b43dd6f42d4bb # v1.1.18
 
+      - name: Install Graphviz
+        run: |-
+          sudo apt-get install graphviz
+        
       # We intentionally do not use the Coursier cache for release candiates,
       # to reduce attack surface
 
@@ -242,8 +246,14 @@ jobs:
           export MODULE="Pekko HTTP"
           export VERSION=$(echo $REF | sed -e "s/.\(.*\)-.*/\\1/")
           export RC_VERSION=$(echo $REF | tail -c +2)
+          if [[ "$VERSION" =~ ^1\.([0-9]+)\.[0-9]+$ ]]; then
+            export BRANCH="1.${BASH_REMATCH[1]}.x"
+          else
+            export BRANCH="main"
+          fi
           echo "VERSION=$VERSION"
           echo "RC_VERSION=$RC_VERSION"
+          echo "BRANCH=$BRANCH"
 
           export DISCUSS=$(curl 'https://lists.apache.org/api/stats.lua?list=dev&domain=pekko.apache.org' | jq ".emails.[] | .subject, .mid" | grep -A1 "$MODULE $VERSION" | tail -1 | tr -d \")
           echo "DISCUSS=$DISCUSS"
@@ -320,7 +330,7 @@ jobs:
           
           To compile from the source, please refer to:
           
-          https://github.com/apache/pekko-http/blob/main/README.md#building-from-source
+          https://github.com/apache/pekko-http/blob/$BRANCH/README.md#building-from-source
           
           To verify the binary build, please refer to:
           
