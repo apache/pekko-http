@@ -13,9 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-
 import org.apache.pekko
 import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpMethods, StatusCodes }
 import pekko.http.scaladsl.server._
@@ -50,7 +47,7 @@ class MethodDirectivesSpec extends RoutingSpec {
         status shouldEqual StatusCodes.OK
 
         val lengthF = response._3.dataBytes.runFold(0)((c, _) => c + 1)
-        val length = Await.result(lengthF, Duration(100, "millis"))
+        val length = lengthF.futureValue
         length shouldEqual 0
       }
     }
