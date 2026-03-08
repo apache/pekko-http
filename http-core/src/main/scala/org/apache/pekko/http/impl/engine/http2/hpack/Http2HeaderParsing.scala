@@ -16,7 +16,7 @@ package org.apache.pekko.http.impl.engine.http2.hpack
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.RequestParsing
-import pekko.http.impl.engine.http2.RequestParsing.parseError
+import pekko.http.impl.engine.http2.RequestParsing.{ parseError, protocolError }
 import pekko.http.scaladsl.model
 import pekko.http.scaladsl.model.HttpHeader.ParsingResult
 import model.{ HttpHeader, HttpMethod, HttpMethods, IllegalUriException, ParsingException, StatusCode, Uri }
@@ -41,7 +41,9 @@ private[pekko] object Http2HeaderParsing {
   }
   object PathAndQuery extends HeaderParser[(Uri.Path, Option[String])](":path") {
     override def parse(name: String, value: String, parserSettings: ParserSettings): (Uri.Path, Option[String]) =
-      try {
+      if (value.isEmpty) {
+        protocolError("Pseudo-header ':path' must not be empty")
+      } else try {
         Uri.parseHttp2PathPseudoHeader(value, mode = parserSettings.uriParsingMode)
       } catch {
         case IllegalUriException(info) => throw new ParsingException(info)

@@ -141,7 +141,9 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           // Insert the Foo header so it occurs before at least one pseudo-header
           val (before, after) = pseudoHeaders.splitAt(insertPoint)
           val modified = before ++ Vector("Foo" -> "bar") ++ after
-          parseExpectProtocolError(modified)
+          val ex = parseExpectProtocolError(modified)
+          ex.getMessage should
+          ===(s"Malformed request: Pseudo-header field '${after.head._1}' must not appear after a regular header")
         }
       }
 
@@ -152,12 +154,14 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
 
       "not accept connection-specific headers" in {
         // Add Connection header to indicate that Foo is a connection-specific header
-        parseExpectProtocolError(Vector(
+        val ex = parseExpectProtocolError(Vector(
           ":method" -> "GET",
           ":scheme" -> "https",
           ":path" -> "/",
           "Connection" -> "foo",
-          "Foo" -> "bar"))
+          "Foo" -> "bar"
+        ))
+        ex.getMessage should ===("Malformed request: Header 'Connection' must not be used with HTTP/2")
       }
 
       "not accept TE with other values than 'trailers'" in {
@@ -165,11 +169,14 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         // The only exception to this is the TE header field, which MAY be
         // present in an HTTP/2 request; when it is, it MUST NOT contain any
         // value other than "trailers".
-        parseExpectProtocolError(Vector(
+        val ex = parseExpectProtocolError(Vector(
           ":method" -> "GET",
           ":scheme" -> "https",
           ":path" -> "/",
-          "TE" -> "chunked"))
+          "TE" -> "chunked"
+        ))
+        ex.getMessage should
+        ===("Malformed request: Header 'TE' must not contain value other than 'trailers', value was 'chunked")
 
       }
 
@@ -457,11 +464,13 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       "reject empty ':path' pseudo-headers for http and https" in {
         val schemes = Seq("http", "https")
         forAll(schemes) { (scheme: String) =>
-          parseExpectProtocolError(
+          val ex = parseExpectProtocolError(
             keyValuePairs = Vector(
               ":method" -> "POST",
               ":scheme" -> scheme,
-              ":path" -> ""))
+              ":path" -> ""
+            ))
+          ex.getMessage should ===("Malformed request: Pseudo-header ':path' must not be empty")
         }
       }
 
@@ -477,7 +486,76 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       // a CONNECT request (Section 8.3).  An HTTP request that omits
       // mandatory pseudo-header fields is malformed
 
-      // [assume CONNECT not supported]
+      // 8.3.  HTTP/2 CONNECT Method
+
+      // The CONNECT method can be used to convert the HTTP/2 connection into
+      // a tunnel for a non-HTTP/2 protocol.  The CONNECT method is identified
+      // by the ":method" pseudo-header field having a value of "CONNECT".
+      //
+      // A CONNECT request that does not conform to the following restrictions
+      // is malformed (Section 8.1.2.6):
+      //
+      // *  The ":scheme" and ":path" pseudo-header fields MUST NOT be included
+      //
+      // *  The ":authority" pseudo-header field contains the host and port to
+      //    connect to (equivalent to the authority-form of the request-target
+      //    of CONNECT requests, see [RFC7230], Section 5.3.3).
+
+      "handle CONNECT requests correctly" should {
+
+        "accept valid CONNECT requests without :scheme and :path" in {
+          val request: HttpRequest = parseExpectOk(
+            keyValuePairs = Vector(
+              ":method" -> "CONNECT",
+              ":authority" -> "example.com:443"
+            ))
+          request.method should ===(HttpMethods.CONNECT)
+          request.uri.authority.host.toString should ===("example.com")
+          request.uri.authority.port should ===(443)
+        }
+
+        "reject CONNECT requests with :path pseudo-header" in {
+          val ex = parseExpectProtocolError(
+            keyValuePairs = Vector(
+              ":method" -> "CONNECT",
+              ":authority" -> "example.com:443",
+              ":path" -> "/"
+            ))
+          ex.getMessage should ===("Malformed request: Pseudo-header ':path' must not be included in CONNECT request")
+        }
+
+        "reject CONNECT requests with :scheme pseudo-header" in {
+          val ex = parseExpectProtocolError(
+            keyValuePairs = Vector(
+              ":method" -> "CONNECT",
+              ":authority" -> "example.com:443",
+              ":scheme" -> "https"
+            ))
+          ex.getMessage should ===("Malformed request: Pseudo-header ':scheme' must not be included in CONNECT request")
+        }
+
+        "reject CONNECT requests with both :scheme and :path pseudo-headers" in {
+          val ex = parseExpectProtocolError(
+            keyValuePairs = Vector(
+              ":method" -> "CONNECT",
+              ":authority" -> "example.com:443",
+              ":scheme" -> "https",
+              ":path" -> "/"
+            ))
+          // Should fail on :path first since it's checked before :scheme in the header parsing order
+          ex.getMessage should ===("Malformed request: Pseudo-header ':path' must not be included in CONNECT request")
+        }
+
+        "reject CONNECT requests with empty :path" in {
+          val ex = parseExpectProtocolError(
+            keyValuePairs = Vector(
+              ":method" -> "CONNECT",
+              ":authority" -> "example.com:443",
+              ":path" -> ""
+            ))
+          ex.getMessage should ===("Malformed request: Pseudo-header ':path' must not be empty")
+        }
+      }
 
       "reject requests without a mandatory pseudo-headers" in {
         val mandatoryPseudoHeaders = Seq(":method", ":scheme", ":path")
