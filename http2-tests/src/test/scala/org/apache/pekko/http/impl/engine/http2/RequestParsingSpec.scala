@@ -449,13 +449,15 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       // ... A request in asterisk form includes the
       // value '*' for the ":path" pseudo-header field.
 
-      "handle a ':path' with an asterisk" in pendingUntilFixed {
+      "handle a ':path' with an asterisk" in {
         val request: HttpRequest = parseExpectOk(
           keyValuePairs = Vector(
             ":method" -> "OPTIONS",
             ":scheme" -> "http",
-            ":path" -> "*"))
-        request.uri.toString should ===("*") // FIXME: Compare in a better way
+            ":path" -> "*"
+          ))
+        request.uri.path.toString should ===("")
+        request.uri.rawQueryString should ===(None)
       }
 
       // [The ":path"] pseudo-header field MUST NOT be empty for "http" or "https"
