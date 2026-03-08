@@ -23,6 +23,7 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.caching.scaladsl.CachingSettings
 import pekko.testkit.TestKit
+import pekko.testkit.TestProbe
 
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
@@ -125,8 +126,10 @@ class ExpiringLfuCacheSpec extends AnyWordSpec with Matchers with BeforeAndAfter
       Await.result(cache(2, () => Future.successful("B")), 3.seconds) should be("B")
       Await.result(cache.get(3, () => "C"), 3.seconds) should be("C")
       cache.get(4, () => "D")
-      Thread.sleep(50)
-      cache.size should be(3)
+      val probe = TestProbe()
+      probe.awaitAssert {
+        cache.size should be(3)
+      }
     }
     "not cache exceptions" in {
       val cache = lfuCache[String]()
