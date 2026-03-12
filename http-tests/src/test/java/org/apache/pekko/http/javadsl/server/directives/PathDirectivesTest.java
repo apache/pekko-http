@@ -15,16 +15,16 @@ package org.apache.pekko.http.javadsl.server.directives;
 
 import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.Host;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.http.scaladsl.model.HttpRequest;
 
-public class PathDirectivesTest extends JUnitRouteTest {
+public class PathDirectivesTest extends JUnit5RouteTest {
   @Test
   public void testPathPrefixAndPath() {
     TestRoute route =

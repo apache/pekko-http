@@ -19,16 +19,16 @@ import org.apache.pekko.http.javadsl.model.MediaTypes;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.testkit.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class PetStoreAPITest extends JUnitRouteTest {
+public class PetStoreAPITest extends JUnit5RouteTest {
   @Test
   public void testGetPet() {
     TestRouteResult response = createRoute().run(HttpRequest.GET("/pet/1"));

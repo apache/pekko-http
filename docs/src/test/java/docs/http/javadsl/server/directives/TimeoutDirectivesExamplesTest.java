@@ -25,9 +25,9 @@ import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.testkit.TestKit;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.junit.After;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -84,7 +84,7 @@ public class TimeoutDirectivesExamplesTest extends AllDirectives {
   }
   // #testSetup
 
-  @After
+  @AfterEach
   public void shutDown() {
     TestKit.shutdownActorSystem(
         system, scala.concurrent.duration.Duration.create(1, TimeUnit.SECONDS), false);
@@ -161,7 +161,7 @@ public class TimeoutDirectivesExamplesTest extends AllDirectives {
   }
 
   // make it compile only to avoid flaking in slow builds
-  @Ignore("Compile only test")
+  @Disabled("Compile only test")
   @Test
   public void testRequestTimeoutCustomResponseCanBeAddedSeparately() throws Exception {
     // #withRequestTimeoutResponse

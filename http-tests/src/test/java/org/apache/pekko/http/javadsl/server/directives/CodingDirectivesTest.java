@@ -20,7 +20,8 @@ import org.apache.pekko.http.javadsl.model.headers.ContentEncoding;
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
 import org.apache.pekko.util.ByteString;
 
-import org.junit.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import org.apache.pekko.http.javadsl.testkit.*;
 
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class CodingDirectivesTest extends JUnitRouteTest {
+public class CodingDirectivesTest extends JUnit5RouteTest {
 
   @Test
   public void testAutomaticEncodingWhenNoEncodingRequested() throws Exception {
@@ -39,7 +40,7 @@ public class CodingDirectivesTest extends JUnitRouteTest {
     TestRouteResult response = route.run(HttpRequest.create());
     response.assertStatusCode(200);
 
-    Assert.assertEquals("TestString", response.entityBytes().utf8String());
+    Assertions.assertEquals("TestString", response.entityBytes().utf8String());
   }
 
   @Test
@@ -57,7 +58,7 @@ public class CodingDirectivesTest extends JUnitRouteTest {
         Coder.Deflate.decode(response.entityBytes(), materializer())
             .toCompletableFuture()
             .get(3, TimeUnit.SECONDS);
-    Assert.assertEquals("tester", decompressed.utf8String());
+    Assertions.assertEquals("tester", decompressed.utf8String());
   }
 
   @Test

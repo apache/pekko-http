@@ -16,9 +16,9 @@ package docs.http.javadsl.server.directives;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map.Entry;
 import java.util.function.Function;
@@ -66,7 +66,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.parameterList;
 
 // #parameterSeq
 
-public class ParameterDirectivesExamplesTest extends JUnitRouteTest {
+public class ParameterDirectivesExamplesTest extends JUnit5RouteTest {
 
   @Test
   public void testParameter() {

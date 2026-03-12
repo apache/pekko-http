@@ -15,8 +15,8 @@ package docs.http.javadsl.server;
 
 import org.apache.pekko.http.javadsl.model.RemoteAddress;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
-import org.junit.Test;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.junit.jupiter.api.Test;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -86,7 +86,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #allOf
 
-public class DirectiveExamplesTest extends JUnitRouteTest {
+public class DirectiveExamplesTest extends JUnit5RouteTest {
 
   @Test
   public void compileOnlySpec() throws Exception {

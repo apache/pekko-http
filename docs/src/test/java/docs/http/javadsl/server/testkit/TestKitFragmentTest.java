@@ -18,11 +18,11 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class TestKitFragmentTest extends JUnitRouteTest {
+public class TestKitFragmentTest extends JUnit5RouteTest {
   class FragmentTester extends AllDirectives {
     public Route createRoute(Route fragment) {
       return pathPrefix("test", () -> fragment);

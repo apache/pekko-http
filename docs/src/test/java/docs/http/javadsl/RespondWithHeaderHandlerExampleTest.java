@@ -24,11 +24,11 @@ import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.ExceptionHandler;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.http.scaladsl.model.ErrorInfo;
 import org.apache.pekko.http.scaladsl.model.IllegalHeaderException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.concurrent.CompletionStage;
@@ -39,7 +39,7 @@ import static junit.framework.TestCase.assertTrue;
 // #no-exception-details-in-response
 // #no-exception-details-in-response
 
-public class RespondWithHeaderHandlerExampleTest extends JUnitRouteTest {
+public class RespondWithHeaderHandlerExampleTest extends JUnit5RouteTest {
 
   @Test
   public void compileOnlySpec() throws Exception {

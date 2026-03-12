@@ -15,8 +15,8 @@ package docs.http.javadsl.server;
 
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
-import org.junit.Test;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.junit.jupiter.api.Test;
 
 // #path-examples
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
@@ -26,7 +26,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 import static org.apache.pekko.http.javadsl.server.Directives.pathSingleSlash;
 // #path-examples
 
-public class PathDirectiveExampleTest extends JUnitRouteTest {
+public class PathDirectiveExampleTest extends JUnit5RouteTest {
   @Test
   public void testPathPrefix() {
     // #path-examples

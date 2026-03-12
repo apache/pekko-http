@@ -111,7 +111,7 @@ public class Http2ClientApp {
                             res.getAttribute(ResponseFuture.KEY()).get();
                         responseFuture.future().complete(res);
                       } catch (Exception ex) {
-                        ex.printStackTrace();
+                        system.log().error(ex, "Error processing HTTP/2 response");
                       }
                     }))
             .run(SystemMaterializer.get(system).materializer());

@@ -13,13 +13,13 @@
 
 package docs.http.javadsl.server;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.Host;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 
 // #by-class
 import static org.apache.pekko.http.javadsl.server.Directives.extractHost;
@@ -32,7 +32,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
 // #by-name
 
-public class HeaderRequestValsExampleTest extends JUnitRouteTest {
+public class HeaderRequestValsExampleTest extends JUnit5RouteTest {
 
   @Test
   public void testHeaderVals() {

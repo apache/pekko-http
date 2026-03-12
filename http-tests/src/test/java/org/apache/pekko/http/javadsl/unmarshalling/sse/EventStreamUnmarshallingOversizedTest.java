@@ -20,25 +20,24 @@ package org.apache.pekko.http.javadsl.unmarshalling.sse;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.settings.OversizedSseStrategy;
 import org.apache.pekko.http.javadsl.settings.ServerSentEventSettings;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.scalatestplus.junit.JUnitSuite;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class EventStreamUnmarshallingOversizedTest extends JUnitSuite {
+public class EventStreamUnmarshallingOversizedTest {
 
   private static ActorSystem system;
 
-  @BeforeClass
+  @BeforeAll
   public static void setup() {
     system = ActorSystem.create();
   }
 
-  @AfterClass
+  @AfterAll
   public static void teardown() throws Exception {
     system.terminate();
     system.getWhenTerminated().toCompletableFuture().get(5, TimeUnit.SECONDS);
@@ -52,30 +51,30 @@ public class EventStreamUnmarshallingOversizedTest extends JUnitSuite {
             .withLineLength(50)
             .withOversizedLineStrategy(OversizedSseStrategy.FailStream);
 
-    assertEquals("Should have correct line length", 50, settings.maxLineSize());
+    assertEquals(50, settings.maxLineSize(), "Should have correct line length");
     assertEquals(
-        "Should have FailStream line strategy",
         OversizedSseStrategy.FailStream,
-        settings.getOversizedLineStrategyEnum());
+        settings.getOversizedLineStrategyEnum(),
+        "Should have FailStream line strategy");
 
     // Test all strategies can be set
     settings = settings.withOversizedLineStrategy(OversizedSseStrategy.LogAndSkip);
     assertEquals(
-        "Should have LogAndSkip line strategy",
         OversizedSseStrategy.LogAndSkip,
-        settings.getOversizedLineStrategyEnum());
+        settings.getOversizedLineStrategyEnum(),
+        "Should have LogAndSkip line strategy");
 
     settings = settings.withOversizedLineStrategy(OversizedSseStrategy.Truncate);
     assertEquals(
-        "Should have Truncate line strategy",
         OversizedSseStrategy.Truncate,
-        settings.getOversizedLineStrategyEnum());
+        settings.getOversizedLineStrategyEnum(),
+        "Should have Truncate line strategy");
 
     settings = settings.withOversizedLineStrategy(OversizedSseStrategy.DeadLetter);
     assertEquals(
-        "Should have DeadLetter line strategy",
         OversizedSseStrategy.DeadLetter,
-        settings.getOversizedLineStrategyEnum());
+        settings.getOversizedLineStrategyEnum(),
+        "Should have DeadLetter line strategy");
   }
 
   @Test
@@ -85,12 +84,12 @@ public class EventStreamUnmarshallingOversizedTest extends JUnitSuite {
         ServerSentEventSettings.create(system).withOversizedLineStrategy("log-and-skip");
 
     assertEquals(
-        "Should have log-and-skip line strategy string",
         "log-and-skip",
-        settings.getOversizedLineStrategy());
+        settings.getOversizedLineStrategy(),
+        "Should have log-and-skip line strategy string");
     assertEquals(
-        "Should have LogAndSkip line strategy enum",
         OversizedSseStrategy.LogAndSkip,
-        settings.getOversizedLineStrategyEnum());
+        settings.getOversizedLineStrategyEnum(),
+        "Should have LogAndSkip line strategy enum");
   }
 }

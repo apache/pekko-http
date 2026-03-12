@@ -22,14 +22,14 @@ import org.apache.pekko.http.javadsl.model.ws.BinaryMessage;
 import org.apache.pekko.http.javadsl.model.ws.Message;
 import org.apache.pekko.http.javadsl.model.ws.TextMessage;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.testkit.WSProbe;
 import org.apache.pekko.stream.OverflowStrategy;
 import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -50,7 +50,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.extractOfferedWsPr
 import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessagesForOptionalProtocol;
 
 // #extractOfferedWsProtocols
-public class WebSocketDirectivesExamplesTest extends JUnitRouteTest {
+public class WebSocketDirectivesExamplesTest extends JUnit5RouteTest {
 
   @Test
   public void testHandleWebSocketMessages() {

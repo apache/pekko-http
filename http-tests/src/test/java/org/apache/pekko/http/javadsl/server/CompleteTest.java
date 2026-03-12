@@ -19,16 +19,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.MediaTypes;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class CompleteTest extends JUnitRouteTest {
+public class CompleteTest extends JUnit5RouteTest {
   @Test
   public void completeWithString() {
     Route route = complete("Everything OK!");

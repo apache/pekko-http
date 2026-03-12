@@ -18,13 +18,13 @@ import org.apache.pekko.actor.testkit.typed.javadsl.TestProbe;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Adapter;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class TestKitWithActorTest extends JUnitRouteTest {
+public class TestKitWithActorTest extends JUnit5RouteTest {
 
   @Test
   public void returnPongForGetPing() {

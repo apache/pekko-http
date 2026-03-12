@@ -39,6 +39,7 @@ inThisBuild(Def.settings(
   testOptions ++= Seq(
     Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
     Tests.Argument(TestFrameworks.ScalaTest, "-oDF")),
+  testFrameworks += new TestFramework("net.aichler.jupiter.api.JupiterFramework"),
   Dependencies.Versions,
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),

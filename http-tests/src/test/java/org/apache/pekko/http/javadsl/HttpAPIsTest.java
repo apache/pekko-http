@@ -17,12 +17,12 @@ import org.apache.pekko.event.LoggingAdapter;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings;
 import org.apache.pekko.japi.function.Function;
 import org.apache.pekko.stream.javadsl.Flow;
 import com.typesafe.config.ConfigFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
 import java.util.concurrent.CompletionStage;
@@ -31,7 +31,7 @@ import static org.apache.pekko.http.javadsl.ConnectHttp.toHost;
 import static org.apache.pekko.http.javadsl.ConnectHttp.toHostHttps;
 
 @SuppressWarnings("ConstantConditions")
-public class HttpAPIsTest extends JUnitRouteTest {
+public class HttpAPIsTest extends JUnit5RouteTest {
 
   @Test
   public void placeholderCompileTimeOnlyTest() {
