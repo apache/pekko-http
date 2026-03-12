@@ -20,9 +20,9 @@ import org.apache.pekko.http.javadsl.model.Uri;
 import org.apache.pekko.http.javadsl.model.headers.XForwardedFor;
 import org.apache.pekko.http.javadsl.model.headers.XRealIp;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -30,7 +30,7 @@ import java.util.Arrays;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class MiscDirectivesTest extends JUnitRouteTest {
+public class MiscDirectivesTest extends JUnit5RouteTest {
 
   static boolean isShort(String str) {
     return str.length() < 5;

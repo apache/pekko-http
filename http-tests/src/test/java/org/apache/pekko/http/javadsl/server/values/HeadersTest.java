@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.javadsl.server.values;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 
 import org.apache.pekko.http.javadsl.model.*;
@@ -24,7 +24,7 @@ import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class HeadersTest extends JUnitRouteTest {
+public class HeadersTest extends JUnit5RouteTest {
   final RawHeader testHeaderInstance = RawHeader.create("X-Test-Header", "abcdef-test");
   final Age ageHeaderInstance = Age.create(1000);
 

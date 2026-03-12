@@ -15,16 +15,15 @@ package org.apache.pekko.http.javadsl.model;
 
 import org.apache.pekko.http.scaladsl.model.AttributeKey$;
 import org.apache.pekko.stream.scaladsl.TLSPlacebo;
-import org.junit.Test;
-import org.scalatestplus.junit.JUnitSuite;
+import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class HttpMessageTest extends JUnitSuite {
+public class HttpMessageTest {
   @Test
   public void testRetrieveAttributeByKey() {
     AttributeKey<String> oneStringKey = AttributeKey.create("one", String.class);

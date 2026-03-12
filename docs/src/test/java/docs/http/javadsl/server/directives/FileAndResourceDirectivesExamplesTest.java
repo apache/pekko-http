@@ -18,9 +18,9 @@ import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.directives.DirectoryRenderer;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import scala.NotImplementedError;
 
 import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
@@ -63,9 +63,9 @@ import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 
 // #getFromResourceDirectory
 
-public class FileAndResourceDirectivesExamplesTest extends JUnitRouteTest {
+public class FileAndResourceDirectivesExamplesTest extends JUnit5RouteTest {
 
-  @Ignore("Compile only test")
+  @Disabled("Compile only test")
   @Test
   public void testGetFromFile() {
     // #getFromFile
@@ -77,7 +77,7 @@ public class FileAndResourceDirectivesExamplesTest extends JUnitRouteTest {
     // #getFromFile
   }
 
-  @Ignore("Compile only test")
+  @Disabled("Compile only test")
   @Test
   public void testGetFromResource() {
     // #getFromResource
@@ -89,7 +89,7 @@ public class FileAndResourceDirectivesExamplesTest extends JUnitRouteTest {
     // #getFromResource
   }
 
-  @Ignore("Compile only test")
+  @Disabled("Compile only test")
   @Test
   public void testListDirectoryContents() {
     // #listDirectoryContents
@@ -112,7 +112,7 @@ public class FileAndResourceDirectivesExamplesTest extends JUnitRouteTest {
     // #listDirectoryContents
   }
 
-  @Ignore("Compile only test")
+  @Disabled("Compile only test")
   @Test
   public void testGetFromBrowseableDirectory() {
     // #getFromBrowseableDirectory
@@ -123,7 +123,7 @@ public class FileAndResourceDirectivesExamplesTest extends JUnitRouteTest {
     // #getFromBrowseableDirectory
   }
 
-  @Ignore("Compile only test")
+  @Disabled("Compile only test")
   @Test
   public void testGetFromBrowseableDirectories() {
     // #getFromBrowseableDirectories
@@ -134,7 +134,7 @@ public class FileAndResourceDirectivesExamplesTest extends JUnitRouteTest {
     // #getFromBrowseableDirectories
   }
 
-  @Ignore("Compile only test")
+  @Disabled("Compile only test")
   @Test
   public void testGetFromDirectory() {
     // #getFromDirectory
@@ -145,7 +145,7 @@ public class FileAndResourceDirectivesExamplesTest extends JUnitRouteTest {
     // #getFromDirectory
   }
 
-  @Ignore("Compile only test")
+  @Disabled("Compile only test")
   @Test
   public void testGetFromResourceDirectory() {
     // #getFromResourceDirectory

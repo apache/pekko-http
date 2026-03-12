@@ -20,13 +20,13 @@ import java.util.concurrent.TimeUnit;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.scaladsl.model.StatusCodes;
 import org.apache.pekko.japi.pf.PFBuilder;
 import org.apache.pekko.pattern.CircuitBreaker;
 import org.apache.pekko.testkit.javadsl.TestKit;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
@@ -53,7 +53,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #onCompleteWithBreaker
 
-public class FutureDirectivesExamplesTest extends JUnitRouteTest {
+public class FutureDirectivesExamplesTest extends JUnit5RouteTest {
 
   @Test
   public void testOnComplete() {
@@ -156,7 +156,7 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
   // relationships
   // between triggering and reporting errors for ongoing calls. This test fails a lot so disabling
   // for now.
-  @Ignore
+  @Disabled
   @Test
   public void testOnCompleteWithBreaker() throws InterruptedException {
     // #onCompleteWithBreaker

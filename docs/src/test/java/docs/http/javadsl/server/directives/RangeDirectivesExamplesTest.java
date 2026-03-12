@@ -22,14 +22,14 @@ import org.apache.pekko.http.javadsl.model.headers.Range;
 import org.apache.pekko.http.javadsl.model.headers.RangeUnits;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.util.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +42,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.withRangeSupport;
 
 // #withRangeSupport
 
-public class RangeDirectivesExamplesTest extends JUnitRouteTest {
+public class RangeDirectivesExamplesTest extends JUnit5RouteTest {
   @Override
   public Config additionalConfig() {
     return ConfigFactory.parseString("pekko.http.routing.range-coalescing-threshold=2");
@@ -62,7 +62,7 @@ public class RangeDirectivesExamplesTest extends JUnitRouteTest {
         org.apache.pekko.http.javadsl.model.ContentRange.create(0, 2, 8);
     final org.apache.pekko.http.javadsl.model.ContentRange bytes678Range =
         org.apache.pekko.http.javadsl.model.ContentRange.create(6, 7, 8);
-    final Materializer materializer = systemResource().materializer();
+    final Materializer materializer = materializer();
 
     testRoute(route)
         .run(

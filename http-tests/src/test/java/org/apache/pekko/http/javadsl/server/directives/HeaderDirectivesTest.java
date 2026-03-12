@@ -18,16 +18,16 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.*;
 import org.apache.pekko.http.javadsl.server.Directives;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.japi.pf.PFBuilder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class HeaderDirectivesTest extends JUnitRouteTest {
+public class HeaderDirectivesTest extends JUnit5RouteTest {
 
   @Test
   public void testHeaderValue() {

@@ -20,14 +20,14 @@ import org.apache.pekko.http.javadsl.model.headers.ModeledCustomHeader;
 import org.apache.pekko.http.javadsl.model.headers.ModeledCustomHeaderFactory;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.japi.JavaPartialFunction;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import scala.PartialFunction;
 
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 // #header-value-pf
 import org.apache.pekko.http.javadsl.server.Directives;
@@ -36,7 +36,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.headerValuePF;
 
 // #header-value-pf
 
-public class CustomHeaderExampleTest extends JUnitRouteTest {
+public class CustomHeaderExampleTest extends JUnit5RouteTest {
   // #modeled-api-key-custom-header
   public static class ApiTokenHeader extends ModeledCustomHeader {
 
@@ -79,14 +79,14 @@ public class CustomHeaderExampleTest extends JUnitRouteTest {
 
     final Optional<ApiTokenHeader> fromRaw =
         apiTokenHeaderFactory.from(RawHeader.create("apiKey", "token"));
-    assertTrue("Expected a header", fromRaw.isPresent());
+    assertTrue(fromRaw.isPresent(), "Expected a header");
     assertEquals("apiKey", fromRaw.get().name());
     assertEquals("token", fromRaw.get().value());
 
     // will match, header keys are case insensitive
     final Optional<ApiTokenHeader> fromRawUpper =
         apiTokenHeaderFactory.from(RawHeader.create("APIKEY", "token"));
-    assertTrue("Expected a header", fromRawUpper.isPresent());
+    assertTrue(fromRawUpper.isPresent(), "Expected a header");
     assertEquals("apiKey", fromRawUpper.get().name());
     assertEquals("token", fromRawUpper.get().value());
 

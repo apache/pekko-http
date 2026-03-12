@@ -23,9 +23,9 @@ import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.server.Rejections;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.util.ByteString;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
@@ -64,7 +64,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.withPrecompressedM
 
 // #withPrecompressedMediaTypeSupport
 
-public class CodingDirectivesExamplesTest extends JUnitRouteTest {
+public class CodingDirectivesExamplesTest extends JUnit5RouteTest {
 
   @Test
   public void testResponseEncodingAccepted() {

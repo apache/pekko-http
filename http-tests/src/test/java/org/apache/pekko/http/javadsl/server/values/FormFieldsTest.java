@@ -14,19 +14,19 @@
 package org.apache.pekko.http.javadsl.server.values;
 
 import org.apache.pekko.http.javadsl.model.ContentTypes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.apache.pekko.http.javadsl.model.HttpCharsets;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.MediaTypes;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.japi.Pair;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class FormFieldsTest extends JUnitRouteTest {
+public class FormFieldsTest extends JUnit5RouteTest {
 
   private Pair<String, String> param(String name, String value) {
     return Pair.create(name, value);
