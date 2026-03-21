@@ -31,7 +31,7 @@ class CompatFormFieldSpec extends RoutingSpec {
         }
       }
     } else
-      "ignore incompatiblity in 2.13" in succeed
+      "ignore incompatibility in 2.13" in succeed
 
   "FormFieldDirectives" should {
     "be compatible" should {
