@@ -30,7 +30,7 @@ object Dependencies {
     s"https://github.com/summerwind/h2spec/releases/download/v$h2specVersion/$h2specName.$h2specArtifactExtension"
 
   val scalaTestVersion = "3.2.20"
-  val scalaCheckVersion = "1.18.0"
+  val scalaCheckVersion = "1.19.0"
 
   val scalafixVersion = _root_.scalafix.sbt.BuildInfo.scalafixVersion // grab from plugin
 
@@ -88,7 +88,7 @@ object Dependencies {
       val junitIntf = "com.github.sbt" % "junit-interface" % "0.13.3" % "test"
 
       val scalatest = "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
-      val scalatestplusScalacheck = "org.scalatestplus" %% "scalacheck-1-18" % (scalaTestVersion + ".0") % "test"
+      val scalatestplusScalacheck = "org.scalatestplus" %% "scalacheck-1-19" % (scalaTestVersion + ".0") % "test"
       val scalatestplusJUnit = "org.scalatestplus" %% "junit-4-13" % (scalaTestVersion + ".0") % "test"
 
       // HTTP/2
