@@ -84,7 +84,7 @@ public class FileUploadExamplesTest extends JUnitRouteTest {
                                   // stream into a file as the chunks of it arrives and return a
                                   // CompletionStage
                                   // file to where it got stored
-                                  final File file = Files.createTempFile("upload", "tmp");
+                                  final File file = Files.createTempFile("upload", "tmp").toFile();
                                   return bodyPart
                                       .getEntity()
                                       .getDataBytes()

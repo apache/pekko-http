@@ -75,7 +75,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
     final Function<FileInfo, File> temporaryDestination =
         (info) -> {
           try {
-            return Files.createTempFile(info.getFileName(), ".tmp");
+            return Files.createTempFile(info.getFileName(), ".tmp").toFile();
           } catch (Exception e) {
             return null;
           }
@@ -117,7 +117,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
     final Function<FileInfo, File> temporaryDestination =
         info -> {
           try {
-            return Files.createTempFile(info.getFileName(), ".tmp");
+            return Files.createTempFile(info.getFileName(), ".tmp").toFile();
           } catch (Exception e) {
             return null;
           }
@@ -295,7 +295,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
 
     File tempFile = null;
     try {
-      tempFile = Files.createTempFile(prefix, suffix);
+      tempFile = Files.createTempFile(prefix, suffix).toFile();
       tempFile.deleteOnExit();
       Files.write(
           tempFile.toPath(),

@@ -42,7 +42,7 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
     // #storeUploadedFile
 
     def tempDestination(fileInfo: FileInfo): File =
-      Files.createTempFile(fileInfo.fileName, ".tmp")
+      Files.createTempFile(fileInfo.fileName, ".tmp").toFile
 
     val route =
       storeUploadedFile("csv", tempDestination) {
@@ -71,7 +71,7 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
     // #storeUploadedFiles
 
     def tempDestination(fileInfo: FileInfo): File =
-      Files.createTempFile(fileInfo.fileName, ".tmp")
+      Files.createTempFile(fileInfo.fileName, ".tmp").toFile
 
     val route =
       storeUploadedFiles("csv", tempDestination) { files =>
