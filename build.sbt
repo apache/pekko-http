@@ -44,8 +44,10 @@ inThisBuild(Def.settings(
   concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
   onLoad in Global := {
     sLog.value.info(
-      s"Building Pekko HTTP ${version.value} against Pekko ${PekkoCoreDependency.version} on Scala ${(httpCore /
-        scalaVersion).value}")
+      s"Building Pekko HTTP ${version.value} against Pekko ${PekkoCoreDependency.version} on Scala ${
+          (httpCore /
+          scalaVersion).value
+        }")
     (onLoad in Global).value
   },
   projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
@@ -71,7 +73,7 @@ lazy val userProjects: Seq[ProjectReference] = List[ProjectReference](
 lazy val aggregatedProjects: Seq[ProjectReference] = userProjects ++ List[ProjectReference](
   httpTests,
   docs,
-  // compatibilityTests,
+  compatibilityTests,
   httpJmhBench,
   billOfMaterials)
 lazy val root = Project(
@@ -82,9 +84,8 @@ lazy val root = Project(
   .settings(
     name := "pekko-http-root",
     // Unidoc doesn't like macro definitions
-    // compatibilityTests temporarily disabled
-    unidocProjectExcludes := Seq(parsing, docs, httpTests, httpJmhBench, httpScalafix, httpScalafixRules,
-      httpScalafixTestInput, httpScalafixTestOutput, httpScalafixTests),
+    unidocProjectExcludes := Seq(parsing, compatibilityTests, docs, httpTests, httpJmhBench, httpScalafix,
+      httpScalafixRules, httpScalafixTestInput, httpScalafixTestOutput, httpScalafixTests),
     // Support applying macros in unidoc:
     scalaMacroSupport,
     Compile / headerCreate / unmanagedSources := (baseDirectory.value / "project").**("*.scala").get)
@@ -434,14 +435,13 @@ lazy val docs = project("docs")
     ValidatePR / additionalTasks += Compile / paradox)
   .settings(ParadoxSupport.paradoxWithCustomDirectives)
 
-/*
 lazy val compatibilityTests = Project("http-compatibility-tests", file("http-compatibility-tests"))
-  .enablePlugins(NoPublish, NoScala3)
+  .enablePlugins(NoPublish)
   .disablePlugins(MimaPlugin)
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .settings(
     libraryDependencies ++= Seq(
-      "org.apache.pekko" %% "pekko-http" % MiMa.latest101Version % "provided",
+      "org.apache.pekko" %% "pekko-http" % "1.0.0" % "provided"
     ),
     (Test / dependencyClasspath) := {
       // HACK: We'd like to use `dependsOn(http % "test->compile")` to upgrade the explicit dependency above to the
@@ -450,7 +450,6 @@ lazy val compatibilityTests = Project("http-compatibility-tests", file("http-com
       (httpTests / Test / fullClasspath).value
     }
   )
- */
 
 lazy val billOfMaterials = Project("bill-of-materials", file("bill-of-materials"))
   .enablePlugins(BillOfMaterialsPlugin)
