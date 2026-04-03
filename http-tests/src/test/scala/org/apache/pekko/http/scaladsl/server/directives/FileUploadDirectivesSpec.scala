@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.server.directives
 
 import java.io.File
+import java.nio.file.Files
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -45,7 +46,7 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
           @volatile var file: Option[File] = None
 
           def tempDest(fileInfo: FileInfo): File = {
-            val dest = File.createTempFile("http-FileUploadDirectivesSpec", ".tmp")
+            val dest = Files.createTempFile("http-FileUploadDirectivesSpec", ".tmp").toFile
             file = Some(dest)
             dest
           }
@@ -102,7 +103,7 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
           @volatile var files: Seq[File] = Nil
 
           def tempDest(fileInfo: FileInfo): File = {
-            val dest = File.createTempFile("http-FileUploadDirectivesSpec", ".tmp")
+            val dest = Files.createTempFile("http-FileUploadDirectivesSpec", ".tmp").toFile
             files = files :+ dest
             dest
           }

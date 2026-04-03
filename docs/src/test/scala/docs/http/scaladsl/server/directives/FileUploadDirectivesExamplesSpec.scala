@@ -15,15 +15,16 @@ package docs.http.scaladsl.server.directives
 
 import org.apache.pekko
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.server.RoutingSpec
 import pekko.http.scaladsl.server.directives.FileInfo
 import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.stream.scaladsl.Framing
 import pekko.testkit.TestDuration
 import pekko.util.ByteString
-import java.io.File
-
-import pekko.http.scaladsl.server.RoutingSpec
 import docs.CompileOnlySpec
+
+import java.io.File
+import java.nio.file.Files
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -41,7 +42,7 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
     // #storeUploadedFile
 
     def tempDestination(fileInfo: FileInfo): File =
-      File.createTempFile(fileInfo.fileName, ".tmp")
+      Files.createTempFile(fileInfo.fileName, ".tmp").toFile
 
     val route =
       storeUploadedFile("csv", tempDestination) {
@@ -70,7 +71,7 @@ class FileUploadDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec 
     // #storeUploadedFiles
 
     def tempDestination(fileInfo: FileInfo): File =
-      File.createTempFile(fileInfo.fileName, ".tmp")
+      Files.createTempFile(fileInfo.fileName, ".tmp").toFile
 
     val route =
       storeUploadedFiles("csv", tempDestination) { files =>

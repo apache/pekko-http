@@ -14,6 +14,7 @@
 package docs.http.scaladsl.server
 
 import java.io.File
+import java.nio.file.Files
 
 import org.apache.pekko
 import pekko.Done
@@ -47,7 +48,7 @@ class FileUploadExamplesSpec extends RoutingSpec with CompileOnlySpec {
             case b: BodyPart if b.name == "file" =>
               // stream into a file as the chunks of it arrives and return a future
               // file to where it got stored
-              val file = File.createTempFile("upload", "tmp")
+              val file = Files.createTempFile("upload", "tmp").toFile
               b.entity.dataBytes.runWith(FileIO.toPath(file.toPath)).map(_ =>
                 b.name -> file)
 
