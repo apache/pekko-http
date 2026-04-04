@@ -25,14 +25,14 @@ import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.settings.ParserSettings;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
-import org.junit.Test;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.apache.pekko.util.ByteString.emptyByteString;
 
 // #application-custom-java
@@ -41,7 +41,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.extractRequest;
 
 // #application-custom-java
 
-public class CustomMediaTypesExampleTest extends JUnitRouteTest {
+public class CustomMediaTypesExampleTest extends JUnit5RouteTest {
 
   @Test
   public void customMediaTypes() throws ExecutionException, InterruptedException {

@@ -18,12 +18,12 @@ import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.http.javadsl.server.directives.FileInfo;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.stream.javadsl.Framing;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.io.File;
@@ -62,7 +62,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
 
 // #fileUploadAll
 
-public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
+public class FileUploadDirectivesExamplesTest extends JUnit5RouteTest {
 
   @Override
   public FiniteDuration defaultAwaitDuration() {
@@ -265,7 +265,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitRouteTest {
     // #fileUploadAll
   }
 
-  @Ignore("compileOnly")
+  @Disabled("compileOnly")
   @Test
   public void testFileProcessing() {
     // #fileProcessing

@@ -26,16 +26,16 @@ import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
 import org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings;
 import org.apache.pekko.http.javadsl.settings.ParserSettings;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.stream.Materializer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 // #application-custom-java
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
@@ -43,7 +43,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.extractRequest;
 
 // #application-custom-java
 
-public class CustomStatusCodesExampleTest extends JUnitRouteTest {
+public class CustomStatusCodesExampleTest extends JUnit5RouteTest {
 
   @Test
   public void customStatusCodes()

@@ -21,15 +21,15 @@ import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.*;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.util.ByteString;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class MarshallerTest extends JUnitRouteTest {
+public class MarshallerTest extends JUnit5RouteTest {
 
   @Test
   public void testCustomToStringMarshaller() {

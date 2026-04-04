@@ -21,8 +21,8 @@ import org.apache.pekko.http.javadsl.server.RejectionHandler;
 import org.apache.pekko.http.javadsl.server.Rejections;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.ValidationRejection;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
-import org.junit.Test;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.junit.jupiter.api.Test;
 
 import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
 
@@ -51,7 +51,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.reject;
 
 // #handleNotFoundWithDefails
 
-public class ExecutionDirectivesExamplesTest extends JUnitRouteTest {
+public class ExecutionDirectivesExamplesTest extends JUnit5RouteTest {
 
   @Test
   public void testHandleExceptions() {

@@ -16,12 +16,12 @@ package org.apache.pekko.http.javadsl.server.directives;
 import org.apache.pekko.http.javadsl.model.AttributeKey;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class AttributeDirectivesTest extends JUnitRouteTest {
+public class AttributeDirectivesTest extends JUnit5RouteTest {
   AttributeKey<String> key = AttributeKey.create("my-key", String.class);
 
   @Test

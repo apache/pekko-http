@@ -16,13 +16,14 @@ package docs.http.javadsl.server.directives;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.Host;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 
 // #host1
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
@@ -46,7 +47,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.host;
 
 // #matchAndExtractHost
 
-public class HostDirectivesExamplesTest extends JUnitRouteTest {
+public class HostDirectivesExamplesTest extends JUnit5RouteTest {
 
   @Test
   public void testListOfHost() {
@@ -115,16 +116,20 @@ public class HostDirectivesExamplesTest extends JUnitRouteTest {
   }
 
   @SuppressWarnings("unused")
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testFailingMatchAndExtractHost() {
-    // #failing-matchAndExtractHost
-    // this will throw IllegalArgumentException
-    final Route hostRegex =
-        host(
-            Pattern.compile("server-([0-9]).company.(com|net|org)"),
-            s ->
-                // will not reach here
-                complete(s));
-    // #failing-matchAndExtractHost
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          // #failing-matchAndExtractHost
+          // this will throw IllegalArgumentException
+          final Route hostRegex =
+              host(
+                  Pattern.compile("server-([0-9]).company.(com|net|org)"),
+                  s ->
+                      // will not reach here
+                      complete(s));
+          // #failing-matchAndExtractHost
+        });
   }
 }

@@ -16,12 +16,12 @@ package docs.http.javadsl.server;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.Host;
 import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
 import org.apache.pekko.http.scaladsl.model.headers.Authorization;
 
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 // #oauth2-authenticator-java
 import org.apache.pekko.http.javadsl.server.Route;
@@ -31,7 +31,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.authenticateOAuth2
 
 // #oauth2-authenticator-java
 
-public class OAuth2AuthenticatorExample extends JUnitRouteTest {
+public class OAuth2AuthenticatorExample extends JUnit5RouteTest {
 
   private final String hardcodedToken = "token";
 

@@ -21,17 +21,16 @@ import org.apache.pekko.stream.SystemMaterializer;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
-import org.junit.Test;
-import org.scalatestplus.junit.JUnitSuite;
+import org.junit.jupiter.api.Test;
 
 import scala.util.Try;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class EntityDiscardingTest extends JUnitSuite {
+public class EntityDiscardingTest {
 
   private ActorSystem sys = ActorSystem.create("test");
   private Iterable<ByteString> testData =

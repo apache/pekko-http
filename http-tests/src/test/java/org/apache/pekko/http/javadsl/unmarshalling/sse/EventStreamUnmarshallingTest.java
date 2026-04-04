@@ -24,13 +24,12 @@ import org.apache.pekko.http.javadsl.model.HttpEntity;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.http.javadsl.model.sse.ServerSentEvent;
 import org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshallingSpec;
-import org.junit.Assert;
-import org.junit.Test;
-import org.scalatestplus.junit.JUnitSuite;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static scala.jdk.javaapi.FutureConverters.asJava;
 
-public class EventStreamUnmarshallingTest extends JUnitSuite {
+public class EventStreamUnmarshallingTest {
 
   @Test
   public void testFromEventsStream() throws Exception {
@@ -48,7 +47,7 @@ public class EventStreamUnmarshallingTest extends JUnitSuite {
               .get(3000, TimeUnit.SECONDS);
       // #event-stream-unmarshalling-example
 
-      Assert.assertEquals(events, unmarshalledEvents);
+      Assertions.assertEquals(events, unmarshalledEvents);
     } finally {
       asJava(system.terminate()).toCompletableFuture().get(42, TimeUnit.SECONDS);
     }
