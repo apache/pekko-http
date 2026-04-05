@@ -50,7 +50,7 @@ private[coding] class DeflateCompressor private[coding] (compressionLevel: Int) 
 
   protected def compressWithBuffer(input: ByteString, buffer: Array[Byte]): ByteString = {
     require(deflater.needsInput())
-    deflater.setInput(input.toArrayUnsafe())
+    deflater.setInput(input.asByteBuffer)
     drainDeflater(deflater, buffer)
   }
   protected def flushWithBuffer(buffer: Array[Byte]): ByteString = {
@@ -149,7 +149,7 @@ private[coding] abstract class DeflateDecompressorBase(maxBytesPerChunk: Int = D
 
     override def canWorkWithPartialData = true
     override def parse(reader: ByteStringParser.ByteReader): ParseResult[ByteString] = {
-      inflater.setInput(reader.remainingData.toArray)
+      inflater.setInput(reader.remainingData.asByteBuffer)
 
       val buffer = new Array[Byte](maxBytesPerChunk)
       val read = inflater.inflate(buffer)
