@@ -13,6 +13,9 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import java.lang.invoke.{ MethodHandles, VarHandle }
+import java.nio.ByteOrder
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.stream.impl.io.ByteStringParser
@@ -50,6 +53,16 @@ import pekko.stream.Attributes
 @InternalApi
 private[http] object FrameEventParser extends ByteStringParser[FrameEvent] {
   import ByteStringParser._
+
+  // VarHandle for reading/writing 4 bytes as a big-endian int in a byte array.
+  // Initialized lazily with a fallback to null if unavailable (e.g. security restrictions).
+  private val intArrayViewHandle: VarHandle = {
+    try {
+      MethodHandles.byteArrayViewVarHandle(classOf[Array[Int]], ByteOrder.BIG_ENDIAN)
+    } catch {
+      case _: Exception => null
+    }
+  }
 
   override def createLogic(attr: Attributes) = new ParsingLogic {
     startWith(ReadFrameHeader)
@@ -130,36 +143,47 @@ private[http] object FrameEventParser extends ByteStringParser[FrameEvent] {
     val m0 = ((mask >> 24) & 0xFF).toByte
     val m1 = ((mask >> 16) & 0xFF).toByte
     val m2 = ((mask >> 8) & 0xFF).toByte
-    val m3 = ((mask >> 0) & 0xFF).toByte
-
-    @tailrec def rec(bytes: Array[Byte], offset: Int, last: Int): Unit =
-      if (offset < last) {
-        // process four bytes each turn
-        bytes(offset + 0) = (bytes(offset + 0) ^ m0).toByte
-        bytes(offset + 1) = (bytes(offset + 1) ^ m1).toByte
-        bytes(offset + 2) = (bytes(offset + 2) ^ m2).toByte
-        bytes(offset + 3) = (bytes(offset + 3) ^ m3).toByte
-
-        rec(bytes, offset + 4, last)
-      } else {
-        val len = bytes.length
-
-        if (last < len) {
-          bytes(last) = (bytes(last) ^ m0).toByte
-
-          if (last + 1 < len) {
-            bytes(last + 1) = (bytes(last + 1) ^ m1).toByte
-
-            if (last + 2 < len)
-              bytes(last + 2) = (bytes(last + 2) ^ m2).toByte
-          }
-        }
-      }
 
     val buffer = bytes.toArray[Byte]
-    rec(buffer, 0, (bytes.length / 4) * 4)
+    val len = buffer.length
+    val aligned = (len / 4) * 4
 
-    val newMask = Integer.rotateLeft(mask, (bytes.length % 4) * 8)
+    if (intArrayViewHandle != null) {
+      // Fast path: read/XOR/write 4 bytes at a time as a single int via VarHandle
+      @tailrec def recFast(offset: Int): Unit =
+        if (offset < aligned) {
+          val chunk = intArrayViewHandle.get(buffer, offset).asInstanceOf[Int]
+          intArrayViewHandle.set(buffer, offset, chunk ^ mask)
+          recFast(offset + 4)
+        }
+      recFast(0)
+    } else {
+      // Fallback: process four bytes each turn
+      val m3 = ((mask >> 0) & 0xFF).toByte
+      @tailrec def rec(offset: Int): Unit =
+        if (offset < aligned) {
+          buffer(offset + 0) = (buffer(offset + 0) ^ m0).toByte
+          buffer(offset + 1) = (buffer(offset + 1) ^ m1).toByte
+          buffer(offset + 2) = (buffer(offset + 2) ^ m2).toByte
+          buffer(offset + 3) = (buffer(offset + 3) ^ m3).toByte
+          rec(offset + 4)
+        }
+      rec(0)
+    }
+
+    // Handle remaining 1-3 bytes beyond the last aligned group
+    if (aligned < len) {
+      buffer(aligned) = (buffer(aligned) ^ m0).toByte
+
+      if (aligned + 1 < len) {
+        buffer(aligned + 1) = (buffer(aligned + 1) ^ m1).toByte
+
+        if (aligned + 2 < len)
+          buffer(aligned + 2) = (buffer(aligned + 2) ^ m2).toByte
+      }
+    }
+
+    val newMask = Integer.rotateLeft(mask, (len % 4) * 8)
     (ByteString.fromArrayUnsafe(buffer), newMask)
   }
 
