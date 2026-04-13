@@ -77,7 +77,7 @@ abstract class PathDirectives extends ParameterDirectives {
    * }
    * }}}
    *
-   * For further information, refer to: http://googlewebmastercentral.blogspot.de/2010/04/to-slash-or-not-to-slash.html
+   * For further information, refer to: https://developers.google.com/search/blog/2010/04/to-slash-or-not-to-slash
    */
   def pathEndOrSingleSlash(inner: Supplier[Route]): Route = RouteAdapter {
     D.pathEndOrSingleSlash { inner.get.delegate }

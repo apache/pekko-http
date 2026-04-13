@@ -160,7 +160,7 @@ trait PathDirectives extends PathMatchers with ImplicitPathMatcherConstruction w
    *
    * For further information, refer to:
    *
-   * @see [[https://webmasters.googleblog.com/2010/04/to-slash-or-not-to-slash.html]]
+   * @see [[https://developers.google.com/search/blog/2010/04/to-slash-or-not-to-slash]]
    * @group path
    */
   def pathEndOrSingleSlash: Directive0 = rawPathPrefix(Slash.? ~ PathEnd)
