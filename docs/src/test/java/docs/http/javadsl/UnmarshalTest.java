@@ -13,10 +13,10 @@
 
 package docs.http.javadsl;
 
-import static org.junit.Assert.assertEquals;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 // #imports
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 // #imports
 
 @SuppressWarnings("unused")
-public class UnmarshalTest extends JUnitRouteTest {
+public class UnmarshalTest extends JUnitJupiterRouteTest {
 
   @Test
   public void useUnmarshal() throws Exception {

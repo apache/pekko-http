@@ -14,10 +14,9 @@
 package org.apache.pekko.http.javadsl.settings;
 
 import org.apache.pekko.actor.ActorSystem;
-import org.junit.Test;
-import org.scalatestplus.junit.JUnitSuite;
+import org.junit.jupiter.api.Test;
 
-public class ClientConnectionSettingsTest extends JUnitSuite {
+public class ClientConnectionSettingsTest {
 
   @Test
   public void testCreateWithActorSystem() {

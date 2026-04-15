@@ -16,14 +16,14 @@ package org.apache.pekko.http.javadsl.testkit;
 import java.util.function.Function;
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.apache.pekko.http.javadsl.testkit.*;
 
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.*;
 import org.apache.pekko.http.javadsl.server.Rejections;
 
-public class JUnitRouteTestTest extends JUnitRouteTest {
+public class JUnitRouteTestTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testTheMostSimpleAndDirectRouteTest() {

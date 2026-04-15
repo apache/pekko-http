@@ -17,8 +17,8 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
-import org.junit.Test;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,7 +42,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #composition-2
 
-public class CustomDirectivesExamplesTest extends JUnitRouteTest {
+public class CustomDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   // #labeling-1
   public Route getOrPut(Supplier<Route> inner) {

@@ -17,11 +17,10 @@
 
 package org.apache.pekko.http.javadsl.settings;
 
-import org.junit.Test;
-import org.scalatestplus.junit.JUnitSuite;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class OversizedSseStrategySimpleTest extends JUnitSuite {
+public class OversizedSseStrategySimpleTest {
 
   @Test
   public void testEnumValues() {
@@ -31,10 +30,10 @@ public class OversizedSseStrategySimpleTest extends JUnitSuite {
     OversizedSseStrategy truncate = OversizedSseStrategy.Truncate;
     OversizedSseStrategy deadLetter = OversizedSseStrategy.DeadLetter;
 
-    assertNotNull("FailStream should not be null", failStream);
-    assertNotNull("LogAndSkip should not be null", logAndSkip);
-    assertNotNull("Truncate should not be null", truncate);
-    assertNotNull("DeadLetter should not be null", deadLetter);
+    assertNotNull(failStream, "FailStream should not be null");
+    assertNotNull(logAndSkip, "LogAndSkip should not be null");
+    assertNotNull(truncate, "Truncate should not be null");
+    assertNotNull(deadLetter, "DeadLetter should not be null");
   }
 
   @Test
@@ -43,6 +42,6 @@ public class OversizedSseStrategySimpleTest extends JUnitSuite {
     OversizedSseStrategy strategy =
         OversizedSseStrategy.fromScala(
             org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.FailStream$.MODULE$);
-    assertEquals("Should convert from Scala FailStream", OversizedSseStrategy.FailStream, strategy);
+    assertEquals(OversizedSseStrategy.FailStream, strategy, "Should convert from Scala FailStream");
   }
 }

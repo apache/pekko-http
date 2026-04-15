@@ -16,14 +16,14 @@ package org.apache.pekko.http.javadsl.server.directives;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Directives;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.apache.pekko.http.javadsl.common.PartialApplication.*;
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class ComposingDirectivesTest extends JUnitRouteTest {
+public class ComposingDirectivesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testAnyOf0Arg() {

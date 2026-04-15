@@ -29,15 +29,15 @@ import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.model.headers.Server;
 import org.apache.pekko.http.javadsl.model.headers.ProductVersion;
 import org.apache.pekko.http.javadsl.settings.RoutingSettings;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.server.*;
 import org.apache.pekko.japi.pf.PFBuilder;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.ExecutionContextExecutor;
 
@@ -256,7 +256,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.extractActorSystem
 
 // #extractActorSystem
 
-public class BasicDirectivesExamplesTest extends JUnitRouteTest {
+public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testExtract() {
@@ -438,7 +438,7 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
     // #withLog
   }
 
-  @Ignore("Ignore compile-only test")
+  @Disabled("Ignore compile-only test")
   @Test
   public void testWithSettings() {
     // #withSettings
@@ -628,7 +628,7 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
     // #mapResponseHeaders
   }
 
-  @Ignore("Not implemented yet")
+  @Disabled("Not implemented yet")
   @Test
   public void testMapInnerRoute() {
     // #mapInnerRoute
@@ -903,7 +903,7 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
     // #provide
   }
 
-  @Ignore("Test failed")
+  @Disabled("Test failed")
   @Test
   public void testCancelRejections() {
     // #cancelRejections
@@ -915,7 +915,7 @@ public class BasicDirectivesExamplesTest extends JUnitRouteTest {
     // #cancelRejections
   }
 
-  @Ignore("Test failed")
+  @Disabled("Test failed")
   @Test
   public void testCancelRejection() {
     // #cancelRejection

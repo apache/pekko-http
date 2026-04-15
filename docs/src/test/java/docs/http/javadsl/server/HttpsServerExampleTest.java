@@ -15,14 +15,13 @@ package docs.http.javadsl.server;
 
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.ConnectionContext;
-import org.junit.Test;
-import org.scalatestplus.junit.JUnitSuite;
+import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
 /* COMPILE ONLY TEST */
-public class HttpsServerExampleTest extends JUnitSuite {
+public class HttpsServerExampleTest {
 
   @Test
   public void compileOnlySpec() throws Exception {

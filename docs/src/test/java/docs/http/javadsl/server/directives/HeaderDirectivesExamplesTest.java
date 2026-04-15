@@ -16,7 +16,7 @@ package docs.http.javadsl.server.directives;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.apache.pekko.http.javadsl.model.HttpHeader;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
@@ -27,7 +27,7 @@ import org.apache.pekko.http.javadsl.model.headers.HttpOriginRange;
 import org.apache.pekko.http.javadsl.model.headers.Origin;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.japi.JavaPartialFunction;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import scala.PartialFunction;
@@ -86,7 +86,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.checkSameOrigin;
 
 // #checkSameOrigin
 
-public class HeaderDirectivesExamplesTest extends JUnitRouteTest {
+public class HeaderDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testHeaderValue() {

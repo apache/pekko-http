@@ -17,13 +17,13 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.Uri;
 import org.apache.pekko.http.javadsl.server.Directives;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class SchemeDirectivesTest extends JUnitRouteTest {
+public class SchemeDirectivesTest extends JUnitJupiterRouteTest {
   @Test
   public void testSchemeFilter() {
     TestRoute route = testRoute(scheme("http", () -> complete("OK!")));

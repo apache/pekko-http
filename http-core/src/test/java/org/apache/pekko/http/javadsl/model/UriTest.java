@@ -15,13 +15,13 @@ package org.apache.pekko.http.javadsl.model;
 
 import org.apache.pekko.http.scaladsl.model.IllegalUriException;
 import org.apache.pekko.japi.Pair;
-import org.junit.Test;
-import org.scalatestplus.junit.JUnitSuite;
+import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class UriTest extends JUnitSuite {
+public class UriTest {
 
   @Test
   public void testValidUrlExamples() {
@@ -83,79 +83,106 @@ public class UriTest extends JUnitSuite {
   }
 
   // #illegal-scheme
-  @Test(expected = IllegalUriException.class)
+  @Test
   public void testIllegalScheme() {
-    Uri.create("foö:/a");
-    // IllegalUriException(
-    //  "Illegal URI reference: Invalid input 'ö', expected scheme-char, 'EOI', '#', ':', '?',
-    // slashSegments or pchar (line 1, column 3)",
-    //  "http://user:ö@host\n" +
-    //  "            ^"
-    // )
+    assertThrows(
+        IllegalUriException.class,
+        () -> {
+          Uri.create("foö:/a");
+          // IllegalUriException(
+          //  "Illegal URI reference: Invalid input 'ö', expected scheme-char, 'EOI', '#', ':', '?',
+          // slashSegments or pchar (line 1, column 3)",
+          //  "http://user:ö@host\n" +
+          //  "            ^"
+          // )
+        });
   }
   // #illegal-scheme
 
   // #illegal-userinfo
-  @Test(expected = IllegalUriException.class)
+  @Test
   public void testIllegalUserInfo() {
-    Uri.create("http://user:ö@host");
-    // IllegalUriException(
-    //  "Illegal URI reference: Invalid input 'ö', expected userinfo-char, pct-encoded, '@' or port
-    // (line 1, column 13)",
-    //  "http://use%2G@host\n" +
-    //  "            ^"
-    // )
+    assertThrows(
+        IllegalUriException.class,
+        () -> {
+          Uri.create("http://user:ö@host");
+          // IllegalUriException(
+          //  "Illegal URI reference: Invalid input 'ö', expected userinfo-char, pct-encoded, '@' or
+          // port
+          // (line 1, column 13)",
+          //  "http://use%2G@host\n" +
+          //  "            ^"
+          // )
+        });
   }
   // #illegal-userinfo
 
   // #illegal-percent-encoding
-  @Test(expected = IllegalUriException.class)
+  @Test
   public void testIllegalPercentEncoding() {
-    Uri.create("http://use%2G@host");
-    // IllegalUriException(
-    //  "Illegal URI reference: Invalid input 'G', expected HEXDIG (line 1, column 13)",
-    //  "http://www.example.com/name with spaces/\n" +
-    //  "                           ^"
-    // )
+    assertThrows(
+        IllegalUriException.class,
+        () -> {
+          Uri.create("http://use%2G@host");
+          // IllegalUriException(
+          //  "Illegal URI reference: Invalid input 'G', expected HEXDIG (line 1, column 13)",
+          //  "http://www.example.com/name with spaces/\n" +
+          //  "                           ^"
+          // )
+        });
   }
   // #illegal-percent-encoding
 
   // #illegal-path
-  @Test(expected = IllegalUriException.class)
+  @Test
   public void testIllegalPath() {
-    Uri.create("http://www.example.com/name with spaces/");
-    // IllegalUriException(
-    //  "Illegal URI reference: Invalid input ' ', expected '/', 'EOI', '#', '?' or pchar (line 1,
-    // column 28)",
-    //  "http://www.example.com/name with spaces/\n" +
-    //  "                           ^"
-    // )
+    assertThrows(
+        IllegalUriException.class,
+        () -> {
+          Uri.create("http://www.example.com/name with spaces/");
+          // IllegalUriException(
+          //  "Illegal URI reference: Invalid input ' ', expected '/', 'EOI', '#', '?' or pchar
+          // (line 1,
+          // column 28)",
+          //  "http://www.example.com/name with spaces/\n" +
+          //  "                           ^"
+          // )
+        });
   }
   // #illegal-path
 
   // #illegal-path-with-control-char
-  @Test(expected = IllegalUriException.class)
+  @Test
   public void testIllegalPathWithControlCharacter() {
-    Uri.create("http:///with\newline");
-    // IllegalUriException(
-    //  "Illegal URI reference: Invalid input '\\n', expected '/', 'EOI', '#', '?' or pchar (line 1,
-    // column 13)",
-    //  "http:///with\n" +
-    //  "            ^"
-    // )
+    assertThrows(
+        IllegalUriException.class,
+        () -> {
+          Uri.create("http:///with\newline");
+          // IllegalUriException(
+          //  "Illegal URI reference: Invalid input '\\n', expected '/', 'EOI', '#', '?' or pchar
+          // (line 1,
+          // column 13)",
+          //  "http:///with\n" +
+          //  "            ^"
+          // )
+        });
   }
   // #illegal-path-with-control-char
 
-  @Test(expected = IllegalUriException.class)
+  @Test
   public void testIllegalQuery() {
-    // #illegal-query
-    Uri.create("?a%b=c").query();
-    // IllegalUriException(
-    //  " Illegal query: Invalid input '=', expected HEXDIG (line 1, column 4): a%b=c",
-    //  "a%b=c\n" +
-    //  " ^"
-    // )
-    // #illegal-query
+    assertThrows(
+        IllegalUriException.class,
+        () -> {
+          // #illegal-query
+          Uri.create("?a%b=c").query();
+          // IllegalUriException(
+          //  " Illegal query: Invalid input '=', expected HEXDIG (line 1, column 4): a%b=c",
+          //  "a%b=c\n" +
+          //  " ^"
+          // )
+          // #illegal-query
+        });
   }
 
   // #query-strict-definition
@@ -203,52 +230,71 @@ public class UriTest extends JUnitSuite {
   }
 
   // #query-strict-mode-exception-1
-  @Test(expected = IllegalUriException.class)
+  @Test
   public void testStrictModeException1() {
-    strict("a^=b");
-    // IllegalUriException(
-    //  "Illegal query: Invalid input '^', expected '+', '=', query-char, 'EOI', '&' or pct-encoded
-    // (line 1, column 2)",
-    //  "a^=b\n" +
-    //  " ^")
+    assertThrows(
+        IllegalUriException.class,
+        () -> {
+          strict("a^=b");
+          // IllegalUriException(
+          //  "Illegal query: Invalid input '^', expected '+', '=', query-char, 'EOI', '&' or
+          // pct-encoded
+          // (line 1, column 2)",
+          //  "a^=b\n" +
+          //  " ^")
+        });
   }
   // #query-strict-mode-exception-1
 
   // #query-strict-mode-exception-2
-  @Test(expected = IllegalUriException.class)
+  @Test
   public void testStrictModeException2() {
-    strict("a;=b");
-    // IllegalUriException(
-    //  "Illegal query: Invalid input ';', expected '+', '=', query-char, 'EOI', '&' or pct-encoded
-    // (line 1, column 2)",
-    //  "a;=b\n" +
-    //  " ^")
+    assertThrows(
+        IllegalUriException.class,
+        () -> {
+          strict("a;=b");
+          // IllegalUriException(
+          //  "Illegal query: Invalid input ';', expected '+', '=', query-char, 'EOI', '&' or
+          // pct-encoded
+          // (line 1, column 2)",
+          //  "a;=b\n" +
+          //  " ^")
+        });
   }
   // #query-strict-mode-exception-2
 
   // #query-strict-mode-exception-3
-  @Test(expected = IllegalUriException.class)
+  @Test
   public void testStrictModeException3() {
-    // double '=' in query string is invalid
-    strict("a=b=c");
-    // IllegalUriException(
-    //  "Illegal query: Invalid input '=', expected '+', query-char, 'EOI', '&' or pct-encoded (line
-    // 1, column 4)",
-    //  "a=b=c\n"  +
-    //  " ^")
+    assertThrows(
+        IllegalUriException.class,
+        () -> {
+          // double '=' in query string is invalid
+          strict("a=b=c");
+          // IllegalUriException(
+          //  "Illegal query: Invalid input '=', expected '+', query-char, 'EOI', '&' or pct-encoded
+          // (line
+          // 1, column 4)",
+          //  "a=b=c\n"  +
+          //  " ^")
+        });
   }
   // #query-strict-mode-exception-3
 
   // #query-strict-mode-exception-4
-  @Test(expected = IllegalUriException.class)
+  @Test
   public void testStrictModeException4() {
-    // following '%', it should be percent encoding (HEXDIG), but "%b=" is not a valid percent
-    // encoding
-    strict("a%b=c");
-    // IllegalUriException(
-    //  "Illegal query: Invalid input '=', expected HEXDIG (line 1, column 4)",
-    //  "a%b=c\n" +
-    //  "   ^")
+    assertThrows(
+        IllegalUriException.class,
+        () -> {
+          // following '%', it should be percent encoding (HEXDIG), but "%b=" is not a valid percent
+          // encoding
+          strict("a%b=c");
+          // IllegalUriException(
+          //  "Illegal query: Invalid input '=', expected HEXDIG (line 1, column 4)",
+          //  "a%b=c\n" +
+          //  "   ^")
+        });
   }
   // #query-strict-mode-exception-4
 
@@ -300,17 +346,22 @@ public class UriTest extends JUnitSuite {
   }
 
   // #query-relaxed-mode-exception-1
-  @Test(expected = IllegalUriException.class)
+  @Test
   public void testRelaxedModeException1() {
-    // following '%', it should be percent encoding (HEXDIG), but "%b=" is not a valid percent
-    // encoding
-    // still invalid even in relaxed mode
-    relaxed("a%b=c");
-    // IllegalUriException(
-    //  "Illegal query: Invalid input '=', expected '+', query-char, 'EOI', '&' or pct-encoded (line
-    // 1, column 4)",
-    //  "a%b=c\n" +
-    //  "   ^")
+    assertThrows(
+        IllegalUriException.class,
+        () -> {
+          // following '%', it should be percent encoding (HEXDIG), but "%b=" is not a valid percent
+          // encoding
+          // still invalid even in relaxed mode
+          relaxed("a%b=c");
+          // IllegalUriException(
+          //  "Illegal query: Invalid input '=', expected '+', query-char, 'EOI', '&' or pct-encoded
+          // (line
+          // 1, column 4)",
+          //  "a%b=c\n" +
+          //  "   ^")
+        });
   }
   // #query-relaxed-mode-exception-1
 

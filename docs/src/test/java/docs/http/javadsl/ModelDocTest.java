@@ -14,8 +14,8 @@
 package docs.http.javadsl;
 
 import org.apache.pekko.util.ByteString;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 // #import-model
 import org.apache.pekko.http.javadsl.model.*;

@@ -15,13 +15,13 @@ package org.apache.pekko.http.javadsl.server.directives;
 
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.HttpCookie;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class CookieDirectivesTest extends JUnitRouteTest {
+public class CookieDirectivesTest extends JUnitJupiterRouteTest {
   @Test
   public void testCookieValue() {
     TestRoute route = testRoute(cookie("userId", userId -> complete(userId.value())));

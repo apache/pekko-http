@@ -31,6 +31,7 @@ addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.6")
 addSbtPlugin("com.github.pjfanning" % "sbt-source-dist" % "0.1.13")
 addSbtPlugin("com.github.pjfanning" % "sbt-pekko-build" % "0.4.7")
 addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.7.0")
+addSbtPlugin("com.github.sbt.junit" % "sbt-jupiter-interface" % "0.18.0")
 
 // used in ValidatePullRequest to check github PR comments whether to build all subprojects
 libraryDependencies += "org.kohsuke" % "github-api" % "1.330"

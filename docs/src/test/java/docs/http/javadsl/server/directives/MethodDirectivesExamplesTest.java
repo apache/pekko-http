@@ -13,13 +13,13 @@
 
 package docs.http.javadsl.server.directives;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.apache.pekko.http.javadsl.model.HttpMethods;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 
 // #delete
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
@@ -70,7 +70,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.overrideMethodWith
 
 // #overrideMethodWithParameter
 
-public class MethodDirectivesExamplesTest extends JUnitRouteTest {
+public class MethodDirectivesExamplesTest extends JUnitJupiterRouteTest {
   @Test
   public void testDelete() {
     // #delete

@@ -17,10 +17,10 @@ import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -39,7 +39,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.handleWith;
 
 // #example-handleWith-with-json
 
-public class MarshallingDirectivesExamplesTest extends JUnitRouteTest {
+public class MarshallingDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   // #person
   public static class Person {

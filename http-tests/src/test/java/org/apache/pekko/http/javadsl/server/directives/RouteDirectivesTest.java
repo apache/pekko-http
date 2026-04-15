@@ -16,16 +16,17 @@ package org.apache.pekko.http.javadsl.server.directives;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.Location;
 import org.apache.pekko.http.javadsl.server.Directives;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.util.ByteString;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-public class RouteDirectivesTest extends JUnitRouteTest {
+public class RouteDirectivesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testRedirection() {
@@ -105,9 +106,13 @@ public class RouteDirectivesTest extends JUnitRouteTest {
                 + "or a custom limit set with `withSizeLimit`.");
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testEmptyRoutesConcatenation() {
-    route();
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          route();
+        });
   }
 
   @Test

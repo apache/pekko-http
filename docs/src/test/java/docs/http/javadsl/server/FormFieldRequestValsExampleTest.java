@@ -13,7 +13,7 @@
 
 package docs.http.javadsl.server;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.apache.pekko.http.javadsl.model.FormData;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
@@ -21,7 +21,7 @@ import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshaller;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.japi.Pair;
 
 // #simple
@@ -35,7 +35,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.formField;
 
 // #custom-unmarshal
 
-public class FormFieldRequestValsExampleTest extends JUnitRouteTest {
+public class FormFieldRequestValsExampleTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testFormFieldVals() {

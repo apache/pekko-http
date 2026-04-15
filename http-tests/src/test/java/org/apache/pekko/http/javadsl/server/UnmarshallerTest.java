@@ -14,18 +14,18 @@
 package org.apache.pekko.http.javadsl.server;
 
 import org.apache.pekko.http.javadsl.model.*;
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class UnmarshallerTest extends JUnitRouteTest {
+public class UnmarshallerTest extends JUnitJupiterRouteTest {
 
   @Test
   public void unmarshallerWithoutExecutionContext() throws Exception {

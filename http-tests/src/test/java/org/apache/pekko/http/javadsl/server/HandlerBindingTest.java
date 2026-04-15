@@ -15,15 +15,15 @@ package org.apache.pekko.http.javadsl.server;
 
 import static org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers.INTEGER;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
 import org.apache.pekko.http.scaladsl.model.HttpRequest;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class HandlerBindingTest extends JUnitRouteTest {
+public class HandlerBindingTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testHandlerWithoutExtractions() {

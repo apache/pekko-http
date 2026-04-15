@@ -16,10 +16,9 @@ package org.apache.pekko.http.javadsl.settings;
 import org.apache.pekko.actor.ActorSystem;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.junit.Test;
-import org.scalatestplus.junit.JUnitSuite;
+import org.junit.jupiter.api.Test;
 
-public class RoutingSettingsTest extends JUnitSuite {
+public class RoutingSettingsTest {
 
   @Test
   public void testCreateWithActorSystem() {
