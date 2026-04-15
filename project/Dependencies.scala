@@ -120,8 +120,9 @@ object Dependencies {
     l ++= Seq(
       parboiled,
       Test.sprayJson, // for WS Autobahn test metadata
-      Test.scalatest, Test.scalatestplusScalacheck, Test.scalatestplusJUnit),
-    libraryDependencies ++= junitJupiterTestDeps.value)
+      Test.scalatest,
+      Test.scalatestplusScalacheck,
+      Test.scalatestplusJUnit) ++ junitJupiterTestDeps.value)
 
   lazy val httpCaching = l ++= Seq(
     caffeine,
@@ -133,16 +134,15 @@ object Dependencies {
   lazy val http = Seq()
 
   lazy val http2Tests = Seq(
-    l ++= Seq(Test.h2spec),
-    libraryDependencies ++= junitJupiterTestDeps.value)
+    l ++= Seq(Test.h2spec) ++ junitJupiterTestDeps.value)
 
   lazy val httpTestkit = Seq(
     versionDependentDeps(
       Test.junit4,
       Test.specs2 % "provided; test"),
-    l ++= junitJupiterTestDeps.value ++ Seq(
+    l ++= Seq(
       "org.junit.jupiter" % "junit-jupiter-api" % JupiterKeys.junitJupiterVersion.value % "provided",
-      Test.scalatest.withConfigurations(Some("provided; test"))))
+      Test.scalatest.withConfigurations(Some("provided; test"))) ++ junitJupiterTestDeps.value)
 
   lazy val httpTestkitMunit =
     l ++= Seq(Test.munit % "provided; test")
@@ -159,16 +159,17 @@ object Dependencies {
     libraryDependencies += Test.scalatest)
 
   lazy val httpJackson = Seq(
-    l ++= Seq(jacksonDatabind, Test.scalatestplusJUnit),
-    libraryDependencies ++= junitJupiterTestDeps.value)
+    l ++= Seq(jacksonDatabind, Test.scalatestplusJUnit) ++ junitJupiterTestDeps.value)
 
   lazy val httpJackson3 = Seq(
-    l ++= Seq(jacksonDatabind3, Test.scalatestplusJUnit),
-    libraryDependencies ++= junitJupiterTestDeps.value)
+    l ++= Seq(jacksonDatabind3, Test.scalatestplusJUnit) ++ junitJupiterTestDeps.value)
 
   lazy val docs = Seq(
-    l ++= Seq(Docs.sprayJson, Docs.gson, Docs.jacksonXml, Docs.reflections),
-    libraryDependencies ++= junitJupiterTestDeps.value)
+    l ++= Seq(
+      Docs.sprayJson,
+      Docs.gson,
+      Docs.jacksonXml,
+      Docs.reflections) ++ junitJupiterTestDeps.value)
 }
 
 object DependencyHelpers {
