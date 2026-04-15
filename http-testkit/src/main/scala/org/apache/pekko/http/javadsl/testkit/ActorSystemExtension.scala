@@ -34,7 +34,7 @@ import com.typesafe.config.{ Config, ConfigFactory }
  * ActorSystemExtension systemExtension = new ActorSystemExtension("MyTest", ConfigFactory.empty());
  * }}}
  *
- * Or use it indirectly through [[JUnit5RouteTest]].
+ * Or use it indirectly through [[JUnitJupiterRouteTest]].
  */
 class ActorSystemExtension(name: String, additionalConfig: Config)
     extends BeforeEachCallback with AfterEachCallback {

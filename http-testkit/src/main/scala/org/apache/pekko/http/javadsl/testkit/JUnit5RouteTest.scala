@@ -9,87 +9,22 @@
 
 package org.apache.pekko.http.javadsl.testkit
 
-import scala.concurrent.Future
-
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.extension.RegisterExtension
-
-import org.apache.pekko
-import pekko.actor.ActorSystem
-import pekko.event.Logging
-import pekko.http.javadsl.model.HttpRequest
-import pekko.http.javadsl.server._
-import pekko.stream.Materializer
-
 import com.typesafe.config.{ Config, ConfigFactory }
 
 /**
- * A RouteTest that uses JUnit 5 (Jupiter) assertions. ActorSystem and Materializer lifecycle
- * is managed via [[ActorSystemExtension]], the JUnit 5 equivalent of
- * [[org.junit.rules.ExternalResource]].
+ * A RouteTest that uses JUnit 5 (Jupiter) assertions.
  *
- * This is the JUnit 5 counterpart of [[JUnitRouteTest]]. Migrate your tests from
- * `extends JUnitRouteTest` to `extends JUnit5RouteTest` to use JUnit 5 annotations
- * and assertions.
+ * @deprecated Use [[JUnitJupiterRouteTestBase]] instead. The class name has been updated
+ *             to follow the standard JUnit 5 naming convention.
  */
-abstract class JUnit5RouteTestBase extends RouteTest {
-  protected def systemExtension: ActorSystemExtension
-  implicit def system: ActorSystem = systemExtension.system
-  implicit def materializer: Materializer = systemExtension.materializer
-
-  protected def createTestRouteResultAsync(request: HttpRequest, result: Future[RouteResult]): TestRouteResult =
-    new TestRouteResult(result, awaitDuration)(system.dispatcher, materializer) {
-      protected def assertEquals(expected: AnyRef, actual: AnyRef, message: String): Unit =
-        reportDetails { Assertions.assertEquals(expected, actual, message) }
-
-      protected def assertEquals(expected: Int, actual: Int, message: String): Unit =
-        Assertions.assertEquals(expected, actual, message)
-
-      protected def assertTrue(predicate: Boolean, message: String): Unit =
-        Assertions.assertTrue(predicate, message)
-
-      protected def fail(message: String): Unit = {
-        Assertions.fail[Unit](message)
-        throw new IllegalStateException("Assertion should have failed")
-      }
-
-      def reportDetails[T](block: => T): T = {
-        try block
-        catch {
-          case t: Throwable => throw new AssertionError(t.getMessage + "\n" +
-              "  Request was:      " + request + "\n" +
-              "  Route result was: " + result + "\n", t)
-        }
-      }
-    }
-}
+@deprecated("Use JUnitJupiterRouteTestBase instead", "1.1.0")
+abstract class JUnit5RouteTestBase extends JUnitJupiterRouteTestBase
 
 /**
- * JUnit 5 (Jupiter) route test base class. Extend this class to write HTTP route tests
- * using JUnit 5 annotations (`@Test`, `@BeforeEach`, `@AfterEach`, etc.).
+ * JUnit 5 (Jupiter) route test base class.
  *
- * The ActorSystem is managed automatically via [[ActorSystemExtension]]. Override
- * `additionalConfig` to provide custom configuration.
- *
- * Example usage:
- * {{{
- * import org.junit.jupiter.api.Test;
- * import static org.junit.jupiter.api.Assertions.*;
- *
- * public class MyRouteTest extends JUnit5RouteTest {
- *     @Test
- *     public void testHello() {
- *         testRoute(get(() -> complete("hello")))
- *             .run(HttpRequest.GET("/"))
- *             .assertStatusCode(StatusCodes.OK);
- *     }
- * }
- * }}}
+ * @deprecated Use [[JUnitJupiterRouteTest]] instead. The class name has been updated
+ *             to follow the standard JUnit 5 naming convention.
  */
-abstract class JUnit5RouteTest extends JUnit5RouteTestBase {
-  protected def additionalConfig: Config = ConfigFactory.empty()
-
-  @RegisterExtension
-  protected val systemExtension: ActorSystemExtension =
-    new ActorSystemExtension(Logging.simpleName(getClass), additionalConfig)
-}
+@deprecated("Use JUnitJupiterRouteTest instead", "1.1.0")
+abstract class JUnit5RouteTest extends JUnitJupiterRouteTest
