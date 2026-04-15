@@ -23,7 +23,7 @@ object Dependencies {
   val jacksonXmlVersion = jacksonDatabindVersion
   val junitVersion = "4.13.2"
   // sbt-jupiter-interface 0.11.0 requires JUnit 5.9.x; using 5.9.3 for compatibility
-  val junit5Version = "5.9.3"
+  val junit5Version = "5.14.3"
   val junitPlatformVersion = "1.14.3"
   val h2specVersion = "2.6.0"
   val h2specName = s"h2spec_${DependencyHelpers.osName}_amd64"
