@@ -16,11 +16,11 @@ package docs.http.javadsl.server.testkit;
 // #simple-app-testing
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.junit.jupiter.api.Test;
 
-public class TestkitExampleTest extends JUnit5RouteTest {
+public class TestkitExampleTest extends JUnitJupiterRouteTest {
   TestRoute appRoute = testRoute(new MyAppService().createRoute());
 
   @Test

@@ -30,7 +30,7 @@ import static org.apache.pekko.http.javadsl.server.directives.CachingDirectives.
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 // #time-unit-import
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -49,7 +49,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.path;
 import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
 // #cache
 
-public class CachingDirectivesExamplesTest extends JUnit5RouteTest {
+public class CachingDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testCache() {

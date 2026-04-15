@@ -17,7 +17,7 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.BasicHttpCredentials;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.japi.JavaPartialFunction;
 import org.junit.jupiter.api.Test;
 import scala.PartialFunction;
@@ -96,7 +96,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.extractCredentials
 
 // #extractCredentials
 
-public class SecurityDirectivesExamplesTest extends JUnit5RouteTest {
+public class SecurityDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testAuthenticateBasic() {

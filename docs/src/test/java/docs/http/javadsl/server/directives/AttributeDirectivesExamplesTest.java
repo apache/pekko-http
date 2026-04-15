@@ -17,10 +17,10 @@ import org.apache.pekko.http.javadsl.model.AttributeKey;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
-public class AttributeDirectivesExamplesTest extends JUnit5RouteTest {
+public class AttributeDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void attribute() {

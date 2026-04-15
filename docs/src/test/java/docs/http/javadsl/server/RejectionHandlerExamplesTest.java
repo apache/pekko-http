@@ -24,7 +24,7 @@ import org.apache.pekko.http.javadsl.server.MissingCookieRejection;
 import org.apache.pekko.http.javadsl.server.RejectionHandler;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.ValidationRejection;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.stream.Collectors;
@@ -49,7 +49,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
 import static org.apache.pekko.http.javadsl.server.Directives.validate;
 
 // #example-json
-public class RejectionHandlerExamplesTest extends JUnit5RouteTest {
+public class RejectionHandlerExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void compileOnlySpec() throws Exception {

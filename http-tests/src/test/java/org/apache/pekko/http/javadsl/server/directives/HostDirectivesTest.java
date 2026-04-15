@@ -17,7 +17,7 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.Uri;
 import org.apache.pekko.http.javadsl.server.Directives;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.junit.jupiter.api.Test;
 
@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class HostDirectivesTest extends JUnit5RouteTest {
+public class HostDirectivesTest extends JUnitJupiterRouteTest {
   @Test
   public void testHostFilterBySingleName() {
     TestRoute route = testRoute(host("example.org", () -> complete("OK!")));

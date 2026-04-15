@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.model.headers.Location;
 
 // #extractScheme
@@ -34,7 +34,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.scheme;
 
 // #scheme
 
-public class SchemeDirectivesExamplesTest extends JUnit5RouteTest {
+public class SchemeDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testScheme() {

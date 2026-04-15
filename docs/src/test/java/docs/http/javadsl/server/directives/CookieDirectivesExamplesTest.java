@@ -20,7 +20,7 @@ import org.apache.pekko.http.javadsl.model.headers.HttpCookie;
 import org.apache.pekko.http.javadsl.model.headers.SetCookie;
 import org.apache.pekko.http.javadsl.server.Rejections;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.scaladsl.model.DateTime;
 import org.junit.jupiter.api.Test;
 
@@ -47,7 +47,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.setCookie;
 
 // #setCookie
-public class CookieDirectivesExamplesTest extends JUnit5RouteTest {
+public class CookieDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testCookie() {

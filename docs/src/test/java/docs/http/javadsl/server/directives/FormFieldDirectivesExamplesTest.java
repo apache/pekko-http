@@ -18,7 +18,7 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.japi.Pair;
 import org.junit.jupiter.api.Test;
 
@@ -52,7 +52,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.formFieldMultiMap;
 
 // #formFieldMultiMap
 
-public class FormFieldDirectivesExamplesTest extends JUnit5RouteTest {
+public class FormFieldDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testFormField() {

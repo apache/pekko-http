@@ -18,7 +18,7 @@ import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.http.javadsl.server.directives.FileInfo;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.stream.javadsl.Framing;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
@@ -62,7 +62,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
 
 // #fileUploadAll
 
-public class FileUploadDirectivesExamplesTest extends JUnit5RouteTest {
+public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Override
   public FiniteDuration defaultAwaitDuration() {

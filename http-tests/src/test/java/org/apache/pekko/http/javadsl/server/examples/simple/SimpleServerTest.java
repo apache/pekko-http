@@ -18,7 +18,7 @@ import org.apache.pekko.http.javadsl.testkit.*;
 
 import org.junit.jupiter.api.Test;
 
-public class SimpleServerTest extends JUnit5RouteTest {
+public class SimpleServerTest extends JUnitJupiterRouteTest {
   TestRoute route = testRoute(new SimpleServerApp().createRoute());
 
   @Test

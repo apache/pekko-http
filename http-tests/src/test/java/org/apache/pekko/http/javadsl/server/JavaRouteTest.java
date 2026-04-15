@@ -32,7 +32,7 @@ import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.junit.jupiter.api.Test;
 
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 // FIXME discuss how to provide a javadsl.CustomHeader where render() is either pre-implemented or
 // trivial to write in Java
 import org.apache.pekko.http.scaladsl.model.headers.CustomHeader;
@@ -41,7 +41,7 @@ import org.apache.pekko.util.ByteString;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class JavaRouteTest extends JUnit5RouteTest {
+public class JavaRouteTest extends JUnitJupiterRouteTest {
   private final Route route = getRoute();
   private static final Unmarshaller<String, BigDecimal> BIG_DECIMAL_PARAM =
       Unmarshaller.sync(BigDecimal::new);

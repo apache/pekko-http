@@ -28,7 +28,7 @@ import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 
 // #simple-handler-example-full
@@ -58,7 +58,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #async-handler-1
 
-public class HandlerExampleDocTest extends JUnit5RouteTest {
+public class HandlerExampleDocTest extends JUnitJupiterRouteTest {
   @Test
   public void testSimpleHandler() {
     // #simple-handler-example-full

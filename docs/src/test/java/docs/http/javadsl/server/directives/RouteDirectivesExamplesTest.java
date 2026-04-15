@@ -20,7 +20,7 @@ import org.apache.pekko.http.javadsl.server.Rejections;
 import org.apache.pekko.http.javadsl.server.RequestContext;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.RouteResult;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -53,7 +53,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #failWith
 
-public class RouteDirectivesExamplesTest extends JUnit5RouteTest {
+public class RouteDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testShowRedirectOnCompleteWithTerms() {

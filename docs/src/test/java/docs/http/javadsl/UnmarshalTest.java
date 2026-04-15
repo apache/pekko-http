@@ -14,7 +14,7 @@
 package docs.http.javadsl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 // #imports
 
 @SuppressWarnings("unused")
-public class UnmarshalTest extends JUnit5RouteTest {
+public class UnmarshalTest extends JUnitJupiterRouteTest {
 
   @Test
   public void useUnmarshal() throws Exception {

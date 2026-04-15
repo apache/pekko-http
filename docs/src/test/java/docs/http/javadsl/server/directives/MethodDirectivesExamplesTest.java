@@ -19,7 +19,7 @@ import org.apache.pekko.http.javadsl.model.HttpMethods;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 
 // #delete
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
@@ -70,7 +70,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.overrideMethodWith
 
 // #overrideMethodWithParameter
 
-public class MethodDirectivesExamplesTest extends JUnit5RouteTest {
+public class MethodDirectivesExamplesTest extends JUnitJupiterRouteTest {
   @Test
   public void testDelete() {
     // #delete

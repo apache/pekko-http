@@ -20,7 +20,7 @@ import org.apache.pekko.http.javadsl.model.headers.ModeledCustomHeader;
 import org.apache.pekko.http.javadsl.model.headers.ModeledCustomHeaderFactory;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.japi.JavaPartialFunction;
 import org.junit.jupiter.api.Test;
 import scala.PartialFunction;
@@ -36,7 +36,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.headerValuePF;
 
 // #header-value-pf
 
-public class CustomHeaderExampleTest extends JUnit5RouteTest {
+public class CustomHeaderExampleTest extends JUnitJupiterRouteTest {
   // #modeled-api-key-custom-header
   public static class ApiTokenHeader extends ModeledCustomHeader {
 

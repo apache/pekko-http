@@ -17,7 +17,7 @@ import org.apache.pekko.event.LoggingAdapter;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings;
 import org.apache.pekko.japi.function.Function;
 import org.apache.pekko.stream.javadsl.Flow;
@@ -31,7 +31,7 @@ import static org.apache.pekko.http.javadsl.ConnectHttp.toHost;
 import static org.apache.pekko.http.javadsl.ConnectHttp.toHostHttps;
 
 @SuppressWarnings("ConstantConditions")
-public class HttpAPIsTest extends JUnit5RouteTest {
+public class HttpAPIsTest extends JUnitJupiterRouteTest {
 
   @Test
   public void placeholderCompileTimeOnlyTest() {

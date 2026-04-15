@@ -23,7 +23,7 @@ import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.*;
 import org.apache.pekko.http.javadsl.server.Rejections;
 
-public class JUnitRouteTestTest extends JUnit5RouteTest {
+public class JUnitRouteTestTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testTheMostSimpleAndDirectRouteTest() {

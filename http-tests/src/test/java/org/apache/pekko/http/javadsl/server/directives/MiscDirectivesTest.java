@@ -20,7 +20,7 @@ import org.apache.pekko.http.javadsl.model.Uri;
 import org.apache.pekko.http.javadsl.model.headers.XForwardedFor;
 import org.apache.pekko.http.javadsl.model.headers.XRealIp;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +30,7 @@ import java.util.Arrays;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class MiscDirectivesTest extends JUnit5RouteTest {
+public class MiscDirectivesTest extends JUnitJupiterRouteTest {
 
   static boolean isShort(String str) {
     return str.length() < 5;

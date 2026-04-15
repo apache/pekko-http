@@ -21,10 +21,10 @@ import org.junit.jupiter.api.Test;
 
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 
-public class ParameterDirectivesTest extends JUnit5RouteTest {
+public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testStringParameterExtraction() {

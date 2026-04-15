@@ -33,7 +33,7 @@ import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class SecurityDirectivesTest extends JUnit5RouteTest {
+public class SecurityDirectivesTest extends JUnitJupiterRouteTest {
 
   // These authenticators don't have to be async; they're just written that way to test the API.
   private CompletionStage<Optional<String>> authenticateUser(Optional<ProvidedCredentials> creds) {

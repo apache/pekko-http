@@ -23,14 +23,14 @@ import org.apache.pekko.http.javadsl.server.ExceptionHandler;
 import org.apache.pekko.http.javadsl.server.RejectionHandler;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.http.scaladsl.server.MethodRejection;
 import org.apache.pekko.http.scaladsl.server.Rejection;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class ExecutionDirectivesTest extends JUnit5RouteTest {
+public class ExecutionDirectivesTest extends JUnitJupiterRouteTest {
   @Test
   public void testCatchExceptionThrownFromHandler() {
     Route divide =

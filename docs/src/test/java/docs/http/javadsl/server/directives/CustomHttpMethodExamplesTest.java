@@ -23,7 +23,7 @@ import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.settings.ParserSettings;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.stream.javadsl.Flow;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,7 +41,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.extractMethod;
 
 // #customHttpMethod
-public class CustomHttpMethodExamplesTest extends JUnit5RouteTest {
+public class CustomHttpMethodExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testComposition() throws InterruptedException, ExecutionException, TimeoutException {

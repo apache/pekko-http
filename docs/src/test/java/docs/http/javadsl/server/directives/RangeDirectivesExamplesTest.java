@@ -22,7 +22,7 @@ import org.apache.pekko.http.javadsl.model.headers.Range;
 import org.apache.pekko.http.javadsl.model.headers.RangeUnits;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.util.ByteString;
@@ -42,7 +42,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.withRangeSupport;
 
 // #withRangeSupport
 
-public class RangeDirectivesExamplesTest extends JUnit5RouteTest {
+public class RangeDirectivesExamplesTest extends JUnitJupiterRouteTest {
   @Override
   public Config additionalConfig() {
     return ConfigFactory.parseString("pekko.http.routing.range-coalescing-threshold=2");

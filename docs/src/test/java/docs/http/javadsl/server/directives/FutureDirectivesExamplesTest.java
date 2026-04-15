@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.scaladsl.model.StatusCodes;
 import org.apache.pekko.japi.pf.PFBuilder;
 import org.apache.pekko.pattern.CircuitBreaker;
@@ -53,7 +53,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #onCompleteWithBreaker
 
-public class FutureDirectivesExamplesTest extends JUnit5RouteTest {
+public class FutureDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testOnComplete() {

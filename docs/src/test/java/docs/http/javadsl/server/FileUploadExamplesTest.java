@@ -17,7 +17,7 @@ import org.apache.pekko.Done;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorRef;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.japi.Pair;
 import org.apache.pekko.stream.Materializer;
@@ -55,7 +55,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #stream-csv-upload
 
-public class FileUploadExamplesTest extends JUnit5RouteTest {
+public class FileUploadExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void compileOnlySpec() throws Exception {

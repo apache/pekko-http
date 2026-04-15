@@ -21,7 +21,7 @@ import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.Accept;
 import org.apache.pekko.http.javadsl.server.*;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.apache.pekko.http.javadsl.common.EntityStreamingSupport;
@@ -54,7 +54,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.path;
 import static org.apache.pekko.http.javadsl.server.Directives.completeWithSource;
 
 // #csv-example
-public class JsonStreamingExamplesTest extends JUnit5RouteTest {
+public class JsonStreamingExamplesTest extends JUnitJupiterRouteTest {
 
   // #routes
   final Route tweets() {

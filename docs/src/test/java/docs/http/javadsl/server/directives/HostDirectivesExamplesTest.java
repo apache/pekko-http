@@ -23,7 +23,7 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.Host;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 
 // #host1
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
@@ -47,7 +47,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.host;
 
 // #matchAndExtractHost
 
-public class HostDirectivesExamplesTest extends JUnit5RouteTest {
+public class HostDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testListOfHost() {

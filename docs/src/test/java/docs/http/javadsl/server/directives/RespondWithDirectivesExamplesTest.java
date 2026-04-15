@@ -19,7 +19,7 @@ import org.apache.pekko.http.javadsl.model.headers.HttpOrigin;
 import org.apache.pekko.http.javadsl.model.headers.Origin;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -57,7 +57,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefault
 import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeader;
 
 // #respondWithDefaultHeaders
-public class RespondWithDirectivesExamplesTest extends JUnit5RouteTest {
+public class RespondWithDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testMultipleHeaders() {

@@ -17,13 +17,13 @@ import static org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers.IN
 
 import org.junit.jupiter.api.Test;
 
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
 import org.apache.pekko.http.scaladsl.model.HttpRequest;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class HandlerBindingTest extends JUnit5RouteTest {
+public class HandlerBindingTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testHandlerWithoutExtractions() {

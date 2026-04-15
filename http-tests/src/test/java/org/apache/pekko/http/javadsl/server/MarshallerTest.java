@@ -23,13 +23,13 @@ import org.apache.pekko.http.javadsl.model.headers.*;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.junit.jupiter.api.Test;
 
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.util.ByteString;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class MarshallerTest extends JUnit5RouteTest {
+public class MarshallerTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testCustomToStringMarshaller() {

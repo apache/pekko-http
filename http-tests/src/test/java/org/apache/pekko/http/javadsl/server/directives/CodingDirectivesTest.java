@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class CodingDirectivesTest extends JUnit5RouteTest {
+public class CodingDirectivesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testAutomaticEncodingWhenNoEncodingRequested() throws Exception {

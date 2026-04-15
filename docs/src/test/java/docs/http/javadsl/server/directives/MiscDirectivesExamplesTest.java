@@ -18,7 +18,7 @@ import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.*;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.junit.jupiter.api.Test;
 
@@ -73,7 +73,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.rejectEmptyRespons
 
 // #rejectEmptyResponse-example
 
-public class MiscDirectivesExamplesTest extends JUnit5RouteTest {
+public class MiscDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testWithSizeLimit() {

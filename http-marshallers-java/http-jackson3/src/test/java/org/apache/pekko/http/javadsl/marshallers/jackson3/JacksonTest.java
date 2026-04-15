@@ -32,7 +32,7 @@ import org.apache.pekko.http.javadsl.model.HttpEntities;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.RequestEntity;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 
 import org.junit.jupiter.api.Test;
 
@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class JacksonTest extends JUnit5RouteTest {
+public class JacksonTest extends JUnitJupiterRouteTest {
 
   public static class SomeData {
     public final String field;

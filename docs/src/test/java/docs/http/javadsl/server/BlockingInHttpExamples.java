@@ -17,7 +17,7 @@ import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.dispatch.MessageDispatcher;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CompletableFuture;
@@ -32,7 +32,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.completeWithFuture
 import static org.apache.pekko.http.javadsl.server.Directives.post;
 
 // #blocking-example-in-dedicated-dispatcher
-public class BlockingInHttpExamples extends JUnit5RouteTest {
+public class BlockingInHttpExamples extends JUnitJupiterRouteTest {
 
   @Test
   public void compileOnlySpec() throws Exception {

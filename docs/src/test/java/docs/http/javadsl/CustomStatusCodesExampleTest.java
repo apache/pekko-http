@@ -26,7 +26,7 @@ import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
 import org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings;
 import org.apache.pekko.http.javadsl.settings.ParserSettings;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.stream.Materializer;
 import org.junit.jupiter.api.Test;
 
@@ -43,7 +43,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.extractRequest;
 
 // #application-custom-java
 
-public class CustomStatusCodesExampleTest extends JUnit5RouteTest {
+public class CustomStatusCodesExampleTest extends JUnitJupiterRouteTest {
 
   @Test
   public void customStatusCodes()

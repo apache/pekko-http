@@ -29,7 +29,7 @@ import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.model.headers.Server;
 import org.apache.pekko.http.javadsl.model.headers.ProductVersion;
 import org.apache.pekko.http.javadsl.settings.RoutingSettings;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.server.*;
 import org.apache.pekko.japi.pf.PFBuilder;
 import org.apache.pekko.stream.Materializer;
@@ -256,7 +256,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.extractActorSystem
 
 // #extractActorSystem
 
-public class BasicDirectivesExamplesTest extends JUnit5RouteTest {
+public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testExtract() {

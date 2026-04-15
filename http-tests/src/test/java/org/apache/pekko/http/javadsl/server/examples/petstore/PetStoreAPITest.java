@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PetStoreAPITest extends JUnit5RouteTest {
+public class PetStoreAPITest extends JUnitJupiterRouteTest {
   @Test
   public void testGetPet() {
     TestRouteResult response = createRoute().run(HttpRequest.GET("/pet/1"));

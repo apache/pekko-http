@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 
 import java.util.function.Function;
 import java.util.function.BiFunction;
@@ -49,7 +49,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.logResult;
 
 // #logResult
 
-public class DebuggingDirectivesExamplesTest extends JUnit5RouteTest {
+public class DebuggingDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testLogRequest() {

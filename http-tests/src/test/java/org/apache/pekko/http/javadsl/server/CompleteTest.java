@@ -24,11 +24,11 @@ import org.junit.jupiter.api.Test;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.MediaTypes;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class CompleteTest extends JUnit5RouteTest {
+public class CompleteTest extends JUnitJupiterRouteTest {
   @Test
   public void completeWithString() {
     Route route = complete("Everything OK!");

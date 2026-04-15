@@ -20,14 +20,14 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-public class JacksonXmlExampleTest extends JUnit5RouteTest {
+public class JacksonXmlExampleTest extends JUnitJupiterRouteTest {
 
   final String xml = "<point><x>3</x><y>4</y></point>";
   final Point point =

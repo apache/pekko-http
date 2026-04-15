@@ -18,7 +18,7 @@ import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.directives.DirectoryRenderer;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import scala.NotImplementedError;
@@ -63,7 +63,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 
 // #getFromResourceDirectory
 
-public class FileAndResourceDirectivesExamplesTest extends JUnit5RouteTest {
+public class FileAndResourceDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Disabled("Compile only test")
   @Test

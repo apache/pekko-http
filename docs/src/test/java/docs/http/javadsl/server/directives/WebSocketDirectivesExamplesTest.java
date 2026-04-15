@@ -22,7 +22,7 @@ import org.apache.pekko.http.javadsl.model.ws.BinaryMessage;
 import org.apache.pekko.http.javadsl.model.ws.Message;
 import org.apache.pekko.http.javadsl.model.ws.TextMessage;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.WSProbe;
 import org.apache.pekko.stream.OverflowStrategy;
 import org.apache.pekko.stream.javadsl.Flow;
@@ -50,7 +50,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.extractOfferedWsPr
 import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessagesForOptionalProtocol;
 
 // #extractOfferedWsProtocols
-public class WebSocketDirectivesExamplesTest extends JUnit5RouteTest {
+public class WebSocketDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testHandleWebSocketMessages() {

@@ -14,7 +14,7 @@
 package org.apache.pekko.http.javadsl.server;
 
 import org.apache.pekko.http.javadsl.model.*;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class UnmarshallerTest extends JUnit5RouteTest {
+public class UnmarshallerTest extends JUnitJupiterRouteTest {
 
   @Test
   public void unmarshallerWithoutExecutionContext() throws Exception {

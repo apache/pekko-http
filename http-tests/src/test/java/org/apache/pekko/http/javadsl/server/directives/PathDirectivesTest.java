@@ -20,11 +20,11 @@ import org.junit.jupiter.api.Test;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.Host;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.http.scaladsl.model.HttpRequest;
 
-public class PathDirectivesTest extends JUnit5RouteTest {
+public class PathDirectivesTest extends JUnitJupiterRouteTest {
   @Test
   public void testPathPrefixAndPath() {
     TestRoute route =

@@ -18,7 +18,7 @@ package org.apache.pekko.http.javadsl.marshalling.sse;
 
 import org.apache.pekko.http.javadsl.model.sse.ServerSentEvent;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnit5RouteTest;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
@@ -31,7 +31,7 @@ import static org.apache.pekko.http.javadsl.model.MediaTypes.TEXT_EVENT_STREAM;
 import static org.apache.pekko.http.javadsl.server.Directives.completeOK;
 import static org.apache.pekko.util.ByteString.emptyByteString;
 
-public class EventStreamMarshallingTest extends JUnit5RouteTest {
+public class EventStreamMarshallingTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testToEventStream() {
