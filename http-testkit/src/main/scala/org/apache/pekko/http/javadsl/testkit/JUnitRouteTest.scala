@@ -33,6 +33,7 @@ import com.typesafe.config.{ Config, ConfigFactory }
  * A RouteTest that uses JUnit assertions. ActorSystem and Materializer are provided as an [[org.junit.rules.ExternalResource]]
  * and their lifetime is automatically managed.
  */
+@deprecated("Use JUnitJupiterRouteTestBase instead", "2.0.0")
 abstract class JUnitRouteTestBase extends RouteTest {
   protected def systemResource: ActorSystemResource
   implicit def system: ActorSystem = systemResource.system
@@ -64,6 +65,8 @@ abstract class JUnitRouteTestBase extends RouteTest {
       }
     }
 }
+
+@deprecated("Use JUnitJupiterRouteTest instead", "2.0.0")
 abstract class JUnitRouteTest extends JUnitRouteTestBase {
   protected def additionalConfig: Config = ConfigFactory.empty()
 
@@ -72,6 +75,7 @@ abstract class JUnitRouteTest extends JUnitRouteTestBase {
   protected def systemResource: ActorSystemResource = _systemResource
 }
 
+@deprecated("Use ActorSystemExtension (Jupiter Junit support) instead", "2.0.0")
 class ActorSystemResource(name: String, additionalConfig: Config) extends ExternalResource {
   protected def config = additionalConfig.withFallback(ConfigFactory.load())
   protected def createSystem(): ActorSystem = ActorSystem(name, config)

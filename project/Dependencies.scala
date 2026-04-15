@@ -22,7 +22,7 @@ object Dependencies {
   val jacksonDatabindVersion = "2.21.2"
   val jacksonDatabind3Version = "3.1.2"
   val jacksonXmlVersion = jacksonDatabindVersion
-  val junitVersion = "4.13.2"
+  val junit4Version = "4.13.2"
   val h2specVersion = "2.6.0"
   val h2specName = s"h2spec_${DependencyHelpers.osName}_amd64"
   val h2specExe = "h2spec" + DependencyHelpers.exeIfWindows
@@ -78,6 +78,9 @@ object Dependencies {
 
     object Test {
       val sprayJson = Compile.sprayJson % "test"
+
+      // For pekko-http-testkit-java (JUnit 4 support for library users) -- deprecated since 2.0.0
+      val junit4 = "junit" % "junit" % junit4Version
       val specs2 = "org.specs2" %% "specs2-core" % "4.23.0"
       val munit = "org.scalameta" %% "munit" % "1.3.0"
 
@@ -135,6 +138,7 @@ object Dependencies {
 
   lazy val httpTestkit = Seq(
     versionDependentDeps(
+      Test.junit4,
       Test.specs2 % "provided; test"),
     l ++= junitJupiterTestDeps.value ++ Seq(
       "org.junit.jupiter" % "junit-jupiter-api" % JupiterKeys.junitJupiterVersion.value % "provided",
