@@ -13,6 +13,7 @@
 
 import sbt._
 import sbt.Keys._
+import com.github.sbt.junit.jupiter.sbt.Import.JupiterKeys
 import scala.language.implicitConversions
 
 object Dependencies {
@@ -21,10 +22,7 @@ object Dependencies {
   val jacksonDatabindVersion = "2.21.2"
   val jacksonDatabind3Version = "3.1.2"
   val jacksonXmlVersion = jacksonDatabindVersion
-  val junitVersion = "4.13.2"
-  // sbt-jupiter-interface 0.11.0 requires JUnit 5.9.x; using 5.9.3 for compatibility
-  val junit5Version = "5.14.3"
-  val junitPlatformVersion = "1.14.3"
+  val junit4Version = "4.13.2"
   val h2specVersion = "2.6.0"
   val h2specName = s"h2spec_${DependencyHelpers.osName}_amd64"
   val h2specExe = "h2spec" + DependencyHelpers.exeIfWindows
@@ -65,12 +63,6 @@ object Dependencies {
     // For pekko-http-jackson3 support
     val jacksonDatabind3 = "tools.jackson.core" % "jackson-databind" % jacksonDatabind3Version
 
-    // For pekko-http-testkit-java (JUnit 4 support for library users)
-    val junit = "junit" % "junit" % junitVersion
-
-    // For pekko-http-testkit-java (JUnit 5 support for library users)
-    val junit5Api = "org.junit.jupiter" % "junit-jupiter-api" % junit5Version
-
     val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % "3.2.3"
 
     val scalafix = "ch.epfl.scala" %% "scalafix-core" % Dependencies.scalafixVersion
@@ -86,21 +78,13 @@ object Dependencies {
 
     object Test {
       val sprayJson = Compile.sprayJson % "test"
-      val junit = Compile.junit % "test"
+
+      // For pekko-http-testkit-java (JUnit 4 support for library users) -- deprecated since 2.0.0
+      val junit4 = "junit" % "junit" % junit4Version
       val specs2 = "org.specs2" %% "specs2-core" % "4.23.0"
       val munit = "org.scalameta" %% "munit" % "1.3.0"
 
       val scalacheck = "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
-      val junitIntf = "com.github.sbt" % "junit-interface" % "0.13.3" % "test"
-
-      // JUnit 5 (Jupiter) dependencies for running tests
-      val junit5Api = Compile.junit5Api % "test"
-      val junit5Engine = "org.junit.jupiter" % "junit-jupiter-engine" % junit5Version % "test"
-      val junit5Params = "org.junit.jupiter" % "junit-jupiter-params" % junit5Version % "test"
-      val jupiterIntf = "net.aichler" % "jupiter-interface" % "0.11.1" % "test"
-      // Override platform-launcher to match our JUnit 5 version (jupiter-interface 0.11.1 pulls 1.9.1)
-      val junitPlatformLauncher =
-        "org.junit.platform" % "junit-platform-launcher" % junitPlatformVersion % "test"
 
       val scalatest = "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
       val scalatestplusScalacheck = "org.scalatestplus" %% "scalacheck-1-19" % (scalaTestVersion + ".0") % "test"
@@ -110,21 +94,35 @@ object Dependencies {
 
       val h2spec = ("io.github.summerwind" % h2specName % h2specVersion % "test").from(h2specUrl)
     }
+
   }
 
   import Compile._
 
   lazy val l = libraryDependencies
 
+  // JUnit Jupiter dependencies — versions derived from the sbt-jupiter-interface plugin settings
+  lazy val junitJupiterTestDeps: Def.Initialize[Seq[ModuleID]] = Def.setting {
+    Seq(
+      "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % "test",
+      "org.junit.jupiter" % "junit-jupiter-api" % JupiterKeys.junitJupiterVersion.value % "test",
+      "org.junit.jupiter" % "junit-jupiter-engine" % JupiterKeys.junitJupiterVersion.value % "test",
+      "org.junit.jupiter" % "junit-jupiter-params" % JupiterKeys.junitJupiterVersion.value % "test",
+      "org.junit.platform" % "junit-platform-launcher" % JupiterKeys.junitPlatformVersion.value % "test"
+    )
+  }
+
   lazy val parsing = Seq(
     DependencyHelpers.versionDependentDeps(
       Dependencies.Provided.scalaReflect))
 
-  lazy val httpCore = l ++= Seq(
-    parboiled,
-    Test.sprayJson, // for WS Autobahn test metadata
-    Test.scalatest, Test.scalatestplusScalacheck, Test.scalatestplusJUnit,
-    Test.junit5Api, Test.junit5Engine, Test.jupiterIntf, Test.junitPlatformLauncher)
+  lazy val httpCore = Seq(
+    l ++= Seq(
+      parboiled,
+      Test.sprayJson, // for WS Autobahn test metadata
+      Test.scalatest,
+      Test.scalatestplusScalacheck,
+      Test.scalatestplusJUnit) ++ junitJupiterTestDeps.value)
 
   lazy val httpCaching = l ++= Seq(
     caffeine,
@@ -135,22 +133,22 @@ object Dependencies {
 
   lazy val http = Seq()
 
-  lazy val http2Tests = l ++= Seq(Test.h2spec,
-    Test.junit5Api, Test.junit5Engine, Test.jupiterIntf, Test.junitPlatformLauncher)
+  lazy val http2Tests = Seq(
+    l ++= Seq(Test.h2spec) ++ junitJupiterTestDeps.value)
 
   lazy val httpTestkit = Seq(
     versionDependentDeps(
+      Test.junit4,
       Test.specs2 % "provided; test"),
     l ++= Seq(
-      Test.junit5Api, Test.junit5Engine, Test.jupiterIntf, Test.junitPlatformLauncher,
-      Test.junit, Test.junitIntf, Compile.junit % "provided", Compile.junit5Api % "provided",
-      Test.scalatest.withConfigurations(Some("provided; test"))))
+      "org.junit.jupiter" % "junit-jupiter-api" % JupiterKeys.junitJupiterVersion.value % "provided",
+      Test.scalatest.withConfigurations(Some("provided; test"))) ++ junitJupiterTestDeps.value)
 
   lazy val httpTestkitMunit =
     l ++= Seq(Test.munit % "provided; test")
 
-  lazy val httpTests = l ++=
-    Seq(Test.junit5Api, Test.junit5Engine, Test.jupiterIntf, Test.junitPlatformLauncher, Test.scalatest, Test.junitIntf)
+  lazy val httpTests = Seq(
+    l ++= junitJupiterTestDeps.value ++ Seq(Test.scalatest))
 
   lazy val httpXml = Seq(
     versionDependentDeps(scalaXml),
@@ -160,14 +158,18 @@ object Dependencies {
     versionDependentDeps(sprayJson),
     libraryDependencies += Test.scalatest)
 
-  lazy val httpJackson = l ++= Seq(jacksonDatabind, Test.scalatestplusJUnit,
-    Test.junit5Api, Test.junit5Engine, Test.jupiterIntf, Test.junitPlatformLauncher)
+  lazy val httpJackson = Seq(
+    l ++= Seq(jacksonDatabind, Test.scalatestplusJUnit) ++ junitJupiterTestDeps.value)
 
-  lazy val httpJackson3 = l ++= Seq(jacksonDatabind3, Test.scalatestplusJUnit,
-    Test.junit5Api, Test.junit5Engine, Test.jupiterIntf, Test.junitPlatformLauncher)
+  lazy val httpJackson3 = Seq(
+    l ++= Seq(jacksonDatabind3, Test.scalatestplusJUnit) ++ junitJupiterTestDeps.value)
 
-  lazy val docs = l ++= Seq(Docs.sprayJson, Docs.gson, Docs.jacksonXml, Docs.reflections,
-    Test.junit5Api, Test.junit5Engine, Test.jupiterIntf, Test.junitPlatformLauncher)
+  lazy val docs = Seq(
+    l ++= Seq(
+      Docs.sprayJson,
+      Docs.gson,
+      Docs.jacksonXml,
+      Docs.reflections) ++ junitJupiterTestDeps.value)
 }
 
 object DependencyHelpers {
