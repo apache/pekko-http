@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.scaladsl.testkit
@@ -17,10 +17,13 @@ import scala.concurrent.duration._
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.testkit._
+import pekko.http.impl.util.enhanceConfig
 
 case class RouteTestTimeout(duration: FiniteDuration)
 
 object RouteTestTimeout {
-  implicit def default(implicit system: ActorSystem): RouteTestTimeout = RouteTestTimeout(1.second.dilated)
+  implicit def default(implicit system: ActorSystem): RouteTestTimeout = {
+    val routesTimeout = system.settings.config.getFiniteDuration("pekko.http.testkit.routes.timeout")
+    RouteTestTimeout(routesTimeout)
+  }
 }
