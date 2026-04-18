@@ -84,7 +84,8 @@ class Http2HighlevelServerSpec extends PekkoSpecWithMaterializer(
         status: StatusCode = StatusCodes.OK,
         headers: immutable.Seq[HttpHeader] = Nil): TestPublisher.Probe[ByteString] = {
       val probe = TestPublisher.probe[ByteString]()
-      sendResponse(HttpResponse(status, headers, HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(probe))))
+      sendResponse(HttpResponse(status, headers,
+        HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(probe))))
       probe
     }
 
@@ -111,7 +112,8 @@ class Http2HighlevelServerSpec extends PekkoSpecWithMaterializer(
     lazy val clientFlow =
       Http().connectionTo("pekko.example.org")
         .withCustomHttpsConnectionContext(ExampleHttpContexts.exampleClientContext)
-        .withClientConnectionSettings(clientSettings.withTransport(ExampleHttpContexts.proxyTransport(binding.localAddress)))
+        .withClientConnectionSettings(
+          clientSettings.withTransport(ExampleHttpContexts.proxyTransport(binding.localAddress)))
         .http2()
     lazy val clientRequestsOut = TestPublisher.probe[HttpRequest]()
     lazy val clientResponsesIn = TestSubscriber.probe[HttpResponse]()
@@ -127,7 +129,8 @@ class Http2HighlevelServerSpec extends PekkoSpecWithMaterializer(
         headers: immutable.Seq[HttpHeader] = Nil): TestPublisher.Probe[ByteString] = {
       val probe = TestPublisher.probe[ByteString]()
       sendClientRequest(
-        HttpRequest(method, uri, headers, HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(probe)))
+        HttpRequest(method, uri, headers,
+          HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(probe)))
           .addAttribute(requestIdAttr, RequestId(requestId)))
       probe
     }

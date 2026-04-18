@@ -93,10 +93,12 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
     val handlerWithErrorHandling = withErrorHandling(log, handler)
 
     val http1: HttpImplementation =
-      Flow[HttpRequest].mapAsync(settings.pipeliningLimit)(handleUpgradeRequests(handlerWithErrorHandling, settings, log))
+      Flow[HttpRequest].mapAsync(settings.pipeliningLimit)(handleUpgradeRequests(handlerWithErrorHandling, settings,
+        log))
         .joinMat(GracefulTerminatorStage(system, settings).atop(http.serverLayer(settings, log = log)))(Keep.right)
     val http2: HttpImplementation =
-      Http2Blueprint.handleWithStreamIdHeader(settings.http2Settings.maxConcurrentStreams)(handlerWithErrorHandling)(system.dispatcher)
+      Http2Blueprint.handleWithStreamIdHeader(settings.http2Settings.maxConcurrentStreams)(handlerWithErrorHandling)(
+        system.dispatcher)
         .joinMat(Http2Blueprint.serverStackTls(settings, log, telemetry, Http().dateHeaderRendering))(Keep.right)
 
     val masterTerminator = new MasterServerTerminator(log)
