@@ -358,7 +358,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       extraInitialWindow: Int) extends ReceivingData {
 
     override protected def onDataFrame(dataFrame: DataFrame): StreamState = {
-      val newData = collectedData ++ dataFrame.payload
+      val newData =
+        if (collectedData.isEmpty) dataFrame.payload
+        else if (dataFrame.payload.isEmpty) collectedData
+        else collectedData ++ dataFrame.payload
 
       if (dataFrame.endStream) {
         totalBufferedData -= newData.length
