@@ -20,7 +20,7 @@ object Dependencies {
   import DependencyHelpers._
 
   val jacksonDatabindVersion = "2.21.3"
-  val jacksonDatabind3Version = "3.1.2"
+  val jacksonDatabind3Version = "3.1.3"
   val jacksonXmlVersion = jacksonDatabindVersion
   val junit4Version = "4.13.2"
   val h2specVersion = "2.6.0"
