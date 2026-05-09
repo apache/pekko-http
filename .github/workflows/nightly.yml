@@ -57,11 +57,11 @@ jobs:
         run: sbt -Dpekko.build.pekko.version=${{ matrix.PEKKO_VERSION }} "++ ${{ matrix.SCALA_VERSION }}" Test/compile
 
       - name: Run all tests JDK ${{ matrix.JDK }}, Scala ${{ matrix.SCALA_VERSION }}, Pekko ${{ matrix.PEKKO_VERSION }}, TLS Engine ${{ matrix.TLS_ENGINE_CONFIG }}
-        run: |
-          sbt -Dpekko.http.parallelExecution=false -Dpekko.test.timefactor=2 
-            -Dpekko.build.pekko.version=${{ matrix.PEKKO_VERSION }}
-            -DTLS_ENGINE_CONFIG=${{ matrix.TLS_ENGINE_CONFIG }}
-            "++ ${{ matrix.SCALA_VERSION }}" mimaReportBinaryIssues test
+        run: >
+          sbt -Dpekko.http.parallelExecution=false -Dpekko.test.timefactor=2
+          -Dpekko.build.pekko.version=${{ matrix.PEKKO_VERSION }}
+          -DTLS_ENGINE_CONFIG=${{ matrix.TLS_ENGINE_CONFIG }}
+          "++ ${{ matrix.SCALA_VERSION }}" mimaReportBinaryIssues test
 
       - name: Upload test results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
