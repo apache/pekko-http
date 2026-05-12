@@ -126,7 +126,7 @@ private final class ServerSentEventParser(
       setHandlers(in, out, this)
 
       override def onPush(): Unit = {
-        val line = grab(in)
+        val line = grab(in).stripSuffix("\r")
         if (shouldSkipUntilEventEnd) { // Max event size was previously reached. Skip successive lines until event ends
           if (line.isEmpty) shouldSkipUntilEventEnd = false // Stop skipping when end of event (empty line) is reached
           pull(in) // Already reported oversized event (below). Drop and continue to next line.
