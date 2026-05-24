@@ -90,11 +90,15 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       else if (connectionContext.isSecure) settings.defaultHttpsPort
       else settings.defaultHttpPort
 
+    val handlerWithErrorHandling = withErrorHandling(log, handler)
+
     val http1: HttpImplementation =
-      Flow[HttpRequest].mapAsync(settings.pipeliningLimit)(handleUpgradeRequests(handler, settings, log))
+      Flow[HttpRequest].mapAsync(settings.pipeliningLimit)(handleUpgradeRequests(handler, handlerWithErrorHandling,
+        settings, log))
         .joinMat(GracefulTerminatorStage(system, settings).atop(http.serverLayer(settings, log = log)))(Keep.right)
     val http2: HttpImplementation =
-      Http2Blueprint.handleWithStreamIdHeader(settings.http2Settings.maxConcurrentStreams)(handler)(system.dispatcher)
+      Http2Blueprint.handleWithStreamIdHeader(settings.http2Settings.maxConcurrentStreams)(handlerWithErrorHandling)(
+        system.dispatcher)
         .joinMat(Http2Blueprint.serverStackTls(settings, log, telemetry, Http().dateHeaderRendering))(Keep.right)
 
     val masterTerminator = new MasterServerTerminator(log)
@@ -138,6 +142,23 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       }.to(Sink.ignore).run()
   }
 
+  private def withErrorHandling(
+      log: LoggingAdapter,
+      handler: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] = { request =>
+    try {
+      handler(request).recover {
+        case NonFatal(ex) => handleHandlerError(log, ex)
+      }(ExecutionContext.parasitic)
+    } catch {
+      case NonFatal(ex) => Future.successful(handleHandlerError(log, ex))
+    }
+  }
+
+  private def handleHandlerError(log: LoggingAdapter, ex: Throwable): HttpResponse = {
+    log.error(ex, "Internal server error, sending 500 response")
+    HttpResponse(StatusCodes.InternalServerError)
+  }
+
   private def prepareServerAttributes(settings: ServerSettings, incoming: Tcp.IncomingConnection) = {
     val attrs = Http.prepareAttributes(settings, incoming)
     if (telemetry == NoOpTelemetry) attrs
@@ -149,6 +170,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 
   private def handleUpgradeRequests(
       handler: HttpRequest => Future[HttpResponse],
+      handlerWithErrorHandling: HttpRequest => Future[HttpResponse],
       settings: ServerSettings,
       log: LoggingAdapter): HttpRequest => Future[HttpResponse] = { req =>
     req.header[Upgrade] match {
@@ -172,8 +194,8 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
               Flow[HttpRequest]
                 .watchTermination(Keep.right)
                 .prepend(injectedRequest)
-                .via(Http2Blueprint.handleWithStreamIdHeader(settings.http2Settings.maxConcurrentStreams)(handler)(
-                  system.dispatcher))
+                .via(Http2Blueprint.handleWithStreamIdHeader(settings.http2Settings.maxConcurrentStreams)(
+                  handlerWithErrorHandling)(system.dispatcher))
                 // the settings from the header are injected into the blueprint as initial demuxer settings
                 .joinMat(Http2Blueprint.serverStack(settings, log, settingsFromHeader, true, telemetry,
                   Http().dateHeaderRendering))(Keep.left))

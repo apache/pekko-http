@@ -30,7 +30,6 @@ import pekko.http.scaladsl.model.{
   HttpHeader,
   HttpMethod,
   HttpMethods,
-  HttpProtocols,
   HttpRequest,
   HttpResponse,
   RequestResponseAssociation,
@@ -45,6 +44,8 @@ import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.stream.StreamTcpException
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
+import pekko.stream.testkit.Utils.TE
+import pekko.testkit.EventFilter
 import pekko.testkit.TestProbe
 import pekko.util.ByteString
 
@@ -144,6 +145,31 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       val response = expectClientResponse()
       response.status should be(StatusCodes.BadRequest)
     }
+
+    "return internal server error when handler future fails" in new TestSetup {
+      sendClientRequest()
+      val serverRequest = expectServerRequest()
+
+      EventFilter[TE](message = "boom", occurrences = 1).intercept {
+        serverRequest.promise.failure(TE("boom"))
+        val response = expectClientResponse()
+        response.status should be(StatusCodes.InternalServerError)
+      }
+
+      sendClientRequest()
+      val nextServerRequest = expectServerRequest()
+      nextServerRequest.sendResponse(HttpResponse())
+      expectClientResponse().status should be(StatusCodes.OK)
+    }
+
+    "return internal server error when handler throws synchronously" in new TestSetup {
+      override def handler: HttpRequest => Future[HttpResponse] = _ => throw TE("boom-sync")
+
+      EventFilter[TE](message = "boom-sync", occurrences = 1).intercept {
+        sendClientRequest()
+        expectClientResponse().status should be(StatusCodes.InternalServerError)
+      }
+    }
   }
 
   case class ServerRequest(request: HttpRequest, promise: Promise[HttpResponse]) {
@@ -169,7 +195,7 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
     def serverSettings: ServerSettings = ServerSettings(system)
     def clientSettings: ClientConnectionSettings = ClientConnectionSettings(system)
     private lazy val serverRequestProbe = TestProbe()
-    private lazy val handler: HttpRequest => Future[HttpResponse] = { req =>
+    def handler: HttpRequest => Future[HttpResponse] = { req =>
       val p = Promise[HttpResponse]()
       serverRequestProbe.ref ! ServerRequest(req, p)
       p.future

@@ -160,6 +160,9 @@ private[http2] object RequestParsing {
             case ":status" =>
               protocolError("Pseudo-header ':status' is for responses only; it cannot appear in a request")
 
+            case name if name.startsWith(":") =>
+              protocolError(s"Unexpected pseudo-header '$name' in request")
+
             case "content-length" =>
               if (contentLength == -1) {
                 val contentLengthValue = ContentLength.get(value).toLong
