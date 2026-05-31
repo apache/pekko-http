@@ -629,7 +629,7 @@ private[client] object NewHostConnectionPool {
         }
         override def postStop(): Unit = {
           slots.foreach(_.shutdown())
-          log.debug(s"Pool stopped")
+          log.debug("Pool stopped")
         }
 
         private def willClose(response: HttpResponse): Boolean =

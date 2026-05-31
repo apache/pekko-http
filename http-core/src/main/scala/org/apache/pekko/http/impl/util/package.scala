@@ -176,7 +176,7 @@ package util {
       new Receive {
         def isDefinedAt(x: Any): Boolean = r.isDefinedAt(x)
         def apply(x: Any): Unit = {
-          log.debug(s"[$mark] received: $x")
+          log.debug("[{}] received: {}", mark, x)
           r(x)
         }
       }

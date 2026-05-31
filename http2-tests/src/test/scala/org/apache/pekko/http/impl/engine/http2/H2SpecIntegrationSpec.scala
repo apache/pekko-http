@@ -311,7 +311,7 @@ class H2SpecIntegrationSpec extends PekkoFreeSpec(
           "-j", junitOutput.getPath) ++
         specSectionNumber.toList.map(number => s"http2/$number")
 
-      log.debug(s"Executing h2spec: $command")
+      log.debug("Executing h2spec: {}", command)
       val aggregateTckLogs = ProcessLogger(
         out => {
           if (out.contains("All tests passed")) ()
