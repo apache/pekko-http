@@ -42,8 +42,7 @@ private[parsing] object SpecializedHeaderValueParsers {
           if (result > (Long.MaxValue - digit) / 10)
             fail("`Content-Length` header value must not exceed 63-bit integer range")
           else recurse(ix + 1, result * 10 + digit)
-        }
-        else if (WSP(c)) recurse(ix + 1, result)
+        } else if (WSP(c)) recurse(ix + 1, result)
         else if (c == '\r' && byteAt(input, ix + 1) == LF_BYTE) (`Content-Length`(result), ix + 2)
         else if (c == '\n') (`Content-Length`(result), ix + 1)
         else fail("Illegal `Content-Length` header value")
