@@ -380,8 +380,12 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       extends ReceivingDataWithBuffer(HalfClosedRemoteWaitingForOutgoingStream(extraInitialWindow)) {
     override def handleOutgoingCreated(
         outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
-      outStream.increaseWindow(extraInitialWindow)
-      Open(buffer, outStream)
+      if (outStream.increaseWindow(extraInitialWindow)) Open(buffer, outStream)
+      else {
+        outStream.cancelStream()
+        multiplexer.pushControlFrame(RstStreamFrame(outStream.streamId, ErrorCode.FLOW_CONTROL_ERROR))
+        Closed
+      }
     }
     override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState =
       HalfClosedLocal(buffer)
@@ -421,8 +425,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
 
     def increaseWindow(delta: Int): StreamState = {
-      outStream.increaseWindow(delta)
-      this
+      if (outStream.increaseWindow(delta)) this
+      else {
+        multiplexer.pushControlFrame(RstStreamFrame(outStream.streamId, ErrorCode.FLOW_CONTROL_ERROR))
+        Closed
+      }
     }
   }
 
@@ -531,8 +538,12 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       outStream.cancelStream()
     }
     override def incrementWindow(delta: Int): StreamState = {
-      outStream.increaseWindow(delta)
-      this
+      if (outStream.increaseWindow(delta)) this
+      else {
+        outStream.cancelStream()
+        multiplexer.pushControlFrame(RstStreamFrame(outStream.streamId, ErrorCode.FLOW_CONTROL_ERROR))
+        Closed
+      }
     }
   }
 
@@ -553,8 +564,12 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
     override def handleOutgoingCreated(
         outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
-      outStream.increaseWindow(extraInitialWindow)
-      HalfClosedRemoteSendingData(outStream)
+      if (outStream.increaseWindow(extraInitialWindow)) HalfClosedRemoteSendingData(outStream)
+      else {
+        outStream.cancelStream()
+        multiplexer.pushControlFrame(RstStreamFrame(outStream.streamId, ErrorCode.FLOW_CONTROL_ERROR))
+        Closed
+      }
     }
     override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState = Closed
   }
@@ -700,11 +715,12 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
 
   trait OutStream {
+    def streamId: Int
     def canSend: Boolean
     def cancelStream(): Unit
     def endStreamIfPossible(): Option[FrameEvent]
     def nextFrame(maxBytesToSend: Int): DataFrame
-    def increaseWindow(delta: Int): Unit
+    def increaseWindow(delta: Int): Boolean
     def isDone: Boolean
   }
   object OutStream {
@@ -816,11 +832,17 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
     def bufferedBytes: Int = buffer.length
 
-    override def increaseWindow(increment: Int): Unit = if (increment >= 0) {
-      outboundWindowLeft += increment
-      debug(s"Updating window for $streamId by $increment to $outboundWindowLeft buffered bytes: $bufferedBytes")
-      enqueueIfPossible()
-    }
+    override def increaseWindow(increment: Int): Boolean = if (increment >= 0) {
+      val newWindow = outboundWindowLeft.toLong + increment
+      if (newWindow > Http2Protocol.MaxWindowSize) {
+        false
+      } else {
+        outboundWindowLeft = newWindow.toInt
+        debug(s"Updating window for $streamId by $increment to $outboundWindowLeft buffered bytes: $bufferedBytes")
+        enqueueIfPossible()
+        true
+      }
+    } else true
 
     // external callbacks, need to make sure that potential stream state changing events are run through the state machine
     override def onPush(): Unit = {
