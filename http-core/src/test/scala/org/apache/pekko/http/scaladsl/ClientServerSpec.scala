@@ -643,7 +643,7 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
         Http().singleRequest(request(i), settings = clientSettings).futureValue
           .entity.dataBytes.runFold(ByteString.empty) { (prev, cur) =>
             val res = prev ++ cur
-            system.log.debug(s"Received ${res.size} of [${res.take(1).utf8String}]")
+            system.log.debug("Received {} of [{}]", res.size, res.take(1).utf8String)
             res
           }.futureValue
           .size shouldBe responseSize

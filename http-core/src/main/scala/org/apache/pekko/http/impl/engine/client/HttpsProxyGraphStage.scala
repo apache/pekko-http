@@ -150,7 +150,7 @@ private final class HttpsProxyGraphStage(
                     }
                     parser.onUpstreamFinish()
 
-                    log.debug(s"HTTP(S) proxy connection to {}:{} established. Now forwarding data.", targetHostName,
+                    log.debug("HTTP(S) proxy connection to {}:{} established. Now forwarding data.", targetHostName,
                       targetPort)
 
                     state = Connected

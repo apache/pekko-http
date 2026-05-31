@@ -50,7 +50,7 @@ class HttpClientDecodingExampleSpec extends PekkoSpec with CompileOnlySpec with 
         case HttpEncodings.identity =>
           Coders.NoCoding
         case other =>
-          log.warning(s"Unknown encoding [$other], not decoding")
+          log.warning("Unknown encoding [{}], not decoding", other)
           Coders.NoCoding
       }
 
@@ -61,7 +61,7 @@ class HttpClientDecodingExampleSpec extends PekkoSpec with CompileOnlySpec with 
       Future.traverse(requests)(http.singleRequest(_).map(decodeResponse))
 
     futureResponses.futureValue.foreach { resp =>
-      system.log.info(s"response is ${resp.toStrict(1.second).futureValue}")
+      system.log.info("response is {}", resp.toStrict(1.second).futureValue)
     }
 
     system.terminate()

@@ -271,8 +271,8 @@ object FileAndResourceDirectives extends FileAndResourceDirectives {
     val canonicalFinalPath = finalFile.getCanonicalPath
 
     if (!canonicalFinalPath.startsWith(baseFile.getCanonicalPath)) {
-      log.warning(s"[$finalFile] points to a location that is not part of [$baseFile]. This might be a directory " +
-        "traversal attempt.")
+      log.warning("[{}] points to a location that is not part of [{}]. This might be a directory traversal attempt.",
+        finalFile, baseFile)
       ""
     } else canonicalFinalPath
   }

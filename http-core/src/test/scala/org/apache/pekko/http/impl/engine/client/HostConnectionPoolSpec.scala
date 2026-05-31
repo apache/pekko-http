@@ -880,7 +880,7 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
             connectionProbe.ref ! serverConnection
           })
           .run().awaitResult(3.seconds)
-      system.log.debug(s"Server bound to [${serverBinding.localAddress}]")
+      system.log.debug("Server bound to [{}]", serverBinding.localAddress)
 
       // needs to be an involved two step process:
       //   1. setup client flow and proxies on the server side to be able to return that flow immediately

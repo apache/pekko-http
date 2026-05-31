@@ -189,7 +189,7 @@ private[engine] final class HttpHeaderParser private (
         case (c, IllegalResponseHeaderNameProcessingMode.Error) =>
           fail(s"Illegal character '${escape(c)}' in header name")
         case (c, IllegalResponseHeaderNameProcessingMode.Warn) =>
-          log.warning(s"Header key contains illegal character '${escape(c)}'")
+          log.warning("Header key contains illegal character '{}'", escape(c))
           scanHeaderNameAndReturnIndexOfColon(input, start, limit)(ix + 1)
         case (c, IllegalResponseHeaderNameProcessingMode.Ignore) =>
           scanHeaderNameAndReturnIndexOfColon(input, start, limit)(ix + 1)
@@ -649,7 +649,7 @@ private[http] object HttpHeaderParser {
                   fail(s"Illegal character '${escape(c)}' in header value")
                 case IllegalResponseHeaderValueProcessingMode.Warn =>
                   // ignore the illegal character and log a warning message
-                  log.warning(s"Illegal character '${escape(c)}' in header value")
+                  log.warning("Illegal character '{}' in header value", escape(c))
                   sb
                 case IllegalResponseHeaderValueProcessingMode.Ignore =>
                   // just ignore the illegal character

@@ -84,11 +84,11 @@ abstract class DontLeakActorsOnFailingConnectionSpecs(poolImplementation: String
   private def handleResponse(httpResp: Try[HttpResponse], id: Int): Unit = {
     httpResp match {
       case Success(httpRes) =>
-        system.log.error(s"$id: OK: (${httpRes.status.intValue}")
+        system.log.error("{}: OK: ({}", id, httpRes.status.intValue)
         httpRes.entity.dataBytes.runWith(Sink.ignore)
 
       case Failure(ex) =>
-        system.log.debug(s"$id: FAIL $ex") // this is what we expect
+        system.log.debug("{}: FAIL {}", id, ex) // this is what we expect
     }
   }
 

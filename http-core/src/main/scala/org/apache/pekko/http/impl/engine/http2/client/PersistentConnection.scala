@@ -154,8 +154,8 @@ private[http2] object PersistentConnection {
             } else {
               setHandler(requestIn, Unconnected)
               if (baseEmbargo == Duration.Zero) {
-                log.info(s"Connection attempt failed: ${cause.getMessage}. Trying to connect again${connectsLeft.map(
-                    n => s" ($n attempts left)").getOrElse("")}.")
+                log.info("Connection attempt failed: {}. Trying to connect again{}.", cause.getMessage,
+                    connectsLeft.map(n => s" ($n attempts left)").getOrElse(""))
                 connect(connectsLeft, Duration.Zero)
               } else {
                 val embargo = lastEmbargo match {
@@ -165,9 +165,9 @@ private[http2] object PersistentConnection {
                 val minMillis = embargo.toMillis
                 val maxMillis = minMillis * 2
                 val backoff = ThreadLocalRandom.current().nextLong(minMillis, maxMillis).millis
-                log.info(
-                  s"Connection attempt failed: ${cause.getMessage}. Trying to connect again after backoff ${PrettyDuration.format(
-                      backoff)} ${connectsLeft.map(n => s" ($n attempts left)").getOrElse("")}.")
+                log.info("Connection attempt failed: {}. Trying to connect again after backoff {} {}.",
+                    cause.getMessage, PrettyDuration.format(backoff),
+                    connectsLeft.map(n => s" ($n attempts left)").getOrElse(""))
                 scheduleOnce(EmbargoEnded(connectsLeft, embargo), backoff)
               }
             }
