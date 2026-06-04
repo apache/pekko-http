@@ -82,7 +82,7 @@ object Dependencies {
       // For pekko-http-testkit-java (JUnit 4 support for library users) -- deprecated since 2.0.0
       val junit4 = "junit" % "junit" % junit4Version
       val specs2 = "org.specs2" %% "specs2-core" % "4.23.0"
-      val munit = "org.scalameta" %% "munit" % "1.3.1"
+      val munit = "org.scalameta" %% "munit" % "1.3.2"
 
       val scalacheck = "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
 
