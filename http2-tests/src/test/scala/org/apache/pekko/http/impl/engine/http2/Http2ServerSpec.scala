@@ -1061,6 +1061,17 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectDecodedHEADERS(streamId = TheStreamId, endStream = true).headers should be(
             immutable.Seq(RawHeader("grpc-status", "10")))
         })
+
+      "reject stream-level WINDOW_UPDATE that would overflow the flow-control window with FLOW_CONTROL_ERROR"
+        .inAssertAllStagesStopped(
+          new WaitingForResponseDataSetup {
+            // fill the stream-level window up to Int.MaxValue
+            network.sendWINDOW_UPDATE(TheStreamId, Int.MaxValue - Http2Protocol.InitialWindowSize)
+            // one more increment must trigger RST_STREAM with FLOW_CONTROL_ERROR;
+            // use sendFrame directly to bypass the test-side window tracking assertion
+            network.sendFrame(WindowUpdateFrame(TheStreamId, 1))
+            network.expectRST_STREAM(TheStreamId, ErrorCode.FLOW_CONTROL_ERROR)
+          })
     }
 
     "support multiple concurrent substreams" should {
@@ -1273,6 +1284,18 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
 
           network.expectRST_STREAM(1, ErrorCode.PROTOCOL_ERROR)
         })
+
+      "reject connection-level WINDOW_UPDATE that would overflow the flow-control window with FLOW_CONTROL_ERROR"
+        .inAssertAllStagesStopped(
+          new TestSetup with RequestResponseProbes {
+            // fill the connection-level window up to Int.MaxValue
+            network.sendWINDOW_UPDATE(0, Int.MaxValue - Http2Protocol.InitialWindowSize)
+            // one more increment must trigger GOAWAY with FLOW_CONTROL_ERROR;
+            // use sendFrame directly to bypass the test-side window tracking assertion
+            network.sendFrame(WindowUpdateFrame(0, 1))
+            val (_, errorCode) = network.expectGOAWAY()
+            errorCode should ===(ErrorCode.FLOW_CONTROL_ERROR)
+          })
 
       "backpressure incoming frames when outgoing control frame buffer fills".inAssertAllStagesStopped(
         new TestSetup with HandlerFunctionSupport {

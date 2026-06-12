@@ -37,9 +37,12 @@ private[parsing] object SpecializedHeaderValueParsers {
         : (HttpHeader, Int) = {
       @tailrec def recurse(ix: Int = valueStart, result: Long = 0): (HttpHeader, Int) = {
         val c = byteChar(input, ix)
-        if (result < 0) fail("`Content-Length` header value must not exceed 63-bit integer range")
-        else if (DIGIT(c)) recurse(ix + 1, result * 10 + c - '0')
-        else if (WSP(c)) recurse(ix + 1, result)
+        if (DIGIT(c)) {
+          val digit = c - '0'
+          if (result > (Long.MaxValue - digit) / 10)
+            fail("`Content-Length` header value must not exceed 63-bit integer range")
+          else recurse(ix + 1, result * 10 + digit)
+        } else if (WSP(c)) recurse(ix + 1, result)
         else if (c == '\r' && byteAt(input, ix + 1) == LF_BYTE) (`Content-Length`(result), ix + 2)
         else if (c == '\n') (`Content-Length`(result), ix + 1)
         else fail("Illegal `Content-Length` header value")
