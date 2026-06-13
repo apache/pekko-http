@@ -35,6 +35,7 @@ object Common extends AutoPlugin {
       // verbosely. So, opt out of those in general.
       "-Wconf:cat=other-match-analysis&msg=match may not be exhaustive:s")).value,
     scalacOptions ++= onlyOnScala3(Seq("-Wconf:cat=deprecation:s")).value,
+    scalacOptions ++= onlyOnScala3(Seq("-Yfuture-lazy-vals")).value,
     javacOptions ++=
       Seq("-encoding", "UTF-8", "--release", javacTarget),
     mimaReportSignatureProblems := true,
