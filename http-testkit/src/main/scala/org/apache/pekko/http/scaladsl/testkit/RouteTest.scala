@@ -47,7 +47,7 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
   protected def createActorSystem(): ActorSystem =
     ActorSystem(actorSystemNameFrom(getClass), testConfig)
 
-  def actorSystemNameFrom(clazz: Class[_]) =
+  def actorSystemNameFrom(clazz: Class[?]) =
     clazz.getName
       .replace('.', '-')
       .replace('_', '-')

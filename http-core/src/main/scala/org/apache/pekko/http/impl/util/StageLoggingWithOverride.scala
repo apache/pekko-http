@@ -33,7 +33,7 @@ private[pekko] trait StageLoggingWithOverride extends GraphStageLogic {
 
   private var _log: LoggingAdapter = null
 
-  protected def logSource: Class[_] = this.getClass
+  protected def logSource: Class[?] = this.getClass
 
   def log: LoggingAdapter = {
     // only used in StageLogic, i.e. thread safe

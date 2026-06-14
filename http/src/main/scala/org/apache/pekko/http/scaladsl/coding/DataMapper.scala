@@ -20,17 +20,17 @@ import pekko.util.ByteString
 
 /** An abstraction to transform data bytes of HttpMessages or HttpEntities */
 sealed trait DataMapper[T] {
-  def transformDataBytes(t: T, transformer: Flow[ByteString, ByteString, _]): T
+  def transformDataBytes(t: T, transformer: Flow[ByteString, ByteString, ?]): T
 }
 object DataMapper {
   implicit val mapRequestEntity: DataMapper[RequestEntity] =
     new DataMapper[RequestEntity] {
-      def transformDataBytes(t: RequestEntity, transformer: Flow[ByteString, ByteString, _]): RequestEntity =
+      def transformDataBytes(t: RequestEntity, transformer: Flow[ByteString, ByteString, ?]): RequestEntity =
         t.transformDataBytes(transformer)
     }
   implicit val mapResponseEntity: DataMapper[ResponseEntity] =
     new DataMapper[ResponseEntity] {
-      def transformDataBytes(t: ResponseEntity, transformer: Flow[ByteString, ByteString, _]): ResponseEntity =
+      def transformDataBytes(t: ResponseEntity, transformer: Flow[ByteString, ByteString, ?]): ResponseEntity =
         t.transformDataBytes(transformer)
     }
 
@@ -40,7 +40,7 @@ object DataMapper {
 
   def mapMessage[T, E](entityMapper: DataMapper[E])(mapEntity: (T, E => E) => T): DataMapper[T] =
     new DataMapper[T] {
-      def transformDataBytes(t: T, transformer: Flow[ByteString, ByteString, _]): T =
+      def transformDataBytes(t: T, transformer: Flow[ByteString, ByteString, ?]): T =
         mapEntity(t, entityMapper.transformDataBytes(_, transformer))
     }
 }

@@ -187,7 +187,7 @@ private[http2] object PersistentConnection {
         class Connected(
             requestOut: SubSourceOutlet[HttpRequest],
             responseIn: SubSinkInlet[HttpResponse]) extends State {
-          private var ongoingRequests: Map[AssociationTag, Map[AttributeKey[_], RequestResponseAssociation]] = Map.empty
+          private var ongoingRequests: Map[AssociationTag, Map[AttributeKey[?], RequestResponseAssociation]] = Map.empty
           responseIn.pull()
 
           requestOut.setHandler(new OutHandler {
@@ -234,7 +234,7 @@ private[http2] object PersistentConnection {
             ongoingRequests = ongoingRequests.updated(tag,
               req.attributes.collect({
                 case (key, value: RequestResponseAssociation) => key -> value
-              }: PartialFunction[(AttributeKey[_], Any), (AttributeKey[_], RequestResponseAssociation)]))
+              }: PartialFunction[(AttributeKey[?], Any), (AttributeKey[?], RequestResponseAssociation)]))
             requestOut.push(req.addAttribute(associationTagKey, tag))
           }
 

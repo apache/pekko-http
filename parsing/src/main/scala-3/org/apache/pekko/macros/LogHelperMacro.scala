@@ -15,7 +15,7 @@ package org.apache.pekko.macros
 
 import org.apache.pekko.annotation.InternalApi
 
-import scala.quoted._
+import scala.quoted.*
 
 /** INTERNAL API */
 @InternalApi
@@ -31,5 +31,5 @@ private[pekko] trait LogHelperMacro { self: LogHelper =>
 /** INTERNAL API */
 @InternalApi
 private[pekko] object LogHelperMacro {
-  def guard(isEnabled: Expr[Boolean], log: Expr[Unit])(using Quotes): Expr[Unit] = '{ if ($isEnabled) $log }
+  def guard(isEnabled: Expr[Boolean], log: Expr[Unit])(using Quotes): Expr[Unit] = '{ if $isEnabled then $log }
 }

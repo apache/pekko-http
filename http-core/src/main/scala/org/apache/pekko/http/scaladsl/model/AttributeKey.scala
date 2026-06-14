@@ -17,7 +17,7 @@ import org.apache.pekko.http.javadsl.{ model => jm }
 
 import scala.reflect.ClassTag
 
-case class AttributeKey[T](name: String, private val clazz: Class[_]) extends jm.AttributeKey[T]
+case class AttributeKey[T](name: String, private val clazz: Class[?]) extends jm.AttributeKey[T]
 
 object AttributeKey {
   def apply[T: ClassTag](name: String): AttributeKey[T] =

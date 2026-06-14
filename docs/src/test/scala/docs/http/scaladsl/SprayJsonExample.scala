@@ -34,7 +34,7 @@ import scala.io.StdIn
 object SprayJsonExample {
 
   // needed to run the route
-  implicit val system: ActorSystem[_] = ActorSystem(Behaviors.empty, "SprayExample")
+  implicit val system: ActorSystem[?] = ActorSystem(Behaviors.empty, "SprayExample")
   // needed for the future map/flatmap in the end and future in fetchItem and saveOrder
   implicit val executionContext: ExecutionContext = system.executionContext
 

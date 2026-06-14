@@ -25,7 +25,7 @@ object WebSocket {
    * handle the WebSocket message stream. If the request wasn't a WebSocket request a response with status code 400 is
    * returned.
    */
-  def handleWebSocketRequestWith(request: HttpRequest, handler: Flow[Message, Message, _]): HttpResponse =
+  def handleWebSocketRequestWith(request: HttpRequest, handler: Flow[Message, Message, ?]): HttpResponse =
     request.asScala.attribute(AttributeKeys.webSocketUpgrade) match {
       case Some(header) => header.handleMessagesWith(handler)
       case None         => HttpResponse.create().withStatus(StatusCodes.BAD_REQUEST).withEntity("Expected WebSocket request")

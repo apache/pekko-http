@@ -43,7 +43,7 @@ object ValidatePullRequest extends AutoPlugin {
   override def requires = plugins.JvmPlugin
 
   sealed trait BuildMode {
-    def task: Option[TaskKey[_]]
+    def task: Option[TaskKey[?]]
     def log(projectName: String, l: Logger): Unit
   }
 
@@ -106,7 +106,7 @@ object ValidatePullRequest extends AutoPlugin {
   // running validation
   val validatePullRequest = taskKey[Unit]("Validate pull request and report aggregated results")
   val executePullRequestValidation = taskKey[Seq[KeyValue[Result[Any]]]]("Run pull request per project")
-  val additionalTasks = settingKey[Seq[TaskKey[_]]]("Additional tasks for pull request validation")
+  val additionalTasks = settingKey[Seq[TaskKey[?]]]("Additional tasks for pull request validation")
 
   // The set of (top-level) files or directories to watch for build changes.
   val BuildFilesAndDirectories = Set("project", "build.sbt", ".github")
@@ -331,7 +331,7 @@ object AggregatePRValidation extends AutoPlugin {
 
       def runTasks[T](s: State, structure: BuildStructure, ts: Seq[sbt.internal.Aggregation.KeyValue[Task[T]]],
           extra: DummyTaskMap, show: ShowConfig)(
-          implicit display: Show[ScopedKey[_]]): (State, Result[Seq[KeyValue[Result[T]]]]) = {
+          implicit display: Show[ScopedKey[?]]): (State, Result[Seq[KeyValue[Result[T]]]]) = {
         val complete = timedRun[T](s, ts, extra)
         sbt.access.AggregationShowRun(complete, show)
         val newState =
@@ -402,7 +402,7 @@ object AggregatePRValidation extends AutoPlugin {
         write("## Pull request validation report")
         write("")
 
-        def showKey(key: ScopedKey[_]): String = Project.showContextKey2(extracted.session).show(key)
+        def showKey(key: ScopedKey[?]): String = Project.showContextKey2(extracted.session).show(key)
 
         def totalCount(suiteResult: SuiteResult): Int = {
           import suiteResult._
@@ -464,8 +464,8 @@ object AggregatePRValidation extends AutoPlugin {
               Incomplete.linearize(inc).filter(x => x.message.isDefined || x.directCause.isDefined)
                 .map { case i @ Incomplete(node, tpe, message, causes, directCause) =>
                   def nodeName: String = node match {
-                    case Some(key: ScopedKey[_]) => showKey(key)
-                    case Some(t: Task[_])        =>
+                    case Some(key: ScopedKey[?]) => showKey(key)
+                    case Some(t: Task[?])        =>
                       t.info.name
                         .orElse(t.info.attributes.get(taskDefinitionKey).map(showKey))
                         .getOrElse(t.info.toString)

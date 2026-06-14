@@ -257,6 +257,6 @@ private[http] object PoolInterface {
       }
       override def genString(poolId: PoolId, system: ActorSystem): String = s"${system.name}/${genString(poolId)}"
 
-      override def getClazz(t: PoolId): Class[_] = classOf[PoolId]
+      override def getClazz(t: PoolId): Class[?] = classOf[PoolId]
     }
 }

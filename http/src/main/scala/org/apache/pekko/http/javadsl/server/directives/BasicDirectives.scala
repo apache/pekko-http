@@ -159,8 +159,8 @@ abstract class BasicDirectives {
    * Adds a TransformationRejection cancelling all rejections of one of the given classes
    * to the list of rejections potentially coming back from the inner route.
    */
-  def cancelRejections(classes: JIterable[Class[_]], inner: Supplier[Route]): Route = RouteAdapter {
-    D.cancelRejections(convertIterable[Class[_], Class[_]](classes): _*) { inner.get.delegate }
+  def cancelRejections(classes: JIterable[Class[?]], inner: Supplier[Route]): Route = RouteAdapter {
+    D.cancelRejections(convertIterable[Class[?], Class[?]](classes): _*) { inner.get.delegate }
   }
 
   /**

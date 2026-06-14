@@ -210,7 +210,7 @@ abstract class Unmarshaller[-A, B] extends UnmarshallerBase[A, B] {
   def flatMap[C](f: java.util.function.Function[B, CompletionStage[C]]): Unmarshaller[A, C] =
     asScala.flatMap { ctx => mat => b => f.apply(b).asScala }
 
-  def flatMap[C](u: Unmarshaller[_ >: B, C]): Unmarshaller[A, C] =
+  def flatMap[C](u: Unmarshaller[? >: B, C]): Unmarshaller[A, C] =
     asScala.flatMap { ctx => mat => b => u.asScala.apply(b)(ctx, mat) }
 
   // TODO not exposed for Java yet

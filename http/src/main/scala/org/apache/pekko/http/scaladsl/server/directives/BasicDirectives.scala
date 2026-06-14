@@ -186,7 +186,7 @@ trait BasicDirectives {
    *
    * @group basic
    */
-  def cancelRejections(classes: Class[_]*): Directive0 =
+  def cancelRejections(classes: Class[?]*): Directive0 =
     cancelRejections(r => classes.exists(_.isInstance(r)))
 
   /**

@@ -57,7 +57,7 @@ package object util {
     new EnhancedByteStringSource(byteStrings)
 
   private[this] var eventStreamLogger: ActorRef = _
-  private[http] def installEventStreamLoggerFor(channel: Class[_])(implicit system: ActorSystem): Unit = {
+  private[http] def installEventStreamLoggerFor(channel: Class[?])(implicit system: ActorSystem): Unit = {
     synchronized {
       if (eventStreamLogger == null)
         eventStreamLogger =

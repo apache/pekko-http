@@ -56,11 +56,11 @@ private[http2] case class Http2SubStream(
     // or streaming as the LastChunk of a chunked data stream
     trailingHeaders: OptionVal[ParsedHeadersFrame],
     data: Either[ByteString, Source[Any /* ByteString | HttpEntity.ChunkStreamPart */, Any]],
-    correlationAttributes: Map[AttributeKey[_], _]) {
+    correlationAttributes: Map[AttributeKey[?], ?]) {
   def streamId: Int = initialHeaders.streamId
   def hasEntity: Boolean = !initialHeaders.endStream
 
-  def withCorrelationAttributes(newAttributes: Map[AttributeKey[_], _]): Http2SubStream =
+  def withCorrelationAttributes(newAttributes: Map[AttributeKey[?], ?]): Http2SubStream =
     copy(correlationAttributes = newAttributes)
 
   /**
@@ -91,7 +91,7 @@ private[http2] case class Http2SubStream(
 @InternalApi
 private[http2] object Http2SubStream {
   def apply(entity: HttpEntity, headers: ParsedHeadersFrame, trailingHeaders: OptionVal[ParsedHeadersFrame],
-      correlationAttributes: Map[AttributeKey[_], _] = Map.empty): Http2SubStream = {
+      correlationAttributes: Map[AttributeKey[?], ?] = Map.empty): Http2SubStream = {
     val data =
       entity match {
         case HttpEntity.Chunked(_, chunks) => Right(chunks)

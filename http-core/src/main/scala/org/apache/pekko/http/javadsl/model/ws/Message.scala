@@ -71,7 +71,7 @@ abstract class TextMessage extends Message {
   /**
    * Returns a source of the text message data.
    */
-  def getStreamedText: Source[String, _]
+  def getStreamedText: Source[String, ?]
 
   /**
    * Returns the strict message text if this message is strict, throws otherwise.
@@ -95,7 +95,7 @@ object TextMessage {
   def create(text: String): TextMessage =
     new TextMessage {
       def isStrict: Boolean = true
-      def getStreamedText: Source[String, _] = Source.single(text)
+      def getStreamedText: Source[String, ?] = Source.single(text)
       def getStrictText: String = text
 
       def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.TextMessage.Strict] = asScala
@@ -108,11 +108,11 @@ object TextMessage {
   /**
    * Creates a streamed text message.
    */
-  def create(textStream: Source[String, _]): TextMessage =
+  def create(textStream: Source[String, ?]): TextMessage =
     new TextMessage {
       def isStrict: Boolean = false
       def getStrictText: String = throw new IllegalStateException("Cannot get strict text for streamed message.")
-      def getStreamedText: Source[String, _] = textStream
+      def getStreamedText: Source[String, ?] = textStream
 
       def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.TextMessage.Strict] = asScala
         .toStrict(timeoutMillis.millis)(materializer)
@@ -137,7 +137,7 @@ abstract class BinaryMessage extends Message {
   /**
    * Returns a source of the binary message data.
    */
-  def getStreamedData: Source[ByteString, _]
+  def getStreamedData: Source[ByteString, ?]
 
   /**
    * Returns the strict message data if this message is strict, throws otherwise.
@@ -159,7 +159,7 @@ object BinaryMessage {
   def create(data: ByteString): BinaryMessage =
     new BinaryMessage {
       def isStrict: Boolean = true
-      def getStreamedData: Source[ByteString, _] = Source.single(data)
+      def getStreamedData: Source[ByteString, ?] = Source.single(data)
       def getStrictData: ByteString = data
 
       def toStrict(
@@ -173,11 +173,11 @@ object BinaryMessage {
   /**
    * Creates a streamed binary message.
    */
-  def create(dataStream: Source[ByteString, _]): BinaryMessage =
+  def create(dataStream: Source[ByteString, ?]): BinaryMessage =
     new BinaryMessage {
       def isStrict: Boolean = false
       def getStrictData: ByteString = throw new IllegalStateException("Cannot get strict data for streamed message.")
-      def getStreamedData: Source[ByteString, _] = dataStream
+      def getStreamedData: Source[ByteString, ?] = dataStream
 
       def toStrict(
           timeoutMillis: Long, materializer: Materializer): CompletionStage[sm.ws.BinaryMessage.Strict] = asScala

@@ -31,7 +31,7 @@ import pekko.http.scaladsl.model.ws._
 @InternalApi
 private[http] object MessageToFrameRenderer {
   def create(serverSide: Boolean): Flow[Message, FrameStart, NotUsed] = {
-    def strictFrames(opcode: Opcode, data: ByteString): Source[FrameStart, _] =
+    def strictFrames(opcode: Opcode, data: ByteString): Source[FrameStart, ?] =
       // FIXME: fragment?
       Source.single(FrameEvent.fullFrame(opcode, None, data, fin = true))
 

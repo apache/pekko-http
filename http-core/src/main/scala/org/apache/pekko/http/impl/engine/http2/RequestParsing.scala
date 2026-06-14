@@ -61,7 +61,7 @@ private[http2] object RequestParsing {
         None
 
     val baseAttributes = {
-      var map = Map.empty[AttributeKey[_], Any]
+      var map = Map.empty[AttributeKey[?], Any]
       map = sslSessionAttribute match {
         case Some(sslSession) => map.updated(AttributeKeys.sslSession, SslSessionInfo(sslSession))
         case None             => map

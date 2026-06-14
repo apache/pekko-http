@@ -92,11 +92,11 @@ sealed trait Multipart extends jm.Multipart {
   def getMediaType: jm.MediaType.Multipart = mediaType
 
   /** Java API */
-  def getParts: JSource[_ <: jm.Multipart.BodyPart, AnyRef] =
+  def getParts: JSource[? <: jm.Multipart.BodyPart, AnyRef] =
     JSource.fromGraph(parts.asInstanceOf[Source[Multipart.BodyPart, AnyRef]])
 
   /** Java API */
-  def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[_ <: jm.Multipart.Strict] =
+  def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[? <: jm.Multipart.Strict] =
     toStrict(FiniteDuration(timeoutMillis, concurrent.duration.MILLISECONDS))(materializer).asJava
 }
 
@@ -134,11 +134,11 @@ object Multipart {
     override def toEntity: HttpEntity.Strict = toEntity(BodyPartRenderer.randomBoundary(), DefaultNoLogging)
 
     /** Java API */
-    override def getParts: JSource[_ <: jm.Multipart.BodyPart.Strict, AnyRef] =
-      super.getParts.asInstanceOf[JSource[_ <: jm.Multipart.BodyPart.Strict, AnyRef]]
+    override def getParts: JSource[? <: jm.Multipart.BodyPart.Strict, AnyRef] =
+      super.getParts.asInstanceOf[JSource[? <: jm.Multipart.BodyPart.Strict, AnyRef]]
 
     /** Java API */
-    override def getStrictParts: java.lang.Iterable[_ <: jm.Multipart.BodyPart.Strict] =
+    override def getStrictParts: java.lang.Iterable[? <: jm.Multipart.BodyPart.Strict] =
       (strictParts: immutable.Seq[jm.Multipart.BodyPart.Strict]).asJava
   }
 
@@ -198,7 +198,7 @@ object Multipart {
     def getDispositionType: Optional[jm.headers.ContentDispositionType] = OptionalUtil.convertOption(dispositionType)
 
     /** Java API */
-    def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[_ <: jm.Multipart.BodyPart.Strict] =
+    def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[? <: jm.Multipart.BodyPart.Strict] =
       toStrict(FiniteDuration(timeoutMillis, concurrent.duration.MILLISECONDS))(materializer).asJava
   }
 
@@ -235,8 +235,8 @@ object Multipart {
     }
 
     /** Java API */
-    override def getParts: JSource[_ <: jm.Multipart.General.BodyPart, AnyRef] =
-      super.getParts.asInstanceOf[JSource[_ <: jm.Multipart.General.BodyPart, AnyRef]]
+    override def getParts: JSource[? <: jm.Multipart.General.BodyPart, AnyRef] =
+      super.getParts.asInstanceOf[JSource[? <: jm.Multipart.General.BodyPart, AnyRef]]
 
     /** Java API */
     override def toStrict(
@@ -354,8 +354,8 @@ object Multipart {
     }
 
     /** Java API */
-    override def getParts: JSource[_ <: jm.Multipart.FormData.BodyPart, AnyRef] =
-      super.getParts.asInstanceOf[JSource[_ <: jm.Multipart.FormData.BodyPart, AnyRef]]
+    override def getParts: JSource[? <: jm.Multipart.FormData.BodyPart, AnyRef] =
+      super.getParts.asInstanceOf[JSource[? <: jm.Multipart.FormData.BodyPart, AnyRef]]
 
     /** Java API */
     override def toStrict(
@@ -392,7 +392,7 @@ object Multipart {
     /** INTERNAL API */
     @InternalApi
     private[pekko] def createSource(
-        parts: Source[pekko.http.javadsl.model.Multipart.FormData.BodyPart, _]): Multipart.FormData = {
+        parts: Source[pekko.http.javadsl.model.Multipart.FormData.BodyPart, ?]): Multipart.FormData = {
       apply(parts.asInstanceOf[Source[Multipart.FormData.BodyPart, Any]])
     }
 
@@ -576,8 +576,8 @@ object Multipart {
     }
 
     /** Java API */
-    override def getParts: JSource[_ <: jm.Multipart.ByteRanges.BodyPart, AnyRef] =
-      super.getParts.asInstanceOf[JSource[_ <: jm.Multipart.ByteRanges.BodyPart, AnyRef]]
+    override def getParts: JSource[? <: jm.Multipart.ByteRanges.BodyPart, AnyRef] =
+      super.getParts.asInstanceOf[JSource[? <: jm.Multipart.ByteRanges.BodyPart, AnyRef]]
 
     /** Java API */
     override def toStrict(

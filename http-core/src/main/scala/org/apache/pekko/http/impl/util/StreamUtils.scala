@@ -287,7 +287,7 @@ private[http] object StreamUtils {
   /**
    * Tries to guess whether a source needs to cancelled and how. In the best case no materialization should be needed.
    */
-  def cancelSource(source: Source[_, _])(implicit materializer: Materializer): Unit = source match {
+  def cancelSource(source: Source[?, ?])(implicit materializer: Materializer): Unit = source match {
     case EmptySource => // nothing to do with empty source
     case x           =>
       val mat =
