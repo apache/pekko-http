@@ -13,9 +13,6 @@
 
 package docs.http.javadsl.server.directives;
 
-import java.util.Arrays;
-import java.util.regex.Pattern;
-
 import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +24,6 @@ import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.server.PathMatcher1;
 import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
 // #path-matcher
-import static org.apache.pekko.http.javadsl.server.PathMatchers.segments;
 // #path-matcher
 import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
 // #path-matcher
@@ -113,6 +109,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.redirectToNoTraili
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.path;
 import static org.apache.pekko.http.javadsl.server.Directives.ignoreTrailingSlash;
+
 // #ignoreTrailingSlash
 
 public class PathDirectivesExamplesTest extends JUnitJupiterRouteTest {
@@ -120,6 +117,7 @@ public class PathDirectivesExamplesTest extends JUnitJupiterRouteTest {
   // #path-prefix-test, path-suffix, raw-path-prefix, raw-path-prefix-test
   Supplier<RouteAdapter> completeWithUnmatchedPath =
       () -> extractUnmatchedPath((path) -> complete(path.toString()));
+
   // #path-prefix-test, path-suffix, raw-path-prefix, raw-path-prefix-test
 
   @Test

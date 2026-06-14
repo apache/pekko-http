@@ -14,7 +14,6 @@
 package org.apache.pekko.http.javadsl.model;
 
 import java.util.Map;
-
 import org.apache.pekko.japi.Pair;
 
 /** Simple model for `application/x-www-form-urlencoded` form data. */

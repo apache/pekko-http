@@ -182,6 +182,7 @@ public class FileUploadExamplesTest extends JUnitJupiterRouteTest {
                   return onComplete(() -> done, ignored -> complete("ok!"));
                 }));
   }
+
   // #stream-csv-upload
 
   static class Entry implements Serializable {

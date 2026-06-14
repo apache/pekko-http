@@ -16,13 +16,11 @@ package org.apache.pekko.http.javadsl.server.directives;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
-
-import org.junit.jupiter.api.Test;
-
 import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
+import org.junit.jupiter.api.Test;
 
 public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
 
@@ -61,13 +59,15 @@ public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.create().withUri("/abc?byteParam=test"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'byteParam' was malformed:\n'test' is not a valid 8-bit signed integer value");
+            "The query parameter 'byteParam' was malformed:\n"
+                + "'test' is not a valid 8-bit signed integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?byteParam=1000"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'byteParam' was malformed:\n'1000' is not a valid 8-bit signed integer value");
+            "The query parameter 'byteParam' was malformed:\n"
+                + "'1000' is not a valid 8-bit signed integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?byteParam=48"))
@@ -91,13 +91,15 @@ public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.create().withUri("/abc?shortParam=test"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'shortParam' was malformed:\n'test' is not a valid 16-bit signed integer value");
+            "The query parameter 'shortParam' was malformed:\n"
+                + "'test' is not a valid 16-bit signed integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?shortParam=100000"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'shortParam' was malformed:\n'100000' is not a valid 16-bit signed integer value");
+            "The query parameter 'shortParam' was malformed:\n"
+                + "'100000' is not a valid 16-bit signed integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?shortParam=1234"))
@@ -121,7 +123,8 @@ public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.create().withUri("/abc?intParam=test"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'intParam' was malformed:\n'test' is not a valid 32-bit signed integer value");
+            "The query parameter 'intParam' was malformed:\n"
+                + "'test' is not a valid 32-bit signed integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?intParam=48"))
@@ -144,7 +147,8 @@ public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.create().withUri("/abc?longParam=test"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'longParam' was malformed:\n'test' is not a valid 64-bit signed integer value");
+            "The query parameter 'longParam' was malformed:\n"
+                + "'test' is not a valid 64-bit signed integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?longParam=123456"))
@@ -168,7 +172,8 @@ public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.create().withUri("/abc?floatParam=test"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'floatParam' was malformed:\n'test' is not a valid 32-bit floating point value");
+            "The query parameter 'floatParam' was malformed:\n"
+                + "'test' is not a valid 32-bit floating point value");
 
     route
         .run(HttpRequest.create().withUri("/abc?floatParam=48"))
@@ -192,7 +197,8 @@ public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.create().withUri("/abc?doubleParam=test"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'doubleParam' was malformed:\n'test' is not a valid 64-bit floating point value");
+            "The query parameter 'doubleParam' was malformed:\n"
+                + "'test' is not a valid 64-bit floating point value");
 
     route
         .run(HttpRequest.create().withUri("/abc?doubleParam=48"))
@@ -216,13 +222,15 @@ public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.create().withUri("/abc?hexByteParam=test"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'hexByteParam' was malformed:\n'test' is not a valid 8-bit hexadecimal integer value");
+            "The query parameter 'hexByteParam' was malformed:\n"
+                + "'test' is not a valid 8-bit hexadecimal integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?hexByteParam=1000"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'hexByteParam' was malformed:\n'1000' is not a valid 8-bit hexadecimal integer value");
+            "The query parameter 'hexByteParam' was malformed:\n"
+                + "'1000' is not a valid 8-bit hexadecimal integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?hexByteParam=48"))
@@ -248,13 +256,15 @@ public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.create().withUri("/abc?hexShortParam=test"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'hexShortParam' was malformed:\n'test' is not a valid 16-bit hexadecimal integer value");
+            "The query parameter 'hexShortParam' was malformed:\n"
+                + "'test' is not a valid 16-bit hexadecimal integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?hexShortParam=100000"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'hexShortParam' was malformed:\n'100000' is not a valid 16-bit hexadecimal integer value");
+            "The query parameter 'hexShortParam' was malformed:\n"
+                + "'100000' is not a valid 16-bit hexadecimal integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?hexShortParam=1234"))
@@ -280,7 +290,8 @@ public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.create().withUri("/abc?hexIntParam=test"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'hexIntParam' was malformed:\n'test' is not a valid 32-bit hexadecimal integer value");
+            "The query parameter 'hexIntParam' was malformed:\n"
+                + "'test' is not a valid 32-bit hexadecimal integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?hexIntParam=12345678"))
@@ -304,7 +315,8 @@ public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.create().withUri("/abc?hexLongParam=test"))
         .assertStatusCode(400)
         .assertEntity(
-            "The query parameter 'hexLongParam' was malformed:\n'test' is not a valid 64-bit hexadecimal integer value");
+            "The query parameter 'hexLongParam' was malformed:\n"
+                + "'test' is not a valid 64-bit hexadecimal integer value");
 
     route
         .run(HttpRequest.create().withUri("/abc?hexLongParam=123456789a"))

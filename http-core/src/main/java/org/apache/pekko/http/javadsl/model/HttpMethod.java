@@ -25,6 +25,7 @@ public abstract class HttpMethod {
   public final String name() {
     return value();
   }
+
   /** Returns the name of the method. */
   public abstract String value();
 

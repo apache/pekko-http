@@ -13,18 +13,15 @@
 
 package org.apache.pekko.http.javadsl.server.values;
 
-import org.apache.pekko.http.javadsl.model.ContentTypes;
-import org.junit.jupiter.api.Test;
+import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-import org.apache.pekko.http.javadsl.model.HttpCharsets;
+import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.model.MediaTypes;
-import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.apache.pekko.japi.Pair;
-
-import static org.apache.pekko.http.javadsl.server.Directives.*;
+import org.junit.jupiter.api.Test;
 
 public class FormFieldsTest extends JUnitJupiterRouteTest {
 
@@ -84,13 +81,15 @@ public class FormFieldsTest extends JUnitJupiterRouteTest {
         .run(singleParameterUrlEncodedRequest("byteParam", "test"))
         .assertStatusCode(400)
         .assertEntity(
-            "The form field 'byteParam' was malformed:\n'test' is not a valid 8-bit signed integer value");
+            "The form field 'byteParam' was malformed:\n"
+                + "'test' is not a valid 8-bit signed integer value");
 
     route
         .run(singleParameterUrlEncodedRequest("byteParam", "1000"))
         .assertStatusCode(400)
         .assertEntity(
-            "The form field 'byteParam' was malformed:\n'1000' is not a valid 8-bit signed integer value");
+            "The form field 'byteParam' was malformed:\n"
+                + "'1000' is not a valid 8-bit signed integer value");
 
     route
         .run(singleParameterUrlEncodedRequest("byteParam", "48"))

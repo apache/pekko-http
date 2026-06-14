@@ -120,11 +120,7 @@ public class RejectionHandlerExamplesTest extends JUnitJupiterRouteTest {
                   if (response.entity() instanceof HttpEntity.Strict entity) {
                     // since all Pekko default rejection responses are Strict this will handle all
                     // rejections
-                    String message =
-                        entity
-                            .getData()
-                            .utf8String()
-                            .replaceAll("\"", "\\\"");
+                    String message = entity.getData().utf8String().replaceAll("\"", "\\\"");
                     // we create a new copy the response in order to keep all headers and status
                     // code,
                     // replacing the original entity with a custom message as hand rolled JSON you

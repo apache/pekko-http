@@ -13,13 +13,11 @@
 
 package org.apache.pekko.http.javadsl.server;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.Done;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.ServerBinding;
-import org.apache.pekko.http.scaladsl.Http;
-
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.CompletableFuture;
 
 public class MinimalHttpApp extends HttpApp {
 

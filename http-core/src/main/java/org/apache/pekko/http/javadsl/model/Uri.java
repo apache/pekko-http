@@ -14,12 +14,10 @@
 package org.apache.pekko.http.javadsl.model;
 
 import java.nio.charset.Charset;
-
+import java.util.Optional;
 import org.apache.pekko.http.impl.model.JavaUri;
 import org.apache.pekko.http.impl.model.UriJavaAccessor;
 import org.parboiled2.ParserInput$;
-
-import java.util.Optional;
 
 /** Represents an Uri. Use methods on the class to create modified copies of a given instance. */
 public abstract class Uri {

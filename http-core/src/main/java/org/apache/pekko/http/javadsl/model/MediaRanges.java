@@ -13,9 +13,8 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-import org.apache.pekko.http.impl.util.Util;
-
 import java.util.Map;
+import org.apache.pekko.http.impl.util.Util;
 
 /** Contains a set of predefined media-ranges and static methods to create custom ones. */
 public final class MediaRanges {

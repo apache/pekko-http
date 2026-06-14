@@ -48,6 +48,7 @@ public class PetStoreExample {
     CompletableFuture<Pet> futurePet = CompletableFuture.supplyAsync(() -> thePet);
     return completeOKWithFuture(futurePet, Jackson.<Pet>marshaller());
   }
+
   // #marshall
 
   // #unmarshall
@@ -97,6 +98,7 @@ public class PetStoreExample {
                             // 3. calling a method of a controller instance
                             delete(() -> controller.deletePet(petId))))));
   }
+
   // #unmarshall
 
   public static void main(String[] args) throws IOException {

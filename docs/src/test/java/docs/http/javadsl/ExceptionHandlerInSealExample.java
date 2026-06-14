@@ -14,14 +14,14 @@
 package docs.http.javadsl;
 
 // #seal-handler-example
+import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
+
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.ExceptionHandler;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.apache.pekko.http.javadsl.server.RejectionHandler;
 import org.apache.pekko.http.javadsl.server.Route;
-
-import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
 
 public class ExceptionHandlerInSealExample extends AllDirectives {
 

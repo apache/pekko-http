@@ -13,22 +13,21 @@
 
 package org.apache.pekko.http.javadsl.server.directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.*;
+
 import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpEntity;
-import org.junit.jupiter.api.Test;
-
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.ExceptionHandler;
 import org.apache.pekko.http.javadsl.server.RejectionHandler;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.apache.pekko.http.scaladsl.server.MethodRejection;
 import org.apache.pekko.http.scaladsl.server.Rejection;
-
-import static org.apache.pekko.http.javadsl.server.Directives.*;
+import org.junit.jupiter.api.Test;
 
 public class ExecutionDirectivesTest extends JUnitJupiterRouteTest {
   @Test
@@ -131,11 +130,7 @@ public class ExecutionDirectivesTest extends JUnitJupiterRouteTest {
             .mapRejectionResponse(
                 response -> {
                   if (response.entity() instanceof HttpEntity.Strict entity) {
-                    String message =
-                        entity
-                            .getData()
-                            .utf8String()
-                            .replaceAll("\"", "\\\"");
+                    String message = entity.getData().utf8String().replaceAll("\"", "\\\"");
                     return response.withEntity(
                         ContentTypes.APPLICATION_JSON, "{\"rejection\": \"" + message + "\"}");
                   } else {

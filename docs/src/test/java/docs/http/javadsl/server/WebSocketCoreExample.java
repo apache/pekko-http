@@ -21,11 +21,16 @@ import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.pekko.NotUsed;
-import org.apache.pekko.http.impl.util.JavaMapping;
+import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.ConnectionContext;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.ServerBinding;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.ws.Message;
+import org.apache.pekko.http.javadsl.model.ws.TextMessage;
 import org.apache.pekko.http.javadsl.model.ws.WebSocketRequest;
 import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
@@ -33,19 +38,9 @@ import org.apache.pekko.http.javadsl.settings.WebSocketSettings;
 import org.apache.pekko.http.scaladsl.model.AttributeKeys;
 import org.apache.pekko.japi.JavaPartialFunction;
 import org.apache.pekko.japi.function.Function;
-
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Source;
-
-import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.http.javadsl.Http;
-import org.apache.pekko.http.javadsl.ServerBinding;
-import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.model.HttpResponse;
-import org.apache.pekko.http.javadsl.model.ws.Message;
-import org.apache.pekko.http.javadsl.model.ws.TextMessage;
-import org.apache.pekko.http.javadsl.model.ws.WebSocket;
 import org.apache.pekko.util.ByteString;
 
 @SuppressWarnings({"Convert2MethodRef", "ConstantConditions"})
@@ -72,6 +67,7 @@ public class WebSocketCoreExample {
       return HttpResponse.create().withStatus(404);
     }
   }
+
   // #websocket-handling
 
   public static void main(String[] args) throws Exception {
@@ -124,6 +120,7 @@ public class WebSocketCoreExample {
       return TextMessage.create(Source.single("Hello ").concat(msg.getStreamedText()));
     }
   }
+
   // #websocket-handler
 
   {

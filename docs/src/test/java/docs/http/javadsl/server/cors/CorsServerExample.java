@@ -18,6 +18,14 @@
 package docs.http.javadsl.server.cors;
 
 // #cors-server-example
+import static org.apache.pekko.http.cors.javadsl.CorsDirectives.cors;
+import static org.apache.pekko.http.cors.javadsl.CorsDirectives.corsRejectionHandler;
+import static org.apache.pekko.http.javadsl.server.Directives.*;
+
+import java.util.NoSuchElementException;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.Http;
@@ -26,15 +34,6 @@ import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.ExceptionHandler;
 import org.apache.pekko.http.javadsl.server.RejectionHandler;
 import org.apache.pekko.http.javadsl.server.Route;
-
-import java.util.NoSuchElementException;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import static org.apache.pekko.http.cors.javadsl.CorsDirectives.cors;
-import static org.apache.pekko.http.cors.javadsl.CorsDirectives.corsRejectionHandler;
-import static org.apache.pekko.http.javadsl.server.Directives.*;
 
 public class CorsServerExample {
 

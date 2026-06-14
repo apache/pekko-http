@@ -13,10 +13,9 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-import org.apache.pekko.http.scaladsl.model.ContentRange$;
-
 import java.util.Optional;
 import java.util.OptionalLong;
+import org.apache.pekko.http.scaladsl.model.ContentRange$;
 import org.apache.pekko.util.OptionalUtil;
 
 public abstract class ContentRange {

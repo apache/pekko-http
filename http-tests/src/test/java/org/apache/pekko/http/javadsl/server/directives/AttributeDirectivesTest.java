@@ -18,7 +18,6 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
-
 import org.junit.jupiter.api.Test;
 
 public class AttributeDirectivesTest extends JUnitJupiterRouteTest {

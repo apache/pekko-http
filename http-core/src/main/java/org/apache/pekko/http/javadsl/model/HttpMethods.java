@@ -13,10 +13,9 @@
 
 package org.apache.pekko.http.javadsl.model;
 
+import java.util.Optional;
 import org.apache.pekko.http.impl.util.Util;
 import org.apache.pekko.http.scaladsl.model.HttpMethods$;
-
-import java.util.Optional;
 
 /** Contains static constants for predefined method types. */
 public final class HttpMethods {

@@ -15,6 +15,9 @@ package docs.http.javadsl;
 
 // #explicit-handler-example
 
+import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
+
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
@@ -23,10 +26,6 @@ import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.ExceptionHandler;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.apache.pekko.http.javadsl.server.Route;
-
-import java.util.concurrent.CompletionStage;
-
-import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
 
 public class ExceptionHandlerExample extends AllDirectives {
   public static void main(String[] args) {

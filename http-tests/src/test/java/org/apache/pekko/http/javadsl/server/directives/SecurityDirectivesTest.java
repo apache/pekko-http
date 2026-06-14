@@ -13,25 +13,23 @@
 
 package org.apache.pekko.http.javadsl.server.directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.*;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
+
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.junit.jupiter.api.Test;
-
-import scala.util.Left;
-import scala.util.Right;
-import org.apache.pekko.http.javadsl.server.*;
-import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.Authorization;
 import org.apache.pekko.http.javadsl.model.headers.BasicHttpCredentials;
 import org.apache.pekko.http.javadsl.model.headers.HttpChallenge;
+import org.apache.pekko.http.javadsl.server.*;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 import org.apache.pekko.http.javadsl.testkit.*;
-
-import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
-
-import static org.apache.pekko.http.javadsl.server.Directives.*;
+import org.junit.jupiter.api.Test;
+import scala.util.Left;
+import scala.util.Right;
 
 public class SecurityDirectivesTest extends JUnitJupiterRouteTest {
 

@@ -13,23 +13,20 @@
 
 package org.apache.pekko.http.javadsl.server.directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.*;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
 import org.apache.pekko.http.javadsl.model.headers.ContentEncoding;
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
+import org.apache.pekko.http.javadsl.testkit.*;
 import org.apache.pekko.util.ByteString;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import org.apache.pekko.http.javadsl.testkit.*;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
-import static org.apache.pekko.http.javadsl.server.Directives.*;
 
 public class CodingDirectivesTest extends JUnitJupiterRouteTest {
 

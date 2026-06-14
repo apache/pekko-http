@@ -14,7 +14,6 @@
 package org.apache.pekko.http.javadsl.coding;
 
 import java.util.concurrent.CompletionStage;
-
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.scaladsl.coding.Deflate$;
@@ -22,7 +21,6 @@ import org.apache.pekko.http.scaladsl.coding.Gzip$;
 import org.apache.pekko.http.scaladsl.coding.NoCoding$;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.util.ByteString;
-
 import scala.jdk.javaapi.FutureConverters;
 
 /** A coder is an implementation of the predefined encoders/decoders defined for HTTP. */
@@ -51,7 +49,9 @@ public enum Coder {
         underlying.encodeMessage((org.apache.pekko.http.scaladsl.model.HttpMessage) message);
   }
 
-  /** @deprecated Synchronous encoding is deprecated since Akka HTTP 10.2.0 */
+  /**
+   * @deprecated Synchronous encoding is deprecated since Akka HTTP 10.2.0
+   */
   @Deprecated
   public ByteString encode(ByteString input) {
     return underlying.encode(input);

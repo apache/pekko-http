@@ -18,7 +18,6 @@ package org.apache.pekko.http.javadsl.model.sse;
 
 import java.util.Optional;
 import java.util.OptionalInt;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

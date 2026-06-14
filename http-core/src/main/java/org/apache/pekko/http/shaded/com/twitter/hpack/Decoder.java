@@ -31,13 +31,12 @@
 
 package org.apache.pekko.http.shaded.com.twitter.hpack;
 
+import static org.apache.pekko.http.shaded.com.twitter.hpack.HeaderField.HEADER_ENTRY_OVERHEAD;
+
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.pekko.http.impl.util.StringTools;
 import org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.IndexType;
-
-import static org.apache.pekko.http.shaded.com.twitter.hpack.HeaderField.HEADER_ENTRY_OVERHEAD;
 
 public final class Decoder {
 

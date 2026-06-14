@@ -13,34 +13,29 @@
 
 package org.apache.pekko.http.javadsl.marshallers.jackson3;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import tools.jackson.core.StreamReadConstraints;
-import tools.jackson.core.StreamWriteConstraints;
-import tools.jackson.core.json.JsonFactory;
-import tools.jackson.core.util.BufferRecycler;
-import tools.jackson.core.util.JsonRecyclerPools.BoundedPool;
-import tools.jackson.core.util.RecyclerPool;
-import tools.jackson.databind.ObjectMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.http.javadsl.marshallers.jackson3.Jackson;
 import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpEntities;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.RequestEntity;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-
 import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.*;
+import tools.jackson.core.StreamReadConstraints;
+import tools.jackson.core.StreamWriteConstraints;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.core.util.BufferRecycler;
+import tools.jackson.core.util.JsonRecyclerPools.BoundedPool;
+import tools.jackson.core.util.RecyclerPool;
 
 public class JacksonTest extends JUnitJupiterRouteTest {
 

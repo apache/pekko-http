@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.javadsl.model;
 
+import java.util.OptionalLong;
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.Done;
 import org.apache.pekko.actor.ClassicActorSystemProvider;
 import org.apache.pekko.annotation.DoNotInherit;
@@ -21,9 +23,6 @@ import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
 import scala.concurrent.Future;
-
-import java.util.OptionalLong;
-import java.util.concurrent.CompletionStage;
 
 /**
  * Represents the entity of an Http message. An entity consists of the content-type of the data and

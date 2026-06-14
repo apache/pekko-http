@@ -18,11 +18,13 @@ public interface Unmarshallers {
   // #unmarshaller-creation
   <A, B> Unmarshaller<A, B> async(
       java.util.function.Function<A, java.util.concurrent.CompletionStage<B>> f);
+
   // #unmarshaller-creation
 
   /** Creates an unmarshaller from a Java function. */
   // #unmarshaller-creation
   <A, B> Unmarshaller<A, B> sync(java.util.function.Function<A, B> f);
+
   // #unmarshaller-creation
 
   // #unmarshaller-creation

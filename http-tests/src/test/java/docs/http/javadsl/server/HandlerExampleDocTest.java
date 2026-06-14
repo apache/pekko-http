@@ -85,6 +85,7 @@ public class HandlerExampleDocTest extends JUnitJupiterRouteTest {
                                 .withStatus(StatusCodes.ACCEPTED);
                         return complete(response);
                       }));
+
       // #simple-handler
 
       Route createRoute() {
@@ -207,6 +208,7 @@ public class HandlerExampleDocTest extends JUnitJupiterRouteTest {
                       () ->
                           paramXY(
                               (x, y) -> onSuccess(multiplyAsync(ctx, x, y), Function.identity()))));
+
       // #async-handler-1
 
       // #async-handler-2
@@ -218,6 +220,7 @@ public class HandlerExampleDocTest extends JUnitJupiterRouteTest {
       }
 
       Route addAsyncRoute = path("add", () -> paramXY(this::addAsync));
+
       // #async-handler-2
 
       Route createRoute() {

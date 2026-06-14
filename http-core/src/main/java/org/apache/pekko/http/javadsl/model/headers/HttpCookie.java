@@ -13,13 +13,11 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
+import java.util.Optional;
+import java.util.OptionalLong;
 import org.apache.pekko.annotation.DoNotInherit;
 import org.apache.pekko.http.javadsl.model.DateTime;
 import org.apache.pekko.util.OptionalUtil;
-
-import java.util.Optional;
-import java.util.OptionalLong;
-
 import scala.jdk.javaapi.OptionConverters;
 
 @DoNotInherit

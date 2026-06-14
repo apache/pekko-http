@@ -12,15 +12,15 @@
  */
 
 package docs.http.javadsl;
+
 // #minimal-routing-example
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
-
-import java.util.concurrent.CompletionStage;
 
 public class HttpServerMinimalExampleTest extends AllDirectives {
 

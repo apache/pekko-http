@@ -15,7 +15,6 @@ package docs.http.javadsl.server.directives;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
@@ -205,7 +204,8 @@ public class FutureDirectivesExamplesTest extends JUnitJupiterRouteTest {
               testRoute(route)
                   .run(HttpRequest.GET("/divide/10/0"))
                   .assertEntity(
-                      "The server is currently unavailable (because it is overloaded or down for maintenance).")
+                      "The server is currently unavailable (because it is overloaded or down for"
+                          + " maintenance).")
                   .assertStatusCode(StatusCodes.ServiceUnavailable());
               return null;
             });
