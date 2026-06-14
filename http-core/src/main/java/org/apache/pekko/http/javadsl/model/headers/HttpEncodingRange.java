@@ -15,7 +15,9 @@ package org.apache.pekko.http.javadsl.model.headers;
 
 import org.apache.pekko.http.scaladsl.model.headers.HttpEncodingRange$;
 
-/** @see HttpEncodingRanges for convenience access to often used values. */
+/**
+ * @see HttpEncodingRanges for convenience access to often used values.
+ */
 public abstract class HttpEncodingRange {
   public abstract float qValue();
 

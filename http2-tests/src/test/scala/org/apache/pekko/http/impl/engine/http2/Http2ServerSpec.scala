@@ -904,11 +904,11 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
            * Loop that checks for a while that publisherProbe has outstanding demand and runs body to fulfill it
            * Will fail if there's still demand after the timeout.
            */
-          def fulfillDemandWithin(publisherProbe: TestPublisher.Probe[_], timeout: FiniteDuration)(
+          def fulfillDemandWithin(publisherProbe: TestPublisher.Probe[?], timeout: FiniteDuration)(
               body: => Unit): Unit = {
             // HACK to support `expectRequest` with a timeout
-            def within[T](publisherProbe: TestPublisher.Probe[_], dur: FiniteDuration)(t: => T): T = {
-              val field = classOf[ManualProbe[_]].getDeclaredField("probe")
+            def within[T](publisherProbe: TestPublisher.Probe[?], dur: FiniteDuration)(t: => T): T = {
+              val field = classOf[ManualProbe[?]].getDeclaredField("probe")
               field.setAccessible(true)
               field.get(publisherProbe).asInstanceOf[TestProbe].within(dur)(t)
             }

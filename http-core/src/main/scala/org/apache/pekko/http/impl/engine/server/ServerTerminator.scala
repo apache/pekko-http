@@ -208,7 +208,7 @@ private[http] final class GracefulTerminatorStage(settings: ServerSettings)
     val selfTerminator = new ConnectionTerminator(triggerTermination)
 
     val logic = new TimerGraphStageLogic(shape) with StageLogging {
-      override protected def logSource: Class[_] = classOf[GracefulTerminatorStage]
+      override protected def logSource: Class[?] = classOf[GracefulTerminatorStage]
 
       // this promise will be completed once our termination is complete;
       // e.g. we replied with "go away" to pending requests, and no new ones were incoming etc

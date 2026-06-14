@@ -16,20 +16,20 @@
 
 package org.apache.pekko.http.javadsl.marshalling.sse;
 
+import static org.apache.pekko.http.javadsl.model.HttpRequest.GET;
+import static org.apache.pekko.http.javadsl.model.MediaTypes.TEXT_EVENT_STREAM;
+import static org.apache.pekko.http.javadsl.server.Directives.completeOK;
+import static org.apache.pekko.util.ByteString.emptyByteString;
+
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.pekko.http.javadsl.model.sse.ServerSentEvent;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.Test;
-
-import static org.apache.pekko.http.javadsl.model.HttpRequest.GET;
-import static org.apache.pekko.http.javadsl.model.MediaTypes.TEXT_EVENT_STREAM;
-import static org.apache.pekko.http.javadsl.server.Directives.completeOK;
-import static org.apache.pekko.util.ByteString.emptyByteString;
 
 public class EventStreamMarshallingTest extends JUnitJupiterRouteTest {
 

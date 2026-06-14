@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.javadsl.model;
 
+import java.util.Optional;
 import org.apache.pekko.http.impl.util.Util;
 import org.apache.pekko.http.scaladsl.model.MediaTypes$;
-import java.util.Optional;
 
 /** Contains the set of predefined media-types. */
 public final class MediaTypes {

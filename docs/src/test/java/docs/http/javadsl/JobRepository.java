@@ -14,14 +14,13 @@
 package docs.http.javadsl;
 
 // #behavior
+import com.fasterxml.jackson.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.*;
-import com.fasterxml.jackson.annotation.*;
 
 /** Actor for use with the HttpServerWithActorsSample */
 public class JobRepository extends AbstractBehavior<JobRepository.Command> {

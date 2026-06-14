@@ -154,8 +154,8 @@ object Unmarshaller
 
   /** Order of parameters (`right` first, `left` second) is intentional, since that's the order we evaluate them in. */
   final case class EitherUnmarshallingException(
-      rightClass: Class[_], right: Throwable,
-      leftClass: Class[_], left: Throwable)
+      rightClass: Class[?], right: Throwable,
+      leftClass: Class[?], left: Throwable)
       extends RuntimeException(
         s"Failed to unmarshal Either[${Logging.simpleName(leftClass)}, ${Logging.simpleName(
             rightClass)}] (attempted ${Logging.simpleName(rightClass)} first). " +

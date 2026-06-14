@@ -13,9 +13,8 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
-import org.apache.pekko.http.scaladsl.model.headers.ByteRange$;
-
 import java.util.OptionalLong;
+import org.apache.pekko.http.scaladsl.model.headers.ByteRange$;
 
 public abstract class ByteRange {
   public abstract boolean isSlice();

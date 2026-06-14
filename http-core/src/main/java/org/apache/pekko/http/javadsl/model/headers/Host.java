@@ -13,9 +13,8 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
-import org.apache.pekko.http.javadsl.model.Authority;
-
 import java.net.InetSocketAddress;
+import org.apache.pekko.http.javadsl.model.Authority;
 
 public abstract class Host extends org.apache.pekko.http.scaladsl.model.HttpHeader {
 

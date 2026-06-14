@@ -91,7 +91,7 @@ abstract class HeaderDirectives extends FutureDirectives {
     def magnetForModeledCustomHeader(clazz: Class[T]): HeaderMagnet[T] = {
       // figure out the modeled header companion and use that to parse the header
       val refl = new ReflectiveDynamicAccess(getClass.getClassLoader)
-      refl.getObjectFor[ModeledCustomHeaderCompanion[_]](t.getName) match {
+      refl.getObjectFor[ModeledCustomHeaderCompanion[?]](t.getName) match {
         case Success(companion) =>
           new HeaderMagnet[T] {
             override def classTag = ClassTag(t)
@@ -106,7 +106,7 @@ abstract class HeaderDirectives extends FutureDirectives {
     }
 
     val magnet: HeaderMagnet[T] =
-      if (classOf[ModeledCustomHeader[_]].isAssignableFrom(t)) magnetForModeledCustomHeader(t)
+      if (classOf[ModeledCustomHeader[?]].isAssignableFrom(t)) magnetForModeledCustomHeader(t)
       else HeaderMagnet.fromClassNormalJavaHeader(t)
 
     D.headerValueByType(magnet) { value =>

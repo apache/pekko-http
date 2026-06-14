@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.javadsl.marshallers.jackson;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.StreamReadConstraints;
@@ -23,7 +25,9 @@ import com.fasterxml.jackson.core.util.RecyclerPool;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpEntities;
@@ -31,14 +35,7 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.RequestEntity;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-
 import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class JacksonTest extends JUnitJupiterRouteTest {
 

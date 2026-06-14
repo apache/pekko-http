@@ -16,7 +16,6 @@ package org.apache.pekko.http.javadsl.model;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
-
 import org.apache.pekko.http.javadsl.model.headers.ContentDisposition;
 import org.apache.pekko.http.javadsl.model.headers.ContentDispositionType;
 import org.apache.pekko.http.javadsl.model.headers.RangeUnit;

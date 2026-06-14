@@ -102,7 +102,8 @@ public class CustomMediaTypesExampleTest extends JUnitJupiterRouteTest {
             .get()
             .utf8String();
     assertEquals(
-        "application/custom = class org.apache.pekko.http.scaladsl.model.ContentType$WithFixedCharset",
+        "application/custom = class"
+            + " org.apache.pekko.http.scaladsl.model.ContentType$WithFixedCharset",
         body); // it's the Scala DSL package because it's the only instance of the Java DSL
   }
 }

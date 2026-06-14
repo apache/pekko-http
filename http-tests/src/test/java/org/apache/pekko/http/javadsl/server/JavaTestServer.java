@@ -13,6 +13,12 @@
 
 package org.apache.pekko.http.javadsl.server;
 
+import static org.apache.pekko.http.javadsl.server.Directives.*;
+
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.*;
+import java.util.function.Function;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
@@ -27,13 +33,6 @@ import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
-
-import java.time.Duration;
-import java.util.Optional;
-import java.util.concurrent.*;
-import java.util.function.Function;
-
-import static org.apache.pekko.http.javadsl.server.Directives.*;
 
 public class JavaTestServer {
 
@@ -172,7 +171,8 @@ public class JavaTestServer {
         + "        <p>Defined resources:</p>\n"
         + "        <ul>\n"
         + "          <li><a href=\"/ping\">/ping</a></li>\n"
-        + "          <li><a href=\"/secure\">/secure</a> Use any username and '&lt;username&gt;-password' as credentials</li>\n"
+        + "          <li><a href=\"/secure\">/secure</a> Use any username and"
+        + " '&lt;username&gt;-password' as credentials</li>\n"
         + "          <li><a href=\"/crash\">/crash</a></li>\n"
         + "          <li><a href=\"/timeout\">/timeout</a> Demonstrates timeout </li>\n"
         + "        </ul>\n"

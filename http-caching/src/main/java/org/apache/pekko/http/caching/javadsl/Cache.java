@@ -13,14 +13,13 @@
 
 package org.apache.pekko.http.caching.javadsl;
 
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.annotation.ApiMayChange;
 import org.apache.pekko.annotation.DoNotInherit;
 import org.apache.pekko.japi.function.Creator;
 import org.apache.pekko.japi.function.Procedure;
-
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 @ApiMayChange
 @DoNotInherit

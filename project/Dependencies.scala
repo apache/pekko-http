@@ -19,8 +19,8 @@ import scala.language.implicitConversions
 object Dependencies {
   import DependencyHelpers._
 
-  val jacksonDatabindVersion = "2.21.4"
-  val jacksonDatabind3Version = "3.1.4"
+  val jacksonDatabindVersion = "2.22.0"
+  val jacksonDatabind3Version = "3.2.0"
   val jacksonXmlVersion = jacksonDatabindVersion
   val junit4Version = "4.13.2"
   val h2specVersion = "2.6.0"
@@ -36,7 +36,7 @@ object Dependencies {
   val scalafixVersion = _root_.scalafix.sbt.BuildInfo.scalafixVersion // grab from plugin
 
   val scala213Version = "2.13.18"
-  val scala3Version = "3.3.7"
+  val scala3Version = "3.3.8"
   val allScalaVersions = Seq(scala213Version, scala3Version)
 
   val Versions = Seq(
@@ -82,7 +82,7 @@ object Dependencies {
       // For pekko-http-testkit-java (JUnit 4 support for library users) -- deprecated since 2.0.0
       val junit4 = "junit" % "junit" % junit4Version
       val specs2 = "org.specs2" %% "specs2-core" % "4.23.0"
-      val munit = "org.scalameta" %% "munit" % "1.3.1"
+      val munit = "org.scalameta" %% "munit" % "1.3.3"
 
       val scalacheck = "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
 

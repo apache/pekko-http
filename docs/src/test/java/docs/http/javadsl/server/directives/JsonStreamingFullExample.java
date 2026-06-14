@@ -14,6 +14,8 @@
 package docs.http.javadsl.server.directives;
 
 // #custom-content-type
+import java.util.Random;
+import java.util.stream.Stream;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
@@ -23,9 +25,6 @@ import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.stream.javadsl.Source;
-
-import java.util.Random;
-import java.util.stream.Stream;
 
 public class JsonStreamingFullExample extends AllDirectives {
 

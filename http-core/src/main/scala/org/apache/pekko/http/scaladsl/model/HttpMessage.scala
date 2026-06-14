@@ -49,7 +49,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
   def isResponse: Boolean
 
   def headers: immutable.Seq[HttpHeader]
-  def attributes: Map[AttributeKey[_], _]
+  def attributes: Map[AttributeKey[?], ?]
   def entity: ResponseEntity
   def protocol: HttpProtocol
 
@@ -104,7 +104,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
     }
 
   /** Returns a copy of this message with the attributes set to the given ones. */
-  def withAttributes(headers: Map[AttributeKey[_], _]): Self
+  def withAttributes(headers: Map[AttributeKey[?], ?]): Self
 
   /** Returns a copy of this message with the entity set to the given one. */
   def withEntity(entity: MessageEntity): Self
@@ -124,7 +124,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
   def mapHeaders(f: immutable.Seq[HttpHeader] => immutable.Seq[HttpHeader]): Self = withHeaders(f(headers))
 
   /** Returns a copy of this message with the attributes transformed by the given function */
-  def mapAttributes(f: Map[AttributeKey[_], _] => Map[AttributeKey[_], _]): Self = withAttributes(f(attributes))
+  def mapAttributes(f: Map[AttributeKey[?], ?] => Map[AttributeKey[?], ?]): Self = withAttributes(f(attributes))
 
   /**
    * The content encoding as specified by the Content-Encoding header. If no Content-Encoding header is present the
@@ -177,8 +177,8 @@ sealed trait HttpMessage extends jm.HttpMessage {
     withHeaders(headers.filterNot(_.is(lowerHeaderName)))
   }
 
-  def removeAttribute(key: jm.AttributeKey[_]): Self = {
-    val ev = implicitly[JavaMapping[jm.AttributeKey[_], AttributeKey[_]]]
+  def removeAttribute(key: jm.AttributeKey[?]): Self = {
+    val ev = implicitly[JavaMapping[jm.AttributeKey[?], AttributeKey[?]]]
     mapAttributes(_ - ev.toScala(key))
   }
 
@@ -319,7 +319,7 @@ final class HttpRequest(
     val method: HttpMethod,
     val uri: Uri,
     val headers: immutable.Seq[HttpHeader],
-    val attributes: Map[AttributeKey[_], _],
+    val attributes: Map[AttributeKey[?], ?],
     val entity: RequestEntity,
     val protocol: HttpProtocol)
     extends jm.HttpRequest with HttpMessage {
@@ -367,7 +367,7 @@ final class HttpRequest(
   override def withHeaders(headers: immutable.Seq[HttpHeader]): HttpRequest =
     if (headers eq this.headers) this else copyImpl(headers = headers)
 
-  override def withAttributes(attributes: Map[AttributeKey[_], _]): HttpRequest =
+  override def withAttributes(attributes: Map[AttributeKey[?], ?]): HttpRequest =
     if (attributes eq this.attributes) this else copyImpl(attributes = attributes)
 
   override def withHeadersAndEntity(headers: immutable.Seq[HttpHeader], entity: RequestEntity): HttpRequest =
@@ -401,7 +401,7 @@ final class HttpRequest(
       method: HttpMethod = method,
       uri: Uri = uri,
       headers: immutable.Seq[HttpHeader] = headers,
-      attributes: Map[AttributeKey[_], _] = attributes,
+      attributes: Map[AttributeKey[?], ?] = attributes,
       entity: RequestEntity = entity,
       protocol: HttpProtocol = protocol) = new HttpRequest(method, uri, headers, attributes, entity, protocol)
 
@@ -520,7 +520,7 @@ object HttpRequest {
 final class HttpResponse(
     val status: StatusCode,
     val headers: immutable.Seq[HttpHeader],
-    val attributes: Map[AttributeKey[_], _],
+    val attributes: Map[AttributeKey[?], ?],
     val entity: ResponseEntity,
     val protocol: HttpProtocol)
     extends jm.HttpResponse with HttpMessage {
@@ -539,7 +539,7 @@ final class HttpResponse(
   override def withHeaders(headers: immutable.Seq[HttpHeader]): HttpResponse =
     if (headers eq this.headers) this else copyImpl(headers = headers)
 
-  def withAttributes(attributes: Map[AttributeKey[_], _]): HttpResponse =
+  def withAttributes(attributes: Map[AttributeKey[?], ?]): HttpResponse =
     if (attributes eq this.attributes) this else copyImpl(attributes = attributes)
 
   override def withProtocol(protocol: pekko.http.javadsl.model.HttpProtocol): pekko.http.javadsl.model.HttpResponse =
@@ -566,7 +566,7 @@ final class HttpResponse(
   private def copyImpl(
       status: StatusCode = status,
       headers: immutable.Seq[HttpHeader] = headers,
-      attributes: Map[AttributeKey[_], _] = attributes,
+      attributes: Map[AttributeKey[?], ?] = attributes,
       entity: ResponseEntity = entity,
       protocol: HttpProtocol = protocol) = new HttpResponse(status, headers, attributes, entity, protocol)
 

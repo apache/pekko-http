@@ -31,7 +31,7 @@ trait ScalatestUtils extends MarshallingTestUtils {
   def evaluateTo[T](value: T): Matcher[Future[T]] =
     equal(value).matcher[T].compose(x => Await.result(x, marshallingTimeout))
 
-  def haveFailedWith(t: Throwable): Matcher[Future[_]] =
+  def haveFailedWith(t: Throwable): Matcher[Future[?]] =
     equal(t).matcher[Throwable].compose(x => Await.result(x.failed, marshallingTimeout))
 
   def unmarshalToValue[T: FromEntityUnmarshaller](value: T)(

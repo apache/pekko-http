@@ -64,6 +64,7 @@ public class CustomHeaderExampleTest extends JUnitJupiterRouteTest {
       return new ApiTokenHeader(name(), value);
     }
   }
+
   // #modeled-api-key-custom-header
 
   @Test

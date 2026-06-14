@@ -89,7 +89,7 @@ object Marshaller {
     fromScala(scalaMarshaller.wrap(mediaType.asScala)((in: C) => f.apply(in))(ContentTypeOverrider.forEntity))
   }
 
-  def entityToOKResponse[A](m: Marshaller[A, _ <: RequestEntity]): Marshaller[A, HttpResponse] = {
+  def entityToOKResponse[A](m: Marshaller[A, ? <: RequestEntity]): Marshaller[A, HttpResponse] = {
     fromScala(marshalling.Marshaller.fromToEntityMarshaller[A]()(m.asScalaCastOutput))
   }
 
@@ -98,12 +98,12 @@ object Marshaller {
   }
 
   def entityToResponse[A](status: StatusCode, headers: java.lang.Iterable[HttpHeader],
-      m: Marshaller[A, _ <: RequestEntity]): Marshaller[A, HttpResponse] = {
+      m: Marshaller[A, ? <: RequestEntity]): Marshaller[A, HttpResponse] = {
     fromScala(marshalling.Marshaller.fromToEntityMarshaller[A](status.asScala, headers.asScala)(m.asScalaCastOutput))
   }
 
   def entityToOKResponse[A](
-      headers: java.lang.Iterable[HttpHeader], m: Marshaller[A, _ <: RequestEntity]): Marshaller[A, HttpResponse] = {
+      headers: java.lang.Iterable[HttpHeader], m: Marshaller[A, ? <: RequestEntity]): Marshaller[A, HttpResponse] = {
     fromScala(marshalling.Marshaller.fromToEntityMarshaller[A](headers = headers.asScala)(m.asScalaCastOutput))
   }
 

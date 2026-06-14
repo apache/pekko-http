@@ -15,14 +15,13 @@ package docs.http.javadsl.server.testkit;
 
 // #simple-app
 
+import java.io.IOException;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.examples.simple.SimpleServerApp;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-
-import java.io.IOException;
 
 public class MyAppService extends AllDirectives {
 

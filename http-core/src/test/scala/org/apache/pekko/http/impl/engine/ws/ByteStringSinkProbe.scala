@@ -120,7 +120,7 @@ private[http] object ByteStringSinkProbe {
       def within[T](max: FiniteDuration)(f: => T): T = probe.within(max)(f)
     }
 
-  def apply(source: Source[ByteString, _])(implicit system: ClassicActorSystemProvider): ByteStringSinkProbe = {
+  def apply(source: Source[ByteString, ?])(implicit system: ClassicActorSystemProvider): ByteStringSinkProbe = {
     val probe = ByteStringSinkProbe()(system.classicSystem)
     source.runWith(probe.sink)
     probe.ensureSubscription()

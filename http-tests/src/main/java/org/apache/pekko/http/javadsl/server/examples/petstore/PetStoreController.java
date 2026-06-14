@@ -13,12 +13,11 @@
 
 package org.apache.pekko.http.javadsl.server.examples.petstore;
 
-import org.apache.pekko.http.javadsl.model.StatusCodes;
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-import org.apache.pekko.http.javadsl.server.Route;
-
 import java.util.Map;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Route;
 
 public class PetStoreController {
   private Map<Integer, Pet> dataStore;

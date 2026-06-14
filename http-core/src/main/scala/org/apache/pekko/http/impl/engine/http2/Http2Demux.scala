@@ -248,7 +248,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
       override def isUpgraded: Boolean = upgraded
 
-      override protected def logSource: Class[_] =
+      override protected def logSource: Class[?] =
         if (isServer) classOf[Http2ServerDemux] else classOf[Http2ClientDemux]
 
       // cache debug state at the beginning to avoid that this has to be queried all the time
@@ -424,7 +424,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       //        after a while or buffer only a limited amount?
       val bufferedSubStreamOutput = new BufferedOutlet[Http2SubStream](fromOutlet(substreamOut))
       override def dispatchSubstream(initialHeaders: ParsedHeadersFrame, data: Either[ByteString, Source[Any, Any]],
-          correlationAttributes: Map[AttributeKey[_], _]): Unit =
+          correlationAttributes: Map[AttributeKey[?], ?]): Unit =
         bufferedSubStreamOutput.push(Http2SubStream(initialHeaders, OptionVal.None, data, correlationAttributes))
 
       // -----------------------------------------------------------------

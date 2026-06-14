@@ -65,6 +65,7 @@ public class MarshallingDirectivesExamplesTest extends JUnitJupiterRouteTest {
       return favoriteNumber;
     }
   }
+
   // #person
 
   @Test

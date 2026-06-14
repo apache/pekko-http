@@ -165,7 +165,8 @@ public class RouteDirectivesExamplesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.GET("/foo"))
         .assertStatusCode(StatusCodes.PERMANENT_REDIRECT)
         .assertEntity(
-            "The request, and all future requests should be repeated using <a href=\"/foo/\">this URI</a>.");
+            "The request, and all future requests should be repeated using <a href=\"/foo/\">this"
+                + " URI</a>.");
     // #redirect
   }
 

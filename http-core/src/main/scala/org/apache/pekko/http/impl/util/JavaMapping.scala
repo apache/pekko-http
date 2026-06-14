@@ -52,7 +52,7 @@ private[http] trait J2SMapping[J] {
 /** INTERNAL API */
 @InternalApi
 private[http] object J2SMapping {
-  implicit def fromJavaMapping[J](implicit mapping: JavaMapping[J, _]): J2SMapping[J] { type S = mapping.S } = mapping
+  implicit def fromJavaMapping[J](implicit mapping: JavaMapping[J, ?]): J2SMapping[J] { type S = mapping.S } = mapping
 
   implicit def fromJavaSeqMapping[J](
       implicit mapping: J2SMapping[J]): J2SMapping[Seq[J]] { type S = immutable.Seq[mapping.S] } =
@@ -72,7 +72,7 @@ private[http] trait S2JMapping[S] {
 /** INTERNAL API */
 @InternalApi
 private[http] object S2JMapping {
-  implicit def fromScalaMapping[S](implicit mapping: JavaMapping[_, S]): S2JMapping[S] { type J = mapping.J } = mapping
+  implicit def fromScalaMapping[S](implicit mapping: JavaMapping[?, S]): S2JMapping[S] { type J = mapping.J } = mapping
 }
 
 /** INTERNAL API */
@@ -256,8 +256,8 @@ private[http] object JavaMapping {
   implicit object InetSocketAddress extends Identity[java.net.InetSocketAddress]
   implicit object ByteString extends Identity[pekko.util.ByteString]
 
-  implicit val AttributeKey: Inherited[jm.AttributeKey[_], sm.AttributeKey[_]] =
-    new Inherited[jm.AttributeKey[_], sm.AttributeKey[_]]
+  implicit val AttributeKey: Inherited[jm.AttributeKey[?], sm.AttributeKey[?]] =
+    new Inherited[jm.AttributeKey[?], sm.AttributeKey[?]]
   implicit def attributeKey[T]: Inherited[jm.AttributeKey[T], sm.AttributeKey[T]] =
     AttributeKey.asInstanceOf[Inherited[jm.AttributeKey[T], sm.AttributeKey[T]]]
   implicit object ContentType extends Inherited[jm.ContentType, sm.ContentType]

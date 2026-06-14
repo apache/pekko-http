@@ -160,6 +160,7 @@ public class JsonStreamingExamplesTest extends JUnitJupiterRouteTest {
 
     return responseStreaming;
   }
+
   // #routes
 
   final void clientStreamingJsonExample() {
@@ -260,6 +261,7 @@ public class JsonStreamingExamplesTest extends JUnitJupiterRouteTest {
       return message;
     }
   }
+
   // #tweet-model
 
   // #measurement-model

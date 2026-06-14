@@ -44,9 +44,9 @@ abstract class PathMatcher[L](implicit val ev: Tuple[L]) extends (Path => PathMa
     this ~ PathMatchers.Slash ~ other
 
   /** Alias for [[or]]. */
-  def |[R >: L: Tuple](other: PathMatcher[_ <: R]): PathMatcher[R] = or(other)
+  def |[R >: L: Tuple](other: PathMatcher[? <: R]): PathMatcher[R] = or(other)
 
-  def or[R >: L: Tuple](other: PathMatcher[_ <: R]): PathMatcher[R] =
+  def or[R >: L: Tuple](other: PathMatcher[? <: R]): PathMatcher[R] =
     new PathMatcher[R] {
       def apply(path: Path) = self(path).orElse(other(path))
     }
@@ -346,7 +346,7 @@ trait ImplicitPathMatcherConstruction {
 trait PathMatchers {
   import PathMatcher._
 
-  def not(self: PathMatcher[_]): PathMatcher0 =
+  def not(self: PathMatcher[?]): PathMatcher0 =
     new PathMatcher[Unit] {
       def apply(path: Path) = if (self(path) eq Unmatched) Matched(path, ()) else Unmatched
     }

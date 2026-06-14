@@ -13,9 +13,14 @@
 
 package docs.http.javadsl;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
-import org.apache.pekko.http.javadsl.model.AttributeKey;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.ResponseFuture;
@@ -23,19 +28,10 @@ import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
 import org.apache.pekko.stream.BoundedSourceQueue;
 import org.apache.pekko.stream.Materializer;
-import org.apache.pekko.stream.OverflowStrategy;
 import org.apache.pekko.stream.SystemMaterializer;
 import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
-import org.apache.pekko.stream.javadsl.SourceQueueWithComplete;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-
-import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 
 /**
  * A small example app that shows how to use the HTTP/2 client API currently against actual internet

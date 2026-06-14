@@ -38,7 +38,6 @@ import static org.apache.pekko.util.ByteString.emptyByteString;
 
 // #manual-entity-consume-example-1
 import java.io.File;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.apache.pekko.stream.javadsl.Framing;

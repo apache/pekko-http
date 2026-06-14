@@ -101,6 +101,7 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
             get(() -> complete("Received GET request for order " + id))
                 .orElse(put(() -> complete("Received PUT request for order " + id))));
   }
+
   // #example1
 
   // #usingConcat
@@ -112,6 +113,7 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
                 get(() -> complete("Received GET request for order " + id)),
                 put(() -> complete("Received PUT request for order " + id))));
   }
+
   // #usingConcat
 
   // #usingConcatBig
@@ -124,6 +126,7 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
                 put(() -> complete("Received PUT request for order " + id)),
                 head(() -> complete("Received HEAD request for order " + id))));
   }
+
   // #usingConcatBig
 
   // #getOrPut
@@ -139,6 +142,7 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
                 () ->
                     extractMethod(method -> complete("Received " + method + " for order " + id))));
   }
+
   // #getOrPut
 
   // #getOrPutUsingAnyOf
@@ -152,6 +156,7 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
                 () ->
                     extractMethod(method -> complete("Received " + method + " for order " + id))));
   }
+
   // #getOrPutUsingAnyOf
 
   // #composeNesting
@@ -166,6 +171,7 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
             getWithIP(
                 address -> complete("Received request for order " + id + " from IP " + address)));
   }
+
   // #composeNesting
 
   // #composeNestingAllOf

@@ -19,7 +19,7 @@ import sbt.Keys._
  */
 object VersionGenerator {
 
-  def versionSettings: Seq[Setting[_]] = inConfig(Compile)(Seq(
+  def versionSettings: Seq[Setting[?]] = inConfig(Compile)(Seq(
     resourceGenerators += generateVersion(resourceManaged, _ / "pekko-http-version.conf",
       """|pekko.http.version = "%s"
          |"""),

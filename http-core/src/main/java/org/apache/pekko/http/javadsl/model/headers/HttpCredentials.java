@@ -13,9 +13,8 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
-import org.apache.pekko.http.impl.util.Util;
-
 import java.util.Map;
+import org.apache.pekko.http.impl.util.Util;
 
 public abstract class HttpCredentials {
   public abstract String scheme();

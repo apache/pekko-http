@@ -15,27 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
-name: Scalafmt
-
-permissions: {}
-
-on:
-  pull_request:
-    branches: ['**']
-
-jobs:
-  build:
-    name: Code is formatted
-    runs-on: ubuntu-latest
-    if: github.repository == 'apache/pekko-http'
-    steps:
-      - name: Checkout current branch (full)
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Check project is formatted
-        uses: jrouly/scalafmt-native-action@v5
-        with:
-          arguments: '--list --mode diff-ref=origin/main'
+# Scala 3's -Yfuture-lazy-vals flag changes the bytecode generated for object
+# lazy vals, removing the synthetic <clinit> methods present in the 1.0.0
+# baseline. These are compiler-internal initialization methods and are not
+# part of the public API, so the change is binary compatible in practice.
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.server.Directives.<clinit>")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.server.PathMatchers.<clinit>")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.server.directives.PathDirectives.<clinit>")

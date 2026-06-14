@@ -23,6 +23,6 @@ package sbt {
     }
     def AggregationShowRun[T](complete: sbt.internal.Aggregation.Complete[T],
         show: sbt.internal.Aggregation.ShowConfig)(
-        implicit display: Show[ScopedKey[_]]): Unit = showRunMethod.invoke(Aggregation, complete, show, display)
+        implicit display: Show[ScopedKey[?]]): Unit = showRunMethod.invoke(Aggregation, complete, show, display)
   }
 }

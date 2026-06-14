@@ -13,6 +13,9 @@
 
 package org.apache.pekko.http.javadsl.server.directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.*;
+
+import java.util.Optional;
 import org.apache.pekko.http.javadsl.model.HttpHeader;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
@@ -22,10 +25,6 @@ import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.japi.pf.PFBuilder;
 import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
-
-import static org.apache.pekko.http.javadsl.server.Directives.*;
 
 public class HeaderDirectivesTest extends JUnitJupiterRouteTest {
 

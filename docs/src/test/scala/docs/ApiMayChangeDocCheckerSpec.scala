@@ -29,7 +29,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers {
 
-  def prettifyName(clazz: Class[_]): String = {
+  def prettifyName(clazz: Class[?]): String = {
     clazz.getCanonicalName.replaceAll("\\$minus", "-").split("\\$")(0)
   }
 
@@ -65,7 +65,7 @@ class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers {
     try {
       val docPage = source.getLines().toList
       "contain all ApiMayChange references in classes" in {
-        val classes: mutable.Set[Class[_]] = reflections.getTypesAnnotatedWith(classOf[ApiMayChange], true).asScala
+        val classes: mutable.Set[Class[?]] = reflections.getTypesAnnotatedWith(classOf[ApiMayChange], true).asScala
         val missing = classes
           .map(prettifyName)
           .foldLeft(Set.empty[String])(collectMissing(docPage))

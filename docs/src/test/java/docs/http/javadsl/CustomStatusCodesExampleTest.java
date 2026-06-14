@@ -27,7 +27,6 @@ import org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings;
 import org.apache.pekko.http.javadsl.settings.ParserSettings;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.apache.pekko.stream.Materializer;
 import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;

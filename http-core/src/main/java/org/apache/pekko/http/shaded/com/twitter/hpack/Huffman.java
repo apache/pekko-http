@@ -31,8 +31,8 @@
 
 package org.apache.pekko.http.shaded.com.twitter.hpack;
 
-import static org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.HUFFMAN_CODE_LENGTHS;
 import static org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.HUFFMAN_CODES;
+import static org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.HUFFMAN_CODE_LENGTHS;
 
 public final class Huffman {
 

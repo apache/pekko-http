@@ -23,7 +23,9 @@ import javax.net.ssl.SSLSession;
  * pekko.http.[client|server].parsing.tls-session-info-header = on</code>.
  */
 public abstract class TlsSessionInfo extends CustomHeader {
-  /** @return the SSLSession this message was received over. */
+  /**
+   * @return the SSLSession this message was received over.
+   */
   public abstract SSLSession getSession();
 
   public static TlsSessionInfo create(SSLSession session) {

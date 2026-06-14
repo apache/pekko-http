@@ -79,7 +79,7 @@ sealed trait ModeledHeader extends HttpHeader with Serializable {
   def lowercaseName: String = companion.lowercaseName
   final def render[R <: Rendering](r: R): r.type = renderValue(companion.render(r))
   protected[http] def renderValue[R <: Rendering](r: R): r.type
-  protected def companion: ModeledCompanion[_]
+  protected def companion: ModeledCompanion[?]
 }
 
 private[headers] sealed trait RequestHeader extends ModeledHeader { override def renderInRequests = true }

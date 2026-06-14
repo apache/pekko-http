@@ -14,19 +14,18 @@
 package docs.http.javadsl;
 
 // #single-request-decoding-example
-import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.http.javadsl.Http;
-import org.apache.pekko.http.javadsl.coding.Coder;
-import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.model.HttpResponse;
-import org.apache.pekko.http.scaladsl.model.headers.HttpEncodings;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.coding.Coder;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.scaladsl.model.headers.HttpEncodings;
 
 public class HttpClientDecodingExampleTest {
 

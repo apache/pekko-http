@@ -13,20 +13,19 @@
 
 package org.apache.pekko.http.javadsl.server;
 
-import org.apache.pekko.Done;
-import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.event.Logging;
-import org.apache.pekko.http.javadsl.Http;
-import org.apache.pekko.http.javadsl.ServerBinding;
-import org.apache.pekko.http.javadsl.settings.ServerSettings;
 import com.typesafe.config.ConfigFactory;
-
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.pekko.Done;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.event.Logging;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.ServerBinding;
+import org.apache.pekko.http.javadsl.settings.ServerSettings;
 
 /**
  * DEPRECATED, consider https://github.com/apache/pekko-http-quickstart-java.g8 instead
@@ -40,6 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class HttpApp extends AllDirectives {
 
   private AtomicReference<ServerBinding> serverBinding = new AtomicReference<>();
+
   /**
    * Holds a reference to the {@link ActorSystem} used to start this server. Stopping this system
    * will interfere with the proper functioning condition of the server.

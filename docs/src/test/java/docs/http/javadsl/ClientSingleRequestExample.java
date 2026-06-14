@@ -24,7 +24,6 @@ import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.server.examples.petstore.Pet;
-import org.apache.pekko.stream.SystemMaterializer;
 
 import java.util.concurrent.CompletionStage;
 
@@ -37,6 +36,7 @@ public class ClientSingleRequestExample {
         Http.get(system).singleRequest(HttpRequest.create("https://pekko.apache.org"));
   }
 }
+
 // #single-request-example
 
 class OtherRequestResponseExamples {

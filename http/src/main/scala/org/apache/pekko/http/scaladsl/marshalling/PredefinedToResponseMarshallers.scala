@@ -108,7 +108,7 @@ trait LowPriorityToResponseMarshallerImplicits {
     fromEntityStreamingSupportAndByteStringSourceMarshaller[T, M](s, m.map(_.dataBytes))
 
   private[marshalling] def fromEntityStreamingSupportAndByteStringSourceMarshaller[T: ClassTag, M](
-      s: EntityStreamingSupport, m: Marshaller[T, Source[ByteString, _]]): ToResponseMarshaller[Source[T, M]] = {
+      s: EntityStreamingSupport, m: Marshaller[T, Source[ByteString, ?]]): ToResponseMarshaller[Source[T, M]] = {
     Marshaller[Source[T, M], HttpResponse] { implicit ec => source =>
       FastFuture.successful {
         Marshalling.WithFixedContentType(s.contentType,
@@ -161,7 +161,7 @@ object PredefinedToResponseMarshallers extends PredefinedToResponseMarshallers {
 
 final class NoStrictlyCompatibleElementMarshallingAvailableException[T](
     streamContentType: ContentType,
-    availableMarshallings: List[Marshalling[_]])(implicit tag: ClassTag[T])
+    availableMarshallings: List[Marshalling[?]])(implicit tag: ClassTag[T])
     extends RuntimeException(
       s"None of the available marshallings ($availableMarshallings) directly " +
       s"match the ContentType requested by the top-level streamed entity ($streamContentType). " +

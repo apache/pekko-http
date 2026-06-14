@@ -49,7 +49,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -184,7 +183,6 @@ import static org.apache.pekko.http.javadsl.server.Directives.mapResponseHeaders
 
 // #mapResponseHeaders
 // #mapInnerRoute
-import static org.apache.pekko.http.javadsl.server.Directives.mapInnerRoute;
 
 // #mapInnerRoute
 // #mapRejections

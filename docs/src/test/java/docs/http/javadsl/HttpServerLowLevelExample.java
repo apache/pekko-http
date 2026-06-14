@@ -14,6 +14,7 @@
 package docs.http.javadsl;
 
 // #low-level-server-example
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.Http;
@@ -21,10 +22,7 @@ import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.apache.pekko.stream.SystemMaterializer;
 import org.apache.pekko.util.ByteString;
-
-import java.util.concurrent.CompletionStage;
 
 public class HttpServerLowLevelExample {
 

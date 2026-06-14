@@ -48,6 +48,7 @@ public class CustomDirectivesExamplesTest extends JUnitJupiterRouteTest {
   public Route getOrPut(Supplier<Route> inner) {
     return get(inner).orElse(put(inner));
   }
+
   // #labeling-1
 
   @Test
@@ -114,6 +115,7 @@ public class CustomDirectivesExamplesTest extends JUnitJupiterRouteTest {
               });
         });
   }
+
   // #composition-1
 
   @Test

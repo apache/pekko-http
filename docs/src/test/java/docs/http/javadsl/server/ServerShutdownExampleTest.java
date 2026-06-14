@@ -13,15 +13,14 @@
 
 package docs.http.javadsl.server;
 
+import java.time.Duration;
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.CoordinatedShutdown;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.server.Route;
-
-import java.time.Duration;
-import java.util.concurrent.CompletionStage;
 
 public class ServerShutdownExampleTest {
 

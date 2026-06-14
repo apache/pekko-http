@@ -554,7 +554,7 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
               Source.queue(8, OverflowStrategy.fail).mapMaterializedValue(responseSourceQueuePromise.success)))
       }
 
-      val requestSourceQueuePromise = Promise[SourceQueueWithComplete[_]]()
+      val requestSourceQueuePromise = Promise[SourceQueueWithComplete[?]]()
       val requestSource = Source.queue[HttpEntity.ChunkStreamPart](8, OverflowStrategy.fail)
         .mapMaterializedValue(requestSourceQueuePromise.success)
       val slowRequestEntity = Chunked(ContentTypes.`text/plain(UTF-8)`, requestSource)

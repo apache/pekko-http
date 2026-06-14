@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.javadsl.settings;
 
-import org.apache.pekko.actor.ActorSystem;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.apache.pekko.actor.ActorSystem;
 import org.junit.jupiter.api.Test;
 
 public class RoutingSettingsTest {

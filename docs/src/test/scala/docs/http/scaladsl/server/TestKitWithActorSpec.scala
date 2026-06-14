@@ -46,7 +46,7 @@ class TestKitWithActorSpec extends AnyWordSpec with Matchers with ScalatestRoute
   // This test does not use the classic APIs,
   // so it needs to adapt the system:
   import pekko.actor.typed.scaladsl.adapter._
-  implicit val typedSystem: ActorSystem[_] = system.toTyped
+  implicit val typedSystem: ActorSystem[?] = system.toTyped
   implicit val timeout: Timeout = Timeout(500.milliseconds)
   implicit val scheduler: untyped.Scheduler = system.scheduler
 

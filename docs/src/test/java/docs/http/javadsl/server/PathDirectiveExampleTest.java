@@ -24,6 +24,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.path;
 import static org.apache.pekko.http.javadsl.server.Directives.pathEnd;
 import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 import static org.apache.pekko.http.javadsl.server.Directives.pathSingleSlash;
+
 // #path-examples
 
 public class PathDirectiveExampleTest extends JUnitJupiterRouteTest {

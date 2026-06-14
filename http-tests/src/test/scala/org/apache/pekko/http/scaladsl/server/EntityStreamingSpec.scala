@@ -357,7 +357,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
       case ex: java.lang.RuntimeException if ex.getCause != null =>
         val cause = ex.getCause
         cause.getClass should ===(
-          classOf[pekko.http.scaladsl.marshalling.NoStrictlyCompatibleElementMarshallingAvailableException[_]])
+          classOf[pekko.http.scaladsl.marshalling.NoStrictlyCompatibleElementMarshallingAvailableException[?]])
         cause.getMessage should include("Please provide an implicit `Marshaller[java.lang.String, HttpEntity]")
         cause.getMessage should include("that can render java.lang.String as [application/json]")
     }
@@ -420,7 +420,7 @@ class EntityStreamingSpec extends RoutingSpec with ScalaFutures {
       case ex: java.lang.RuntimeException if ex.getCause != null =>
         val cause = ex.getCause
         cause.getClass should ===(
-          classOf[pekko.http.scaladsl.marshalling.NoStrictlyCompatibleElementMarshallingAvailableException[_]])
+          classOf[pekko.http.scaladsl.marshalling.NoStrictlyCompatibleElementMarshallingAvailableException[?]])
         cause.getMessage should include("Please provide an implicit `Marshaller[java.lang.String, HttpEntity]")
         cause.getMessage should include("that can render java.lang.String as [application/json]")
     }

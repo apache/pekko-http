@@ -34,7 +34,6 @@ package org.apache.pekko.http.shaded.com.twitter.hpack;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
-
 import org.apache.pekko.http.impl.util.StringTools;
 import org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.IndexType;
 

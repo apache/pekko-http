@@ -13,11 +13,10 @@
 
 package docs.http.javadsl.server.testkit;
 
+import java.util.concurrent.TimeUnit;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 import scala.concurrent.duration.FiniteDuration;
-
-import java.util.concurrent.TimeUnit;
 
 public class WithTimeoutTest extends JUnitJupiterRouteTest {
   // #timeout-setting
@@ -25,6 +24,7 @@ public class WithTimeoutTest extends JUnitJupiterRouteTest {
   public FiniteDuration awaitDuration() {
     return FiniteDuration.create(5, TimeUnit.SECONDS);
   }
+
   // #timeout-setting
 
   @Test

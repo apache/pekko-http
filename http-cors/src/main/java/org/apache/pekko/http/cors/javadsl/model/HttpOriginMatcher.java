@@ -17,9 +17,9 @@
 
 package org.apache.pekko.http.cors.javadsl.model;
 
+import org.apache.pekko.http.cors.scaladsl.model.HttpOriginMatcher$;
 import org.apache.pekko.http.impl.util.Util;
 import org.apache.pekko.http.javadsl.model.headers.HttpOrigin;
-import org.apache.pekko.http.cors.scaladsl.model.HttpOriginMatcher$;
 
 public abstract class HttpOriginMatcher {
 
