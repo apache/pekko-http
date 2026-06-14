@@ -93,7 +93,7 @@ class SerializabilitySpec extends AnyWordSpec with Matchers {
     // make sure to use correct class loader
     val loader = classOf[HttpRequest].getClassLoader
     val ois = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray)) {
-      override def resolveClass(desc: ObjectStreamClass): Class[_] =
+      override def resolveClass(desc: ObjectStreamClass): Class[?] =
         Class.forName(desc.getName, false, loader)
     }
 

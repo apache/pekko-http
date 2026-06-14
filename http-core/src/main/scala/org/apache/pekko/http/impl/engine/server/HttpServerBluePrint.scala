@@ -447,7 +447,7 @@ private[http] object HttpServerBluePrint {
               grab(requestParsingIn) match {
                 case r: RequestStart =>
                   openRequests = openRequests.enqueue(r)
-                  messageEndPending = r.createEntity.isInstanceOf[StreamedEntityCreator[_, _]]
+                  messageEndPending = r.createEntity.isInstanceOf[StreamedEntityCreator[?, ?]]
                   val rs = if (r.expect100Continue) {
                     r.createEntity match {
                       case StrictEntityCreator(HttpEntity.Strict(_, _)) =>

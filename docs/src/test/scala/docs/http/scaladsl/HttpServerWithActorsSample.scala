@@ -103,7 +103,7 @@ object HttpServerWithActorsSample {
   import scala.concurrent.Future
 
   class JobRoutes(buildJobRepository: ActorRef[JobRepository.Command])(
-      implicit system: ActorSystem[_]) extends JsonSupport {
+      implicit system: ActorSystem[?]) extends JsonSupport {
 
     import pekko.actor.typed.scaladsl.AskPattern.schedulerFromActorSystem
     import pekko.actor.typed.scaladsl.AskPattern.Askable

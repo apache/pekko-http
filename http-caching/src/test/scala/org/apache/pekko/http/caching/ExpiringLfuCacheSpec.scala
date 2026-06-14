@@ -174,7 +174,7 @@ class ExpiringLfuCacheSpec extends AnyWordSpec with Matchers with BeforeAndAfter
       }
     }
     "be created with the same ttl and tti" in {
-      lfuCache[Int](timeToLive = 5.seconds, timeToIdle = 5.seconds) shouldBe a[LfuCache[_, _]]
+      lfuCache[Int](timeToLive = 5.seconds, timeToIdle = 5.seconds) shouldBe a[LfuCache[?, ?]]
     }
   }
 

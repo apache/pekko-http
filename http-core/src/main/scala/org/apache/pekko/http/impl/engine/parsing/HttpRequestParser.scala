@@ -199,7 +199,7 @@ private[http] final class HttpRequestParser(
                 `Raw-Request-URI`(uriBytes.decodeString(HttpCharsets.`US-ASCII`.nioCharset)) :: headers
               else headers
 
-            val attributes: Map[AttributeKey[_], Any] =
+            val attributes: Map[AttributeKey[?], Any] =
               if (settings.includeSslSessionAttribute) Map(AttributeKeys.sslSession -> SslSessionInfo(sslSession))
               else Map.empty
 

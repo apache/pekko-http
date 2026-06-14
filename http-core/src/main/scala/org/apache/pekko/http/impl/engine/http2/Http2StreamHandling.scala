@@ -47,7 +47,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def settings: Http2CommonSettings
   def pushGOAWAY(errorCode: ErrorCode, debug: String): Unit
   def dispatchSubstream(initialHeaders: ParsedHeadersFrame, data: Either[ByteString, Source[Any, Any]],
-      correlationAttributes: Map[AttributeKey[_], _]): Unit
+      correlationAttributes: Map[AttributeKey[?], ?]): Unit
   def isUpgraded: Boolean
 
   def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart]
@@ -263,14 +263,14 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     def stateName: String = productPrefix
 
     /** Called when we receive a user-created stream (that is open for more data) */
-    def handleOutgoingCreated(outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
+    def handleOutgoingCreated(outStream: OutStream, correlationAttributes: Map[AttributeKey[?], ?]): StreamState = {
       warning(
         s"handleOutgoingCreated received unexpectedly in state $stateName. This indicates a bug in Pekko HTTP, please report it to the issue tracker.")
       this
     }
 
     /** Called when we receive a user-created stream that is already closed */
-    def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
+    def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[?], ?]): StreamState = {
       warning(
         s"handleOutgoingCreatedAndFinished received unexpectedly in state $stateName. This indicates a bug in Pekko HTTP, please report it to the issue tracker.")
       this
@@ -297,7 +297,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         event: StreamFrameEvent,
         nextStateEmpty: StreamState,
         nextStateStream: IncomingStreamBuffer => StreamState,
-        correlationAttributes: Map[AttributeKey[_], _] = Map.empty): StreamState =
+        correlationAttributes: Map[AttributeKey[?], ?] = Map.empty): StreamState =
       event match {
         case frame @ ParsedHeadersFrame(streamId, endStream, _, _, _) =>
           if (endStream) {
@@ -315,7 +315,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         streamId: Int,
         headers: ParsedHeadersFrame,
         initialData: ByteString,
-        correlationAttributes: Map[AttributeKey[_], _],
+        correlationAttributes: Map[AttributeKey[?], ?],
         nextStateStream: IncomingStreamBuffer => StreamState): StreamState = {
       val subSource = new SubSourceOutlet[Any](s"substream-out-$streamId")
       val buffer = new IncomingStreamBuffer(streamId, subSource)
@@ -344,16 +344,16 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         expectIncomingStream(event, HalfClosedRemoteWaitingForOutgoingStream(0), OpenReceivingDataFirst(_, 0))
 
     override def handleOutgoingCreated(
-        outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState =
+        outStream: OutStream, correlationAttributes: Map[AttributeKey[?], ?]): StreamState =
       OpenSendingData(outStream, correlationAttributes)
-    override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState =
+    override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[?], ?]): StreamState =
       HalfClosedLocalWaitingForPeerStream(correlationAttributes)
   }
 
   /** Special state that allows collecting some incoming data before dispatching it either as strict or streamed entity */
   case class CollectingIncomingData(
       headers: ParsedHeadersFrame,
-      correlationAttributes: Map[AttributeKey[_], _],
+      correlationAttributes: Map[AttributeKey[?], ?],
       collectedData: ByteString,
       extraInitialWindow: Int) extends ReceivingData {
 
@@ -379,11 +379,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   case class OpenReceivingDataFirst(buffer: IncomingStreamBuffer, extraInitialWindow: Int = 0)
       extends ReceivingDataWithBuffer(HalfClosedRemoteWaitingForOutgoingStream(extraInitialWindow)) {
     override def handleOutgoingCreated(
-        outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
+        outStream: OutStream, correlationAttributes: Map[AttributeKey[?], ?]): StreamState = {
       outStream.increaseWindow(extraInitialWindow)
       Open(buffer, outStream)
     }
-    override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState =
+    override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[?], ?]): StreamState =
       HalfClosedLocal(buffer)
     override def handleOutgoingEnded(): StreamState = Closed
 
@@ -426,7 +426,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
   }
 
-  case class OpenSendingData(outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]) extends StreamState
+  case class OpenSendingData(outStream: OutStream, correlationAttributes: Map[AttributeKey[?], ?]) extends StreamState
       with Sending {
     override def handle(event: StreamFrameEvent): StreamState = event match {
       case _: ParsedHeadersFrame =>
@@ -443,7 +443,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
     override def handleOutgoingEnded(): StreamState = HalfClosedLocalWaitingForPeerStream(correlationAttributes)
   }
-  case class HalfClosedLocalWaitingForPeerStream(correlationAttributes: Map[AttributeKey[_], _]) extends StreamState {
+  case class HalfClosedLocalWaitingForPeerStream(correlationAttributes: Map[AttributeKey[?], ?]) extends StreamState {
     override def handle(event: StreamFrameEvent): StreamState = event match {
       case _: WindowUpdateFrame =>
         // We're not planning on sending any data on this stream anymore, so we don't care about window updates.
@@ -552,11 +552,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
 
     override def handleOutgoingCreated(
-        outStream: OutStream, correlationAttributes: Map[AttributeKey[_], _]): StreamState = {
+        outStream: OutStream, correlationAttributes: Map[AttributeKey[?], ?]): StreamState = {
       outStream.increaseWindow(extraInitialWindow)
       HalfClosedRemoteSendingData(outStream)
     }
-    override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[_], _]): StreamState = Closed
+    override def handleOutgoingCreatedAndFinished(correlationAttributes: Map[AttributeKey[?], ?]): StreamState = Closed
   }
 
   /**
@@ -723,10 +723,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
   final class OutStreamImpl(
       val streamId: Int,
-      private var maybeInlet: OptionVal[SubSinkInlet[_]],
+      private var maybeInlet: OptionVal[SubSinkInlet[?]],
       var outboundWindowLeft: Int,
       var trailer: OptionVal[ParsedHeadersFrame]) extends InHandler with OutStream {
-    private def inlet: SubSinkInlet[_] = maybeInlet.get
+    private def inlet: SubSinkInlet[?] = maybeInlet.get
 
     private var buffer: ByteString = ByteString.empty
     private var upstreamClosed: Boolean = false
@@ -743,7 +743,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         enqueueOutStream(streamId)
       }
 
-    def registerIncomingData(inlet: SubSinkInlet[_]): Unit = {
+    def registerIncomingData(inlet: SubSinkInlet[?]): Unit = {
       require(!maybeInlet.isDefined)
 
       this.maybeInlet = OptionVal.Some(inlet)

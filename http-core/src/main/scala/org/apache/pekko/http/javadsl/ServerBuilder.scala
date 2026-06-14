@@ -114,7 +114,7 @@ trait ServerBuilder {
    * the `pekko.http.server.max-connections` setting. Please see the documentation in the reference.conf for more
    * information about what kind of guarantees to expect.
    */
-  def bindFlow(handlerFlow: Flow[HttpRequest, HttpResponse, _]): CompletionStage[ServerBinding]
+  def bindFlow(handlerFlow: Flow[HttpRequest, HttpResponse, ?]): CompletionStage[ServerBinding]
 
   /**
    * Creates a [[pekko.stream.javadsl.Source]] of [[pekko.http.javadsl.IncomingConnection]] instances which represents a prospective HTTP server binding
@@ -185,9 +185,9 @@ object ServerBuilder {
         interface, port, context.asScala, settings.asScala, parallelism = 0, log)(materializer)
         .map(new ServerBinding(_)).asJava
 
-    def bindFlow(handlerFlow: Flow[HttpRequest, HttpResponse, _]): CompletionStage[ServerBinding] =
+    def bindFlow(handlerFlow: Flow[HttpRequest, HttpResponse, ?]): CompletionStage[ServerBinding] =
       http.bindAndHandleImpl(
-        handlerFlow.asInstanceOf[Flow[sm.HttpRequest, sm.HttpResponse, _]].asScala,
+        handlerFlow.asInstanceOf[Flow[sm.HttpRequest, sm.HttpResponse, ?]].asScala,
         interface, port, context.asScala, settings.asScala, log)(materializer)
         .map(new ServerBinding(_)).asJava
 

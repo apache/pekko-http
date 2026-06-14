@@ -55,7 +55,7 @@ object PekkoSpec {
     ConfigFactory.parseMap(map.asJava)
   }
 
-  def getCallerName(clazz: Class[_]): String = {
+  def getCallerName(clazz: Class[?]): String = {
     val s = Thread.currentThread.getStackTrace.map(_.getClassName).drop(1)
       .dropWhile(_.matches("(java.lang.Thread|.*PekkoSpec.?$|.*StreamSpec.?$)"))
     val reduced = s.lastIndexWhere(_ == clazz.getName) match {
@@ -75,7 +75,7 @@ abstract class PekkoSpec(_system: ActorSystem) extends PekkoBaseSpec(_system) wi
 
   def this(s: String) = this(ConfigFactory.parseString(s))
 
-  def this(configMap: Map[String, _]) = this(PekkoSpec.mapToConfig(configMap))
+  def this(configMap: Map[String, ?]) = this(PekkoSpec.mapToConfig(configMap))
 
   def this() = this(ActorSystem(PekkoSpec.getCallerName(getClass), PekkoSpec.testConf))
 
@@ -103,7 +103,7 @@ abstract class PekkoFreeSpec(_system: ActorSystem) extends PekkoBaseSpec(_system
 
   def this(s: String) = this(ConfigFactory.parseString(s))
 
-  def this(configMap: Map[String, _]) = this(PekkoSpec.mapToConfig(configMap))
+  def this(configMap: Map[String, ?]) = this(PekkoSpec.mapToConfig(configMap))
 
   def this() = this(ActorSystem(PekkoSpec.getCallerName(getClass), PekkoSpec.testConf))
 
@@ -134,7 +134,7 @@ abstract class PekkoBaseSpec(_system: ActorSystem)
 
   def this(s: String) = this(ConfigFactory.parseString(s))
 
-  def this(configMap: Map[String, _]) = this(PekkoSpec.mapToConfig(configMap))
+  def this(configMap: Map[String, ?]) = this(PekkoSpec.mapToConfig(configMap))
 
   def this() = this(ActorSystem(PekkoSpec.getCallerName(getClass), PekkoSpec.testConf))
 
@@ -151,9 +151,9 @@ abstract class PekkoBaseSpec(_system: ActorSystem)
 
   override def expectedTestDuration: FiniteDuration = 60.seconds
 
-  def muteDeadLetters(messageClasses: Class[_]*)(sys: ActorSystem = system): Unit =
+  def muteDeadLetters(messageClasses: Class[?]*)(sys: ActorSystem = system): Unit =
     if (!sys.log.isDebugEnabled) {
-      def mute(clazz: Class[_]): Unit =
+      def mute(clazz: Class[?]): Unit =
         sys.eventStream.publish(Mute(DeadLettersFilter(clazz)(occurrences = Int.MaxValue)))
       if (messageClasses.isEmpty) mute(classOf[AnyRef])
       else messageClasses.foreach(mute)
@@ -165,7 +165,7 @@ abstract class PekkoBaseSpec(_system: ActorSystem)
       def areEqual(a: Class[A], b: Class[B]) = a == b
     }
 
-  implicit def setEqualityConstraint[A, T <: Set[_ <: A]]: CanEqual[Set[A], T] =
+  implicit def setEqualityConstraint[A, T <: Set[? <: A]]: CanEqual[Set[A], T] =
     new CanEqual[Set[A], T] {
       def areEqual(a: Set[A], b: T) = a == b
     }

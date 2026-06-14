@@ -39,21 +39,21 @@ trait WebSocketUpgrade {
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
    * use the given handlerFlow to handle WebSocket messages from the client.
    */
-  def handleMessagesWith(handlerFlow: Graph[FlowShape[Message, Message], _ <: Any]): HttpResponse
+  def handleMessagesWith(handlerFlow: Graph[FlowShape[Message, Message], ? <: Any]): HttpResponse
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
    * use the given handlerFlow to handle WebSocket messages from the client. The given subprotocol must be one
    * of the ones offered by the client.
    */
-  def handleMessagesWith(handlerFlow: Graph[FlowShape[Message, Message], _ <: Any], subprotocol: String): HttpResponse
+  def handleMessagesWith(handlerFlow: Graph[FlowShape[Message, Message], ? <: Any], subprotocol: String): HttpResponse
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
    * use the given inSink to handle WebSocket messages from the client and the given outSource to send messages to the client.
    */
   def handleMessagesWith(
-      inSink: Graph[SinkShape[Message], _ <: Any], outSource: Graph[SourceShape[Message], _ <: Any]): HttpResponse
+      inSink: Graph[SinkShape[Message], ? <: Any], outSource: Graph[SourceShape[Message], ? <: Any]): HttpResponse
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
@@ -61,6 +61,6 @@ trait WebSocketUpgrade {
    *
    * The given subprotocol must be one of the ones offered by the client.
    */
-  def handleMessagesWith(inSink: Graph[SinkShape[Message], _ <: Any], outSource: Graph[SourceShape[Message], _ <: Any],
+  def handleMessagesWith(inSink: Graph[SinkShape[Message], ? <: Any], outSource: Graph[SourceShape[Message], ? <: Any],
       subprotocol: String): HttpResponse
 }

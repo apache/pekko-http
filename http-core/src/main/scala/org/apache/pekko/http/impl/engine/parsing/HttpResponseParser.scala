@@ -147,7 +147,7 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
         createEntity: EntityCreator[ResponseOutput, ResponseEntity],
         headers: List[HttpHeader] = headers) = {
 
-      val attributes: Map[AttributeKey[_], Any] =
+      val attributes: Map[AttributeKey[?], Any] =
         if (settings.includeSslSessionAttribute) Map(AttributeKeys.sslSession -> SslSessionInfo(sslSession))
         else Map.empty
 

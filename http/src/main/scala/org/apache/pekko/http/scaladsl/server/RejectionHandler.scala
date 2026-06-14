@@ -126,7 +126,7 @@ object RejectionHandler {
     }
   }
   private final case class TypeHandler[T <: Rejection](
-      runtimeClass: Class[_], f: immutable.Seq[T] => Route) extends Handler with PartialFunction[Rejection, T] {
+      runtimeClass: Class[?], f: immutable.Seq[T] => Route) extends Handler with PartialFunction[Rejection, T] {
     def isDefinedAt(rejection: Rejection): Boolean = runtimeClass.isInstance(rejection)
     def apply(rejection: Rejection): T = rejection.asInstanceOf[T]
 

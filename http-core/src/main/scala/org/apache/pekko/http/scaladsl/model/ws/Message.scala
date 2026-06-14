@@ -40,7 +40,7 @@ sealed trait TextMessage extends pekko.http.javadsl.model.ws.TextMessage with Me
   /**
    * The contents of this message as a stream.
    */
-  def textStream: Source[String, _]
+  def textStream: Source[String, ?]
 
   /**
    * Collects all possible parts and returns a potentially future Strict Message for easier processing.
@@ -57,7 +57,7 @@ sealed trait TextMessage extends pekko.http.javadsl.model.ws.TextMessage with Me
     }
 
   /** Java API */
-  override def getStreamedText: javadsl.Source[String, _] = textStream.asJava
+  override def getStreamedText: javadsl.Source[String, ?] = textStream.asJava
   override def asScala: TextMessage = this
   override def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[TextMessage.Strict] =
     toStrict(timeoutMillis.millis)(materializer).asJava
@@ -72,7 +72,7 @@ object TextMessage {
    * A strict [[TextMessage]] that contains the complete data as a [[String]].
    */
   final case class Strict(text: String) extends TextMessage {
-    def textStream: Source[String, _] = Source.single(text)
+    def textStream: Source[String, ?] = Source.single(text)
     override def toString: String = s"TextMessage.Strict($text)"
 
     /** Java API */
@@ -80,7 +80,7 @@ object TextMessage {
     override def isStrict: Boolean = true
   }
 
-  final case class Streamed(textStream: Source[String, _]) extends TextMessage {
+  final case class Streamed(textStream: Source[String, ?]) extends TextMessage {
     override def toString: String = s"TextMessage.Streamed($textStream)"
 
     /** Java API */
@@ -100,7 +100,7 @@ sealed trait BinaryMessage extends pekko.http.javadsl.model.ws.BinaryMessage wit
   /**
    * The contents of this message as a stream.
    */
-  def dataStream: Source[ByteString, _]
+  def dataStream: Source[ByteString, ?]
 
   /**
    * Collects all possible parts and returns a potentially future Strict Message for easier processing.
@@ -117,7 +117,7 @@ sealed trait BinaryMessage extends pekko.http.javadsl.model.ws.BinaryMessage wit
     }
 
   /** Java API */
-  override def getStreamedData: javadsl.Source[ByteString, _] = dataStream.asJava
+  override def getStreamedData: javadsl.Source[ByteString, ?] = dataStream.asJava
   override def asScala: BinaryMessage = this
   override def toStrict(timeoutMillis: Long, materializer: Materializer): CompletionStage[BinaryMessage.Strict] =
     toStrict(timeoutMillis.millis)(materializer).asJava
@@ -132,14 +132,14 @@ object BinaryMessage {
    * A strict [[BinaryMessage]] that contains the complete data as a [[pekko.util.ByteString]].
    */
   final case class Strict(data: ByteString) extends BinaryMessage {
-    def dataStream: Source[ByteString, _] = Source.single(data)
+    def dataStream: Source[ByteString, ?] = Source.single(data)
     override def toString: String = s"BinaryMessage.Strict($data)"
 
     /** Java API */
     override def getStrictData: ByteString = data
     override def isStrict: Boolean = true
   }
-  final case class Streamed(dataStream: Source[ByteString, _]) extends BinaryMessage {
+  final case class Streamed(dataStream: Source[ByteString, ?]) extends BinaryMessage {
     override def toString: String = s"BinaryMessage.Streamed($dataStream)"
 
     /** Java API */

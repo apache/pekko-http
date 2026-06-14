@@ -32,7 +32,7 @@ trait Specs2Utils extends MarshallingTestUtils {
   def evaluateTo[T](value: T)(implicit ee: ExecutionEnv): Matcher[Future[T]] =
     beEqualTo(value).await
 
-  def haveFailedWith(t: Throwable)(implicit ee: ExecutionEnv): Matcher[Future[_]] =
+  def haveFailedWith(t: Throwable)(implicit ee: ExecutionEnv): Matcher[Future[?]] =
     throwA(t).await
 
   def unmarshalToValue[T: FromEntityUnmarshaller](value: T)(

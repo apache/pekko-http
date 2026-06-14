@@ -244,7 +244,7 @@ object MultiNodeSpec {
     ConfigFactory.parseMap(map.asJava)
   }
 
-  private def getCallerName(clazz: Class[_]): String = {
+  private def getCallerName(clazz: Class[?]): String = {
     val s = Thread.currentThread.getStackTrace.map(_.getClassName).drop(1).dropWhile(_.matches(".*MultiNodeSpec.?$"))
     val reduced = s.lastIndexWhere(_ == clazz.getName) match {
       case -1 => s
@@ -385,9 +385,9 @@ abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles:
    */
   def node(role: RoleName): ActorPath = RootActorPath(testConductor.getAddressFor(role).await)
 
-  def muteDeadLetters(messageClasses: Class[_]*)(sys: ActorSystem = system): Unit =
+  def muteDeadLetters(messageClasses: Class[?]*)(sys: ActorSystem = system): Unit =
     if (!sys.log.isDebugEnabled) {
-      def mute(clazz: Class[_]): Unit =
+      def mute(clazz: Class[?]): Unit =
         sys.eventStream.publish(Mute(DeadLettersFilter(clazz)(occurrences = Int.MaxValue)))
       if (messageClasses.isEmpty) mute(classOf[AnyRef])
       else messageClasses.foreach(mute)

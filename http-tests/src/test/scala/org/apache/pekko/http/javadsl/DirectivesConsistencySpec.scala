@@ -91,7 +91,7 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
       case _                   => Right(m.getName)
     }
 
-  val allowMissing: Map[Class[_], Set[String]] = Map(
+  val allowMissing: Map[Class[?], Set[String]] = Map(
     scalaDirectivesClazz -> Set(
       "route", "request",
       "completeOK", // solved by raw complete() in Scala
@@ -119,7 +119,7 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
       "authenticateOAuth2PF", "authenticateOAuth2PFAsync",
       "authenticateBasicPF", "authenticateBasicPFAsync"))
 
-  def assertHasMethod(c: Class[_], name: String, alternativeName: String): Unit = {
+  def assertHasMethod(c: Class[?], name: String, alternativeName: String): Unit = {
     // include class name to get better error message
     if (!allowMissing.getOrElse(c, Set.empty).exists(n => n == name || n == alternativeName)) {
       val methods = c.getMethods.collect { case m if !ignore(m.getName) => c.getName + "." + m.getName }
@@ -142,8 +142,8 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
           case `scalaDirectivesClazz` =>
             val all = javaDirectivesClazz
 
-            var is = List.empty[Class[_]]
-            var c: Class[_] = all
+            var is = List.empty[Class[?]]
+            var c: Class[?] = all
             while (c != classOf[java.lang.Object]) {
               is = c :: is
               c = c.getSuperclass

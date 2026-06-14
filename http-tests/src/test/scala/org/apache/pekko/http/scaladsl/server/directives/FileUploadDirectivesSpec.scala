@@ -500,14 +500,14 @@ class MockFailingWritePath extends java.nio.file.Path { selfPath =>
     new FileSystem {
       override def provider(): FileSystemProvider = new FileSystemProvider {
         override def getScheme: String = ???
-        override def newFileSystem(uri: URI, env: util.Map[String, _]): FileSystem = ???
+        override def newFileSystem(uri: URI, env: util.Map[String, ?]): FileSystem = ???
         override def getFileSystem(uri: URI): FileSystem = ???
         override def getPath(uri: URI): Path = ???
         override def newByteChannel(
-            path: Path, options: util.Set[_ <: OpenOption], attrs: FileAttribute[_]*): SeekableByteChannel = ???
-        override def newDirectoryStream(dir: Path, filter: DirectoryStream.Filter[_ >: Path]): DirectoryStream[Path] =
+            path: Path, options: util.Set[? <: OpenOption], attrs: FileAttribute[?]*): SeekableByteChannel = ???
+        override def newDirectoryStream(dir: Path, filter: DirectoryStream.Filter[? >: Path]): DirectoryStream[Path] =
           ???
-        override def createDirectory(dir: Path, attrs: FileAttribute[_]*): Unit = ???
+        override def createDirectory(dir: Path, attrs: FileAttribute[?]*): Unit = ???
         override def delete(path: Path): Unit = ()
         override def copy(source: Path, target: Path, options: CopyOption*): Unit = ???
         override def move(source: Path, target: Path, options: CopyOption*): Unit = ???
@@ -523,7 +523,7 @@ class MockFailingWritePath extends java.nio.file.Path { selfPath =>
           ???
         override def setAttribute(path: Path, attribute: String, value: Any, options: LinkOption*): Unit = ???
         override def newFileChannel(
-            path: Path, options: util.Set[_ <: OpenOption], attrs: FileAttribute[_]*): FileChannel =
+            path: Path, options: util.Set[? <: OpenOption], attrs: FileAttribute[?]*): FileChannel =
           new FileChannel {
             override def read(dst: ByteBuffer): Int = ???
             override def read(dsts: Array[ByteBuffer], offset: Int, length: Int): Long = ???
@@ -580,8 +580,8 @@ class MockFailingWritePath extends java.nio.file.Path { selfPath =>
     override def toPath: Path = selfPath
   }
   override def register(
-      watcher: WatchService, events: Array[WatchEvent.Kind[_]], modifiers: WatchEvent.Modifier*): WatchKey = ???
-  override def register(watcher: WatchService, events: WatchEvent.Kind[_]*): WatchKey = ???
+      watcher: WatchService, events: Array[WatchEvent.Kind[?]], modifiers: WatchEvent.Modifier*): WatchKey = ???
+  override def register(watcher: WatchService, events: WatchEvent.Kind[?]*): WatchKey = ???
   override def iterator(): util.Iterator[Path] = ???
   override def compareTo(other: Path): Int = ???
 }
