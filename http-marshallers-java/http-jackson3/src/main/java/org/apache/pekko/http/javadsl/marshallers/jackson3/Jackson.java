@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.javadsl.marshallers.jackson3;
 
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;

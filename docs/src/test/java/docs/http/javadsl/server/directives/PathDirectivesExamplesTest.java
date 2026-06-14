@@ -13,7 +13,6 @@
 
 package docs.http.javadsl.server.directives;
 
-
 import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.junit.jupiter.api.Test;
 
