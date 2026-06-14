@@ -13,43 +13,40 @@
 
 package docs.http.javadsl;
 
-import org.apache.pekko.Done;
-import org.apache.pekko.NotUsed;
-import org.apache.pekko.actor.*;
-import org.apache.pekko.http.javadsl.ClientTransport;
-import org.apache.pekko.http.javadsl.Http;
-import org.apache.pekko.http.javadsl.OutgoingConnection;
-import org.apache.pekko.http.javadsl.model.headers.HttpCredentials;
-import org.apache.pekko.http.javadsl.model.headers.SetCookie;
-import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
-import org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings;
-import org.apache.pekko.stream.javadsl.*;
-import org.apache.pekko.util.ByteString;
+import static org.apache.pekko.pattern.Patterns.pipe;
+import static org.apache.pekko.util.ByteString.emptyByteString;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
-
+import java.util.function.Function;
+import org.apache.pekko.Done;
+import org.apache.pekko.NotUsed;
+import org.apache.pekko.actor.*;
+import org.apache.pekko.actor.AbstractActor;
+import org.apache.pekko.http.javadsl.ClientTransport;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.OutgoingConnection;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.javadsl.model.headers.HttpCredentials;
+import org.apache.pekko.http.javadsl.model.headers.SetCookie;
+import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
+import org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings;
+import org.apache.pekko.stream.javadsl.*;
+import org.apache.pekko.stream.javadsl.Framing;
+import org.apache.pekko.util.ByteString;
 import scala.concurrent.ExecutionContextExecutor;
 
-import static org.apache.pekko.util.ByteString.emptyByteString;
-
 // #manual-entity-consume-example-1
-import java.io.File;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
-import org.apache.pekko.stream.javadsl.Framing;
-import org.apache.pekko.http.javadsl.model.*;
 // #manual-entity-consume-example-1
 
 // #single-request-in-actor-example
-import org.apache.pekko.actor.AbstractActor;
-import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.model.HttpResponse;
-import static org.apache.pekko.pattern.Patterns.pipe;
 
 // #single-request-in-actor-example
 

@@ -13,40 +13,40 @@
 
 package docs.http.javadsl.server.directives;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.pekko.japi.JavaPartialFunction;
-import org.apache.pekko.http.javadsl.model.Uri;
-import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.model.HttpMethods;
-import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.apache.pekko.http.javadsl.model.headers.*;
-import org.apache.pekko.http.javadsl.model.headers.CacheDirectives.*;
-import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.server.RequestContext;
-// #caching-directives-import
-import static org.apache.pekko.http.javadsl.server.directives.CachingDirectives.*;
-// #caching-directives-import
-// #time-unit-import
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
-// #time-unit-import
-import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import org.apache.pekko.http.javadsl.server.RouteResult;
-// #create-cache-imports
-import org.apache.pekko.http.caching.javadsl.Cache;
-import org.apache.pekko.http.caching.javadsl.CachingSettings;
-import org.apache.pekko.http.caching.javadsl.LfuCacheSettings;
-import org.apache.pekko.http.caching.LfuCache;
-// #create-cache-imports
-
-// #cache
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.extractUri;
 import static org.apache.pekko.http.javadsl.server.Directives.path;
 import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
+import static org.apache.pekko.http.javadsl.server.directives.CachingDirectives.*;
+
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.pekko.http.caching.LfuCache;
+import org.apache.pekko.http.caching.javadsl.Cache;
+import org.apache.pekko.http.caching.javadsl.CachingSettings;
+import org.apache.pekko.http.caching.javadsl.LfuCacheSettings;
+import org.apache.pekko.http.javadsl.model.HttpMethods;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.Uri;
+import org.apache.pekko.http.javadsl.model.headers.*;
+import org.apache.pekko.http.javadsl.model.headers.CacheDirectives.*;
+import org.apache.pekko.http.javadsl.server.RequestContext;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.RouteResult;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
+import org.apache.pekko.japi.JavaPartialFunction;
+import org.junit.jupiter.api.Test;
+
+// #caching-directives-import
+// #caching-directives-import
+// #time-unit-import
+// #time-unit-import
+
+// #create-cache-imports
+// #create-cache-imports
+
+// #cache
 // #cache
 
 public class CachingDirectivesExamplesTest extends JUnitJupiterRouteTest {

@@ -13,60 +13,50 @@
 
 package docs.http.javadsl.server.directives;
 
-import org.junit.jupiter.api.Test;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.delete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractMethod;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.head;
+import static org.apache.pekko.http.javadsl.server.Directives.method;
+import static org.apache.pekko.http.javadsl.server.Directives.options;
+import static org.apache.pekko.http.javadsl.server.Directives.overrideMethodWithParameter;
+import static org.apache.pekko.http.javadsl.server.Directives.patch;
+import static org.apache.pekko.http.javadsl.server.Directives.post;
+import static org.apache.pekko.http.javadsl.server.Directives.put;
 
 import org.apache.pekko.http.javadsl.model.HttpMethods;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
+import org.junit.jupiter.api.Test;
 
 // #delete
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.delete;
 
 // #delete
 // #head
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.head;
 
 // #head
 // #options
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.options;
 
 // #options
 // #patch
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.patch;
 
 // #patch
 // #post
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.post;
 
 // #post
 // #put
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.put;
 
 // #put
 // #method-example
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.method;
 
 // #method-example
 // #extractMethod
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.get;
-import static org.apache.pekko.http.javadsl.server.Directives.extractMethod;
 
 // #extractMethod
 // #overrideMethodWithParameter
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.get;
-import static org.apache.pekko.http.javadsl.server.Directives.post;
-import static org.apache.pekko.http.javadsl.server.Directives.overrideMethodWithParameter;
 
 // #overrideMethodWithParameter
 
@@ -200,7 +190,8 @@ public class MethodDirectivesExamplesTest extends JUnitJupiterRouteTest {
     testRoute(route)
         .run(HttpRequest.GET("/?method=hallo"))
         .assertEntity(
-            "The server either does not recognize the request method, or it lacks the ability to fulfill the request.");
+            "The server either does not recognize the request method, or it lacks the ability to"
+                + " fulfill the request.");
 
     // #overrideMethodWithParameter
   }

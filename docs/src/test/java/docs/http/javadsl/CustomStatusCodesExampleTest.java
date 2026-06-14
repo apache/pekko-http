@@ -13,6 +13,14 @@
 
 package docs.http.javadsl;
 
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractRequest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import javax.net.ssl.SSLContext;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.ConnectionContext;
 import org.apache.pekko.http.javadsl.Http;
@@ -27,19 +35,9 @@ import org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings;
 import org.apache.pekko.http.javadsl.settings.ParserSettings;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.apache.pekko.stream.Materializer;
 import org.junit.jupiter.api.Test;
 
-import javax.net.ssl.SSLContext;
-import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 // #application-custom-java
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractRequest;
 
 // #application-custom-java
 

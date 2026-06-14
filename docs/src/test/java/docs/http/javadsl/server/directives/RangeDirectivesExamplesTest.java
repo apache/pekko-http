@@ -13,6 +13,16 @@
 
 package docs.http.javadsl.server.directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.withRangeSupport;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.Multipart;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
@@ -21,24 +31,14 @@ import org.apache.pekko.http.javadsl.model.headers.ContentRange;
 import org.apache.pekko.http.javadsl.model.headers.Range;
 import org.apache.pekko.http.javadsl.model.headers.RangeUnits;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.util.ByteString;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
 
 // #withRangeSupport
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.withRangeSupport;
 
 // #withRangeSupport
 

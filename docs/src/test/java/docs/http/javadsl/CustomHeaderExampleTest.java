@@ -13,26 +13,24 @@
 
 package docs.http.javadsl;
 
+import static org.apache.pekko.http.javadsl.server.Directives.headerValuePF;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.Optional;
 import org.apache.pekko.http.javadsl.model.HttpHeader;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.ModeledCustomHeader;
 import org.apache.pekko.http.javadsl.model.headers.ModeledCustomHeaderFactory;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
+import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.japi.JavaPartialFunction;
 import org.junit.jupiter.api.Test;
 import scala.PartialFunction;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 // #header-value-pf
-import org.apache.pekko.http.javadsl.server.Directives;
-
-import static org.apache.pekko.http.javadsl.server.Directives.headerValuePF;
 
 // #header-value-pf
 
@@ -64,6 +62,7 @@ public class CustomHeaderExampleTest extends JUnitJupiterRouteTest {
       return new ApiTokenHeader(name(), value);
     }
   }
+
   // #modeled-api-key-custom-header
 
   @Test

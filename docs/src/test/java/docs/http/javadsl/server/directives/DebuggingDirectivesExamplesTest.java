@@ -13,39 +13,33 @@
 
 package docs.http.javadsl.server.directives;
 
-import org.junit.jupiter.api.Test;
-
-import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.model.HttpResponse;
-import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-
-import java.util.function.Function;
-import java.util.function.BiFunction;
-
-import org.apache.pekko.http.javadsl.server.directives.LogEntry;
-
-import java.util.List;
-
-import org.apache.pekko.http.javadsl.server.Rejection;
-
 import static org.apache.pekko.event.Logging.InfoLevel;
-
-import java.util.stream.Collectors;
-import java.util.Optional;
-
-// #logRequest
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.get;
 import static org.apache.pekko.http.javadsl.server.Directives.logRequest;
+import static org.apache.pekko.http.javadsl.server.Directives.logRequestResultOptional;
+import static org.apache.pekko.http.javadsl.server.Directives.logResult;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.javadsl.server.Rejection;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.directives.LogEntry;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
+import org.junit.jupiter.api.Test;
+
+// #logRequest
 
 // #logRequest
 // #logRequestResult
-import static org.apache.pekko.http.javadsl.server.Directives.logRequestResultOptional;
 
 // #logRequestResult
 // #logResult
-import static org.apache.pekko.http.javadsl.server.Directives.logResult;
 
 // #logResult
 

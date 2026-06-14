@@ -13,6 +13,13 @@
 
 package docs.http.javadsl.server.directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.completeWith;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.handleWith;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.model.*;
@@ -22,20 +29,13 @@ import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.junit.jupiter.api.Test;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 // #example-entity-with-json
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.entity;
 
 // #example-entity-with-json
 // #example-completeWith-with-json
-import static org.apache.pekko.http.javadsl.server.Directives.completeWith;
 
 // #example-completeWith-with-json
 // #example-handleWith-with-json
-import static org.apache.pekko.http.javadsl.server.Directives.handleWith;
 
 // #example-handleWith-with-json
 
@@ -65,6 +65,7 @@ public class MarshallingDirectivesExamplesTest extends JUnitJupiterRouteTest {
       return favoriteNumber;
     }
   }
+
   // #person
 
   @Test

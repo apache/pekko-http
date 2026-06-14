@@ -13,12 +13,19 @@
 
 package docs.http.javadsl.server.directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.completeOrRecoverWith;
+import static org.apache.pekko.http.javadsl.server.Directives.failWith;
+import static org.apache.pekko.http.javadsl.server.Directives.onComplete;
+import static org.apache.pekko.http.javadsl.server.Directives.onCompleteWithBreaker;
+import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
+
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.scaladsl.model.StatusCodes;
@@ -28,28 +35,16 @@ import org.apache.pekko.testkit.javadsl.TestKit;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
-
 // #onComplete
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.onComplete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #onComplete
 // #onSuccess
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #onSuccess
 // #completeOrRecoverWith
-import static org.apache.pekko.http.javadsl.server.Directives.completeOrRecoverWith;
-import static org.apache.pekko.http.javadsl.server.Directives.failWith;
 
 // #completeOrRecoverWith
 // #onCompleteWithBreaker
-import static org.apache.pekko.http.javadsl.server.Directives.onCompleteWithBreaker;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #onCompleteWithBreaker
 
@@ -205,7 +200,8 @@ public class FutureDirectivesExamplesTest extends JUnitJupiterRouteTest {
               testRoute(route)
                   .run(HttpRequest.GET("/divide/10/0"))
                   .assertEntity(
-                      "The server is currently unavailable (because it is overloaded or down for maintenance).")
+                      "The server is currently unavailable (because it is overloaded or down for"
+                          + " maintenance).")
                   .assertStatusCode(StatusCodes.ServiceUnavailable());
               return null;
             });

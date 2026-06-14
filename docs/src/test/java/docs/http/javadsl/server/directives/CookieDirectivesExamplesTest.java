@@ -13,6 +13,14 @@
 
 package docs.http.javadsl.server.directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.cookie;
+import static org.apache.pekko.http.javadsl.server.Directives.deleteCookie;
+import static org.apache.pekko.http.javadsl.server.Directives.optionalCookie;
+import static org.apache.pekko.http.javadsl.server.Directives.setCookie;
+
+import java.util.Optional;
+import java.util.OptionalLong;
 import org.apache.pekko.http.javadsl.model.HttpHeader;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.Cookie;
@@ -24,27 +32,16 @@ import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.scaladsl.model.DateTime;
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 // #cookie
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.cookie;
 
 // #cookie
 // #optionalCookie
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.optionalCookie;
 
 // #optionalCookie
 // #deleteCookie
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.deleteCookie;
 
 // #deleteCookie
 // #setCookie
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.setCookie;
 
 // #setCookie
 public class CookieDirectivesExamplesTest extends JUnitJupiterRouteTest {

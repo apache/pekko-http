@@ -13,17 +13,16 @@
 
 package docs.http.javadsl.server.directives;
 
-import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.apache.pekko.http.javadsl.model.headers.BasicHttpCredentials;
-import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.apache.pekko.japi.JavaPartialFunction;
-import org.junit.jupiter.api.Test;
-import scala.PartialFunction;
-import scala.util.Either;
-import scala.util.Left;
-import scala.util.Right;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasic;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasicAsync;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasicPF;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasicPFAsync;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateOrRejectWithChallenge;
+import static org.apache.pekko.http.javadsl.server.Directives.authorize;
+import static org.apache.pekko.http.javadsl.server.Directives.authorizeAsync;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractCredentials;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -32,67 +31,43 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
-
-// #authenticateBasic
-import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
-
-import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasic;
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-
-// #authenticateBasic
-// #authenticateBasicPF
-import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
-
-import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasicPF;
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-
-// #authenticateBasicPF
-// #authenticateBasicPFAsync
-import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
-
-import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasicPFAsync;
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-
-// #authenticateBasicPFAsync
-// #authenticateBasicAsync
-import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
-
-import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasicAsync;
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-
-// #authenticateBasicAsync
-// #authenticateOrRejectWithChallenge
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.BasicHttpCredentials;
 import org.apache.pekko.http.javadsl.model.headers.HttpChallenge;
 import org.apache.pekko.http.javadsl.model.headers.HttpCredentials;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
+import org.apache.pekko.japi.JavaPartialFunction;
+import org.junit.jupiter.api.Test;
+import scala.PartialFunction;
+import scala.util.Either;
+import scala.util.Left;
+import scala.util.Right;
 
-import static org.apache.pekko.http.javadsl.server.Directives.authenticateOrRejectWithChallenge;
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
+// #authenticateBasic
+
+// #authenticateBasic
+// #authenticateBasicPF
+
+// #authenticateBasicPF
+// #authenticateBasicPFAsync
+
+// #authenticateBasicPFAsync
+// #authenticateBasicAsync
+
+// #authenticateBasicAsync
+// #authenticateOrRejectWithChallenge
 
 // #authenticateOrRejectWithChallenge
 // #authorize
-import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 
-import static org.apache.pekko.http.javadsl.server.Directives.authorize;
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
 // #authorize
 // #authorizeAsync
-import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 
-import static org.apache.pekko.http.javadsl.server.Directives.authorizeAsync;
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
 // #authorizeAsync
 // #extractCredentials
-import org.apache.pekko.http.javadsl.model.headers.HttpCredentials;
-
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractCredentials;
 
 // #extractCredentials
 

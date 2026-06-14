@@ -14,15 +14,14 @@
 package docs.http.javadsl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-
-import org.junit.jupiter.api.Test;
-
-// #imports
-import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
+import org.junit.jupiter.api.Test;
+
+// #imports
 
 // #imports
 

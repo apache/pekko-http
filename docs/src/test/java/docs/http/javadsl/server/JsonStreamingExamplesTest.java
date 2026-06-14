@@ -13,8 +13,21 @@
 
 package docs.http.javadsl.server;
 
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.completeOKWithSource;
+import static org.apache.pekko.http.javadsl.server.Directives.completeWithSource;
+import static org.apache.pekko.http.javadsl.server.Directives.entityAsSourceOf;
+import static org.apache.pekko.http.javadsl.server.Directives.extractMaterializer;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.onComplete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.post;
+
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.http.javadsl.common.CsvEntityStreamingSupport;
+import org.apache.pekko.http.javadsl.common.EntityStreamingSupport;
 import org.apache.pekko.http.javadsl.common.JsonEntityStreamingSupport;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
@@ -24,34 +37,19 @@ import org.apache.pekko.http.javadsl.server.*;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.apache.pekko.http.javadsl.common.EntityStreamingSupport;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.CompletionStage;
-
 // #response-streaming
-import static org.apache.pekko.http.javadsl.server.Directives.completeOKWithSource;
-import static org.apache.pekko.http.javadsl.server.Directives.get;
-import static org.apache.pekko.http.javadsl.server.Directives.parameter;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #response-streaming
 // #incoming-request-streaming
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.entityAsSourceOf;
-import static org.apache.pekko.http.javadsl.server.Directives.extractMaterializer;
-import static org.apache.pekko.http.javadsl.server.Directives.onComplete;
-import static org.apache.pekko.http.javadsl.server.Directives.post;
 
 // #incoming-request-streaming
 // #csv-example
-import static org.apache.pekko.http.javadsl.server.Directives.get;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.completeWithSource;
 
 // #csv-example
 public class JsonStreamingExamplesTest extends JUnitJupiterRouteTest {
@@ -160,6 +158,7 @@ public class JsonStreamingExamplesTest extends JUnitJupiterRouteTest {
 
     return responseStreaming;
   }
+
   // #routes
 
   final void clientStreamingJsonExample() {
@@ -260,6 +259,7 @@ public class JsonStreamingExamplesTest extends JUnitJupiterRouteTest {
       return message;
     }
   }
+
   // #tweet-model
 
   // #measurement-model

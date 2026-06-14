@@ -13,6 +13,14 @@
 
 package docs.http.javadsl;
 
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractRequest;
+import static org.apache.pekko.util.ByteString.emptyByteString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.HashMap;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
@@ -28,16 +36,7 @@ import org.apache.pekko.http.javadsl.settings.ServerSettings;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.apache.pekko.util.ByteString.emptyByteString;
-
 // #application-custom-java
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractRequest;
 
 // #application-custom-java
 
@@ -102,7 +101,8 @@ public class CustomMediaTypesExampleTest extends JUnitJupiterRouteTest {
             .get()
             .utf8String();
     assertEquals(
-        "application/custom = class org.apache.pekko.http.scaladsl.model.ContentType$WithFixedCharset",
+        "application/custom = class"
+            + " org.apache.pekko.http.scaladsl.model.ContentType$WithFixedCharset",
         body); // it's the Scala DSL package because it's the only instance of the Java DSL
   }
 }

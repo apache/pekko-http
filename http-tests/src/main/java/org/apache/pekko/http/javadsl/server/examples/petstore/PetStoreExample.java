@@ -13,25 +13,27 @@
 
 package org.apache.pekko.http.javadsl.server.examples.petstore;
 
-import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.http.javadsl.Http;
-// #imports
-import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
-import org.apache.pekko.http.javadsl.model.StatusCodes;
-// #imports
-import org.apache.pekko.http.javadsl.server.Route;
-
-import java.io.IOException;
-// #imports
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-// #imports
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-
-// #imports
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 import static org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers.INTEGER;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Route;
+
+// #imports
+// #imports
+
+// #imports
+// #imports
+
+// #imports
 
 // #imports
 
@@ -48,6 +50,7 @@ public class PetStoreExample {
     CompletableFuture<Pet> futurePet = CompletableFuture.supplyAsync(() -> thePet);
     return completeOKWithFuture(futurePet, Jackson.<Pet>marshaller());
   }
+
   // #marshall
 
   // #unmarshall
@@ -97,6 +100,7 @@ public class PetStoreExample {
                             // 3. calling a method of a controller instance
                             delete(() -> controller.deletePet(petId))))));
   }
+
   // #unmarshall
 
   public static void main(String[] args) throws IOException {

@@ -13,6 +13,62 @@
 
 package docs.http.javadsl.server.directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasic;
+import static org.apache.pekko.http.javadsl.server.Directives.cancelRejection;
+import static org.apache.pekko.http.javadsl.server.Directives.cancelRejections;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extract;
+import static org.apache.pekko.http.javadsl.server.Directives.extractActorSystem;
+import static org.apache.pekko.http.javadsl.server.Directives.extractDataBytes;
+import static org.apache.pekko.http.javadsl.server.Directives.extractExecutionContext;
+import static org.apache.pekko.http.javadsl.server.Directives.extractLog;
+import static org.apache.pekko.http.javadsl.server.Directives.extractMatchedPath;
+import static org.apache.pekko.http.javadsl.server.Directives.extractMaterializer;
+import static org.apache.pekko.http.javadsl.server.Directives.extractParserSettings;
+import static org.apache.pekko.http.javadsl.server.Directives.extractRequest;
+import static org.apache.pekko.http.javadsl.server.Directives.extractRequestContext;
+import static org.apache.pekko.http.javadsl.server.Directives.extractRequestEntity;
+import static org.apache.pekko.http.javadsl.server.Directives.extractSettings;
+import static org.apache.pekko.http.javadsl.server.Directives.extractStrictEntity;
+import static org.apache.pekko.http.javadsl.server.Directives.extractUnmatchedPath;
+import static org.apache.pekko.http.javadsl.server.Directives.extractUri;
+import static org.apache.pekko.http.javadsl.server.Directives.mapRejections;
+import static org.apache.pekko.http.javadsl.server.Directives.mapRequest;
+import static org.apache.pekko.http.javadsl.server.Directives.mapRequestContext;
+import static org.apache.pekko.http.javadsl.server.Directives.mapResponse;
+import static org.apache.pekko.http.javadsl.server.Directives.mapResponseEntity;
+import static org.apache.pekko.http.javadsl.server.Directives.mapResponseHeaders;
+import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResult;
+import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResultFuture;
+import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResultPF;
+import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResultWith;
+import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResultWithPF;
+import static org.apache.pekko.http.javadsl.server.Directives.mapSettings;
+import static org.apache.pekko.http.javadsl.server.Directives.mapUnmatchedPath;
+import static org.apache.pekko.http.javadsl.server.Directives.pass;
+import static org.apache.pekko.http.javadsl.server.Directives.provide;
+import static org.apache.pekko.http.javadsl.server.Directives.recoverRejections;
+import static org.apache.pekko.http.javadsl.server.Directives.recoverRejectionsWith;
+import static org.apache.pekko.http.javadsl.server.Directives.reject;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeaders;
+import static org.apache.pekko.http.javadsl.server.Directives.toStrictEntity;
+import static org.apache.pekko.http.javadsl.server.Directives.withExecutionContext;
+import static org.apache.pekko.http.javadsl.server.Directives.withLog;
+import static org.apache.pekko.http.javadsl.server.Directives.withMaterializer;
+import static org.apache.pekko.http.javadsl.server.Directives.withSettings;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executors;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.StreamSupport;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.event.Logging;
@@ -25,12 +81,13 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.ResponseEntity;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.ProductVersion;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.model.headers.Server;
-import org.apache.pekko.http.javadsl.model.headers.ProductVersion;
+import org.apache.pekko.http.javadsl.server.*;
+import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 import org.apache.pekko.http.javadsl.settings.RoutingSettings;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.apache.pekko.http.javadsl.server.*;
 import org.apache.pekko.japi.pf.PFBuilder;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.javadsl.Sink;
@@ -41,218 +98,142 @@ import org.junit.jupiter.api.Test;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.ExecutionContextExecutor;
 
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.StreamSupport;
-
 // #extract
-import static org.apache.pekko.http.javadsl.server.Directives.extract;
 
 // #extract
 // #extractLog
-import static org.apache.pekko.http.javadsl.server.Directives.extractLog;
 
 // #extractLog
 // #withMaterializer
-import static org.apache.pekko.http.javadsl.server.Directives.withMaterializer;
 
 // #withMaterializer
 // #extractMaterializer
-import static org.apache.pekko.http.javadsl.server.Directives.extractMaterializer;
 
 // #extractMaterializer
 // #provide
-import static org.apache.pekko.http.javadsl.server.Directives.provide;
 
 // #provide
 // #extractExecutionContext
-import static org.apache.pekko.http.javadsl.server.Directives.extractExecutionContext;
 
 // #extractExecutionContext
 // #withExecutionContext
-import static org.apache.pekko.http.javadsl.server.Directives.withExecutionContext;
 
 // #withExecutionContext
 // #withLog
-import static org.apache.pekko.http.javadsl.server.Directives.withLog;
 
 // #withLog
 // #withSettings
-import static org.apache.pekko.http.javadsl.server.Directives.withSettings;
 
 // #withSettings
 // #mapResponse
-import static org.apache.pekko.http.javadsl.server.Directives.mapResponse;
 
 // #mapResponse
 // #mapRouteResult
-import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResult;
 
 // #mapRouteResult
 // #mapRequest
-import static org.apache.pekko.http.javadsl.server.Directives.mapRequest;
 
 // #mapRequest
 // #mapRouteResultPF
-import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResultPF;
 
 // #mapRouteResultPF
 // #mapRouteResultWithPF
-import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResultWithPF;
 
 // #mapRouteResultWithPF
 // #mapRouteResultWith
-import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResultWith;
 
 // #mapRouteResultWith
 // #pass
-import static org.apache.pekko.http.javadsl.server.Directives.pass;
 
 // #pass
 // #cancelRejections
-import static org.apache.pekko.http.javadsl.server.Directives.cancelRejections;
 
 // #cancelRejections
 // #cancelRejection
-import static org.apache.pekko.http.javadsl.server.Directives.cancelRejection;
 
 // #cancelRejection
 // #extractRequest
-import static org.apache.pekko.http.javadsl.server.Directives.extractRequest;
 
 // #extractRequest
 // #mapSettings
-import static org.apache.pekko.http.javadsl.server.Directives.mapSettings;
 
 // #mapSettings
 // #extractSettings
-import static org.apache.pekko.http.javadsl.server.Directives.extractSettings;
 
 // #extractSettings
 // #extractRequestContext
-import static org.apache.pekko.http.javadsl.server.Directives.extractRequestContext;
 
 // #extractRequestContext
 // #extractParserSettings
-import static org.apache.pekko.http.javadsl.server.Directives.extractParserSettings;
 
 // #extractParserSettings
 // #extractMatchedPath
-import static org.apache.pekko.http.javadsl.server.Directives.extractMatchedPath;
 
 // #extractMatchedPath
 // #extractUri
-import static org.apache.pekko.http.javadsl.server.Directives.extractUri;
 
 // #extractUri
 // #mapUnmatchedPath
-import static org.apache.pekko.http.javadsl.server.Directives.mapUnmatchedPath;
 
 // #mapUnmatchedPath
 // #extractDataBytes
-import static org.apache.pekko.http.javadsl.server.Directives.extractDataBytes;
 
 // #extractDataBytes
 // #extractStrictEntity
-import static org.apache.pekko.http.javadsl.server.Directives.extractStrictEntity;
 
 // #extractStrictEntity
 // #toStrictEntity
-import static org.apache.pekko.http.javadsl.server.Directives.toStrictEntity;
 
 // #toStrictEntity
 // #mapRouteResultFuture
-import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResultFuture;
 
 // #mapRouteResultFuture
 // #mapResponseEntity
-import static org.apache.pekko.http.javadsl.server.Directives.mapResponseEntity;
 
 // #mapResponseEntity
 // #mapResponseHeaders
-import static org.apache.pekko.http.javadsl.server.Directives.mapResponseHeaders;
 
 // #mapResponseHeaders
 // #mapInnerRoute
-import static org.apache.pekko.http.javadsl.server.Directives.mapInnerRoute;
 
 // #mapInnerRoute
 // #mapRejections
-import static org.apache.pekko.http.javadsl.server.Directives.mapRejections;
 
 // #mapRejections
 // #recoverRejections
-import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
-
-import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasic;
-import static org.apache.pekko.http.javadsl.server.Directives.recoverRejections;
 
 // #recoverRejections
 // #recoverRejectionsWith
-import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
-
-import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasic;
-import static org.apache.pekko.http.javadsl.server.Directives.recoverRejectionsWith;
 
 // #recoverRejectionsWith
 // #mapRequest
-import static org.apache.pekko.http.javadsl.server.Directives.extractRequest;
-import static org.apache.pekko.http.javadsl.server.Directives.mapRequest;
 
 // #mapRequest
 // #mapRequestContext
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractRequest;
-import static org.apache.pekko.http.javadsl.server.Directives.mapRequestContext;
 
 // #mapRequestContext
 // #mapRouteResult
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResult;
 
 // #mapRouteResult
 // #mapRouteResultPF
-import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResultPF;
-import static org.apache.pekko.http.javadsl.server.Directives.reject;
 
 // #mapRouteResultPF
 // #mapRouteResultWithPF
-import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResultWithPF;
-import static org.apache.pekko.http.javadsl.server.Directives.reject;
 
 // #mapRouteResultWithPF
 // #mapRouteResultWith
-import static org.apache.pekko.http.javadsl.server.Directives.mapRouteResultWith;
-import static org.apache.pekko.http.javadsl.server.Directives.reject;
 
 // #mapRouteResultWith
 // #mapResponseHeaders
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeaders;
-import static org.apache.pekko.http.javadsl.server.Directives.mapResponseHeaders;
 
 // #mapResponseHeaders
 // #extractUnmatchedPath
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractUnmatchedPath;
 
 // #extractUnmatchedPath
 // #extractRequestEntity
-import static org.apache.pekko.http.javadsl.server.Directives.extractRequestEntity;
 
 // #extractRequestEntity
 // #extractActorSystem
-import static org.apache.pekko.http.javadsl.server.Directives.extractActorSystem;
 
 // #extractActorSystem
 

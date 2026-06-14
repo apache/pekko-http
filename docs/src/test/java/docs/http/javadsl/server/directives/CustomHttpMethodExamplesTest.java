@@ -13,7 +13,16 @@
 
 package docs.http.javadsl.server.directives;
 
-import org.apache.pekko.NotUsed;
+import static org.apache.pekko.http.javadsl.model.HttpProtocols.HTTP_1_1;
+import static org.apache.pekko.http.javadsl.model.RequestEntityAcceptances.Expected;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractMethod;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.event.LoggingAdapter;
 import org.apache.pekko.event.NoLogging;
@@ -24,21 +33,9 @@ import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.settings.ParserSettings;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.apache.pekko.stream.javadsl.Flow;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.apache.pekko.http.javadsl.model.HttpProtocols.HTTP_1_1;
-import static org.apache.pekko.http.javadsl.model.RequestEntityAcceptances.Expected;
 
 // #customHttpMethod
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractMethod;
 
 // #customHttpMethod
 public class CustomHttpMethodExamplesTest extends JUnitJupiterRouteTest {

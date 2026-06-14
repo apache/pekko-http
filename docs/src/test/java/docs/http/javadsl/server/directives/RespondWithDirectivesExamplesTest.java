@@ -13,6 +13,15 @@
 
 package docs.http.javadsl.server.directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeader;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeaders;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeader;
+import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeaders;
+
+import java.util.Arrays;
+import java.util.List;
 import org.apache.pekko.http.javadsl.model.HttpHeader;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.HttpOrigin;
@@ -22,39 +31,19 @@ import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.List;
-
 // #multiple-headers
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeaders;
 
 // #multiple-headers
 // #respondWithHeader
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeader;
 
 // #respondWithHeader
 // #respondWithDefaultHeader
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeader;
-import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeader;
 
 // #respondWithDefaultHeader
 // #respondWithHeaders
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeaders;
-import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeaders;
 
 // #respondWithHeaders
 // #respondWithDefaultHeaders
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.respondWithDefaultHeaders;
-import static org.apache.pekko.http.javadsl.server.Directives.respondWithHeader;
 
 // #respondWithDefaultHeaders
 public class RespondWithDirectivesExamplesTest extends JUnitJupiterRouteTest {

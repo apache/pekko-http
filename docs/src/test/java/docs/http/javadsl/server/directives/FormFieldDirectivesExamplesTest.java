@@ -13,42 +13,38 @@
 
 package docs.http.javadsl.server.directives;
 
-import org.apache.pekko.http.javadsl.model.FormData;
-import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.apache.pekko.japi.Pair;
-import org.junit.jupiter.api.Test;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.formField;
+import static org.apache.pekko.http.javadsl.server.Directives.formFieldList;
+import static org.apache.pekko.http.javadsl.server.Directives.formFieldMap;
+import static org.apache.pekko.http.javadsl.server.Directives.formFieldMultiMap;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.pekko.http.javadsl.model.FormData;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Directives;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
+import org.apache.pekko.japi.Pair;
+import org.junit.jupiter.api.Test;
 
 // #formField
-import org.apache.pekko.http.javadsl.server.Directives;
-
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.formField;
 
 // #formField
 
 // #formFieldMap
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.formFieldMap;
 
 // #formFieldMap
 // #formFieldList
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.formFieldList;
 
 // #formFieldList
 // #formFieldMultiMap
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.formFieldMultiMap;
 
 // #formFieldMultiMap
 

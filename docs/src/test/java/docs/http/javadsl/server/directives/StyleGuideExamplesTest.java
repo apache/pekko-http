@@ -14,18 +14,17 @@
 package docs.http.javadsl.server.directives;
 
 // #imports
-import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 import static org.apache.pekko.http.javadsl.server.Directives.*;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
+import java.util.function.Function;
+import java.util.function.Supplier;
 import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 
 // #imports
 
 // #imports-directives
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 
 // #imports-directives
 

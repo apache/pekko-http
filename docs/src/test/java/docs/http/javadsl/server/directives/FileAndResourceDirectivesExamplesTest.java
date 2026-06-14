@@ -13,8 +13,20 @@
 
 package docs.http.javadsl.server.directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.getFromBrowseableDirectories;
+import static org.apache.pekko.http.javadsl.server.Directives.getFromBrowseableDirectory;
+import static org.apache.pekko.http.javadsl.server.Directives.getFromDirectory;
+import static org.apache.pekko.http.javadsl.server.Directives.getFromFile;
+import static org.apache.pekko.http.javadsl.server.Directives.getFromResource;
+import static org.apache.pekko.http.javadsl.server.Directives.getFromResourceDirectory;
+import static org.apache.pekko.http.javadsl.server.Directives.listDirectoryContents;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
+
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.directives.DirectoryRenderer;
@@ -23,43 +35,25 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import scala.NotImplementedError;
 
-import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
-
 // #getFromFile
-import static org.apache.pekko.http.javadsl.server.Directives.getFromFile;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #getFromFile
 // #getFromResource
-import static org.apache.pekko.http.javadsl.server.Directives.getFromResource;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #getFromResource
 // #listDirectoryContents
-import org.apache.pekko.http.javadsl.server.Directives;
-
-import static org.apache.pekko.http.javadsl.server.Directives.listDirectoryContents;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #listDirectoryContents
 // #getFromBrowseableDirectory
-import static org.apache.pekko.http.javadsl.server.Directives.getFromBrowseableDirectory;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #getFromBrowseableDirectory
 // #getFromBrowseableDirectories
-import static org.apache.pekko.http.javadsl.server.Directives.getFromBrowseableDirectories;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #getFromBrowseableDirectories
 // #getFromDirectory
-import static org.apache.pekko.http.javadsl.server.Directives.getFromDirectory;
-import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 
 // #getFromDirectory
 // #getFromResourceDirectory
-import static org.apache.pekko.http.javadsl.server.Directives.getFromResourceDirectory;
-import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 
 // #getFromResourceDirectory
 
