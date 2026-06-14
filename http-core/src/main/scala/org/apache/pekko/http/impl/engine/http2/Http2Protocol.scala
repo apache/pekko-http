@@ -55,6 +55,17 @@ private[http] object Http2Protocol {
   final val InitialWindowSize = 65535
 
   /**
+   * The maximum value of a flow-control window size as defined by the specification.
+   *
+   * See https://tools.ietf.org/html/rfc7540#section-6.9.1:
+   *    A sender MUST NOT allow a flow-control window to exceed 2^31-1 octets.
+   *    If a sender receives a WINDOW_UPDATE that causes a flow-control window to
+   *    exceed this maximum, it MUST treat this as a connection or stream error
+   *    (Section 5.4) of type FLOW_CONTROL_ERROR.
+   */
+  final val MaxWindowSize: Int = Int.MaxValue
+
+  /**
    * The initial frame size for both incoming and outgoing frames as defined by the
    * specification.
    *

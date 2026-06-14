@@ -37,6 +37,8 @@ abstract class ContentLengthHeaderParserSpec(mode: String, newLine: String) exte
       a[ParsingException] should be thrownBy parse("9223372036854775808") // Long.MaxValue + 1
       a[ParsingException] should be thrownBy parse("92233720368547758070") // Long.MaxValue * 10 which is 0 taken overflow into account
       a[ParsingException] should be thrownBy parse("92233720368547758080") // (Long.MaxValue + 1) * 10 which is 0 taken overflow into account
+      // overflow that wraps to a small positive value (was not caught by the old `result < 0` check)
+      a[ParsingException] should be thrownBy parse("18446744073709551634") // ~2^64+18, wraps to 18 in signed Long
     }
   }
 

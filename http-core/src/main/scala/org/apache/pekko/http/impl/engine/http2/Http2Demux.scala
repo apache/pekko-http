@@ -355,7 +355,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
             frame match {
               case WindowUpdateFrame(streamId, increment)
                   if streamId == 0 /* else fall through to StreamFrameEvent */ =>
-                multiplexer.updateConnectionLevelWindow(increment)
+                if (!multiplexer.updateConnectionLevelWindow(increment))
+                  pushGOAWAY(ErrorCode.FLOW_CONTROL_ERROR,
+                    "WINDOW_UPDATE would exceed maximum connection-level flow-control window size")
               case p: PriorityFrame    => multiplexer.updatePriority(p)
               case s: StreamFrameEvent =>
                 if (!terminating)
