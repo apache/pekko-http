@@ -15,11 +15,10 @@ package org.apache.pekko.http.javadsl.model;
 
 import java.io.File;
 import java.nio.file.Path;
-
 import org.apache.pekko.http.impl.util.JavaAccessors;
 import org.apache.pekko.http.scaladsl.model.HttpEntity$;
-import org.apache.pekko.util.ByteString;
 import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.util.ByteString;
 
 /** Constructors for HttpEntity instances */
 public final class HttpEntities {

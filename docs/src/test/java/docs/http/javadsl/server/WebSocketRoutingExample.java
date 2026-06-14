@@ -14,13 +14,13 @@
 package docs.http.javadsl.server;
 
 import org.apache.pekko.NotUsed;
+import org.apache.pekko.http.javadsl.model.ws.Message;
+import org.apache.pekko.http.javadsl.model.ws.TextMessage;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.japi.JavaPartialFunction;
 import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Source;
-import org.apache.pekko.http.javadsl.model.ws.Message;
-import org.apache.pekko.http.javadsl.model.ws.TextMessage;
 
 public class WebSocketRoutingExample extends AllDirectives {
 
@@ -28,6 +28,7 @@ public class WebSocketRoutingExample extends AllDirectives {
   public Route createRoute() {
     return path("greeter", () -> handleWebSocketMessages(greeter()));
   }
+
   // #websocket-route
 
   /**

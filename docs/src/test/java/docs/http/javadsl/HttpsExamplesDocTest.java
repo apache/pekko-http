@@ -13,14 +13,12 @@
 
 package docs.http.javadsl;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.ConnectionContext;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.HttpsConnectionContext;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLParameters;
 
 @SuppressWarnings("unused")
 public class HttpsExamplesDocTest {

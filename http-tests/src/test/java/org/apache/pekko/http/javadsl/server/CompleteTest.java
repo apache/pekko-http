@@ -13,20 +13,17 @@
 
 package org.apache.pekko.http.javadsl.server;
 
+import static org.apache.pekko.http.javadsl.server.Directives.*;
 import static org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers.INTEGER;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-
-import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.junit.jupiter.api.Test;
-
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.MediaTypes;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-
-import static org.apache.pekko.http.javadsl.server.Directives.*;
+import org.junit.jupiter.api.Test;
 
 public class CompleteTest extends JUnitJupiterRouteTest {
   @Test

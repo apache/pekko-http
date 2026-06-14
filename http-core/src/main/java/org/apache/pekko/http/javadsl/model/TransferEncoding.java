@@ -13,12 +13,12 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-import org.apache.pekko.http.impl.util.Util;
-import org.apache.pekko.http.javadsl.model.headers.EntityTagRanges;
-
 import java.util.Map;
+import org.apache.pekko.http.impl.util.Util;
 
-/** @see TransferEncodings for convenience access to often used values. */
+/**
+ * @see TransferEncodings for convenience access to often used values.
+ */
 public abstract class TransferEncoding {
   public abstract String name();
 

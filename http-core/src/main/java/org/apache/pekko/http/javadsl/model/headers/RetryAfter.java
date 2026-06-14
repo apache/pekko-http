@@ -13,9 +13,10 @@ package org.apache.pekko.http.javadsl.model.headers;
 import java.util.Optional;
 import org.apache.pekko.http.javadsl.model.DateTime;
 import org.apache.pekko.http.scaladsl.model.headers.Retry$minusAfter;
-import org.apache.pekko.http.scaladsl.model.headers.RetryAfterDuration;
 import org.apache.pekko.http.scaladsl.model.headers.RetryAfterDateTime;
+import org.apache.pekko.http.scaladsl.model.headers.RetryAfterDuration;
 import org.apache.pekko.util.OptionalUtil;
+
 /**
  * Model for the `Retry-After` header. Specification:
  * //https://tools.ietf.org/html/rfc7231#section-7.1.3

@@ -13,12 +13,11 @@
 
 package org.apache.pekko.http.javadsl.server.directives;
 
-import org.apache.pekko.annotation.InternalApi;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.apache.pekko.annotation.InternalApi;
 
 /**
  * INTERNAL API – used for consistency specs

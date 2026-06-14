@@ -13,11 +13,10 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-import org.apache.pekko.http.scaladsl.model.Uri;
-import org.apache.pekko.http.impl.model.UriJavaAccessor;
-
 import java.net.InetAddress;
 import java.nio.charset.Charset;
+import org.apache.pekko.http.impl.model.UriJavaAccessor;
+import org.apache.pekko.http.scaladsl.model.Uri;
 
 /**
  * Represents a host in a URI or a Host header. The host can either be empty or be represented by an

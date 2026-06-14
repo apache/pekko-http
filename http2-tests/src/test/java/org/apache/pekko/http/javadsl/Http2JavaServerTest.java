@@ -13,16 +13,15 @@
 
 package org.apache.pekko.http.javadsl;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.impl.util.ExampleHttpContexts;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.japi.function.Function;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 public class Http2JavaServerTest {
   public static void main(String[] args) {

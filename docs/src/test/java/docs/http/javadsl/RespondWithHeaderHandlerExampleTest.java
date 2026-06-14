@@ -15,6 +15,10 @@ package docs.http.javadsl;
 
 // #respond-with-header-exceptionhandler-example
 
+import static junit.framework.TestCase.assertTrue;
+
+import java.io.IOException;
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
@@ -29,11 +33,6 @@ import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.http.scaladsl.model.ErrorInfo;
 import org.apache.pekko.http.scaladsl.model.IllegalHeaderException;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.util.concurrent.CompletionStage;
-
-import static junit.framework.TestCase.assertTrue;
 
 // #respond-with-header-exceptionhandler-example
 // #no-exception-details-in-response
@@ -51,7 +50,8 @@ public class RespondWithHeaderHandlerExampleTest extends JUnitJupiterRouteTest {
                   throw new IllegalHeaderException(
                       new ErrorInfo(
                           "Value of header Foo was illegal",
-                          "Found illegal value \"<script>alert('evil_xss_or_xsrf_reflection')</script>\""));
+                          "Found illegal value"
+                              + " \"<script>alert('evil_xss_or_xsrf_reflection')</script>\""));
                 }));
 
     String response = route.run(HttpRequest.GET("/")).entityString();

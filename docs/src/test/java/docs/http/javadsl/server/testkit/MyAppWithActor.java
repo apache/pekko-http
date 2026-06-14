@@ -13,15 +13,12 @@
 
 package docs.http.javadsl.server.testkit;
 
+import java.time.Duration;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.Scheduler;
 import org.apache.pekko.actor.typed.javadsl.AskPattern;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.scaladsl.model.StatusCodes;
-import org.apache.pekko.japi.pf.PFBuilder;
-
-import java.time.Duration;
 
 public class MyAppWithActor extends AllDirectives {
   public static class Ping {

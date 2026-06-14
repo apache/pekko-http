@@ -22,6 +22,7 @@ package docs.http.javadsl;
 
 // #bootstrap
 
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.Behavior;
@@ -31,8 +32,6 @@ import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.server.Route;
-
-import java.util.concurrent.CompletionStage;
 
 public class HttpServerWithActorsSample {
 

@@ -15,7 +15,6 @@ package org.apache.pekko.http.javadsl.model.headers;
 
 import org.apache.pekko.http.javadsl.model.MediaType;
 import org.apache.pekko.http.javadsl.model.Uri;
-import org.apache.pekko.http.impl.util.Util;
 
 public final class LinkParams {
   private LinkParams() {}

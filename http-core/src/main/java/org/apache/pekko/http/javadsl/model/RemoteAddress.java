@@ -16,7 +16,6 @@ package org.apache.pekko.http.javadsl.model;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Optional;
-
 import scala.jdk.javaapi.OptionConverters;
 
 public abstract class RemoteAddress {

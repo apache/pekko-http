@@ -13,15 +13,11 @@
 
 package org.apache.pekko.http.javadsl.testkit;
 
-import java.util.function.Function;
 import java.util.concurrent.CompletableFuture;
-
-import org.junit.jupiter.api.Test;
-import org.apache.pekko.http.javadsl.testkit.*;
-
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.*;
 import org.apache.pekko.http.javadsl.server.Rejections;
+import org.junit.jupiter.api.Test;
 
 public class JUnitRouteTestTest extends JUnitJupiterRouteTest {
 

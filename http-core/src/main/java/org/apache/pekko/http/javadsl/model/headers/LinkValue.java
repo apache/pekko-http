@@ -13,8 +13,8 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
-import org.apache.pekko.http.javadsl.model.Uri;
 import org.apache.pekko.http.impl.util.Util;
+import org.apache.pekko.http.javadsl.model.Uri;
 
 public abstract class LinkValue {
   public abstract Uri getUri();

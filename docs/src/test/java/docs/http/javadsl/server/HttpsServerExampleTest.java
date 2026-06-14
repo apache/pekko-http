@@ -13,12 +13,11 @@
 
 package docs.http.javadsl.server;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.ConnectionContext;
 import org.junit.jupiter.api.Test;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
 
 /* COMPILE ONLY TEST */
 public class HttpsServerExampleTest {

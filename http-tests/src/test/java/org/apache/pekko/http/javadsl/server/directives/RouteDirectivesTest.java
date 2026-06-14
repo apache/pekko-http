@@ -13,6 +13,9 @@
 
 package org.apache.pekko.http.javadsl.server.directives;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.concurrent.CompletableFuture;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.Location;
 import org.apache.pekko.http.javadsl.server.Directives;
@@ -21,10 +24,6 @@ import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.util.ByteString;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 public class RouteDirectivesTest extends JUnitJupiterRouteTest {
 
@@ -100,10 +99,11 @@ public class RouteDirectivesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.create("/limit-5").withEntity("1234567890"))
         .assertStatusCode(StatusCodes.CONTENT_TOO_LARGE)
         .assertEntity(
-            "EntityStreamSizeException: incoming entity size (10) exceeded size limit (5 bytes)! "
-                + "This may have been a parser limit (set via `pekko.http.[server|client].parsing.max-content-length`), "
-                + "a decoder limit (set via `pekko.http.routing.decode-max-size`), "
-                + "or a custom limit set with `withSizeLimit`.");
+            "EntityStreamSizeException: incoming entity size (10) exceeded size limit (5 bytes)!"
+                + " This may have been a parser limit (set via"
+                + " `pekko.http.[server|client].parsing.max-content-length`), a decoder limit (set"
+                + " via `pekko.http.routing.decode-max-size`), or a custom limit set with"
+                + " `withSizeLimit`.");
   }
 
   @Test

@@ -15,6 +15,8 @@ package docs.http.javadsl.server;
 
 // #high-level-server-example
 
+import java.io.IOException;
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
@@ -22,9 +24,6 @@ import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpEntities;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
-
-import java.io.IOException;
-import java.util.concurrent.CompletionStage;
 
 public class HighLevelServerExample extends AllDirectives {
   public static void main(String[] args) throws IOException {

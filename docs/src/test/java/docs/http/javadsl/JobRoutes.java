@@ -14,20 +14,18 @@
 package docs.http.javadsl;
 
 // #route
+import static org.apache.pekko.http.javadsl.server.Directives.*;
+import static org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers.LONG;
+
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
-
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.AskPattern;
-
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
-
-import static org.apache.pekko.http.javadsl.server.Directives.*;
-import static org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers.LONG;
 
 /** Routes for use with the HttpServerWithActorsSample */
 public class JobRoutes {

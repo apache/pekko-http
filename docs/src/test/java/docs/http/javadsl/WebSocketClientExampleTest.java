@@ -13,6 +13,11 @@
 
 package docs.http.javadsl;
 
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.Done;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorSystem;
@@ -32,12 +37,6 @@ import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Keep;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
-
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 @SuppressWarnings("unused")
 public class WebSocketClientExampleTest {

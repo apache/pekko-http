@@ -26,7 +26,7 @@ ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
 
 ThisBuild / javafmtFormatterCompatibleJavaVersion := 17
 
-addCommandAlias("checkCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; +headerCheckAll; javafmtCheckAll")
+addCommandAlias("checkCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; javafmtCheckAll; +headerCheckAll")
 addCommandAlias("applyCodeStyle", "+headerCreateAll; scalafmtAll; scalafmtSbt; javafmtAll")
 addCommandAlias(name = "sortImports", value = ";scalafixEnable; scalafixAll SortImports; scalafmtAll")
 

@@ -13,19 +13,18 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-import org.apache.pekko.actor.ClassicActorSystemProvider;
-import org.apache.pekko.annotation.DoNotInherit;
-import org.apache.pekko.stream.FlowShape;
-import org.apache.pekko.stream.Graph;
-import org.apache.pekko.stream.Materializer;
-import org.apache.pekko.http.javadsl.model.headers.HttpCredentials;
-import org.apache.pekko.util.ByteString;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import org.apache.pekko.actor.ClassicActorSystemProvider;
+import org.apache.pekko.annotation.DoNotInherit;
+import org.apache.pekko.http.javadsl.model.headers.HttpCredentials;
+import org.apache.pekko.stream.FlowShape;
+import org.apache.pekko.stream.Graph;
+import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.util.ByteString;
 
 /**
  * The base type for an Http message (request or response).

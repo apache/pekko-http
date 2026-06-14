@@ -13,17 +13,16 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-import org.apache.pekko.http.impl.model.JavaQuery;
-import org.apache.pekko.http.impl.model.UriJavaAccessor;
-import org.apache.pekko.japi.Pair;
-import org.parboiled2.CharPredicate;
-import org.parboiled2.ParserInput$;
-
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
+import org.apache.pekko.http.impl.model.JavaQuery;
+import org.apache.pekko.http.impl.model.UriJavaAccessor;
+import org.apache.pekko.japi.Pair;
+import org.parboiled2.CharPredicate;
+import org.parboiled2.ParserInput$;
 
 public abstract class Query {
   /** Returns the value of the first parameter with the given key if it exists. */

@@ -13,15 +13,10 @@
 
 package org.apache.pekko.http.javadsl.server;
 
-import org.apache.pekko.Done;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.ServerBinding;
-import scala.runtime.BoxedUnit;
-
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SneakHttpApp extends MinimalHttpApp {
 

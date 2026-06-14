@@ -13,10 +13,9 @@
 
 package org.apache.pekko.http.javadsl.model;
 
+import java.util.Optional;
 import org.apache.pekko.http.impl.util.Util;
 import org.apache.pekko.http.scaladsl.model.HttpCharsets$;
-
-import java.util.Optional;
 
 /** Contains a set of predefined charsets. */
 public final class HttpCharsets {

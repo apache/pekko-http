@@ -13,14 +13,13 @@
 
 package org.apache.pekko.http.javadsl.server.examples.simple;
 
+import static org.apache.pekko.http.javadsl.server.Directives.*;
+
+import java.io.IOException;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.HttpsConnectionContext;
 import org.apache.pekko.http.javadsl.server.Route;
-
-import static org.apache.pekko.http.javadsl.server.Directives.*;
-
-import java.io.IOException;
 
 public class SimpleServerHttpHttpsApp {
 

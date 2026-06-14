@@ -15,7 +15,12 @@ package docs.http.javadsl;
 
 // #actor-interaction
 
-import org.apache.pekko.NotUsed;
+import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.Behavior;
@@ -26,20 +31,10 @@ import org.apache.pekko.actor.typed.javadsl.Receive;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
-import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
-import org.apache.pekko.stream.javadsl.Flow;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
-import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
 
 public class HttpServerActorInteractionExample extends AllDirectives {
 

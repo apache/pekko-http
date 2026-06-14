@@ -50,7 +50,7 @@ jobs:
           key: build-target-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
 
       - name: Check code is formatted
-        run: sbt javafmtCheckAll
+        run: sbt checkCodeStyle
 
       - name: Check for missing formatting
         run: git diff --exit-code --color

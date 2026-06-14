@@ -13,10 +13,9 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
+import java.util.Optional;
 import org.apache.pekko.http.javadsl.model.HttpHeader;
 import org.apache.pekko.util.Helpers;
-
-import java.util.Optional;
 
 /**
  * Companion class for the {@link ModeledCustomHeader} class. It offers methods to create {@link

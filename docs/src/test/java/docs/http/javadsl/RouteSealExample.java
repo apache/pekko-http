@@ -13,14 +13,13 @@
 
 package docs.http.javadsl;
 
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
-
-import java.util.concurrent.CompletionStage;
 
 // #route-seal-example
 public class RouteSealExample extends AllDirectives {

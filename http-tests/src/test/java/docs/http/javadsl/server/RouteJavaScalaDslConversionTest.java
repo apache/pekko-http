@@ -13,7 +13,6 @@
 
 package docs.http.javadsl.server;
 
-import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.directives.RouteAdapter;

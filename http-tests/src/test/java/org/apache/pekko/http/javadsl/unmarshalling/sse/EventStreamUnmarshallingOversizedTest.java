@@ -17,16 +17,15 @@
 
 package org.apache.pekko.http.javadsl.unmarshalling.sse;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.settings.OversizedSseStrategy;
 import org.apache.pekko.http.javadsl.settings.ServerSentEventSettings;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class EventStreamUnmarshallingOversizedTest {
 

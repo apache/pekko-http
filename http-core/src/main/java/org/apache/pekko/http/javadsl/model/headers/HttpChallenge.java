@@ -13,12 +13,10 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
-import org.apache.pekko.http.impl.util.Util;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
+import org.apache.pekko.http.impl.util.Util;
 import scala.jdk.javaapi.OptionConverters;
 
 public abstract class HttpChallenge {
@@ -36,13 +34,17 @@ public abstract class HttpChallenge {
     return create(scheme, Optional.of(realm), params);
   }
 
-  /** @since 1.3.0 */
+  /**
+   * @since 1.3.0
+   */
   public static HttpChallenge create(String scheme, Optional<String> realm) {
     return org.apache.pekko.http.scaladsl.model.headers.HttpChallenge.apply(
         scheme, OptionConverters.toScala(realm), Util.emptyMap);
   }
 
-  /** @since 1.3.0 */
+  /**
+   * @since 1.3.0
+   */
   public static HttpChallenge create(
       String scheme, Optional<String> realm, Map<String, String> params) {
     return org.apache.pekko.http.scaladsl.model.headers.HttpChallenge.apply(

@@ -13,15 +13,13 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-import org.apache.pekko.http.scaladsl.model.AttributeKey$;
-import org.apache.pekko.stream.scaladsl.TLSPlacebo;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import org.apache.pekko.http.scaladsl.model.AttributeKey$;
+import org.junit.jupiter.api.Test;
 
 public class HttpMessageTest {
   @Test

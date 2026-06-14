@@ -13,11 +13,10 @@
 
 package org.apache.pekko.http.javadsl.model;
 
+import java.util.Optional;
 import org.apache.pekko.annotation.ApiMayChange;
 import org.apache.pekko.http.impl.util.Util;
 import org.apache.pekko.http.scaladsl.model.StatusCodes$;
-
-import java.util.Optional;
 
 /**
  * Contains the set of predefined status-codes along with static methods to access and create custom
@@ -101,7 +100,9 @@ public final class StatusCodes {
   public static final StatusCode CONTENT_TOO_LARGE =
       org.apache.pekko.http.scaladsl.model.StatusCodes.ContentTooLarge();
 
-  /** @deprecated deprecated in favor of CONTENT_TOO_LARGE since 1.1.0 */
+  /**
+   * @deprecated deprecated in favor of CONTENT_TOO_LARGE since 1.1.0
+   */
   @Deprecated
   public static final StatusCode PAYLOAD_TOO_LARGE =
       org.apache.pekko.http.scaladsl.model.StatusCodes.PayloadTooLarge();
@@ -125,7 +126,9 @@ public final class StatusCodes {
   public static final StatusCode UNPROCESSABLE_CONTENT =
       org.apache.pekko.http.scaladsl.model.StatusCodes.UnprocessableContent();
 
-  /** @deprecated deprecated in favor of UNPROCESSABLE_CONTENT since 1.1.0 */
+  /**
+   * @deprecated deprecated in favor of UNPROCESSABLE_CONTENT since 1.1.0
+   */
   @Deprecated
   public static final StatusCode UNPROCESSABLE_ENTITY =
       org.apache.pekko.http.scaladsl.model.StatusCodes.UnprocessableEntity();

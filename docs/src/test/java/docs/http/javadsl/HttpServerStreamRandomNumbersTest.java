@@ -14,6 +14,9 @@
 package docs.http.javadsl;
 
 // #stream-random-numbers
+import java.util.Random;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
@@ -22,13 +25,8 @@ import org.apache.pekko.http.javadsl.ServerBinding;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
-
-import java.util.Random;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Stream;
 
 public class HttpServerStreamRandomNumbersTest extends AllDirectives {
 

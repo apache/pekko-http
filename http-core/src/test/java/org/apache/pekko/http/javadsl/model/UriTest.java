@@ -13,13 +13,13 @@
 
 package org.apache.pekko.http.javadsl.model;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.Optional;
 import org.apache.pekko.http.scaladsl.model.IllegalUriException;
 import org.apache.pekko.japi.Pair;
 import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class UriTest {
 
@@ -97,6 +97,7 @@ public class UriTest {
           // )
         });
   }
+
   // #illegal-scheme
 
   // #illegal-userinfo
@@ -115,6 +116,7 @@ public class UriTest {
           // )
         });
   }
+
   // #illegal-userinfo
 
   // #illegal-percent-encoding
@@ -131,6 +133,7 @@ public class UriTest {
           // )
         });
   }
+
   // #illegal-percent-encoding
 
   // #illegal-path
@@ -149,6 +152,7 @@ public class UriTest {
           // )
         });
   }
+
   // #illegal-path
 
   // #illegal-path-with-control-char
@@ -167,6 +171,7 @@ public class UriTest {
           // )
         });
   }
+
   // #illegal-path-with-control-char
 
   @Test
@@ -189,6 +194,7 @@ public class UriTest {
   public Query strict(String query) {
     return Query.create(query, org.apache.pekko.http.javadsl.model.Uri.STRICT);
   }
+
   // #query-strict-definition
 
   @Test
@@ -244,6 +250,7 @@ public class UriTest {
           //  " ^")
         });
   }
+
   // #query-strict-mode-exception-1
 
   // #query-strict-mode-exception-2
@@ -261,6 +268,7 @@ public class UriTest {
           //  " ^")
         });
   }
+
   // #query-strict-mode-exception-2
 
   // #query-strict-mode-exception-3
@@ -279,6 +287,7 @@ public class UriTest {
           //  " ^")
         });
   }
+
   // #query-strict-mode-exception-3
 
   // #query-strict-mode-exception-4
@@ -296,12 +305,14 @@ public class UriTest {
           //  "   ^")
         });
   }
+
   // #query-strict-mode-exception-4
 
   // #query-relaxed-definition
   public Query relaxed(String query) {
     return Query.create(query, org.apache.pekko.http.javadsl.model.Uri.RELAXED);
   }
+
   // #query-relaxed-definition
 
   @Test

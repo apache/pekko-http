@@ -14,11 +14,7 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 import java.util.Optional;
-import java.util.OptionalLong;
-
 import scala.jdk.javaapi.OptionConverters;
-
-import org.apache.pekko.http.impl.util.Util;
 
 public final class CacheDirectives {
   private CacheDirectives() {}
