@@ -91,10 +91,12 @@ public class ModelDocTest {
   // a method that extracts basic HTTP credentials from a request
   private Optional<BasicHttpCredentials> getCredentialsOfRequest(HttpRequest request) {
     Optional<Authorization> auth = request.getHeader(Authorization.class);
-    if (auth.isPresent() && auth.get().credentials() instanceof BasicHttpCredentials basicHttpCredentials)
+    if (auth.isPresent()
+        && auth.get().credentials() instanceof BasicHttpCredentials basicHttpCredentials)
       return Optional.of(basicHttpCredentials);
     else return Optional.empty();
   }
+
   // #headers
 
   static
@@ -118,6 +120,7 @@ public class ModelDocTest {
     // Add the attribute
     return request.addAttribute(User.attributeKey, user);
   }
+
   // #attributes
 
   @Test

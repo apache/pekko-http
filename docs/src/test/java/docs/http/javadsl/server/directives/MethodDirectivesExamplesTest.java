@@ -200,7 +200,8 @@ public class MethodDirectivesExamplesTest extends JUnitJupiterRouteTest {
     testRoute(route)
         .run(HttpRequest.GET("/?method=hallo"))
         .assertEntity(
-            "The server either does not recognize the request method, or it lacks the ability to fulfill the request.");
+            "The server either does not recognize the request method, or it lacks the ability to"
+                + " fulfill the request.");
 
     // #overrideMethodWithParameter
   }

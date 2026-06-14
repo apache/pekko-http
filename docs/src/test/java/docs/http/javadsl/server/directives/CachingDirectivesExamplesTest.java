@@ -28,11 +28,9 @@ import static org.apache.pekko.http.javadsl.server.directives.CachingDirectives.
 // #caching-directives-import
 // #time-unit-import
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 // #time-unit-import
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.apache.pekko.http.javadsl.server.RouteResult;
 // #create-cache-imports
@@ -47,6 +45,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.extractUri;
 import static org.apache.pekko.http.javadsl.server.Directives.path;
 import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
+
 // #cache
 
 public class CachingDirectivesExamplesTest extends JUnitJupiterRouteTest {

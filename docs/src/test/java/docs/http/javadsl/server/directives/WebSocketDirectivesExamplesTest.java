@@ -14,7 +14,6 @@
 package docs.http.javadsl.server.directives;
 
 import org.apache.pekko.NotUsed;
-import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.Uri;
 import org.apache.pekko.http.javadsl.model.headers.SecWebSocketProtocol;
@@ -34,7 +33,6 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
 // #handleWebSocketMessages
 import static org.apache.pekko.http.javadsl.server.Directives.path;

@@ -13,7 +13,6 @@
 
 package docs.http.javadsl.server.directives;
 
-import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.event.LoggingAdapter;
 import org.apache.pekko.event.NoLogging;
@@ -24,7 +23,6 @@ import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.settings.ParserSettings;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.apache.pekko.stream.javadsl.Flow;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
