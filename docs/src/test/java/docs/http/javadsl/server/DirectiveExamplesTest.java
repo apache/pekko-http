@@ -13,11 +13,35 @@
 
 package docs.http.javadsl.server;
 
-import static org.apache.pekko.http.javadsl.server.Directives.allOf;
-import static org.apache.pekko.http.javadsl.server.Directives.anyOf;
+import org.apache.pekko.http.javadsl.model.RemoteAddress;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
+import org.junit.jupiter.api.Test;
+
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+// #example1
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractClientIP;
-import static org.apache.pekko.http.javadsl.server.Directives.extractMethod;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.put;
+
+import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
+
+// #example1
+// #usingConcat
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.put;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
+
+// #usingConcat
+// #usingConcatBig
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.get;
 import static org.apache.pekko.http.javadsl.server.Directives.head;
 import static org.apache.pekko.http.javadsl.server.Directives.path;
@@ -25,34 +49,40 @@ import static org.apache.pekko.http.javadsl.server.Directives.put;
 import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
 import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
 
-import java.util.function.Function;
-import java.util.function.Supplier;
-import org.apache.pekko.http.javadsl.model.RemoteAddress;
-import org.apache.pekko.http.javadsl.server.Directives;
-import org.apache.pekko.http.javadsl.server.Route;
-import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.junit.jupiter.api.Test;
-
-// #example1
-
-// #example1
-// #usingConcat
-
-// #usingConcat
-// #usingConcatBig
-
 // #usingConcatBig
 
 // #getOrPut
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractMethod;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.put;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
 
 // #getOrPut
 // #getOrPutUsingAnyOf
+import org.apache.pekko.http.javadsl.server.Directives;
+
+import static org.apache.pekko.http.javadsl.server.Directives.anyOf;
+
+import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
 
 // #getOrPutUsingAnyOf
 // #composeNesting
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractClientIP;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #composeNesting
 // #allOf
+import org.apache.pekko.http.javadsl.server.Directives;
+
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.allOf;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #allOf
 
@@ -71,7 +101,6 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
             get(() -> complete("Received GET request for order " + id))
                 .orElse(put(() -> complete("Received PUT request for order " + id))));
   }
-
   // #example1
 
   // #usingConcat
@@ -83,7 +112,6 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
                 get(() -> complete("Received GET request for order " + id)),
                 put(() -> complete("Received PUT request for order " + id))));
   }
-
   // #usingConcat
 
   // #usingConcatBig
@@ -96,7 +124,6 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
                 put(() -> complete("Received PUT request for order " + id)),
                 head(() -> complete("Received HEAD request for order " + id))));
   }
-
   // #usingConcatBig
 
   // #getOrPut
@@ -112,7 +139,6 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
                 () ->
                     extractMethod(method -> complete("Received " + method + " for order " + id))));
   }
-
   // #getOrPut
 
   // #getOrPutUsingAnyOf
@@ -126,7 +152,6 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
                 () ->
                     extractMethod(method -> complete("Received " + method + " for order " + id))));
   }
-
   // #getOrPutUsingAnyOf
 
   // #composeNesting
@@ -141,7 +166,6 @@ public class DirectiveExamplesTest extends JUnitJupiterRouteTest {
             getWithIP(
                 address -> complete("Received request for order " + id + " from IP " + address)));
   }
-
   // #composeNesting
 
   // #composeNestingAllOf

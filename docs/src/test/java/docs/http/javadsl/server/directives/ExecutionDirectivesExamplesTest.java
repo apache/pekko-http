@@ -13,18 +13,8 @@
 
 package docs.http.javadsl.server.directives;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractUnmatchedPath;
-import static org.apache.pekko.http.javadsl.server.Directives.handleExceptions;
-import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
-import static org.apache.pekko.http.javadsl.server.Directives.reject;
-import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
-
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.http.javadsl.server.ExceptionHandler;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.apache.pekko.http.javadsl.server.RejectionHandler;
@@ -34,13 +24,30 @@ import org.apache.pekko.http.javadsl.server.ValidationRejection;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
+import static org.apache.pekko.http.javadsl.server.PathMatchers.integerSegment;
+
 // #handleExceptions
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.handleExceptions;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #handleExceptions
 // #handleRejections
+import org.apache.pekko.http.javadsl.server.Directives;
+
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.reject;
 
 // #handleRejections
 // #handleNotFoundWithDefails
+import org.apache.pekko.http.javadsl.server.Directives;
+
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractUnmatchedPath;
+import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
+import static org.apache.pekko.http.javadsl.server.Directives.reject;
 
 // #handleNotFoundWithDefails
 

@@ -13,18 +13,6 @@
 
 package docs.http.javadsl.server.directives;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.get;
-import static org.apache.pekko.http.javadsl.server.Directives.headerValueByName;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.put;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
@@ -32,13 +20,25 @@ import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.function.Function;
+
 // #labeling-1
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.put;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
 // #labeling-1
 // #composition-1
+import static org.apache.pekko.http.javadsl.server.Directives.headerValueByName;
 
 // #composition-1
 // #composition-2
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #composition-2
 
@@ -48,7 +48,6 @@ public class CustomDirectivesExamplesTest extends JUnitJupiterRouteTest {
   public Route getOrPut(Supplier<Route> inner) {
     return get(inner).orElse(put(inner));
   }
-
   // #labeling-1
 
   @Test
@@ -115,7 +114,6 @@ public class CustomDirectivesExamplesTest extends JUnitJupiterRouteTest {
               });
         });
   }
-
   // #composition-1
 
   @Test

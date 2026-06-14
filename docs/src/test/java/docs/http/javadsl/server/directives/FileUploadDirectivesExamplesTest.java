@@ -13,31 +13,12 @@
 
 package docs.http.javadsl.server.directives;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractRequestContext;
-import static org.apache.pekko.http.javadsl.server.Directives.fileUpload;
-import static org.apache.pekko.http.javadsl.server.Directives.fileUploadAll;
-import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
-import static org.apache.pekko.http.javadsl.server.Directives.storeUploadedFile;
-import static org.apache.pekko.http.javadsl.server.Directives.storeUploadedFiles;
-
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import org.apache.pekko.http.impl.engine.rendering.BodyPartRenderer;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.http.javadsl.server.directives.FileInfo;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.apache.pekko.stream.javadsl.Framing;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
@@ -45,16 +26,39 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import scala.concurrent.duration.FiniteDuration;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 // #storeUploadedFile
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.storeUploadedFile;
 
 // #storeUploadedFile
 // #storeUploadedFiles
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.storeUploadedFiles;
 
 // #storeUploadedFiles
 // #fileUpload
+import static org.apache.pekko.http.javadsl.server.Directives.extractRequestContext;
+import static org.apache.pekko.http.javadsl.server.Directives.fileUpload;
+import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
 
 // #fileUpload
 // #fileUploadAll
+import static org.apache.pekko.http.javadsl.server.Directives.extractRequestContext;
+import static org.apache.pekko.http.javadsl.server.Directives.fileUploadAll;
+import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
 
 // #fileUploadAll
 

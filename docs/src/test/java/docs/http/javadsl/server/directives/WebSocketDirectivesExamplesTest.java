@@ -13,16 +13,8 @@
 
 package docs.http.javadsl.server.directives;
 
-import static org.apache.pekko.http.javadsl.server.Directives.extractOfferedWsProtocols;
-import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessages;
-import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessagesForOptionalProtocol;
-import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessagesForProtocol;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
 import org.apache.pekko.NotUsed;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.Uri;
 import org.apache.pekko.http.javadsl.model.headers.SecWebSocketProtocol;
@@ -39,13 +31,23 @@ import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
 // #handleWebSocketMessages
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessages;
 
 // #handleWebSocketMessages
 // #handleWebSocketMessagesForProtocol
+import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessagesForProtocol;
 
 // #handleWebSocketMessagesForProtocol
 // #extractOfferedWsProtocols
+import static org.apache.pekko.http.javadsl.server.Directives.extractOfferedWsProtocols;
+import static org.apache.pekko.http.javadsl.server.Directives.handleWebSocketMessagesForOptionalProtocol;
 
 // #extractOfferedWsProtocols
 public class WebSocketDirectivesExamplesTest extends JUnitJupiterRouteTest {

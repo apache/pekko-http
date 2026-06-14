@@ -13,17 +13,6 @@
 
 package docs.http.javadsl.server.directives;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.parameter;
-import static org.apache.pekko.http.javadsl.server.Directives.parameterList;
-import static org.apache.pekko.http.javadsl.server.Directives.parameterMap;
-import static org.apache.pekko.http.javadsl.server.Directives.parameterMultiMap;
-import static org.apache.pekko.http.javadsl.server.Directives.parameterOptional;
-import static org.apache.pekko.http.javadsl.server.Directives.parameterRequiredValue;
-
-import java.util.Map.Entry;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
@@ -31,28 +20,49 @@ import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map.Entry;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 // #parameter
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
 
 // #parameter
 // #parameters
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
 
 // #parameters
 // #optional
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
+import static org.apache.pekko.http.javadsl.server.Directives.parameterOptional;
 
 // #optional
 // #required-value
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameterRequiredValue;
 
 // #required-value
 // #mapped-value
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameter;
 
 // #mapped-value
 // #parameterMap
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameterMap;
 
 // #parameterMap
 // #parameterMultiMap
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameterMultiMap;
 
 // #parameterMultiMap
 // #parameterSeq
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.parameterList;
 
 // #parameterSeq
 

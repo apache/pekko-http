@@ -13,19 +13,20 @@
 
 package docs.http.javadsl.server;
 
-import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasic;
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-
 import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.Host;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.scaladsl.model.headers.Authorization;
-import org.junit.jupiter.api.Test;
 
 // #basic-authenticator-java
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasic;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
 // #basic-authenticator-java
 

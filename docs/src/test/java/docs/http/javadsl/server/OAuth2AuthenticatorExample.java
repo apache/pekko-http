@@ -13,19 +13,21 @@
 
 package docs.http.javadsl.server;
 
-import static org.apache.pekko.http.javadsl.server.Directives.authenticateOAuth2;
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-
-import java.util.Optional;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.Host;
-import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.scaladsl.model.headers.Authorization;
+
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 // #oauth2-authenticator-java
+import org.apache.pekko.http.javadsl.server.Route;
+
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.authenticateOAuth2;
 
 // #oauth2-authenticator-java
 

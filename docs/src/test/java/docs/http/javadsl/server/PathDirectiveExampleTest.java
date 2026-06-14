@@ -13,18 +13,17 @@
 
 package docs.http.javadsl.server;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.pathEnd;
-import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
-import static org.apache.pekko.http.javadsl.server.Directives.pathSingleSlash;
-
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
 // #path-examples
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.pathEnd;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.pathSingleSlash;
 // #path-examples
 
 public class PathDirectiveExampleTest extends JUnitJupiterRouteTest {

@@ -25,6 +25,10 @@ sourceDistIncubating := false
 ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
 
 ThisBuild / javafmtFormatterCompatibleJavaVersion := 17
+ThisBuild / javafmt / excludeFilter := new SimpleFileFilter(f => {
+  val p = f.getAbsolutePath
+  p.contains("/docs/") || p.contains("/examples/")
+})
 
 addCommandAlias("checkCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; javafmtCheckAll; +headerCheckAll")
 addCommandAlias("applyCodeStyle", "+headerCreateAll; scalafmtAll; scalafmtSbt; javafmtAll")

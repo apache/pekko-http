@@ -13,15 +13,6 @@
 
 package docs.http.javadsl.server;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.decodeRequestWith;
-import static org.apache.pekko.http.javadsl.server.Directives.get;
-import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.post;
-import static org.apache.pekko.http.javadsl.server.Directives.validate;
-
-import java.util.stream.Collectors;
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpEntity;
@@ -36,12 +27,26 @@ import org.apache.pekko.http.javadsl.server.ValidationRejection;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.stream.Collectors;
+
 // #example1
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.decodeRequestWith;
+import static org.apache.pekko.http.javadsl.server.Directives.get;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.post;
 // #example1
 // #custom-handler-example-java
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
 
 // #custom-handler-example-java
 // #example-json
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.handleRejections;
+import static org.apache.pekko.http.javadsl.server.Directives.validate;
 
 // #example-json
 public class RejectionHandlerExamplesTest extends JUnitJupiterRouteTest {
@@ -115,7 +120,11 @@ public class RejectionHandlerExamplesTest extends JUnitJupiterRouteTest {
                   if (response.entity() instanceof HttpEntity.Strict entity) {
                     // since all Pekko default rejection responses are Strict this will handle all
                     // rejections
-                    String message = entity.getData().utf8String().replaceAll("\"", "\\\"");
+                    String message =
+                        entity
+                            .getData()
+                            .utf8String()
+                            .replaceAll("\"", "\\\"");
                     // we create a new copy the response in order to keep all headers and status
                     // code,
                     // replacing the original entity with a custom message as hand rolled JSON you

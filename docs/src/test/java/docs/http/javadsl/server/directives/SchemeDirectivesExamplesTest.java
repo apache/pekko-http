@@ -13,23 +13,24 @@
 
 package docs.http.javadsl.server.directives;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extract;
-import static org.apache.pekko.http.javadsl.server.Directives.extractScheme;
-import static org.apache.pekko.http.javadsl.server.Directives.redirect;
-import static org.apache.pekko.http.javadsl.server.Directives.scheme;
+import org.junit.jupiter.api.Test;
 
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
-import org.apache.pekko.http.javadsl.model.headers.Location;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.junit.jupiter.api.Test;
+import org.apache.pekko.http.javadsl.model.headers.Location;
 
 // #extractScheme
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractScheme;
 
 // #extractScheme
 // #scheme
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extract;
+import static org.apache.pekko.http.javadsl.server.Directives.redirect;
+import static org.apache.pekko.http.javadsl.server.Directives.scheme;
 
 // #scheme
 

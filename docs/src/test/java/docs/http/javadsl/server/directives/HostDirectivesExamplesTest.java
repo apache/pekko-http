@@ -13,31 +13,37 @@
 
 package docs.http.javadsl.server.directives;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractHost;
-import static org.apache.pekko.http.javadsl.server.Directives.host;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import java.util.Arrays;
 import java.util.regex.Pattern;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.Host;
-import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.junit.jupiter.api.Test;
 
 // #host1
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.host;
 
 // #host1
 // #host2
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.host;
 
 // #host2
 // #extractHostname
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractHost;
 
 // #extractHostname
 // #matchAndExtractHost
+import org.apache.pekko.http.javadsl.server.Directives;
+
+import static org.apache.pekko.http.javadsl.server.Directives.host;
 
 // #matchAndExtractHost
 

@@ -14,17 +14,19 @@
 package docs.http.javadsl;
 
 // #unmarshall-response-body
-import java.util.concurrent.CompletionStage;
-import org.apache.pekko.actor.typed.ActorSystem;
-import org.apache.pekko.actor.typed.javadsl.Behaviors;
-import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
-import org.apache.pekko.http.javadsl.model.*;
-import org.apache.pekko.http.javadsl.server.examples.petstore.Pet;
 
 // #unmarshall-response-body
 
 // #single-request-example
+import org.apache.pekko.actor.typed.ActorSystem;
+import org.apache.pekko.actor.typed.javadsl.Behaviors;
+import org.apache.pekko.http.javadsl.Http;
+import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.server.examples.petstore.Pet;
+import org.apache.pekko.stream.SystemMaterializer;
+
+import java.util.concurrent.CompletionStage;
 
 public class ClientSingleRequestExample {
 
@@ -35,7 +37,6 @@ public class ClientSingleRequestExample {
         Http.get(system).singleRequest(HttpRequest.create("https://pekko.apache.org"));
   }
 }
-
 // #single-request-example
 
 class OtherRequestResponseExamples {

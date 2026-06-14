@@ -13,22 +13,6 @@
 
 package docs.http.javadsl.server;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.entity;
-import static org.apache.pekko.http.javadsl.server.Directives.onComplete;
-import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.PathMatchers.longSegment;
-import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
-
-import java.io.File;
-import java.io.Serializable;
-import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import org.apache.pekko.Done;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorRef;
@@ -44,11 +28,31 @@ import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.util.ByteString;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.io.Serializable;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
+import static org.apache.pekko.http.javadsl.server.PathMatchers.longSegment;
+import static org.apache.pekko.http.javadsl.server.PathMatchers.segment;
+
 // #simple-upload
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #simple-upload
 
 // #stream-csv-upload
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.onComplete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #stream-csv-upload
 
@@ -178,7 +182,6 @@ public class FileUploadExamplesTest extends JUnitJupiterRouteTest {
                   return onComplete(() -> done, ignored -> complete("ok!"));
                 }));
   }
-
   // #stream-csv-upload
 
   static class Entry implements Serializable {

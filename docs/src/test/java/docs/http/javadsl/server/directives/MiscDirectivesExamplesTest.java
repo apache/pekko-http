@@ -13,23 +13,6 @@
 
 package docs.http.javadsl.server.directives;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.entity;
-import static org.apache.pekko.http.javadsl.server.Directives.extractClientIP;
-import static org.apache.pekko.http.javadsl.server.Directives.extractUri;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.rejectEmptyResponse;
-import static org.apache.pekko.http.javadsl.server.Directives.requestEntityEmpty;
-import static org.apache.pekko.http.javadsl.server.Directives.requestEntityPresent;
-import static org.apache.pekko.http.javadsl.server.Directives.selectPreferredLanguage;
-import static org.apache.pekko.http.javadsl.server.Directives.validate;
-import static org.apache.pekko.http.javadsl.server.Directives.withSizeLimit;
-import static org.apache.pekko.http.javadsl.server.Directives.withoutSizeLimit;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.function.Function;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.*;
@@ -39,28 +22,54 @@ import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 import org.junit.jupiter.api.Test;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.function.Function;
+
 // #withSizeLimitExample
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.withSizeLimit;
 
 // #withSizeLimitExample
 // #withSizeLimitExampleNested
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.withSizeLimit;
 
 // #withSizeLimitExampleNested
 // #withoutSizeLimitExample
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.entity;
+import static org.apache.pekko.http.javadsl.server.Directives.withoutSizeLimit;
 
 // #withoutSizeLimitExample
 // #extractClientIP
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractClientIP;
 
 // #extractClientIP
 // #requestEntity-empty-present-example
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.requestEntityEmpty;
+import static org.apache.pekko.http.javadsl.server.Directives.requestEntityPresent;
 
 // #requestEntity-empty-present-example
 // #selectPreferredLanguage
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.selectPreferredLanguage;
 
 // #selectPreferredLanguage
 // #validate-example
+import static org.apache.pekko.http.javadsl.server.Directives.extractUri;
+import static org.apache.pekko.http.javadsl.server.Directives.validate;
 
 // #validate-example
 // #rejectEmptyResponse-example
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.rejectEmptyResponse;
 
 // #rejectEmptyResponse-example
 

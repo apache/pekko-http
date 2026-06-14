@@ -13,21 +13,22 @@
 
 package docs.http.javadsl.server;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.extractHost;
-import static org.apache.pekko.http.javadsl.server.Directives.headerValueByName;
+import org.junit.jupiter.api.Test;
 
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.Host;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.junit.jupiter.api.Test;
 
 // #by-class
+import static org.apache.pekko.http.javadsl.server.Directives.extractHost;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
 // #by-class
 // #by-name
+import static org.apache.pekko.http.javadsl.server.Directives.headerValueByName;
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
 
 // #by-name
 

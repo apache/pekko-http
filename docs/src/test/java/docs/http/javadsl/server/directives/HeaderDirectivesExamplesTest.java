@@ -13,21 +13,11 @@
 
 package docs.http.javadsl.server.directives;
 
-import static org.apache.pekko.http.javadsl.common.PartialApplication.*;
-import static org.apache.pekko.http.javadsl.server.Directives.anyOf;
-import static org.apache.pekko.http.javadsl.server.Directives.checkSameOrigin;
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.headerValue;
-import static org.apache.pekko.http.javadsl.server.Directives.headerValueByName;
-import static org.apache.pekko.http.javadsl.server.Directives.headerValueByType;
-import static org.apache.pekko.http.javadsl.server.Directives.headerValuePF;
-import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValue;
-import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValueByName;
-import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValueByType;
-import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValuePF;
-
 import java.util.Optional;
 import java.util.function.Function;
+
+import org.junit.jupiter.api.Test;
+
 import org.apache.pekko.http.javadsl.model.HttpHeader;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
@@ -36,42 +26,63 @@ import org.apache.pekko.http.javadsl.model.headers.HttpOrigin;
 import org.apache.pekko.http.javadsl.model.headers.HttpOriginRange;
 import org.apache.pekko.http.javadsl.model.headers.Origin;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
-import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import org.apache.pekko.japi.JavaPartialFunction;
-import org.junit.jupiter.api.Test;
+import org.apache.pekko.http.javadsl.testkit.TestRoute;
 import scala.PartialFunction;
 
+import static org.apache.pekko.http.javadsl.common.PartialApplication.*;
+
 // #headerValue
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.headerValue;
 
 // #headerValue
 // #headerValue-with-default
+import org.apache.pekko.http.javadsl.server.Directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.anyOf;
 // #headerValue-with-default
 // #headerValueByName
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.headerValueByName;
 
 // #headerValueByName
 // #headerValueByType
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.headerValueByType;
 
 // #headerValueByType
 // #headerValuePF
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.headerValuePF;
 
 // #headerValuePF
 // #optionalHeaderValue
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValue;
 
 // #optionalHeaderValue
 // #optionalHeaderValueByName
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValueByName;
 
 // #optionalHeaderValueByName
 // #optionalHeaderValueByType
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValueByType;
 
 // #optionalHeaderValueByType
 // #optionalHeaderValuePF
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.optionalHeaderValuePF;
 
 // #optionalHeaderValuePF
 // #checkSameOrigin
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.checkSameOrigin;
 
 // #checkSameOrigin
 

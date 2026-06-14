@@ -13,27 +13,26 @@
 
 package docs.http.javadsl;
 
-import static org.apache.pekko.http.javadsl.model.AttributeKeys.trailer;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+
 import org.apache.pekko.actor.ActorSystem;
-import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.HttpsConnectionContext;
-import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.model.HttpResponse;
+// #trailingHeaders
 import org.apache.pekko.http.javadsl.model.Trailer;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
+import static org.apache.pekko.http.javadsl.model.AttributeKeys.trailer;
+
+// #trailingHeaders
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.japi.function.Function;
-
-// #trailingHeaders
-
-// #trailingHeaders
 
 // #bindAndHandleSecure
 // #bindAndHandlePlain
 // #http2Client
 // #http2ClientWithPriorKnowledge
+import org.apache.pekko.http.javadsl.Http;
 
 // #http2ClientWithPriorKnowledge
 // #http2Client

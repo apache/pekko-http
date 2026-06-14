@@ -13,22 +13,9 @@
 
 package docs.http.javadsl.server.directives;
 
-import static org.apache.pekko.http.javadsl.server.Directives.complete;
-import static org.apache.pekko.http.javadsl.server.Directives.failWith;
-import static org.apache.pekko.http.javadsl.server.Directives.path;
-import static org.apache.pekko.http.javadsl.server.Directives.pathEnd;
-import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
-import static org.apache.pekko.http.javadsl.server.Directives.pathSingleSlash;
-import static org.apache.pekko.http.javadsl.server.Directives.redirect;
-import static org.apache.pekko.http.javadsl.server.Directives.reject;
-
-import java.util.Collections;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.ContentType;
 import org.apache.pekko.http.javadsl.model.headers.Location;
-import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.http.javadsl.server.Rejections;
 import org.apache.pekko.http.javadsl.server.RequestContext;
 import org.apache.pekko.http.javadsl.server.Route;
@@ -36,16 +23,33 @@ import org.apache.pekko.http.javadsl.server.RouteResult;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+
 // #complete
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #complete
 
 // #reject
+import org.apache.pekko.http.javadsl.server.Directives;
 
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+import static org.apache.pekko.http.javadsl.server.Directives.reject;
 // #reject
 // #redirect
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.pathEnd;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+import static org.apache.pekko.http.javadsl.server.Directives.pathSingleSlash;
+import static org.apache.pekko.http.javadsl.server.Directives.redirect;
 // #redirect
 // #failWith
+import static org.apache.pekko.http.javadsl.server.Directives.failWith;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
 
 // #failWith
 
@@ -161,8 +165,7 @@ public class RouteDirectivesExamplesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.GET("/foo"))
         .assertStatusCode(StatusCodes.PERMANENT_REDIRECT)
         .assertEntity(
-            "The request, and all future requests should be repeated using <a href=\"/foo/\">this"
-                + " URI</a>.");
+            "The request, and all future requests should be repeated using <a href=\"/foo/\">this URI</a>.");
     // #redirect
   }
 
