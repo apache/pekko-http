@@ -157,8 +157,8 @@ object PathMatcher extends ImplicitPathMatcherConstruction {
    * Creates a PathMatcher that always matches, consumes nothing and extracts the given Tuple of values.
    */
   def provide[L](extractions: L)(implicit ev: Tuple[L]): PathMatcher[L] =
-    new PathMatcher[L]()(ev) {
-      def apply(path: Path) = Matched(path, extractions)(ev)
+    new PathMatcher[L] {
+      def apply(path: Path) = Matched(path, extractions)
     }
 
   /**
@@ -167,9 +167,9 @@ object PathMatcher extends ImplicitPathMatcherConstruction {
    */
   def apply[L](prefix: Path, extractions: L)(implicit ev: Tuple[L]): PathMatcher[L] =
     if (prefix.isEmpty) provide(extractions)
-    else new PathMatcher[L]()(ev) {
+    else new PathMatcher[L] {
       def apply(path: Path) =
-        if (path.startsWith(prefix)) Matched(path.dropChars(prefix.charCount), extractions)(ev)
+        if (path.startsWith(prefix)) Matched(path.dropChars(prefix.charCount), extractions)
         else Unmatched
     }
 
