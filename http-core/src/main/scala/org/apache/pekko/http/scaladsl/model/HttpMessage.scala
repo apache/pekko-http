@@ -213,7 +213,8 @@ sealed trait HttpMessage extends jm.HttpMessage {
 
   /** Java API */
   def getHeaders[T <: jm.HttpHeader](headerClass: Class[T]): JIterable[T] = {
-    headers[T](ClassTag[T](headerClass)).asJava
+    implicit val ct: ClassTag[T] = ClassTag(headerClass)
+    headers[T].asJava
   }
 
   /** Java API */

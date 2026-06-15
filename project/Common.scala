@@ -24,11 +24,11 @@ object Common extends AutoPlugin {
       "-deprecation",
       "-encoding", "UTF-8", // yes, this is 2 args
       "-unchecked",
-      "-Ywarn-dead-code",
       "-Wconf:msg=reached max recursion depth:s",
       "-Wconf:msg=Prefer the Scala annotation over Java's `@Deprecated`:s",
       "-release:" + javacTarget),
     scalacOptions ++= onlyOnScala2(Seq(
+      "-Ywarn-dead-code",
       "-Xlint",
       // Exhaustivity checking is only useful for simple sealed hierarchies and matches without filters.
       // In all other cases, the warning is non-actionable: you get spurious warnings that need to be suppressed
@@ -36,7 +36,19 @@ object Common extends AutoPlugin {
       "-Wconf:cat=other-match-analysis&msg=match may not be exhaustive:s")).value,
     scalacOptions ++= onlyOnScala3(Seq(
       "-Wconf:cat=deprecation:s",
-      "-Yfuture-lazy-vals")).value,
+      "-Yfuture-lazy-vals",
+      "-Wconf:msg=Implicit parameters should be provided with a `using` clause:s",
+      "-Wconf:msg=is deprecated for wildcard arguments of types:s",
+      "-Wconf:msg=The trailing ` _` for eta-expansion is unnecessary:s",
+      "-Wconf:msg=with as a type operator has been deprecated:s",
+      "-Wconf:msg=Unreachable case except for null:s",
+      "-Wconf:msg=is no longer supported for vararg splices:s",
+      "-Wconf:msg=is not declared infix:s",
+      "-Wconf:msg=auto insertion will be deprecated:s",
+      "-Wconf:msg=Ignoring \\[this\\] qualifier:s",
+      "-Wconf:msg=trait App in package scala is deprecated:s",
+      "-Wconf:msg=pattern binding uses refutable extractor:s",
+      "-Wconf:msg=bad option.*-Yfuture-lazy-vals:s")).value,
     javacOptions ++=
       Seq("-encoding", "UTF-8", "--release", javacTarget),
     mimaReportSignatureProblems := true,

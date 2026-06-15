@@ -95,7 +95,7 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
   def charsetOption: Option[HttpCharset] = contentType.charsetOption
   def charset: HttpCharset = charsetOption.getOrElse(sys.error("Binary entity does not have charset"))
   def headers: immutable.Seq[HttpHeader] = rawResponse.headers
-  def header[T >: Null <: HttpHeader: ClassTag]: Option[T] = rawResponse.header[T](implicitly[ClassTag[T]])
+  def header[T >: Null <: HttpHeader: ClassTag]: Option[T] = rawResponse.header[T]
   def header(name: String): Option[HttpHeader] = rawResponse.headers.find(_.is(name.toLowerCase))
   def status: StatusCode = rawResponse.status
 

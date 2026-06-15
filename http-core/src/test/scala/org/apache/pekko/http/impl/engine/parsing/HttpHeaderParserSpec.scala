@@ -351,12 +351,12 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
       zeroHashStrings.next().hashCode should be(0)
 
       def regular(): Unit = {
-        val (_, accept: Accept) = parseLine(regularHeader)
-        accept.mediaRanges.head.getParams.size should be(numKeys)
+        val (_, accept) = parseLine(regularHeader)
+        accept.asInstanceOf[Accept].mediaRanges.head.getParams.size should be(numKeys)
       }
       def colliding(): Unit = {
-        val (_, accept: Accept) = parseLine(collidingHeader)
-        accept.mediaRanges.head.getParams.size should be(numKeys)
+        val (_, accept) = parseLine(collidingHeader)
+        accept.asInstanceOf[Accept].mediaRanges.head.getParams.size should be(numKeys)
       }
 
       BenchUtils.nanoRace(regular(), colliding()) should be < 3.0 // speed must be in same order of magnitude
@@ -423,7 +423,7 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
       if (headerA eq headerB) 1 else 0
     }
 
-    private[this] val random = new Random(42)
+    private val random = new Random(42)
     def nextRandomPrintableChar(): Char = random.nextPrintableChar()
     def nextRandomInt(min: Int, max: Int) = random.nextInt(max - min) + min
     @tailrec final def nextRandomAlphaNumChar(): Char = {

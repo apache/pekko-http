@@ -82,11 +82,11 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
 
   import Http._
 
-  private[this] val defaultConnectionPoolSettings = ConnectionPoolSettings(system)
+  private val defaultConnectionPoolSettings = ConnectionPoolSettings(system)
 
   // configured default HttpsContext for the client-side
   // SYNCHRONIZED ACCESS ONLY!
-  private[this] var _defaultClientHttpsConnectionContext: HttpsConnectionContext = _
+  private var _defaultClientHttpsConnectionContext: HttpsConnectionContext = null
 
   // ** SERVER ** //
 
@@ -321,7 +321,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   // ** CLIENT ** //
 
   private[http] val poolMaster: PoolMaster = PoolMaster()
-  private[this] val systemMaterializer = SystemMaterializer(system).materializer
+  private val systemMaterializer = SystemMaterializer(system).materializer
 
   /**
    * Creates a builder which will create a single connection to a host every time the built flow is materialized. There

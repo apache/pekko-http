@@ -29,29 +29,29 @@ final class PathMatchers
 object PathMatchers {
   import JavaPathMatchers._
 
-  private[this] val IntegerSegment: PathMatcher1[java.lang.Integer] = fromScala1(SPathMatchers.IntNumber.map { i =>
+  private val IntegerSegment: PathMatcher1[java.lang.Integer] = fromScala1(SPathMatchers.IntNumber.map { i =>
     i: java.lang.Integer
   })
-  private[this] val LongSegment: PathMatcher1[java.lang.Long] = fromScala1(SPathMatchers.LongNumber.map { i =>
+  private val LongSegment: PathMatcher1[java.lang.Long] = fromScala1(SPathMatchers.LongNumber.map { i =>
     i: java.lang.Long
   })
-  private[this] val HexIntegerSegment: PathMatcher1[java.lang.Integer] =
+  private val HexIntegerSegment: PathMatcher1[java.lang.Integer] =
     fromScala1(SPathMatchers.HexIntNumber.map { i => i: java.lang.Integer })
-  private[this] val HexLongSegment: PathMatcher1[java.lang.Long] = fromScala1(SPathMatchers.HexLongNumber.map { i =>
+  private val HexLongSegment: PathMatcher1[java.lang.Long] = fromScala1(SPathMatchers.HexLongNumber.map { i =>
     i: java.lang.Long
   })
-  private[this] val DoubleSegment: PathMatcher1[java.lang.Double] = fromScala1(SPathMatchers.DoubleNumber.map { i =>
+  private val DoubleSegment: PathMatcher1[java.lang.Double] = fromScala1(SPathMatchers.DoubleNumber.map { i =>
     i: java.lang.Double
   })
-  private[this] val UUIDSegment: PathMatcher1[UUID] = fromScala1(SPathMatchers.JavaUUID)
+  private val UUIDSegment: PathMatcher1[UUID] = fromScala1(SPathMatchers.JavaUUID)
 
-  private[this] val Neutral = fromScala0(SPathMatchers.Neutral)
-  private[this] val Slash = new PathMatcher0(SPathMatchers.Slash)
-  private[this] val PathEnd = new PathMatcher0(SPathMatchers.PathEnd)
-  private[this] val Remaining = new PathMatcher1[String](SPathMatchers.Remaining)
-  private[this] val RemainingPath = new PathMatcher1[Path](SPathMatchers.RemainingPath)
-  private[this] val Segment = new PathMatcher1[String](SPathMatchers.Segment)
-  private[this] val Segments = new PathMatcher1[java.util.List[String]](SPathMatchers.Segments.map(_.asJava))
+  private val Neutral = fromScala0(SPathMatchers.Neutral)
+  private val Slash = new PathMatcher0(SPathMatchers.Slash)
+  private val PathEnd = new PathMatcher0(SPathMatchers.PathEnd)
+  private val Remaining = new PathMatcher1[String](SPathMatchers.Remaining)
+  private val RemainingPath = new PathMatcher1[Path](SPathMatchers.RemainingPath)
+  private val Segment = new PathMatcher1[String](SPathMatchers.Segment)
+  private val Segments = new PathMatcher1[java.util.List[String]](SPathMatchers.Segments.map(_.asJava))
 
   /**
    * Converts a path string containing slashes into a PathMatcher that interprets slashes as

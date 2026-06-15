@@ -52,7 +52,8 @@ abstract class DontLeakActorsOnFailingConnectionSpecs(poolImplementation: String
   implicit val system: ActorSystem = ActorSystem("DontLeakActorsOnFailingConnectionSpecs-" + poolImplementation, config)
   implicit val materializer: Materializer = Materializer.createMaterializer(system)
 
-  val log = Logging(system, getClass)(LogSource.fromClass)
+  implicit val classLogSource: LogSource[Class[?]] = LogSource.fromClass
+  val log = Logging(system, getClass: Class[?])
 
   "Http.superPool" should {
 

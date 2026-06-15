@@ -30,11 +30,11 @@ import com.typesafe.config.ConfigFactory
 
 class HttpEntityBenchmark extends CommonBenchmark {
   @Param(Array("strict", "default"))
-  var entityType: String = _
+  var entityType: String = null
 
-  implicit var system: ActorSystem = _
+  implicit var system: ActorSystem = null
 
-  var entity: HttpEntity = _
+  var entity: HttpEntity = null
 
   @Benchmark
   def discardBytes(): Unit = {

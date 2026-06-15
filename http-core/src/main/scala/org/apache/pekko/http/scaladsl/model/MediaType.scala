@@ -325,7 +325,7 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
   /** Function used to find a custom media type. Called before the predefined media types. Strings will be lowercase. */
   type FindCustom = (String, String) => Option[MediaType]
 
-  private[this] var extensionMap = Map.empty[String, MediaType]
+  private var extensionMap = Map.empty[String, MediaType]
 
   def forExtensionOption(ext: String): Option[MediaType] = extensionMap.get(ext.toLowerCase)
   def forExtension(ext: String): MediaType = extensionMap.getOrElse(ext.toLowerCase, `application/octet-stream`)

@@ -78,7 +78,7 @@ object FastFuture {
     case Success(t) => FulfilledFuture(t)
     case Failure(e) => ErrorFuture(e)
   }
-  private[this] val _successful: Any => Future[Any] = FulfilledFuture.apply
+  private val _successful: Any => Future[Any] = FulfilledFuture.apply
   def successful[T]: T => Future[T] = _successful.asInstanceOf[T => Future[T]]
   val failed: Throwable => Future[Nothing] = ErrorFuture.apply
 

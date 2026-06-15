@@ -185,7 +185,7 @@ private[http] object OutgoingConnectionBlueprint {
 
     override def createLogic(effectiveAttributes: Attributes) =
       new GraphStageLogic(shape) with InHandler with OutHandler {
-        private var entitySource: SubSourceOutlet[ResponseOutput] = _
+        private var entitySource: SubSourceOutlet[ResponseOutput] = null
         private def entitySubstreamStarted = entitySource ne null
         private def idle = this
         private var completionDeferred = false

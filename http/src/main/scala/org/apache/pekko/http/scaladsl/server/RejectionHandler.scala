@@ -75,8 +75,8 @@ object RejectionHandler {
   def newBuilder(): Builder = new Builder(isDefault = false)
 
   final class Builder private[RejectionHandler] (isDefault: Boolean) {
-    private[this] val cases = new immutable.VectorBuilder[Handler]
-    private[this] var notFound: Option[Route] = None
+    private val cases = new immutable.VectorBuilder[Handler]
+    private var notFound: Option[Route] = None
 
     /**
      * Handles a single [[Rejection]] with the given partial function.

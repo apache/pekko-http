@@ -40,12 +40,12 @@ class ConnectionPoolBenchmark extends CommonBenchmark {
   import ConnectionPoolBenchmark._
 
   @Param(Array("1", "10", "100", "1000", "10000"))
-  var maxConnections: String = _
+  var maxConnections: String = null
 
-  implicit var system: ActorSystem = _
+  implicit var system: ActorSystem = null
   implicit def ec: ExecutionContext = system.dispatcher
 
-  private var poolSettings: ConnectionPoolSettings = _
+  private var poolSettings: ConnectionPoolSettings = null
 
   val request = HttpRequest(uri = "http://localhost:8080")
 

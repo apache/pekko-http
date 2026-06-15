@@ -66,7 +66,7 @@ abstract class FramedEntityStreamingDirectives extends TimeoutDirectives {
     D.complete(response)
   }
 
-  private[this] val ByteStringAsEntityFn = new java.util.function.Function[ByteString, HttpEntity]() {
+  private val ByteStringAsEntityFn = new java.util.function.Function[ByteString, HttpEntity]() {
     override def apply(bs: ByteString): HttpEntity = HttpEntities.create(bs)
   }
 }

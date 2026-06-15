@@ -20,6 +20,7 @@ import scala.util.{ Failure, Success, Try }
 import org.apache.pekko
 import pekko.http.scaladsl.marshalling.ToResponseMarshaller
 import pekko.http.scaladsl.server.Directives._
+import pekko.http.scaladsl.server.util.Tuple
 import pekko.http.scaladsl.server.util.Tupler
 import pekko.http.scaladsl.util.FastFuture._
 import pekko.pattern.{ CircuitBreaker, CircuitBreakerOpenException }
@@ -102,10 +103,11 @@ object OnSuccessMagnet {
   implicit def apply[T](future: => Future[T])(implicit tupler: Tupler[T]): OnSuccessMagnet { type Out = tupler.Out } =
     new OnSuccessMagnet {
       type Out = tupler.Out
+      implicit val tupleEv: Tuple[tupler.Out] = tupler.OutIsTuple
       val directive = Directive[tupler.Out] { inner => ctx =>
         import ctx.executionContext
         future.fast.flatMap(t => inner(tupler(t))(ctx))
-      }(tupler.OutIsTuple)
+      }
     }
 }
 

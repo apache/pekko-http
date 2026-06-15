@@ -34,8 +34,8 @@ trait RouteTestResultComponent {
    * A receptacle for the response or rejections created by a route.
    */
   class RouteTestResult(timeout: FiniteDuration)(implicit fm: Materializer) {
-    private[this] var result: Option[Either[immutable.Seq[Rejection], HttpResponse]] = None
-    private[this] val latch = new CountDownLatch(1)
+    private var result: Option[Either[immutable.Seq[Rejection], HttpResponse]] = None
+    private val latch = new CountDownLatch(1)
 
     def handled: Boolean = synchronized { result.isDefined && result.get.isRight }
 
@@ -100,7 +100,7 @@ trait RouteTestResultComponent {
       this
     }
 
-    private[this] lazy val entityRecreator: () => ResponseEntity =
+    private lazy val entityRecreator: () => ResponseEntity =
       rawResponse.entity match {
         case s: HttpEntity.Strict => () => s
 
