@@ -105,7 +105,6 @@ val scalaMacroSupport = Seq(
   })
 
 lazy val parsing = project("parsing")
-  .settings(AutomaticModuleName.settings("pekko.http.parsing"))
   .addPekkoModuleDependency("pekko-actor", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.parsing)
   .settings(scalacOptions += "-language:_")
@@ -115,7 +114,6 @@ lazy val parsing = project("parsing")
   .disablePlugins(MimaPlugin)
 
 lazy val httpCore = project("http-core")
-  .settings(AutomaticModuleName.settings("pekko.http.core"))
   .settings(AddMetaInfLicenseFiles.httpCoreSettings)
   .dependsOn(parsing /*, httpScalafixRules % ScalafixConfig*/ )
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
@@ -131,7 +129,6 @@ lazy val httpCore = project("http-core")
   .disablePlugins(ScalafixPlugin)
 
 lazy val http = project("http")
-  .settings(AutomaticModuleName.settings("pekko.http"))
   .dependsOn(httpCore)
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.http)
@@ -142,7 +139,6 @@ lazy val http = project("http")
   .enablePlugins(ReproducibleBuildsPlugin)
 
 lazy val http2Tests = project("http2-tests")
-  .settings(AutomaticModuleName.settings("pekko.http.http2"))
   .dependsOn(httpCore, httpTestkit % "test", httpCore % "test->test")
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-stream-testkit", "test", PekkoCoreDependency.default)
@@ -183,7 +179,6 @@ lazy val http2Tests = project("http2-tests")
   .disablePlugins(MimaPlugin) // experimental module still
 
 lazy val httpTestkit = project("http-testkit")
-  .settings(AutomaticModuleName.settings("pekko.http.testkit"))
   .dependsOn(http)
   .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-testkit", "provided", PekkoCoreDependency.default)
@@ -198,7 +193,6 @@ lazy val httpTestkit = project("http-testkit")
   .disablePlugins(MimaPlugin) // testkit, no bin compat guaranteed
 
 lazy val httpTestkitMunit = project("http-testkit-munit")
-  .settings(AutomaticModuleName.settings("pekko.http.testkit.munit"))
   .dependsOn(http, httpTestkit)
   .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-testkit", "provided", PekkoCoreDependency.default)
@@ -219,7 +213,6 @@ lazy val httpTests = project("http-tests")
   .settings(
     // following is needed by Agrona lib (PekkoHttpServerLatencyMultiNodeSpec)
     // https://github.com/aeron-io/agrona/wiki/Change-Log#200-2024-12-17
-    MultiJvm / jvmOptions += "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED",
     // Fix to reenable scala-steward, see https://gitter.im/scala-steward-org/scala-steward?at=6183bb66d78911028a1b7cd8
     // Putting that jar file with the complicated name into the git tree directly breaks if something in the environment
     // has unicode path names configured wrongly. So, we wrap it into an extra zip file which is extracted before
@@ -248,13 +241,11 @@ lazy val httpMarshallersScala = project("http-marshallers-scala")
 
 lazy val httpXml =
   httpMarshallersScalaSubproject("xml")
-    .settings(AutomaticModuleName.settings("pekko.http.marshallers.scalaxml"))
     .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
     .settings(Dependencies.httpXml)
 
 lazy val httpSprayJson =
   httpMarshallersScalaSubproject("spray-json")
-    .settings(AutomaticModuleName.settings("pekko.http.marshallers.sprayjson"))
     .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
     .settings(Dependencies.httpSprayJson)
 
@@ -266,7 +257,6 @@ lazy val httpMarshallersJava = project("http-marshallers-java")
 
 lazy val httpJackson =
   httpMarshallersJavaSubproject("jackson")
-    .settings(AutomaticModuleName.settings("pekko.http.marshallers.jackson"))
     .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
     .addPekkoModuleDependency("pekko-stream-testkit", "test", PekkoCoreDependency.default)
     .dependsOn(httpTestkit % "test")
@@ -275,7 +265,6 @@ lazy val httpJackson =
 
 lazy val httpJackson3 =
   httpMarshallersJavaSubproject("jackson3")
-    .settings(AutomaticModuleName.settings("pekko.http.marshallers.jackson3"))
     .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
     .addPekkoModuleDependency("pekko-stream-testkit", "test", PekkoCoreDependency.default)
     .dependsOn(httpTestkit % "test")
@@ -286,7 +275,6 @@ lazy val httpJackson3 =
 lazy val httpCaching = project("http-caching")
   .settings(
     name := "pekko-http-caching")
-  .settings(AutomaticModuleName.settings("pekko.http.caching"))
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.httpCaching)
@@ -296,7 +284,6 @@ lazy val httpCaching = project("http-caching")
 lazy val httpCors = project("http-cors")
   .settings(
     name := "pekko-http-cors")
-  .settings(AutomaticModuleName.settings("pekko.http.cors"))
   .settings(AddMetaInfLicenseFiles.httpCorsSettings)
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
