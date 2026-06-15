@@ -31,7 +31,7 @@ import org.parboiled2.Parser.DeliveryScheme.Either
  */
 @InternalApi
 private[http] final class UriParser(
-    private[this] var _input: ParserInput,
+    private var _input: ParserInput,
     val uriParsingCharset: Charset,
     val uriParsingMode: Uri.ParsingMode,
     val maxValueStackSize: Int) extends Parser(maxValueStackSize = maxValueStackSize)
@@ -119,40 +119,40 @@ private[http] final class UriParser(
     Uri.fail(s"Illegal $target: " + formatter.format(error, input), formatter.formatErrorLine(error, input))
   }
 
-  private[this] val `path-segment-char` = uriParsingMode match {
+  private val `path-segment-char` = uriParsingMode match {
     case Uri.ParsingMode.Strict => `pchar-base`
     case _                      => `relaxed-path-segment-char`
   }
-  private[this] val `query-char` = uriParsingMode match {
+  private val `query-char` = uriParsingMode match {
     case Uri.ParsingMode.Strict => `query-fragment-char`
     case _                      => `relaxed-query-char`
   }
-  private[this] val `query-key-char` = uriParsingMode match {
+  private val `query-key-char` = uriParsingMode match {
     case Uri.ParsingMode.Strict  => `strict-query-key-char`
     case Uri.ParsingMode.Relaxed => `relaxed-query-key-char`
   }
-  private[this] val `query-value-char` = uriParsingMode match {
+  private val `query-value-char` = uriParsingMode match {
     case Uri.ParsingMode.Strict  => `strict-query-value-char`
     case Uri.ParsingMode.Relaxed => `relaxed-query-value-char`
   }
-  private[this] val `fragment-char` = uriParsingMode match {
+  private val `fragment-char` = uriParsingMode match {
     case Uri.ParsingMode.Strict => `query-fragment-char`
     case _                      => `relaxed-fragment-char`
   }
 
   // New vars need to be reset in `reset` below
-  private[this] var _scheme = ""
-  private[this] var _userinfo = ""
-  private[this] var _host: Host = Host.Empty
-  private[this] var _port: Int = 0
-  private[this] var _path: Path = Path.Empty
+  private var _scheme = ""
+  private var _userinfo = ""
+  private var _host: Host = Host.Empty
+  private var _port: Int = 0
+  private var _path: Path = Path.Empty
 
   /**
    *  Percent-encoded. When in in 'relaxed' mode, characters not permitted by https://tools.ietf.org/html/rfc3986#section-3.4
    *  are already automatically percent-encoded here
    */
-  private[this] var _rawQueryString: Option[String] = None
-  private[this] var _fragment: Option[String] = None
+  private var _rawQueryString: Option[String] = None
+  private var _fragment: Option[String] = None
 
   /** Allows to reuse this parser. */
   def reset(newInput: ParserInput): Unit = {
@@ -167,14 +167,14 @@ private[http] final class UriParser(
     _firstPercentIx = -1
   }
 
-  private[this] def setScheme(scheme: String): Unit = _scheme = scheme
-  private[this] def setUserInfo(userinfo: String): Unit = _userinfo = userinfo
-  private[this] def setHost(host: Host): Unit = _host = host
-  private[this] def setPort(port: Int): Unit = _port = port
-  private[this] def setPath(path: Path): Unit = _path = path
-  private[this] def setRawQueryString(rawQueryString: String): Unit =
+  private def setScheme(scheme: String): Unit = _scheme = scheme
+  private def setUserInfo(userinfo: String): Unit = _userinfo = userinfo
+  private def setHost(host: Host): Unit = _host = host
+  private def setPort(port: Int): Unit = _port = port
+  private def setPath(path: Path): Unit = _path = path
+  private def setRawQueryString(rawQueryString: String): Unit =
     _rawQueryString = Some(parseSafeRawQueryString(rawQueryString))
-  private[this] def setFragment(fragment: String): Unit = _fragment = Some(fragment)
+  private def setFragment(fragment: String): Unit = _fragment = Some(fragment)
 
   // http://tools.ietf.org/html/rfc3986#appendix-A
 
@@ -371,7 +371,7 @@ private[http] final class UriParser(
 
   private def savePath() = rule { run(setPath(Path(sb.toString, uriParsingCharset))) }
 
-  private[this] var _firstPercentIx = -1
+  private var _firstPercentIx = -1
 
   private def clearSBForDecoding(): Rule0 = rule { run { sb.setLength(0); _firstPercentIx = -1 } }
 

@@ -61,7 +61,7 @@ object HttpCharsetRange {
 
 final case class HttpCharset private[http] (override val value: String)(val aliases: immutable.Seq[String])
     extends jm.HttpCharset with SingletonValueRenderable with WithQValue[HttpCharsetRange] {
-  @transient private[this] var _nioCharset: Try[Charset] = HttpCharset.findNioCharset(value)
+  @transient private var _nioCharset: Try[Charset] = HttpCharset.findNioCharset(value)
 
   /** Returns the Charset for this charset if available or throws an exception otherwise */
   def nioCharset: Charset = _nioCharset.get

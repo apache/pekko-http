@@ -32,8 +32,8 @@ import pekko.util.ByteString
 
 class H2ServerProcessingBenchmark extends CommonBenchmark with H2RequestResponseBenchmark {
 
-  var httpFlow: Flow[ByteString, ByteString, Any] = _
-  implicit var system: ActorSystem = _
+  var httpFlow: Flow[ByteString, ByteString, Any] = null
+  implicit var system: ActorSystem = null
 
   val packedResponse = ByteString(1, 5, 0, 0) // a HEADERS frame with end_stream == true
 

@@ -59,7 +59,7 @@ sealed trait ContentType extends jm.ContentType with ValueRenderable {
   def mediaType: MediaType
   def charsetOption: Option[HttpCharset]
 
-  private[this] var _toString: String = _
+  private var _toString: String = null
   override def toString: String = {
     if (_toString eq null)
       _toString = super.toString

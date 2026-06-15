@@ -23,7 +23,7 @@ import org.apache.pekko.annotation.InternalApi
  */
 @InternalApi
 private[http] trait ObjectRegistry[K, V <: AnyRef] {
-  private[this] var _registry = Map.empty[K, V]
+  private var _registry = Map.empty[K, V]
 
   protected final def register(key: K, obj: V): obj.type = {
     require(!_registry.contains(key), s"ObjectRegistry for ${getClass.getSimpleName} already contains value for $key")

@@ -67,7 +67,7 @@ private[http] trait LazyValueBytesRenderable extends Renderable {
   // unsynchronized and non-volatile lazy init, worst case: we init once per core
   // which, since instances of derived classes are usually long-lived, is still better
   // that a synchronization overhead or even @volatile reads
-  private[this] var _valueBytes: Array[Byte] = _
+  private var _valueBytes: Array[Byte] = null
   private def valueBytes =
     if (_valueBytes != null) _valueBytes else { _valueBytes = value.asciiBytes; _valueBytes }
 
@@ -84,7 +84,7 @@ private[http] trait LazyValueBytesRenderable extends Renderable {
  */
 @InternalApi
 private[http] trait SingletonValueRenderable extends Product with Renderable {
-  private[this] val valueBytes = value.asciiBytes
+  private val valueBytes = value.asciiBytes
   def value = productPrefix
   def render[R <: Rendering](r: R): r.type = r ~~ valueBytes
 }
@@ -281,7 +281,7 @@ private[http] object Rendering {
  */
 @InternalApi
 private[http] class StringRendering extends Rendering {
-  private[this] val sb = new java.lang.StringBuilder
+  private val sb = new java.lang.StringBuilder
   def ~~(ch: Char): this.type = { sb.append(ch); this }
   def ~~(bytes: Array[Byte]): this.type = {
     @tailrec def rec(ix: Int = 0): this.type =
@@ -316,9 +316,9 @@ private[http] class StringRendering extends Rendering {
 private[http] class ByteArrayRendering(sizeHint: Int, logDiscardedHeader: String => Unit = _ => ()) extends Rendering {
   def this(sizeHint: Int) = this(sizeHint, _ => ())
 
-  private[this] var array = new Array[Byte](sizeHint)
+  private var array = new Array[Byte](sizeHint)
 
-  private[this] var size = 0
+  private var size = 0
 
   def get: Array[Byte] =
     if (size == array.length) array
@@ -388,7 +388,7 @@ private[http] class ByteArrayRendering(sizeHint: Int, logDiscardedHeader: String
 private[http] class ByteStringRendering(sizeHint: Int, logDiscardedHeader: String => Unit = _ => ()) extends Rendering {
   def this(sizeHint: Int) = this(sizeHint, _ => ())
 
-  private[this] val builder = new ByteStringBuilder
+  private val builder = new ByteStringBuilder
   builder.sizeHint(sizeHint)
 
   def get: ByteString = builder.result()
@@ -434,8 +434,8 @@ private[http] class ByteStringRendering(sizeHint: Int, logDiscardedHeader: Strin
  */
 @InternalApi
 private[http] class CustomCharsetByteStringRendering(nioCharset: Charset, sizeHint: Int) extends Rendering {
-  private[this] val charBuffer = CharBuffer.allocate(64)
-  private[this] val builder = new ByteStringBuilder
+  private val charBuffer = CharBuffer.allocate(64)
+  private val builder = new ByteStringBuilder
   builder.sizeHint(sizeHint)
 
   def get: ByteString = {

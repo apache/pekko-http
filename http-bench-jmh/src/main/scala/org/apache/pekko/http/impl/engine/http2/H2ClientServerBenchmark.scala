@@ -39,13 +39,13 @@ import com.typesafe.config.ConfigFactory
  * for the response. Does not include the network.
  */
 class H2ClientServerBenchmark extends CommonBenchmark with H2RequestResponseBenchmark {
-  var httpFlow: Flow[HttpRequest, HttpResponse, Any] = _
-  implicit var system: ActorSystem = _
+  var httpFlow: Flow[HttpRequest, HttpResponse, Any] = null
+  implicit var system: ActorSystem = null
 
   val numRequests = 1000
 
   @Param(Array("[]", "[\"reset\"]"))
-  var frameTypeThrottleFrameTypes: String = _
+  var frameTypeThrottleFrameTypes: String = null
 
   @Benchmark
   @OperationsPerInvocation(1000) // should be same as numRequest

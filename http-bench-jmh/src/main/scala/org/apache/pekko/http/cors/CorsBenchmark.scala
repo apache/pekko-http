@@ -49,10 +49,10 @@ class CorsBenchmark extends Directives with CorsDirectives {
   private val http = Http()
   private val corsSettings = CorsSettings.default
 
-  private var binding: ServerBinding = _
-  private var request: HttpRequest = _
-  private var requestCors: HttpRequest = _
-  private var requestPreflight: HttpRequest = _
+  private var binding: ServerBinding = null
+  private var request: HttpRequest = null
+  private var requestCors: HttpRequest = null
+  private var requestPreflight: HttpRequest = null
 
   @Setup
   def setup(): Unit = {

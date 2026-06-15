@@ -50,8 +50,8 @@ import scala.util.Try
  */
 @InternalApi
 private[http] object Utf8Decoder extends StreamingCharsetDecoder {
-  private[this] val Utf8Accept = 0
-  private[this] val Utf8Reject = 12
+  private val Utf8Accept = 0
+  private val Utf8Reject = 12
 
   val characterClasses =
     Array[Byte](

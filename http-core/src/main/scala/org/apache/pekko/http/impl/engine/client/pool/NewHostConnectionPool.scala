@@ -76,7 +76,7 @@ private[client] object NewHostConnectionPool {
 
         setHandlers(requestsIn, responsesOut, this)
 
-        private[this] var lastTimeoutId = 0L
+        private var lastTimeoutId = 0L
 
         val slots = Vector.tabulate(_settings.maxConnections)(new Slot(_))
         val slotsWaitingForDispatch: util.Deque[Slot] = new util.ArrayDeque[Slot]
@@ -205,8 +205,8 @@ private[client] object NewHostConnectionPool {
         }
 
         protected trait StateHandling {
-          private[this] var _state: SlotState = Unconnected
-          private[this] var _changedIntoThisStateNanos: Long = System.nanoTime()
+          private var _state: SlotState = Unconnected
+          private var _changedIntoThisStateNanos: Long = System.nanoTime()
 
           def changedIntoThisStateNanos: Long = _changedIntoThisStateNanos
           def state: SlotState = _state
@@ -217,12 +217,12 @@ private[client] object NewHostConnectionPool {
         }
 
         final class Slot(val slotId: Int) extends SlotContext with StateHandling {
-          private[this] var currentTimeoutId: Long = -1
-          private[this] var currentTimeout: Cancellable = _
-          private[this] var disconnectAt: Long = Long.MaxValue
-          private[this] var isEnqueuedForResponseDispatch: Boolean = false
+          private var currentTimeoutId: Long = -1
+          private var currentTimeout: Cancellable = null
+          private var disconnectAt: Long = Long.MaxValue
+          private var isEnqueuedForResponseDispatch: Boolean = false
 
-          private[this] var connection: SlotConnection = _
+          private var connection: SlotConnection = null
           def isIdle: Boolean = state.isIdle
           def isConnected: Boolean = state.isConnected
           def shutdown(): Unit = {
@@ -435,7 +435,7 @@ private[client] object NewHostConnectionPool {
             Instant.now().toEpochMilli > disconnectAt
           } else false
 
-          private[this] def cancelCurrentTimeout(): Unit =
+          private def cancelCurrentTimeout(): Unit =
             if (currentTimeout ne null) {
               currentTimeout.cancel()
               currentTimeout = null

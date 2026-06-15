@@ -41,8 +41,8 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
   import HttpMessageParser._
   import settings._
 
-  private[this] var contextForCurrentResponse: Option[ResponseContext] = None
-  private[this] var statusCode: StatusCode = StatusCodes.OK
+  private var contextForCurrentResponse: Option[ResponseContext] = None
+  private var statusCode: StatusCode = StatusCodes.OK
 
   final override val isResponseParser = true
 

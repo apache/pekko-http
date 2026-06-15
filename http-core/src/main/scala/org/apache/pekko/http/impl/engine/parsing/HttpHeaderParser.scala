@@ -83,13 +83,13 @@ private[engine] final class HttpHeaderParser private (
     val settings: HttpHeaderParser.Settings,
     val log: LoggingAdapter,
     onIllegalHeader: ErrorInfo => Unit,
-    private[this] var nodes: Array[Char] = new Array(512), // initial size, can grow as needed
-    private[this] var nodeCount: Int = 0,
-    private[this] var branchData: Array[Short] = new Array(254 * 3),
-    private[this] var branchDataCount: Int = 0,
-    private[this] var values: Array[AnyRef] = new Array(255), // fixed size of 255
-    private[this] var valueCount: Int = 0,
-    private[this] var trieIsPrivate: Boolean = false) { // signals the trie data can be mutated w/o having to copy first
+    private var nodes: Array[Char] = new Array(512), // initial size, can grow as needed
+    private var nodeCount: Int = 0,
+    private var branchData: Array[Short] = new Array(254 * 3),
+    private var branchDataCount: Int = 0,
+    private var values: Array[AnyRef] = new Array(255), // fixed size of 255
+    private var valueCount: Int = 0,
+    private var trieIsPrivate: Boolean = false) { // signals the trie data can be mutated w/o having to copy first
 
   // TODO: evaluate whether switching to a value-class-based approach allows us to improve code readability without sacrificing performance
 

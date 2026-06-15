@@ -55,8 +55,8 @@ class LineParserBenchmark {
 
   lazy val line = ByteString("x" * lineSize + "\n")
 
-  var parserGraph: RunnableGraph[Future[Done]] = _
-  var tempFile: Path = _
+  var parserGraph: RunnableGraph[Future[Done]] = null
+  var tempFile: Path = null
 
   @Setup
   def setup(): Unit = {

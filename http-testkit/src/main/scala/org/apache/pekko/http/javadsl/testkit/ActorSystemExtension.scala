@@ -45,7 +45,7 @@ class ActorSystemExtension(name: String, additionalConfig: Config)
   implicit def system: ActorSystem = _system
   implicit def materializer: Materializer = SystemMaterializer.get(system).materializer
 
-  private[this] var _system: ActorSystem = null
+  private var _system: ActorSystem = null
 
   override def beforeEach(context: ExtensionContext): Unit = {
     require(_system eq null, "ActorSystem already created; nested test execution is not supported")

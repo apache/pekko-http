@@ -106,7 +106,7 @@ private[http] object StreamUtils {
           setHandlers(in, out, this)
 
           // KillSwitch implementation
-          private[this] val killCallback = getAsyncCallback[Try[Unit]](handleKill)
+          private val killCallback = getAsyncCallback[Try[Unit]](handleKill)
 
           def handleKill(result: Try[Unit]): Unit = result match {
             case Success(_)  => completeStage()

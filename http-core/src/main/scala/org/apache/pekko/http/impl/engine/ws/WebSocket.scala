@@ -95,13 +95,13 @@ private[http] object WebSocket {
     }
   }
 
-  private[this] final val PingFullFrame: FrameStart =
+  private final val PingFullFrame: FrameStart =
     FrameEvent.fullFrame(Opcode.Ping, None, ByteString.empty, fin = true)
-  private[this] final val mkDirectAnswerPing = () => DirectAnswer(PingFullFrame)
+  private final val mkDirectAnswerPing = () => DirectAnswer(PingFullFrame)
 
-  private[this] final val PongFullFrame: FrameStart =
+  private final val PongFullFrame: FrameStart =
     FrameEvent.fullFrame(Opcode.Pong, None, ByteString.empty, fin = true)
-  private[this] final val mkDirectAnswerPong = () => DirectAnswer(PongFullFrame)
+  private final val mkDirectAnswerPong = () => DirectAnswer(PongFullFrame)
 
   /**
    * The layer that implements all low-level frame handling, like handling control frames, collecting messages

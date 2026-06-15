@@ -126,12 +126,12 @@ private[http] object PoolMaster {
  */
 @InternalApi
 private[http] final class PoolMasterActor extends Actor with ActorLogging {
-  private[this] val thisMaster: PoolMaster = new PoolMaster(self)
+  private val thisMaster: PoolMaster = new PoolMaster(self)
 
   import PoolMasterActor._
 
-  private[this] var statusById = Map[PoolId, PoolInterfaceStatus]()
-  private[this] var idByPool = Map[PoolInterface, PoolId]()
+  private var statusById = Map[PoolId, PoolInterfaceStatus]()
+  private var idByPool = Map[PoolInterface, PoolId]()
 
   /**
    * Start a new pool interface actor, register it in our maps, and watch its death. No actor should
@@ -141,7 +141,7 @@ private[http] final class PoolMasterActor extends Actor with ActorLogging {
    * @param fm the materializer to use for this pool
    * @return the newly created actor ref
    */
-  private[this] def startPoolInterface(poolId: PoolId)(implicit fm: Materializer): PoolInterface = {
+  private def startPoolInterface(poolId: PoolId)(implicit fm: Materializer): PoolInterface = {
     if (statusById.contains(poolId)) {
       throw new IllegalStateException(s"pool interface actor for $poolId already exists")
     }

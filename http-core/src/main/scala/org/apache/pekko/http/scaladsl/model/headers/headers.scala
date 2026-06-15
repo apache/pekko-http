@@ -37,7 +37,7 @@ import pekko.http.scaladsl.model._
 sealed abstract class ModeledCompanion[T: ClassTag] extends Renderable {
   val name = ModeledCompanion.nameFromClass(getClass)
   val lowercaseName = name.toRootLowerCase
-  private[this] val nameAndColonSpaceBytes = (name + ": ").asciiBytes
+  private val nameAndColonSpaceBytes = (name + ": ").asciiBytes
   final def render[R <: Rendering](r: R): r.type = r ~~ nameAndColonSpaceBytes
 
   /**
@@ -71,7 +71,7 @@ sealed trait ModeledHeader extends HttpHeader with Serializable {
   def renderInRequests: Boolean = false // default implementation
   def renderInResponses: Boolean = false // default implementation
   def name: String = companion.name
-  private[this] var _value: String = _
+  private var _value: String = null
   def value: String = {
     if (_value eq null) _value = renderValue(new StringRendering).get
     _value
@@ -105,7 +105,7 @@ abstract class CustomHeader extends jm.headers.CustomHeader {
  */
 abstract class ModeledCustomHeaderCompanion[H <: ModeledCustomHeader[H]] {
   def name: String
-  private var _lowercaseName: String = _
+  private var _lowercaseName: String = null
   def lowercaseName: String = {
     if (_lowercaseName eq null) _lowercaseName = name.toRootLowerCase
     _lowercaseName

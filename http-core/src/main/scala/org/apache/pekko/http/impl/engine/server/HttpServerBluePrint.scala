@@ -127,7 +127,7 @@ private[http] object HttpServerBluePrint {
 
         var downstreamPullWaiting = false
         var completionDeferred = false
-        var entitySource: SubSourceOutlet[RequestOutput] = _
+        var entitySource: SubSourceOutlet[RequestOutput] = null
 
         // optimization: to avoid allocations the "idle" case in and out handlers are put directly on the GraphStageLogic itself
         override def onPull(): Unit = {
