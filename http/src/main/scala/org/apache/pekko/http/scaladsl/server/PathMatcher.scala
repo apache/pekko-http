@@ -99,9 +99,8 @@ abstract class PathMatcher[L](implicit val ev: Tuple[L]) extends (Path => PathMa
    * </table>
    */
   def repeat(min: Int, max: Int, separator: PathMatcher0 = PathMatchers.Neutral)(
-      implicit lift: PathMatcher.Lift[L, List]): PathMatcher[lift.Out] = {
-    implicit val tupleEv: Tuple[lift.Out] = lift.OutIsTuple
-    new PathMatcher[lift.Out]() {
+      implicit lift: PathMatcher.Lift[L, List]): PathMatcher[lift.Out] =
+    new PathMatcher[lift.Out]()(lift.OutIsTuple) {
       require(min >= 0, "`min` must be >= 0")
       require(max >= min, "`max` must be >= `min`")
 
@@ -128,7 +127,6 @@ abstract class PathMatcher[L](implicit val ev: Tuple[L]) extends (Path => PathMa
         else done
       }
     }
-  }
 }
 
 object PathMatcher extends ImplicitPathMatcherConstruction {
@@ -158,12 +156,10 @@ object PathMatcher extends ImplicitPathMatcherConstruction {
   /**
    * Creates a PathMatcher that always matches, consumes nothing and extracts the given Tuple of values.
    */
-  def provide[L](extractions: L)(implicit ev: Tuple[L]): PathMatcher[L] = {
-    implicit val tupleL: Tuple[L] = ev
-    new PathMatcher[L] {
-      def apply(path: Path) = Matched(path, extractions)
+  def provide[L](extractions: L)(implicit ev: Tuple[L]): PathMatcher[L] =
+    new PathMatcher[L]()(ev) {
+      def apply(path: Path) = Matched(path, extractions)(ev)
     }
-  }
 
   /**
    * Creates a PathMatcher that matches and consumes the given path prefix and extracts the given list of extractions.
@@ -171,13 +167,10 @@ object PathMatcher extends ImplicitPathMatcherConstruction {
    */
   def apply[L](prefix: Path, extractions: L)(implicit ev: Tuple[L]): PathMatcher[L] =
     if (prefix.isEmpty) provide(extractions)
-    else {
-      implicit val tupleL: Tuple[L] = ev
-      new PathMatcher[L] {
-        def apply(path: Path) =
-          if (path.startsWith(prefix)) Matched(path.dropChars(prefix.charCount), extractions)
-          else Unmatched
-      }
+    else new PathMatcher[L]()(ev) {
+      def apply(path: Path) =
+        if (path.startsWith(prefix)) Matched(path.dropChars(prefix.charCount), extractions)(ev)
+        else Unmatched
     }
 
   /** Provoke implicit conversions to PathMatcher to be applied */
@@ -190,15 +183,13 @@ object PathMatcher extends ImplicitPathMatcherConstruction {
   }
 
   implicit class EnhancedPathMatcher[L](underlying: PathMatcher[L]) {
-    def optional(implicit lift: PathMatcher.Lift[L, Option]): PathMatcher[lift.Out] = {
-      implicit val tupleEv: Tuple[lift.Out] = lift.OutIsTuple
-      new PathMatcher[lift.Out]() {
+    def optional(implicit lift: PathMatcher.Lift[L, Option]): PathMatcher[lift.Out] =
+      new PathMatcher[lift.Out]()(lift.OutIsTuple) {
         def apply(path: Path) = underlying(path) match {
           case Matched(rest, extractions) => Matched(rest, lift(extractions))
           case Unmatched                  => Matched(path, lift())
         }
       }
-    }
     def ?(implicit lift: PathMatcher.Lift[L, Option]): PathMatcher[lift.Out] = optional(lift)
   }
 
