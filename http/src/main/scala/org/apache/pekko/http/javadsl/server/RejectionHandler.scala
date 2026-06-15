@@ -69,8 +69,10 @@ class RejectionHandlerBuilder(asScala: server.RejectionHandler.Builder) {
    */
   def handleAll[T <: Rejection](
       t: Class[T], handler: function.Function[java.util.List[T], Route]): RejectionHandlerBuilder = {
-    asScala.handleAll { (rejections: collection.immutable.Seq[T]) => handler.apply(rejections.asJava).delegate }(
-      ClassTag(t))
+    implicit val ct: ClassTag[server.Rejection] = ClassTag(t)
+    asScala.handleAll { (rejections: collection.immutable.Seq[server.Rejection]) =>
+      handler.apply(rejections.asInstanceOf[Seq[T]].asJava).delegate
+    }
     this
   }
 

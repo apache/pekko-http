@@ -108,7 +108,7 @@ lazy val parsing = project("parsing")
   .settings(AutomaticModuleName.settings("pekko.http.parsing"))
   .addPekkoModuleDependency("pekko-actor", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.parsing)
-  .settings(scalacOptions += "-language:_")
+  .settings(scalacOptions ++= (if (scalaVersion.value.startsWith("3")) Nil else Seq("-language:_")))
   .settings(scalaMacroSupport)
   .enablePlugins(ScaladocNoVerificationOfDiagrams)
   .enablePlugins(ReproducibleBuildsPlugin)
@@ -136,7 +136,7 @@ lazy val http = project("http")
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.http)
   .settings(
-    Compile / scalacOptions += "-language:_")
+    Compile / scalacOptions ++= (if (scalaVersion.value.startsWith("3")) Nil else Seq("-language:_")))
   .settings(scalaMacroSupport)
   .enablePlugins(BootstrapGenjavadoc, BoilerplatePlugin)
   .enablePlugins(ReproducibleBuildsPlugin)
@@ -191,7 +191,7 @@ lazy val httpTestkit = project("http-testkit")
   .settings(
     // don't ignore Suites which is the default for the junit-interface
     testOptions += Tests.Argument(TestFrameworks.JUnit, "--ignore-runners="),
-    Compile / scalacOptions ++= Seq("-language:_"),
+    Compile / scalacOptions ++= (if (scalaVersion.value.startsWith("3")) Nil else Seq("-language:_")),
     Test / run / mainClass := Some("org.apache.pekko.http.javadsl.SimpleServerApp"))
   .enablePlugins(BootstrapGenjavadoc, MultiNodeScalaTest, ScaladocNoVerificationOfDiagrams)
   .enablePlugins(ReproducibleBuildsPlugin)
@@ -398,7 +398,7 @@ lazy val docs = project("docs")
     name := "pekko-http-docs",
     scalacOptions ++= Seq(
       // Make sure we don't accidentally keep documenting deprecated calls
-      "-Xfatal-warnings",
+      "-Werror",
       // Does not appear to lead to problems
       "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s"),
     scalacOptions ++= (

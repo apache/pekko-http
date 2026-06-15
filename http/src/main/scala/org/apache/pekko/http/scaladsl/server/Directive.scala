@@ -48,8 +48,10 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
   /**
    * Joins two directives into one which runs the second directive if the first one rejects.
    */
-  def or[R >: L](that: Directive[R]): Directive[R] =
-    recover(rejections => directives.BasicDirectives.mapRejections(rejections ++ _) & that)(that.ev)
+  def or[R >: L](that: Directive[R]): Directive[R] = {
+    implicit val ev: Tuple[R] = that.ev
+    recover(rejections => directives.BasicDirectives.mapRejections(rejections ++ _) & that)
+  }
 
   /**
    * Joins two directives into one which extracts the concatenation of its base directive extractions.
@@ -70,7 +72,8 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
    * instance of type `A` (which is usually a case class).
    */
   def as[A](constructor: ConstructFromTuple[L, A]): Directive1[A] = {
-    def validatedMap[R](f: L => R)(implicit tupler: Tupler[R]): Directive[tupler.Out] =
+    def validatedMap[R](f: L => R)(implicit tupler: Tupler[R]): Directive[tupler.Out] = {
+      implicit val tupleEv: Tuple[tupler.Out] = tupler.OutIsTuple
       Directive[tupler.Out] { inner =>
         tapply { values => ctx =>
           def futureRouteResult(): Future[RouteResult] = {
@@ -84,7 +87,8 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
           }
           futureRouteResult()
         }
-      }(tupler.OutIsTuple)
+      }
+    }
 
     validatedMap(constructor)
   }
@@ -93,8 +97,10 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
    * Maps over this directive using the given function, which can produce either a tuple or any other value
    * (which will then we wrapped into a [[scala.Tuple1]]).
    */
-  def tmap[R](f: L => R)(implicit tupler: Tupler[R]): Directive[tupler.Out] =
-    Directive[tupler.Out] { inner => tapply { values => inner(tupler(f(values))) } }(tupler.OutIsTuple)
+  def tmap[R](f: L => R)(implicit tupler: Tupler[R]): Directive[tupler.Out] = {
+    implicit val tupleEv: Tuple[tupler.Out] = tupler.OutIsTuple
+    Directive[tupler.Out] { inner => tapply { values => inner(tupler(f(values))) } }
+  }
 
   /**
    * Flatmaps this directive using the given function.
@@ -124,12 +130,14 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
    * If it is not defined however, the returned directive will reject with the given rejections.
    */
   def tcollect[R](pf: PartialFunction[L, R], rejections: Rejection*)(
-      implicit tupler: Tupler[R]): Directive[tupler.Out] =
+      implicit tupler: Tupler[R]): Directive[tupler.Out] = {
+    implicit val tupleEv: Tuple[tupler.Out] = tupler.OutIsTuple
     Directive[tupler.Out] { inner =>
       tapply { values => ctx =>
         { if (pf.isDefinedAt(values)) inner(tupler(pf(values)))(ctx) else ctx.reject(rejections: _*) }
       }
-    }(tupler.OutIsTuple)
+    }
+  }
 
   /**
    * Creates a new directive that is able to recover from rejections that were produced by `this` Directive
@@ -188,10 +196,12 @@ object Directive {
    * Adds helper functions to `Directive0`
    */
   implicit class Directive0Support(val underlying: Directive0) extends AnyVal {
-    def wrap[R](f: => Directive[R]): Directive[R] =
+    def wrap[R](f: => Directive[R]): Directive[R] = {
+      implicit val tupleEv: Tuple[R] = Tuple.yes[R]
       underlying.tflatMap { _ =>
         f
-      }(Tuple.yes[R]) // we will create a Directive[R], so we know it will be tupled correctly
+      } // we will create a Directive[R], so we know it will be tupled correctly
+    }
   }
 
   /**
@@ -251,10 +261,12 @@ object ConjunctionMagnet {
       implicit join: TupleOps.Join[L, R]): ConjunctionMagnet[L] { type Out = Directive[join.Out] } =
     new ConjunctionMagnet[L] {
       type Out = Directive[join.Out]
-      def apply(underlying: Directive[L]) =
+      def apply(underlying: Directive[L]) = {
+        implicit val joinOutIsTuple: Tuple[join.Out] = Tuple.yes[join.Out]
         Directive[join.Out] { inner =>
           underlying.tapply { prefix => other.tapply { suffix => inner(join(prefix, suffix)) } }
-        }(Tuple.yes) // we know that join will only ever produce tuples
+        }
+      }
     }
 
   implicit def fromStandardRoute[L](route: StandardRoute): ConjunctionMagnet[L] { type Out = StandardRoute } =
