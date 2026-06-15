@@ -321,7 +321,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         multiplexer.pushControlFrame(frame)
         // FIXME: handle the connection closing according to the specification
       }
-      private[this] var allowReadingIncomingFrames: Boolean = true
+      private var allowReadingIncomingFrames: Boolean = true
       override def allowReadingIncomingFrames(allow: Boolean): Unit = {
         if (allow != allowReadingIncomingFrames)
           if (allow) {

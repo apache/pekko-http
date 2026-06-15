@@ -262,7 +262,7 @@ object Coroner {
 trait WatchedByCoroner {
   self: TestKit =>
 
-  @volatile private var coronerWatch: Coroner.WatchHandle = _
+  @volatile private var coronerWatch: Coroner.WatchHandle = null
 
   final def startCoroner(): Unit = {
     coronerWatch = Coroner.watch(expectedTestDuration.dilated, getClass.getName, System.err,

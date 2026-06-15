@@ -104,7 +104,7 @@ private[http] object PoolInterface {
       requestOut: Outlet[RequestContext], responseIn: Inlet[ResponseContext], bufferSize: Int,
       val log: LoggingAdapter)(implicit executionContext: ExecutionContext) extends TimerGraphStageLogic(shape)
       with PoolInterface with InHandler with OutHandler with LogHelper {
-    private[this] val PoolOverflowException = new BufferOverflowException( // stack trace cannot be prevented here because `BufferOverflowException` is final
+    private val PoolOverflowException = new BufferOverflowException( // stack trace cannot be prevented here because `BufferOverflowException` is final
       s"Exceeded configured max-open-requests value of [${poolId.hcps.setup.settings.maxOpenRequests}]. This means that the request queue of this pool (${poolId.hcps}) " +
       s"has completely filled up because the pool currently does not process requests fast enough to handle the incoming request load. " +
       "Please retry the request later. See https://pekko.apache.org/docs/pekko-http/current/scala/http/client-side/pool-overflow.html for " +

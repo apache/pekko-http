@@ -66,9 +66,9 @@ private[http] final class HttpRequestParser(
       override val headerParser = self.headerParser.createShallowCopy()
       override val isResponseParser = false
 
-      private[this] var method: HttpMethod = _
-      private[this] var uri: Uri = _
-      private[this] var uriBytes: ByteString = _
+      private var method: HttpMethod = null
+      private var uri: Uri = null
+      private var uriBytes: ByteString = null
 
       override def onPush(): Unit = handleParserOutput(parseSessionBytes(grab(in)))
       override def onPull(): Unit = handleParserOutput(doPull())

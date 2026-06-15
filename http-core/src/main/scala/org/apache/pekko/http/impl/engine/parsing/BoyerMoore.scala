@@ -22,9 +22,9 @@ import org.apache.pekko.util.ByteString
 private[parsing] class BoyerMoore(needle: Array[Byte]) {
   require(needle.length > 0, "needle must be non-empty")
 
-  private[this] val nl1 = needle.length - 1
+  private val nl1 = needle.length - 1
 
-  private[this] val charTable: Array[Int] = {
+  private val charTable: Array[Int] = {
     val table = Array.fill(256)(needle.length)
     @tailrec def rec(i: Int): Unit =
       if (i < nl1) {
@@ -35,7 +35,7 @@ private[parsing] class BoyerMoore(needle: Array[Byte]) {
     table
   }
 
-  private[this] val offsetTable: Array[Int] = {
+  private val offsetTable: Array[Int] = {
     val table = new Array[Int](needle.length)
 
     @tailrec def isPrefix(i: Int, j: Int): Boolean =

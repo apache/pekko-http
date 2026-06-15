@@ -31,7 +31,7 @@ import pekko.annotation.InternalApi
 @InternalApi
 private[http] abstract class SettingsCompanionImpl[T](protected val prefix: String) {
   private final val MaxCached = 8
-  private[this] var cache = ListMap.empty[ActorSystem, T]
+  private var cache = ListMap.empty[ActorSystem, T]
 
   implicit def default(implicit refFactory: ActorRefFactory): T =
     apply(actorSystem)

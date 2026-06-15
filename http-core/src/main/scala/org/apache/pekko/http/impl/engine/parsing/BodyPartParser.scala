@@ -55,7 +55,7 @@ private[http] final class BodyPartParser(
   sealed trait StateResult // phantom type for ensuring soundness of our parsing method setup
 
   // TODO: prevent re-priming header parser from scratch
-  private[this] val headerParser = HttpHeaderParser(settings, log)
+  private val headerParser = HttpHeaderParser(settings, log)
 
   val in = Inlet[ByteString]("BodyPartParser.in")
   val out = Outlet[BodyPartParser.Output]("BodyPartParser.out")

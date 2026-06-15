@@ -49,6 +49,6 @@ private[http] object PoolId {
     def name: String = s"#$id"
   }
 
-  private[this] val uniquePoolId = new AtomicLong(0)
+  private val uniquePoolId = new AtomicLong(0)
   def newUniquePool() = UniquePool(uniquePoolId.incrementAndGet())
 }

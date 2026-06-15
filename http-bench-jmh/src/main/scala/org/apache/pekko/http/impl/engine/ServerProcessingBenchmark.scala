@@ -37,8 +37,8 @@ class ServerProcessingBenchmark extends CommonBenchmark {
   val request = ByteString("GET / HTTP/1.1\r\nHost: localhost\r\nUser-Agent: test\r\n\r\n")
   val response = HttpResponse()
 
-  var httpFlow: Flow[ByteString, ByteString, Any] = _
-  implicit var system: ActorSystem = _
+  var httpFlow: Flow[ByteString, ByteString, Any] = null
+  implicit var system: ActorSystem = null
 
   @Benchmark
   @OperationsPerInvocation(10000)

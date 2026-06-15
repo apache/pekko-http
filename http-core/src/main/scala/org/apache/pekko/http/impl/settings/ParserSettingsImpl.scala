@@ -88,8 +88,8 @@ private[pekko] final case class ParserSettingsImpl(
 
 object ParserSettingsImpl extends SettingsCompanionImpl[ParserSettingsImpl]("pekko.http.parsing") {
 
-  private[this] val noCustomMethods: String => Option[HttpMethod] = ConstantFun.scalaAnyToNone
-  private[this] val noCustomStatusCodes: Int => Option[StatusCode] = ConstantFun.scalaAnyToNone
+  private val noCustomMethods: String => Option[HttpMethod] = ConstantFun.scalaAnyToNone
+  private val noCustomStatusCodes: Int => Option[StatusCode] = ConstantFun.scalaAnyToNone
   private[ParserSettingsImpl] val noCustomMediaTypes: (String, String) => Option[MediaType] =
     ConstantFun.scalaAnyTwoToNone
 

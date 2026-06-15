@@ -67,7 +67,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 
   import Http2._
 
-  private[this] final val DefaultPortForProtocol = -1 // any negative value
+  private final val DefaultPortForProtocol = -1 // any negative value
 
   val http = Http(system)
   val telemetry = TelemetrySpi.create(system)

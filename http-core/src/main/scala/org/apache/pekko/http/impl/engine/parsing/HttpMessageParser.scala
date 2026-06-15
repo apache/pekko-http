@@ -47,14 +47,14 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
   //   - null: currently no output
   //   - Output: one output element
   //   - ListBuffer: several output elements
-  private[this] var result: AnyRef = null
-  private[this] var state: ByteString => StateResult = startNewMessage(_, 0)
-  private[this] var protocol: HttpProtocol = `HTTP/1.1`
+  private var result: AnyRef = null
+  private var state: ByteString => StateResult = startNewMessage(_, 0)
+  private var protocol: HttpProtocol = `HTTP/1.1`
   protected var completionHandling: CompletionHandling = CompletionOk
   protected var terminated = false
 
-  private[this] var lastSession: SSLSession = null // used to prevent having to recreate header on each message
-  private[this] var tlsSessionInfoHeader: `Tls-Session-Info` = null
+  private var lastSession: SSLSession = null // used to prevent having to recreate header on each message
+  private var tlsSessionInfoHeader: `Tls-Session-Info` = null
 
   protected def settings: ParserSettings
   protected def headerParser: HttpHeaderParser

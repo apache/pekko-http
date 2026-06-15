@@ -70,7 +70,7 @@ abstract class JUnitRouteTestBase extends RouteTest {
 abstract class JUnitRouteTest extends JUnitRouteTestBase {
   protected def additionalConfig: Config = ConfigFactory.empty()
 
-  private[this] val _systemResource = new ActorSystemResource(Logging.simpleName(getClass), additionalConfig)
+  private val _systemResource = new ActorSystemResource(Logging.simpleName(getClass), additionalConfig)
   @Rule
   protected def systemResource: ActorSystemResource = _systemResource
 }
@@ -83,7 +83,7 @@ class ActorSystemResource(name: String, additionalConfig: Config) extends Extern
   implicit def system: ActorSystem = _system
   implicit def materializer: Materializer = SystemMaterializer.get(system).materializer
 
-  private[this] var _system: ActorSystem = null
+  private var _system: ActorSystem = null
 
   override def before(): Unit = {
     require(_system eq null)

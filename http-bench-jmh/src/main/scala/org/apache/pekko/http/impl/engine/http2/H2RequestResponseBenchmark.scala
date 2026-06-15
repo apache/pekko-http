@@ -36,15 +36,15 @@ import com.typesafe.config.ConfigFactory
 
 trait H2RequestResponseBenchmark extends HPackEncodingSupport {
   @Param(Array("1"))
-  var minStrictEntitySize: String = _
+  var minStrictEntitySize: String = null
 
   @Param(Array("empty", "singleframe"))
-  var requestbody: String = _
+  var requestbody: String = null
 
   @Param(Array("strict", "closedelimited" /* Not enable by default:, "chunked", "empty"*/ ))
-  var responsetype: String = _
+  var responsetype: String = null
 
-  protected var response: HttpResponse = _
+  protected var response: HttpResponse = null
 
   private val requestBytes = ByteString("abcde")
   private def requestWithoutBody(streamId: Int): ByteString =
@@ -53,15 +53,15 @@ trait H2RequestResponseBenchmark extends HPackEncodingSupport {
     FrameRenderer.render(HeadersFrame(streamId, endStream = false, endHeaders = true, headerBlock(streamId), None)) ++
     FrameRenderer.render(DataFrame(streamId, endStream = true, requestBytes))
 
-  private var firstRequestHeaderBlock: ByteString = _
+  private var firstRequestHeaderBlock: ByteString = null
   // use header compression for subsequent requests
-  private var subsequentRequestHeaderBlock: ByteString = _
+  private var subsequentRequestHeaderBlock: ByteString = null
   private def headerBlock(streamId: Int): ByteString =
     if (streamId == 1) firstRequestHeaderBlock
     else subsequentRequestHeaderBlock
 
-  protected var requestDataCreator: Int => ByteString = _
-  protected var request: HttpRequest = _
+  protected var requestDataCreator: Int => ByteString = null
+  protected var request: HttpRequest = null
 
   def numRequests: Int
   lazy val config =

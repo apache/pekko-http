@@ -46,19 +46,19 @@ class StreamServerProcessingBenchmark extends CommonBenchmark {
   val totalBytes: String = "1000000"
 
   @Param(Array("10", "100", "1000"))
-  var numChunks: String = _
+  var numChunks: String = null
 
-  var totalExpectedBytes: Long = _
+  var totalExpectedBytes: Long = 0L
 
   // @Param(Array("100")) -- not a param any more
   var numRequestsPerConnection: String = "100"
 
   @Param(Array("strict", "default", "chunked"))
-  var entityType: String = _
+  var entityType: String = null
 
-  var httpFlow: Flow[ByteString, ByteString, Any] = _
+  var httpFlow: Flow[ByteString, ByteString, Any] = null
 
-  implicit var system: ActorSystem = _
+  implicit var system: ActorSystem = null
 
   @Benchmark
   def benchRequestProcessing(): Unit = {

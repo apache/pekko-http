@@ -104,7 +104,7 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
       subprotocol: String): HttpResponse =
     handleMessages(createScalaFlow(inSink, outSource), subprotocol = Some(subprotocol))
 
-  private[this] def createScalaFlow(inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
+  private def createScalaFlow(inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
       outSource: Graph[SourceShape[jm.ws.Message], ? <: Any]): Graph[FlowShape[Message, Message], NotUsed] =
     JavaMapping.toScala(scaladsl.Flow.fromSinkAndSourceMat(inSink, outSource)(scaladsl.Keep.none): Graph[FlowShape[
         jm.ws.Message, jm.ws.Message], NotUsed])

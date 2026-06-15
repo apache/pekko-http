@@ -38,7 +38,7 @@ private[engine] class HeaderParserBenchmark {
   @Param(Array("no", "yes"))
   var withCustomMediaTypes = "no"
 
-  var parser: HttpHeaderParser = _
+  var parser: HttpHeaderParser = null
 
   val request = """GET / HTTP/1.1
       |
