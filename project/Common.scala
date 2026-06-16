@@ -15,9 +15,16 @@ import sbt._
 import Keys._
 import com.lightbend.paradox.projectinfo.ParadoxProjectInfoPluginKeys._
 import com.typesafe.tools.mima.plugin.MimaKeys._
+import sbtunidoc.BaseUnidocPlugin.autoImport.unidocProjectFilter
 
 object Common extends AutoPlugin {
   override def trigger: PluginTrigger = allRequirements
+  override lazy val globalSettings = Seq(
+    Global / excludeLintKeys ++= Set(
+      projectInfoVersion,
+      mimaReportSignatureProblems,
+      autoAPIMappings,
+      unidocProjectFilter))
   override lazy val projectSettings = Seq(
     projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
     scalacOptions ++= Seq(
