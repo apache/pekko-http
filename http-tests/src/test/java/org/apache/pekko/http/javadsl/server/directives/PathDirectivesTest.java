@@ -185,7 +185,7 @@ public class PathDirectivesTest extends JUnitJupiterRouteTest {
     TestRoute route =
         testRoute(
             // this is testing that we can express the same path using slash() and concat() as with
-            // nexting inside slash()
+            // nesting inside slash()
             path(
                 segment("age").slash().concat(integerSegment()),
                 value -> complete(value.toString())));

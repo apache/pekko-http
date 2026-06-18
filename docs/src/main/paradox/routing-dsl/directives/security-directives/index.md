@@ -30,7 +30,7 @@ other mechanism. After authentication the system believes that it knows who the 
 **Authorization** is the process of determining, whether a given user is allowed access to a given resource or not. In
 most cases, in order to be able to authorize a user (i.e. allow access to some part of the system) the users identity
 must already have been established, i.e. he/she must have been authenticated. Without prior authentication the
-authorization would have to be very crude, e.g. "allow access for *all* users" or "allow access for *noone*". Only after
+authorization would have to be very crude, e.g. "allow access for *all* users" or "allow access for *no one*". Only after
 authentication will it be possible to, e.g., "allow access to the statistics resource for *admins*, but not for regular
 *members*".
 
