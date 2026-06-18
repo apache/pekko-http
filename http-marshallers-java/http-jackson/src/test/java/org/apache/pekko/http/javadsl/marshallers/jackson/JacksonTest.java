@@ -15,8 +15,6 @@ package org.apache.pekko.http.javadsl.marshallers.jackson;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.StreamWriteConstraints;
 import com.fasterxml.jackson.core.util.BufferRecycler;
@@ -39,14 +37,7 @@ import org.junit.jupiter.api.Test;
 
 public class JacksonTest extends JUnitJupiterRouteTest {
 
-  public static class SomeData {
-    public final String field;
-
-    @JsonCreator
-    public SomeData(@JsonProperty("field") String field) {
-      this.field = field;
-    }
-  }
+  public record SomeData(@com.fasterxml.jackson.annotation.JsonProperty("field") String field) {}
 
   RequestEntity invalidEntity =
       HttpEntities.create(
@@ -79,7 +70,8 @@ public class JacksonTest extends JUnitJupiterRouteTest {
 
   @Test
   public void detailsShouldBeHiddenFromResponseEntity() throws Exception {
-    Route route = entity(Jackson.unmarshaller(SomeData.class), theData -> complete(theData.field));
+    Route route =
+        entity(Jackson.unmarshaller(SomeData.class), theData -> complete(theData.field()));
 
     runRoute(route.seal(), HttpRequest.PUT("/").withEntity(invalidEntity))
         .assertEntity("The request content was malformed:\nCannot unmarshal JSON as SomeData");
@@ -94,23 +86,16 @@ public class JacksonTest extends JUnitJupiterRouteTest {
     final long maxTokenCount = 9876543210L;
     final int maxNestingDepth = 5;
     String configText =
-        "read.max-number-length="
-            + maxNumLen
-            + "\n"
-            + "read.max-name-length="
-            + maxNameLen
-            + "\n"
-            + "read.max-string-length="
-            + maxStringLen
-            + "\n"
-            + "read.max-document-length="
-            + maxDocLen
-            + "\n"
-            + "read.max-token-count="
-            + maxTokenCount
-            + "\n"
-            + "read.max-nesting-depth="
-            + maxNestingDepth;
+        """
+        read.max-number-length=%d
+        read.max-name-length=%d
+        read.max-string-length=%d
+        read.max-document-length=%d
+        read.max-token-count=%d
+        read.max-nesting-depth=%d\
+        """
+            .formatted(
+                maxNumLen, maxNameLen, maxStringLen, maxDocLen, maxTokenCount, maxNestingDepth);
     Config config = ConfigFactory.parseString(configText).withFallback(getDefaultConfig());
     ObjectMapper mapper = Jackson.createMapper(config);
     StreamReadConstraints constraints = mapper.getFactory().streamReadConstraints();
@@ -144,10 +129,11 @@ public class JacksonTest extends JUnitJupiterRouteTest {
     final String poolType = "bounded";
     final int poolSize = 10;
     String configText =
-        "buffer-recycler.pool-instance="
-            + poolType
-            + "\nbuffer-recycler.bounded-pool-size="
-            + poolSize;
+        """
+        buffer-recycler.pool-instance=%s
+        buffer-recycler.bounded-pool-size=%d\
+        """
+            .formatted(poolType, poolSize);
     Config config = ConfigFactory.parseString(configText).withFallback(getDefaultConfig());
     ObjectMapper mapper = Jackson.createMapper(config);
     RecyclerPool<BufferRecycler> recyclerPool = mapper.getFactory()._getRecyclerPool();

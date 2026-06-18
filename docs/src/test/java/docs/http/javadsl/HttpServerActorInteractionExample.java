@@ -101,31 +101,11 @@ public class HttpServerActorInteractionExample extends AllDirectives {
   static class Auction extends AbstractBehavior<Auction.Message> {
     interface Message {}
 
-    static class Bid implements Message {
-      public final String userId;
-      public final int offer;
+    record Bid(String userId, int offer) implements Message {}
 
-      Bid(String userId, int offer) {
-        this.userId = userId;
-        this.offer = offer;
-      }
-    }
+    record GetBids(ActorRef<Bids> replyTo) implements Message {}
 
-    static class GetBids implements Message {
-      final ActorRef<Bids> replyTo;
-
-      GetBids(ActorRef<Bids> replyTo) {
-        this.replyTo = replyTo;
-      }
-    }
-
-    static class Bids {
-      public final List<Bid> bids;
-
-      Bids(List<Bid> bids) {
-        this.bids = bids;
-      }
-    }
+    record Bids(List<Bid> bids) {}
 
     public Auction(ActorContext<Message> context) {
       super(context);
@@ -147,12 +127,12 @@ public class HttpServerActorInteractionExample extends AllDirectives {
 
     private Behavior<Message> onBid(Bid bid) {
       bids.add(bid);
-      getContext().getLog().info("Bid complete: {}, {}", bid.userId, bid.offer);
+      getContext().getLog().info("Bid complete: {}, {}", bid.userId(), bid.offer());
       return this;
     }
 
     private Behavior<Message> onGetBids(GetBids getBids) {
-      getBids.replyTo.tell(new Bids(bids));
+      getBids.replyTo().tell(new Bids(bids));
       return this;
     }
   }
