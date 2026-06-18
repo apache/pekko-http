@@ -90,8 +90,8 @@ object RejectionHandler {
      * Handles several Rejections of the same type at the same time.
      * The seq passed to the given function is guaranteed to be non-empty.
      */
-    def handleAll[T <: Rejection: ClassTag](f: immutable.Seq[T] => Route): this.type = {
-      val runtimeClass = implicitly[ClassTag[T]].runtimeClass
+    def handleAll[T <: Rejection](f: immutable.Seq[T] => Route)(implicit ct: ClassTag[T]): this.type = {
+      val runtimeClass = ct.runtimeClass
       cases += TypeHandler[T](runtimeClass, f)
       this
     }

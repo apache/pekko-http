@@ -108,7 +108,11 @@ lazy val parsing = project("parsing")
   .settings(AutomaticModuleName.settings("pekko.http.parsing"))
   .addPekkoModuleDependency("pekko-actor", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.parsing)
-  .settings(scalacOptions += "-language:_")
+  .settings(scalacOptions ++= {
+    val v = scalaVersion.value
+    if (v.startsWith("3") && CrossVersion.partialVersion(v).exists(_._2 >= 9)) Seq.empty
+    else Seq("-language:_")
+  })
   .settings(scalaMacroSupport)
   .enablePlugins(ScaladocNoVerificationOfDiagrams)
   .enablePlugins(ReproducibleBuildsPlugin)
@@ -136,7 +140,11 @@ lazy val http = project("http")
   .addPekkoModuleDependency("pekko-stream", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.http)
   .settings(
-    Compile / scalacOptions += "-language:_")
+    Compile / scalacOptions ++= {
+      val v = scalaVersion.value
+      if (v.startsWith("3") && CrossVersion.partialVersion(v).exists(_._2 >= 9)) Seq.empty
+      else Seq("-language:_")
+    })
   .settings(scalaMacroSupport)
   .enablePlugins(BootstrapGenjavadoc, BoilerplatePlugin)
   .enablePlugins(ReproducibleBuildsPlugin)
@@ -191,7 +199,11 @@ lazy val httpTestkit = project("http-testkit")
   .settings(
     // don't ignore Suites which is the default for the junit-interface
     testOptions += Tests.Argument(TestFrameworks.JUnit, "--ignore-runners="),
-    Compile / scalacOptions ++= Seq("-language:_"),
+    Compile / scalacOptions ++= {
+      val v = scalaVersion.value
+      if (v.startsWith("3") && CrossVersion.partialVersion(v).exists(_._2 >= 9)) Seq.empty
+      else Seq("-language:_")
+    },
     Test / run / mainClass := Some("org.apache.pekko.http.javadsl.SimpleServerApp"))
   .enablePlugins(BootstrapGenjavadoc, MultiNodeScalaTest, ScaladocNoVerificationOfDiagrams)
   .enablePlugins(ReproducibleBuildsPlugin)

@@ -136,8 +136,8 @@ sealed trait HttpMessage extends jm.HttpMessage {
   }
 
   /** Returns the first header of the given type if there is one */
-  def header[T >: Null <: jm.HttpHeader: ClassTag]: Option[T] = {
-    val clazz = classTag[T].runtimeClass.asInstanceOf[Class[T]]
+  def header[T >: Null <: jm.HttpHeader](implicit ct: ClassTag[T]): Option[T] = {
+    val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
     HttpHeader.fastFind[T](clazz, headers) match {
       case OptionVal.Some(h)                     => Some(h)
       case _ if clazz == classOf[`Content-Type`] => Some(`Content-Type`(entity.contentType)).asInstanceOf[Option[T]]
@@ -146,7 +146,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
   }
 
   /** Returns all the headers of the given type * */
-  def headers[T <: jm.HttpHeader: ClassTag]: immutable.Seq[T] = headers.collect {
+  def headers[T <: jm.HttpHeader](implicit ct: ClassTag[T]): immutable.Seq[T] = headers.collect {
     case h: T => h
   }
 

@@ -99,7 +99,7 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
   /**
    * Flatmaps this directive using the given function.
    */
-  def tflatMap[R: Tuple](f: L => Directive[R]): Directive[R] =
+  def tflatMap[R](f: L => Directive[R])(implicit ev: Tuple[R]): Directive[R] =
     Directive[R] { inner => tapply { values => f(values).tapply(inner) } }
 
   /**
@@ -135,7 +135,7 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
    * Creates a new directive that is able to recover from rejections that were produced by `this` Directive
    * **before the inner route was applied**.
    */
-  def recover[R >: L: Tuple](recovery: immutable.Seq[Rejection] => Directive[R]): Directive[R] =
+  def recover[R >: L](recovery: immutable.Seq[Rejection] => Directive[R])(implicit ev: Tuple[R]): Directive[R] =
     Directive[R] { inner => ctx =>
       import ctx.executionContext
       @volatile var rejectedFromInnerRoute = false
@@ -148,7 +148,8 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
   /**
    * Variant of `recover` that only recovers from rejections handled by the given PartialFunction.
    */
-  def recoverPF[R >: L: Tuple](recovery: PartialFunction[immutable.Seq[Rejection], Directive[R]]): Directive[R] =
+  def recoverPF[R >: L](recovery: PartialFunction[immutable.Seq[Rejection], Directive[R]])(
+      implicit ev: Tuple[R]): Directive[R] =
     recover { rejections =>
       recovery.applyOrElse(rejections, (rejs: Seq[Rejection]) => RouteDirectives.reject(rejs: _*))
     }
@@ -162,7 +163,7 @@ object Directive {
   /**
    * Constructs a directive from a function literal.
    */
-  def apply[T: Tuple](f: (T => Route) => Route): Directive[T] =
+  def apply[T](f: (T => Route) => Route)(implicit ev: Tuple[T]): Directive[T] =
     new Directive[T] { def tapply(inner: T => Route) = f(inner) }
 
   /**
