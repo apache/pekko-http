@@ -94,6 +94,10 @@ object MediaRange {
     Custom(mainType.toRootLowerCase, ps, q)
   }
 
+  private[http] def customWithParams(mainType: String, params: Map[String, String],
+      qValue: Float = 1.0f): MediaRange =
+    Custom(mainType.toRootLowerCase, params, qValue)
+
   final case class One(mediaType: MediaType, qValue: Float) extends MediaRange with ValueRenderable {
     require(0.0f <= qValue && qValue <= 1.0f, "qValue must be >= 0 and <= 1.0")
     def mainType = mediaType.mainType

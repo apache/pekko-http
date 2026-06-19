@@ -14,7 +14,7 @@ import org.apache.pekko.http.javadsl.model.MediaRange;
 
 /**
  * Model for the `Accept-Query` header. Specification:
- * https://www.rfc-editor.org/rfc/rfc10008.html#section-4.1
+ * https://www.rfc-editor.org/rfc/rfc10008.html#section-3
  */
 public abstract class AcceptQuery extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<MediaRange> getMediaRanges();
