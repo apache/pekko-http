@@ -14,7 +14,7 @@
 package org.apache.pekko.http.scaladsl.server.directives
 
 import org.apache.pekko
-import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpMethod, HttpMethods, HttpRequest, StatusCodes }
+import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpMethods, HttpRequest, StatusCodes }
 import pekko.http.scaladsl.server._
 import pekko.stream.scaladsl.Source
 

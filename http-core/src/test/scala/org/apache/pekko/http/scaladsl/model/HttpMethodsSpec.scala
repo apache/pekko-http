@@ -36,4 +36,16 @@ class HttpMethodsSpec extends AnyWordSpec {
       assert(HttpMethods.getForKeyCaseInsensitive("query") == Option(HttpMethods.QUERY))
     }
   }
+
+  "HttpMethods.QUERY" must {
+    "be safe per RFC 10008" in {
+      assert(HttpMethods.QUERY.isSafe)
+    }
+    "be idempotent per RFC 10008" in {
+      assert(HttpMethods.QUERY.isIdempotent)
+    }
+    "expect a request entity per RFC 10008" in {
+      assert(HttpMethods.QUERY.requestEntityAcceptance == RequestEntityAcceptance.Expected)
+    }
+  }
 }
