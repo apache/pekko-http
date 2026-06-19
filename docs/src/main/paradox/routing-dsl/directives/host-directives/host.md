@@ -67,7 +67,7 @@ Scala
 Java
 :  @@snip [HostDirectivesExamplesTest.java](/docs/src/test/java/docs/http/javadsl/server/directives/HostDirectivesExamplesTest.java) { #matchAndExtractHost }
 
-Beware that in the case of introducing multiple capturing groups in the regex such as in the case bellow, the
+Beware that in the case of introducing multiple capturing groups in the regex such as in the case below, the
 directive will fail at runtime, at the moment the route tree is evaluated for the first time. This might cause
 your http handler actor to enter in a fail/restart loop depending on your supervision strategy.
 

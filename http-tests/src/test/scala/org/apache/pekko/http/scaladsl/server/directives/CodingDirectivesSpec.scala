@@ -508,7 +508,7 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
         rejection shouldEqual UnsupportedRequestEncodingRejection(gzip)
       }
     }
-    "reject the request when decodeing with GZIP and no Content-Encoding header is present" in {
+    "reject the request when decoding with GZIP and no Content-Encoding header is present" in {
       Post("/", "yes") ~> decodeRequestWith(Gzip) { echoRequestContent } ~> check {
         rejection shouldEqual UnsupportedRequestEncodingRejection(gzip)
       }

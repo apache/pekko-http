@@ -15,7 +15,7 @@ Extracts the @apidoc[HttpMethod] from the request context and provides it for us
 ## Example
 
 In the below example our route first matches all `GET` requests, and if an incoming request wasn't a `GET`,
-the matching continues and the extractMethod route will be applied which we can use to programatically
+the matching continues and the extractMethod route will be applied which we can use to programmatically
 print what type of request it was - independent of what actual HttpMethod it was:
 
 Scala
