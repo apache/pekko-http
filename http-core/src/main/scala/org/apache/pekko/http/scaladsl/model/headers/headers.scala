@@ -232,6 +232,22 @@ final case class `Accept-Ranges`(rangeUnits: immutable.Seq[RangeUnit]) extends j
   def getRangeUnits: Iterable[jm.headers.RangeUnit] = rangeUnits.asJava
 }
 
+// https://www.rfc-editor.org/rfc/rfc10008.html#section-4.1
+object `Accept-Query` extends ModeledCompanion[`Accept-Query`] {
+  def apply(firstMediaRange: MediaRange, otherMediaRanges: MediaRange*): `Accept-Query` =
+    apply(firstMediaRange +: otherMediaRanges)
+  implicit val mediaRangesRenderer: Renderer[immutable.Iterable[MediaRange]] = Renderer.defaultSeqRenderer[MediaRange] // cache
+}
+final case class `Accept-Query`(mediaRanges: immutable.Seq[MediaRange]) extends jm.headers.AcceptQuery
+    with ResponseHeader {
+  import `Accept-Query`.mediaRangesRenderer
+  def renderValue[R <: Rendering](r: R): r.type = r ~~ mediaRanges
+  protected def companion = `Accept-Query`
+
+  /** Java API */
+  def getMediaRanges: Iterable[jm.MediaRange] = mediaRanges.asJava
+}
+
 // https://www.w3.org/TR/cors/#access-control-allow-credentials-response-header
 object `Access-Control-Allow-Credentials` extends ModeledCompanion[`Access-Control-Allow-Credentials`]
 final case class `Access-Control-Allow-Credentials`(allow: Boolean)

@@ -14,5 +14,6 @@
 * [patch](patch.md)
 * [post](post.md)
 * [put](put.md)
+* [query](query.md)
 
 @@@

@@ -144,6 +144,7 @@ private[http] object HeaderParser {
     "accept-charset",
     "accept-encoding",
     "accept-language",
+    "accept-query",
     "accept-ranges",
     "access-control-allow-credentials",
     "access-control-allow-headers",

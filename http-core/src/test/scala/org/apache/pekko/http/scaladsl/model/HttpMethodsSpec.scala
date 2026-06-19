@@ -32,5 +32,8 @@ class HttpMethodsSpec extends AnyWordSpec {
     "return HttpMethods.OPTIONS" in {
       assert(HttpMethods.getForKeyCaseInsensitive("oPtIoNs") == Option(HttpMethods.OPTIONS))
     }
+    "return HttpMethods.QUERY" in {
+      assert(HttpMethods.getForKeyCaseInsensitive("query") == Option(HttpMethods.QUERY))
+    }
   }
 }

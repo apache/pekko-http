@@ -31,6 +31,7 @@ public final class HttpMethods {
   public static final HttpMethod PATCH = org.apache.pekko.http.scaladsl.model.HttpMethods.PATCH();
   public static final HttpMethod POST = org.apache.pekko.http.scaladsl.model.HttpMethods.POST();
   public static final HttpMethod PUT = org.apache.pekko.http.scaladsl.model.HttpMethods.PUT();
+  public static final HttpMethod QUERY = org.apache.pekko.http.scaladsl.model.HttpMethods.QUERY();
   public static final HttpMethod TRACE = org.apache.pekko.http.scaladsl.model.HttpMethods.TRACE();
 
   /**

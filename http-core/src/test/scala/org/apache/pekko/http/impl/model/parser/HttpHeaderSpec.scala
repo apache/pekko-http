@@ -120,6 +120,39 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Accept-Ranges: none" =!= `Accept-Ranges`()
     }
 
+    "Accept-Query" in {
+      // basic token form
+      "Accept-Query: application/json" =!= `Accept-Query`(MediaTypes.`application/json`)
+      // multiple media ranges
+      "Accept-Query: application/json, text/xml" =!=
+        `Accept-Query`(MediaTypes.`application/json`, MediaTypes.`text/xml`)
+      // full wildcard
+      "Accept-Query: */*" =!= `Accept-Query`(MediaRanges.`*/*`)
+      // type wildcard
+      "Accept-Query: application/*" =!= `Accept-Query`(MediaRanges.`application/*`)
+      // RFC 9651 Structured Fields: quoted string form (application/jsonpath is not predefined)
+      """Accept-Query: "application/jsonpath"""" =!=
+        `Accept-Query`(MediaType.customBinary("application", "jsonpath", MediaType.Compressible,
+          allowArbitrarySubtypes = true))
+          .renderedTo("application/jsonpath")
+      // RFC 10008 Section 3.2 example: mixed token and quoted-string forms with parameters
+      """Accept-Query: "application/jsonpath", application/sql;charset="UTF-8"""" =!=
+        `Accept-Query`(
+          MediaType.customBinary("application", "jsonpath", MediaType.Compressible,
+            allowArbitrarySubtypes = true),
+          MediaType.customBinary("application", "sql", MediaType.Compressible,
+            params = Map("charset" -> "UTF-8"), allowArbitrarySubtypes = true))
+          .renderedTo("application/jsonpath, application/sql; charset=UTF-8")
+      // q-values are not meaningful for Accept-Query (RFC 10008) and must be stripped
+      "Accept-Query: application/json;q=0.8" =!=
+        `Accept-Query`(MediaTypes.`application/json`)
+          .renderedTo("application/json")
+      // q-values stripped even with other parameters preserved
+      "Accept-Query: application/json;charset=utf-8;q=0.5" =!=
+        `Accept-Query`(MediaTypes.`application/json`.withParams(Map("charset" -> "utf-8")))
+          .renderedTo("application/json; charset=utf-8")
+    }
+
     "Accept-Encoding" in {
       "Accept-Encoding: compress, gzip, fancy" =!=
         `Accept-Encoding`(compress, gzip, HttpEncoding.custom("fancy"))

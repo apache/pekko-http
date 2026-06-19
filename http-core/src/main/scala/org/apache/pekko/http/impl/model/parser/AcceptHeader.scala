@@ -29,6 +29,42 @@ private[parser] trait AcceptHeader { this: Parser with CommonRules with CommonAc
     zeroOrMore(`media-range-decl`).separatedBy(listSep) ~ EOI ~> (Accept(_))
   }
 
+  // https://www.rfc-editor.org/rfc/rfc10008.html#section-4.1
+  // Accept-Query uses Structured Fields syntax (RFC 9651): media types may appear
+  // as tokens (application/json) or quoted strings ("application/jsonpath").
+  // Unlike Accept, q-values are not meaningful and are stripped if present.
+  def `accept-query` = rule {
+    zeroOrMore(`accept-query-media-range-decl`).separatedBy(listSep) ~ EOI ~> (`Accept-Query`(_))
+  }
+
+  def `accept-query-media-range-decl` = rule {
+    `accept-query-media-range-def` ~ OWS ~ zeroOrMore(ws(';') ~ parameter) ~> { (main, sub, params) =>
+      val cleanParams = TreeMap(params.filterNot(_._1 == "q"): _*)
+      if (sub == "*") {
+        val mainLower = main.toRootLowerCase
+        MediaRanges.getForKey(mainLower) match {
+          case Some(registered) => if (cleanParams.isEmpty) registered else registered.withParams(cleanParams)
+          case None             => MediaRange.custom(mainLower, cleanParams)
+        }
+      } else {
+        MediaRange(getMediaType(main, sub, cleanParams contains "charset", cleanParams))
+      }
+    }
+  }
+
+  def `accept-query-media-range-def` = rule {
+    "*/*" ~ push("*") ~ push("*") |
+    '*' ~ push("*") ~ push("*") |
+    `type` ~ '/' ~
+    ('*' ~ !tchar ~ push("*") | subtype) |
+    `quoted-string` ~>
+    ((s: String) => {
+      val slashIdx = s.indexOf('/')
+      if (slashIdx > 0) push(s.substring(0, slashIdx)) ~ push(s.substring(slashIdx + 1))
+      else push(s) ~ push("*")
+    })
+  }
+
   def `media-range-decl` = rule {
     `media-range-def` ~ OWS ~ zeroOrMore(ws(';') ~ parameter) ~> { (main, sub, params) =>
       if (sub == "*") {

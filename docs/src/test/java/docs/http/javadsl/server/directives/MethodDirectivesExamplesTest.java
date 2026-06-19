@@ -51,6 +51,11 @@ import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.put;
 
 // #put
+// #query
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.query;
+
+// #query
 // #method-example
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.method;
@@ -138,6 +143,17 @@ public class MethodDirectivesExamplesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.PUT("/").withEntity("put content"))
         .assertEntity("This is a PUT request.");
     // #put
+  }
+
+  @Test
+  public void testQuery() {
+    // #query
+    final Route route = query(() -> complete("This is a QUERY request."));
+
+    testRoute(route)
+        .run(HttpRequest.QUERY("/").withEntity("query content"))
+        .assertEntity("This is a QUERY request.");
+    // #query
   }
 
   @Test
