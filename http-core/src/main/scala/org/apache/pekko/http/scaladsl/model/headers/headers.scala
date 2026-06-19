@@ -239,7 +239,7 @@ object `Accept-Query` extends ModeledCompanion[`Accept-Query`] {
   def apply(firstMediaRange: MediaRange, otherMediaRanges: MediaRange*): `Accept-Query` =
     apply(firstMediaRange +: otherMediaRanges)
 
-  private[this] val sfTokenChar: CharPredicate = CharacterClasses.tchar ++ ":/"
+  private val sfTokenChar: CharPredicate = CharacterClasses.tchar ++ ":/"
 
   private implicit val mediaRangeRenderer: Renderer[MediaRange] = new Renderer[MediaRange] {
     def render[R <: Rendering](r: R, mediaRange: MediaRange): r.type = {

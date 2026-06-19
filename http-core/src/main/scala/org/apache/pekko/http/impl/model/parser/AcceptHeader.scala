@@ -24,9 +24,9 @@ import pekko.http.impl.util._
 private[parser] trait AcceptHeader { this: Parser with CommonRules with CommonActions =>
   import CharacterClasses._
 
-  private[this] val acceptQueryMediaRangeChar = tchar ++ '/'
-  private[this] val sfStringChar = CharPredicate('\u0020' to '\u0021', '\u0023' to '\u005B', '\u005D' to '\u007E')
-  private[this] val sfStringEscapedChar = CharPredicate('"', '\\')
+  private val acceptQueryMediaRangeChar = tchar ++ '/'
+  private val sfStringChar = CharPredicate('\u0020' to '\u0021', '\u0023' to '\u005B', '\u005D' to '\u007E')
+  private val sfStringEscapedChar = CharPredicate('"', '\\')
 
   // http://tools.ietf.org/html/rfc7231#section-5.3.2
   def accept = rule {
