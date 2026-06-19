@@ -42,7 +42,8 @@ private[pekko] trait StageLoggingWithOverride extends GraphStageLogic {
         _log =
           logOverride match {
             case DefaultNoLogging =>
-              pekko.event.Logging(materializer.system, logSource)(LogSource.fromClass)
+              implicit val ls: LogSource[Class[?]] = LogSource.fromClass
+              pekko.event.Logging(materializer.system, logSource)
             case x => x
           }
       case _ =>

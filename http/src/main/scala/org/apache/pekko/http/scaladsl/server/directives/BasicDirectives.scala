@@ -152,7 +152,7 @@ trait BasicDirectives {
    *
    * @group basic
    */
-  def tprovide[L: Tuple](values: L): Directive[L] =
+  def tprovide[L](values: L)(implicit ev: Tuple[L]): Directive[L] =
     Directive { _(values) }
 
   /**

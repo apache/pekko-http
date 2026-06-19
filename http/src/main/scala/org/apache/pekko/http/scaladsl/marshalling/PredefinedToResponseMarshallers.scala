@@ -92,7 +92,8 @@ trait PredefinedToResponseMarshallers extends LowPriorityToResponseMarshallerImp
         }
     })
 
-  implicit def fromEntityStreamingSupportAndByteStringMarshaller[T: ClassTag, M](implicit s: EntityStreamingSupport,
+  implicit def fromEntityStreamingSupportAndByteStringMarshaller[T, M](implicit ct: ClassTag[T],
+      s: EntityStreamingSupport,
       m: ToByteStringMarshaller[T]): ToResponseMarshaller[Source[T, M]] =
     fromEntityStreamingSupportAndByteStringSourceMarshaller(s, m.map(Source.single))
 }

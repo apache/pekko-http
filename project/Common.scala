@@ -31,19 +31,19 @@ object Common extends AutoPlugin {
       "-deprecation",
       "-encoding", "UTF-8", // yes, this is 2 args
       "-unchecked",
-      "-Ywarn-dead-code",
       "-Wconf:msg=reached max recursion depth:s",
       "-Wconf:msg=Prefer the Scala annotation over Java's `@Deprecated`:s",
       "-release:" + javacTarget),
     scalacOptions ++= onlyOnScala2(Seq(
       "-Xlint",
+      "-Ywarn-dead-code",
       // Exhaustivity checking is only useful for simple sealed hierarchies and matches without filters.
       // In all other cases, the warning is non-actionable: you get spurious warnings that need to be suppressed
       // verbosely. So, opt out of those in general.
       "-Wconf:cat=other-match-analysis&msg=match may not be exhaustive:s")).value,
     scalacOptions ++= onlyOnScala3(Seq(
-      "-Wconf:cat=deprecation:s",
-      "-Yfuture-lazy-vals")).value,
+      "-Wconf:cat=deprecation:s")).value,
+    scalacOptions ++= onlyOnScala3Below39(Seq("-Yfuture-lazy-vals")).value,
     javacOptions ++=
       Seq("-encoding", "UTF-8", "--release", javacTarget),
     mimaReportSignatureProblems := true,
@@ -55,6 +55,15 @@ object Common extends AutoPlugin {
   }
   def onlyOnScala3[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
     if (scalaVersion.value.startsWith("3")) values else Seq.empty[T]
+  }
+  def onlyOnScala3Below39[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
+    if (scalaVersion.value.startsWith("3") && CrossVersion.partialVersion(scalaVersion.value).exists(_._2 < 9)) values
+    else Seq.empty[T]
+  }
+  def notOnScala39Plus[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
+    if (scalaVersion.value.startsWith("3") && CrossVersion.partialVersion(scalaVersion.value).exists(_._2 >= 9))
+      Seq.empty[T]
+    else values
   }
 
   def scalaMinorVersion: Def.Initialize[Long] = Def.setting { CrossVersion.partialVersion(scalaVersion.value).get._2 }
