@@ -61,7 +61,8 @@ object Common extends AutoPlugin {
     else Seq.empty[T]
   }
   def notOnScala39Plus[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
-    if (scalaVersion.value.startsWith("3") && CrossVersion.partialVersion(scalaVersion.value).exists(_._2 >= 9)) Seq.empty[T]
+    if (scalaVersion.value.startsWith("3") && CrossVersion.partialVersion(scalaVersion.value).exists(_._2 >= 9))
+      Seq.empty[T]
     else values
   }
 
