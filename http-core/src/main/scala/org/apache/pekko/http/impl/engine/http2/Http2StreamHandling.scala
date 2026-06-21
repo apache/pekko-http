@@ -129,17 +129,22 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   /** Called by Http2ServerDemux when a stream comes in from the user-handler */
   def handleOutgoingCreated(stream: Http2SubStream): Unit = {
     stream.initialHeaders.priorityInfo.foreach(multiplexer.updatePriority)
-    if (streamFor(stream.streamId) != Closed) {
+    val streamId = stream.streamId
+    val oldState = streamFor(streamId)
+    if (oldState ne Closed) {
       multiplexer.pushControlFrame(stream.initialHeaders)
 
-      if (stream.initialHeaders.endStream) {
-        updateState(stream.streamId, _.handleOutgoingCreatedAndFinished(stream.correlationAttributes),
-          "handleOutgoingCreatedAndFinished")
-      } else {
-        val outStream = OutStream(stream)
-        updateState(stream.streamId, _.handleOutgoingCreated(outStream, stream.correlationAttributes),
-          "handleOutgoingCreated")
-      }
+      // Inline state transition to avoid lambda allocation per response
+      require(!stateMachineRunning, "State machine already running")
+      stateMachineRunning = true
+      val newState =
+        if (stream.initialHeaders.endStream)
+          oldState.handleOutgoingCreatedAndFinished(stream.correlationAttributes)
+        else {
+          val outStream = OutStream(stream)
+          oldState.handleOutgoingCreated(outStream, stream.correlationAttributes)
+        }
+      commitStreamState(streamId, oldState, newState)
     } else
       // stream was cancelled by peer before our response was ready
       stream.data.foreach(_.runWith(Sink.cancelled)(subFusingMaterializer))
@@ -147,8 +152,13 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
 
   // Called by the outgoing stream multiplexer when that side of the stream is ended.
-  def handleOutgoingEnded(streamId: Int): Unit =
-    updateState(streamId, _.handleOutgoingEnded(), "handleOutgoingEnded")
+  def handleOutgoingEnded(streamId: Int): Unit = {
+    require(!stateMachineRunning, "State machine already running")
+    stateMachineRunning = true
+    val oldState = streamFor(streamId)
+    val newState = oldState.handleOutgoingEnded()
+    commitStreamState(streamId, oldState, newState)
+  }
 
   def handleOutgoingFailed(streamId: Int, cause: Throwable): Unit =
     updateState(streamId, _.handleOutgoingFailed(cause), "handleOutgoingFailed")
