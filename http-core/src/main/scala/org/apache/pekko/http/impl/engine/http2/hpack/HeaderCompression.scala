@@ -84,7 +84,17 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
           case other => other
         }
 
-      def onPull(): Unit = pull(eventsIn)
+      // Continuation frames to drain when a CompositeFrame is split.
+      // Using a var field on Logic avoids allocating a new OutHandler per CompositeFrame.
+      private var continuationFrames: Seq[FrameEvent] = null
+
+      def onPull(): Unit =
+        if (continuationFrames ne null) {
+          push(eventsOut, continuationFrames.head)
+          val rest = continuationFrames.tail
+          continuationFrames = if (rest.isEmpty) null else rest
+        } else pull(eventsIn)
+
       def onPush(): Unit = grab(eventsIn) match {
         case ack @ SettingsAckFrame(s) =>
           applySettings(s)
@@ -93,16 +103,7 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
           compressedHeadersFrame(streamId, endStream, kvs, prioInfo) match {
             case CompositeFrame(first +: rest) =>
               push(eventsOut, first)
-              setHandler(eventsOut,
-                new OutHandler {
-                  private var remainingData = rest
-
-                  def onPull(): Unit = {
-                    push(eventsOut, remainingData.head)
-                    remainingData = remainingData.tail
-                    if (remainingData.isEmpty) setHandler(eventsOut, logic)
-                  }
-                })
+              if (rest.nonEmpty) continuationFrames = rest
             case frame => push(eventsOut, frame)
           }
         case CompositeFrame(frames) =>
