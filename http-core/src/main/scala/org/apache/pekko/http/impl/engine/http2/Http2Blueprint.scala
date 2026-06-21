@@ -308,7 +308,8 @@ private[http] object Http2Blueprint {
         // an extra EC dispatch hop. This is significant for fast handlers
         // (e.g. gRPC unary handlers returning Future.successful) where the
         // extra hop would double the scheduling overhead.
-        val response = try handler(req) catch { case scala.util.control.NonFatal(ex) => Future.failed(ex) }
+        val response = try handler(req)
+        catch { case scala.util.control.NonFatal(ex) => Future.failed(ex) }
 
         req.attribute(Http2.streamId) match {
           case Some(streamIdHeader) =>

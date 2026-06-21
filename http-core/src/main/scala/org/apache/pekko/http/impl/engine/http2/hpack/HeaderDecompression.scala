@@ -74,7 +74,7 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
               parsed
             } else {
               import Http2HeaderParsing._
-              
+
               // Try cache first for common headers
               val cacheKey = (name, value)
               val cached = headerCache.get(cacheKey)
