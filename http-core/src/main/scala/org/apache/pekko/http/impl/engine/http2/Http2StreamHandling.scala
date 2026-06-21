@@ -114,8 +114,17 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def activeStreamCount(): Int = streamStates.size
 
   /** Called by Http2ServerDemux to let the state machine handle StreamFrameEvents */
-  def handleStreamEvent(e: StreamFrameEvent): Unit =
-    updateState(e.streamId, _.handle(e), "handleStreamEvent", e.frameTypeName)
+  def handleStreamEvent(e: StreamFrameEvent): Unit = {
+    // Inline state transition to avoid _.handle(e) lambda allocation per frame.
+    // This is the hottest call site - invoked for every incoming HTTP/2 frame.
+    require(!stateMachineRunning, "State machine already running")
+    stateMachineRunning = true
+
+    val streamId = e.streamId
+    val oldState = streamFor(streamId)
+    val newState = oldState.handle(e)
+    commitStreamState(streamId, oldState, newState)
+  }
 
   /** Called by Http2ServerDemux when a stream comes in from the user-handler */
   def handleOutgoingCreated(stream: Http2SubStream): Unit = {
@@ -169,6 +178,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
     val oldState = streamFor(streamId)
     val newState = handle(oldState)
+    commitStreamState(streamId, oldState, newState)
+  }
+
+  /** Commits a stream state transition with bookkeeping (map update, debug logging, deferred enqueue). */
+  private def commitStreamState(streamId: Int, oldState: StreamState, newState: StreamState): Unit = {
     newState match {
       case Closed =>
         streamStates.remove(streamId)
@@ -178,17 +192,14 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
 
     debug(
-      s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne
-          null)
-          s"($eventArg)"
-        else ""}]")
+      s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName}")
 
     stateMachineRunning = false
     if (deferredStreamToEnqueue != -1) {
-      val streamId = deferredStreamToEnqueue
+      val deferredId = deferredStreamToEnqueue
       deferredStreamToEnqueue = -1
-      if (streamStates.contains(streamId))
-        multiplexer.enqueueOutStream(streamId)
+      if (streamStates.contains(deferredId))
+        multiplexer.enqueueOutStream(deferredId)
     }
   }
 
