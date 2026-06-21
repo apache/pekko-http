@@ -163,8 +163,34 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     streamStates.keys.foreach(streamId => updateState(streamId.toInt, handle, event, eventArg))
 
   private def updateState(
-      streamId: Int, handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit =
-    updateStateAndReturn(streamId, x => (handle(x), ()), event, eventArg)
+      streamId: Int, handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit = {
+    require(!stateMachineRunning, "State machine already running")
+    stateMachineRunning = true
+
+    val oldState = streamFor(streamId)
+    val newState = handle(oldState)
+    newState match {
+      case Closed =>
+        streamStates.remove(streamId)
+        if (streamStates.isEmpty) onAllStreamsClosed()
+        tryPullSubStreams()
+      case newState => streamStates.put(streamId, newState)
+    }
+
+    debug(
+      s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne
+          null)
+          s"($eventArg)"
+        else ""}]")
+
+    stateMachineRunning = false
+    if (deferredStreamToEnqueue != -1) {
+      val streamId = deferredStreamToEnqueue
+      deferredStreamToEnqueue = -1
+      if (streamStates.contains(streamId))
+        multiplexer.enqueueOutStream(streamId)
+    }
+  }
 
   // Calling multiplexer.enqueueOutStream directly out of the state machine is not allowed, because it might try to
   // reenter the state machine with `pullNextState`. This call defers enqueuing until the current state machine operation
