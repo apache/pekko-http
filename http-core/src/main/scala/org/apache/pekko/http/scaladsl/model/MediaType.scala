@@ -18,6 +18,7 @@ import pekko.annotation.DoNotInherit
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.util.Helpers.toRootLowerCase
 
 /**
  * A MediaType describes the type of the content of an HTTP message entity.
@@ -74,7 +75,7 @@ sealed abstract class MediaType(_mainType: String, _subType: String) extends jm.
       case _            => false
     }
 
-  override def hashCode(): Int = value.toLowerCase.hashCode
+  override def hashCode(): Int = toRootLowerCase(value).hashCode
 
   /**
    * JAVA API
@@ -327,12 +328,12 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
 
   private var extensionMap = Map.empty[String, MediaType]
 
-  def forExtensionOption(ext: String): Option[MediaType] = extensionMap.get(ext.toLowerCase)
-  def forExtension(ext: String): MediaType = extensionMap.getOrElse(ext.toLowerCase, `application/octet-stream`)
+  def forExtensionOption(ext: String): Option[MediaType] = extensionMap.get(toRootLowerCase(ext))
+  def forExtension(ext: String): MediaType = extensionMap.getOrElse(toRootLowerCase(ext), `application/octet-stream`)
 
   private def registerFileExtensions[T <: MediaType](mediaType: T): T = {
     mediaType.fileExtensions.foreach { ext =>
-      val lcExt = ext.toLowerCase
+      val lcExt = toRootLowerCase(ext)
       require(!extensionMap.contains(lcExt),
         s"Extension '$ext' clash: media-types '${extensionMap(lcExt)}' and '$mediaType'")
       extensionMap = extensionMap.updated(lcExt, mediaType)

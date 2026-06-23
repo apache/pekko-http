@@ -21,6 +21,7 @@ import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
+import pekko.util.Helpers.toRootLowerCase
 
 /**
  * @groupname header Header directives
@@ -81,7 +82,7 @@ trait HeaderDirectives {
    * @group header
    */
   def headerValueByName(headerName: String): Directive1[String] =
-    headerValue(optionalValue(headerName.toLowerCase)) | reject(MissingHeaderRejection(headerName))
+    headerValue(optionalValue(toRootLowerCase(headerName))) | reject(MissingHeaderRejection(headerName))
 
   /**
    * Extracts the first HTTP request header of the given type.
@@ -125,7 +126,7 @@ trait HeaderDirectives {
    * @group header
    */
   def optionalHeaderValueByName(headerName: String): Directive1[Option[String]] = {
-    val lowerCaseName = headerName.toRootLowerCase
+    val lowerCaseName = toRootLowerCase(headerName)
     extract(_.request.headers.collectFirst {
       case h: HttpHeader if h.is(lowerCaseName) => h.value
     })

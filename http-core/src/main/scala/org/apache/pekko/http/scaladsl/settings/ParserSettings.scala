@@ -26,6 +26,7 @@ import pekko.http.impl.util._
 import pekko.http.javadsl.model
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.{ settings => js }
+import pekko.util.Helpers.toRootLowerCase
 
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
@@ -123,7 +124,7 @@ abstract class ParserSettings private[pekko] () extends pekko.http.javadsl.setti
     self.copy(includeSslSessionAttribute = newValue)
   override def withModeledHeaderParsing(newValue: Boolean): ParserSettings = self.copy(modeledHeaderParsing = newValue)
   override def withIgnoreIllegalHeaderFor(newValue: List[String]): ParserSettings =
-    self.copy(ignoreIllegalHeaderFor = newValue.map(_.toLowerCase).toSet)
+    self.copy(ignoreIllegalHeaderFor = newValue.map(toRootLowerCase).toSet)
 
   // overloads for idiomatic Scala use
   def withUriParsingMode(newValue: Uri.ParsingMode): ParserSettings = self.copy(uriParsingMode = newValue)

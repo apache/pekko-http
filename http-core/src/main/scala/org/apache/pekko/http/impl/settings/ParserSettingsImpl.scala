@@ -27,6 +27,7 @@ import pekko.http.scaladsl.settings.ParserSettings.{
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.util.ConstantFun
+import pekko.util.Helpers.toRootLowerCase
 
 import scala.jdk.CollectionConverters._
 
@@ -115,7 +116,7 @@ object ParserSettingsImpl extends SettingsCompanionImpl[ParserSettingsImpl]("pek
       Uri.ParsingMode(c.getString("uri-parsing-mode")),
       CookieParsingMode(c.getString("cookie-parsing-mode")),
       c.getBoolean("illegal-header-warnings"),
-      c.getStringList("ignore-illegal-header-for").asScala.map(_.toLowerCase).toSet,
+      c.getStringList("ignore-illegal-header-for").asScala.map(toRootLowerCase).toSet,
       ErrorLoggingVerbosity(c.getString("error-logging-verbosity")),
       IllegalResponseHeaderNameProcessingMode(c.getString("illegal-response-header-name-processing-mode")),
       IllegalResponseHeaderValueProcessingMode(c.getString("illegal-response-header-value-processing-mode")),

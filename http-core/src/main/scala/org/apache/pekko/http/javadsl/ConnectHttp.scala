@@ -21,6 +21,7 @@ import scala.jdk.OptionConverters._
 import org.apache.pekko
 import pekko.annotation.{ DoNotInherit, InternalApi }
 import pekko.http.javadsl.model.Uri
+import pekko.util.Helpers.toRootLowerCase
 
 @DoNotInherit
 abstract class ConnectHttp {
@@ -72,7 +73,7 @@ object ConnectHttp {
   }
 
   private def toHost(uriHost: Uri, port: Int): ConnectHttp = {
-    val s = uriHost.scheme.toLowerCase(Locale.ROOT)
+    val s = toRootLowerCase(uriHost.scheme)
     if (s == "https") new ConnectHttpsImpl(uriHost.host.address, effectivePort(s, port), context = Optional.empty())
     else new ConnectHttpImpl(uriHost.host.address, effectivePort(s, port))
   }
@@ -115,7 +116,7 @@ object ConnectHttp {
   }
 
   private def toHostHttps(uriHost: Uri, port: Int): ConnectWithHttps = {
-    val s = uriHost.scheme.toLowerCase(Locale.ROOT)
+    val s = toRootLowerCase(uriHost.scheme)
     require(s == "" || s == "https", "toHostHttps used with non https scheme! Was: " + uriHost)
     new ConnectHttpsImpl(uriHost.host.address, effectivePort("https", port), context = Optional.empty())
   }
@@ -126,7 +127,7 @@ object ConnectHttp {
   }
 
   private def effectivePort(scheme: String, port: Int): Int = {
-    val s = scheme.toLowerCase(Locale.ROOT)
+    val s = toRootLowerCase(scheme)
     if (port >= 0) port
     else if (s == "https" || s == "wss") 443
     else if (s == "http" || s == "ws") 80
