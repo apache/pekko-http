@@ -23,6 +23,7 @@ import pekko.http.impl.model.parser.{ CharacterClasses, HeaderParser }
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.headers._
 import pekko.util.OptionVal
+import pekko.util.Helpers.toRootLowerCase
 
 import scala.collection.immutable
 
@@ -91,7 +92,7 @@ object HttpHeader {
       val parser = new HeaderParser(value, settings)
       parser.`header-field-value`.run() match {
         case Success(preProcessedValue) =>
-          HeaderParser.parseFull(name.toLowerCase, preProcessedValue, settings) match {
+          HeaderParser.parseFull(toRootLowerCase(name), preProcessedValue, settings) match {
             case HeaderParser.Success(header) => ParsingResult.Ok(header, Nil)
             case HeaderParser.Failure(info)   =>
               val errors = info.withSummaryPrepended(s"Illegal HTTP header '$name'") :: Nil

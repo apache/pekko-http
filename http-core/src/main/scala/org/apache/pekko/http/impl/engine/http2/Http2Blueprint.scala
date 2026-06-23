@@ -38,8 +38,8 @@ import pekko.http.scaladsl.settings.{
 import pekko.stream.{ BidiShape, Graph, StreamTcpException, ThrottleMode }
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Source }
-import pekko.util.ByteString
-import pekko.util.OptionVal
+import pekko.util.{ ByteString, OptionVal }
+import pekko.util.Helpers.toRootLowerCase
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.{ ExecutionContext, Future }
@@ -226,7 +226,7 @@ private[http] object Http2Blueprint {
   }
 
   private[http2] def frameTypeAliasToFrameTypeName(frameType: String): Option[String] = {
-    frameType.toLowerCase match {
+    toRootLowerCase(frameType) match {
       case "reset"         => Some("RstStreamFrame")
       case "headers"       => Some("HeadersFrame")
       case "continuation"  => Some("ContinuationFrame")

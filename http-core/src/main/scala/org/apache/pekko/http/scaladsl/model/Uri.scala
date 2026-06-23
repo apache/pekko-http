@@ -28,6 +28,7 @@ import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.model.parser.UriParser
 import pekko.http.impl.model.parser.CharacterClasses._
 import pekko.http.impl.util._
+import pekko.util.Helpers.toRootLowerCase
 import Uri._
 import org.parboiled2.{ CharPredicate, CharUtils, ParserInput }
 
@@ -871,7 +872,7 @@ object Uri {
       } else if (allLower) -1
       else -2
     verify() match {
-      case -2 => scheme.toLowerCase
+      case -2 => toRootLowerCase(scheme)
       case -1 => scheme
       case ix => fail(s"Invalid URI scheme, unexpected character at pos $ix ('${scheme.charAt(ix)}')")
     }

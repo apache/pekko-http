@@ -14,6 +14,8 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import java.util.Locale
+
 import org.apache.pekko
 import pekko.http.scaladsl.model.{ HttpMethod, StatusCodes }
 import pekko.http.scaladsl.model.HttpMethods._
@@ -111,7 +113,7 @@ trait MethodDirectives {
   def overrideMethodWithParameter(paramName: String): Directive0 =
     parameter(paramName.optional).flatMap {
       case Some(method) =>
-        getForKey(method.toUpperCase) match {
+        getForKey(method.toUpperCase(Locale.ROOT)) match {
           case Some(m) => mapRequest(_.withMethod(m))
           case _       => complete(StatusCodes.NotImplemented)
         }
