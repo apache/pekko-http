@@ -625,6 +625,16 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           ErrorInfo("The server does not support the HTTP protocol version used in the request."))
       }
 
+      "a NUL byte in the request target" in new Test {
+        val result = multiParse(newParser)(Seq("GET /\u0000HTTP/1.1 HTTP/1.1\r\n"))
+        result.length shouldEqual 1
+        result.head match {
+          case Left(MessageStartError(BadRequest, info)) =>
+            info.summary should startWith("Illegal request-target")
+          case other => fail(s"Expected BadRequest MessageStartError but got $other")
+        }
+      }
+
       "with an illegal char in a header name" in new Test {
         """GET / HTTP/1.1
           |User@Agent: curl/7.19.7""" should parseToError(BadRequest, ErrorInfo("Illegal character '@' in header name"))
