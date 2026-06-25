@@ -123,19 +123,13 @@ public class Jackson {
 
   private static RecyclerPool<BufferRecycler> getBufferRecyclerPool(final Config cfg) {
     final String poolType = cfg.getString("buffer-recycler.pool-instance");
-    switch (poolType) {
-      case "thread-local":
-        return JsonRecyclerPools.threadLocalPool();
-      case "concurrent-deque":
-        return JsonRecyclerPools.newConcurrentDequePool();
-      case "shared-concurrent-deque":
-        return JsonRecyclerPools.sharedConcurrentDequePool();
-      case "bounded":
-        return JsonRecyclerPools.newBoundedPool(cfg.getInt("buffer-recycler.bounded-pool-size"));
-      case "non-recycling":
-        return JsonRecyclerPools.nonRecyclingPool();
-      default:
-        throw new IllegalArgumentException("Unknown recycler-pool: " + poolType);
-    }
+    return switch (poolType) {
+      case "thread-local" -> JsonRecyclerPools.threadLocalPool();
+      case "concurrent-deque" -> JsonRecyclerPools.newConcurrentDequePool();
+      case "shared-concurrent-deque" -> JsonRecyclerPools.sharedConcurrentDequePool();
+      case "bounded" -> JsonRecyclerPools.newBoundedPool(cfg.getInt("buffer-recycler.bounded-pool-size"));
+      case "non-recycling" -> JsonRecyclerPools.nonRecyclingPool();
+      default -> throw new IllegalArgumentException("Unknown recycler-pool: " + poolType);
+    };
   }
 }

@@ -34,22 +34,15 @@ public class MarshallerTest extends JUnitJupiterRouteTest {
     final Marshaller<Integer, RequestEntity> numberAsNameMarshaller =
         Marshaller.wrapEntity(
             (Integer param) -> {
-              switch (param) {
-                case 0:
-                  return "null";
-                case 1:
-                  return "eins";
-                case 2:
-                  return "zwei";
-                case 3:
-                  return "drei";
-                case 4:
-                  return "vier";
-                case 5:
-                  return "fünf";
-                default:
-                  return "wat?";
-              }
+              return switch (param) {
+                case 0 -> "null";
+                case 1 -> "eins";
+                case 2 -> "zwei";
+                case 3 -> "drei";
+                case 4 -> "vier";
+                case 5 -> "fünf";
+                default -> "wat?";
+              };
             },
             Marshaller.stringToEntity(),
             MediaTypes.TEXT_X_SPEECH);
@@ -95,14 +88,11 @@ public class MarshallerTest extends JUnitJupiterRouteTest {
     final Marshaller<Integer, RequestEntity> numberAsJsonListMarshaller =
         Marshaller.wrapEntity(
             (Integer param) -> {
-              switch (param) {
-                case 1:
-                  return ByteString.fromString("[1]");
-                case 5:
-                  return ByteString.fromString("[1,2,3,4,5]");
-                default:
-                  return ByteString.fromString("[]");
-              }
+              return switch (param) {
+                case 1 -> ByteString.fromString("[1]");
+                case 5 -> ByteString.fromString("[1,2,3,4,5]");
+                default -> ByteString.fromString("[]");
+              };
             },
             Marshaller.byteStringToEntity(),
             MediaTypes.APPLICATION_JSON);
@@ -142,15 +132,15 @@ public class MarshallerTest extends JUnitJupiterRouteTest {
         Marshaller.withFixedContentType(
             MediaTypes.APPLICATION_JSON.toContentType(),
             (Integer param) -> {
-              switch (param) {
-                case 1:
-                  return HttpEntities.create(MediaTypes.APPLICATION_JSON.toContentType(), "[1]");
-                case 5:
-                  return HttpEntities.create(
+              return switch (param) {
+                case 1 ->
+                  HttpEntities.create(MediaTypes.APPLICATION_JSON.toContentType(), "[1]");
+                case 5 ->
+                  HttpEntities.create(
                       MediaTypes.APPLICATION_JSON.toContentType(), "[1,2,3,4,5]");
-                default:
-                  return HttpEntities.create(MediaTypes.APPLICATION_JSON.toContentType(), "[]");
-              }
+                default ->
+                  HttpEntities.create(MediaTypes.APPLICATION_JSON.toContentType(), "[]");
+              };
             });
 
     final Function<Integer, Route> nummerHandler =
@@ -188,16 +178,15 @@ public class MarshallerTest extends JUnitJupiterRouteTest {
         Marshaller.withFixedContentType(
             MediaTypes.APPLICATION_JSON.toContentType(),
             (Integer param) -> {
-              switch (param) {
-                case 1:
-                  return HttpResponse.create()
+              return switch (param) {
+                case 1 ->
+                  HttpResponse.create()
                       .withEntity(MediaTypes.APPLICATION_JSON.toContentType(), "[1]");
-                case 5:
-                  return HttpResponse.create()
+                case 5 ->
+                  HttpResponse.create()
                       .withEntity(MediaTypes.APPLICATION_JSON.toContentType(), "[1,2,3,4,5]");
-                default:
-                  return HttpResponse.create().withStatus(StatusCodes.NOT_FOUND);
-              }
+                default -> HttpResponse.create().withStatus(StatusCodes.NOT_FOUND);
+              };
             });
 
     final Function<Integer, Route> nummerHandler =
