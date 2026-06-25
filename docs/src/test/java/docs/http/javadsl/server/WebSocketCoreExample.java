@@ -137,7 +137,7 @@ public class WebSocketCoreExample {
             .withPeriodicKeepAliveData(
                 () ->
                     ByteString.fromString(
-                        String.format("debug-%d", pingCounter.incrementAndGet())));
+                        "debug-%d".formatted(pingCounter.incrementAndGet())));
 
     ServerSettings customServerSettings =
         defaultSettings.withWebsocketSettings(customWebsocketSettings);
@@ -162,7 +162,7 @@ public class WebSocketCoreExample {
             .withPeriodicKeepAliveData(
                 () ->
                     ByteString.fromString(
-                        String.format("debug-%d", pingCounter.incrementAndGet())));
+                        "debug-%d".formatted(pingCounter.incrementAndGet())));
 
     ClientConnectionSettings customSettings =
         defaultSettings.withWebsocketSettings(customWebsocketSettings);

@@ -31,7 +31,7 @@ public class HttpResponseDetailedStringExampleTest {
     HttpEntity entity = response.entity();
     HttpProtocol protocol = response.protocol();
 
-    return String.format("HttpResponse(%s, %s, %s, %s)", status, headers, entity, protocol);
+    return "HttpResponse(%s, %s, %s, %s)".formatted(status, headers, entity, protocol);
   }
 
   @Test

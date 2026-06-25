@@ -69,7 +69,7 @@ public class CompleteTest extends JUnitJupiterRouteTest {
     return CompletableFuture.supplyAsync(
         () -> {
           int result = x + y;
-          return String.format("%d + %d = %d", x, y, result);
+          return "%d + %d = %d".formatted(x, y, result);
         });
   }
 

@@ -82,8 +82,7 @@ public class CachingDirectivesExamplesTest extends JUnitJupiterRouteTest {
                         extractUri(
                             uri ->
                                 complete(
-                                    String.format(
-                                        "Request for %s @ count %d",
+                                    "Request for %s @ count %d".formatted(
                                         uri, count.incrementAndGet())))));
 
     // tests:
@@ -137,8 +136,7 @@ public class CachingDirectivesExamplesTest extends JUnitJupiterRouteTest {
                         extractUri(
                             uri ->
                                 complete(
-                                    String.format(
-                                        "Request for %s @ count %d",
+                                    "Request for %s @ count %d".formatted(
                                         uri, count.incrementAndGet())))));
 
     // tests:
@@ -188,7 +186,7 @@ public class CachingDirectivesExamplesTest extends JUnitJupiterRouteTest {
     final Route innerRoute =
         extractUri(
             uri ->
-                complete(String.format("Request for %s @ count %d", uri, count.incrementAndGet())));
+                complete("Request for %s @ count %d".formatted(uri, count.incrementAndGet())));
 
     // #create-cache
     final CachingSettings defaultCachingSettings = CachingSettings.create(system());

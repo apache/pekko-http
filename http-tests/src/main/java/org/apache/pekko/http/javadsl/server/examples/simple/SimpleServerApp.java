@@ -45,7 +45,7 @@ public class SimpleServerApp {
   // #https-http-app
   public Route multiply(int x, int y) {
     int result = x * y;
-    return complete(String.format("%d * %d = %d", x, y, result));
+    return complete("%d * %d = %d".formatted(x, y, result));
   }
 
   public CompletionStage<Route> multiplyAsync(Executor ctx, int x, int y) {
@@ -63,13 +63,13 @@ public class SimpleServerApp {
                     "y",
                     y -> {
                       int result = x + y;
-                      return complete(String.format("%d + %d = %d", x, y, result));
+                      return complete("%d + %d = %d".formatted(x, y, result));
                     }));
 
     BiFunction<Integer, Integer, Route> subtractHandler =
         (x, y) -> {
           int result = x - y;
-          return complete(String.format("%d - %d = %d", x, y, result));
+          return complete("%d - %d = %d".formatted(x, y, result));
         };
 
     return concat(

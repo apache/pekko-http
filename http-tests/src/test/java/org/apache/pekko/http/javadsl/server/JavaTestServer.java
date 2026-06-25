@@ -79,7 +79,7 @@ public class JavaTestServer {
                 authenticateBasic(
                     "My basic secure site",
                     handleAuth,
-                    (login) -> complete(String.format("Hello, %s!", login))));
+                    (login) -> complete("Hello, %s!".formatted(login))));
 
     final Route ping = path("ping", () -> complete("PONG!"));
 
@@ -198,7 +198,7 @@ public class JavaTestServer {
   private CompletionStage<Void> shutdown(CompletionStage<ServerBinding> binding) {
     return binding.thenAccept(
         b -> {
-          System.out.println(String.format("Unbinding from %s", b.localAddress()));
+          System.out.println("Unbinding from %s".formatted(b.localAddress()));
 
           final CompletionStage<?> unbound = b.unbind();
           try {

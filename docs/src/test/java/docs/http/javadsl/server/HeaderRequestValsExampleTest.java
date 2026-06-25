@@ -38,7 +38,7 @@ public class HeaderRequestValsExampleTest extends JUnitJupiterRouteTest {
   public void testHeaderVals() {
     // #by-class
 
-    final Route route = extractHost(host -> complete(String.format("Host header was: %s", host)));
+    final Route route = extractHost(host -> complete("Host header was: %s".formatted(host)));
 
     // tests:
     final HttpRequest request =
@@ -57,7 +57,7 @@ public class HeaderRequestValsExampleTest extends JUnitJupiterRouteTest {
         headerValueByName(
             "X-Fish-Name",
             xFishName ->
-                complete(String.format("The `X-Fish-Name` header's value was: %s", xFishName)));
+                complete("The `X-Fish-Name` header's value was: %s".formatted(xFishName)));
 
     // tests:
     final HttpRequest request =

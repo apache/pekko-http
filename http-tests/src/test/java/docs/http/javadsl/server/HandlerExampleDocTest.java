@@ -70,7 +70,7 @@ public class HandlerExampleDocTest extends JUnitJupiterRouteTest {
                   extractUri(
                       uri ->
                           complete(
-                              String.format("This was a %s request to %s", method.name(), uri))));
+                              "This was a %s request to %s".formatted(method.name(), uri))));
 
       Route handlerResponse =
           extractMethod(
@@ -81,7 +81,7 @@ public class HandlerExampleDocTest extends JUnitJupiterRouteTest {
                         final HttpResponse response =
                             HttpResponse.create()
                                 .withEntity(
-                                    String.format("Accepted %s request to %s", method.name(), uri))
+                                    "Accepted %s request to %s".formatted(method.name(), uri))
                                 .withStatus(StatusCodes.ACCEPTED);
                         return complete(response);
                       }));
