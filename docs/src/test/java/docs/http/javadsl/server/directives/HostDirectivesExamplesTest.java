@@ -13,7 +13,7 @@
 
 package docs.http.javadsl.server.directives;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
@@ -53,7 +53,7 @@ public class HostDirectivesExamplesTest extends JUnitJupiterRouteTest {
   public void testListOfHost() {
     // #host1
     final Route matchListOfHosts =
-        host(Arrays.asList("api.company.com", "rest.company.com"), () -> complete(StatusCodes.OK));
+        host(List.of("api.company.com", "rest.company.com"), () -> complete(StatusCodes.OK));
 
     testRoute(matchListOfHosts)
         .run(HttpRequest.GET("/").addHeader(Host.create("api.company.com")))

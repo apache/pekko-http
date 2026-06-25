@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.model.*;
@@ -28,7 +27,7 @@ public class JacksonXmlSupport {
   private static final ObjectMapper DEFAULT_XML_MAPPER =
       new XmlMapper().enable(SerializationFeature.WRAP_ROOT_VALUE);
   private static final List<MediaType> XML_MEDIA_TYPES =
-      Arrays.asList(MediaTypes.APPLICATION_XML, MediaTypes.TEXT_XML);
+      List.of(MediaTypes.APPLICATION_XML, MediaTypes.TEXT_XML);
 
   public static <T> Marshaller<T, RequestEntity> marshaller() {
     return Marshaller.wrapEntity(

@@ -15,7 +15,7 @@ package org.apache.pekko.http.javadsl.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.http.javadsl.model.*;
@@ -63,7 +63,7 @@ public class UnmarshallerTest extends JUnitJupiterRouteTest {
   public void oneMarshallerCanHaveMultipleMediaTypes() throws Exception {
     Unmarshaller<HttpEntity, String> xmlUnmarshaller =
         Unmarshaller.forMediaTypes(
-                Arrays.asList(MediaTypes.APPLICATION_XML, MediaTypes.TEXT_XML),
+                List.of(MediaTypes.APPLICATION_XML, MediaTypes.TEXT_XML),
                 Unmarshaller.entityToString())
             .thenApply((str) -> "xml");
 

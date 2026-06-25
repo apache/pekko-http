@@ -20,9 +20,7 @@ import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.function.Function;
@@ -127,8 +125,8 @@ public class CustomDirectivesExamplesTest extends JUnitJupiterRouteTest {
     Function<MyCredentials, Set<MyRole>> authLogic =
         (credentials) -> {
           if (credentials.userId.equals("admin") && credentials.safeSecretVerification("secret"))
-            return new HashSet<>(Arrays.asList(MyRole.USER, MyRole.ADMIN));
-          else return Collections.emptySet();
+            return Set.of(MyRole.USER, MyRole.ADMIN);
+          else return Set.of();
         };
 
     // and then using the custom route
@@ -150,7 +148,7 @@ public class CustomDirectivesExamplesTest extends JUnitJupiterRouteTest {
         .run(
             HttpRequest.GET("/admin")
                 .addHeaders(
-                    Arrays.asList(
+                    List.of(
                         RawHeader.create("X-My-User-Id", "user"),
                         RawHeader.create("X-My-User-Secret", "wrong"))))
         .assertStatusCode(StatusCodes.FORBIDDEN);
@@ -159,7 +157,7 @@ public class CustomDirectivesExamplesTest extends JUnitJupiterRouteTest {
         .run(
             HttpRequest.GET("/admin")
                 .addHeaders(
-                    Arrays.asList(
+                    List.of(
                         RawHeader.create("X-My-User-Id", "admin"),
                         RawHeader.create("X-My-User-Secret", "secret"))))
         .assertStatusCode(StatusCodes.OK);

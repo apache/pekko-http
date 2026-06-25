@@ -23,7 +23,7 @@ import org.apache.pekko.http.javadsl.server.RouteResult;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
@@ -82,14 +82,14 @@ public class RouteDirectivesExamplesTest extends JUnitJupiterRouteTest {
                 () ->
                     complete(
                         StatusCodes.CREATED,
-                        Collections.singletonList(ContentType.create(ContentTypes.TEXT_PLAIN_UTF8)),
+                        List.of(ContentType.create(ContentTypes.TEXT_PLAIN_UTF8)),
                         HttpEntities.create("bar"))),
             path(
                 "f",
                 () ->
                     complete(
                         StatusCodes.get(201),
-                        Collections.singletonList(ContentType.create(ContentTypes.TEXT_PLAIN_UTF8)),
+                        List.of(ContentType.create(ContentTypes.TEXT_PLAIN_UTF8)),
                         HttpEntities.create("bar"))),
             path("g", () -> complete("baz")));
 

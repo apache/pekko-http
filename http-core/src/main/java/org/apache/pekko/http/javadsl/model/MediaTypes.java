@@ -587,7 +587,7 @@ public final class MediaTypes {
   public static MediaType.Binary customBinary(
       String mainType, String subType, boolean compressible) {
     return customBinary(
-        mainType, subType, compressible, java.util.Collections.<String, String>emptyMap(), false);
+        mainType, subType, compressible, java.util.Map.<String, String>of(), false);
   }
 
   public static MediaType.Binary customBinary(
@@ -596,7 +596,7 @@ public final class MediaTypes {
         mainType,
         subType,
         compressibility,
-        java.util.Collections.<String, String>emptyMap(),
+        java.util.Map.<String, String>of(),
         false);
   }
 

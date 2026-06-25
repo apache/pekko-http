@@ -17,7 +17,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.*;
 import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -60,7 +60,7 @@ public class JavaRouteTest extends JUnitJupiterRouteTest {
 
   private final Unmarshaller<HttpEntity, UUID> UUID_FROM_XML_BODY =
       Unmarshaller.forMediaTypes(
-              Arrays.asList(MediaTypes.TEXT_XML, MediaTypes.APPLICATION_XML),
+              List.of(MediaTypes.TEXT_XML, MediaTypes.APPLICATION_XML),
               Unmarshaller.entityToString())
           .thenApply(
               s -> {

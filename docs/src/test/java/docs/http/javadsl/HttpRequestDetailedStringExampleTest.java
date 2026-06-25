@@ -15,7 +15,7 @@ package docs.http.javadsl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
+import java.util.List;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.Authorization;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ public class HttpRequestDetailedStringExampleTest {
     HttpEntity.Strict piiBody = HttpEntities.create("This body contains information about [user]");
 
     HttpRequest httpRequestWithHeadersAndBody =
-        HttpRequest.create().withEntity(piiBody).withHeaders(Arrays.asList(piiHeader));
+        HttpRequest.create().withEntity(piiBody).withHeaders(List.of(piiHeader));
 
     // Our custom string representation includes body and headers string representations...
     assertTrue(toDetailedString(httpRequestWithHeadersAndBody).contains(piiHeader.toString()));
