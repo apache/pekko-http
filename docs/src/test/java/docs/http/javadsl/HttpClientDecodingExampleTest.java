@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.coding.Coder;
@@ -63,7 +62,7 @@ public class HttpClientDecodingExampleTest {
         httpRequests.stream()
             .map(req -> http.singleRequest(req).thenApply(decodeResponse))
             .map(CompletionStage::toCompletableFuture)
-            .collect(Collectors.toList());
+            .toList();
 
     for (CompletableFuture<HttpResponse> futureResponse : futureResponses) {
       final HttpResponse httpResponse = futureResponse.get();
