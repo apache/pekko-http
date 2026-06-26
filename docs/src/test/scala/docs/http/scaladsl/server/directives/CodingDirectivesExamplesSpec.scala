@@ -173,7 +173,6 @@ class CodingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       (_: HttpResponse).header[`Content-Encoding`].map(_.encodings.head).getOrElse(HttpEncodings.identity)
     }
 
-  def compress(input: String, encoder: Coder): ByteString = {
-    Await.result(encoder.encodeAsync(ByteString(input)), 10.seconds))
-  }
+  def compress(input: String, encoder: Coder): ByteString =
+    Await.result(encoder.encodeAsync(ByteString(input), 10.seconds))
 }
