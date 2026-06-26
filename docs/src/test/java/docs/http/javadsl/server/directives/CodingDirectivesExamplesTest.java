@@ -108,8 +108,7 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
   @Test
   public void testEncodeResponseWith() {
     // #encodeResponseWith
-    final Route route =
-        encodeResponseWith(List.of(Coder.Gzip), () -> complete("content"));
+    final Route route = encodeResponseWith(List.of(Coder.Gzip), () -> complete("content"));
 
     // tests:
     testRoute(route)

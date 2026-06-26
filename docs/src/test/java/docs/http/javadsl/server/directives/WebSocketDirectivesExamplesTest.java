@@ -135,12 +135,7 @@ public class WebSocketDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
     // WS creates a WebSocket request for testing
     testRoute(websocketMultipleProtocolRoute)
-        .run(
-            WS(
-                Uri.create("/services"),
-                wsClient.flow(),
-                materializer(),
-                List.of("other", "echo")))
+        .run(WS(Uri.create("/services"), wsClient.flow(), materializer(), List.of("other", "echo")))
         .assertHeaderExists(SecWebSocketProtocol.create("echo"));
 
     wsClient.sendMessage("Peter");

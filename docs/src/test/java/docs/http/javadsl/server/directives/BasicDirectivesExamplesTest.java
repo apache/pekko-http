@@ -618,8 +618,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
         .run(
             HttpRequest.GET("/")
                 .withHeaders(
-                    List.of(
-                        RawHeader.create("id", "12345"), RawHeader.create("id2", "67890"))))
+                    List.of(RawHeader.create("id", "12345"), RawHeader.create("id2", "67890"))))
         .assertHeaderKindNotExists("id")
         .assertHeaderExists("id2", "67890");
     // #mapResponseHeaders
@@ -792,8 +791,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
     final Route route =
         mapRouteResult(
             rr -> {
-              final Iterable<Rejection> rejections =
-                  List.of(Rejections.authorizationFailed());
+              final Iterable<Rejection> rejections = List.of(Rejections.authorizationFailed());
               return RouteResults.rejected(rejections);
             },
             () -> complete("abc"));
@@ -1122,8 +1120,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
     // tests:
     final Iterator iterator =
-        List.of(
-                ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
+        List.of(ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
             .iterator();
     final Source<ByteString, NotUsed> dataBytes = Source.fromIterator(() -> iterator);
 
@@ -1144,8 +1141,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
     // tests:
     final Iterator iterator =
-        List.of(
-                ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
+        List.of(ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
             .iterator();
     final Source<ByteString, NotUsed> dataBytes = Source.fromIterator(() -> iterator);
     testRoute(route)
@@ -1176,8 +1172,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
     // tests:
     final Iterator iterator =
-        List.of(
-                ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
+        List.of(ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
             .iterator();
     final Source<ByteString, NotUsed> dataBytes = Source.fromIterator(() -> iterator);
     testRoute(route)

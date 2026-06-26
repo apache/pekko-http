@@ -289,9 +289,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
       tempFile = Files.createTempFile(prefix, suffix).toFile();
       tempFile.deleteOnExit();
       Files.write(
-          tempFile.toPath(),
-          List.of("2,3,5", "7,11,13,17,23", "29,31,37"),
-          StandardCharsets.UTF_8);
+          tempFile.toPath(), List.of("2,3,5", "7,11,13,17,23", "29,31,37"), StandardCharsets.UTF_8);
     } catch (Exception e) {
       // ignore
     }
