@@ -204,7 +204,7 @@ public class PathDirectivesTest extends JUnitJupiterRouteTest {
         testRoute(
             path(
                 segment("multiply").slash(integerSegment()).slash("with").slash(integerSegment()),
-                (x, y) -> complete(String.format("%d * %d = %d", x, y, x * y))));
+                (x, y) -> complete("%d * %d = %d".formatted(x, y, x * y))));
 
     route.run(HttpRequest.GET("/multiply/3/with/6")).assertEntity("3 * 6 = 18");
   }

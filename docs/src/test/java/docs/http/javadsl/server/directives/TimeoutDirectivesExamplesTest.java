@@ -53,7 +53,7 @@ public class TimeoutDirectivesExamplesTest extends AllDirectives {
   private final Http http = Http.get(system);
 
   private void shutdown(ServerBinding b) throws Exception {
-    System.out.println(String.format("Unbinding from %s", b.localAddress()));
+    System.out.println("Unbinding from %s".formatted(b.localAddress()));
 
     b.unbind().toCompletableFuture().get(3, TimeUnit.SECONDS);
   }

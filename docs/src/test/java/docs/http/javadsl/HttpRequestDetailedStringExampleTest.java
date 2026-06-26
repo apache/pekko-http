@@ -31,7 +31,7 @@ public class HttpRequestDetailedStringExampleTest {
     RequestEntity entity = request.entity();
     HttpProtocol protocol = request.protocol();
 
-    return String.format("HttpRequest(%s, %s, %s, %s, %s)", method, uri, headers, entity, protocol);
+    return "HttpRequest(%s, %s, %s, %s, %s)".formatted(method, uri, headers, entity, protocol);
   }
 
   @Test

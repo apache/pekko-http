@@ -122,7 +122,7 @@ public class DebuggingDirectivesExamplesTest extends JUnitJupiterRouteTest {
     Function<HttpResponse, LogEntry> showSuccessAsInfo =
         (response) ->
             LogEntry.create(
-                String.format("Response code '%d'", response.status().intValue()), InfoLevel());
+                "Response code '%d'".formatted(response.status().intValue()), InfoLevel());
 
     Function<List<Rejection>, LogEntry> showRejectionAsInfo =
         (rejections) ->

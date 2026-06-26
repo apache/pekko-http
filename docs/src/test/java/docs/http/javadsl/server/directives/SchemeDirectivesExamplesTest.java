@@ -39,8 +39,7 @@ public class SchemeDirectivesExamplesTest extends JUnitJupiterRouteTest {
   @Test
   public void testScheme() {
     // #extractScheme
-    final Route route =
-        extractScheme((scheme) -> complete(String.format("The scheme is '%s'", scheme)));
+    final Route route = extractScheme((scheme) -> complete("The scheme is '%s'".formatted(scheme)));
     testRoute(route)
         .run(HttpRequest.GET("https://www.example.com/"))
         .assertEntity("The scheme is 'https'");

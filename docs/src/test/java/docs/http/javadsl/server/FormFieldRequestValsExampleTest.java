@@ -48,7 +48,7 @@ public class FormFieldRequestValsExampleTest extends JUnitJupiterRouteTest {
                 formField(
                     StringUnmarshallers.INTEGER,
                     "age",
-                    a -> complete(String.format("Name: %s, age: %d", n, a))));
+                    a -> complete("Name: %s, age: %d".formatted(n, a))));
 
     // tests:
     final FormData formData =
@@ -66,7 +66,7 @@ public class FormFieldRequestValsExampleTest extends JUnitJupiterRouteTest {
         StringUnmarshaller.sync(s -> new SampleId(Integer.valueOf(s)));
 
     final Route route =
-        formField(SAMPLE_ID, "id", sid -> complete(String.format("SampleId: %s", sid.id)));
+        formField(SAMPLE_ID, "id", sid -> complete("SampleId: %s".formatted(sid.id)));
 
     // tests:
     final FormData formData = FormData.create(Pair.create("id", "1337"));
