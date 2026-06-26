@@ -350,7 +350,7 @@ abstract class BasicDirectives {
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
    * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
    */
-  @Deprecated
+  @Deprecated(since = "1.3.0")
   @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def extractStrictEntity(timeout: FiniteDuration, inner: JFunction[HttpEntity.Strict, Route]): Route = RouteAdapter {
     D.extractStrictEntity(timeout) { strict => inner.apply(strict).delegate }
@@ -386,7 +386,7 @@ abstract class BasicDirectives {
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
    * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
    */
-  @Deprecated
+  @Deprecated(since = "1.3.0")
   @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def extractStrictEntity(timeout: FiniteDuration, maxBytes: Long, inner: JFunction[HttpEntity.Strict, Route]): Route =
     RouteAdapter {
@@ -423,7 +423,7 @@ abstract class BasicDirectives {
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
    * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
    */
-  @Deprecated
+  @Deprecated(since = "1.3.0")
   @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def toStrictEntity(timeout: FiniteDuration, inner: Supplier[Route]): Route = RouteAdapter {
     D.toStrictEntity(timeout) { inner.get.delegate }
@@ -457,7 +457,7 @@ abstract class BasicDirectives {
    * @param timeout The directive is failed if the stream isn't completed after the given timeout.
    * @deprecated As of 1.3.0, use the overloaded method taking a `java.time.Duration` instead.
    */
-  @Deprecated
+  @Deprecated(since = "1.3.0")
   @deprecated("use the overloaded method taking a `java.time.Duration` instead.", "1.3.0")
   def toStrictEntity(timeout: FiniteDuration, maxBytes: Long, inner: Supplier[Route]): Route = RouteAdapter {
     D.toStrictEntity(timeout, maxBytes) { inner.get.delegate }

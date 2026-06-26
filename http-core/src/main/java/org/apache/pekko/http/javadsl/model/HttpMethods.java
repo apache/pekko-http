@@ -41,7 +41,7 @@ public final class HttpMethods {
    *     org.apache.pekko.http.javadsl.model.RequestEntityAcceptance, boolean)} instead. Deprecated
    *     since 1.4.0.
    */
-  @Deprecated
+  @Deprecated(since = "1.4.0")
   public static HttpMethod custom(
       String value,
       boolean safe,
