@@ -56,8 +56,7 @@ public class HeaderRequestValsExampleTest extends JUnitJupiterRouteTest {
         // extract the `value` of the header:
         headerValueByName(
             "X-Fish-Name",
-            xFishName ->
-                complete("The `X-Fish-Name` header's value was: %s".formatted(xFishName)));
+            xFishName -> complete("The `X-Fish-Name` header's value was: %s".formatted(xFishName)));
 
     // tests:
     final HttpRequest request =

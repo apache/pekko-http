@@ -69,8 +69,7 @@ public class HandlerExampleDocTest extends JUnitJupiterRouteTest {
               method ->
                   extractUri(
                       uri ->
-                          complete(
-                              "This was a %s request to %s".formatted(method.name(), uri))));
+                          complete("This was a %s request to %s".formatted(method.name(), uri))));
 
       Route handlerResponse =
           extractMethod(
