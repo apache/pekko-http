@@ -101,7 +101,7 @@ public class RangeDirectivesExamplesTest extends JUnitJupiterRouteTest {
     try {
       final List<Multipart.ByteRanges.BodyPart> bodyParts =
           completionStage.toCompletableFuture().get(3, TimeUnit.SECONDS);
-      assertEquals(2, bodyParts.toArray().length);
+      assertEquals(2, bodyParts.size());
 
       final Multipart.ByteRanges.BodyPart part1 = bodyParts.get(0);
       assertEquals(bytes028Range, part1.getContentRange());
