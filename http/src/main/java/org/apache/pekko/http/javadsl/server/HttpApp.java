@@ -35,7 +35,7 @@ import org.apache.pekko.http.javadsl.settings.ServerSettings;
  *
  * @deprecated HttpApp this doesn't reflect the latest APIs, since Akka HTTP 10.2.0
  */
-@Deprecated
+@Deprecated(since = "Akka HTTP 10.2.0")
 public abstract class HttpApp extends AllDirectives {
 
   private AtomicReference<ServerBinding> serverBinding = new AtomicReference<>();

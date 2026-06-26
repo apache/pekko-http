@@ -103,7 +103,7 @@ public final class StatusCodes {
   /**
    * @deprecated deprecated in favor of CONTENT_TOO_LARGE since 1.1.0
    */
-  @Deprecated
+  @Deprecated(since = "1.1.0")
   public static final StatusCode PAYLOAD_TOO_LARGE =
       org.apache.pekko.http.scaladsl.model.StatusCodes.PayloadTooLarge();
 
@@ -129,7 +129,7 @@ public final class StatusCodes {
   /**
    * @deprecated deprecated in favor of UNPROCESSABLE_CONTENT since 1.1.0
    */
-  @Deprecated
+  @Deprecated(since = "1.1.0")
   public static final StatusCode UNPROCESSABLE_ENTITY =
       org.apache.pekko.http.scaladsl.model.StatusCodes.UnprocessableEntity();
 

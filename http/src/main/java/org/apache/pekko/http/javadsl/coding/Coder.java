@@ -52,7 +52,7 @@ public enum Coder {
   /**
    * @deprecated Synchronous encoding is deprecated since Akka HTTP 10.2.0
    */
-  @Deprecated
+  @Deprecated(since = "Akka HTTP 10.2.0")
   public ByteString encode(ByteString input) {
     return underlying.encode(input);
   }
