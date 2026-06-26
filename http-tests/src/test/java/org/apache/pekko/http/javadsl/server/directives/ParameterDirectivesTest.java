@@ -404,8 +404,12 @@ public class ParameterDirectivesTest extends JUnitJupiterRouteTest {
 
                   StringBuilder res = new StringBuilder();
                   res.append(paramEntries.size()).append(": [");
-                  for (Map.Entry<String, String> entry : entries)
-                    res.append(entry.getKey()).append(" -> ").append(entry.getValue()).append(", ");
+                  entries.forEach(
+                      entry ->
+                          res.append(entry.getKey())
+                              .append(" -> ")
+                              .append(entry.getValue())
+                              .append(", "));
                   res.append(']');
                   return complete(res.toString());
                 }));
