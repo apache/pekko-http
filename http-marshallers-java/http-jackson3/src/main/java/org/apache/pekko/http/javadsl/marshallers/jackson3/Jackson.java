@@ -133,7 +133,8 @@ public class Jackson {
       case "thread-local" -> JsonRecyclerPools.threadLocalPool();
       case "concurrent-deque" -> JsonRecyclerPools.newConcurrentDequePool();
       case "shared-concurrent-deque" -> JsonRecyclerPools.sharedConcurrentDequePool();
-      case "bounded" -> JsonRecyclerPools.newBoundedPool(cfg.getInt("buffer-recycler.bounded-pool-size"));
+      case "bounded" ->
+          JsonRecyclerPools.newBoundedPool(cfg.getInt("buffer-recycler.bounded-pool-size"));
       case "non-recycling" -> JsonRecyclerPools.nonRecyclingPool();
       default -> throw new IllegalArgumentException("Unknown recycler-pool: " + poolType);
     };

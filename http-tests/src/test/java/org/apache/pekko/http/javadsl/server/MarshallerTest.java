@@ -133,13 +133,10 @@ public class MarshallerTest extends JUnitJupiterRouteTest {
             MediaTypes.APPLICATION_JSON.toContentType(),
             (Integer param) -> {
               return switch (param) {
-                case 1 ->
-                  HttpEntities.create(MediaTypes.APPLICATION_JSON.toContentType(), "[1]");
+                case 1 -> HttpEntities.create(MediaTypes.APPLICATION_JSON.toContentType(), "[1]");
                 case 5 ->
-                  HttpEntities.create(
-                      MediaTypes.APPLICATION_JSON.toContentType(), "[1,2,3,4,5]");
-                default ->
-                  HttpEntities.create(MediaTypes.APPLICATION_JSON.toContentType(), "[]");
+                    HttpEntities.create(MediaTypes.APPLICATION_JSON.toContentType(), "[1,2,3,4,5]");
+                default -> HttpEntities.create(MediaTypes.APPLICATION_JSON.toContentType(), "[]");
               };
             });
 
@@ -180,11 +177,11 @@ public class MarshallerTest extends JUnitJupiterRouteTest {
             (Integer param) -> {
               return switch (param) {
                 case 1 ->
-                  HttpResponse.create()
-                      .withEntity(MediaTypes.APPLICATION_JSON.toContentType(), "[1]");
+                    HttpResponse.create()
+                        .withEntity(MediaTypes.APPLICATION_JSON.toContentType(), "[1]");
                 case 5 ->
-                  HttpResponse.create()
-                      .withEntity(MediaTypes.APPLICATION_JSON.toContentType(), "[1,2,3,4,5]");
+                    HttpResponse.create()
+                        .withEntity(MediaTypes.APPLICATION_JSON.toContentType(), "[1,2,3,4,5]");
                 default -> HttpResponse.create().withStatus(StatusCodes.NOT_FOUND);
               };
             });
