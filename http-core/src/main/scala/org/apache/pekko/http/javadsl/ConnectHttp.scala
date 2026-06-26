@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.javadsl
 
-import java.util.Locale
 import java.util.Optional
 
 import scala.jdk.OptionConverters._
