@@ -174,5 +174,5 @@ class CodingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     }
 
   def compress(input: String, encoder: Coder): ByteString =
-    Await.result(encoder.encodeAsync(ByteString(input), 10.seconds))
+    Await.result(encoder.encodeAsync(ByteString(input)), 10.seconds)
 }
