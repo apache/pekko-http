@@ -16,11 +16,16 @@
 # under the License.
 
 # Remove deprecated methods
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.coding.Coder.encode")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.server.Directives.extractUpgradeToWebSocket")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.server.directives.WebSocketDirectives.extractUpgradeToWebSocket")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.RoutingSettings.getFileIODispatcher")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.RoutingSettings.withFileIODispatcher")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.unmarshalling.sse.EventStreamUnmarshalling.fromEventStream")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.Deflate.encode")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.Encoder.encode")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.Gzip.encode")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.NoCoding.encode")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.Deflate.newEncodeTransformer")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.Encoder.newEncodeTransformer")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.coding.Gzip.newEncodeTransformer")
