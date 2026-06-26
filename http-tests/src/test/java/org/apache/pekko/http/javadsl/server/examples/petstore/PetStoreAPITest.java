@@ -33,8 +33,8 @@ public class PetStoreAPITest extends JUnitJupiterRouteTest {
     response.assertStatusCode(StatusCodes.OK).assertMediaType("application/json");
 
     Pet pet = response.entity(Jackson.unmarshaller(Pet.class));
-    assertEquals("cat", pet.getName());
-    assertEquals(1, pet.getId());
+    assertEquals("cat", pet.name());
+    assertEquals(1, pet.id());
   }
 
   @Test
@@ -54,8 +54,8 @@ public class PetStoreAPITest extends JUnitJupiterRouteTest {
     response.assertStatusCode(StatusCodes.OK);
 
     Pet pet = response.entity(Jackson.unmarshaller(Pet.class));
-    assertEquals("giraffe", pet.getName());
-    assertEquals(1, pet.getId());
+    assertEquals("giraffe", pet.name());
+    assertEquals(1, pet.id());
   }
 
   @Test

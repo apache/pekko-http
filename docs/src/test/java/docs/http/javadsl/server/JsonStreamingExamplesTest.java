@@ -223,7 +223,11 @@ public class JsonStreamingExamplesTest extends JUnitJupiterRouteTest {
     routes
         .run(HttpRequest.GET("/tweets?n=2").addHeader(acceptCsv))
         .assertStatusCode(200)
-        .assertEntity("12,Hello World!\n" + "12,Hello World!\n");
+        .assertEntity(
+            """
+            12,Hello World!
+            12,Hello World!
+            """);
 
     // test responses to potential errors
     final Accept acceptText = Accept.create(MediaRanges.ALL_APPLICATION);

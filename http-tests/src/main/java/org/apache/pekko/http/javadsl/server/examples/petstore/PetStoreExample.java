@@ -39,12 +39,12 @@ public class PetStoreExample {
 
   // #marshall
   private static Route putPetHandler(Map<Integer, Pet> pets, Pet thePet) {
-    pets.put(thePet.getId(), thePet);
+    pets.put(thePet.id(), thePet);
     return complete(StatusCodes.OK, thePet, Jackson.<Pet>marshaller());
   }
 
   private static Route alternativeFuturePutPetHandler(Map<Integer, Pet> pets, Pet thePet) {
-    pets.put(thePet.getId(), thePet);
+    pets.put(thePet.id(), thePet);
     CompletableFuture<Pet> futurePet = CompletableFuture.supplyAsync(() -> thePet);
     return completeOKWithFuture(futurePet, Jackson.<Pet>marshaller());
   }
