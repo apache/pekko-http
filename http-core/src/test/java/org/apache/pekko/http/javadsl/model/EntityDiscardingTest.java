@@ -15,7 +15,7 @@ package org.apache.pekko.http.javadsl.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.apache.pekko.Done;
 import org.apache.pekko.actor.ActorSystem;
@@ -30,7 +30,7 @@ public class EntityDiscardingTest {
 
   private ActorSystem sys = ActorSystem.create("test");
   private Iterable<ByteString> testData =
-      Arrays.asList(ByteString.fromString("abc"), ByteString.fromString("def"));
+      List.of(ByteString.fromString("abc"), ByteString.fromString("def"));
 
   @Test
   public void testHttpRequestDiscardEntity() {

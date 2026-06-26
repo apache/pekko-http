@@ -31,8 +31,8 @@ import org.apache.pekko.util.ByteString;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 // #handleWebSocketMessages
 import static org.apache.pekko.http.javadsl.server.Directives.path;
@@ -63,7 +63,7 @@ public class WebSocketDirectivesExamplesTest extends JUnitJupiterRouteTest {
                             Source.single("Hello ")
                                 .concat(tm.getStreamedText())
                                 .concat(Source.single("!")));
-                    return Collections.singletonList(ret);
+                    return List.of(ret);
                   } else if (msg instanceof BinaryMessage bm) {
                     bm.getStreamedData().runWith(Sink.ignore(), materializer());
                     return Collections.emptyList();
@@ -110,7 +110,7 @@ public class WebSocketDirectivesExamplesTest extends JUnitJupiterRouteTest {
                             Source.single("Hello ")
                                 .concat(tm.getStreamedText())
                                 .concat(Source.single("!")));
-                    return Collections.singletonList(ret);
+                    return List.of(ret);
                   } else if (msg instanceof BinaryMessage bm) {
                     bm.getStreamedData().runWith(Sink.ignore(), materializer());
                     return Collections.emptyList();
@@ -135,12 +135,7 @@ public class WebSocketDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
     // WS creates a WebSocket request for testing
     testRoute(websocketMultipleProtocolRoute)
-        .run(
-            WS(
-                Uri.create("/services"),
-                wsClient.flow(),
-                materializer(),
-                Arrays.asList("other", "echo")))
+        .run(WS(Uri.create("/services"), wsClient.flow(), materializer(), List.of("other", "echo")))
         .assertHeaderExists(SecWebSocketProtocol.create("echo"));
 
     wsClient.sendMessage("Peter");
@@ -214,7 +209,7 @@ public class WebSocketDirectivesExamplesTest extends JUnitJupiterRouteTest {
                 Uri.create("/services"),
                 wsClient.flow(),
                 materializer(),
-                Arrays.asList("echo", "alfa", "kilo")))
+                List.of("echo", "alfa", "kilo")))
         .assertHeaderExists(SecWebSocketProtocol.create("echo"));
 
     wsClient.sendMessage("ping");

@@ -14,7 +14,6 @@
 package docs.http.javadsl;
 
 // #single-request-decoding-example
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -33,7 +32,7 @@ public class HttpClientDecodingExampleTest {
     final ActorSystem system = ActorSystem.create();
 
     final List<HttpRequest> httpRequests =
-        Arrays.asList(
+        List.of(
             HttpRequest.create("https://httpbin.org/gzip"), // Content-Encoding: gzip in response
             HttpRequest.create(
                 "https://httpbin.org/deflate"), // Content-Encoding: deflate in response

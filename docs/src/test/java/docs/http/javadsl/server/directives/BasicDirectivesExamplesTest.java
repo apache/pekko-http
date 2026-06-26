@@ -42,9 +42,8 @@ import scala.concurrent.ExecutionContext;
 import scala.concurrent.ExecutionContextExecutor;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -619,8 +618,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
         .run(
             HttpRequest.GET("/")
                 .withHeaders(
-                    Arrays.asList(
-                        RawHeader.create("id", "12345"), RawHeader.create("id2", "67890"))))
+                    List.of(RawHeader.create("id", "12345"), RawHeader.create("id2", "67890"))))
         .assertHeaderKindNotExists("id")
         .assertHeaderExists("id2", "67890");
     // #mapResponseHeaders
@@ -640,7 +638,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
     // ignore any rejections and replace them by AuthorizationFailedRejection
     final Route route =
         mapRejections(
-            rejections -> Collections.singletonList((Rejection) Rejections.authorizationFailed()),
+            rejections -> List.of((Rejection) Rejections.authorizationFailed()),
             () -> path("abc", () -> complete("abc")));
 
     // tests:
@@ -793,8 +791,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
     final Route route =
         mapRouteResult(
             rr -> {
-              final Iterable<Rejection> rejections =
-                  Collections.singletonList(Rejections.authorizationFailed());
+              final Iterable<Rejection> rejections = List.of(Rejections.authorizationFailed());
               return RouteResults.rejected(rejections);
             },
             () -> complete("abc"));
@@ -817,7 +814,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
                     Rejected.class,
                     rejected -> {
                       final Iterable<Rejection> rejections =
-                          Collections.singletonList(Rejections.authorizationFailed());
+                          List.of(Rejections.authorizationFailed());
                       return RouteResults.rejected(rejections);
                     })
                 .build(),
@@ -841,7 +838,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
                         CompletableFuture.supplyAsync(
                             () -> {
                               final Iterable<Rejection> rejections =
-                                  Collections.singletonList(Rejections.authorizationFailed());
+                                  List.of(Rejections.authorizationFailed());
                               return RouteResults.rejected(rejections);
                             }))
                 .build(),
@@ -863,7 +860,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
                     () -> {
                       if (rr instanceof Rejected) {
                         final Iterable<Rejection> rejections =
-                            Collections.singletonList(Rejections.authorizationFailed());
+                            List.of(Rejections.authorizationFailed());
                         return RouteResults.rejected(rejections);
                       } else {
                         return rr;
@@ -1123,8 +1120,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
     // tests:
     final Iterator iterator =
-        Arrays.asList(
-                ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
+        List.of(ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
             .iterator();
     final Source<ByteString, NotUsed> dataBytes = Source.fromIterator(() -> iterator);
 
@@ -1145,8 +1141,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
     // tests:
     final Iterator iterator =
-        Arrays.asList(
-                ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
+        List.of(ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
             .iterator();
     final Source<ByteString, NotUsed> dataBytes = Source.fromIterator(() -> iterator);
     testRoute(route)
@@ -1177,8 +1172,7 @@ public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
     // tests:
     final Iterator iterator =
-        Arrays.asList(
-                ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
+        List.of(ByteString.fromString("1"), ByteString.fromString("2"), ByteString.fromString("3"))
             .iterator();
     final Source<ByteString, NotUsed> dataBytes = Source.fromIterator(() -> iterator);
     testRoute(route)

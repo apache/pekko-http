@@ -29,8 +29,7 @@ import scala.concurrent.duration.FiniteDuration;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -90,8 +89,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
               return complete(StatusCodes.OK);
             });
 
-    Map<String, String> filenameMapping = new HashMap<>();
-    filenameMapping.put("filename", "primes.csv");
+    Map<String, String> filenameMapping = Map.of("filename", "primes.csv");
 
     org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
         Multiparts.createStrictFormDataFromParts(
@@ -137,10 +135,8 @@ public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
               return complete(StatusCodes.OK);
             });
 
-    Map<String, String> filenameMappingA = new HashMap<>();
-    Map<String, String> filenameMappingB = new HashMap<>();
-    filenameMappingA.put("filename", "primesA.csv");
-    filenameMappingB.put("filename", "primesB.csv");
+    Map<String, String> filenameMappingA = Map.of("filename", "primesA.csv");
+    Map<String, String> filenameMappingB = Map.of("filename", "primesB.csv");
 
     org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
         Multiparts.createStrictFormDataFromParts(
@@ -177,15 +173,14 @@ public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
                     CompletionStage<Integer> sumF =
                         byteSource
                             .via(Framing.delimiter(ByteString.fromString("\n"), 1024))
-                            .mapConcat(bs -> Arrays.asList(bs.utf8String().split(",")))
+                            .mapConcat(bs -> List.of(bs.utf8String().split(",")))
                             .map(s -> Integer.parseInt(s))
                             .runFold(0, (acc, n) -> acc + n, ctx.getMaterializer());
                     return onSuccess(sumF, sum -> complete("Sum: " + sum));
                   });
             });
 
-    Map<String, String> filenameMapping = new HashMap<>();
-    filenameMapping.put("filename", "primes.csv");
+    Map<String, String> filenameMapping = Map.of("filename", "primes.csv");
 
     org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
         Multiparts.createStrictFormDataFromParts(
@@ -222,7 +217,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
                                   // sum the numbers as they arrive
                                   return item.getValue()
                                       .via(Framing.delimiter(ByteString.fromString("\n"), 1024))
-                                      .mapConcat(bs -> Arrays.asList(bs.utf8String().split(",")))
+                                      .mapConcat(bs -> List.of(bs.utf8String().split(",")))
                                       .map(s -> Integer.parseInt(s))
                                       .runFold(0, (acc, n) -> acc + n, ctx.getMaterializer());
                                 })
@@ -236,10 +231,8 @@ public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
                   });
             });
 
-    Map<String, String> filenameMappingA = new HashMap<>();
-    Map<String, String> filenameMappingB = new HashMap<>();
-    filenameMappingA.put("filename", "primesA.csv");
-    filenameMappingB.put("filename", "primesB.csv");
+    Map<String, String> filenameMappingA = Map.of("filename", "primesA.csv");
+    Map<String, String> filenameMappingB = Map.of("filename", "primesB.csv");
 
     org.apache.pekko.http.javadsl.model.Multipart.FormData multipartForm =
         Multiparts.createStrictFormDataFromParts(
@@ -278,7 +271,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
                     CompletionStage<Integer> sumF =
                         byteSource
                             .via(Framing.delimiter(ByteString.fromString("\n"), 1024))
-                            .mapConcat(bs -> Arrays.asList(bs.utf8String().split(",")))
+                            .mapConcat(bs -> List.of(bs.utf8String().split(",")))
                             .map(s -> Integer.parseInt(s))
                             .runFold(0, (acc, n) -> acc + n, ctx.getMaterializer());
                     return onSuccess(sumF, sum -> complete("Sum: " + sum));
@@ -286,8 +279,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
               return fileUpload("csv", processUploadedFile);
             });
 
-    Map<String, String> filenameMapping = new HashMap<>();
-    filenameMapping.put("filename", "primes.csv");
+    Map<String, String> filenameMapping = Map.of("filename", "primes.csv");
 
     String prefix = "primes";
     String suffix = ".csv";
@@ -297,9 +289,7 @@ public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
       tempFile = Files.createTempFile(prefix, suffix).toFile();
       tempFile.deleteOnExit();
       Files.write(
-          tempFile.toPath(),
-          Arrays.asList("2,3,5", "7,11,13,17,23", "29,31,37"),
-          StandardCharsets.UTF_8);
+          tempFile.toPath(), List.of("2,3,5", "7,11,13,17,23", "29,31,37"), StandardCharsets.UTF_8);
     } catch (Exception e) {
       // ignore
     }

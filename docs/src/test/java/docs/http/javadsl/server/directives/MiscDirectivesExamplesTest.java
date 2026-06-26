@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
 
 // #withSizeLimitExample
@@ -189,11 +190,11 @@ public class MiscDirectivesExamplesTest extends JUnitJupiterRouteTest {
     // #selectPreferredLanguage
     final Route enRoute =
         selectPreferredLanguage(
-            Arrays.asList(Language.create("en"), Language.create("en-US")),
+            List.of(Language.create("en"), Language.create("en-US")),
             lang -> complete(lang.toString()));
     final Route deHuRoute =
         selectPreferredLanguage(
-            Arrays.asList(Language.create("de-DE"), Language.create("hu")),
+            List.of(Language.create("de-DE"), Language.create("hu")),
             lang -> complete(lang.toString()));
 
     // tests:

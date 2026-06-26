@@ -22,7 +22,6 @@ import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.List;
 
 // #multiple-headers
@@ -63,7 +62,7 @@ public class RespondWithDirectivesExamplesTest extends JUnitJupiterRouteTest {
   public void testMultipleHeaders() {
     // #multiple-headers
     final List<HttpHeader> headers =
-        Arrays.asList(
+        List.of(
             Origin.create(HttpOrigin.parse("http://pekko.apache.org")),
             RawHeader.create("X-Fish-Name", "Blippy"));
     respondWithDefaultHeaders(
@@ -151,7 +150,7 @@ public class RespondWithDirectivesExamplesTest extends JUnitJupiterRouteTest {
     final HttpHeader pekko = Origin.create(HttpOrigin.parse("http://pekko.apache.org"));
 
     final Route route =
-        path("foo", () -> respondWithHeaders(Arrays.asList(gonzo, pekko), () -> complete("beep")));
+        path("foo", () -> respondWithHeaders(List.of(gonzo, pekko), () -> complete("beep")));
 
     testRoute(route)
         .run(HttpRequest.GET("/foo"))
@@ -168,7 +167,7 @@ public class RespondWithDirectivesExamplesTest extends JUnitJupiterRouteTest {
     // custom headers
     final RawHeader blippy = RawHeader.create("X-Fish-Name", "Blippy");
     final HttpHeader pekko = Origin.create(HttpOrigin.parse("http://pekko.apache.org"));
-    final List<HttpHeader> defaultHeaders = Arrays.asList(blippy, pekko);
+    final List<HttpHeader> defaultHeaders = List.of(blippy, pekko);
     final RawHeader elTonno = RawHeader.create("X-Fish-Name", "El Tonno");
 
     // format: OFF

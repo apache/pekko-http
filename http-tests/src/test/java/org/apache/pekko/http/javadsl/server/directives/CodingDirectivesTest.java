@@ -15,8 +15,8 @@ package org.apache.pekko.http.javadsl.server.directives;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
@@ -60,8 +60,7 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testEncodingWhenDeflateRequestedAndGzipSupported() {
-    TestRoute route =
-        testRoute(encodeResponseWith(Arrays.asList(Coder.Gzip), () -> complete("tester")));
+    TestRoute route = testRoute(encodeResponseWith(List.of(Coder.Gzip), () -> complete("tester")));
 
     HttpRequest request =
         HttpRequest.create().addHeader(AcceptEncoding.create(HttpEncodings.DEFLATE));
@@ -93,9 +92,7 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
   public void testGzipDecoding() {
     TestRoute route =
         testRoute(
-            decodeRequestWith(
-                Collections.singleton(Coder.Gzip),
-                () -> extractEntity(entity -> complete(entity))));
+            decodeRequestWith(Set.of(Coder.Gzip), () -> extractEntity(entity -> complete(entity))));
 
     HttpRequest gzipRequest =
         HttpRequest.POST("/")

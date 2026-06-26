@@ -27,7 +27,7 @@ import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.util.ByteString;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import java.util.List;
 
 import static org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller.entityToString;
 
@@ -108,8 +108,7 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
   @Test
   public void testEncodeResponseWith() {
     // #encodeResponseWith
-    final Route route =
-        encodeResponseWith(Collections.singletonList(Coder.Gzip), () -> complete("content"));
+    final Route route = encodeResponseWith(List.of(Coder.Gzip), () -> complete("content"));
 
     // tests:
     testRoute(route)
@@ -132,7 +131,7 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
         .assertRejections(Rejections.unacceptedResponseEncoding(HttpEncodings.GZIP));
 
     final Route routeWithLevel9 =
-        encodeResponseWith(Collections.singletonList(Coder.GzipLevel9), () -> complete("content"));
+        encodeResponseWith(List.of(Coder.GzipLevel9), () -> complete("content"));
 
     testRoute(routeWithLevel9)
         .run(HttpRequest.GET("/"))

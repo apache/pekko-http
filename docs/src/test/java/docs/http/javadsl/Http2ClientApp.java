@@ -15,7 +15,7 @@ package docs.http.javadsl;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -58,7 +58,7 @@ public class Http2ClientApp {
         .apply(
             HttpRequest.create(
                     "https://pekko.apache.org/api/pekko/current/org/apache/pekko/actor/typed/scaladsl/index.html")
-                .withHeaders(Arrays.asList(AcceptEncoding.create(HttpEncodings.GZIP))))
+                .withHeaders(List.of(AcceptEncoding.create(HttpEncodings.GZIP))))
         .thenAccept(
             res -> {
               System.out.println("[1] Got index.html: " + res);
