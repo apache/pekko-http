@@ -18,12 +18,15 @@ import static org.apache.pekko.http.javadsl.server.Directives.*;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
 import org.apache.pekko.http.javadsl.model.headers.ContentEncoding;
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
 import org.apache.pekko.http.javadsl.testkit.*;
+import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.stream.javadsl.Compression;
 import org.apache.pekko.util.ByteString;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -72,38 +75,66 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
   }
 
   @Test
-  public void testAutomaticDecoding() {
+  public void testAutomaticDecoding() throws Exception {
     TestRoute route = testRoute(decodeRequest(() -> extractEntity(entity -> complete(entity))));
+
+    ByteString compressedDataDeflate =
+        Source.single(ByteString.fromString("abcdef"))
+            .via(Compression.deflate())
+            .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
+            .toCompletableFuture()
+            .get(); // Wait for result
 
     HttpRequest deflateRequest =
         HttpRequest.POST("/")
             .addHeader(ContentEncoding.create(HttpEncodings.DEFLATE))
-            .withEntity(Coder.Deflate.encode(ByteString.fromString("abcdef")));
+            .withEntity(compressedDataDeflate);
     route.run(deflateRequest).assertStatusCode(200).assertEntity("abcdef");
+
+    ByteString compressedDataGzip =
+        Source.single(ByteString.fromString("hijklmnopq"))
+            .via(Compression.gzip())
+            .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
+            .toCompletableFuture()
+            .get(); // Wait for result
 
     HttpRequest gzipRequest =
         HttpRequest.POST("/")
             .addHeader(ContentEncoding.create(HttpEncodings.GZIP))
-            .withEntity(Coder.Gzip.encode(ByteString.fromString("hijklmnopq")));
+            .withEntity(compressedDataGzip);
     route.run(gzipRequest).assertStatusCode(200).assertEntity("hijklmnopq");
   }
 
   @Test
-  public void testGzipDecoding() {
+  public void testGzipDecoding() throws Exception {
     TestRoute route =
         testRoute(
             decodeRequestWith(Set.of(Coder.Gzip), () -> extractEntity(entity -> complete(entity))));
 
+    ByteString compressedGzip =
+        Source.single(ByteString.fromString("hijklmnopq"))
+            .via(Compression.gzip())
+            .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
+            .toCompletableFuture()
+            .get(); // Wait for result
+
     HttpRequest gzipRequest =
         HttpRequest.POST("/")
             .addHeader(ContentEncoding.create(HttpEncodings.GZIP))
-            .withEntity(Coder.Gzip.encode(ByteString.fromString("hijklmnopq")));
+            .withEntity(compressedGzip);
     route.run(gzipRequest).assertStatusCode(200).assertEntity("hijklmnopq");
+
+    ByteString compressedDeflate =
+        Source.single(ByteString.fromString("abcdef"))
+            .via(Compression.deflate())
+            .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
+            .toCompletableFuture()
+            .get(); // Wait for result
 
     HttpRequest deflateRequest =
         HttpRequest.POST("/")
             .addHeader(ContentEncoding.create(HttpEncodings.DEFLATE))
-            .withEntity(Coder.Deflate.encode(ByteString.fromString("abcdef")));
+            .withEntity(compressedDeflate);
     route
         .run(deflateRequest)
         .assertStatusCode(400)
