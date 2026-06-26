@@ -18,6 +18,7 @@ import java.nio.file.attribute.{ PosixFileAttributeView, PosixFilePermission }
 import sbtdynver.GitDescribeOutput
 import spray.boilerplate.BoilerplatePlugin
 import com.lightbend.paradox.apidoc.ApidocPlugin.autoImport.apidocRootPackage
+import com.github.sbt.junit.jupiter.sbt.Import.JupiterKeys
 
 sourceDistName := "apache-pekko-http"
 sourceDistIncubating := false
@@ -26,6 +27,9 @@ ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
 
 ThisBuild / javafmtFormatterCompatibleJavaVersion := 17
 ThisBuild / javafmtSortImports := false
+
+ThisBuild / JupiterKeys.junitJupiterVersion := "6.1.0"
+ThisBuild / JupiterKeys.junitPlatformVersion := "6.1.0"
 
 addCommandAlias("checkCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; javafmtCheckAll; +headerCheckAll")
 addCommandAlias("applyCodeStyle", "+headerCreateAll; scalafmtAll; scalafmtSbt; javafmtAll")
