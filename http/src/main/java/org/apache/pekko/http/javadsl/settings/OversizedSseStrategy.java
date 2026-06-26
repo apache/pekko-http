@@ -43,18 +43,16 @@ public enum OversizedSseStrategy {
 
   /** Convert this Java enum to the corresponding Scala enum value. */
   public org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy asScala() {
-    switch (this) {
-      case FailStream:
-        return org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.FailStream$.MODULE$;
-      case LogAndSkip:
-        return org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.LogAndSkip$.MODULE$;
-      case Truncate:
-        return org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.Truncate$.MODULE$;
-      case DeadLetter:
-        return org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.DeadLetter$.MODULE$;
-      default:
-        throw new IllegalArgumentException("Unknown OversizedSseStrategy: " + this);
-    }
+    return switch (this) {
+      case FailStream ->
+          org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.FailStream$.MODULE$;
+      case LogAndSkip ->
+          org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.LogAndSkip$.MODULE$;
+      case Truncate ->
+          org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.Truncate$.MODULE$;
+      case DeadLetter ->
+          org.apache.pekko.http.scaladsl.settings.OversizedSseStrategy.DeadLetter$.MODULE$;
+    };
   }
 
   /** Convert from a Scala enum value to the corresponding Java enum value. */
