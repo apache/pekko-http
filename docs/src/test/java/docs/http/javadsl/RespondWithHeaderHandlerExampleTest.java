@@ -15,7 +15,7 @@ package docs.http.javadsl;
 
 // #respond-with-header-exceptionhandler-example
 
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.concurrent.CompletionStage;
