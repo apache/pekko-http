@@ -19,14 +19,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.pekko.NotUsed;
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
 import org.apache.pekko.http.javadsl.model.headers.ContentEncoding;
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
 import org.apache.pekko.http.javadsl.testkit.*;
-import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.stream.javadsl.Compression;
+import org.apache.pekko.stream.javadsl.Flow;
+import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -78,30 +80,18 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
   public void testAutomaticDecoding() throws Exception {
     TestRoute route = testRoute(decodeRequest(() -> extractEntity(entity -> complete(entity))));
 
-    ByteString compressedDataDeflate =
-        Source.single(ByteString.fromString("abcdef"))
-            .via(Compression.deflate())
-            .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
-            .toCompletableFuture()
-            .get(); // Wait for result
-
+    ByteString compressedDeflate = compress("abcdef", Compression.deflate());
     HttpRequest deflateRequest =
         HttpRequest.POST("/")
             .addHeader(ContentEncoding.create(HttpEncodings.DEFLATE))
-            .withEntity(compressedDataDeflate);
+            .withEntity(compressedDeflate);
     route.run(deflateRequest).assertStatusCode(200).assertEntity("abcdef");
 
-    ByteString compressedDataGzip =
-        Source.single(ByteString.fromString("hijklmnopq"))
-            .via(Compression.gzip())
-            .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
-            .toCompletableFuture()
-            .get(); // Wait for result
-
+    ByteString compressedGzip = compress("hijklmnopq", Compression.gzip());
     HttpRequest gzipRequest =
         HttpRequest.POST("/")
             .addHeader(ContentEncoding.create(HttpEncodings.GZIP))
-            .withEntity(compressedDataGzip);
+            .withEntity(compressedGzip);
     route.run(gzipRequest).assertStatusCode(200).assertEntity("hijklmnopq");
   }
 
@@ -111,26 +101,14 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
         testRoute(
             decodeRequestWith(Set.of(Coder.Gzip), () -> extractEntity(entity -> complete(entity))));
 
-    ByteString compressedGzip =
-        Source.single(ByteString.fromString("hijklmnopq"))
-            .via(Compression.gzip())
-            .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
-            .toCompletableFuture()
-            .get(); // Wait for result
-
+    ByteString compressedGzip = compress("hijklmnopq", Compression.gzip());
     HttpRequest gzipRequest =
         HttpRequest.POST("/")
             .addHeader(ContentEncoding.create(HttpEncodings.GZIP))
             .withEntity(compressedGzip);
     route.run(gzipRequest).assertStatusCode(200).assertEntity("hijklmnopq");
 
-    ByteString compressedDeflate =
-        Source.single(ByteString.fromString("abcdef"))
-            .via(Compression.deflate())
-            .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
-            .toCompletableFuture()
-            .get(); // Wait for result
-
+    ByteString compressedDeflate = compress("abcdef", Compression.deflate());
     HttpRequest deflateRequest =
         HttpRequest.POST("/")
             .addHeader(ContentEncoding.create(HttpEncodings.DEFLATE))
@@ -139,5 +117,14 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
         .run(deflateRequest)
         .assertStatusCode(400)
         .assertEntity("The request's Content-Encoding is not supported. Expected:\ngzip");
+  }
+
+  private ByteString compress(String input, Flow<ByteString, ByteString, NotUsed> compressionFlow)
+      throws Exception {
+    return Source.single(ByteString.fromString(input))
+        .via(compressionFlow)
+        .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
+        .toCompletableFuture()
+        .get(); // Wait for result
   }
 }
