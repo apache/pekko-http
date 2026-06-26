@@ -20,6 +20,7 @@ import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -126,7 +127,7 @@ public class CustomDirectivesExamplesTest extends JUnitJupiterRouteTest {
         (credentials) -> {
           if (credentials.userId.equals("admin") && credentials.safeSecretVerification("secret"))
             return Set.of(MyRole.USER, MyRole.ADMIN);
-          else return Set.of();
+          else return Collections.emptySet();
         };
 
     // and then using the custom route

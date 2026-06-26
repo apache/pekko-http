@@ -31,6 +31,7 @@ import org.apache.pekko.util.ByteString;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 
 // #handleWebSocketMessages
@@ -65,7 +66,7 @@ public class WebSocketDirectivesExamplesTest extends JUnitJupiterRouteTest {
                     return List.of(ret);
                   } else if (msg instanceof BinaryMessage bm) {
                     bm.getStreamedData().runWith(Sink.ignore(), materializer());
-                    return List.of();
+                    return Collections.emptyList();
                   } else {
                     throw new IllegalArgumentException("Unsupported message type!");
                   }
@@ -112,7 +113,7 @@ public class WebSocketDirectivesExamplesTest extends JUnitJupiterRouteTest {
                     return List.of(ret);
                   } else if (msg instanceof BinaryMessage bm) {
                     bm.getStreamedData().runWith(Sink.ignore(), materializer());
-                    return List.of();
+                    return Collections.emptyList();
                   } else {
                     throw new IllegalArgumentException("Unsupported message type!");
                   }
@@ -176,7 +177,7 @@ public class WebSocketDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
     // WS creates a WebSocket request for testing
     testRoute(websocketRoute)
-        .run(WS(Uri.create("/services"), wsClient.flow(), materializer(), List.of()))
+        .run(WS(Uri.create("/services"), wsClient.flow(), materializer(), Collections.emptyList()))
         .assertHeaderExists(SecWebSocketProtocol.create("echo"));
 
     wsClient.sendMessage("ping");

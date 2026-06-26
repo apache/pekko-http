@@ -17,6 +17,7 @@ import static org.apache.pekko.http.impl.util.Util.convertArray;
 import static org.apache.pekko.http.impl.util.Util.convertMapToScala;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Map;
 import org.apache.pekko.http.ccompat.MapHelpers;
 import org.apache.pekko.stream.javadsl.Source;
@@ -108,7 +109,7 @@ public final class Multiparts {
   public static Multipart.FormData.BodyPart createFormDataBodyPart(
       String name, BodyPartEntity entity) {
     List nil = Nil$.MODULE$;
-    Map<String, String> additionalDispositionParams = Map.of();
+    Map<String, String> additionalDispositionParams = Collections.emptyMap();
     return org.apache.pekko.http.scaladsl.model.Multipart$FormData$BodyPart$Builder$.MODULE$.create(
         name,
         (org.apache.pekko.http.scaladsl.model.BodyPartEntity) entity,
@@ -144,7 +145,7 @@ public final class Multiparts {
   public static Multipart.FormData.BodyPart.Strict createFormDataBodyPartStrict(
       String name, HttpEntity.Strict entity) {
     List nil = Nil$.MODULE$;
-    Map<String, String> additionalDispositionParams = Map.of();
+    Map<String, String> additionalDispositionParams = Collections.emptyMap();
     return org.apache.pekko.http.scaladsl.model.Multipart$FormData$BodyPart$StrictBuilder$.MODULE$
         .createStrict(
             name,
