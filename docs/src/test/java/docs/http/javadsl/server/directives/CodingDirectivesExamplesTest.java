@@ -144,7 +144,7 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
   }
 
   @Test
-  public void testDecodeRequest() {
+  public void testDecodeRequest() throws Exception {
     // #decodeRequest
     final ByteString helloGzipped = compress("Hello", Compression.gzip());
     final ByteString helloDeflated = compress("Hello", Compression.deflate());
@@ -180,7 +180,7 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
   }
 
   @Test
-  public void testDecodeRequestWith() {
+  public void testDecodeRequestWith() throws Exception {
     // #decodeRequestWith
     final ByteString helloGzipped = compress("Hello", Compression.gzip());
     final ByteString helloDeflated = compress("Hello", Compression.deflate());
@@ -217,7 +217,7 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
   }
 
   @Test
-  public void testWithPrecompressedMediaTypeSupport() {
+  public void testWithPrecompressedMediaTypeSupport() throws Exception {
     // #withPrecompressedMediaTypeSupport
     final ByteString svgz = compress("<svg/>", Compression.gzip());
 
