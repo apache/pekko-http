@@ -131,7 +131,7 @@ public abstract class HttpApp extends AllDirectives {
           .handle(
               (success, exception) -> {
                 postServerShutdown(Optional.ofNullable(exception), theSystem);
-                if (!system.isPresent()) {
+                if (system.isEmpty()) {
                   // we created the system. we should cleanup!
                   theSystem.terminate();
                 }
