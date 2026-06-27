@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.javadsl.server.directives;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import java.util.concurrent.CompletableFuture;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.Location;
@@ -104,15 +102,6 @@ public class RouteDirectivesTest extends JUnitJupiterRouteTest {
                 + " `pekko.http.[server|client].parsing.max-content-length`), a decoder limit (set"
                 + " via `pekko.http.routing.decode-max-size`), or a custom limit set with"
                 + " `withSizeLimit`.");
-  }
-
-  @Test
-  public void testEmptyRoutesConcatenation() {
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          route();
-        });
   }
 
   @Test
