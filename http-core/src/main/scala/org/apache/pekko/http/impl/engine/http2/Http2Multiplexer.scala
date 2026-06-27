@@ -194,9 +194,10 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
                 else WaitingForNetworkToSendData
               }
             case PullFrameResult.SendFrameAndTrailer(frame, trailer) =>
-              send(frame)
-              controlFrameBuffer += trailer
-              WaitingForNetworkToSendControlFrames
+              pushFrameOut(CompositeFrame(frame :: trailer :: Nil))
+              connectionWindowLeft -= frame.payload.length
+              if (sendableOutstreams.isEmpty) Idle
+              else WaitingForNetworkToSendData
           }
         }
       }
