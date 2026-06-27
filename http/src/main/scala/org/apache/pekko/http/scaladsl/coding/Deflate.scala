@@ -18,7 +18,7 @@ import pekko.annotation.InternalApi
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.HttpEncodings
 
-@InternalApi // used by javadsl.Coder
+@InternalApi // used by javadsl.coding.Coder
 @deprecated("Actual implementation of Deflate is internal API, use Coders.Deflate instead", since = "Akka HTTP 10.2.0")
 class Deflate private[http] (compressionLevel: Int, val messageFilter: HttpMessage => Boolean) extends Coder
     with StreamDecoder {
@@ -30,9 +30,9 @@ class Deflate private[http] (compressionLevel: Int, val messageFilter: HttpMessa
   private[http] def newCompressor = new DeflateCompressor(compressionLevel)
   def newDecompressorStage(maxBytesPerChunk: Int) = () => new DeflateDecompressor(maxBytesPerChunk)
 
-  @InternalApi // used by javadsl.Coder
+  @InternalApi // used by javadsl.coding.Coder
   private[http] def withLevel(level: Int): Deflate = new Deflate(level, messageFilter)
 }
-@InternalApi // used by javadsl.Coder
+@InternalApi // used by javadsl.coding.Coder
 @deprecated("Actual implementation of Deflate is internal API, use Coders.Deflate instead", since = "Akka HTTP 10.2.0")
 object Deflate extends Deflate(Encoder.DefaultFilter)
