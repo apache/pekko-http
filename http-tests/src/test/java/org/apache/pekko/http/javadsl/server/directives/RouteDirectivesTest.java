@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.javadsl.server.directives;
 
-
 import java.util.concurrent.CompletableFuture;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.Location;

@@ -19,6 +19,8 @@
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.coding.Coder.encode")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.server.Directives.extractUpgradeToWebSocket")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.server.directives.WebSocketDirectives.extractUpgradeToWebSocket")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.server.Directives.route")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.server.directives.RouteDirectives.route")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.RoutingSettings.getFileIODispatcher")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.RoutingSettings.withFileIODispatcher")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.unmarshalling.sse.EventStreamUnmarshalling.fromEventStream")
