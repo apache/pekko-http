@@ -152,7 +152,7 @@ object Coroner {
     def dumpAllThreads: Seq[ThreadInfo] = {
       threadMx.dumpAllThreads(
         threadMx.isObjectMonitorUsageSupported,
-        threadMx.isSynchronizerUsageSupported)
+        threadMx.isSynchronizerUsageSupported).toIndexedSeq
     }
 
     def findDeadlockedThreads: (Seq[ThreadInfo], String) = {
@@ -165,7 +165,7 @@ object Coroner {
         (Seq.empty, desc)
       } else {
         val maxTraceDepth = 1000 // Seems deep enough
-        (threadMx.getThreadInfo(ids, maxTraceDepth), desc)
+        (threadMx.getThreadInfo(ids, maxTraceDepth).toIndexedSeq, desc)
       }
     }
 
