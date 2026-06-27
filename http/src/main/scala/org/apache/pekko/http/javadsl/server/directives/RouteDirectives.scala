@@ -48,23 +48,6 @@ abstract class RouteDirectives extends RespondWithDirectives {
   private implicit val conversionExecutionContext: ExecutionContext = ExecutionContext.parasitic
 
   /**
-   * Java-specific call added so you can chain together multiple alternate routes using comma,
-   * rather than having to explicitly call route1.orElse(route2).orElse(route3).
-   * @deprecated Use the `RouteDirectives.concat` method instead.
-   */
-  @Deprecated(since = "Akka HTTP 10.1.6")
-  @deprecated("Use the RouteDirectives.concat method instead.", "Akka HTTP 10.1.6")
-  @CorrespondsTo("concat")
-  @varargs def route(alternatives: Route*): Route = RouteAdapter {
-    import pekko.http.scaladsl.server.Directives._
-
-    if (alternatives.isEmpty)
-      throw new IllegalArgumentException("Chaining empty list of routes is illegal.")
-
-    alternatives.map(_.delegate).reduce(_ ~ _)
-  }
-
-  /**
    * Used to chain multiple alternate routes using comma,
    * rather than having to explicitly call route1.orElse(route2).orElse(route3).
    */

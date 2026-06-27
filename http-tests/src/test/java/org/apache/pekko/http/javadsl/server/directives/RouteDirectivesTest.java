@@ -107,15 +107,6 @@ public class RouteDirectivesTest extends JUnitJupiterRouteTest {
   }
 
   @Test
-  public void testEmptyRoutesConcatenation() {
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          route();
-        });
-  }
-
-  @Test
   public void testRouteFromFunction() {
     TestRoute route =
         testRoute(
