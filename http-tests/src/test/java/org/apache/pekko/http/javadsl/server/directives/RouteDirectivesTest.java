@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.javadsl.server.directives;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.concurrent.CompletableFuture;
 import org.apache.pekko.http.javadsl.model.*;
