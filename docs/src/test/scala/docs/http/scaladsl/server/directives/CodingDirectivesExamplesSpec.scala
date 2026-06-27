@@ -21,9 +21,11 @@ import pekko.http.scaladsl.model.headers.HttpEncodings._
 import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.server._
 import pekko.util.ByteString
-import scala.annotation.nowarn
 import docs.CompileOnlySpec
 import org.scalatest.matchers.Matcher
+
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
 
 class CodingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
   "responseEncodingAccepted" in {
@@ -171,6 +173,6 @@ class CodingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
       (_: HttpResponse).header[`Content-Encoding`].map(_.encodings.head).getOrElse(HttpEncodings.identity)
     }
 
-  @nowarn("msg=encode in trait Encoder is deprecated")
-  def compress(input: String, encoder: Coder): ByteString = encoder.encode(ByteString(input))
+  def compress(input: String, encoder: Coder): ByteString =
+    Await.result(encoder.encodeAsync(ByteString(input)), 10.seconds)
 }

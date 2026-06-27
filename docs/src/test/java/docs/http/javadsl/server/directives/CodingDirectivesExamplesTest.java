@@ -13,6 +13,7 @@
 
 package docs.http.javadsl.server.directives;
 
+import org.apache.pekko.NotUsed;
 import org.apache.pekko.http.javadsl.model.HttpEntities;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
@@ -25,6 +26,9 @@ import org.apache.pekko.http.javadsl.server.Rejections;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.util.ByteString;
+import org.apache.pekko.stream.javadsl.Compression;
+import org.apache.pekko.stream.javadsl.Flow;
+import org.apache.pekko.stream.javadsl.Source;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -140,10 +144,10 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
   }
 
   @Test
-  public void testDecodeRequest() {
+  public void testDecodeRequest() throws Exception {
     // #decodeRequest
-    final ByteString helloGzipped = Coder.Gzip.encode(ByteString.fromString("Hello"));
-    final ByteString helloDeflated = Coder.Deflate.encode(ByteString.fromString("Hello"));
+    final ByteString helloGzipped = compress("Hello", Compression.gzip());
+    final ByteString helloDeflated = compress("Hello", Compression.deflate());
 
     final Route route =
         decodeRequest(
@@ -176,10 +180,10 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
   }
 
   @Test
-  public void testDecodeRequestWith() {
+  public void testDecodeRequestWith() throws Exception {
     // #decodeRequestWith
-    final ByteString helloGzipped = Coder.Gzip.encode(ByteString.fromString("Hello"));
-    final ByteString helloDeflated = Coder.Deflate.encode(ByteString.fromString("Hello"));
+    final ByteString helloGzipped = compress("Hello", Compression.gzip());
+    final ByteString helloDeflated = compress("Hello", Compression.deflate());
 
     final Route route =
         decodeRequestWith(
@@ -213,9 +217,9 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
   }
 
   @Test
-  public void testWithPrecompressedMediaTypeSupport() {
+  public void testWithPrecompressedMediaTypeSupport() throws Exception {
     // #withPrecompressedMediaTypeSupport
-    final ByteString svgz = Coder.Gzip.encode(ByteString.fromString("<svg/>"));
+    final ByteString svgz = compress("<svg/>", Compression.gzip());
 
     final Route route =
         withPrecompressedMediaTypeSupport(
@@ -231,5 +235,14 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
         .assertMediaType(MediaTypes.IMAGE_SVG_XML)
         .assertHeaderExists(ContentEncoding.create(HttpEncodings.GZIP));
     // #withPrecompressedMediaTypeSupport
+  }
+
+  private ByteString compress(String input, Flow<ByteString, ByteString, NotUsed> compressionFlow)
+      throws Exception {
+    return Source.single(ByteString.fromString(input))
+        .via(compressionFlow)
+        .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
+        .toCompletableFuture()
+        .get(); // Wait for result
   }
 }
