@@ -32,5 +32,20 @@ class HttpMethodsSpec extends AnyWordSpec {
     "return HttpMethods.OPTIONS" in {
       assert(HttpMethods.getForKeyCaseInsensitive("oPtIoNs") == Option(HttpMethods.OPTIONS))
     }
+    "return HttpMethods.QUERY" in {
+      assert(HttpMethods.getForKeyCaseInsensitive("query") == Option(HttpMethods.QUERY))
+    }
+  }
+
+  "HttpMethods.QUERY" must {
+    "be safe per RFC 10008" in {
+      assert(HttpMethods.QUERY.isSafe)
+    }
+    "be idempotent per RFC 10008" in {
+      assert(HttpMethods.QUERY.isIdempotent)
+    }
+    "expect a request entity per RFC 10008" in {
+      assert(HttpMethods.QUERY.requestEntityAcceptance == RequestEntityAcceptance.Expected)
+    }
   }
 }

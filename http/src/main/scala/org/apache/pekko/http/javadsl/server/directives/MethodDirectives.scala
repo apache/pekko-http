@@ -47,6 +47,10 @@ abstract class MethodDirectives extends MarshallingDirectives {
     D.put { inner.get.delegate }
   }
 
+  def query(inner: function.Supplier[Route]): Route = RouteAdapter {
+    D.query { inner.get.delegate }
+  }
+
   def extractMethod(inner: function.Function[HttpMethod, Route]) = RouteAdapter {
     D.extractMethod { m =>
       inner.apply(m).delegate

@@ -114,6 +114,7 @@ object HttpMethods extends ObjectRegistry[String, HttpMethod] {
   val PATCH   = register(HttpMethod("PATCH"  , isSafe = false, isIdempotent = false, requestEntityAcceptance = Expected,   contentLengthAllowed = contentLengthAllowedCommon))
   val POST    = register(HttpMethod("POST"   , isSafe = false, isIdempotent = false, requestEntityAcceptance = Expected,   contentLengthAllowed = contentLengthAllowedCommon))
   val PUT     = register(HttpMethod("PUT"    , isSafe = false, isIdempotent = true , requestEntityAcceptance = Expected,   contentLengthAllowed = contentLengthAllowedCommon))
+  val QUERY   = register(HttpMethod("QUERY"  , isSafe = true , isIdempotent = true , requestEntityAcceptance = Expected,   contentLengthAllowed = contentLengthAllowedCommon))
   val TRACE   = register(HttpMethod("TRACE"  , isSafe = true , isIdempotent = true , requestEntityAcceptance = Disallowed, contentLengthAllowed = contentLengthAllowedCommon))
   // format: ON
 

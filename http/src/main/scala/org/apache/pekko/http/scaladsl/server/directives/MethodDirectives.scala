@@ -80,6 +80,13 @@ trait MethodDirectives {
   def put: Directive0 = _put
 
   /**
+   * Rejects all non-QUERY requests.
+   *
+   * @group method
+   */
+  def query: Directive0 = _query
+
+  /**
    * Extracts the request method.
    *
    * @group method
@@ -133,5 +140,6 @@ object MethodDirectives extends MethodDirectives {
   private val _patch  : Directive0 = method(PATCH)
   private val _post   : Directive0 = method(POST)
   private val _put    : Directive0 = method(PUT)
+  private val _query  : Directive0 = method(QUERY)
   // format: ON
 }

@@ -83,4 +83,9 @@ public abstract class HttpRequest
   public static HttpRequest OPTIONS(String uri) {
     return create(uri).withMethod(HttpMethods.OPTIONS);
   }
+
+  /** A default QUERY request to be modified using the `withX` methods. */
+  public static HttpRequest QUERY(String uri) {
+    return create(uri).withMethod(HttpMethods.QUERY);
+  }
 }

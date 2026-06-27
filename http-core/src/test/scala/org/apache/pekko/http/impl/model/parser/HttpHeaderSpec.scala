@@ -120,6 +120,56 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Accept-Ranges: none" =!= `Accept-Ranges`()
     }
 
+    "Accept-Query" in {
+      "Accept-Query: " =!= `Accept-Query`(Seq.empty[MediaRange])
+      // basic token form
+      "Accept-Query: application/json" =!= `Accept-Query`(MediaTypes.`application/json`)
+      // multiple media ranges
+      "Accept-Query: application/json, text/xml" =!=
+        `Accept-Query`(MediaTypes.`application/json`, MediaTypes.`text/xml`)
+      // full wildcard
+      "Accept-Query: */*" =!= `Accept-Query`(MediaRanges.`*/*`)
+      // type wildcard
+      "Accept-Query: application/*" =!= `Accept-Query`(MediaRanges.`application/*`)
+      // RFC 9651 Structured Fields: quoted string form (application/jsonpath is not predefined)
+      val jsonPath = MediaType.customBinary("application", "jsonpath", MediaType.Compressible,
+        allowArbitrarySubtypes = true)
+      """Accept-Query: "application/jsonpath"""" =!=
+        `Accept-Query`(jsonPath).renderedTo("application/jsonpath")
+      // RFC 10008 requires the string form for media ranges that are not valid Structured Field tokens
+      val leadingDigit = MediaType.customBinary("3", "example", MediaType.Compressible, allowArbitrarySubtypes = true)
+      """Accept-Query: "3/example"""" =!=
+        `Accept-Query`(leadingDigit).renderedTo(""""3/example"""")
+      // RFC 10008 Section 3.2 example: mixed token and quoted-string forms with parameters
+      """Accept-Query: "application/jsonpath", application/sql;charset="UTF-8"""" =!=
+        `Accept-Query`(
+          jsonPath,
+          MediaType.customBinary("application", "sql", MediaType.Compressible,
+            params = Map("charset" -> "UTF-8"), allowArbitrarySubtypes = true))
+          .renderedTo("application/jsonpath, application/sql;charset=UTF-8")
+      // Accept-Query parameters are Structured Field parameters, not Accept q-values
+      "Accept-Query: application/json;q=quality" =!=
+        `Accept-Query`(MediaTypes.`application/json`.withParams(Map("q" -> "quality")))
+          .renderedTo("application/json;q=quality")
+      """Accept-Query: application/json;q="0.5"""" =!=
+        `Accept-Query`(MediaTypes.`application/json`.withParams(Map("q" -> "0.5")))
+          .renderedTo("""application/json;q="0.5"""")
+      val headerWithQValue = `Accept-Query`(MediaTypes.`application/json`.withQValue(0.8)).unsafeToString
+      headerWithQValue shouldEqual "Accept-Query: application/json"
+      val headerWithQParam = `Accept-Query`(MediaTypes.`application/json`.withParams(Map("charset" -> "utf-8",
+        "q" -> "0.5"))).unsafeToString
+      headerWithQParam shouldEqual """Accept-Query: application/json;charset=utf-8;q="0.5""""
+      val HttpHeader.ParsingResult.Ok(wildcardWithQParam, Nil) =
+        HttpHeader.parse("Accept-Query", """application/*;q="0.5"""")
+      wildcardWithQParam.unsafeToString shouldEqual """Accept-Query: application/*;q="0.5""""
+      HttpHeader.parse("Accept-Query", "*").errors should not be empty
+      HttpHeader.parse("Accept-Query", "*/json").errors should not be empty
+      HttpHeader.parse("Accept-Query", "3/example").errors should not be empty
+      HttpHeader.parse("Accept-Query", "application/json;q=0.8").errors should not be empty
+      HttpHeader.parse("Accept-Query", "application/json;Charset=UTF-8").errors should not be empty
+      HttpHeader.parse("Accept-Query", """"application/json/extra"""").errors should not be empty
+    }
+
     "Accept-Encoding" in {
       "Accept-Encoding: compress, gzip, fancy" =!=
         `Accept-Encoding`(compress, gzip, HttpEncoding.custom("fancy"))

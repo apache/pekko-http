@@ -206,6 +206,7 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
     "render in response" in {
       val responseHeaders = Vector[HttpHeader](
         `Accept-Ranges`(RangeUnits.Bytes),
+        `Accept-Query`(MediaTypes.`application/json`),
         `Access-Control-Allow-Credentials`(true),
         `Access-Control-Allow-Headers`("X-Custom"),
         `Access-Control-Allow-Methods`(HttpMethods.GET),
