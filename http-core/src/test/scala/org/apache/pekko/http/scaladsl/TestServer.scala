@@ -41,10 +41,7 @@ object TestServer extends App {
     """)
   implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
 
-  val settings = ActorMaterializerSettings(system)
-    //    .withSyncProcessingLimit(Int.MaxValue)
-    .withInputBuffer(128, 128)
-  implicit val fm: Materializer = ActorMaterializer(settings)
+  implicit val fm: Materializer = Materializer(system)
   try {
     val binding = Http().newServerAt("localhost", 9001).bindSync {
       case req @ HttpRequest(GET, Uri.Path("/"), _, _, _) =>
