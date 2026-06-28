@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.marshallers.sprayjson
 
-
 import spray.json._
 
 import org.apache.pekko

@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.model.ws
 
-
 import scala.collection.immutable
 
 import org.apache.pekko.http.scaladsl.model.{ HttpHeader, Uri }
