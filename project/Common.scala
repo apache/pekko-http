@@ -37,16 +37,18 @@ object Common extends AutoPlugin {
     scalacOptions ++= onlyOnScala2(Seq(
       "-Xlint",
       "-Ywarn-dead-code",
+      "-Xfatal-warnings",
       // Exhaustivity checking is only useful for simple sealed hierarchies and matches without filters.
       // In all other cases, the warning is non-actionable: you get spurious warnings that need to be suppressed
       // verbosely. So, opt out of those in general.
       "-Wconf:cat=other-match-analysis&msg=match may not be exhaustive:s")).value,
     scalacOptions ++= onlyOnScala3(Seq(
-      "-Wconf:cat=deprecation:s")).value,
+      "-Werror")).value,
     scalacOptions ++= onlyOnScala3Below39(Seq("-Yfuture-lazy-vals")).value,
     javacOptions ++=
       Seq("-encoding", "UTF-8", "--release", javacTarget),
     mimaReportSignatureProblems := true,
+    Compile / doc / scalacOptions --= Seq("-Xfatal-warnings"),
     Global / parallelExecution := sys.props.getOrElse("pekko.http.parallelExecution", "true") != "false")
 
   val javacTarget: String = "17"
