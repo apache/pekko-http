@@ -15,7 +15,6 @@ package org.apache.pekko.http.impl
 
 import java.nio.charset.StandardCharsets
 
-import language.implicitConversions
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ Await, Future }
 import scala.reflect.ClassTag

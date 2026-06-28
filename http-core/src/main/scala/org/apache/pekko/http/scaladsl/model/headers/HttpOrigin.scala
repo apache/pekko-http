@@ -22,7 +22,6 @@ import pekko.http.scaladsl.model.Uri
 import org.parboiled2.UTF8
 
 import scala.collection.immutable
-import scala.language.implicitConversions
 
 abstract class HttpOriginRange extends jm.headers.HttpOriginRange with ValueRenderable {
   def matches(origin: HttpOrigin): Boolean

@@ -49,7 +49,6 @@ object Http extends ExtensionId[Http] with ExtensionIdProvider {
 class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
   import scala.concurrent.ExecutionContext.{ parasitic => ec }
 
-  import language.implicitConversions
   private implicit def completionStageCovariant[T, U >: T](in: CompletionStage[T]): CompletionStage[U] =
     in.asInstanceOf[CompletionStage[U]]
 

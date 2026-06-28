@@ -30,7 +30,6 @@ import scala.collection.immutable
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
-import scala.language.implicitConversions
 
 /**
  * Public API but not intended for subclassing

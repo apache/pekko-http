@@ -14,7 +14,6 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.lang.{ Iterable => JIterable }
-import language.implicitConversions
 import scala.collection.immutable
 import scala.util.Try
 import java.nio.charset.Charset

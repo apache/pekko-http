@@ -19,7 +19,6 @@ import java.lang.{ Iterable => JIterable }
 import java.util.OptionalLong
 import java.util.concurrent.CompletionStage
 
-import scala.language.implicitConversions
 import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.concurrent.duration._

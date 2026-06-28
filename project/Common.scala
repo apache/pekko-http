@@ -31,6 +31,7 @@ object Common extends AutoPlugin {
       "-deprecation",
       "-encoding", "UTF-8", // yes, this is 2 args
       "-unchecked",
+      "-language:implicitConversions",
       "-Wconf:msg=reached max recursion depth:s",
       "-Wconf:msg=Prefer the Scala annotation over Java's `@Deprecated`:s",
       "-release:" + javacTarget),
@@ -42,11 +43,24 @@ object Common extends AutoPlugin {
       // In all other cases, the warning is non-actionable: you get spurious warnings that need to be suppressed
       // verbosely. So, opt out of those in general.
       "-Wconf:cat=other-match-analysis&msg=match may not be exhaustive:s",
-      "-Wconf:msg=inferred structural type:s")).value,
+      "-Wconf:msg=inferred structural type:s",
+      "-Wconf:msg=is already introduced in an enclosing scope:s",
+      "-Wconf:msg=will be easy to mistake for calls to:s",
+      "-Wconf:msg=Pattern definition introduces Unit-valued member:s",
+      "-Wconf:msg=type was inferred to be `Any`:s",
+      "-Wconf:msg=Overloaded implicit conversions:s",
+      "-Wconf:msg=getClass not selected from this instance:s",
+      "-Wconf:cat=deprecation:s")).value,
     scalacOptions ++= onlyOnScala3(Seq(
       "-Werror",
-      "-Wconf:msg=Suspicious top-level unqualified call to synchronized:s",
-      "-Wconf:msg=overrides concrete, non-deprecated definition:s")).value,
+      "-Wconf:msg=Suspicious top-level unqualified call:s",
+      "-Wconf:msg=overrides concrete:s",
+      "-Wconf:msg=Unreachable case except for null:s",
+      "-Wconf:msg=match may not be exhaustive:s",
+      "-Wconf:msg=type test for.*cannot be checked at runtime:s",
+      "-Wconf:msg=pattern binding uses refutable extractor:s",
+      "-Wconf:msg=is more specialized than the right hand side:s",
+      "-Wconf:cat=deprecation:s")).value,
     scalacOptions ++= onlyOnScala3Below39(Seq("-Yfuture-lazy-vals")).value,
     javacOptions ++=
       Seq("-encoding", "UTF-8", "--release", javacTarget),

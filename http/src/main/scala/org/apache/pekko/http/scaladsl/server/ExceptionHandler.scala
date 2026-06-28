@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
 import org.apache.pekko

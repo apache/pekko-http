@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import language.implicitConversions
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
 import pekko.http.impl.util._

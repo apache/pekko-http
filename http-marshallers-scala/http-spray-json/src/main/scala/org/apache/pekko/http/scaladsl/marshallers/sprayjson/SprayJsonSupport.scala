@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.marshallers.sprayjson
 
-import scala.language.implicitConversions
 
 import spray.json._
 
