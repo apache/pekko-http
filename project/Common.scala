@@ -41,9 +41,12 @@ object Common extends AutoPlugin {
       // Exhaustivity checking is only useful for simple sealed hierarchies and matches without filters.
       // In all other cases, the warning is non-actionable: you get spurious warnings that need to be suppressed
       // verbosely. So, opt out of those in general.
-      "-Wconf:cat=other-match-analysis&msg=match may not be exhaustive:s")).value,
+      "-Wconf:cat=other-match-analysis&msg=match may not be exhaustive:s",
+      "-Wconf:msg=inferred structural type:s")).value,
     scalacOptions ++= onlyOnScala3(Seq(
-      "-Werror")).value,
+      "-Werror",
+      "-Wconf:msg=Suspicious top-level unqualified call to synchronized:s",
+      "-Wconf:msg=overrides concrete, non-deprecated definition:s")).value,
     scalacOptions ++= onlyOnScala3Below39(Seq("-Yfuture-lazy-vals")).value,
     javacOptions ++=
       Seq("-encoding", "UTF-8", "--release", javacTarget),
