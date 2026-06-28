@@ -400,14 +400,13 @@ lazy val docs = project("docs")
   .settings(Dependencies.docs)
   .settings(
     name := "pekko-http-docs",
-    scalacOptions ++= Seq(
-      // Make sure we don't accidentally keep documenting deprecated calls
-      "-Xfatal-warnings",
-      // Does not appear to lead to problems
-      "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s"),
     scalacOptions ++= (
-      if (scalaVersion.value.startsWith("3")) Seq.empty
+      if (scalaVersion.value.startsWith("3")) Seq(
+        "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s")
       else Seq(
+        // Make sure we don't accidentally keep documenting deprecated calls
+        "-Xfatal-warnings",
+        "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s",
         // In docs adding an unused variable can be helpful, for example
         // to show its type
         "-Xlint:-unused")

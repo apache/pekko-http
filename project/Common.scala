@@ -50,6 +50,8 @@ object Common extends AutoPlugin {
       "-Wconf:msg=type was inferred to be `Any`:s",
       "-Wconf:msg=Overloaded implicit conversions:s",
       "-Wconf:msg=getClass not selected from this instance:s",
+      "-Wconf:msg=Unused import:s",
+      "-Wconf:msg=is never used:s",
       "-Wconf:cat=deprecation:s")).value,
     scalacOptions ++= onlyOnScala3(Seq(
       "-Werror",
