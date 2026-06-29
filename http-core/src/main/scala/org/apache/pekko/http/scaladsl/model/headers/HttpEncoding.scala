@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.model.headers
 
-import language.implicitConversions
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }

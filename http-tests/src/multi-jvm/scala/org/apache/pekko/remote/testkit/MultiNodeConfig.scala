@@ -17,7 +17,6 @@ import java.net.{ InetAddress, InetSocketAddress }
 
 import com.typesafe.config.{ Config, ConfigFactory, ConfigObject }
 
-import language.implicitConversions
 import scala.concurrent.{ Await, Awaitable }
 import scala.concurrent.duration._
 import scala.collection.immutable

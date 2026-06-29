@@ -96,7 +96,6 @@ private[http] object JavaMapping {
   def toScala[J, S](j: J)(implicit mapping: JavaMapping[J, S]): S = mapping.toScala(j)
 
   object Implicits {
-    import scala.language.implicitConversions
 
     implicit def convertToScala[J](j: J)(implicit mapping: J2SMapping[J]): mapping.S = mapping.toScala(j)
     implicit def convertSeqToScala[J](j: Seq[J])(implicit mapping: J2SMapping[J]): immutable.Seq[mapping.S] =

@@ -323,7 +323,6 @@ class FramingSpec extends PekkoSpecWithMaterializer {
 
   protected def newRenderer(): FrameEventRenderer = new FrameEventRenderer
 
-  import scala.language.implicitConversions
   private implicit def headerToEvent(header: FrameHeader): FrameEvent =
     FrameStart(header, ByteString.empty)
 }

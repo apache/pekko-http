@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import language.implicitConversions
 import java.net.{ Inet4Address, Inet6Address, InetAddress }
 import java.lang.{ Iterable, StringBuilder => JStringBuilder }
 import java.nio.charset.Charset

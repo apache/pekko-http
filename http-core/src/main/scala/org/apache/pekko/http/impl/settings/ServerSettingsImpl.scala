@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.impl.settings
 
-import scala.language.implicitConversions
 import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.util.Try

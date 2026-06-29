@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.model.headers
 
-import scala.language.implicitConversions
 import scala.collection.immutable
 
 import org.apache.pekko

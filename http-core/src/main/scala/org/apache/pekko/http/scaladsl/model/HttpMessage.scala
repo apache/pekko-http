@@ -24,7 +24,7 @@ import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
 import scala.jdk.FutureConverters._
-import scala.reflect.{ classTag, ClassTag }
+import scala.reflect.ClassTag
 
 import org.apache.pekko
 import pekko.Done

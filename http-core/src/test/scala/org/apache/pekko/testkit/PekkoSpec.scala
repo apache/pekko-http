@@ -15,7 +15,6 @@ package org.apache.pekko.testkit
 
 import org.scalactic.{ CanEqual, TypeCheckedTripleEquals }
 
-import language.postfixOps
 import org.scalatest.{ BeforeAndAfterAll, TestSuite }
 import org.apache.pekko
 import pekko.actor.ActorSystem

@@ -341,7 +341,9 @@ lazy val httpScalafixRules =
   Project(id = "http-scalafix-rules", base = file("http-scalafix/scalafix-rules"))
     .settings(
       name := "pekko-http-scalafix-rules",
-      libraryDependencies += Dependencies.Compile.scalafix)
+      libraryDependencies += Dependencies.Compile.scalafix,
+      // scala.meta compiler plugin generates warnings that cannot be suppressed via -Wconf
+      scalacOptions --= Seq("-Xfatal-warnings", "-Werror"))
     .enablePlugins(NoScala3)
     .disablePlugins(MimaPlugin) // tooling, no bin compat guaranteed
 
@@ -400,14 +402,13 @@ lazy val docs = project("docs")
   .settings(Dependencies.docs)
   .settings(
     name := "pekko-http-docs",
-    scalacOptions ++= Seq(
-      // Make sure we don't accidentally keep documenting deprecated calls
-      "-Xfatal-warnings",
-      // Does not appear to lead to problems
-      "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s"),
     scalacOptions ++= (
-      if (scalaVersion.value.startsWith("3")) Seq.empty
+      if (scalaVersion.value.startsWith("3")) Seq(
+        "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s")
       else Seq(
+        // Make sure we don't accidentally keep documenting deprecated calls
+        "-Xfatal-warnings",
+        "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s",
         // In docs adding an unused variable can be helpful, for example
         // to show its type
         "-Xlint:-unused")
