@@ -168,6 +168,9 @@ The server exposes additional settings for the negotiated extension under
 `preferred-client-window-size`, `allow-server-no-context`, and `preferred-client-no-context`. See the
 @ref[configuration reference](../configuration.md) for the complete list of settings and defaults.
 
+If compression is enabled globally, a route can still decline compression for a single accepted WebSocket by using the
+`handleMessages` or `handleMessagesWith` overload with `compressionEnabled = false`.
+
 @@@ note
 The `server_no_context_takeover` and `client_no_context_takeover` extension parameters affect whether compression
 dictionaries are retained across messages. Retaining context generally improves compression ratio, while disabling

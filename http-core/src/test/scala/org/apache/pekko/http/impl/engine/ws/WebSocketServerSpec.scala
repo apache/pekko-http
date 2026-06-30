@@ -695,6 +695,38 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
+      "not negotiate permessage-deflate when compression is disabled for the accepted WebSocket" in
+      Utils.assertAllStagesStopped {
+        new TestSetup {
+          sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
+
+          val request = expectRequest()
+          val upgrade = request.attribute(webSocketUpgrade)
+          val response = upgrade.get.handleMessages(
+            Flow.fromSinkAndSource(Sink.ignore, Source.single(TextMessage.Strict("plain server message"))),
+            None,
+            compressionEnabled = false)
+          responses.sendNext(response)
+
+          expectResponseWithWipedDate(
+            """HTTP/1.1 101 Switching Protocols
+              |Upgrade: websocket
+              |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+              |Server: pekko-http/test
+              |Date: XXXX
+              |Connection: upgrade
+              |
+              |""")
+
+          expectWSFrame(Protocol.Opcode.Text, ByteString("plain server message"), fin = true)
+          expectWSCloseFrame(Protocol.CloseCodes.Regular)
+
+          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+          closeNetworkInput()
+          expectNetworkClose()
+        }
+      }
+
       "negotiate configured permessage-deflate parameters" in Utils.assertAllStagesStopped {
         new TestSetup {
           override def settings = {

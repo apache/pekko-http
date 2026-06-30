@@ -136,20 +136,34 @@ private[http] object Handshake {
 
             def handle(
                 handler: Either[Graph[FlowShape[FrameEvent, FrameEvent], Any], Graph[FlowShape[Message, Message], Any]],
-                subprotocol: Option[String]): HttpResponse = {
+                subprotocol: Option[String],
+                compressionEnabled: Boolean): HttpResponse = {
               require(
                 subprotocol.forall(chosen => clientSupportedSubprotocols.contains(chosen)),
                 s"Tried to choose invalid subprotocol '$subprotocol' which wasn't offered by the client: [${requestedProtocols.mkString(", ")}]")
-              buildResponse(key.get, handler, subprotocol, perMessageDeflate, settings, log)
+              val acceptedPerMessageDeflate = if (compressionEnabled) perMessageDeflate else None
+              buildResponse(key.get, handler, subprotocol, acceptedPerMessageDeflate, settings, log)
             }
 
             def handleFrames(
                 handlerFlow: Graph[FlowShape[FrameEvent, FrameEvent], Any], subprotocol: Option[String]): HttpResponse =
-              handle(Left(handlerFlow), subprotocol)
+              handle(Left(handlerFlow), subprotocol, compressionEnabled = true)
+
+            override private[http] def handleFrames(
+                handlerFlow: Graph[FlowShape[FrameEvent, FrameEvent], Any],
+                subprotocol: Option[String],
+                compressionEnabled: Boolean): HttpResponse =
+              handle(Left(handlerFlow), subprotocol, compressionEnabled)
 
             override def handleMessages(handlerFlow: Graph[FlowShape[Message, Message], Any],
                 subprotocol: Option[String] = None): HttpResponse =
-              handle(Right(handlerFlow), subprotocol)
+              handle(Right(handlerFlow), subprotocol, compressionEnabled = true)
+
+            override def handleMessages(
+                handlerFlow: Graph[FlowShape[Message, Message], Any],
+                subprotocol: Option[String],
+                compressionEnabled: Boolean): HttpResponse =
+              handle(Right(handlerFlow), subprotocol, compressionEnabled)
           }
           OptionVal.Some(header)
         } else OptionVal.None

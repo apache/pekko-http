@@ -42,4 +42,11 @@ private[http] abstract class UpgradeToWebSocketLowLevel extends InternalCustomHe
   @InternalApi
   private[http] def handleFrames(handlerFlow: Graph[FlowShape[FrameEvent, FrameEvent], Any],
       subprotocol: Option[String] = None): HttpResponse
+
+  @InternalApi
+  private[http] def handleFrames(
+      handlerFlow: Graph[FlowShape[FrameEvent, FrameEvent], Any],
+      subprotocol: Option[String],
+      compressionEnabled: Boolean): HttpResponse =
+    handleFrames(handlerFlow, subprotocol)
 }

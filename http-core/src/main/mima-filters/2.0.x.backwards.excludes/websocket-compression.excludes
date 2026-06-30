@@ -15,5 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# Add server-side WebSocket compression support.
+# Add server-side WebSocket compression support and per-upgrade compression control.
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.ws.Handshake#Server.buildResponse")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.model.ws.WebSocketUpgrade.handleMessagesWith")
