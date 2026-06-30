@@ -398,7 +398,7 @@ lazy val docs = project("docs")
   .addPekkoModuleDependency("pekko-actor-testkit-typed", "provided", PekkoCoreDependency.default)
   .dependsOn(
     httpCore, http, httpXml, http2Tests, httpMarshallersJava, httpMarshallersScala, httpCaching, httpCors,
-    httpTests % "compile;test->test", httpTestkit % "compile;test->test", httpScalafixRules % ScalafixConfig)
+    httpTests % "compile;test->test", httpTestkit % "compile;test->test")
   .settings(Dependencies.docs)
   .settings(
     name := "pekko-http-docs",
