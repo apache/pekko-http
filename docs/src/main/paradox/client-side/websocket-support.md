@@ -9,6 +9,11 @@ the lifetime of the connection. Therefore a WebSocket connection is modelled as 
 @apidoc[Flow[Message, Message, Mat]] to or a @apidoc[Flow[Message, Message, Mat]] that you connect a @apidoc[Source[Message, Mat]] and
 a @apidoc[Sink[Message, Mat]] to.
 
+@@@ note
+Client-side WebSocket compression is not currently implemented. Apache Pekko HTTP can negotiate
+`permessage-deflate` compression for server-side WebSocket connections when a client requests it.
+@@@
+
 A WebSocket request starts with a regular HTTP request which contains an `Upgrade` header (and possibly
 other regular HTTP request properties), so in addition to the flow of messages there also is an initial response
 from the server, this is modelled with @apidoc[WebSocketUpgradeResponse].

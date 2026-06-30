@@ -312,6 +312,9 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
       parseAndCache(s"Connection: close${newLine}x")(s"CONNECTION: close${newLine}x") shouldEqual Connection("close")
       parseAndCache(s"Host: spray.io:123${newLine}x")(s"HOST: spray.io:123${newLine}x") shouldEqual Host("spray.io",
         123)
+      parseAndCache(s"Sec-WebSocket-Extensions: permessage-deflate${newLine}x")(
+        s"SEC-WEBSOCKET-EXTENSIONS: permessage-deflate${newLine}x") shouldEqual `Sec-WebSocket-Extensions`(
+        Seq(WebSocketExtension("permessage-deflate")))
 
       // don't parse other headers
       parseAndCache(s"User-Agent: hmpf${newLine}x")(s"USER-AGENT: hmpf${newLine}x") shouldEqual RawHeader("User-Agent",

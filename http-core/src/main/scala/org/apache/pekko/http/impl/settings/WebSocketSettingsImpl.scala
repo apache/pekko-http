@@ -31,7 +31,8 @@ private[pekko] final case class WebSocketSettingsImpl(
     periodicKeepAliveMode: String,
     periodicKeepAliveMaxIdle: Duration,
     periodicKeepAliveData: () => ByteString,
-    logFrames: Boolean)
+    logFrames: Boolean,
+    compression: WebSocketCompressionSettingsImpl)
     extends pekko.http.scaladsl.settings.WebSocketSettings {
 
   require(
@@ -58,21 +59,62 @@ private[pekko] object WebSocketSettingsImpl { // on purpose not extending Settin
   def serverFromRoot(root: Config): WebSocketSettingsImpl =
     server(root.getConfig("pekko.http.server.websocket"))
   def server(config: Config): WebSocketSettingsImpl =
-    fromConfig(config)
+    fromConfig(config, WebSocketCompressionSettingsImpl.fromConfig(config.getConfig("compression")))
 
   def clientFromRoot(root: Config): WebSocketSettingsImpl =
     client(root.getConfig("pekko.http.client.websocket"))
   def client(config: Config): WebSocketSettingsImpl =
-    fromConfig(config)
+    fromConfig(config, WebSocketCompressionSettingsImpl.Disabled)
 
-  private def fromConfig(inner: Config): WebSocketSettingsImpl = {
+  private def fromConfig(inner: Config, compression: WebSocketCompressionSettingsImpl): WebSocketSettingsImpl = {
     val c = inner
     WebSocketSettingsImpl(
       Randoms.SecureRandomInstances,
       c.getString("periodic-keep-alive-mode"), // mode could be extended to be a factory of pings, if we'd need control over the data field
       c.getPotentiallyInfiniteDuration("periodic-keep-alive-max-idle"),
       NoPeriodicKeepAliveData,
-      c.getBoolean("log-frames"))
+      c.getBoolean("log-frames"),
+      compression)
   }
 
+}
+
+/** INTERNAL API */
+@InternalApi
+private[pekko] final case class WebSocketCompressionSettingsImpl(
+    enabled: Boolean,
+    maxAllocation: Long,
+    compressionLevel: Int,
+    preferredClientWindowSize: Int,
+    allowServerNoContext: Boolean,
+    preferredClientNoContext: Boolean) {
+  require(maxAllocation >= 0, "websocket compression max-allocation must be >= 0")
+  require(compressionLevel >= 0 && compressionLevel <= 9, "websocket compression level must be between 0 and 9")
+  require(
+    preferredClientWindowSize >= 8 && preferredClientWindowSize <= 15,
+    "websocket compression preferred-client-window-size must be between 8 and 15")
+}
+
+/** INTERNAL API */
+@InternalApi
+private[pekko] object WebSocketCompressionSettingsImpl {
+  val Disabled: WebSocketCompressionSettingsImpl =
+    WebSocketCompressionSettingsImpl(
+      enabled = false,
+      maxAllocation = 0,
+      compressionLevel = 6,
+      preferredClientWindowSize = 15,
+      allowServerNoContext = false,
+      preferredClientNoContext = false)
+
+  def fromConfig(c: Config): WebSocketCompressionSettingsImpl = {
+    val perMessageDeflate = c.getConfig("permessage-deflate")
+    WebSocketCompressionSettingsImpl(
+      c.getBoolean("enabled"),
+      c.getBytes("max-allocation"),
+      perMessageDeflate.getInt("compression-level"),
+      perMessageDeflate.getInt("preferred-client-window-size"),
+      perMessageDeflate.getBoolean("allow-server-no-context"),
+      perMessageDeflate.getBoolean("preferred-client-no-context"))
+  }
 }

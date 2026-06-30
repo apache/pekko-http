@@ -151,6 +151,37 @@ In case you need to keep inactive connections alive, you can either tweak your i
 
 <a id="keep-alive-ping"></a>
 
+## WebSocket compression
+
+Apache Pekko HTTP can negotiate the RFC 7692 `permessage-deflate` WebSocket extension for server-side WebSocket
+connections. Compression is enabled by default, but is only used when the client requests it with the
+`Sec-WebSocket-Extensions: permessage-deflate` header during the WebSocket handshake.
+
+You can disable WebSocket compression globally for the server:
+
+```
+pekko.http.server.websocket.compression.enabled = false
+```
+
+The server exposes additional settings for the negotiated extension under
+`pekko.http.server.websocket.compression.permessage-deflate`, including `compression-level`,
+`preferred-client-window-size`, `allow-server-no-context`, and `preferred-client-no-context`. See the
+@ref[configuration reference](../configuration.md) for the complete list of settings and defaults.
+
+@@@ note
+The `server_no_context_takeover` and `client_no_context_takeover` extension parameters affect whether compression
+dictionaries are retained across messages. Retaining context generally improves compression ratio, while disabling
+context takeover can reduce cross-message information retention and memory lifetime. The defaults keep context takeover
+enabled unless explicitly configured otherwise.
+
+Pekko HTTP uses the JDK `Deflater` and `Inflater` implementation for `permessage-deflate`. The JDK API
+does not expose zlib `windowBits` or `memLevel`, so Pekko HTTP does not accept `server_max_window_bits`
+values below `15` and does not provide server window-size or memory-level settings. A client may still
+request `client_max_window_bits`; when it does, Pekko HTTP can include the configured
+`preferred-client-window-size` in the handshake response to ask the client to use that window size for
+client-to-server messages.
+@@@
+
 ## Automatic keep-alive Ping support
 
 For long running websocket connections it may be beneficial to enable automatic heartbeat using `Ping` frames.

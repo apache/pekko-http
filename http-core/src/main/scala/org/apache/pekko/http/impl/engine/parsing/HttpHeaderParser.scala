@@ -487,6 +487,7 @@ private[http] object HttpHeaderParser {
     "content-type",
     "expect",
     "host",
+    "sec-websocket-extensions",
     "sec-websocket-key",
     "sec-websocket-protocol",
     "sec-websocket-version",

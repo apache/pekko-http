@@ -47,10 +47,12 @@ private[http] object WebSocket {
   def stack(
       serverSide: Boolean,
       websocketSettings: WebSocketSettings,
+      perMessageDeflate: Option[PerMessageDeflate.Negotiated] = None,
       closeTimeout: FiniteDuration = 3.seconds, // TODO put close timeout into the settings?
       log: LoggingAdapter): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] =
     masking(serverSide, websocketSettings.randomFactory).atop(
       FrameLogger.logFramesIfEnabled(websocketSettings.logFrames)).atop(
+      perMessageDeflate.map(_.bidiFlow).getOrElse(BidiFlow.identity)).atop(
       frameHandling(serverSide, closeTimeout, log)).atop(
       periodicKeepAlive(websocketSettings)).atop(
       messageAPI(serverSide, closeTimeout))

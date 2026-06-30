@@ -23,6 +23,7 @@ import scala.collection.immutable.Seq
 import pekko.event.LoggingAdapter
 import pekko.http.impl.util._
 import pekko.http.impl.engine.server.UpgradeToOtherProtocolResponseHeader
+import pekko.http.impl.settings.WebSocketSettingsImpl
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.model.ws.Message
 import pekko.http.scaladsl.model._
@@ -122,6 +123,13 @@ private[http] object Handshake {
             case OptionVal.Some(p) => p.protocols
             case _                 => Nil
           }
+          val clientRequestedExtensions = headers.collect {
+            case extensions: `Sec-WebSocket-Extensions` => extensions.extensions
+          }.flatten
+          val perMessageDeflate =
+            PerMessageDeflate.negotiate(
+              clientRequestedExtensions,
+              settings.asInstanceOf[WebSocketSettingsImpl].compression)
 
           val header = new UpgradeToWebSocketLowLevel {
             def requestedProtocols: Seq[String] = clientSupportedSubprotocols
@@ -132,7 +140,7 @@ private[http] object Handshake {
               require(
                 subprotocol.forall(chosen => clientSupportedSubprotocols.contains(chosen)),
                 s"Tried to choose invalid subprotocol '$subprotocol' which wasn't offered by the client: [${requestedProtocols.mkString(", ")}]")
-              buildResponse(key.get, handler, subprotocol, settings, log)
+              buildResponse(key.get, handler, subprotocol, perMessageDeflate, settings, log)
             }
 
             def handleFrames(
@@ -169,11 +177,16 @@ private[http] object Handshake {
      */
     def buildResponse(key: `Sec-WebSocket-Key`,
         handler: Either[Graph[FlowShape[FrameEvent, FrameEvent], Any], Graph[FlowShape[Message, Message], Any]],
-        subprotocol: Option[String], settings: WebSocketSettings, log: LoggingAdapter): HttpResponse = {
+        subprotocol: Option[String],
+        perMessageDeflate: Option[PerMessageDeflate.Negotiated],
+        settings: WebSocketSettings,
+        log: LoggingAdapter): HttpResponse = {
       val frameHandler = handler match {
-        case Left(frameHandler)    => frameHandler
+        case Left(frameHandler) =>
+          perMessageDeflate.map(_.frameEventBidiFlow(settings.randomFactory).join(frameHandler)).getOrElse(frameHandler)
         case Right(messageHandler) =>
-          WebSocket.stack(serverSide = true, settings, log = log).join(messageHandler)
+          WebSocket.stack(serverSide = true, settings, perMessageDeflate = perMessageDeflate, log = log)
+            .join(messageHandler)
       }
 
       HttpResponse(
@@ -182,7 +195,9 @@ private[http] object Handshake {
         List(
           UpgradeHeader,
           ConnectionUpgradeHeader,
-          `Sec-WebSocket-Accept`.forKey(key),
+          `Sec-WebSocket-Accept`.forKey(key)) :::
+        perMessageDeflate.map(p => `Sec-WebSocket-Extensions`(Seq(p.responseExtension))).toList :::
+        List(
           UpgradeToOtherProtocolResponseHeader(WebSocket.framing.join(frameHandler))))
     }
   }
