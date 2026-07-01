@@ -43,10 +43,35 @@ trait WebSocketUpgrade {
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
+   * use the given handlerFlow to handle WebSocket messages from the client.
+   *
+   * The compressionEnabled flag allows declining negotiated WebSocket compression for this accepted WebSocket.
+   *
+   * @since 2.0.0
+   */
+  def handleMessagesWith(
+      handlerFlow: Graph[FlowShape[Message, Message], ? <: Any], compressionEnabled: Boolean): HttpResponse
+
+  /**
+   * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
    * use the given handlerFlow to handle WebSocket messages from the client. The given subprotocol must be one
    * of the ones offered by the client.
    */
   def handleMessagesWith(handlerFlow: Graph[FlowShape[Message, Message], ? <: Any], subprotocol: String): HttpResponse
+
+  /**
+   * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
+   * use the given handlerFlow to handle WebSocket messages from the client. The given subprotocol must be one
+   * of the ones offered by the client.
+   *
+   * The compressionEnabled flag allows declining negotiated WebSocket compression for this accepted WebSocket.
+   *
+   * @since 2.0.0
+   */
+  def handleMessagesWith(
+      handlerFlow: Graph[FlowShape[Message, Message], ? <: Any],
+      subprotocol: String,
+      compressionEnabled: Boolean): HttpResponse
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
@@ -59,8 +84,31 @@ trait WebSocketUpgrade {
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
    * use the given inSink to handle WebSocket messages from the client and the given outSource to send messages to the client.
    *
+   * The compressionEnabled flag allows declining negotiated WebSocket compression for this accepted WebSocket.
+   *
+   * @since 2.0.0
+   */
+  def handleMessagesWith(inSink: Graph[SinkShape[Message], ? <: Any], outSource: Graph[SourceShape[Message], ? <: Any],
+      compressionEnabled: Boolean): HttpResponse
+
+  /**
+   * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
+   * use the given inSink to handle WebSocket messages from the client and the given outSource to send messages to the client.
+   *
    * The given subprotocol must be one of the ones offered by the client.
    */
   def handleMessagesWith(inSink: Graph[SinkShape[Message], ? <: Any], outSource: Graph[SourceShape[Message], ? <: Any],
       subprotocol: String): HttpResponse
+
+  /**
+   * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
+   * use the given inSink to handle WebSocket messages from the client and the given outSource to send messages to the client.
+   *
+   * The given subprotocol must be one of the ones offered by the client.
+   * The compressionEnabled flag allows declining negotiated WebSocket compression for this accepted WebSocket.
+   *
+   * @since 2.0.0
+   */
+  def handleMessagesWith(inSink: Graph[SinkShape[Message], ? <: Any], outSource: Graph[SourceShape[Message], ? <: Any],
+      subprotocol: String, compressionEnabled: Boolean): HttpResponse
 }
