@@ -72,6 +72,12 @@ private[http2] object FrameRenderer {
           .putInt32(windowSizeIncrement)
           .build()
 
+      case CompositeFrame((data: DataFrame) +: (headers: HeadersFrame) +: Nil) =>
+        renderDataAndHeaders(data, headers)
+
+      case CompositeFrame(frames) =>
+        frames.iterator.map(render).foldLeft(ByteString.empty)(_ ++ _)
+
       case ContinuationFrame(streamId, endHeaders, payload) =>
         Frame(
           payload.length,
@@ -153,14 +159,51 @@ private[http2] object FrameRenderer {
       .put(payload)
       .build()
 
+  private def renderDataAndHeaders(data: DataFrame, headers: HeadersFrame): ByteString = {
+    val headersPayloadSize = (if (headers.priorityInfo.isDefined) 5 else 0) + headers.headerBlockFragment.length
+    val buffer = new Array[Byte](9 + data.payload.length + 9 + headersPayloadSize)
+    val afterData = Frame
+      .writeTo(
+        buffer,
+        offset = 0,
+        data.payload.length,
+        Http2Protocol.FrameType.DATA,
+        Http2Protocol.Flags.END_STREAM.ifSet(data.endStream),
+        data.streamId)
+      .put(data.payload)
+      .finish()
+    Frame
+      .writeTo(
+        buffer,
+        afterData,
+        headersPayloadSize,
+        Http2Protocol.FrameType.HEADERS,
+        Http2Protocol.Flags.END_STREAM.ifSet(headers.endStream) |
+        Http2Protocol.Flags.END_HEADERS.ifSet(headers.endHeaders) |
+        Http2Protocol.Flags.PRIORITY.ifSet(headers.priorityInfo.isDefined),
+        headers.streamId)
+      .putPriorityInfo(headers.priorityInfo)
+      .put(headers.headerBlockFragment)
+      .finish()
+    ByteString.fromArrayUnsafe(buffer)
+  }
+
   private object Frame {
     def apply(payloadSize: Int, tpe: FrameType, flags: ByteFlag, streamId: Int): Frame =
-      new Frame(payloadSize, tpe, flags, streamId)
+      new Frame(payloadSize, tpe, flags, streamId, new Array[Byte](9 + payloadSize), 0)
+    def writeTo(buffer: Array[Byte], offset: Int, payloadSize: Int, tpe: FrameType, flags: ByteFlag,
+        streamId: Int): Frame =
+      new Frame(payloadSize, tpe, flags, streamId, buffer, offset)
   }
-  private class Frame(payloadSize: Int, tpe: FrameType, flags: ByteFlag, streamId: Int) {
-    private val targetSize = 9 + payloadSize
-    private val buffer = new Array[Byte](targetSize)
-    private var pos = 0
+  private class Frame(
+      payloadSize: Int,
+      tpe: FrameType,
+      flags: ByteFlag,
+      streamId: Int,
+      buffer: Array[Byte],
+      start: Int) {
+    private val targetSize = start + 9 + payloadSize
+    private var pos = start
 
     putInt24(payloadSize)
     putByte(tpe.id.toByte)
@@ -212,8 +255,13 @@ private[http2] object FrameRenderer {
         this
       }
 
-    def build(): ByteString =
+    def finish(): Int =
       if (pos != targetSize) throw new IllegalStateException(s"Did not write exactly $targetSize bytes but $pos")
-      else ByteString.fromArrayUnsafe(buffer)
+      else pos
+
+    def build(): ByteString = {
+      finish()
+      ByteString.fromArrayUnsafe(buffer)
+    }
   }
 }
