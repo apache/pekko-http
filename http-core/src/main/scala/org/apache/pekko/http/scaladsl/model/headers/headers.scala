@@ -27,9 +27,11 @@ import scala.reflect.ClassTag
 import scala.util.{ Failure, Success, Try }
 import scala.annotation.tailrec
 import scala.collection.immutable
+import org.parboiled2.CharPredicate
 import org.parboiled2.util.Base64
 import pekko.event.Logging
 import pekko.http.impl.util._
+import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.impl.model.parser.CharacterClasses.`attr-char`
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model._
@@ -230,6 +232,60 @@ final case class `Accept-Ranges`(rangeUnits: immutable.Seq[RangeUnit]) extends j
 
   /** Java API */
   def getRangeUnits: Iterable[jm.headers.RangeUnit] = rangeUnits.asJava
+}
+
+// https://www.rfc-editor.org/rfc/rfc10008.html#section-3
+object `Accept-Query` extends ModeledCompanion[`Accept-Query`] {
+  def apply(firstMediaRange: MediaRange, otherMediaRanges: MediaRange*): `Accept-Query` =
+    apply(firstMediaRange +: otherMediaRanges)
+
+  private val sfTokenChar: CharPredicate = CharacterClasses.tchar ++ ":/"
+
+  private implicit val mediaRangeRenderer: Renderer[MediaRange] = new Renderer[MediaRange] {
+    def render[R <: Rendering](r: R, mediaRange: MediaRange): r.type = {
+      renderSfTokenOrString(r, mediaRangeValue(mediaRange))
+      mediaRange.params.foreach {
+        case (key, value) =>
+          r ~~ ';' ~~ key.toRootLowerCase ~~ '='
+          renderSfTokenOrString(r, value)
+      }
+      r
+    }
+  }
+
+  implicit val mediaRangesRenderer: Renderer[immutable.Iterable[MediaRange]] = Renderer.defaultSeqRenderer[MediaRange] // cache
+
+  private def mediaRangeValue(mediaRange: MediaRange): String =
+    mediaRange match {
+      case MediaRange.One(mediaType, _) => mediaType.mainType + '/' + mediaType.subType
+      case _                            => mediaRange.mainType + "/*"
+    }
+
+  private def renderSfTokenOrString[R <: Rendering](r: R, value: String): r.type =
+    if (isSfToken(value)) r ~~ value else r ~~#! value
+
+  private def isSfToken(value: String): Boolean =
+    value.nonEmpty && isSfTokenStart(value.charAt(0)) && {
+      var ix = 1
+      var valid = true
+      while (valid && ix < value.length) {
+        valid = sfTokenChar(value.charAt(ix))
+        ix += 1
+      }
+      valid
+    }
+
+  private def isSfTokenStart(ch: Char): Boolean =
+    CharacterClasses.ALPHA(ch) || ch == '*'
+}
+final case class `Accept-Query`(mediaRanges: immutable.Seq[MediaRange]) extends jm.headers.AcceptQuery
+    with ResponseHeader {
+  import `Accept-Query`.mediaRangesRenderer
+  def renderValue[R <: Rendering](r: R): r.type = r ~~ mediaRanges
+  protected def companion = `Accept-Query`
+
+  /** Java API */
+  def getMediaRanges: Iterable[jm.MediaRange] = mediaRanges.asJava
 }
 
 // https://www.w3.org/TR/cors/#access-control-allow-credentials-response-header

@@ -14,7 +14,7 @@
 package org.apache.pekko.http.scaladsl.server.directives
 
 import org.apache.pekko
-import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpMethods, StatusCodes }
+import pekko.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpMethods, HttpRequest, StatusCodes }
 import pekko.http.scaladsl.server._
 import pekko.stream.scaladsl.Source
 
@@ -50,6 +50,17 @@ class MethodDirectivesSpec extends RoutingSpec {
         val length = lengthF.futureValue
         length shouldEqual 0
       }
+    }
+  }
+
+  "query" should {
+    lazy val queryRoute = query { completeOk }
+
+    "block GET requests" in {
+      Get() ~> queryRoute ~> check { handled shouldEqual false }
+    }
+    "let QUERY requests pass" in {
+      HttpRequest(method = HttpMethods.QUERY) ~> queryRoute ~> check { response shouldEqual Ok }
     }
   }
 

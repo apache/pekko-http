@@ -98,6 +98,17 @@ class MethodDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // #put-method
   }
 
+  "query-method" in {
+    // #query-method
+    val route = query { complete("This is a QUERY request.") }
+
+    // tests:
+    HttpRequest(method = HttpMethods.QUERY, uri = "/") ~> route ~> check {
+      responseAs[String] shouldEqual "This is a QUERY request."
+    }
+    // #query-method
+  }
+
   "method-example" in {
     // #method-example
     val route = method(HttpMethods.PUT) { complete("This is a PUT request.") }
