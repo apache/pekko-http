@@ -67,7 +67,7 @@ trait CorsDirectives {
   def cors(settings: CorsSettings): Directive0 = {
     import settings._
 
-    /** Return the invalid origins, or `Nil` if one is valid. */
+    // Return the invalid origins, or `Nil` if one is valid.
     def validateOrigins(origins: Seq[HttpOrigin]): List[CorsRejection.Cause] =
       if (allowedOrigins == HttpOriginMatcher.* || origins.exists(allowedOrigins.matches)) {
         Nil
@@ -75,7 +75,7 @@ trait CorsDirectives {
         CorsRejection.InvalidOrigin(origins) :: Nil
       }
 
-    /** Return the method if invalid, `Nil` otherwise. */
+    // Return the method if invalid, `Nil` otherwise.
     def validateMethod(method: HttpMethod): List[CorsRejection.Cause] =
       if (allowedMethods.contains(method)) {
         Nil
@@ -83,7 +83,7 @@ trait CorsDirectives {
         CorsRejection.InvalidMethod(method) :: Nil
       }
 
-    /** Return the list of invalid headers, or `Nil` if they are all valid. */
+    // Return the list of invalid headers, or `Nil` if they are all valid.
     def validateHeaders(headers: Seq[String]): List[CorsRejection.Cause] = {
       val invalidHeaders = headers.filterNot(allowedHeaders.matches)
       if (invalidHeaders.isEmpty) {
