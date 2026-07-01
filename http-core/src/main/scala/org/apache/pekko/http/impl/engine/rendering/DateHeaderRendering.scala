@@ -43,7 +43,7 @@ import scala.concurrent.ExecutionContext
 
     sealed trait DateState
 
-    /** Date has not been used for a while */
+    // Date has not been used for a while
     case object Idle extends DateState
     case class AutoUpdated(value: String) extends DateState {
       var wasUsed: Boolean = false
