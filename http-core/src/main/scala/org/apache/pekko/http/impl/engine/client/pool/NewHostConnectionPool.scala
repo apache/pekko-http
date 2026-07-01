@@ -375,7 +375,7 @@ private[client] object NewHostConnectionPool {
                   OptionVal.Some(Event.onPreConnect)
               }
 
-            /** Run a loop of state transitions */
+            // Run a loop of state transitions
             /* @tailrec (does not work for some reason?) */
             def loop[U](event: Event[U], arg: U, remainingIterations: Int): Unit =
               if (remainingIterations > 0)

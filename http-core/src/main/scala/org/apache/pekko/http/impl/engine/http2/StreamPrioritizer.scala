@@ -57,10 +57,8 @@ private[http2] object StreamPrioritizer {
       /** Choose a substream from a set of substream ids that have data available */
       def chooseSubstream(streams: Set[Int]): Int = {
 
-        /**
-         * Chooses one of the children, returns the chosen stream id (which must be part of `streams` or
-         * -1 if no eligible stream was found in that part of the tree).
-         */
+        // Chooses one of the children, returns the chosen stream id (which must be part of `streams` or
+        // -1 if no eligible stream was found in that part of the tree).
         def chooseFromChildren(prioNode: PriorityNode): Int = {
           if (streams.contains(prioNode.streamId)) prioNode.streamId
           else {
