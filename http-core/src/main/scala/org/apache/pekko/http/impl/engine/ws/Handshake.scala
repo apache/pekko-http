@@ -93,7 +93,7 @@ private[http] object Handshake {
       // - Origin header is optional and, if required, should be validated
       //   on higher levels (routing, application logic)
       //
-      // TODO See #18709 Extension support is optional in WS and currently unsupported.
+      // WebSocket extension negotiation is optional. Currently only permessage-deflate is supported.
       //
       // these are not needed directly, we verify their presence and correctness only:
       // - Upgrade
@@ -123,13 +123,16 @@ private[http] object Handshake {
             case OptionVal.Some(p) => p.protocols
             case _                 => Nil
           }
-          val clientRequestedExtensions = headers.collect {
+          val clientRequestedExtensions = headers.flatMap {
             case extensions: `Sec-WebSocket-Extensions` => extensions.extensions
-          }.flatten
+            case _                                      => Nil
+          }
           val perMessageDeflate =
-            PerMessageDeflate.negotiate(
-              clientRequestedExtensions,
-              settings.asInstanceOf[WebSocketSettingsImpl].compression)
+            settings match {
+              case impl: WebSocketSettingsImpl =>
+                PerMessageDeflate.negotiate(clientRequestedExtensions, impl.compression)
+              case _ => None
+            }
 
           val header = new UpgradeToWebSocketLowLevel {
             def requestedProtocols: Seq[String] = clientSupportedSubprotocols
@@ -203,16 +206,14 @@ private[http] object Handshake {
             .join(messageHandler)
       }
 
-      HttpResponse(
-        StatusCodes.SwitchingProtocols,
+      val extensionHeaders = perMessageDeflate.map(p => `Sec-WebSocket-Extensions`(Seq(p.responseExtension))).toList
+      val responseHeaders =
         subprotocol.map(p => `Sec-WebSocket-Protocol`(Seq(p))).toList :::
-        List(
-          UpgradeHeader,
-          ConnectionUpgradeHeader,
-          `Sec-WebSocket-Accept`.forKey(key)) :::
-        perMessageDeflate.map(p => `Sec-WebSocket-Extensions`(Seq(p.responseExtension))).toList :::
-        List(
-          UpgradeToOtherProtocolResponseHeader(WebSocket.framing.join(frameHandler))))
+        List(UpgradeHeader, ConnectionUpgradeHeader, `Sec-WebSocket-Accept`.forKey(key)) :::
+        extensionHeaders :::
+        List(UpgradeToOtherProtocolResponseHeader(WebSocket.framing.join(frameHandler)))
+
+      HttpResponse(StatusCodes.SwitchingProtocols, responseHeaders)
     }
   }
 

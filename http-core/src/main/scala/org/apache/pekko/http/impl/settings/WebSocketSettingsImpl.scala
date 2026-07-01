@@ -101,7 +101,7 @@ private[pekko] object WebSocketCompressionSettingsImpl {
   val Disabled: WebSocketCompressionSettingsImpl =
     WebSocketCompressionSettingsImpl(
       enabled = false,
-      maxAllocation = 0,
+      maxAllocation = 64 * 1024,
       compressionLevel = 6,
       preferredClientWindowSize = 15,
       allowServerNoContext = false,

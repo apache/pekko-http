@@ -35,7 +35,7 @@ import pekko.stream.stage.GraphStageLogic
 import pekko.stream.stage.InHandler
 import pekko.stream.stage.OutHandler
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
-import pekko.util.ByteString
+import pekko.util.{ ByteString, ByteStringBuilder }
 
 import scala.collection.immutable
 import scala.collection.immutable.ListMap
@@ -129,7 +129,7 @@ private[http] object PerMessageDeflate {
   }
 
   private def validWindowBits(value: String): Boolean =
-    value.length <= 2 && value.forall(_.isDigit) && {
+    value.nonEmpty && value.length <= 2 && value.forall(_.isDigit) && {
       val parsed = value.toInt
       parsed >= 8 && parsed <= 15
     }
@@ -143,6 +143,7 @@ private[http] object PerMessageDeflate {
     private var compressedMessageInProgress = false
     private var decompressedMessageBytes = 0L
     private var bypassFrameInProgress = false
+    private val buffer = new Array[Byte](8192)
 
     override def apply(event: FrameEventOrError): immutable.Iterable[FrameEventOrError] = event match {
       case start @ FrameStart(header, data)
@@ -196,7 +197,6 @@ private[http] object PerMessageDeflate {
         val input = if (appendTail) data ++ EmptyStoredBlock else data
         inflater.setInput(input.toArrayUnsafe())
         val output = new ByteArrayOutputStream(1024)
-        val buffer = new Array[Byte](1024)
         var count = inflater.inflate(buffer)
         while (count > 0) {
           decompressedMessageBytes += count
@@ -224,6 +224,7 @@ private[http] object PerMessageDeflate {
     private var frame: Option[UncompressedFrame] = None
     private var messageInProgress = false
     private var bypassFrameInProgress = false
+    private val buffer = new Array[Byte](8192)
 
     override def apply(event: FrameEvent): immutable.Iterable[FrameEvent] = event match {
       case FrameStart(header, _)
@@ -277,7 +278,6 @@ private[http] object PerMessageDeflate {
     private def deflate(data: ByteString, removeTail: Boolean): ByteString = {
       deflater.setInput(data.toArrayUnsafe())
       val output = new ByteArrayOutputStream(1024)
-      val buffer = new Array[Byte](1024)
       var count = deflater.deflate(buffer, 0, buffer.length, Deflater.SYNC_FLUSH)
       while (count > 0) {
         output.write(buffer, 0, count)
@@ -335,11 +335,40 @@ private[http] object PerMessageDeflate {
       }
   }
 
-  private final case class CompressedFrame(header: FrameHeader, data: ByteString, appendTail: Boolean) {
-    def append(next: ByteString): CompressedFrame = copy(data = data ++ next)
+  private final case class CompressedFrame(
+      header: FrameHeader,
+      fragments: Vector[ByteString],
+      length: Int,
+      appendTail: Boolean) {
+    def data: ByteString = compact(fragments, length)
+    def append(next: ByteString): CompressedFrame = copy(fragments = fragments :+ next, length = length + next.length)
   }
 
-  private final case class UncompressedFrame(header: FrameHeader, data: ByteString, removeTail: Boolean) {
-    def append(next: ByteString): UncompressedFrame = copy(data = data ++ next)
+  private object CompressedFrame {
+    def apply(header: FrameHeader, data: ByteString, appendTail: Boolean): CompressedFrame =
+      CompressedFrame(header, Vector(data), data.length, appendTail)
   }
+
+  private final case class UncompressedFrame(
+      header: FrameHeader,
+      fragments: Vector[ByteString],
+      length: Int,
+      removeTail: Boolean) {
+    def data: ByteString = compact(fragments, length)
+    def append(next: ByteString): UncompressedFrame = copy(fragments = fragments :+ next, length = length + next.length)
+  }
+
+  private object UncompressedFrame {
+    def apply(header: FrameHeader, data: ByteString, removeTail: Boolean): UncompressedFrame =
+      UncompressedFrame(header, Vector(data), data.length, removeTail)
+  }
+
+  private def compact(fragments: Vector[ByteString], length: Int): ByteString =
+    if (fragments.lengthCompare(1) == 0) fragments.head
+    else {
+      val builder = new ByteStringBuilder
+      builder.sizeHint(length)
+      fragments.foreach(builder.append)
+      builder.result()
+    }
 }
