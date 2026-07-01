@@ -25,7 +25,7 @@ import pekko.util.ByteString
 /**
  * An encoder and decoder for the HTTP 'identity' encoding.
  */
-@InternalApi
+@InternalApi // used by javadsl.coding.Coder
 @deprecated("Actual implementation of NoCoding is internal API, use Coders.NoCoding instead",
   since = "Akka HTTP 10.2.0")
 object NoCoding extends Coder with StreamDecoder {
