@@ -220,18 +220,14 @@ trait PathDirectives extends PathMatchers with ImplicitPathMatcherConstruction w
    */
   def ignoreTrailingSlash: Directive0 = Directive[Unit] {
 
-    /**
-     * Converts a URL that ends with `/` to one without. Or one that ends without `/` to one with it.
-     */
+    // Converts a URL that ends with `/` to one without. Or one that ends without `/` to one with it.
     def flipTrailingSlash(path: Path): Path = {
       if (path.endsWithSlash && path != Path.SingleSlash) path.reverse.tail.reverse
       else path ++ Path.SingleSlash
     }
 
-    /**
-     * Transforms empty rejections to [[pekko.http.scaladsl.server.directives.PathDirectives.TrailingRetryRejection]]
-     * for the only purpose to break the loop of rejection handling
-     */
+    // Transforms empty rejections to [[pekko.http.scaladsl.server.directives.PathDirectives.TrailingRetryRejection]]
+    // for the only purpose to break the loop of rejection handling
     val transformEmptyRejections = recoverRejections(rejections =>
       if (rejections == Nil) {
         Rejected(List(TrailingRetryRejection))
