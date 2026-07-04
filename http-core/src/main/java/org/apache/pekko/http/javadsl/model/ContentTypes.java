@@ -21,6 +21,7 @@ import org.apache.pekko.http.scaladsl.model.ContentType$;
  * <p>If the {@link ContentType} you're looking for is not pre-defined here, you can obtain it from
  * a {@link MediaType} by using: {@code MediaTypes.TEXT_HTML.toContentType()}
  */
+@SuppressWarnings("deprecation")
 public final class ContentTypes {
   private ContentTypes() {}
 

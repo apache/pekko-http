@@ -36,6 +36,7 @@ import org.apache.pekko.http.scaladsl.model.ExceptionWithErrorInfo;
 import org.apache.pekko.util.ByteString;
 
 /** A JSON marshaller/unmarshaller using the Jackson library. */
+@SuppressWarnings("deprecation")
 public class Jackson {
   private static final ObjectMapper defaultObjectMapper =
       createMapper().enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY);
