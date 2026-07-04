@@ -24,6 +24,7 @@ import org.apache.pekko.util.ByteString;
 import scala.jdk.javaapi.FutureConverters;
 
 /** A coder is an implementation of the predefined encoders/decoders defined for HTTP. */
+@SuppressWarnings("deprecation")
 public enum Coder {
   NoCoding(NoCoding$.MODULE$),
   Deflate(Deflate$.MODULE$),
