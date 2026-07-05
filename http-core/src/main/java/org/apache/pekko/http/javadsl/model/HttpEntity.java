@@ -114,7 +114,7 @@ public interface HttpEntity {
    * always keep an upper limit on accepted entities to avoid potential attackers flooding you with
    * too large requests/responses, so use this method with caution.
    *
-   * <p>See [[withSizeLimit]] for more details.
+   * <p>See {@link #withSizeLimit(long)} for more details.
    */
   HttpEntity withoutSizeLimit();
 
@@ -170,8 +170,8 @@ public interface HttpEntity {
    * entity.
    *
    * <p>Note: It is crucial that entities are either discarded, or consumed by running the
-   * underlying [[org.apache.pekko.stream.javadsl.Source]] as otherwise the lack of consuming of the
-   * data will trigger back-pressure to the underlying TCP connection (as designed), however
+   * underlying {@code org.apache.pekko.stream.javadsl.Source} as otherwise the lack of consuming of
+   * the data will trigger back-pressure to the underlying TCP connection (as designed), however
    * possibly leading to an idle-timeout that will close the connection, instead of just having
    * ignored the data.
    *
@@ -195,8 +195,8 @@ public interface HttpEntity {
    * entity.
    *
    * <p>Note: It is crucial that entities are either discarded, or consumed by running the
-   * underlying [[org.apache.pekko.stream.javadsl.Source]] as otherwise the lack of consuming of the
-   * data will trigger back-pressure to the underlying TCP connection (as designed), however
+   * underlying {@code org.apache.pekko.stream.javadsl.Source} as otherwise the lack of consuming of
+   * the data will trigger back-pressure to the underlying TCP connection (as designed), however
    * possibly leading to an idle-timeout that will close the connection, instead of just having
    * ignored the data.
    *

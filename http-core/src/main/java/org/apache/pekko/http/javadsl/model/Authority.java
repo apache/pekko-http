@@ -22,8 +22,8 @@ public abstract class Authority {
   public abstract Host host();
 
   /**
-   * A port number that may be `0` to signal the default port of for scheme. In general what you
-   * want is not the value of this field but {@link Uri::port::}
+   * A port number that may be {@code 0} to signal the default port of for scheme. In general what
+   * you want is not the value of this field but {@link Uri#port()}
    */
   public abstract int port();
 

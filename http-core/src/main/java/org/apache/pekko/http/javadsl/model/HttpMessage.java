@@ -77,8 +77,8 @@ public interface HttpMessage {
    * {@code entity} of this HTTP message.
    *
    * <p>Note: It is crucial that entities are either discarded, or consumed by running the
-   * underlying [[org.apache.pekko.stream.javadsl.Source]] as otherwise the lack of consuming of the
-   * data will trigger back-pressure to the underlying TCP connection (as designed), however
+   * underlying {@code org.apache.pekko.stream.javadsl.Source} as otherwise the lack of consuming of
+   * the data will trigger back-pressure to the underlying TCP connection (as designed), however
    * possibly leading to an idle-timeout that will close the connection, instead of just having
    * ignored the data.
    *
@@ -102,8 +102,8 @@ public interface HttpMessage {
    * {@code entity} of this HTTP message.
    *
    * <p>Note: It is crucial that entities are either discarded, or consumed by running the
-   * underlying [[org.apache.pekko.stream.javadsl.Source]] as otherwise the lack of consuming of the
-   * data will trigger back-pressure to the underlying TCP connection (as designed), however
+   * underlying {@code org.apache.pekko.stream.javadsl.Source} as otherwise the lack of consuming of
+   * the data will trigger back-pressure to the underlying TCP connection (as designed), however
    * possibly leading to an idle-timeout that will close the connection, instead of just having
    * ignored the data.
    *

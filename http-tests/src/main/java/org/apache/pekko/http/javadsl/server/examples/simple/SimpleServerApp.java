@@ -40,18 +40,39 @@ import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 
 // #https-http-config
 
+/** Example application demonstrating pekko-http server with HTTP and HTTPS support. */
 public class SimpleServerApp {
 
   // #https-http-app
+  /**
+   * Multiplies two numbers and returns a route with the result.
+   *
+   * @param x the first number
+   * @param y the second number
+   * @return a route completing with the multiplication result
+   */
   public Route multiply(int x, int y) {
     int result = x * y;
     return complete("%d * %d = %d".formatted(x, y, result));
   }
 
+  /**
+   * Asynchronously multiplies two numbers and returns a future route with the result.
+   *
+   * @param ctx the executor to use for async computation
+   * @param x the first number
+   * @param y the second number
+   * @return a completion stage of the route
+   */
   public CompletionStage<Route> multiplyAsync(Executor ctx, int x, int y) {
     return CompletableFuture.supplyAsync(() -> multiply(x, y), ctx);
   }
 
+  /**
+   * Creates the main route for the calculator application.
+   *
+   * @return the application route
+   */
   public Route createRoute() {
     Route addHandler =
         parameter(
@@ -104,6 +125,12 @@ public class SimpleServerApp {
 
   // ** STARTING THE SERVER ** //
 
+  /**
+   * Main entry point that starts the calculator HTTP server.
+   *
+   * @param args command line arguments (not used)
+   * @throws IOException if an I/O error occurs
+   */
   public static void main(String[] args) throws IOException {
     final ActorSystem system = ActorSystem.create("SimpleServerApp");
 
@@ -132,6 +159,12 @@ public class SimpleServerApp {
   // #https-http-config
   // ** CONFIGURING ADDITIONAL SETTINGS ** //
 
+  /**
+   * Creates an HTTPS connection context using a PKCS12 keystore.
+   *
+   * @param system the actor system
+   * @return the HTTPS connection context
+   */
   public static HttpsConnectionContext createHttpsContext(ActorSystem system) {
     try {
       // initialise the keystore

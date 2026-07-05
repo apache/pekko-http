@@ -13,14 +13,15 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
-import scala.annotation.nowarn
 import com.typesafe.config.ConfigFactory
+import org.apache.pekko.actor.ActorSystem
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class SettingsEqualitySpec extends AnyWordSpec with Matchers {
 
   val config = ConfigFactory.load.resolve
+  implicit val system: ActorSystem = ActorSystem("test", config)
 
   "equality" should {
     "hold for ConnectionPoolSettings" in {
@@ -32,12 +33,12 @@ class SettingsEqualitySpec extends AnyWordSpec with Matchers {
     }
 
     "hold for ParserSettings.forServer" in {
-      val s1 = ParserSettings(config)
-      val s2 = ParserSettings(config)
+      val s1 = ParserSettings.forServer
+      val s2 = ParserSettings.forServer
 
       s1 shouldBe s2
       s1.toString should startWith("ParserSettings(")
-    }: @nowarn("msg=apply in object ParserSettings is deprecated")
+    }
 
     "hold for ClientConnectionSettings" in {
       val s1 = ClientConnectionSettings(config)

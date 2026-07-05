@@ -21,7 +21,7 @@ package org.apache.pekko.http.javadsl.model;
  */
 public abstract class HttpMethod {
 
-  /** Returns the name of the method, always equal to [[value]]. */
+  /** Returns the name of the method, always equal to {@link #value()}. */
   public final String name() {
     return value();
   }

@@ -52,8 +52,8 @@ public abstract class HttpApp extends AllDirectives {
   }
 
   /**
-   * Start a server on the specified host and port, using the provided [[ActorSystem]] Note that
-   * this method is blocking.
+   * Start a server on the specified host and port, using the provided {@link ActorSystem}. Note
+   * that this method is blocking.
    *
    * @param system ActorSystem to use for starting the app, if null is passed in a new default
    *     ActorSystem will be created instead, which will be terminated when the server is stopped.
@@ -73,8 +73,8 @@ public abstract class HttpApp extends AllDirectives {
   }
 
   /**
-   * Start a server on the specified host and port, using the provided settings and [[ActorSystem]].
-   * Note that this method is blocking.
+   * Start a server on the specified host and port, using the provided settings and {@link
+   * ActorSystem}. Note that this method is blocking.
    *
    * @param system ActorSystem to use for starting the app, if null is passed in a new default
    *     ActorSystem will be created instead, which will be terminated when the server is stopped.
@@ -85,8 +85,8 @@ public abstract class HttpApp extends AllDirectives {
   }
 
   /**
-   * Start a server on the specified host and port, using the provided settings and [[ActorSystem]]
-   * if present. Note that this method is blocking. This method may throw an {@link
+   * Start a server on the specified host and port, using the provided settings and {@link
+   * ActorSystem} if present. Note that this method is blocking. This method may throw an {@link
    * ExecutionException} or {@link InterruptedException} if the future that signals that the server
    * should shutdown is interrupted or cancelled.
    *
@@ -155,7 +155,8 @@ public abstract class HttpApp extends AllDirectives {
   /**
    * Hook that will be called just after the server termination. Override this method if you want to
    * perform some cleanup actions after the server is stopped. The {@code failure} parameter
-   * contains a {@link Throwable} only if there has been a problem shutting down the server.
+   * contains a {@link java.lang.Throwable} only if there has been a problem shutting down the
+   * server.
    */
   protected void postServerShutdown(Optional<Throwable> failure, ActorSystem system) {
     systemReference.get().log().info("Shutting down the server");

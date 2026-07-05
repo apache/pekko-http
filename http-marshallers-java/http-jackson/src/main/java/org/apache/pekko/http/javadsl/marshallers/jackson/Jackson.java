@@ -36,12 +36,19 @@ import org.apache.pekko.http.scaladsl.model.ExceptionWithErrorInfo;
 import org.apache.pekko.util.ByteString;
 
 /** A JSON marshaller/unmarshaller using the Jackson library. */
+@SuppressWarnings("deprecation")
 public class Jackson {
   private static final ObjectMapper defaultObjectMapper =
       createMapper().enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY);
 
   /** INTERNAL API */
   public static class JacksonUnmarshallingException extends ExceptionWithErrorInfo {
+    /**
+     * Creates a new JacksonUnmarshallingException.
+     *
+     * @param expectedType the expected type that was being unmarshalled
+     * @param cause the underlying IO exception
+     */
     public JacksonUnmarshallingException(Class<?> expectedType, IOException cause) {
       super(
           new ErrorInfo(
@@ -50,29 +57,72 @@ public class Jackson {
     }
   }
 
+  /**
+   * Returns a marshaller that converts a value of type {@code T} to a JSON {@link RequestEntity}
+   * using the default {@link ObjectMapper}.
+   *
+   * @param <T> the type of the value to marshal
+   */
   public static <T> Marshaller<T, RequestEntity> marshaller() {
     return marshaller(defaultObjectMapper);
   }
 
+  /**
+   * Returns a marshaller that converts a value of type {@code T} to a JSON {@link RequestEntity}
+   * using the given {@link ObjectMapper}.
+   *
+   * @param <T> the type of the value to marshal
+   * @param mapper the ObjectMapper to use for serialization
+   */
   public static <T> Marshaller<T, RequestEntity> marshaller(ObjectMapper mapper) {
     return Marshaller.wrapEntity(
         u -> toJSON(mapper, u), Marshaller.stringToEntity(), MediaTypes.APPLICATION_JSON);
   }
 
+  /**
+   * Returns an unmarshaller that converts a JSON {@link ByteString} to a value of the given type
+   * using the default {@link ObjectMapper}.
+   *
+   * @param <T> the target type
+   * @param expectedType the class of the target type
+   */
   public static <T> Unmarshaller<ByteString, T> byteStringUnmarshaller(Class<T> expectedType) {
     return byteStringUnmarshaller(defaultObjectMapper, expectedType);
   }
 
+  /**
+   * Returns an unmarshaller that converts a JSON {@link HttpEntity} to a value of the given type
+   * using the default {@link ObjectMapper}.
+   *
+   * @param <T> the target type
+   * @param expectedType the class of the target type
+   */
   public static <T> Unmarshaller<HttpEntity, T> unmarshaller(Class<T> expectedType) {
     return unmarshaller(defaultObjectMapper, expectedType);
   }
 
+  /**
+   * Returns an unmarshaller that converts a JSON {@link HttpEntity} to a value of the given type
+   * using the given {@link ObjectMapper}.
+   *
+   * @param <T> the target type
+   * @param mapper the ObjectMapper to use for deserialization
+   * @param expectedType the class of the target type
+   */
   public static <T> Unmarshaller<HttpEntity, T> unmarshaller(
       ObjectMapper mapper, Class<T> expectedType) {
     return Unmarshaller.forMediaType(MediaTypes.APPLICATION_JSON, Unmarshaller.entityToString())
         .thenApply(s -> fromJSON(mapper, s, expectedType));
   }
 
+  /**
+   * Returns an unmarshaller that converts a JSON {@link ByteString} to a value of the given type
+   * using the given {@link ObjectMapper}.
+   *
+   * @param <T> the target type
+   * @param mapper the ObjectMapper to use for deserialization
+   * @param expectedType the class of the target type
+   */
   public static <T> Unmarshaller<ByteString, T> byteStringUnmarshaller(
       ObjectMapper mapper, Class<T> expectedType) {
     return Unmarshaller.sync(s -> fromJSON(mapper, s.utf8String(), expectedType));
