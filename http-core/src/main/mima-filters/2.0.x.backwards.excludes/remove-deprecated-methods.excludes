@@ -125,3 +125,9 @@ ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scalad
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.websocketRandomFactory")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.getWebsocketRandomFactory")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.withWebsocketRandomFactory")
+
+# Remove deprecated StatusCodes (since 1.1.0)
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.StatusCodes.PayloadTooLarge")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.StatusCodes.UnprocessableEntity")
+ProblemFilters.exclude[MissingFieldProblem]("org.apache.pekko.http.javadsl.model.StatusCodes.PAYLOAD_TOO_LARGE")
+ProblemFilters.exclude[MissingFieldProblem]("org.apache.pekko.http.javadsl.model.StatusCodes.UNPROCESSABLE_ENTITY")
