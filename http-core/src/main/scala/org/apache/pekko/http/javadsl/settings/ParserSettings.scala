@@ -111,12 +111,14 @@ abstract class ParserSettings private[pekko] () extends BodyPartParser.Settings 
 
 }
 
-object ParserSettings extends SettingsCompanion[ParserSettings] {
+object ParserSettings {
   trait CookieParsingMode
   trait ErrorLoggingVerbosity
   trait IllegalResponseHeaderNameProcessingMode
   trait IllegalResponseHeaderValueProcessingMode
   trait ConflictingContentTypeHeaderProcessingMode
+
+  def create(system: ActorSystem): ParserSettings = forServer(system)
 
   def forServer(system: ClassicActorSystemProvider): ParserSettings =
     pekko.http.scaladsl.settings.ParserSettings.forServer(system)
