@@ -157,10 +157,6 @@ object UnsupportedRequestContentTypeRejection
       supported: Set[ContentTypeRange], contentType: Option[ContentType]): UnsupportedRequestContentTypeRejection =
     new UnsupportedRequestContentTypeRejection(supported, contentType)
 
-  @deprecated("for binary compatibility", since = "Akka HTTP 10.1.9")
-  def apply(supported: Set[ContentTypeRange]): UnsupportedRequestContentTypeRejection =
-    new UnsupportedRequestContentTypeRejection(supported, None)
-
   def unapply(rejection: UnsupportedRequestContentTypeRejection): Option[Set[ContentTypeRange]] =
     Some(rejection.supported)
 }
