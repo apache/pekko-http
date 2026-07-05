@@ -15,4 +15,5 @@ package org.apache.pekko.http.javadsl.server.examples.petstore;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** A simple pet record with an id and name. */
 public record Pet(@JsonProperty("id") int id, @JsonProperty("name") String name) {}

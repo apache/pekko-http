@@ -26,12 +26,13 @@ import org.apache.pekko.stream.javadsl.Source;
  * The model of multipart content for media-types `multipart/\*` (general multipart content),
  * `multipart/form-data` and `multipart/byteranges`.
  *
- * <p>The basic modelling classes for these media-types
- * ([[org.apache.pekko.http.scaladsl.Multipart.General]], [[Multipart.FormData]] and
- * [[org.apache.pekko.http.scaladsl.Multipart.ByteRanges]], respectively) are stream-based but each
- * have a strict counterpart (namely [[org.apache.pekko.http.scaladsl.Multipart.General.Strict]],
- * [[org.apache.pekko.http.scaladsl.Multipart.FormData.Strict]] and
- * [[org.apache.pekko.http.scaladsl.Multipart.ByteRanges.Strict]]).
+ * <p>The basic modelling classes for these media-types ({@code
+ * org.apache.pekko.http.scaladsl.Multipart.General}, {@code Multipart.FormData} and {@code
+ * org.apache.pekko.http.scaladsl.Multipart.ByteRanges}, respectively) are stream-based but each
+ * have a strict counterpart (namely {@code
+ * org.apache.pekko.http.scaladsl.Multipart.General.Strict}, {@code
+ * org.apache.pekko.http.scaladsl.Multipart.FormData.Strict} and {@code
+ * org.apache.pekko.http.scaladsl.Multipart.ByteRanges.Strict}).
  */
 public interface Multipart {
 

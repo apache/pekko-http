@@ -15,6 +15,7 @@ package org.apache.pekko.http.javadsl.model;
 
 import org.apache.pekko.http.javadsl.model.ws.WebSocketUpgrade;
 
+@SuppressWarnings("unchecked")
 public final class AttributeKeys {
   public static final AttributeKey<RemoteAddress> remoteAddress =
       (AttributeKey<RemoteAddress>)
