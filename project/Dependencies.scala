@@ -37,11 +37,12 @@ object Dependencies {
 
   val scala213Version = "2.13.18"
   val scala3Version = "3.3.8"
-  val allScalaVersions = Seq(scala213Version, scala3Version)
+  val scala3NextVersion = "3.8.4"
+  val publishedScalaVersions = Seq(scala213Version, scala3Version)
 
   val Versions = Seq(
-    crossScalaVersions := allScalaVersions,
-    scalaVersion := allScalaVersions.head)
+    crossScalaVersions := publishedScalaVersions,
+    scalaVersion := publishedScalaVersions.head)
 
   object Provided {
     val jsr305 = "com.google.code.findbugs" % "jsr305" % "3.0.2" % "provided"
@@ -65,7 +66,7 @@ object Dependencies {
 
     val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % "3.2.4"
 
-    val scalafix = "ch.epfl.scala" %% "scalafix-core" % Dependencies.scalafixVersion
+    val scalafix = ("ch.epfl.scala" %% "scalafix-core" % Dependencies.scalafixVersion).cross(CrossVersion.for3Use2_13)
 
     val parboiled = "org.parboiled" %% "parboiled" % "2.5.1"
 

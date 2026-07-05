@@ -19,6 +19,7 @@ import org.apache.pekko.Done;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.ServerBinding;
 
+@SuppressWarnings("deprecation")
 public class MinimalHttpApp extends HttpApp {
 
   CompletableFuture<Done> shutdownTrigger = new CompletableFuture<>();

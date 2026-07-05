@@ -33,6 +33,7 @@ import sbtunidoc.BaseUnidocPlugin.autoImport.unidoc
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable
+import scala.language.postfixOps
 import scala.sys.process._
 import scala.util.Try
 import scala.util.matching.Regex
@@ -392,9 +393,13 @@ object AggregatePRValidation extends AutoPlugin {
         fw.println(msg)
       }
 
+      @scala.annotation.nowarn("cat=deprecation")
       val testLogger = LogExchange.logger("testLogger")
       val appender = MainAppender.defaultBacked(useFormat = false)(fw)
-      LogExchange.bindLoggerAppenders("testLogger", appender -> Level.Info :: Nil)
+      @scala.annotation.nowarn("cat=deprecation")
+      def installTestLoggerAppender(): Unit =
+        LogExchange.bindLoggerAppenders("testLogger", appender -> Level.Info :: Nil)
+      installTestLoggerAppender()
 
       log.info("")
       if (failed.nonEmpty || mimaFailures.nonEmpty || failedTasks.nonEmpty) {
@@ -516,102 +521,105 @@ object MimaWithPrValidation extends AutoPlugin {
   override lazy val projectSettings = Seq(
     ValidatePR / additionalTasks += mimaResult,
     mimaResult := {
-      import com.typesafe.tools.mima.core
-      def reportModuleErrors(module: ModuleID,
-          backward: List[core.Problem],
-          forward: List[core.Problem],
-          filters: Seq[core.ProblemFilter],
-          backwardFilters: Map[String, Seq[core.ProblemFilter]],
-          forwardFilters: Map[String, Seq[core.ProblemFilter]],
-          log: String => Unit, projectName: String): Boolean = {
-        // filters * found is n-squared, it's fixable in principle by special-casing known
-        // filter types or something, not worth it most likely...
+      if (scalaVersion.value == Dependencies.scala3NextVersion) NoErrors
+      else {
+        import com.typesafe.tools.mima.core
+        def reportModuleErrors(module: ModuleID,
+            backward: List[core.Problem],
+            forward: List[core.Problem],
+            filters: Seq[core.ProblemFilter],
+            backwardFilters: Map[String, Seq[core.ProblemFilter]],
+            forwardFilters: Map[String, Seq[core.ProblemFilter]],
+            log: String => Unit, projectName: String): Boolean = {
+          // filters * found is n-squared, it's fixable in principle by special-casing known
+          // filter types or something, not worth it most likely...
 
-        val versionOrdering = {
-          // version string "x.y.z" is converted to an Int tuple (x, y, z) for comparison
-          val VersionRegex = """(\d+)\.?(\d+)?\.?(.*)?""".r
-          def int(versionPart: String) =
-            Try(versionPart.replace("x", Short.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
-          Ordering[(Int, Int, Int)].on[String] { case VersionRegex(x, y, z) => (int(x), int(y), int(z)) }
-        }
-        def isReported(module: ModuleID, verionedFilters: Map[String, Seq[core.ProblemFilter]])(
-            problem: core.Problem) =
-          (verionedFilters.collect {
-            // get all filters that apply to given module version or any version after it
-            case f @ (version, filters) if versionOrdering.gteq(version, module.revision) => filters
-          }.flatten ++ filters).forall { f =>
-            if (f(problem)) {
-              true
-            } else {
-              // log(projectName + ": filtered out: " + problem.description + "\n  filtered by: " + f)
-              false
+          val versionOrdering = {
+            // version string "x.y.z" is converted to an Int tuple (x, y, z) for comparison
+            val VersionRegex = """(\d+)\.?(\d+)?\.?(.*)?""".r
+            def int(versionPart: String) =
+              Try(versionPart.replace("x", Short.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
+            Ordering[(Int, Int, Int)].on[String] { case VersionRegex(x, y, z) => (int(x), int(y), int(z)) }
+          }
+          def isReported(module: ModuleID, verionedFilters: Map[String, Seq[core.ProblemFilter]])(
+              problem: core.Problem) =
+            (verionedFilters.collect {
+              // get all filters that apply to given module version or any version after it
+              case f @ (version, filters) if versionOrdering.gteq(version, module.revision) => filters
+            }.flatten ++ filters).forall { f =>
+              if (f(problem)) {
+                true
+              } else {
+                // log(projectName + ": filtered out: " + problem.description + "\n  filtered by: " + f)
+                false
+              }
             }
+
+          val backErrors = backward.filter(isReported(module, backwardFilters))
+          val forwErrors = forward.filter(isReported(module, forwardFilters))
+
+          val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
+          val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
+
+          // TODO - Line wrapping an other magikz
+          def prettyPrint(p: core.Problem, affected: String): String = {
+            " * " + p.description(affected) + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
           }
 
-        val backErrors = backward.filter(isReported(module, backwardFilters))
-        val forwErrors = forward.filter(isReported(module, forwardFilters))
-
-        val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
-        val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
-
-        // TODO - Line wrapping an other magikz
-        def prettyPrint(p: core.Problem, affected: String): String = {
-          " * " + p.description(affected) + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
+          log(
+            s"$projectName: found ${backErrors.size + forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
+          ((backErrors.map { p: core.Problem => prettyPrint(p, "current") }) ++
+          (forwErrors.map { p: core.Problem => prettyPrint(p, "other") })).foreach { p =>
+            log(p)
+          }
+          backErrors.nonEmpty || forwErrors.nonEmpty
         }
 
-        log(
-          s"$projectName: found ${backErrors.size + forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
-        ((backErrors.map { p: core.Problem => prettyPrint(p, "current") }) ++
-        (forwErrors.map { p: core.Problem => prettyPrint(p, "other") })).foreach { p =>
-          log(p)
-        }
-        backErrors.nonEmpty || forwErrors.nonEmpty
-      }
+        def withLogger[T](f: (String => Unit) => T): (String, T) = {
+          val stringWriter = new StringWriter()
+          val printWriter = new PrintWriter(stringWriter)
 
-      def withLogger[T](f: (String => Unit) => T): (String, T) = {
-        val stringWriter = new StringWriter()
-        val printWriter = new PrintWriter(stringWriter)
+          val result = f(printWriter.println)
 
-        val result = f(printWriter.println)
-
-        printWriter.close()
-        stringWriter.close()
-        (stringWriter.toString, result)
-      }
-
-      val allResults =
-        mimaPreviousClassfiles.value.toSeq.map {
-          case (moduleId, file) =>
-            val problems = SbtMima.runMima(
-              file,
-              mimaCurrentClassfiles.value,
-              (mimaFindBinaryIssues / fullClasspath).value,
-              mimaCheckDirection.value,
-              scalaVersion.value,
-              streams.value.log,
-              Nil)
-
-            val binary = mimaBinaryIssueFilters.value
-            val backward = mimaBackwardIssueFilters.value
-            val forward = mimaForwardIssueFilters.value
-
-            withLogger { logger =>
-              reportModuleErrors(
-                moduleId,
-                problems._1, problems._2,
-                binary,
-                backward,
-                forward,
-                logger,
-                name.value)
-            }
+          printWriter.close()
+          stringWriter.close()
+          (stringWriter.toString, result)
         }
 
-      val noErrors = allResults.forall(!_._2)
-      if (noErrors) NoErrors
-      else {
-        val erroneous = allResults.filter(_._2)
-        Problems(erroneous.map(_._1).mkString("\n"))
+        val allResults =
+          mimaPreviousClassfiles.value.toSeq.map {
+            case (moduleId, file) =>
+              val problems = SbtMima.runMima(
+                file,
+                mimaCurrentClassfiles.value,
+                (mimaFindBinaryIssues / fullClasspath).value,
+                mimaCheckDirection.value,
+                scalaVersion.value,
+                streams.value.log,
+                Nil)
+
+              val binary = mimaBinaryIssueFilters.value
+              val backward = mimaBackwardIssueFilters.value
+              val forward = mimaForwardIssueFilters.value
+
+              withLogger { logger =>
+                reportModuleErrors(
+                  moduleId,
+                  problems._1, problems._2,
+                  binary,
+                  backward,
+                  forward,
+                  logger,
+                  name.value)
+              }
+          }
+
+        val noErrors = allResults.forall(!_._2)
+        if (noErrors) NoErrors
+        else {
+          val erroneous = allResults.filter(_._2)
+          Problems(erroneous.map(_._1).mkString("\n"))
+        }
       }
     })
 }
