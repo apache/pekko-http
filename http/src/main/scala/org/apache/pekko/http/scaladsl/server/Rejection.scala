@@ -20,7 +20,7 @@ import java.util.function.Function
 import scala.collection.immutable
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
-import scala.runtime.AbstractFunction1
+import scala.runtime.AbstractFunction2
 
 import org.apache.pekko
 import pekko.http.impl.util.JavaMapping._
@@ -151,7 +151,7 @@ final class UnsupportedRequestContentTypeRejection(
 }
 
 object UnsupportedRequestContentTypeRejection
-    extends AbstractFunction1[Set[ContentTypeRange], UnsupportedRequestContentTypeRejection] {
+    extends AbstractFunction2[Set[ContentTypeRange], Option[ContentType], UnsupportedRequestContentTypeRejection] {
 
   def apply(
       supported: Set[ContentTypeRange], contentType: Option[ContentType]): UnsupportedRequestContentTypeRejection =

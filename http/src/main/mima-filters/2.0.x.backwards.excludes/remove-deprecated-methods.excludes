@@ -98,3 +98,4 @@ ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scalad
 
 # Remove deprecated UnsupportedRequestContentTypeRejection.apply 1-arg (since Akka HTTP 10.1.9)
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.server.UnsupportedRequestContentTypeRejection.apply")
+ProblemFilters.exclude[MissingTypesProblem]("org.apache.pekko.http.scaladsl.server.UnsupportedRequestContentTypeRejection$")
