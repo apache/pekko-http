@@ -15,5 +15,4 @@ package org.apache.pekko.http.scaladsl.settings
 
 import org.apache.pekko.testkit.PekkoSpec
 
-class ClientConnectionSettingsSpec extends PekkoSpec {
-}
+class ClientConnectionSettingsSpec extends PekkoSpec {}
