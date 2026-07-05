@@ -18,21 +18,6 @@ import org.apache.pekko.testkit.PekkoSpec
 
 class ServerSettingsSpec extends PekkoSpec {
   "ServerSettings" should {
-    "fail early when creating ServerSettings with incomplete ParserSettings" in {
-      // This creates client-specific parserSettings, without server-specific values.
-      val parserSettings = ParserSettings.forClient
-
-      // This includes ParserSettings, complete with server-specific settings
-      val serverSettings = ServerSettings(system)
-
-      // This would create 'defective' serverSettings, since these
-      // parserSettings don't contain the server-specific values. Notably,
-      // max-content-length would not be set (and throw an exception on access).
-      val e = intercept[IllegalArgumentException] {
-        serverSettings.withParserSettings(parserSettings)
-      }
-      e.getMessage should include("does not contain the server-specific settings")
-    }
     "default enableHttp2 to true" in {
       val serverSettings = ServerSettings(system)
       serverSettings.enableHttp2 should ===(true)

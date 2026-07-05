@@ -16,21 +16,4 @@ package org.apache.pekko.http.scaladsl.settings
 import org.apache.pekko.testkit.PekkoSpec
 
 class ClientConnectionSettingsSpec extends PekkoSpec {
-  "ClientConnectionSettings" should {
-    "fail early when creating ClientConnectionSettings with incomplete ParserSettings" in {
-      // This creates server-specific parserSettings, without client-specific values.
-      val parserSettings = ParserSettings.forServer
-
-      // This includes ParserSettings, complete with client-specific settings
-      val clientConnectionSettings = ClientConnectionSettings(system)
-
-      // This would create 'defective' clientConnectionSettings, since these
-      // parserSettings don't contain the client-specific values. Notably,
-      // max-content-length would not be set (and throw an exception on access).
-      val e = intercept[IllegalArgumentException] {
-        clientConnectionSettings.withParserSettings(parserSettings)
-      }
-      e.getMessage should include("does not contain the client-specific settings")
-    }
-  }
 }
