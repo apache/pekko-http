@@ -125,3 +125,8 @@ ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scalad
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.websocketRandomFactory")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.getWebsocketRandomFactory")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.withWebsocketRandomFactory")
+
+# Remove deprecated ConnectionContext.defaultPort (since Akka HTTP 10.2.0)
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.ConnectionContext.defaultPort")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.defaultPort")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpConnectionContext.defaultPort")
