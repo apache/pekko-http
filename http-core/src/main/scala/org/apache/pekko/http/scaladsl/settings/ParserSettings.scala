@@ -19,7 +19,7 @@ import java.util.function.Function
 
 import com.typesafe.config.Config
 import org.apache.pekko
-import pekko.actor.ClassicActorSystemProvider
+import pekko.actor.{ ActorSystem, ClassicActorSystemProvider }
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.settings.ParserSettingsImpl
 import pekko.http.impl.util._
@@ -157,7 +157,7 @@ abstract class ParserSettings private[pekko] () extends pekko.http.javadsl.setti
     self.copy(conflictingContentTypeHeaderProcessingMode = newValue)
 }
 
-object ParserSettings extends SettingsCompanion[ParserSettings] {
+object ParserSettings {
   sealed trait CookieParsingMode extends pekko.http.javadsl.settings.ParserSettings.CookieParsingMode
   object CookieParsingMode {
     case object RFC6265 extends CookieParsingMode
@@ -237,10 +237,9 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
       }
   }
 
-  @deprecated("Use forServer or forClient instead", "Akka HTTP 10.2.0")
-  override def apply(config: Config): ParserSettings = ParserSettingsImpl(config)
-  @deprecated("Use forServer or forClient instead", "Akka HTTP 10.2.0")
-  override def apply(configOverrides: String): ParserSettings = ParserSettingsImpl(configOverrides)
+  def apply(system: ActorSystem): ParserSettings = forServer(system)
+  def apply(system: ClassicActorSystemProvider): ParserSettings = forServer(system)
+  implicit def default(implicit system: ClassicActorSystemProvider): ParserSettings = forServer(system)
 
   def forServer(implicit system: ClassicActorSystemProvider): ParserSettings =
     ParserSettingsImpl.forServer(system.classicSystem.settings.config)
