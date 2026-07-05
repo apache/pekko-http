@@ -136,3 +136,7 @@ ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.sca
 ProblemFilters.exclude[IncompatibleMethTypeProblem]("org.apache.pekko.http.scaladsl.settings.ParserSettings.apply")
 ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.ParserSettings.default")
 ProblemFilters.exclude[IncompatibleMethTypeProblem]("org.apache.pekko.http.scaladsl.settings.ParserSettings.default")
+# Remove deprecated ConnectionContext.defaultPort (since Akka HTTP 10.2.0)
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.ConnectionContext.defaultPort")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpsConnectionContext.defaultPort")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.HttpConnectionContext.defaultPort")

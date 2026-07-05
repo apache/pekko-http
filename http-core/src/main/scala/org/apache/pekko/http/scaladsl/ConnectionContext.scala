@@ -18,10 +18,7 @@ import javax.net.ssl._
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, InternalApi }
 
-trait ConnectionContext extends pekko.http.javadsl.ConnectionContext {
-  @deprecated("Internal method, left for binary compatibility", since = "Akka HTTP 10.2.0")
-  protected[http] def defaultPort: Int
-}
+trait ConnectionContext extends pekko.http.javadsl.ConnectionContext
 
 object ConnectionContext {
   // #https-server-context-creation
@@ -91,13 +88,9 @@ object ConnectionContext {
 @InternalApi
 final class HttpsConnectionContext private[http] (
     private[http] val engineCreator: Option[(String, Int)] => SSLEngine)
-    extends pekko.http.javadsl.HttpsConnectionContext with ConnectionContext {
-  protected[http] override final def defaultPort: Int = 443
-}
+    extends pekko.http.javadsl.HttpsConnectionContext with ConnectionContext
 
-sealed class HttpConnectionContext extends pekko.http.javadsl.HttpConnectionContext with ConnectionContext {
-  protected[http] override final def defaultPort: Int = 80
-}
+sealed class HttpConnectionContext extends pekko.http.javadsl.HttpConnectionContext with ConnectionContext
 
 object HttpConnectionContext extends HttpConnectionContext {
 

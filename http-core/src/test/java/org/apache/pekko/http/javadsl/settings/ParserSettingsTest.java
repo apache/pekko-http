@@ -16,6 +16,7 @@ package org.apache.pekko.http.javadsl.settings;
 import org.apache.pekko.actor.ActorSystem;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("deprecation")
 public class ParserSettingsTest {
 
   @Test

@@ -18,7 +18,7 @@ import org.apache.pekko.http.scaladsl.model.IllegalHeaderException;
 
 /**
  * The base type representing Http headers. All actual header values will be instances of one of the
- * subtypes defined in the `headers` packages. Unknown headers will be subtypes of {@link
+ * subtypes defined in the {@code headers} packages. Unknown headers will be subtypes of {@link
  * org.apache.pekko.http.javadsl.model.headers.RawHeader}. Not for user extension.
  */
 @DoNotInherit

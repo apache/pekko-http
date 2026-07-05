@@ -32,13 +32,13 @@ public abstract class ServerSentEvent {
 
   private static final Option<Object> intNone = OptionalUtil.scalaNone();
 
-  /** Provides a [[ServerSentEvent]] with empty data which can be used as a heartbeat */
+  /** Provides a {@link ServerSentEvent} with empty data which can be used as a heartbeat */
   public static ServerSentEvent heartbeat() {
     return org.apache.pekko.http.scaladsl.model.sse.ServerSentEvent.heartbeat();
   }
 
   /**
-   * Creates a [[ServerSentEvent]].
+   * Creates a {@link ServerSentEvent}.
    *
    * @param data data, may be empty or span multiple lines
    */
@@ -48,7 +48,7 @@ public abstract class ServerSentEvent {
   }
 
   /**
-   * Creates a [[ServerSentEvent]].
+   * Creates a {@link ServerSentEvent}.
    *
    * @param data data, may span multiple lines
    * @param type type, must not contain \n or \r
@@ -58,7 +58,7 @@ public abstract class ServerSentEvent {
   }
 
   /**
-   * Creates a [[ServerSentEvent]].
+   * Creates a {@link ServerSentEvent}.
    *
    * @param data data, may span multiple lines
    * @param type type, must not contain \n or \r
@@ -69,7 +69,7 @@ public abstract class ServerSentEvent {
   }
 
   /**
-   * Creates a [[ServerSentEvent]].
+   * Creates a {@link ServerSentEvent}.
    *
    * @param data data, may span multiple lines
    * @param retry reconnection delay in milliseconds
@@ -79,7 +79,7 @@ public abstract class ServerSentEvent {
   }
 
   /**
-   * Creates a [[ServerSentEvent]].
+   * Creates a {@link ServerSentEvent}.
    *
    * @param data data, may span multiple lines
    * @param type optional type, must not contain \n or \r
