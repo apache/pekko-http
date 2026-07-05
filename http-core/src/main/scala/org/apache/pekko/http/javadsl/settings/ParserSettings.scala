@@ -118,27 +118,6 @@ object ParserSettings extends SettingsCompanion[ParserSettings] {
   trait IllegalResponseHeaderValueProcessingMode
   trait ConflictingContentTypeHeaderProcessingMode
 
-  /**
-   * @deprecated Use forServer or forClient instead.
-   */
-  @Deprecated(since = "Akka HTTP 10.2.0")
-  @deprecated("Use forServer or forClient instead", since = "Akka HTTP 10.2.0")
-  override def create(config: Config): ParserSettings = ParserSettingsImpl(config)
-
-  /**
-   * @deprecated Use forServer or forClient instead.
-   */
-  @Deprecated(since = "Akka HTTP 10.2.0")
-  @deprecated("Use forServer or forClient instead", since = "Akka HTTP 10.2.0")
-  override def create(configOverrides: String): ParserSettings = ParserSettingsImpl(configOverrides)
-
-  /**
-   * @deprecated Use forServer or forClient instead.
-   */
-  @Deprecated(since = "Akka HTTP 10.2.0")
-  @deprecated("Use forServer or forClient instead", since = "Akka HTTP 10.2.0")
-  override def create(system: ActorSystem): ParserSettings = create(system.settings.config)
-
   def forServer(system: ClassicActorSystemProvider): ParserSettings =
     pekko.http.scaladsl.settings.ParserSettings.forServer(system)
   def forClient(system: ClassicActorSystemProvider): ParserSettings =
