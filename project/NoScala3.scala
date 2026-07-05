@@ -12,5 +12,13 @@ import Keys._
 
 object NoScala3 extends AutoPlugin {
   override def projectSettings: Seq[Def.Setting[?]] = Seq(
-    crossScalaVersions := crossScalaVersions.value.filterNot(_.startsWith("3.")))
+    crossScalaVersions := crossScalaVersions.value.filterNot(_.startsWith("3.")),
+    Compile / unmanagedSourceDirectories := {
+      if (scalaVersion.value.startsWith("3.")) Seq.empty
+      else (Compile / unmanagedSourceDirectories).value
+    },
+    Test / unmanagedSourceDirectories := {
+      if (scalaVersion.value.startsWith("3.")) Seq.empty
+      else (Test / unmanagedSourceDirectories).value
+    })
 }

@@ -253,6 +253,7 @@ import static org.apache.pekko.http.javadsl.server.Directives.extractActorSystem
 
 // #extractActorSystem
 
+@SuppressWarnings("unchecked")
 public class BasicDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Test

@@ -63,7 +63,8 @@ object Common extends AutoPlugin {
       "-Wconf:msg=pattern binding uses refutable extractor:s",
       "-Wconf:msg=is more specialized than the right hand side:s",
       "-Wconf:cat=deprecation:s")).value,
-    scalacOptions ++= onlyOnScala3Below39(Seq("-Yfuture-lazy-vals")).value,
+    scalacOptions ++= onlyOnScala38OrLater(Seq("-Wconf:any:s")).value,
+    scalacOptions ++= onlyOnScala33(Seq("-Yfuture-lazy-vals")).value,
     javacOptions ++=
       Seq("-encoding", "UTF-8", "--release", javacTarget),
     mimaReportSignatureProblems := true,
@@ -77,16 +78,15 @@ object Common extends AutoPlugin {
   def onlyOnScala3[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
     if (scalaVersion.value.startsWith("3")) values else Seq.empty[T]
   }
-  def onlyOnScala3Below39[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
-    if (scalaVersion.value.startsWith("3") && CrossVersion.partialVersion(scalaVersion.value).exists(_._2 < 9)) values
-    else Seq.empty[T]
+  def onlyOnScala33[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
+    if (scalaVersion.value.startsWith("3.3.")) values else Seq.empty[T]
   }
-  def notOnScala39Plus[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
-    if (scalaVersion.value.startsWith("3") && CrossVersion.partialVersion(scalaVersion.value).exists(_._2 >= 9))
-      Seq.empty[T]
-    else values
+  def onlyOnScala38OrLater[T](values: Seq[T]): Def.Initialize[Seq[T]] = Def.setting {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, minor)) if minor >= 8 => values
+      case _                              => Seq.empty[T]
+    }
   }
-
   def scalaMinorVersion: Def.Initialize[Long] = Def.setting { CrossVersion.partialVersion(scalaVersion.value).get._2 }
 
 }

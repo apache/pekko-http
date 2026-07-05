@@ -272,7 +272,8 @@ abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles:
       ActorSystem(MultiNodeSpec.getCallerName(classOf[MultiNodeSpec]), ConfigFactory.load(config.config)),
       config.roles, config.deployments)
 
-  val log: LoggingAdapter = Logging(system, this.getClass)(LogSource.fromClass)
+  private implicit val logSource: LogSource[Class[?]] = LogSource.fromClass
+  val log: LoggingAdapter = Logging(system, this.getClass)
 
   /**
    * Enrich `.await()` onto all Awaitables, using remaining duration from the innermost
