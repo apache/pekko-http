@@ -21,14 +21,26 @@ import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.HttpsConnectionContext;
 import org.apache.pekko.http.javadsl.server.Route;
 
+/** Example application demonstrating running both HTTP and HTTPS servers. */
 public class SimpleServerHttpHttpsApp {
 
+  /**
+   * Creates a simple route that responds with "Hello World!".
+   *
+   * @return the application route
+   */
   public Route createRoute() {
     return get(() -> complete("Hello World!"));
   }
 
   // ** STARTING THE SERVER ** //
 
+  /**
+   * Main entry point that starts both HTTP and HTTPS servers.
+   *
+   * @param args command line arguments (not used)
+   * @throws IOException if an I/O error occurs
+   */
   public static void main(String[] args) throws IOException {
     final ActorSystem system = ActorSystem.create("SimpleServerHttpHttpsApp");
 

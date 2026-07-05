@@ -19,13 +19,25 @@ import java.util.Map;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.Route;
 
+/** A simple controller for the pet store example. */
 public class PetStoreController {
   private Map<Integer, Pet> dataStore;
 
+  /**
+   * Creates a new PetStoreController.
+   *
+   * @param dataStore the backing data store for pets
+   */
   public PetStoreController(Map<Integer, Pet> dataStore) {
     this.dataStore = dataStore;
   }
 
+  /**
+   * Deletes a pet by its id.
+   *
+   * @param petId the id of the pet to delete
+   * @return a route completing with OK status
+   */
   public Route deletePet(int petId) {
     dataStore.remove(petId);
     return complete(StatusCodes.OK);

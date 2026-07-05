@@ -35,6 +35,7 @@ import static org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers.IN
 
 // #imports
 
+/** Example application demonstrating pekko-http routing with Jackson marshalling. */
 public class PetStoreExample {
 
   // #marshall
@@ -52,6 +53,12 @@ public class PetStoreExample {
   // #marshall
 
   // #unmarshall
+  /**
+   * Creates the route for the pet store application.
+   *
+   * @param pets the data store for pets
+   * @return the application route
+   */
   public static Route appRoute(final Map<Integer, Pet> pets) {
     PetStoreController controller = new PetStoreController(pets);
 
@@ -101,6 +108,12 @@ public class PetStoreExample {
 
   // #unmarshall
 
+  /**
+   * Main entry point that starts the pet store HTTP server.
+   *
+   * @param args command line arguments (not used)
+   * @throws IOException if an I/O error occurs
+   */
   public static void main(String[] args) throws IOException {
     Map<Integer, Pet> pets = new ConcurrentHashMap<>();
     Pet dog = new Pet(0, "dog");
