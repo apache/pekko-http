@@ -13,29 +13,41 @@
 
 package docs
 
-import java.lang.reflect.Method
-
 import org.apache.pekko.annotation.ApiMayChange
-import org.reflections.Reflections
-import org.reflections.scanners.{ MethodAnnotationsScanner, Scanners, TypeAnnotationsScanner }
-import org.reflections.util.{ ClasspathHelper, ConfigurationBuilder }
+import io.github.classgraph.{ ClassGraph, MethodInfo }
 import org.scalatest.Assertion
 
-import scala.collection.mutable
 import scala.io.Source
 import scala.jdk.CollectionConverters._
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers {
+class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
 
-  def prettifyName(clazz: Class[?]): String = {
-    clazz.getCanonicalName.replaceAll("\\$minus", "-").split("\\$")(0)
+  private val apiMayChangeAnnotation = classOf[ApiMayChange].getName
+  private val httpPackagePrefix = "org.apache.pekko.http."
+
+  private lazy val scanResult =
+    new ClassGraph()
+      .acceptPackages("org.apache.pekko.http")
+      .enableClassInfo()
+      .enableMethodInfo()
+      .enableAnnotationInfo()
+      .ignoreClassVisibility()
+      .ignoreMethodVisibility()
+      .scan()
+
+  def prettifyName(className: String): String = {
+    className.replaceAll("\\$minus", "-").split("\\$")(0)
   }
 
+  private def isHttpClass(className: String): Boolean =
+    className.startsWith(httpPackagePrefix)
+
   // As Specs, Directives and HttpApp inherit get all directives methods, we skip those as they are not really bringing any extra info
-  def removeClassesToIgnore(method: Method): Boolean = {
-    Seq("Spec", ".Directives", ".HttpApp").exists(method.getDeclaringClass.getCanonicalName.contains)
+  def removeClassesToIgnore(method: MethodInfo): Boolean = {
+    Seq("Spec", ".Directives", ".HttpApp").exists(method.getClassName.contains)
   }
 
   def collectMissing(docPage: Seq[String])(set: Set[String], name: String): Set[String] = {
@@ -56,30 +68,34 @@ class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers {
   }
 
   "compatibility-guidelines.md doc page" should {
-    val reflections = new Reflections(new ConfigurationBuilder()
-      .setUrls(ClasspathHelper.forPackage("org.apache.pekko.http"))
-      .setScanners(
-        Scanners.TypesAnnotated,
-        Scanners.MethodsAnnotated))
     val source = Source.fromFile("docs/src/main/paradox/compatibility-guidelines.md")
     try {
       val docPage = source.getLines().toList
       "contain all ApiMayChange references in classes" in {
-        val classes: mutable.Set[Class[?]] = reflections.getTypesAnnotatedWith(classOf[ApiMayChange], true).asScala
+        val classes = scanResult.getClassesWithAnnotation(apiMayChangeAnnotation).asScala.filter(classInfo =>
+          isHttpClass(classInfo.getName))
         val missing = classes
-          .map(prettifyName)
+          .map(classInfo => prettifyName(classInfo.getName))
           .foldLeft(Set.empty[String])(collectMissing(docPage))
         checkNoMissingCases(missing, "Types")
       }
       "contain all ApiMayChange references in methods" in {
-        val methods = reflections.getMethodsAnnotatedWith(classOf[ApiMayChange]).asScala
+        val methods =
+          scanResult.getClassesWithMethodAnnotation(apiMayChangeAnnotation).asScala.flatMap { classInfo =>
+            classInfo.getDeclaredMethodInfo.asScala.filter(method =>
+              isHttpClass(method.getClassName) && method.hasAnnotation(apiMayChangeAnnotation))
+          }
         val missing = methods
           .filterNot(removeClassesToIgnore)
-          .map(method => prettifyName(method.getDeclaringClass) + "#" + method.getName)
+          .map(method => prettifyName(method.getClassName) + "#" + method.getName)
           .foldLeft(Set.empty[String])(collectMissing(docPage))
         checkNoMissingCases(missing, "Methods")
       }
     } finally source.close()
 
   }
+
+  override protected def afterAll(): Unit =
+    try scanResult.close()
+    finally super.afterAll()
 }
