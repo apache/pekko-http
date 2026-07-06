@@ -30,36 +30,38 @@ object MyRejectionHandler {
   import StatusCodes._
   import Directives._
 
-  object MyApp extends App {
-    def myRejectionHandler =
-      RejectionHandler.newBuilder()
-        .handle {
-          case MissingCookieRejection(cookieName) =>
-            complete(HttpResponse(BadRequest, entity = "No cookies, no service!!!"))
-        }
-        .handle {
-          case AuthorizationFailedRejection =>
-            complete(Forbidden, "You're out of your depth!")
-        }
-        .handle {
-          case ValidationRejection(msg, _) =>
-            complete(InternalServerError, "That wasn't valid! " + msg)
-        }
-        .handleAll[MethodRejection] { methodRejections =>
-          val names = methodRejections.map(_.supported.name)
-          complete(MethodNotAllowed, s"Can't do that! Supported: ${names.mkString(" or ")}!")
-        }
-        .handleNotFound { complete((NotFound, "Not here!")) }
-        .result()
+  object MyApp {
+    def main(args: Array[String]): Unit = {
+      def myRejectionHandler =
+        RejectionHandler.newBuilder()
+          .handle {
+            case MissingCookieRejection(cookieName) =>
+              complete(HttpResponse(BadRequest, entity = "No cookies, no service!!!"))
+          }
+          .handle {
+            case AuthorizationFailedRejection =>
+              complete(Forbidden, "You're out of your depth!")
+          }
+          .handle {
+            case ValidationRejection(msg, _) =>
+              complete(InternalServerError, "That wasn't valid! " + msg)
+          }
+          .handleAll[MethodRejection] { methodRejections =>
+            val names = methodRejections.map(_.supported.name)
+            complete(MethodNotAllowed, s"Can't do that! Supported: ${names.mkString(" or ")}!")
+          }
+          .handleNotFound { complete((NotFound, "Not here!")) }
+          .result()
 
-    implicit val system: ActorSystem = ActorSystem()
+      implicit val system: ActorSystem = ActorSystem()
 
-    val route: Route = handleRejections(myRejectionHandler) {
-      // ... some route structure
-      null // #hide
+      val route: Route = handleRejections(myRejectionHandler) {
+        // ... some route structure
+        null // #hide
+      }
+
+      Http().newServerAt("localhost", 8080).bind(route)
     }
-
-    Http().newServerAt("localhost", 8080).bind(route)
   }
   // #custom-handler-example
 }

@@ -24,26 +24,28 @@ import pekko.util.ByteString
 
 import com.typesafe.config.{ Config, ConfigFactory }
 
-object TestSingleRequest extends App {
-  val testConf: Config = ConfigFactory.parseString("""
-    pekko.loglevel = INFO
-    pekko.log-dead-letters = off
-    pekko.stream.materializer.debug.fuzzing-mode = off
-    """)
-  implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
-  import system.dispatcher
+object TestSingleRequest {
+  def main(args: Array[String]): Unit = {
+    val testConf: Config = ConfigFactory.parseString("""
+      pekko.loglevel = INFO
+      pekko.log-dead-letters = off
+      pekko.stream.materializer.debug.fuzzing-mode = off
+      """)
+    implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
+    import system.dispatcher
 
-  val url = StdIn.readLine("url? ")
+    val url = StdIn.readLine("url? ")
 
-  val x = Http().singleRequest(HttpRequest(uri = url))
+    val x = Http().singleRequest(HttpRequest(uri = url))
 
-  val res = Await.result(x, 10.seconds)
+    val res = Await.result(x, 10.seconds)
 
-  val response = res.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).map(_.utf8String)
+    val response = res.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).map(_.utf8String)
 
-  println(" ------------ RESPONSE ------------")
-  println(Await.result(response, 10.seconds))
-  println(" -------- END OF RESPONSE ---------")
+    println(" ------------ RESPONSE ------------")
+    println(Await.result(response, 10.seconds))
+    println(" -------- END OF RESPONSE ---------")
 
-  system.terminate()
+    system.terminate()
+  }
 }

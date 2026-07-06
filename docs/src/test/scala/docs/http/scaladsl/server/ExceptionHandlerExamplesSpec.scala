@@ -39,17 +39,19 @@ object MyExplicitExceptionHandler {
       }
   }
 
-  object MyApp extends App {
+  object MyApp {
+    def main(args: Array[String]): Unit = {
 
-    implicit val system: ActorSystem = ActorSystem()
+      implicit val system: ActorSystem = ActorSystem()
 
-    val route: Route =
-      handleExceptions(myExceptionHandler) {
-        // ... some route structure
-        null // #hide
-      }
+      val route: Route =
+        handleExceptions(myExceptionHandler) {
+          // ... some route structure
+          null // #hide
+        }
 
-    Http().newServerAt("localhost", 8080).bind(route)
+      Http().newServerAt("localhost", 8080).bind(route)
+    }
   }
 
   //#explicit-handler-example
@@ -75,15 +77,17 @@ object MyImplicitExceptionHandler {
         }
     }
 
-  object MyApp extends App {
+  object MyApp {
+    def main(args: Array[String]): Unit = {
 
-    implicit val system: ActorSystem = ActorSystem()
+      implicit val system: ActorSystem = ActorSystem()
 
-    val route: Route =
-    // ... some route structure
-      null // #hide
+      val route: Route =
+      // ... some route structure
+        null // #hide
 
-    Http().newServerAt("localhost", 8080).bind(route)
+      Http().newServerAt("localhost", 8080).bind(route)
+    }
   }
 
   //#implicit-handler-example
@@ -162,10 +166,12 @@ object RespondWithHeaderExceptionHandlerExample {
       }
   }
 
-  object MyApp extends App {
-    implicit val system: ActorSystem = ActorSystem()
+  object MyApp {
+    def main(args: Array[String]): Unit = {
+      implicit val system: ActorSystem = ActorSystem()
 
-    Http().newServerAt("localhost", 8080).bind(route)
+      Http().newServerAt("localhost", 8080).bind(route)
+    }
   }
   //#respond-with-header-exceptionhandler-example
 }
