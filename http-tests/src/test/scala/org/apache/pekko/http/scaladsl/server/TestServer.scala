@@ -59,6 +59,19 @@ object TestServer {
     }
 
     // format: OFF
+    lazy val index =
+      <html>
+        <body>
+          <h1>Say hello to <i>pekko-http-core</i>!</h1>
+          <p>Defined resources:</p>
+          <ul>
+            <li><a href="/ping">/ping</a></li>
+            <li><a href="/secure">/secure</a> Use any username and '&lt;username&gt;-password' as credentials</li>
+            <li><a href="/crash">/crash</a></li>
+          </ul>
+        </body>
+      </html>
+
     val routes = {
       get {
         path("") {
@@ -115,18 +128,5 @@ object TestServer {
     StdIn.readLine()
 
     bindingFuture.flatMap(_.unbind()).onComplete(_ => system.terminate())
-
-    lazy val index =
-      <html>
-        <body>
-          <h1>Say hello to <i>pekko-http-core</i>!</h1>
-          <p>Defined resources:</p>
-          <ul>
-            <li><a href="/ping">/ping</a></li>
-            <li><a href="/secure">/secure</a> Use any username and '&lt;username&gt;-password' as credentials</li>
-            <li><a href="/crash">/crash</a></li>
-          </ul>
-        </body>
-      </html>
   }
 }

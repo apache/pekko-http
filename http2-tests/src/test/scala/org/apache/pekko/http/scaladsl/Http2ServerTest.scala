@@ -52,6 +52,46 @@ object Http2ServerTest {
       pekko.pattern.after(millis.millis, system.scheduler)(Future.successful(t))
     }
 
+    lazy val index = HttpResponse(
+      entity = HttpEntity(
+        ContentTypes.`text/html(UTF-8)`,
+        """|<html>
+          | <body>
+          |    <h1>Say hello to <i>pekko-http-core</i>!</h1>
+          |    <p>Defined resources:</p>
+          |    <ul>
+          |      <li><a href="/ping">/ping</a></li>
+          |      <li><a href="/image-page">/image-page</a></li>
+          |      <li><a href="/crash">/crash</a></li>
+          |    </ul>
+          |    <div>
+          |      <form method="post" enctype="multipart/form-data" action="upload">
+          |        <label for="file">File</label><input type="file" name="file" multiple="true"/><br/>
+          |        <input type="submit" />
+          |      </form>
+          |    </div>
+          |  </body>
+          |</html>""".stripMargin))
+
+    def imagesBlock = {
+      def one(): String =
+        s"""<img width="80" height="60" src="/image1?cachebuster=${Random.nextInt()}"></img>
+           |<img width="80" height="60" src="/image2?cachebuster=${Random.nextInt()}"></img>
+           |""".stripMargin
+
+      Seq.fill(20)(one()).mkString
+    }
+
+    lazy val imagePage = HttpResponse(
+      entity = HttpEntity(
+        ContentTypes.`text/html(UTF-8)`,
+        s"""|<html>
+            | <body>
+            |    <h1>Image Page</h1>
+            |    $imagesBlock
+            |  </body>
+            |</html>""".stripMargin))
+
     val syncHandler: HttpRequest => HttpResponse = {
       case HttpRequest(GET, Uri.Path("/"), _, _, _)                                          => index
       case HttpRequest(GET, Uri.Path("/ping"), _, _, _)                                      => HttpResponse(entity = "PONG!")
@@ -99,47 +139,5 @@ object Http2ServerTest {
     } finally {
       system.terminate()
     }
-
-    ////////////// helpers //////////////
-
-    lazy val index = HttpResponse(
-      entity = HttpEntity(
-        ContentTypes.`text/html(UTF-8)`,
-        """|<html>
-          | <body>
-          |    <h1>Say hello to <i>pekko-http-core</i>!</h1>
-          |    <p>Defined resources:</p>
-          |    <ul>
-          |      <li><a href="/ping">/ping</a></li>
-          |      <li><a href="/image-page">/image-page</a></li>
-          |      <li><a href="/crash">/crash</a></li>
-          |    </ul>
-          |    <div>
-          |      <form method="post" enctype="multipart/form-data" action="upload">
-          |        <label for="file">File</label><input type="file" name="file" multiple="true"/><br/>
-          |        <input type="submit" />
-          |      </form>
-          |    </div>
-          |  </body>
-          |</html>""".stripMargin))
-
-    def imagesBlock = {
-      def one(): String =
-        s"""<img width="80" height="60" src="/image1?cachebuster=${Random.nextInt()}"></img>
-           |<img width="80" height="60" src="/image2?cachebuster=${Random.nextInt()}"></img>
-           |""".stripMargin
-
-      Seq.fill(20)(one()).mkString
-    }
-
-    lazy val imagePage = HttpResponse(
-      entity = HttpEntity(
-        ContentTypes.`text/html(UTF-8)`,
-        s"""|<html>
-            | <body>
-            |    <h1>Image Page</h1>
-            |    $imagesBlock
-            |  </body>
-            |</html>""".stripMargin))
   }
 }
