@@ -89,7 +89,6 @@ class DeflateSpec extends CoderSpec {
     }
   }
 
-  @nowarn("msg=deprecated")
   private def decodeWith(inflater: TrackingInflater, bytes: ByteString): ByteString =
     decoderWith(inflater).decode(bytes)(SystemMaterializer(system).materializer).awaitResult(3.seconds.dilated)
 
