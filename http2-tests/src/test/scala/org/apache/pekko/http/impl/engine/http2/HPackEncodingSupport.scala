@@ -68,6 +68,6 @@ trait HPackEncodingSupport {
 
     headerPairs.foreach((encode _).tupled)
 
-    ByteString.fromArray(bos.toByteArray)
+    ByteString(bos.toByteArray)
   }
 }
