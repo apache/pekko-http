@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.marshallers.xml
 
 import java.io.File
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 import scala.concurrent.{ Await, Future }
@@ -117,7 +118,7 @@ class ScalaXmlSupportSpec extends AnyFreeSpec with Matchers with ScalatestRouteT
     val file = Files.createTempFile("xxe", ".txt")
     val fileRef = file.toFile
     try {
-      Files.write(file, content.getBytes("UTF-8"))
+      Files.write(file, content.getBytes(StandardCharsets.UTF_8))
       f(fileRef)
     } finally {
       fileRef.delete()
