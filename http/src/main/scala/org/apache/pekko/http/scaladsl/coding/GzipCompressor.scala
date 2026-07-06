@@ -73,9 +73,9 @@ private[coding] class GzipDecompressor(
   protected[coding] def createInflater(): Inflater = new Inflater(true)
 
   override def createLogic(attr: Attributes) = new ParsingLogic {
-    private[this] val inflater = createInflater()
-    private[this] val crc32: CRC32 = new CRC32
-    private[this] var inflaterEnded = false
+    private val inflater = createInflater()
+    private val crc32: CRC32 = new CRC32
+    private var inflaterEnded = false
 
     private def cleanupInflater(): Unit =
       if (!inflaterEnded) {
