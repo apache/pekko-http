@@ -123,6 +123,7 @@ private[coding] class DeflateDecompressor(
 
       override def parse(reader: ByteStringParser.ByteReader): ParseResult[ByteString] = {
         val inflater = examineAndBuildInflater(reader.remainingData)
+        cleanupInflater()
         currentInflater = inflater
         ParseResult(None, new Inflate(inflater, noPostProcessing = true, ProbeWrapping))
       }
