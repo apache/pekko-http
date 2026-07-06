@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.coding
 
 import java.io.{ InputStream, OutputStream }
+import java.util.concurrent.{ CountDownLatch, TimeUnit }
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip._
 
@@ -79,6 +80,10 @@ class DeflateSpec extends CoderSpec {
         .runWith(Sink.ignore)
         .awaitResult(3.seconds.dilated)
 
+      // postStop() (which calls end()) is dispatched to the stage actor after the
+      // Sink.ignore future completes, so we must wait for end() itself rather than
+      // for the stream future to avoid a race.
+      inflater.awaitEnd(3.seconds.dilated)
       inflater.endCalls.get() shouldEqual 1
     }
     "release the inflater when decoding is truncated" in {
@@ -106,9 +111,14 @@ class DeflateSpec extends CoderSpec {
 
   private class TrackingInflater extends java.util.zip.Inflater(false) {
     val endCalls = new AtomicInteger
+    private val endLatch = new CountDownLatch(1)
+
+    def awaitEnd(atMost: FiniteDuration): Unit =
+      endLatch.await(atMost.toMillis, TimeUnit.MILLISECONDS)
 
     override def end(): Unit = {
       endCalls.incrementAndGet()
+      endLatch.countDown()
       super.end()
     }
   }
