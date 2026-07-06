@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import java.lang.invoke.MethodHandles
 import javax.net.ssl.SSLContext
 
 import scala.collection.immutable
@@ -50,16 +49,6 @@ import org.scalatest.concurrent.PatienceConfiguration.Timeout
  * * if applicable: provide application-level response
  * * validate the produced response frames
  */
-object Http2ServerSpec {
-  private val manualProbeHandle =
-    MethodHandles
-      .privateLookupIn(classOf[ManualProbe[?]], MethodHandles.lookup())
-      .findVarHandle(classOf[ManualProbe[?]], "probe", classOf[TestProbe])
-
-  def testProbeFor(publisherProbe: TestPublisher.Probe[?]): TestProbe =
-    manualProbeHandle.get(publisherProbe).asInstanceOf[TestProbe]
-}
-
 class Http2ServerSpec extends Http2SpecWithMaterializer("""
     pekko.http.server.http2.log-frames = on
   """)
@@ -919,8 +908,9 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
               body: => Unit): Unit = {
             // HACK to support `expectRequest` with a timeout
             def within[T](publisherProbe: TestPublisher.Probe[?], dur: FiniteDuration)(t: => T): T = {
-              val probe = Http2ServerSpec.testProbeFor(publisherProbe)
-              probe.within(dur)(t)
+              val field = classOf[ManualProbe[?]].getDeclaredField("probe")
+              field.setAccessible(true)
+              field.get(publisherProbe).asInstanceOf[TestProbe].within(dur)(t)
             }
             def expectRequest(timeout: FiniteDuration): Long =
               within(publisherProbe, timeout)(publisherProbe.expectRequest())

@@ -14,7 +14,6 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.io._
-import java.lang.invoke.MethodHandles
 
 import scala.util.Try
 
@@ -92,16 +91,10 @@ class SerializabilitySpec extends AnyWordSpec with Matchers {
     oos.writeObject(obj)
     oos.close()
     // make sure to use correct class loader
-    val lookup = MethodHandles.privateLookupIn(classOf[HttpRequest], MethodHandles.lookup())
     val loader = classOf[HttpRequest].getClassLoader
     val ois = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray)) {
-      override def resolveClass(desc: ObjectStreamClass): Class[?] = {
-        val name = desc.getName
-        if (name.startsWith("["))
-          Class.forName(name, false, loader)
-        else
-          lookup.findClass(name)
-      }
+      override def resolveClass(desc: ObjectStreamClass): Class[?] =
+        Class.forName(desc.getName, false, loader)
     }
 
     val rereadObj = ois.readObject()

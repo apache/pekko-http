@@ -19,12 +19,13 @@ import scala.util.control.NoStackTrace
 import io.github.classgraph.{ ClassGraph, MethodInfo => ClassGraphMethodInfo }
 import org.apache.pekko
 
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.exceptions.TestPendingException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 object ClassGraphMembers {
-  final case class MethodInfo(owner: String, name: String, isStatic: Boolean, correspondsTo: Option[String])
+  final case class MethodInfo(name: String, isStatic: Boolean, correspondsTo: Option[String])
 
   private val correspondsToAnnotation = "org.apache.pekko.http.javadsl.server.directives.CorrespondsTo"
 
@@ -60,7 +61,7 @@ object ClassGraphMembers {
 
   def allInterfaces(clazz: Class[?]): Vector[String] =
     interfacesCache.getOrElseUpdate(clazz.getName,
-      classInfo(clazz.getName).getInterfaces.asScala.map(_.getName).toVector)
+      classInfo(clazz.getName).getInterfaces.directOnly.asScala.map(_.getName).toVector)
 
   def superclasses(clazz: Class[?]): Vector[String] =
     superclassesCache.getOrElseUpdate(
@@ -73,16 +74,18 @@ object ClassGraphMembers {
     Option(scanResult.getClassInfo(className))
       .getOrElse(throw new IllegalArgumentException(s"Could not find class metadata for [$className]"))
 
+  def close(): Unit =
+    scanResult.close()
+
   private def toMethod(method: ClassGraphMethodInfo): MethodInfo =
     MethodInfo(
-      method.getClassName,
       method.getName,
       method.isStatic,
       Option(method.getAnnotationInfo(correspondsToAnnotation))
         .flatMap(annotation => Option(annotation.getParameterValues.getValue("value")).map(_.toString)))
 }
 
-class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
+class DirectivesConsistencySpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
   import ClassGraphMembers.MethodInfo
 
   val scalaDirectivesClazz = classOf[pekko.http.scaladsl.server.Directives]
@@ -254,4 +257,7 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
     }
   }
 
+  override protected def afterAll(): Unit =
+    try ClassGraphMembers.close()
+    finally super.afterAll()
 }

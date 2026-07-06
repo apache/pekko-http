@@ -19,10 +19,11 @@ import org.scalatest.Assertion
 
 import scala.io.Source
 import scala.jdk.CollectionConverters._
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers {
+class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
 
   private val apiMayChangeAnnotation = classOf[ApiMayChange].getName
   private val httpPackagePrefix = "org.apache.pekko.http."
@@ -93,4 +94,8 @@ class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers {
     } finally source.close()
 
   }
+
+  override protected def afterAll(): Unit =
+    try scanResult.close()
+    finally super.afterAll()
 }
