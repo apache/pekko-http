@@ -62,12 +62,12 @@ trait HPackEncodingSupport {
     headers.map(h => h.lowercaseName -> h.value)
 
   def encodeHeaderPairs(headerPairs: Seq[(String, String)]): ByteString = {
-    val bos = new ByteArrayOutputStream(1024)
+    val bos = new ByteArrayOutputStream()
 
     def encode(name: String, value: String): Unit = encoder.encodeHeader(bos, name, value, false)
 
     headerPairs.foreach((encode _).tupled)
 
-    ByteString.fromArrayUnsafe(bos.toByteArray)
+    ByteString.fromArray(bos.toByteArray)
   }
 }

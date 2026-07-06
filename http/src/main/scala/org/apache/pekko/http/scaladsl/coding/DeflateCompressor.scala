@@ -55,7 +55,7 @@ private[coding] class DeflateCompressor private[coding] (compressionLevel: Int) 
   }
   protected def flushWithBuffer(buffer: Array[Byte]): ByteString = {
     val written = deflater.deflate(buffer, 0, buffer.length, Deflater.SYNC_FLUSH)
-    ByteString.fromArrayUnsafe(buffer, 0, written)
+    ByteString.fromArray(buffer, 0, written)
   }
   protected def finishWithBuffer(buffer: Array[Byte]): ByteString = {
     deflater.finish()
@@ -89,7 +89,7 @@ private[coding] object DeflateCompressor {
       deflater: Deflater, buffer: Array[Byte], result: ByteStringBuilder = new ByteStringBuilder()): ByteString = {
     val len = deflater.deflate(buffer)
     if (len > 0) {
-      result ++= ByteString.fromArrayUnsafe(buffer, 0, len)
+      result ++= ByteString.fromArray(buffer, 0, len)
       drainDeflater(deflater, buffer, result)
     } else {
       require(deflater.needsInput())
@@ -159,7 +159,7 @@ private[coding] abstract class DeflateDecompressorBase(maxBytesPerChunk: Int = D
       if (read > 0) {
         afterBytesRead(buffer, 0, read)
         val next = if (inflater.finished()) afterInflate else this
-        ParseResult(Some(ByteString.fromArrayUnsafe(buffer, 0, read)), next, noPostProcessing)
+        ParseResult(Some(ByteString.fromArray(buffer, 0, read)), next, noPostProcessing)
       } else {
         if (inflater.finished()) ParseResult(None, afterInflate, noPostProcessing)
         else throw ByteStringParser.NeedMoreData

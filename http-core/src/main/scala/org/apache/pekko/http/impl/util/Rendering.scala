@@ -371,7 +371,7 @@ private[http] class ByteArrayRendering(sizeHint: Int, logDiscardedHeader: String
       if (mark < size) {
         if (array(mark) == '\r' || array(mark) == '\n') {
           logDiscardedHeader("Invalid outgoing header was discarded. " + LogByteStringTools.printByteString(
-            ByteString.fromArrayUnsafe(array, origMark, size - origMark)))
+            ByteString.fromArray(array, origMark, size - origMark)))
           size = origMark
           false
         } else rec(mark + 1)
