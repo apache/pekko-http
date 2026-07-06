@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.coding
 
 import java.io.{ InputStream, OutputStream }
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip._
 
 import scala.annotation.nowarn
@@ -25,6 +26,8 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest }
 import pekko.http.scaladsl.model.HttpMethods.POST
 import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncodings }
+import pekko.stream.SystemMaterializer
+import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.testkit._
 import pekko.util.ByteString
 
@@ -60,6 +63,54 @@ class DeflateSpec extends CoderSpec {
       Coders.Deflate.decodeMessage(encodeMessage(request, Deflater.NO_COMPRESSION, noWrap = false)).toStrict(
         3.seconds.dilated)
         .awaitResult(3.seconds.dilated) should equal(request)
+    }
+    "release the inflater when decoding completes" in {
+      val inflater = new TrackingInflater
+      decodeWith(inflater, streamEncode(smallTextBytes)) should readAs(smallText)
+      inflater.endCalls.get() shouldEqual 1
+    }
+    "release the inflater when decoding is cancelled early" in {
+      val inflater = new TrackingInflater
+      val compressed = streamEncode(largeTextBytes)
+
+      Source.single(compressed)
+        .via(decoderWith(inflater).withMaxBytesPerChunk(1).decoderFlow)
+        .take(1)
+        .runWith(Sink.ignore)
+        .awaitResult(3.seconds.dilated)
+
+      inflater.endCalls.get() shouldEqual 1
+    }
+    "release the inflater when decoding is truncated" in {
+      val inflater = new TrackingInflater
+      // Truncated deflate streams complete without exception (completeStage on truncation)
+      decodeWith(inflater, streamEncode(smallTextBytes).dropRight(5))
+      inflater.endCalls.get() shouldEqual 1
+    }
+  }
+
+  @nowarn("msg=deprecated")
+  private def decodeWith(inflater: TrackingInflater, bytes: ByteString): ByteString =
+    decoderWith(inflater).decode(bytes)(SystemMaterializer(system).materializer).awaitResult(3.seconds.dilated)
+
+  @nowarn("msg=deprecated")
+  private def decoderWith(inflater: TrackingInflater): StreamDecoder =
+    new StreamDecoder {
+      override val encoding = HttpEncodings.deflate
+
+      override def newDecompressorStage(maxBytesPerChunk: Int) =
+        () =>
+          new DeflateDecompressor(maxBytesPerChunk) {
+            override protected[coding] def createInflater(noWrap: Boolean) = inflater
+          }
+    }
+
+  private class TrackingInflater extends java.util.zip.Inflater(false) {
+    val endCalls = new AtomicInteger
+
+    override def end(): Unit = {
+      endCalls.incrementAndGet()
+      super.end()
     }
   }
 
