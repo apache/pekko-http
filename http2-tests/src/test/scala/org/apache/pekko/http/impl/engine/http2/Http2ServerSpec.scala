@@ -13,6 +13,7 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.lang.invoke.MethodHandles
 import javax.net.ssl.SSLContext
 
 import scala.collection.immutable
@@ -907,10 +908,13 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           def fulfillDemandWithin(publisherProbe: TestPublisher.Probe[?], timeout: FiniteDuration)(
               body: => Unit): Unit = {
             // HACK to support `expectRequest` with a timeout
+            val probeHandle = {
+              val probeField = classOf[ManualProbe[?]].getDeclaredField("probe")
+              probeField.setAccessible(true)
+              MethodHandles.lookup().unreflectVarHandle(probeField)
+            }
             def within[T](publisherProbe: TestPublisher.Probe[?], dur: FiniteDuration)(t: => T): T = {
-              val field = classOf[ManualProbe[?]].getDeclaredField("probe")
-              field.setAccessible(true)
-              field.get(publisherProbe).asInstanceOf[TestProbe].within(dur)(t)
+              probeHandle.get(publisherProbe).asInstanceOf[TestProbe].within(dur)(t)
             }
             def expectRequest(timeout: FiniteDuration): Long =
               within(publisherProbe, timeout)(publisherProbe.expectRequest())
