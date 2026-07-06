@@ -31,7 +31,7 @@ trait CachingDirectives {
   import pekko.http.scaladsl.server.directives.RouteDirectives._
 
   /**
-   * Wraps its inner Route with caching support using the given [[Cache]] implementation and
+   * Wraps its inner Route with caching support using the given `Cache` implementation and
    * keyer function.
    */
   def cache[K](cache: Cache[K, RouteResult], keyer: PartialFunction[RequestContext, K]): Directive0 =
@@ -52,7 +52,7 @@ trait CachingDirectives {
     }).flatMap(if (_) pass else reject)
 
   /**
-   * Wraps its inner Route with caching support using the given [[Cache]] implementation and
+   * Wraps its inner Route with caching support using the given `Cache` implementation and
    * keyer function. Note that routes producing streaming responses cannot be wrapped with this directive.
    */
   def alwaysCache[K](cache: Cache[K, RouteResult], keyer: PartialFunction[RequestContext, K]): Directive0 =
@@ -68,13 +68,13 @@ trait CachingDirectives {
     }
 
   /**
-   * Creates an [[LfuCache]] with default settings obtained from the system's configuration.
+   * Creates an `LfuCache` with default settings obtained from the system's configuration.
    */
   def routeCache[K](implicit s: ActorSystem): Cache[K, RouteResult] =
     LfuCache[K, RouteResult](s)
 
   /**
-   * Creates an [[LfuCache]].
+   * Creates an `LfuCache`.
    */
   def routeCache[K](settings: CachingSettings): Cache[K, RouteResult] =
     LfuCache[K, RouteResult](settings)

@@ -32,10 +32,10 @@ trait HeaderDirectives {
   import RouteDirectives._
 
   /**
-   * Checks that request comes from the same origin. Extracts the [[Origin]] header value and verifies that
-   * allowed range contains the obtained value. In the case of absent of the [[Origin]] header rejects
+   * Checks that request comes from the same origin. Extracts the `Origin` header value and verifies that
+   * allowed range contains the obtained value. In the case of absent of the `Origin` header rejects
    * with [[MissingHeaderRejection]]. If the origin value is not in the allowed range
-   * rejects with an [[InvalidOriginRejection]] and [[StatusCodes.Forbidden]] status.
+   * rejects with an [[InvalidOriginRejection]] and `StatusCodes.Forbidden` status.
    *
    * @group header
    */
@@ -88,8 +88,8 @@ trait HeaderDirectives {
    * Extracts the first HTTP request header of the given type.
    * If no header with a matching type is found the request is rejected with a [[pekko.http.scaladsl.server.MissingHeaderRejection]].
    *
-   * Custom headers will only be matched by this directive if they extend [[ModeledCustomHeader]]
-   * and provide a companion extending [[ModeledCustomHeaderCompanion]].
+   * Custom headers will only be matched by this directive if they extend `ModeledCustomHeader`
+   * and provide a companion extending `ModeledCustomHeaderCompanion`.
    *
    * @group header
    */
@@ -135,8 +135,8 @@ trait HeaderDirectives {
   /**
    * Extract the header value of the optional HTTP request header with the given type.
    *
-   * Custom headers will only be matched by this directive if they extend [[ModeledCustomHeader]]
-   * and provide a companion extending [[ModeledCustomHeaderCompanion]].
+   * Custom headers will only be matched by this directive if they extend `ModeledCustomHeader`
+   * and provide a companion extending `ModeledCustomHeaderCompanion`.
    *
    * @group header
    */
@@ -165,7 +165,7 @@ trait HeaderMagnet[T] {
 object HeaderMagnet extends LowPriorityHeaderMagnetImplicits {
 
   /**
-   * If possible we want to apply the special logic for [[ModeledCustomHeader]] to extract custom headers by type,
+   * If possible we want to apply the special logic for `ModeledCustomHeader` to extract custom headers by type,
    * otherwise the default `fromCompanion` is good enough (for headers that the parser emits in the right type already).
    */
   implicit def fromCompanionForModeledCustomHeader[T <: ModeledCustomHeader[T], H <: ModeledCustomHeaderCompanion[T]](

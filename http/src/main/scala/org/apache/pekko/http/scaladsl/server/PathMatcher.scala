@@ -32,12 +32,12 @@ import pekko.http.scaladsl.server.util.TupleOps._
 abstract class PathMatcher[L](implicit val ev: Tuple[L]) extends (Path => PathMatcher.Matching[L]) { self =>
   import PathMatcher._
 
-  /** Alias for [[slash]]. */
+  /** Alias for `slash`. */
   def / : PathMatcher[L] = slash
 
   def slash: PathMatcher[L] = this ~ PathMatchers.Slash
 
-  /** Alias for [[slash]]. */
+  /** Alias for `slash`. */
   def /[R](other: PathMatcher[R])(implicit join: Join[L, R]): PathMatcher[join.Out] = slash(other)
 
   def slash[R](other: PathMatcher[R])(implicit join: Join[L, R]): PathMatcher[join.Out] =

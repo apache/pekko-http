@@ -239,7 +239,7 @@ abstract class PathDirectives extends ParameterDirectives {
   /**
    * If the request path doesn't end with a slash, redirect to the same uri with trailing slash in the path.
    *
-   * '''Caveat''': [[#path]] without trailing slash and [[#pathEnd]] directives will not match inside of this directive.
+   * '''Caveat''': `path` without trailing slash and [[#pathEnd]] directives will not match inside of this directive.
    *
    * @param redirectionType A status code from StatusCodes, which must be a redirection type.
    */

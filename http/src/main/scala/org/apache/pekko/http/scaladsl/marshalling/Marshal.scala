@@ -44,7 +44,7 @@ object Marshal {
 class Marshal[A](val value: A) {
 
   /**
-   * Marshals `value` using the first available [[Marshalling]] for `A` and `B` provided by the given [[Marshaller]].
+   * Marshals `value` using the first available [[Marshalling]] for `A` and `B` provided by the given `Marshaller`.
    * If the marshalling is flexible with regard to the used charset `UTF-8` is chosen.
    */
   def to[B](implicit m: Marshaller[A, B], ec: ExecutionContext): Future[B] =

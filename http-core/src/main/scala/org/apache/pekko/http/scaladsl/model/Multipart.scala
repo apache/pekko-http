@@ -158,13 +158,13 @@ object Multipart {
     def headers: immutable.Seq[HttpHeader]
 
     /**
-     * The potentially present [[`Content-Disposition`]] header.
+     * The potentially present `Content-Disposition` header.
      */
     def contentDispositionHeader: Option[`Content-Disposition`] =
       headers.collectFirst { case x: `Content-Disposition` => x }
 
     /**
-     * The parameters of the potentially present [[`Content-Disposition`]] header.
+     * The parameters of the potentially present `Content-Disposition` header.
      * Returns an empty map if no such header is present.
      */
     def dispositionParams: Map[String, String] =
@@ -174,7 +174,7 @@ object Multipart {
       }
 
     /**
-     * The [[pekko.http.scaladsl.model.headers.ContentDispositionType]] of the potentially present [[`Content-Disposition`]] header.
+     * The [[pekko.http.scaladsl.model.headers.ContentDispositionType]] of the potentially present `Content-Disposition` header.
      */
     def dispositionType: Option[ContentDispositionType] =
       contentDispositionHeader.map(_.dispositionType)

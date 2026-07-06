@@ -33,10 +33,10 @@ abstract class HeaderDirectives extends FutureDirectives {
   private type ScalaHeaderMagnet = HeaderMagnet[pekko.http.scaladsl.model.HttpHeader]
 
   /**
-   * Checks that request comes from the same origin. Extracts the [[Origin]] header value and verifies that
-   * allowed range contains the obtained value. In the case of absent of the [[Origin]] header rejects
+   * Checks that request comes from the same origin. Extracts the `Origin` header value and verifies that
+   * allowed range contains the obtained value. In the case of absent of the `Origin` header rejects
    * with [[MissingHeaderRejection]]. If the origin value is not in the allowed range
-   * rejects with an [[InvalidOriginRejection]] and [[StatusCodes.FORBIDDEN]] status.
+   * rejects with an [[InvalidOriginRejection]] and `StatusCodes.FORBIDDEN` status.
    *
    * @group header
    */

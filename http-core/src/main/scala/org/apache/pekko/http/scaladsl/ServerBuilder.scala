@@ -30,7 +30,7 @@ import scala.concurrent.Future
 /**
  * Builder API to create server bindings.
  *
- * Use [[HttpExt.newServerAt()]] to create a builder, use methods to customize settings,
+ * Use `HttpExt.newServerAt()` to create a builder, use methods to customize settings,
  * and then call one of the bind* methods to bind a server.
  */
 trait ServerBuilder {
@@ -45,7 +45,7 @@ trait ServerBuilder {
   def logTo(log: LoggingAdapter): ServerBuilder
 
   /**
-   * Use custom [[ServerSettings]] for the binding.
+   * Use custom `ServerSettings` for the binding.
    */
   def withSettings(settings: ServerSettings): ServerBuilder
 
@@ -60,7 +60,7 @@ trait ServerBuilder {
   def enableHttps(context: HttpsConnectionContext): ServerBuilder
 
   /**
-   * Use custom [[Materializer]] for the binding
+   * Use custom `Materializer` for the binding
    */
   def withMaterializer(materializer: Materializer): ServerBuilder
 

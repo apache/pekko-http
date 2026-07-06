@@ -41,7 +41,7 @@ abstract class WebSocketDirectives extends SecurityDirectives {
   }
 
   /**
-   * Extract the list of WebSocket subprotocols as offered by the client in the [[Sec-WebSocket-Protocol]] header if
+   * Extract the list of WebSocket subprotocols as offered by the client in the `Sec-WebSocket-Protocol` header if
    * this is a WebSocket request. Rejects with an [[ExpectedWebSocketRequestRejection]], otherwise.
    */
   def extractOfferedWsProtocols(inner: JFunction[JList[String], Route]): Route = RouteAdapter {

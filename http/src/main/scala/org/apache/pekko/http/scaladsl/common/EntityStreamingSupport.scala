@@ -55,7 +55,7 @@ abstract class EntityStreamingSupport extends common.EntityStreamingSupport {
   /**
    * Read-side, allows changing what content types are accepted by this framing.
    *
-   * EntityStreamingSupport traits MUST support re-configuring the accepted [[ContentTypeRange]].
+   * EntityStreamingSupport traits MUST support re-configuring the accepted `ContentTypeRange`.
    *
    * This is in order to support a-typical APIs which users still want to communicate with using
    * the provided support trait. Typical examples include APIs which return valid `application/json`
@@ -69,7 +69,7 @@ abstract class EntityStreamingSupport extends common.EntityStreamingSupport {
   /**
    * Write-side, defines what Content-Type the Marshaller should offer and the final Content-Type of the response.
    *
-   * EntityStreamingSupport traits MUST support re-configuring the offered [[ContentType]].
+   * EntityStreamingSupport traits MUST support re-configuring the offered `ContentType`.
    * This is due to the need integrating with existing systems which sometimes expect custom Content-Types,
    * however really are just plain JSON or something else internally (perhaps with slight extensions).
    *

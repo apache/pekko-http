@@ -51,7 +51,7 @@ object Decoder {
 /**
  * Internal API
  *
- * A decoder that is implemented in terms of a [[Stage]]
+ * A decoder that is implemented in terms of a `Stage`
  */
 @InternalApi
 @deprecated("StreamDecoder is internal API and will be moved or removed in the future", since = "Akka HTTP 10.2.0")

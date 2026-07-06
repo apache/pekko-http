@@ -27,7 +27,7 @@ abstract class HostConnectionPool private[http] {
   /**
    * Asynchronously triggers the shutdown of the host connection pool.
    *
-   * The produced [[CompletionStage]] is fulfilled when the shutdown has been completed.
+   * The produced `CompletionStage` is fulfilled when the shutdown has been completed.
    */
   def shutdown(): CompletionStage[Done]
 }

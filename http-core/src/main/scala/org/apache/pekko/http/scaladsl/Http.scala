@@ -55,7 +55,7 @@ import scala.util.control.NonFatal
 /**
  * Pekko extension for HTTP which serves as the main entry point into pekko-http.
  *
- * Use as `Http().bindAndHandle` etc. with an implicit [[ActorSystem]] in scope.
+ * Use as `Http().bindAndHandle` etc. with an implicit `ActorSystem` in scope.
  */
 @DoNotInherit
 class HttpExt @InternalStableApi /* constructor signature is hardcoded in Telemetry */ private[http] (
@@ -326,7 +326,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   /**
    * Creates a builder which will create a single connection to a host every time the built flow is materialized. There
    * is no pooling and you are yourself responsible for lifecycle management of the connection. For a more convenient
-   * Request level API see [[singleRequest()]]
+   * Request level API see `singleRequest()`
    *
    * @return A builder to configure more specific setup for the connection and then build a `Flow[Request, Response, Future[OutgoingConnection]]`.
    */
@@ -447,7 +447,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * object of type `T` from the application which is emitted together with the corresponding response.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a `ConnectionPoolSettings` explicitly.
    */
   def newHostConnectionPool[T](host: String, port: Int = 80,
       settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
@@ -464,7 +464,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * for encryption on the connections.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a `ConnectionPoolSettings` explicitly.
    */
   def newHostConnectionPoolHttps[T](host: String, port: Int = 443,
       connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
@@ -505,7 +505,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * object of type `T` from the application which is emitted together with the corresponding response.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a `ConnectionPoolSettings` explicitly.
    */
   def cachedHostConnectionPool[T](host: String, port: Int = 80,
       settings: ConnectionPoolSettings = defaultConnectionPoolSettings,
@@ -522,7 +522,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * for encryption on the connections.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a `ConnectionPoolSettings` explicitly.
    */
   def cachedHostConnectionPoolHttps[T](host: String, port: Int = 443,
       connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
@@ -572,7 +572,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * object of type `T` from the application which is emitted together with the corresponding response.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a `ConnectionPoolSettings` explicitly.
    */
   def superPool[T](
       connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
@@ -892,7 +892,7 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
     /**
      * Completes when the [[terminate]] is called and server termination is in progress.
      * Can be useful to make parts of your application aware that termination has been issued,
-     * and they have [[Deadline]] time remaining to clean-up before the server will forcefully close
+     * and they have `Deadline` time remaining to clean-up before the server will forcefully close
      * existing connections.
      *
      * Note that while termination is in progress, no new connections will be accepted (i.e. termination implies prior [[unbind]]).

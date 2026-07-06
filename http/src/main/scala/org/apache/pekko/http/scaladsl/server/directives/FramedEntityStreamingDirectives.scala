@@ -27,7 +27,7 @@ import pekko.util.ByteString
  * Allows the [[MarshallingDirectives.entity]] directive to extract a [[pekko.stream.scaladsl.Source]] of elements.
  *
  * See [[common.EntityStreamingSupport]] for useful default framing `Flow` instances and
- * support traits such as `SprayJsonSupport` (or your other favourite JSON library) to provide the needed [[Marshaller]] s.
+ * support traits such as `SprayJsonSupport` (or your other favourite JSON library) to provide the needed `Marshaller` s.
  */
 trait FramedEntityStreamingDirectives extends MarshallingDirectives {
 
@@ -37,15 +37,15 @@ trait FramedEntityStreamingDirectives extends MarshallingDirectives {
    * Extracts entity as [[pekko.stream.scaladsl.Source]] of elements of type `T`.
    * This is achieved by applying the implicitly provided (in the following order):
    *
-   * - 1st: chunk-up the incoming [[ByteString]]s by applying the `Content-Type`-aware framing
-   * - 2nd: apply the [[Unmarshaller]] (from [[ByteString]] to `T`) for each of the respective "chunks" (e.g. for each JSON element contained within an array).
+   * - 1st: chunk-up the incoming `ByteString`s by applying the `Content-Type`-aware framing
+   * - 2nd: apply the `Unmarshaller` (from `ByteString` to `T`) for each of the respective "chunks" (e.g. for each JSON element contained within an array).
    *
    * The request will be rejected with an [[pekko.http.scaladsl.server.UnsupportedRequestContentTypeRejection]] if
-   * its [[ContentType]] is not supported by the used `framing` or `unmarshaller`.
+   * its `ContentType` is not supported by the used `framing` or `unmarshaller`.
    *
    * Cancelling extracted [[pekko.stream.scaladsl.Source]] closes the connection abruptly (same as cancelling the `entity.dataBytes`).
    *
-   * See also [[MiscDirectives.withoutSizeLimit]] as you may want to allow streaming infinite streams of data in this route.
+   * See also `MiscDirectives.withoutSizeLimit` as you may want to allow streaming infinite streams of data in this route.
    * By default the uploaded data is limited by the `pekko.http.parsing.max-content-length`.
    */
   final def asSourceOf[T](
@@ -56,15 +56,15 @@ trait FramedEntityStreamingDirectives extends MarshallingDirectives {
    * Extracts entity as [[pekko.stream.scaladsl.Source]] of elements of type `T`.
    * This is achieved by applying the implicitly provided (in the following order):
    *
-   * - 1st: chunk-up the incoming [[ByteString]]s by applying the `Content-Type`-aware framing
-   * - 2nd: apply the [[Unmarshaller]] (from [[ByteString]] to `T`) for each of the respective "chunks" (e.g. for each JSON element contained within an array).
+   * - 1st: chunk-up the incoming `ByteString`s by applying the `Content-Type`-aware framing
+   * - 2nd: apply the `Unmarshaller` (from `ByteString` to `T`) for each of the respective "chunks" (e.g. for each JSON element contained within an array).
    *
    * The request will be rejected with an [[pekko.http.scaladsl.server.UnsupportedRequestContentTypeRejection]] if
-   * its [[ContentType]] is not supported by the used `framing` or `unmarshaller`.
+   * its `ContentType` is not supported by the used `framing` or `unmarshaller`.
    *
    * Cancelling extracted [[pekko.stream.scaladsl.Source]] closes the connection abruptly (same as cancelling the `entity.dataBytes`).
    *
-   * See also [[MiscDirectives.withoutSizeLimit]] as you may want to allow streaming infinite streams of data in this route.
+   * See also `MiscDirectives.withoutSizeLimit` as you may want to allow streaming infinite streams of data in this route.
    * By default the uploaded data is limited by the `pekko.http.parsing.max-content-length`.
    */
   final def asSourceOf[T](support: EntityStreamingSupport)(

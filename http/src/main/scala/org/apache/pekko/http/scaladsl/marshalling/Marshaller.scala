@@ -34,7 +34,7 @@ sealed abstract class Marshaller[-A, +B] {
    * the [[pekko.http.scaladsl.model.MediaType]] of the marshalling result with the given one.
    * Note that not all wrappings are legal. f the underlying [[pekko.http.scaladsl.model.MediaType]] has constraints with regard to the
    * charsets it allows the new [[pekko.http.scaladsl.model.MediaType]] must be compatible, since pekko-http will never recode entities.
-   * If the wrapping is illegal the [[scala.concurrent.Future]] produced by the resulting marshaller will contain a [[RuntimeException]].
+   * If the wrapping is illegal the [[scala.concurrent.Future]] produced by the resulting marshaller will contain a `RuntimeException`.
    */
   def wrap[C, D >: B](newMediaType: MediaType)(f: C => A)(implicit mto: ContentTypeOverrider[D]): Marshaller[C, D] =
     wrapWithEC[C, D](newMediaType)(_ => f)
@@ -44,7 +44,7 @@ sealed abstract class Marshaller[-A, +B] {
    * the [[pekko.http.scaladsl.model.MediaType]] of the marshalling result with the given one.
    * Note that not all wrappings are legal. f the underlying [[pekko.http.scaladsl.model.MediaType]] has constraints with regard to the
    * charsets it allows the new [[pekko.http.scaladsl.model.MediaType]] must be compatible, since pekko-http will never recode entities.
-   * If the wrapping is illegal the [[scala.concurrent.Future]] produced by the resulting marshaller will contain a [[RuntimeException]].
+   * If the wrapping is illegal the [[scala.concurrent.Future]] produced by the resulting marshaller will contain a `RuntimeException`.
    */
   def wrapWithEC[C, D >: B](newMediaType: MediaType)(f: ExecutionContext => C => A)(
       implicit cto: ContentTypeOverrider[D]): Marshaller[C, D] =
@@ -96,7 +96,7 @@ object Marshaller
     with PredefinedToRequestMarshallers {
 
   /**
-   * Creates a [[Marshaller]] from the given function.
+   * Creates a `Marshaller` from the given function.
    */
   def apply[A, B](f: ExecutionContext => A => Future[List[Marshalling[B]]]): Marshaller[A, B] =
     new Marshaller[A, B] {
@@ -106,7 +106,7 @@ object Marshaller
     }
 
   /**
-   * Helper for creating a [[Marshaller]] using the given function.
+   * Helper for creating a `Marshaller` using the given function.
    */
   def strict[A, B](f: A => Marshalling[B]): Marshaller[A, B] =
     Marshaller { _ => a => FastFuture.successful(f(a) :: Nil) }
@@ -136,7 +136,7 @@ object Marshaller
     oneOf(values.map(f): _*)
 
   /**
-   * Helper for creating a synchronous [[Marshaller]] to content with a fixed charset from the given function.
+   * Helper for creating a synchronous `Marshaller` to content with a fixed charset from the given function.
    */
   def withFixedContentType[A, B](contentType: ContentType)(marshal: A => B): Marshaller[A, B] =
     new Marshaller[A, B] {
@@ -153,7 +153,7 @@ object Marshaller
     }
 
   /**
-   * Helper for creating a synchronous [[Marshaller]] to content with a negotiable charset from the given function.
+   * Helper for creating a synchronous `Marshaller` to content with a negotiable charset from the given function.
    */
   def withOpenCharset[A, B](mediaType: MediaType.WithOpenCharset)(marshal: (A, HttpCharset) => B): Marshaller[A, B] =
     new Marshaller[A, B] {
@@ -170,13 +170,13 @@ object Marshaller
     }
 
   /**
-   * Helper for creating a synchronous [[Marshaller]] to non-negotiable content from the given function.
+   * Helper for creating a synchronous `Marshaller` to non-negotiable content from the given function.
    */
   def opaque[A, B](marshal: A => B): Marshaller[A, B] =
     strict { value => Marshalling.Opaque(() => marshal(value)) }
 
   /**
-   * Helper for creating a [[Marshaller]] combined of the provided `marshal` function
+   * Helper for creating a `Marshaller` combined of the provided `marshal` function
    * and an implicit Marshaller which is able to produce the required final type.
    */
   def combined[A, B, C](marshal: A => B)(implicit m2: Marshaller[B, C]): Marshaller[A, C] =

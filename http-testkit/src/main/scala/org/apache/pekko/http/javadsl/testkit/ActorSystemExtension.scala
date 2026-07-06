@@ -22,11 +22,11 @@ import pekko.stream.SystemMaterializer
 import com.typesafe.config.{ Config, ConfigFactory }
 
 /**
- * A JUnit 5 (Jupiter) Extension that manages the lifecycle of an [[ActorSystem]].
+ * A JUnit 5 (Jupiter) Extension that manages the lifecycle of an `ActorSystem`.
  *
- * This is the JUnit 5 counterpart of [[ActorSystemResource]] which uses JUnit 4's
- * [[org.junit.rules.ExternalResource]]. It implements [[BeforeEachCallback]] and
- * [[AfterEachCallback]] to create and terminate the ActorSystem around each test method.
+ * This is the JUnit 5 counterpart of `ActorSystemResource` which uses JUnit 4's
+ * [[org.junit.rules.ExternalResource]]. It implements `BeforeEachCallback` and
+ * `AfterEachCallback` to create and terminate the ActorSystem around each test method.
  *
  * Usage with `@RegisterExtension`:
  * {{{

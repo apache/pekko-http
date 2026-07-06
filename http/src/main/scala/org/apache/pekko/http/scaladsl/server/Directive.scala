@@ -198,7 +198,7 @@ object Directive {
   /**
    * "Standard" transformers for [[Directive1]].
    * Easier to use than `tmap`, `tflatMap`, etc. defined on [[Directive]] itself,
-   * because they provide transparent conversion from [[Tuple1]].
+   * because they provide transparent conversion from `Tuple1`.
    */
   implicit class SingleValueTransformers[T](val underlying: Directive1[T]) extends AnyVal {
     def map[R](f: T => R)(implicit tupler: Tupler[R]): Directive[tupler.Out] =

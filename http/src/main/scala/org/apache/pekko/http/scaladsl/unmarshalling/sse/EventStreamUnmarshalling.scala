@@ -28,8 +28,8 @@ import pekko.http.scaladsl.settings.{ OversizedSseStrategy, ServerSentEventSetti
 import pekko.stream.scaladsl.{ Keep, Source }
 
 /**
- * Importing [[EventStreamUnmarshalling.fromEventsStream]] lets an `HttpEntity` with a `text/event-stream` media type be
- * unmarshalled to a source of [[ServerSentEvent]]s.
+ * Importing `EventStreamUnmarshalling.fromEventsStream` lets an `HttpEntity` with a `text/event-stream` media type be
+ * unmarshalled to a source of `ServerSentEvent`s.
  *
  * The maximum size for parsing server-sent events is 8KiB. The maximum size for parsing lines of a server-sent event
  * is 4KiB. If you need to customize any of these, set the `pekko.http.sse.max-event-size` and
@@ -40,7 +40,7 @@ object EventStreamUnmarshalling extends EventStreamUnmarshalling
 
 /**
  * Mixing in this trait lets a `HttpEntity` with a `text/event-stream` media type be unmarshalled to a source of
- * [[ServerSentEvent]]s.
+ * `ServerSentEvent`s.
  *
  * The maximum size for parsing server-sent events is 8KiB by default and can be customized by configuring
  * `pekko.http.sse.max-event-size`. The maximum size for parsing lines of a server-sent event is 4KiB by

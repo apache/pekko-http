@@ -177,20 +177,20 @@ object Marshaller {
   }
 
   /**
-   * Helper for creating a synchronous [[Marshaller]] to content with a fixed charset from the given function.
+   * Helper for creating a synchronous `Marshaller` to content with a fixed charset from the given function.
    */
   def withFixedContentType[A, B](contentType: ContentType, f: java.util.function.Function[A, B]): Marshaller[A, B] =
     fromScala(marshalling.Marshaller.withFixedContentType(contentType.asScala)(f.apply))
 
   /**
-   * Helper for creating a synchronous [[Marshaller]] to content with a negotiable charset from the given function.
+   * Helper for creating a synchronous `Marshaller` to content with a negotiable charset from the given function.
    */
   def withOpenCharset[A, B](
       mediaType: MediaType.WithOpenCharset, f: java.util.function.BiFunction[A, HttpCharset, B]): Marshaller[A, B] =
     fromScala(marshalling.Marshaller.withOpenCharset(mediaType.asScala)(f.apply))
 
   /**
-   * Helper for creating a synchronous [[Marshaller]] to non-negotiable content from the given function.
+   * Helper for creating a synchronous `Marshaller` to non-negotiable content from the given function.
    */
   def opaque[A, B](f: function.Function[A, B]): Marshaller[A, B] =
     fromScala(scaladsl.marshalling.Marshaller.opaque[A, B] { a => f.apply(a) })

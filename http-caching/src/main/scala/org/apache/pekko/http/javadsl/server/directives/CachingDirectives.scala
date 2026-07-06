@@ -62,7 +62,7 @@ object CachingDirectives {
   }
 
   /**
-   * Wraps its inner Route with caching support using the given [[Cache]] implementation and
+   * Wraps its inner Route with caching support using the given `Cache` implementation and
    * keyer function. Note that routes producing streaming responses cannot be wrapped with this directive.
    */
   def alwaysCache[K](cache: Cache[K, RouteResult], keyer: PartialFunction[RequestContext, K], inner: Supplier[Route]) =
@@ -73,9 +73,9 @@ object CachingDirectives {
     }
 
   /**
-   * Creates an [[LfuCache]]
+   * Creates an `LfuCache`
    *
-   * Default settings are available via [[pekko.http.caching.javadsl.CachingSettings.create]].
+   * Default settings are available via `CachingSettings.create`.
    */
   def routeCache[K](settings: CachingSettings): Cache[K, RouteResult] =
     LfuCache.create[K, RouteResult](settings)

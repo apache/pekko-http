@@ -52,7 +52,7 @@ trait FutureDirectives {
     * completion with the future's value as an extraction of type `T` if
     * the supplied `CircuitBreaker` is closed.
     *
-    * If the supplied [[CircuitBreaker]] is open the request is rejected
+    * If the supplied `CircuitBreaker` is open the request is rejected
     * with a [[CircuitBreakerOpenRejection]].
     *
     * @group future

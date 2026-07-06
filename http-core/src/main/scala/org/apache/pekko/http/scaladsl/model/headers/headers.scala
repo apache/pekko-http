@@ -92,7 +92,7 @@ private[headers] sealed trait SyntheticHeader extends ModeledHeader
 /**
  * Superclass for user-defined custom headers defined by implementing `name` and `value`.
  *
- * Prefer to extend [[ModeledCustomHeader]] and [[ModeledCustomHeaderCompanion]] instead if
+ * Prefer to extend `ModeledCustomHeader` and `ModeledCustomHeaderCompanion` instead if
  * planning to use the defined header in match clauses (e.g. in the routing layer of Pekko HTTP),
  * as they allow the custom header to be matched from [[RawHeader]] and vice-versa.
  */
@@ -102,7 +102,7 @@ abstract class CustomHeader extends jm.headers.CustomHeader {
 }
 
 /**
- * To be extended by companion object of a custom header extending [[ModeledCustomHeader]].
+ * To be extended by companion object of a custom header extending `ModeledCustomHeader`.
  * Implements necessary apply and unapply methods to make the such defined header feel "native".
  */
 abstract class ModeledCustomHeaderCompanion[H <: ModeledCustomHeader[H]] {
@@ -133,7 +133,7 @@ abstract class ModeledCustomHeaderCompanion[H <: ModeledCustomHeader[H]] {
 
 /**
  * Support class for building user-defined custom headers defined by implementing `name` and `value`.
- * By implementing a [[ModeledCustomHeader]] instead of [[CustomHeader]] directly, all needed unapply
+ * By implementing a `ModeledCustomHeader` instead of [[CustomHeader]] directly, all needed unapply
  * methods are provided for this class, such that it can be pattern matched on from [[RawHeader]] and
  * the other way around as well.
  */

@@ -45,7 +45,7 @@ sealed trait LowerPriorityGenericUnmarshallers {
       })
 
   /**
-   * Enables using [[Either]] to encode the following unmarshalling logic:
+   * Enables using `Either` to encode the following unmarshalling logic:
    * Attempt unmarshalling the entity as as `R` first (yielding `R`),
    * and if it fails attempt unmarshalling as `L` (yielding `Left`).
    *

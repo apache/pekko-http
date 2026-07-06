@@ -28,13 +28,13 @@ import scala.jdk.OptionConverters._
 object ServerSentEvent {
 
   /**
-   * A [[ServerSentEvent]] with empty data which can be used as a heartbeat.
+   * A `ServerSentEvent` with empty data which can be used as a heartbeat.
    */
   val heartbeat: ServerSentEvent =
     ServerSentEvent("")
 
   /**
-   * Creates a [[ServerSentEvent]].
+   * Creates a `ServerSentEvent`.
    *
    * @param data data, may span multiple lines
    * @param type type, must not contain \n or \r
@@ -43,7 +43,7 @@ object ServerSentEvent {
     new ServerSentEvent(data, Some(`type`))
 
   /**
-   * Creates a [[ServerSentEvent]].
+   * Creates a `ServerSentEvent`.
    *
    * @param data data, may span multiple lines
    * @param type type, must not contain \n or \r
@@ -53,7 +53,7 @@ object ServerSentEvent {
     new ServerSentEvent(data, Some(`type`), Some(id))
 
   /**
-   * Creates a [[ServerSentEvent]].
+   * Creates a `ServerSentEvent`.
    *
    * @param data data, may span multiple lines
    * @param retry reconnection delay in milliseconds

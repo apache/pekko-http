@@ -221,7 +221,7 @@ trait BasicDirectives {
   def extractMatchedPath: Directive1[Uri.Path] = BasicDirectives._extractMatchedPath
 
   /**
-   * Extracts the current [[HttpRequest]] instance.
+   * Extracts the current `HttpRequest` instance.
    *
    * @group basic
    */
@@ -291,7 +291,7 @@ trait BasicDirectives {
     BasicDirectives._extractLog
 
   /**
-   * Runs its inner route with the given alternative [[RoutingSettings]].
+   * Runs its inner route with the given alternative `RoutingSettings`.
    *
    * @group basic
    */
@@ -307,7 +307,7 @@ trait BasicDirectives {
     mapRequestContext(ctx => ctx.withRoutingSettings(f(ctx.settings)))
 
   /**
-   * Extracts the [[RoutingSettings]] from the [[pekko.http.scaladsl.server.RequestContext]].
+   * Extracts the `RoutingSettings` from the [[pekko.http.scaladsl.server.RequestContext]].
    *
    * @group basic
    */

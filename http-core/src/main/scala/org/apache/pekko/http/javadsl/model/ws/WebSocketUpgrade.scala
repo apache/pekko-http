@@ -20,7 +20,7 @@ import pekko.http.javadsl.model.HttpResponse
 import pekko.stream.{ FlowShape, Graph, SinkShape, SourceShape }
 
 /**
- * An attribute that WebSocket requests will contain. Use [[WebSocketUpgrade.handleMessagesWith]] to
+ * An attribute that WebSocket requests will contain. Use `WebSocketUpgrade.handleMessagesWith` to
  * create a WebSocket handshake response and handle the WebSocket message stream with the given handler.
  *
  * This is a low-level API. You might want to use `handleWebSocketMessages` instead as documented

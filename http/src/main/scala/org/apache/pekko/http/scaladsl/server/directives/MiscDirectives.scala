@@ -98,7 +98,7 @@ trait MiscDirectives {
 
   /**
    * Disables the size limit (configured by `pekko.http.parsing.max-content-length` by default) checking on the incoming
-   * [[HttpRequest]] entity.
+   * `HttpRequest` entity.
    * Can be useful when handling arbitrarily large data uploads in specific parts of your routes.
    *
    * @note  Usage of `withoutSizeLimit` is not recommended as it turns off the too large payload protection. Therefore,

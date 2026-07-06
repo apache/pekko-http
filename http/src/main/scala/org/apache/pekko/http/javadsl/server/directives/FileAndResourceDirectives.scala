@@ -264,11 +264,11 @@ abstract class FileAndResourceDirectives extends ExecutionDirectives {
     D.listDirectoryContents(directories: _*)(directoryRenderer.asScala)
   }
 
-  /** Default [[DirectoryRenderer]] to be used with directory listing directives. */
+  /** Default `DirectoryRenderer` to be used with directory listing directives. */
   def defaultDirectoryRenderer: DirectoryRenderer =
     pekko.http.scaladsl.server.directives.FileAndResourceDirectives.DirectoryRenderer.defaultDirectoryRenderer
 
-  /** Default [[ContentTypeResolver]]. */
+  /** Default `ContentTypeResolver`. */
   def defaultContentTypeResolver: ContentTypeResolver =
     pekko.http.scaladsl.server.directives.ContentTypeResolver.Default
 }

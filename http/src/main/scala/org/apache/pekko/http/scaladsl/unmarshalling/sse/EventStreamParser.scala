@@ -25,7 +25,7 @@ import pekko.stream.scaladsl.Flow
 import pekko.util.ByteString
 
 /**
- * Flow that converts raw byte string input into [[ServerSentEvent]]s.
+ * Flow that converts raw byte string input into `ServerSentEvent`s.
  *
  * This API is made for use in non-pekko-http clients, like Play's WSClient.
  */
@@ -33,7 +33,7 @@ import pekko.util.ByteString
 object EventStreamParser {
 
   /**
-   * Flow that converts raw byte string input into [[ServerSentEvent]]s.
+   * Flow that converts raw byte string input into `ServerSentEvent`s.
    *
    * This API is made for use in non-pekko-http clients, like Play's WSClient.
    *
@@ -44,7 +44,7 @@ object EventStreamParser {
     apply(maxLineSize, maxEventSize, emitEmptyEvents = false)
 
   /**
-   * Flow that converts raw byte string input into [[ServerSentEvent]]s.
+   * Flow that converts raw byte string input into `ServerSentEvent`s.
    *
    * This API is made for use in non-pekko-http clients, like Play's WSClient.
    *
@@ -56,7 +56,7 @@ object EventStreamParser {
     apply(maxLineSize, maxEventSize, emitEmptyEvents, OversizedSseStrategy.FailStream)
 
   /**
-   * Flow that converts raw byte string input into [[ServerSentEvent]]s.
+   * Flow that converts raw byte string input into `ServerSentEvent`s.
    *
    * This API is made for use in non-pekko-http clients, like Play's WSClient.
    *
@@ -71,7 +71,7 @@ object EventStreamParser {
     apply(maxLineSize, maxEventSize, emitEmptyEvents, OversizedSseStrategy.fromString(oversizedStrategy))
 
   /**
-   * Flow that converts raw byte string input into [[ServerSentEvent]]s.
+   * Flow that converts raw byte string input into `ServerSentEvent`s.
    *
    * This API is made for use in non-pekko-http clients, like Play's WSClient.
    *
@@ -86,7 +86,7 @@ object EventStreamParser {
     apply(maxLineSize, maxEventSize, emitEmptyEvents, oversizedStrategy, oversizedStrategy)
 
   /**
-   * Flow that converts raw byte string input into [[ServerSentEvent]]s.
+   * Flow that converts raw byte string input into `ServerSentEvent`s.
    *
    * This API is made for use in non-pekko-http clients, like Play's WSClient.
    *

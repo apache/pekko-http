@@ -42,7 +42,7 @@ abstract class HttpApp extends Directives {
   private val serverBinding = new AtomicReference[ServerBinding]()
 
   /**
-   * [[ActorSystem]] used to start this server. Stopping this system will interfere with the proper functioning condition of the server.
+   * `ActorSystem` used to start this server. Stopping this system will interfere with the proper functioning condition of the server.
    */
   protected val systemReference = new AtomicReference[ActorSystem]()
 
@@ -55,7 +55,7 @@ abstract class HttpApp extends Directives {
   }
 
   /**
-   * Start a server on the specified host and port, using the provided [[ActorSystem]].
+   * Start a server on the specified host and port, using the provided `ActorSystem`.
    * Note that this method is blocking
    *
    * @param system ActorSystem to use for starting the app,
@@ -75,7 +75,7 @@ abstract class HttpApp extends Directives {
   }
 
   /**
-   * Start a server on the specified host and port, using the provided settings and [[ActorSystem]].
+   * Start a server on the specified host and port, using the provided settings and `ActorSystem`.
    * Note that this method is blocking.
    *
    * @param system ActorSystem to use for starting the app,
@@ -87,7 +87,7 @@ abstract class HttpApp extends Directives {
   }
 
   /**
-   * Start a server on the specified host and port, using the provided settings and [[ActorSystem]] if present.
+   * Start a server on the specified host and port, using the provided settings and `ActorSystem` if present.
    * Note that this method is blocking.
    *
    * @param system ActorSystem to use for starting the app,
@@ -127,8 +127,8 @@ abstract class HttpApp extends Directives {
   }
 
   /**
-   * It tries to retrieve the [[ServerBinding]] if the server has been successfully started. It fails otherwise.
-   * You can use this method to attempt to retrieve the [[ServerBinding]] at any point in time to, for example, stop the server due to unexpected circumstances.
+   * It tries to retrieve the `ServerBinding` if the server has been successfully started. It fails otherwise.
+   * You can use this method to attempt to retrieve the `ServerBinding` at any point in time to, for example, stop the server due to unexpected circumstances.
    */
   def binding(): Try[ServerBinding] = {
     if (serverBinding.get() == null)
@@ -138,7 +138,7 @@ abstract class HttpApp extends Directives {
 
   /**
    * Hook that will be called just after the server termination. Override this method if you want to perform some cleanup actions after the server is stopped.
-   * The `attempt` parameter is represented with a [[Try]] type that is successful only if the server was successfully shut down.
+   * The `attempt` parameter is represented with a `Try` type that is successful only if the server was successfully shut down.
    */
   protected def postServerShutdown(attempt: Try[Done], system: ActorSystem): Unit = {
     systemReference.get().log.info("Shutting down the server")

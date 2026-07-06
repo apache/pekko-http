@@ -715,7 +715,7 @@ object HttpEntity {
     def completionStage: CompletionStage[Done] = f.asJava
   }
 
-  /** Adds Scala DSL idiomatic methods to [[HttpEntity]], e.g. versions of methods with an implicit [[Materializer]]. */
+  /** Adds Scala DSL idiomatic methods to [[HttpEntity]], e.g. versions of methods with an implicit `Materializer`. */
   implicit final class HttpEntityScalaDSLSugar(val httpEntity: HttpEntity) extends AnyVal {
 
     /**

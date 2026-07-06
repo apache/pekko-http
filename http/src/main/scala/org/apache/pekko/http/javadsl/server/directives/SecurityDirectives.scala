@@ -45,7 +45,7 @@ object SecurityDirectives {
      * Safely compares the passed in `secret` with the received secret part of the Credentials.
      * Use of this method instead of manual String equality testing is recommended in order to guard against timing attacks.
      *
-     * See also [[pekko.http.impl.util.EnhancedString#secure_==]], for more information.
+     * See also `org.apache.pekko.http.impl.util.EnhancedString#secure_==`, for more information.
      */
     def verify(secret: String): Boolean = asScala.verify(secret)
   }
@@ -62,7 +62,7 @@ abstract class SecurityDirectives extends SchemeDirectives {
   import pekko.http.impl.util.JavaMapping.Implicits._
 
   /**
-   * Extracts the potentially present [[HttpCredentials]] provided with the request's [[pekko.http.javadsl.model.headers.Authorization]] header.
+   * Extracts the potentially present `HttpCredentials` provided with the request's [[pekko.http.javadsl.model.headers.Authorization]] header.
    */
   def extractCredentials(inner: JFunction[Optional[HttpCredentials], Route]): Route = RouteAdapter {
     D.extractCredentials { cred =>
@@ -315,8 +315,8 @@ abstract class SecurityDirectives extends SchemeDirectives {
   }
 
   /**
-   * Asynchronous version of [[authorize]].
-   * If the [[CompletionStage]] fails or is completed with `false`
+   * Asynchronous version of `authorize`.
+   * If the `CompletionStage` fails or is completed with `false`
    * authorization fails and the route is rejected with an [[pekko.http.javadsl.server.AuthorizationFailedRejection]].
    */
   @CorrespondsTo("authorizeAsync")
