@@ -195,7 +195,7 @@ private[http] object PerMessageDeflate {
       try {
         val input = if (appendTail) data ++ EmptyStoredBlock else data
         inflater.setInput(input.toArrayUnsafe())
-        val output = new ByteArrayOutputStream()
+        val output = new ByteArrayOutputStream(1024)
         val buffer = new Array[Byte](1024)
         var count = inflater.inflate(buffer)
         while (count > 0) {
@@ -205,7 +205,7 @@ private[http] object PerMessageDeflate {
           output.write(buffer, 0, count)
           count = inflater.inflate(buffer)
         }
-        ByteString.fromArray(output.toByteArray)
+        ByteString.fromArrayUnsafe(output.toByteArray)
       } catch {
         case ex: DataFormatException =>
           throw new ProtocolException(s"Invalid WebSocket compressed message: ${ex.getMessage}")
@@ -276,14 +276,14 @@ private[http] object PerMessageDeflate {
 
     private def deflate(data: ByteString, removeTail: Boolean): ByteString = {
       deflater.setInput(data.toArrayUnsafe())
-      val output = new ByteArrayOutputStream()
+      val output = new ByteArrayOutputStream(1024)
       val buffer = new Array[Byte](1024)
       var count = deflater.deflate(buffer, 0, buffer.length, Deflater.SYNC_FLUSH)
       while (count > 0) {
         output.write(buffer, 0, count)
         count = deflater.deflate(buffer, 0, buffer.length, Deflater.SYNC_FLUSH)
       }
-      val bytes = ByteString.fromArray(output.toByteArray)
+      val bytes = ByteString.fromArrayUnsafe(output.toByteArray)
       if (removeTail && bytes.endsWith(EmptyStoredBlock)) bytes.dropRight(EmptyStoredBlock.length) else bytes
     }
 
