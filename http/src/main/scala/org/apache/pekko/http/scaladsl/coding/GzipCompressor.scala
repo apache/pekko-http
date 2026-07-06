@@ -70,12 +70,26 @@ private[coding] object GzipCompressor {
 @InternalApi
 private[coding] class GzipDecompressor(
     maxBytesPerChunk: Int = Decoder.MaxBytesPerChunkDefault) extends DeflateDecompressorBase(maxBytesPerChunk) {
+  protected[coding] def createInflater(): Inflater = new Inflater(true)
+
   override def createLogic(attr: Attributes) = new ParsingLogic {
-    private val inflater = new Inflater(true)
-    private val crc32: CRC32 = new CRC32
+    private[this] val inflater = createInflater()
+    private[this] val crc32: CRC32 = new CRC32
+    private[this] var inflaterEnded = false
+
+    private def cleanupInflater(): Unit =
+      if (!inflaterEnded) {
+        inflaterEnded = true
+        inflater.end()
+      }
+
+    override def postStop(): Unit = cleanupInflater()
 
     trait Step extends ParseStep[ByteString] {
-      override def onTruncation(): Unit = failStage(new ZipException("Truncated GZIP stream"))
+      override def onTruncation(): Unit = {
+        cleanupInflater()
+        failStage(new ZipException("Truncated GZIP stream"))
+      }
     }
     startWith(ReadHeaders)
 
