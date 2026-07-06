@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.coding
 
 import java.io.{ InputStream, OutputStream }
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.{ GZIPInputStream, GZIPOutputStream, ZipException }
 
@@ -21,9 +22,10 @@ import scala.concurrent.duration._
 
 import org.apache.pekko
 import pekko.http.impl.util._
-import pekko.http.scaladsl.model.HttpEncodings
+import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.stream.SystemMaterializer
 import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.testkit.TestDuration
 import pekko.util.ByteString
 
 class GzipSpec extends CoderSpec {
@@ -49,7 +51,8 @@ class GzipSpec extends CoderSpec {
       ex.ultimateCause.getMessage should equal("Truncated GZIP stream")
     }
     "throw an error if compressed data is just missing the trailer at the end" in {
-      def brokenCompress(payload: String) = Coders.Gzip.newCompressor.compress(ByteString(payload, "UTF-8"))
+      def brokenCompress(payload: String) =
+        Coders.Gzip.newCompressor.compress(ByteString(payload, StandardCharsets.UTF_8))
       val ex = the[RuntimeException] thrownBy ourDecode(brokenCompress("abcdefghijkl"))
       ex.ultimateCause.getMessage should equal("Truncated GZIP stream")
     }
