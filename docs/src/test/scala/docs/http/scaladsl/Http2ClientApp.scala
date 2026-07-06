@@ -34,50 +34,54 @@ import scala.concurrent.Future
 import scala.concurrent.Promise
 
 /** A small example app that shows how to use the HTTP/2 client API currently against actual internet servers */
-object Http2ClientApp extends App {
-  val config =
-    ConfigFactory.parseString(
-      """
-         # pekko.loglevel = debug
-         pekko.http.client.http2.log-frames = true
-         pekko.http.client.parsing.max-content-length = 20m
-      """).withFallback(ConfigFactory.defaultApplication())
+object Http2ClientApp {
+  def main(args: Array[String]): Unit = {
+    val config =
+      ConfigFactory.parseString(
+        """
+           # pekko.loglevel = debug
+           pekko.http.client.http2.log-frames = true
+           pekko.http.client.parsing.max-content-length = 20m
+        """).withFallback(ConfigFactory.defaultApplication())
 
-  implicit val system: ActorSystem = ActorSystem("Http2ClientApp", config)
-  implicit val ec: ExecutionContext = system.dispatcher
+    implicit val system: ActorSystem = ActorSystem("Http2ClientApp", config)
+    implicit val ec: ExecutionContext = system.dispatcher
 
-  // #response-future-association
-  val dispatch = singleRequest(Http().connectionTo("pekko.apache.org").http2())
+    // #response-future-association
+    val dispatch = singleRequest(Http().connectionTo("pekko.apache.org").http2())
 
-  dispatch(
-    HttpRequest(
-      uri = "https://pekko.apache.org/api/pekko/current/org/apache/pekko/actor/typed/scaladsl/index.html",
-      headers = headers.`Accept-Encoding`(HttpEncodings.gzip) :: Nil)).onComplete { res =>
-    println(s"[1] Got index.html: $res")
-    res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [1] $res"))
+    dispatch(
+      HttpRequest(
+        uri = "https://pekko.apache.org/api/pekko/current/org/apache/pekko/actor/typed/scaladsl/index.html",
+        headers = headers.`Accept-Encoding`(HttpEncodings.gzip) :: Nil)).onComplete { res =>
+      println(s"[1] Got index.html: $res")
+      res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [1] $res"))
+    }
+
+    // #response-future-association
+
+    dispatch(
+      HttpRequest(
+        uri = "https://pekko.apache.org/api/pekko/current/index.js",
+        headers = /*headers.`Accept-Encoding`(HttpEncodings.gzip) ::*/ Nil)).onComplete { res =>
+      println(s"[2] Got index.js: $res")
+      res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [2] $res"))
+    }
+
+    dispatch(HttpRequest(uri = "https://pekko.apache.org/api/pekko/current/lib/MaterialIcons-Regular.woff"))
+      .flatMap(_.toStrict(1.second))
+      .onComplete(res => println(s"[3] Got font: $res"))
+
+    dispatch(HttpRequest(uri = "https://pekko.apache.org/favicon.ico"))
+      .flatMap(_.toStrict(1.second))
+      .onComplete(res => println(s"[4] Got favicon: $res"))
+
   }
 
   // #response-future-association
-
-  dispatch(
-    HttpRequest(
-      uri = "https://pekko.apache.org/api/pekko/current/index.js",
-      headers = /*headers.`Accept-Encoding`(HttpEncodings.gzip) ::*/ Nil)).onComplete { res =>
-    println(s"[2] Got index.js: $res")
-    res.get.entity.dataBytes.runWith(Sink.ignore).onComplete(res => println(s"Finished reading [2] $res"))
-  }
-
-  dispatch(HttpRequest(uri = "https://pekko.apache.org/api/pekko/current/lib/MaterialIcons-Regular.woff"))
-    .flatMap(_.toStrict(1.second))
-    .onComplete(res => println(s"[3] Got font: $res"))
-
-  dispatch(HttpRequest(uri = "https://pekko.apache.org/favicon.ico"))
-    .flatMap(_.toStrict(1.second))
-    .onComplete(res => println(s"[4] Got favicon: $res"))
-
-  // #response-future-association
-  def singleRequest(
-      connection: Flow[HttpRequest, HttpResponse, Any], bufferSize: Int = 100): HttpRequest => Future[HttpResponse] = {
+  private def singleRequest(
+      connection: Flow[HttpRequest, HttpResponse, Any], bufferSize: Int = 100)(implicit system: ActorSystem)
+      : HttpRequest => Future[HttpResponse] = {
     val queue =
       Source.queue(bufferSize)
         .via(connection)
@@ -102,5 +106,4 @@ object Http2ClientApp extends App {
     }
   }
   // #response-future-association
-
 }

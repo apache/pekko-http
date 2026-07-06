@@ -30,67 +30,69 @@ import com.typesafe.config.{ Config, ConfigFactory }
 
 import scala.io.StdIn
 
-object TestServer extends App {
-  val testConf: Config = ConfigFactory.parseString("""
-    pekko.loglevel = INFO
-    pekko.log-dead-letters = off
-    pekko.stream.materializer.debug.fuzzing-mode = off
-    pekko.actor.serialize-creators = off
-    pekko.actor.serialize-messages = off
-    pekko.actor.default-dispatcher.throughput = 1000
-    """)
-  implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
+object TestServer {
+  def main(args: Array[String]): Unit = {
+    val testConf: Config = ConfigFactory.parseString("""
+      pekko.loglevel = INFO
+      pekko.log-dead-letters = off
+      pekko.stream.materializer.debug.fuzzing-mode = off
+      pekko.actor.serialize-creators = off
+      pekko.actor.serialize-messages = off
+      pekko.actor.default-dispatcher.throughput = 1000
+      """)
+    implicit val system: ActorSystem = ActorSystem("ServerTest", testConf)
 
-  implicit val fm: Materializer = Materializer(system)
-  try {
-    val binding = Http().newServerAt("localhost", 9001).bindSync {
-      case req @ HttpRequest(GET, Uri.Path("/"), _, _, _) =>
-        req.attribute(webSocketUpgrade) match {
-          case Some(upgrade) => upgrade.handleMessages(echoWebSocketService) // needed for running the autobahn test suite
-          case None          => index
-        }
-      case HttpRequest(GET, Uri.Path("/ping"), _, _, _)             => HttpResponse(entity = "PONG!")
-      case HttpRequest(GET, Uri.Path("/crash"), _, _, _)            => sys.error("BOOM!")
-      case req @ HttpRequest(GET, Uri.Path("/ws-greeter"), _, _, _) =>
-        req.attribute(webSocketUpgrade) match {
-          case Some(upgrade) => upgrade.handleMessages(greeterWebSocketService)
-          case None          => HttpResponse(400, entity = "Not a valid websocket request!")
-        }
-      case _: HttpRequest => HttpResponse(404, entity = "Unknown resource!")
+    implicit val fm: Materializer = Materializer(system)
+    try {
+      val binding = Http().newServerAt("localhost", 9001).bindSync {
+        case req @ HttpRequest(GET, Uri.Path("/"), _, _, _) =>
+          req.attribute(webSocketUpgrade) match {
+            case Some(upgrade) => upgrade.handleMessages(echoWebSocketService) // needed for running the autobahn test suite
+            case None          => index
+          }
+        case HttpRequest(GET, Uri.Path("/ping"), _, _, _)             => HttpResponse(entity = "PONG!")
+        case HttpRequest(GET, Uri.Path("/crash"), _, _, _)            => sys.error("BOOM!")
+        case req @ HttpRequest(GET, Uri.Path("/ws-greeter"), _, _, _) =>
+          req.attribute(webSocketUpgrade) match {
+            case Some(upgrade) => upgrade.handleMessages(greeterWebSocketService)
+            case None          => HttpResponse(400, entity = "Not a valid websocket request!")
+          }
+        case _: HttpRequest => HttpResponse(404, entity = "Unknown resource!")
+      }
+
+      Await.result(binding, 1.second) // throws if binding fails
+      println("Server online at http://localhost:9001")
+      println("Press RETURN to stop...")
+      StdIn.readLine()
+    } finally {
+      system.terminate()
     }
 
-    Await.result(binding, 1.second) // throws if binding fails
-    println("Server online at http://localhost:9001")
-    println("Press RETURN to stop...")
-    StdIn.readLine()
-  } finally {
-    system.terminate()
+    ////////////// helpers //////////////
+
+    lazy val index = HttpResponse(
+      entity = HttpEntity(
+        ContentTypes.`text/html(UTF-8)`,
+        """|<html>
+           | <body>
+           |    <h1>Say hello to <i>pekko-http-core</i>!</h1>
+           |    <p>Defined resources:</p>
+           |    <ul>
+           |      <li><a href="/ping">/ping</a></li>
+           |      <li><a href="/crash">/crash</a></li>
+           |    </ul>
+           |  </body>
+           |</html>""".stripMargin))
+
+    def echoWebSocketService: Flow[Message, Message, NotUsed] =
+      Flow[Message] // just let message flow directly to the output
+
+    def greeterWebSocketService: Flow[Message, Message, NotUsed] =
+      Flow[Message]
+        .collect {
+          case TextMessage.Strict(name) => TextMessage(s"Hello '$name'")
+          case tm: TextMessage          => TextMessage(Source.single("Hello ") ++ tm.textStream)
+          // ignore binary messages
+        }
   }
-
-  ////////////// helpers //////////////
-
-  lazy val index = HttpResponse(
-    entity = HttpEntity(
-      ContentTypes.`text/html(UTF-8)`,
-      """|<html>
-         | <body>
-         |    <h1>Say hello to <i>pekko-http-core</i>!</h1>
-         |    <p>Defined resources:</p>
-         |    <ul>
-         |      <li><a href="/ping">/ping</a></li>
-         |      <li><a href="/crash">/crash</a></li>
-         |    </ul>
-         |  </body>
-         |</html>""".stripMargin))
-
-  def echoWebSocketService: Flow[Message, Message, NotUsed] =
-    Flow[Message] // just let message flow directly to the output
-
-  def greeterWebSocketService: Flow[Message, Message, NotUsed] =
-    Flow[Message]
-      .collect {
-        case TextMessage.Strict(name) => TextMessage(s"Hello '$name'")
-        case tm: TextMessage          => TextMessage(Source.single("Hello ") ++ tm.textStream)
-        // ignore binary messages
-      }
 }

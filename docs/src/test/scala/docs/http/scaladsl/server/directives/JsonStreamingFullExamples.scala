@@ -54,35 +54,37 @@ class JsonStreamingFullExamples extends AnyWordSpec {
       })
   }
 
-  object ApiServer extends App with UserProtocol {
-    implicit val system: ActorSystem = ActorSystem("api")
-    implicit val executionContext: ExecutionContext = system.dispatcher
+  object ApiServer extends UserProtocol {
+    def main(args: Array[String]): Unit = {
+      implicit val system: ActorSystem = ActorSystem("api")
+      implicit val executionContext: ExecutionContext = system.dispatcher
 
-    implicit val jsonStreamingSupport: JsonEntityStreamingSupport = EntityStreamingSupport.json()
-      .withContentType(ct)
-      .withParallelMarshalling(parallelism = 10, unordered = false)
+      implicit val jsonStreamingSupport: JsonEntityStreamingSupport = EntityStreamingSupport.json()
+        .withContentType(ct)
+        .withParallelMarshalling(parallelism = 10, unordered = false)
 
-    // (fake) async database query api
-    def dummyUser(id: String) = User(s"User $id", id.toString)
+      // (fake) async database query api
+      def dummyUser(id: String) = User(s"User $id", id.toString)
 
-    def fetchUsers(): Source[User, NotUsed] = Source.fromIterator(() =>
-      Iterator.fill(10000) {
-        val id = Random.nextInt()
-        dummyUser(id.toString)
-      })
+      def fetchUsers(): Source[User, NotUsed] = Source.fromIterator(() =>
+        Iterator.fill(10000) {
+          val id = Random.nextInt()
+          dummyUser(id.toString)
+        })
 
-    val route =
-      pathPrefix("users") {
-        get {
-          complete(fetchUsers())
+      val route =
+        pathPrefix("users") {
+          get {
+            complete(fetchUsers())
+          }
         }
-      }
 
-    val bindingFuture = Http().newServerAt("localhost", 8080).bind(route)
+      val bindingFuture = Http().newServerAt("localhost", 8080).bind(route)
 
-    println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
-    StdIn.readLine()
-    bindingFuture.flatMap(_.unbind()).onComplete(_ => system.terminate())
+      println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
+      StdIn.readLine()
+      bindingFuture.flatMap(_.unbind()).onComplete(_ => system.terminate())
+    }
   }
 
   // #custom-content-type
