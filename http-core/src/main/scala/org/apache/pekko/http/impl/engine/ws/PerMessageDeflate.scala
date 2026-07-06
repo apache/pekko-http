@@ -194,7 +194,7 @@ private[http] object PerMessageDeflate {
     private def inflate(data: ByteString, appendTail: Boolean): ByteString = {
       try {
         val input = if (appendTail) data ++ EmptyStoredBlock else data
-        inflater.setInput(input.toArray)
+        inflater.setInput(input.toArrayUnsafe())
         val output = new ByteArrayOutputStream()
         val buffer = new Array[Byte](1024)
         var count = inflater.inflate(buffer)
@@ -275,7 +275,7 @@ private[http] object PerMessageDeflate {
     }
 
     private def deflate(data: ByteString, removeTail: Boolean): ByteString = {
-      deflater.setInput(data.toArray)
+      deflater.setInput(data.toArrayUnsafe())
       val output = new ByteArrayOutputStream()
       val buffer = new Array[Byte](1024)
       var count = deflater.deflate(buffer, 0, buffer.length, Deflater.SYNC_FLUSH)
