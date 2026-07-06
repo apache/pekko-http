@@ -91,7 +91,7 @@ object ClientTransport {
 
   /**
    * Returns a [[ClientTransport]] that runs all connection through the given HTTP(S) proxy using the
-   * HTTP CONNECT method. This method also takes [[HttpCredentials]] in order to pass along to the proxy.
+   * HTTP CONNECT method. This method also takes `HttpCredentials` in order to pass along to the proxy.
    *
    * An HTTP(S) proxy is a proxy that will create one TCP connection to the HTTP(S) proxy for each target connection. The
    * proxy transparently forwards the TCP connection to the target host.
@@ -103,7 +103,7 @@ object ClientTransport {
 
   /**
    * Returns a [[ClientTransport]] that runs all connection through the given HTTP(S) proxy using the
-   * HTTP CONNECT method. This method also takes [[HttpCredentials]] in order to pass along to the proxy.
+   * HTTP CONNECT method. This method also takes `HttpCredentials` in order to pass along to the proxy.
    *
    * Pulls the host/port pair from the application.conf: pekko.client.proxy.https.{host, port}
    */
@@ -115,7 +115,7 @@ object ClientTransport {
   /**
    * Returns a [[ClientTransport]] that allows to customize host name resolution.
    * @param lookup A function that will be called with hostname and port and that should (potentially asynchronously resolve the given host/port
-   *               to an [[InetSocketAddress]]
+   *               to an `InetSocketAddress`
    */
   def withCustomResolver(lookup: (String, Int) => Future[InetSocketAddress]): ClientTransport =
     ClientTransportWithCustomResolver(lookup)

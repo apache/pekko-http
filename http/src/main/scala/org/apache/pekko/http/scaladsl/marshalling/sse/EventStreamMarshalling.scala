@@ -24,14 +24,14 @@ import pekko.http.scaladsl.model.sse.ServerSentEvent
 import pekko.stream.scaladsl.Source
 
 /**
- * Importing [[EventStreamMarshalling.toEventStream]] lets a source of [[ServerSentEvent]]s be marshalled to a
+ * Importing [[EventStreamMarshalling.toEventStream]] lets a source of `ServerSentEvent`s be marshalled to a
  * `HttpEntity` and hence as a `HttpResponse`.
  */
 @ApiMayChange
 object EventStreamMarshalling extends EventStreamMarshalling
 
 /**
- * Mixing in this trait lets a source of [[ServerSentEvent]]s be marshalled to a `HttpEntity` and hence as a
+ * Mixing in this trait lets a source of `ServerSentEvent`s be marshalled to a `HttpEntity` and hence as a
  * `HttpResponse`.
  */
 @ApiMayChange

@@ -208,7 +208,7 @@ abstract class BasicDirectives {
   }
 
   /**
-   * Extracts the current [[HttpRequest]] instance.
+   * Extracts the current `HttpRequest` instance.
    */
   def extractRequest(inner: JFunction[HttpRequest, Route]) = RouteAdapter {
     D.extractRequest { rq =>
@@ -236,7 +236,7 @@ abstract class BasicDirectives {
   }
 
   /**
-   * Extracts the [[Materializer]] from the [[RequestContext]].
+   * Extracts the `Materializer` from the [[RequestContext]].
    */
   def extractMaterializer(inner: JFunction[Materializer, Route]): Route = RouteAdapter(
     D.extractMaterializer { m => inner.apply(m).delegate })
@@ -249,7 +249,7 @@ abstract class BasicDirectives {
     D.extractActorSystem { system => inner.apply(system).delegate })
 
   /**
-   * Extracts the [[ExecutionContextExecutor]] from the [[RequestContext]].
+   * Extracts the `ExecutionContextExecutor` from the [[RequestContext]].
    */
   def extractExecutionContext(inner: JFunction[ExecutionContextExecutor, Route]): Route = RouteAdapter(
     D.extractExecutionContext { c => inner.apply(c).delegate })
@@ -264,7 +264,7 @@ abstract class BasicDirectives {
   }
 
   /**
-   * Runs its inner route with the given alternative [[LoggingAdapter]].
+   * Runs its inner route with the given alternative `LoggingAdapter`.
    */
   def withLog(log: LoggingAdapter, inner: Supplier[Route]): Route = RouteAdapter {
     D.withLog(log) { inner.get.delegate }
@@ -285,14 +285,14 @@ abstract class BasicDirectives {
   }
 
   /**
-   * Runs its inner route with the given alternative [[RoutingSettings]].
+   * Runs its inner route with the given alternative `RoutingSettings`.
    */
   def withSettings(s: RoutingSettings, inner: Supplier[Route]): Route = RouteAdapter {
     D.withSettings(s.asScala) { inner.get.delegate }
   }
 
   /**
-   * Extracts the [[LoggingAdapter]]
+   * Extracts the `LoggingAdapter`
    */
   def extractLog(inner: JFunction[LoggingAdapter, Route]): Route = RouteAdapter {
     D.extractLog { log => inner.apply(log).delegate }
@@ -308,7 +308,7 @@ abstract class BasicDirectives {
   }
 
   /**
-   * Extracts the [[RoutingSettings]] from the [[pekko.http.javadsl.server.RequestContext]].
+   * Extracts the `RoutingSettings` from the [[pekko.http.javadsl.server.RequestContext]].
    */
   def extractSettings(inner: JFunction[RoutingSettings, Route]) = RouteAdapter {
     D.extractSettings { settings =>

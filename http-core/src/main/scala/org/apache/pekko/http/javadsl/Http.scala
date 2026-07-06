@@ -80,7 +80,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     adaptServerLayer(delegate.serverLayer(settings.asScala, remoteAddress.asScala))
 
   /**
-   * Constructs a server layer stage using the given [[ServerSettings]]. The returned [[pekko.stream.javadsl.BidiFlow]] isn't reusable and
+   * Constructs a server layer stage using the given `ServerSettings`. The returned [[pekko.stream.javadsl.BidiFlow]] isn't reusable and
    * can only be materialized once.
    */
   def serverLayer(
@@ -113,7 +113,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     adaptClientLayer(delegate.clientLayer(JavaMapping.toScala(hostHeader), settings.asScala))
 
   /**
-   * Constructs a client layer stage using the given [[ClientConnectionSettings]].
+   * Constructs a client layer stage using the given `ClientConnectionSettings`.
    */
   def clientLayer(
       hostHeader: headers.Host,
@@ -170,7 +170,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
   /**
    * Creates a builder which will create a single connection to a host every time the built flow is materialized. There
    * is no pooling and you are yourself responsible for lifecycle management of the connection. For a more convenient
-   * Request level API see [[singleRequest()]]
+   * Request level API see `singleRequest()`
    *
    * @return A builder to configure more specific setup for the connection and then build a `Flow&gt;Request, Response, CompletionStage&gt;OutgoingConnection>>`.
    */
@@ -214,7 +214,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     adaptTupleFlow(delegate.newHostConnectionPool[T](to.host, to.port)(materializer).mapMaterializedValue(_.toJava))
 
   /**
-   * Same as [[newHostConnectionPool]] but with HTTPS encryption.
+   * Same as `newHostConnectionPool` but with HTTPS encryption.
    *
    * The given [[ConnectionContext]] will be used for encryption on the connection.
    */
@@ -294,7 +294,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * object of type `T` from the application which is emitted together with the corresponding response.
    *
    * To configure additional settings for the pool (and requests made using it),
-   * use the `pekko.http.host-connection-pool` config section or pass in a [[ConnectionPoolSettings]] explicitly.
+   * use the `pekko.http.host-connection-pool` config section or pass in a `ConnectionPoolSettings` explicitly.
    */
   def cachedHostConnectionPool[T](
       to: ConnectHttp,
@@ -304,7 +304,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
       _.toJava))
 
   /**
-   * Same as [[cachedHostConnectionPool]] but with HTTPS encryption.
+   * Same as `cachedHostConnectionPool` but with HTTPS encryption.
    *
    * When an [[HttpConnectionContext]] is defined in the given [[ConnectHttp]] it will be used, otherwise the default client-side context will be used.
    */
@@ -317,7 +317,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
       .mapMaterializedValue(_.toJava))
 
   /**
-   * Same as [[cachedHostConnectionPool]] but with HTTPS encryption.
+   * Same as `cachedHostConnectionPool` but with HTTPS encryption.
    *
    * When an [[HttpConnectionContext]] is defined in the given [[ConnectHttp]] it will be used, otherwise the default client-side context will be used.
    */
@@ -384,7 +384,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     adaptTupleFlow(delegate.superPool[T](defaultClientHttpsContext.asScala, settings.asScala, log))
 
   /**
-   * Fires a single [[HttpRequest]] across the (cached) host connection pool for the request's
+   * Fires a single `HttpRequest` across the (cached) host connection pool for the request's
    * effective URI to produce a response future.
    *
    * The [[defaultClientHttpsContext]] is used to configure TLS for the connection.
@@ -396,7 +396,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     delegate.singleRequest(request.asScala).asJava
 
   /**
-   * Fires a single [[HttpRequest]] across the (cached) host connection pool for the request's
+   * Fires a single `HttpRequest` across the (cached) host connection pool for the request's
    * effective URI to produce a response future.
    *
    * The [[defaultClientHttpsContext]] is used to configure TLS for the connection.
@@ -408,7 +408,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     delegate.singleRequest(request.asScala, connectionContext.asScala).asJava
 
   /**
-   * Fires a single [[HttpRequest]] across the (cached) host connection pool for the request's
+   * Fires a single `HttpRequest` across the (cached) host connection pool for the request's
    * effective URI to produce a response future.
    *
    * The given [[HttpsConnectionContext]] will be used for encryption if the request is sent to an https endpoint.
@@ -433,7 +433,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     adaptWsBidiFlow(delegate.webSocketClientLayer(request.asScala))
 
   /**
-   * Constructs a WebSocket [[pekko.stream.javadsl.BidiFlow]] using the configured default [[ClientConnectionSettings]],
+   * Constructs a WebSocket [[pekko.stream.javadsl.BidiFlow]] using the configured default `ClientConnectionSettings`,
    * configured using the `pekko.http.client` config section.
    *
    * The layer is not reusable and must only be materialized once.
@@ -445,7 +445,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     adaptWsBidiFlow(delegate.webSocketClientLayer(request.asScala, settings.asScala))
 
   /**
-   * Constructs a WebSocket [[pekko.stream.javadsl.BidiFlow]] using the configured default [[ClientConnectionSettings]],
+   * Constructs a WebSocket [[pekko.stream.javadsl.BidiFlow]] using the configured default `ClientConnectionSettings`,
    * configured using the `pekko.http.client` config section.
    *
    * The layer is not reusable and must only be materialized once.

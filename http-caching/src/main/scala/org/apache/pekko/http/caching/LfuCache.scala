@@ -39,7 +39,7 @@ object LfuCache {
     apply(scaladsl.CachingSettings(system))
 
   /**
-   * Creates a new [[pekko.http.caching.LfuCache]], with optional expiration depending
+   * Creates a new `LfuCache`, with optional expiration depending
    * on whether a non-zero and finite timeToLive and/or timeToIdle is set or not.
    */
   def apply[K, V](cachingSettings: scaladsl.CachingSettings): pekko.http.caching.scaladsl.Cache[K, V] = {
@@ -55,7 +55,7 @@ object LfuCache {
 
   /**
    * Java API
-   * Creates a new [[pekko.http.caching.LfuCache]] using configuration of the system,
+   * Creates a new `LfuCache` using configuration of the system,
    * with optional expiration depending on whether a non-zero and finite timeToLive and/or timeToIdle is set or not.
    */
   def create[K, V](system: ActorSystem): pekko.http.caching.javadsl.Cache[K, V] =
@@ -63,7 +63,7 @@ object LfuCache {
 
   /**
    * Java API
-   * Creates a new [[pekko.http.caching.LfuCache]], with optional expiration depending
+   * Creates a new `LfuCache`, with optional expiration depending
    * on whether a non-zero and finite timeToLive and/or timeToIdle is set or not.
    */
   def create[K, V](settings: javadsl.CachingSettings): pekko.http.caching.javadsl.Cache[K, V] =

@@ -69,7 +69,7 @@ object TextMessage {
     Streamed(textStream)
 
   /**
-   * A strict [[TextMessage]] that contains the complete data as a [[String]].
+   * A strict [[TextMessage]] that contains the complete data as a `String`.
    */
   final case class Strict(text: String) extends TextMessage {
     def textStream: Source[String, ?] = Source.single(text)

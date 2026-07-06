@@ -26,22 +26,22 @@ import pekko.util.Helpers.toRootLowerCase
  * While knowledge of the MediaType alone suffices for being able to properly interpret binary content this
  * is not generally the case for non-binary (i.e. character-based) content, which also requires the definition
  * of a specific character encoding ([[HttpCharset]]).
- * Therefore [[MediaType]] instances are frequently encountered as a member of a [[ContentType]], which
+ * Therefore [[MediaType]] instances are frequently encountered as a member of a `ContentType`, which
  * groups a [[MediaType]] with a potentially required [[HttpCharset]] to hold everything required for being
  * able to interpret an [[HttpEntity]].
  *
  * MediaTypes come in three basic forms:
  *
- * 1. Binary: These do not need an additional [[HttpCharset]] to be able to form a [[ContentType]]. Therefore
+ * 1. Binary: These do not need an additional [[HttpCharset]] to be able to form a `ContentType`. Therefore
  *    they can be implicitly converted to the latter.
  *
  * 2. WithOpenCharset: Most character-based MediaTypes are of this form, which can be combined with all
- *    [[HttpCharset]] instances to form a [[ContentType]].
+ *    [[HttpCharset]] instances to form a `ContentType`.
  *
  * 3. WithFixedCharset: Some character-based MediaTypes prescribe a single, clearly defined charset and as such,
  *    similarly to binary MediaTypes, do not require the addition of an [[HttpCharset]] instances to form a
- *    [[ContentType]]. The most prominent example is probably `application/json` which must always be UTF-8 encoded.
- *    Like binary MediaTypes `WithFixedCharset` types can be implicitly converted to a [[ContentType]].
+ *    `ContentType`. The most prominent example is probably `application/json` which must always be UTF-8 encoded.
+ *    Like binary MediaTypes `WithFixedCharset` types can be implicitly converted to a `ContentType`.
  *
  * Not for user extension.
  */

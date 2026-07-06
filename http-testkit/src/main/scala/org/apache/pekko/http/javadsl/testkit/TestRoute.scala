@@ -19,7 +19,7 @@ import pekko.http.javadsl.server.Route
 
 /**
  * A wrapped route that has a `run` method to run a request through the underlying route to create
- * a [[TestResponse]].
+ * a `TestResponse`.
  *
  * A TestRoute is created by deriving a test class from the concrete RouteTest implementation for your
  * testing framework (like [[JUnitRouteTest]] for JUnit) and then using its `testRoute` method to wrap

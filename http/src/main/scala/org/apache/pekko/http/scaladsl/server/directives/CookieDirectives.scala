@@ -29,7 +29,7 @@ trait CookieDirectives {
   import RouteDirectives._
 
   /**
-   * Extracts the [[HttpCookiePair]] with the given name. If the cookie is not present the
+   * Extracts the `HttpCookiePair` with the given name. If the cookie is not present the
    * request is rejected with a respective [[MissingCookieRejection]].
    *
    * @group cookie
@@ -38,7 +38,7 @@ trait CookieDirectives {
     headerValue(findCookie(name)) | reject(MissingCookieRejection(name))
 
   /**
-   * Extracts the [[HttpCookiePair]] with the given name as an `Option[HttpCookiePair]`.
+   * Extracts the `HttpCookiePair` with the given name as an `Option[HttpCookiePair]`.
    * If the cookie is not present a value of `None` is extracted.
    *
    * @group cookie
@@ -52,7 +52,7 @@ trait CookieDirectives {
   }
 
   /**
-   * Adds a [[Set-Cookie]] response header with the given cookies.
+   * Adds a `Set-Cookie` response header with the given cookies.
    *
    * @group cookie
    */
@@ -60,7 +60,7 @@ trait CookieDirectives {
     respondWithHeaders((first :: more.toList).map(`Set-Cookie`(_)))
 
   /**
-   * Adds a [[Set-Cookie]] response header expiring the given cookies.
+   * Adds a `Set-Cookie` response header expiring the given cookies.
    *
    * @group cookie
    */
@@ -70,7 +70,7 @@ trait CookieDirectives {
     })
 
   /**
-   * Adds a [[Set-Cookie]] response header expiring the cookie with the given properties.
+   * Adds a `Set-Cookie` response header expiring the cookie with the given properties.
    *
    * @group cookie
    */

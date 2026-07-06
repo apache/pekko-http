@@ -64,7 +64,7 @@ object ConnectHttp {
    * port is ignored.
    *
    * If the given port is 0, a new local port will be assigned by the operating system,
-   * which can then be retrieved by the materialized [[pekko.http.javadsl.Http.ServerBinding]].
+   * which can then be retrieved by the materialized `Http.ServerBinding`.
    */
   def toHost(host: String, port: Int): ConnectHttp = {
     require(port >= 0, "port must be >= 0")
@@ -104,7 +104,7 @@ object ConnectHttp {
    * port is ignored.
    *
    * If the given port is 0, a new local port will be assigned by the operating system,
-   * which can then be retrieved by the materialized [[org.apache.pekko.http.javadsl.Http.ServerBinding]].
+   * which can then be retrieved by the materialized `Http.ServerBinding`.
    *
    * Uses the default HTTPS context.
    */

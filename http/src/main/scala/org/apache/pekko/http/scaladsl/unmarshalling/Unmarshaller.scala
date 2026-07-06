@@ -115,7 +115,7 @@ object Unmarshaller
       underlying.mapWithInput { (entity, data) => f(data, Unmarshaller.bestUnmarshallingCharsetFor(entity)) }
 
     /**
-     * Modifies the underlying [[Unmarshaller]] to only accept Content-Types matching one of the given ranges.
+     * Modifies the underlying `Unmarshaller` to only accept Content-Types matching one of the given ranges.
      * Note that you can only restrict to a subset of the Content-Types accepted by the underlying unmarshaller,
      * i.e. the given ranges must be completely supported also by the underlying Unmarshaller!
      * If a violation of this rule is detected at runtime, i.e. if an entity is encountered whose Content-Type

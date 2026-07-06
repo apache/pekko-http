@@ -58,7 +58,7 @@ trait MarshallingDirectives {
     } & cancelRejections(RequestEntityExpectedRejection.getClass, classOf[UnsupportedRequestContentTypeRejection])
 
   /**
-   * Returns the in-scope [[FromRequestUnmarshaller]] for the given type.
+   * Returns the in-scope `FromRequestUnmarshaller` for the given type.
    *
    * @group marshalling
    */

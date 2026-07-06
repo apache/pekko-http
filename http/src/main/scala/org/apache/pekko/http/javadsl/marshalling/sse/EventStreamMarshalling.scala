@@ -23,12 +23,12 @@ import pekko.http.javadsl.model.sse.ServerSentEvent
 import pekko.stream.javadsl.Source
 
 /**
- * Using `eventStreamMarshaller` lets a source of [[ServerSentEvent]]s be marshalled to a `HttpResponse`.
+ * Using `eventStreamMarshaller` lets a source of `ServerSentEvent`s be marshalled to a `HttpResponse`.
  */
 object EventStreamMarshalling {
 
   /**
-   * Lets a source of [[ServerSentEvent]]s be marshalled to a `HttpResponse`.
+   * Lets a source of `ServerSentEvent`s be marshalled to a `HttpResponse`.
    */
   val toEventStream: Marshaller[Source[ServerSentEvent, NotUsed], RequestEntity] = {
     def asScala(eventStream: Source[ServerSentEvent, NotUsed]) =

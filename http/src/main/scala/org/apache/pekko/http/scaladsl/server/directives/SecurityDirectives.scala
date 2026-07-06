@@ -26,8 +26,8 @@ import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
 
 /**
- * Provides directives for securing an inner route using the standard Http authentication headers [[`WWW-Authenticate`]]
- * and [[Authorization]]. Most prominently, HTTP Basic authentication and OAuth 2.0 Authorization Framework
+ * Provides directives for securing an inner route using the standard Http authentication headers `WWW-Authenticate`
+ * and `Authorization`. Most prominently, HTTP Basic authentication and OAuth 2.0 Authorization Framework
  * as defined in RFC 2617 and RFC 6750 respectively.
  *
  * See: <a href="https://www.ietf.org/rfc/rfc2617.txt">RFC 2617</a>.
@@ -78,7 +78,7 @@ trait SecurityDirectives {
   // #async-authenticator-pf
 
   /**
-   * Extracts the potentially present [[HttpCredentials]] provided with the request's [[Authorization]] header.
+   * Extracts the potentially present `HttpCredentials` provided with the request's `Authorization` header.
    *
    * @group security
    */
@@ -202,7 +202,7 @@ trait SecurityDirectives {
 
   /**
    * Lifts an authenticator function into a directive. The authenticator function gets passed in credentials from the
-   * [[Authorization]] header of the request. If the function returns `Right(user)` the user object is provided
+   * `Authorization` header of the request. If the function returns `Right(user)` the user object is provided
    * to the inner route. If the function returns `Left(challenge)` the request is rejected with an
    * [[AuthenticationFailedRejection]] that contains this challenge to be added to the response.
    *
@@ -224,7 +224,7 @@ trait SecurityDirectives {
 
   /**
    * Lifts an authenticator function into a directive. The authenticator function gets passed in credentials from the
-   * [[Authorization]] header of the request. If the function returns `Right(user)` the user object is provided
+   * `Authorization` header of the request. If the function returns `Right(user)` the user object is provided
    * to the inner route. If the function returns `Left(challenge)` the request is rejected with an
    * [[AuthenticationFailedRejection]] that contains this challenge to be added to the response.
    *
@@ -263,8 +263,8 @@ trait SecurityDirectives {
     authorizeAsync(ctx => Future.successful(check(ctx)))
 
   /**
-   * Asynchronous version of [[authorize]].
-   * If the [[Future]] fails or is completed with `false`
+   * Asynchronous version of `authorize`.
+   * If the `Future` fails or is completed with `false`
    * authorization fails and the route is rejected with an [[AuthorizationFailedRejection]].
    *
    * @group security
@@ -273,8 +273,8 @@ trait SecurityDirectives {
     authorizeAsync(ctx => check)
 
   /**
-   * Asynchronous version of [[authorize]].
-   * If the [[Future]] fails or is completed with `false`
+   * Asynchronous version of `authorize`.
+   * If the `Future` fails or is completed with `false`
    * authorization fails and the route is rejected with an [[AuthorizationFailedRejection]].
    *
    * @group security
@@ -306,7 +306,7 @@ object Credentials {
      * This method can be used if the secret is not stored in plain text.
      * Use of this method instead of manual String equality testing is recommended in order to guard against timing attacks.
      *
-     * See also [[EnhancedString#secure_==]], for more information.
+     * See also `org.apache.pekko.http.impl.util.EnhancedString#secure_==`, for more information.
      */
     def verify(secret: String, hasher: String => String): Boolean
 
@@ -314,7 +314,7 @@ object Credentials {
      * Safely compares the passed in `secret` with the received secret part of the Credentials.
      * Use of this method instead of manual String equality testing is recommended in order to guard against timing attacks.
      *
-     * See also [[EnhancedString#secure_==]], for more information.
+     * See also `org.apache.pekko.http.impl.util.EnhancedString#secure_==`, for more information.
      */
     def verify(secret: String): Boolean = verify(secret, x => x)
 

@@ -27,7 +27,7 @@ import pekko.stream.javadsl.Flow
 
 /**
  * Builder for setting up a flow that will create one single connection per materialization to the specified host.
- * When customization is done, the flow is created using [[#http()]], [[#https()]], [[#http2()]] or [[#http2WithPriorKnowledge()]].
+ * When customization is done, the flow is created using `http()`, `https()`, `http2()` or `http2WithPriorKnowledge()`.
  *
  * Not for user extension
  */
@@ -104,7 +104,7 @@ trait OutgoingConnectionBuilder {
   def withCustomHttpsConnectionContext(httpsConnectionContext: HttpsConnectionContext): OutgoingConnectionBuilder
 
   /**
-   * Use custom [[ClientConnectionSettings]] for the connection.
+   * Use custom `ClientConnectionSettings` for the connection.
    */
   def withClientConnectionSettings(settings: ClientConnectionSettings): OutgoingConnectionBuilder
 
