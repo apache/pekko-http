@@ -14,7 +14,7 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.io._
-import java.lang.invoke.{ MethodHandles, MethodType }
+import java.lang.invoke.MethodHandles
 
 import scala.util.Try
 
@@ -98,7 +98,7 @@ class SerializabilitySpec extends AnyWordSpec with Matchers {
       override def resolveClass(desc: ObjectStreamClass): Class[?] = {
         val name = desc.getName
         if (name.startsWith("["))
-          MethodType.fromMethodDescriptorString(s"()$name", loader).returnType()
+          Class.forName(name, false, loader)
         else
           lookup.findClass(name)
       }
