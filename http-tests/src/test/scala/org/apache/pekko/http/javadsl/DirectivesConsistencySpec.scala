@@ -13,18 +13,77 @@
 
 package org.apache.pekko.http.javadsl
 
-import java.lang.reflect.{ Method, Modifier }
-
+import scala.jdk.CollectionConverters._
 import scala.util.control.NoStackTrace
 
+import io.github.classgraph.{ ClassGraph, MethodInfo => ClassGraphMethodInfo }
 import org.apache.pekko
-import pekko.http.javadsl.server.directives.CorrespondsTo
 
 import org.scalatest.exceptions.TestPendingException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+object ClassGraphMembers {
+  final case class MethodInfo(owner: String, name: String, isStatic: Boolean, correspondsTo: Option[String])
+
+  private val correspondsToAnnotation = "org.apache.pekko.http.javadsl.server.directives.CorrespondsTo"
+
+  private lazy val scanResult =
+    new ClassGraph()
+      .acceptPackages("org.apache.pekko.http")
+      .enableClassInfo()
+      .enableMethodInfo()
+      .enableAnnotationInfo()
+      .ignoreClassVisibility()
+      .ignoreMethodVisibility()
+      .scan()
+
+  private lazy val publicMethodsCache =
+    collection.concurrent.TrieMap.empty[String, Vector[MethodInfo]]
+  private lazy val declaredMethodsCache =
+    collection.concurrent.TrieMap.empty[String, Vector[MethodInfo]]
+  private lazy val interfacesCache =
+    collection.concurrent.TrieMap.empty[String, Vector[String]]
+  private lazy val superclassesCache =
+    collection.concurrent.TrieMap.empty[String, Vector[String]]
+
+  def publicMethods(clazz: Class[?]): Array[MethodInfo] =
+    publicMethodsCache
+      .getOrElseUpdate(clazz.getName,
+        classInfo(clazz.getName).getMethodInfo.asScala.filter(_.isPublic).map(toMethod).toVector)
+      .toArray
+
+  def declaredMethods(className: String): Vector[MethodInfo] =
+    declaredMethodsCache.getOrElseUpdate(
+      className,
+      classInfo(className).getDeclaredMethodInfo.asScala.map(toMethod).toVector)
+
+  def allInterfaces(clazz: Class[?]): Vector[String] =
+    interfacesCache.getOrElseUpdate(clazz.getName,
+      classInfo(clazz.getName).getInterfaces.asScala.map(_.getName).toVector)
+
+  def superclasses(clazz: Class[?]): Vector[String] =
+    superclassesCache.getOrElseUpdate(
+      clazz.getName,
+      (classInfo(clazz.getName) +: classInfo(clazz.getName).getSuperclasses.asScala.toVector)
+        .map(_.getName)
+        .filterNot(_ == "java.lang.Object"))
+
+  private def classInfo(className: String) =
+    Option(scanResult.getClassInfo(className))
+      .getOrElse(throw new IllegalArgumentException(s"Could not find class metadata for [$className]"))
+
+  private def toMethod(method: ClassGraphMethodInfo): MethodInfo =
+    MethodInfo(
+      method.getClassName,
+      method.getName,
+      method.isStatic,
+      Option(method.getAnnotationInfo(correspondsToAnnotation))
+        .flatMap(annotation => Option(annotation.getParameterValues.getValue("value")).map(_.toString)))
+}
+
 class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
+  import ClassGraphMembers.MethodInfo
 
   val scalaDirectivesClazz = classOf[pekko.http.scaladsl.server.Directives]
   val javaDirectivesClazz = classOf[pekko.http.javadsl.server.AllDirectives]
@@ -37,30 +96,30 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
     Set("not", "DoubleNumber", "HexIntNumber", "HexLongNumber", "IntNumber", "JavaUUID", "LongNumber",
       "Neutral", "PathEnd", "Remaining", "Segment", "Segments", "Slash", "RemainingPath") // TODO do we cover these?
 
-  def prepareDirectivesList(in: Array[Method]): List[Method] = {
-    in.toSet[Method]
+  def prepareDirectivesList(in: Array[MethodInfo]): List[MethodInfo] = {
+    in.toSet
       .toList
-      .foldLeft[List[Method]](Nil) {
+      .foldLeft[List[MethodInfo]](Nil) {
         (l, s) =>
           {
-            val test = l.find { _.getName.toLowerCase == s.getName.toLowerCase }
+            val test = l.find { _.name.toLowerCase == s.name.toLowerCase }
             if (test.isEmpty) s :: l else l
           }
       }
-      .sortBy(_.getName)
+      .sortBy(_.name)
       .iterator
-      .filterNot(m => Modifier.isStatic(m.getModifiers))
-      .filterNot(m => ignore(m.getName))
-      .filterNot(m => m.getName.contains("$"))
-      .filterNot(m => m.getName.startsWith("_"))
+      .filterNot(_.isStatic)
+      .filterNot(m => ignore(m.name))
+      .filterNot(m => m.name.contains("$"))
+      .filterNot(m => m.name.startsWith("_"))
       .toList
   }
 
   val scalaDirectives = {
-    prepareDirectivesList(scalaDirectivesClazz.getMethods)
+    prepareDirectivesList(ClassGraphMembers.publicMethods(scalaDirectivesClazz))
   }
   val javaDirectives = {
-    prepareDirectivesList(javaDirectivesClazz.getMethods)
+    prepareDirectivesList(ClassGraphMembers.publicMethods(javaDirectivesClazz))
   }
 
   val correspondingScalaMethods = {
@@ -68,9 +127,8 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
       for {
         // using Scala annotations - Java annotations were magically not present in certain places...
         d <- javaDirectives
-        if d.isAnnotationPresent(classOf[CorrespondsTo])
-        annot = d.getAnnotation(classOf[CorrespondsTo])
-      } yield d.getName -> annot.value()
+        correspondent <- d.correspondsTo
+      } yield d.name -> correspondent
 
     Map(javaToScalaMappings.toList: _*)
   }
@@ -78,17 +136,17 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
   val correspondingJavaMethods = Map() ++ correspondingScalaMethods.map(_.swap)
 
   /** Left(@CorrespondsTo(...) or Right(normal name) */
-  def correspondingScalaMethodName(m: Method): Either[String, String] =
-    correspondingScalaMethods.get(m.getName) match {
+  def correspondingScalaMethodName(m: MethodInfo): Either[String, String] =
+    correspondingScalaMethods.get(m.name) match {
       case Some(correspondent) => Left(correspondent)
-      case _                   => Right(m.getName)
+      case _                   => Right(m.name)
     }
 
   /** Left(@CorrespondsTo(...) or Right(normal name) */
-  def correspondingJavaMethodName(m: Method): Either[String, String] =
-    correspondingJavaMethods.get(m.getName) match {
+  def correspondingJavaMethodName(m: MethodInfo): Either[String, String] =
+    correspondingJavaMethods.get(m.name) match {
       case Some(correspondent) => Left(correspondent)
-      case _                   => Right(m.getName)
+      case _                   => Right(m.name)
     }
 
   val allowMissing: Map[Class[?], Set[String]] = Map(
@@ -122,7 +180,8 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
   def assertHasMethod(c: Class[?], name: String, alternativeName: String): Unit = {
     // include class name to get better error message
     if (!allowMissing.getOrElse(c, Set.empty).exists(n => n == name || n == alternativeName)) {
-      val methods = c.getMethods.collect { case m if !ignore(m.getName) => c.getName + "." + m.getName }
+      val methods =
+        ClassGraphMembers.publicMethods(c).collect { case m if !ignore(m.name) => c.getName + "." + m.name }
 
       def originClazz = {
         // look in the "opposite" class
@@ -130,32 +189,20 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
         // in hava we have a huge inheritance chain so we unfold it
         c match {
           case `javaDirectivesClazz` =>
-            val all = scalaDirectivesClazz
             (for {
-              i <- all.getInterfaces
-              m <- i.getDeclaredMethods
-              if m.getName == name || m.getName == alternativeName
+              i <- ClassGraphMembers.allInterfaces(scalaDirectivesClazz)
+              m <- ClassGraphMembers.declaredMethods(i)
+              if m.name == name || m.name == alternativeName
             } yield i).headOption
-              .map(_.getName)
-              .getOrElse(throw new Exception(s"Unable to locate method [$name] on source class $all"))
+              .getOrElse(throw new Exception(s"Unable to locate method [$name] on source class $scalaDirectivesClazz"))
 
           case `scalaDirectivesClazz` =>
-            val all = javaDirectivesClazz
-
-            var is = List.empty[Class[?]]
-            var c: Class[?] = all
-            while (c != classOf[java.lang.Object]) {
-              is = c :: is
-              c = c.getSuperclass
-            }
-
             (for {
-              i <- is
-              m <- i.getDeclaredMethods
-              if m.getName == name || m.getName == alternativeName
+              i <- ClassGraphMembers.superclasses(javaDirectivesClazz)
+              m <- ClassGraphMembers.declaredMethods(i)
+              if m.name == name || m.name == alternativeName
             } yield i).headOption
-              .map(_.getName)
-              .getOrElse(throw new Exception(s"Unable to locate method [$name] on source class $all"))
+              .getOrElse(throw new Exception(s"Unable to locate method [$name] on source class $javaDirectivesClazz"))
         }
       }
 
@@ -170,8 +217,8 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
   }
 
   "DSL Stats" should {
-    info("Scala Directives: ~" + scalaDirectives.map(_.getName).filterNot(ignore).size)
-    info("Java Directives: ~" + javaDirectives.map(_.getName).filterNot(ignore).size)
+    info("Scala Directives: ~" + scalaDirectives.map(_.name).filterNot(ignore).size)
+    info("Java Directives: ~" + javaDirectives.map(_.name).filterNot(ignore).size)
   }
 
   "Directive aliases" should {
@@ -182,7 +229,7 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
   "Consistency scaladsl -> javadsl" should {
     for {
       m <- scalaDirectives
-      name = m.getName
+      name = m.name
       targetName = correspondingJavaMethodName(m) match {
         case Left(l)  => l
         case Right(r) => r
@@ -196,7 +243,7 @@ class DirectivesConsistencySpec extends AnyWordSpec with Matchers {
   "Consistency javadsl -> scaladsl" should {
     for {
       m <- javaDirectives
-      name = m.getName
+      name = m.name
       targetName = correspondingScalaMethodName(m) match {
         case Left(l)  => l
         case Right(r) => r

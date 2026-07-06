@@ -29,6 +29,7 @@ object Dependencies {
   val h2specArtifactExtension = if (h2specExe.endsWith("exe")) "zip" else "tar.gz"
   val h2specUrl =
     s"https://github.com/summerwind/h2spec/releases/download/v$h2specVersion/$h2specName.$h2specArtifactExtension"
+  val classGraphVersion = "4.8.184"
 
   val scalaTestVersion = "3.2.20"
   val scalaCheckVersion = "1.19.0"
@@ -74,7 +75,7 @@ object Dependencies {
       val sprayJson = Compile.sprayJson % "test"
       val gson = "com.google.code.gson" % "gson" % "2.14.0" % "test"
       val jacksonXml = "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml" % jacksonXmlVersion % "test"
-      val reflections = "org.reflections" % "reflections" % "0.10.2" % "test"
+      val classGraph = "io.github.classgraph" % "classgraph" % classGraphVersion % "test"
     }
 
     object Test {
@@ -90,6 +91,7 @@ object Dependencies {
       val scalatest = "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
       val scalatestplusScalacheck = "org.scalatestplus" %% "scalacheck-1-19" % (scalaTestVersion + ".0") % "test"
       val scalatestplusJUnit = "org.scalatestplus" %% "junit-4-13" % (scalaTestVersion + ".0") % "test"
+      val classGraph = "io.github.classgraph" % "classgraph" % classGraphVersion % "test"
 
       // HTTP/2
 
@@ -149,7 +151,7 @@ object Dependencies {
     l ++= Seq(Test.munit % "provided; test")
 
   lazy val httpTests = Seq(
-    l ++= junitJupiterTestDeps.value ++ Seq(Test.scalatest))
+    l ++= junitJupiterTestDeps.value ++ Seq(Test.scalatest, Test.classGraph))
 
   lazy val httpXml = Seq(
     versionDependentDeps(scalaXml),
@@ -170,7 +172,7 @@ object Dependencies {
       Docs.sprayJson,
       Docs.gson,
       Docs.jacksonXml,
-      Docs.reflections) ++ junitJupiterTestDeps.value)
+      Docs.classGraph) ++ junitJupiterTestDeps.value)
 }
 
 object DependencyHelpers {

@@ -13,15 +13,23 @@
 
 package sbt {
   package object access {
-    import java.lang.invoke.MethodHandles
+    import java.lang.invoke.{ MethodHandles, MethodType }
 
     type Aggregation = sbt.internal.Aggregation
     val Aggregation = sbt.internal.Aggregation
 
     private val showRunHandle = {
-      val method = Class.forName("sbt.internal.Aggregation$").getDeclaredMethods.find(_.getName == "showRun").get
-      method.setAccessible(true)
-      MethodHandles.lookup().unreflect(method)
+      val aggregationClass = Aggregation.getClass
+      MethodHandles
+        .privateLookupIn(aggregationClass, MethodHandles.lookup())
+        .findVirtual(
+          aggregationClass,
+          "showRun",
+          MethodType.methodType(
+            Void.TYPE,
+            classOf[sbt.internal.Aggregation.Complete[?]],
+            classOf[sbt.internal.Aggregation.ShowConfig],
+            classOf[Show[ScopedKey[?]]]))
     }
     def AggregationShowRun[T](complete: sbt.internal.Aggregation.Complete[T],
         show: sbt.internal.Aggregation.ShowConfig)(

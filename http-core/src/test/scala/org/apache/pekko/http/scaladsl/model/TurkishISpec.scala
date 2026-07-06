@@ -13,7 +13,7 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import java.lang.invoke.MethodHandles
+import java.lang.invoke.{ MethodHandles, MethodType }
 import java.util.Locale
 import org.apache.pekko.http.impl.util._
 import org.scalatest.matchers.should.Matchers
@@ -22,10 +22,11 @@ import org.scalatest.wordspec.AnyWordSpec
 class TurkishISpec extends AnyWordSpec with Matchers {
   "Model" should {
     "not suffer from turkish-i problem" in {
-      val charsetClass = Class.forName("org.apache.pekko.http.scaladsl.model.HttpCharsets$")
-      val charsetCtor = charsetClass.getDeclaredConstructor()
-      charsetCtor.setAccessible(true)
-      val charsetHandle = MethodHandles.lookup().unreflectConstructor(charsetCtor)
+      val lookup = MethodHandles.lookup()
+      val charsetClass = lookup.findClass("org.apache.pekko.http.scaladsl.model.HttpCharsets$")
+      val charsetHandle =
+        MethodHandles.privateLookupIn(charsetClass, lookup).findConstructor(charsetClass,
+          MethodType.methodType(Void.TYPE))
 
       val previousLocale = Locale.getDefault
 

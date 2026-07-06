@@ -50,6 +50,16 @@ import org.scalatest.concurrent.PatienceConfiguration.Timeout
  * * if applicable: provide application-level response
  * * validate the produced response frames
  */
+object Http2ServerSpec {
+  private val manualProbeHandle =
+    MethodHandles
+      .privateLookupIn(classOf[ManualProbe[?]], MethodHandles.lookup())
+      .findVarHandle(classOf[ManualProbe[?]], "probe", classOf[TestProbe])
+
+  def testProbeFor(publisherProbe: TestPublisher.Probe[?]): TestProbe =
+    manualProbeHandle.get(publisherProbe).asInstanceOf[TestProbe]
+}
+
 class Http2ServerSpec extends Http2SpecWithMaterializer("""
     pekko.http.server.http2.log-frames = on
   """)
@@ -908,13 +918,9 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           def fulfillDemandWithin(publisherProbe: TestPublisher.Probe[?], timeout: FiniteDuration)(
               body: => Unit): Unit = {
             // HACK to support `expectRequest` with a timeout
-            val probeHandle = {
-              val probeField = classOf[ManualProbe[?]].getDeclaredField("probe")
-              probeField.setAccessible(true)
-              MethodHandles.lookup().unreflectVarHandle(probeField)
-            }
             def within[T](publisherProbe: TestPublisher.Probe[?], dur: FiniteDuration)(t: => T): T = {
-              probeHandle.get(publisherProbe).asInstanceOf[TestProbe].within(dur)(t)
+              val probe = Http2ServerSpec.testProbeFor(publisherProbe)
+              probe.within(dur)(t)
             }
             def expectRequest(timeout: FiniteDuration): Long =
               within(publisherProbe, timeout)(publisherProbe.expectRequest())
