@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.scaladsl.marshalling
 
+import java.nio.charset.StandardCharsets
+
 import scala.collection.immutable
 import scala.collection.immutable.ListMap
 
@@ -242,7 +244,7 @@ class MarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll w
 
   protected class FixedRandom extends java.util.Random {
     override def nextBytes(array: Array[Byte]): Unit = {
-      val bytes = "my-stable-boundary".getBytes("UTF-8")
+      val bytes = "my-stable-boundary".getBytes(StandardCharsets.UTF_8)
       bytes.copyToArray(array, 0, bytes.length)
     }
   }

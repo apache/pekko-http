@@ -13,27 +13,27 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.pekko
 import pekko.NotUsed
-
-import scala.concurrent.duration._
-import scala.util.{ Failure, Random }
-import pekko.stream.scaladsl._
-import pekko.stream.testkit._
-import pekko.util.ByteString
 import pekko.http.scaladsl.model.ws._
 import Protocol.Opcode
 import pekko.http.impl.settings.WebSocketSettingsImpl
 import pekko.http.impl.util.{ LogByteStringTools, PekkoSpecWithMaterializer }
 import pekko.http.scaladsl.settings.WebSocketSettings
-import pekko.testkit._
 import pekko.stream.OverflowStrategy
+import pekko.stream.scaladsl._
+import pekko.stream.testkit._
+import pekko.testkit._
+import pekko.util.ByteString
 import org.scalatest.concurrent.Eventually
 
 import scala.concurrent.Await
+import scala.concurrent.duration._
+import scala.util.{ Failure, Random }
 
 class MessageSpec extends PekkoSpecWithMaterializer(
       """
@@ -186,7 +186,7 @@ class MessageSpec extends PekkoSpecWithMaterializer(
         }
         "decode complete, strict frame from utf8" in new ClientTestSetup {
           val msg = "äbcdef€\uffff"
-          val data = ByteString(msg, "UTF-8")
+          val data = ByteString(msg, UTF_8)
           val input = frameHeader(Opcode.Text, data.size, fin = true) ++ data
 
           pushInput(input)
@@ -194,7 +194,7 @@ class MessageSpec extends PekkoSpecWithMaterializer(
         }
         "decode utf8 as far as possible for partial frame" in new ClientTestSetup {
           val msg = "bäcdef€"
-          val data = ByteString(msg, "UTF-8")
+          val data = ByteString(msg, UTF_8)
           val data0 = data.slice(0, 2)
           val data1 = data.slice(2, 5)
           val input = frameHeader(Opcode.Text, data.size, fin = true) ++ data0
@@ -212,7 +212,7 @@ class MessageSpec extends PekkoSpecWithMaterializer(
         }
         "decode utf8 with code point split across frames" in new ClientTestSetup {
           val msg = "äbcdef€"
-          val data = ByteString(msg, "UTF-8")
+          val data = ByteString(msg, UTF_8)
           val data0 = data.slice(0, 1)
           val data1 = data.slice(1, data.size)
           val header0 = frameHeader(Opcode.Text, data0.size, fin = false)
@@ -242,10 +242,10 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           dataSource.runWith(Sink.fromSubscriber(sub))
           val s = sub.expectSubscription()
           s.request(2)
-          sub.expectNext(ByteString("äb", "UTF-8"))
+          sub.expectNext(ByteString("äb", UTF_8))
 
           pushInput(data2)
-          sub.expectNext(ByteString("cdef€", "UTF-8"))
+          sub.expectNext(ByteString("cdef€", UTF_8))
           s.request(1)
           sub.expectComplete()
         }
@@ -334,7 +334,7 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           val msg = TextMessage.Strict(text)
           pushMessage(msg)
 
-          expectFrameOnNetwork(Opcode.Text, ByteString(text, "UTF-8"), fin = true)
+          expectFrameOnNetwork(Opcode.Text, ByteString(text, UTF_8), fin = true)
         }
         "for a strict message larger than configured maximum frame size" in pending
         "for a streamed message" in new ServerTestSetup {
@@ -345,9 +345,9 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           val sub = pub.expectSubscription()
 
           val text1 = text.take(3)
-          val text1Bytes = ByteString(text1, "UTF-8")
+          val text1Bytes = ByteString(text1, UTF_8)
           val text2 = text.drop(3)
-          val text2Bytes = ByteString(text2, "UTF-8")
+          val text2Bytes = ByteString(text2, UTF_8)
 
           sub.sendNext(text1)
           expectFrameOnNetwork(Opcode.Text, text1Bytes, fin = false)
@@ -376,7 +376,7 @@ class MessageSpec extends PekkoSpecWithMaterializer(
 
           expectNoNetworkData()
           sub.sendNext(half2)
-          expectFrameOnNetwork(Opcode.Text, ByteString(gclef, "utf8"), fin = false)
+          expectFrameOnNetwork(Opcode.Text, ByteString(gclef, UTF_8), fin = false)
         }
         "for a streamed message with a chunk being larger than configured maximum frame size" in pending
         "and mask input on the client side" in new ClientTestSetup {
@@ -387,9 +387,9 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           val sub = pub.expectSubscription()
 
           val text1 = text.take(3)
-          val text1Bytes = ByteString(text1, "UTF-8")
+          val text1Bytes = ByteString(text1, UTF_8)
           val text2 = text.drop(3)
-          val text2Bytes = ByteString(text2, "UTF-8")
+          val text2Bytes = ByteString(text2, UTF_8)
 
           sub.sendNext(text1)
           expectMaskedFrameOnNetwork(Opcode.Text, text1Bytes, fin = false)
@@ -552,7 +552,7 @@ class MessageSpec extends PekkoSpecWithMaterializer(
       }
       "after receiving regular close frame when idle (but some data was exchanged before)" in new ServerTestSetup {
         val msg = "äbcdef€\uffff"
-        val input = frame(Opcode.Text, ByteString(msg, "UTF-8"), fin = true, mask = true)
+        val input = frame(Opcode.Text, ByteString(msg, UTF_8), fin = true, mask = true)
 
         // send at least one regular frame to trigger #19340 afterwards
         pushInput(input)
@@ -859,12 +859,12 @@ class MessageSpec extends PekkoSpecWithMaterializer(
         expectCloseCodeOnNetwork(Protocol.CloseCodes.InconsistentData)
       }
       "truncated utf8 encoding for single frame message" in new ClientTestSetup {
-        val data = ByteString("€", "UTF-8").take(1) // half a euro
+        val data = ByteString("€", UTF_8).take(1) // half a euro
         pushInput(frameHeader(Opcode.Text, 1, fin = true) ++ data)
         expectCloseCodeOnNetwork(Protocol.CloseCodes.InconsistentData)
       }
       "truncated utf8 encoding for streamed frame" in new ClientTestSetup {
-        val data = ByteString("€", "UTF-8").take(1) // half a euro
+        val data = ByteString("€", UTF_8).take(1) // half a euro
         pushInput(frameHeader(Opcode.Text, 0, fin = false) ++
           frameHeader(Opcode.Continuation, 1, fin = true) ++
           data)
@@ -934,10 +934,10 @@ class MessageSpec extends PekkoSpecWithMaterializer(
       "convert streamed binary with multiple elements to strict binary" in {
         Await.result(
           BinaryMessage
-            .Streamed(Source(ByteString(pre.getBytes("UTF-8")) :: ByteString(msg.getBytes("UTF-8")) :: ByteString(
-              post.getBytes("UTF-8")) :: Nil))
+            .Streamed(Source(ByteString(pre.getBytes(UTF_8)) :: ByteString(msg.getBytes(UTF_8)) :: ByteString(
+              post.getBytes(UTF_8)) :: Nil))
             .toStrict(1.second), 1.second) should be(
-          BinaryMessage.Strict(ByteString((pre + msg + post).getBytes("UTF-8"))))
+          BinaryMessage.Strict(ByteString((pre + msg + post).getBytes(UTF_8))))
       }
       "convert streamed text to strict text" in {
         Await.result(
@@ -948,8 +948,8 @@ class MessageSpec extends PekkoSpecWithMaterializer(
       "convert streamed binary to strict binary" in {
         Await.result(
           BinaryMessage
-            .Streamed(Source.single(ByteString(msg.getBytes("UTF-8"))))
-            .toStrict(1.second), 1.second) should be(BinaryMessage.Strict(ByteString(msg.getBytes("UTF-8"))))
+            .Streamed(Source.single(ByteString(msg.getBytes(UTF_8))))
+            .toStrict(1.second), 1.second) should be(BinaryMessage.Strict(ByteString(msg.getBytes(UTF_8))))
       }
       "convert streamed text to strict text if stream is empty" in {
         Await.result(
@@ -977,7 +977,7 @@ class MessageSpec extends PekkoSpecWithMaterializer(
       "convert streamed binary to strict binary if stream is infinite" in {
         val future = Await.ready(
           BinaryMessage
-            .Streamed(Source.repeat(ByteString(msg.getBytes("UTF-8"))))
+            .Streamed(Source.repeat(ByteString(msg.getBytes(UTF_8))))
             .toStrict(1.second), 5.second)
 
         future.onComplete {
