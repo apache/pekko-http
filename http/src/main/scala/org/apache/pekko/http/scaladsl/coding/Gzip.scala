@@ -27,7 +27,7 @@ class Gzip private[http] (compressionLevel: Int, val messageFilter: HttpMessage 
   }
 
   val encoding = HttpEncodings.gzip
-  private[http] def newCompressor = new GzipCompressor(compressionLevel)
+  private[http] def newCompressor: GzipCompressor = new GzipCompressor(compressionLevel)
   def newDecompressorStage(maxBytesPerChunk: Int) = () => new GzipDecompressor(maxBytesPerChunk)
 
   @InternalApi // used by javadsl.coding.Coder

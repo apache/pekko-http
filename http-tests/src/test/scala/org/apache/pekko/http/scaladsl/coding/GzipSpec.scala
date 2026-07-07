@@ -120,7 +120,7 @@ class GzipSpec extends CoderSpec {
   @nowarn("msg=deprecated")
   private def encoderWith(tracking: TrackingDeflater): Gzip =
     new Gzip(Encoder.DefaultFilter) {
-      override private[http] def newCompressor: Compressor = new GzipCompressor() {
+      override private[http] def newCompressor: GzipCompressor = new GzipCompressor() {
         override protected lazy val deflater: java.util.zip.Deflater = tracking
       }
     }

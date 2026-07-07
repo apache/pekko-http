@@ -122,7 +122,7 @@ class DeflateSpec extends CoderSpec {
   @nowarn("msg=deprecated")
   private def encoderWith(tracking: TrackingDeflater): Deflate =
     new Deflate(Encoder.DefaultFilter) {
-      override private[http] def newCompressor: Compressor = new DeflateCompressor() {
+      override private[http] def newCompressor: DeflateCompressor = new DeflateCompressor() {
         override protected lazy val deflater: java.util.zip.Deflater = tracking
       }
     }
