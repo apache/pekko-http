@@ -52,6 +52,16 @@ private[http] object PerMessageDeflate {
   private val ServerNoContextTakeover = "server_no_context_takeover"
   private val EmptyStoredBlock = ByteString(0x00, 0x00, 0xFF.toByte, 0xFF.toByte)
 
+  private[ws] trait CompressionFactory {
+    def newInflater(): Inflater
+    def newDeflater(compressionLevel: Int): Deflater
+  }
+
+  private object DefaultCompressionFactory extends CompressionFactory {
+    override def newInflater(): Inflater = new Inflater(true)
+    override def newDeflater(compressionLevel: Int): Deflater = new Deflater(compressionLevel, true)
+  }
+
   final case class Negotiated(
       responseExtension: WebSocketExtension,
       serverNoContextTakeover: Boolean,
@@ -74,15 +84,27 @@ private[http] object PerMessageDeflate {
         deflaterFlow)
 
     private def inflaterFlow: Flow[FrameEventOrError, FrameEventOrError, NotUsed] =
-      Flow.fromGraph(new LifecycleMapConcatStage(
-        "PerMessageDeflate.inflater",
-        () => new InflaterFlow(clientNoContextTakeover, settings)))
+      createInflaterFlow(clientNoContextTakeover, settings, DefaultCompressionFactory)
 
     private def deflaterFlow: Flow[FrameEvent, FrameEvent, NotUsed] =
-      Flow.fromGraph(new LifecycleMapConcatStage(
-        "PerMessageDeflate.deflater",
-        () => new DeflaterFlow(serverNoContextTakeover, settings)))
+      createDeflaterFlow(serverNoContextTakeover, settings, DefaultCompressionFactory)
   }
+
+  private[ws] def createInflaterFlow(
+      noContextTakeover: Boolean,
+      settings: WebSocketCompressionSettingsImpl,
+      compressionFactory: CompressionFactory): Flow[FrameEventOrError, FrameEventOrError, NotUsed] =
+    Flow.fromGraph(new LifecycleMapConcatStage(
+      "PerMessageDeflate.inflater",
+      () => new InflaterFlow(noContextTakeover, settings, compressionFactory)))
+
+  private[ws] def createDeflaterFlow(
+      noContextTakeover: Boolean,
+      settings: WebSocketCompressionSettingsImpl,
+      compressionFactory: CompressionFactory): Flow[FrameEvent, FrameEvent, NotUsed] =
+    Flow.fromGraph(new LifecycleMapConcatStage(
+      "PerMessageDeflate.deflater",
+      () => new DeflaterFlow(noContextTakeover, settings, compressionFactory)))
 
   def negotiate(
       requested: immutable.Seq[WebSocketExtension],
@@ -136,9 +158,10 @@ private[http] object PerMessageDeflate {
 
   private final class InflaterFlow(
       noContextTakeover: Boolean,
-      settings: WebSocketCompressionSettingsImpl)
+      settings: WebSocketCompressionSettingsImpl,
+      compressionFactory: CompressionFactory)
       extends LifecycleMapConcat[FrameEventOrError, FrameEventOrError] {
-    private var inflater = new Inflater(true)
+    private var inflater = compressionFactory.newInflater()
     private var compressedFrame: Option[CompressedFrame] = None
     private var compressedMessageInProgress = false
     private var decompressedMessageBytes = 0L
@@ -187,7 +210,7 @@ private[http] object PerMessageDeflate {
       if (frame.appendTail) decompressedMessageBytes = 0L
       if (frame.appendTail && noContextTakeover) {
         inflater.end()
-        inflater = new Inflater(true)
+        inflater = compressionFactory.newInflater()
       }
       FrameStart(frame.header.copy(length = inflated.length), inflated) :: Nil
     }
@@ -218,9 +241,10 @@ private[http] object PerMessageDeflate {
 
   private final class DeflaterFlow(
       noContextTakeover: Boolean,
-      settings: WebSocketCompressionSettingsImpl)
+      settings: WebSocketCompressionSettingsImpl,
+      compressionFactory: CompressionFactory)
       extends LifecycleMapConcat[FrameEvent, FrameEvent] {
-    private var deflater = new Deflater(settings.compressionLevel, true)
+    private var deflater = compressionFactory.newDeflater(settings.compressionLevel)
     private var frame: Option[UncompressedFrame] = None
     private var messageInProgress = false
     private var bypassFrameInProgress = false
@@ -270,7 +294,7 @@ private[http] object PerMessageDeflate {
       val compressed = deflate(current.data, current.removeTail)
       if (current.removeTail && noContextTakeover) {
         deflater.end()
-        deflater = new Deflater(settings.compressionLevel, true)
+        deflater = compressionFactory.newDeflater(settings.compressionLevel)
       }
       FrameStart(current.header.copy(length = compressed.length), compressed) :: Nil
     }
