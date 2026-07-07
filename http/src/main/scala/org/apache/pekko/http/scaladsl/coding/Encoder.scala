@@ -55,8 +55,12 @@ trait Encoder {
 
     def encodeChunk(bytes: ByteString): ByteString = compressor.compressAndFlush(bytes)
     def finish(): ByteString = compressor.finish()
+    def cleanup(): Unit = compressor match {
+      case dc: DeflateCompressor => dc.endDeflater()
+      case _                     =>
+    }
 
-    StreamUtils.byteStringTransformer(encodeChunk, () => finish())
+    StreamUtils.byteStringTransformer(encodeChunk, () => finish(), () => cleanup())
   }
 }
 

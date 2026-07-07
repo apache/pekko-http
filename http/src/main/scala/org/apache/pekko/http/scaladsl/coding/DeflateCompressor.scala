@@ -60,9 +60,17 @@ private[coding] class DeflateCompressor private[coding] (compressionLevel: Int) 
   protected def finishWithBuffer(buffer: Array[Byte]): ByteString = {
     deflater.finish()
     val res = drainDeflater(deflater, buffer)
-    deflater.end()
+    endDeflater()
     res
   }
+
+  private[coding] def endDeflater(): Unit =
+    if (!deflaterEnded) {
+      deflaterEnded = true
+      deflater.end()
+    }
+
+  private var deflaterEnded = false
 
   private def newTempBuffer(size: Int = 65536): Array[Byte] = {
     // The default size is somewhat arbitrary, we'd like to guess a better value but Deflater/zlib
