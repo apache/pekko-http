@@ -104,7 +104,19 @@ private[coding] object DeflateCompressor {
 private[coding] class DeflateDecompressor(
     maxBytesPerChunk: Int = Decoder.MaxBytesPerChunkDefault) extends DeflateDecompressorBase(maxBytesPerChunk) {
 
+  protected[coding] def createInflater(noWrap: Boolean): Inflater = new Inflater(noWrap)
+
   override def createLogic(attr: Attributes) = new ParsingLogic {
+    private var currentInflater: Inflater = null
+    private var inflaterEnded = false
+
+    private def cleanupInflater(): Unit =
+      if (!inflaterEnded && currentInflater != null) {
+        inflaterEnded = true
+        currentInflater.end()
+      }
+
+    override def postStop(): Unit = cleanupInflater()
 
     /** Step that probes if the deflate stream contains a zlib wrapper */
     case object ProbeWrapping extends ParseStep[ByteString] {
@@ -112,6 +124,8 @@ private[coding] class DeflateDecompressor(
 
       override def parse(reader: ByteStringParser.ByteReader): ParseResult[ByteString] = {
         val inflater = examineAndBuildInflater(reader.remainingData)
+        cleanupInflater()
+        currentInflater = inflater
         ParseResult(None, new Inflate(inflater, noPostProcessing = true, ProbeWrapping))
       }
     }
@@ -132,7 +146,7 @@ private[coding] class DeflateDecompressor(
      */
     private def examineAndBuildInflater(bytes: ByteString): Inflater = {
       val wrapped = (bytes.head & 0x0F) == 0x08
-      new Inflater(!wrapped)
+      createInflater(!wrapped)
     }
 
     startWith(ProbeWrapping)
