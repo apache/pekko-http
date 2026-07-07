@@ -70,6 +70,8 @@ private[coding] class DeflateCompressor private[coding] (compressionLevel: Int) 
       deflater.end()
     }
 
+  private[coding] override def cleanup(): Unit = endDeflater()
+
   private var deflaterEnded = false
 
   private def newTempBuffer(size: Int = 65536): Array[Byte] = {
