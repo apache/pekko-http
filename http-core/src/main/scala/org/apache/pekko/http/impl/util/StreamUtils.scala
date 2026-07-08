@@ -64,13 +64,10 @@ private[http] object StreamUtils {
           override def onPull(): Unit = pull(in)
 
           override def onUpstreamFinish(): Unit = {
-            try {
-              val data = finish()
-              if (data.nonEmpty) emit(out, data)
-              completeStage()
-            } finally {
-              finished = true
-            }
+            val data = finish()
+            finished = true
+            if (data.nonEmpty) emit(out, data)
+            completeStage()
           }
 
           override def postStop(): Unit = if (!finished) cleanup()
