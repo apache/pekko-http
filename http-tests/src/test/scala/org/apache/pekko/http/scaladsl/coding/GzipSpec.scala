@@ -81,6 +81,13 @@ class GzipSpec extends CoderSpec {
       tracking.awaitEnd(3.seconds.dilated)
       tracking.endCalls.get() shouldEqual 1
     }
+    "release the inflater when decoding fails on truncation" in {
+      val inflater = new TrackingInflater
+
+      val ex = the[RuntimeException] thrownBy decodeWith(inflater, streamEncode(smallTextBytes).dropRight(5))
+      ex.ultimateCause.getMessage should equal("Truncated GZIP stream")
+      inflater.endCalls.get() shouldEqual 1
+    }
     "release the deflater when encoding completes" in {
       val tracking = new TrackingDeflater
       Source.single(smallTextBytes)
