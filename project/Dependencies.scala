@@ -18,7 +18,7 @@ import scala.language.implicitConversions
 object Dependencies {
   import DependencyHelpers._
 
-  val jacksonDatabindVersion = "2.20.0"
+  val jacksonDatabindVersion = "2.21.5"
   val jacksonXmlVersion = jacksonDatabindVersion
   val junitVersion = "4.13.2"
   val h2specVersion = "2.6.0"
@@ -28,14 +28,14 @@ object Dependencies {
   val h2specUrl =
     s"https://github.com/summerwind/h2spec/releases/download/v$h2specVersion/$h2specName.$h2specArtifactExtension"
 
-  val scalaTestVersion = "3.2.19"
-  val scalaCheckVersion = "1.18.0"
+  val scalaTestVersion = "3.2.20"
+  val scalaCheckVersion = "1.19.0"
 
   val scalafixVersion = _root_.scalafix.sbt.BuildInfo.scalafixVersion // grab from plugin
 
   val scala212Version = "2.12.21"
   val scala213Version = "2.13.18"
-  val scala3Version = "3.3.7"
+  val scala3Version = "3.3.8"
   val allScalaVersions = Seq(scala213Version, scala212Version, scala3Version)
 
   val Versions = Seq(
@@ -78,14 +78,14 @@ object Dependencies {
     object Test {
       val sprayJson = Compile.sprayJson % "test"
       val junit = Compile.junit % "test"
-      val specs2 = "org.specs2" %% "specs2-core" % "4.21.0"
-      val munit = "org.scalameta" %% "munit" % "1.1.1"
+      val specs2 = "org.specs2" %% "specs2-core" % "4.23.0"
+      val munit = "org.scalameta" %% "munit" % "1.3.3"
 
       val scalacheck = "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
       val junitIntf = "com.github.sbt" % "junit-interface" % "0.13.3" % "test"
 
       val scalatest = "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
-      val scalatestplusScalacheck = "org.scalatestplus" %% "scalacheck-1-18" % (scalaTestVersion + ".0") % "test"
+      val scalatestplusScalacheck = "org.scalatestplus" %% "scalacheck-1-19" % (scalaTestVersion + ".0") % "test"
       val scalatestplusJUnit = "org.scalatestplus" %% "junit-4-13" % (scalaTestVersion + ".0") % "test"
 
       // HTTP/2
