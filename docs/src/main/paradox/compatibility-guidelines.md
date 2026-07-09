@@ -24,7 +24,6 @@ Scala
     org.apache.pekko.http.scaladsl.server.directives.FileUploadDirectives#storeUploadedFiles
     org.apache.pekko.http.scaladsl.server.directives.FileUploadDirectives#fileUploadAll
     org.apache.pekko.http.scaladsl.marshalling.sse.EventStreamMarshalling
-    org.apache.pekko.http.scaladsl.server.HttpApp
     org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamParser
     org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling
     org.apache.pekko.http.scaladsl.OutgoingConnectionBuilder#managedPersistentHttp2
@@ -39,7 +38,6 @@ Java
     org.apache.pekko.http.javadsl.server.directives.FileUploadDirectives#storeUploadedFile
     org.apache.pekko.http.javadsl.server.directives.FileUploadDirectives#storeUploadedFiles
     org.apache.pekko.http.javadsl.server.directives.FileUploadDirectives#fileUploadAll
-    org.apache.pekko.http.javadsl.server.HttpApp
     org.apache.pekko.http.javadsl.model.RequestResponseAssociation
     org.apache.pekko.http.javadsl.OutgoingConnectionBuilder#managedPersistentHttp2WithPriorKnowledge
     org.apache.pekko.http.javadsl.OutgoingConnectionBuilder#managedPersistentHttp2
