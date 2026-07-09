@@ -101,3 +101,7 @@ ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scalad
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.server.UnsupportedRequestContentTypeRejection.andThen")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.server.UnsupportedRequestContentTypeRejection.compose")
 ProblemFilters.exclude[MissingTypesProblem]("org.apache.pekko.http.scaladsl.server.UnsupportedRequestContentTypeRejection$")
+
+# Remove deprecated HttpApp (since Akka HTTP 10.2.0)
+ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.scaladsl.server.HttpApp")
+ProblemFilters.exclude[MissingClassProblem]("org.apache.pekko.http.javadsl.server.HttpApp")

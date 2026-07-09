@@ -42,13 +42,13 @@ class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers with BeforeAn
     className.replaceAll("\\$minus", "-").split("\\$")(0)
   }
 
+  // As Specs and Directives inherit get all directives methods, we skip those as they are not really bringing any extra info
+  def removeClassesToIgnore(method: MethodInfo): Boolean = {
+    Seq("Spec", ".Directives").exists(method.getClassName.contains)
+  }
+
   private def isHttpClass(className: String): Boolean =
     className.startsWith(httpPackagePrefix)
-
-  // As Specs, Directives and HttpApp inherit get all directives methods, we skip those as they are not really bringing any extra info
-  def removeClassesToIgnore(method: MethodInfo): Boolean = {
-    Seq("Spec", ".Directives", ".HttpApp").exists(method.getClassName.contains)
-  }
 
   def collectMissing(docPage: Seq[String])(set: Set[String], name: String): Set[String] = {
     if (docPage.exists(line => line.contains(name)))
