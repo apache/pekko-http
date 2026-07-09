@@ -139,14 +139,6 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
     } else onBadProtocol(input.drop(cursor))
   }
 
-  /**
-   * @param ch connection header
-   * @param clh content-length
-   * @param cth content-type
-   * @param teh transfer-encoding
-   * @param e100c expect 100 continue
-   * @param hh host header seen
-   */
   @tailrec protected final def parseHeaderLines(input: ByteString, lineStart: Int,
       headers: ListBuffer[HttpHeader] = initialHeaderBuffer,
       headerCount: Int = 0, ch: Option[Connection] = None,
