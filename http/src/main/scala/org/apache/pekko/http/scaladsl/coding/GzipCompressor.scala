@@ -22,8 +22,11 @@ import pekko.stream.impl.io.ByteStringParser
 import pekko.stream.impl.io.ByteStringParser.{ ParseResult, ParseStep }
 import pekko.util.ByteString
 
+import scala.annotation.nowarn
+
 /** Internal API */
 @InternalApi
+@nowarn("msg=deprecated .* is internal API")
 private[coding] class GzipCompressor(compressionLevel: Int) extends DeflateCompressor(compressionLevel) {
   override protected lazy val deflater = new Deflater(compressionLevel, true)
   private val checkSum = new CRC32 // CRC32 of uncompressed data
@@ -73,15 +76,16 @@ private[coding] class GzipDecompressor(
   protected[coding] def createInflater(): Inflater = new Inflater(true)
 
   override def createLogic(attr: Attributes) = new ParsingLogic {
-    private[this] val inflater = new Inflater(true)
+    private[this] val inflater = createInflater()
     private[this] val crc32: CRC32 = new CRC32
     private[this] var inflaterEnded = false
 
-    private def cleanupInflater(): Unit =
+    private def cleanupInflater(): Unit = {
       if (!inflaterEnded) {
         inflaterEnded = true
         inflater.end()
       }
+    }
 
     override def postStop(): Unit = cleanupInflater()
 
