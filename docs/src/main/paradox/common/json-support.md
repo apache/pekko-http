@@ -20,6 +20,9 @@ To make use of the support module for (un)marshalling from and to JSON with [Jac
   version="PekkoHttpVersion"
 }
 
+It is recommended that you read the @extref[pekko-serialization-jackson](pekko-docs:serialization-jackson.html) docs and in particular, the Security concerns.
+Pekko HTTP Jackson support also strongly discourages the use of `JsonTypeInfo` with `Id.CLASS` or `Id.MINIMAL_CLASS`. Use `Id.NAME` or another of the safe options.
+
 Use `org.apache.pekko.http.javadsl.marshallers.jackson.Jackson.unmarshaller(T.class)` to create an @apidoc[Unmarshaller[HttpEntity,T]] which expects the request
 body (HttpEntity) to be of type `application/json` and converts it to `T` using Jackson.
 
