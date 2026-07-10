@@ -34,6 +34,7 @@ class DeflateCompressor private[coding] (compressionLevel: Int) extends Compress
   def this() = this(DeflateCompressor.DefaultCompressionLevel)
 
   protected lazy val deflater = new Deflater(compressionLevel, false)
+  private var deflaterEnded = false
 
   override final def compressAndFlush(input: ByteString): ByteString = {
     val buffer = newTempBuffer(input.size)
@@ -61,9 +62,17 @@ class DeflateCompressor private[coding] (compressionLevel: Int) extends Compress
   protected def finishWithBuffer(buffer: Array[Byte]): ByteString = {
     deflater.finish()
     val res = drainDeflater(deflater, buffer)
-    deflater.end()
+    endDeflater()
     res
   }
+
+  private[coding] def endDeflater(): Unit =
+    if (!deflaterEnded) {
+      deflaterEnded = true
+      deflater.end()
+    }
+
+  private[coding] override def cleanup(): Unit = endDeflater()
 
   private def newTempBuffer(size: Int = 65536): Array[Byte] = {
     // The default size is somewhat arbitrary, we'd like to guess a better value but Deflater/zlib
