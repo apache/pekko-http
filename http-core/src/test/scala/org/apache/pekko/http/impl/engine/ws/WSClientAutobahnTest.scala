@@ -88,10 +88,7 @@ object WSClientAutobahnTest {
     def updateReports(agent: String = Agent): Future[Unit] =
       runToSingleText(updateReportsUri(agent)).map(_ => ())
 
-    /**
-     * Map from textual case ID (like 1.1.1) to IndexedCaseInfo
-     * @return
-     */
+    // Map from textual case ID (like 1.1.1) to IndexedCaseInfo
     def getCaseMap(): Future[Map[String, IndexedCaseInfo]] = {
       val res =
         getCaseCount().flatMap { count =>
@@ -176,11 +173,9 @@ object WSClientAutobahnTest {
     def completionSignal[T]: Flow[T, T, Future[Done]] =
       Flow[T].watchTermination((_, res) => res)
 
-    /**
-     * The autobahn tests define a weird API where every request must be a WebSocket request and
-     * they will send a single websocket message with the result. WebSocket everywhere? Strange,
-     * but somewhat consistent.
-     */
+    // The autobahn tests define a weird API where every request must be a WebSocket request and
+    // they will send a single websocket message with the result. WebSocket everywhere? Strange,
+    // but somewhat consistent.
     def runToSingleText(uri: Uri): Future[String] = {
       val sink = Sink.head[Message]
       runWs(uri, Flow.fromSinkAndSourceMat(sink, Source.maybe[Message])(Keep.left)).flatMap {
@@ -189,6 +184,7 @@ object WSClientAutobahnTest {
           throw new IllegalStateException(s"unexpected element of type ${other.getClass}")
       }
     }
+
     def runToSingleJsonValue[T: JsonReader](uri: Uri): Future[T] =
       runToSingleText(uri).map(_.parseJson.convertTo[T])
 
