@@ -44,12 +44,18 @@ private[http] object StreamUtils {
    * Creates a transformer that will call `f` for each incoming ByteString and output its result. After the complete
    * input has been read it will call `finish` once to determine the final ByteString to post to the output.
    * Empty ByteStrings are discarded.
+   * If the stage is stopped before the input is fully consumed (e.g. on downstream cancellation or upstream failure),
+   * `cleanup` is called to release any resources held by the transformer.
    */
   def byteStringTransformer(
-      f: ByteString => ByteString, finish: () => ByteString): GraphStage[FlowShape[ByteString, ByteString]] =
+      f: ByteString => ByteString,
+      finish: () => ByteString,
+      cleanup: () => Unit = () => ()): GraphStage[FlowShape[ByteString, ByteString]] =
     new SimpleLinearGraphStage[ByteString] {
       override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
         new GraphStageLogic(shape) with InHandler with OutHandler {
+          private var finished = false
+
           override def onPush(): Unit = {
             val data = f(grab(in))
             if (data.nonEmpty) push(out, data)
@@ -60,9 +66,12 @@ private[http] object StreamUtils {
 
           override def onUpstreamFinish(): Unit = {
             val data = finish()
+            finished = true
             if (data.nonEmpty) emit(out, data)
             completeStage()
           }
+
+          override def postStop(): Unit = if (!finished) cleanup()
 
           setHandlers(in, out, this)
         }

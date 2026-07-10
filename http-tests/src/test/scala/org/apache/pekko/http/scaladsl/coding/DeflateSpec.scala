@@ -92,10 +92,40 @@ class DeflateSpec extends CoderSpec {
       decodeWith(inflater, streamEncode(smallTextBytes).dropRight(5))
       inflater.endCalls.get() shouldEqual 1
     }
+    "release the deflater when encoding completes" in {
+      val tracking = new TrackingDeflater
+      Source.single(smallTextBytes)
+        .via(encoderWith(tracking).encoderFlow)
+        .runWith(Sink.ignore)
+        .awaitResult(3.seconds.dilated)
+      tracking.awaitEnd(3.seconds.dilated)
+      tracking.endCalls.get() shouldEqual 1
+    }
+    "release the deflater when encoding is cancelled early" in {
+      val tracking = new TrackingDeflater
+      Source.single(largeTextBytes)
+        .via(encoderWith(tracking).encoderFlow)
+        .take(1)
+        .runWith(Sink.ignore)
+        .awaitResult(3.seconds.dilated)
+      // postStop() (which calls end()) is dispatched to the stage actor after the
+      // Sink.ignore future completes, so we must wait for end() itself rather than
+      // for the stream future to avoid a race.
+      tracking.awaitEnd(3.seconds.dilated)
+      tracking.endCalls.get() shouldEqual 1
+    }
   }
 
   private def decodeWith(inflater: TrackingInflater, bytes: ByteString): ByteString =
     decoderWith(inflater).decode(bytes)(SystemMaterializer(system).materializer).awaitResult(3.seconds.dilated)
+
+  @nowarn("msg=deprecated")
+  private def encoderWith(tracking: TrackingDeflater): Deflate =
+    new Deflate(Encoder.DefaultFilter) {
+      override def newCompressor: DeflateCompressor = new DeflateCompressor() {
+        override protected lazy val deflater: java.util.zip.Deflater = tracking
+      }
+    }
 
   @nowarn("msg=deprecated")
   private def decoderWith(inflater: TrackingInflater): StreamDecoder =
@@ -110,6 +140,20 @@ class DeflateSpec extends CoderSpec {
     }
 
   private class TrackingInflater extends java.util.zip.Inflater(false) {
+    val endCalls = new AtomicInteger
+    private val endLatch = new CountDownLatch(1)
+
+    def awaitEnd(atMost: FiniteDuration): Unit =
+      endLatch.await(atMost.toMillis, TimeUnit.MILLISECONDS)
+
+    override def end(): Unit = {
+      endCalls.incrementAndGet()
+      endLatch.countDown()
+      super.end()
+    }
+  }
+
+  private class TrackingDeflater extends java.util.zip.Deflater(Deflater.DEFAULT_COMPRESSION, false) {
     val endCalls = new AtomicInteger
     private val endLatch = new CountDownLatch(1)
 
