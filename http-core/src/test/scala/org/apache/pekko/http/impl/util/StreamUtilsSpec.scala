@@ -16,6 +16,7 @@ package org.apache.pekko.http.impl.util
 import org.apache.pekko
 import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.stream.testkit.scaladsl.TestSink
 import pekko.util.ByteString
 import pekko.testkit._
 import org.scalatest.concurrent.ScalaFutures
@@ -24,6 +25,44 @@ import scala.concurrent.duration._
 import scala.util.Failure
 
 class StreamUtilsSpec extends PekkoSpec with ScalaFutures {
+
+  "byteStringTransformer" should {
+    "clean up after normal completion" in {
+      val events = TestProbe()
+      val transformed = ByteString("transformed")
+      val trailer = ByteString("trailer")
+      val result =
+        Source
+          .single(ByteString("input"))
+          .via(StreamUtils.byteStringTransformer(_ => transformed, () => trailer, () => events.ref ! "cleanup"))
+          .runWith(Sink.seq)
+
+      Await.result(result, 3.seconds.dilated) shouldBe Seq(transformed, trailer)
+      events.expectMsg("cleanup")
+    }
+
+    "clean up if downstream cancels before the final emission" in {
+      val events = TestProbe()
+      val transformed = ByteString("transformed")
+      val trailer = ByteString("trailer")
+      val downstream =
+        Source
+          .single(ByteString("input"))
+          .via(StreamUtils.byteStringTransformer(
+            _ => transformed,
+            () => {
+              events.ref ! "finish"
+              trailer
+            },
+            () => events.ref ! "cleanup"))
+          .runWith(TestSink[ByteString]())
+
+      downstream.request(1).expectNext(transformed)
+      events.expectMsg("finish")
+      downstream.cancel()
+      events.expectMsg("cleanup")
+    }
+  }
 
   "captureTermination" should {
     "signal completion" when {
