@@ -26,7 +26,7 @@ addSbtPlugin("com.lightbend.paradox" % "sbt-paradox-theme" % "0.10.7")
 addSbtPlugin("com.lightbend.paradox" % "sbt-paradox" % "0.10.7")
 
 addSbtPlugin("com.github.sbt" % "sbt-header" % "5.11.0")
-addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.33")
+addSbtPlugin("net.bzzt" % "sbt-reproducible-builds" % "0.35")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.7")
 addSbtPlugin("com.github.pjfanning" % "sbt-source-dist" % "0.1.13")
 addSbtPlugin("com.github.pjfanning" % "sbt-pekko-build" % "0.4.7")
