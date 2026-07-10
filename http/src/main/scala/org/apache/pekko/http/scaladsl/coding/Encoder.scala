@@ -56,7 +56,7 @@ trait Encoder {
     def encodeChunk(bytes: ByteString): ByteString = compressor.compressAndFlush(bytes)
     def finish(): ByteString = compressor.finish()
 
-    StreamUtils.byteStringTransformer(encodeChunk, () => finish())
+    StreamUtils.byteStringTransformer(encodeChunk, () => finish(), () => compressor.cleanup())
   }
 }
 
@@ -100,4 +100,7 @@ abstract class Compressor {
 
   /** Combines `compress` + `finish` */
   def compressAndFinish(input: ByteString): ByteString
+
+  /** Release any native resources held by this compressor. Idempotent. */
+  private[coding] def cleanup(): Unit = ()
 }

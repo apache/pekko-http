@@ -27,7 +27,7 @@ class Deflate private[http] (compressionLevel: Int, val messageFilter: HttpMessa
   }
 
   val encoding = HttpEncodings.deflate
-  private[http] def newCompressor = new DeflateCompressor(compressionLevel)
+  private[http] def newCompressor: DeflateCompressor = new DeflateCompressor(compressionLevel)
   def newDecompressorStage(maxBytesPerChunk: Int) = () => new DeflateDecompressor(maxBytesPerChunk)
 
   @InternalApi // used by javadsl.coding.Coder
