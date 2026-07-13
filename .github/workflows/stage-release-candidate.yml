@@ -216,7 +216,8 @@ jobs:
 
       - name: Install Graphviz
         run: |-
-          sudo apt-get install graphviz
+          sudo apt-get update
+          sudo apt-get install -y graphviz
         
       # We intentionally do not use the Coursier cache for release candiates,
       # to reduce attack surface
