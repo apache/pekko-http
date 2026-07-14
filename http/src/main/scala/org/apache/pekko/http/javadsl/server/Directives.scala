@@ -82,10 +82,7 @@ object Directives extends AllDirectives {
   @ApiMayChange
   def allOf(first: Function[Supplier[Route], Route], second: Function[Supplier[Route], Route], inner: Supplier[Route])
       : Route = {
-    first.apply(new Supplier[Route] {
-      override def get(): Route =
-        second.apply(inner)
-    })
+    first.apply(() => second.apply(inner))
   }
 
   /**
@@ -102,13 +99,7 @@ object Directives extends AllDirectives {
   @ApiMayChange
   def allOf[A, B](first: Function[Function[A, Route], Route], second: Function[Function[B, Route], Route],
       inner: BiFunction[A, B, Route]): Route = {
-    first.apply(new Function[A, Route] {
-      override def apply(a: A): Route =
-        second.apply(new Function[B, Route] {
-          override def apply(b: B): Route =
-            inner.apply(a, b)
-        })
-    })
+    first.apply((a: A) => second.apply((b: B) => inner.apply(a, b)))
   }
 
   /**
@@ -124,12 +115,6 @@ object Directives extends AllDirectives {
   @ApiMayChange
   def allOf[A](first: Function[Supplier[Route], Route], second: Function[Function[A, Route], Route],
       inner: Function[A, Route]): Route = {
-    first.apply(new Supplier[Route] {
-      override def get(): Route =
-        second.apply(new Function[A, Route] {
-          override def apply(a: A): Route =
-            inner.apply(a)
-        })
-    })
+    first.apply(() => second.apply((a: A) => inner.apply(a)))
   }
 }

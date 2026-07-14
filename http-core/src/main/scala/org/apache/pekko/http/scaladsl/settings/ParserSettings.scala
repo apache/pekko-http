@@ -88,17 +88,13 @@ abstract class ParserSettings private[pekko] () extends pekko.http.javadsl.setti
   override def getIllegalResponseHeaderValueProcessingMode = this.illegalResponseHeaderValueProcessingMode
   override def getConflictingContentTypeHeaderProcessingMode = this.conflictingContentTypeHeaderProcessingMode
 
-  override def getCustomMethods = new Function[String, Optional[pekko.http.javadsl.model.HttpMethod]] {
-    override def apply(t: String) = (self.customMethods(t): Option[pekko.http.javadsl.model.HttpMethod]).toJava
-  }
-  override def getCustomStatusCodes = new Function[Int, Optional[pekko.http.javadsl.model.StatusCode]] {
-    override def apply(t: Int) = (self.customStatusCodes(t): Option[pekko.http.javadsl.model.StatusCode]).toJava
-  }
+  override def getCustomMethods =
+    (t: String) => (self.customMethods(t): Option[pekko.http.javadsl.model.HttpMethod]).toJava
+  override def getCustomStatusCodes =
+    (t: Int) => (self.customStatusCodes(t): Option[pekko.http.javadsl.model.StatusCode]).toJava
   override def getCustomMediaTypes =
-    new pekko.japi.function.Function2[String, String, Optional[pekko.http.javadsl.model.MediaType]] {
-      override def apply(mainType: String, subType: String): Optional[model.MediaType] =
-        (self.customMediaTypes(mainType, subType): Option[pekko.http.javadsl.model.MediaType]).toJava
-    }
+    (mainType: String, subType: String) =>
+      (self.customMediaTypes(mainType, subType): Option[pekko.http.javadsl.model.MediaType]).toJava
   def getModeledHeaderParsing: Boolean = this.modeledHeaderParsing
 
   // override for more specific return type

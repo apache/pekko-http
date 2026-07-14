@@ -53,16 +53,10 @@ class HttpExtensionApiSpec extends PekkoSpecWithMaterializer(
 
   val successResponse = HttpResponse.create().withStatus(200)
 
-  val httpSuccessFunction = new Function[HttpRequest, HttpResponse] {
-    @throws(classOf[Exception])
-    override def apply(param: HttpRequest): HttpResponse = successResponse
-  }
+  val httpSuccessFunction: Function[HttpRequest, HttpResponse] = (_: HttpRequest) => successResponse
 
-  val asyncHttpSuccessFunction = new Function[HttpRequest, CompletionStage[HttpResponse]] {
-    @throws(classOf[Exception])
-    override def apply(param: HttpRequest): CompletionStage[HttpResponse] =
-      CompletableFuture.completedFuture(successResponse)
-  }
+  val asyncHttpSuccessFunction: Function[HttpRequest, CompletionStage[HttpResponse]] =
+    (_: HttpRequest) => CompletableFuture.completedFuture(successResponse)
 
   "The Java HTTP extension" should {
 

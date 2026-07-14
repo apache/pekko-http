@@ -637,10 +637,7 @@ private[client] object NewHostConnectionPool {
 
         private val safeCallback = getAsyncCallback[() => Unit](f => f())
         private def safely[T, U](f: T => Unit): T => Unit = t => safeCallback.invoke(() => f(t))
-        private def safeRunnable(body: => Unit): Runnable =
-          new Runnable {
-            def run(): Unit = safeCallback.invoke(() => body)
-          }
+        private def safeRunnable(body: => Unit): Runnable = () => safeCallback.invoke(() => body)
         private def createNewTimeoutId(): Long = {
           lastTimeoutId += 1
           lastTimeoutId

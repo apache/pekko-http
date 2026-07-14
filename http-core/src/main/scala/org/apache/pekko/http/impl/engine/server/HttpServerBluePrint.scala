@@ -401,7 +401,7 @@ private[http] object HttpServerBluePrint {
         }
     }
     private def schedule(delay: FiniteDuration, handler: HttpRequest => HttpResponse): Cancellable =
-      materializer.scheduleOnce(delay, new Runnable { def run() = trigger.invoke((self, handler(request))) })
+      materializer.scheduleOnce(delay, () => trigger.invoke((self, handler(request))))
 
     import pekko.http.impl.util.JavaMapping.Implicits._
 

@@ -29,9 +29,7 @@ class RouteJavaScalaDslConversionSpec extends AnyWordSpec {
       import org.apache.pekko
 
       val javaRoute =
-        pekko.http.javadsl.server.Directives.get(new Supplier[pekko.http.javadsl.server.Route] {
-          override def get(): Route = pekko.http.javadsl.server.Directives.complete("ok")
-        })
+        pekko.http.javadsl.server.Directives.get(() => pekko.http.javadsl.server.Directives.complete("ok"))
 
       // Remember that Route in Scala is just a type alias:
       //   type Route = RequestContext => Future[RouteResult]
