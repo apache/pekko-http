@@ -279,7 +279,7 @@ private[http] object StreamUtils {
      * Schedule a block to be run once after the given duration in the context of this graph stage.
      */
     def scheduleOnce(delay: FiniteDuration)(block: => Unit): Cancellable =
-      materializer.scheduleOnce(delay, new Runnable { def run() = runInContext(block) })
+      materializer.scheduleOnce(delay, () => runInContext(block))
 
     def runInContext(block: => Unit): Unit = getAsyncCallback[AnyRef](_ => block).invoke(null)
   }

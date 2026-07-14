@@ -65,9 +65,7 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
   final def getStreamCancellationDelay: JDuration = streamCancellationDelay.toJava
   final def getRequestHeaderSizeHint: Int = requestHeaderSizeHint
   final def getWebsocketSettings: WebSocketSettings = websocketSettings
-  final def getWebsocketRandomFactory: Supplier[Random] = new Supplier[Random] {
-    override def get(): Random = websocketRandomFactory()
-  }
+  final def getWebsocketRandomFactory: Supplier[Random] = () => websocketRandomFactory()
   final def getLocalAddress: Optional[InetSocketAddress] = localAddress.toJava
 
   /** The underlying transport used to connect to hosts. By default [[ClientTransport.TCP]] is used. */
@@ -106,9 +104,7 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
   def withLogUnencryptedNetworkBytes(newValue: Optional[Int]): ClientConnectionSettings =
     self.copy(logUnencryptedNetworkBytes = newValue.toScala)
   def withWebsocketRandomFactory(newValue: java.util.function.Supplier[Random]): ClientConnectionSettings =
-    self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
-      override def get(): Random = newValue.get()
-    }))
+    self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(() => newValue.get()))
   def withWebsocketSettings(newValue: WebSocketSettings): ClientConnectionSettings =
     self.copy(websocketSettings = newValue.asScala)
   def withSocketOptions(newValue: java.lang.Iterable[SocketOption]): ClientConnectionSettings =

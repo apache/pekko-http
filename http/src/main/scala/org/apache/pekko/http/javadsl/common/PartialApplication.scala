@@ -39,10 +39,6 @@ object PartialApplication {
    * @return the function partially applied
    */
   @ApiMayChange
-  def bindParameter[A, B, R](f: BiFunction[A, B, R], a: A): Function[B, R] = {
-    new Function[B, R] {
-      override def apply(b: B): R = f.apply(a, b)
-    }
-  }
+  def bindParameter[A, B, R](f: BiFunction[A, B, R], a: A): Function[B, R] = (b: B) => f.apply(a, b)
 
 }

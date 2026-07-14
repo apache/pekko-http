@@ -68,9 +68,7 @@ abstract class ClientConnectionSettings private[pekko] ()
   def withWebsocketSettings(newValue: WebSocketSettings): ClientConnectionSettings =
     self.copy(websocketSettings = newValue)
   def withWebsocketRandomFactory(newValue: () => Random): ClientConnectionSettings =
-    withWebsocketSettings(self.websocketSettings.withRandomFactoryFactory(new Supplier[Random] {
-      override def get(): Random = newValue()
-    }))
+    withWebsocketSettings(self.websocketSettings.withRandomFactoryFactory(() => newValue()))
   def withUserAgentHeader(newValue: Option[`User-Agent`]): ClientConnectionSettings =
     self.copy(userAgentHeader = newValue)
   def withLogUnencryptedNetworkBytes(newValue: Option[Int]): ClientConnectionSettings =
