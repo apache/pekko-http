@@ -48,14 +48,14 @@ inThisBuild(Def.settings(
     Tests.Argument(TestFrameworks.ScalaTest, "-oDF")),
   Dependencies.Versions,
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
-  concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
-  onLoad in Global := {
+  Global / concurrentRestrictions += Tags.limit(Tags.Test, 1),
+  Global / onLoad := {
     sLog.value.info(
       s"Building Pekko HTTP ${version.value} against Pekko ${PekkoCoreDependency.version} on Scala ${
           (httpCore /
           scalaVersion).value
         }")
-    (onLoad in Global).value
+    (Global / onLoad).value
   },
   projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
   versionScheme := Some(VersionScheme.SemVerSpec)))
