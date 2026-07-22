@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.ConnectionContext;
@@ -32,6 +33,7 @@ import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.ws.Message;
 import org.apache.pekko.http.javadsl.model.ws.TextMessage;
 import org.apache.pekko.http.javadsl.model.ws.WebSocketRequest;
+import org.apache.pekko.http.javadsl.model.ws.WebSocketUpgrade;
 import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
 import org.apache.pekko.http.javadsl.settings.WebSocketSettings;
@@ -122,6 +124,25 @@ public class WebSocketCoreExample {
   }
 
   // #websocket-handler
+
+  static HttpResponse selectiveCompression(
+      WebSocketUpgrade upgrade, Flow<Message, Message, NotUsed> handler) {
+    // #websocket-selective-compression
+    Predicate<Message> shouldCompress =
+        message -> {
+          if (!message.isStrict())
+            return true; // Compress streamed messages without buffering them.
+          if (message.isText()) {
+            return ByteString.fromString(message.asTextMessage().getStrictText()).size() >= 1024;
+          } else {
+            return message.asBinaryMessage().getStrictData().size() >= 1024;
+          }
+        };
+
+    HttpResponse response = upgrade.handleMessagesWith(handler, shouldCompress);
+    // #websocket-selective-compression
+    return response;
+  }
 
   {
     ActorSystem system = null;

@@ -16,7 +16,7 @@ package directives
 
 import java.util.{ List => JList }
 import java.util.Optional
-import java.util.function.{ Function => JFunction }
+import java.util.function.{ Function => JFunction, Predicate }
 
 import org.apache.pekko
 import pekko.NotUsed
@@ -60,12 +60,38 @@ abstract class WebSocketDirectives extends SecurityDirectives {
   }
 
   /**
+   * Handles WebSocket requests with the given handler and selectively compresses outbound messages for which
+   * {@code shouldCompress} returns {@code true} when {@code permessage-deflate} was negotiated.
+   *
+   * @since 2.0.0
+   */
+  def handleWebSocketMessages[T](handler: Flow[Message, Message, T], shouldCompress: Predicate[Message]): Route =
+    RouteAdapter {
+      D.handleWebSocketMessages(adapt(handler), message => shouldCompress.test(message))
+    }
+
+  /**
    * Handles WebSocket requests with the given handler if the given subprotocol is offered in the request and
    * rejects other requests with an [[ExpectedWebSocketRequestRejection]] or an [[UnsupportedWebSocketSubprotocolRejection]].
    */
   def handleWebSocketMessagesForProtocol[T](handler: Flow[Message, Message, T], subprotocol: String): Route =
     RouteAdapter {
       D.handleWebSocketMessagesForProtocol(adapt(handler), subprotocol)
+    }
+
+  /**
+   * Handles WebSocket requests with the given handler if the given subprotocol is offered and selectively compresses
+   * outbound messages for which {@code shouldCompress} returns {@code true} when {@code permessage-deflate} was
+   * negotiated.
+   *
+   * @since 2.0.0
+   */
+  def handleWebSocketMessagesForProtocol[T](
+      handler: Flow[Message, Message, T],
+      subprotocol: String,
+      shouldCompress: Predicate[Message]): Route =
+    RouteAdapter {
+      D.handleWebSocketMessagesForProtocol(adapt(handler), subprotocol, message => shouldCompress.test(message))
     }
 
   /**
@@ -82,6 +108,22 @@ abstract class WebSocketDirectives extends SecurityDirectives {
   def handleWebSocketMessagesForOptionalProtocol[T](
       handler: Flow[Message, Message, T], subprotocol: Optional[String]): Route = RouteAdapter {
     D.handleWebSocketMessagesForOptionalProtocol(adapt(handler), subprotocol.asScala)
+  }
+
+  /**
+   * Handles WebSocket requests with the given handler and selectively compresses outbound messages for which
+   * {@code shouldCompress} returns {@code true} when {@code permessage-deflate} was negotiated.
+   *
+   * @since 2.0.0
+   */
+  def handleWebSocketMessagesForOptionalProtocol[T](
+      handler: Flow[Message, Message, T],
+      subprotocol: Optional[String],
+      shouldCompress: Predicate[Message]): Route = RouteAdapter {
+    D.handleWebSocketMessagesForOptionalProtocol(
+      adapt(handler),
+      subprotocol.asScala,
+      message => shouldCompress.test(message))
   }
 
   private def adapt[T](handler: Flow[Message, Message, T]): scaladsl.Flow[s.Message, s.Message, NotUsed] = {

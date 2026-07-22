@@ -125,6 +125,24 @@ class WebSocketExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpe
       .onComplete(_ => system.terminate()) // and shutdown when done
   }
 
+  "selective-compression-example" in compileOnlySpec {
+    import pekko.http.scaladsl.model.ws.{ BinaryMessage, Message, TextMessage, WebSocketUpgrade }
+    import pekko.stream.scaladsl.Flow
+
+    val upgrade: WebSocketUpgrade = null
+    val handler: Flow[Message, Message, Any] = null
+
+    // #websocket-selective-compression
+    val shouldCompress: Message => Boolean = {
+      case TextMessage.Strict(text)   => ByteString(text).length >= 1024
+      case BinaryMessage.Strict(data) => data.length >= 1024
+      case _                          => true // Compress streamed messages without buffering them.
+    }
+
+    val response = upgrade.handleMessages(handler, shouldCompress)
+    // #websocket-selective-compression
+  }
+
   "ping-server-example" in compileOnlySpec {
     implicit val system: ActorSystem = null
     val route = null

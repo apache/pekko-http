@@ -49,4 +49,16 @@ private[http] abstract class UpgradeToWebSocketLowLevel extends InternalCustomHe
       subprotocol: Option[String],
       compressionEnabled: Boolean): HttpResponse =
     handleFrames(handlerFlow, subprotocol)
+
+  /**
+   * The `shouldCompress` function is evaluated once for every outbound text or binary message when
+   * `permessage-deflate` was negotiated. The decision for the initial frame is retained for every continuation frame.
+   */
+  @InternalApi
+  private[http] def handleFrames(
+      handlerFlow: Graph[FlowShape[FrameEvent, FrameEvent], Any],
+      subprotocol: Option[String],
+      compressionEnabled: Boolean,
+      shouldCompress: FrameStart => Boolean): HttpResponse =
+    handleFrames(handlerFlow, subprotocol, compressionEnabled)
 }

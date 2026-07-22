@@ -13,9 +13,15 @@
 
 package org.apache.pekko.http.scaladsl.server.directives
 
+import java.util.function.Predicate
+
+import scala.collection.immutable
+
 import org.apache.pekko
-import pekko.http.scaladsl.model.StatusCodes
-import pekko.http.scaladsl.model.headers.`Sec-WebSocket-Protocol`
+import pekko.http.impl.engine.server.InternalCustomHeader
+import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
+import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes }
+import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Protocol`, Upgrade, UpgradeProtocol }
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.server.{
   ExpectedWebSocketRequestRejection,
@@ -24,7 +30,7 @@ import pekko.http.scaladsl.server.{
   UnsupportedWebSocketSubprotocolRejection
 }
 import pekko.http.scaladsl.testkit.WSProbe
-import pekko.stream.OverflowStrategy
+import pekko.stream.{ FlowShape, Graph, OverflowStrategy }
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
 import pekko.util.ByteString
 
@@ -48,6 +54,48 @@ class WebSocketDirectivesSpec extends RoutingSpec {
         wsClient.sendCompletion()
         wsClient.expectCompletion()
       }
+    }
+    "pass the outbound compression selector to the WebSocket upgrade" in {
+      var selectedSubprotocol = Option.empty[Option[String]]
+      var compressionDecision = Option.empty[Boolean]
+      val request = recordingWebSocketRequest() { (subprotocol, shouldCompress) =>
+        selectedSubprotocol = Some(subprotocol)
+        compressionDecision = Some(shouldCompress(TextMessage("compress")))
+      }
+
+      request ~> handleWebSocketMessages(Flow[Message],
+        {
+          case TextMessage.Strict("compress") => true
+          case _                              => false
+        }) ~> check {
+        isWebSocketUpgrade shouldEqual true
+      }
+
+      selectedSubprotocol shouldEqual Some(None)
+      compressionDecision shouldEqual Some(true)
+    }
+    "pass the Java outbound compression predicate and selected subprotocol to the WebSocket upgrade" in {
+      var selectedSubprotocol = Option.empty[Option[String]]
+      var compressionDecision = Option.empty[Boolean]
+      val request = recordingWebSocketRequest("echo") { (subprotocol, shouldCompress) =>
+        selectedSubprotocol = Some(subprotocol)
+        compressionDecision = Some(shouldCompress(TextMessage("compress")))
+      }
+      val shouldCompress = new Predicate[pekko.http.javadsl.model.ws.Message] {
+        override def test(message: pekko.http.javadsl.model.ws.Message): Boolean = message.isText
+      }
+      val javaRoute = pekko.http.javadsl.server.Directives.handleWebSocketMessagesForProtocol(
+        Flow[pekko.http.javadsl.model.ws.Message].asJava,
+        "echo",
+        shouldCompress)
+
+      request ~> javaRoute.asScala ~> check {
+        isWebSocketUpgrade shouldEqual true
+        header[`Sec-WebSocket-Protocol`].get.protocols shouldEqual immutable.Seq("echo")
+      }
+
+      selectedSubprotocol shouldEqual Some(Some("echo"))
+      compressionDecision shouldEqual Some(true)
     }
     "choose subprotocol from offered ones" in {
       val wsClient = WSProbe()
@@ -113,4 +161,33 @@ class WebSocketDirectivesSpec extends RoutingSpec {
   def echo: Flow[Message, Message, Any] =
     Flow[Message]
       .buffer(1, OverflowStrategy.backpressure) // needed because a noop flow hasn't any buffer that would start processing
+
+  private def recordingWebSocketRequest(offeredProtocols: String*)(
+      onHandle: (Option[String], Message => Boolean) => Unit): HttpRequest = {
+    val upgrade =
+      new InternalCustomHeader("UpgradeToWebSocketTestHeader") with WebSocketUpgrade {
+        override def requestedProtocols: immutable.Seq[String] = offeredProtocols.toList
+
+        override def handleMessages(
+            handlerFlow: Graph[FlowShape[Message, Message], Any],
+            subprotocol: Option[String]): HttpResponse =
+          throw new AssertionError("The selective-compression overload was not called")
+
+        override def handleMessages(
+            handlerFlow: Graph[FlowShape[Message, Message], Any],
+            subprotocol: Option[String],
+            shouldCompress: Message => Boolean): HttpResponse = {
+          onHandle(subprotocol, shouldCompress)
+          HttpResponse(
+            StatusCodes.SwitchingProtocols,
+            headers =
+              Upgrade(UpgradeProtocol("websocket") :: Nil) ::
+              subprotocol.map(protocol => `Sec-WebSocket-Protocol`(protocol :: Nil)).toList)
+        }
+      }
+
+    HttpRequest()
+      .addAttribute(webSocketUpgrade, upgrade)
+      .addHeader(upgrade)
+  }
 }

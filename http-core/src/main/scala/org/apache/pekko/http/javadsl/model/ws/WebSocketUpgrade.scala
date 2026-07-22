@@ -14,6 +14,7 @@
 package org.apache.pekko.http.javadsl.model.ws
 
 import java.lang.{ Iterable => JIterable }
+import java.util.function.Predicate
 
 import org.apache.pekko
 import pekko.http.javadsl.model.HttpResponse
@@ -54,6 +55,20 @@ trait WebSocketUpgrade {
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
+   * use the given handlerFlow to handle WebSocket messages from the client.
+   *
+   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated once for each outbound text or
+   * binary message. Returning {@code true} compresses that message and returning {@code false} sends it uncompressed.
+   * The filter does not affect inbound messages or whether compression is negotiated.
+   *
+   * @since 2.0.0
+   */
+  def handleMessagesWith(
+      handlerFlow: Graph[FlowShape[Message, Message], ? <: Any], shouldCompress: Predicate[Message]): HttpResponse =
+    handleMessagesWith(handlerFlow)
+
+  /**
+   * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
    * use the given handlerFlow to handle WebSocket messages from the client. The given subprotocol must be one
    * of the ones offered by the client.
    */
@@ -75,6 +90,23 @@ trait WebSocketUpgrade {
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
+   * use the given handlerFlow to handle WebSocket messages from the client. The given subprotocol must be one
+   * of the ones offered by the client.
+   *
+   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated once for each outbound text or
+   * binary message. Returning {@code true} compresses that message and returning {@code false} sends it uncompressed.
+   * The filter does not affect inbound messages or whether compression is negotiated.
+   *
+   * @since 2.0.0
+   */
+  def handleMessagesWith(
+      handlerFlow: Graph[FlowShape[Message, Message], ? <: Any],
+      subprotocol: String,
+      shouldCompress: Predicate[Message]): HttpResponse =
+    handleMessagesWith(handlerFlow, subprotocol)
+
+  /**
+   * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
    * use the given inSink to handle WebSocket messages from the client and the given outSource to send messages to the client.
    */
   def handleMessagesWith(
@@ -90,6 +122,23 @@ trait WebSocketUpgrade {
    */
   def handleMessagesWith(inSink: Graph[SinkShape[Message], ? <: Any], outSource: Graph[SourceShape[Message], ? <: Any],
       compressionEnabled: Boolean): HttpResponse
+
+  /**
+   * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
+   * use the given inSink to handle WebSocket messages from the client and the given outSource to send messages to the
+   * client.
+   *
+   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated once for each outbound text or
+   * binary message. Returning {@code true} compresses that message and returning {@code false} sends it uncompressed.
+   * The filter does not affect inbound messages or whether compression is negotiated.
+   *
+   * @since 2.0.0
+   */
+  def handleMessagesWith(
+      inSink: Graph[SinkShape[Message], ? <: Any],
+      outSource: Graph[SourceShape[Message], ? <: Any],
+      shouldCompress: Predicate[Message]): HttpResponse =
+    handleMessagesWith(inSink, outSource)
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
@@ -111,4 +160,22 @@ trait WebSocketUpgrade {
    */
   def handleMessagesWith(inSink: Graph[SinkShape[Message], ? <: Any], outSource: Graph[SourceShape[Message], ? <: Any],
       subprotocol: String, compressionEnabled: Boolean): HttpResponse
+
+  /**
+   * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
+   * use the given inSink to handle WebSocket messages from the client and the given outSource to send messages to the
+   * client. The given subprotocol must be one of the ones offered by the client.
+   *
+   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated once for each outbound text or
+   * binary message. Returning {@code true} compresses that message and returning {@code false} sends it uncompressed.
+   * The filter does not affect inbound messages or whether compression is negotiated.
+   *
+   * @since 2.0.0
+   */
+  def handleMessagesWith(
+      inSink: Graph[SinkShape[Message], ? <: Any],
+      outSource: Graph[SourceShape[Message], ? <: Any],
+      subprotocol: String,
+      shouldCompress: Predicate[Message]): HttpResponse =
+    handleMessagesWith(inSink, outSource, subprotocol)
 }

@@ -42,6 +42,9 @@ private[http] object Handshake {
 
   object Server {
 
+    private val CompressEveryMessage: Message => Boolean = _ => true
+    private val CompressEveryFrame: FrameStart => Boolean = _ => true
+
     /**
      *  Validates a client WebSocket handshake. Returns either `OptionVal.Some(UpgradeToWebSocketLowLevel)` or
      *  `OptionVal.None`
@@ -140,12 +143,22 @@ private[http] object Handshake {
             def handle(
                 handler: Either[Graph[FlowShape[FrameEvent, FrameEvent], Any], Graph[FlowShape[Message, Message], Any]],
                 subprotocol: Option[String],
-                compressionEnabled: Boolean): HttpResponse = {
+                compressionEnabled: Boolean,
+                shouldCompressMessage: Message => Boolean = CompressEveryMessage,
+                shouldCompressFrame: FrameStart => Boolean = CompressEveryFrame): HttpResponse = {
               require(
                 subprotocol.forall(chosen => clientSupportedSubprotocols.contains(chosen)),
                 s"Tried to choose invalid subprotocol '$subprotocol' which wasn't offered by the client: [${requestedProtocols.mkString(", ")}]")
               val acceptedPerMessageDeflate = if (compressionEnabled) perMessageDeflate else None
-              buildResponse(key.get, handler, subprotocol, acceptedPerMessageDeflate, settings, log)
+              buildResponse(
+                key.get,
+                handler,
+                subprotocol,
+                acceptedPerMessageDeflate,
+                settings,
+                log,
+                shouldCompressMessage,
+                shouldCompressFrame)
             }
 
             def handleFrames(
@@ -158,6 +171,13 @@ private[http] object Handshake {
                 compressionEnabled: Boolean): HttpResponse =
               handle(Left(handlerFlow), subprotocol, compressionEnabled)
 
+            override private[http] def handleFrames(
+                handlerFlow: Graph[FlowShape[FrameEvent, FrameEvent], Any],
+                subprotocol: Option[String],
+                compressionEnabled: Boolean,
+                shouldCompress: FrameStart => Boolean): HttpResponse =
+              handle(Left(handlerFlow), subprotocol, compressionEnabled, shouldCompressFrame = shouldCompress)
+
             override def handleMessages(handlerFlow: Graph[FlowShape[Message, Message], Any],
                 subprotocol: Option[String] = None): HttpResponse =
               handle(Right(handlerFlow), subprotocol, compressionEnabled = true)
@@ -167,6 +187,12 @@ private[http] object Handshake {
                 subprotocol: Option[String],
                 compressionEnabled: Boolean): HttpResponse =
               handle(Right(handlerFlow), subprotocol, compressionEnabled)
+
+            override def handleMessages(
+                handlerFlow: Graph[FlowShape[Message, Message], Any],
+                subprotocol: Option[String],
+                shouldCompress: Message => Boolean): HttpResponse =
+              handle(Right(handlerFlow), subprotocol, compressionEnabled = true, shouldCompressMessage = shouldCompress)
           }
           OptionVal.Some(header)
         } else OptionVal.None
@@ -197,12 +223,33 @@ private[http] object Handshake {
         subprotocol: Option[String],
         perMessageDeflate: Option[PerMessageDeflate.Negotiated],
         settings: WebSocketSettings,
-        log: LoggingAdapter): HttpResponse = {
+        log: LoggingAdapter): HttpResponse =
+      buildResponse(
+        key,
+        handler,
+        subprotocol,
+        perMessageDeflate,
+        settings,
+        log,
+        CompressEveryMessage,
+        CompressEveryFrame)
+
+    private def buildResponse(
+        key: `Sec-WebSocket-Key`,
+        handler: Either[Graph[FlowShape[FrameEvent, FrameEvent], Any], Graph[FlowShape[Message, Message], Any]],
+        subprotocol: Option[String],
+        perMessageDeflate: Option[PerMessageDeflate.Negotiated],
+        settings: WebSocketSettings,
+        log: LoggingAdapter,
+        shouldCompressMessage: Message => Boolean,
+        shouldCompressFrame: FrameStart => Boolean): HttpResponse = {
       val frameHandler = handler match {
         case Left(frameHandler) =>
-          perMessageDeflate.map(_.frameEventBidiFlow(settings.randomFactory).join(frameHandler)).getOrElse(frameHandler)
+          perMessageDeflate
+            .map(_.frameEventBidiFlow(settings.randomFactory, shouldCompressFrame).join(frameHandler))
+            .getOrElse(frameHandler)
         case Right(messageHandler) =>
-          WebSocket.stack(serverSide = true, settings, perMessageDeflate = perMessageDeflate, log = log)
+          WebSocket.stack(true, settings, perMessageDeflate, log, shouldCompressMessage)
             .join(messageHandler)
       }
 

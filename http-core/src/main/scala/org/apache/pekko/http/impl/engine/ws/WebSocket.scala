@@ -50,12 +50,29 @@ private[http] object WebSocket {
       perMessageDeflate: Option[PerMessageDeflate.Negotiated] = None,
       closeTimeout: FiniteDuration = 3.seconds, // TODO put close timeout into the settings?
       log: LoggingAdapter): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] =
+    stack(serverSide, websocketSettings, perMessageDeflate, closeTimeout, log, _ => true)
+
+  def stack(
+      serverSide: Boolean,
+      websocketSettings: WebSocketSettings,
+      perMessageDeflate: Option[PerMessageDeflate.Negotiated],
+      log: LoggingAdapter,
+      shouldCompress: Message => Boolean): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] =
+    stack(serverSide, websocketSettings, perMessageDeflate, 3.seconds, log, shouldCompress)
+
+  def stack(
+      serverSide: Boolean,
+      websocketSettings: WebSocketSettings,
+      perMessageDeflate: Option[PerMessageDeflate.Negotiated],
+      closeTimeout: FiniteDuration,
+      log: LoggingAdapter,
+      shouldCompress: Message => Boolean): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] =
     masking(serverSide, websocketSettings.randomFactory).atop(
       FrameLogger.logFramesIfEnabled(websocketSettings.logFrames)).atop(
-      perMessageDeflate.map(_.bidiFlow).getOrElse(BidiFlow.identity)).atop(
+      perMessageDeflate.map(_.messageBidiFlow).getOrElse(BidiFlow.identity)).atop(
       frameHandling(serverSide, closeTimeout, log)).atop(
       periodicKeepAlive(websocketSettings)).atop(
-      messageAPI(serverSide, closeTimeout))
+      messageAPI(serverSide, closeTimeout, perMessageDeflate.map(_ => shouldCompress)))
 
   /** The lowest layer that implements the binary protocol */
   def framing: BidiFlow[ByteString, FrameEvent, FrameEvent, ByteString, NotUsed] =
@@ -154,7 +171,14 @@ private[http] object WebSocket {
    */
   def messageAPI(
       serverSide: Boolean,
-      closeTimeout: FiniteDuration): BidiFlow[FrameHandler.Output, Message, Message, FrameOutHandler.Input, NotUsed] = {
+      closeTimeout: FiniteDuration): BidiFlow[FrameHandler.Output, Message, Message, FrameOutHandler.Input, NotUsed] =
+    messageAPI(serverSide, closeTimeout, None)
+
+  private def messageAPI(
+      serverSide: Boolean,
+      closeTimeout: FiniteDuration,
+      shouldCompress: Option[Message => Boolean])
+      : BidiFlow[FrameHandler.Output, Message, Message, FrameOutHandler.Input, NotUsed] = {
     /* Collects user-level API messages from MessageDataParts */
     val collectMessage: Flow[MessageDataPart, Message, NotUsed] =
       Flow[MessageDataPart]
@@ -188,7 +212,9 @@ private[http] object WebSocket {
         .named("ws-prepare-messages")
 
     def renderMessages: Flow[Message, FrameStart, NotUsed] =
-      MessageToFrameRenderer.create(serverSide)
+      shouldCompress
+        .map(MessageToFrameRenderer.create(serverSide, _))
+        .getOrElse(MessageToFrameRenderer.create(serverSide))
         .named("ws-render-messages")
 
     BidiFlow.fromGraph(GraphDSL.create() { implicit b =>
