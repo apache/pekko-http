@@ -76,12 +76,9 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
               }
 
               name match {
-                case "content-type" => handle(ContentType.parse(name, value, parserSettings))
-                case ":authority"   => handle(Authority.parse(name, value, parserSettings))
-                case ":path"        =>
-                  if (value.isEmpty)
-                    throw new Http2ProtocolException("Malformed request: ':path' must not be empty")
-                  handle(PathAndQuery.parse(name, value, parserSettings))
+                case "content-type"   => handle(ContentType.parse(name, value, parserSettings))
+                case ":authority"     => handle(Authority.parse(name, value, parserSettings))
+                case ":path"          => handle(PathAndQuery.parse(name, value, parserSettings))
                 case ":method"        => handle(Method.parse(name, value, parserSettings))
                 case ":scheme"        => handle(Scheme.parse(name, value, parserSettings))
                 case "content-length" => handle(ContentLength.parse(name, value, parserSettings))

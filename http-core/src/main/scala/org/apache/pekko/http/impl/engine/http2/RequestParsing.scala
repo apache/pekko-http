@@ -84,9 +84,19 @@ private[http2] object RequestParsing {
           cookies: StringBuilder,
           headers: VectorBuilder[HttpHeader]): HttpRequest = {
         // https://httpwg.org/specs/rfc7540.html#rfc.section.8.1.2.3: these pseudo header fields are mandatory for a request
-        checkRequiredPseudoHeader(":scheme", scheme)
-        checkRequiredPseudoHeader(":method", method)
-        checkRequiredPseudoHeader(":path", pathAndRawQuery)
+        // except for CONNECT requests which MUST NOT include :path or :scheme
+        if (method == HttpMethods.CONNECT) {
+          // CONNECT requests must not include :path or :scheme pseudo-headers
+          if (pathAndRawQuery ne null)
+            protocolError("Pseudo-header ':path' must not be included in CONNECT request")
+          if (scheme ne null)
+            protocolError("Pseudo-header ':scheme' must not be included in CONNECT request")
+        } else {
+          // Non-CONNECT requests must include :method, :scheme, and :path pseudo-headers
+          checkRequiredPseudoHeader(":scheme", scheme)
+          checkRequiredPseudoHeader(":method", method)
+          checkRequiredPseudoHeader(":path", pathAndRawQuery)
+        }
 
         if (cookies != null) {
           // Compress 'cookie' headers if present
@@ -97,9 +107,17 @@ private[http2] object RequestParsing {
 
         val entity = subStream.createEntity(contentLength, contentType)
 
-        val (path, rawQueryString) = pathAndRawQuery
         val authorityOrDefault: Uri.Authority = if (authority == null) Uri.Authority.Empty else authority
-        val uri = Uri(scheme, authorityOrDefault, path, rawQueryString)
+        // For CONNECT requests, the URI is constructed differently since :scheme and :path are not included
+        // The authority contains the host:port to connect to
+        val uri = if (method == HttpMethods.CONNECT) {
+          // CONNECT requests use the authority as the request target (e.g., "example.com:443")
+          // We construct a URI with just the authority and an empty path
+          Uri("", authorityOrDefault, Uri.Path.Empty, None)
+        } else {
+          val (path, rawQueryString) = pathAndRawQuery
+          Uri(scheme, authorityOrDefault, path, rawQueryString)
+        }
         val attributes = baseAttributes.updated(Http2.streamId, subStream.streamId)
 
         new HttpRequest(method, uri, headers.result(), attributes, entity, HttpProtocols.`HTTP/2.0`)
