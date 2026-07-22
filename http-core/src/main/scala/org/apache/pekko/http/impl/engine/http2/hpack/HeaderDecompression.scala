@@ -54,6 +54,10 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
       val decoder = new pekko.http.shaded.com.twitter.hpack.Decoder(Http2Protocol.InitialMaxHeaderListSize,
         Http2Protocol.InitialMaxHeaderTableSize)
 
+      // Cache for common gRPC headers to avoid repeated parsing
+      // Key: (name, value), Value: parsed header object
+      private val headerCache = new java.util.concurrent.ConcurrentHashMap[(String, String), AnyRef](64)
+
       become(Idle)
 
       // simple state machine
@@ -70,28 +74,41 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
               parsed
             } else {
               import Http2HeaderParsing._
-              def handle(parsed: AnyRef): AnyRef = {
-                headers += name -> parsed
-                parsed
-              }
 
-              name match {
-                case "content-type" => handle(ContentType.parse(name, value, parserSettings))
-                case ":authority"   => handle(Authority.parse(name, value, parserSettings))
-                case ":path"        =>
-                  if (value.isEmpty)
-                    throw new Http2ProtocolException("Malformed request: ':path' must not be empty")
-                  handle(PathAndQuery.parse(name, value, parserSettings))
-                case ":method"        => handle(Method.parse(name, value, parserSettings))
-                case ":scheme"        => handle(Scheme.parse(name, value, parserSettings))
-                case "content-length" => handle(ContentLength.parse(name, value, parserSettings))
-                case "cookie"         => handle(Cookie.parse(name, value, parserSettings))
-                case x if x(0) == ':' => handle(value)
-                case _                =>
-                  // cannot use OtherHeader.parse because that doesn't has access to header parser
-                  val header = parseHeaderPair(httpHeaderParser, name, value)
-                  RequestParsing.validateHeader(header)
-                  handle(header)
+              // Try cache first for common headers
+              val cacheKey = (name, value)
+              val cached = headerCache.get(cacheKey)
+              if (cached ne null) {
+                headers += name -> cached
+                cached
+              } else {
+                def handle(parsed: AnyRef): AnyRef = {
+                  // Cache the parsed result for future use (limit cache size to avoid memory issues)
+                  if (headerCache.size() < 1024) {
+                    headerCache.put(cacheKey, parsed)
+                  }
+                  headers += name -> parsed
+                  parsed
+                }
+
+                name match {
+                  case "content-type" => handle(ContentType.parse(name, value, parserSettings))
+                  case ":authority"   => handle(Authority.parse(name, value, parserSettings))
+                  case ":path"        =>
+                    if (value.isEmpty)
+                      throw new Http2ProtocolException("Malformed request: ':path' must not be empty")
+                    handle(PathAndQuery.parse(name, value, parserSettings))
+                  case ":method"        => handle(Method.parse(name, value, parserSettings))
+                  case ":scheme"        => handle(Scheme.parse(name, value, parserSettings))
+                  case "content-length" => handle(ContentLength.parse(name, value, parserSettings))
+                  case "cookie"         => handle(Cookie.parse(name, value, parserSettings))
+                  case x if x(0) == ':' => handle(value)
+                  case _                =>
+                    // cannot use OtherHeader.parse because that doesn't has access to header parser
+                    val header = parseHeaderPair(httpHeaderParser, name, value)
+                    RequestParsing.validateHeader(header)
+                    handle(header)
+                }
               }
             }
           }

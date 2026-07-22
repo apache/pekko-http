@@ -303,17 +303,27 @@ private[http] object Http2Blueprint {
       implicit ec: ExecutionContext): Flow[HttpRequest, HttpResponse, NotUsed] =
     Flow[HttpRequest]
       .mapAsyncUnordered(parallelism) { req =>
-        // The handler itself may do significant work so make sure to schedule it separately. This is especially important for HTTP/2 where it is expected that
-        // multiple requests are handled concurrently on the same connection. The complete stream including `mapAsyncUnordered` shares one GraphInterpreter, so
-        // that this extra indirection will guard the GraphInterpreter from being starved by user code.
-        Future {
-          val response = handler(req)
+        // mapAsyncUnordered already schedules on the execution context,
+        // so call the handler directly without wrapping in Future { } to avoid
+        // an extra EC dispatch hop. This is significant for fast handlers
+        // (e.g. gRPC unary handlers returning Future.successful) where the
+        // extra hop would double the scheduling overhead.
+        val response = try handler(req)
+        catch { case scala.util.control.NonFatal(ex) => Future.failed(ex) }
 
-          req.attribute(Http2.streamId) match {
-            case Some(streamIdHeader) => response.map(_.addAttribute(Http2.streamId, streamIdHeader)) // add stream id attribute when request had it
-            case None                 => response
-          }
-        }.flatten
+        req.attribute(Http2.streamId) match {
+          case Some(streamIdHeader) =>
+            // Fast path: if response is already completed, add attribute synchronously
+            response.value match {
+              case Some(scala.util.Success(resp)) =>
+                Future.successful(resp.addAttribute(Http2.streamId, streamIdHeader))
+              case Some(scala.util.Failure(ex)) =>
+                Future.failed(ex)
+              case None =>
+                response.map(_.addAttribute(Http2.streamId, streamIdHeader))
+            }
+          case None => response
+        }
       }
 
   private[http2] def logParsingError(info: ErrorInfo, log: LoggingAdapter,

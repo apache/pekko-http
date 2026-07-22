@@ -114,23 +114,37 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def activeStreamCount(): Int = streamStates.size
 
   /** Called by Http2ServerDemux to let the state machine handle StreamFrameEvents */
-  def handleStreamEvent(e: StreamFrameEvent): Unit =
-    updateState(e.streamId, _.handle(e), "handleStreamEvent", e.frameTypeName)
+  def handleStreamEvent(e: StreamFrameEvent): Unit = {
+    // Inline state transition to avoid _.handle(e) lambda allocation per frame.
+    // This is the hottest call site - invoked for every incoming HTTP/2 frame.
+    require(!stateMachineRunning, "State machine already running")
+    stateMachineRunning = true
+
+    val streamId = e.streamId
+    val oldState = streamFor(streamId)
+    val newState = oldState.handle(e)
+    commitStreamState(streamId, oldState, newState)
+  }
 
   /** Called by Http2ServerDemux when a stream comes in from the user-handler */
   def handleOutgoingCreated(stream: Http2SubStream): Unit = {
     stream.initialHeaders.priorityInfo.foreach(multiplexer.updatePriority)
-    if (streamFor(stream.streamId) != Closed) {
+    val streamId = stream.streamId
+    val oldState = streamFor(streamId)
+    if (oldState ne Closed) {
       multiplexer.pushControlFrame(stream.initialHeaders)
 
-      if (stream.initialHeaders.endStream) {
-        updateState(stream.streamId, _.handleOutgoingCreatedAndFinished(stream.correlationAttributes),
-          "handleOutgoingCreatedAndFinished")
-      } else {
-        val outStream = OutStream(stream)
-        updateState(stream.streamId, _.handleOutgoingCreated(outStream, stream.correlationAttributes),
-          "handleOutgoingCreated")
-      }
+      // Inline state transition to avoid lambda allocation per response
+      require(!stateMachineRunning, "State machine already running")
+      stateMachineRunning = true
+      val newState =
+        if (stream.initialHeaders.endStream)
+          oldState.handleOutgoingCreatedAndFinished(stream.correlationAttributes)
+        else {
+          val outStream = OutStream(stream)
+          oldState.handleOutgoingCreated(outStream, stream.correlationAttributes)
+        }
+      commitStreamState(streamId, oldState, newState)
     } else
       // stream was cancelled by peer before our response was ready
       stream.data.foreach(_.runWith(Sink.cancelled)(subFusingMaterializer))
@@ -138,8 +152,13 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
 
   // Called by the outgoing stream multiplexer when that side of the stream is ended.
-  def handleOutgoingEnded(streamId: Int): Unit =
-    updateState(streamId, _.handleOutgoingEnded(), "handleOutgoingEnded")
+  def handleOutgoingEnded(streamId: Int): Unit = {
+    require(!stateMachineRunning, "State machine already running")
+    stateMachineRunning = true
+    val oldState = streamFor(streamId)
+    val newState = oldState.handleOutgoingEnded()
+    commitStreamState(streamId, oldState, newState)
+  }
 
   def handleOutgoingFailed(streamId: Int, cause: Throwable): Unit =
     updateState(streamId, _.handleOutgoingFailed(cause), "handleOutgoingFailed")
@@ -163,8 +182,36 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     streamStates.keys.foreach(streamId => updateState(streamId.toInt, handle, event, eventArg))
 
   private def updateState(
-      streamId: Int, handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit =
-    updateStateAndReturn(streamId, x => (handle(x), ()), event, eventArg)
+      streamId: Int, handle: StreamState => StreamState, event: String, eventArg: AnyRef = null): Unit = {
+    require(!stateMachineRunning, "State machine already running")
+    stateMachineRunning = true
+
+    val oldState = streamFor(streamId)
+    val newState = handle(oldState)
+    commitStreamState(streamId, oldState, newState)
+  }
+
+  /** Commits a stream state transition with bookkeeping (map update, debug logging, deferred enqueue). */
+  private def commitStreamState(streamId: Int, oldState: StreamState, newState: StreamState): Unit = {
+    newState match {
+      case Closed =>
+        streamStates.remove(streamId)
+        if (streamStates.isEmpty) onAllStreamsClosed()
+        tryPullSubStreams()
+      case newState => streamStates.put(streamId, newState)
+    }
+
+    debug(
+      s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName}")
+
+    stateMachineRunning = false
+    if (deferredStreamToEnqueue != -1) {
+      val deferredId = deferredStreamToEnqueue
+      deferredStreamToEnqueue = -1
+      if (streamStates.contains(deferredId))
+        multiplexer.enqueueOutStream(deferredId)
+    }
+  }
 
   // Calling multiplexer.enqueueOutStream directly out of the state machine is not allowed, because it might try to
   // reenter the state machine with `pullNextState`. This call defers enqueuing until the current state machine operation
