@@ -35,7 +35,7 @@ import pekko.stream.stage.GraphStageLogic
 import pekko.stream.stage.InHandler
 import pekko.stream.stage.OutHandler
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
-import pekko.util.ByteString
+import pekko.util.{ ByteString, ByteStringBuilder }
 
 import scala.collection.immutable
 import scala.collection.immutable.ListMap
@@ -51,6 +51,16 @@ private[http] object PerMessageDeflate {
   private val ClientNoContextTakeover = "client_no_context_takeover"
   private val ServerNoContextTakeover = "server_no_context_takeover"
   private val EmptyStoredBlock = ByteString(0x00, 0x00, 0xFF.toByte, 0xFF.toByte)
+
+  private[ws] trait CompressionFactory {
+    def newInflater(): Inflater
+    def newDeflater(compressionLevel: Int): Deflater
+  }
+
+  private object DefaultCompressionFactory extends CompressionFactory {
+    override def newInflater(): Inflater = new Inflater(true)
+    override def newDeflater(compressionLevel: Int): Deflater = new Deflater(compressionLevel, true)
+  }
 
   final case class Negotiated(
       responseExtension: WebSocketExtension,
@@ -74,15 +84,27 @@ private[http] object PerMessageDeflate {
         deflaterFlow)
 
     private def inflaterFlow: Flow[FrameEventOrError, FrameEventOrError, NotUsed] =
-      Flow.fromGraph(new LifecycleMapConcatStage(
-        "PerMessageDeflate.inflater",
-        () => new InflaterFlow(clientNoContextTakeover, settings)))
+      createInflaterFlow(clientNoContextTakeover, settings, DefaultCompressionFactory)
 
     private def deflaterFlow: Flow[FrameEvent, FrameEvent, NotUsed] =
-      Flow.fromGraph(new LifecycleMapConcatStage(
-        "PerMessageDeflate.deflater",
-        () => new DeflaterFlow(serverNoContextTakeover, settings)))
+      createDeflaterFlow(serverNoContextTakeover, settings, DefaultCompressionFactory)
   }
+
+  private[ws] def createInflaterFlow(
+      noContextTakeover: Boolean,
+      settings: WebSocketCompressionSettingsImpl,
+      compressionFactory: CompressionFactory): Flow[FrameEventOrError, FrameEventOrError, NotUsed] =
+    Flow.fromGraph(new LifecycleMapConcatStage(
+      "PerMessageDeflate.inflater",
+      () => new InflaterFlow(noContextTakeover, settings, compressionFactory)))
+
+  private[ws] def createDeflaterFlow(
+      noContextTakeover: Boolean,
+      settings: WebSocketCompressionSettingsImpl,
+      compressionFactory: CompressionFactory): Flow[FrameEvent, FrameEvent, NotUsed] =
+    Flow.fromGraph(new LifecycleMapConcatStage(
+      "PerMessageDeflate.deflater",
+      () => new DeflaterFlow(noContextTakeover, settings, compressionFactory)))
 
   def negotiate(
       requested: immutable.Seq[WebSocketExtension],
@@ -129,20 +151,22 @@ private[http] object PerMessageDeflate {
   }
 
   private def validWindowBits(value: String): Boolean =
-    value.length <= 2 && value.forall(_.isDigit) && {
+    value.nonEmpty && value.length <= 2 && value.forall(_.isDigit) && {
       val parsed = value.toInt
       parsed >= 8 && parsed <= 15
     }
 
   private final class InflaterFlow(
       noContextTakeover: Boolean,
-      settings: WebSocketCompressionSettingsImpl)
+      settings: WebSocketCompressionSettingsImpl,
+      compressionFactory: CompressionFactory)
       extends LifecycleMapConcat[FrameEventOrError, FrameEventOrError] {
-    private var inflater = new Inflater(true)
+    private var inflater = compressionFactory.newInflater()
     private var compressedFrame: Option[CompressedFrame] = None
     private var compressedMessageInProgress = false
     private var decompressedMessageBytes = 0L
     private var bypassFrameInProgress = false
+    private val buffer = new Array[Byte](8192)
 
     override def apply(event: FrameEventOrError): immutable.Iterable[FrameEventOrError] = event match {
       case start @ FrameStart(header, data)
@@ -186,7 +210,7 @@ private[http] object PerMessageDeflate {
       if (frame.appendTail) decompressedMessageBytes = 0L
       if (frame.appendTail && noContextTakeover) {
         inflater.end()
-        inflater = new Inflater(true)
+        inflater = compressionFactory.newInflater()
       }
       FrameStart(frame.header.copy(length = inflated.length), inflated) :: Nil
     }
@@ -196,7 +220,6 @@ private[http] object PerMessageDeflate {
         val input = if (appendTail) data ++ EmptyStoredBlock else data
         inflater.setInput(input.toArrayUnsafe())
         val output = new ByteArrayOutputStream(1024)
-        val buffer = new Array[Byte](1024)
         var count = inflater.inflate(buffer)
         while (count > 0) {
           decompressedMessageBytes += count
@@ -218,12 +241,14 @@ private[http] object PerMessageDeflate {
 
   private final class DeflaterFlow(
       noContextTakeover: Boolean,
-      settings: WebSocketCompressionSettingsImpl)
+      settings: WebSocketCompressionSettingsImpl,
+      compressionFactory: CompressionFactory)
       extends LifecycleMapConcat[FrameEvent, FrameEvent] {
-    private var deflater = new Deflater(settings.compressionLevel, true)
+    private var deflater = compressionFactory.newDeflater(settings.compressionLevel)
     private var frame: Option[UncompressedFrame] = None
     private var messageInProgress = false
     private var bypassFrameInProgress = false
+    private val buffer = new Array[Byte](8192)
 
     override def apply(event: FrameEvent): immutable.Iterable[FrameEvent] = event match {
       case FrameStart(header, _)
@@ -269,7 +294,7 @@ private[http] object PerMessageDeflate {
       val compressed = deflate(current.data, current.removeTail)
       if (current.removeTail && noContextTakeover) {
         deflater.end()
-        deflater = new Deflater(settings.compressionLevel, true)
+        deflater = compressionFactory.newDeflater(settings.compressionLevel)
       }
       FrameStart(current.header.copy(length = compressed.length), compressed) :: Nil
     }
@@ -277,7 +302,6 @@ private[http] object PerMessageDeflate {
     private def deflate(data: ByteString, removeTail: Boolean): ByteString = {
       deflater.setInput(data.toArrayUnsafe())
       val output = new ByteArrayOutputStream(1024)
-      val buffer = new Array[Byte](1024)
       var count = deflater.deflate(buffer, 0, buffer.length, Deflater.SYNC_FLUSH)
       while (count > 0) {
         output.write(buffer, 0, count)
@@ -335,11 +359,40 @@ private[http] object PerMessageDeflate {
       }
   }
 
-  private final case class CompressedFrame(header: FrameHeader, data: ByteString, appendTail: Boolean) {
-    def append(next: ByteString): CompressedFrame = copy(data = data ++ next)
+  private final case class CompressedFrame(
+      header: FrameHeader,
+      fragments: Vector[ByteString],
+      length: Int,
+      appendTail: Boolean) {
+    def data: ByteString = compact(fragments, length)
+    def append(next: ByteString): CompressedFrame = copy(fragments = fragments :+ next, length = length + next.length)
   }
 
-  private final case class UncompressedFrame(header: FrameHeader, data: ByteString, removeTail: Boolean) {
-    def append(next: ByteString): UncompressedFrame = copy(data = data ++ next)
+  private object CompressedFrame {
+    def apply(header: FrameHeader, data: ByteString, appendTail: Boolean): CompressedFrame =
+      CompressedFrame(header, Vector(data), data.length, appendTail)
   }
+
+  private final case class UncompressedFrame(
+      header: FrameHeader,
+      fragments: Vector[ByteString],
+      length: Int,
+      removeTail: Boolean) {
+    def data: ByteString = compact(fragments, length)
+    def append(next: ByteString): UncompressedFrame = copy(fragments = fragments :+ next, length = length + next.length)
+  }
+
+  private object UncompressedFrame {
+    def apply(header: FrameHeader, data: ByteString, removeTail: Boolean): UncompressedFrame =
+      UncompressedFrame(header, Vector(data), data.length, removeTail)
+  }
+
+  private def compact(fragments: Vector[ByteString], length: Int): ByteString =
+    if (fragments.lengthCompare(1) == 0) fragments.head
+    else {
+      val builder = new ByteStringBuilder
+      builder.sizeHint(length)
+      fragments.foreach(builder.append)
+      builder.result()
+    }
 }

@@ -14,6 +14,9 @@
 package org.apache.pekko.http.impl.engine.ws
 
 import java.io.ByteArrayOutputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.Deflater
 import java.util.zip.Inflater
 
@@ -24,8 +27,10 @@ import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.stream.Materializer
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.stream.testkit.Utils
+import pekko.stream.testkit.scaladsl.TestSink
 import pekko.util.ByteString
 import pekko.http.impl.engine.server.HttpServerTestSetupBase
+import pekko.http.impl.settings.WebSocketCompressionSettingsImpl
 import pekko.http.impl.settings.WebSocketSettingsImpl
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 
@@ -599,6 +604,118 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
           closeNetworkInput()
           expectNetworkClose()
         }
+      }
+
+      "release compression resources after normal completion" in Utils.assertAllStagesStopped {
+        val tracking = new TrackingCompression
+
+        Source.empty[FrameEventOrError].via(inflaterFlow(tracking)).runWith(Sink.ignore).futureValue
+        Source.empty[FrameEvent].via(deflaterFlow(tracking)).runWith(Sink.ignore).futureValue
+
+        tracking.awaitAllEnded()
+      }
+
+      "release compression resources after upstream failure" in Utils.assertAllStagesStopped {
+        val tracking = new TrackingCompression
+        val failure = new RuntimeException("test failure")
+
+        Source.failed[FrameEventOrError](failure)
+          .via(inflaterFlow(tracking))
+          .runWith(Sink.ignore)
+          .failed
+          .futureValue shouldEqual failure
+        Source.failed[FrameEvent](failure)
+          .via(deflaterFlow(tracking))
+          .runWith(Sink.ignore)
+          .failed
+          .futureValue shouldEqual failure
+
+        tracking.awaitAllEnded()
+      }
+
+      "release compression resources after downstream cancellation" in Utils.assertAllStagesStopped {
+        val tracking = new TrackingCompression
+        val inflaterProbe =
+          Source.maybe[FrameEventOrError].via(inflaterFlow(tracking)).runWith(TestSink[FrameEventOrError]())
+        val deflaterProbe = Source.maybe[FrameEvent].via(deflaterFlow(tracking)).runWith(TestSink[FrameEvent]())
+
+        inflaterProbe.cancel()
+        deflaterProbe.cancel()
+
+        tracking.awaitAllEnded()
+      }
+
+      "release compression resources after protocol errors" in Utils.assertAllStagesStopped {
+        val tracking = new TrackingCompression
+        val invalidInbound =
+          FrameEvent.fullFrame(
+            Protocol.Opcode.Text,
+            None,
+            ByteString(0xFF, 0xFF, 0xFF),
+            fin = true,
+            rsv1 = true)
+        val invalidOutbound =
+          FrameEvent.fullFrame(Protocol.Opcode.Text, None, ByteString("reserved"), fin = true, rsv1 = true)
+
+        Source.single[FrameEventOrError](invalidInbound)
+          .via(inflaterFlow(tracking))
+          .runWith(Sink.ignore)
+          .failed
+          .futureValue shouldBe a[ProtocolException]
+        Source.single[FrameEvent](invalidOutbound)
+          .via(deflaterFlow(tracking))
+          .runWith(Sink.ignore)
+          .failed
+          .futureValue shouldBe a[ProtocolException]
+
+        tracking.awaitAllEnded()
+      }
+
+      "release compression resources with incomplete compression state" in Utils.assertAllStagesStopped {
+        val tracking = new TrackingCompression
+        val payload = ByteString("unfinished compressed message")
+        val (firstCompressedFragment, _) = deflatePerMessageFrames(payload, splitAt = 12)
+        val incompleteInboundMessage =
+          FrameEvent.fullFrame(
+            Protocol.Opcode.Text,
+            None,
+            firstCompressedFragment,
+            fin = false,
+            rsv1 = true)
+        val incompleteInboundFrame =
+          FrameStart(
+            FrameHeader(
+              Protocol.Opcode.Text,
+              None,
+              length = firstCompressedFragment.length + 1,
+              fin = true,
+              rsv1 = true),
+            firstCompressedFragment)
+        val incompleteOutboundMessage =
+          FrameEvent.fullFrame(Protocol.Opcode.Text, None, payload, fin = false)
+        val incompleteOutboundFrame =
+          FrameStart(
+            FrameHeader(Protocol.Opcode.Text, None, length = payload.length + 1, fin = true),
+            payload)
+
+        Source(List[FrameEventOrError](incompleteInboundMessage))
+          .via(inflaterFlow(tracking))
+          .runWith(Sink.ignore)
+          .futureValue
+        Source(List[FrameEventOrError](incompleteInboundFrame))
+          .via(inflaterFlow(tracking))
+          .runWith(Sink.ignore)
+          .futureValue
+        Source(List[FrameEvent](incompleteOutboundMessage))
+          .via(deflaterFlow(tracking))
+          .runWith(Sink.ignore)
+          .futureValue
+        Source(List[FrameEvent](incompleteOutboundFrame))
+          .via(deflaterFlow(tracking))
+          .runWith(Sink.ignore)
+          .futureValue
+
+        tracking.awaitAllEnded()
       }
 
       "fail invalid compressed messages with a protocol error" in Utils.assertAllStagesStopped {
@@ -1402,6 +1519,60 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
       ByteString.fromArray(output.toByteArray)
     } finally {
       inflater.end()
+    }
+  }
+
+  private val compressionSettings = WebSocketCompressionSettingsImpl.Disabled.copy(enabled = true)
+
+  private def inflaterFlow(compressionFactory: PerMessageDeflate.CompressionFactory) =
+    PerMessageDeflate.createInflaterFlow(
+      noContextTakeover = false,
+      compressionSettings,
+      compressionFactory)
+
+  private def deflaterFlow(compressionFactory: PerMessageDeflate.CompressionFactory) =
+    PerMessageDeflate.createDeflaterFlow(
+      noContextTakeover = false,
+      compressionSettings,
+      compressionFactory)
+
+  private final class TrackingCompression extends PerMessageDeflate.CompressionFactory {
+    private val inflaterCreated = new AtomicInteger
+    private val deflaterCreated = new AtomicInteger
+    private val inflaterEnded = new AtomicInteger
+    private val deflaterEnded = new AtomicInteger
+    private val inflaterEndLatch = new CountDownLatch(1)
+    private val deflaterEndLatch = new CountDownLatch(1)
+
+    override def newInflater(): Inflater = {
+      inflaterCreated.incrementAndGet()
+      new Inflater(true) {
+        override def end(): Unit = {
+          inflaterEnded.incrementAndGet()
+          inflaterEndLatch.countDown()
+          super.end()
+        }
+      }
+    }
+
+    override def newDeflater(level: Int): Deflater = {
+      deflaterCreated.incrementAndGet()
+      new Deflater(level, true) {
+        override def end(): Unit = {
+          deflaterEnded.incrementAndGet()
+          deflaterEndLatch.countDown()
+          super.end()
+        }
+      }
+    }
+
+    def awaitAllEnded(): Unit = {
+      inflaterCreated.get() should be > 0
+      deflaterCreated.get() should be > 0
+      inflaterEndLatch.await(3.seconds.toMillis, TimeUnit.MILLISECONDS) shouldEqual true
+      deflaterEndLatch.await(3.seconds.toMillis, TimeUnit.MILLISECONDS) shouldEqual true
+      inflaterEnded.get() shouldEqual inflaterCreated.get()
+      deflaterEnded.get() shouldEqual deflaterCreated.get()
     }
   }
 }
