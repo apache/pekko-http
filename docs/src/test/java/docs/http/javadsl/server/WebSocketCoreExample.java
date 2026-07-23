@@ -128,16 +128,7 @@ public class WebSocketCoreExample {
   static HttpResponse selectiveCompression(
       WebSocketUpgrade upgrade, Flow<Message, Message, NotUsed> handler) {
     // #websocket-selective-compression
-    Predicate<Message> shouldCompress =
-        message -> {
-          if (!message.isStrict())
-            return true; // Compress streamed messages without buffering them.
-          if (message.isText()) {
-            return ByteString.fromString(message.asTextMessage().getStrictText()).size() >= 1024;
-          } else {
-            return message.asBinaryMessage().getStrictData().size() >= 1024;
-          }
-        };
+    Predicate<Message> shouldCompress = Message::isText;
 
     HttpResponse response = upgrade.handleMessagesWith(handler, shouldCompress);
     // #websocket-selective-compression
