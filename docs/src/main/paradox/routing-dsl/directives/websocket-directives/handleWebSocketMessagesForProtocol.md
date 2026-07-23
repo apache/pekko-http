@@ -18,6 +18,9 @@ The directive first checks if the request was a valid WebSocket handshake reques
 subprotocol name. If yes, the directive completes the request with the passed handler. Otherwise, the request is
 either rejected with an @apidoc[ExpectedWebSocketRequestRejection$] or an @apidoc[UnsupportedWebSocketSubprotocolRejection].
 
+The overload that accepts a `shouldCompress` filter can select compression separately for each outbound message after
+`permessage-deflate` is negotiated.
+
 To support several subprotocols, for example at the same path, several instances of `handleWebSocketMessagesForProtocol` can
 be chained using `~` as you can see in the below example.
 

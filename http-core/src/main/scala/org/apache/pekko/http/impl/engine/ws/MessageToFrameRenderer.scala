@@ -30,23 +30,34 @@ import pekko.http.scaladsl.model.ws._
  */
 @InternalApi
 private[http] object MessageToFrameRenderer {
-  def create(serverSide: Boolean): Flow[Message, FrameStart, NotUsed] = {
-    def strictFrames(opcode: Opcode, data: ByteString): Source[FrameStart, ?] =
-      // FIXME: fragment?
-      Source.single(FrameEvent.fullFrame(opcode, None, data, fin = true))
+  def create(serverSide: Boolean): Flow[Message, FrameStart, NotUsed] =
+    create(serverSide, None)
 
-    def streamedFrames[M](opcode: Opcode, data: Source[ByteString, M]): Source[FrameStart, Any] =
+  def create(serverSide: Boolean, shouldCompress: Message => Boolean): Flow[Message, FrameStart, NotUsed] =
+    create(serverSide, Some(shouldCompress))
+
+  private def create(
+      serverSide: Boolean,
+      shouldCompress: Option[Message => Boolean]): Flow[Message, FrameStart, NotUsed] = {
+    def strictFrames(opcode: Opcode, data: ByteString, compress: Boolean): Source[FrameStart, ?] =
+      // FIXME: fragment?
+      Source.single(FrameEvent.fullFrame(opcode, None, data, fin = true, rsv1 = compress))
+
+    def streamedFrames[M](opcode: Opcode, data: Source[ByteString, M], compress: Boolean): Source[FrameStart, Any] =
       data.statefulMap(() => true)((isFirst, data) => {
           val frameOpcode = if (isFirst) opcode else Opcode.Continuation
-          (false, FrameEvent.fullFrame(frameOpcode, None, data, fin = false))
+          (false, FrameEvent.fullFrame(frameOpcode, None, data, fin = false, rsv1 = isFirst && compress))
         }, _ => None) ++ Source.single(FrameEvent.emptyLastContinuationFrame)
 
     Flow[Message]
-      .flatMapConcat {
-        case BinaryMessage.Strict(data) => strictFrames(Opcode.Binary, data)
-        case bm: BinaryMessage          => streamedFrames(Opcode.Binary, bm.dataStream)
-        case TextMessage.Strict(text)   => strictFrames(Opcode.Text, ByteString(text, StandardCharsets.UTF_8))
-        case tm: TextMessage            => streamedFrames(Opcode.Text, tm.textStream.via(Utf8Encoder))
+      .flatMapConcat { message =>
+        val compress = shouldCompress.exists(_(message))
+        message match {
+          case BinaryMessage.Strict(data) => strictFrames(Opcode.Binary, data, compress)
+          case bm: BinaryMessage          => streamedFrames(Opcode.Binary, bm.dataStream, compress)
+          case TextMessage.Strict(text)   => strictFrames(Opcode.Text, ByteString(text, StandardCharsets.UTF_8), compress)
+          case tm: TextMessage            => streamedFrames(Opcode.Text, tm.textStream.via(Utf8Encoder), compress)
+        }
       }
   }
 }

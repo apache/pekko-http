@@ -17,11 +17,13 @@ import java.io.ByteArrayOutputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Predicate
 import java.util.zip.Deflater
 import java.util.zip.Inflater
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
+import pekko.http.javadsl.model.ws.{ Message => JavaMessage, TextMessage => JavaTextMessage }
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.stream.Materializer
@@ -536,6 +538,131 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
+      "select compression separately for each outbound message" in Utils.assertAllStagesStopped {
+        new TestSetup {
+          sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
+
+          val request = expectRequest()
+          val upgrade = request.attribute(webSocketUpgrade)
+          val evaluated = new AtomicInteger()
+          val firstMessage = "compressed first server message"
+          val secondMessage = "plain"
+          val thirdMessage = "compressed third server message"
+          val response = upgrade.get.handleMessages(
+            Flow.fromSinkAndSource(
+              Sink.ignore,
+              Source(List(
+                TextMessage.Strict(firstMessage),
+                TextMessage.Strict(secondMessage),
+                TextMessage.Strict(thirdMessage)))),
+            None,
+            message => {
+              evaluated.incrementAndGet()
+              message.asInstanceOf[TextMessage.Strict].text.startsWith("compressed")
+            })
+          responses.sendNext(response)
+
+          expectResponseWithWipedDate(
+            """HTTP/1.1 101 Switching Protocols
+              |Upgrade: websocket
+              |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+              |Sec-WebSocket-Extensions: permessage-deflate
+              |Server: pekko-http/test
+              |Date: XXXX
+              |Connection: upgrade
+              |
+              |""")
+
+          val firstPayload = expectCompressedFrame(Protocol.Opcode.Text, fin = true, rsv1 = true)
+          expectWSFrame(Protocol.Opcode.Text, ByteString(secondMessage), fin = true)
+          val thirdPayload = expectCompressedFrame(Protocol.Opcode.Text, fin = true, rsv1 = true)
+          inflatePerMessagesWithContext(firstPayload, thirdPayload).map(_.utf8String) shouldEqual
+          Seq(firstMessage, thirdMessage)
+          evaluated.get() shouldEqual 3
+          expectWSCloseFrame(Protocol.CloseCodes.Regular)
+
+          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+          closeNetworkInput()
+          expectNetworkClose()
+        }
+      }
+
+      "select compression separately through the Java API" in Utils.assertAllStagesStopped {
+        new TestSetup {
+          sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
+
+          val request = expectRequest()
+          val upgrade = request.attribute(webSocketUpgrade)
+          val response = upgrade.get.handleMessagesWith(
+            Flow.fromSinkAndSource(
+              Sink.foreach[JavaMessage](_ => ()),
+              Source(List[JavaMessage](
+                JavaTextMessage.create("plain"),
+                JavaTextMessage.create("compressed Java server message")))),
+            new Predicate[JavaMessage] {
+              override def test(message: JavaMessage): Boolean =
+                message.asTextMessage.getStrictText.startsWith("compressed")
+            })
+          responses.sendNext(response)
+
+          expectResponseWithWipedDate(
+            """HTTP/1.1 101 Switching Protocols
+              |Upgrade: websocket
+              |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+              |Sec-WebSocket-Extensions: permessage-deflate
+              |Server: pekko-http/test
+              |Date: XXXX
+              |Connection: upgrade
+              |
+              |""")
+
+          expectWSFrame(Protocol.Opcode.Text, ByteString("plain"), fin = true)
+          expectCompressedTextFrame("compressed Java server message")
+          expectWSCloseFrame(Protocol.CloseCodes.Regular)
+
+          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+          closeNetworkInput()
+          expectNetworkClose()
+        }
+      }
+
+      "not evaluate the outbound compression filter when permessage-deflate is not negotiated" in
+      Utils.assertAllStagesStopped {
+        new TestSetup {
+          sendWebSocketRequest("")
+
+          val request = expectRequest()
+          val upgrade = request.attribute(webSocketUpgrade)
+          val evaluated = new AtomicInteger()
+          val response = upgrade.get.handleMessages(
+            Flow.fromSinkAndSource(Sink.ignore, Source.single(TextMessage.Strict("plain server message"))),
+            None,
+            _ => {
+              evaluated.incrementAndGet()
+              true
+            })
+          responses.sendNext(response)
+
+          expectResponseWithWipedDate(
+            """HTTP/1.1 101 Switching Protocols
+              |Upgrade: websocket
+              |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+              |Server: pekko-http/test
+              |Date: XXXX
+              |Connection: upgrade
+              |
+              |""")
+
+          expectWSFrame(Protocol.Opcode.Text, ByteString("plain server message"), fin = true)
+          evaluated.get() shouldEqual 0
+          expectWSCloseFrame(Protocol.CloseCodes.Regular)
+
+          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+          closeNetworkInput()
+          expectNetworkClose()
+        }
+      }
+
       "deflate empty outbound messages sent by the application" in Utils.assertAllStagesStopped {
         new TestSetup {
           sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
@@ -716,6 +843,48 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
           .futureValue
 
         tracking.awaitAllEnded()
+      }
+
+      "keep one uncompressed selection across a streamed outbound message" in Utils.assertAllStagesStopped {
+        new TestSetup {
+          sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
+
+          val request = expectRequest()
+          val upgrade = request.attribute(webSocketUpgrade)
+          val evaluated = new AtomicInteger()
+          val response = upgrade.get.handleMessages(
+            Flow.fromSinkAndSource(
+              Sink.ignore,
+              Source.single(TextMessage(Source(List("streamed ", "plain ", "message"))))),
+            None,
+            _ => {
+              evaluated.incrementAndGet()
+              false
+            })
+          responses.sendNext(response)
+
+          expectResponseWithWipedDate(
+            """HTTP/1.1 101 Switching Protocols
+              |Upgrade: websocket
+              |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+              |Sec-WebSocket-Extensions: permessage-deflate
+              |Server: pekko-http/test
+              |Date: XXXX
+              |Connection: upgrade
+              |
+              |""")
+
+          expectWSFrame(Protocol.Opcode.Text, ByteString("streamed "), fin = false)
+          expectWSFrame(Protocol.Opcode.Continuation, ByteString("plain "), fin = false)
+          expectWSFrame(Protocol.Opcode.Continuation, ByteString("message"), fin = false)
+          expectWSFrame(Protocol.Opcode.Continuation, ByteString.empty, fin = true)
+          evaluated.get() shouldEqual 1
+          expectWSCloseFrame(Protocol.CloseCodes.Regular)
+
+          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+          closeNetworkInput()
+          expectNetworkClose()
+        }
       }
 
       "fail invalid compressed messages with a protocol error" in Utils.assertAllStagesStopped {
@@ -1290,6 +1459,143 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
+      "select compression separately for low-level outbound messages" in Utils.assertAllStagesStopped {
+        new TestSetup {
+          sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
+
+          val request = expectRequest()
+          val upgrade = request.attribute(webSocketUpgrade)
+          val evaluated = new AtomicInteger()
+          val firstMessage = ByteString("compressed first low-level message")
+          val secondMessage = ByteString("plain")
+          val thirdMessage = ByteString("compressed third low-level message")
+          val response = upgrade.get.asInstanceOf[UpgradeToWebSocketLowLevel].handleFrames(
+            Flow.fromSinkAndSource(
+              Sink.ignore,
+              Source(List(
+                FrameEvent.fullFrame(Protocol.Opcode.Text, None, firstMessage, fin = true),
+                FrameEvent.fullFrame(Protocol.Opcode.Text, None, secondMessage, fin = true),
+                FrameEvent.fullFrame(Protocol.Opcode.Text, None, thirdMessage, fin = true)))),
+            None,
+            compressionEnabled = true,
+            shouldCompress = start => {
+              evaluated.incrementAndGet()
+              start.data.utf8String.startsWith("compressed")
+            })
+          responses.sendNext(response)
+
+          expectResponseWithWipedDate(
+            """HTTP/1.1 101 Switching Protocols
+              |Upgrade: websocket
+              |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+              |Sec-WebSocket-Extensions: permessage-deflate
+              |Server: pekko-http/test
+              |Date: XXXX
+              |Connection: upgrade
+              |
+              |""")
+
+          val firstPayload = expectCompressedFrame(Protocol.Opcode.Text, fin = true, rsv1 = true)
+          expectWSFrame(Protocol.Opcode.Text, secondMessage, fin = true)
+          val thirdPayload = expectCompressedFrame(Protocol.Opcode.Text, fin = true, rsv1 = true)
+          inflatePerMessagesWithContext(firstPayload, thirdPayload) shouldEqual Seq(firstMessage, thirdMessage)
+          evaluated.get() shouldEqual 3
+          netOut.expectComplete()
+
+          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+          closeNetworkInput()
+        }
+      }
+
+      "retain a low-level compression decision across continuation and control frames" in
+      Utils.assertAllStagesStopped {
+        new TestSetup {
+          sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
+
+          val request = expectRequest()
+          val upgrade = request.attribute(webSocketUpgrade)
+          val evaluated = new AtomicInteger()
+          val response = upgrade.get.asInstanceOf[UpgradeToWebSocketLowLevel].handleFrames(
+            Flow.fromSinkAndSource(
+              Sink.ignore,
+              Source(List(
+                FrameEvent.fullFrame(Protocol.Opcode.Text, None, ByteString("plain "), fin = false),
+                FrameEvent.fullFrame(Protocol.Opcode.Ping, None, ByteString("ping"), fin = true),
+                FrameEvent.fullFrame(Protocol.Opcode.Continuation, None, ByteString("message"), fin = true)))),
+            None,
+            compressionEnabled = true,
+            shouldCompress = _ => {
+              evaluated.incrementAndGet()
+              false
+            })
+          responses.sendNext(response)
+
+          expectResponseWithWipedDate(
+            """HTTP/1.1 101 Switching Protocols
+              |Upgrade: websocket
+              |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+              |Sec-WebSocket-Extensions: permessage-deflate
+              |Server: pekko-http/test
+              |Date: XXXX
+              |Connection: upgrade
+              |
+              |""")
+
+          expectWSFrame(Protocol.Opcode.Text, ByteString("plain "), fin = false)
+          expectWSFrame(Protocol.Opcode.Ping, ByteString("ping"), fin = true)
+          expectWSFrame(Protocol.Opcode.Continuation, ByteString("message"), fin = true)
+          evaluated.get() shouldEqual 1
+          netOut.expectComplete()
+
+          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+          closeNetworkInput()
+        }
+      }
+
+      "pass every frame-data event through for an uncompressed low-level message" in
+      Utils.assertAllStagesStopped {
+        new TestSetup {
+          sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
+
+          val request = expectRequest()
+          val upgrade = request.attribute(webSocketUpgrade)
+          val evaluated = new AtomicInteger()
+          val message = ByteString("plain split frame data")
+          val (firstPart, secondPart) = message.splitAt(8)
+          val response = upgrade.get.asInstanceOf[UpgradeToWebSocketLowLevel].handleFrames(
+            Flow.fromSinkAndSource(
+              Sink.ignore,
+              Source(List(
+                FrameStart(FrameHeader(Protocol.Opcode.Text, None, message.length, fin = true), firstPart),
+                FrameData(secondPart, lastPart = true)))),
+            None,
+            compressionEnabled = true,
+            shouldCompress = _ => {
+              evaluated.incrementAndGet()
+              false
+            })
+          responses.sendNext(response)
+
+          expectResponseWithWipedDate(
+            """HTTP/1.1 101 Switching Protocols
+              |Upgrade: websocket
+              |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+              |Sec-WebSocket-Extensions: permessage-deflate
+              |Server: pekko-http/test
+              |Date: XXXX
+              |Connection: upgrade
+              |
+              |""")
+
+          expectWSFrame(Protocol.Opcode.Text, message, fin = true)
+          evaluated.get() shouldEqual 1
+          netOut.expectComplete()
+
+          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+          closeNetworkInput()
+        }
+      }
+
       "apply compression to low-level frame handlers" in Utils.assertAllStagesStopped {
         new TestSetup {
           sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
@@ -1489,6 +1795,14 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
           inflated ++ inflateFrame(inflater, data)
       }
     } finally {
+      inflater.end()
+    }
+  }
+
+  private def inflatePerMessagesWithContext(messages: ByteString*): Seq[ByteString] = {
+    val inflater = new Inflater(true)
+    try messages.map(message => inflateFrame(inflater, message ++ ByteString(0x00, 0x00, 0xFF.toByte, 0xFF.toByte)))
+    finally {
       inflater.end()
     }
   }

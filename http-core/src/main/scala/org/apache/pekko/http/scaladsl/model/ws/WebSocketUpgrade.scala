@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.model.ws
 
 import java.lang.Iterable
+import java.util.function.{ Predicate => JPredicate }
 import scala.collection.immutable
 import org.apache.pekko
 import pekko.NotUsed
@@ -74,6 +75,36 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
   /**
    * The high-level interface to create a WebSocket server based on "messages".
    *
+   * If `permessage-deflate` is negotiated, `shouldCompress` is evaluated once for each outbound text or binary
+   * message. Returning `true` compresses that message and returning `false` sends it uncompressed. The filter does not
+   * affect inbound messages or whether compression is negotiated.
+   *
+   * @since 2.0.0
+   */
+  def handleMessages(
+      handlerFlow: Graph[FlowShape[Message, Message], Any],
+      shouldCompress: Message => Boolean): HttpResponse =
+    handleMessages(handlerFlow, None, shouldCompress)
+
+  /**
+   * The high-level interface to create a WebSocket server based on "messages".
+   *
+   * Optionally, a subprotocol out of the ones requested by the client can be chosen. If `permessage-deflate` is
+   * negotiated, `shouldCompress` is evaluated once for each outbound text or binary message. Returning `true`
+   * compresses that message and returning `false` sends it uncompressed. The filter does not affect inbound messages
+   * or whether compression is negotiated.
+   *
+   * @since 2.0.0
+   */
+  def handleMessages(
+      handlerFlow: Graph[FlowShape[Message, Message], Any],
+      subprotocol: Option[String],
+      shouldCompress: Message => Boolean): HttpResponse =
+    handleMessages(handlerFlow, subprotocol)
+
+  /**
+   * The high-level interface to create a WebSocket server based on "messages".
+   *
    * Returns a response to return in a request handler that will signal the
    * low-level HTTP implementation to upgrade the connection to WebSocket and
    * use the supplied inSink to consume messages received from the client and
@@ -108,6 +139,38 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
       compressionEnabled: Boolean): HttpResponse =
     handleMessages(scaladsl.Flow.fromSinkAndSource(inSink, outSource), subprotocol, compressionEnabled)
 
+  /**
+   * The high-level interface to create a WebSocket server based on "messages".
+   *
+   * If `permessage-deflate` is negotiated, `shouldCompress` is evaluated once for each outbound text or binary
+   * message. Returning `true` compresses that message and returning `false` sends it uncompressed. The filter does not
+   * affect inbound messages or whether compression is negotiated.
+   *
+   * @since 2.0.0
+   */
+  def handleMessagesWithSinkSource(
+      inSink: Graph[SinkShape[Message], Any],
+      outSource: Graph[SourceShape[Message], Any],
+      shouldCompress: Message => Boolean): HttpResponse =
+    handleMessages(scaladsl.Flow.fromSinkAndSource(inSink, outSource), None, shouldCompress)
+
+  /**
+   * The high-level interface to create a WebSocket server based on "messages".
+   *
+   * Optionally, a subprotocol out of the ones requested by the client can be chosen. If `permessage-deflate` is
+   * negotiated, `shouldCompress` is evaluated once for each outbound text or binary message. Returning `true`
+   * compresses that message and returning `false` sends it uncompressed. The filter does not affect inbound messages
+   * or whether compression is negotiated.
+   *
+   * @since 2.0.0
+   */
+  def handleMessagesWithSinkSource(
+      inSink: Graph[SinkShape[Message], Any],
+      outSource: Graph[SourceShape[Message], Any],
+      subprotocol: Option[String],
+      shouldCompress: Message => Boolean): HttpResponse =
+    handleMessages(scaladsl.Flow.fromSinkAndSource(inSink, outSource), subprotocol, shouldCompress)
+
   import scala.jdk.CollectionConverters._
 
   /**
@@ -133,6 +196,16 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
 
   /**
    * Java API
+   *
+   * @since 2.0.0
+   */
+  override def handleMessagesWith(
+      handlerFlow: Graph[FlowShape[jm.ws.Message, jm.ws.Message], ? <: Any],
+      shouldCompress: JPredicate[jm.ws.Message]): HttpResponse =
+    handleMessages(JavaMapping.toScala(handlerFlow), message => shouldCompress.test(message))
+
+  /**
+   * Java API
    */
   def handleMessagesWith(
       handlerFlow: Graph[FlowShape[jm.ws.Message, jm.ws.Message], ? <: Any], subprotocol: String): HttpResponse =
@@ -148,6 +221,17 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
       subprotocol: String,
       compressionEnabled: Boolean): HttpResponse =
     handleMessages(JavaMapping.toScala(handlerFlow), subprotocol = Some(subprotocol), compressionEnabled)
+
+  /**
+   * Java API
+   *
+   * @since 2.0.0
+   */
+  override def handleMessagesWith(
+      handlerFlow: Graph[FlowShape[jm.ws.Message, jm.ws.Message], ? <: Any],
+      subprotocol: String,
+      shouldCompress: JPredicate[jm.ws.Message]): HttpResponse =
+    handleMessages(JavaMapping.toScala(handlerFlow), Some(subprotocol), message => shouldCompress.test(message))
 
   /**
    * Java API
@@ -172,6 +256,17 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    *
    * @since 2.0.0
    */
+  override def handleMessagesWith(
+      inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
+      outSource: Graph[SourceShape[jm.ws.Message], ? <: Any],
+      shouldCompress: JPredicate[jm.ws.Message]): HttpResponse =
+    handleMessages(createScalaFlow(inSink, outSource), message => shouldCompress.test(message))
+
+  /**
+   * Java API
+   *
+   * @since 2.0.0
+   */
   def handleMessagesWith(
       inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
       outSource: Graph[SourceShape[jm.ws.Message], ? <: Any],
@@ -189,6 +284,18 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
       subprotocol: String,
       compressionEnabled: Boolean): HttpResponse =
     handleMessages(createScalaFlow(inSink, outSource), subprotocol = Some(subprotocol), compressionEnabled)
+
+  /**
+   * Java API
+   *
+   * @since 2.0.0
+   */
+  override def handleMessagesWith(
+      inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
+      outSource: Graph[SourceShape[jm.ws.Message], ? <: Any],
+      subprotocol: String,
+      shouldCompress: JPredicate[jm.ws.Message]): HttpResponse =
+    handleMessages(createScalaFlow(inSink, outSource), Some(subprotocol), message => shouldCompress.test(message))
 
   private def createScalaFlow(inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
       outSource: Graph[SourceShape[jm.ws.Message], ? <: Any]): Graph[FlowShape[Message, Message], NotUsed] =

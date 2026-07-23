@@ -61,6 +61,18 @@ trait WebSocketDirectives {
     handleWebSocketMessagesForOptionalProtocol(handler, None)
 
   /**
+   * Handles WebSocket requests with the given handler and selectively compresses outbound messages for which
+   * `shouldCompress` returns `true` when `permessage-deflate` was negotiated.
+   *
+   * @group websocket
+   * @since 2.0.0
+   */
+  def handleWebSocketMessages(
+      handler: Flow[Message, Message, Any],
+      shouldCompress: Message => Boolean): Route =
+    handleWebSocketMessagesForOptionalProtocol(handler, None, shouldCompress)
+
+  /**
    * Handles WebSocket requests with the given handler if the given subprotocol is offered in the request and
    * rejects other requests with an [[ExpectedWebSocketRequestRejection]] or an [[UnsupportedWebSocketSubprotocolRejection]].
    *
@@ -68,6 +80,19 @@ trait WebSocketDirectives {
    */
   def handleWebSocketMessagesForProtocol(handler: Flow[Message, Message, Any], subprotocol: String): Route =
     handleWebSocketMessagesForOptionalProtocol(handler, Some(subprotocol))
+
+  /**
+   * Handles WebSocket requests with the given handler if the given subprotocol is offered and selectively compresses
+   * outbound messages for which `shouldCompress` returns `true` when `permessage-deflate` was negotiated.
+   *
+   * @group websocket
+   * @since 2.0.0
+   */
+  def handleWebSocketMessagesForProtocol(
+      handler: Flow[Message, Message, Any],
+      subprotocol: String,
+      shouldCompress: Message => Boolean): Route =
+    handleWebSocketMessagesForOptionalProtocol(handler, Some(subprotocol), shouldCompress)
 
   /**
    * Handles WebSocket requests with the given handler and rejects other requests with an
@@ -87,6 +112,24 @@ trait WebSocketDirectives {
     extractWebSocketUpgrade { upgrade =>
       if (subprotocol.forall(sub => upgrade.requestedProtocols.exists(_.equalsIgnoreCase(sub))))
         complete(upgrade.handleMessages(handler, subprotocol))
+      else
+        reject(UnsupportedWebSocketSubprotocolRejection(subprotocol.get)) // None.forall == true
+    }
+
+  /**
+   * Handles WebSocket requests with the given handler and selectively compresses outbound messages for which
+   * `shouldCompress` returns `true` when `permessage-deflate` was negotiated.
+   *
+   * @group websocket
+   * @since 2.0.0
+   */
+  def handleWebSocketMessagesForOptionalProtocol(
+      handler: Flow[Message, Message, Any],
+      subprotocol: Option[String],
+      shouldCompress: Message => Boolean): Route =
+    extractWebSocketUpgrade { upgrade =>
+      if (subprotocol.forall(sub => upgrade.requestedProtocols.exists(_.equalsIgnoreCase(sub))))
+        complete(upgrade.handleMessages(handler, subprotocol, shouldCompress))
       else
         reject(UnsupportedWebSocketSubprotocolRejection(subprotocol.get)) // None.forall == true
     }

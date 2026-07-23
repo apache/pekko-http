@@ -70,8 +70,16 @@ private[http] object PerMessageDeflate {
     def bidiFlow: BidiFlow[FrameEventOrError, FrameEventOrError, FrameEvent, FrameEvent, NotUsed] =
       BidiFlow.fromFlows(inflaterFlow, deflaterFlow)
 
+    def messageBidiFlow: BidiFlow[FrameEventOrError, FrameEventOrError, FrameEvent, FrameEvent, NotUsed] =
+      BidiFlow.fromFlows(inflaterFlow, selectiveDeflaterFlow(_.header.rsv1, rsv1IndicatesCompression = true))
+
     def frameEventBidiFlow(
         maskRandom: () => Random): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
+      frameEventBidiFlow(maskRandom, _ => true)
+
+    def frameEventBidiFlow(
+        maskRandom: () => Random,
+        shouldCompress: FrameStart => Boolean): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
       BidiFlow.fromFlows(
         Flow[FrameEvent]
           .via(Masking.unmaskIf(condition = true))
@@ -81,13 +89,26 @@ private[http] object PerMessageDeflate {
             case FrameError(ex)    => throw ex
           }
           .via(Masking.maskIf(condition = true, maskRandom)),
-        deflaterFlow)
+        selectiveDeflaterFlow(shouldCompress, rsv1IndicatesCompression = false))
 
     private def inflaterFlow: Flow[FrameEventOrError, FrameEventOrError, NotUsed] =
       createInflaterFlow(clientNoContextTakeover, settings, DefaultCompressionFactory)
 
     private def deflaterFlow: Flow[FrameEvent, FrameEvent, NotUsed] =
       createDeflaterFlow(serverNoContextTakeover, settings, DefaultCompressionFactory)
+
+    private def selectiveDeflaterFlow(
+        shouldCompress: FrameStart => Boolean,
+        rsv1IndicatesCompression: Boolean): Flow[FrameEvent, FrameEvent, NotUsed] =
+      Flow.fromGraph(new LifecycleMapConcatStage(
+        "PerMessageDeflate.deflater",
+        () =>
+          new DeflaterFlow(
+            serverNoContextTakeover,
+            settings,
+            DefaultCompressionFactory,
+            shouldCompress,
+            rsv1IndicatesCompression)))
   }
 
   private[ws] def createInflaterFlow(
@@ -104,7 +125,13 @@ private[http] object PerMessageDeflate {
       compressionFactory: CompressionFactory): Flow[FrameEvent, FrameEvent, NotUsed] =
     Flow.fromGraph(new LifecycleMapConcatStage(
       "PerMessageDeflate.deflater",
-      () => new DeflaterFlow(noContextTakeover, settings, compressionFactory)))
+      () =>
+        new DeflaterFlow(
+          noContextTakeover,
+          settings,
+          compressionFactory,
+          _ => true,
+          rsv1IndicatesCompression = false)))
 
   def negotiate(
       requested: immutable.Seq[WebSocketExtension],
@@ -242,11 +269,14 @@ private[http] object PerMessageDeflate {
   private final class DeflaterFlow(
       noContextTakeover: Boolean,
       settings: WebSocketCompressionSettingsImpl,
-      compressionFactory: CompressionFactory)
+      compressionFactory: CompressionFactory,
+      shouldCompress: FrameStart => Boolean,
+      rsv1IndicatesCompression: Boolean)
       extends LifecycleMapConcat[FrameEvent, FrameEvent] {
     private var deflater = compressionFactory.newDeflater(settings.compressionLevel)
     private var frame: Option[UncompressedFrame] = None
     private var messageInProgress = false
+    private var compressFragmentedMessage = false
     private var bypassFrameInProgress = false
     private val buffer = new Array[Byte](8192)
 
@@ -254,7 +284,7 @@ private[http] object PerMessageDeflate {
       case FrameStart(header, _)
           if (header.opcode == Protocol.Opcode.Text ||
           header.opcode == Protocol.Opcode.Binary) &&
-          (header.rsv1 || header.rsv2 || header.rsv3) =>
+          (header.rsv2 || header.rsv3 || (header.rsv1 && !rsv1IndicatesCompression)) =>
         throw new ProtocolException("Unexpected reserved bit for outbound WebSocket message")
       case FrameStart(header, _)
           if header.opcode == Protocol.Opcode.Continuation &&
@@ -265,18 +295,32 @@ private[http] object PerMessageDeflate {
           header.opcode == Protocol.Opcode.Binary =>
         if (messageInProgress || frame.isDefined)
           throw new ProtocolException("Unexpected data frame while fragmented message is open")
+        val compress = if (rsv1IndicatesCompression) header.rsv1 else shouldCompress(start)
         messageInProgress = !header.fin
-        frame = Some(UncompressedFrame(header.copy(length = 0, rsv1 = true), data, removeTail = header.fin))
-        if (start.lastPart) finishFrame() else Nil
+        compressFragmentedMessage = compress && messageInProgress
+        if (compress) {
+          frame = Some(UncompressedFrame(header.copy(length = 0, rsv1 = true), data, removeTail = header.fin))
+          if (start.lastPart) finishFrame() else Nil
+        } else {
+          bypassFrameInProgress = !start.lastPart
+          start :: Nil
+        }
       case start @ FrameStart(header, _) if bypassFrameInProgress =>
         throw new ProtocolException(s"Unexpected frame ${header.opcode} while frame data is open")
       case start @ FrameStart(header, _) if (frame.isDefined || messageInProgress) && header.opcode.isControl =>
         bypassFrameInProgress = !start.lastPart
         start :: Nil
       case start @ FrameStart(header, data) if messageInProgress && header.opcode == Protocol.Opcode.Continuation =>
+        val compress = compressFragmentedMessage
         messageInProgress = !header.fin
-        frame = Some(UncompressedFrame(header.copy(length = 0), data, removeTail = header.fin))
-        if (start.lastPart) finishFrame() else Nil
+        if (!messageInProgress) compressFragmentedMessage = false
+        if (compress) {
+          frame = Some(UncompressedFrame(header.copy(length = 0), data, removeTail = header.fin))
+          if (start.lastPart) finishFrame() else Nil
+        } else {
+          bypassFrameInProgress = !start.lastPart
+          start :: Nil
+        }
       case start @ FrameStart(header, _) if frame.isDefined || messageInProgress =>
         throw new ProtocolException(s"Unexpected frame ${header.opcode} while fragmented message is open")
       case data: FrameData if bypassFrameInProgress =>

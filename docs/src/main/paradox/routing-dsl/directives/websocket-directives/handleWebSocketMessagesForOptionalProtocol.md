@@ -18,6 +18,9 @@ If the `subprotocol` parameter is @scala[None]@java[@javadoc:[empty](java.util.O
 announced in the WebSocket request) @scala[contains `protocol`]@java[matches the contained subprotocol]. If the client did not offer the protocol in question
 the request is rejected with an @apidoc[UnsupportedWebSocketSubprotocolRejection].
 
+The overload that accepts a `shouldCompress` filter can select compression separately for each outbound message after
+`permessage-deflate` is negotiated.
+
 To support several subprotocols you may chain several `handleWebSocketMessagesForOptionalProtocol` routes.
 
 The `handleWebSocketMessagesForOptionalProtocol` directive is used as a building block for @ref[WebSocket Directives](index.md) to handle websocket messages.

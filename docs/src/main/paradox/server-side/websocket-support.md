@@ -171,6 +171,20 @@ The server exposes additional settings for the negotiated extension under
 If compression is enabled globally, a route can still decline compression for a single accepted WebSocket by using the
 `handleMessages` or `handleMessagesWith` overload with `compressionEnabled = false`.
 
+After `permessage-deflate` is negotiated, an application can also select which server-to-client messages are compressed.
+The compression filter is evaluated once for each outbound text or binary message. Returning `true` compresses that
+message; returning `false` sends it uncompressed. The same decision applies to every fragment of a streamed message.
+
+Scala
+:  @@snip [WebSocketExampleSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/WebSocketExampleSpec.scala) { #websocket-selective-compression }
+
+Java
+:  @@snip [WebSocketCoreExample.java](/docs/src/test/java/docs/http/javadsl/server/WebSocketCoreExample.java) { #websocket-selective-compression }
+
+The filter only controls outbound messages. It does not affect extension negotiation, and the client can still send both
+compressed and uncompressed messages. The filter is not evaluated if `permessage-deflate` was not negotiated. To disable
+compression in both directions for a security-sensitive endpoint, use the `compressionEnabled = false` overload instead.
+
 @@@ note
 The `server_no_context_takeover` and `client_no_context_takeover` extension parameters affect whether compression
 dictionaries are retained across messages. Retaining context generally improves compression ratio, while disabling
