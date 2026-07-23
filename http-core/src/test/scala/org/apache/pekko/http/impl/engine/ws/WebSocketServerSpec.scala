@@ -23,8 +23,8 @@ import java.util.zip.Inflater
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.http.scaladsl.model.ws._
 import pekko.http.javadsl.model.ws.{ Message => JavaMessage, TextMessage => JavaTextMessage }
+import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.stream.Materializer
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
