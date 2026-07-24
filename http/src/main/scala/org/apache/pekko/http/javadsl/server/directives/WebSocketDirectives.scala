@@ -62,6 +62,9 @@ abstract class WebSocketDirectives extends SecurityDirectives {
   /**
    * Handles WebSocket requests with the given handler and selectively compresses outbound messages for which
    * {@code shouldCompress} returns {@code true} when {@code permessage-deflate} was negotiated.
+   * The filter is evaluated synchronously once per outbound text or binary message, and the result applies to all
+   * fragments. It should be fast and non-blocking; if it throws, the WebSocket stream fails. A streamed message's
+   * complete payload and final size are not available when the filter is evaluated.
    *
    * @since 2.0.0
    */
@@ -82,7 +85,9 @@ abstract class WebSocketDirectives extends SecurityDirectives {
   /**
    * Handles WebSocket requests with the given handler if the given subprotocol is offered and selectively compresses
    * outbound messages for which {@code shouldCompress} returns {@code true} when {@code permessage-deflate} was
-   * negotiated.
+   * negotiated. The filter is evaluated synchronously once per outbound text or binary message, and the result applies
+   * to all fragments. It should be fast and non-blocking; if it throws, the WebSocket stream fails. A streamed
+   * message's complete payload and final size are not available when the filter is evaluated.
    *
    * @since 2.0.0
    */
@@ -113,6 +118,9 @@ abstract class WebSocketDirectives extends SecurityDirectives {
   /**
    * Handles WebSocket requests with the given handler and selectively compresses outbound messages for which
    * {@code shouldCompress} returns {@code true} when {@code permessage-deflate} was negotiated.
+   * The filter is evaluated synchronously once per outbound text or binary message, and the result applies to all
+   * fragments. It should be fast and non-blocking; if it throws, the WebSocket stream fails. A streamed message's
+   * complete payload and final size are not available when the filter is evaluated.
    *
    * @since 2.0.0
    */

@@ -57,9 +57,14 @@ trait WebSocketUpgrade {
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
    * use the given handlerFlow to handle WebSocket messages from the client.
    *
-   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated once for each outbound text or
-   * binary message. Returning {@code true} compresses that message and returning {@code false} sends it uncompressed.
-   * The filter does not affect inbound messages or whether compression is negotiated.
+   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated synchronously once for each
+   * outbound text or binary message. The result applies to every fragment of that message. Returning {@code true}
+   * compresses the message and returning {@code false} sends it uncompressed. The filter is not invoked for control
+   * frames or when compression was not negotiated, and it does not affect inbound messages or whether compression is
+   * negotiated.
+   *
+   * The filter should be fast and non-blocking; if it throws, the WebSocket stream fails. For streamed messages, the
+   * complete payload and its final size are not available when the filter is evaluated.
    *
    * @since 2.0.0
    */
@@ -93,9 +98,14 @@ trait WebSocketUpgrade {
    * use the given handlerFlow to handle WebSocket messages from the client. The given subprotocol must be one
    * of the ones offered by the client.
    *
-   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated once for each outbound text or
-   * binary message. Returning {@code true} compresses that message and returning {@code false} sends it uncompressed.
-   * The filter does not affect inbound messages or whether compression is negotiated.
+   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated synchronously once for each
+   * outbound text or binary message. The result applies to every fragment of that message. Returning {@code true}
+   * compresses the message and returning {@code false} sends it uncompressed. The filter is not invoked for control
+   * frames or when compression was not negotiated, and it does not affect inbound messages or whether compression is
+   * negotiated.
+   *
+   * The filter should be fast and non-blocking; if it throws, the WebSocket stream fails. For streamed messages, the
+   * complete payload and its final size are not available when the filter is evaluated.
    *
    * @since 2.0.0
    */
@@ -128,9 +138,14 @@ trait WebSocketUpgrade {
    * use the given inSink to handle WebSocket messages from the client and the given outSource to send messages to the
    * client.
    *
-   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated once for each outbound text or
-   * binary message. Returning {@code true} compresses that message and returning {@code false} sends it uncompressed.
-   * The filter does not affect inbound messages or whether compression is negotiated.
+   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated synchronously once for each
+   * outbound text or binary message. The result applies to every fragment of that message. Returning {@code true}
+   * compresses the message and returning {@code false} sends it uncompressed. The filter is not invoked for control
+   * frames or when compression was not negotiated, and it does not affect inbound messages or whether compression is
+   * negotiated.
+   *
+   * The filter should be fast and non-blocking; if it throws, the WebSocket stream fails. For streamed messages, the
+   * complete payload and its final size are not available when the filter is evaluated.
    *
    * @since 2.0.0
    */
@@ -166,9 +181,14 @@ trait WebSocketUpgrade {
    * use the given inSink to handle WebSocket messages from the client and the given outSource to send messages to the
    * client. The given subprotocol must be one of the ones offered by the client.
    *
-   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated once for each outbound text or
-   * binary message. Returning {@code true} compresses that message and returning {@code false} sends it uncompressed.
-   * The filter does not affect inbound messages or whether compression is negotiated.
+   * If {@code permessage-deflate} is negotiated, {@code shouldCompress} is evaluated synchronously once for each
+   * outbound text or binary message. The result applies to every fragment of that message. Returning {@code true}
+   * compresses the message and returning {@code false} sends it uncompressed. The filter is not invoked for control
+   * frames or when compression was not negotiated, and it does not affect inbound messages or whether compression is
+   * negotiated.
+   *
+   * The filter should be fast and non-blocking; if it throws, the WebSocket stream fails. For streamed messages, the
+   * complete payload and its final size are not available when the filter is evaluated.
    *
    * @since 2.0.0
    */
