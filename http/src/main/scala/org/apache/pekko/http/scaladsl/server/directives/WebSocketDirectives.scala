@@ -62,7 +62,10 @@ trait WebSocketDirectives {
 
   /**
    * Handles WebSocket requests with the given handler and selectively compresses outbound messages for which
-   * `shouldCompress` returns `true` when `permessage-deflate` was negotiated.
+   * `shouldCompress` returns `true` when `permessage-deflate` was negotiated. The filter is evaluated synchronously
+   * once per outbound text or binary message, and the result applies to all fragments. It should be fast and
+   * non-blocking; if it throws, the WebSocket stream fails. A streamed message's complete payload and final size are
+   * not available when the filter is evaluated.
    *
    * @group websocket
    * @since 2.0.0
@@ -83,7 +86,10 @@ trait WebSocketDirectives {
 
   /**
    * Handles WebSocket requests with the given handler if the given subprotocol is offered and selectively compresses
-   * outbound messages for which `shouldCompress` returns `true` when `permessage-deflate` was negotiated.
+   * outbound messages for which `shouldCompress` returns `true` when `permessage-deflate` was negotiated. The filter
+   * is evaluated synchronously once per outbound text or binary message, and the result applies to all fragments. It
+   * should be fast and non-blocking; if it throws, the WebSocket stream fails. A streamed message's complete payload
+   * and final size are not available when the filter is evaluated.
    *
    * @group websocket
    * @since 2.0.0
@@ -118,7 +124,10 @@ trait WebSocketDirectives {
 
   /**
    * Handles WebSocket requests with the given handler and selectively compresses outbound messages for which
-   * `shouldCompress` returns `true` when `permessage-deflate` was negotiated.
+   * `shouldCompress` returns `true` when `permessage-deflate` was negotiated. The filter is evaluated synchronously
+   * once per outbound text or binary message, and the result applies to all fragments. It should be fast and
+   * non-blocking; if it throws, the WebSocket stream fails. A streamed message's complete payload and final size are
+   * not available when the filter is evaluated.
    *
    * @group websocket
    * @since 2.0.0

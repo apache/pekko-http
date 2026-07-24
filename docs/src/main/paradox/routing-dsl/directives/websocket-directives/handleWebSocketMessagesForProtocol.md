@@ -19,7 +19,12 @@ subprotocol name. If yes, the directive completes the request with the passed ha
 either rejected with an @apidoc[ExpectedWebSocketRequestRejection$] or an @apidoc[UnsupportedWebSocketSubprotocolRejection].
 
 The overload that accepts a `shouldCompress` filter can select compression separately for each outbound message after
-`permessage-deflate` is negotiated.
+`permessage-deflate` is negotiated. It is evaluated synchronously once for each outbound text or binary message, and
+its result applies to every fragment of that message. The filter is not invoked for control frames or when compression
+was not negotiated. It should be fast and non-blocking; throwing from it fails the WebSocket stream.
+
+For a streamed message, the complete payload and its final size are not available when the filter is evaluated.
+Applications that select compression based on message size therefore need an explicit policy for streamed messages.
 
 To support several subprotocols, for example at the same path, several instances of `handleWebSocketMessagesForProtocol` can
 be chained using `~` as you can see in the below example.
