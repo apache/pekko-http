@@ -16,8 +16,6 @@
 
 package org.apache.pekko.http.javadsl.unmarshalling.sse;
 
-import static scala.jdk.javaapi.FutureConverters.asJava;
-
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.ActorSystem;
@@ -48,7 +46,8 @@ public class EventStreamUnmarshallingTest {
 
       Assertions.assertEquals(events, unmarshalledEvents);
     } finally {
-      asJava(system.terminate()).toCompletableFuture().get(42, TimeUnit.SECONDS);
+      system.terminate();
+      system.getWhenTerminated().get(42, TimeUnit.SECONDS);
     }
   }
 }

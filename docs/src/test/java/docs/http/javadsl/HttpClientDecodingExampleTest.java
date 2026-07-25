@@ -23,7 +23,7 @@ import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
-import org.apache.pekko.http.scaladsl.model.headers.HttpEncodings;
+import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
 
 public class HttpClientDecodingExampleTest {
 
@@ -45,9 +45,9 @@ public class HttpClientDecodingExampleTest {
         response -> {
           // Pick the right coder
           final Coder coder;
-          if (HttpEncodings.gzip().equals(response.encoding())) {
+          if (HttpEncodings.GZIP.equals(response.encoding())) {
             coder = Coder.Gzip;
-          } else if (HttpEncodings.deflate().equals(response.encoding())) {
+          } else if (HttpEncodings.DEFLATE.equals(response.encoding())) {
             coder = Coder.Deflate;
           } else {
             coder = Coder.NoCoding;
