@@ -24,8 +24,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.net.http.HttpRequest;
-
 public class HttpMessageTest extends JUnitSuite {
   @Test
   public void testRetrieveAttributeByKey() {
