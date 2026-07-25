@@ -91,7 +91,7 @@ public class JavaTestServer {
                         "scala",
                         () ->
                             completeOKWithFutureString(
-                                org.apache.pekko.dispatch.Futures.failed(new Exception("Boom!"))))
+                                CompletableFuture.failedFuture(new Exception("Boom!"))))
                     .orElse(
                         path(
                             "java",
