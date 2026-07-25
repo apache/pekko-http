@@ -16,9 +16,9 @@ package org.apache.pekko.http.javadsl.server;
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 import static org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers.INTEGER;
 
+import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
-import org.apache.pekko.http.scaladsl.model.HttpRequest;
 import org.junit.jupiter.api.Test;
 
 public class HandlerBindingTest extends JUnitJupiterRouteTest {
