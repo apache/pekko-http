@@ -13,7 +13,6 @@
 
 package docs.http.javadsl.server.directives;
 
-import org.apache.pekko.http.javadsl.model.DateTime;
 import org.apache.pekko.http.javadsl.model.HttpHeader;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.headers.Cookie;
@@ -22,6 +21,7 @@ import org.apache.pekko.http.javadsl.model.headers.SetCookie;
 import org.apache.pekko.http.javadsl.server.Rejections;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
+import org.apache.pekko.http.scaladsl.model.DateTime;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
