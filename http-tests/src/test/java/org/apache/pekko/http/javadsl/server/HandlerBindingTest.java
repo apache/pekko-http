@@ -17,9 +17,9 @@ import static org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers.IN
 
 import org.junit.Test;
 
+import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRouteResult;
-import org.apache.pekko.http.scaladsl.model.HttpRequest;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 

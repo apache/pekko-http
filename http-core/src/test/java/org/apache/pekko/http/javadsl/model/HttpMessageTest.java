@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.javadsl.model;
 
-import org.apache.pekko.http.scaladsl.model.AttributeKey$;
 import org.apache.pekko.stream.scaladsl.TLSPlacebo;
 import org.junit.Test;
 import org.scalatestplus.junit.JUnitSuite;
@@ -23,6 +22,9 @@ import javax.net.ssl.SSLSession;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.net.http.HttpRequest;
 
 public class HttpMessageTest extends JUnitSuite {
   @Test
@@ -31,8 +33,7 @@ public class HttpMessageTest extends JUnitSuite {
     // keys with the same type but different names should be considered different
     AttributeKey<String> otherStringKey = AttributeKey.create("other", String.class);
 
-    // it should be possible to use 'Scala attribute keys' in the Java API's
-    AttributeKey<Integer> intKey = AttributeKey$.MODULE$.apply("int", Integer.class);
+    AttributeKey<Integer> intKey = AttributeKey.create("int", Integer.class);
     // keys with the same name but different types should be considered different
     AttributeKey<Integer> otherIntKey = AttributeKey.create("other", Integer.class);
 
@@ -64,7 +65,7 @@ public class HttpMessageTest extends JUnitSuite {
     RemoteAddress remoteAddress = RemoteAddress.create(new byte[] {10, 0, 0, 1});
     HttpRequest newRequest = request.addAttribute(AttributeKeys.remoteAddress, remoteAddress);
 
-    assert (newRequest.getAttribute(AttributeKeys.remoteAddress).get().equals(remoteAddress));
+    assertTrue(newRequest.getAttribute(AttributeKeys.remoteAddress).get().equals(remoteAddress));
   }
 
   @Test
@@ -73,6 +74,6 @@ public class HttpMessageTest extends JUnitSuite {
     HttpRequest request =
         HttpRequest.create().addAttribute(AttributeKeys.sslSession, SslSessionInfo.create(session));
 
-    assert (request.getAttribute(AttributeKeys.sslSession).get().getSession() == session);
+    assertTrue(request.getAttribute(AttributeKeys.sslSession).get().getSession() == session);
   }
 }
