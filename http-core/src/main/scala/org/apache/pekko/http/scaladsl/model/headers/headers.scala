@@ -18,9 +18,6 @@ import java.net.InetSocketAddress
 import java.security.MessageDigest
 import java.util
 import javax.net.ssl.SSLSession
-import org.apache.pekko
-import pekko.annotation.{ ApiMayChange, InternalApi }
-import pekko.stream.scaladsl.ScalaSessionAPI
 
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
@@ -29,12 +26,16 @@ import scala.annotation.tailrec
 import scala.collection.immutable
 import org.parboiled2.CharPredicate
 import org.parboiled2.util.Base64
+
+import org.apache.pekko
+import pekko.annotation.{ ApiMayChange, InternalApi }
 import pekko.event.Logging
 import pekko.http.impl.util._
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.impl.model.parser.CharacterClasses.`attr-char`
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model._
+import pekko.stream.scaladsl.ScalaSessionAPI
 
 sealed abstract class ModeledCompanion[T: ClassTag] extends Renderable {
   val name = ModeledCompanion.nameFromClass(getClass)
