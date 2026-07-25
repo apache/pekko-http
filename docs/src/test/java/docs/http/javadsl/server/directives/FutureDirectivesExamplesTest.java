@@ -18,10 +18,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
-import org.apache.pekko.http.scaladsl.model.StatusCodes;
 import org.apache.pekko.japi.pf.PFBuilder;
 import org.apache.pekko.pattern.CircuitBreaker;
 import org.apache.pekko.testkit.javadsl.TestKit;
@@ -75,7 +75,7 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
                                     .matchAny(
                                         ex ->
                                             complete(
-                                                StatusCodes.InternalServerError(),
+                                                StatusCodes.INTERNAL_SERVER_ERROR,
                                                 "An error occurred: " + ex.getMessage()))
                                     .build())
                             .get()));
@@ -84,7 +84,7 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
 
     testRoute(route)
         .run(HttpRequest.GET("/divide/10/0"))
-        .assertStatusCode(StatusCodes.InternalServerError())
+        .assertStatusCode(StatusCodes.INTERNAL_SERVER_ERROR)
         .assertEntity("An error occurred: / by zero");
     // #onComplete
   }
@@ -114,7 +114,7 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
 
     testRoute(route)
         .run(HttpRequest.GET("/failure"))
-        .assertStatusCode(StatusCodes.InternalServerError())
+        .assertStatusCode(StatusCodes.INTERNAL_SERVER_ERROR)
         .assertEntity("There was an internal server error.");
     // #onSuccess
   }
@@ -148,7 +148,7 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
 
     testRoute(route)
         .run(HttpRequest.GET("/failure"))
-        .assertStatusCode(StatusCodes.InternalServerError())
+        .assertStatusCode(StatusCodes.INTERNAL_SERVER_ERROR)
         .assertEntity("There was an internal server error.");
     // #completeOrRecoverWith
   }
@@ -185,7 +185,7 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
                                     .matchAny(
                                         ex ->
                                             complete(
-                                                StatusCodes.InternalServerError(),
+                                                StatusCodes.INTERNAL_SERVER_ERROR,
                                                 "An error occurred: " + ex.toString()))
                                     .build())
                             .get()));
@@ -194,7 +194,7 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
 
     testRoute(route)
         .run(HttpRequest.GET("/divide/10/0"))
-        .assertStatusCode(StatusCodes.InternalServerError())
+        .assertStatusCode(StatusCodes.INTERNAL_SERVER_ERROR)
         .assertEntity("An error occurred: java.lang.ArithmeticException: / by zero");
 
     // The circuit-breaker will eventually be opened
@@ -207,7 +207,7 @@ public class FutureDirectivesExamplesTest extends JUnitRouteTest {
                   .run(HttpRequest.GET("/divide/10/0"))
                   .assertEntity(
                       "The server is currently unavailable (because it is overloaded or down for maintenance).")
-                  .assertStatusCode(StatusCodes.ServiceUnavailable());
+                  .assertStatusCode(StatusCodes.SERVICE_UNAVAILABLE);
               return null;
             });
 

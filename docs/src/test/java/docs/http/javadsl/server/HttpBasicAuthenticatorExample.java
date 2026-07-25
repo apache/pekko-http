@@ -18,11 +18,11 @@ import java.util.Optional;
 import org.junit.Test;
 
 import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.headers.Authorization;
 import org.apache.pekko.http.javadsl.model.headers.Host;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.server.directives.SecurityDirectives.ProvidedCredentials;
 import org.apache.pekko.http.javadsl.testkit.JUnitRouteTest;
-import org.apache.pekko.http.scaladsl.model.headers.Authorization;
 
 // #basic-authenticator-java
 import static org.apache.pekko.http.javadsl.server.Directives.authenticateBasic;

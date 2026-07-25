@@ -26,12 +26,12 @@ import org.apache.pekko.NotUsed;
 import org.apache.pekko.http.impl.util.JavaMapping;
 import org.apache.pekko.http.javadsl.ConnectHttp;
 import org.apache.pekko.http.javadsl.ConnectionContext;
+import org.apache.pekko.http.javadsl.model.AttributeKeys;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.ws.WebSocketRequest;
 import org.apache.pekko.http.javadsl.settings.ClientConnectionSettings;
 import org.apache.pekko.http.javadsl.settings.ServerSettings;
 import org.apache.pekko.http.javadsl.settings.WebSocketSettings;
-import org.apache.pekko.http.scaladsl.model.AttributeKeys;
 import org.apache.pekko.japi.JavaPartialFunction;
 import org.apache.pekko.japi.function.Function;
 
@@ -58,7 +58,7 @@ public class WebSocketCoreExample {
 
     if (request.getUri().path().equals("/greeter")) {
       return request
-          .getAttribute(AttributeKeys.webSocketUpgrade())
+          .getAttribute(AttributeKeys.webSocketUpgrade)
           .map(
               upgrade -> {
                 Flow<Message, Message, NotUsed> greeterFlow = greeter();
