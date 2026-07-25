@@ -15,10 +15,10 @@ package org.apache.pekko.http.javadsl.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
-import org.apache.pekko.http.scaladsl.model.AttributeKey$;
 import org.junit.jupiter.api.Test;
 
 public class HttpMessageTest {
@@ -29,7 +29,7 @@ public class HttpMessageTest {
     AttributeKey<String> otherStringKey = AttributeKey.create("other", String.class);
 
     // it should be possible to use 'Scala attribute keys' in the Java API's
-    AttributeKey<Integer> intKey = AttributeKey$.MODULE$.apply("int", Integer.class);
+    AttributeKey<Integer> intKey = AttributeKey.create("int", Integer.class);
     // keys with the same name but different types should be considered different
     AttributeKey<Integer> otherIntKey = AttributeKey.create("other", Integer.class);
 
@@ -61,7 +61,7 @@ public class HttpMessageTest {
     RemoteAddress remoteAddress = RemoteAddress.create(new byte[] {10, 0, 0, 1});
     HttpRequest newRequest = request.addAttribute(AttributeKeys.remoteAddress, remoteAddress);
 
-    assert (newRequest.getAttribute(AttributeKeys.remoteAddress).get().equals(remoteAddress));
+    assertTrue(newRequest.getAttribute(AttributeKeys.remoteAddress).get().equals(remoteAddress));
   }
 
   @Test
@@ -70,6 +70,6 @@ public class HttpMessageTest {
     HttpRequest request =
         HttpRequest.create().addAttribute(AttributeKeys.sslSession, SslSessionInfo.create(session));
 
-    assert (request.getAttribute(AttributeKeys.sslSession).get().getSession() == session);
+    assertTrue(request.getAttribute(AttributeKeys.sslSession).get().getSession() == session);
   }
 }
