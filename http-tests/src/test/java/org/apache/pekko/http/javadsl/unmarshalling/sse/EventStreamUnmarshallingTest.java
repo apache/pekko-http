@@ -47,7 +47,7 @@ public class EventStreamUnmarshallingTest {
       Assertions.assertEquals(events, unmarshalledEvents);
     } finally {
       system.terminate();
-      system.getWhenTerminated().get(42, TimeUnit.SECONDS);
+      system.getWhenTerminated().toCompletableFuture().get(42, TimeUnit.SECONDS);
     }
   }
 }
