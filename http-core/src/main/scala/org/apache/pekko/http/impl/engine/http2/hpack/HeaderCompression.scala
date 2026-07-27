@@ -43,48 +43,79 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
       val encoder = new pekko.http.shaded.com.twitter.hpack.Encoder(Http2Protocol.InitialMaxHeaderTableSize)
       val os = new ByteArrayOutputStream(128)
 
-      def onPull(): Unit = pull(eventsIn)
+      private def compressedHeadersFrame(
+          streamId: Int,
+          endStream: Boolean,
+          kvs: Seq[(String, AnyRef)],
+          prioInfo: Option[PriorityFrame]): FrameEvent =
+        // When ending the stream without any payload, use a DATA frame rather than
+        // a HEADERS frame to work around https://github.com/golang/go/issues/47851.
+        if (endStream && kvs.isEmpty) DataFrame(streamId, endStream, ByteString.empty)
+        else {
+          kvs.foreach {
+            case (key, value: String) =>
+              encoder.encodeHeader(os, key, value, false)
+            case (key, value) =>
+              throw new IllegalStateException(
+                s"Didn't expect key-value-pair [$key] -> [$value](${value.getClass}) here.")
+          }
+          val result = ByteString.fromArrayUnsafe(os.toByteArray) // BAOS.toByteArray always creates a copy
+          os.reset()
+          if (result.size <= currentMaxFrameSize)
+            HeadersFrame(streamId, endStream, endHeaders = true, result, prioInfo)
+          else {
+            val builder = Vector.newBuilder[FrameEvent]
+            builder += HeadersFrame(streamId, endStream, endHeaders = false, result.take(currentMaxFrameSize), prioInfo)
+            var remainingData = result.drop(currentMaxFrameSize)
+            while (remainingData.nonEmpty) {
+              val thisFragment = remainingData.take(currentMaxFrameSize)
+              val rest = remainingData.drop(currentMaxFrameSize)
+              builder += ContinuationFrame(streamId, endHeaders = rest.isEmpty, thisFragment)
+              remainingData = rest
+            }
+            CompositeFrame(builder.result())
+          }
+        }
+
+      private def compressedFrame(frame: FrameEvent): FrameEvent =
+        frame match {
+          case ParsedHeadersFrame(streamId, endStream, kvs, prioInfo, _) =>
+            compressedHeadersFrame(streamId, endStream, kvs, prioInfo)
+          case other => other
+        }
+
+      // Continuation frames to drain when a CompositeFrame is split.
+      // Using a var field on Logic avoids allocating a new OutHandler per CompositeFrame.
+      private var continuationFrames: Seq[FrameEvent] = null
+
+      def onPull(): Unit =
+        if (continuationFrames ne null) {
+          push(eventsOut, continuationFrames.head)
+          val rest = continuationFrames.tail
+          continuationFrames = if (rest.isEmpty) null else rest
+        } else pull(eventsIn)
+
       def onPush(): Unit = grab(eventsIn) match {
         case ack @ SettingsAckFrame(s) =>
           applySettings(s)
           push(eventsOut, ack)
         case ParsedHeadersFrame(streamId, endStream, kvs, prioInfo, _) =>
-          // When ending the stream without any payload, use a DATA frame rather than
-          // a HEADERS frame to work around https://github.com/golang/go/issues/47851.
-          if (endStream && kvs.isEmpty) push(eventsOut, DataFrame(streamId, endStream, ByteString.empty))
-          else {
-            kvs.foreach {
-              case (key, value: String) =>
-                encoder.encodeHeader(os, key, value, false)
-              case (key, value) =>
-                throw new IllegalStateException(
-                  s"Didn't expect key-value-pair [$key] -> [$value](${value.getClass}) here.")
-            }
-            val result = ByteString.fromArrayUnsafe(os.toByteArray) // BAOS.toByteArray always creates a copy
-            os.reset()
-            if (result.size <= currentMaxFrameSize)
-              push(eventsOut, HeadersFrame(streamId, endStream, endHeaders = true, result, prioInfo))
-            else {
-              val first =
-                HeadersFrame(streamId, endStream, endHeaders = false, result.take(currentMaxFrameSize), prioInfo)
-
+          compressedHeadersFrame(streamId, endStream, kvs, prioInfo) match {
+            case CompositeFrame(first +: rest) =>
               push(eventsOut, first)
-              setHandler(eventsOut,
-                new OutHandler {
-                  private var remainingData = result.drop(currentMaxFrameSize)
-
-                  def onPull(): Unit = {
-                    val thisFragment = remainingData.take(currentMaxFrameSize)
-                    val rest = remainingData.drop(currentMaxFrameSize)
-                    val last = rest.isEmpty
-
-                    push(eventsOut, ContinuationFrame(streamId, endHeaders = last, thisFragment))
-                    if (last) setHandler(eventsOut, logic)
-                    else remainingData = rest
-                  }
-                })
-            }
+              if (rest.nonEmpty) continuationFrames = rest
+            case frame => push(eventsOut, frame)
           }
+        case CompositeFrame(frames) =>
+          val builder = Vector.newBuilder[FrameEvent]
+          frames.foreach {
+            case frame =>
+              compressedFrame(frame) match {
+                case CompositeFrame(compressed) => builder ++= compressed
+                case compressed                 => builder += compressed
+              }
+          }
+          push(eventsOut, CompositeFrame(builder.result()))
         case x => push(eventsOut, x)
       }
 

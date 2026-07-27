@@ -146,9 +146,21 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       log: LoggingAdapter,
       handler: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] = { request =>
     try {
-      handler(request).recover {
-        case NonFatal(ex) => handleHandlerError(log, ex)
-      }(ExecutionContext.parasitic)
+      val response = handler(request)
+      // Fast path: if the handler returned an already-completed successful Future
+      // (common for gRPC unary handlers), skip the .recover allocation entirely.
+      // .recover always allocates a Recover PartialFunction + wrapper Future via transform,
+      // even when the original Future is already successful.
+      response.value match {
+        case Some(Success(_)) => response
+        case Some(Failure(ex)) if NonFatal(ex) =>
+          Future.successful(handleHandlerError(log, ex))
+        case Some(Failure(ex)) => throw ex
+        case None =>
+          response.recover {
+            case NonFatal(ex) => handleHandlerError(log, ex)
+          }(ExecutionContext.parasitic)
+      }
     } catch {
       case NonFatal(ex) => Future.successful(handleHandlerError(log, ex))
     }
