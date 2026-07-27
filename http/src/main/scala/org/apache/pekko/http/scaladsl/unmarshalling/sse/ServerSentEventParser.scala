@@ -95,7 +95,7 @@ private object ServerSentEventParser {
 
   private final val Retry = "retry"
 
-  private val Field = """([^:]+): ?(.*)""".r
+  private val Field = """(?s)([^:]+): ?(.*)""".r
 }
 
 case class OversizedSseEvent(event: ServerSentEvent)

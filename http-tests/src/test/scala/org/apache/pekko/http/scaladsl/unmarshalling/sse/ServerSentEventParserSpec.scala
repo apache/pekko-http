@@ -78,6 +78,27 @@ final class ServerSentEventParserSpec extends AsyncWordSpec with Matchers with B
             ServerSentEvent("event 3", None, Some("")),
             ServerSentEvent("event 4")))
     }
+    "parse data values containing Unicode line terminators (U+0085, U+2028, U+2029)" in {
+      // WHATWG SSE spec: lines end only on CR/LF/CRLF; these Unicode chars are ordinary content
+      val nel = "\u0085" // NEL
+      val ls = "\u2028" // LINE SEPARATOR
+      val ps = "\u2029" // PARAGRAPH SEPARATOR
+      val input = Vector(
+        s"data: before${nel}after",
+        "",
+        s"data: before${ls}after",
+        "",
+        s"data: before${ps}after",
+        "")
+      Source(input)
+        .via(new ServerSentEventParser(1048576, emitEmptyEvents = false))
+        .runWith(Sink.seq)
+        .map(
+          _ shouldBe Vector(
+            ServerSentEvent(s"before${nel}after"),
+            ServerSentEvent(s"before${ls}after"),
+            ServerSentEvent(s"before${ps}after")))
+    }
     "parse ServerSentEvents correctly (and pass empty events)" in {
       val input = """|data: event 1 line 1
                      |data:event 1 line 2
