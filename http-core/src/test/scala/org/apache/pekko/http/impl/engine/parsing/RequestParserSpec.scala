@@ -556,6 +556,16 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      "too many chunks" in new Test {
+        override def parserSettings: ParserSettings =
+          super.parserSettings.withMaxChunkCount(5)
+
+        val chunks = (1 to 10).map(i => s"1\na\n").mkString + "0\n"
+        val result = multiParse(newParser)(Seq(prep(start + chunks)))
+        val errors = result.collect { case Left(EntityStreamError(info)) => info.summary }
+        errors should contain("HTTP chunk count exceeds the configured limit of 5 chunks")
+      }
+
       "an illegal chunk termination" in new Test {
         Seq(
           start,
