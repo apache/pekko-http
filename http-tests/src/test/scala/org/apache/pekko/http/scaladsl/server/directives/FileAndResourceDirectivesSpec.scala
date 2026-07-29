@@ -545,9 +545,9 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
         Get() ~> withSettings(settings)(listDirectoryContents(dir.getAbsolutePath)) ~> check {
           val body = responseAs[String]
           body should include("a&amp;b.txt")
-          body should not include "a&b.txt"
+          (body should not).include("a&b.txt")
           body should include("a&#39;b.txt")
-          body should not include "a'b.txt"
+          (body should not).include("a'b.txt")
         }
       } finally {
         dir.listFiles().foreach(_.delete())
