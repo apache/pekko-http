@@ -246,16 +246,20 @@ private[http] object PerMessageDeflate {
       try {
         val input = if (appendTail) data ++ EmptyStoredBlock else data
         inflater.setInput(input.toArrayUnsafe())
-        val output = new ByteArrayOutputStream(1024)
+        val maxInitialCapacity =
+          if (settings.maxAllocation > 0) math.min(settings.maxAllocation, 128 * 1024).toInt
+          else 128 * 1024
+        val output = new ByteStringBuilder
+        output.sizeHint(maxInitialCapacity)
         var count = inflater.inflate(buffer)
         while (count > 0) {
           decompressedMessageBytes += count
           if (settings.maxAllocation > 0 && decompressedMessageBytes > settings.maxAllocation)
             throw new ProtocolException("WebSocket decompressed message exceeds configured maximum allocation")
-          output.write(buffer, 0, count)
+          output.putBytes(buffer, 0, count)
           count = inflater.inflate(buffer)
         }
-        ByteString.fromArrayUnsafe(output.toByteArray)
+        output.result()
       } catch {
         case ex: DataFormatException =>
           throw new ProtocolException(s"Invalid WebSocket compressed message: ${ex.getMessage}")
