@@ -400,26 +400,20 @@ object DirectoryListing {
       |</html>
       |""".stripMarginWithNewline("\n").split('$')
 
-  private def escapeHtml(s: String): String = escapeHtml(s, "")
-
-  private def escapeHtml(s1: String, s2: String): String = {
-    val sb = new java.lang.StringBuilder(s1.length + s2.length + 16)
-    def appendEscaped(s: String): Unit = {
-      var i = 0
-      while (i < s.length) {
-        s.charAt(i) match {
-          case '&'  => sb.append("&amp;")
-          case '<'  => sb.append("&lt;")
-          case '>'  => sb.append("&gt;")
-          case '"'  => sb.append("&quot;")
-          case '\'' => sb.append("&#39;")
-          case c    => sb.append(c)
-        }
-        i += 1
+  private def escapeHtml(s: String): String = {
+    val sb = new java.lang.StringBuilder(s.length + 16)
+    var i = 0
+    while (i < s.length) {
+      s.charAt(i) match {
+        case '&'  => sb.append("&amp;")
+        case '<'  => sb.append("&lt;")
+        case '>'  => sb.append("&gt;")
+        case '"'  => sb.append("&quot;")
+        case '\'' => sb.append("&#39;")
+        case c    => sb.append(c)
       }
+      i += 1
     }
-    appendEscaped(s1)
-    appendEscaped(s2)
     sb.toString
   }
 
@@ -444,7 +438,8 @@ object DirectoryListing {
       def lastModified(file: File) = DateTime(file.lastModified).toIsoLikeDateTimeString
       def start(name: String) = {
         val escapedName = escapeHtml(name)
-        sb.append("<a href=\"").append(escapeHtml(path, name)).append("\">").append(escapedName).append("</a>")
+        sb.append("<a href=\"").append(escapeHtml(path)).append(escapedName).append("\">").append(escapedName).append(
+          "</a>")
           .append(" " * (maxNameLen - name.length))
       }
       def renderDirectory(file: File, name: String) =
