@@ -440,7 +440,12 @@ object DirectoryListing {
         val escapedName = escapeHtml(name)
         sb.append("<a href=\"").append(escapeHtml(path)).append(escapedName).append("\">").append(escapedName).append(
           "</a>")
-          .append(" " * (maxNameLen - name.length))
+        var padding = maxNameLen - name.length
+        while (padding > 0) {
+          sb.append(' ')
+          padding -= 1
+        }
+        sb
       }
       def renderDirectory(file: File, name: String) =
         start(name + '/').append("        ").append(lastModified(file)).append('\n')
