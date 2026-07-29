@@ -44,6 +44,7 @@ private[pekko] final case class ParserSettingsImpl(
     maxToStrictBytes: Long,
     maxChunkExtLength: Int,
     maxChunkSize: Int,
+    maxChunkCount: Int,
     maxCommentParsingDepth: Int,
     uriParsingMode: Uri.ParsingMode,
     cookieParsingMode: CookieParsingMode,
@@ -71,6 +72,7 @@ private[pekko] final case class ParserSettingsImpl(
   require(maxContentLengthSetting.forall(_ >= 0), "if set max-content-length must be >= 0")
   require(maxChunkExtLength > 0, "max-chunk-ext-length must be > 0")
   require(maxChunkSize > 0, "max-chunk-size must be > 0")
+  require(maxChunkCount > 0, "max-chunk-count must be > 0")
   require(maxCommentParsingDepth > 0, "max-comment-parsing-depth must be > 0")
 
   override val defaultHeaderValueCacheLimit: Int = headerValueCacheLimits("default")
@@ -112,6 +114,7 @@ object ParserSettingsImpl extends SettingsCompanionImpl[ParserSettingsImpl]("pek
       c.getPossiblyInfiniteBytes("max-to-strict-bytes"),
       c.getIntBytes("max-chunk-ext-length"),
       c.getIntBytes("max-chunk-size"),
+      c.getIntBytes("max-chunk-count"),
       c.getInt("max-comment-parsing-depth"),
       Uri.ParsingMode(c.getString("uri-parsing-mode")),
       CookieParsingMode(c.getString("cookie-parsing-mode")),
