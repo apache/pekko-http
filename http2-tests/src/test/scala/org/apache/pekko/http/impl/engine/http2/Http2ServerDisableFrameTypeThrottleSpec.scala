@@ -21,10 +21,11 @@ import pekko.http.impl.engine.http2.framing.FrameRenderer
 import pekko.util.ByteStringBuilder
 
 /**
- * This tests the http2 server throttle support for rapid resets is disabled by default.
+ * This tests the http2 server throttle support for rapid resets when explicitly disabled.
  */
 class Http2ServerDisableFrameTypeThrottleSpec extends Http2SpecWithMaterializer("""
     pekko.http.server.http2.log-frames = on
+    pekko.http.server.http2.frame-type-throttle.frame-types = []
   """) {
   override def failOnSevereMessages: Boolean = true
 
