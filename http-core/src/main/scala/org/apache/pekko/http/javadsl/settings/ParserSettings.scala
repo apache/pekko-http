@@ -44,6 +44,7 @@ abstract class ParserSettings private[pekko] () extends BodyPartParser.Settings 
   def getMaxToStrictBytes: Long
   def getMaxChunkExtLength: Int
   def getMaxChunkSize: Int
+  def getMaxChunkCount: Int
   def getMaxCommentParsingDepth: Int
   def getUriParsingMode: Uri.ParsingMode
   def getCookieParsingMode: ParserSettings.CookieParsingMode
@@ -74,6 +75,7 @@ abstract class ParserSettings private[pekko] () extends BodyPartParser.Settings 
   def withMaxToStrictBytes(newValue: Long): ParserSettings = self.copy(maxToStrictBytes = newValue)
   def withMaxChunkExtLength(newValue: Int): ParserSettings = self.copy(maxChunkExtLength = newValue)
   def withMaxChunkSize(newValue: Int): ParserSettings = self.copy(maxChunkSize = newValue)
+  def withMaxChunkCount(newValue: Int): ParserSettings = self.copy(maxChunkCount = newValue)
   def withMaxCommentParsingDepth(newValue: Int): ParserSettings = self.copy(maxCommentParsingDepth = newValue)
   def withUriParsingMode(newValue: Uri.ParsingMode): ParserSettings = self.copy(uriParsingMode = newValue.asScala)
   def withCookieParsingMode(newValue: ParserSettings.CookieParsingMode): ParserSettings =

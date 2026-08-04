@@ -47,6 +47,7 @@ abstract class ParserSettings private[pekko] () extends pekko.http.javadsl.setti
   def maxToStrictBytes: Long
   def maxChunkExtLength: Int
   def maxChunkSize: Int
+  def maxChunkCount: Int
   def maxCommentParsingDepth: Int
   def uriParsingMode: Uri.ParsingMode
   def cookieParsingMode: ParserSettings.CookieParsingMode
@@ -68,6 +69,7 @@ abstract class ParserSettings private[pekko] () extends pekko.http.javadsl.setti
   override def getCookieParsingMode: js.ParserSettings.CookieParsingMode = this.cookieParsingMode
   override def getHeaderValueCacheLimits: util.Map[String, Int] = this.headerValueCacheLimits.asJava
   override def getMaxChunkExtLength = this.maxChunkExtLength
+  override def getMaxChunkCount = this.maxChunkCount
   override def getUriParsingMode: pekko.http.javadsl.model.Uri.ParsingMode = this.uriParsingMode
   override def getMaxHeaderCount = this.maxHeaderCount
   override def getMaxContentLength = this.maxContentLength
@@ -111,6 +113,7 @@ abstract class ParserSettings private[pekko] () extends pekko.http.javadsl.setti
   override def withMaxToStrictBytes(newValue: Long): ParserSettings = self.copy(maxToStrictBytes = newValue)
   override def withMaxChunkExtLength(newValue: Int): ParserSettings = self.copy(maxChunkExtLength = newValue)
   override def withMaxChunkSize(newValue: Int): ParserSettings = self.copy(maxChunkSize = newValue)
+  override def withMaxChunkCount(newValue: Int): ParserSettings = self.copy(maxChunkCount = newValue)
   override def withMaxCommentParsingDepth(newValue: Int): ParserSettings = self.copy(maxCommentParsingDepth = newValue)
   override def withIllegalHeaderWarnings(newValue: Boolean): ParserSettings =
     self.copy(illegalHeaderWarnings = newValue)

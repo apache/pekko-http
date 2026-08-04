@@ -249,7 +249,8 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
   }
 
   protected final def parseChunk(
-      input: ByteString, offset: Int, isLastMessage: Boolean, totalBytesRead: Long): StateResult = {
+      input: ByteString, offset: Int, isLastMessage: Boolean, totalBytesRead: Long, chunkCount: Int = 0)
+      : StateResult = {
     @tailrec def parseTrailer(extension: String, lineStart: Int, headers: List[HttpHeader] = Nil,
         headerCount: Int = 0): StateResult = {
       var errorInfo: ErrorInfo = null
@@ -277,10 +278,14 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
 
     def parseChunkBody(chunkSize: Int, extension: String, cursor: Int): StateResult =
       if (chunkSize > 0) {
+        if (chunkCount >= settings.maxChunkCount)
+          failEntityStream(
+            s"HTTP chunk count exceeds the configured limit of ${settings.maxChunkCount} chunks")
         val chunkBodyEnd = cursor + chunkSize
         def result(terminatorLen: Int) = {
           emit(EntityChunk(HttpEntity.Chunk(input.slice(cursor, chunkBodyEnd).compact, extension)))
-          Trampoline(_ => parseChunk(input, chunkBodyEnd + terminatorLen, isLastMessage, totalBytesRead + chunkSize))
+          Trampoline(_ =>
+            parseChunk(input, chunkBodyEnd + terminatorLen, isLastMessage, totalBytesRead + chunkSize, chunkCount + 1))
         }
         byteAt(input, chunkBodyEnd) match {
           case CR_BYTE if byteAt(input, chunkBodyEnd + 1) == LF_BYTE => result(2)
@@ -318,7 +323,8 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
 
     try parseSize(offset, 0)
     catch {
-      case NotEnoughDataException => continue(input, offset)(parseChunk(_, _, isLastMessage, totalBytesRead))
+      case NotEnoughDataException =>
+        continue(input, offset)(parseChunk(_, _, isLastMessage, totalBytesRead, chunkCount))
     }
   }
 
