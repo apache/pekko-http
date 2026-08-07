@@ -28,8 +28,8 @@ ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
 ThisBuild / javafmtFormatterCompatibleJavaVersion := 17
 ThisBuild / javafmtSortImports := false
 
-ThisBuild / JupiterKeys.junitJupiterVersion := "6.1.2"
-ThisBuild / JupiterKeys.junitPlatformVersion := "6.1.2"
+ThisBuild / JupiterKeys.junitJupiterVersion := "6.1.3"
+ThisBuild / JupiterKeys.junitPlatformVersion := "6.1.3"
 
 addCommandAlias("checkCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; javafmtCheckAll; +headerCheckAll")
 addCommandAlias("applyCodeStyle", "+headerCreateAll; scalafmtAll; scalafmtSbt; javafmtAll")
