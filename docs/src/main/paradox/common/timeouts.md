@@ -15,6 +15,15 @@ on a connection for over `idle-timeout` time, the connection will be automatical
 This setting should be used as a last-resort safeguard to prevent unused or stuck connections from consuming resources for
 an indefinite time.
 
+This is a bidirectional inactivity timeout. It triggers only when no
+bytes are sent or received for the configured duration. Traffic in
+either direction, including a client sending bytes at intervals shorter
+than the timeout, keeps the connection alive; it is not an overall
+request-receive timeout. Lowering this value and configuring
+`pekko.http.server.parsing.max-content-length` reduce exposure but do not
+bound request duration. Use an appropriately configured reverse proxy or
+application-level entity timeout when a hard receive deadline is required.
+
 The setting works the same way for server and client connections and it is configurable independently using the following keys:
 
 ```
