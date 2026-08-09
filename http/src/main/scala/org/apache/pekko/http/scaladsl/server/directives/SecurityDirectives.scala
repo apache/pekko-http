@@ -142,6 +142,12 @@ trait SecurityDirectives {
    * The given authenticator determines whether the credentials in the request are valid
    * and, if so, which user object to supply to the inner route.
    *
+   * If no `Authorization: Bearer &lt;token&gt;` header is present, this directive falls back to
+   * extracting the token from the `access_token` query parameter. Per RFC 6750 Section 2.3,
+   * bearer tokens transmitted via query parameters may be leaked in server logs, browser history,
+   * HTTP Referer headers, and proxy logs. For browser-facing APIs, prefer requiring the
+   * `Authorization` header.
+   *
    * @group security
    */
   def authenticateOAuth2[T](realm: String, authenticator: Authenticator[T]): AuthenticationDirective[T] =
@@ -151,6 +157,12 @@ trait SecurityDirectives {
    * A directive that wraps the inner route with OAuth2 Bearer Token authentication support.
    * The given authenticator determines whether the credentials in the request are valid
    * and, if so, which user object to supply to the inner route.
+   *
+   * If no `Authorization: Bearer &lt;token&gt;` header is present, this directive falls back to
+   * extracting the token from the `access_token` query parameter. Per RFC 6750 Section 2.3,
+   * bearer tokens transmitted via query parameters may be leaked in server logs, browser history,
+   * HTTP Referer headers, and proxy logs. For browser-facing APIs, prefer requiring the
+   * `Authorization` header.
    *
    * @group security
    */
@@ -180,6 +192,9 @@ trait SecurityDirectives {
    * The given authenticator determines whether the credentials in the request are valid
    * and, if so, which user object to supply to the inner route.
    *
+   * Falls back to extracting the token from the `access_token` query parameter if no
+   * `Authorization` header is present. See [[authenticateOAuth2]] for security considerations.
+   *
    * @group security
    */
   def authenticateOAuth2PF[T](realm: String, authenticator: AuthenticatorPF[T]): AuthenticationDirective[T] =
@@ -189,6 +204,9 @@ trait SecurityDirectives {
    * A directive that wraps the inner route with OAuth2 Bearer Token authentication support.
    * The given authenticator determines whether the credentials in the request are valid
    * and, if so, which user object to supply to the inner route.
+   *
+   * Falls back to extracting the token from the `access_token` query parameter if no
+   * `Authorization` header is present. See [[authenticateOAuth2]] for security considerations.
    *
    * @group security
    */
