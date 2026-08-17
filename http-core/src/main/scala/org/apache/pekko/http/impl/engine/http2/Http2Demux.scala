@@ -348,41 +348,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
           def onPush(): Unit = {
             val frame = grab(frameIn)
+            // Single pattern match: PingFrame first (no onDataFrameSeen),
+            // all other frames call onDataFrameSeen at the start.
             frame match {
-              case _: PingFrame => // handle later
-              case _            => pingState.onDataFrameSeen()
-            }
-            frame match {
-              case WindowUpdateFrame(streamId, increment)
-                  if streamId == 0 /* else fall through to StreamFrameEvent */ =>
-                if (!multiplexer.updateConnectionLevelWindow(increment))
-                  pushGOAWAY(ErrorCode.FLOW_CONTROL_ERROR,
-                    "WINDOW_UPDATE would exceed maximum connection-level flow-control window size")
-              case p: PriorityFrame    => multiplexer.updatePriority(p)
-              case s: StreamFrameEvent =>
-                if (!terminating)
-                  handleStreamEvent(s)
-                else if (s.streamId <= lastIdBeforeTermination)
-                  handleStreamEvent(s)
-                else
-                  // make clear that we are not accepting any more data on other streams
-                  multiplexer.pushControlFrame(RstStreamFrame(s.streamId, ErrorCode.REFUSED_STREAM))
-
-              case SettingsFrame(settings) =>
-                if (settings.nonEmpty) debug(s"Got ${settings.length} settings!")
-
-                val settingsAppliedOk = applyRemoteSettings(settings)
-                if (settingsAppliedOk) {
-                  multiplexer.pushControlFrame(SettingsAckFrame(settings))
-                }
-
-              case SettingsAckFrame(_) =>
-              // Currently, we only expect an ack for the initial settings frame, sent
-              // above in preStart. Since only some settings are supported, and those
-              // settings are non-modifiable and known at construction time, these settings
-              // are enforced from the start of the connection so there's no need to invoke
-              // `enforceSettings(initialLocalSettings)`
-
               case PingFrame(true, data) =>
                 if (data != ConfigurablePing.Ping.data) {
                   // We only ever push static data, responding with anything else is wrong
@@ -393,7 +361,44 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
               case PingFrame(false, data) =>
                 multiplexer.pushControlFrame(PingFrame(ack = true, data))
 
+              case WindowUpdateFrame(streamId, increment)
+                  if streamId == 0 /* else fall through to StreamFrameEvent */ =>
+                pingState.onDataFrameSeen()
+                if (!multiplexer.updateConnectionLevelWindow(increment))
+                  pushGOAWAY(ErrorCode.FLOW_CONTROL_ERROR,
+                    "WINDOW_UPDATE would exceed maximum connection-level flow-control window size")
+              case p: PriorityFrame =>
+                pingState.onDataFrameSeen()
+                multiplexer.updatePriority(p)
+              case s: StreamFrameEvent =>
+                pingState.onDataFrameSeen()
+                if (!terminating)
+                  handleStreamEvent(s)
+                else if (s.streamId <= lastIdBeforeTermination)
+                  handleStreamEvent(s)
+                else
+                  // make clear that we are not accepting any more data on other streams
+                  multiplexer.pushControlFrame(RstStreamFrame(s.streamId, ErrorCode.REFUSED_STREAM))
+
+              case SettingsFrame(settings) =>
+                pingState.onDataFrameSeen()
+                if (settings.nonEmpty) debug(s"Got ${settings.length} settings!")
+
+                val settingsAppliedOk = applyRemoteSettings(settings)
+                if (settingsAppliedOk) {
+                  multiplexer.pushControlFrame(SettingsAckFrame(settings))
+                }
+
+              case _: SettingsAckFrame =>
+                pingState.onDataFrameSeen()
+              // Currently, we only expect an ack for the initial settings frame, sent
+              // above in preStart. Since only some settings are supported, and those
+              // settings are non-modifiable and known at construction time, these settings
+              // are enforced from the start of the connection so there's no need to invoke
+              // `enforceSettings(initialLocalSettings)`
+
               case e =>
+                pingState.onDataFrameSeen()
                 debug(s"Got unhandled event $e")
               // ignore unknown frames
             }

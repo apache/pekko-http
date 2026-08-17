@@ -88,6 +88,8 @@ private[http] object FrameEvent {
       streamId: Int,
       windowSizeIncrement: Int) extends StreamFrameEvent
 
+  final case class CompositeFrame(frames: immutable.Seq[FrameEvent]) extends FrameEvent
+
   final case class PriorityFrame(
       streamId: Int,
       exclusiveFlag: Boolean,
