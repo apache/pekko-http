@@ -23,7 +23,6 @@ import com.github.sbt.junit.jupiter.sbt.Import.JupiterKeys
 sourceDistName := "apache-pekko-http"
 sourceDistIncubating := false
 
-ThisBuild / resolvers += Resolver.ApacheMavenStagingRepo
 ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
 
 ThisBuild / javafmtFormatterCompatibleJavaVersion := 17
