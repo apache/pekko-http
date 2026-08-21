@@ -59,11 +59,12 @@ private[http2] class Http2ClientDemux(http2Settings: Http2ClientSettings, master
     extends Http2Demux(http2Settings, initialRemoteSettings = Nil, upgraded = false, isServer = false) {
 
   def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[ChunkStreamPart] = {
-    val headerParser = masterHttpHeaderParser.createShallowCopy()
     Some(LastChunk(extension = "",
       headers.keyValuePairs.map {
         case (name, value: HttpHeader) => value
-        case (name, value)             => parseHeaderPair(headerParser, name, value.asInstanceOf[String])
+        case (name, value) =>
+          val headerParser = masterHttpHeaderParser.createShallowCopy()
+          parseHeaderPair(headerParser, name, value.asInstanceOf[String])
       }.toList))
   }
 
