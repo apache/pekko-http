@@ -281,16 +281,19 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
         if (chunkCount >= settings.maxChunkCount)
           failEntityStream(
             s"HTTP chunk count exceeds the configured limit of ${settings.maxChunkCount} chunks")
-        val chunkBodyEnd = cursor + chunkSize
-        def result(terminatorLen: Int) = {
-          emit(EntityChunk(HttpEntity.Chunk(input.slice(cursor, chunkBodyEnd).compact, extension)))
-          Trampoline(_ =>
-            parseChunk(input, chunkBodyEnd + terminatorLen, isLastMessage, totalBytesRead + chunkSize, chunkCount + 1))
-        }
-        byteAt(input, chunkBodyEnd) match {
-          case CR_BYTE if byteAt(input, chunkBodyEnd + 1) == LF_BYTE => result(2)
-          case LF_BYTE                                               => result(1)
-          case x                                                     => failEntityStream("Illegal chunk termination")
+        else {
+          val chunkBodyEnd = cursor + chunkSize
+          def result(terminatorLen: Int) = {
+            emit(EntityChunk(HttpEntity.Chunk(input.slice(cursor, chunkBodyEnd).compact, extension)))
+            Trampoline(_ =>
+              parseChunk(input, chunkBodyEnd + terminatorLen, isLastMessage, totalBytesRead + chunkSize,
+                chunkCount + 1))
+          }
+          byteAt(input, chunkBodyEnd) match {
+            case CR_BYTE if byteAt(input, chunkBodyEnd + 1) == LF_BYTE => result(2)
+            case LF_BYTE                                               => result(1)
+            case x                                                     => failEntityStream("Illegal chunk termination")
+          }
         }
       } else parseTrailer(extension, cursor)
 
