@@ -458,6 +458,21 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
 
     }
 
+    "collect its temporary files in a single directory" in {
+      // the directory is removed by one shutdown hook, instead of registering every single uploaded file with
+      // `File.deleteOnExit`, which the JVM would remember for the lifetime of the process
+      val first = UploadTempFiles.create()
+      val second = UploadTempFiles.create()
+      try {
+        first.getParentFile.getName should startWith("pekko-http-uploads")
+        second.getParentFile shouldEqual first.getParentFile
+        (first should not).equal(second)
+      } finally {
+        first.delete()
+        second.delete()
+      }
+    }
+
   }
 
   private def read(file: File): String = {

@@ -14,7 +14,7 @@
 package org.apache.pekko.http.scaladsl.server.directives
 
 import java.io.File
-import java.nio.file.Files
+import java.nio.file.{ Files, Path }
 
 import scala.collection.immutable
 import scala.concurrent.{ Future, Promise }
@@ -22,7 +22,7 @@ import scala.util.{ Failure, Success }
 
 import org.apache.pekko
 import pekko.Done
-import pekko.annotation.ApiMayChange
+import pekko.annotation.{ ApiMayChange, InternalApi }
 import pekko.http.impl.util.StreamUtils
 import pekko.http.javadsl
 import pekko.http.scaladsl.model.{ ContentType, Multipart }
@@ -174,11 +174,7 @@ trait FileUploadDirectives {
     extractRequestContext.flatMap { ctx =>
       implicit val ec = ctx.executionContext
 
-      def tempDest(fileInfo: FileInfo): File = {
-        val dest = Files.createTempFile("pekko-http-upload", ".tmp").toFile
-        dest.deleteOnExit()
-        dest
-      }
+      def tempDest(fileInfo: FileInfo): File = UploadTempFiles.create()
 
       storeUploadedFiles(fieldName, tempDest).map { files =>
         files.map {
@@ -195,6 +191,36 @@ trait FileUploadDirectives {
 }
 
 object FileUploadDirectives extends FileUploadDirectives
+
+/**
+ * INTERNAL API
+ *
+ * Temporary files for uploads that the application may never consume.
+ *
+ * The files are collected in a directory of their own that a single shutdown hook removes on exit. Registering every
+ * file with `File.deleteOnExit` instead would keep its path in a JVM-wide set for the lifetime of the process, also
+ * long after the file itself has been deleted, so that a long-running server accepting uploads would slowly grow its
+ * heap.
+ */
+@InternalApi
+private[directives] object UploadTempFiles {
+  private lazy val directory: Path = {
+    val dir = Files.createTempDirectory("pekko-http-uploads") // owner-only permissions where the file system has them
+    Runtime.getRuntime.addShutdownHook(new Thread(
+      () => deleteRecursively(dir.toFile),
+      "pekko-http-upload-cleanup"))
+    dir
+  }
+
+  def create(): File = Files.createTempFile(directory, "pekko-http-upload", ".tmp").toFile
+
+  private def deleteRecursively(file: File): Unit = {
+    val children = file.listFiles()
+    if (children ne null) children.foreach(deleteRecursively)
+    file.delete()
+    ()
+  }
+}
 
 /**
  * Additional metadata about the file being uploaded/that was uploaded using the [[FileUploadDirectives]]
