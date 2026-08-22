@@ -267,6 +267,19 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
           1.second.dilated).data.asByteBuffer.getInt shouldEqual 0xCAFEBABE
       }
     }
+    "return the resource content from an archive with metadata taken from the archive entry" in {
+      val route = getFromResource("com/typesafe/config/Config.class")
+
+      def runCheck() =
+        Get() ~> route ~> check {
+          val entity = responseEntity.toStrict(1.second.dilated).awaitResult(1.second.dilated)
+          entity.contentLength shouldEqual entity.data.length
+          header[`Last-Modified`] shouldBe defined
+        }
+
+      runCheck()
+      runCheck() // the archive is shared between requests, so make sure it is still usable afterwards
+    }
     "return the file content with MediaType 'application/octet-stream' on unknown file extensions" in {
       Get() ~> getFromResource("sample.xyz") ~> check {
         mediaType shouldEqual `application/octet-stream`

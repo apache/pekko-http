@@ -15,7 +15,7 @@ package org.apache.pekko.http.scaladsl.server
 package directives
 
 import java.io.File
-import java.net.{ URI, URL }
+import java.net.{ JarURLConnection, URL, URLConnection }
 
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
@@ -284,28 +284,28 @@ object FileAndResourceDirectives extends FileAndResourceDirectives {
         if (file.isDirectory) None
         else Some(ResourceFile(url, file.length(), file.lastModified()))
       case "jar" =>
-        val path = new URI(url.getPath).getPath // remove "file:" prefix and normalize whitespace
-        val bangIndex = path.indexOf('!')
-        val filePath = path.substring(0, bangIndex)
-        val resourcePath = path.substring(bangIndex + 2)
-        val jar = new java.util.zip.ZipFile(filePath)
-        try {
-          val entry = jar.getEntry(resourcePath)
-          if (entry.isDirectory) None
-          else Option(jar.getInputStream(entry)).map { is =>
-            is.close()
-            ResourceFile(url, entry.getSize, entry.getTime)
-          }
-        } finally jar.close()
-      case _ =>
-        val conn = url.openConnection()
-        try {
-          conn.setUseCaches(false) // otherwise the JDK will keep the connection open when we close!
-          val len = conn.getContentLength
-          val lm = conn.getLastModified
-          Some(ResourceFile(url, len, lm))
-        } finally conn.getInputStream.close()
+        url.openConnection() match {
+          case jarConnection: JarURLConnection =>
+            // Ask the connection for the entry instead of opening the jar file here: opening it means reading and
+            // parsing the whole central directory again for every single request. With caching left enabled the JDK
+            // reuses the same open jar file as the class loader does, so nothing is opened here at all in the common
+            // case (and nothing must be closed either, the cached jar file is shared).
+            jarConnection.setUseCaches(true)
+            Option(jarConnection.getJarEntry) // null if the entry disappeared from the jar in the meantime
+              .filterNot(_.isDirectory)
+              .map(entry => ResourceFile(url, entry.getSize, entry.getTime))
+          case connection => fromUrlConnection(url, connection)
+        }
+      case _ => fromUrlConnection(url, url.openConnection())
     }
+
+    private def fromUrlConnection(url: URL, connection: URLConnection): Option[ResourceFile] =
+      try {
+        connection.setUseCaches(false) // otherwise the JDK will keep the connection open when we close!
+        val len = connection.getContentLength
+        val lm = connection.getLastModified
+        Some(ResourceFile(url, len, lm))
+      } finally connection.getInputStream.close()
   }
   case class ResourceFile(url: URL, length: Long, lastModified: Long)
 
