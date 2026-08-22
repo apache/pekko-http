@@ -5,6 +5,7 @@
 @@@ index
 
 * [extractClientIP](extractClientIP.md)
+* [extractDirectClientIP](extractDirectClientIP.md)
 * [rejectEmptyResponse](rejectEmptyResponse.md)
 * [requestEntityEmpty](requestEntityEmpty.md)
 * [requestEntityPresent](requestEntityPresent.md)

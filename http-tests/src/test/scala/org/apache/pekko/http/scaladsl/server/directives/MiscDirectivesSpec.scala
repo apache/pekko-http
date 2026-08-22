@@ -46,6 +46,30 @@ class MiscDirectivesSpec extends RoutingSpec {
         extractClientIP { echoComplete }
       } ~> check { responseAs[String] shouldEqual "unknown" }
     }
+    "extract from the remote address attribute" in {
+      Get().withAttributes(Map(AttributeKeys.remoteAddress -> remoteAddress("5.6.7.8"))) ~> {
+        extractClientIP { echoComplete }
+      } ~> check { responseAs[String] shouldEqual "5.6.7.8" }
+    }
+  }
+
+  "the extractDirectClientIP directive" should {
+    "extract from the remote address attribute" in {
+      Get().withAttributes(Map(AttributeKeys.remoteAddress -> remoteAddress("5.6.7.8"))) ~> {
+        extractDirectClientIP { echoComplete }
+      } ~> check { responseAs[String] shouldEqual "5.6.7.8" }
+    }
+    "ignore the X-Forwarded-For and X-Real-IP headers a client may have sent" in {
+      Get().withAttributes(Map(AttributeKeys.remoteAddress -> remoteAddress("5.6.7.8")))         ~>
+      addHeaders(`X-Forwarded-For`(remoteAddress("2.3.4.5")), RawHeader("x-real-ip", "1.2.3.4")) ~> {
+        extractDirectClientIP { echoComplete }
+      } ~> check { responseAs[String] shouldEqual "5.6.7.8" }
+    }
+    "extract unknown when the attribute is not set" in {
+      Get() ~> addHeader(`X-Forwarded-For`(remoteAddress("2.3.4.5"))) ~> {
+        extractDirectClientIP { echoComplete }
+      } ~> check { responseAs[String] shouldEqual "unknown" }
+    }
   }
 
   "the selectPreferredLanguage directive" should {
