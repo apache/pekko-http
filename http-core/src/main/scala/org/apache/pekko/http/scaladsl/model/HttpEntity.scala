@@ -645,8 +645,8 @@ object HttpEntity {
         private var maxBytes = -1L
         private var bytesLeft = Long.MaxValue
 
-        @nowarn("msg=deprecated") // Attributes.getFirst is deprecated, but we need to use it here
         override def preStart(): Unit = {
+          // getFirst has been marked as an internal stable API since Pekko Core 2.0.0-M4
           _attributes.getFirst[SizeLimit] match {
             case Some(limit: SizeLimit) if limit.isDisabled =>
             // "no limit"
