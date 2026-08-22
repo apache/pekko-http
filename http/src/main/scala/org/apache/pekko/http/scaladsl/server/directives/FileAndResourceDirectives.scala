@@ -16,6 +16,7 @@ package directives
 
 import java.io.{ File, FileNotFoundException, IOException, InputStream }
 import java.net.{ JarURLConnection, URL, URLConnection }
+import java.nio.file.Paths
 
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
@@ -273,7 +274,10 @@ object FileAndResourceDirectives extends FileAndResourceDirectives {
     val finalFile = new File(finalPath)
     val canonicalFinalPath = finalFile.getCanonicalPath
 
-    if (!canonicalFinalPath.startsWith(baseFile.getCanonicalPath)) {
+    // compared element by element instead of as plain strings: `/var/www-private/secret` has the canonical path of
+    // `/var/www` as a string prefix without being contained in that directory, which canonicalization can produce
+    // for a symbolic link that points at a sibling directory
+    if (!Paths.get(canonicalFinalPath).startsWith(Paths.get(baseFile.getCanonicalPath))) {
       log.warning("[{}] points to a location that is not part of [{}]. This might be a directory traversal attempt.",
         finalFile, baseFile)
       ""

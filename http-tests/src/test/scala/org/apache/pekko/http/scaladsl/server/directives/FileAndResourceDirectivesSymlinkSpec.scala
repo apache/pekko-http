@@ -15,6 +15,7 @@ package org.apache.pekko.http.scaladsl.server
 package directives
 
 import java.io.File
+import java.nio.charset.StandardCharsets
 import java.nio.file.{ Files, Paths }
 
 import scala.concurrent.duration._
@@ -41,9 +42,21 @@ class FileAndResourceDirectivesSymlinkSpec extends RoutingSpec
     Paths.get(dirWithLink.getAbsolutePath, "linked-dir"),
     new File(testRoot, "subDirectory").toPath.toAbsolutePath)
 
+  // a sibling of the served directory whose name has the name of the served directory as a prefix
+  val siblingDir = new File(tempDir.toFile, "dirWithLink-private")
+  siblingDir.mkdir()
+  val siblingFile = new File(siblingDir, "secret.txt")
+  Files.write(siblingFile.toPath, "secret".getBytes(StandardCharsets.UTF_8))
+  val siblingSymlink = Files.createSymbolicLink(
+    Paths.get(dirWithLink.getAbsolutePath, "linked-sibling"),
+    siblingDir.toPath.toAbsolutePath)
+
   override def afterAll(): Unit = {
     super.afterAll()
     Files.deleteIfExists(symlink)
+    Files.deleteIfExists(siblingSymlink)
+    Files.deleteIfExists(siblingFile.toPath)
+    Files.deleteIfExists(siblingDir.toPath)
     Files.deleteIfExists(dirWithLink.toPath)
     Files.deleteIfExists(tempDir)
   }
@@ -66,6 +79,17 @@ class FileAndResourceDirectivesSymlinkSpec extends RoutingSpec
           /* TODO: resurrect following links under an option
           responseAs[String] shouldEqual "123"
           mediaType shouldEqual `application/pdf`*/
+        }
+      }
+    }
+
+    "not follow symbolic links into a sibling directory whose name starts with the served directory" in {
+      Files.isSymbolicLink(siblingSymlink) shouldBe true
+      // the canonical location of the file is `<tmp>/dirWithLink-private/secret.txt`, which has the canonical
+      // path of the served directory, `<tmp>/dirWithLink`, as a string prefix
+      EventFilter.warning(pattern = ".* points to a location that is not part of .*", occurrences = 1).intercept {
+        Get("linked-sibling/secret.txt") ~> _getFromDirectory() ~> check {
+          handled shouldBe false
         }
       }
     }
