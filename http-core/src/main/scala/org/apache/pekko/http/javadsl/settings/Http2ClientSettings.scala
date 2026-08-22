@@ -34,6 +34,20 @@ trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2Cli
   def maxConcurrentStreams: Int
   def withMaxConcurrentStreams(newValue: Int): Http2ClientSettings = copy(maxConcurrentStreams = newValue)
 
+  /**
+   * The maximum size of a decoded header list that this endpoint is prepared to accept, in bytes. The value is
+   * advertised to the peer via SETTINGS_MAX_HEADER_LIST_SIZE and the same limit is applied to the accumulated
+   * header block fragments of a HEADERS frame and its CONTINUATION frames.
+   *
+   * @since 2.0.0
+   */
+  def maxHeaderListSize: Int
+
+  /**
+   * @since 2.0.0
+   */
+  def withMaxHeaderListSize(newValue: Int): Http2ClientSettings = copy(maxHeaderListSize = newValue)
+
   def outgoingControlFrameBufferSize: Int
   def withOutgoingControlFrameBufferSize(newValue: Int): Http2ClientSettings =
     copy(outgoingControlFrameBufferSize = newValue)

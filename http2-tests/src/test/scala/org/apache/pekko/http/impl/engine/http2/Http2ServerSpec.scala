@@ -23,6 +23,7 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.{ ErrorCode, Flags, FrameType, SettingIdentifier }
+import pekko.http.impl.engine.http2.framing.FrameRenderer
 import pekko.http.impl.engine.server.{ HttpAttributes, ServerTerminator }
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.scaladsl.client.RequestBuilding.Get
@@ -187,6 +188,74 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           val headerPayload = network.expectHeaderBlock(1)
           headerPayload shouldBe HPackSpecExamples.C61FirstResponseWithHuffman
         })
+
+      "reject an unfinished header block that grows beyond max-header-list-size".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings = super.settings.mapHttp2Settings(_.withMaxHeaderListSize(4096))
+
+          val headerBlock = HPackSpecExamples.C41FirstRequestWithHuffman
+          network.sendHEADERS(1, endStream = true, endHeaders = false, headerBlock)
+
+          // the peer never sets END_HEADERS, so neither the HPACK decoder nor request dispatch ever run
+          val fragment = ByteString(new Array[Byte](1024))
+          (1 to 5).foreach(_ => network.sendCONTINUATION(1, endHeaders = false, fragment))
+
+          user.requestIn.ensureSubscription()
+          user.requestIn.expectNoMessage(100.millis)
+
+          val (_, errorCode) = network.expectGOAWAY()
+          errorCode should ===(ErrorCode.ENHANCE_YOUR_CALM)
+        })
+      "reject an unfinished header block made up of empty CONTINUATION frames".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings = super.settings.mapHttp2Settings(_.withMaxHeaderListSize(256))
+
+          val headerBlock = HPackSpecExamples.C41FirstRequestWithHuffman
+          network.sendHEADERS(1, endStream = true, endHeaders = false, headerBlock)
+
+          // empty fragments don't grow the header block but are accounted with their frame header size, so their
+          // number is bounded as well (sent in one go because the connection is failed in between)
+          network.sendBytes((1 to 64).map(_ =>
+            FrameRenderer.render(ContinuationFrame(1, endHeaders = false, ByteString.empty))).reduce(_ ++ _))
+
+          user.requestIn.ensureSubscription()
+          user.requestIn.expectNoMessage(100.millis)
+
+          val (_, errorCode) = network.expectGOAWAY()
+          errorCode should ===(ErrorCode.ENHANCE_YOUR_CALM)
+        })
+      "reject a header block that decodes to more than max-header-list-size".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings = super.settings.mapHttp2Settings(_.withMaxHeaderListSize(1024))
+
+          val request = HttpRequest(
+            uri = "http://www.example.com/",
+            headers = RawHeader("big-header", "x" * 2000) :: Nil)
+          network.sendHEADERS(1, endStream = true, endHeaders = true, network.encodeRequestHeaders(request))
+
+          user.requestIn.ensureSubscription()
+          user.requestIn.expectNoMessage(100.millis)
+
+          val (_, errorCode) = network.expectGOAWAY()
+          errorCode should ===(ErrorCode.ENHANCE_YOUR_CALM)
+        })
+      "accept a header block that stays within max-header-list-size".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings = super.settings.mapHttp2Settings(_.withMaxHeaderListSize(1024))
+
+          val request =
+            HttpRequest(uri = "http://www.example.com/", headers = RawHeader("small-header", "x" * 100) :: Nil)
+          network.sendHEADERS(1, endStream = true, endHeaders = true, network.encodeRequestHeaders(request))
+
+          user.expectRequest().headers should contain(RawHeader("small-header", "x" * 100))
+        })
+
+      "advertise SETTINGS_MAX_HEADER_LIST_SIZE to the peer" in
+      new TestSetupWithoutHandshake with RequestResponseProbes {
+        network.sendBytes(Http2Protocol.ClientConnectionPreface)
+        network.expectSETTINGS().settings should contain(
+          Setting(SettingIdentifier.SETTINGS_MAX_HEADER_LIST_SIZE, settings.http2Settings.maxHeaderListSize))
+      }
 
       "fail if Http2StreamIdHeader missing" in pending
       "automatically add `Date` header" in pending
