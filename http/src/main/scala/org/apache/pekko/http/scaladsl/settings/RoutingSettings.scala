@@ -33,6 +33,14 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
   def decodeMaxBytesPerChunk: Int
   def decodeMaxSize: Long
 
+  /**
+   * Whether resources that live in a jar file are served through the JDK's jar file cache, the same cache the class
+   * loader uses, instead of opening and parsing the jar file for every request.
+   *
+   * @since 2.0.0
+   */
+  def useJarFileCache: Boolean
+
   /* Java APIs */
   def getVerboseErrorMessages: Boolean = this.verboseErrorMessages
   def getFileGetConditional: Boolean = this.fileGetConditional
@@ -41,6 +49,11 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
   def getRangeCoalescingThreshold: Long = this.rangeCoalescingThreshold
   def getDecodeMaxBytesPerChunk: Int = this.decodeMaxBytesPerChunk
   def getDecodeMaxSize: Long = this.decodeMaxSize
+
+  /**
+   * @since 2.0.0
+   */
+  def getUseJarFileCache: Boolean = this.useJarFileCache
 
   override def withVerboseErrorMessages(verboseErrorMessages: Boolean): RoutingSettings =
     self.copy(verboseErrorMessages = verboseErrorMessages)
@@ -54,6 +67,12 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
   override def withDecodeMaxBytesPerChunk(decodeMaxBytesPerChunk: Int): RoutingSettings =
     self.copy(decodeMaxBytesPerChunk = decodeMaxBytesPerChunk)
   override def withDecodeMaxSize(decodeMaxSize: Long): RoutingSettings = self.copy(decodeMaxSize = decodeMaxSize)
+
+  /**
+   * @since 2.0.0
+   */
+  override def withUseJarFileCache(useJarFileCache: Boolean): RoutingSettings =
+    self.copy(useJarFileCache = useJarFileCache)
 }
 
 object RoutingSettings extends SettingsCompanion[RoutingSettings] {
