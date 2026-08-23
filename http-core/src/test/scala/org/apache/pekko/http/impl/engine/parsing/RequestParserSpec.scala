@@ -670,6 +670,20 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           |abc""" should parseToError(BadRequest, ErrorInfo("Illegal `Content-Length` header value"))
       }
 
+      "with whitespace inside the Content-Length header value" in new Test {
+        """GET / HTTP/1.0
+          |Content-Length: 1 2
+          |
+          |abc""" should parseToError(BadRequest, ErrorInfo("Illegal `Content-Length` header value"))
+      }
+
+      "with an empty Content-Length header value" in new Test {
+        """GET / HTTP/1.0
+          |Content-Length:
+          |
+          |abc""" should parseToError(BadRequest, ErrorInfo("Illegal `Content-Length` header value"))
+      }
+
       "with Content-Length > Long.MaxSize" in new Test {
         // content-length = (Long.MaxValue + 1) * 10, which is 0 when calculated overflow
         """PUT /resource/yes HTTP/1.1
