@@ -37,7 +37,6 @@ import org.openjdk.jmh.annotations.Warmup
     "-XX:InitialCodeCacheSize=512m",
     "-XX:ReservedCodeCacheSize=512m",
     "-XX:+UseParallelGC",
-    "-XX:-UseBiasedLocking",
     "-XX:+AlwaysPreTouch"))
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
