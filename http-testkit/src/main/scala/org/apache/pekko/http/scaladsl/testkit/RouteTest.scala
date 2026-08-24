@@ -30,6 +30,7 @@ import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.stream.scaladsl.Source
 import pekko.testkit.TestKit
 import pekko.util.ConstantFun
+import pekko.util.Helpers.toRootLowerCase
 import com.typesafe.config.{ Config, ConfigFactory }
 
 import scala.collection.immutable
@@ -95,7 +96,7 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
   def charset: HttpCharset = charsetOption.getOrElse(sys.error("Binary entity does not have charset"))
   def headers: immutable.Seq[HttpHeader] = rawResponse.headers
   def header[T >: Null <: HttpHeader: ClassTag]: Option[T] = rawResponse.header[T](implicitly[ClassTag[T]])
-  def header(name: String): Option[HttpHeader] = rawResponse.headers.find(_.is(name.toLowerCase))
+  def header(name: String): Option[HttpHeader] = rawResponse.headers.find(_.is(toRootLowerCase(name)))
   def status: StatusCode = rawResponse.status
 
   def closingExtension: String = chunks.lastOption match {
