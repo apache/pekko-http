@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
+import java.util.Locale
+
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -54,6 +56,25 @@ class ScalatestRouteTestSpec extends AnyFreeSpec with Matchers with ScalatestRou
         status shouldEqual OK
         responseEntity shouldEqual HttpEntity(ContentTypes.`text/plain(UTF-8)`, "abc")
         header("Fancy") shouldEqual Some(pinkHeader)
+      }
+    }
+
+    "a header lookup by name that is unaffected by the turkish-i problem" in {
+      val previousLocale = Locale.getDefault
+      try {
+        Locale.setDefault(new Locale("tr", "TR"))
+        // in the turkish locale 'I'.toLowerCase is a dotless i, so a default-locale
+        // lowercasing of 'If-Match' would not match the header's lowercaseName
+        val ifMatchHeader = RawHeader("If-Match", "\"xyzzy\"")
+        Get() ~> {
+          respondWithHeader(ifMatchHeader) {
+            complete("abc")
+          }
+        } ~> check {
+          header("If-Match") shouldEqual Some(ifMatchHeader)
+        }
+      } finally {
+        Locale.setDefault(previousLocale)
       }
     }
 
