@@ -103,6 +103,20 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      "a response with a non-ASCII header name, when illegal header names are ignored" in new Test {
+        override def parserSettings: ParserSettings =
+          super.parserSettings.withIllegalResponseHeaderNameProcessingMode(
+            ParserSettings.IllegalResponseHeaderNameProcessingMode.Ignore)
+
+        // a header name that is not 7-bit ASCII is an opaque byte range, decoded one character per
+        // byte (ISO-8859-1) rather than sign extended into \uFFxx characters
+        val name = new String("f\u00f6o".getBytes(java.nio.charset.StandardCharsets.UTF_8),
+          java.nio.charset.StandardCharsets.ISO_8859_1)
+        s"HTTP/1.1 200 OK${newLine}föo: bar${newLine}Content-Length: 0${newLine}${newLine}" should parseTo(
+          HttpResponse(headers = List(RawHeader(name, "bar"))))
+        closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
       "a response with a missing reason phrase" in new Test {
         s"HTTP/1.1 404 ${newLine}Content-Length: 0${newLine}${newLine}" should parseTo(HttpResponse(NotFound))
         closeAfterResponseCompletion shouldEqual Seq(false)
