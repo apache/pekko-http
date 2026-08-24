@@ -16,18 +16,16 @@ package org.apache.pekko.http.impl.util
 import org.apache.pekko
 import pekko.annotation.InternalApi
 
-import scala.annotation.nowarn
-
 /**
  * INTERNAL API
  */
 @InternalApi
 private[http] object StringTools {
-  @nowarn("msg=deprecated")
   def asciiStringFromBytes(bytes: Array[Byte]): String =
-    // Deprecated constructor but also (unfortunately) the fastest way to convert a ASCII encoded byte array
-    // into a String without extra copying.
-    new String(bytes, 0)
+    // ISO-8859-1 rather than US-ASCII: this maps every byte to the character of the same value, which
+    // is what the deprecated `new String(bytes, 0)` this replaces did. Since JDK 9 (compact strings) it
+    // keeps the array as is with a LATIN1 coder, so it is the same single copy.
+    new String(bytes, ISO88591)
 
   def asciiStringBytes(string: String): Array[Byte] = {
     // this is as fast as Unsafe.copyUSAsciiStrToBytes for recent JDK versions
