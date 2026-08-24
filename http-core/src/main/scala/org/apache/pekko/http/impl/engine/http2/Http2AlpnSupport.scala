@@ -15,9 +15,6 @@ package org.apache.pekko.http.impl.engine.http2
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.http.impl.engine.http2.Http2AlpnSupport.{ H2, HTTP11 }
-import pekko.stream.TLSProtocol.NegotiateNewSession
-import pekko.stream.impl.io.TlsUtils
 
 import java.{ util => ju }
 import javax.net.ssl.SSLEngine
@@ -25,7 +22,7 @@ import javax.net.ssl.SSLEngine
 /**
  * INTERNAL API
  *
- * Will add support to an engine either using jetty alpn or using netty APIs (later).
+ * ALPN support, which every JDK this project builds against provides natively.
  */
 @InternalApi
 private[http] object Http2AlpnSupport {
@@ -36,22 +33,8 @@ private[http] object Http2AlpnSupport {
   /**
    * Enables server-side Http/2 ALPN support for the given engine.
    */
-  def enableForServer(engine: SSLEngine, setChosenProtocol: String => Unit): SSLEngine =
-    Http2JDKAlpnSupport.jdkAlpnSupport(engine, setChosenProtocol)
-
-  def clientSetApplicationProtocols(engine: SSLEngine, protocols: Array[String]): Unit =
-    Http2JDKAlpnSupport.clientSetApplicationProtocols(engine, protocols)
-}
-
-/**
- * INTERNAL API
- *
- * The actual implementation of ALPN support on supported JDKs. We rely on lazy class loading to not fail with class loading errors
- * when ALPN support is missing.
- */
-private[http] object Http2JDKAlpnSupport {
-  def jdkAlpnSupport(engine: SSLEngine, setChosenProtocol: String => Unit): SSLEngine = {
-    engine.setHandshakeApplicationProtocolSelector { (engine: SSLEngine, protocols: ju.List[String]) =>
+  def enableForServer(engine: SSLEngine, setChosenProtocol: String => Unit): SSLEngine = {
+    engine.setHandshakeApplicationProtocolSelector { (_: SSLEngine, protocols: ju.List[String]) =>
       val chosen = chooseProtocol(protocols)
       chosen.foreach(setChosenProtocol)
 
@@ -63,17 +46,14 @@ private[http] object Http2JDKAlpnSupport {
     engine
   }
 
+  def clientSetApplicationProtocols(engine: SSLEngine, protocols: Array[String]): Unit = {
+    val params = engine.getSSLParameters
+    params.setApplicationProtocols(protocols)
+    engine.setSSLParameters(params)
+  }
+
   private def chooseProtocol(protocols: ju.List[String]): Option[String] =
     if (protocols.contains(H2)) Some(H2)
     else if (protocols.contains(HTTP11)) Some(HTTP11)
     else None
-
-  def applySessionParameters(engine: SSLEngine, sessionParameters: NegotiateNewSession): Unit =
-    TlsUtils.applySessionParameters(engine, sessionParameters)
-
-  def clientSetApplicationProtocols(engine: SSLEngine, protocols: Array[String]): Unit = {
-    val params = engine.getSSLParameters
-    params.setApplicationProtocols(Array("h2"))
-    engine.setSSLParameters(params)
-  }
 }
