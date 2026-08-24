@@ -107,6 +107,15 @@ abstract class CoderSpec extends AnyWordSpec with CodecSpecSupport with Inspecto
 
       uncompressed should readAs(largeText)
     }
+    "produce the same output for a multi-fragment input as for a compact one" in {
+      // the checksum is fed one ByteBuffer per fragment, so it must not depend on how the input is fragmented
+      val fragmented = largeTextBytes.grouped(512).map(chunk => ByteString(chunk.toArray)).reduce(_ ++ _)
+      fragmented.isCompact shouldEqual false
+      fragmented shouldEqual largeTextBytes
+
+      ourEncode(fragmented) shouldEqual ourEncode(largeTextBytes)
+      ourDecode(ourEncode(fragmented)) should readAs(largeText)
+    }
     "works for any split in prefix + suffix" in {
       val compressed = streamEncode(smallTextBytes)
       def tryWithPrefixOfSize(prefixSize: Int): Unit = {
