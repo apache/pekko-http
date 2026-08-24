@@ -40,5 +40,34 @@ class TurkishISpec extends AnyWordSpec with Matchers {
         Locale.setDefault(previousLocale)
       }
     }
+
+    "parse a header name containing a capital I in the turkish locale" in withTurkishLocale {
+      HttpHeader.parse("If-Match", "\"xyzzy\"") match {
+        case HttpHeader.ParsingResult.Ok(header, Nil) => header shouldBe a[headers.`If-Match`]
+        case other                                    => fail(s"Expected a modelled If-Match header but got $other")
+      }
+    }
+
+    "normalize a uri scheme containing a capital I in the turkish locale" in withTurkishLocale {
+      Uri(scheme = "IPP", authority = Uri.Authority(Uri.Host("example.com"))).scheme shouldEqual "ipp"
+    }
+
+    "resolve a media type for an upper case file extension in the turkish locale" in withTurkishLocale {
+      MediaTypes.forExtension("TIFF") shouldEqual MediaTypes.`image/tiff`
+    }
+
+    "lowercase an error header name in the turkish locale" in withTurkishLocale {
+      ErrorInfo("summary", "detail").withErrorHeaderName("If-Match").errorHeaderName shouldEqual "if-match"
+    }
+  }
+
+  private def withTurkishLocale(body: => Any): Unit = {
+    val previousLocale = Locale.getDefault
+    try {
+      Locale.setDefault(new Locale("tr", "TR"))
+      body
+    } finally {
+      Locale.setDefault(previousLocale)
+    }
   }
 }
