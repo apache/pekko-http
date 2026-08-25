@@ -29,7 +29,7 @@ object Dependencies {
   val h2specArtifactExtension = if (h2specExe.endsWith("exe")) "zip" else "tar.gz"
   val h2specUrl =
     s"https://github.com/summerwind/h2spec/releases/download/v$h2specVersion/$h2specName.$h2specArtifactExtension"
-  val classGraphVersion = "4.8.193"
+  val classGraphVersion = "4.8.194"
 
   val scalaTestVersion = "3.2.20"
   val scalaCheckVersion = "1.19.0"
