@@ -17,7 +17,6 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
-import java.io.ByteArrayOutputStream
 import java.util.Random
 import java.util.zip.Deflater
 import java.util.zip.Inflater
@@ -27,6 +26,7 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.impl.settings.WebSocketCompressionSettingsImpl
+import pekko.http.impl.util.ByteStringOutputStream
 import pekko.http.scaladsl.model.headers.WebSocketExtension
 import pekko.stream.scaladsl.BidiFlow
 import pekko.stream.scaladsl.Flow
@@ -246,7 +246,7 @@ private[http] object PerMessageDeflate {
       try {
         val input = if (appendTail) data ++ EmptyStoredBlock else data
         inflater.setInput(input.toArrayUnsafe())
-        val output = new ByteArrayOutputStream(1024)
+        val output = new ByteStringOutputStream(1024)
         var count = inflater.inflate(buffer)
         while (count > 0) {
           decompressedMessageBytes += count
@@ -255,7 +255,7 @@ private[http] object PerMessageDeflate {
           output.write(buffer, 0, count)
           count = inflater.inflate(buffer)
         }
-        ByteString.fromArrayUnsafe(output.toByteArray)
+        output.toByteStringUnsafe
       } catch {
         case ex: DataFormatException =>
           throw new ProtocolException(s"Invalid WebSocket compressed message: ${ex.getMessage}")
@@ -345,13 +345,13 @@ private[http] object PerMessageDeflate {
 
     private def deflate(data: ByteString, removeTail: Boolean): ByteString = {
       deflater.setInput(data.toArrayUnsafe())
-      val output = new ByteArrayOutputStream(1024)
+      val output = new ByteStringOutputStream(1024)
       var count = deflater.deflate(buffer, 0, buffer.length, Deflater.SYNC_FLUSH)
       while (count > 0) {
         output.write(buffer, 0, count)
         count = deflater.deflate(buffer, 0, buffer.length, Deflater.SYNC_FLUSH)
       }
-      val bytes = ByteString.fromArrayUnsafe(output.toByteArray)
+      val bytes = output.toByteStringUnsafe
       if (removeTail && bytes.endsWith(EmptyStoredBlock)) bytes.dropRight(EmptyStoredBlock.length) else bytes
     }
 
