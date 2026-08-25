@@ -29,7 +29,7 @@ import pekko.stream._
 import pekko.stream.scaladsl._
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.headers
-import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, IllegalResponseException, ResponseEntity }
+import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest, HttpResponse, IllegalResponseException, ResponseEntity }
 import pekko.http.impl.engine.rendering.{ HttpRequestRendererFactory, RequestRenderingContext }
 import pekko.http.impl.engine.parsing._
 import pekko.http.impl.util._
@@ -103,6 +103,7 @@ private[http] object OutgoingConnectionBlueprint {
       val responsePrep = Flow[List[ParserOutput.ResponseOutput]]
         .mapConcat(ConstantFun.scalaIdentityFunction)
         .via(new PrepareResponse(parserSettings))
+        .via(strictifyResponseEntities(settings))
 
       val terminationFanout = b.add(Broadcast[HttpResponse](2))
 
@@ -136,6 +137,30 @@ private[http] object OutgoingConnectionBlueprint {
       core).atop(
       logTLSBidiBySetting("client-plain-text", settings.logUnencryptedNetworkBytes))
   }
+
+  /**
+   * Collects response entities into `HttpEntity.Strict` entities if
+   * `pekko.http.client.strict-response-entity-timeout` is configured, otherwise passes responses through unchanged.
+   *
+   * Responses on a single HTTP/1.1 connection are strictly sequential, so collecting the entity of one response
+   * before the next one is emitted does not hold up any other response.
+   */
+  private def strictifyResponseEntities(
+      settings: ClientConnectionSettings): Flow[HttpResponse, HttpResponse, NotUsed] =
+    settings.strictResponseEntityTimeout match {
+      case None          => Flow[HttpResponse]
+      case Some(timeout) =>
+        val maxBytes = settings.strictResponseEntityMaxBytes
+        Flow[HttpResponse].flatMapConcat { response =>
+          response.entity match {
+            case _: HttpEntity.Strict => Source.single(response)
+            case entity               =>
+              entity.dataBytes
+                .via(new ToStrict(timeout, Some(maxBytes), entity.contentType))
+                .map(strict => response.withEntity(strict))
+          }
+        }.named("strictifyResponseEntities")
+    }
 
   // a simple merge stage that simply forwards its first input and ignores its second input
   // (the terminationBackchannelInput), but applies a special completion handling

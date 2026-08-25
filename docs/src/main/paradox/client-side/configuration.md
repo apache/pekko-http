@@ -20,6 +20,26 @@ Basic client settings can be overridden in multiple ways:
 
 @@snip [reference.conf](/http-core/src/main/resources/reference.conf) { #client-settings }
 
+## Strict Response Entities
+
+By default response entities are streamed, so the application has to consume (or discard) each response entity before
+the connection can be used for the next request. Setting `pekko.http.client.strict-response-entity-timeout` to a
+duration makes the client collect every response entity into a strict entity (`HttpEntity.Strict`) before the response is
+dispatched to the application:
+
+```
+pekko.http.client.strict-response-entity-timeout = 10s
+```
+
+Keep in mind that this buffers each complete response body in memory. A response that is not fully received within the
+configured duration fails with a `TimeoutException`, and one that exceeds
+`pekko.http.client.strict-response-entity-max-bytes` (8 MB by default) fails with an `EntityStreamException`; in both
+cases the connection is failed. Trailing headers of chunked responses are dropped, as they are with
+`HttpEntity.toStrict`.
+
+This setting only applies to the HTTP/1.1 client, which includes the connection pool backing
+@ref[request-level](request-level.md) and @ref[host-level](host-level.md) APIs.
+
 ## Pool Settings
 
 Pool settings influence the behavior of client connection pools as used with APIs like `Http.singleRequest`
