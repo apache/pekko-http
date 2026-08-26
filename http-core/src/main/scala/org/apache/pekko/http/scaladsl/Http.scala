@@ -589,7 +589,14 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
    * for setting up the HTTPS connection pool, if the request is targeted towards an `https` endpoint.
    *
    * Note that the request must have an absolute URI, otherwise the future will be completed with an error.
+   *
+   * <p>
+   *   Opentelemetry Java Instrumentation relies on this method so avoid changing it. It is the client
+   *   entry point the agent instruments to create HTTP client spans and to inject the propagated context.
+   *   See https://github.com/apache/pekko-http/issues/1241
+   * </p>
    */
+  // see https://github.com/open-telemetry/opentelemetry-java-instrumentation/blob/6f9ca5672ce84edbbe36ce0e14386c31d68f479f/instrumentation/pekko/pekko-http-1.0/javaagent/src/main/java/io/opentelemetry/javaagent/instrumentation/pekkohttp/v1_0/client/HttpExtClientInstrumentation.java
   def singleRequest(
       request: HttpRequest,
       connectionContext: HttpsConnectionContext = defaultClientHttpsContext,
@@ -951,7 +958,14 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
     /**
      * Handles the connection with the given flow, which is materialized exactly once
      * and the respective materialization result returned.
+     *
+     * <p>
+     *   Opentelemetry Java Instrumentation relies on this method so avoid changing it. It is the server
+     *   entry point the agent instruments for bindings created from a connection source.
+     *   See https://github.com/apache/pekko-http/issues/1241
+     * </p>
      */
+    // see https://github.com/open-telemetry/opentelemetry-java-instrumentation/blob/6f9ca5672ce84edbbe36ce0e14386c31d68f479f/instrumentation/pekko/pekko-http-1.0/javaagent/src/main/java/io/opentelemetry/javaagent/instrumentation/pekkohttp/v1_0/server/PekkoHttpServerSourceInstrumentation.java
     def handleWith[Mat](handler: Flow[HttpRequest, HttpResponse, Mat])(implicit fm: Materializer): Mat =
       flow.joinMat(handler)(Keep.right).run()
 

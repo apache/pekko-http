@@ -137,14 +137,18 @@ private[http] final class PoolMasterActor extends Actor with ActorLogging {
    * Start a new pool interface actor, register it in our maps, and watch its death. No actor should
    * currently exist for this pool.
    * <p>
-   *   Opentelemetry Java Instrumentation relies on this method so avoid changing it.
+   *   Opentelemetry Java Instrumentation relies on this method so avoid changing it. The agent matches
+   *   the mangled name `org$apache$pekko$http$impl$engine$client$PoolMasterActor$$startPoolInterface`,
+   *   which only exists in the bytecode because the closure below captures this method.
+   *   See https://github.com/apache/pekko-http/issues/1241
    * </p>
    * @param poolId the pool id this pool corresponds to
    * @param fm the materializer to use for this pool
    * @return the newly created actor ref
    */
+  // see https://github.com/open-telemetry/opentelemetry-java-instrumentation/blob/6f9ca5672ce84edbbe36ce0e14386c31d68f479f/instrumentation/pekko/pekko-http-1.0/javaagent/src/main/java/io/opentelemetry/javaagent/instrumentation/pekkohttp/v1_0/client/PoolMasterActorInstrumentation.java
+  @noinline // Not inlined so that the agent can match the method in the bytecode
   private def startPoolInterface(poolId: PoolId)(implicit fm: Materializer): PoolInterface = {
-    // see https://github.com/open-telemetry/opentelemetry-java-instrumentation/blob/6f9ca5672ce84edbbe36ce0e14386c31d68f479f/instrumentation/pekko/pekko-http-1.0/javaagent/src/main/java/io/opentelemetry/javaagent/instrumentation/pekkohttp/v1_0/client/PoolMasterActorInstrumentation.java#L28
     if (statusById.contains(poolId)) {
       throw new IllegalStateException(s"pool interface actor for $poolId already exists")
     }
