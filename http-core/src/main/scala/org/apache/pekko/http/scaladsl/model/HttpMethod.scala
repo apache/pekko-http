@@ -95,8 +95,10 @@ object HttpMethods extends ObjectRegistry[String, HttpMethod] {
   // for CONNECT it is explicitly not allowed in the 2xx (Successful) range
   private def contentLengthAllowedForConnect(forStatus: StatusCode): Boolean = forStatus.intValue < 200 ||
     forStatus.intValue >= 300
-  // for HEAD it is technically allowed, but must match the content-length of hypothetical GET request, so can not be anticipated
-  private def contentLengthAllowedForHead(forStatus: StatusCode): Boolean = false
+  // for HEAD it is allowed (RFC 9110 section 8.6) and should match the content-length of the hypothetical GET
+  // request; the renderer additionally suppresses a zero length, which usually means that the application had no
+  // body to hand over rather than that the resource is empty
+  private def contentLengthAllowedForHead(forStatus: StatusCode): Boolean = forStatus.allowsEntity
   // for other methods there are common rules:
   // - for 1xx (Informational) or 204 (No Content) it is explicitly not allowed
   // - for 304 (Not Modified) it must match the content-length of hypothetical 200-accepted request, so can not be anticipated

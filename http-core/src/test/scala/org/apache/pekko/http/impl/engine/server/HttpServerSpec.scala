@@ -523,6 +523,7 @@ class HttpServerSpec extends PekkoSpec(
                |Server: pekko-http/test
                |Date: XXXX
                |Content-Type: text/plain; charset=UTF-8
+               |Content-Length: 4
                |
                |""")
         }
@@ -551,6 +552,7 @@ class HttpServerSpec extends PekkoSpec(
                |Server: pekko-http/test
                |Date: XXXX
                |Content-Type: text/plain; charset=UTF-8
+               |Content-Length: 4
                |
                |""")
         }
