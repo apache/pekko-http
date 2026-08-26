@@ -19,6 +19,7 @@ import scala.collection.immutable
 import org.apache.pekko
 import pekko.http.scaladsl.util.FastFuture
 import pekko.util.ByteString
+import pekko.util.Helpers.toRootLowerCase
 
 trait PredefinedFromStringUnmarshallers {
 
@@ -48,7 +49,7 @@ trait PredefinedFromStringUnmarshallers {
 
   implicit val booleanFromStringUnmarshaller: Unmarshaller[String, Boolean] =
     Unmarshaller.strict[String, Boolean] { string =>
-      string.toLowerCase match {
+      toRootLowerCase(string) match {
         case "true" | "yes" | "on" | "1"  => true
         case "false" | "no" | "off" | "0" => false
         case ""                           => throw Unmarshaller.NoContentException

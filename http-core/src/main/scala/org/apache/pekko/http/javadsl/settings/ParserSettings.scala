@@ -23,6 +23,7 @@ import java.{ util => ju }
 
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.util.Helpers.toRootLowerCase
 
 import scala.annotation.varargs
 import scala.collection.JavaConverters._
@@ -90,7 +91,7 @@ abstract class ParserSettings private[pekko] () extends BodyPartParser.Settings 
     self.copy(includeSslSessionAttribute = newValue)
   def withModeledHeaderParsing(newValue: Boolean): ParserSettings = self.copy(modeledHeaderParsing = newValue)
   def withIgnoreIllegalHeaderFor(newValue: List[String]): ParserSettings =
-    self.copy(ignoreIllegalHeaderFor = newValue.map(_.toLowerCase).toSet)
+    self.copy(ignoreIllegalHeaderFor = newValue.map(toRootLowerCase).toSet)
 
   // special ---
 
