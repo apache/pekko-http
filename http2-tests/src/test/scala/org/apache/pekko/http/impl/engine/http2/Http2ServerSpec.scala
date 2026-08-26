@@ -470,24 +470,45 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         user.emitResponse(TheStreamId, HttpResponse())
         network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId).toMap should contain(":status" -> "200")
       })
+    }
 
-      // RFC 9110 section 15.4.5: a 304 is supposed to carry the content-length a 200 would have had, so rendering a
-      // zero here would be actively misleading. HTTP/1.1 omits the header for 1xx, 204 and 304 as well.
-      "not render content-length for a 304 response".inAssertAllStagesStopped(new HeadRequestSetup {
-        sendHeadRequest()
-        user.emitResponse(TheStreamId, HttpResponse(StatusCodes.NotModified))
+    // The status based rules are the ones PR #962 introduced for HTTP/1.1 in HttpMethod.contentLengthAllowed. They
+    // do not depend on the request method, so they are exercised here with a plain GET.
+    "render content-length according to the response status" should {
+      abstract class GetRequestSetup extends TestSetup with RequestResponseProbes {
+        val TheStreamId = 1
+        def responsePairs(response: HttpResponse): Map[String, String] = {
+          network.sendRequest(TheStreamId,
+            HttpRequest(HttpMethods.GET, "https://www.example.com/", protocol = HttpProtocols.`HTTP/2.0`))
+          user.expectRequest()
+          user.emitResponse(TheStreamId, response)
+          network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId).toMap
+        }
+      }
 
-        val pairs = network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId).toMap
-        pairs should contain(":status" -> "304")
+      "render it for a 200 with an empty entity".inAssertAllStagesStopped(new GetRequestSetup {
+        responsePairs(HttpResponse()) should contain("content-length" -> "0")
+      })
+
+      "not render it for a 204".inAssertAllStagesStopped(new GetRequestSetup {
+        val pairs = responsePairs(HttpResponse(StatusCodes.NoContent))
+        pairs should contain(":status" -> "204")
         pairs.keySet should not contain "content-length"
       })
 
-      "not render content-length for a 204 response".inAssertAllStagesStopped(new HeadRequestSetup {
-        sendHeadRequest()
-        user.emitResponse(TheStreamId, HttpResponse(StatusCodes.NoContent))
+      // 205 is deliberately not exempt: RFC 9112 section 6.3 only lets 1xx, 204 and 304 be self delimiting, so a 205
+      // has to be framed. This is the case PR #962 fixed for HTTP/1.1 and the one http4s/http4s#7919 reports.
+      "render it for a 205".inAssertAllStagesStopped(new GetRequestSetup {
+        val pairs = responsePairs(HttpResponse(StatusCodes.ResetContent))
+        pairs should contain(":status" -> "205")
+        pairs should contain("content-length" -> "0")
+      })
 
-        val pairs = network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId).toMap
-        pairs should contain(":status" -> "204")
+      // RFC 9110 section 15.4.5: a 304 is supposed to carry the content-length a 200 would have had, so rendering a
+      // zero here would be actively misleading.
+      "not render it for a 304".inAssertAllStagesStopped(new GetRequestSetup {
+        val pairs = responsePairs(HttpResponse(StatusCodes.NotModified))
+        pairs should contain(":status" -> "304")
         pairs.keySet should not contain "content-length"
       })
     }
