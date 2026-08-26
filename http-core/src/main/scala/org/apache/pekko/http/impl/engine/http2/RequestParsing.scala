@@ -97,12 +97,17 @@ private[http2] object RequestParsing {
 
         val entity = subStream.createEntity(contentLength, contentType)
 
+        // mirrors HttpServerBluePrint's ControllerStage for HTTP/1.1: the handler sees a GET, while the substream
+        // handling in Http2StreamHandling still knows the request was a HEAD and strips the response body
+        val effectiveMethod =
+          if (method == HttpMethods.HEAD && serverSettings.transparentHeadRequests) HttpMethods.GET else method
+
         val (path, rawQueryString) = pathAndRawQuery
         val authorityOrDefault: Uri.Authority = if (authority == null) Uri.Authority.Empty else authority
         val uri = Uri(scheme, authorityOrDefault, path, rawQueryString)
         val attributes = baseAttributes.updated(Http2.streamId, subStream.streamId)
 
-        new HttpRequest(method, uri, headers.result(), attributes, entity, HttpProtocols.`HTTP/2.0`)
+        new HttpRequest(effectiveMethod, uri, headers.result(), attributes, entity, HttpProtocols.`HTTP/2.0`)
       }
 
       @tailrec

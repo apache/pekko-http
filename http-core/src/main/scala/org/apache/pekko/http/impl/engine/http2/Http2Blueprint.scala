@@ -64,6 +64,19 @@ private[http2] case class Http2SubStream(
     copy(correlationAttributes = newAttributes)
 
   /**
+   * Returns a copy that carries no data and ends the stream with its initial headers. The header pairs are kept as
+   * they are, so that a response keeps advertising the `content-length` the peer would have received otherwise.
+   *
+   * Used for responses to HEAD requests, which must not carry content (RFC 9110 section 9.3.2). The caller is
+   * responsible for cancelling `data` if it is a stream.
+   */
+  def withoutData: Http2SubStream =
+    copy(
+      initialHeaders = initialHeaders.copy(endStream = true),
+      trailingHeaders = OptionVal.None,
+      data = Left(ByteString.empty))
+
+  /**
    * Create the request entity (when we're the server) or response entity (when we're the client) for this substream
    */
   def createEntity(contentLength: Long, contentTypeOption: OptionVal[ContentType]): RequestEntity = {
