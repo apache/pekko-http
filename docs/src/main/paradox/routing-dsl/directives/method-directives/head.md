@@ -23,6 +23,14 @@ stripping off the result body. See the `pekko.http.server.transparent-head-reque
 this behavior.
 @@@
 
+@@@ note
+The response body is stripped off, but the `Content-Length` header is still rendered when the entity declares a
+non-zero length, so that clients can learn the size of the resource without fetching it. Entities without a known
+length (`Chunked`, `CloseDelimited`) and empty entities render no `Content-Length`; if you want to answer a HEAD
+request with the size of the hypothetical GET response without producing the bytes, complete with
+`HttpEntity.Default(contentType, length, Source.empty)`.
+@@@
+
 ## Example
 
 Scala

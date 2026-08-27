@@ -155,6 +155,21 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
               |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Content-Type: text/plain; charset=UTF-8
+              |Content-Length: 23
+              |
+              |""", close = false)
+      }
+
+      "to a transparent HEAD request (empty Strict response entity)" in new TestSetup() {
+        ResponseRenderingContext(
+          requestMethod = HttpMethods.HEAD,
+          response = HttpResponse(
+            headers = List(Age(30), Connection("Keep-Alive")),
+            entity = HttpEntity.Empty)) should renderTo(
+          """HTTP/1.1 200 OK
+              |Age: 30
+              |Server: pekko-http/1.0.0
+              |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |
               |""", close = false)
       }
@@ -206,6 +221,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
               |Server: pekko-http/1.0.0
               |Date: Thu, 25 Aug 2011 09:10:29 GMT
               |Content-Type: text/plain; charset=UTF-8
+              |Content-Length: 100
               |
               |""", close = false)
       }
@@ -714,7 +730,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
                  |Server: pekko-http/1.0.0
                  |Date: Thu, 25 Aug 2011 09:10:29 GMT
                  |${renCH.fold("")(_.toString + "\n")}Content-Type: text/plain; charset=UTF-8
-                 |${if (headReq || resCD) "" else "Content-Length: 6\n"}
+                 |${if (resCD) "" else "Content-Length: 6\n"}
                  |${if (headReq) "" else "ENTITY"}""", close))
     }
   }
