@@ -13,6 +13,7 @@
 
 package docs.http.javadsl.server.directives;
 
+import org.apache.pekko.http.javadsl.model.AttributeKeys;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.model.headers.*;
@@ -51,6 +52,11 @@ import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.extractClientIP;
 
 // #extractClientIP
+// #extractDirectClientIP
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.extractDirectClientIP;
+
+// #extractDirectClientIP
 // #requestEntity-empty-present-example
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.requestEntityEmpty;
@@ -168,6 +174,35 @@ public class MiscDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
     testRoute(route).run(HttpRequest.GET("/")).assertEntity("Client's IP is unknown");
     // #extractClientIPExample
+  }
+
+  @Test
+  public void testExtractDirectClientIP() throws UnknownHostException {
+    // #extractDirectClientIPExample
+    final Route route =
+        extractDirectClientIP(
+            remoteAddr ->
+                complete(
+                    "Client's IP is "
+                        + remoteAddr
+                            .getAddress()
+                            .map(InetAddress::getHostAddress)
+                            .orElseGet(() -> "unknown")));
+
+    // tests:
+    final String ip = "192.168.1.2";
+    final org.apache.pekko.http.javadsl.model.RemoteAddress remoteAddress =
+        org.apache.pekko.http.javadsl.model.RemoteAddress.create(InetAddress.getByName(ip));
+
+    testRoute(route)
+        .run(HttpRequest.GET("/").addAttribute(AttributeKeys.remoteAddress, remoteAddress))
+        .assertEntity("Client's IP is " + ip);
+
+    // a client cannot choose the address by sending a header
+    testRoute(route)
+        .run(HttpRequest.GET("/").addHeader(XForwardedFor.create(remoteAddress)))
+        .assertEntity("Client's IP is unknown");
+    // #extractDirectClientIPExample
   }
 
   @Test

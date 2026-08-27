@@ -37,6 +37,25 @@ class MiscDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // #extractClientIP-example
   }
 
+  "extractDirectClientIP-example" in {
+    // #extractDirectClientIP-example
+    val route = extractDirectClientIP { ip =>
+      complete("Client's ip is " + ip.toOption.map(_.getHostAddress).getOrElse("unknown"))
+    }
+
+    // tests:
+    val remoteAddress = RemoteAddress(InetAddress.getByName("192.168.3.12"))
+    Get("/").withAttributes(Map(AttributeKeys.remoteAddress -> remoteAddress)) ~> route ~> check {
+      responseAs[String] shouldEqual "Client's ip is 192.168.3.12"
+    }
+
+    // a client cannot choose the address by sending a header
+    Get("/").withHeaders(`X-Forwarded-For`(RemoteAddress(InetAddress.getByName("1.2.3.4")))) ~> route ~> check {
+      responseAs[String] shouldEqual "Client's ip is unknown"
+    }
+    // #extractDirectClientIP-example
+  }
+
   "rejectEmptyResponse-example" in {
     // #rejectEmptyResponse-example
     val route = rejectEmptyResponse {

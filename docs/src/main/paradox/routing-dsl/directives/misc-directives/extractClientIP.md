@@ -17,7 +17,8 @@ If no valid IP address is encountered, this extractor will return RemoteAddress.
 
 @@@ warning
 Clients can send any values in these headers. If the client is not a trusted upstream, the IP address can be malicious.
-For sensitive operations use the @apidoc[AttributeKeys.remoteAddress](AttributeKeys$) @ref[attribute](../../../common/http-model.md#attributes),
+For sensitive operations use @ref[extractDirectClientIP](extractDirectClientIP.md), which reads the
+@apidoc[AttributeKeys.remoteAddress](AttributeKeys$) @ref[attribute](../../../common/http-model.md#attributes) only,
 or use the specific headers which are known to be set correctly by the infrastructure you do trust.
 @@@
 

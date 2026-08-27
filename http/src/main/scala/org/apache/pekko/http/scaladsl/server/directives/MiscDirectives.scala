@@ -41,9 +41,27 @@ trait MiscDirectives {
    * or [[pekko.http.scaladsl.model.AttributeKeys.remoteAddress]] attribute
    * (in that order of priority).
    *
+   * Note that the headers are under the control of the client unless a trusted proxy in front of this server
+   * overwrites them. Use [[extractDirectClientIP]] where the address must not be chosen by the client, for example
+   * for access control or rate limiting.
+   *
    * @group misc
    */
   def extractClientIP: Directive1[RemoteAddress] = MiscDirectives._extractClientIP
+
+  /**
+   * Extracts the client's IP from the [[pekko.http.scaladsl.model.AttributeKeys.remoteAddress]] attribute alone, that
+   * is the address of the peer of the connection the request arrived on. Forwarding headers are ignored, so the
+   * address cannot be chosen by the client, but it is the address of the last proxy rather than of the client itself
+   * when the request was forwarded.
+   *
+   * Requires the `pekko.http.server.remote-address-attribute` setting to be `on` and extracts
+   * [[pekko.http.scaladsl.model.RemoteAddress.Unknown]] otherwise.
+   *
+   * @since 2.0.0
+   * @group misc
+   */
+  def extractDirectClientIP: Directive1[RemoteAddress] = MiscDirectives._extractDirectClientIP
 
   /**
    * Rejects if the request entity is non-empty.
@@ -116,12 +134,15 @@ object MiscDirectives extends MiscDirectives {
   import RouteDirectives._
   import RouteResult._
 
-  private val _extractClientIP: Directive1[RemoteAddress] =
-    headerValuePF { case `X-Forwarded-For`(Seq(address, _*)) => address } |
-    headerValuePF { case `X-Real-Ip`(address) => address } |
+  private val _extractDirectClientIP: Directive1[RemoteAddress] =
     extractRequest.map { request =>
       request.attribute(AttributeKeys.remoteAddress).getOrElse(RemoteAddress.Unknown)
     }
+
+  private val _extractClientIP: Directive1[RemoteAddress] =
+    headerValuePF { case `X-Forwarded-For`(Seq(address, _*)) => address } |
+    headerValuePF { case `X-Real-Ip`(address) => address } |
+    _extractDirectClientIP
 
   private val _requestEntityEmpty: Directive0 =
     extract(_.request.entity.isKnownEmpty).flatMap(if (_) pass else reject)

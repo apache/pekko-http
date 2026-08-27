@@ -41,9 +41,28 @@ abstract class MiscDirectives extends MethodDirectives {
    * Extracts the client's IP from either the X-Forwarded-For, Remote-Address, X-Real-IP header
    * or [[pekko.http.javadsl.model.AttributeKeys.remoteAddress]] attribute
    * (in that order of priority).
+   *
+   * Note that the headers are under the control of the client unless a trusted proxy in front of this server
+   * overwrites them. Use [[extractDirectClientIP]] where the address must not be chosen by the client, for example
+   * for access control or rate limiting.
    */
   def extractClientIP(inner: JFunction[RemoteAddress, Route]): Route = RouteAdapter {
     D.extractClientIP { ip => inner.apply(ip).delegate }
+  }
+
+  /**
+   * Extracts the client's IP from the [[pekko.http.javadsl.model.AttributeKeys.remoteAddress]] attribute alone, that
+   * is the address of the peer of the connection the request arrived on. Forwarding headers are ignored, so the
+   * address cannot be chosen by the client, but it is the address of the last proxy rather than of the client itself
+   * when the request was forwarded.
+   *
+   * Requires the `pekko.http.server.remote-address-attribute` setting to be `on` and extracts
+   * [[pekko.http.javadsl.model.RemoteAddresses.UNKNOWN]] otherwise.
+   *
+   * @since 2.0.0
+   */
+  def extractDirectClientIP(inner: JFunction[RemoteAddress, Route]): Route = RouteAdapter {
+    D.extractDirectClientIP { ip => inner.apply(ip).delegate }
   }
 
   /**
