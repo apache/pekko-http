@@ -254,8 +254,16 @@ private[http] class HttpResponseRendererFactory(
               r ~~ `Transfer-Encoding` ~~ ChunkedBytes ~~ CrLf
           }
 
+          // RFC 9112 section 6.3 rule 1 exempts responses to HEAD requests from body framing, so a Content-Length
+          // is pure metadata there and cannot desync the connection. Only render a length the application actually
+          // declared: a zero length nearly always means that there was no body to hand over rather than that the
+          // resource is empty, and our own client only honours a HEAD Content-Length when it is greater than zero
+          // (see HttpResponseParser).
           def renderContentLengthHeader(contentLength: Long) =
-            if (ctx.requestMethod.contentLengthAllowed(status)) r ~~ ContentLengthBytes ~~ contentLength ~~ CrLf else r
+            if (ctx.requestMethod.contentLengthAllowed(status) &&
+              (contentLength > 0 || ctx.requestMethod != HttpMethods.HEAD))
+              r ~~ ContentLengthBytes ~~ contentLength ~~ CrLf
+            else r
 
           def headersAndEntity(entityBytes: => Source[ByteString, Any]): StrictOrStreamed =
             if (noEntity) {
