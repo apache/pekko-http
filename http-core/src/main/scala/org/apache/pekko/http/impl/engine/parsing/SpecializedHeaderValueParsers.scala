@@ -33,18 +33,32 @@ private[parsing] object SpecializedHeaderValueParsers {
   def specializedHeaderValueParsers = Seq(ContentLengthParser)
 
   object ContentLengthParser extends HeaderValueParser("Content-Length", maxValueCount = 1) {
+    // The field value is `1*DIGIT`, surrounded by optional whitespace (RFC 9110, section 8.6 and RFC 9112,
+    // section 5). Whitespace within the digits must not be skipped: a value like `1 2` would then be read as `12`
+    // here while another implementation in the request path rejects it or reads it as `1`.
     def apply(hhp: HttpHeaderParser, input: ByteString, valueStart: Int, onIllegalHeader: ErrorInfo => Unit)
         : (HttpHeader, Int) = {
-      @tailrec def recurse(ix: Int = valueStart, result: Long = 0): (HttpHeader, Int) = {
+      @tailrec def skipWhitespace(ix: Int): Int = if (WSP(byteChar(input, ix))) skipWhitespace(ix + 1) else ix
+
+      @tailrec def digits(ix: Int, result: Long, seenDigit: Boolean): (HttpHeader, Int) = {
         val c = byteChar(input, ix)
-        if (result < 0) fail("`Content-Length` header value must not exceed 63-bit integer range")
-        else if (DIGIT(c)) recurse(ix + 1, result * 10 + c - '0')
-        else if (WSP(c)) recurse(ix + 1, result)
-        else if (c == '\r' && byteAt(input, ix + 1) == LF_BYTE) (`Content-Length`(result), ix + 2)
+        if (DIGIT(c)) {
+          val digit = c - '0'
+          if (result > (Long.MaxValue - digit) / 10)
+            fail("`Content-Length` header value must not exceed 63-bit integer range")
+          else digits(ix + 1, result * 10 + digit, seenDigit = true)
+        } else if (!seenDigit) fail("Illegal `Content-Length` header value")
+        else lineEnd(skipWhitespace(ix), result)
+      }
+
+      def lineEnd(ix: Int, result: Long): (HttpHeader, Int) = {
+        val c = byteChar(input, ix)
+        if (c == '\r' && byteAt(input, ix + 1) == LF_BYTE) (`Content-Length`(result), ix + 2)
         else if (c == '\n') (`Content-Length`(result), ix + 1)
         else fail("Illegal `Content-Length` header value")
       }
-      recurse()
+
+      digits(skipWhitespace(valueStart), 0, seenDigit = false)
     }
   }
 }
