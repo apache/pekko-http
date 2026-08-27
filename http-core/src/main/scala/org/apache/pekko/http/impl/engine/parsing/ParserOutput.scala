@@ -16,6 +16,7 @@ package org.apache.pekko.http.impl.engine.parsing
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
+import pekko.http.IllegalRequestContext
 import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.model._
 import pekko.stream.scaladsl.Source
@@ -62,7 +63,10 @@ private[http] object ParserOutput {
 
   final case class EntityChunk(chunk: HttpEntity.ChunkStreamPart) extends MessageOutput
 
-  final case class MessageStartError(status: StatusCode, info: ErrorInfo) extends MessageStart with ErrorOutput
+  final case class MessageStartError(
+      status: StatusCode,
+      info: ErrorInfo,
+      context: IllegalRequestContext = IllegalRequestContext.empty) extends MessageStart with ErrorOutput
 
   final case class EntityStreamError(info: ErrorInfo) extends ErrorOutput
 

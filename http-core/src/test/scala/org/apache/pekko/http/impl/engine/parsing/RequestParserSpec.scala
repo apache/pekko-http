@@ -26,6 +26,7 @@ import pekko.stream.TLSProtocol._
 import org.scalatest.matchers.Matcher
 import org.scalatest.BeforeAndAfterAll
 import pekko.http.scaladsl.settings.{ ParserSettings, WebSocketSettings }
+import pekko.http.IllegalRequestContext
 import pekko.http.impl.engine.parsing.ParserOutput._
 import pekko.http.impl.settings.WebSocketSettingsImpl
 import pekko.http.impl.util._
@@ -639,7 +640,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         val result = multiParse(newParser)(Seq("GET /\u0000HTTP/1.1 HTTP/1.1\r\n"))
         result.length shouldEqual 1
         result.head match {
-          case Left(MessageStartError(BadRequest, info)) =>
+          case Left(MessageStartError(BadRequest, info, _)) =>
             info.summary should startWith("Illegal request-target")
           case other => fail(s"Expected BadRequest MessageStartError but got $other")
         }
@@ -784,6 +785,31 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           |""" should parseToError(BadRequest, ErrorInfo("A chunked request must not contain a Content-Length header"))
       }
     }
+
+    "report what it knows about a rejected request" - {
+      "the method and the raw request target when the request target is illegal" in new Test {
+        illegalRequestContextOf("GET /%% HTTP/1.1\r\n") should be(
+          (Some(GET), Some("/%%"), None))
+      }
+
+      "the method, the raw request target and the protocol when the request line parsed" in new Test {
+        illegalRequestContextOf("GET /abc HTTP/1.1\r\n\r\n") should be(
+          (Some(GET), Some("/abc"), Some(`HTTP/1.1`)))
+      }
+
+      "nothing when the request failed before the method was known" in new Test {
+        illegalRequestContextOf("BLAH /abc HTTP/1.1\r\n") should be((None, None, None))
+      }
+
+      "nothing from the previous request on the same connection" in new Test {
+        // the parser reuses its fields for every message, a rejection must not report the previous request
+        multiParse(newParser)(Seq("GET /previous HTTP/1.1\r\nHost: x\r\n\r\n", "BLAH /abc HTTP/1.1\r\n")) match {
+          case Seq(Right(_), Left(MessageStartError(_, _, context))) =>
+            (context.method, context.rawRequestTarget, context.protocol) should be((None, None, None))
+          case other => fail(s"Expected a request followed by a MessageStartError but got $other")
+        }
+      }
+    }
   }
 
   override def afterAll() = TestKit.shutdownActorSystem(system)
@@ -802,6 +828,14 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
 
       override def toString = req.toString
     }
+
+    /** The context of the single `MessageStartError` that parsing `input` is expected to produce */
+    def illegalRequestContextOf(input: String): (Option[HttpMethod], Option[String], Option[HttpProtocol]) =
+      multiParse(newParser)(Seq(input)) match {
+        case Seq(Left(MessageStartError(_, _, context))) =>
+          (context.method, context.rawRequestTarget, context.protocol)
+        case other => fail(s"Expected a single MessageStartError but got $other")
+      }
 
     def strictEqualify[T](x: Either[T, HttpRequest]): Either[T, StrictEqualHttpRequest] =
       x.map(new StrictEqualHttpRequest(_))
@@ -830,7 +864,16 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         parser: HttpRequestParser,
         expected: Either[RequestOutput, HttpRequest]*): Matcher[Seq[String]] =
       equal(expected.map(strictEqualify))
-        .matcher[Seq[Either[RequestOutput, StrictEqualHttpRequest]]].compose(multiParse(parser))
+        .matcher[Seq[Either[RequestOutput, StrictEqualHttpRequest]]]
+        // the illegal request context is asserted separately, it is not part of what these expectations describe
+        .compose(multiParse(parser)(_).map(withoutIllegalRequestContext))
+
+    def withoutIllegalRequestContext(
+        output: Either[RequestOutput, StrictEqualHttpRequest]): Either[RequestOutput, StrictEqualHttpRequest] =
+      output match {
+        case Left(error: MessageStartError) => Left(error.copy(context = IllegalRequestContext.empty))
+        case other                          => other
+      }
 
     def multiParse(parser: HttpRequestParser)(input: Seq[String]): Seq[Either[RequestOutput, StrictEqualHttpRequest]] =
       Source(input.toList)
@@ -842,7 +885,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           case (Seq(RequestStart(method, uri, protocol, attrs, headers, createEntity, _, close)), entityParts) =>
             closeAfterResponseCompletion :+= close
             Right(HttpRequest(method, uri, headers, createEntity(entityParts), protocol))
-          case (Seq(x @ (MessageStartError(_, _) | EntityStreamError(_))), rest) =>
+          case (Seq(x @ (MessageStartError(_, _, _) | EntityStreamError(_))), rest) =>
             rest.runWith(Sink.cancelled)
             Left(x)
         }

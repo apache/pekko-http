@@ -201,7 +201,7 @@ private[http] object OutgoingConnectionBlueprint {
             push(httpResponseOut, new HttpResponse(statusCode, headers, attributes, entity, protocol))
             completeOnMessageEnd = closeRequested
 
-          case MessageStartError(_, info) =>
+          case MessageStartError(_, info, _) =>
             throw IllegalResponseException(info)
 
           case other =>
