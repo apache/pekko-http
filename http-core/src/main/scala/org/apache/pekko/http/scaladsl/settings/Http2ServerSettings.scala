@@ -41,6 +41,7 @@ private[http] trait Http2CommonSettings {
 
   def logFrames: Boolean
   def maxConcurrentStreams: Int
+  def maxHeaderListSize: Int
   def outgoingControlFrameBufferSize: Int
 
   def pingInterval: FiniteDuration
@@ -90,6 +91,20 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def maxConcurrentStreams: Int
   override def withMaxConcurrentStreams(newValue: Int): Http2ServerSettings = copy(maxConcurrentStreams = newValue)
 
+  /**
+   * The maximum size of a decoded header list that this endpoint is prepared to accept, in bytes. The value is
+   * advertised to the peer via SETTINGS_MAX_HEADER_LIST_SIZE and the same limit is applied to the accumulated
+   * header block fragments of a HEADERS frame and its CONTINUATION frames.
+   *
+   * @since 2.0.0
+   */
+  def maxHeaderListSize: Int
+
+  /**
+   * @since 2.0.0
+   */
+  override def withMaxHeaderListSize(newValue: Int): Http2ServerSettings = copy(maxHeaderListSize = newValue)
+
   def outgoingControlFrameBufferSize: Int
   override def withOutgoingControlFrameBufferSize(newValue: Int): Http2ServerSettings =
     copy(outgoingControlFrameBufferSize = newValue)
@@ -129,6 +144,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
 
   private[http] case class Http2ServerSettingsImpl(
       maxConcurrentStreams: Int,
+      maxHeaderListSize: Int,
       requestEntityChunkSize: Int,
       incomingConnectionLevelBufferSize: Int,
       incomingStreamLevelBufferSize: Int,
@@ -144,6 +160,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       internalSettings: Option[Http2InternalServerSettings])
       extends Http2ServerSettings {
     require(maxConcurrentStreams >= 0, "max-concurrent-streams must be >= 0")
+    require(maxHeaderListSize > 0, "max-header-list-size must be > 0")
     require(requestEntityChunkSize > 0, "request-entity-chunk-size must be > 0")
     require(incomingConnectionLevelBufferSize > 0, "incoming-connection-level-buffer-size must be > 0")
     require(incomingStreamLevelBufferSize > 0, "incoming-stream-level-buffer-size must be > 0")
@@ -161,6 +178,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       extends pekko.http.impl.util.SettingsCompanionImpl[Http2ServerSettingsImpl]("pekko.http.server.http2") {
     def fromSubConfig(root: Config, c: Config): Http2ServerSettingsImpl = Http2ServerSettingsImpl(
       maxConcurrentStreams = c.getInt("max-concurrent-streams"),
+      maxHeaderListSize = c.getIntBytes("max-header-list-size"),
       requestEntityChunkSize = c.getIntBytes("request-entity-chunk-size"),
       incomingConnectionLevelBufferSize = c.getIntBytes("incoming-connection-level-buffer-size"),
       incomingStreamLevelBufferSize = c.getIntBytes("incoming-stream-level-buffer-size"),
@@ -205,6 +223,20 @@ trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http
   def maxConcurrentStreams: Int
   override def withMaxConcurrentStreams(newValue: Int): Http2ClientSettings = copy(maxConcurrentStreams = newValue)
 
+  /**
+   * The maximum size of a decoded header list that this endpoint is prepared to accept, in bytes. The value is
+   * advertised to the peer via SETTINGS_MAX_HEADER_LIST_SIZE and the same limit is applied to the accumulated
+   * header block fragments of a HEADERS frame and its CONTINUATION frames.
+   *
+   * @since 2.0.0
+   */
+  def maxHeaderListSize: Int
+
+  /**
+   * @since 2.0.0
+   */
+  override def withMaxHeaderListSize(newValue: Int): Http2ClientSettings = copy(maxHeaderListSize = newValue)
+
   def outgoingControlFrameBufferSize: Int
   override def withOutgoingControlFrameBufferSize(newValue: Int): Http2ClientSettings =
     copy(outgoingControlFrameBufferSize = newValue)
@@ -244,6 +276,7 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
 
   private[http] case class Http2ClientSettingsImpl(
       maxConcurrentStreams: Int,
+      maxHeaderListSize: Int,
       requestEntityChunkSize: Int,
       incomingConnectionLevelBufferSize: Int,
       incomingStreamLevelBufferSize: Int,
@@ -258,6 +291,7 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       internalSettings: Option[Http2InternalClientSettings])
       extends Http2ClientSettings with javadsl.settings.Http2ClientSettings {
     require(maxConcurrentStreams >= 0, "max-concurrent-streams must be >= 0")
+    require(maxHeaderListSize > 0, "max-header-list-size must be > 0")
     require(requestEntityChunkSize > 0, "request-entity-chunk-size must be > 0")
     require(incomingConnectionLevelBufferSize > 0, "incoming-connection-level-buffer-size must be > 0")
     require(incomingStreamLevelBufferSize > 0, "incoming-stream-level-buffer-size must be > 0")
@@ -272,6 +306,7 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       extends pekko.http.impl.util.SettingsCompanionImpl[Http2ClientSettingsImpl]("pekko.http.client.http2") {
     def fromSubConfig(root: Config, c: Config): Http2ClientSettingsImpl = Http2ClientSettingsImpl(
       maxConcurrentStreams = c.getInt("max-concurrent-streams"),
+      maxHeaderListSize = c.getIntBytes("max-header-list-size"),
       requestEntityChunkSize = c.getIntBytes("request-entity-chunk-size"),
       incomingConnectionLevelBufferSize = c.getIntBytes("incoming-connection-level-buffer-size"),
       incomingStreamLevelBufferSize = c.getIntBytes("incoming-stream-level-buffer-size"),

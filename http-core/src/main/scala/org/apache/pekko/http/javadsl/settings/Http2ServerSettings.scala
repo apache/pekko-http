@@ -42,6 +42,20 @@ trait Http2ServerSettings {
   def getMaxConcurrentStreams: Int = maxConcurrentStreams
   def withMaxConcurrentStreams(newValue: Int): Http2ServerSettings
 
+  /**
+   * The maximum size of a decoded header list that this endpoint is prepared to accept, in bytes. The value is
+   * advertised to the peer via SETTINGS_MAX_HEADER_LIST_SIZE and the same limit is applied to the accumulated
+   * header block fragments of a HEADERS frame and its CONTINUATION frames.
+   *
+   * @since 2.0.0
+   */
+  def getMaxHeaderListSize: Int = maxHeaderListSize
+
+  /**
+   * @since 2.0.0
+   */
+  def withMaxHeaderListSize(newValue: Int): Http2ServerSettings
+
   def getOutgoingControlFrameBufferSize: Int = outgoingControlFrameBufferSize
   def withOutgoingControlFrameBufferSize(newValue: Int): Http2ServerSettings
 

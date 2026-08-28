@@ -53,20 +53,19 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       val parseRequest: Http2SubStream => HttpRequest =
         RequestParsing.parseRequest(headerParser, serverSettings, attributes)
 
-      try Source.single(frame)
-          .via(new HeaderDecompression(headerParser, parserSettings))
-          .map { // emulate demux
-            case headers: ParsedHeadersFrame =>
-              Http2SubStream(
-                initialHeaders = headers,
-                trailingHeaders = OptionVal.None,
-                data = Right(data),
-                correlationAttributes = Map.empty)
-          }
-          .map(parseRequest)
-          .runWith(Sink.head)
-          .futureValue
-      catch { case ex: Throwable => throw ex.getCause } // unpack futureValue exceptions
+      Source.single(frame)
+        .via(new HeaderDecompression(headerParser, parserSettings, serverSettings.http2Settings.maxHeaderListSize))
+        .map { // emulate demux
+          case headers: ParsedHeadersFrame =>
+            Http2SubStream(
+              initialHeaders = headers,
+              trailingHeaders = OptionVal.None,
+              data = Right(data),
+              correlationAttributes = Map.empty)
+        }
+        .map(parseRequest)
+        .runWith(Sink.head)
+        .futureValue
     }
 
     def shouldThrowMalformedRequest[T](block: => T): Exception = {
