@@ -39,12 +39,12 @@ trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2Cli
    * advertised to the peer via SETTINGS_MAX_HEADER_LIST_SIZE and the same limit is applied to the accumulated
    * header block fragments of a HEADERS frame and its CONTINUATION frames.
    *
-   * @since 2.0.0
+   * @since 1.4.1
    */
   def maxHeaderListSize: Int
 
   /**
-   * @since 2.0.0
+   * @since 1.4.1
    */
   def withMaxHeaderListSize(newValue: Int): Http2ClientSettings = copy(maxHeaderListSize = newValue)
 
