@@ -102,24 +102,18 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
             }
           }
         }
-        val stream = payload.compact.asInputStream
         try {
-          decoder.decode(stream, Receiver) // only compact ByteString supports InputStream with mark/reset
+          decoder.decode(ByteStringInputStream(payload), Receiver)
           // the decoder stops emitting headers as soon as the limit is exceeded and reports that here
           val truncated = decoder.endHeaderBlock()
 
           if (truncated) headerListSizeExceeded(streamId)
-          else push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo, None))
+          else push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo))
         } catch {
-          case ex: ParsingException =>
-            // push details further and let RequestErrorFlow handle responding with bad request
-            push(eventsOut, ParsedHeadersFrame(streamId, endStream, Seq.empty, prioInfo, Some(ex.info)))
           case _: IOException =>
             // this is signalled by the decoder when it failed, we want to react to this by rendering a GOAWAY frame
             fail(eventsOut,
               new Http2Compliance.Http2ProtocolException(ErrorCode.COMPRESSION_ERROR, "Decompression failed."))
-        } finally {
-          stream.close()
         }
       }
 
