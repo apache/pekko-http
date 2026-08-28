@@ -127,7 +127,7 @@ private[http] object Http2Blueprint {
       httpLayer(settings, log, dateHeaderRendering) atopKeepRight
       serverDemux(settings.http2Settings, initialDemuxerSettings, upgraded) atop
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames) atop // enable for debugging
-      hpackCoding(masterHttpHeaderParser, settings.parserSettings)
+      hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize)
 
     val frameTypesForThrottle = getFrameTypesForThrottle(settings.http2Settings)
     
@@ -153,7 +153,7 @@ private[http] object Http2Blueprint {
       httpLayerClient(masterHttpHeaderParser, settings, log)).atop(
       clientDemux(settings.http2Settings, masterHttpHeaderParser)).atop(
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames)).atop( // enable for debugging
-      hpackCoding(masterHttpHeaderParser, settings.parserSettings)).atop(
+      hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize)).atop(
       framingClient(log)).atop(
       errorHandling(log)).atop(
       idleTimeoutIfConfigured(settings.idleTimeout))
@@ -247,11 +247,11 @@ private[http] object Http2Blueprint {
    * TODO: introduce another FrameEvent type that exclude HeadersFrame and ContinuationFrame from
    * reaching the higher-level.
    */
-  def hpackCoding(masterHttpHeaderParser: HttpHeaderParser, parserSettings: ParserSettings)
+  def hpackCoding(masterHttpHeaderParser: HttpHeaderParser, parserSettings: ParserSettings, maxHeaderListSize: Int)
       : BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
     BidiFlow.fromFlows(
       Flow[FrameEvent].via(HeaderCompression),
-      Flow[FrameEvent].via(new HeaderDecompression(masterHttpHeaderParser, parserSettings)))
+      Flow[FrameEvent].via(new HeaderDecompression(masterHttpHeaderParser, parserSettings, maxHeaderListSize)))
 
   /**
    * Creates substreams for every stream and manages stream state machines
