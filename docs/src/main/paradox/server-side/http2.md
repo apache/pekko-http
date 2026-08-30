@@ -26,20 +26,20 @@ Java
 Note that currently only `newServerAt(...).bind` and `newServerAt(...).bindSync`
 support HTTP/2 but not `bindFlow` or `connectionSource(): Source`.
 
-HTTP/2 over TLS needs [Application-Layer Protocol Negotiation (ALPN)](https://en.wikipedia.org/wiki/Application-Layer_Protocol_Negotiation)
-to negotiate whether both client and server support HTTP/2.
+HTTP/2 over TLS uses [Application-Layer Protocol Negotiation (ALPN)](https://www.rfc-editor.org/rfc/rfc7301.html)
+to negotiate whether both client and server support HTTP/2. ALPN support is included in the Java versions supported by
+Apache Pekko HTTP and does not require a separate provider or boot classpath configuration.
 
 ### HTTP/2 without HTTPS
 
-While un-encrypted connections are allowed by HTTP/2, this is [sometimes discouraged](https://http2.github.io/faq/#does-http2-require-encryption).
+HTTP/2 without TLS should only be used on a trusted network or when TLS is terminated by a trusted proxy. Most public
+clients use HTTP/2 over TLS.
 
-There are 2 ways to implement un-encrypted HTTP/2 connections: by using the
-[HTTP Upgrade mechanism](https://httpwg.org/specs/rfc7540.html#discover-http)
-or by starting communication in HTTP/2 directly which requires the client to
-have [Prior Knowledge](https://httpwg.org/specs/rfc7540.html#known-http) of
-HTTP/2 support.
+Apache Pekko HTTP supports starting a cleartext HTTP/2 connection with
+[prior knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3). For compatibility with older clients, it
+also supports the HTTP/1.1 Upgrade mechanism from the obsolete RFC 7540 specification.
 
-We support both approaches transparently on the same port. This feature is automatically enabled when HTTP/2 is enabled:
+Both approaches are supported transparently on the same port and are automatically enabled when HTTP/2 is enabled:
 
 Scala
 :   @@snip[Http2Spec.scala](/docs/src/test/scala/docs/http/scaladsl/Http2Spec.scala) { #bindAndHandlePlain }
@@ -49,10 +49,16 @@ Java
 
 #### h2c Upgrade
 
-The advantage of switching from HTTP/1.1 to HTTP/2 using the
-[HTTP Upgrade mechanism](https://httpwg.org/specs/rfc7540.html#discover-http)
-is that both HTTP/1.1 and HTTP/2 clients can connect to the server on the
-same port, without being aware beforehand which protocol the server supports.
+@@@ warning
+
+The HTTP/1.1 Upgrade mechanism and the `h2c` upgrade token are obsolete in
+[RFC 9113](https://www.rfc-editor.org/rfc/rfc9113.html#section-11.2). Use this mode only when compatibility with an
+older client requires it. New cleartext HTTP/2 clients should use prior knowledge.
+
+@@@
+
+The legacy Upgrade mechanism allows HTTP/1.1 and HTTP/2 clients to connect to the same port without knowing beforehand
+which protocol the server supports.
 
 The disadvantage is that relatively few clients support switching to HTTP/2
 in this way. Additionally, HTTP/2 communication cannot start until the first
@@ -60,14 +66,13 @@ request has been completely sent. This means if your first request may be
 large, it might be worth it to start with an empty OPTIONS request to switch
 to HTTP/2 before sending your first 'real' request, at the cost of a roundtrip.
 
-#### h2c with prior knowledge
+#### Cleartext HTTP/2 with prior knowledge
 
 The other option is to connect and start communicating in HTTP/2 immediately.
 The downside of this approach is the client must know beforehand that the
 server supports HTTP/2.
-For the reason this approach is known as h2c with
-[Prior Knowledge](https://httpwg.org/specs/rfc7540.html#known-http) of HTTP/2
-support.
+For this reason the approach is known as HTTP/2 with
+[prior knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3).
 
 ## Trailing headers
 
@@ -114,20 +119,4 @@ $ curl -k -v https://localhost:8443
 (...)
 ```
 
-If your curl output looks like above, you have successfully configured HTTP/2. However, on JDKs up to version 9, it is likely to look like this instead:
-
-```
-$ curl -k -v https://localhost:8443
-(...)
-* ALPN, offering h2
-* ALPN, offering http/1.1
-(...)
-* ALPN, server did not agree to a protocol
-(...)
-> GET / HTTP/1.1
-(...)
-< HTTP/1.1 200 OK
-(...)
-```
-
-This shows `curl` declaring it is ready to speak `h2` (the shorthand name of HTTP/2), but could not determine whether the server is ready to, so it fell back to HTTP/1.1. To make this negotiation work you'll have to configure ALPN as described below.
+If your curl output looks like above, you have successfully configured HTTP/2.
