@@ -54,7 +54,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         RequestParsing.parseRequest(headerParser, serverSettings, attributes)
 
       try Source.single(frame)
-          .via(new HeaderDecompression(headerParser, parserSettings))
+          .via(new HeaderDecompression(headerParser, parserSettings, serverSettings.http2Settings.maxHeaderListSize))
           .map { // emulate demux
             case headers: ParsedHeadersFrame =>
               Http2SubStream(
