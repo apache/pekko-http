@@ -36,7 +36,7 @@ import pekko.http.scaladsl.Http.OutgoingConnection
 import pekko.http.scaladsl.{ ConnectionContext, Http, HttpsConnectionContext }
 import pekko.http.scaladsl.Http.ServerBinding
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.{ Connection, RawHeader, Upgrade, UpgradeProtocol }
+import pekko.http.scaladsl.model.headers.{ Connection, Host, RawHeader, Upgrade, UpgradeProtocol }
 import pekko.http.scaladsl.model.http2.Http2SettingsHeader
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.ServerSettings
@@ -50,7 +50,7 @@ import pekko.Done
 
 import javax.net.ssl.SSLEngine
 import scala.collection.immutable
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success }
@@ -287,6 +287,47 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       system.classicSystem))(Keep.right)
       .addAttributes(Http.cancellationStrategyAttributeForDelay(clientConnectionSettings.streamCancellationDelay))
   }
+
+  /**
+   * Like [[outgoingConnection]], but offers `http/1.1` alongside `h2` over ALPN and falls back to the HTTP/1.1 client
+   * stack when the server does not select `h2`.
+   *
+   * The whole stack is built inside `Flow.fromMaterializer` so that every materialization gets its own engine and
+   * negotiation promise - `PersistentConnection.managedConnection` re-materializes the connection flow on each
+   * reconnect, so the "not reusable" approach `httpsWithAlpn` takes server-side would not work here.
+   */
+  def outgoingConnectionWithNegotiation(host: String, port: Int, connectionContext: HttpsConnectionContext,
+      clientConnectionSettings: ClientConnectionSettings, log: LoggingAdapter)
+      : Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] =
+    Flow.fromMaterializer { (_, _) =>
+      val negotiated = Promise[String]()
+
+      // TODO find an alternative way to do this
+      def createEngine(): SSLEngine = {
+        val engine = connectionContext.engineCreator(Some((host, port)))
+        engine.setUseClientMode(true)
+        Http2AlpnSupport.clientSetApplicationProtocols(engine, Array(Http2AlpnSupport.H2, Http2AlpnSupport.HTTP11))
+        new AlpnObservingSSLEngine(engine, protocol => { negotiated.trySuccess(protocol); () })
+      }
+
+      val hostHeader = port match {
+        case 0 | 443 => Host(host)
+        case _       => Host(host, port)
+      }
+      val http1Layer = http.clientLayer(hostHeader, clientConnectionSettings, log)
+      val http2Layer =
+        Http2Blueprint.clientStack(clientConnectionSettings, log, telemetry).atop(Http2Blueprint.unwrapTls)
+
+      val stack = ClientProtocolSwitch(negotiated.future, http1Layer, http2Layer).addAttributes(
+        prepareClientAttributes(host, port)).atop(
+        LogByteStringTools.logTLSBidiBySetting("client-plain-text",
+          clientConnectionSettings.logUnencryptedNetworkBytes)).atop(
+        TLS(createEngine _, closing = TLSClosing.eagerClose))
+
+      stack.joinMat(clientConnectionSettings.transport.connectTo(host, port, clientConnectionSettings)(
+        system.classicSystem))(Keep.right)
+        .addAttributes(Http.cancellationStrategyAttributeForDelay(clientConnectionSettings.streamCancellationDelay))
+    }.mapMaterializedValue(_.flatten)
 
   def outgoingConnectionPriorKnowledge(host: String, port: Int, clientConnectionSettings: ClientConnectionSettings,
       log: LoggingAdapter): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {

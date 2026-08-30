@@ -73,7 +73,7 @@ private[http] object Http2JDKAlpnSupport {
 
   def clientSetApplicationProtocols(engine: SSLEngine, protocols: Array[String]): Unit = {
     val params = engine.getSSLParameters
-    params.setApplicationProtocols(Array("h2"))
+    params.setApplicationProtocols(protocols)
     engine.setSSLParameters(params)
   }
 }
