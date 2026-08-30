@@ -1,6 +1,6 @@
 # Apache Pekko HTTP — Threat Model
 
-**Status:** Reviewed by a Pekko maintainer. **Q1-Q8 of §14 are answered** and are settled model, and §5b records the project's standing position on configuration defaults. **Q9 is resolved against the source and ruled on**, leaving **Q10 (coexistence with `security.md`) as the only open question**. No claim in this document is now uncited: every assertion is either cited to Pekko HTTP's own source and configuration, or stated by a maintainer.
+**Status:** Reviewed by a Pekko maintainer. **Q1-Q8 of §14 are answered** and are settled model, and §5b records the project's standing position on configuration defaults. **All ten questions in §14 are answered.** One item is referred rather than settled: whether the upstream-coordination sentence in `security.md` should be promoted into `SECURITY.md` (§14 Q10). No claim in this document is now uncited: every assertion is either cited to Pekko HTTP's own source and configuration, or stated by a maintainer.
 
 | | |
 | --- | --- |
@@ -17,7 +17,7 @@
 *(maintainer)* — stated by a Pekko maintainer in review of this document.
 *(inferred)* — reasoned from code or config defaults, **not yet confirmed**; each has a matching question in §14.
 
-**Confidence:** 20 documented / 26 maintainer / 0 inferred — counting inline tags only. The §5a limits table and the §15 back-map carry a further ~35 documented facts under a single collective citation each, so the document is more evidence-backed than the bare ratio suggests. **Nothing in the document is inferred any more.** Q1-Q2 and Q4-Q9 were answered by a maintainer in review; Q3, Q5 and Q9 were resolved against the source first, the last of these replacing §5's negative claims with a cited scan. Q4 and Q5 are worth noting as corrections rather than confirmations — in both, the draft's proposed answer had the facts backwards and the code said otherwise, while the triage disposition it proposed survived intact.
+**Confidence:** 20 documented / 27 maintainer / 0 inferred — counting inline tags only. The §5a limits table and the §15 back-map carry a further ~35 documented facts under a single collective citation each, so the document is more evidence-backed than the bare ratio suggests. **Nothing in the document is inferred any more.** Q1-Q2 and Q4-Q9 were answered by a maintainer in review; Q3, Q5 and Q9 were resolved against the source first, the last of these replacing §5's negative claims with a cited scan. Q4 and Q5 are worth noting as corrections rather than confirmations — in both, the draft's proposed answer had the facts backwards and the code said otherwise, while the triage disposition it proposed survived intact.
 
 Apache Pekko HTTP is a Scala/Java toolkit for building HTTP-based services and clients on top of Pekko Streams. It provides a full HTTP/1.1 and HTTP/2 implementation — parsing, connection management, marshalling, and a routing DSL of composable "directives" — as an **embeddable library**, not a standalone server. The application supplies the routes, the authentication, and the deployment.
 
@@ -352,7 +352,19 @@ On the second half: **in-process termination is supported**, and `HttpsConnectio
 
 **Answer:** state the boundary here rather than deferring it. The `ActorSystem`'s shutdown hooks are worth **highlighting** in §5 so an integrator is not surprised by them, but the claim this document makes and stands behind is that **Pekko HTTP registers none of its own**. A report that Pekko HTTP installs a shutdown hook is factually wrong (§11a); one about the hooks `CoordinatedShutdown` or Artery register belongs to `apache/pekko`'s model, and is `OUT-OF-MODEL: unsupported-component` here.
 
-**Q10 — Coexistence (meta).** `docs/src/main/paradox/security.md` has a "Security model" section that this document expands considerably. *Proposed:* this file becomes canonical for **scope and triage**, `security.md` stays canonical for **announcements and reporting**, and its "Security model" section becomes a short pointer here. Agree?
+**Q10 — Coexistence. ANSWERED *(maintainer)*.** Following the split adopted in [`apache/pekko#3478`](https://github.com/apache/pekko/pull/3478). Three documents carry security information, each canonical for one thing:
+
+| Document | Canonical for | Reached by |
+| --- | --- | --- |
+| [`SECURITY.md`](SECURITY.md) | **The reporting policy.** The strongest and canonical statement of how to report and what the project undertakes | Anyone arriving via the repository, and every other document |
+| `THREAT_MODEL.md` (this document) | **Scope** — what is and is not a vulnerability, and how a report is triaged | Reporters, triagers, scanning tools |
+| `docs/src/main/paradox/security.md` | Security announcements, and the documentation-site index of security material | Readers of the documentation site |
+
+Every other document **links** to `SECURITY.md` for the reporting policy and to this document for scope, rather than restating either. A change to the policy is therefore made in one place.
+
+**Note the correction to the draft's proposal.** It suggested that `security.md`'s "Security model" section be reduced to a pointer here. It is *not*, and must not be: §4 quotes that section verbatim as the documented source of the "should not be exposed to the public internet directly" posture, and §15 back-maps four separate claims to it. Reducing it to a pointer would delete the evidence this document is built on and leave §4 citing a redirect. The section stays; `security.md` gains links to `SECURITY.md` and to this file, matching the minimal change made in `apache/pekko#3478`.
+
+**One statement is referred, not migrated.** `security.md` carries an upstream-coordination sentence that `SECURITY.md` does not: *"Ideally, any issues affecting Apache Pekko and Akka should be reported to Apache team first. We will share the report with the Lightbend Akka team."* Per the same ruling, a reporting statement living outside `SECURITY.md` is referred to the maintainers for a decision — promoted verbatim or dropped, never silently moved. It is left untouched in `security.md` pending that decision. (`apache/pekko` resolved its equivalent by carrying a general sentence in `SECURITY.md`: *"The Pekko PMC will coordinate responsible disclosure with affected upstream maintainers where needed."*)
 
 ---
 
