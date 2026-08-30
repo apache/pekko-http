@@ -26,6 +26,13 @@ import pekko.http.scaladsl.util.FastFuture._
 
 /**
  * A directive that provides a tuple of values of type `L` to create an inner route.
+ *
+ * <p>
+ *   Opentelemetry Java Instrumentation relies on the single-argument `tapply` method of this class (and of
+ *   every subclass) so avoid changing it. The agent uses it to derive the `http.route` attribute.
+ *   See https://github.com/apache/pekko-http/issues/1241 and
+ *   https://github.com/open-telemetry/opentelemetry-java-instrumentation/blob/6f9ca5672ce84edbbe36ce0e14386c31d68f479f/instrumentation/pekko/pekko-http-1.0/javaagent/src/main/java/io/opentelemetry/javaagent/instrumentation/pekkohttp/v1_0/server/route/DirectiveInstrumentation.java
+ * </p>
  */
 //#basic
 abstract class Directive[L](implicit val ev: Tuple[L]) {

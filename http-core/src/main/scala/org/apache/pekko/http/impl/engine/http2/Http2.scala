@@ -59,6 +59,13 @@ import scala.util.{ Failure, Success }
  * INTERNAL API
  *
  * Internal entry points for Http/2 server
+ *
+ * <p>
+ *   Opentelemetry Java Instrumentation relies on this class so avoid changing it. Besides
+ *   [[Http2Ext.bindAndHandleAsync]] the agent also reads the `system` member to obtain a dispatcher for
+ *   the response future, so keep that accessor around too.
+ *   See https://github.com/apache/pekko-http/issues/1241
+ * </p>
  */
 @InternalApi
 private[http] final class Http2Ext(implicit val system: ActorSystem)
@@ -73,6 +80,13 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
   val telemetry = TelemetrySpi.create(system)
 
   // TODO: split up similarly to what `Http` does into `serverLayer`, `bindAndHandle`, etc.
+  /**
+   * <p>
+   *   Opentelemetry Java Instrumentation relies on this method so avoid changing it. HTTP/2 bindings do
+   *   not go through `HttpExt`, so this is the only server entry point the agent can hook for HTTP/2.
+   *   See https://github.com/apache/pekko-http/issues/1241
+   * </p>
+   */
   @noinline // Not inlined to permit instrumentation to pass params (interface, port) as context to constructed implementation flows
   def bindAndHandleAsync(
       handler: HttpRequest => Future[HttpResponse],
@@ -298,6 +312,13 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 @InternalApi
 private[http] object Http2 extends ExtensionId[Http2Ext] with ExtensionIdProvider {
 
+  /**
+   * <p>
+   *   Opentelemetry Java Instrumentation relies on this attribute key so avoid changing it. The agent uses
+   *   it to recognise a request that was replayed through the HTTP/2 stack after an h2c upgrade.
+   *   See https://github.com/apache/pekko-http/issues/1241
+   * </p>
+   */
   val streamId = AttributeKey[Int]("x-http2-stream-id")
 
   override def get(system: ActorSystem): Http2Ext = super.get(system)

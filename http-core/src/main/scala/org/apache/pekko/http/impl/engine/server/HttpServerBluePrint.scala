@@ -101,6 +101,17 @@ private[http] object HttpServerBluePrint {
       : BidiFlow[HttpResponse, ResponseRenderingContext, RequestOutput, RequestOutput, NotUsed] =
     BidiFlow.fromGraph(new ControllerStage(settings, log)).reversed
 
+  /**
+   * Wraps the HTTP/1.1 request/response bidi flow.
+   * <p>
+   *   Opentelemetry Java Instrumentation relies on this method so avoid changing it. The agent wraps the
+   *   returned [[BidiFlow]] to start and end server spans, and matches on the method name and on the
+   *   [[BidiFlow]] return type.
+   *   See https://github.com/apache/pekko-http/issues/1241
+   * </p>
+   */
+  // see https://github.com/open-telemetry/opentelemetry-java-instrumentation/blob/6f9ca5672ce84edbbe36ce0e14386c31d68f479f/instrumentation/pekko/pekko-http-1.0/javaagent/src/main/java/io/opentelemetry/javaagent/instrumentation/pekkohttp/v1_0/server/HttpServerBluePrintInstrumentation.java
+  @noinline // Not inlined so that the agent can match the method in the bytecode
   def requestPreparation(
       settings: ServerSettings): BidiFlow[HttpResponse, HttpResponse, RequestOutput, HttpRequest, NotUsed] =
     BidiFlow.fromFlows(Flow[HttpResponse], new PrepareRequests(settings))

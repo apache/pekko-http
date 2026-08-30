@@ -28,6 +28,13 @@ import pekko.http.scaladsl.server.util.TupleOps._
 /**
  * A PathMatcher tries to match a prefix of a given string and returns either a PathMatcher.Matched instance
  * if matched, otherwise PathMatcher.Unmatched.
+ *
+ * <p>
+ *   Opentelemetry Java Instrumentation relies on the `apply(Path)` method of this class (and of every
+ *   subclass) so avoid changing it. The agent uses it to derive the `http.route` attribute.
+ *   See https://github.com/apache/pekko-http/issues/1241 and
+ *   https://github.com/open-telemetry/opentelemetry-java-instrumentation/blob/6f9ca5672ce84edbbe36ce0e14386c31d68f479f/instrumentation/pekko/pekko-http-1.0/javaagent/src/main/java/io/opentelemetry/javaagent/instrumentation/pekkohttp/v1_0/server/route/PathMatcherStaticInstrumentation.java
+ * </p>
  */
 abstract class PathMatcher[L](implicit val ev: Tuple[L]) extends (Path => PathMatcher.Matching[L]) { self =>
   import PathMatcher._
@@ -164,7 +171,15 @@ object PathMatcher extends ImplicitPathMatcherConstruction {
   /**
    * Creates a PathMatcher that matches and consumes the given path prefix and extracts the given list of extractions.
    * If the given prefix is empty the returned PathMatcher matches always and consumes nothing.
+   *
+   * <p>
+   *   Opentelemetry Java Instrumentation relies on this method so avoid changing it. The agent matches on the
+   *   method name, on the [[Path]] first parameter and on the [[PathMatcher]] return type, and uses it to
+   *   derive the `http.route` attribute.
+   *   See https://github.com/apache/pekko-http/issues/1241
+   * </p>
    */
+  // see https://github.com/open-telemetry/opentelemetry-java-instrumentation/blob/6f9ca5672ce84edbbe36ce0e14386c31d68f479f/instrumentation/pekko/pekko-http-1.0/javaagent/src/main/java/io/opentelemetry/javaagent/instrumentation/pekkohttp/v1_0/server/route/PathMatcherInstrumentation.java
   def apply[L](prefix: Path, extractions: L)(implicit ev: Tuple[L]): PathMatcher[L] =
     if (prefix.isEmpty) provide(extractions)
     else new PathMatcher[L] {
