@@ -28,6 +28,7 @@ Scala
     org.apache.pekko.http.scaladsl.unmarshalling.sse.EventStreamUnmarshalling
     org.apache.pekko.http.scaladsl.OutgoingConnectionBuilder#managedPersistentHttp2
     org.apache.pekko.http.scaladsl.OutgoingConnectionBuilder#managedPersistentHttp2WithPriorKnowledge
+    org.apache.pekko.http.scaladsl.OutgoingConnectionBuilder#http2WithFallback
     ```
 
 Java
@@ -41,6 +42,7 @@ Java
     org.apache.pekko.http.javadsl.model.RequestResponseAssociation
     org.apache.pekko.http.javadsl.OutgoingConnectionBuilder#managedPersistentHttp2WithPriorKnowledge
     org.apache.pekko.http.javadsl.OutgoingConnectionBuilder#managedPersistentHttp2
+    org.apache.pekko.http.javadsl.OutgoingConnectionBuilder#http2WithFallback
     ```    
 
 #### pekko-http-caching
