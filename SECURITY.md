@@ -34,14 +34,32 @@ Three points catch most reporters:
 
 - **Pekko HTTP is not meant to face the public internet unaided.** The project
   recommends fronting it with an enterprise-grade routing solution or a load
-  balancer. Denial-of-service resistance is claimed only as "pretty well under
-  most known attacks", not absolutely. See §4 and §14 Q1.
+  balancer. For denial of service the model draws an explicit line: a **single
+  request within every documented limit** that causes disproportionate CPU or
+  memory use is a vulnerability, and we want that report. Resource exhaustion
+  that depends on request **volume** — connection floods, slow-loris at scale —
+  is the fronting proxy's job and will be closed as by-design. Load-generator
+  output is not a finding. See §5a for the limits and §14 Q1 for the ruling.
 - **Pekko HTTP is a toolkit, not a security system.** It provides no
   authentication policy, no authorization model, no CSRF protection and no
   output encoding. The security directives route credentials to a verifier the
   application supplies. See §9.
 - **Requests rejected for exceeding a documented limit are the limits working**,
   not a bug. The limits are listed in §5a.
+- **Configuration defaults are compatibility choices, not security claims.** Pekko
+  HTTP inherits a large deployment base from Akka HTTP, and tightening a shipped
+  default breaks working deployments on upgrade. A report that a default *should*
+  be stricter is a change request, not a vulnerability, and will be closed as
+  by-design — but it is genuinely welcome on the development list, where the PMC
+  will weigh it on its merits. You are free to strengthen any of these settings in
+  your own configuration, and §10 says which ones matter most. See §5b.
+
+**What we do want.** The flip side of the above is the report this project values
+most: **an implementation that does not do what it is documented to do.** If a
+parsing limit fails to bound what it claims to bound, if a control that is switched
+on can be bypassed, if a containment check can be walked around — that is a defect,
+it is in scope, and we will fix it. The defaults debate is about which value ships;
+it never excuses a mechanism that does not work.
 
 ## Further Security Documentation
 
