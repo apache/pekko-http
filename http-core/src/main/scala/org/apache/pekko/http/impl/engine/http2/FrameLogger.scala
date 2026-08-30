@@ -105,6 +105,9 @@ private[http2] object FrameLogger {
         case WindowUpdateFrame(streamId, windowSizeIncrement) =>
           LogEntry(streamId, "WIND", s"+ $windowSizeIncrement")
 
+        case CompositeFrame(frames) =>
+          LogEntry(0, "COMP", frames.map(entryForFrame).map(display).mkString("; "))
+
         case other: StreamFrameEvent =>
           LogEntry(other.streamId, "UNKN", other.toString)
         case other =>
