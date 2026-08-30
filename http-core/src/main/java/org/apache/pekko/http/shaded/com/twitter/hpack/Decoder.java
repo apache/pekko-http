@@ -529,8 +529,11 @@ public final class Decoder {
   }
 
   private String readStringLiteral(InputStream in, int length) throws IOException {
-    byte[] buf = new byte[length];
-    if (in.read(buf) != length) {
+    // readNBytes rather than read: InputStream.read(byte[]) is free to return fewer bytes than
+    // requested even when more are available, which would be reported here as a decompression
+    // failure
+    byte[] buf = in.readNBytes(length);
+    if (buf.length != length) {
       throw DECOMPRESSION_EXCEPTION;
     }
     final byte[] result;
