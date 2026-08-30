@@ -158,8 +158,14 @@ private[http] object ClientProtocolSwitch {
           setHandler(in,
             new InHandler {
               override def onPush(): Unit = {
-                pending :+= grab(in)
-                pump()
+                val elem = grab(in)
+                // steady state: hand the element straight over, the buffer is only needed while the negotiation
+                // result is still in flight
+                if (pending.isEmpty && out.isAvailable) out.push(elem)
+                else {
+                  pending :+= elem
+                  pump()
+                }
               }
               override def onUpstreamFinish(): Unit = {
                 finished = true
