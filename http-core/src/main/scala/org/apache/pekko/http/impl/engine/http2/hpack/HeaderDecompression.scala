@@ -106,9 +106,11 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
             }
           }
         }
-        val stream = payload.compact.asInputStream
+        // no compact() needed: the decoder only reads forward, so the SequenceInputStream that a
+        // multi-fragment ByteString hands out is enough and the header block is not copied
+        val stream = payload.asInputStream
         try {
-          decoder.decode(stream, Receiver) // only compact ByteString supports InputStream with mark/reset
+          decoder.decode(stream, Receiver)
           // the decoder stops emitting headers as soon as the limit is exceeded and reports that here
           val truncated = decoder.endHeaderBlock()
 
