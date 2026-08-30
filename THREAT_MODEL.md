@@ -1,6 +1,6 @@
 # Apache Pekko HTTP — Threat Model
 
-**Status:** Reviewed by a Pekko maintainer. **Q1-Q8 of §14 are answered** and are settled model, and §5b records the project's standing position on configuration defaults. **Q9 is resolved against the source** and **Q10 (coexistence with `security.md`) remains open**. No claim in this document is now uncited: every assertion is either cited to Pekko HTTP's own source and configuration, or stated by a maintainer.
+**Status:** Reviewed by a Pekko maintainer. **Q1-Q8 of §14 are answered** and are settled model, and §5b records the project's standing position on configuration defaults. **Q9 is resolved against the source and ruled on**, leaving **Q10 (coexistence with `security.md`) as the only open question**. No claim in this document is now uncited: every assertion is either cited to Pekko HTTP's own source and configuration, or stated by a maintainer.
 
 | | |
 | --- | --- |
@@ -17,7 +17,7 @@
 *(maintainer)* — stated by a Pekko maintainer in review of this document.
 *(inferred)* — reasoned from code or config defaults, **not yet confirmed**; each has a matching question in §14.
 
-**Confidence:** 20 documented / 24 maintainer / 0 inferred — counting inline tags only. The §5a limits table and the §15 back-map carry a further ~35 documented facts under a single collective citation each, so the document is more evidence-backed than the bare ratio suggests. **Nothing in the document is inferred any more.** Q1-Q2 and Q4-Q8 were answered by a maintainer in review; Q3, Q5 and Q9 were resolved against the source, the last of these replacing §5's negative claims with a cited scan. Q4 and Q5 are worth noting as corrections rather than confirmations — in both, the draft's proposed answer had the facts backwards and the code said otherwise, while the triage disposition it proposed survived intact.
+**Confidence:** 20 documented / 26 maintainer / 0 inferred — counting inline tags only. The §5a limits table and the §15 back-map carry a further ~35 documented facts under a single collective citation each, so the document is more evidence-backed than the bare ratio suggests. **Nothing in the document is inferred any more.** Q1-Q2 and Q4-Q9 were answered by a maintainer in review; Q3, Q5 and Q9 were resolved against the source first, the last of these replacing §5's negative claims with a cited scan. Q4 and Q5 are worth noting as corrections rather than confirmations — in both, the draft's proposed answer had the facts backwards and the code said otherwise, while the triage disposition it proposed survived intact.
 
 Apache Pekko HTTP is a Scala/Java toolkit for building HTTP-based services and clients on top of Pekko Streams. It provides a full HTTP/1.1 and HTTP/2 implementation — parsing, connection management, marshalling, and a routing DSL of composable "directives" — as an **embeddable library**, not a standalone server. The application supplies the routes, the authentication, and the deployment.
 
@@ -94,11 +94,12 @@ Read carefully, this makes a **graded** claim rather than a binary one: Pekko HT
 Negative claims, rarely written down and therefore verified against the source rather than asserted. The scan below covers the main sources of `http-core`, `http`, `parsing`, `http-caching` and `http-cors` *(documented — source scan, §14 Q9)*:
 
 - **Binds no port until the application calls a `bind*` method.** Binding is reachable only through the public `Http().bind` / `bindAndHandle*` entry points (`Http.scala:179-292`); nothing binds at class or extension initialization.
-- **Installs no signal handlers and spawns no child processes.** No `sun.misc.Signal`/`SignalHandler`, `ProcessBuilder` or `Runtime.exec` in the main sources — and, unlike `apache/pekko`, no `addShutdownHook` of its own.
+- **Installs no signal handlers and spawns no child processes.** No `sun.misc.Signal`/`SignalHandler`, `ProcessBuilder` or `Runtime.exec` in the main sources.
+- **Registers no JVM shutdown hook.** There is no `addShutdownHook` anywhere in Pekko HTTP's main sources. Any hook an integrator observes comes from the actor system, not from here — see the caveat below.
 - **Writes no files of its own accord** — no `FileOutputStream`, `Files.write`, `FileWriter` or `createTempFile`. It serves from disk only via directives the application installs (`getFromFile`, `getFromDirectory`), and those read.
 - **Does not mutate process-global state at initialization** — no `System.setProperty`, `Security.setProperty`, `Security.addProvider` or `setDefault(...)`.
 
-**One inherited caveat.** These claims cover Pekko HTTP's own modules, not the `ActorSystem` it runs on. `apache/pekko` *does* register JVM shutdown hooks — one in `CoordinatedShutdown`, and a second in Artery when remoting is enabled — so an integrator will observe shutdown hooks in the process; they arrive with the actor system, and are modeled in the companion document, not here.
+**One inherited caveat, highlighted because it is easy to misattribute.** The claims above cover Pekko HTTP's own modules, not the `ActorSystem` it runs on. `apache/pekko` *does* register JVM shutdown hooks — one in `CoordinatedShutdown`, and a second in Artery when remoting is enabled — so an integrator running a Pekko HTTP service **will** observe shutdown hooks in the process. They arrive with the actor system and are modeled in the companion document. **Pekko HTTP itself adds none**, and that is the claim this section makes: *"a Pekko HTTP process has no shutdown hook"* is false, while *"Pekko HTTP registers no shutdown hook"* is true and is what §14 Q9 settles. *(maintainer — §14 Q9)*
 
 ---
 
@@ -283,6 +284,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 - **"`allow-credentials = yes` with `allowed-origins = "*"` sends `Access-Control-Allow-Origin: *` with credentials."** It does not — the literal `*` is sent only when `allowCredentials` is false, otherwise the request `Origin` is echoed (`CorsSettingsImpl.scala:64`, covered by `CorsDirectivesSpec`). Reports asserting the literal `*`-with-credentials combination are factually wrong.
 - **"Credential comparison is vulnerable to a timing attack."** Check which comparator the report exercises: `Credentials.verify` is constant-time (§8 P8), so the claim is wrong against it; against an application's own `provideVerify` comparator it is a finding in that application, not this library.
 - **Findings in `*-tests`, `http-testkit*`, `http-bench-jmh`, `http-scalafix`, `docs`** — `OUT-OF-MODEL: unsupported-component` per §3.
+- **"The process registers JVM shutdown hooks."** Pekko HTTP registers none (§5, §14 Q9). The hooks are `CoordinatedShutdown`'s and, with remoting enabled, Artery's — they belong to `apache/pekko`'s model. `OUT-OF-MODEL: unsupported-component`.
 - **Findings in the actor or stream layer** — belongs to `apache/pekko`'s model, not this one.
 
 ---
@@ -346,7 +348,9 @@ The operative test is *content vs. volume*: one well-formed, in-limits request d
 
 On the second half: **in-process termination is supported**, and `HttpsConnectionContext` is a first-class API. It is not, however, the posture the documentation steers production deployments toward — §4's quoted recommendation to front the service with an enterprise-grade routing solution or load balancer applies to TLS as much as to volume defence (§14 Q1), and in such a deployment termination is commonly the proxy's job. Both are supported; the fronted one is what the docs recommend.
 
-**Q9 — The negative claims in §5.** *Resolved from code — confirm the disposition only.* Scanned the main sources of `http-core`, `http`, `parsing`, `http-caching` and `http-cors`: no `addShutdownHook`, no `ProcessBuilder`/`Runtime.exec`, no `Signal`/`SignalHandler`, no file-writing API, no `System.setProperty`/`Security.*`/`setDefault`, and no bind outside the public `Http().bind*` entry points. All four claims hold **for Pekko HTTP's own code**, and §5 now cites the scan rather than asserting them. The caveat worth a maintainer's eye is the inherited one: the `ActorSystem` registers shutdown hooks that Pekko HTTP does not, so *"Pekko HTTP installs no shutdown hook"* is true while *"a Pekko HTTP process has no shutdown hook"* is false. **Is stating that boundary here — rather than deferring the whole topic to the companion model — the split you want?**
+**Q9 — The negative claims in §5. ANSWERED *(maintainer)*.** *Resolved from code, then ruled on.* Scanned the main sources of `http-core`, `http`, `parsing`, `http-caching` and `http-cors`: no `addShutdownHook`, no `ProcessBuilder`/`Runtime.exec`, no `Signal`/`SignalHandler`, no file-writing API, no `System.setProperty`/`Security.*`/`setDefault`, and no bind outside the public `Http().bind*` entry points. All claims hold, and §5 cites the scan rather than asserting them.
+
+**Answer:** state the boundary here rather than deferring it. The `ActorSystem`'s shutdown hooks are worth **highlighting** in §5 so an integrator is not surprised by them, but the claim this document makes and stands behind is that **Pekko HTTP registers none of its own**. A report that Pekko HTTP installs a shutdown hook is factually wrong (§11a); one about the hooks `CoordinatedShutdown` or Artery register belongs to `apache/pekko`'s model, and is `OUT-OF-MODEL: unsupported-component` here.
 
 **Q10 — Coexistence (meta).** `docs/src/main/paradox/security.md` has a "Security model" section that this document expands considerably. *Proposed:* this file becomes canonical for **scope and triage**, `security.md` stays canonical for **announcements and reporting**, and its "Security model" section becomes a short pointer here. Agree?
 
