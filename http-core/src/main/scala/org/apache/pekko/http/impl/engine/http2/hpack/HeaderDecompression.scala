@@ -21,7 +21,7 @@ import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.http2.RequestParsing.parseHeaderPair
 import pekko.http.impl.engine.http2._
 import pekko.http.impl.engine.parsing.HttpHeaderParser
-import pekko.http.scaladsl.model.ParsingException
+import pekko.http.scaladsl.model.{ ErrorInfo, ParsingException }
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.shaded.com.twitter.hpack.HeaderListener
 import pekko.stream._
@@ -73,8 +73,14 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
       def parseAndEmit(
           streamId: Int, endStream: Boolean, payload: ByteString, prioInfo: Option[PriorityFrame]): Unit = {
         val headers = new VectorBuilder[(String, AnyRef)]
+        // A header that fails to parse must not unwind out of the decoder. Decoding has to run to the end of
+        // the block so that the HPACK dynamic table keeps tracking the peer's - insertHeader calls this
+        // listener before adding to the table, and the representations after this one would not be read at
+        // all - and so that endHeaderBlock resets the state machine. Both would otherwise stay wrong for
+        // every later HEADERS frame on the connection. Remember the first failure and report it afterwards.
+        var parsingError: Option[ErrorInfo] = None
         object Receiver extends HeaderListener {
-          def addHeader(name: String, value: String, parsed: AnyRef, sensitive: Boolean): AnyRef = {
+          def addHeader(name: String, value: String, parsed: AnyRef, sensitive: Boolean): AnyRef = try {
             if (parsed ne null) {
               headers += name -> parsed
               parsed
@@ -104,6 +110,12 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
                   handle(header)
               }
             }
+          } catch {
+            case ex: ParsingException =>
+              if (parsingError.isEmpty) parsingError = Some(ex.info)
+              // nothing usable to cache against the table entry, so the value is parsed again if it is
+              // referenced again - and fails again, consistently
+              null
           }
         }
         // no compact() needed: the decoder only reads forward, so the SequenceInputStream that a
@@ -115,16 +127,28 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
           val truncated = decoder.endHeaderBlock()
 
           if (truncated) headerListSizeExceeded(streamId)
-          else push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo, None))
+          else
+            parsingError match {
+              // push details further and let RequestErrorFlow handle responding with bad request
+              case Some(info) =>
+                push(eventsOut, ParsedHeadersFrame(streamId, endStream, Seq.empty, prioInfo, Some(info)))
+              case None =>
+                push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo, None))
+            }
         } catch {
           case ex: ParsingException =>
-            // push details further and let RequestErrorFlow handle responding with bad request
+            // not expected any more now that the listener catches them, kept so that one thrown from
+            // somewhere else still answers with a bad request rather than tearing down the connection
             push(eventsOut, ParsedHeadersFrame(streamId, endStream, Seq.empty, prioInfo, Some(ex.info)))
           case _: IOException =>
             // this is signalled by the decoder when it failed, we want to react to this by rendering a GOAWAY frame
             fail(eventsOut,
               new Http2Compliance.Http2ProtocolException(ErrorCode.COMPRESSION_ERROR, "Decompression failed."))
         } finally {
+          // endHeaderBlock is what resets the decoder for the next block, so it has to run even when decode
+          // unwound anyway - a malformed pseudo header raises an Http2ProtocolException, for one. Running it
+          // a second time after the call above is a no-op.
+          decoder.endHeaderBlock()
           stream.close()
         }
       }
