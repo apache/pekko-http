@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Project** | Apache Pekko HTTP |
-| **Written against** | commit `dd0a4a3`, `main` |
+| **Written against** | commit `444d939`, `main` |
 | **Date** | 2026-08-27 |
 | **Authors** | ASF Security team, at the request of the Pekko PMC |
 | **Version binding** | Versioned alongside the project. A report against version *N* is triaged against the model as it stood at *N*, not at `main`. |
@@ -17,7 +17,7 @@
 *(maintainer)* — stated by a Pekko maintainer in review of this document.
 *(inferred)* — reasoned from code or config defaults, **not yet confirmed**; each has a matching question in §14.
 
-**Draft confidence:** 13 documented / 0 maintainer / 16 inferred — counting inline tags only. The §5a limits table and the §15 back-map carry a further ~35 documented facts under a single collective citation each, so the document is more evidence-backed than the bare ratio suggests. What is genuinely inferred clusters in three places: the §3/§7/§9 non-goals, the negative claims in §5, and the exact boundary of the DoS claim — §14 Q1, Q7 and Q9 respectively.
+**Draft confidence:** 17 documented / 0 maintainer / 15 inferred — counting inline tags only. The §5a limits table and the §15 back-map carry a further ~35 documented facts under a single collective citation each, so the document is more evidence-backed than the bare ratio suggests. What is genuinely inferred clusters in three places: the §3/§7/§9 non-goals, the negative claims in §5, and the exact boundary of the DoS claim — §14 Q1, Q7 and Q9 respectively. §14 Q3 and Q5 were originally inferred and have since been resolved against the source; they remain listed so the PMC can confirm the *disposition*, not the fact.
 
 Apache Pekko HTTP is a Scala/Java toolkit for building HTTP-based services and clients on top of Pekko Streams. It provides a full HTTP/1.1 and HTTP/2 implementation — parsing, connection management, marshalling, and a routing DSL of composable "directives" — as an **embeddable library**, not a standalone server. The application supplies the routes, the authentication, and the deployment.
 
@@ -118,6 +118,7 @@ Pekko HTTP's resistance to malformed and abusive input is almost entirely a func
 | `max-comment-parsing-depth` | `5` | Nested comment recursion |
 | `max-to-strict-bytes` | `8m` | `toStrict` materialization |
 | `max-concurrent-streams` | `256` | HTTP/2 concurrent streams |
+| `max-header-list-size` | `64 KiB` | HTTP/2 decompressed header list, **and** the accumulated HEADERS + CONTINUATION fragments for one header block |
 | `max-connections` | `1024` | Server connections |
 | `pipelining-limit` | `1` | In-flight pipelined requests |
 | `idle-timeout` | `60 s` | Connection idle |
@@ -180,7 +181,7 @@ So with **both** defaults in force, the directive **echoes the requesting `Origi
 
 - **Attackers with code execution in the embedding JVM.** Already inside.
 - **The embedding application itself.** A route that deliberately leaks data is an application bug.
-- **Side-channel observers.** No timing guarantees are made — including, notably, that the authentication directives do **not** promise constant-time credential comparison; the comparison function is supplied by the application. *(inferred — §14 Q5)*
+- **Side-channel observers.** No general timing guarantees are made about routing or parsing. Credential comparison is the exception: `Credentials.Provided.verify` compares in constant time (see §8 P8), so a timing finding there is in scope, while one against an application-supplied `provideVerify` is not. *(documented — `SecurityDirectives.scala`, `EnhancedByteArray.scala`)*
 
 ---
 
@@ -194,8 +195,10 @@ So with **both** defaults in force, the directive **echoes the requesting `Origi
 | P4 | **Strict URI and RFC6265 cookie parsing by default**, rather than lenient normalization that invites smuggling | Two components disagreeing on a URI or cookie under `strict` | High | *(documented — `reference.conf`)* |
 | P5 | **Connection and request lifetimes are bounded** — `idle-timeout 60s`, `request-timeout 20s`, `max-connections 1024`, `pipelining-limit 1` | A client holding resources indefinitely under defaults | High | *(documented — `reference.conf`)* |
 | P6 | **HTTP/2 concurrency is bounded** — `max-concurrent-streams = 256` | Unbounded stream/state growth on one connection | High | *(documented — `reference.conf`)* |
+| P7 | **HTTP/2 header blocks are bounded** — `max-header-list-size = 64 KiB` caps the decompressed header list *and* the accumulated HEADERS + CONTINUATION fragments, so a header block the peer never terminates with `END_HEADERS` cannot grow without bound; over-limit blocks get `GOAWAY(ENHANCE_YOUR_CALM)` rather than being buffered | Unbounded buffering from a CONTINUATION flood or an oversized header list | **Critical** | *(documented — `reference.conf`)* |
+| P8 | **Credential comparison is constant-time** where the verifier calls `Credentials.verify` — it compares via `secure_==`, which XOR-accumulates over the full length after a length check, rather than short-circuiting on the first differing byte | Secret recoverable byte-by-byte from response timing against a `verify`-based verifier | High | *(documented — `SecurityDirectives.scala`, `EnhancedByteArray.scala:37`)* |
 
-**Every one of these is a default-on property** — a notable contrast with `apache/pekko`, where the strongest controls must be switched on. Pekko HTTP's weak spot is not its defaults but the boundary of its DoS claim (§9, §14 Q1).
+**P1-P7 are default-on properties** — a notable contrast with `apache/pekko`, where the strongest controls must be switched on. P8 is the exception: it holds only for a verifier that calls `Credentials.verify`, which is why §10.4 states it as a downstream responsibility. Pekko HTTP's weak spot is not its defaults but the boundary of its DoS claim (§9, §14 Q1).
 
 ---
 
@@ -210,7 +213,7 @@ So with **both** defaults in force, the directive **echoes the requesting `Origi
 
 ### False friends
 
-- **The security directives are not a security *system*.** `authenticateBasic` and `authenticateOAuth2` route credentials to an application-supplied verifier; they impose no password policy, no rate limiting, no lockout, and — see §14 Q5 — no constant-time comparison of their own.
+- **The security directives are not a security *system*.** `authenticateBasic` and `authenticateOAuth2` route credentials to an application-supplied verifier; they impose no password policy, no rate limiting and no lockout. They *do* supply a constant-time comparison (§8 P8) — but only to a verifier that calls `Credentials.verify`; one that pattern-matches the secret out and uses `==` gets none of it.
 - **`allowed-origins = "*"` does not mean "no credentials are exposed".** Combined with the shipped `allow-credentials = yes`, it echoes the caller's `Origin` (§5a).
 - **`remote-address-attribute` is not the client IP behind a proxy.** It is the socket peer.
 - **`max-content-length` is not a global memory bound.** It bounds one entity; concurrent connections multiply it.
@@ -222,7 +225,7 @@ So with **both** defaults in force, the directive **echoes the requesting `Origi
 - **Slow-loris and connection exhaustion** — partially bounded by P5, explicitly not fully claimed (§14 Q1).
 - **Decompression bombs** in request bodies, where the application enables decoding.
 - **SSRF** via the client API, where the application takes a URL from a request.
-- **Path traversal** in file-serving directives — see §14 Q3.
+- **Path traversal** in file-serving directives is *not* left to the caller — `safeDirectoryChildPath` contains it (§14 Q3). What remains the caller's is the surrounding choice: which root is served, and whether a symlink may point out of it.
 - **XXE** in XML marshallers — a property of the underlying parser.
 
 ---
@@ -232,7 +235,7 @@ So with **both** defaults in force, the directive **echoes the requesting `Origi
 1. **Put an enterprise-grade proxy or load balancer in front** of an internet-facing service *(documented — `security.md`)*.
 2. **Do not raise the §5a limits without understanding the memory cost** — each is multiplied by concurrent connections.
 3. **If CORS is enabled, set `allowed-origins` explicitly.** Do not ship the `"*"` + `allow-credentials = yes` combination to a credentialed API (§5a).
-4. **Supply a constant-time credential comparison** to the authentication directives (§14 Q5).
+4. **Compare credentials with `Credentials.verify`**, which is constant-time (§8 P8) — not with `==` on the secret, and not via `provideVerify` unless the supplied verifier is itself constant-time.
 5. **Do not derive client identity from `X-Forwarded-For`** unless a trusted proxy sets it and the application validates the chain.
 6. **Validate and canonicalize any request-derived path** before passing it to a file-serving directive.
 7. **Treat client-API responses from untrusted upstreams as untrusted input.**
@@ -246,7 +249,7 @@ So with **both** defaults in force, the directive **echoes the requesting `Origi
 - **Enabling `cors()` and leaving `allowed-origins = "*"`** on an API that uses cookies or bearer tokens.
 - **Trusting `X-Forwarded-For`** for rate limiting, audit logging, or access control without a trusted-proxy chain.
 - **Raising `max-content-length` to `infinite`** to accept large uploads, without a concurrency bound.
-- **Comparing credentials with `==`** inside an `authenticateBasic` verifier.
+- **Comparing credentials with `==`** inside an `authenticateBasic` verifier — or reaching for `provideVerify` with a non-constant-time verifier — instead of `Credentials.verify`.
 - **Passing a request path segment straight to `getFromFile`.**
 - **Turning `verbose-error-messages = on`** in production to aid debugging.
 
@@ -258,7 +261,8 @@ So with **both** defaults in force, the directive **echoes the requesting `Origi
 - **"No authentication on routes."** Authentication is the application's responsibility (§9). A scan of this library cannot conclude a route is unauthenticated.
 - **"Request exceeding `max-uri-length` / `max-header-count` is rejected."** That is P1 working.
 - **"CORS allows any origin."** Reflects the shipped default and requires the application to have opted into `cors()`; pending §14 Q2, report against the *application's* configuration, not the library.
-- **"`allow-credentials = yes` with `allowed-origins = "*"` sends `Access-Control-Allow-Origin: *` with credentials."** It does not — per the documented interaction it echoes the request `Origin` instead (§5a). Reports asserting the literal `*`-with-credentials combination are factually wrong.
+- **"`allow-credentials = yes` with `allowed-origins = "*"` sends `Access-Control-Allow-Origin: *` with credentials."** It does not — the literal `*` is sent only when `allowCredentials` is false, otherwise the request `Origin` is echoed (`CorsSettingsImpl.scala:64`, covered by `CorsDirectivesSpec`). Reports asserting the literal `*`-with-credentials combination are factually wrong.
+- **"Credential comparison is vulnerable to a timing attack."** Check which comparator the report exercises: `Credentials.verify` is constant-time (§8 P8), so the claim is wrong against it; against an application's own `provideVerify` comparator it is a finding in that application, not this library.
 - **Findings in `*-tests`, `http-testkit*`, `http-bench-jmh`, `http-scalafix`, `docs`** — `OUT-OF-MODEL: unsupported-component` per §3.
 - **Findings in the actor or stream layer** — belongs to `apache/pekko`'s model, not this one.
 
@@ -300,11 +304,11 @@ Each states a **proposed answer**; confirming or correcting is enough.
 
 **Q2 — The CORS defaults.** `allowed-origins = "*"` with `allow-credentials = yes` echoes the caller's `Origin` with credentials allowed. *Proposed:* deliberate, on the grounds that `cors()` is opt-in and an application enabling it is expected to configure it — so a report against the default is `VALID-HARDENING` at most, and the §10.3 guidance covers it. Confirm — or should the shipped default change?
 
-**Q3 — File-serving directives.** `getFromFile` / `getFromDirectory` / `getFromResourceDirectory`. *Proposed:* these perform their own containment, so a genuine traversal escaping the configured root would be `VALID`; passing an unvalidated request path in is a §11 misuse. Is containment actually claimed, and at which directive?
+**Q3 — File-serving directives.** *Resolved from code — confirm the disposition only.* `safeDirectoryChildPath` contains traversal by two stated measures: a path segment must not be `..` and must not contain `/` or `\\`; and the resolved file's `File.getCanonicalPath` must be prefixed by the base path's. So containment **is** claimed, and a genuine escape from the configured root is `VALID`; passing an unvalidated path in is a §11 misuse. One residual the code comment itself flags: containment rests on `getCanonicalPath`, whose symlink resolution is platform-dependent — *is a symlink out of the served root a `VALID` finding, or an operator responsibility?* *(documented — `FileAndResourceDirectives.scala:229-274`)*
 
 **Q4 — `X-Forwarded-For` and client identity.** *Proposed:* Pekko HTTP neither parses nor trusts forwarding headers; `remote-address-attribute` is strictly the socket peer, and deriving client IP is entirely the application's job — so "forwarding header is spoofable" is `BY-DESIGN: property-disclaimed`. Confirm?
 
-**Q5 — Constant-time credential comparison.** Do `authenticateBasic` / `authenticateOAuth2` compare anything themselves, or is comparison entirely the application-supplied verifier's? *Proposed:* entirely the application's, so a timing-attack report against the directives is out of model and belongs in §10.4 as a downstream responsibility. Confirm?
+**Q5 — Constant-time credential comparison.** *Resolved from code — this document's earlier draft had it backwards.* `Credentials.Provided.verify` does compare, via `secure_==` (`EnhancedByteArray.scala:37`), which is constant-time; the library therefore **does** provide the guarantee, recorded as §8 P8. It is conditional on the verifier calling `verify` — `provideVerify` hands the raw secret to application code and waives it. *Proposed:* a timing finding against `verify` is `VALID`; one against an application's own `provideVerify` comparator is `BY-DESIGN: property-disclaimed`. Confirm the split?
 
 **Q6 — Module in/out split (§2 table).** *Proposed:* the split shown. Specifically: should `http-caching` be in model (cache-key confusion is a real class), and is `http-scalafix` correctly out?
 
@@ -332,5 +336,8 @@ Each states a **proposed answer**; confirming or correcting is enough.
 | `uri-parsing-mode = strict`, `cookie-parsing-mode = rfc6265` | `http-core/reference.conf` | §5a, §8 P4 |
 | Timeouts and connection caps | `http-core/reference.conf` | §5a, §8 P5 |
 | `max-concurrent-streams = 256` | `http-core/reference.conf` | §5a, §8 P6 |
+| `max-header-list-size = 64 KiB`, bounding HEADERS + CONTINUATION accumulation | `http-core/reference.conf` | §5a, §8 P7 |
+| `Credentials.verify` compares via constant-time `secure_==` | `SecurityDirectives.scala`, `EnhancedByteArray.scala` | §7, §8 P8, §9, §10.4, §14 Q5 |
+| `safeDirectoryChildPath` rejects `..`/separator segments and enforces a canonical-path prefix | `FileAndResourceDirectives.scala` | §9, §14 Q3 |
 | `remote-address-attribute = off` | `http-core/reference.conf` | §5, §9, §14 Q4 |
 | CORS: `*` + credentials echoes the request `Origin` | `http-cors/reference.conf` | §5a, §9, §11a, §14 Q2 |
