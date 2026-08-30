@@ -1,6 +1,6 @@
 # Apache Pekko HTTP — Threat Model
 
-**Status:** DRAFT — awaiting Pekko PMC review. Not yet ratified as a whole. **§14 Q1 (the DoS line) and Q2 (the CORS defaults) have been answered by a maintainer**, and §5b records the project's standing position on configuration defaults; these are settled model. The remaining questions in §14 are still open.
+**Status:** Reviewed by a Pekko maintainer. **Q1-Q8 of §14 are answered** and are settled model, and §5b records the project's standing position on configuration defaults. **Q9 is resolved against the source** and **Q10 (coexistence with `security.md`) remains open**. No claim in this document is now uncited: every assertion is either cited to Pekko HTTP's own source and configuration, or stated by a maintainer.
 
 | | |
 | --- | --- |
@@ -17,7 +17,7 @@
 *(maintainer)* — stated by a Pekko maintainer in review of this document.
 *(inferred)* — reasoned from code or config defaults, **not yet confirmed**; each has a matching question in §14.
 
-**Draft confidence:** 17 documented / 6 maintainer / 13 inferred — counting inline tags only. The §5a limits table and the §15 back-map carry a further ~35 documented facts under a single collective citation each, so the document is more evidence-backed than the bare ratio suggests. What is genuinely inferred now clusters in two places: the §3/§7/§9 non-goals and the negative claims in §5 — §14 Q7 and Q9 respectively. Four questions are closed: Q1 and Q2 answered by a maintainer, Q3 and Q5 resolved against the source (they remain listed so the PMC can confirm the *disposition*, not the fact). The DoS boundary, previously the largest inferred area, is now maintainer-settled.
+**Confidence:** 20 documented / 24 maintainer / 0 inferred — counting inline tags only. The §5a limits table and the §15 back-map carry a further ~35 documented facts under a single collective citation each, so the document is more evidence-backed than the bare ratio suggests. **Nothing in the document is inferred any more.** Q1-Q2 and Q4-Q8 were answered by a maintainer in review; Q3, Q5 and Q9 were resolved against the source, the last of these replacing §5's negative claims with a cited scan. Q4 and Q5 are worth noting as corrections rather than confirmations — in both, the draft's proposed answer had the facts backwards and the code said otherwise, while the triage disposition it proposed survived intact.
 
 Apache Pekko HTTP is a Scala/Java toolkit for building HTTP-based services and clients on top of Pekko Streams. It provides a full HTTP/1.1 and HTTP/2 implementation — parsing, connection management, marshalling, and a routing DSL of composable "directives" — as an **embeddable library**, not a standalone server. The application supplies the routes, the authentication, and the deployment.
 
@@ -47,17 +47,17 @@ Caller roles:
 | Benchmarks | `http-bench-jmh` | — | **no** — §3 |
 | Lint / build / docs | `http-scalafix`, `docs`, `project`, `scripts`, `legal` | — | **no** — §3 |
 
-*(inferred — the in/out split is the ASF Security team's proposal; see §14 Q6)*
+*(maintainer — the in/out split is confirmed by the Pekko maintainers; see §14 Q6)*
 
 ---
 
 ## §3 Out of scope (explicit non-goals)
 
-- **Test kits, benchmarks, scalafix rules, build tooling and documentation sources.** A finding in `http-bench-jmh` or any `*-tests` module is `OUT-OF-MODEL: unsupported-component`. *(inferred — §14 Q6)*
+- **Test kits, benchmarks, scalafix rules, build tooling and documentation sources.** A finding in `http-bench-jmh` or any `*-tests` module is `OUT-OF-MODEL: unsupported-component`. *(maintainer — §14 Q6)*
 - **Pekko HTTP is not a WAF, and not an edge-hardened server.** The documentation says so plainly: applications *"should not be exposed to the public internet directly"* and an *"enterprise grade routing solution"* or a load balancer such as Apache HTTP Server or Nginx *"would be safer"* *(documented — `security.md`)*. See §4.
-- **Pekko HTTP is not an authentication or authorization system.** It ships `authenticateBasic`, `authenticateOAuth2` and `authorize` directives, but these are *plumbing*: the credential check is a function the application supplies. Pekko HTTP has no user store, no session model, and no policy engine. *(inferred — §14 Q7)*
+- **Pekko HTTP is not an authentication or authorization system.** It ships `authenticateBasic`, `authenticateOAuth2` and `authorize` directives, but these are *plumbing*: the credential check is a function the application supplies. Pekko HTTP has no user store, no session model, and no policy engine. *(maintainer — §14 Q7)*
 - **The actor, stream, remoting and cluster layers** are out of scope here and covered by `apache/pekko`'s threat model.
-- **Attackers who already control the embedding process** are out of scope. *(inferred — §14 Q7)*
+- **Attackers who already control the embedding process** are out of scope. *(maintainer — §14 Q7)*
 
 ---
 
@@ -84,19 +84,21 @@ Read carefully, this makes a **graded** claim rather than a binary one: Pekko HT
 
 ## §5 Assumptions about the environment
 
-- **Runtime.** A conformant JVM. Pekko HTTP does not defend against a hostile JVM or in-process attacker. *(inferred — §14 Q7)*
+- **Runtime.** A conformant JVM. Pekko HTTP does not defend against a hostile JVM or in-process attacker. *(maintainer — §14 Q7)*
 - **Fronting infrastructure.** The documented expectation is that something sits in front in production *(documented — `security.md`)*. Per §14 Q1 this is load-bearing for *volume* only: the proxy is relied on for flood and slow-loris defence, not for bounding a single request, which is P1's job.
-- **TLS.** Pekko HTTP can terminate TLS itself (`HttpsConnectionContext`), but where a reverse proxy is used, termination is commonly the proxy's job. Cipher and protocol selection come from the JSSE context the application supplies. *(inferred — §14 Q8)*
-- **Client IP.** `remote-address-attribute` ships `off` *(documented — `reference.conf`)*. When on, the attribute reflects the **socket** peer, which behind a proxy is the proxy. `X-Forwarded-For` is not trusted or parsed into it automatically — deriving client IP from headers is the application's decision. *(inferred — §14 Q4)*
+- **TLS.** Pekko HTTP can terminate TLS itself (`HttpsConnectionContext`) and this is supported, though the documented recommendation to front the service (§4) means termination is commonly the proxy's job in production. Cipher and protocol selection come from the JSSE context the application supplies — Pekko HTTP pins nothing and overrides no JDK default, so cipher strength is a deployment property. *(maintainer — §14 Q8)*
+- **Client IP.** `remote-address-attribute` ships `off` *(documented — `reference.conf`)*. When on, the attribute reflects the **socket** peer, which behind a proxy is the proxy; forwarding headers never feed it. Header-derived client IP is opt-in at the call site: `extractClientIP` reads `X-Forwarded-For` / `X-Real-Ip` and is therefore client-controllable, while `extractDirectClientIP` reads the attribute alone and is not. Choosing between them is the application's decision (§14 Q4). *(documented — `MiscDirectives.scala`)*
 
 ### What Pekko HTTP does not do to its host
 
-Negative claims, rarely written down and therefore high-priority confirmation targets *(all inferred — §14 Q9)*:
+Negative claims, rarely written down and therefore verified against the source rather than asserted. The scan below covers the main sources of `http-core`, `http`, `parsing`, `http-caching` and `http-cors` *(documented — source scan, §14 Q9)*:
 
-- Binds no port until the application calls a `bind*` method.
-- Installs no signal handlers, spawns no child processes.
-- Writes no files of its own accord; serves from disk only via directives the application installs (`getFromFile`, `getFromDirectory`).
-- Does not mutate process-global state at initialization.
+- **Binds no port until the application calls a `bind*` method.** Binding is reachable only through the public `Http().bind` / `bindAndHandle*` entry points (`Http.scala:179-292`); nothing binds at class or extension initialization.
+- **Installs no signal handlers and spawns no child processes.** No `sun.misc.Signal`/`SignalHandler`, `ProcessBuilder` or `Runtime.exec` in the main sources — and, unlike `apache/pekko`, no `addShutdownHook` of its own.
+- **Writes no files of its own accord** — no `FileOutputStream`, `Files.write`, `FileWriter` or `createTempFile`. It serves from disk only via directives the application installs (`getFromFile`, `getFromDirectory`), and those read.
+- **Does not mutate process-global state at initialization** — no `System.setProperty`, `Security.setProperty`, `Security.addProvider` or `setDefault(...)`.
+
+**One inherited caveat.** These claims cover Pekko HTTP's own modules, not the `ActorSystem` it runs on. `apache/pekko` *does* register JVM shutdown hooks — one in `CoordinatedShutdown`, and a second in Artery when remoting is enabled — so an integrator will observe shutdown hooks in the process; they arrive with the actor system, and are modeled in the companion document, not here.
 
 ---
 
@@ -173,7 +175,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 | --- | --- | --- | --- |
 | Any bound route | Request line (method, URI, version) | **Yes** | Pekko HTTP: §5a length limits |
 | Any bound route | Headers, incl. `Host`, `Cookie` | **Yes** | Pekko HTTP: count/length limits. App: semantic trust |
-| Any bound route | `X-Forwarded-*` | **Yes** — trivially spoofable | **App/operator** — not validated by Pekko HTTP (§14 Q4) |
+| Any bound route | `X-Forwarded-*`, `X-Real-Ip` | **Yes** — trivially spoofable | **App** — surfaced by `extractClientIP`, never validated; use `extractDirectClientIP` for access control or rate limiting (§14 Q4) |
 | Any bound route | Entity body (fixed, chunked, streamed) | **Yes** | Pekko HTTP: size/chunk limits. App: content validation |
 | HTTP/2 | Frames, HPACK table, stream IDs | **Yes** | Pekko HTTP: `max-concurrent-streams` |
 | Route with marshaller | Entity parsed to a domain type | **Yes** | Underlying JSON/XML library + app |
@@ -188,9 +190,9 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 
 **In scope:**
 
-- **The remote HTTP client.** Can send arbitrary bytes, malformed framing, oversized or deeply-nested input, many concurrent connections, and abusive HTTP/2 frame sequences. The primary adversary — though per §14 Q1 what this adversary achieves through sheer *volume* is the proxy's problem, not the library's. *(inferred — §14 Q7)*
-- **A malicious upstream server**, where the application uses the client API against an untrusted endpoint. *(inferred — §14 Q7)*
-- **A cross-origin web attacker**, where the application enables CORS. *(inferred — §14 Q2)*
+- **The remote HTTP client.** Can send arbitrary bytes, malformed framing, oversized or deeply-nested input, many concurrent connections, and abusive HTTP/2 frame sequences. The primary adversary — though per §14 Q1 what this adversary achieves through sheer *volume* is the proxy's problem, not the library's. *(maintainer — §14 Q7)*
+- **A malicious upstream server**, where the application uses the client API against an untrusted endpoint. *(maintainer — §14 Q7)*
+- **A cross-origin web attacker**, where the application enables CORS. *(maintainer — §14 Q2)*
 
 **Explicitly out of scope:**
 
@@ -221,10 +223,10 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 
 - **No claim of complete DoS resistance.** The documented wording is *"behaves pretty well under most known Denial of Service attacks"*, immediately followed by a recommendation to front it with a load balancer or enterprise routing solution *(documented — `security.md`)*. Per §14 Q1 this disclaimer is **scoped to volume**: Pekko HTTP does not claim to withstand floods, but it *does* claim that one in-limits request cannot provoke disproportionate work — that part is P1, and a violation is `VALID`. *(maintainer — §14 Q1)*
 - **No edge hardening.** Rate limiting, IP reputation, request scrubbing, connection-count throttling beyond `max-connections`, slow-loris mitigation beyond `idle-timeout` — none are provided, and none are planned. *(maintainer — §14 Q1)*
-- **No authentication or authorization.** The security directives are plumbing; the credential check is the application's function. *(inferred — §14 Q7)*
-- **No CSRF protection.** No token issuance or verification is provided. *(inferred — §14 Q7)*
-- **No output encoding / XSS defence.** Pekko HTTP renders what the application marshals. *(inferred — §14 Q7)*
-- **No trusted client-IP derivation.** See §5 and §14 Q4.
+- **No authentication or authorization.** The security directives are plumbing; the credential check is the application's function. *(maintainer — §14 Q7)*
+- **No CSRF protection.** No token issuance or verification is provided. *(maintainer — §14 Q7)*
+- **No output encoding / XSS defence.** Pekko HTTP renders what the application marshals. *(maintainer — §14 Q7)*
+- **No trusted client-IP derivation from headers.** `extractClientIP` surfaces `X-Forwarded-For` / `X-Real-Ip` without validating them, and Pekko HTTP has no trusted-proxy chain configuration. `extractDirectClientIP` is the trustworthy accessor, but it yields the last proxy rather than the client. See §5 and §14 Q4.
 
 ### False friends
 
@@ -251,7 +253,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 2. **Do not raise the §5a limits without understanding the memory cost** — each is multiplied by concurrent connections.
 3. **If CORS is enabled, set `allowed-origins` explicitly.** Do not ship the `"*"` + `allow-credentials = yes` combination to a credentialed API (§5a).
 4. **Compare credentials with `Credentials.verify`**, which is constant-time (§8 P8) — not with `==` on the secret, and not via `provideVerify` unless the supplied verifier is itself constant-time.
-5. **Do not derive client identity from `X-Forwarded-For`** unless a trusted proxy sets it and the application validates the chain.
+5. **Use `extractDirectClientIP`, not `extractClientIP`, for access control, rate limiting or audit logging.** The latter reads `X-Forwarded-For` / `X-Real-Ip`, which the client controls unless a trusted proxy overwrites them; it requires `remote-address-attribute = on` to fall back usefully. Derive identity from `X-Forwarded-For` only where a trusted proxy sets it and you validate the chain yourself.
 6. **Validate and canonicalize any request-derived path** before passing it to a file-serving directive.
 7. **Treat client-API responses from untrusted upstreams as untrusted input.**
 8. **Consider `server-header = ""`** if product/version disclosure matters to your threat model.
@@ -262,7 +264,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 
 - **Exposing a Pekko HTTP service directly to the internet** with no fronting proxy, contrary to the documented recommendation.
 - **Enabling `cors()` and leaving `allowed-origins = "*"`** on an API that uses cookies or bearer tokens.
-- **Trusting `X-Forwarded-For`** for rate limiting, audit logging, or access control without a trusted-proxy chain.
+- **Reaching for `extractClientIP`** — the more discoverable name — for rate limiting, audit logging or access control, where `extractDirectClientIP` is the one that cannot be chosen by the caller.
 - **Raising `max-content-length` to `infinite`** to accept large uploads, without a concurrency bound.
 - **Comparing credentials with `==`** inside an `authenticateBasic` verifier — or reaching for `provideVerify` with a non-constant-time verifier — instead of `Credentials.verify`.
 - **Passing a request path segment straight to `getFromFile`.**
@@ -276,6 +278,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 - **"No authentication on routes."** Authentication is the application's responsibility (§9). A scan of this library cannot conclude a route is unauthenticated.
 - **"Request exceeding `max-uri-length` / `max-header-count` is rejected."** That is P1 working.
 - **"N concurrent connections / requests exhaust CPU, memory or sockets."** Volume-based resource exhaustion is `BY-DESIGN: property-disclaimed` per §14 Q1 — defence belongs to the fronting proxy (§10.1). Reports must show *one* in-limits request doing disproportionate work, not many requests doing proportionate work. A load-generator result is not a finding.
+- **"`extractClientIP` trusts a client-supplied header."** By design and documented at the directive, with `extractDirectClientIP` provided as the trustworthy alternative (§14 Q4). `BY-DESIGN: property-disclaimed`. A report that `extractDirectClientIP` can be influenced by a header *is* in scope.
 - **"CORS allows any origin."** Reflects the shipped default and requires the application to have opted into `cors()`. A request to change the default is `BY-DESIGN: default-configuration` per §5b; a misconfigured deployment is a finding against the *application*, not the library.
 - **"`allow-credentials = yes` with `allowed-origins = "*"` sends `Access-Control-Allow-Origin: *` with credentials."** It does not — the literal `*` is sent only when `allowCredentials` is false, otherwise the request `Origin` is echoed (`CorsSettingsImpl.scala:64`, covered by `CorsDirectivesSpec`). Reports asserting the literal `*`-with-credentials combination are factually wrong.
 - **"Credential comparison is vulnerable to a timing attack."** Check which comparator the report exercises: `Credentials.verify` is constant-time (§8 P8), so the claim is wrong against it; against an application's own `provideVerify` comparator it is a finding in that application, not this library.
@@ -329,17 +332,21 @@ The operative test is *content vs. volume*: one well-formed, in-limits request d
 
 **Q3 — File-serving directives.** *Resolved from code — confirm the disposition only.* `safeDirectoryChildPath` contains traversal by two stated measures: a path segment must not be `..` and must not contain `/` or `\\`; and the resolved file's `File.getCanonicalPath` must be prefixed by the base path's. So containment **is** claimed, and a genuine escape from the configured root is `VALID`; passing an unvalidated path in is a §11 misuse. One residual the code comment itself flags: containment rests on `getCanonicalPath`, whose symlink resolution is platform-dependent — *is a symlink out of the served root a `VALID` finding, or an operator responsibility?* *(documented — `FileAndResourceDirectives.scala:229-274`)*
 
-**Q4 — `X-Forwarded-For` and client identity.** *Proposed:* Pekko HTTP neither parses nor trusts forwarding headers; `remote-address-attribute` is strictly the socket peer, and deriving client IP is entirely the application's job — so "forwarding header is spoofable" is `BY-DESIGN: property-disclaimed`. Confirm?
+**Q4 — `X-Forwarded-For` and client identity. ANSWERED *(maintainer)*.** The disposition is confirmed, but the draft's stated basis for it was wrong and is corrected here. Pekko HTTP **does** parse forwarding headers: `extractClientIP` resolves `X-Forwarded-For` (first address) → `X-Real-Ip` → the `remoteAddress` attribute, in that order (`MiscDirectives.scala:142-145`). What is true is that it never does so *implicitly* — `remote-address-attribute` populates the attribute from the socket peer only, and a route gets header-derived values solely because it called `extractClientIP`.
 
-**Q5 — Constant-time credential comparison.** *Resolved from code — this document's earlier draft had it backwards.* `Credentials.Provided.verify` does compare, via `secure_==` (`EnhancedByteArray.scala:37`), which is constant-time; the library therefore **does** provide the guarantee, recorded as §8 P8. It is conditional on the verifier calling `verify` — `provideVerify` hands the raw secret to application code and waives it. *Proposed:* a timing finding against `verify` is `VALID`; one against an application's own `provideVerify` comparator is `BY-DESIGN: property-disclaimed`. Confirm the split?
+**Answer:** the spoofability is documented at the directive rather than defended against. `extractClientIP`'s own scaladoc warns that *"the headers are under the control of the client unless a trusted proxy in front of this server overwrites them"* and directs the reader to `extractDirectClientIP` *"where the address must not be chosen by the client, for example for access control or rate limiting"* — a directive added for exactly this purpose (#1219, `@since 2.0.0`), which reads the attribute alone and ignores headers. So "`extractClientIP` trusts a spoofable header" is `BY-DESIGN: property-disclaimed`: the library offers both a convenient and a trustworthy accessor, documents which is which, and leaves the choice to the application. A defect in `extractDirectClientIP` — anything client-controlled reaching it — would be `VALID`. *(documented — `MiscDirectives.scala:39-64`)*
 
-**Q6 — Module in/out split (§2 table).** *Proposed:* the split shown. Specifically: should `http-caching` be in model (cache-key confusion is a real class), and is `http-scalafix` correctly out?
+**Q5 — Constant-time credential comparison. ANSWERED *(maintainer)*.** *Resolved from code — this document's earlier draft had it backwards.* `Credentials.Provided.verify` does compare, via `secure_==` (`EnhancedByteArray.scala:37`), which is constant-time; the library therefore **does** provide the guarantee, recorded as §8 P8. It is conditional on the verifier calling `verify` — `provideVerify` hands the raw secret to application code and waives it. **Answer *(maintainer)*:** the split is confirmed. A timing finding against `verify` — anything that makes the comparison data-dependent — is `VALID` at §8 P8's severity. One against an application's own `provideVerify` comparator is `BY-DESIGN: property-disclaimed`: passing the raw secret to application code waives the guarantee by construction, and §10.4 states the responsibility.
 
-**Q7 — The §3/§7/§9 non-goals.** *Proposed:* Pekko HTTP provides no authentication system, no authorization policy, no CSRF protection and no XSS/output encoding, and in-JVM attackers plus a malicious embedding application are out of the adversary model — while the remote HTTP client, a malicious upstream (client API), and a cross-origin web attacker (where CORS is on) are all **in**. Confirm the split?
+**Q6 — Module in/out split (§2 table). ANSWERED *(maintainer)*.** **Answer:** the split shown in §2 is confirmed as the maintainers' own, not merely the ASF Security team's proposal. `http-caching` is **in** model — cache-key confusion is a real class and the directive ships as part of the supported surface. `http-scalafix` is correctly **out**, along with the test kits, `http-bench-jmh`, `docs`, `project`, `scripts` and `legal`: a finding in any of them is `OUT-OF-MODEL: unsupported-component` per §3.
 
-**Q8 — TLS.** *Proposed:* where Pekko HTTP terminates TLS, protocol and cipher selection come from the application-supplied JSSE context, so "weak cipher accepted" is a deployment finding, not a library one. Confirm — and is in-process termination a supported production posture, or is proxy termination the expectation?
+**Q7 — The §3/§7/§9 non-goals. ANSWERED *(maintainer)*.** **Answer:** the split is confirmed as stated. Pekko HTTP provides **no** authentication system, authorization policy, CSRF protection or XSS/output encoding — reports against those are `BY-DESIGN: property-disclaimed` per §9. **Out** of the adversary model: attackers with code execution in the embedding JVM, and a malicious embedding application (a route that deliberately leaks is an application bug). **In**: the remote HTTP client (primary), a malicious upstream server where the application drives the client API against an untrusted endpoint, and a cross-origin web attacker where the application has enabled `cors()`. This closes the §3, §7 and §9 non-goals as maintainer-stated rather than inferred.
 
-**Q9 — The negative claims in §5.** These are inferred and hard to cite. Are any wrong — does Pekko HTTP bind ports, write files, or mutate process-global state in ways an integrator would not expect?
+**Q8 — TLS. ANSWERED *(maintainer)*.** **Answer:** confirmed. Where Pekko HTTP terminates TLS via `HttpsConnectionContext`, protocol and cipher selection come from the JSSE context the application supplies; Pekko HTTP neither pins a cipher suite nor overrides the JDK's defaults. "Weak cipher accepted" is therefore a deployment finding against that context or the JDK, not a library one — `OUT-OF-MODEL: trusted-input` per §6, which marks configuration as operator-supplied. A defect in how Pekko HTTP *drives* the context — failing to apply a supplied restriction, or continuing after a handshake failure — would be `VALID`.
+
+On the second half: **in-process termination is supported**, and `HttpsConnectionContext` is a first-class API. It is not, however, the posture the documentation steers production deployments toward — §4's quoted recommendation to front the service with an enterprise-grade routing solution or load balancer applies to TLS as much as to volume defence (§14 Q1), and in such a deployment termination is commonly the proxy's job. Both are supported; the fronted one is what the docs recommend.
+
+**Q9 — The negative claims in §5.** *Resolved from code — confirm the disposition only.* Scanned the main sources of `http-core`, `http`, `parsing`, `http-caching` and `http-cors`: no `addShutdownHook`, no `ProcessBuilder`/`Runtime.exec`, no `Signal`/`SignalHandler`, no file-writing API, no `System.setProperty`/`Security.*`/`setDefault`, and no bind outside the public `Http().bind*` entry points. All four claims hold **for Pekko HTTP's own code**, and §5 now cites the scan rather than asserting them. The caveat worth a maintainer's eye is the inherited one: the `ActorSystem` registers shutdown hooks that Pekko HTTP does not, so *"Pekko HTTP installs no shutdown hook"* is true while *"a Pekko HTTP process has no shutdown hook"* is false. **Is stating that boundary here — rather than deferring the whole topic to the companion model — the split you want?**
 
 **Q10 — Coexistence (meta).** `docs/src/main/paradox/security.md` has a "Security model" section that this document expands considerably. *Proposed:* this file becomes canonical for **scope and triage**, `security.md` stays canonical for **announcements and reporting**, and its "Security model" section becomes a short pointer here. Agree?
 
@@ -363,5 +370,6 @@ The operative test is *content vs. volume*: one well-formed, in-limits request d
 | `Credentials.verify` compares via constant-time `secure_==` | `SecurityDirectives.scala`, `EnhancedByteArray.scala` | §7, §8 P8, §9, §10.4, §14 Q5 |
 | `safeDirectoryChildPath` rejects `..`/separator segments and enforces a canonical-path prefix | `FileAndResourceDirectives.scala` | §9, §14 Q3 |
 | `remote-address-attribute = off` | `http-core/reference.conf` | §5, §9, §14 Q4 |
+| `extractClientIP` reads `X-Forwarded-For`/`X-Real-Ip`; `extractDirectClientIP` reads the attribute alone | `MiscDirectives.scala` | §5, §6, §9, §10.5, §11a, §14 Q4 |
 | CORS: `*` + credentials echoes the request `Origin` | `http-cors/reference.conf` | §5a, §9, §11a, §14 Q2 |
 | `http-cors` code donated by Lomig Mégard, defaults inherited with it | `legal/CorsNotice.txt`, `NOTICE` | §5b, §14 Q2 |
