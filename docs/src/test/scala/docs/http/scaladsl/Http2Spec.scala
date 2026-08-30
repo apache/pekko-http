@@ -75,6 +75,9 @@ object Http2Spec {
     // #http2Client
     Http().connectionTo("localhost").toPort(8443).http2()
     // #http2Client
+    // #http2ClientWithFallback
+    Http().connectionTo("localhost").toPort(8443).http2WithFallback()
+    // #http2ClientWithFallback
     // #http2ClientWithPriorKnowledge
     Http().connectionTo("localhost").toPort(8080).http2WithPriorKnowledge()
     // #http2ClientWithPriorKnowledge
