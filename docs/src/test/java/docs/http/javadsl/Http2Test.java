@@ -61,6 +61,10 @@ class Http2Test {
     Http.get(system).connectionTo("127.0.0.1").toPort(8443).http2();
     // #http2Client
 
+    // #http2ClientWithFallback
+    Http.get(system).connectionTo("127.0.0.1").toPort(8443).http2WithFallback();
+    // #http2ClientWithFallback
+
     // #http2ClientWithPriorKnowledge
     Http.get(system).connectionTo("127.0.0.1").toPort(8080).http2WithPriorKnowledge();
     // #http2ClientWithPriorKnowledge

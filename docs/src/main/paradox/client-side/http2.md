@@ -14,9 +14,10 @@ unexpected when coming from a background with non-"streaming first" HTTP Clients
 
 ## Create the client 
 
-There are three mechanisms for a client to establish an HTTP/2 connection. Apache Pekko HTTP supports:
+There are several mechanisms for a client to establish an HTTP/2 connection. Apache Pekko HTTP supports:
 
  - HTTP/2 over TLS 
+ - HTTP/2 over TLS with ALPN fallback to HTTP/1.1
  - HTTP/2 over a plain TCP connection ("h2c with prior knowledge")
 
 Apache Pekko HTTP doesn't support:
@@ -36,7 +37,30 @@ Java
 HTTP/2 over TLS needs [Application-Layer Protocol Negotiation (ALPN)](https://en.wikipedia.org/wiki/Application-Layer_Protocol_Negotiation)
 to negotiate whether both client and server support HTTP/2.
 
-Apache Pekko HTTP does not currently support protocol negotiation to fall back to HTTP/1.1 for this API. When the server does not support HTTP/2, the stream will fail.
+`http2()` offers only `h2` in that handshake, so when the server does not support HTTP/2 the stream will fail. Use
+`http2WithFallback()` if you need the connection to survive that case.
+
+### HTTP/2 over TLS with fallback to HTTP/1.1
+
+@@@ warning
+`http2WithFallback()` is available as a preview. This means it is ready to be evaluated, but the API and behavior
+are likely to change.
+@@@
+
+`http2WithFallback()` offers both `h2` and `http/1.1` in the ALPN handshake and runs whichever protocol the server
+selected. A server that speaks HTTP/2 gets an HTTP/2 connection; a server that does not - including one that ignores
+ALPN entirely - gets an HTTP/1.1 connection instead of a failed stream:
+
+Scala
+:   @@snip[Http2Spec.scala](/docs/src/test/scala/docs/http/scaladsl/Http2Spec.scala) { #http2ClientWithFallback }
+
+Java
+:   @@snip[Http2Test.java](/docs/src/test/java/docs/http/javadsl/Http2Test.java) { #http2ClientWithFallback }
+
+Because the protocol is only known once the connection is up, requests should carry a @apidoc[RequestResponseAssociation]
+as described in @ref[Request-response ordering](#request-response-ordering) - the flow may end up running HTTP/2, where
+responses are not guaranteed to arrive in request order.
+
 ### h2c with prior knowledge
 
 The other option is to connect and start communicating in HTTP/2 immediately. You must know beforehand the target server

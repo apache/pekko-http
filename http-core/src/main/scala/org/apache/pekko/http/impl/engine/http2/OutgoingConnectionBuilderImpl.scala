@@ -94,6 +94,14 @@ private[pekko] object OutgoingConnectionBuilderImpl {
         log)
     }
 
+    override def http2WithFallback(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
+      // tls, http/2 if the server selects it over ALPN, http/1.1 otherwise
+      val port = this.port.getOrElse(443)
+      Http2(system.classicSystem).outgoingConnectionWithNegotiation(host, port,
+        connectionContext.getOrElse(Http(system.classicSystem).defaultClientHttpsContext), clientConnectionSettings,
+        log)
+    }
+
     override def managedPersistentHttp2(): Flow[HttpRequest, HttpResponse, NotUsed] =
       PersistentConnection.managedConnection(
         http2(),
@@ -127,6 +135,10 @@ private[pekko] object OutgoingConnectionBuilderImpl {
     override def https()
         : JFlow[javadsl.model.HttpRequest, javadsl.model.HttpResponse, CompletionStage[javadsl.OutgoingConnection]] =
       javaFlow(actual.https())
+
+    override def http2WithFallback()
+        : JFlow[javadsl.model.HttpRequest, javadsl.model.HttpResponse, CompletionStage[javadsl.OutgoingConnection]] =
+      javaFlow(actual.http2WithFallback())
 
     override def managedPersistentHttp2(): JFlow[javadsl.model.HttpRequest, javadsl.model.HttpResponse, NotUsed] =
       javaFlowKeepMatVal(actual.managedPersistentHttp2())

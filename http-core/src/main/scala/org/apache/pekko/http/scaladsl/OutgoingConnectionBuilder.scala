@@ -66,6 +66,18 @@ trait OutgoingConnectionBuilder {
   def http2(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]]
 
   /**
+   * Create a flow that when materialized creates a single TLS connection with a default port 443, offering both
+   * `h2` and `http/1.1` over ALPN and using whichever the server selects. Unlike `http2()` this does not fail
+   * against a server that has no HTTP/2 support - it falls back to HTTP/1.1.
+   *
+   * Note that when the negotiation ends up on HTTP/2 the responses are not guaranteed to arrive in the same order as
+   * the requests go out, so requests need a [[pekko.http.scaladsl.model.RequestResponseAssociation]]
+   * which Pekko HTTP will carry over to the corresponding response for a request.
+   */
+  @ApiMayChange
+  def http2WithFallback(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]]
+
+  /**
    * Create a flow that when materialized creates a managed HTTP/2 TLS connection with a default port 443.
    *
    * The connection will be re-established as needed.
