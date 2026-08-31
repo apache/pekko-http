@@ -663,6 +663,28 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           ErrorInfo("HTTP header value exceeds the configured limit of 32 characters"))
       }
 
+      "with more headers than the configured limit" in new Test {
+        override def parserSettings: ParserSettings = super.parserSettings.withMaxHeaderCount(2)
+        """GET / HTTP/1.1
+          |A: 1
+          |B: 2
+          |C: 3""" should parseToError(
+          BadRequest,
+          ErrorInfo("HTTP message contains more than the configured limit of 2 headers"))
+      }
+
+      "with more repeated Connection headers than the configured limit" in new Test {
+        // repeated Connection headers are merged into one, but each still counts towards maxHeaderCount so that a
+        // flood cannot bypass the limit and force unbounded quadratic token accumulation
+        override def parserSettings: ParserSettings = super.parserSettings.withMaxHeaderCount(2)
+        """GET / HTTP/1.1
+          |Connection: a
+          |Connection: b
+          |Connection: c""" should parseToError(
+          BadRequest,
+          ErrorInfo("HTTP message contains more than the configured limit of 2 headers"))
+      }
+
       "with an invalid Content-Length header value" in new Test {
         """GET / HTTP/1.0
           |Content-Length: 1.5
