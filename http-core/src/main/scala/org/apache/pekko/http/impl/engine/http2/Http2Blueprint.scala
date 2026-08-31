@@ -206,9 +206,15 @@ private[http] object Http2Blueprint {
 
   private def rapidResetMitigation(settings: Http2ServerSettings,
       frameTypesForThrottle: Set[String]): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] = {
-    def frameCost(event: FrameEvent): Int = {
-      if (frameTypesForThrottle.contains(event.frameTypeName)) 1 else 0
-    }
+    def frameCost(event: FrameEvent): Int =
+      if (frameTypesForThrottle.contains(event.frameTypeName)) 1
+      else event match {
+        // A DATA frame with no payload consumes no flow-control window, so unlike a data-carrying one its number is
+        // not bounded by flow control at all. It is matched separately because throttling every DATA frame would
+        // throttle legitimate throughput along with it.
+        case d: DataFrame if d.payload.isEmpty && frameTypesForThrottle.contains(EmptyDataFrameThrottleName) => 1
+        case _                                                                                               => 0
+      }
 
     BidiFlow.fromFlows(
       Flow[FrameEvent],
@@ -225,8 +231,15 @@ private[http] object Http2Blueprint {
     }
   }
 
+  /**
+   * Not a real `frameTypeName`, so it never matches one directly: `frameCost` recognises it and charges DATA frames
+   * that carry no payload.
+   */
+  private[http2] val EmptyDataFrameThrottleName = "EmptyDataFrame"
+
   private[http2] def frameTypeAliasToFrameTypeName(frameType: String): Option[String] = {
     toRootLowerCase(frameType) match {
+      case "empty-data"    => Some(EmptyDataFrameThrottleName)
       case "reset"         => Some("RstStreamFrame")
       case "headers"       => Some("HeadersFrame")
       case "continuation"  => Some("ContinuationFrame")
