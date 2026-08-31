@@ -250,6 +250,18 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           user.expectRequest().headers should contain(RawHeader("small-header", "x" * 100))
         })
 
+      "reject a frame larger than max-frame-size".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings = super.settings.mapHttp2Settings(_.withMaxFrameSize(16384))
+
+          // the length field allows up to 16 MiB, so an oversized frame has to be rejected on the frame header
+          // rather than accepted and buffered
+          network.sendDATA(1, endStream = true, ByteString(new Array[Byte](16385)))
+
+          val (_, errorCode) = network.expectGOAWAY()
+          errorCode should ===(ErrorCode.FRAME_SIZE_ERROR)
+        })
+
       "advertise SETTINGS_MAX_HEADER_LIST_SIZE to the peer" in
       new TestSetupWithoutHandshake with RequestResponseProbes {
         network.sendBytes(Http2Protocol.ClientConnectionPreface)
@@ -657,6 +669,10 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           })
         "fail if more data is received than stream-level window allows".inAssertAllStagesStopped(
           new WaitingForRequestData {
+            // the single frame below is deliberately bigger than the stream-level buffer, and so also bigger than the
+            // default max-frame-size; raise that limit so the frame reaches the flow-control check this test is about
+            override def settings: ServerSettings = super.settings.mapHttp2Settings(_.withMaxFrameSize(1024 * 1024))
+
             // trigger a connection-level WINDOW_UPDATE
             network.sendDATA(TheStreamId, endStream = false, ByteString("0000"))
             entityDataIn.expectUtf8EncodedString("0000")
