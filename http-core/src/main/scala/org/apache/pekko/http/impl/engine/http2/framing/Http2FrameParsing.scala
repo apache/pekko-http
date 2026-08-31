@@ -193,8 +193,10 @@ private[http2] class Http2FrameParsing(
           val length = reader.readShortBE() << 8 | reader.readByte()
           val tpe = reader.readByte()
           val flags = new ByteFlag(reader.readByte())
-          val streamId = reader.readIntBE()
-          // TODO: assert that reserved bit is 0 by checking if streamId > 0
+          // RFC 9113 5.1.1: the high bit of the stream identifier is reserved and MUST be ignored when receiving.
+          // Without masking it a peer that sets it yields a negative stream id, which never matches the stream the
+          // frame is really for and fails the connection instead.
+          val streamId = reader.readIntBE() & 0x7FFFFFFF
           val payload = reader.take(length)
           val maybeframe = FrameType.byId(tpe) match {
             case OptionVal.Some(ft) =>
