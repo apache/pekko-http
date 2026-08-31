@@ -717,6 +717,85 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
 
     }
 
+    "support strict response entities" should {
+      abstract class StrictEntitySetup extends TestSetup with NetProbes {
+        override def settings =
+          super.settings.withStrictResponseEntityTimeout(Some(2.seconds.dilated))
+      }
+
+      "collect a response entity into a strict entity".inAssertAllStagesStopped(new StrictEntitySetup {
+        val streamId = 0x1
+        user.emitRequest(Get("/"))
+        network.expectDecodedHEADERS(streamId, endStream = true)
+
+        network.sendHEADERS(streamId, endStream = false,
+          Seq(
+            RawHeader(":status", "200"),
+            RawHeader("content-type", "application/octet-stream")))
+        network.sendDATA(streamId, endStream = false, ByteString("abc"))
+        network.sendDATA(streamId, endStream = true, ByteString("def"))
+
+        user.expectResponse().entity shouldBe
+        HttpEntity.Strict(ContentTypes.`application/octet-stream`, ByteString("abcdef"))
+      })
+
+      "emit responses in the order in which their entities complete".inAssertAllStagesStopped(
+        new StrictEntitySetup {
+          user.emitRequest(Get("/slow"))
+          network.expectDecodedHEADERS(0x1, endStream = true)
+          user.emitRequest(Get("/fast"))
+          network.expectDecodedHEADERS(0x3, endStream = true)
+
+          // the first response starts first but its entity stays incomplete
+          network.sendHEADERS(0x1, endStream = false,
+            Seq(RawHeader(":status", "200"), RawHeader("content-type", "application/octet-stream")))
+          network.sendDATA(0x1, endStream = false, ByteString("in"))
+
+          // while the second response completes right away
+          network.sendHEADERS(0x3, endStream = false,
+            Seq(RawHeader(":status", "201"), RawHeader("content-type", "application/octet-stream")))
+          network.sendDATA(0x3, endStream = true, ByteString("complete"))
+
+          user.expectResponse().status shouldBe StatusCodes.Created
+
+          network.sendDATA(0x1, endStream = true, ByteString("complete"))
+          user.expectResponse().status shouldBe StatusCodes.OK
+        })
+
+      "fail the connection if a response entity exceeds strict-response-entity-max-bytes".inAssertAllStagesStopped(
+        new StrictEntitySetup {
+          override def settings = super.settings.withStrictResponseEntityMaxBytes(5)
+
+          val streamId = 0x1
+          user.emitRequest(Get("/"))
+          network.expectDecodedHEADERS(streamId, endStream = true)
+
+          network.sendHEADERS(streamId, endStream = false,
+            Seq(
+              RawHeader(":status", "200"),
+              RawHeader("content-type", "application/octet-stream")))
+          EventFilter.error(pattern = "HTTP2 connection failed with error .*", occurrences = 1).intercept {
+            network.sendDATA(streamId, endStream = true, ByteString("abcdef"))
+
+            user.responseIn.expectSubscriptionAndError().getMessage should include(
+              "longer than the maximum of 5")
+          }
+        })
+
+      "leave response entities streamed by default".inAssertAllStagesStopped(new TestSetup with NetProbes {
+        val streamId = 0x1
+        user.emitRequest(Get("/"))
+        network.expectDecodedHEADERS(streamId, endStream = true)
+
+        network.sendHEADERS(streamId, endStream = false,
+          Seq(
+            RawHeader(":status", "200"),
+            RawHeader("content-type", "application/octet-stream")))
+
+        user.expectResponse().entity shouldBe a[Chunked]
+      })
+    }
+
     "expose synthetic headers" should {
       "expose Tls-Session-Info".inAssertAllStagesStopped(new TestSetup {
         lazy val expectedSession = SSLContext.getDefault.createSSLEngine.getSession

@@ -167,7 +167,27 @@ private[http] object Http2Blueprint {
       StreamUtils.statefulAttrsMap[Http2SubStream, HttpResponse] { attrs =>
         val headerParser = masterHttpHeaderParser.createShallowCopy()
         stream => ResponseParsing.parseResponse(headerParser, settings.parserSettings, attrs)(stream)
-      })
+      }.via(strictifyResponseEntitiesIfConfigured(settings)))
+
+  /**
+   * Collects response entities into strict entities if `pekko.http.client.strict-response-entity-timeout` is
+   * configured.
+   *
+   * Entities are collected for up to `max-concurrent-streams` responses at a time so that a big response does not
+   * delay smaller ones on other streams. Because entities complete in an order of their own, this changes the order
+   * in which responses are emitted; HTTP/2 responses are unordered anyway and have to be correlated to their request
+   * via a `RequestResponseAssociation`.
+   */
+  private def strictifyResponseEntitiesIfConfigured(
+      settings: ClientConnectionSettings): Flow[HttpResponse, HttpResponse, NotUsed] =
+    settings.strictResponseEntityTimeout match {
+      case Some(timeout) =>
+        StreamUtils.strictifyResponseEntities(
+          timeout,
+          settings.strictResponseEntityMaxBytes,
+          parallelism = settings.http2Settings.maxConcurrentStreams)
+      case None => Flow[HttpResponse]
+    }
 
   def idleTimeoutIfConfigured(timeout: Duration): BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] =
     timeout match {
