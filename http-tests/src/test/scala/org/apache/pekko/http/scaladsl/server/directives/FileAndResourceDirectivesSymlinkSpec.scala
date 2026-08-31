@@ -15,7 +15,6 @@ package org.apache.pekko.http.scaladsl.server
 package directives
 
 import java.io.File
-import java.nio.charset.StandardCharsets
 import java.nio.file.{ Files, Paths }
 
 import scala.concurrent.duration._
@@ -46,7 +45,7 @@ class FileAndResourceDirectivesSymlinkSpec extends RoutingSpec
   val siblingDir = new File(tempDir.toFile, "dirWithLink-private")
   siblingDir.mkdir()
   val siblingFile = new File(siblingDir, "secret.txt")
-  Files.write(siblingFile.toPath, "secret".getBytes(StandardCharsets.UTF_8))
+  Files.createFile(siblingFile.toPath)
   val siblingSymlink = Files.createSymbolicLink(
     Paths.get(dirWithLink.getAbsolutePath, "linked-sibling"),
     siblingDir.toPath.toAbsolutePath)

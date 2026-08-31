@@ -16,7 +16,7 @@ package directives
 
 import java.io.{ File, FileNotFoundException, IOException, InputStream }
 import java.net.{ JarURLConnection, URL, URLConnection }
-import java.nio.file.Paths
+import java.nio.file.{ InvalidPathException, Paths }
 
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
@@ -236,9 +236,12 @@ object FileAndResourceDirectives extends FileAndResourceDirectives {
    *    to files containing one of those characters on a file-system that allows those characters in file names
    *    (e.g. backslash on posix).
    *  - Resulting paths are checked to be "contained" in the base directory. "Contained" means that the canonical location
-   *    of the file (according to File.getCanonicalPath) has the canonical version of the basePath as a prefix. The exact
-   *    semantics depend on the implementation of `File.getCanonicalPath` that may or may not resolve symbolic links and
-   *    similar structures depending on the OS and the JDK implementation of file system accesses.
+   *    of the file (according to File.getCanonicalPath) has the canonical version of the basePath as a path-element
+   *    prefix, compared element by element rather than as strings, so that a sibling directory whose name merely starts
+   *    with the base path's name is not treated as contained. The exact semantics depend on the implementation of
+   *    `File.getCanonicalPath` that may or may not resolve symbolic links and similar structures depending on the OS and
+   *    the JDK implementation of file system accesses; on Windows in particular it does not resolve NTFS symbolic links
+   *    and junctions, so a link out of the base directory is not detected there.
    */
   private def safeDirectoryChildPath(basePath: String, path: Uri.Path, log: LoggingAdapter,
       separator: Char = File.separatorChar): String =
@@ -272,12 +275,21 @@ object FileAndResourceDirectives extends FileAndResourceDirectives {
   private def checkIsSafeDescendant(basePath: String, finalPath: String, log: LoggingAdapter): String = {
     val baseFile = new File(basePath)
     val finalFile = new File(finalPath)
-    val canonicalFinalPath = finalFile.getCanonicalPath
 
     // compared element by element instead of as plain strings: `/var/www-private/secret` has the canonical path of
     // `/var/www` as a string prefix without being contained in that directory, which canonicalization can produce
     // for a symbolic link that points at a sibling directory
-    if (!Paths.get(canonicalFinalPath).startsWith(Paths.get(baseFile.getCanonicalPath))) {
+    val canonicalFinalPath =
+      try {
+        val canonical = finalFile.getCanonicalPath
+        if (Paths.get(canonical).startsWith(Paths.get(baseFile.getCanonicalPath))) canonical else ""
+      } catch {
+        // a segment can contain characters that no file-system path may hold (NUL on all platforms, '<' and
+        // similar on Windows): getCanonicalPath and Paths.get throw on those, and such a file cannot exist anyway
+        case _: InvalidPathException | _: IOException => ""
+      }
+
+    if (canonicalFinalPath.isEmpty) {
       log.warning("[{}] points to a location that is not part of [{}]. This might be a directory traversal attempt.",
         finalFile, baseFile)
       ""
