@@ -521,6 +521,28 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      "whitespace between chunk size digits" in new Test {
+        // `5 0` must not be read as 0x50 = 80 bytes; a hex digit after whitespace is rejected so that this parser and
+        // a fronting proxy cannot disagree on the chunk size (request smuggling)
+        Seq(
+          start,
+          """5 0
+            |""") should generalMultiParseTo(
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("Illegal character '0' in chunk start"))))
+        closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
+      "leading whitespace before the chunk size" in new Test {
+        Seq(
+          start,
+          """ 5
+            |""") should generalMultiParseTo(
+          Right(baseRequest),
+          Left(EntityStreamError(ErrorInfo("Illegal character ' ' in chunk start"))))
+        closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
       "an illegal char in chunk size" in new Test {
         Seq(start, "bla") should generalMultiParseTo(
           Right(baseRequest),

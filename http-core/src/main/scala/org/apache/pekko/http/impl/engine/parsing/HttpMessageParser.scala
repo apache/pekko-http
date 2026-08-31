@@ -305,23 +305,29 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
       } else failEntityStream(
         s"HTTP chunk extension length exceeds configured limit of ${settings.maxChunkExtLength} characters")
 
-    @tailrec def parseSize(cursor: Int, size: Long): StateResult =
+    // `sawWhitespace` records that the size digits are over and we are in trailing whitespace. Whitespace after the
+    // size is tolerated (illegal per the spec but seen in the wild, see issue #1812), but whitespace *between* size
+    // digits is not: without this a chunk size such as `5 0` would be read here as 0x50 = 80 bytes while a proxy that
+    // stops at the space reads 5, a request-smuggling discrepancy. Once whitespace is seen only more whitespace or a
+    // terminator may follow; a further hex digit falls through to the illegal-character case.
+    @tailrec def parseSize(cursor: Int, size: Long, sawWhitespace: Boolean): StateResult =
       if (size <= Int.MaxValue) {
         byteChar(input, cursor) match {
-          case c if CharacterClasses.HEXDIG(c)   => parseSize(cursor + 1, size * 16 + CharUtils.hexValue(c))
+          case c if CharacterClasses.HEXDIG(c) && !sawWhitespace =>
+            parseSize(cursor + 1, size * 16 + CharUtils.hexValue(c), sawWhitespace = false)
           case c if size > settings.maxChunkSize =>
             failEntityStream(
               s"HTTP chunk of $size bytes exceeds the configured limit of ${settings.maxChunkSize} bytes")
           case ';' if cursor > offset                                          => parseChunkExtensions(size.toInt, cursor + 1)()
           case '\r' if cursor > offset && byteAt(input, cursor + 1) == LF_BYTE =>
             parseChunkBody(size.toInt, "", cursor + 2)
-          case '\n' if cursor > offset      => parseChunkBody(size.toInt, "", cursor + 1)
-          case c if CharacterClasses.WSP(c) => parseSize(cursor + 1, size) // illegal according to the spec but can happen, see issue #1812
-          case c                            => failEntityStream(s"Illegal character '${escape(c)}' in chunk start")
+          case '\n' if cursor > offset                         => parseChunkBody(size.toInt, "", cursor + 1)
+          case c if CharacterClasses.WSP(c) && cursor > offset => parseSize(cursor + 1, size, sawWhitespace = true)
+          case c                                               => failEntityStream(s"Illegal character '${escape(c)}' in chunk start")
         }
       } else failEntityStream(s"HTTP chunk size exceeds Integer.MAX_VALUE (${Int.MaxValue}) bytes")
 
-    try parseSize(offset, 0)
+    try parseSize(offset, 0, sawWhitespace = false)
     catch {
       case NotEnoughDataException =>
         continue(input, offset)(parseChunk(_, _, isLastMessage, totalBytesRead, chunkCount))
