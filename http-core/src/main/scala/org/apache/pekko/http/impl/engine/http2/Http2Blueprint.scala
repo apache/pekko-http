@@ -205,16 +205,11 @@ private[http] object Http2Blueprint {
       Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = false, log)))
 
   private def rapidResetMitigation(settings: Http2ServerSettings,
-      frameTypesForThrottle: Set[String]): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] = {
-    def frameCost(event: FrameEvent): Int = {
-      if (frameTypesForThrottle.contains(event.frameTypeName)) 1 else 0
-    }
-
+      frameTypesForThrottle: Set[String]): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
     BidiFlow.fromFlows(
       Flow[FrameEvent],
       Flow[FrameEvent].throttle(settings.frameTypeThrottleCost, settings.frameTypeThrottleInterval,
-        settings.frameTypeThrottleBurst, frameCost, ThrottleMode.Enforcing))
-  }
+        settings.frameTypeThrottleBurst, frameCost(frameTypesForThrottle, _), ThrottleMode.Enforcing))
 
   private def getFrameTypesForThrottle(settings: Http2ServerSettings): Set[String] = {
     val set = settings.frameTypeThrottleFrameTypes
@@ -225,17 +220,48 @@ private[http] object Http2Blueprint {
     }
   }
 
+  /**
+   * Not a real `frameTypeName`, so it never matches one directly: [[frameCost]] recognises it and charges every DATA
+   * frame that carries no payload.
+   *
+   * Such a frame consumes no flow-control window, so unlike a data-carrying one its number is not bounded by flow
+   * control at all and a peer can send them continuously. Data-carrying frames are deliberately not covered, because
+   * throttling those would throttle legitimate throughput along with them.
+   */
+  private[http2] val EmptyDataFrameThrottleName = "EmptyDataFrame"
+
+  /**
+   * As [[EmptyDataFrameThrottleName]], but only for the empty DATA frames that do not carry END_STREAM. An empty
+   * DATA frame with END_STREAM is how a client closes a request body whose length it did not know up front, so it is
+   * both legitimate and self-limiting: one per stream, after which the stream is half-closed. An empty DATA frame
+   * that does not end its stream has no such use, which is why this is the alias that is throttled by default.
+   */
+  private[http2] val EmptyDataFrameNoEndStreamThrottleName = "EmptyDataFrameNoEndStream"
+
+  private[http2] def frameCost(frameTypesForThrottle: Set[String], event: FrameEvent): Int =
+    if (frameTypesForThrottle.contains(event.frameTypeName)) 1
+    else event match {
+      case d: DataFrame if d.payload.isEmpty && isThrottledEmptyDataFrame(frameTypesForThrottle, d) => 1
+      case _                                                                                        => 0
+    }
+
+  private def isThrottledEmptyDataFrame(frameTypesForThrottle: Set[String], frame: DataFrame): Boolean =
+    frameTypesForThrottle.contains(EmptyDataFrameThrottleName) ||
+    (!frame.endStream && frameTypesForThrottle.contains(EmptyDataFrameNoEndStreamThrottleName))
+
   private[http2] def frameTypeAliasToFrameTypeName(frameType: String): Option[String] = {
     toRootLowerCase(frameType) match {
-      case "reset"         => Some("RstStreamFrame")
-      case "headers"       => Some("HeadersFrame")
-      case "continuation"  => Some("ContinuationFrame")
-      case "go-away"       => Some("GoAwayFrame")
-      case "priority"      => Some("PriorityFrame")
-      case "ping"          => Some("PingFrame")
-      case "push-promise"  => Some("PushPromiseFrame")
-      case "window-update" => Some("WindowUpdateFrame")
-      case _               => None
+      case "empty-data"               => Some(EmptyDataFrameThrottleName)
+      case "empty-data-no-end-stream" => Some(EmptyDataFrameNoEndStreamThrottleName)
+      case "reset"                    => Some("RstStreamFrame")
+      case "headers"                  => Some("HeadersFrame")
+      case "continuation"             => Some("ContinuationFrame")
+      case "go-away"                  => Some("GoAwayFrame")
+      case "priority"                 => Some("PriorityFrame")
+      case "ping"                     => Some("PingFrame")
+      case "push-promise"             => Some("PushPromiseFrame")
+      case "window-update"            => Some("WindowUpdateFrame")
+      case _                          => None
     }
   }
 
