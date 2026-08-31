@@ -17,3 +17,5 @@
 
 # new max-part-count setting
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.engine.parsing.BodyPartParser#Settings.maxPartCount")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ParserSettings.getMaxPartCount")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ParserSettings.maxPartCount")
