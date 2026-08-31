@@ -401,6 +401,50 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         }
       }
 
+      "dropping a chunk trailer header whose value would inject CRLF into the response" in new TestSetup() {
+        // the trailer carries an attacker-controlled RawHeader value containing CRLF; it must be discarded rather
+        // than split the response, exactly as a header in the main header block is
+        HttpResponse(entity = Chunked(
+          ContentTypes.`text/plain(UTF-8)`,
+          source(
+            Chunk(ByteString("body123")),
+            LastChunk("", List(RawHeader("X-Trace", "ok\r\nSet-Cookie: injected=1"), Age(30)))))) should renderTo {
+          """HTTP/1.1 200 OK
+            |Server: pekko-http/1.0.0
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |Transfer-Encoding: chunked
+            |Content-Type: text/plain; charset=UTF-8
+            |
+            |7
+            |body123
+            |0
+            |Age: 30
+            |
+            |"""
+        }
+      }
+
+      "dropping a chunk extension whose value would inject CRLF into the chunk framing" in new TestSetup() {
+        // the chunk extension is rendered raw into the chunk-size line; a CRLF in it must not corrupt the framing
+        HttpResponse(entity = Chunked(
+          ContentTypes.`text/plain(UTF-8)`,
+          source(
+            Chunk(ByteString("body123"), "ok\r\nSet-Cookie: injected=1"),
+            LastChunk))) should renderTo {
+          """HTTP/1.1 200 OK
+            |Server: pekko-http/1.0.0
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |Transfer-Encoding: chunked
+            |Content-Type: text/plain; charset=UTF-8
+            |
+            |7
+            |body123
+            |0
+            |
+            |"""
+        }
+      }
+
       "with one chunk and and extra LastChunks at the end (which should be ignored)" in new TestSetup() {
         HttpResponse(entity = Chunked(
           ContentTypes.`text/plain(UTF-8)`,
