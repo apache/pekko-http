@@ -106,6 +106,19 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
       }
     }
 
+    "reject an actual request listing a disallowed origin next to an allowed one" in {
+      val settings = referenceSettings.withAllowedOrigins(HttpOriginMatcher(exampleOrigin))
+      val disallowedOrigin = HttpOrigin("http://evil.com")
+
+      // the response echoes back every origin given, so accepting because one of them matches would echo the
+      // disallowed origin back to the caller
+      Get() ~> Origin(Seq(exampleOrigin, disallowedOrigin)) ~> {
+        route(settings)
+      } ~> check {
+        rejection shouldBe CorsRejection(CorsRejection.InvalidOrigin(Seq(exampleOrigin, disallowedOrigin)))
+      }
+    }
+
     "accept pre-flight requests with a null origin when allowed-origins = `*`" in {
       val settings = referenceSettings
       Options() ~> Origin(Seq.empty) ~> `Access-Control-Request-Method`(GET) ~> {
