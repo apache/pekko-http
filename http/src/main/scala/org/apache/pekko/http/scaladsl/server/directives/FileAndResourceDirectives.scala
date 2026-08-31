@@ -94,6 +94,10 @@ trait FileAndResourceDirectives {
    * Completes GET requests with the content of the given class-path resource.
    * If the resource cannot be found or read the Route rejects the request.
    *
+   * The resource name is passed to the class loader as given: unlike `getFromResourceDirectory` this directive does
+   * not reject `..` or separator characters, so a name built from request input can resolve to a resource outside the
+   * intended prefix. Validate any request-derived part of the name, or use `getFromResourceDirectory` instead.
+   *
    * @group fileandresource
    */
   def getFromResource(resourceName: String)(implicit resolver: ContentTypeResolver): Route =
@@ -102,6 +106,8 @@ trait FileAndResourceDirectives {
   /**
    * Completes GET requests with the content of the given resource.
    * If the resource is a directory or cannot be found or read the Route rejects the request.
+   *
+   * The resource name is not checked for path traversal, see `getFromResource(resourceName)` above.
    *
    * @group fileandresource
    */

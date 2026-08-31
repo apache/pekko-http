@@ -50,6 +50,10 @@ abstract class FileAndResourceDirectives extends ExecutionDirectives {
    * Completes GET requests with the content of the given resource loaded from the default ClassLoader,
    * using the default content type resolver.
    * If the resource cannot be found or read the Route rejects the request.
+   *
+   * The path is passed to the class loader as given: unlike `getFromResourceDirectory` this directive does not
+   * reject `..` or separator characters, so a path built from request input can resolve to a resource outside the
+   * intended prefix. Validate any request-derived part of the path, or use `getFromResourceDirectory` instead.
    */
   def getFromResource(path: String): Route = RouteAdapter {
     D.getFromResource(path)
