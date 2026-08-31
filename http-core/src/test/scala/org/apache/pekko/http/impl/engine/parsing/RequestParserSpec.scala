@@ -663,6 +663,17 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           ErrorInfo("HTTP header value exceeds the configured limit of 32 characters"))
       }
 
+      "with an unparseable Transfer-Encoding header value" in new Test {
+        // the value cannot be modelled, so it would otherwise degrade to a RawHeader and the message would be framed
+        // by Content-Length while an upstream that does understand it frames by chunked encoding
+        """POST / HTTP/1.1
+          |Host: x
+          |Transfer-Encoding: "chunked"
+          |Content-Length: 3
+          |
+          |abc""" should parseToError(BadRequest, ErrorInfo("Illegal `Transfer-Encoding` header value"))
+      }
+
       "with an invalid Content-Length header value" in new Test {
         """GET / HTTP/1.0
           |Content-Length: 1.5
