@@ -296,7 +296,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 - Taking on any authentication, authorization, or rate-limiting responsibility currently disclaimed in §9.
 - A change to the documented "do not expose directly" posture in `security.md`.
 - Promotion of a §3 module into the supported surface.
-- A change to the §5 process-behaviour claims — for example, [#1217](https://github.com/apache/pekko-http/pull/1217) proposes replacing the per-upload `deleteOnExit` with a single JVM shutdown hook registered by Pekko HTTP itself, which on merge invalidates the "registers no shutdown hook" claim in §5 and the matching §11a non-finding.
+- A change to the §5 process-behaviour claims. One near-miss is on record: [#1217](https://github.com/apache/pekko-http/pull/1217) originally replaced the per-upload `deleteOnExit` with a raw JVM shutdown hook registered by Pekko HTTP itself, which would have invalidated the "registers no shutdown hook" claim in §5 and the matching §11a non-finding; it was reworked in review to register the cleanup as a `CoordinatedShutdown` task on the actor system instead, so the claims stand.
 - **A report that cannot be routed to exactly one §13 disposition** — evidence of a model gap; revise the model rather than making an ad-hoc call.
 
 ---
