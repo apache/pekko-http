@@ -63,5 +63,23 @@ final class LineParserSpec extends AsyncWordSpec with Matchers with BaseUnmarsha
         .runWith(Sink.seq)
         .map(_ shouldBe Vector("after", "", "before", "middle"))
     }
+
+    "parse a CRLF that is split across two chunks" in {
+      Source(("line1\r" :: "\nline2\r\n" :: Nil).map(ByteString(_)))
+        .via(new LineParser(1048576))
+        .runWith(Sink.seq)
+        .map(_ shouldBe Vector("line1", "line2"))
+    }
+
+    "parse lines from a multi-fragment ByteString" in {
+      // a single element that is a concatenation of several chunks, as produced by the stage's own buffering
+      val input = ByteString("line1\nli") ++ ByteString("ne2\r") ++ ByteString("\nline3\r") ++ ByteString("line4\n")
+      input.isCompact shouldBe false
+      Source
+        .single(input)
+        .via(new LineParser(1048576))
+        .runWith(Sink.seq)
+        .map(_ shouldBe Vector("line1", "line2", "line3", "line4"))
+    }
   }
 }
