@@ -35,6 +35,10 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
 
   val shape = FlowShape(eventsIn, eventsOut)
 
+  /** RFC 9113 8.2.1: NUL, CR and LF are never valid in an HTTP/2 field name or value. */
+  private[http2] def hasIllegalChar(s: String): Boolean =
+    s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0 || s.indexOf('\u0000') >= 0
+
   def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
     new GraphStageLogic(shape) with StageLogging with InHandler with OutHandler { logic =>
       setHandlers(eventsIn, eventsOut, this)
@@ -55,7 +59,15 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
           else {
             kvs.foreach {
               case (key, value: String) =>
-                encoder.encodeHeader(os, key, value, false)
+                // RFC 9113 8.2.1: a field name or value carrying a NUL, CR or LF is malformed and must not be sent.
+                // The value can be attacker-controlled (a RawHeader, CustomHeader or a response trailer), so drop the
+                // offending field instead of encoding it, mirroring the HTTP/1.1 renderer's CR/LF guard.
+                if (HeaderCompression.hasIllegalChar(key) || HeaderCompression.hasIllegalChar(value))
+                  // debug, not warning: the value can be attacker-influenced (reflected into a header), so a warning
+                  // here would be a log-flooding vector; the HTTP/1.1 renderer drops such headers silently too
+                  log.debug("Dropping HTTP/2 header [{}] because its name or value contains a CR, LF or NUL", key)
+                else
+                  encoder.encodeHeader(os, key, value, false)
               case (key, value) =>
                 throw new IllegalStateException(
                   s"Didn't expect key-value-pair [$key] -> [$value](${value.getClass}) here.")
