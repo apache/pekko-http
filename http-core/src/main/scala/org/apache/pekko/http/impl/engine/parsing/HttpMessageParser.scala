@@ -207,8 +207,11 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
         case h: Connection => ch match {
             case None =>
               parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, Some(h), clh, cth, isChunked, e100c, hh)
-            case Some(x) => parseHeaderLines(input, lineEnd, headers, headerCount, Some(x.append(h.tokens)), clh, cth,
-                isChunked, e100c, hh)
+            // count each merged Connection header towards the limit: the tokens are accumulated into `x` (an O(n) copy
+            // per header), so without incrementing headerCount the `headerCount < maxHeaderCount` guard never trips and
+            // a flood of Connection headers drives unbounded quadratic work from a single message
+            case Some(x) => parseHeaderLines(input, lineEnd, headers, headerCount + 1, Some(x.append(h.tokens)), clh,
+                cth, isChunked, e100c, hh)
           }
         case h: Host =>
           if (!hh || isResponseParser)
