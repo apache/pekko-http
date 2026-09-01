@@ -13,14 +13,13 @@
 
 package org.apache.pekko.http.impl.engine
 
-import java.lang.{ StringBuilder => JStringBuilder }
 import org.apache.pekko
 import pekko.http.scaladsl.settings.ParserSettings
 
-import scala.annotation.tailrec
 import pekko.event.LoggingAdapter
 import pekko.util.ByteString
 import pekko.http.scaladsl.model.{ ErrorInfo, StatusCode, StatusCodes }
+import pekko.http.impl.util.ISO88591
 import pekko.http.impl.util.SingletonException
 
 /**
@@ -41,11 +40,13 @@ package object parsing {
   private[http] def byteAt(input: ByteString, ix: Int): Byte =
     if (ix < input.length) input(ix) else throw NotEnoughDataException
 
-  private[http] def asciiString(input: ByteString, start: Int, end: Int): String = {
-    @tailrec def build(ix: Int = start, sb: JStringBuilder = new JStringBuilder(end - start)): String =
-      if (ix == end) sb.toString else build(ix + 1, sb.append(input(ix).toChar))
-    if (start == end) "" else build()
-  }
+  /**
+   * Decodes the given range as a String, one character per byte. Bytes above 0x7F are decoded as
+   * ISO-8859-1, as [[pekko.http.impl.util.ByteStringParserInput.sliceString]] already does; most
+   * callers have validated the range as 7-bit ASCII, for which the two agree.
+   */
+  private[http] def asciiString(input: ByteString, start: Int, end: Int): String =
+    if (start == end) "" else input.slice(start, end).decodeString(ISO88591)
 
   private[http] def logParsingError(info: ErrorInfo, log: LoggingAdapter,
       settings: ParserSettings.ErrorLoggingVerbosity,
