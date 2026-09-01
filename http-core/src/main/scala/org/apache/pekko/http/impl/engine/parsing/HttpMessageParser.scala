@@ -22,6 +22,7 @@ import org.parboiled2.CharUtils
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.IllegalRequestContext
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.impl.util.HttpConstants._
 import pekko.http.scaladsl.model.{ ParsingException => _, _ }
@@ -62,6 +63,25 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
 
   /** invoked if the specified protocol is unknown */
   protected def onBadProtocol(input: ByteString): Nothing
+
+  /**
+   * What is known about the message that is currently being parsed, at the point where parsing failed.
+   * Only the request parser has anything to report here.
+   */
+  protected def illegalRequestContext: IllegalRequestContext = IllegalRequestContext.empty
+
+  /** The protocol of the message that is currently being parsed */
+  protected final def currentProtocol: HttpProtocol = protocol
+
+  /**
+   * Completion handling for a message start that was truncated by the connection closing, reporting
+   * what the parser had already read of that message.
+   */
+  protected final val completionIsMessageStartError: CompletionHandling =
+    () =>
+      Some(MessageStartError(StatusCodes.BadRequest, ErrorInfo("Illegal HTTP message start"),
+        illegalRequestContext))
+
   protected def parseMessage(input: ByteString, offset: Int): HttpMessageParser.StateResult
   protected def parseEntity(headers: List[HttpHeader], protocol: HttpProtocol, input: ByteString, bodyStart: Int,
       clh: Option[`Content-Length`], cth: Option[`Content-Type`], isChunked: Boolean,
@@ -122,7 +142,7 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
   }
 
   protected final def startNewMessage(input: ByteString, offset: Int): StateResult = {
-    if (offset < input.length) setCompletionHandling(CompletionIsMessageStartError)
+    if (offset < input.length) setCompletionHandling(completionIsMessageStartError)
     try parseMessage(input, offset)
     catch { case NotEnoughDataException => continue(input, offset)(startNewMessage) }
   }
@@ -369,7 +389,7 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
   protected final def failMessageStart(status: StatusCode, summary: String, detail: String = ""): StateResult =
     failMessageStart(status, ErrorInfo(summary, detail))
   protected final def failMessageStart(status: StatusCode, info: ErrorInfo): StateResult = {
-    emit(MessageStartError(status, info))
+    emit(MessageStartError(status, info, illegalRequestContext))
     setCompletionHandling(CompletionOk)
     terminate()
   }
@@ -439,8 +459,6 @@ private[http] object HttpMessageParser {
 
   type CompletionHandling = () => Option[ErrorOutput]
   val CompletionOk: CompletionHandling = () => None
-  val CompletionIsMessageStartError: CompletionHandling =
-    () => Some(ParserOutput.MessageStartError(StatusCodes.BadRequest, ErrorInfo("Illegal HTTP message start")))
   val CompletionIsEntityStreamError: CompletionHandling =
     () =>
       Some(ParserOutput.EntityStreamError(ErrorInfo(

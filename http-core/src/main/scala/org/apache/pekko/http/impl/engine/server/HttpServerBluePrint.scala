@@ -26,7 +26,7 @@ import pekko.stream._
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl._
 import pekko.stream.stage._
-import pekko.http.ParsingErrorHandler
+import pekko.http.{ IllegalRequestContext, ParsingErrorHandler }
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.http.impl.engine.parsing.ParserOutput._
 import pekko.http.impl.engine.parsing._
@@ -268,20 +268,24 @@ private[http] object HttpServerBluePrint {
     def establishAbsoluteUri(requestOutput: RequestOutput): RequestOutput = requestOutput match {
       case connect: RequestStart if connect.method == HttpMethods.CONNECT =>
         MessageStartError(StatusCodes.BadRequest,
-          ErrorInfo(s"CONNECT requests are not supported", s"Rejecting CONNECT request to '${connect.uri}'"))
+          ErrorInfo(s"CONNECT requests are not supported", s"Rejecting CONNECT request to '${connect.uri}'"),
+          contextOf(connect))
       case start: RequestStart =>
         try {
           val effectiveUri = HttpRequest.effectiveUri(start.uri, start.headers, isSecureConnection, defaultHostHeader)
           start.copy(uri = effectiveUri)
         } catch {
           case e: IllegalUriException =>
-            MessageStartError(StatusCodes.BadRequest, e.info)
+            MessageStartError(StatusCodes.BadRequest, e.info, contextOf(start))
         }
       case x => x
     }
 
     Flow[SessionBytes].via(rootParser).map(establishAbsoluteUri)
   }
+
+  private def contextOf(start: RequestStart): IllegalRequestContext =
+    IllegalRequestContext(Some(start.method), Some(start.uri.toString), Some(start.protocol))
 
   def rendering(settings: ServerSettings, log: LoggingAdapter, dateHeaderRendering: DateHeaderRendering)
       : Flow[ResponseRenderingContext, ResponseRenderingOutput, NotUsed] = {
@@ -475,7 +479,8 @@ private[http] object HttpServerBluePrint {
                 case MessageEnd =>
                   messageEndPending = false
                   push(requestPrepOut, MessageEnd)
-                case MessageStartError(status, info)                                   => finishWithIllegalRequestError(status, info)
+                case MessageStartError(status, info, context) =>
+                  finishWithIllegalRequestError(status, info, context)
                 case x: EntityStreamError if messageEndPending && openRequests.isEmpty =>
                   // client terminated the connection after receiving an early response to 100-continue
                   completeStage()
@@ -578,8 +583,9 @@ private[http] object HttpServerBluePrint {
             }
           })
 
-        def finishWithIllegalRequestError(status: StatusCode, info: ErrorInfo): Unit = {
-          val errorResponse = JavaMapping.toScala(parsingErrorHandler.handle(status, info, log, settings))
+        def finishWithIllegalRequestError(status: StatusCode, info: ErrorInfo,
+            context: IllegalRequestContext = IllegalRequestContext.empty): Unit = {
+          val errorResponse = JavaMapping.toScala(parsingErrorHandler.handle(status, info, log, settings, context))
           emitErrorResponse(errorResponse)
         }
 
