@@ -32,6 +32,11 @@ abstract class RoutingSettings private[pekko] () { self: RoutingSettingsImpl =>
   def getRangeCoalescingThreshold: Long
   def getDecodeMaxBytesPerChunk: Int
 
+  /**
+   * @since 2.0.0
+   */
+  def getUseJarFileCache: Boolean
+
   def withVerboseErrorMessages(verboseErrorMessages: Boolean): RoutingSettings =
     self.copy(verboseErrorMessages = verboseErrorMessages)
   def withFileGetConditional(fileGetConditional: Boolean): RoutingSettings =
@@ -44,6 +49,11 @@ abstract class RoutingSettings private[pekko] () { self: RoutingSettingsImpl =>
   def withDecodeMaxBytesPerChunk(decodeMaxBytesPerChunk: Int): RoutingSettings =
     self.copy(decodeMaxBytesPerChunk = decodeMaxBytesPerChunk)
   def withDecodeMaxSize(decodeMaxSize: Long): RoutingSettings = self.copy(decodeMaxSize = decodeMaxSize)
+
+  /**
+   * @since 2.0.0
+   */
+  def withUseJarFileCache(useJarFileCache: Boolean): RoutingSettings = self.copy(useJarFileCache = useJarFileCache)
 }
 
 object RoutingSettings extends SettingsCompanion[RoutingSettings] {

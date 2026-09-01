@@ -14,8 +14,8 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import java.io.File
-import java.net.{ URI, URL }
+import java.io.{ File, FileNotFoundException, IOException, InputStream }
+import java.net.{ JarURLConnection, URL, URLConnection }
 
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
@@ -109,17 +109,20 @@ trait FileAndResourceDirectives {
       resourceName: String, contentType: ContentType, classLoader: ClassLoader = _defaultClassLoader): Route =
     if (!resourceName.endsWith('/'))
       get {
-        Option(classLoader.getResource(resourceName)).flatMap(ResourceFile.apply) match {
-          case Some(ResourceFile(url, length, lastModified)) =>
-            conditionalFor(length, lastModified) {
-              if (length > 0) {
-                withRangeSupportAndPrecompressedMediaTypeSupport {
-                  complete(HttpEntity.Default(contentType, length,
-                    StreamConverters.fromInputStream(() => url.openStream())))
-                }
-              } else complete(HttpEntity.Empty)
-            }
-          case _ => reject // not found or directory
+        extractSettings { settings =>
+          val useJarFileCache = settings.useJarFileCache
+          Option(classLoader.getResource(resourceName)).flatMap(ResourceFile(_, useJarFileCache)) match {
+            case Some(ResourceFile(url, length, lastModified)) =>
+              conditionalFor(length, lastModified) {
+                if (length > 0) {
+                  withRangeSupportAndPrecompressedMediaTypeSupport {
+                    complete(HttpEntity.Default(contentType, length,
+                      StreamConverters.fromInputStream(() => openStream(url, useJarFileCache))))
+                  }
+                } else complete(HttpEntity.Empty)
+              }
+            case _ => reject // not found or directory
+          }
         }
       }
     else reject // don't serve the content of resource "directories"
@@ -278,35 +281,79 @@ object FileAndResourceDirectives extends FileAndResourceDirectives {
   }
 
   object ResourceFile {
-    def apply(url: URL): Option[ResourceFile] = url.getProtocol match {
+
+    /**
+     * Probes the resource without keeping any handle open: for a resource inside a jar file the jar is opened, read
+     * and closed again, as this overload always did before the jar file cache became configurable. Use the
+     * two-argument overload to let the JDK's jar file cache keep the jar open across requests.
+     */
+    def apply(url: URL): Option[ResourceFile] = apply(url, useJarFileCache = false)
+
+    /**
+     * @param useJarFileCache whether the JDK's jar file cache may be used for resources inside a jar file, see the
+     *                        `pekko.http.routing.use-jar-file-cache` setting
+     * @since 2.0.0
+     */
+    def apply(url: URL, useJarFileCache: Boolean): Option[ResourceFile] = url.getProtocol match {
       case "file" =>
         val file = new File(url.toURI)
         if (file.isDirectory) None
         else Some(ResourceFile(url, file.length(), file.lastModified()))
-      case "jar" =>
-        val path = new URI(url.getPath).getPath // remove "file:" prefix and normalize whitespace
-        val bangIndex = path.indexOf('!')
-        val filePath = path.substring(0, bangIndex)
-        val resourcePath = path.substring(bangIndex + 2)
-        val jar = new java.util.zip.ZipFile(filePath)
-        try {
-          val entry = jar.getEntry(resourcePath)
-          if (entry.isDirectory) None
-          else Option(jar.getInputStream(entry)).map { is =>
-            is.close()
-            ResourceFile(url, entry.getSize, entry.getTime)
-          }
-        } finally jar.close()
       case _ =>
-        val conn = url.openConnection()
-        try {
-          conn.setUseCaches(false) // otherwise the JDK will keep the connection open when we close!
-          val len = conn.getContentLength
-          val lm = conn.getLastModified
-          Some(ResourceFile(url, len, lm))
-        } finally conn.getInputStream.close()
+        openConnection(url, useJarFileCache) match {
+          case jarConnection: JarURLConnection =>
+            // Ask the connection for the entry instead of opening the jar file here: opening it means reading and
+            // parsing the whole central directory again for every single request. With the JDK's cache in use the
+            // same open jar file is reused across requests, so nothing is opened here at all in the common case.
+            // A connection that does not use the cache owns its jar file and has to close it again.
+            val ownsJarFile = !jarConnection.getUseCaches
+            try {
+              val entry = Option(jarConnection.getJarEntry).filterNot(_.isDirectory)
+              entry.map(e => ResourceFile(url, e.getSize, e.getTime))
+            } catch {
+              case _: FileNotFoundException => None // the entry disappeared from the jar in the meantime
+            } finally if (ownsJarFile) {
+                try jarConnection.getJarFile.close()
+                catch { case _: IOException => } // the jar itself may be gone, then there is nothing to close
+              }
+          case connection => fromUrlConnection(url, connection)
+        }
+    }
+
+    private def fromUrlConnection(url: URL, connection: URLConnection): Option[ResourceFile] =
+      try {
+        connection.setUseCaches(false) // otherwise the JDK will keep the connection open when we close!
+        val len = connection.getContentLengthLong
+        val lm = connection.getLastModified
+        if (len < 0) None // an unknown length would be served as an empty response, so reject instead
+        else Some(ResourceFile(url, len, lm))
+      } catch {
+        case _: FileNotFoundException => None // nothing behind the URL: reject instead of failing the request
+      } finally {
+        try connection.getInputStream.close()
+        catch { case _: IOException => } // a stream that cannot be opened holds nothing to close
+      }
+
+    /**
+     * The one place that decides how a connection relates to the JDK's caches: with the jar file cache disabled the
+     * connection must own its jar file, with it enabled the JVM-wide default is left untouched, so that an
+     * application-wide `URLConnection.setDefaultUseCaches(false)` keeps its effect.
+     */
+    private[directives] def openConnection(url: URL, useJarFileCache: Boolean): URLConnection = {
+      val connection = url.openConnection()
+      if (!useJarFileCache) connection.setUseCaches(false)
+      connection
     }
   }
+
+  /**
+   * Opens the resource content. Metadata and content are read through separate connections, so with the jar file
+   * cache disabled a jar-hosted resource is opened and parsed once more here: the entity may never be materialized
+   * at all (HEAD or conditional requests), so the metadata connection cannot simply be handed over. Closing the
+   * returned stream also closes the jar file it came from when the connection owns it.
+   */
+  private def openStream(url: URL, useJarFileCache: Boolean): InputStream =
+    ResourceFile.openConnection(url, useJarFileCache).getInputStream
   case class ResourceFile(url: URL, length: Long, lastModified: Long)
 
   trait DirectoryRenderer extends pekko.http.javadsl.server.directives.DirectoryRenderer {

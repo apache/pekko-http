@@ -16,7 +16,7 @@ package org.apache.pekko.http.scaladsl.server.directives
 import java.io.File
 import java.nio.file.Files
 
-import scala.concurrent.Future
+import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 
 import org.apache.pekko
@@ -29,6 +29,7 @@ import pekko.testkit._
 import pekko.util.ByteString
 
 import org.scalatest.concurrent.Eventually
+import org.scalatest.time.{ Seconds, Span }
 
 class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
 
@@ -456,6 +457,45 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
         rejection shouldEqual MissingFormFieldRejection("missing")
       }
 
+    }
+
+    "collect its temporary files in a single directory" in {
+      // the directory is removed by a CoordinatedShutdown task when the actor system terminates, instead of
+      // registering every single uploaded file with `File.deleteOnExit`, which the JVM would remember for the
+      // lifetime of the process
+      val uploadTempFiles = UploadTempFiles(system)
+      val first = uploadTempFiles.create()
+      val second = uploadTempFiles.create()
+      try {
+        first.getParentFile.getName should startWith("pekko-http-uploads")
+        second.getParentFile shouldEqual first.getParentFile
+        (first should not).equal(second)
+      } finally {
+        first.delete()
+        second.delete()
+      }
+    }
+
+    "recreate its temporary directory when it was removed while the server runs" in {
+      val uploadTempFiles = UploadTempFiles(system)
+      val first = uploadTempFiles.create()
+      val directory = first.getParentFile
+      first.delete()
+      Files.delete(directory.toPath) // a temp-file reaper may remove the directory whenever it is empty
+      val second = uploadTempFiles.create()
+      second.getParentFile shouldEqual directory
+      second.delete()
+    }
+
+    "remove its temporary directory when the actor system terminates" in {
+      val separateSystem = pekko.actor.ActorSystem("upload-temp-files-cleanup-spec")
+      val file = UploadTempFiles(separateSystem).create()
+      val directory = file.getParentFile
+      directory.exists() shouldBe true
+      Await.ready(separateSystem.terminate(), 10.seconds.dilated)
+      eventually(timeout(Span(3, Seconds))) {
+        directory.exists() shouldBe false
+      }
     }
 
   }
