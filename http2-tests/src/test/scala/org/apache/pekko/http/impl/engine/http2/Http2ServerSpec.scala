@@ -411,15 +411,31 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId).toMap should contain(":status" -> "200")
       })
 
-      "render content-length for a strict response entity".inAssertAllStagesStopped(new HeadRequestSetup {
+      // RFC 9110 section 9.3.2: the server MUST NOT send content in a response to a HEAD request. The headers are
+      // still rendered as they would be for a GET, so that the peer learns the size of the resource.
+      "not send the response entity as DATA frames".inAssertAllStagesStopped(new HeadRequestSetup {
         sendHeadRequest()
         user.emitResponse(TheStreamId,
           HttpResponse(entity = HttpEntity(ContentTypes.`application/octet-stream`, ByteString("abcde"))))
 
-        val pairs = network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId, endStream = false).toMap
+        val pairs = network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId, endStream = true).toMap
         pairs should contain("content-length" -> "5")
         pairs should contain("content-type" -> "application/octet-stream")
+        network.expectNoBytes(100.millis)
       })
+
+      "not send DATA frames for a streamed response entity and cancel it".inAssertAllStagesStopped(
+        new HeadRequestSetup {
+          sendHeadRequest()
+          val entityDataOut = TestPublisher.probe[ByteString]()
+          user.emitResponse(TheStreamId,
+            HttpResponse(entity = HttpEntity(ContentTypes.`application/octet-stream`,
+              Source.fromPublisher(entityDataOut))))
+
+          network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId, endStream = true)
+          entityDataOut.expectCancellation()
+          network.expectNoBytes(100.millis)
+        })
 
       // the HTTP/1.1 equivalent is "to a HEAD request setting a custom Content-Type and Content-Length
       // (default response entity)" in ResponseRendererSpec: it lets a handler answer a HEAD request with the
@@ -430,49 +446,71 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           user.emitResponse(TheStreamId,
             HttpResponse(entity = HttpEntity.Default(ContentTypes.`application/octet-stream`, 100, Source.empty)))
 
-          network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId, endStream = false).toMap should contain(
+          network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId, endStream = true).toMap should contain(
             "content-length" -> "100")
+          network.expectNoBytes(100.millis)
         })
 
-      // FIXME: RFC 9110 section 9.3.2 says the server MUST NOT send content in a response to a HEAD request, but
-      // the HTTP/2 engine has no notion of the request method on the response path (ResponseRendering only ever
-      // sees the HttpResponse plus its stream id), so the entity is emitted as DATA frames. HTTP/1.1 strips it in
-      // HttpResponseRendererFactory. This test pins the current wire behaviour so that a fix has to flip it
-      // deliberately rather than silently.
-      "send the response entity as DATA frames (should not, see RFC 9110 section 9.3.2)".inAssertAllStagesStopped(
-        new HeadRequestSetup {
-          sendHeadRequest()
-          user.emitResponse(TheStreamId,
-            HttpResponse(entity = HttpEntity(ContentTypes.`application/octet-stream`, ByteString("abcde"))))
-
-          network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId, endStream = false)
-          network.expectDATA(TheStreamId, endStream = true, ByteString("abcde"))
-        })
-
-      // FIXME: `transparent-head-requests` is only applied by HttpServerBluePrint, so it has no effect over
-      // HTTP/2 and the handler always sees a HEAD request. Pinned here so the divergence from HTTP/1.1 is visible.
-      "ignore transparent-head-requests and pass HEAD through to the handler".inAssertAllStagesStopped(
+      "translate HEAD to GET when transparent-head-requests is enabled and still strip the body".inAssertAllStagesStopped(
         new HeadRequestSetup {
           override def settings: ServerSettings = super.settings.withTransparentHeadRequests(true)
 
-          sendHeadRequest().method shouldBe HttpMethods.HEAD
+          sendHeadRequest().method shouldBe HttpMethods.GET
 
-          user.emitResponse(TheStreamId, HttpResponse())
-          network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId).toMap should contain(":status" -> "200")
+          user.emitResponse(TheStreamId,
+            HttpResponse(entity = HttpEntity(ContentTypes.`application/octet-stream`, ByteString("abcde"))))
+          network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId, endStream = true).toMap should contain(
+            "content-length" -> "5")
+          network.expectNoBytes(100.millis)
         })
 
-      // FIXME: HttpMessageRendering.addContentHeaders renders content-length straight from the entity and never
-      // consults HttpMethod.contentLengthAllowed, so a 304 gets `content-length: 0` where HTTP/1.1 omits the
-      // header entirely (RFC 9110 section 15.4.5: a 304 should carry the Content-Length a 200 would have had).
-      "render content-length 0 for a 304 response (HTTP/1.1 omits it)".inAssertAllStagesStopped(
-        new HeadRequestSetup {
-          sendHeadRequest()
-          user.emitResponse(TheStreamId, HttpResponse(StatusCodes.NotModified))
+      "keep HEAD when transparent-head-requests is disabled".inAssertAllStagesStopped(new HeadRequestSetup {
+        sendHeadRequest().method shouldBe HttpMethods.HEAD
 
-          val pairs = network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId).toMap
-          pairs should contain(":status" -> "304")
-          pairs should contain("content-length" -> "0")
-        })
+        user.emitResponse(TheStreamId, HttpResponse())
+        network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId).toMap should contain(":status" -> "200")
+      })
+    }
+
+    // The status based rules are the ones PR #962 introduced for HTTP/1.1 in HttpMethod.contentLengthAllowed. They
+    // do not depend on the request method, so they are exercised here with a plain GET.
+    "render content-length according to the response status" should {
+      abstract class GetRequestSetup extends TestSetup with RequestResponseProbes {
+        val TheStreamId = 1
+        def responsePairs(response: HttpResponse): Map[String, String] = {
+          network.sendRequest(TheStreamId,
+            HttpRequest(HttpMethods.GET, "https://www.example.com/", protocol = HttpProtocols.`HTTP/2.0`))
+          user.expectRequest()
+          user.emitResponse(TheStreamId, response)
+          network.expectDecodedResponseHEADERSPairs(streamId = TheStreamId).toMap
+        }
+      }
+
+      "render it for a 200 with an empty entity".inAssertAllStagesStopped(new GetRequestSetup {
+        responsePairs(HttpResponse()) should contain("content-length" -> "0")
+      })
+
+      "not render it for a 204".inAssertAllStagesStopped(new GetRequestSetup {
+        val pairs = responsePairs(HttpResponse(StatusCodes.NoContent))
+        pairs should contain(":status" -> "204")
+        pairs.keySet should not contain "content-length"
+      })
+
+      // 205 is deliberately not exempt: RFC 9112 section 6.3 only lets 1xx, 204 and 304 be self delimiting, so a 205
+      // has to be framed. This is the case PR #962 fixed for HTTP/1.1 and the one http4s/http4s#7919 reports.
+      "render it for a 205".inAssertAllStagesStopped(new GetRequestSetup {
+        val pairs = responsePairs(HttpResponse(StatusCodes.ResetContent))
+        pairs should contain(":status" -> "205")
+        pairs should contain("content-length" -> "0")
+      })
+
+      // RFC 9110 section 15.4.5: a 304 is supposed to carry the content-length a 200 would have had, so rendering a
+      // zero here would be actively misleading.
+      "not render it for a 304".inAssertAllStagesStopped(new GetRequestSetup {
+        val pairs = responsePairs(HttpResponse(StatusCodes.NotModified))
+        pairs should contain(":status" -> "304")
+        pairs.keySet should not contain "content-length"
+      })
     }
 
     def requestTests(minCollectStrictEntityBytes: Int) = {
