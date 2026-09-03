@@ -346,6 +346,28 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           trailingResponseHeaders should contain(("x-good", "fine"))
           trailingResponseHeaders.map(_._1) should not contain "x-evil"
         })
+      "release connection-level flow control accounting when a stream with buffered data is reset"
+        .inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings =
+            super.settings.mapHttp2Settings(_.withIncomingConnectionLevelBufferSize(Http2Protocol.InitialWindowSize))
+
+          // Each round buffers request data that the handler never reads and then resets the stream. Those bytes must
+          // be released from the connection-level accounting: otherwise the flow controller keeps counting them as
+          // buffered forever, stops replenishing the connection window, and the peer runs out of window entirely.
+          (0 until 6).foreach { i =>
+            val streamId = 1 + i * 2
+            network.sendHEADERS(streamId, endStream = false,
+              network.headersForRequest(HttpRequest(HttpMethods.POST, "/")))
+            user.expectRequest() // the entity is deliberately never read, so the data stays buffered
+            network.sendDATA(streamId, endStream = false, ByteString(new Array[Byte](20000)))
+            network.sendRST_STREAM(streamId, ErrorCode.CANCEL)
+            network.pollForWindowUpdates(100.millis)
+          }
+
+          // the connection is still usable because the window was replenished along the way
+          network.sendHEADERS(13, endStream = true, network.headersForRequest(Get("/")))
+          user.expectRequest()
+        })
       "consider stream as closed after sending out strict response > WINDOW_SIZE".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           override def settings: ServerSettings =

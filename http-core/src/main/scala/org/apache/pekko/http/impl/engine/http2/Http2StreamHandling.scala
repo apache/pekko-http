@@ -391,7 +391,9 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     override protected def onTrailer(parsedHeadersFrame: ParsedHeadersFrame): StreamState = this // trailing headers not supported for requests right now
     override protected def incrementWindow(delta: Int): StreamState =
       copy(extraInitialWindow = extraInitialWindow + delta)
-    override protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit = {} // nothing to do here
+    // the data collected so far is dropped together with this state, so stop reserving connection-level window for it
+    override protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit =
+      totalBufferedData -= collectedData.length
   }
   case class OpenReceivingDataFirst(buffer: IncomingStreamBuffer, extraInitialWindow: Int = 0)
       extends ReceivingDataWithBuffer(HalfClosedRemoteWaitingForOutgoingStream(extraInitialWindow)) {
@@ -640,8 +642,18 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       streamStates.remove(streamId)
       headRequestStreamIds -= streamId
       wasClosed = true
-      buffer = ByteString.empty
+      discardBuffer()
       trailingHeaders = None
+    }
+
+    /**
+     * Drops what is still buffered and releases the connection-level window it reserved. Without the release the
+     * connection-level flow controller keeps counting these bytes as buffered forever, so it stops replenishing the
+     * connection window and every stream on the connection eventually stalls.
+     */
+    private def discardBuffer(): Unit = {
+      totalBufferedData -= buffer.length
+      buffer = ByteString.empty
     }
 
     def isDone: Boolean = outlet.isClosed
@@ -676,7 +688,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
     def onRstStreamFrame(rst: RstStreamFrame): Unit = {
       outlet.fail(new PeerClosedStreamException(rst.streamId, rst.errorCode))
-      buffer = ByteString.empty
+      discardBuffer()
       trailingHeaders = None
       wasClosed = true
     }
