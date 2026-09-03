@@ -29,8 +29,6 @@ import pekko.stream.stage.GraphStage
 import pekko.stream._
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
 
-import scala.collection.immutable
-
 /**
  * INTERNAL API
  */
@@ -52,9 +50,6 @@ private[http] object RenderSupport {
   private val TextXmlContentType = preRenderContentType(`text/xml(UTF-8)`)
   private val TextHtmlContentType = preRenderContentType(`text/html(UTF-8)`)
   private val TextCsvContentType = preRenderContentType(`text/csv(UTF-8)`)
-
-  implicit val trailerRenderer: Renderer[immutable.Iterable[HttpHeader]] =
-    Renderer.genericSeqRenderer[Renderable, HttpHeader](Rendering.CrLf, Rendering.Empty)
 
   val defaultLastChunkBytes: ByteString = renderChunk(HttpEntity.LastChunk)
 
@@ -156,12 +151,18 @@ private[http] object RenderSupport {
       2 + 2
     val r = new ByteStringRendering(renderedSize)
     r ~~% data.length
-    if (extension.nonEmpty) r ~~ ';' ~~ extension
+    // drop an extension carrying CR/LF: it is rendered raw into the chunk-size line, so a CR/LF would break the chunk
+    // framing / split the response. The extension is optional metadata, so omitting an illegal one is safe
+    if (extension.nonEmpty && extension.indexOf('\r') < 0 && extension.indexOf('\n') < 0) r ~~ ';' ~~ extension
     r ~~ CrLf
     chunk match {
       case HttpEntity.Chunk(data, _)        => r ~~ data
       case HttpEntity.LastChunk(_, Nil)     => // nothing to do
-      case HttpEntity.LastChunk(_, trailer) => r ~~ trailer ~~ CrLf
+      case HttpEntity.LastChunk(_, trailer) =>
+        // render each trailer header through the `~~(HttpHeader)` overload, which scans the rendered bytes for CR/LF
+        // and drops the header if it finds them; the generic sequence renderer would call `header.render` directly
+        // and let an attacker-controlled trailer value (e.g. a RawHeader) inject CRLF and split the response
+        trailer.foreach(r ~~ _)
     }
     r ~~ CrLf
     r.get
