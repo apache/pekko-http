@@ -67,9 +67,11 @@ trait CorsDirectives {
   def cors(settings: CorsSettings): Directive0 = {
     import settings._
 
-    // Return the invalid origins, or `Nil` if one is valid.
+    // Return the invalid origins, or `Nil` if they are all valid. Every origin has to match, not just one of them:
+    // the response echoes back every origin given, so accepting on a single match would echo an origin that was
+    // never allowed when a request lists a permitted origin alongside a disallowed one.
     def validateOrigins(origins: Seq[HttpOrigin]): List[CorsRejection.Cause] =
-      if (allowedOrigins == HttpOriginMatcher.* || origins.exists(allowedOrigins.matches)) {
+      if (allowedOrigins == HttpOriginMatcher.* || (origins.nonEmpty && origins.forall(allowedOrigins.matches))) {
         Nil
       } else {
         CorsRejection.InvalidOrigin(origins) :: Nil
