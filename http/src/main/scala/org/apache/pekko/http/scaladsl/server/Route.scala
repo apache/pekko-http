@@ -18,6 +18,7 @@ import scala.concurrent.{ ExecutionContextExecutor, Future }
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ClassicActorSystemProvider
+import pekko.annotation.InternalApi
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import pekko.http.scaladsl.server.directives.BasicDirectives
 import pekko.http.scaladsl.settings.{ ParserSettings, RoutingSettings }
@@ -69,7 +70,17 @@ object Route {
   def toFlow(route: Route)(implicit system: ClassicActorSystemProvider): Flow[HttpRequest, HttpResponse, NotUsed] =
     Flow[HttpRequest].mapAsync(1)(toFunction(route))
 
-  def toFunction(route: Route)(implicit system: ClassicActorSystemProvider): HttpRequest => Future[HttpResponse] = {
+  def toFunction(route: Route)(implicit system: ClassicActorSystemProvider): HttpRequest => Future[HttpResponse] =
+    toFunction(route, SystemMaterializer(system).materializer)
+
+  /**
+   * INTERNAL API
+   *
+   * Same as `toFunction` but runs the route with the given [[Materializer]] instead of the system materializer.
+   */
+  @InternalApi
+  private[pekko] def toFunction(route: Route, materializer: Materializer)(
+      implicit system: ClassicActorSystemProvider): HttpRequest => Future[HttpResponse] = {
     val routingLog = RoutingLog(system.classicSystem.log)
     val routingSettings = RoutingSettings(system)
     val parserSettings = ParserSettings.forServer
@@ -82,7 +93,7 @@ object Route {
     }
 
     createAsyncHandler(sealedRoute, routingLog, routingSettings, parserSettings)(system.classicSystem.dispatcher,
-      SystemMaterializer(system).materializer)
+      materializer)
   }
 
   private[pekko] def createAsyncHandler(sealedRoute: Route, routingLog: RoutingLog, routingSettings: RoutingSettings,
