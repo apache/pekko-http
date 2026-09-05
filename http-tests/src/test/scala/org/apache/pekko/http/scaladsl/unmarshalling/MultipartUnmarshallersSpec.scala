@@ -19,6 +19,7 @@ import scala.concurrent.duration._
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.util.FastFuture._
@@ -252,6 +253,20 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
             ByteString("""this is
                        |just preamble text""".stripMarginWithNewline(lineFeed))))
             .to[Multipart.General].failed, 1.second.dilated).getMessage shouldEqual "Unexpected end of multipart entity"
+      }
+      "more parts than the configured limit" in {
+        implicit val parserSettings: ParserSettings = ParserSettings(system).withMaxPartCount(2)
+        val singlePart =
+          """--12345
+            |
+            |data
+            |""".stripMarginWithNewline(lineFeed)
+
+        Await.result(
+          Unmarshal(HttpEntity(`multipart/mixed`.withBoundary("12345"), ByteString(singlePart * 3 + "--12345--")))
+            .to[Multipart.General].failed,
+          1.second.dilated).getMessage shouldEqual
+        "multipart entity contains more than the configured limit of 2 parts"
       }
       "a stray boundary" in {
         Await.result(
