@@ -132,6 +132,17 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       // pseudo-header field that appears in a header block after a regular
       // header field MUST be treated as malformed...
 
+      // Neither the CONNECT method of RFC 9113 section 8.5 nor the extended CONNECT of RFC 8441 is supported: a
+      // CONNECT request omits ":scheme" and ":path", which the parser rejects as mandatory. Pinned here so that the
+      // CONNECT specific rule in HttpMethods.contentLengthAllowed is understood to be unreachable over HTTP/2.
+      "not accept a CONNECT request" in {
+        val ex = parseExpectProtocolError(
+          keyValuePairs = Vector(
+            ":method" -> "CONNECT",
+            ":authority" -> "www.example.com:443"))
+        ex.getMessage should ===("Malformed request: Mandatory pseudo-header ':scheme' missing")
+      }
+
       "not accept pseudo-header fields after regular headers" in {
         val pseudoHeaders = Vector(
           ":method" -> "GET",

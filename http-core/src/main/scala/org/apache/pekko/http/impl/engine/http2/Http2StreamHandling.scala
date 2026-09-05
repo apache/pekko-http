@@ -18,7 +18,7 @@ import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.rendering.DateHeaderRendering
-import pekko.http.scaladsl.model.{ AttributeKey, HttpEntity }
+import pekko.http.scaladsl.model.{ AttributeKey, HttpEntity, HttpMethods }
 import pekko.http.scaladsl.model.http2.PeerClosedStreamException
 import pekko.http.scaladsl.settings.Http2CommonSettings
 import pekko.macros.LogHelper
@@ -54,6 +54,9 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
   def flowController: IncomingFlowController = IncomingFlowController.default(settings)
 
+  private def isHeadRequest(frame: ParsedHeadersFrame): Boolean =
+    frame.keyValuePairs.exists { case (name, value) => name == ":method" && (value eq HttpMethods.HEAD) }
+
   /**
    * Tries to generate demand of SubStreams on the inlet from the user handler. The
    * attemp to demand will succeed if the inlet is open and has no pending pull, and,
@@ -65,6 +68,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def tryPullSubStreams(): Unit
 
   private val streamStates = new mutable.LongMap[StreamState](settings.maxConcurrentStreams)
+  // Stream ids of incoming HEAD requests. The response to a HEAD request must not carry content
+  // (RFC 9110 section 9.3.2), but the response path only ever sees an HttpResponse and so cannot know the request
+  // method. Entries are removed when the response is created or when the stream is closed.
+  private val headRequestStreamIds = mutable.Set.empty[Int]
   private var largestIncomingStreamId = 0
   private var outstandingConnectionLevelWindow = Http2Protocol.InitialWindowSize
   private var totalBufferedData = 0
@@ -118,7 +125,15 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     updateState(e.streamId, _.handle(e), "handleStreamEvent", e.frameTypeName)
 
   /** Called by Http2ServerDemux when a stream comes in from the user-handler */
-  def handleOutgoingCreated(stream: Http2SubStream): Unit = {
+  def handleOutgoingCreated(outgoing: Http2SubStream): Unit = {
+    // a response to a HEAD request must not carry content (RFC 9110 section 9.3.2); the headers are sent unchanged
+    // so that the peer still learns the `content-length` it would have received for a GET
+    val stream =
+      if (headRequestStreamIds.remove(outgoing.streamId) && outgoing.hasEntity) {
+        outgoing.data.foreach(_.runWith(Sink.cancelled)(subFusingMaterializer))
+        outgoing.withoutData
+      } else outgoing
+
     stream.initialHeaders.priorityInfo.foreach(multiplexer.updatePriority)
     if (streamFor(stream.streamId) != Closed) {
       multiplexer.pushControlFrame(stream.initialHeaders)
@@ -188,6 +203,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     newState match {
       case Closed =>
         streamStates.remove(streamId)
+        headRequestStreamIds -= streamId
         if (streamStates.isEmpty) onAllStreamsClosed()
         tryPullSubStreams()
       case newState => streamStates.put(streamId, newState)
@@ -300,6 +316,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         correlationAttributes: Map[AttributeKey[?], ?] = Map.empty): StreamState =
       event match {
         case frame @ ParsedHeadersFrame(streamId, endStream, _, _, _) =>
+          if (isServer && isHeadRequest(frame)) headRequestStreamIds += streamId
           if (endStream) {
             dispatchSubstream(frame, Left(ByteString.empty), correlationAttributes)
             nextStateEmpty
@@ -621,6 +638,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
       // FIXME: go through state machine and don't manipulate vars directly here
       streamStates.remove(streamId)
+      headRequestStreamIds -= streamId
       wasClosed = true
       buffer = ByteString.empty
       trailingHeaders = None

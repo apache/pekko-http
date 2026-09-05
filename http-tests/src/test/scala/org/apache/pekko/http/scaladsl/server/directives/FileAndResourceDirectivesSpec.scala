@@ -195,6 +195,18 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       shouldReject("..%c0%af", warnings = 0)
       shouldReject("..%c1%9c", warnings = 0)
     }
+    "reject requests whose path can never name a file" in {
+      // a percent-encoded NUL decodes into the path segment, but no file-system path may contain it, so
+      // canonicalization throws; that must surface as a rejection, not as an error escaping to the exception handler
+      def route(uri: String) =
+        mapRequestContext(_.withUnmatchedPath(Path("/" + uri))) { _getFromDirectory("someDir") }
+
+      EventFilter.warning(pattern = ".* points to a location that is not part of .*", occurrences = 1).intercept {
+        Get() ~> route("na%00ive.txt") ~> check {
+          handled shouldEqual false
+        }
+      }
+    }
     "return the file content with the MediaType matching the file extension" in {
       Get("fileA.txt") ~> _getFromDirectory("someDir") ~> check {
         mediaType shouldEqual `text/plain`
@@ -266,6 +278,35 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
         responseEntity.toStrict(1.second.dilated).awaitResult(
           1.second.dilated).data.asByteBuffer.getInt shouldEqual 0xCAFEBABE
       }
+    }
+    "return the resource content from an archive with metadata taken from the archive entry" in {
+      val route = getFromResource("com/typesafe/config/Config.class")
+
+      def runCheck() =
+        Get() ~> route ~> check {
+          val entity = responseEntity.toStrict(1.second.dilated).awaitResult(1.second.dilated)
+          entity.contentLength shouldEqual entity.data.length
+          header[`Last-Modified`] shouldBe defined
+        }
+
+      runCheck()
+      runCheck() // the archive is shared between requests, so make sure it is still usable afterwards
+    }
+    "return the resource content from an archive when the jar file cache is disabled" in {
+      val route =
+        withSettings(RoutingSettings(system).withUseJarFileCache(false)) {
+          getFromResource("com/typesafe/config/Config.class")
+        }
+
+      def runCheck() =
+        Get() ~> route ~> check {
+          val entity = responseEntity.toStrict(1.second.dilated).awaitResult(1.second.dilated)
+          entity.contentLength shouldEqual entity.data.length
+          entity.data.asByteBuffer.getInt shouldEqual 0xCAFEBABE
+        }
+
+      runCheck()
+      runCheck() // every request opens and closes the jar file of its own, so make sure that is repeatable
     }
     "return the file content with MediaType 'application/octet-stream' on unknown file extensions" in {
       Get() ~> getFromResource("sample.xyz") ~> check {

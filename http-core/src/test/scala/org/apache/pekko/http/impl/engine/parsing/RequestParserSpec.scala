@@ -337,6 +337,29 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      "stop parsing a request that has more chunks than the configured limit" in new Test {
+        override protected def parserSettings: ParserSettings = super.parserSettings.withMaxChunkCount(2)
+
+        val input = prep(start +
+          """1
+            |a
+            |1
+            |b
+            |1
+            |c
+            |0
+            |
+            |""")
+        // collect the raw parser output: nothing must be emitted after the error, in particular no further chunk
+        val outputs =
+          Source.single(SessionBytes(TLSPlacebo.dummySession, ByteString(input)))
+            .via(newParser).runWith(Sink.seq).awaitResult(awaitAtMost)
+
+        outputs.collect { case EntityChunk(chunk) => chunk.data.utf8String } shouldEqual Seq("a", "b")
+        outputs.last shouldEqual EntityStreamError(
+          ErrorInfo("HTTP chunk count exceeds the configured limit of 2 chunks"))
+      }
+
       "don't overflow the stack for large buffers of chunks" in new Test {
         override val awaitAtMost = 10000.millis.dilated
 
@@ -661,6 +684,28 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           |Fancy: 123456789012345678901234567890123""" should parseToError(
           RequestHeaderFieldsTooLarge,
           ErrorInfo("HTTP header value exceeds the configured limit of 32 characters"))
+      }
+
+      "with more headers than the configured limit" in new Test {
+        override def parserSettings: ParserSettings = super.parserSettings.withMaxHeaderCount(2)
+        """GET / HTTP/1.1
+          |A: 1
+          |B: 2
+          |C: 3""" should parseToError(
+          BadRequest,
+          ErrorInfo("HTTP message contains more than the configured limit of 2 headers"))
+      }
+
+      "with more repeated Connection headers than the configured limit" in new Test {
+        // repeated Connection headers are merged into one, but each still counts towards maxHeaderCount so that a
+        // flood cannot bypass the limit and force unbounded quadratic token accumulation
+        override def parserSettings: ParserSettings = super.parserSettings.withMaxHeaderCount(2)
+        """GET / HTTP/1.1
+          |Connection: a
+          |Connection: b
+          |Connection: c""" should parseToError(
+          BadRequest,
+          ErrorInfo("HTTP message contains more than the configured limit of 2 headers"))
       }
 
       "with an unparseable Transfer-Encoding header value" in new Test {

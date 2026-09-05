@@ -73,6 +73,13 @@ private final class LineParser(maxLineSize: Int,
           }
         }
 
+        def lineAt(bs: ByteString, from: Int, until: Int): Option[String] = {
+          val lineByteSize = until - from
+          val line = bs.slice(from, until).utf8String
+          if (maxLineSize > 0 && lineByteSize > maxLineSize) handleLineOversized(lineByteSize, line)
+          else Some(line)
+        }
+
         @tailrec
         def parseLines(
             bs: ByteString,
@@ -82,49 +89,36 @@ private final class LineParser(maxLineSize: Int,
             lastCharWasCr: Boolean): (ByteString, Vector[String], Boolean) =
           if (at >= bs.length)
             (bs.drop(from), parsedLines, lastCharWasCr)
-          else
-            bs(at) match {
-              case CR_BYTE if at < bs.length - 1 && bs(at + 1) == LF_BYTE =>
-                // Lookahead for LF after CR
-                val lineByteSize = at - from
-                val line = bs.slice(from, at).utf8String
-                val processedLine = if (maxLineSize > 0 && lineByteSize > maxLineSize) {
-                  handleLineOversized(lineByteSize, line)
-                } else {
-                  Some(line)
-                }
-                val newParsedLines = processedLine.fold(parsedLines)(parsedLines :+ _)
-                parseLines(bs, at + 2, at + 2, newParsedLines, lastCharWasCr = false)
-              case CR_BYTE =>
-                // if is a CR but we don't know the next character, slice it but flag that the last character was a CR so if the next happens to be a LF we just ignore
-                val lineByteSize = at - from
-                val line = bs.slice(from, at).utf8String
-                val processedLine = if (maxLineSize > 0 && lineByteSize > maxLineSize) {
-                  handleLineOversized(lineByteSize, line)
-                } else {
-                  Some(line)
-                }
-                val newParsedLines = processedLine.fold(parsedLines)(parsedLines :+ _)
-                parseLines(bs, at + 1, at + 1, newParsedLines, lastCharWasCr = true)
-              case LF_BYTE if lastCharWasCr =>
-                // if is a LF and we just sliced a CR then we simply advance
-                parseLines(bs, at + 1, at + 1, parsedLines, lastCharWasCr = false)
-              case LF_BYTE =>
-                // a LF that wasn't preceded by a CR means we found a new slice
-                val lineByteSize = at - from
-                val line = bs.slice(from, at).utf8String
-                val processedLine = if (maxLineSize > 0 && lineByteSize > maxLineSize) {
-                  handleLineOversized(lineByteSize, line)
-                } else {
-                  Some(line)
-                }
-                val newParsedLines = processedLine.fold(parsedLines)(parsedLines :+ _)
-                parseLines(bs, at + 1, at + 1, newParsedLines, lastCharWasCr = false)
-              case _ =>
-                // for other input, simply advance
-                // Reset lastCharWasCr if we encounter any non-LF character after CR
-                parseLines(bs, from, at + 1, parsedLines, lastCharWasCr = false)
+          else if (lastCharWasCr && bs(at) == LF_BYTE)
+            // the LF of a CRLF whose CR already ended a line in a previous chunk, simply advance
+            parseLines(bs, at + 1, at + 1, parsedLines, lastCharWasCr = false)
+          else {
+            // jump straight to the next line terminator instead of testing every single byte:
+            // ByteString.indexOf scans several bytes at a time and, unlike indexed access, does not
+            // walk the fragment list of a multi-chunk ByteString on every byte
+            val crIx = bs.indexOf(CR_BYTE, at)
+            val lfIx = bs.indexOf(LF_BYTE, at)
+            val terminator =
+              if (crIx == -1) lfIx
+              else if (lfIx == -1) crIx
+              else math.min(crIx, lfIx)
+
+            if (terminator == -1)
+              // no line terminator in the rest of the buffer
+              (bs.drop(from), parsedLines, false)
+            else {
+              val newParsedLines = lineAt(bs, from, terminator).fold(parsedLines)(parsedLines :+ _)
+              if (terminator == lfIx)
+                parseLines(bs, terminator + 1, terminator + 1, newParsedLines, lastCharWasCr = false)
+              else if (terminator < bs.length - 1 && bs(terminator + 1) == LF_BYTE)
+                // lookahead for LF after CR
+                parseLines(bs, terminator + 2, terminator + 2, newParsedLines, lastCharWasCr = false)
+              else
+                // a CR but we don't know the next character yet, flag it so that a LF starting the
+                // next chunk is ignored
+                parseLines(bs, terminator + 1, terminator + 1, newParsedLines, lastCharWasCr = true)
             }
+          }
 
         // start the search where it ended, prevent iterating over all the buffer again
         val currentBufferStart = math.max(0, buffer.length - 1)

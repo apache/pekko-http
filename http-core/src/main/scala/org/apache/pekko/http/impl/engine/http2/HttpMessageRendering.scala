@@ -51,6 +51,13 @@ private[http2] class ResponseRendering(settings: ServerSettings, val log: Loggin
 
   override lazy val peerIdHeader: Option[(String, String)] = settings.serverHeader.map(h => h.lowercaseName -> h.value)
 
+  // Mirrors the status based part of the rules the HTTP/1.1 renderer applies through
+  // HttpMethod.contentLengthAllowed: no content-length for 1xx, 204 or 304 (RFC 9110 sections 8.6 and 15.4.5, where a
+  // 304 is supposed to carry the content-length a 200 would have had rather than a made up zero). GET is used here
+  // only because it carries the rules that are common to all methods; the request method is not known on this path.
+  protected override def contentLengthAllowed(response: HttpResponse): Boolean =
+    HttpMethods.GET.contentLengthAllowed(response.status)
+
 }
 
 /** INTERNAL API */
@@ -86,10 +93,16 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
   protected def peerIdHeader: Option[(String, String)]
   protected def dateHeaderRendering: DateHeaderRendering
 
+  /**
+   * Whether a `content-length` may be rendered for this message. Always true for requests, where the length simply
+   * describes the request body.
+   */
+  protected def contentLengthAllowed(r: R): Boolean = true
+
   def apply(r: R): Http2SubStream = {
     val headerPairs = initialHeaderPairs(r)
 
-    HttpMessageRendering.addContentHeaders(headerPairs, r.entity)
+    HttpMessageRendering.addContentHeaders(headerPairs, r.entity, contentLengthAllowed(r))
     HttpMessageRendering.renderHeaders(r.headers, headerPairs, peerIdHeader, log, isServer = r.isResponse,
       shouldRenderAutoHeaders = true, dateHeaderRendering)
 
@@ -114,10 +127,12 @@ private[http2] object HttpMessageRendering {
   /**
    * Mutates `headerPairs` adding headers related to content (type and length).
    */
-  def addContentHeaders(headerPairs: VectorBuilder[(String, String)], entity: HttpEntity): Unit = {
+  def addContentHeaders(headerPairs: VectorBuilder[(String, String)], entity: HttpEntity,
+      contentLengthAllowed: Boolean): Unit = {
     if (entity.contentType ne ContentTypes.NoContentType)
       headerPairs += "content-type" -> entity.contentType.toString
-    entity.contentLengthOption.foreach(headerPairs += "content-length" -> _.toString)
+    if (contentLengthAllowed)
+      entity.contentLengthOption.foreach(headerPairs += "content-length" -> _.toString)
   }
 
   def renderHeaders(
