@@ -145,8 +145,9 @@ private[http] object Http2Blueprint {
     val frameTypesForThrottle = getFrameTypesForThrottle(settings.http2Settings)
     
     val flowWithPossibleThrottle = if (frameTypesForThrottle.nonEmpty) {
-      initialFlow atop rapidResetMitigation(settings.http2Settings, frameTypesForThrottle) atopKeepLeft framing(log)
-    } else initialFlow atop framing(log)
+      initialFlow atop rapidResetMitigation(settings.http2Settings, frameTypesForThrottle) atopKeepLeft framing(log,
+        settings.http2Settings.maxFrameSize)
+    } else initialFlow atop framing(log, settings.http2Settings.maxFrameSize)
 
     flowWithPossibleThrottle atop
       errorHandling(log) atop
@@ -167,7 +168,7 @@ private[http] object Http2Blueprint {
       clientDemux(settings.http2Settings, masterHttpHeaderParser)).atop(
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames)).atop( // enable for debugging
       hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize)).atop(
-      framingClient(log)).atop(
+      framingClient(log, settings.http2Settings.maxFrameSize)).atop(
       errorHandling(log)).atop(
       idleTimeoutIfConfigured(settings.idleTimeout))
   }
@@ -207,15 +208,17 @@ private[http] object Http2Blueprint {
       },
       Flow[ByteString])
 
-  def framing(log: LoggingAdapter): BidiFlow[FrameEvent, ByteString, ByteString, FrameEvent, NotUsed] =
+  def framing(log: LoggingAdapter, maxFrameSize: Int)
+      : BidiFlow[FrameEvent, ByteString, ByteString, FrameEvent, NotUsed] =
     BidiFlow.fromFlows(
       Flow[FrameEvent].map(FrameRenderer.render),
-      Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = true, log)))
+      Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = true, log, maxFrameSize)))
 
-  def framingClient(log: LoggingAdapter): BidiFlow[FrameEvent, ByteString, ByteString, FrameEvent, NotUsed] =
+  def framingClient(log: LoggingAdapter,
+      maxFrameSize: Int): BidiFlow[FrameEvent, ByteString, ByteString, FrameEvent, NotUsed] =
     BidiFlow.fromFlows(
       Flow[FrameEvent].map(FrameRenderer.render).prepend(Source.single(Http2Protocol.ClientConnectionPreface)),
-      Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = false, log)))
+      Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = false, log, maxFrameSize)))
 
   private def rapidResetMitigation(settings: Http2ServerSettings,
       frameTypesForThrottle: Set[String]): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] = {

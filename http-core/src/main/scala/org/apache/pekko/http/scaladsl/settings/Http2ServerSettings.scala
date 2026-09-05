@@ -17,6 +17,7 @@ import org.apache.pekko
 import pekko.annotation.ApiMayChange
 import pekko.annotation.DoNotInherit
 import pekko.annotation.InternalApi
+import pekko.http.impl.engine.http2.Http2Protocol
 import pekko.http.impl.util._
 import pekko.http.javadsl
 import com.typesafe.config.Config
@@ -42,6 +43,7 @@ private[http] trait Http2CommonSettings {
   def logFrames: Boolean
   def maxConcurrentStreams: Int
   def maxHeaderListSize: Int
+  def maxFrameSize: Int
   def outgoingControlFrameBufferSize: Int
 
   def pingInterval: FiniteDuration
@@ -105,6 +107,21 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
    */
   override def withMaxHeaderListSize(newValue: Int): Http2ServerSettings = copy(maxHeaderListSize = newValue)
 
+  /**
+   * The largest frame payload this endpoint accepts, in bytes. A larger incoming frame is rejected with a
+   * FRAME_SIZE_ERROR on its frame header, before the payload is buffered. No larger SETTINGS_MAX_FRAME_SIZE is
+   * advertised, so a peer that follows the spec keeps to the 16 KiB default and the extra room is leniency for peers
+   * that do not. RFC 9113, section 4.2 constrains it to be between 16 KiB and 16 MiB - 1.
+   *
+   * @since 2.0.0
+   */
+  def maxFrameSize: Int
+
+  /**
+   * @since 2.0.0
+   */
+  override def withMaxFrameSize(newValue: Int): Http2ServerSettings = copy(maxFrameSize = newValue)
+
   def outgoingControlFrameBufferSize: Int
   override def withOutgoingControlFrameBufferSize(newValue: Int): Http2ServerSettings =
     copy(outgoingControlFrameBufferSize = newValue)
@@ -145,6 +162,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
   private[http] case class Http2ServerSettingsImpl(
       maxConcurrentStreams: Int,
       maxHeaderListSize: Int,
+      maxFrameSize: Int,
       requestEntityChunkSize: Int,
       incomingConnectionLevelBufferSize: Int,
       incomingStreamLevelBufferSize: Int,
@@ -161,6 +179,9 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       extends Http2ServerSettings {
     require(maxConcurrentStreams >= 0, "max-concurrent-streams must be >= 0")
     require(maxHeaderListSize > 0, "max-header-list-size must be > 0")
+    // RFC 9113, section 4.2: SETTINGS_MAX_FRAME_SIZE must be within these bounds
+    require(maxFrameSize >= Http2Protocol.MinFrameSize && maxFrameSize <= Http2Protocol.MaxFrameSize,
+      s"max-frame-size must be between ${Http2Protocol.MinFrameSize} and ${Http2Protocol.MaxFrameSize}")
     require(requestEntityChunkSize > 0, "request-entity-chunk-size must be > 0")
     require(incomingConnectionLevelBufferSize > 0, "incoming-connection-level-buffer-size must be > 0")
     require(incomingStreamLevelBufferSize > 0, "incoming-stream-level-buffer-size must be > 0")
@@ -179,6 +200,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
     def fromSubConfig(root: Config, c: Config): Http2ServerSettingsImpl = Http2ServerSettingsImpl(
       maxConcurrentStreams = c.getInt("max-concurrent-streams"),
       maxHeaderListSize = c.getIntBytes("max-header-list-size"),
+      maxFrameSize = c.getIntBytes("max-frame-size"),
       requestEntityChunkSize = c.getIntBytes("request-entity-chunk-size"),
       incomingConnectionLevelBufferSize = c.getIntBytes("incoming-connection-level-buffer-size"),
       incomingStreamLevelBufferSize = c.getIntBytes("incoming-stream-level-buffer-size"),
@@ -237,6 +259,21 @@ trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http
    */
   override def withMaxHeaderListSize(newValue: Int): Http2ClientSettings = copy(maxHeaderListSize = newValue)
 
+  /**
+   * The largest frame payload this endpoint accepts, in bytes. A larger incoming frame is rejected with a
+   * FRAME_SIZE_ERROR on its frame header, before the payload is buffered. No larger SETTINGS_MAX_FRAME_SIZE is
+   * advertised, so a peer that follows the spec keeps to the 16 KiB default and the extra room is leniency for peers
+   * that do not. RFC 9113, section 4.2 constrains it to be between 16 KiB and 16 MiB - 1.
+   *
+   * @since 2.0.0
+   */
+  def maxFrameSize: Int
+
+  /**
+   * @since 2.0.0
+   */
+  override def withMaxFrameSize(newValue: Int): Http2ClientSettings = copy(maxFrameSize = newValue)
+
   def outgoingControlFrameBufferSize: Int
   override def withOutgoingControlFrameBufferSize(newValue: Int): Http2ClientSettings =
     copy(outgoingControlFrameBufferSize = newValue)
@@ -277,6 +314,7 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
   private[http] case class Http2ClientSettingsImpl(
       maxConcurrentStreams: Int,
       maxHeaderListSize: Int,
+      maxFrameSize: Int,
       requestEntityChunkSize: Int,
       incomingConnectionLevelBufferSize: Int,
       incomingStreamLevelBufferSize: Int,
@@ -292,6 +330,9 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       extends Http2ClientSettings with javadsl.settings.Http2ClientSettings {
     require(maxConcurrentStreams >= 0, "max-concurrent-streams must be >= 0")
     require(maxHeaderListSize > 0, "max-header-list-size must be > 0")
+    // RFC 9113, section 4.2: SETTINGS_MAX_FRAME_SIZE must be within these bounds
+    require(maxFrameSize >= Http2Protocol.MinFrameSize && maxFrameSize <= Http2Protocol.MaxFrameSize,
+      s"max-frame-size must be between ${Http2Protocol.MinFrameSize} and ${Http2Protocol.MaxFrameSize}")
     require(requestEntityChunkSize > 0, "request-entity-chunk-size must be > 0")
     require(incomingConnectionLevelBufferSize > 0, "incoming-connection-level-buffer-size must be > 0")
     require(incomingStreamLevelBufferSize > 0, "incoming-stream-level-buffer-size must be > 0")
@@ -307,6 +348,7 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
     def fromSubConfig(root: Config, c: Config): Http2ClientSettingsImpl = Http2ClientSettingsImpl(
       maxConcurrentStreams = c.getInt("max-concurrent-streams"),
       maxHeaderListSize = c.getIntBytes("max-header-list-size"),
+      maxFrameSize = c.getIntBytes("max-frame-size"),
       requestEntityChunkSize = c.getIntBytes("request-entity-chunk-size"),
       incomingConnectionLevelBufferSize = c.getIntBytes("incoming-connection-level-buffer-size"),
       incomingStreamLevelBufferSize = c.getIntBytes("incoming-stream-level-buffer-size"),
