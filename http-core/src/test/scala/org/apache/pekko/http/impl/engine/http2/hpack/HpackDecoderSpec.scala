@@ -17,7 +17,8 @@
 
 package org.apache.pekko.http.impl.engine.http2.hpack
 
-import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, InputStream }
+import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, IOException, InputStream, SequenceInputStream }
+import scala.jdk.CollectionConverters._
 
 import scala.collection.mutable.ListBuffer
 
@@ -46,6 +47,14 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
     override def reset(): Unit = underlying.reset()
     override def skip(n: Long): Long = underlying.skip(n)
   }
+
+  /**
+   * The stream a multi-fragment `ByteString` hands out: no mark/reset, and `available()` only ever
+   * reports what is left in the current chunk rather than the whole block.
+   */
+  private def chunkedStream(bytes: Array[Byte], chunkSize: Int): InputStream =
+    new SequenceInputStream(
+      bytes.grouped(chunkSize).map(chunk => new ByteArrayInputStream(chunk): InputStream).asJavaEnumeration)
 
   private def encode(headers: (String, String)*): Array[Byte] = {
     val out = new ByteArrayOutputStream
@@ -82,6 +91,30 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
 
     "decode a header block from a stream that returns a few bytes per read" in {
       decode(new TricklingInputStream(encode(headers: _*), bytesPerRead = 7)) shouldEqual headers
+    }
+
+    "decode a header block from a stream that supports neither mark/reset nor a whole-block available()" in {
+      val stream = chunkedStream(encode(headers: _*), chunkSize = 4)
+      stream.markSupported() shouldEqual false
+      decode(stream) shouldEqual headers
+    }
+
+    "decode a header block split so that a string literal straddles a chunk boundary" in {
+      decode(chunkedStream(encode(headers: _*), chunkSize = 3)) shouldEqual headers
+    }
+
+    "decode a header block split into single-byte chunks" in {
+      decode(chunkedStream(encode(headers: _*), chunkSize = 1)) shouldEqual headers
+    }
+
+    "report a block that ends in the middle of a string literal as a decompression failure" in {
+      val full = encode(headers: _*)
+      a[IOException] should be thrownBy decode(new ByteArrayInputStream(full.dropRight(5)))
+    }
+
+    "report a block that ends in the middle of a length prefix as a decompression failure" in {
+      // a literal header field with incremental indexing, new name, whose name length never arrives
+      a[IOException] should be thrownBy decode(new ByteArrayInputStream(Array[Byte](0x40)))
     }
   }
 }
