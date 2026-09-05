@@ -26,6 +26,10 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class Http2BlueprintSpec extends AnyWordSpec with Matchers {
   "Http2Blueprint" should {
+    "match frame type alias (empty-data)" in {
+      Http2Blueprint.frameTypeAliasToFrameTypeName("empty-data") shouldEqual
+      Some(Http2Blueprint.EmptyDataFrameThrottleName)
+    }
     "match frame type alias (reset)" in {
       Http2Blueprint.frameTypeAliasToFrameTypeName("reset") shouldEqual
       Some(RstStreamFrame(0, ErrorCode.PROTOCOL_ERROR).frameTypeName)
