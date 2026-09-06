@@ -98,6 +98,17 @@ class RenderingSpec extends PekkoSpecWithMaterializer with Matchers {
 
           rendered shouldBe ""
         }
+        // NUL is not a legal field-value character and can truncate the value in a consumer that treats it as a
+        // C string, so it must not reach the wire either
+        "do not render header with NUL in the value" in {
+          val r = setup.create()
+          val rendered =
+            EventFilter.warning(pattern = "Invalid outgoing header was discarded").intercept {
+              setup.result(r ~~ RawHeader("Test", "broken\u0000value"))
+            }
+
+          rendered shouldBe ""
+        }
       }
     }
   }

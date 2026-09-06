@@ -38,7 +38,7 @@ object Dependencies {
 
   val scala213Version = "2.13.18"
   val scala3Version = "3.3.8"
-  val scala3NextVersion = "3.8.4"
+  val scala3NextVersion = "3.9.0"
   val publishedScalaVersions = Seq(scala213Version, scala3Version)
 
   val Versions = Seq(
@@ -84,7 +84,7 @@ object Dependencies {
       // For pekko-http-testkit-java (JUnit 4 support for library users) -- deprecated since 2.0.0
       val junit4 = "junit" % "junit" % junit4Version
       val specs2 = "org.specs2" %% "specs2-core" % "4.23.0"
-      val munit = "org.scalameta" %% "munit" % "1.3.5"
+      val munit = "org.scalameta" %% "munit" % "1.3.6"
 
       val scalacheck = "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
 

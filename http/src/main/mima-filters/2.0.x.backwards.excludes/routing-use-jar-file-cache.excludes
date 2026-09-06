@@ -15,35 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-name: Headers
-
-on:
-  pull_request:
-
-permissions: {}
-
-jobs:
-  check-headers:
-    name: Check headers
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Java 17
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Install sbt
-        uses: sbt/setup-sbt@c7d2d6258b4bd0d3ec5129e6b3453199d3c79729 # v1.5.8
-
-      - name: Cache Coursier cache
-        uses: coursier/cache-action@95e5b1029b6b86e7bac033ee44a0697d8a527d2d # v8.1.1
-
-      - name: Enable jvm-opts
-        run: cp .jvmopts-ci .jvmopts
-
-      - name: Check headers
-        run: sbt +headerCheckAll
+# new use-jar-file-cache routing setting
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.RoutingSettings.getUseJarFileCache")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.RoutingSettings.useJarFileCache")

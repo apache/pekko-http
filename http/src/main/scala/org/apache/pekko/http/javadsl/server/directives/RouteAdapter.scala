@@ -45,8 +45,8 @@ final class RouteAdapter(val delegate: pekko.http.scaladsl.server.Route) extends
   }
 
   private def scalaFlow(system: ActorSystem, materializer: Materializer): Flow[HttpRequest, HttpResponse, NotUsed] = {
-    implicit val s: ActorSystem = system
-    Flow[HttpRequest].map(_.asScala).via(delegate).map(_.asJava)
+    val scalaFunction = scaladsl.server.Route.toFunction(delegate, materializer)(system)
+    Flow[HttpRequest].mapAsync(1)(request => scalaFunction(request.asScala)).map(_.asJava)
   }
 
   override def orElse(alternative: Route): Route =

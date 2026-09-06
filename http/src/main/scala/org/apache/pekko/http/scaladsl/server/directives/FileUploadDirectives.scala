@@ -14,7 +14,7 @@
 package org.apache.pekko.http.scaladsl.server.directives
 
 import java.io.File
-import java.nio.file.Files
+import java.nio.file.{ Files, Path }
 
 import scala.collection.immutable
 import scala.concurrent.{ Future, Promise }
@@ -22,7 +22,8 @@ import scala.util.{ Failure, Success }
 
 import org.apache.pekko
 import pekko.Done
-import pekko.annotation.ApiMayChange
+import pekko.actor.{ CoordinatedShutdown, ExtendedActorSystem, Extension, ExtensionId }
+import pekko.annotation.{ ApiMayChange, InternalApi }
 import pekko.http.impl.util.StreamUtils
 import pekko.http.javadsl
 import pekko.http.scaladsl.model.{ ContentType, Multipart }
@@ -165,7 +166,7 @@ trait FileUploadDirectives {
    * Collects each body part that is a multipart file as a tuple containing metadata and a `Source`
    * for streaming the file contents somewhere. If there is no such field the request will be rejected.
    * Files are buffered into temporary files on disk so in-memory buffers don't overflow. The temporary
-   * files are cleaned up once materialized, or on exit if the stream is not consumed.
+   * files are cleaned up once materialized, or when the actor system terminates if the stream is not consumed.
    *
    * @group fileupload
    */
@@ -174,11 +175,8 @@ trait FileUploadDirectives {
     extractRequestContext.flatMap { ctx =>
       implicit val ec = ctx.executionContext
 
-      def tempDest(fileInfo: FileInfo): File = {
-        val dest = Files.createTempFile("pekko-http-upload", ".tmp").toFile
-        dest.deleteOnExit()
-        dest
-      }
+      val uploadTempFiles = UploadTempFiles(ctx.materializer.system)
+      def tempDest(fileInfo: FileInfo): File = uploadTempFiles.create()
 
       storeUploadedFiles(fieldName, tempDest).map { files =>
         files.map {
@@ -195,6 +193,52 @@ trait FileUploadDirectives {
 }
 
 object FileUploadDirectives extends FileUploadDirectives
+
+/**
+ * INTERNAL API
+ *
+ * Temporary files for uploads that the application may never consume.
+ *
+ * The files are collected in a directory of their own, one per actor system, that a `CoordinatedShutdown` task
+ * removes in the `actor-system-terminate` phase — after in-flight requests have been drained, matching the ordering
+ * that `File.deleteOnExit` provided (its hook runs only after all application shutdown hooks have finished; a raw
+ * `Runtime.addShutdownHook` would run concurrently with the drain and could delete files that requests still use).
+ * Registering every file with `deleteOnExit` instead would keep its path in a JVM-wide set for the lifetime of the
+ * process, also long after the file itself has been deleted, so that a long-running server accepting uploads would
+ * slowly grow its heap.
+ */
+@InternalApi
+private[directives] final class UploadTempFiles(system: ExtendedActorSystem) extends Extension {
+  private val directory: Path = {
+    val dir = Files.createTempDirectory("pekko-http-uploads") // owner-only permissions where the file system has them
+    CoordinatedShutdown(system).addTask(CoordinatedShutdown.PhaseActorSystemTerminate, "pekko-http-upload-cleanup") {
+      () =>
+        deleteRecursively(dir.toFile)
+        Future.successful(Done)
+    }
+    dir
+  }
+
+  def create(): File = {
+    // the directory is empty whenever all uploads have been consumed, and an empty directory in the system temp
+    // location may be removed by a temp-file reaper while the server runs, so recreate it rather than fail uploads
+    Files.createDirectories(directory)
+    Files.createTempFile(directory, "pekko-http-upload", ".tmp").toFile
+  }
+
+  private def deleteRecursively(file: File): Unit = {
+    val children = file.listFiles()
+    if (children ne null) children.foreach(deleteRecursively)
+    file.delete()
+    ()
+  }
+}
+
+/** INTERNAL API */
+@InternalApi
+private[directives] object UploadTempFiles extends ExtensionId[UploadTempFiles] {
+  def createExtension(system: ExtendedActorSystem): UploadTempFiles = new UploadTempFiles(system)
+}
 
 /**
  * Additional metadata about the file being uploaded/that was uploaded using the [[FileUploadDirectives]]

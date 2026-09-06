@@ -204,11 +204,21 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
             // only allow one 'chunked'
             failMessageStart("Multiple Transfer-Encoding entries not supported")
           }
+
+        // `transfer-encoding` is always modelled (it is in `alwaysParsedHeaders`), so it only reaches us as a
+        // RawHeader when its value failed to parse and was degraded to one. Framing must not silently fall back to
+        // Content-Length then: an upstream that does understand the value would frame the message differently, which
+        // is a request smuggling discrepancy.
+        case h: RawHeader if h.lowercaseName == "transfer-encoding" =>
+          failMessageStart("Illegal `Transfer-Encoding` header value")
         case h: Connection => ch match {
             case None =>
               parseHeaderLines(input, lineEnd, headers += h, headerCount + 1, Some(h), clh, cth, isChunked, e100c, hh)
-            case Some(x) => parseHeaderLines(input, lineEnd, headers, headerCount, Some(x.append(h.tokens)), clh, cth,
-                isChunked, e100c, hh)
+            // count each merged Connection header towards the limit: the tokens are accumulated into `x` (an O(n) copy
+            // per header), so without incrementing headerCount the `headerCount < maxHeaderCount` guard never trips and
+            // a flood of Connection headers drives unbounded quadratic work from a single message
+            case Some(x) => parseHeaderLines(input, lineEnd, headers, headerCount + 1, Some(x.append(h.tokens)), clh,
+                cth, isChunked, e100c, hh)
           }
         case h: Host =>
           if (!hh || isResponseParser)
@@ -281,16 +291,19 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
         if (chunkCount >= settings.maxChunkCount)
           failEntityStream(
             s"HTTP chunk count exceeds the configured limit of ${settings.maxChunkCount} chunks")
-        val chunkBodyEnd = cursor + chunkSize
-        def result(terminatorLen: Int) = {
-          emit(EntityChunk(HttpEntity.Chunk(input.slice(cursor, chunkBodyEnd).compact, extension)))
-          Trampoline(_ =>
-            parseChunk(input, chunkBodyEnd + terminatorLen, isLastMessage, totalBytesRead + chunkSize, chunkCount + 1))
-        }
-        byteAt(input, chunkBodyEnd) match {
-          case CR_BYTE if byteAt(input, chunkBodyEnd + 1) == LF_BYTE => result(2)
-          case LF_BYTE                                               => result(1)
-          case x                                                     => failEntityStream("Illegal chunk termination")
+        else {
+          val chunkBodyEnd = cursor + chunkSize
+          def result(terminatorLen: Int) = {
+            emit(EntityChunk(HttpEntity.Chunk(input.slice(cursor, chunkBodyEnd).compact, extension)))
+            Trampoline(_ =>
+              parseChunk(input, chunkBodyEnd + terminatorLen, isLastMessage, totalBytesRead + chunkSize,
+                chunkCount + 1))
+          }
+          byteAt(input, chunkBodyEnd) match {
+            case CR_BYTE if byteAt(input, chunkBodyEnd + 1) == LF_BYTE => result(2)
+            case LF_BYTE                                               => result(1)
+            case x                                                     => failEntityStream("Illegal chunk termination")
+          }
         }
       } else parseTrailer(extension, cursor)
 
