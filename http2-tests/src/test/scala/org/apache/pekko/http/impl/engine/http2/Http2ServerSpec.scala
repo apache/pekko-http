@@ -319,6 +319,36 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         trailingResponseHeaders.size should be(1)
         trailingResponseHeaders.head should be(("Status", "grpc-status 10"))
       })
+      "drop a response header whose value contains CRLF".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          val streamId = 1
+          network.sendHEADERS(streamId, endStream = true, network.headersForRequest(Get("/")))
+          user.expectRequest()
+          user.emitResponse(streamId,
+            HttpResponse(StatusCodes.OK, headers = RawHeader("x-trace", "ok\r\nset-cookie: injected=1") :: Nil))
+
+          val responseHeaders = network.expectDecodedResponseHEADERSPairs(streamId)
+          responseHeaders.map(_._1) should not contain "x-trace"
+          responseHeaders.exists { case (_, v) => v.contains("injected") } should be(false)
+        })
+      "drop a response trailer header whose value contains CRLF".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          val streamId = 1
+          network.sendHEADERS(streamId, endStream = true, network.headersForRequest(Get("/")))
+          user.expectRequest()
+          val response =
+            HttpResponse(StatusCodes.OK,
+              entity = HttpEntity.Strict(ContentTypes.`application/octet-stream`, ByteString("Hello")))
+              .addAttribute(AttributeKeys.trailer,
+                Trailer(Vector(RawHeader("x-evil", "ok\r\nset-cookie: injected=1"), RawHeader("x-good", "fine"))))
+          user.emitResponse(streamId, response)
+
+          network.expectHeaderBlock(streamId, endStream = false)
+          network.expectDATA(streamId, endStream = false, ByteString("Hello"))
+          val trailingResponseHeaders = network.expectDecodedResponseHEADERSPairs(streamId)
+          trailingResponseHeaders should contain(("x-good", "fine"))
+          trailingResponseHeaders.map(_._1) should not contain "x-evil"
+        })
       "consider stream as closed after sending out strict response > WINDOW_SIZE".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           override def settings: ServerSettings =
