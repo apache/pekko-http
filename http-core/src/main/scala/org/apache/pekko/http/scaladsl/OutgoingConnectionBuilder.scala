@@ -78,7 +78,7 @@ trait OutgoingConnectionBuilder {
   def managedPersistentHttp2(): Flow[HttpRequest, HttpResponse, NotUsed]
 
   /**
-   * Create a flow that when materialized creates a single HTTP/2 with 'prior knowledge' plaintext connection with a default port 80
+   * Create a flow that when materialized creates a single HTTP/2 with 'Prior Knowledge' plaintext connection with a default port 80
    *
    * Note that the responses are not guaranteed to arrive in the same order as the requests go out (In the case of a HTTP/2 connection)
    * so therefore requests needs to have a [[pekko.http.scaladsl.model.RequestResponseAssociation]]
@@ -87,7 +87,7 @@ trait OutgoingConnectionBuilder {
   def http2WithPriorKnowledge(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]]
 
   /**
-   * Create a flow that when materialized creates a single HTTP/2 with 'prior knowledge' plaintext connection with a default port 80
+   * Create a flow that when materialized creates a single HTTP/2 with 'Prior Knowledge' plaintext connection with a default port 80
    *
    * The connection will be re-established as needed.
    *

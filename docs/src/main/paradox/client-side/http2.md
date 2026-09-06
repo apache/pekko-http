@@ -17,7 +17,7 @@ unexpected when coming from a background with non-"streaming first" HTTP Clients
 There are three mechanisms for a client to establish an HTTP/2 connection. Apache Pekko HTTP supports:
 
  - HTTP/2 over TLS 
- - HTTP/2 over a plain TCP connection ("h2c with prior knowledge")
+ - HTTP/2 over a plain TCP connection ("h2c with Prior Knowledge")
 
 Apache Pekko HTTP doesn't support:
 
@@ -37,7 +37,7 @@ HTTP/2 over TLS needs [Application-Layer Protocol Negotiation (ALPN)](https://en
 to negotiate whether both client and server support HTTP/2.
 
 Apache Pekko HTTP does not currently support protocol negotiation to fall back to HTTP/1.1 for this API. When the server does not support HTTP/2, the stream will fail.
-### h2c with prior knowledge
+### h2c with Prior Knowledge
 
 The other option is to connect and start communicating in HTTP/2 immediately. You must know beforehand the target server
 supports HTTP/2 over a plain TCP connection. For this reason this approach is known as h2c with

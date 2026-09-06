@@ -100,7 +100,7 @@ private[pekko] object OutgoingConnectionBuilderImpl {
         clientConnectionSettings.http2Settings)
 
     override def http2WithPriorKnowledge(): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
-      // http/2 prior knowledge plaintext
+      // http/2 Prior Knowledge plaintext
       Http2(system.classicSystem).outgoingConnectionPriorKnowledge(host, port.getOrElse(80), clientConnectionSettings,
         log)
     }

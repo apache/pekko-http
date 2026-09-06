@@ -24,7 +24,7 @@ Java
 
 In addition to the host name and port the builder @apidoc[OutgoingConnectionBuilder] returned by @scala[`Http().connectionTo(...)`]@java[`Http.get(system).connectionTo(...)`]
 method also allows you to specify additional properties and as the final step deciding which protocol to use 
-(HTTP/1, HTTP/1 over TLS, HTTP/2 over TLS or HTTP/2 with prior knowledge over a plaintext connection). For details on 
+(HTTP/1, HTTP/1 over TLS, HTTP/2 over TLS or HTTP/2 with Prior Knowledge over a plaintext connection). For details on 
 using HTTP/2 see @ref[Client-Side HTTP/2](./http2.md).
 
 No connection is attempted until the returned flow is actually materialized! If the flow is materialized

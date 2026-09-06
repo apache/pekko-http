@@ -36,7 +36,7 @@ HTTP/2 without TLS should only be used on a trusted network or when TLS is termi
 clients use HTTP/2 over TLS.
 
 Apache Pekko HTTP supports starting a cleartext HTTP/2 connection with
-[prior knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3). For compatibility with older clients, it
+[Prior Knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3). For compatibility with older clients, it
 also supports the HTTP/1.1 Upgrade mechanism from the obsolete RFC 7540 specification.
 
 Both approaches are supported transparently on the same port and are automatically enabled when HTTP/2 is enabled:
@@ -53,7 +53,7 @@ Java
 
 The HTTP/1.1 Upgrade mechanism and the `h2c` upgrade token are obsolete in
 [RFC 9113](https://www.rfc-editor.org/rfc/rfc9113.html#section-11.2). Use this mode only when compatibility with an
-older client requires it. New cleartext HTTP/2 clients should use prior knowledge.
+older client requires it. New cleartext HTTP/2 clients should use Prior Knowledge.
 
 @@@
 
@@ -66,13 +66,13 @@ request has been completely sent. This means if your first request may be
 large, it might be worth it to start with an empty OPTIONS request to switch
 to HTTP/2 before sending your first 'real' request, at the cost of a roundtrip.
 
-#### Cleartext HTTP/2 with prior knowledge
+#### Cleartext HTTP/2 with Prior Knowledge
 
 The other option is to connect and start communicating in HTTP/2 immediately.
 The downside of this approach is the client must know beforehand that the
 server supports HTTP/2.
 For this reason the approach is known as HTTP/2 with
-[prior knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3).
+[Prior Knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3).
 
 ## Trailing headers
 
