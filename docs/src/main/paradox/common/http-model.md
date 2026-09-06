@@ -103,6 +103,16 @@ Scala
 Java
 :   @@snip [ModelDocTest.java](/docs/src/test/java/docs/http/javadsl/ModelDocTest.java) { #synthetic-header-s3 }
 
+The `Raw-Request-URI` header is honoured by both the HTTP/1.1 and the HTTP/2 client; over HTTP/2 its value is sent as
+the `:path` pseudo-header. It is consumed by the request engine and never rendered as a header of its own, and its
+value is used exactly as given — it is the caller's responsibility to supply a valid request target.
+
+This is the supported way to send a request target that @apidoc[Uri] cannot reproduce on its own. `Uri` percent-decodes
+path segments when parsing and re-encodes them with a keep-set that leaves sub-delims raw, so an encoded *pchar* does
+not survive the round trip — `%2B` is rendered back as `+`, for instance. Callers that must reproduce the target
+byte-for-byte should pass it through this header. AWS SigV4 is a typical case: the signature covers the encoded path,
+so an S3 object key containing `+` or `=` must reach the wire exactly as it was signed.
+
 ## HttpResponse
 
 An @apidoc[HttpResponse] consists of
