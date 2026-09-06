@@ -155,15 +155,22 @@ private[http] final class BodyPartParser(
         }
 
       /**
-       * Starts the headers of a new body part, bounding how many of them one entity may contain. Each part costs a
+       * Registers the start of a new body part, bounding how many of them one entity may contain. Each part costs a
        * set of parsed headers and an entity of its own, so a body packed with minimal parts amplifies the work a
-       * request of a given size causes beyond what `max-content-length` bounds.
+       * request of a given size causes beyond what `max-content-length` bounds. Returns false once the limit is
+       * exhausted, in which case the caller must fail the entity via `failMaxPartCount`.
        */
+      def startPart(): Boolean = {
+        val withinLimit = partCount < maxPartCount
+        if (withinLimit) partCount += 1
+        withinLimit
+      }
+
+      def failMaxPartCount(): StateResult =
+        fail(s"multipart entity contains more than the configured limit of $maxPartCount parts")
+
       def parsePartHeaderLines(input: ByteString, lineStart: Int): StateResult =
-        if (partCount < maxPartCount) {
-          partCount += 1
-          parseHeaderLines(input, lineStart)
-        } else fail(s"multipart entity contains more than the configured limit of $maxPartCount parts")
+        if (startPart()) parseHeaderLines(input, lineStart) else failMaxPartCount()
 
       @tailrec def parseHeaderLines(input: ByteString, lineStart: Int,
           headers: ListBuffer[HttpHeader] = ListBuffer[HttpHeader](),
@@ -190,9 +197,14 @@ private[http] final class BodyPartParser(
           case BoundaryHeader =>
             emit(BodyPartStart(headers.toList, _ => HttpEntity.empty(contentType)))
             val ix = lineStart + eolConfiguration.boundaryLength
-            if (eolConfiguration.isEndOfLine(input, ix))
-              parseHeaderLines(input, ix + eolConfiguration.eolLength, headers, headerCount, None)
-            else if (doubleDash(input, ix)) setShouldTerminate()
+            if (eolConfiguration.isEndOfLine(input, ix)) {
+              // an empty part; the boundary starts another one, so it counts towards the limit as well. We must not
+              // route this through `parsePartHeaderLines`: the self-recursive call below is what keeps this method
+              // tail-recursive, and a mutual recursion here would risk the stack overflow the trampoline in
+              // `parseEntity` guards against.
+              if (startPart()) parseHeaderLines(input, ix + eolConfiguration.eolLength, headers, headerCount, None)
+              else failMaxPartCount()
+            } else if (doubleDash(input, ix)) setShouldTerminate()
             else fail("Illegal multipart boundary in message content")
 
           case EmptyHeader => parseEntity(headers.toList, contentType)(input, lineEnd)

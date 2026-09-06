@@ -268,6 +268,16 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
           1.second.dilated).getMessage shouldEqual
         "multipart entity contains more than the configured limit of 2 parts"
       }
+      "more empty parts than the configured limit" in {
+        implicit val parserSettings: ParserSettings = ParserSettings(system).withMaxPartCount(2)
+        val body = ("--12345" + lineFeed) * 5 + "--12345--"
+
+        Await.result(
+          Unmarshal(HttpEntity(`multipart/mixed`.withBoundary("12345"), ByteString(body)))
+            .to[Multipart.General].failed,
+          1.second.dilated).getMessage shouldEqual
+        "multipart entity contains more than the configured limit of 2 parts"
+      }
       "a stray boundary" in {
         Await.result(
           Unmarshal(HttpEntity(
