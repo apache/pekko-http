@@ -63,6 +63,45 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
                        |--XYZABC--""".stripMarginWithNewline(lineFeed)))).to[Multipart.General] should haveParts(
           Multipart.General.BodyPart.Strict(HttpEntity.empty(ContentTypes.`text/xml(UTF-8)`), List(Age(12))))
       }
+      "consecutive parts without header separation, each keeping its own headers" in {
+        Unmarshal(HttpEntity(
+          `multipart/mixed`.withBoundary("XYZABC"),
+          ByteString("""--XYZABC
+                       |Age: 12
+                       |--XYZABC
+                       |Age: 13
+                       |--XYZABC
+                       |--XYZABC--""".stripMarginWithNewline(lineFeed)))).to[Multipart.General] should haveParts(
+          Multipart.General.BodyPart.Strict(HttpEntity.empty(ContentTypes.`text/plain(UTF-8)`), List(Age(12))),
+          Multipart.General.BodyPart.Strict(HttpEntity.empty(ContentTypes.`text/plain(UTF-8)`), List(Age(13))),
+          Multipart.General.BodyPart.Strict(HttpEntity.empty(ContentTypes.`text/plain(UTF-8)`)))
+      }
+      "a part without header separation not carrying its Content-Type into the next part" in {
+        Unmarshal(HttpEntity(
+          `multipart/mixed`.withBoundary("XYZABC"),
+          ByteString("""--XYZABC
+                       |Content-type: text/xml; charset=UTF-8
+                       |--XYZABC
+                       |--XYZABC--""".stripMarginWithNewline(lineFeed)))).to[Multipart.General] should haveParts(
+          Multipart.General.BodyPart.Strict(HttpEntity.empty(ContentTypes.`text/xml(UTF-8)`)),
+          Multipart.General.BodyPart.Strict(HttpEntity.empty(ContentTypes.`text/plain(UTF-8)`)))
+      }
+      "parts without header separation counting headers per part, not across parts" in {
+        implicit val parserSettings: ParserSettings = ParserSettings(system).withMaxHeaderCount(2)
+        Unmarshal(HttpEntity(
+          `multipart/mixed`.withBoundary("XYZABC"),
+          ByteString("""--XYZABC
+                       |Age: 12
+                       |X-Foo: bar
+                       |--XYZABC
+                       |Age: 13
+                       |X-Foo: baz
+                       |--XYZABC--""".stripMarginWithNewline(lineFeed)))).to[Multipart.General] should haveParts(
+          Multipart.General.BodyPart.Strict(HttpEntity.empty(ContentTypes.`text/plain(UTF-8)`),
+            List(Age(12), RawHeader("X-Foo", "bar"))),
+          Multipart.General.BodyPart.Strict(HttpEntity.empty(ContentTypes.`text/plain(UTF-8)`),
+            List(Age(13), RawHeader("X-Foo", "baz"))))
+      }
       "an implicitly typed part (without headers) (Strict)" in {
         Unmarshal(HttpEntity(
           `multipart/mixed`.withBoundary("XYZABC"),

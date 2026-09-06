@@ -198,11 +198,12 @@ private[http] final class BodyPartParser(
             emit(BodyPartStart(headers.toList, _ => HttpEntity.empty(contentType)))
             val ix = lineStart + eolConfiguration.boundaryLength
             if (eolConfiguration.isEndOfLine(input, ix)) {
-              // an empty part; the boundary starts another one, so it counts towards the limit as well. We must not
-              // route this through `parsePartHeaderLines`: the self-recursive call below is what keeps this method
-              // tail-recursive, and a mutual recursion here would risk the stack overflow the trampoline in
-              // `parseEntity` guards against.
-              if (startPart()) parseHeaderLines(input, ix + eolConfiguration.eolLength, headers, headerCount, None)
+              // an empty part; the boundary starts another one, so it counts towards the limit as well and its
+              // header state starts empty. We must not route this through `parsePartHeaderLines`: the
+              // self-recursive call below is what keeps this method tail-recursive, and a mutual recursion here
+              // would risk the stack overflow the trampoline in `parseEntity` guards against.
+              if (startPart())
+                parseHeaderLines(input, ix + eolConfiguration.eolLength, ListBuffer[HttpHeader](), 0, None)
               else failMaxPartCount()
             } else if (doubleDash(input, ix)) setShouldTerminate()
             else fail("Illegal multipart boundary in message content")
