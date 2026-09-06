@@ -262,6 +262,13 @@ private[http] object Rendering {
   val floatFormat = new DecimalFormat("0.0##", DecimalFormatSymbols.getInstance(Locale.ROOT))
   val `\"` = CharPredicate('\\', '"')
 
+  /**
+   * Characters that must never reach the wire inside a rendered header: CR and LF would split the message, and NUL
+   * is not a legal field-value character and can truncate the value in a consumer that treats it as a C string.
+   * Takes an `Int` so that both the `Char` and the `Byte` based renderings can pass their element in directly.
+   */
+  def isIllegalHeaderChar(ch: Int): Boolean = ch == '\r' || ch == '\n' || ch == 0
+
   // US-ASCII printable chars except for '"' and escape chars '\' and (for faulty clients) '%'
   // https://tools.ietf.org/html/rfc6266#appendix-D
   val contentDispositionFilenameSafeChars = CharPredicate.Printable -- "%\"\\"
@@ -299,7 +306,7 @@ private[http] class StringRendering extends Rendering {
     @tailrec def rec(mark: Int): Boolean =
       if (mark < sb.length()) {
         val ch = sb.charAt(mark)
-        if (ch == '\r' || ch == '\n') {
+        if (Rendering.isIllegalHeaderChar(ch)) {
           sb.delete(origMark, sb.length())
           false
         } else rec(mark + 1)
@@ -369,7 +376,7 @@ private[http] class ByteArrayRendering(sizeHint: Int, logDiscardedHeader: String
 
     @tailrec def rec(mark: Int): Boolean =
       if (mark < size) {
-        if (array(mark) == '\r' || array(mark) == '\n') {
+        if (Rendering.isIllegalHeaderChar(array(mark))) {
           logDiscardedHeader("Invalid outgoing header was discarded. " + LogByteStringTools.printByteString(
             ByteString.fromArray(array, origMark, size - origMark)))
           size = origMark
@@ -416,7 +423,7 @@ private[http] class ByteStringRendering(sizeHint: Int, logDiscardedHeader: Strin
     @tailrec def rec(mark: Int): Boolean =
       if (mark < builder.length) {
         val ch = contents(mark)
-        if (ch == '\r' || ch == '\n') {
+        if (Rendering.isIllegalHeaderChar(ch)) {
           logDiscardedHeader(
             "Invalid outgoing header was discarded. " + LogByteStringTools.printByteString(contents.drop(origMark)))
           builder.clear()
@@ -491,7 +498,7 @@ private[http] class CustomCharsetByteStringRendering(nioCharset: Charset, sizeHi
     @tailrec def rec(mark: Int): Boolean =
       if (mark < builder.length) {
         val ch = contents(mark)
-        if (ch == '\r' || ch == '\n') {
+        if (Rendering.isIllegalHeaderChar(ch)) {
           builder.clear()
           builder.append(contents.take(origMark))
           false
