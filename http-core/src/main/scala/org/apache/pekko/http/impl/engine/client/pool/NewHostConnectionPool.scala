@@ -226,6 +226,9 @@ private[client] object NewHostConnectionPool {
           def isIdle: Boolean = state.isIdle
           def isConnected: Boolean = state.isConnected
           def shutdown(): Unit = {
+            // the state timeout is scheduled on the materializer, so it outlives this stage unless it is cancelled here
+            cancelCurrentTimeout()
+
             // if the connection is idle, we just complete it regularly, otherwise, we forcibly tear it down
             // with an error (which will be logged in OutgoingConnectionBlueprint, see `mapError` there).
             val reason =
