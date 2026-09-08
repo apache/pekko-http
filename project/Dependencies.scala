@@ -54,7 +54,7 @@ object Dependencies {
   }
 
   object Compile {
-    val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.4.0"
+    val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.5.0"
 
     // For pekko-http spray-json support
     val sprayJson = "io.spray" %% "spray-json" % "1.3.6"
