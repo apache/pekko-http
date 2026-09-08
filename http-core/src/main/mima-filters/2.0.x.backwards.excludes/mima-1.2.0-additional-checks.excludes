@@ -1,0 +1,114 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# MiMa 1.2.0 checks members that 1.1.6 skipped: static forwarders, synthetic
+# case-class members (copy, copy$default$N, apply, unapply, _N accessors),
+# trait-field accessors and deprecated members. Every member below belongs to internal API - the
+# org.apache.pekko.http.impl packages, or the @InternalApi @DoNotInherit
+# private[http] HTTP/2 settings traits and their Impl case classes.
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.http2.BufferedOutlet.onDownstreamFinish")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.http2.hpack.HeaderDecompression.this")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.parsing.HttpHeaderParser.toLowerCase")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.parsing.HttpMessageParser.parseChunk")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.parsing.HttpResponseParser.parseChunk")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.ws.WebSocket.stack")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.apply")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.this")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.apply")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$23")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.previewServerSettings")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.remoteAddressHeader")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.this")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.websocketRandomFactory")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.WebSocketSettingsImpl.apply")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.WebSocketSettingsImpl.copy")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.settings.WebSocketSettingsImpl.this")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings#Http2ClientSettingsImpl.apply")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings#Http2ClientSettingsImpl.copy")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings#Http2ClientSettingsImpl.this")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings#Http2ServerSettingsImpl.apply")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings#Http2ServerSettingsImpl.copy")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings#Http2ServerSettingsImpl.this")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.engine.http2.Http2Multiplexer.updateConnectionLevelWindow")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.engine.ws.WebSocket.stack$default$3")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._12")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._13")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._14")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._15")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._16")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._17")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._18")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._19")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._20")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._21")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._24")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._26")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$12")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$13")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$14")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$15")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$16")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$17")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$18")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$19")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$20")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$21")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$24")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$26")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$10")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$11")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$12")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$13")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$14")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$15")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$16")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$17")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$18")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$19")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$2")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$20")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$21")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$22")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$3")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$5")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ServerSettingsImpl.copy$default$9")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings#Http2ClientSettingsImpl.copy$default$10")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings#Http2ClientSettingsImpl.copy$default$13")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings#Http2ClientSettingsImpl.copy$default$6")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings#Http2ClientSettingsImpl.copy$default$7")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings#Http2ClientSettingsImpl.copy$default$9")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings#Http2ServerSettingsImpl.copy$default$10")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings#Http2ServerSettingsImpl.copy$default$7")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings#Http2ServerSettingsImpl.copy$default$8")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._25")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$25")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.impl.settings.WebSocketSettingsImpl.unapply")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings#Http2ClientSettingsImpl.unapply")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings#Http2ServerSettingsImpl.unapply")
+ProblemFilters.exclude[MissingTypesProblem]("org.apache.pekko.http.impl.engine.ws.UpgradeToWebSocketLowLevel")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.engine.http2.Http2Multiplexer.updateConnectionLevelWindow")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.engine.http2.Http2StreamHandling.org$apache$pekko$http$impl$engine$http2$Http2StreamHandling$$headRequestStreamIds")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.engine.http2.Http2StreamHandling.org$apache$pekko$http$impl$engine$http2$Http2StreamHandling$_setter_$org$apache$pekko$http$impl$engine$http2$Http2StreamHandling$$headRequestStreamIds_=")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.model.parser.AcceptHeader.org$apache$pekko$http$impl$model$parser$AcceptHeader$$acceptQueryMediaRangeChar")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.model.parser.AcceptHeader.org$apache$pekko$http$impl$model$parser$AcceptHeader$$sfStringChar")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.model.parser.AcceptHeader.org$apache$pekko$http$impl$model$parser$AcceptHeader$$sfStringEscapedChar")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.model.parser.AcceptHeader.org$apache$pekko$http$impl$model$parser$AcceptHeader$_setter_$org$apache$pekko$http$impl$model$parser$AcceptHeader$$acceptQueryMediaRangeChar_=")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.model.parser.AcceptHeader.org$apache$pekko$http$impl$model$parser$AcceptHeader$_setter_$org$apache$pekko$http$impl$model$parser$AcceptHeader$$sfStringChar_=")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.model.parser.AcceptHeader.org$apache$pekko$http$impl$model$parser$AcceptHeader$_setter_$org$apache$pekko$http$impl$model$parser$AcceptHeader$$sfStringEscapedChar_=")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2CommonSettings.maxHeaderListSize")
