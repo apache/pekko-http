@@ -105,7 +105,7 @@ Negative claims, rarely written down and therefore verified against the source r
 
 ## §5a Configuration variants that change the security envelope
 
-Pekko HTTP's resistance to malformed and abusive input is almost entirely a function of `pekko.http.server.parsing.*`. These are the **documented, shipped** limits *(all documented — `http-core/src/main/resources/reference.conf`)*:
+Pekko HTTP's resistance to malformed and abusive input is almost entirely a function of `pekko.http.server.parsing.*`, with two entries under `pekko.http.routing.*` bounding what the parsing limits cannot see — the size of an entity *after* it has been decompressed. These are the **documented, shipped** limits *(all documented — `http-core/src/main/resources/reference.conf`, and `http/src/main/resources/reference.conf` for the two `routing` entries)*:
 
 | Setting | Default | What it bounds |
 | --- | --- | --- |
@@ -134,6 +134,8 @@ Pekko HTTP's resistance to malformed and abusive input is almost entirely a func
 | `server-header` | `pekko-http/${version}` | Advertises product and version |
 | `remote-address-attribute` | `off` | Exposes socket peer address to routes |
 | `transparent-head-requests` | `off` | HEAD handled as GET |
+| `routing.decode-max-bytes-per-chunk` | `1m` | Single `ByteString` a decoding directive emits |
+| `routing.decode-max-size` | `8m` | Entity size **after** decoding — see §9 |
 
 **These limits are the model's quantitative spine.** A report that a request *within* every documented limit causes disproportionate resource use is `VALID`; one that simply exceeds a limit is P1 working, and one that needs a limit raised is `OUT-OF-MODEL: non-default-build` (§14 Q1).
 
@@ -241,7 +243,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 
 - **Request smuggling / desync** between a fronting proxy and Pekko HTTP — inherently a two-party property; strict parsing (P4) helps but cannot settle it alone.
 - **Slow-loris and connection exhaustion** — `idle-timeout` and `max-connections` (P5) bound what one connection holds and how many are accepted, but exhausting those bounds by volume is disclaimed (§14 Q1). A single connection that evades `idle-timeout` while holding resources is the in-scope version.
-- **Decompression bombs** in request bodies, where the application enables decoding.
+- **Decompression bombs** are *not* wholly left to the caller. Where the application decodes through the routing DSL, `decodeRequest` / `decodeRequestWith` bound the result on both axes: the decoder's per-chunk output is set to `decode-max-bytes-per-chunk` (`1m`) and the decoded stream is wrapped in `withSizeLimit(decode-max-size)` (`8m`), so a small gzip body that expands past the limit fails the stream instead of filling the heap (`CodingDirectives.scala:93-102`). Every `decodeRequest*` overload funnels through that one directive, so the bound is not something the caller can forget to apply. What is left to the caller is decoding done *outside* those directives — calling `Coders.Gzip.decodeMessage` on a request, or decoding a response on the client side, gets no limit — and the choice to raise `decode-max-size`, which is read with `getPossiblyInfiniteBytes` and so can be set to infinite (`RoutingSettingsImpl.scala:44`).
 - **SSRF** via the client API, where the application takes a URL from a request.
 - **Path traversal** in file-serving directives is *not* left to the caller — `safeDirectoryChildPath` claims containment, and a genuine escape from the configured root is `VALID` per §5b.4. Review of this model found exactly such a defect: the containment check compared canonical paths as **strings**, so a symbolic link resolving into a sibling directory whose name shares the served root as a string prefix (`/var/www` vs `/var/www-private`) escaped it — fixed by [#1218](https://github.com/apache/pekko-http/pull/1218), which compares path elements (§14 Q3). One platform limit is documented at the function: containment rests on `File.getCanonicalPath`, which on Windows does not resolve NTFS symbolic links or junctions, so the link-escape class stays open there. What remains the caller's is the surrounding choice: which root is served, and whether the tree under it contains symlinks at all — a choice that carries the containment on Windows.
 - **XXE** in XML marshallers — a property of the underlying parser.
