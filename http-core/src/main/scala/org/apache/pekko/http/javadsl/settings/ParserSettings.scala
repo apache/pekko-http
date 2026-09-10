@@ -40,6 +40,13 @@ abstract class ParserSettings private[pekko] () extends BodyPartParser.Settings 
   def getMaxHeaderNameLength: Int
   def getMaxHeaderValueLength: Int
   def getMaxHeaderCount: Int
+
+  /**
+   * The maximum number of body parts a multipart entity may consist of.
+   *
+   * @since 2.0.0
+   */
+  def getMaxPartCount: Int
   def getMaxContentLength: Long
   def getMaxToStrictBytes: Long
   def getMaxChunkExtLength: Int
@@ -76,6 +83,11 @@ abstract class ParserSettings private[pekko] () extends BodyPartParser.Settings 
   def withMaxChunkExtLength(newValue: Int): ParserSettings = self.copy(maxChunkExtLength = newValue)
   def withMaxChunkSize(newValue: Int): ParserSettings = self.copy(maxChunkSize = newValue)
   def withMaxChunkCount(newValue: Int): ParserSettings = self.copy(maxChunkCount = newValue)
+
+  /**
+   * @since 2.0.0
+   */
+  def withMaxPartCount(newValue: Int): ParserSettings = self.copy(maxPartCount = newValue)
   def withMaxCommentParsingDepth(newValue: Int): ParserSettings = self.copy(maxCommentParsingDepth = newValue)
   def withUriParsingMode(newValue: Uri.ParsingMode): ParserSettings = self.copy(uriParsingMode = newValue.asScala)
   def withCookieParsingMode(newValue: ParserSettings.CookieParsingMode): ParserSettings =

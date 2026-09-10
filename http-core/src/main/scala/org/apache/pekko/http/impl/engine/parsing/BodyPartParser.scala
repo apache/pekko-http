@@ -67,6 +67,7 @@ private[http] final class BodyPartParser(
       private var output = collection.immutable.Queue.empty[Output] // FIXME this probably is too wasteful
       private var state: ByteString => StateResult = tryParseInitialBoundary
       private var shouldTerminate = false
+      private var partCount = 0
       // Will be override at the beginning of the parsing (tryParseInitialBoundary and parsePreamble)
       // But initially defined here as norm version to avoid NPE
       private var eolConfiguration: EndOfLineConfiguration = UndefinedEndOfLineConfiguration(boundary)
@@ -129,7 +130,8 @@ private[http] final class BodyPartParser(
           eolConfiguration = eolConfiguration.defineOnce(input)
           if (eolConfiguration.isBoundary(input, 0)) {
             val ix = eolConfiguration.boundaryLength
-            if (eolConfiguration.isEndOfLine(input, ix)) parseHeaderLines(input, ix + eolConfiguration.eolLength)
+            if (eolConfiguration.isEndOfLine(input, ix))
+              parsePartHeaderLines(input, ix + eolConfiguration.eolLength)
             else if (doubleDash(input, ix)) setShouldTerminate()
             else parsePreamble(input)
           } else parsePreamble(input)
@@ -142,7 +144,7 @@ private[http] final class BodyPartParser(
           @tailrec def rec(index: Int): StateResult = {
             val needleEnd = eolConfiguration.boyerMoore.nextIndex(input, index) + eolConfiguration.needle.length
             if (eolConfiguration.isEndOfLine(input, needleEnd))
-              parseHeaderLines(input, needleEnd + eolConfiguration.eolLength)
+              parsePartHeaderLines(input, needleEnd + eolConfiguration.eolLength)
             else if (doubleDash(input, needleEnd)) setShouldTerminate()
             else rec(needleEnd)
           }
@@ -151,6 +153,24 @@ private[http] final class BodyPartParser(
         } catch {
           case NotEnoughDataException => continue(input, 0)((newInput, _) => parsePreamble(newInput))
         }
+
+      /**
+       * Registers the start of a new body part, bounding how many of them one entity may contain. Each part costs a
+       * set of parsed headers and an entity of its own, so a body packed with minimal parts amplifies the work a
+       * request of a given size causes beyond what `max-content-length` bounds. Returns false once the limit is
+       * exhausted, in which case the caller must fail the entity via `failMaxPartCount`.
+       */
+      def startPart(): Boolean = {
+        val withinLimit = partCount < maxPartCount
+        if (withinLimit) partCount += 1
+        withinLimit
+      }
+
+      def failMaxPartCount(): StateResult =
+        fail(s"multipart entity contains more than the configured limit of $maxPartCount parts")
+
+      def parsePartHeaderLines(input: ByteString, lineStart: Int): StateResult =
+        if (startPart()) parseHeaderLines(input, lineStart) else failMaxPartCount()
 
       @tailrec def parseHeaderLines(input: ByteString, lineStart: Int,
           headers: ListBuffer[HttpHeader] = ListBuffer[HttpHeader](),
@@ -177,9 +197,14 @@ private[http] final class BodyPartParser(
           case BoundaryHeader =>
             emit(BodyPartStart(headers.toList, _ => HttpEntity.empty(contentType)))
             val ix = lineStart + eolConfiguration.boundaryLength
-            if (eolConfiguration.isEndOfLine(input, ix))
-              parseHeaderLines(input, ix + eolConfiguration.eolLength, headers, headerCount, None)
-            else if (doubleDash(input, ix)) setShouldTerminate()
+            if (eolConfiguration.isEndOfLine(input, ix)) {
+              // an empty part; the boundary starts another one, so it counts towards the limit as well. We must not
+              // route this through `parsePartHeaderLines`: the self-recursive call below is what keeps this method
+              // tail-recursive, and a mutual recursion here would risk the stack overflow the trampoline in
+              // `parseEntity` guards against.
+              if (startPart()) parseHeaderLines(input, ix + eolConfiguration.eolLength, headers, headerCount, None)
+              else failMaxPartCount()
+            } else if (doubleDash(input, ix)) setShouldTerminate()
             else fail("Illegal multipart boundary in message content")
 
           case EmptyHeader => parseEntity(headers.toList, contentType)(input, lineEnd)
@@ -229,7 +254,7 @@ private[http] final class BodyPartParser(
               // Need to trampoline here, otherwise we have a mutual tail recursion between parseHeaderLines and
               // parseEntity that is not tail-call optimized away and may lead to stack overflows on big chunks of data
               // containing many parts.
-              trampoline(parseHeaderLines(input, needleEnd + eolConfiguration.eolLength))
+              trampoline(parsePartHeaderLines(input, needleEnd + eolConfiguration.eolLength))
             } else if (doubleDash(input, needleEnd)) {
               emitFinalChunk()
               setShouldTerminate()
@@ -309,6 +334,7 @@ private[http] object BodyPartParser {
 
   abstract class Settings extends HttpHeaderParser.Settings {
     def maxHeaderCount: Int
+    def maxPartCount: Int
     def illegalHeaderWarnings: Boolean
     def defaultHeaderValueCacheLimit: Int
   }
