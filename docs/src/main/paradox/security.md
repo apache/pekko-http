@@ -15,7 +15,9 @@ This mailing list also has announcements of releases for Apache projects.
 
 ## Reporting Vulnerabilities
 
-We strongly encourage people to report such problems to our private security mailing list first, before disclosing them in a public forum.
+We strongly encourage people to report such problems privately to the Apache Security team at
+`security@apache.org` first, before disclosing them in a public forum. Apache Pekko does not
+operate a separate project security list.
 
 Please follow the [guidelines](https://www.apache.org/security/) laid down by the Apache Security team.
 
@@ -25,3 +27,5 @@ report with the Lightbend Akka team.
 ## References
 
  * [Akka HTTP security fixes](https://doc.akka.io/docs/akka-http/10.2/security.html)
+ * [Security Policy](https://github.com/apache/pekko-http/blob/main/SECURITY.md)
+ * [Threat Model](https://github.com/apache/pekko-http/blob/main/THREAT_MODEL.md)
