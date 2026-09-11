@@ -17,6 +17,8 @@ import java.util.Optional
 
 import scala.jdk.OptionConverters._
 
+import org.parboiled2.CharUtils
+
 import org.apache.pekko
 import pekko.event.LoggingAdapter
 import pekko.http.javadsl.{ model => jm }
@@ -31,8 +33,11 @@ import pekko.http.scaladsl.settings.ServerSettings
  * unparsable request target fails before the protocol is seen.
  *
  * Note that `rawRequestTarget` is unvalidated, attacker-controlled input, by definition malformed
- * whenever the rejection was caused by the request target itself. Anything that logs or echoes it
- * has to escape it.
+ * whenever the rejection was caused by the request target itself. It can carry any byte the client
+ * chose to send, including CR, LF, NUL and terminal control sequences, so anything that logs or
+ * echoes it has to escape it first: written raw into a log it lets a client forge log lines or drive
+ * the terminal that displays them, and written raw into a response body it is reflected input.
+ * `toString` escapes it and is safe to log as it is; the field itself is not.
  *
  * @since 2.0.0
  */
@@ -51,6 +56,9 @@ final class IllegalRequestContext private[http] (
   /**
    * Java API
    *
+   * The value is unvalidated, attacker-controlled input and has to be escaped before it is logged
+   * or echoed; see the class documentation.
+   *
    * @since 2.0.0
    */
   def getRawRequestTarget: Optional[String] = rawRequestTarget.toJava
@@ -62,9 +70,11 @@ final class IllegalRequestContext private[http] (
    */
   def getProtocol: Optional[jm.HttpProtocol] = protocol.map(p => p: jm.HttpProtocol).toJava
 
+  // the raw request target is escaped so that logging the context does not write client-chosen control
+  // characters into the log; see the class documentation
   override def toString: String =
     s"IllegalRequestContext(${method.map(_.value).getOrElse("-")}," +
-    s"${rawRequestTarget.getOrElse("-")},${protocol.map(_.value).getOrElse("-")})"
+    s"${rawRequestTarget.map(t => CharUtils.escape(t)).getOrElse("-")},${protocol.map(_.value).getOrElse("-")})"
 }
 
 object IllegalRequestContext {
@@ -110,6 +120,10 @@ abstract class ParsingErrorHandler {
    *
    * Note that `DefaultParsingErrorHandler` deliberately keeps implementing the four-argument method
    * rather than this one, so that advice matching that signature keeps firing.
+   *
+   * A handler that reads `context.rawRequestTarget` is handling unvalidated, attacker-controlled
+   * input, and must escape it before writing it to a log or into the response; see
+   * [[IllegalRequestContext]].
    *
    * @since 2.0.0
    */
