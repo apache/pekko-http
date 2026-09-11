@@ -146,6 +146,22 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       response.status should be(StatusCodes.BadRequest)
     }
 
+    "keep the connection usable after a header parsing failure" in new TestSetup {
+      sendClientRequest(HttpRequest(
+        method = HttpMethod.custom("UNKNOWN_TO_SERVER"),
+        uri = "http://www.example.com/test").addAttribute(requestIdAttr, RequestId("bad")))
+      expectClientResponse().status should be(StatusCodes.BadRequest)
+
+      // the failing header must not have left the HPACK dynamic table out of step with the client's, nor the
+      // decoder's state machine part way through the previous block
+      sendClientRequest(
+        HttpRequest(uri = "http://www.example.com/afterwards").addAttribute(requestIdAttr, RequestId("good")))
+      val serverRequest = expectServerRequest()
+      serverRequest.request.uri.path.toString shouldBe "/afterwards"
+      serverRequest.sendResponse(HttpResponse(entity = "pong"))
+      expectClientResponse().status should be(StatusCodes.OK)
+    }
+
     "return internal server error when handler future fails" in new TestSetup {
       sendClientRequest()
       val serverRequest = expectServerRequest()

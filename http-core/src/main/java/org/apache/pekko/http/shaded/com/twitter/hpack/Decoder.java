@@ -98,12 +98,25 @@ public final class Decoder {
     indexType = IndexType.NONE;
   }
 
-  /** Decode the header block into header fields. */
+  /**
+   * Decode the header block into header fields.
+   *
+   * <p>{@code in} must hold the complete header block. The decoder reads forward until the stream
+   * ends and reports a block that stops in the middle of a representation as a decompression
+   * failure, so the stream needs to support neither mark/reset nor an {@code available()} that
+   * covers the whole remaining block.
+   */
   public void decode(InputStream in, HeaderListener headerListener) throws IOException {
-    while (in.available() > 0) {
+    while (true) {
       switch (state) {
         case READ_HEADER_REPRESENTATION:
-          byte b = (byte) in.read();
+          int nextByte = in.read();
+          if (nextByte < 0) {
+            // between representations is the one place where running out of input is the expected
+            // end of the header block rather than a truncated one
+            return;
+          }
+          byte b = (byte) nextByte;
           if (maxDynamicTableSizeChangeRequired && (b & 0xE0) != 0x20) {
             // Encoder MUST signal maximum dynamic table size change
             throw MAX_DYNAMIC_TABLE_SIZE_CHANGE_REQUIRED;
@@ -158,10 +171,6 @@ public final class Decoder {
 
         case READ_MAX_DYNAMIC_TABLE_SIZE:
           int maxSize = decodeULE128(in);
-          if (maxSize == -1) {
-            return;
-          }
-
           // Check for numerical overflow
           if (maxSize > Integer.MAX_VALUE - index) {
             throw DECOMPRESSION_EXCEPTION;
@@ -173,10 +182,6 @@ public final class Decoder {
 
         case READ_INDEXED_HEADER:
           int headerIndex = decodeULE128(in);
-          if (headerIndex == -1) {
-            return;
-          }
-
           // Check for numerical overflow
           if (headerIndex > Integer.MAX_VALUE - index) {
             throw DECOMPRESSION_EXCEPTION;
@@ -189,10 +194,6 @@ public final class Decoder {
         case READ_INDEXED_HEADER_NAME:
           // Header Name matches an entry in the Header Table
           int nameIndex = decodeULE128(in);
-          if (nameIndex == -1) {
-            return;
-          }
-
           // Check for numerical overflow
           if (nameIndex > Integer.MAX_VALUE - index) {
             throw DECOMPRESSION_EXCEPTION;
@@ -203,7 +204,7 @@ public final class Decoder {
           break;
 
         case READ_LITERAL_HEADER_NAME_LENGTH_PREFIX:
-          b = (byte) in.read();
+          b = readByte(in);
           huffmanEncoded = (b & 0x80) == 0x80;
           index = b & 0x7F;
           if (index == 0x7f) {
@@ -243,10 +244,6 @@ public final class Decoder {
         case READ_LITERAL_HEADER_NAME_LENGTH:
           // Header Name is a Literal String
           nameLength = decodeULE128(in);
-          if (nameLength == -1) {
-            return;
-          }
-
           // Check for numerical overflow
           if (nameLength > Integer.MAX_VALUE - index) {
             throw DECOMPRESSION_EXCEPTION;
@@ -276,26 +273,19 @@ public final class Decoder {
           break;
 
         case READ_LITERAL_HEADER_NAME:
-          // Wait until entire name is readable
-          if (in.available() < nameLength) {
-            return;
-          }
-
           name = readStringLiteral(in, nameLength);
 
           state = State.READ_LITERAL_HEADER_VALUE_LENGTH_PREFIX;
           break;
 
         case SKIP_LITERAL_HEADER_NAME:
-          skipLength -= in.skip(skipLength);
-
-          if (skipLength == 0) {
-            state = State.READ_LITERAL_HEADER_VALUE_LENGTH_PREFIX;
-          }
+          skipFully(in, skipLength);
+          skipLength = 0;
+          state = State.READ_LITERAL_HEADER_VALUE_LENGTH_PREFIX;
           break;
 
         case READ_LITERAL_HEADER_VALUE_LENGTH_PREFIX:
-          b = (byte) in.read();
+          b = readByte(in);
           huffmanEncoded = (b & 0x80) == 0x80;
           index = b & 0x7F;
           if (index == 0x7f) {
@@ -336,10 +326,6 @@ public final class Decoder {
         case READ_LITERAL_HEADER_VALUE_LENGTH:
           // Header Value is a Literal String
           valueLength = decodeULE128(in);
-          if (valueLength == -1) {
-            return;
-          }
-
           // Check for numerical overflow
           if (valueLength > Integer.MAX_VALUE - index) {
             throw DECOMPRESSION_EXCEPTION;
@@ -369,22 +355,15 @@ public final class Decoder {
           break;
 
         case READ_LITERAL_HEADER_VALUE:
-          // Wait until entire value is readable
-          if (in.available() < valueLength) {
-            return;
-          }
-
           String value = readStringLiteral(in, valueLength);
           insertHeader(headerListener, name, value, indexType);
           state = State.READ_HEADER_REPRESENTATION;
           break;
 
         case SKIP_LITERAL_HEADER_VALUE:
-          valueLength -= in.skip(valueLength);
-
-          if (valueLength == 0) {
-            state = State.READ_HEADER_REPRESENTATION;
-          }
+          skipFully(in, valueLength);
+          valueLength = 0;
+          state = State.READ_HEADER_REPRESENTATION;
           break;
 
         default:
@@ -546,19 +525,39 @@ public final class Decoder {
     return StringTools.asciiStringFromBytes(result);
   }
 
+  private static byte readByte(InputStream in) throws IOException {
+    int b = in.read();
+    if (b < 0) {
+      // the header block stopped in the middle of a representation
+      throw DECOMPRESSION_EXCEPTION;
+    }
+    return (byte) b;
+  }
+
+  private static void skipFully(InputStream in, int length) throws IOException {
+    long remaining = length;
+    while (remaining > 0) {
+      long skipped = in.skip(remaining);
+      if (skipped <= 0) {
+        // skip() is free to skip nothing; read a byte to make progress and to notice the end
+        if (in.read() < 0) {
+          throw DECOMPRESSION_EXCEPTION;
+        }
+        remaining--;
+      } else {
+        remaining -= skipped;
+      }
+    }
+  }
+
   // Unsigned Little Endian Base 128 Variable-Length Integer Encoding
   private static int decodeULE128(InputStream in) throws IOException {
-    in.mark(5);
     int result = 0;
     int shift = 0;
     while (shift < 32) {
-      if (in.available() == 0) {
-        // Buffer does not contain entire integer,
-        // reset reader index and return -1.
-        in.reset();
-        return -1;
-      }
-      byte b = (byte) in.read();
+      // reading forward only: a block that ends inside an integer is truncated, which used to be
+      // rewound with mark/reset and reported to the caller as "come back with more data"
+      byte b = readByte(in);
       if (shift == 28 && (b & 0xF8) != 0) {
         break;
       }
@@ -569,7 +568,6 @@ public final class Decoder {
       shift += 7;
     }
     // Value exceeds Integer.MAX_VALUE
-    in.reset();
     throw DECOMPRESSION_EXCEPTION;
   }
 }
