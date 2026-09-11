@@ -47,6 +47,21 @@ abstract class ClientConnectionSettings private[pekko] ()
   def parserSettings: ParserSettings
   def logUnencryptedNetworkBytes: Option[Int]
   def streamCancellationDelay: FiniteDuration
+
+  /**
+   * If defined, response entities are collected into `HttpEntity.Strict` entities (using the given timeout)
+   * before the response is dispatched to the application. Only supported by the HTTP/1.1 client.
+   *
+   * @since 2.0.0
+   */
+  def strictResponseEntityTimeout: Option[FiniteDuration]
+
+  /**
+   * The maximum number of bytes collected per response entity when [[strictResponseEntityTimeout]] is defined.
+   *
+   * @since 2.0.0
+   */
+  def strictResponseEntityMaxBytes: Long
   def localAddress: Option[InetSocketAddress]
   def http2Settings: Http2ClientSettings
 
@@ -63,6 +78,14 @@ abstract class ClientConnectionSettings private[pekko] ()
   def withRequestHeaderSizeHint(newValue: Int): ClientConnectionSettings = self.copy(requestHeaderSizeHint = newValue)
   def withStreamCancellationDelay(newValue: FiniteDuration): ClientConnectionSettings =
     self.copy(streamCancellationDelay = newValue)
+
+  /** @since 2.0.0 */
+  def withStrictResponseEntityTimeout(newValue: Option[FiniteDuration]): ClientConnectionSettings =
+    self.copy(strictResponseEntityTimeout = newValue)
+
+  /** @since 2.0.0 */
+  override def withStrictResponseEntityMaxBytes(newValue: Long): ClientConnectionSettings =
+    self.copy(strictResponseEntityMaxBytes = newValue)
 
   // overloads for idiomatic Scala use
   def withWebsocketSettings(newValue: WebSocketSettings): ClientConnectionSettings =

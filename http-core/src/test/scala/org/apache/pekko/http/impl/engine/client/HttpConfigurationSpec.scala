@@ -105,6 +105,26 @@ class HttpConfigurationSpec extends PekkoSpec {
       }
     }
 
+    "have strict response entities disabled by default" in {
+      ClientConnectionSettings(system).strictResponseEntityTimeout should ===(None)
+      ClientConnectionSettings(system).strictResponseEntityMaxBytes should ===(8L * 1024 * 1024)
+    }
+
+    "set `pekko.http.client.strict-response-entity-timeout`" in {
+      configuredSystem("""pekko.http.client.strict-response-entity-timeout = 5s
+                         |pekko.http.client.strict-response-entity-max-bytes = 1m""".stripMargin) { sys =>
+        import scala.concurrent.duration._
+
+        val client = ClientConnectionSettings(sys)
+        client.strictResponseEntityTimeout should ===(Some(5.seconds))
+        client.strictResponseEntityMaxBytes should ===(1024L * 1024)
+
+        val pool = ConnectionPoolSettings(sys)
+        pool.connectionSettings.strictResponseEntityTimeout should ===(Some(5.seconds))
+        pool.connectionSettings.strictResponseEntityMaxBytes should ===(1024L * 1024)
+      }
+    }
+
     "change parser settings for all by setting `pekko.http.parsing`" in {
       configuredSystem("""pekko.http.parsing.illegal-header-warnings = off""") { sys =>
         val client = ClientConnectionSettings(sys)

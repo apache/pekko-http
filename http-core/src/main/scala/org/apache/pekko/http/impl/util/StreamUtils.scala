@@ -17,7 +17,7 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.Cancellable
 import pekko.annotation.InternalApi
-import pekko.http.scaladsl.model.HttpEntity
+import pekko.http.scaladsl.model.{ HttpEntity, HttpResponse }
 import pekko.http.scaladsl.util.FastFuture
 import pekko.stream._
 import pekko.stream.impl.fusing.GraphInterpreter
@@ -272,6 +272,33 @@ private[http] object StreamUtils {
    */
   def statefulAttrsMap[T, U](functionConstructor: Attributes => T => U): Flow[T, U, NotUsed] =
     Flow[T].via(ExposeAttributes[T, U](functionConstructor))
+
+  /**
+   * Collects response entities into `HttpEntity.Strict` entities using the given timeout and maximum number of bytes.
+   * Responses that already carry a strict entity are passed through unchanged.
+   *
+   * With `parallelism == 1` responses keep their original order, which is what the HTTP/1.1 client needs where
+   * responses on a connection are sequential anyway. With a bigger value up to `parallelism` entities are collected
+   * concurrently and responses are emitted in the order in which their entities complete.
+   */
+  def strictifyResponseEntities(
+      timeout: FiniteDuration,
+      maxBytes: Long,
+      parallelism: Int): Flow[HttpResponse, HttpResponse, NotUsed] = {
+    def strictify(response: HttpResponse): Source[HttpResponse, Any] =
+      response.entity match {
+        case _: HttpEntity.Strict => Source.single(response)
+        case entity               =>
+          entity.dataBytes
+            .via(new ToStrict(timeout, Some(maxBytes), entity.contentType))
+            .map(strict => response.withEntity(strict))
+      }
+
+    val flow =
+      if (parallelism <= 1) Flow[HttpResponse].flatMapConcat(strictify)
+      else Flow[HttpResponse].flatMapMerge(parallelism, strictify)
+    flow.named("strictifyResponseEntities")
+  }
 
   trait ScheduleSupport extends GraphStageLogic { self =>
 

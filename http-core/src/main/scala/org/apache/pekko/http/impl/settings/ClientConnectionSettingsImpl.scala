@@ -44,6 +44,8 @@ private[pekko] final case class ClientConnectionSettingsImpl(
     socketOptions: immutable.Seq[SocketOption],
     parserSettings: ParserSettings,
     streamCancellationDelay: FiniteDuration,
+    strictResponseEntityTimeout: Option[FiniteDuration],
+    strictResponseEntityMaxBytes: Long,
     localAddress: Option[InetSocketAddress],
     http2Settings: Http2ClientSettings,
     transport: ClientTransport)
@@ -51,6 +53,10 @@ private[pekko] final case class ClientConnectionSettingsImpl(
 
   require(connectingTimeout >= Duration.Zero, "connectingTimeout must be >= 0")
   require(requestHeaderSizeHint > 0, "request-size-hint must be > 0")
+  require(
+    strictResponseEntityTimeout.forall(_ > Duration.Zero),
+    "strict-response-entity-timeout must be > 0 or `off`")
+  require(strictResponseEntityMaxBytes >= 0, "strict-response-entity-max-bytes must be >= 0")
   require(
     Try { parserSettings.maxContentLength }.isSuccess,
     "The provided ParserSettings is a generic object that does not contain the client-specific settings.")
@@ -86,6 +92,11 @@ private[pekko] object ClientConnectionSettingsImpl
       socketOptions = SocketOptionSettings.fromSubConfig(root, c.getConfig("socket-options")),
       parserSettings = ParserSettingsImpl.fromSubConfig(root, c.getConfig("parsing")),
       streamCancellationDelay = c.getFiniteDuration("stream-cancellation-delay"),
+      strictResponseEntityTimeout = c.getString("strict-response-entity-timeout").toRootLowerCase match {
+        case "off" => None
+        case _     => Some(c.getFiniteDuration("strict-response-entity-timeout"))
+      },
+      strictResponseEntityMaxBytes = c.getPossiblyInfiniteBytes("strict-response-entity-max-bytes"),
       localAddress = None,
       http2Settings = Http2ClientSettingsImpl.fromSubConfig(root, c.getConfig("http2")),
       transport = ClientTransport.TCP)
