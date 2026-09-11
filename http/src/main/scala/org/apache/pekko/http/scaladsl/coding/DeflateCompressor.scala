@@ -172,7 +172,7 @@ private[coding] abstract class DeflateDecompressorBase(maxBytesPerChunk: Int = D
 
     override def canWorkWithPartialData = true
     override def parse(reader: ByteStringParser.ByteReader): ParseResult[ByteString] = {
-      inflater.setInput(reader.remainingData.toArray)
+      inflater.setInput(reader.remainingData.asByteBuffer)
 
       val buffer = new Array[Byte](maxBytesPerChunk)
       val read = inflater.inflate(buffer)

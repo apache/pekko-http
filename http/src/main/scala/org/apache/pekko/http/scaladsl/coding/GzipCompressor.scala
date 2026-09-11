@@ -41,7 +41,8 @@ private[coding] class GzipCompressor(compressionLevel: Int) extends DeflateCompr
     header() ++ super.finishWithBuffer(buffer) ++ trailer()
 
   private def updateCrc(input: ByteString): Unit = {
-    checkSum.update(input.toArrayUnsafe())
+    // one buffer per fragment, so that a multi-fragment ByteString is not compacted into a copy first
+    input.asByteBuffers.foreach(buffer => checkSum.update(buffer))
     bytesRead += input.length
   }
   private def header(): ByteString =
@@ -131,7 +132,7 @@ private[coding] class GzipDecompressor(
   }
   private def crc16(data: ByteString) = {
     val crc = new CRC32
-    crc.update(data.toArrayUnsafe())
+    data.asByteBuffers.foreach(buffer => crc.update(buffer))
     crc.getValue.toInt & 0xFFFF
   }
 }
