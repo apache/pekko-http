@@ -57,6 +57,45 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
   override def failOnSevereMessages: Boolean = true
 
   "The Http/2 server implementation" should {
+    "answer a malformed header field with a 400 on its stream and keep the connection" should {
+      abstract class MalformedHeaderSetup extends TestSetup with RequestResponseProbes {
+        def badRequestThenStillUsable(streamId: Int, headerPairs: Seq[(String, String)]): Unit = {
+          // the 400 is produced where the parsed request would otherwise be handed to the handler, so the handler
+          // has to be asking for one
+          user.requestIn.request(1)
+          network.sendHEADERS(streamId, endStream = true, endHeaders = true, network.encodeHeaderPairs(headerPairs))
+          network.expectDecodedResponseHEADERSPairs(streamId, endStream = false).toMap should contain(
+            ":status" -> "400")
+          network.expectDATAFrame(streamId)
+
+          // the connection is still open and serving: the next stream gets through to the handler
+          val nextStreamId = streamId + 2
+          network.sendRequest(nextStreamId,
+            HttpRequest(HttpMethods.GET, "https://www.example.com/", protocol = HttpProtocols.`HTTP/2.0`))
+          user.expectRequest()
+          user.emitResponse(nextStreamId, HttpResponse())
+          network.expectDecodedResponseHEADERSPairs(nextStreamId).toMap should contain(":status" -> "200")
+        }
+        def request(extra: (String, String)*): Seq[(String, String)] =
+          Seq(":method" -> "GET", ":scheme" -> "https", ":path" -> "/", ":authority" -> "www.example.com") ++ extra
+      }
+
+      "for a value containing CR LF".inAssertAllStagesStopped(new MalformedHeaderSetup {
+        badRequestThenStillUsable(1, request("x-a" -> "foo\r\nx-b: bar"))
+      })
+      "for a value containing NUL".inAssertAllStagesStopped(new MalformedHeaderSetup {
+        // before the fix this failed the decompression stage and took the whole connection down
+        badRequestThenStillUsable(1, request("x-a" -> "foo\u0000bar"))
+      })
+      "for a value longer than max-header-value-length".inAssertAllStagesStopped(new MalformedHeaderSetup {
+        override def settings: ServerSettings = {
+          val s = super.settings
+          s.withParserSettings(s.parserSettings.withMaxHeaderValueLength(16))
+        }
+        badRequestThenStillUsable(1, request("x-a" -> ("v" * 17)))
+      })
+    }
+
     "support simple round-trips" should {
       abstract class SimpleRequestResponseRoundtripSetup extends TestSetup with RequestResponseProbes {
         def requestResponseRoundtrip(

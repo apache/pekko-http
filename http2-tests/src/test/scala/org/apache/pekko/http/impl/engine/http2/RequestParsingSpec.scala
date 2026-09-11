@@ -109,6 +109,39 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           futureValueEx.getCause.asInstanceOf[Http2ProtocolException]
       }
 
+    "reject a malformed header field with a bad request rather than accepting or failing the connection" should {
+      // RFC 9113 8.2.1: a field name or value carrying NUL, CR or LF makes the message malformed
+      def request(extra: (String, String)*): Vector[(String, String)] =
+        Vector(":method" -> "GET", ":scheme" -> "https", ":path" -> "/") ++ extra
+
+      "a header value containing CR LF" in {
+        // the HTTP/1.1 line parser this is handed to stops at the first CRLF it finds, so without the check the
+        // request was accepted with the value silently truncated to `foo`
+        val info = parseExpectError(request("x-a" -> "foo\r\nx-b: bar"))
+        info.summary should include("header field value must not contain CR, LF or NUL")
+      }
+      "a header value containing a bare LF" in {
+        val info = parseExpectError(request("x-a" -> "foo\nbar"))
+        info.summary should include("header field value must not contain CR, LF or NUL")
+      }
+      "a header value containing NUL" in {
+        val info = parseExpectError(request("x-a" -> "foo\u0000bar"))
+        info.summary should include("header field value must not contain CR, LF or NUL")
+      }
+      "a header name containing CR LF" in {
+        val info = parseExpectError(request("x-a\r\nx-b" -> "v"))
+        info.summary should include("header field name must not contain CR, LF or NUL")
+      }
+      "a header value longer than max-header-value-length" in {
+        // the HTTP/1.1 parser reports this with its own, internal exception type, which used to escape the
+        // decompression stage and fail the whole connection instead of answering the one stream
+        val settings = ServerSettings(system)
+        val small = settings.withParserSettings(settings.parserSettings.withMaxHeaderValueLength(16))
+        val info = parseExpectError(request("x-a" -> ("v" * 17)), settings = small)
+        info.summary should include("HTTP header value exceeds the configured limit of 16 characters")
+      }
+    }
+
     "follow RFC7540" should {
 
       // 8.1.2.1.  Pseudo-Header Fields
