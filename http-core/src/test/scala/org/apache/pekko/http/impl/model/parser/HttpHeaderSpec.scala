@@ -907,7 +907,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     "not accept illegal header values" in {
       parse("Foo", "ba\u0000r") shouldEqual ParsingResult.Error(ErrorInfo(
         "Illegal HTTP header value: Invalid input '\\u0000', expected field-value-char, FWS or 'EOI' (line 1, column 3)",
-        "ba\u0000r\n  ^"))
+        // the detail is logged under the default `error-logging-verbosity = full`, so the NUL is escaped in it too
+        "ba\\u0000r\n  ^"))
     }
     "allow UTF8 characters in RawHeaders" in {
       parse("Flood-Resistant-Hammerdrill", "árvíztűrő ütvefúrógép") shouldEqual
