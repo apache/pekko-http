@@ -70,7 +70,7 @@ package parsing {
    * INTERNAL API
    */
   @InternalApi
-  private[parsing] class ParsingException(
+  private[http] class ParsingException(
       val status: StatusCode,
       val info: ErrorInfo) extends RuntimeException(info.formatPretty) {
     def this(status: StatusCode, summary: String) =

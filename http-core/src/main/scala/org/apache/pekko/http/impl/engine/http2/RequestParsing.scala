@@ -218,8 +218,15 @@ private[http2] object RequestParsing {
     // The odd-looking 'x' below is a by-product of how current parser and HTTP/1.1 work.
     // Without '\r\n\x' (x being any additional byte) parsing will fail. See HttpHeaderParserSpec for examples.
     val concHeaderLine = name + ": " + value + "\r\nx"
-    httpHeaderParser.parseHeaderLine(ByteString(concHeaderLine))()
-    httpHeaderParser.resultHeader
+    try {
+      httpHeaderParser.parseHeaderLine(ByteString(concHeaderLine))()
+      httpHeaderParser.resultHeader
+    } catch {
+      // the HTTP/1.1 parser reports a malformed field with its own, internal exception type, which nothing on the
+      // HTTP/2 side catches: left alone it fails the decompression stage and with it the whole connection. Rethrow
+      // it as the model exception `HeaderDecompression` turns into a 400 for the one stream.
+      case e: pekko.http.impl.engine.parsing.ParsingException => throw new ParsingException(e.info)
+    }
   }
 
   private[http2] def checkRequiredPseudoHeader(name: String, value: AnyRef): Unit =

@@ -81,6 +81,16 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
         var parsingError: Option[ErrorInfo] = None
         object Receiver extends HeaderListener {
           def addHeader(name: String, value: String, parsed: AnyRef, sensitive: Boolean): AnyRef = try {
+            // RFC 9113 8.2.1: a field name or value carrying a NUL, CR or LF makes the message malformed. Check it
+            // here, before the field is dispatched on its name: a regular field goes through the HTTP/1.1 line
+            // parser, which reads up to the first CRLF it finds and would silently accept the value truncated
+            // there. Neither the name nor the value is echoed, since either may be what is malformed.
+            if (HeaderCompression.hasIllegalChar(name))
+              throw new ParsingException(
+                ErrorInfo("Malformed request: header field name must not contain CR, LF or NUL"))
+            if (HeaderCompression.hasIllegalChar(value))
+              throw new ParsingException(
+                ErrorInfo("Malformed request: header field value must not contain CR, LF or NUL"))
             if (parsed ne null) {
               headers += name -> parsed
               parsed
