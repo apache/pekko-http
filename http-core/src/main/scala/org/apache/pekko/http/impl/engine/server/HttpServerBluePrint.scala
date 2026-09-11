@@ -519,7 +519,8 @@ private[http] object HttpServerBluePrint {
                   fut.onComplete {
                     case Failure(ex) =>
                       log.error(ex,
-                        s"Response stream for [${requestStart.debugString}] failed with '${ex.getMessage}'. Aborting connection.")
+                        "Response stream for [{}] failed with '{}'. Aborting connection.",
+                        requestStart.debugString, ex.getMessage)
                     case _ => // ignore
                   }(ExecutionContext.parasitic)
                   newEntity
@@ -528,9 +529,10 @@ private[http] object HttpServerBluePrint {
               val isEarlyResponse = messageEndPending && openRequests.isEmpty
               if (isEarlyResponse && response.status.isSuccess)
                 log.warning(
-                  s"Sending an 2xx 'early' response before end of request for ${requestStart.uri} received... " +
+                  "Sending an 2xx 'early' response before end of request for {} received... " +
                   "Note that the connection will be closed after this response. Also, many clients will not read early responses! " +
-                  "Consider only issuing this response after the request data has been completely read!")
+                  "Consider only issuing this response after the request data has been completely read!",
+                  requestStart.uri)
               val forceClose = (requestStart.expect100Continue && oneHundredContinueResponsePending) ||
                 (isClosed(requestParsingIn) && openRequests.isEmpty) ||
                 isEarlyResponse

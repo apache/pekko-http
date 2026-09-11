@@ -182,7 +182,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       log: LoggingAdapter): Source[Http.IncomingConnection, Future[ServerBinding]] = {
     if (settings.enableHttp2)
       log.warning(
-        s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port]")
+        "Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [{}]", port)
 
     val fullLayer: ServerLayerBidiFlow = fuseServerBidiFlow(settings, connectionContext, log)
 
@@ -223,7 +223,7 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] = {
     if (settings.enableHttp2)
       log.warning(
-        s"Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [$port].")
+        "Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [{}].", port)
 
     val fullLayer: Flow[ByteString, ByteString, (Future[Done], ServerTerminator)] =
       fuseServerFlow(fuseServerBidiFlow(settings, connectionContext, log), handler)

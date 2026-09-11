@@ -144,8 +144,8 @@ private final class ServerSentEventParser(
               builder.appendData(line)
               val event = builder.build()
               log.warning(
-                s"Oversized SSE Event ${event.id.fold("") { id => s"at ID: $id " }}" +
-                s"with size: ${builder.size} exceeds max-event-size: $maxEventSize.")
+                "Oversized SSE Event {}with size: {} exceeds max-event-size: {}.",
+                event.id.fold("") { id => s"at ID: $id " }, builder.size, maxEventSize)
               pull(in)
             case OversizedSseStrategy.Truncate =>
               // Because truncating some field types can categorically change the meaning of the event or stream
@@ -153,9 +153,9 @@ private final class ServerSentEventParser(
               // as dropping the entire line which would exceed the message size length. So throw away `line`.
               val event = builder.build()
               log.info(
-                s"Oversized SSE Event ${event.id.fold("") { id => s"at ID: $id " }}" +
-                s"with size: ${builder.size + line.length} exceeds max-event-size: $maxEventSize." +
-                s" Truncating event to last completed line at event size: ${builder.size}.")
+                "Oversized SSE Event {}with size: {} exceeds max-event-size: {}." +
+                " Truncating event to last completed line at event size: {}.",
+                event.id.fold("") { id => s"at ID: $id " }, builder.size + line.length, maxEventSize, builder.size)
               push(out, event)
             case OversizedSseStrategy.DeadLetter =>
               builder.appendData(line)

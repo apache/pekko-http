@@ -193,8 +193,9 @@ private[http] object Http2Blueprint {
       StreamUtils.encodeErrorAndComplete {
         case ex: Http2Compliance.Http2ProtocolException =>
           // protocol errors are most likely provoked by peer, so we don't log them noisily
-          if (log.isDebugEnabled) log.debug(
-            s"HTTP2 connection failed with error [${ex.getMessage}]. Sending ${ex.errorCode} and closing connection.")
+          log.debug(
+            "HTTP2 connection failed with error [{}]. Sending {} and closing connection.",
+            ex.getMessage, ex.errorCode)
           FrameRenderer.render(GoAwayFrame(0, ex.errorCode))
         case ex: StreamTcpException       => throw ex // TCP connection is probably broken: just forward exception
         case ex: HttpIdleTimeoutException =>
@@ -202,7 +203,8 @@ private[http] object Http2Blueprint {
           throw ex
         case NonFatal(ex) =>
           log.error(
-            s"HTTP2 connection failed with error [${ex.getMessage}]. Sending INTERNAL_ERROR and closing connection.")
+            "HTTP2 connection failed with error [{}]. Sending INTERNAL_ERROR and closing connection.",
+            ex.getMessage)
           FrameRenderer.render(GoAwayFrame(0, Http2Protocol.ErrorCode.INTERNAL_ERROR))
       },
       Flow[ByteString])

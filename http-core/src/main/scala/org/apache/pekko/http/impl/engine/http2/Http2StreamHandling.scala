@@ -916,7 +916,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       }
     }
     override def onUpstreamFailure(ex: Throwable): Unit = {
-      log.error(ex, s"Substream $streamId failed with $ex")
+      log.error(ex, "Substream {} failed with {}", streamId, ex)
       multiplexer.pushControlFrame(RstStreamFrame(streamId, Http2Protocol.ErrorCode.INTERNAL_ERROR))
       handleOutgoingFailed(streamId, ex)
       cleanupStream()
