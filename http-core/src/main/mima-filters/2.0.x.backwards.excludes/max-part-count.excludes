@@ -19,3 +19,11 @@
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.engine.parsing.BodyPartParser#Settings.maxPartCount")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.ParserSettings.getMaxPartCount")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ParserSettings.maxPartCount")
+
+# maxPartCount was added as the 12th ParserSettingsImpl field, so every positional
+# case class accessor after it shifted by one. The shifted positions were already
+# filtered except for 22 and 25, whose result types now differ from 1.0.0.
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._22")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl._25")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$22")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.impl.settings.ParserSettingsImpl.copy$default$25")
