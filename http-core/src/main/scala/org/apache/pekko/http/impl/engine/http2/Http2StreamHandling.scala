@@ -667,6 +667,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
         outstandingStreamWindow -= data.sizeInWindow
         if (outstandingStreamWindow < 0) {
+          // the frame is never buffered, so stop reserving connection-level window for it as well
+          totalBufferedData -= data.payload.length
           shutdown()
           multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.FLOW_CONTROL_ERROR))
           // also close response delivery if that has already started
@@ -740,8 +742,17 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         s"remaining connection window space now $outstandingConnectionLevelWindow, total buffered: $totalBufferedData")
     }
 
-    def shutdown(): Unit =
+    /**
+     * Tears the incoming side of the stream down. Everything still buffered is dropped here, so it has to be released
+     * from the connection-level accounting like on the other discard paths: the stream-level flow control error in
+     * `onDataFrame` resets a single stream and leaves the connection running, so anything kept counted there would
+     * stall the whole connection for good.
+     */
+    def shutdown(): Unit = {
+      discardBuffer()
+      trailingHeaders = None
       if (!outlet.isClosed) outlet.fail(Http2StreamHandling.ConnectionWasAbortedException)
+    }
   }
 
   trait OutStream {
