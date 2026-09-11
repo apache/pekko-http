@@ -139,7 +139,7 @@ private[http] object WebSocketClientBlueprint {
                     result.success(InvalidUpgradeResponse(response, s"WebSocket server at $uri returned $problem"))
                     failStage(new IllegalArgumentException(s"WebSocket upgrade did not finish because of '$problem'"))
                 }
-              case MessageStartError(statusCode, errorInfo) =>
+              case MessageStartError(statusCode, errorInfo, _) =>
                 throw new IllegalStateException(s"Message failed with status code $statusCode; Error info: $errorInfo")
               case other =>
                 throw new IllegalStateException(s"unexpected element of type ${other.getClass}")

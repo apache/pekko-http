@@ -14,12 +14,14 @@
 package org.apache.pekko.http.impl.engine.parsing
 
 import java.lang.{ StringBuilder => JStringBuilder }
+import java.nio.charset.StandardCharsets
 import javax.net.ssl.SSLSession
 
 import scala.annotation.{ switch, tailrec }
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.IllegalRequestContext
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util.ByteStringParserInput
 import pekko.http.impl.util.HttpConstants._
@@ -69,6 +71,8 @@ private[http] final class HttpRequestParser(
       private var method: HttpMethod = null
       private var uri: Uri = null
       private var uriBytes: ByteString = null
+      // whether `protocol` of the underlying parser belongs to the message currently being parsed
+      private var protocolParsed: Boolean = false
 
       override def onPush(): Unit = handleParserOutput(parseSessionBytes(grab(in)))
       override def onPull(): Unit = handleParserOutput(doPull())
@@ -89,9 +93,16 @@ private[http] final class HttpRequestParser(
 
       override def parseMessage(input: ByteString, offset: Int): StateResult =
         if (offset < input.length) {
+          // the fields below are reused for every message on a connection, forget what the previous
+          // one left behind so that a failure cannot report values belonging to another request
+          method = null
+          uri = null
+          uriBytes = null
+          protocolParsed = false
           var cursor = parseMethod(input, offset)
           cursor = parseRequestTarget(input, cursor)
           cursor = parseProtocol(input, cursor)
+          protocolParsed = true
           if (byteAt(input, cursor) == CR_BYTE && byteAt(input, cursor + 1) == LF_BYTE)
             parseHeaderLines(input, cursor + 2)
           else if (byteAt(input, cursor) == LF_BYTE)
@@ -251,6 +262,12 @@ private[http] final class HttpRequestParser(
             }
           }
         } else failMessageStart("Request is missing required `Host` header")
+
+      override protected def illegalRequestContext: IllegalRequestContext =
+        IllegalRequestContext(
+          Option(method),
+          Option.unless(uriBytes eq null)(uriBytes.decodeString(StandardCharsets.US_ASCII)),
+          Option.when(protocolParsed)(currentProtocol))
 
       private def remoteAddressStr: String =
         inheritedAttributes.get[HttpAttributes.RemoteAddress].map(_.address) match {

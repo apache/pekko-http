@@ -16,7 +16,7 @@ package org.apache.pekko.http.impl.engine.server
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.LoggingAdapter
-import pekko.http.ParsingErrorHandler
+import pekko.http.{ IllegalRequestContext, ParsingErrorHandler }
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util._
 import pekko.http.scaladsl.Http.ServerLayer
@@ -46,6 +46,20 @@ object TestParsingErrorHandler extends ParsingErrorHandler {
   override def handle(
       status: StatusCode, error: ErrorInfo, log: LoggingAdapter, settings: ServerSettings): HttpResponse =
     HttpResponse(StatusCodes.ImATeapot, entity = HttpEntity("Tea hea"))
+}
+
+/** Renders what the handler was told about the request that was rejected */
+object ContextReportingParsingErrorHandler extends ParsingErrorHandler {
+  override def handle(
+      status: StatusCode, error: ErrorInfo, log: LoggingAdapter, settings: ServerSettings): HttpResponse =
+    HttpResponse(status, entity = HttpEntity("no context"))
+
+  override def handle(status: StatusCode, error: ErrorInfo, log: LoggingAdapter, settings: ServerSettings,
+      context: IllegalRequestContext): HttpResponse =
+    HttpResponse(status,
+      entity = HttpEntity(
+        s"${context.method.map(_.value).getOrElse("-")} ${context.rawRequestTarget.getOrElse("-")} " +
+        s"${context.protocol.map(_.value).getOrElse("-")}"))
 }
 
 class HttpServerSpec extends PekkoSpec(
@@ -1611,6 +1625,59 @@ class HttpServerSpec extends PekkoSpec(
            |Content-Length: 7
            |
            |Tea hea""")
+
+      netIn.sendComplete()
+      netOut.expectComplete()
+    })
+
+    "pass the rejected request to the parsing error handler" in assertAllStagesStopped(new TestSetup {
+      override def settings: ServerSettings =
+        super.settings.withParsingErrorHandler(
+          "org.apache.pekko.http.impl.engine.server.ContextReportingParsingErrorHandler$")
+
+      send("""GET /%% HTTP/1.1
+             |Host: www.example.com
+             |
+             |""")
+
+      requests.request(1)
+
+      expectResponseWithWipedDate(
+        """|HTTP/1.1 400 Bad Request
+           |Server: pekko-http/test
+           |Date: XXXX
+           |Connection: close
+           |Content-Type: text/plain; charset=UTF-8
+           |Content-Length: 9
+           |
+           |GET /%% -""")
+
+      netIn.sendComplete()
+      netOut.expectComplete()
+    })
+
+    "pass the rejected request to the parsing error handler when the Host header does not match" in
+    assertAllStagesStopped(new TestSetup {
+      override def settings: ServerSettings =
+        super.settings.withParsingErrorHandler(
+          "org.apache.pekko.http.impl.engine.server.ContextReportingParsingErrorHandler$")
+
+      send("""GET http://www.example.com/unparsable HTTP/1.1
+             |Host: www.example.net
+             |
+             |""")
+
+      requests.request(1)
+
+      expectResponseWithWipedDate(
+        """|HTTP/1.1 400 Bad Request
+           |Server: pekko-http/test
+           |Date: XXXX
+           |Connection: close
+           |Content-Type: text/plain; charset=UTF-8
+           |Content-Length: 46
+           |
+           |GET http://www.example.com/unparsable HTTP/1.1""")
 
       netIn.sendComplete()
       netOut.expectComplete()
