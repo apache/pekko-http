@@ -219,7 +219,14 @@ private[http] object PoolInterface {
       !shuttingDown && remainingRequested == 0 && idleTimeout.isFinite && hcps.setup.settings.minConnections == 0
 
     override def onUpstreamFailure(ex: Throwable): Unit = shutdownPromise.tryFailure(ex)
-    override def postStop(): Unit = shutdownPromise.tryFailure(new IllegalStateException("Pool shutdown unexpectedly"))
+    override def postStop(): Unit = {
+      val shutdownException = new IllegalStateException("Pool shutdown unexpectedly")
+      shutdownPromise.tryFailure(shutdownException)
+      // Whatever is still queued here was never dispatched to a connection, so nothing else is ever going to complete
+      // these promises. Fail them instead of leaving the callers waiting for a response forever.
+      while (!buffer.isEmpty)
+        buffer.removeFirst().responsePromise.tryFailure(shutdownException)
+    }
 
     // PoolInterface implementations
     override def request(request: HttpRequest, responsePromise: Promise[HttpResponse]): Unit =
