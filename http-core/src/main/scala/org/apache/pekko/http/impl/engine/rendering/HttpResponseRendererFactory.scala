@@ -76,7 +76,9 @@ private[http] class HttpResponseRendererFactory(
               catch {
                 case NonFatal(e) =>
                   log.error(e,
-                    s"Rendering of response failed because response entity stream materialization failed with '${e.getMessage}'. Sending out 500 response instead.")
+                    "Rendering of response failed because response entity stream materialization failed with '{}'. " +
+                    "Sending out 500 response instead.",
+                    e.getMessage)
                   push(out,
                     render(ResponseRenderingContext(HttpResponse(500,
                       entity = StatusCodes.InternalServerError.defaultMessage))).asInstanceOf[Strict].bytes)

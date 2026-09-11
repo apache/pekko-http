@@ -74,7 +74,7 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
             setHandler(in, new WaitingForPeerCloseFrame())
             push(out, FrameEvent.closeFrame(Protocol.CloseCodes.Regular))
           case UserHandlerErredOut(e) =>
-            log.error(e, s"Websocket handler failed with ${e.getMessage}")
+            log.error(e, "Websocket handler failed with {}", e.getMessage)
             setHandler(in, new WaitingForPeerCloseFrame())
             push(out, FrameEvent.closeFrame(Protocol.CloseCodes.UnexpectedCondition, "internal error"))
           case Tick => pull(in) // ignore
@@ -94,7 +94,7 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
         grab(in) match {
           case UserHandlerCompleted   => sendOutLastFrame()
           case UserHandlerErredOut(e) =>
-            log.error(e, s"Websocket handler failed while waiting for handler completion with ${e.getMessage}")
+            log.error(e, "Websocket handler failed while waiting for handler completion with {}", e.getMessage)
             sendOutLastFrame()
           case start: FrameStart => push(out, start)
           case _                 => pull(in) // ignore
@@ -122,8 +122,8 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
         grab(in) match {
           case Tick =>
             if (deadline.isOverdue()) {
-              if (log.isDebugEnabled) log.debug(
-                s"Peer did not acknowledge CLOSE frame after ${_closeTimeout}, closing underlying connection now.")
+              log.debug(
+                "Peer did not acknowledge CLOSE frame after {}, closing underlying connection now.", _closeTimeout)
               completeStage()
             } else pull(in)
           case PeerClosed(code, reason) =>
@@ -145,8 +145,9 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
         grab(in) match {
           case Tick =>
             if (deadline.isOverdue()) {
-              if (log.isDebugEnabled) log.debug(
-                s"Peer did not close TCP connection after sendind CLOSE frame after ${_closeTimeout}, closing underlying connection now.")
+              log.debug(
+                "Peer did not close TCP connection after sendind CLOSE frame after {}, closing underlying connection now.",
+                _closeTimeout)
               completeStage()
             } else pull(in)
           case _ => pull(in) // ignore

@@ -178,7 +178,7 @@ private final class HttpsProxyGraphStage(
             state match {
               case Starting =>
                 log.debug(
-                  s"TCP connection to HTTP(S) proxy connection established. Sending CONNECT {}:{} to HTTP(S) proxy",
+                  "TCP connection to HTTP(S) proxy connection established. Sending CONNECT {}:{} to HTTP(S) proxy",
                   targetHostName, targetPort)
                 push(bytesOut, connectMsg)
                 state = Connecting

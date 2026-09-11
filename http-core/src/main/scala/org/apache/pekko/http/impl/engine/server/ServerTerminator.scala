@@ -139,8 +139,8 @@ private[http] final class MasterServerTerminator(log: LoggingAdapter) extends Se
 
       case Terminating(existingDeadline) =>
         log.warning(
-          s"Issued terminate($timeout) while termination is in progress already (with deadline: time left: ${PrettyDuration.format(
-              existingDeadline.timeLeft)}")
+          "Issued terminate({}) while termination is in progress already (with deadline: time left: {}",
+          timeout, PrettyDuration.format(existingDeadline.timeLeft))
         termination.future
     }
   }

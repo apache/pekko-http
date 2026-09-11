@@ -161,7 +161,7 @@ private[client] object NewHostConnectionPool {
           }
           if (_connectionEmbargo != oldValue) {
             log.debug(
-              s"Connection attempt failed. Backing off new connection attempts for at least ${_connectionEmbargo}.")
+              "Connection attempt failed. Backing off new connection attempts for at least {}.", _connectionEmbargo)
             slots.foreach(_.onNewConnectionEmbargo(_connectionEmbargo))
           }
         }
@@ -395,8 +395,7 @@ private[client] object NewHostConnectionPool {
           override def prefixString: String = s"[$slotId (${state.productPrefix})]"
 
           def error(cause: Throwable, msg: String): Unit =
-            if (log.isErrorEnabled)
-              log.error(cause, s"[{} ({})] $msg", slotId, state.productPrefix)
+            log.error(cause, "[{} ({})] {}", slotId, state.productPrefix, msg)
 
           def settings: ConnectionPoolSettings = _settings
 
