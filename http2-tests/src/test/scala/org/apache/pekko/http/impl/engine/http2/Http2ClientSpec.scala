@@ -44,6 +44,7 @@ import pekko.http.scaladsl.model.headers.{
   `Cache-Control`,
   `Content-Length`,
   `Content-Type`,
+  `Raw-Request-URI`,
   RawHeader
 }
 import pekko.http.scaladsl.model.headers.CacheDirectives._
@@ -127,6 +128,41 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
               HPackSpecExamples.C61FirstResponseWithHuffman, None)),
           expectedResponse = HPackSpecExamples.FirstResponse)
       })
+
+      "send the Raw-Request-URI header verbatim as :path".inAssertAllStagesStopped(
+        new SimpleRequestResponseRoundtripSetup {
+          requestResponseRoundtrip(
+            streamId = 1,
+            // the `uri` is deliberately the lossy round-trip of the raw target, to show the header wins
+            request = HttpRequest(
+              uri = "https://www.example.com/a+b%20c",
+              headers = List(`Raw-Request-URI`("/a%2Bb%20c"))),
+            expectedHeaders = defaultExpectedHeaders.map {
+              case (":path", _) => ":path" -> "/a%2Bb%20c"
+              case other        => other
+            },
+            response = Seq(
+              HeadersFrame(streamId = 1, endStream = true, endHeaders = true,
+                HPackSpecExamples.C61FirstResponseWithHuffman, None)),
+            expectedResponse = HPackSpecExamples.FirstResponse)
+        })
+
+      "re-encode the path from the Uri when no Raw-Request-URI header is present".inAssertAllStagesStopped(
+        new SimpleRequestResponseRoundtripSetup {
+          requestResponseRoundtrip(
+            streamId = 1,
+            request = HttpRequest(uri = "https://www.example.com/a%2Bb%20c"),
+            // `Uri` decodes `%2B` when parsing and renders `+` back, since `+` is kept raw by the pchar keep-set.
+            // This is the round-trip loss that makes the `Raw-Request-URI` escape hatch necessary.
+            expectedHeaders = defaultExpectedHeaders.map {
+              case (":path", _) => ":path" -> "/a+b%20c"
+              case other        => other
+            },
+            response = Seq(
+              HeadersFrame(streamId = 1, endStream = true, endHeaders = true,
+                HPackSpecExamples.C61FirstResponseWithHuffman, None)),
+            expectedResponse = HPackSpecExamples.FirstResponse)
+        })
 
       "GOAWAY when the response has an invalid headers frame".inAssertAllStagesStopped(new TestSetup with NetProbes {
         val streamId = 0x1

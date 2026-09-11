@@ -20,6 +20,7 @@ import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.http2.FrameEvent.ParsedHeadersFrame
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.`Raw-Request-URI`
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.util.OptionVal
@@ -73,9 +74,20 @@ private[http2] class RequestRendering(
     headerPairs += ":method" -> request.method.value
     headerPairs += ":scheme" -> request.uri.scheme
     headerPairs += ":authority" -> request.uri.authority.toString
-    headerPairs += ":path" -> request.uri.toHttpRequestTargetOriginForm.toString
+    // a `Raw-Request-URI` header supplies the request target verbatim, as it does in the HTTP/1.1 renderer. `Uri`
+    // percent-decodes path segments when parsing and re-encodes them with a keep-set that leaves sub-delims raw, so
+    // it cannot round-trip an encoded pchar (`%2B` renders as `+`). Callers that must reproduce the target
+    // byte-for-byte -- AWS SigV4 signs the encoded path, for instance -- pass it through this header.
+    headerPairs += ":path" -> rawRequestTarget(request).getOrElse(
+      request.uri.toHttpRequestTargetOriginForm.toString)
     headerPairs
   }
+
+  // `Raw-Request-URI` is a SyntheticHeader, so it is already excluded from the rendered header block by the
+  // `renderInRequests` filter and is only consumed here. As in HTTP/1.1, the value is taken as given: it is the
+  // caller's responsibility that it is a valid origin-form target.
+  private def rawRequestTarget(request: HttpRequest): Option[String] =
+    request.headers.collectFirst { case `Raw-Request-URI`(rawUri) => rawUri }
 
   override lazy val peerIdHeader: Option[(String, String)] =
     settings.userAgentHeader.map(h => h.lowercaseName -> h.value)
