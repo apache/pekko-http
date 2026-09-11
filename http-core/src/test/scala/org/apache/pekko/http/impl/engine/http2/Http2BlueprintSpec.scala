@@ -26,6 +26,14 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class Http2BlueprintSpec extends AnyWordSpec with Matchers {
   "Http2Blueprint" should {
+    "match frame type alias (empty-data)" in {
+      Http2Blueprint.frameTypeAliasToFrameTypeName("empty-data") shouldEqual
+      Some(Http2Blueprint.EmptyDataFrameThrottleName)
+    }
+    "match frame type alias (empty-data-no-end-stream)" in {
+      Http2Blueprint.frameTypeAliasToFrameTypeName("empty-data-no-end-stream") shouldEqual
+      Some(Http2Blueprint.EmptyDataFrameNoEndStreamThrottleName)
+    }
     "match frame type alias (reset)" in {
       Http2Blueprint.frameTypeAliasToFrameTypeName("reset") shouldEqual
       Some(RstStreamFrame(0, ErrorCode.PROTOCOL_ERROR).frameTypeName)
@@ -67,5 +75,40 @@ class Http2BlueprintSpec extends AnyWordSpec with Matchers {
     "not match unknown frame type alias" in {
       Http2Blueprint.frameTypeAliasToFrameTypeName("unknown") shouldEqual None
     }
+
+    "charge nothing when no frame type is throttled" in {
+      Http2Blueprint.frameCost(Set.empty, emptyDataFrame(endStream = false)) shouldEqual 0
+      Http2Blueprint.frameCost(Set.empty, rstStreamFrame) shouldEqual 0
+    }
+    "charge a frame matched by its own frame type name" in {
+      val throttled = Set(rstStreamFrame.frameTypeName)
+      Http2Blueprint.frameCost(throttled, rstStreamFrame) shouldEqual 1
+      Http2Blueprint.frameCost(throttled, emptyDataFrame(endStream = false)) shouldEqual 0
+    }
+    "charge only the empty DATA frames that do not end the stream (empty-data-no-end-stream)" in {
+      val throttled = Set(Http2Blueprint.EmptyDataFrameNoEndStreamThrottleName)
+      Http2Blueprint.frameCost(throttled, emptyDataFrame(endStream = false)) shouldEqual 1
+      // an empty DATA frame with END_STREAM is how a client closes a request body, so it is left uncharged
+      Http2Blueprint.frameCost(throttled, emptyDataFrame(endStream = true)) shouldEqual 0
+      Http2Blueprint.frameCost(throttled, dataFrame(endStream = false)) shouldEqual 0
+      Http2Blueprint.frameCost(throttled, dataFrame(endStream = true)) shouldEqual 0
+    }
+    "charge every empty DATA frame (empty-data)" in {
+      val throttled = Set(Http2Blueprint.EmptyDataFrameThrottleName)
+      Http2Blueprint.frameCost(throttled, emptyDataFrame(endStream = false)) shouldEqual 1
+      Http2Blueprint.frameCost(throttled, emptyDataFrame(endStream = true)) shouldEqual 1
+      Http2Blueprint.frameCost(throttled, dataFrame(endStream = false)) shouldEqual 0
+      Http2Blueprint.frameCost(throttled, dataFrame(endStream = true)) shouldEqual 0
+    }
+    "charge an empty DATA frame once when both empty DATA aliases are throttled" in {
+      val throttled =
+        Set(Http2Blueprint.EmptyDataFrameThrottleName, Http2Blueprint.EmptyDataFrameNoEndStreamThrottleName)
+      Http2Blueprint.frameCost(throttled, emptyDataFrame(endStream = false)) shouldEqual 1
+      Http2Blueprint.frameCost(throttled, emptyDataFrame(endStream = true)) shouldEqual 1
+    }
   }
+
+  private def emptyDataFrame(endStream: Boolean) = DataFrame(1, endStream, ByteString.empty)
+  private def dataFrame(endStream: Boolean) = DataFrame(1, endStream, ByteString("payload"))
+  private def rstStreamFrame = RstStreamFrame(1, ErrorCode.PROTOCOL_ERROR)
 }
