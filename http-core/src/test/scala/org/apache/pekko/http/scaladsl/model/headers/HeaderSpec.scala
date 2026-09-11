@@ -256,4 +256,31 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
       }
     }
   }
+  "Raw-Request-URI should" - {
+    "accept any request target made of visible ASCII" in {
+      `Raw-Request-URI`("/def%80%fe%ff").uri shouldEqual "/def%80%fe%ff"
+      `Raw-Request-URI`("/a+b=c?d=e&f=%2B#g").uri shouldEqual "/a+b=c?d=e&f=%2B#g"
+      // every visible ASCII character, 0x21 to 0x7E
+      val allVisible = (0x21 to 0x7E).map(_.toChar).mkString
+      `Raw-Request-URI`(allVisible).uri shouldEqual allVisible
+    }
+    "reject anything that cannot be sent as a request target" in {
+      // the value is written into the request line as given: a space, CR or LF would end the target early and let
+      // what follows be read as the protocol, a header or a second request
+      val e = the[IllegalArgumentException] thrownBy `Raw-Request-URI`("/a HTTP/1.0")
+      e.getMessage should include("found U+0020 at index 2")
+      an[IllegalArgumentException] should be thrownBy `Raw-Request-URI`("/a\u000d\u000aHost: evil")
+      an[IllegalArgumentException] should be thrownBy `Raw-Request-URI`("/a\u000aX: y")
+      an[IllegalArgumentException] should be thrownBy `Raw-Request-URI`("/a\u0009b")
+      an[IllegalArgumentException] should be thrownBy `Raw-Request-URI`("/a\u0000b")
+      an[IllegalArgumentException] should be thrownBy `Raw-Request-URI`("/a\u007fb")
+      // rendered a character at a time truncated to a byte, so a character outside ASCII is not sent as itself:
+      // U+010D would land on the wire as 0x0D, a CR
+      an[IllegalArgumentException] should be thrownBy `Raw-Request-URI`("/a\u010d")
+      an[IllegalArgumentException] should be thrownBy `Raw-Request-URI`("/caf\u00e9")
+      an[IllegalArgumentException] should be thrownBy `Raw-Request-URI`("")
+      // `copy` goes through the constructor too
+      an[IllegalArgumentException] should be thrownBy `Raw-Request-URI`("/a").copy(uri = "/a\u000d\u000a")
+    }
+  }
 }

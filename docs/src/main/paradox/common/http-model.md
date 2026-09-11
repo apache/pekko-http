@@ -107,6 +107,14 @@ The `Raw-Request-URI` header is honoured by both the HTTP/1.1 and the HTTP/2 cli
 the `:path` pseudo-header. It is consumed by the request engine and never rendered as a header of its own, and its
 value is used exactly as given — it is the caller's responsibility to supply a valid request target.
 
+Because the value goes to the wire as it is, it has to be something that *can* be sent as a request target: non-empty,
+and made of visible ASCII characters only (`0x21`–`0x7E`). The header rejects anything else on construction with an
+`IllegalArgumentException` — a space, CR or LF would end the request line early and let whatever follows be read as
+the protocol, a header or a second request, and a character outside ASCII cannot be rendered faithfully at all.
+Percent-encode what the target needs to carry; the encoded form is sent untouched. Never build this header from
+request input you have not validated: it is the one place where the client sends bytes you hand it without parsing
+them first.
+
 This is the supported way to send a request target that @apidoc[Uri] cannot reproduce on its own. `Uri` percent-decodes
 path segments when parsing and re-encodes them with a keep-set that leaves sub-delims raw, so an encoded *pchar* does
 not survive the round trip — `%2B` is rendered back as `+`, for instance. Callers that must reproduce the target
@@ -474,3 +482,9 @@ Scala
 
 Java
 :   @@snip [CustomHttpMethodsExampleTest.java](/docs/src/test/java/docs/http/javadsl/server/directives/CustomHttpMethodExamplesTest.java) { #customHttpMethod }
+
+The name of a custom method must be a *token* (RFC 9110 §5.6.2): letters, digits and the characters
+`` !#$%&'*+-.^_`|~ ``. Anything else — a space, a control character, a delimiter such as `/` or `:`, a character
+outside ASCII — is rejected with an `IllegalArgumentException` when the method is created. The name is written into the
+request line as given, ahead of the request target, so a space, CR or LF in it would end the method early and let the
+rest be read as the target, the protocol or a header.

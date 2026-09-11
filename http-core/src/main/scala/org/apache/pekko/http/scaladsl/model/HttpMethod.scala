@@ -16,6 +16,7 @@ package org.apache.pekko.http.scaladsl.model
 import java.util.Locale
 
 import org.apache.pekko
+import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.RequestEntityAcceptance._
@@ -65,7 +66,7 @@ object HttpMethod {
   @deprecated("Use the overload with contentLengthAllowed parameter", since = "1.4.0")
   def custom(name: String, safe: Boolean, idempotent: Boolean, requestEntityAcceptance: RequestEntityAcceptance)
       : HttpMethod = {
-    require(name.nonEmpty, "value must be non-empty")
+    requireToken(name)
     require(!safe || idempotent, "An HTTP method cannot be safe without being idempotent")
     apply(name, safe, idempotent, requestEntityAcceptance, oldContentLengthCondition)
   }
@@ -75,7 +76,7 @@ object HttpMethod {
    */
   def custom(name: String, safe: Boolean, idempotent: Boolean, requestEntityAcceptance: RequestEntityAcceptance,
       contentLengthAllowed: Boolean): HttpMethod = {
-    require(name.nonEmpty, "value must be non-empty")
+    requireToken(name)
     require(!safe || idempotent, "An HTTP method cannot be safe without being idempotent")
     apply(name, safe, idempotent, requestEntityAcceptance, if (contentLengthAllowed) anyToTrue else anyToFalse)
   }
@@ -86,6 +87,19 @@ object HttpMethod {
    */
   def custom(name: String): HttpMethod =
     custom(name, safe = false, idempotent = false, requestEntityAcceptance = Expected, contentLengthAllowed = true)
+
+  // A method name is written into the HTTP/1.1 request line as given, ahead of the request target, so a space, CR
+  // or LF in it would end the method early and let the rest be read as the target, the protocol or a header. Only a
+  // token (RFC 9110 section 5.6.2) is a method on the wire, and only a token is accepted.
+  private def requireToken(name: String): Unit = {
+    require(name.nonEmpty, "value must be non-empty")
+    var ix = 0
+    while (ix < name.length && CharacterClasses.tchar(name.charAt(ix))) ix += 1
+    require(
+      ix == name.length,
+      "an HTTP method name must be a token (RFC 9110 section 5.6.2), it is written into the request line as given: " +
+      s"found U+${"%04X".format(name.charAt(ix).toInt)} at index $ix")
+  }
 }
 
 object HttpMethods extends ObjectRegistry[String, HttpMethod] {

@@ -84,8 +84,9 @@ private[http2] class RequestRendering(
   }
 
   // `Raw-Request-URI` is a SyntheticHeader, so it is already excluded from the rendered header block by the
-  // `renderInRequests` filter and is only consumed here. As in HTTP/1.1, the value is taken as given: it is the
-  // caller's responsibility that it is a valid origin-form target.
+  // `renderInRequests` filter and is only consumed here. As in HTTP/1.1, the value is taken as given; the header
+  // rejects anything but visible ASCII on construction, so it cannot carry a character the HPACK guard would drop
+  // the `:path` field for. Whether it is a well-formed origin-form target is still the caller's responsibility.
   private def rawRequestTarget(request: HttpRequest): Option[String] =
     request.headers.collectFirst { case `Raw-Request-URI`(rawUri) => rawUri }
 
