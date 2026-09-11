@@ -99,6 +99,12 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
         summary3 shouldEqual
         "Illegal HTTP header 'Retry-After': Invalid input '-', expected DIGIT, OWS or 'EOI' (line 1, column 5)"
       }
+      "escape control characters in the error line" in {
+        // the error line is logged under the default `error-logging-verbosity = full`
+        val Left(List(ErrorInfo(summary, detail))) = `Retry-After`.parseFromValueString("12\u001b[31m")
+        summary should startWith("Illegal HTTP header value: Invalid input '\\u001b'")
+        detail shouldEqual "12\\u001b[31m\n  ^"
+      }
     }
   }
 
