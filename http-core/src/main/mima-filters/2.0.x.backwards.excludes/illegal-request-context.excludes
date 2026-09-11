@@ -23,3 +23,6 @@ ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.e
 ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.impl.engine.parsing.ParserOutput#MessageStartError.unapply")
 
 # internal API: replaced by an instance level completion handling that can report the same context
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.parsing.HttpMessageParser.CompletionIsMessageStartError")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.engine.parsing.HttpMessageParser.org$apache$pekko$http$impl$engine$parsing$HttpMessageParser$_setter_$completionIsMessageStartError_=")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.impl.engine.parsing.HttpMessageParser.completionIsMessageStartError")
