@@ -19,10 +19,13 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ `Timeout-Access`, Connection }
 import pekko.stream.Materializer
+import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep }
+import pekko.stream.testkit.scaladsl.{ TestSink, TestSource }
 import pekko.stream.testkit.Utils.assertAllStagesStopped
 import pekko.testkit.ExplicitlyTriggeredScheduler
 import org.scalatest.Inside
 
+import scala.concurrent.Promise
 import scala.concurrent.duration._
 
 /** Tests similar to HttpServerSpec that need ExplicitlyTriggeredScheduler */
@@ -171,6 +174,41 @@ class HttpServerWithExplicitSchedulerSpec extends PekkoSpecWithMaterializer(
         netOut.expectComplete()
         netIn.sendComplete()
       })
+
+      // the timeouts are scheduled on the materializer, so they are not tied to the lifetime of the stage that
+      // created them and have to be cancelled when a connection goes away with a request still open
+      "are cancelled when the stage that scheduled them stops" in assertAllStagesStopped {
+        val scheduler = system.scheduler.asInstanceOf[ExplicitlyTriggeredScheduler]
+        val timeoutHandlerCalled = Promise[Unit]()
+
+        val timeoutSupport =
+          BidiFlow.fromGraph(new HttpServerBluePrint.RequestTimeoutSupport(400.millis, system.log))
+        val applicationSide =
+          Flow.fromSinkAndSourceMat(TestSink[HttpRequest](), TestSource[HttpResponse]())(Keep.both)
+        val ((requestsIn, (applicationRequests, applicationResponses)), responsesOut) =
+          TestSource[HttpRequest]()
+            .viaMat(timeoutSupport.joinMat(applicationSide)(Keep.right))(Keep.both)
+            .toMat(TestSink[HttpResponse]())(Keep.both)
+            .run()
+
+        responsesOut.request(1)
+        requestsIn.sendNext(HttpRequest())
+        applicationRequests.requestNext().header[`Timeout-Access`].foreach(
+          _.timeoutAccess.updateHandler { (_: HttpRequest) =>
+            timeoutHandlerCalled.trySuccess(())
+            HttpResponse(StatusCodes.InternalServerError)
+          })
+
+        // the connection goes away while the application is still working on the response
+        requestsIn.sendComplete()
+        applicationRequests.expectComplete()
+        applicationResponses.sendComplete()
+        responsesOut.expectComplete()
+
+        // nothing is left to run the timeout of a request that can no longer be answered
+        scheduler.timePasses(500.millis)
+        timeoutHandlerCalled.isCompleted shouldBe false
+      }
     }
   }
 

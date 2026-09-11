@@ -349,6 +349,13 @@ private[http] object HttpServerBluePrint {
           def onPull(): Unit = pull(responseIn)
           override def onDownstreamFinish(cause: Throwable): Unit = cancel(responseIn)
         })
+
+      override def postStop(): Unit = {
+        // the timeouts are scheduled on the materializer, so they outlive this stage unless they are cancelled here.
+        // Whatever is still open now belongs to a connection that is gone, so firing them cannot do anything useful.
+        openTimeouts.foreach(_.clear())
+        openTimeouts = immutable.Queue.empty
+      }
     }
   }
 
