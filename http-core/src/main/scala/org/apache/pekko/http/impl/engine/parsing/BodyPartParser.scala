@@ -178,7 +178,8 @@ private[http] final class BodyPartParser(
             emit(BodyPartStart(headers.toList, _ => HttpEntity.empty(contentType)))
             val ix = lineStart + eolConfiguration.boundaryLength
             if (eolConfiguration.isEndOfLine(input, ix))
-              parseHeaderLines(input, ix + eolConfiguration.eolLength, headers, headerCount, None)
+              // an empty part; the boundary starts another one, so its header state starts empty
+              parseHeaderLines(input, ix + eolConfiguration.eolLength, ListBuffer[HttpHeader](), 0, None)
             else if (doubleDash(input, ix)) setShouldTerminate()
             else fail("Illegal multipart boundary in message content")
 
