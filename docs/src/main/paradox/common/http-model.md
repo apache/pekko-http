@@ -482,3 +482,9 @@ Scala
 
 Java
 :   @@snip [CustomHttpMethodsExampleTest.java](/docs/src/test/java/docs/http/javadsl/server/directives/CustomHttpMethodExamplesTest.java) { #customHttpMethod }
+
+The name of a custom method must be a *token* (RFC 9110 §5.6.2): letters, digits and the characters
+`` !#$%&'*+-.^_`|~ ``. Anything else — a space, a control character, a delimiter such as `/` or `:`, a character
+outside ASCII — is rejected with an `IllegalArgumentException` when the method is created. The name is written into the
+request line as given, ahead of the request target, so a space, CR or LF in it would end the method early and let the
+rest be read as the target, the protocol or a header.
