@@ -60,9 +60,9 @@ private[http] object ParseErrorLine {
   // the EOI sentinel (U+FFFF, which is not a control character) is left alone: `HeaderParser` appends it to every
   // header value it parses and strips it from the error afterwards, which only works if it is still that character
   private def escape(c: Char): String = c match {
-    case '\t'                          => "\\t"
-    case '\r'                          => "\\r"
-    case '\n'                          => "\\n"
+    case '\t'                           => "\\t"
+    case '\r'                           => "\\r"
+    case '\n'                           => "\\n"
     case c if Character.isISOControl(c) => "\\u%04x".format(c.toInt)
     case c                              => c.toString
   }
