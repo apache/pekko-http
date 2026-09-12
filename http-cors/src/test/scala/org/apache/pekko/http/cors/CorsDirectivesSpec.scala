@@ -17,8 +17,6 @@
 
 package org.apache.pekko.http.cors
 
-import scala.collection.immutable.Seq
-
 import org.apache.pekko
 import pekko.http.cors.scaladsl.CorsRejection
 import pekko.http.cors.scaladsl.model.{ HttpHeaderRange, HttpOriginMatcher }

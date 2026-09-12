@@ -16,7 +16,6 @@ package org.apache.pekko.http.scaladsl.server.directives
 import java.io.File
 import java.nio.file.{ Files, Path }
 
-import scala.collection.immutable
 import scala.concurrent.{ Future, Promise }
 import scala.util.{ Failure, Success }
 
@@ -82,7 +81,7 @@ trait FileUploadDirectives {
    * @group fileupload
    */
   @ApiMayChange
-  def storeUploadedFiles(fieldName: String, destFn: FileInfo => File): Directive1[immutable.Seq[(FileInfo, File)]] =
+  def storeUploadedFiles(fieldName: String, destFn: FileInfo => File): Directive1[Seq[(FileInfo, File)]] =
     entity(as[Multipart.FormData]).flatMap { formData =>
       extractRequestContext.flatMap { ctx =>
         implicit val mat = ctx.materializer
@@ -171,7 +170,7 @@ trait FileUploadDirectives {
    * @group fileupload
    */
   @ApiMayChange
-  def fileUploadAll(fieldName: String): Directive1[immutable.Seq[(FileInfo, Source[ByteString, Any])]] =
+  def fileUploadAll(fieldName: String): Directive1[Seq[(FileInfo, Source[ByteString, Any])]] =
     extractRequestContext.flatMap { ctx =>
       implicit val ec = ctx.executionContext
 

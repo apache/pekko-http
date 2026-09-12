@@ -25,8 +25,6 @@ import pekko.http.scaladsl.model.headers._
 import pekko.util.OptionVal
 import pekko.util.Helpers.toRootLowerCase
 
-import scala.collection.immutable
-
 /**
  * Marker trait for headers which contain portentially secret / sensitive information.
  *
@@ -111,7 +109,7 @@ object HttpHeader {
   /** INTERNAL API */
   @InternalApi
   private[pekko] def fastFind[T >: Null <: jm.HttpHeader](
-      clazz: Class[T], headers: immutable.Seq[HttpHeader]): OptionVal[T] = {
+      clazz: Class[T], headers: Seq[HttpHeader]): OptionVal[T] = {
     val it = headers.iterator
     while (it.hasNext) it.next() match {
       case h if clazz.isInstance(h) => return OptionVal.Some[T](h.asInstanceOf[T])

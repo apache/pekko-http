@@ -18,8 +18,6 @@ import java.util.Random
 import org.apache.pekko
 import pekko.annotation.InternalApi
 
-import scala.collection.immutable
-import scala.collection.immutable.Seq
 import pekko.event.LoggingAdapter
 import pekko.http.impl.util._
 import pekko.http.impl.engine.server.UpgradeToOtherProtocolResponseHeader
@@ -270,7 +268,7 @@ private[http] object Handshake {
     /**
      * Builds a WebSocket handshake request.
      */
-    def buildRequest(uri: Uri, extraHeaders: immutable.Seq[HttpHeader], subprotocols: Seq[String], random: Random)
+    def buildRequest(uri: Uri, extraHeaders: Seq[HttpHeader], subprotocols: Seq[String], random: Random)
         : (HttpRequest, `Sec-WebSocket-Key`) = {
       val keyBytes = new Array[Byte](16)
       random.nextBytes(keyBytes)

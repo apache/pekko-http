@@ -21,8 +21,6 @@ import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.scaladsl.model.ErrorInfo
 import pekko.util.ByteString
 
-import scala.collection.immutable
-
 /** INTERNAL API */
 @InternalApi
 private[http2] sealed trait FrameEvent { self: Product =>
@@ -78,8 +76,8 @@ private[http] object FrameEvent {
       headerBlockFragment: ByteString) extends StreamFrameEvent
 
   final case class RstStreamFrame(streamId: Int, errorCode: ErrorCode) extends StreamFrameEvent
-  final case class SettingsFrame(settings: immutable.Seq[Setting]) extends FrameEvent
-  final case class SettingsAckFrame(acked: immutable.Seq[Setting]) extends FrameEvent
+  final case class SettingsFrame(settings: Seq[Setting]) extends FrameEvent
+  final case class SettingsAckFrame(acked: Seq[Setting]) extends FrameEvent
 
   case class PingFrame(ack: Boolean, data: ByteString) extends FrameEvent {
     require(data.size == 8, s"PingFrame payload must be of size 8 but was ${data.size}")

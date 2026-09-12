@@ -15,8 +15,6 @@ package org.apache.pekko.http.impl.model.parser
 
 import java.net.InetAddress
 
-import scala.collection.immutable.Seq
-
 import org.apache.pekko
 import pekko.http.scaladsl.settings.ParserSettings.CookieParsingMode
 import pekko.http.impl.model.parser.HeaderParser.Settings

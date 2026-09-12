@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.marshalling
 
-import scala.collection.immutable
-
 import org.apache.pekko.http.scaladsl.model._
 
 sealed trait ContentTypeOverrider[T] {
@@ -28,9 +26,9 @@ object ContentTypeOverrider {
       value.withContentType(newContentType).asInstanceOf[T] // can't be expressed in types
   }
 
-  implicit def forHeadersAndEntity[T <: HttpEntity]: ContentTypeOverrider[(immutable.Seq[HttpHeader], T)] =
-    new ContentTypeOverrider[(immutable.Seq[HttpHeader], T)] {
-      def apply(value: (immutable.Seq[HttpHeader], T), newContentType: ContentType) =
+  implicit def forHeadersAndEntity[T <: HttpEntity]: ContentTypeOverrider[(Seq[HttpHeader], T)] =
+    new ContentTypeOverrider[(Seq[HttpHeader], T)] {
+      def apply(value: (Seq[HttpHeader], T), newContentType: ContentType) =
         value._1 -> value._2.withContentType(newContentType).asInstanceOf[T]
     }
 

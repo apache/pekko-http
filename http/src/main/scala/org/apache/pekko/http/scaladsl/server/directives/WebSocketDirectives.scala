@@ -14,8 +14,6 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import scala.collection.immutable
-
 import org.apache.pekko
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.http.scaladsl.model.ws.{ Message, WebSocketUpgrade }
@@ -48,7 +46,7 @@ trait WebSocketDirectives {
    *
    * @group websocket
    */
-  def extractOfferedWsProtocols: Directive1[immutable.Seq[String]] =
+  def extractOfferedWsProtocols: Directive1[Seq[String]] =
     extractWebSocketUpgrade.map(_.requestedProtocols)
 
   /**

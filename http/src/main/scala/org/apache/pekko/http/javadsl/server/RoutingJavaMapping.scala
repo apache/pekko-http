@@ -15,8 +15,6 @@ package org.apache.pekko.http.javadsl.server
 
 import java.util.concurrent.CompletionStage
 
-import scala.collection.immutable
-
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.{ javadsl, scaladsl }
@@ -35,7 +33,7 @@ private[http] object RoutingJavaMapping {
 
   object Implicits {
     implicit def convertToScala[J](j: J)(implicit mapping: J2SMapping[J]): mapping.S = mapping.toScala(j)
-    implicit def convertSeqToScala[J](j: Seq[J])(implicit mapping: J2SMapping[J]): immutable.Seq[mapping.S] =
+    implicit def convertSeqToScala[J](j: Seq[J])(implicit mapping: J2SMapping[J]): Seq[mapping.S] =
       j.map(mapping.toScala(_)).toList
 
     implicit def AddAsScala[J](javaObject: J)(implicit mapping: J2SMapping[J]): AsScala[mapping.S] =

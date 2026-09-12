@@ -17,7 +17,6 @@ import org.apache.pekko
 import pekko.annotation.ApiMayChange
 
 import scala.annotation.{ tailrec, varargs }
-import scala.collection.immutable
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 
@@ -41,7 +40,7 @@ object CacheDirective {
     CustomCacheDirective(name, content)
 
   sealed abstract class FieldNamesDirective extends Product with ValueRenderable {
-    def fieldNames: immutable.Seq[String]
+    def fieldNames: Seq[String]
     final def render[R <: Rendering](r: R): r.type =
       if (fieldNames.nonEmpty) {
         r ~~ productPrefix ~~ '=' ~~ '"'
@@ -126,7 +125,7 @@ object CacheDirectives {
    * For a fuller description of the use case, see
    * http://tools.ietf.org/html/rfc7234#section-5.2.2.2
    */
-  final case class `no-cache`(fieldNames: immutable.Seq[String]) extends FieldNamesDirective with ResponseDirective
+  final case class `no-cache`(fieldNames: Seq[String]) extends FieldNamesDirective with ResponseDirective
 
   /**
    * For a fuller description of the use case, see
@@ -141,15 +140,15 @@ object CacheDirectives {
    * For a fuller description of the use case, see
    * http://tools.ietf.org/html/rfc7234#section-5.2.2.6
    */
-  final case class `private`(fieldNames: immutable.Seq[String]) extends FieldNamesDirective with ResponseDirective
+  final case class `private`(fieldNames: Seq[String]) extends FieldNamesDirective with ResponseDirective
   object `private` {
-    def apply(): `private` = new `private`(immutable.Seq.empty)
+    def apply(): `private` = new `private`(Seq.empty)
     def apply(firstFieldName: String, otherFieldNames: String*): `private` =
       new `private`(firstFieldName +: otherFieldNames)
   }
 
   /** Java API */
-  @varargs def createPrivate(fieldNames: String*): ResponseDirective = new `private`(immutable.Seq(fieldNames: _*))
+  @varargs def createPrivate(fieldNames: String*): ResponseDirective = new `private`(Seq(fieldNames: _*))
 
   /**
    * For a fuller description of the use case, see

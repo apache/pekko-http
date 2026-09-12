@@ -23,7 +23,6 @@ import pekko.http.impl.engine.http2.FrameEvent.Setting
 import pekko.stream.impl.io
 import pekko.util.ByteString
 
-import scala.collection.immutable
 import scala.util.Try
 
 /**
@@ -41,7 +40,7 @@ private[pekko] object Http2SettingsHeader {
   def headerValueToBinary(value: String): ByteString =
     ByteString(base64UrlStringDecoder(value.toCharArray))
 
-  def parse(value: String, log: LoggingAdapter): Try[immutable.Seq[Setting]] = Try {
+  def parse(value: String, log: LoggingAdapter): Try[Seq[Setting]] = Try {
     // settings are a base64url encoded Http2 settings frame
     // https://httpwg.org/specs/rfc7540.html#rfc.section.3.2.1
     val bytes = headerValueToBinary(value)

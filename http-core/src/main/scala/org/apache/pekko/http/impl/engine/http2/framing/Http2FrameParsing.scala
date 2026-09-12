@@ -14,7 +14,6 @@
 package org.apache.pekko.http.impl.engine.http2
 package framing
 
-import scala.collection.immutable
 import org.apache.pekko
 import pekko.event.LoggingAdapter
 import pekko.stream.Attributes
@@ -33,8 +32,8 @@ import scala.annotation.tailrec
 @InternalApi
 private[http] object Http2FrameParsing {
 
-  def readSettings(payload: ByteStringParser.ByteReader, log: LoggingAdapter): immutable.Seq[Setting] = {
-    @tailrec def readSettings(read: List[Setting]): immutable.Seq[Setting] =
+  def readSettings(payload: ByteStringParser.ByteReader, log: LoggingAdapter): Seq[Setting] = {
+    @tailrec def readSettings(read: List[Setting]): Seq[Setting] =
       if (payload.hasRemaining) {
         val id = payload.readShortBE()
         val value = payload.readIntBE()

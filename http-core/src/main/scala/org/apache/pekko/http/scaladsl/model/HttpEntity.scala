@@ -22,7 +22,6 @@ import java.util.concurrent.CompletionStage
 import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.collection.immutable
 import scala.jdk.FutureConverters._
 import scala.jdk.OptionConverters._
 import scala.util.control.NonFatal
@@ -618,7 +617,7 @@ object HttpEntity {
    * by directly using the `LastChunk` companion object.
    */
   case class LastChunk(
-      extension: String = "", trailer: immutable.Seq[HttpHeader] = Nil) extends HttpEntity.ChunkStreamPart {
+      extension: String = "", trailer: Seq[HttpHeader] = Nil) extends HttpEntity.ChunkStreamPart {
     def data = ByteString.empty
     def isLastChunk = true
 

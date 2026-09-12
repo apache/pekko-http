@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
-import scala.collection.immutable
-
 import org.apache.pekko
 import pekko.http.impl.engine.server.InternalCustomHeader
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes, Uri }
@@ -29,7 +27,7 @@ trait WSTestRequestBuilding {
       implicit materializer: Materializer): HttpRequest = {
     val upgrade =
       new InternalCustomHeader("UpgradeToWebSocketTestHeader") with WebSocketUpgrade {
-        def requestedProtocols: immutable.Seq[String] = subprotocols.toList
+        def requestedProtocols: Seq[String] = subprotocols.toList
 
         def handleMessages(
             handlerFlow: Graph[FlowShape[Message, Message], Any], subprotocol: Option[String]): HttpResponse = {

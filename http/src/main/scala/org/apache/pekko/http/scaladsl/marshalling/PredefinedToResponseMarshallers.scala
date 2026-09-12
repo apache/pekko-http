@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.marshalling
 
-import scala.collection.immutable
 import scala.reflect.ClassTag
 
 import org.apache.pekko
@@ -34,7 +33,7 @@ trait PredefinedToResponseMarshallers extends LowPriorityToResponseMarshallerImp
 
   def fromToEntityMarshaller[T](
       status: StatusCode = StatusCodes.OK,
-      headers: immutable.Seq[HttpHeader] = Nil)(
+      headers: Seq[HttpHeader] = Nil)(
       implicit
       m: ToEntityMarshaller[T]): ToResponseMarshaller[T] =
     fromStatusCodeAndHeadersAndValue.compose(t => (status, headers, t))
@@ -54,18 +53,18 @@ trait PredefinedToResponseMarshallers extends LowPriorityToResponseMarshallerImp
    * a response either with a `text-plain` entity containing the `status.defaultMessage` or an empty entity
    * for status codes that don't allow a response.
    */
-  implicit val fromStatusCodeAndHeaders: TRM[(StatusCode, immutable.Seq[HttpHeader])] =
+  implicit val fromStatusCodeAndHeaders: TRM[(StatusCode, Seq[HttpHeader])] =
     Marshaller.opaque { case (status, headers) => statusCodeResponse(status, headers) }
 
   implicit def fromStatusCodeAndValue[S, T](implicit sConv: S => StatusCode, mt: ToEntityMarshaller[T]): TRM[(S, T)] =
     fromStatusCodeAndHeadersAndValue[T].compose { case (status, value) => (sConv(status), Nil, value) }
 
   implicit def fromStatusCodeConvertibleAndHeadersAndT[S, T](
-      implicit sConv: S => StatusCode, mt: ToEntityMarshaller[T]): TRM[(S, immutable.Seq[HttpHeader], T)] =
+      implicit sConv: S => StatusCode, mt: ToEntityMarshaller[T]): TRM[(S, Seq[HttpHeader], T)] =
     fromStatusCodeAndHeadersAndValue[T].compose { case (status, headers, value) => (sConv(status), headers, value) }
 
   implicit def fromStatusCodeAndHeadersAndValue[T](
-      implicit mt: ToEntityMarshaller[T]): TRM[(StatusCode, immutable.Seq[HttpHeader], T)] =
+      implicit mt: ToEntityMarshaller[T]): TRM[(StatusCode, Seq[HttpHeader], T)] =
     Marshaller(implicit ec => {
       case (status, headers, value) =>
         mt(value).fast.map { marshallings =>
@@ -145,7 +144,7 @@ object PredefinedToResponseMarshallers extends PredefinedToResponseMarshallers {
 
   /** INTERNAL API */
   @InternalApi
-  private def statusCodeResponse(statusCode: StatusCode, headers: immutable.Seq[HttpHeader] = Nil): HttpResponse = {
+  private def statusCodeResponse(statusCode: StatusCode, headers: Seq[HttpHeader] = Nil): HttpResponse = {
     val entity =
       if (statusCode.allowsEntity) HttpEntity(statusCode.defaultMessage)
       else HttpEntity.Empty
@@ -153,7 +152,7 @@ object PredefinedToResponseMarshallers extends PredefinedToResponseMarshallers {
     HttpResponse(status = statusCode, headers = headers, entity = entity)
   }
 
-  private def statusCodeAndEntityResponse(statusCode: StatusCode, headers: immutable.Seq[HttpHeader],
+  private def statusCodeAndEntityResponse(statusCode: StatusCode, headers: Seq[HttpHeader],
       entity: ResponseEntity): HttpResponse = {
     if (statusCode.allowsEntity) HttpResponse(statusCode, headers, entity)
     else HttpResponse(statusCode, headers, HttpEntity.Empty)

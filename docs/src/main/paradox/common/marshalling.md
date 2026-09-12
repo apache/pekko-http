@@ -70,13 +70,13 @@ Specifically these are:
     * @apidoc[StatusCode]
     * `(StatusCode, T)`, if a `ToEntityMarshaller[T]` is available
     * `(Int, T)`, if a `ToEntityMarshaller[T]` is available
-    * `(StatusCode, immutable.Seq[HttpHeader], T)`, if a `ToEntityMarshaller[T]` is available
-    * `(Int, immutable.Seq[HttpHeader], T)`, if a `ToEntityMarshaller[T]` is available
+    * `(StatusCode, Seq[HttpHeader], T)`, if a `ToEntityMarshaller[T]` is available
+    * `(Int, Seq[HttpHeader], T)`, if a `ToEntityMarshaller[T]` is available
  * @scaladoc[PredefinedToRequestMarshallers](org.apache.pekko.http.scaladsl.marshalling.PredefinedToRequestMarshallers)
     * @apidoc[HttpRequest]
     * @apidoc[Uri]
     * `(HttpMethod, Uri, T)`, if a `ToEntityMarshaller[T]` is available
-    * `(HttpMethod, Uri, immutable.Seq[HttpHeader], T)`, if a `ToEntityMarshaller[T]` is available
+    * `(HttpMethod, Uri, Seq[HttpHeader], T)`, if a `ToEntityMarshaller[T]` is available
  * @scaladoc[GenericMarshallers](org.apache.pekko.http.scaladsl.marshalling.GenericMarshallers)
     * @apidoc[Marshaller[Throwable, T]]
     * @apidoc[Marshaller[Option[A], B]], if a @apidoc[Marshaller[A, B]] and an `EmptyValue[B]` is available

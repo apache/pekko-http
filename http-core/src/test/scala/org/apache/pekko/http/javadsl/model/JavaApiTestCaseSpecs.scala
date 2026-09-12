@@ -18,7 +18,6 @@ import pekko.http.javadsl.model.headers.Cookie
 import pekko.http.scaladsl.model
 import pekko.http.scaladsl.model.headers.BasicHttpCredentials
 
-import scala.collection.immutable
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
@@ -52,11 +51,11 @@ class JavaApiTestCaseSpecs extends AnyFreeSpec with Matchers {
     }
     "addAuthentication" in {
       JavaApiTestCases.addAuthentication(model.HttpRequest()) must be(
-        model.HttpRequest(headers = immutable.Seq(model.headers.Authorization(BasicHttpCredentials("username",
+        model.HttpRequest(headers = Seq(model.headers.Authorization(BasicHttpCredentials("username",
           "password")))))
     }
     "removeCookies" in {
-      val testRequest = model.HttpRequest(headers = immutable.Seq(Cookie.create("test", "blub")))
+      val testRequest = model.HttpRequest(headers = Seq(Cookie.create("test", "blub")))
       JavaApiTestCases.removeCookies(testRequest) must be(
         model.HttpRequest())
     }

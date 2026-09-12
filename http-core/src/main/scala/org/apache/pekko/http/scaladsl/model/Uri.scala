@@ -18,7 +18,7 @@ import java.lang.{ Iterable, StringBuilder => JStringBuilder }
 import java.nio.charset.Charset
 
 import scala.annotation.tailrec
-import scala.collection.{ immutable, mutable }
+import scala.collection.mutable
 
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
@@ -447,7 +447,7 @@ object Uri {
     def address: String
     def isEmpty: Boolean
     def toOption: Option[NonEmptyHost]
-    def inetAddresses: immutable.Seq[InetAddress]
+    def inetAddresses: Seq[InetAddress]
 
     def equalsIgnoreCase(other: Host): Boolean
     override def toString = UriRendering.HostRenderer.render(new StringRendering, this).get
@@ -468,7 +468,7 @@ object Uri {
       def address: String = ""
       def isEmpty = true
       def toOption = None
-      def inetAddresses: immutable.Seq[InetAddress] = Nil
+      def inetAddresses: Seq[InetAddress] = Nil
 
       def equalsIgnoreCase(other: Host): Boolean = other eq this
     }
@@ -489,7 +489,7 @@ object Uri {
     def isEmpty = false
     def toOption = Some(this)
   }
-  final case class IPv4Host private[http] (bytes: immutable.Seq[Byte], address: String) extends NonEmptyHost {
+  final case class IPv4Host private[http] (bytes: Seq[Byte], address: String) extends NonEmptyHost {
     require(bytes.length == 4, "bytes array must have length 4")
     require(!address.isEmpty, "address must not be empty")
     def equalsIgnoreCase(other: Host): Boolean = other match {
@@ -498,7 +498,7 @@ object Uri {
     }
 
     override def isIPv4: Boolean = true
-    def inetAddresses = immutable.Seq(InetAddress.getByAddress(bytes.toArray))
+    def inetAddresses = Seq(InetAddress.getByAddress(bytes.toArray))
   }
   object IPv4Host {
     def apply(address: String): IPv4Host = apply(address.split('.').map(_.toInt.toByte))
@@ -508,7 +508,7 @@ object Uri {
     private[http] def apply(bytes: Array[Byte], address: String): IPv4Host =
       IPv4Host(bytes.toSeq, address)
   }
-  final case class IPv6Host private (bytes: immutable.Seq[Byte], address: String) extends NonEmptyHost {
+  final case class IPv6Host private (bytes: Seq[Byte], address: String) extends NonEmptyHost {
     require(bytes.length == 16, "bytes array must have length 16")
     require(!address.isEmpty, "address must not be empty")
     def equalsIgnoreCase(other: Host): Boolean = other match {
@@ -517,11 +517,11 @@ object Uri {
     }
 
     override def isIPv6: Boolean = true
-    def inetAddresses = immutable.Seq(InetAddress.getByAddress(bytes.toArray))
+    def inetAddresses = Seq(InetAddress.getByAddress(bytes.toArray))
   }
   object IPv6Host {
     def apply(bytes: Array[Byte]): IPv6Host = Host(InetAddress.getByAddress(bytes).asInstanceOf[Inet6Address])
-    def apply(bytes: immutable.Seq[Byte]): IPv6Host = apply(bytes.toArray)
+    def apply(bytes: Seq[Byte]): IPv6Host = apply(bytes.toArray)
 
     private[http] def apply(bytes: String, address: String): IPv6Host = {
       import CharUtils.{ hexValue => hex }

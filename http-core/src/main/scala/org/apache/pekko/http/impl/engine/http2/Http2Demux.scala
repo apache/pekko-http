@@ -44,7 +44,6 @@ import pekko.stream.stage.{
 import pekko.util.ByteString
 import pekko.util.OptionVal
 
-import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.DurationInt
@@ -74,7 +73,7 @@ private[http2] class Http2ClientDemux(http2Settings: Http2ClientSettings, master
  * INTERNAL API
  */
 @InternalApi
-private[http2] class Http2ServerDemux(http2Settings: Http2ServerSettings, initialRemoteSettings: immutable.Seq[Setting],
+private[http2] class Http2ServerDemux(http2Settings: Http2ServerSettings, initialRemoteSettings: Seq[Setting],
     upgraded: Boolean)
     extends Http2Demux(http2Settings, initialRemoteSettings, upgraded, isServer = true) {
   // We don't provide access to incoming trailing request headers on the server side
@@ -216,7 +215,7 @@ private[http2] object ConfigurablePing {
  */
 @InternalApi
 private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
-    initialRemoteSettings: immutable.Seq[Setting], upgraded: Boolean, isServer: Boolean)
+    initialRemoteSettings: Seq[Setting], upgraded: Boolean, isServer: Boolean)
     extends GraphStageWithMaterializedValue[BidiShape[Http2SubStream, FrameEvent, FrameEvent, Http2SubStream],
       ServerTerminator] {
   stage =>
@@ -295,10 +294,10 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       // Send initial settings based on the local application.conf. For simplicity, these settings are
       // enforced immediately even before the acknowledgement is received.
       // Reminder: the receiver of a SETTINGS frame must process them in the order they are received.
-      val initialLocalSettings: immutable.Seq[Setting] = immutable.Seq(
+      val initialLocalSettings: Seq[Setting] = Seq(
         Setting(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, http2Settings.maxConcurrentStreams),
         Setting(SettingIdentifier.SETTINGS_MAX_HEADER_LIST_SIZE, http2Settings.maxHeaderListSize)) ++
-        immutable.Seq(Setting(SettingIdentifier.SETTINGS_ENABLE_PUSH, 0)).filter(_ => !isServer) // only on client
+        Seq(Setting(SettingIdentifier.SETTINGS_ENABLE_PUSH, 0)).filter(_ => !isServer) // only on client
 
       override def preStart(): Unit = {
         if (initialRemoteSettings.nonEmpty) {
@@ -485,7 +484,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
        *         was raised. When raising an ERROR, this method already pushes the
        *         error back to the peer.
        */
-      private def applyRemoteSettings(settings: immutable.Seq[Setting]): Boolean = {
+      private def applyRemoteSettings(settings: Seq[Setting]): Boolean = {
         var settingsAppliedOk = true
 
         settings.foreach {

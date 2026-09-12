@@ -15,7 +15,6 @@ package org.apache.pekko.http.impl.engine.http2
 
 import java.net.InetSocketAddress
 
-import scala.collection.immutable
 import scala.concurrent.{ Future, Promise }
 import scala.concurrent.duration._
 
@@ -344,7 +343,7 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
 
     def sendResponseWithEntityStream(
         status: StatusCode = StatusCodes.OK,
-        headers: immutable.Seq[HttpHeader] = Nil): TestPublisher.Probe[ByteString] = {
+        headers: Seq[HttpHeader] = Nil): TestPublisher.Probe[ByteString] = {
       val probe = TestPublisher.probe[ByteString]()
       sendResponse(HttpResponse(status, headers,
         HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(probe))))
@@ -421,7 +420,7 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
           requestId: String,
           method: HttpMethod = HttpMethods.POST,
           uri: Uri = Uri./,
-          headers: immutable.Seq[HttpHeader] = Nil): TestPublisher.Probe[ByteString] = {
+          headers: Seq[HttpHeader] = Nil): TestPublisher.Probe[ByteString] = {
         val probe = TestPublisher.probe[ByteString]()
         sendRequest(
           HttpRequest(method, uri, headers,

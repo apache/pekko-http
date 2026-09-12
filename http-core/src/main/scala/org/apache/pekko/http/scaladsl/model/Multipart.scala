@@ -113,7 +113,7 @@ object Multipart {
     /**
      * The parts of this content as a strict collection.
      */
-    def strictParts: immutable.Seq[Multipart.BodyPart.Strict]
+    def strictParts: Seq[Multipart.BodyPart.Strict]
 
     /**
      * Creates an entity from this multipart object using the specified boundary and logger.
@@ -139,7 +139,7 @@ object Multipart {
 
     /** Java API */
     override def getStrictParts: java.lang.Iterable[? <: jm.Multipart.BodyPart.Strict] =
-      (strictParts: immutable.Seq[jm.Multipart.BodyPart.Strict]).asJava
+      (strictParts: Seq[jm.Multipart.BodyPart.Strict]).asJava
   }
 
   /**
@@ -155,7 +155,7 @@ object Multipart {
     /**
      * The headers the part carries.
      */
-    def headers: immutable.Seq[HttpHeader]
+    def headers: Seq[HttpHeader]
 
     /**
      * The potentially present `Content-Disposition` header.
@@ -185,7 +185,7 @@ object Multipart {
     def getEntity: jm.BodyPartEntity = entity
 
     /** Java API */
-    def getHeaders: java.lang.Iterable[jm.HttpHeader] = (headers: immutable.Seq[jm.HttpHeader]).asJava
+    def getHeaders: java.lang.Iterable[jm.HttpHeader] = (headers: Seq[jm.HttpHeader]).asJava
 
     /** Java API */
     def getContentDispositionHeader: Optional[jm.headers.ContentDisposition] =
@@ -259,7 +259,7 @@ object Multipart {
     /**
      * Strict [[General]] multipart content.
      */
-    case class Strict(mediaType: MediaType.Multipart, strictParts: immutable.Seq[Multipart.General.BodyPart.Strict])
+    case class Strict(mediaType: MediaType.Multipart, strictParts: Seq[Multipart.General.BodyPart.Strict])
         extends Multipart.General with Multipart.Strict with jm.Multipart.General.Strict {
       def parts: Source[Multipart.General.BodyPart.Strict, Any] = Source(strictParts)
       override def toStrict(timeout: FiniteDuration)(implicit fm: Materializer) = FastFuture.successful(this)
@@ -292,7 +292,7 @@ object Multipart {
           Future[jm.Multipart.General.BodyPart.Strict]].asJava
 
       private[BodyPart] def tryCreateFormDataBodyPart[T](
-          f: (String, Map[String, String], immutable.Seq[HttpHeader]) => T): Try[T] = {
+          f: (String, Map[String, String], Seq[HttpHeader]) => T): Try[T] = {
         val params = dispositionParams
         params.get("name") match {
           case Some(name) => Success(f(name, params - "name", headers.filterNot(_.is("content-disposition"))))
@@ -301,17 +301,17 @@ object Multipart {
         }
       }
       private[BodyPart] def tryCreateByteRangesBodyPart[T](
-          f: (ContentRange, RangeUnit, immutable.Seq[HttpHeader]) => T): Try[T] =
+          f: (ContentRange, RangeUnit, Seq[HttpHeader]) => T): Try[T] =
         headers.collectFirst { case x: `Content-Range` => x } match {
           case Some(`Content-Range`(unit, range)) => Success(f(range, unit, headers.filterNot(_.is("content-range"))))
           case None                               => Failure(IllegalHeaderException("multipart/byteranges part must contain `Content-Range` header"))
         }
     }
     object BodyPart {
-      def apply(_entity: BodyPartEntity, _headers: immutable.Seq[HttpHeader] = Nil): Multipart.General.BodyPart =
+      def apply(_entity: BodyPartEntity, _headers: Seq[HttpHeader] = Nil): Multipart.General.BodyPart =
         new Multipart.General.BodyPart {
           def entity = _entity
-          def headers: immutable.Seq[HttpHeader] = _headers
+          def headers: Seq[HttpHeader] = _headers
           def toFormDataBodyPart: Try[Multipart.FormData.BodyPart] =
             tryCreateFormDataBodyPart(FormData.BodyPart(_, entity, _, _))
           def toByteRangesBodyPart: Try[Multipart.ByteRanges.BodyPart] =
@@ -319,13 +319,13 @@ object Multipart {
           override def toString = s"General.BodyPart($entity, $headers)"
         }
 
-      def unapply(value: BodyPart): Option[(BodyPartEntity, immutable.Seq[HttpHeader])] =
+      def unapply(value: BodyPart): Option[(BodyPartEntity, Seq[HttpHeader])] =
         Some(value.entity -> value.headers)
 
       /**
        * Strict [[General.BodyPart]].
        */
-      case class Strict(entity: HttpEntity.Strict, headers: immutable.Seq[HttpHeader] = Nil)
+      case class Strict(entity: HttpEntity.Strict, headers: Seq[HttpHeader] = Nil)
           extends BodyPart with Multipart.BodyPart.Strict with jm.Multipart.General.BodyPart.Strict {
         override def toStrict(timeout: FiniteDuration)(
             implicit fm: Materializer): Future[Multipart.General.BodyPart.Strict] =
@@ -428,7 +428,7 @@ object Multipart {
     /**
      * Strict [[FormData]].
      */
-    case class Strict(strictParts: immutable.Seq[Multipart.FormData.BodyPart.Strict])
+    case class Strict(strictParts: Seq[Multipart.FormData.BodyPart.Strict])
         extends FormData with Multipart.Strict with jm.Multipart.FormData.Strict {
       def parts: Source[Multipart.FormData.BodyPart.Strict, Any] = Source(strictParts)
       override def toStrict(timeout: FiniteDuration)(implicit fm: Materializer) = FastFuture.successful(this)
@@ -461,7 +461,7 @@ object Multipart {
       /**
        * Part headers, not including the Content-Disposition header.
        */
-      def additionalHeaders: immutable.Seq[HttpHeader]
+      def additionalHeaders: Seq[HttpHeader]
 
       override def headers = contentDispositionHeader.get +: additionalHeaders
       override def contentDispositionHeader = Some(`Content-Disposition`(dispositionType.get, dispositionParams))
@@ -487,7 +487,7 @@ object Multipart {
 
       /** Java API */
       def getAdditionalHeaders: java.lang.Iterable[jm.HttpHeader] =
-        (additionalHeaders: immutable.Seq[jm.HttpHeader]).asJava
+        (additionalHeaders: Seq[jm.HttpHeader]).asJava
 
       /** Java API */
       def getFilename: Optional[String] = filename.asJava
@@ -501,7 +501,7 @@ object Multipart {
     object BodyPart {
       def apply(_name: String, _entity: BodyPartEntity,
           _additionalDispositionParams: Map[String, String] = Map.empty,
-          _additionalHeaders: immutable.Seq[HttpHeader] = Nil): Multipart.FormData.BodyPart =
+          _additionalHeaders: Seq[HttpHeader] = Nil): Multipart.FormData.BodyPart =
         new Multipart.FormData.BodyPart {
           def name = _name
           def additionalDispositionParams = _additionalDispositionParams
@@ -522,7 +522,7 @@ object Multipart {
       def fromPath(name: String, contentType: ContentType, file: Path, chunkSize: Int = -1): BodyPart =
         BodyPart(name, HttpEntity.fromPath(contentType, file, chunkSize), Map("filename" -> file.getFileName.toString))
 
-      def unapply(value: BodyPart): Option[(String, BodyPartEntity, Map[String, String], immutable.Seq[HttpHeader])] =
+      def unapply(value: BodyPart): Option[(String, BodyPartEntity, Map[String, String], Seq[HttpHeader])] =
         Some((value.name, value.entity, value.additionalDispositionParams, value.additionalHeaders))
 
       /**
@@ -530,7 +530,7 @@ object Multipart {
        */
       case class Strict(name: String, entity: HttpEntity.Strict,
           additionalDispositionParams: Map[String, String] = Map.empty,
-          additionalHeaders: immutable.Seq[HttpHeader] = Nil)
+          additionalHeaders: Seq[HttpHeader] = Nil)
           extends Multipart.FormData.BodyPart with Multipart.BodyPart.Strict
           with jm.Multipart.FormData.BodyPart.Strict {
         override def toStrict(timeout: FiniteDuration)(
@@ -545,7 +545,7 @@ object Multipart {
         def create(_name: String, _entity: BodyPartEntity,
             _additionalDispositionParams: Map[String, String],
             _additionalHeaders: Iterable[pekko.http.javadsl.model.HttpHeader]): Multipart.FormData.BodyPart = {
-          val _headers = _additionalHeaders.to(immutable.Seq).map { case h: pekko.http.scaladsl.model.HttpHeader => h }
+          val _headers = _additionalHeaders.to(Seq).map { case h: pekko.http.scaladsl.model.HttpHeader => h }
           apply(_name, _entity, _additionalDispositionParams, _headers)
         }
       }
@@ -556,7 +556,7 @@ object Multipart {
         def createStrict(_name: String, _entity: HttpEntity.Strict,
             _additionalDispositionParams: Map[String, String],
             _additionalHeaders: Iterable[pekko.http.javadsl.model.HttpHeader]): Multipart.FormData.BodyPart.Strict = {
-          val _headers = _additionalHeaders.to(immutable.Seq).map { case h: pekko.http.scaladsl.model.HttpHeader => h }
+          val _headers = _additionalHeaders.to(Seq).map { case h: pekko.http.scaladsl.model.HttpHeader => h }
           Strict(_name, _entity, _additionalDispositionParams, _headers)
         }
       }
@@ -596,7 +596,7 @@ object Multipart {
     /**
      * Strict [[ByteRanges]].
      */
-    case class Strict(strictParts: immutable.Seq[Multipart.ByteRanges.BodyPart.Strict])
+    case class Strict(strictParts: Seq[Multipart.ByteRanges.BodyPart.Strict])
         extends Multipart.ByteRanges with Multipart.Strict with jm.Multipart.ByteRanges.Strict {
       def parts: Source[Multipart.ByteRanges.BodyPart.Strict, Any] = Source(strictParts)
       override def toStrict(timeout: FiniteDuration)(implicit fm: Materializer) = FastFuture.successful(this)
@@ -629,7 +629,7 @@ object Multipart {
       /**
        * Part headers, not including the Content-Range header.
        */
-      def additionalHeaders: immutable.Seq[HttpHeader]
+      def additionalHeaders: Seq[HttpHeader]
 
       /**
        * The `Content-Range` header of this part.
@@ -651,7 +651,7 @@ object Multipart {
 
       /** Java API */
       def getAdditionalHeaders: java.lang.Iterable[jm.HttpHeader] =
-        (additionalHeaders: immutable.Seq[jm.HttpHeader]).asJava
+        (additionalHeaders: Seq[jm.HttpHeader]).asJava
 
       /** Java API */
       def getContentRangeHeader: jm.headers.ContentRange = contentRangeHeader
@@ -664,7 +664,7 @@ object Multipart {
     }
     object BodyPart {
       def apply(_contentRange: ContentRange, _entity: BodyPartEntity, _rangeUnit: RangeUnit = RangeUnits.Bytes,
-          _additionalHeaders: immutable.Seq[HttpHeader] = Nil): Multipart.ByteRanges.BodyPart =
+          _additionalHeaders: Seq[HttpHeader] = Nil): Multipart.ByteRanges.BodyPart =
         new Multipart.ByteRanges.BodyPart {
           def contentRange = _contentRange
           def entity = _entity
@@ -674,14 +674,14 @@ object Multipart {
         }
 
       def unapply(value: Multipart.ByteRanges.BodyPart)
-          : Option[(ContentRange, BodyPartEntity, RangeUnit, immutable.Seq[HttpHeader])] =
+          : Option[(ContentRange, BodyPartEntity, RangeUnit, Seq[HttpHeader])] =
         Some((value.contentRange, value.entity, value.rangeUnit, value.additionalHeaders))
 
       /**
        * Strict [[ByteRanges.BodyPart]].
        */
       case class Strict(contentRange: ContentRange, entity: HttpEntity.Strict, rangeUnit: RangeUnit = RangeUnits.Bytes,
-          additionalHeaders: immutable.Seq[HttpHeader] = Nil)
+          additionalHeaders: Seq[HttpHeader] = Nil)
           extends Multipart.ByteRanges.BodyPart with Multipart.BodyPart.Strict
           with jm.Multipart.ByteRanges.BodyPart.Strict {
         override def toStrict(timeout: FiniteDuration)(

@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.client
 
-import scala.collection.immutable
 import scala.concurrent.{ Await, ExecutionContext }
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -86,7 +85,7 @@ trait RequestBuilding extends TransformerPipelineSupport {
 
   def addHeaders(first: HttpHeader, more: HttpHeader*): RequestTransformer = _.mapHeaders(_ ++ (first +: more))
 
-  def mapHeaders(f: immutable.Seq[HttpHeader] => immutable.Seq[HttpHeader]): RequestTransformer = _.mapHeaders(f)
+  def mapHeaders(f: Seq[HttpHeader] => Seq[HttpHeader]): RequestTransformer = _.mapHeaders(f)
 
   def removeHeader(headerName: String): RequestTransformer =
     _.mapHeaders(_.filterNot(_.name.equalsIgnoreCase(headerName)))

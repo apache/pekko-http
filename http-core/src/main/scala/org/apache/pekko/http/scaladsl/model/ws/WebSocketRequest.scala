@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.model.ws
 
-import scala.collection.immutable
-
 import org.apache.pekko.http.scaladsl.model.{ HttpHeader, Uri }
 
 /**
@@ -25,7 +23,7 @@ import org.apache.pekko.http.scaladsl.model.{ HttpHeader, Uri }
  */
 final case class WebSocketRequest(
     uri: Uri,
-    extraHeaders: immutable.Seq[HttpHeader] = Nil,
+    extraHeaders: Seq[HttpHeader] = Nil,
     subprotocol: Option[String] = None)
 object WebSocketRequest {
   implicit def fromTargetUri(uri: Uri): WebSocketRequest = WebSocketRequest(uri)
@@ -33,8 +31,8 @@ object WebSocketRequest {
 
   def apply(
       uri: Uri,
-      extraHeaders: immutable.Seq[HttpHeader],
-      subprotocols: immutable.Seq[String]): WebSocketRequest =
+      extraHeaders: Seq[HttpHeader],
+      subprotocols: Seq[String]): WebSocketRequest =
     WebSocketRequest(
       uri,
       extraHeaders,

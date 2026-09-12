@@ -20,7 +20,6 @@ package org.apache.pekko.http.cors.scaladsl.settings
 import java.util.OptionalLong
 import java.util.concurrent.TimeUnit
 
-import scala.collection.immutable.Seq
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
 import scala.util.Try

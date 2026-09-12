@@ -14,8 +14,6 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import scala.collection.immutable
-
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 
@@ -32,7 +30,7 @@ trait RespondWithDirectives {
    * @group response
    */
   def respondWithHeader(responseHeader: HttpHeader): Directive0 =
-    respondWithHeaders(immutable.Seq(responseHeader))
+    respondWithHeaders(Seq(responseHeader))
 
   /**
    * Adds the given response header to all HTTP responses of its inner Route,
@@ -55,7 +53,7 @@ trait RespondWithDirectives {
    *
    * @group response
    */
-  def respondWithHeaders(responseHeaders: immutable.Seq[HttpHeader]): Directive0 =
+  def respondWithHeaders(responseHeaders: Seq[HttpHeader]): Directive0 =
     mapResponseHeaders(responseHeaders.toList ++ _)
 
   /**
@@ -73,7 +71,7 @@ trait RespondWithDirectives {
    *
    * @group response
    */
-  def respondWithDefaultHeaders(responseHeaders: immutable.Seq[HttpHeader]): Directive0 =
+  def respondWithDefaultHeaders(responseHeaders: Seq[HttpHeader]): Directive0 =
     mapResponse(_.withDefaultHeaders(responseHeaders))
 }
 

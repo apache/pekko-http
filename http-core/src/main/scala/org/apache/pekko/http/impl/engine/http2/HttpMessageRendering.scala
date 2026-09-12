@@ -148,7 +148,7 @@ private[http2] object HttpMessageRendering {
   }
 
   def renderHeaders(
-      headers: immutable.Seq[HttpHeader],
+      headers: Seq[HttpHeader],
       log: LoggingAdapter,
       isServer: Boolean,
       shouldRenderAutoHeaders: Boolean,
@@ -164,7 +164,7 @@ private[http2] object HttpMessageRendering {
    *                     peer. For example, a User-Agent on the client or a Server header on the server.
    */
   def renderHeaders(
-      headersSeq: immutable.Seq[HttpHeader],
+      headersSeq: Seq[HttpHeader],
       headerPairs: VectorBuilder[(String, String)],
       peerIdHeader: Option[(String, String)],
       log: LoggingAdapter,

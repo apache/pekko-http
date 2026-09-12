@@ -15,8 +15,6 @@ package org.apache.pekko.http.scaladsl.server.directives
 
 import java.util.function.Predicate
 
-import scala.collection.immutable
-
 import org.apache.pekko
 import pekko.http.impl.engine.server.InternalCustomHeader
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
@@ -91,7 +89,7 @@ class WebSocketDirectivesSpec extends RoutingSpec {
 
       request ~> javaRoute.asScala ~> check {
         isWebSocketUpgrade shouldEqual true
-        header[`Sec-WebSocket-Protocol`].get.protocols shouldEqual immutable.Seq("echo")
+        header[`Sec-WebSocket-Protocol`].get.protocols shouldEqual Seq("echo")
       }
 
       selectedSubprotocol shouldEqual Some(Some("echo"))
@@ -166,7 +164,7 @@ class WebSocketDirectivesSpec extends RoutingSpec {
       onHandle: (Option[String], Message => Boolean) => Unit): HttpRequest = {
     val upgrade =
       new InternalCustomHeader("UpgradeToWebSocketTestHeader") with WebSocketUpgrade {
-        override def requestedProtocols: immutable.Seq[String] = offeredProtocols.toList
+        override def requestedProtocols: Seq[String] = offeredProtocols.toList
 
         override def handleMessages(
             handlerFlow: Graph[FlowShape[Message, Message], Any],

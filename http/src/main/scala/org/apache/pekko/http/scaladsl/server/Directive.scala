@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import scala.collection.immutable
 import scala.concurrent.Future
 
 import org.apache.pekko
@@ -142,7 +141,7 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
    * Creates a new directive that is able to recover from rejections that were produced by `this` Directive
    * **before the inner route was applied**.
    */
-  def recover[R >: L](recovery: immutable.Seq[Rejection] => Directive[R])(implicit ev: Tuple[R]): Directive[R] =
+  def recover[R >: L](recovery: Seq[Rejection] => Directive[R])(implicit ev: Tuple[R]): Directive[R] =
     Directive[R] { inner => ctx =>
       import ctx.executionContext
       @volatile var rejectedFromInnerRoute = false
@@ -155,7 +154,7 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
   /**
    * Variant of `recover` that only recovers from rejections handled by the given PartialFunction.
    */
-  def recoverPF[R >: L](recovery: PartialFunction[immutable.Seq[Rejection], Directive[R]])(
+  def recoverPF[R >: L](recovery: PartialFunction[Seq[Rejection], Directive[R]])(
       implicit ev: Tuple[R]): Directive[R] =
     recover { rejections =>
       recovery.applyOrElse(rejections, (rejs: Seq[Rejection]) => RouteDirectives.reject(rejs: _*))

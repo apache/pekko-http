@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.model.headers
 
-import scala.collection.immutable
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
@@ -22,7 +21,7 @@ import pekko.http.impl.util.JavaMapping.Implicits._
 import UriRendering.UriRenderer
 import org.parboiled2.CharPredicate
 
-final case class LinkValue(uri: Uri, params: immutable.Seq[LinkParam]) extends jm.headers.LinkValue
+final case class LinkValue(uri: Uri, params: Seq[LinkParam]) extends jm.headers.LinkValue
     with ValueRenderable {
   def render[R <: Rendering](r: R): r.type = {
     r ~~ '<' ~~ uri ~~ '>'
@@ -43,7 +42,7 @@ sealed abstract class LinkParam extends jm.headers.LinkParam with ToStringRender
   def value: AnyRef
 }
 object LinkParam {
-  implicit val paramsRenderer: Renderer[immutable.Seq[LinkParam]] = Renderer.seqRenderer(separator = "; ")
+  implicit val paramsRenderer: Renderer[Seq[LinkParam]] = Renderer.seqRenderer(separator = "; ")
 }
 
 object LinkParams {

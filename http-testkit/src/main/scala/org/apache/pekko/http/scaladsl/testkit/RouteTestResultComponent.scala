@@ -15,7 +15,6 @@ package org.apache.pekko.http.scaladsl.testkit
 
 import java.util.concurrent.CountDownLatch
 
-import scala.collection.immutable
 import scala.concurrent.duration._
 
 import org.apache.pekko
@@ -34,12 +33,12 @@ trait RouteTestResultComponent {
    * A receptacle for the response or rejections created by a route.
    */
   class RouteTestResult(timeout: FiniteDuration)(implicit fm: Materializer) {
-    private var result: Option[Either[immutable.Seq[Rejection], HttpResponse]] = None
+    private var result: Option[Either[Seq[Rejection], HttpResponse]] = None
     private val latch = new CountDownLatch(1)
 
     def handled: Boolean = synchronized { result.isDefined && result.get.isRight }
 
-    def rejections: immutable.Seq[Rejection] = synchronized {
+    def rejections: Seq[Rejection] = synchronized {
       result match {
         case Some(Left(rejections)) => rejections
         case Some(Right(response))  => failTest("Request was not rejected, response was " + response)
@@ -52,7 +51,7 @@ trait RouteTestResultComponent {
     /** Returns a "fresh" entity with a "fresh" unconsumed byte- or chunk stream (if not strict) */
     def entity: ResponseEntity = entityRecreator()
 
-    def chunks: immutable.Seq[ChunkStreamPart] =
+    def chunks: Seq[ChunkStreamPart] =
       entity match {
         case HttpEntity.Chunked(_, chunks) => awaitAllElements[ChunkStreamPart](chunks)
         case _                             => Nil
@@ -118,7 +117,7 @@ trait RouteTestResultComponent {
     private def failNeitherCompletedNorRejected(): Nothing =
       failTest("Request was neither completed nor rejected within " + timeout)
 
-    private def awaitAllElements[T](data: Source[T, ?]): immutable.Seq[T] =
+    private def awaitAllElements[T](data: Source[T, ?]): Seq[T] =
       data.limit(100000).runWith(Sink.seq).awaitResult(timeout)
   }
 }

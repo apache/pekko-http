@@ -15,8 +15,6 @@ package org.apache.pekko.http.javadsl.model
 
 import org.apache.pekko.http.scaladsl.{ model => sm }
 
-import scala.collection.immutable
-
 /** Trailing headers for HTTP/2 responses */
 trait Trailer {
 
@@ -36,5 +34,5 @@ trait Trailer {
   def withHeaders(headers: Iterable[HttpHeader]): Trailer
 }
 object Trailer {
-  def create(): Trailer = new sm.Trailer(immutable.Seq.empty)
+  def create(): Trailer = new sm.Trailer(Seq.empty)
 }

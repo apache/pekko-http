@@ -43,7 +43,6 @@ import pekko.util.Helpers.toRootLowerCase
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.{ ExecutionContext, Future }
-import scala.collection.immutable
 import scala.util.control.NonFatal
 
 /**
@@ -130,7 +129,7 @@ private[http] object Http2Blueprint {
   def serverStack(
       settings: ServerSettings,
       log: LoggingAdapter,
-      initialDemuxerSettings: immutable.Seq[Setting] = Nil,
+      initialDemuxerSettings: Seq[Setting] = Nil,
       upgraded: Boolean = false,
       telemetry: TelemetrySpi,
     dateHeaderRendering: DateHeaderRendering): BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] = {
@@ -272,7 +271,7 @@ private[http] object Http2Blueprint {
    * Creates substreams for every stream and manages stream state machines
    * and handles priorization (TODO: later)
    */
-  def serverDemux(settings: Http2ServerSettings, initialDemuxerSettings: immutable.Seq[Setting], upgraded: Boolean)
+  def serverDemux(settings: Http2ServerSettings, initialDemuxerSettings: Seq[Setting], upgraded: Boolean)
       : BidiFlow[Http2SubStream, FrameEvent, FrameEvent, Http2SubStream, ServerTerminator] =
     BidiFlow.fromGraph(new Http2ServerDemux(settings, initialDemuxerSettings, upgraded))
 

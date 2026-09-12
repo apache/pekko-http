@@ -18,8 +18,6 @@ import pekko.http.scaladsl.model.{ HttpEntity, HttpResponse }
 import pekko.http.scaladsl.model.headers.{ Authorization, BasicHttpCredentials }
 import pekko.testkit.PekkoSpec
 
-import scala.collection.immutable
-
 class HttpResponseDetailedStringExampleSpec extends PekkoSpec {
 
   // Custom string representation which includes headers
@@ -38,7 +36,7 @@ class HttpResponseDetailedStringExampleSpec extends PekkoSpec {
       "This body contains information about [user]"
 
     val httpResponseWithHeadersAndBody =
-      HttpResponse(entity = piiBody, headers = immutable.Seq(piiHeader))
+      HttpResponse(entity = piiBody, headers = Seq(piiHeader))
 
     // Our custom string representation includes body and headers string representations...
     assert(

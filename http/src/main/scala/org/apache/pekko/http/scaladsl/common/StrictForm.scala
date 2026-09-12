@@ -47,7 +47,7 @@ import pekko.stream.Materializer
  * }}}
  */
 sealed abstract class StrictForm {
-  def fields: immutable.Seq[(String, StrictForm.Field)]
+  def fields: Seq[(String, StrictForm.Field)]
   def field(name: String): Option[StrictForm.Field] = fields.collectFirst { case (`name`, field) => field }
 }
 

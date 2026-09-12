@@ -14,7 +14,6 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import scala.collection.immutable
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
@@ -56,7 +55,7 @@ trait ExecutionDirectives {
     extractRequestContext.flatMap { ctx =>
       val maxIterations = 8
       // allow for up to `maxIterations` nested rejections from RejectionHandler before bailing out
-      def handle(rejections: immutable.Seq[Rejection], originalRejections: immutable.Seq[Rejection],
+      def handle(rejections: Seq[Rejection], originalRejections: Seq[Rejection],
           iterationsLeft: Int = maxIterations): Future[RouteResult] =
         if (iterationsLeft > 0) {
           handler(rejections) match {

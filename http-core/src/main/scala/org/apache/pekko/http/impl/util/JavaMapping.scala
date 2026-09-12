@@ -55,9 +55,9 @@ private[http] object J2SMapping {
   implicit def fromJavaMapping[J](implicit mapping: JavaMapping[J, ?]): J2SMapping[J] { type S = mapping.S } = mapping
 
   implicit def fromJavaSeqMapping[J](
-      implicit mapping: J2SMapping[J]): J2SMapping[Seq[J]] { type S = immutable.Seq[mapping.S] } =
+      implicit mapping: J2SMapping[J]): J2SMapping[Seq[J]] { type S = Seq[mapping.S] } =
     new J2SMapping[Seq[J]] {
-      type S = immutable.Seq[mapping.S]
+      type S = Seq[mapping.S]
       def toScala(javaObject: Seq[J]): S = javaObject.map(mapping.toScala(_)).toList
     }
 }
@@ -98,7 +98,7 @@ private[http] object JavaMapping {
   object Implicits {
 
     implicit def convertToScala[J](j: J)(implicit mapping: J2SMapping[J]): mapping.S = mapping.toScala(j)
-    implicit def convertSeqToScala[J](j: Seq[J])(implicit mapping: J2SMapping[J]): immutable.Seq[mapping.S] =
+    implicit def convertSeqToScala[J](j: Seq[J])(implicit mapping: J2SMapping[J]): Seq[mapping.S] =
       j.map(mapping.toScala(_)).toList
 
     implicit def AddAsScala[J](javaObject: J)(implicit mapping: J2SMapping[J]): AsScala[mapping.S] =
@@ -119,12 +119,12 @@ private[http] object JavaMapping {
   }
 
   implicit def iterableMapping[_J, _S](
-      implicit mapping: JavaMapping[_J, _S]): JavaMapping[jl.Iterable[_J], immutable.Seq[_S]] =
-    new JavaMapping[jl.Iterable[_J], immutable.Seq[_S]] {
+      implicit mapping: JavaMapping[_J, _S]): JavaMapping[jl.Iterable[_J], Seq[_S]] =
+    new JavaMapping[jl.Iterable[_J], Seq[_S]] {
       import scala.jdk.CollectionConverters._
 
-      def toJava(scalaObject: immutable.Seq[_S]): jl.Iterable[_J] = scalaObject.map(mapping.toJava).asJavaCollection
-      def toScala(javaObject: jl.Iterable[_J]): immutable.Seq[_S] =
+      def toJava(scalaObject: Seq[_S]): jl.Iterable[_J] = scalaObject.map(mapping.toJava).asJavaCollection
+      def toScala(javaObject: jl.Iterable[_J]): Seq[_S] =
         Implicits.convertSeqToScala(javaObject.asScala.toSeq)
     }
   implicit def map[K, V]: JavaMapping[ju.Map[K, V], immutable.Map[K, V]] =

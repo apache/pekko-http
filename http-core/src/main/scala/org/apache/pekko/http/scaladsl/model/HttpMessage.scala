@@ -20,7 +20,6 @@ import java.util.Optional
 import java.util.concurrent.{ CompletionStage, Executor }
 
 import scala.annotation.tailrec
-import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
 import scala.jdk.FutureConverters._
@@ -48,7 +47,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
   def isRequest: Boolean
   def isResponse: Boolean
 
-  def headers: immutable.Seq[HttpHeader]
+  def headers: Seq[HttpHeader]
   def attributes: Map[AttributeKey[?], ?]
   def entity: ResponseEntity
   def protocol: HttpProtocol
@@ -84,7 +83,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
     withHeaders(firstHeader +: otherHeaders.toList)
 
   /** Returns a copy of this message with the list of headers set to the given ones. */
-  def withHeaders(headers: immutable.Seq[HttpHeader]): Self
+  def withHeaders(headers: Seq[HttpHeader]): Self
 
   /**
    * Returns a new message that contains all of the given default headers which didn't already
@@ -97,7 +96,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
    * Returns a new message that contains all of the given default headers which didn't already
    * exist (by case-insensitive header name) in this message.
    */
-  def withDefaultHeaders(defaultHeaders: immutable.Seq[HttpHeader]): Self =
+  def withDefaultHeaders(defaultHeaders: Seq[HttpHeader]): Self =
     withHeaders {
       if (headers.isEmpty) defaultHeaders
       else defaultHeaders.foldLeft(headers) { (acc, h) => if (headers.exists(_.is(h.lowercaseName))) acc else h +: acc }
@@ -118,10 +117,10 @@ sealed trait HttpMessage extends jm.HttpMessage {
     entity.toStrict(timeout, maxBytes).fast.map(this.withEntity)
 
   /** Returns a copy of this message with the entity and headers set to the given ones. */
-  def withHeadersAndEntity(headers: immutable.Seq[HttpHeader], entity: MessageEntity): Self
+  def withHeadersAndEntity(headers: Seq[HttpHeader], entity: MessageEntity): Self
 
   /** Returns a copy of this message with the list of headers transformed by the given function */
-  def mapHeaders(f: immutable.Seq[HttpHeader] => immutable.Seq[HttpHeader]): Self = withHeaders(f(headers))
+  def mapHeaders(f: Seq[HttpHeader] => Seq[HttpHeader]): Self = withHeaders(f(headers))
 
   /** Returns a copy of this message with the attributes transformed by the given function */
   def mapAttributes(f: Map[AttributeKey[?], ?] => Map[AttributeKey[?], ?]): Self = withAttributes(f(attributes))
@@ -146,7 +145,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
   }
 
   /** Returns all the headers of the given type * */
-  def headers[T <: jm.HttpHeader](implicit ct: ClassTag[T]): immutable.Seq[T] = headers.collect {
+  def headers[T <: jm.HttpHeader](implicit ct: ClassTag[T]): Seq[T] = headers.collect {
     case h: T => h
   }
 
@@ -202,7 +201,7 @@ sealed trait HttpMessage extends jm.HttpMessage {
   import scala.jdk.CollectionConverters._
 
   /** Java API */
-  def getHeaders: JIterable[jm.HttpHeader] = (headers: immutable.Seq[jm.HttpHeader]).asJava
+  def getHeaders: JIterable[jm.HttpHeader] = (headers: Seq[jm.HttpHeader]).asJava
 
   /** Java API */
   def getHeader[T <: jm.HttpHeader](headerClass: Class[T]): Optional[T] =
@@ -318,7 +317,7 @@ object HttpMessage {
 final class HttpRequest(
     val method: HttpMethod,
     val uri: Uri,
-    val headers: immutable.Seq[HttpHeader],
+    val headers: Seq[HttpHeader],
     val attributes: Map[AttributeKey[?], ?],
     val entity: RequestEntity,
     val protocol: HttpProtocol)
@@ -357,20 +356,20 @@ final class HttpRequest(
   /**
    * All cookies provided by the client in one or more `Cookie` headers.
    */
-  def cookies: immutable.Seq[HttpCookiePair] = for (case `Cookie`(cookies) <- headers; cookie <- cookies) yield cookie
+  def cookies: Seq[HttpCookiePair] = for (case `Cookie`(cookies) <- headers; cookie <- cookies) yield cookie
 
   /**
    * Determines whether this request can be safely retried, which is the case only of the request method is idempotent.
    */
   def canBeRetried = method.isIdempotent
 
-  override def withHeaders(headers: immutable.Seq[HttpHeader]): HttpRequest =
+  override def withHeaders(headers: Seq[HttpHeader]): HttpRequest =
     if (headers eq this.headers) this else copyImpl(headers = headers)
 
   override def withAttributes(attributes: Map[AttributeKey[?], ?]): HttpRequest =
     if (attributes eq this.attributes) this else copyImpl(attributes = attributes)
 
-  override def withHeadersAndEntity(headers: immutable.Seq[HttpHeader], entity: RequestEntity): HttpRequest =
+  override def withHeadersAndEntity(headers: Seq[HttpHeader], entity: RequestEntity): HttpRequest =
     copyImpl(headers = headers, entity = entity)
   override def withEntity(entity: jm.RequestEntity): HttpRequest = copyImpl(entity = entity.asInstanceOf[RequestEntity])
   override def withEntity(entity: MessageEntity): HttpRequest = copyImpl(entity = entity)
@@ -400,7 +399,7 @@ final class HttpRequest(
   private def copyImpl(
       method: HttpMethod = method,
       uri: Uri = uri,
-      headers: immutable.Seq[HttpHeader] = headers,
+      headers: Seq[HttpHeader] = headers,
       attributes: Map[AttributeKey[?], ?] = attributes,
       entity: RequestEntity = entity,
       protocol: HttpProtocol = protocol) = new HttpRequest(method, uri, headers, attributes, entity, protocol)
@@ -448,7 +447,7 @@ object HttpRequest {
    * include a valid [[pekko.http.scaladsl.model.headers.Host]] header or if URI authority and [[pekko.http.scaladsl.model.headers.Host]] header don't match.
    */
   def effectiveUri(
-      uri: Uri, headers: immutable.Seq[HttpHeader], securedConnection: Boolean, defaultHostHeader: Host): Uri = {
+      uri: Uri, headers: Seq[HttpHeader], securedConnection: Boolean, defaultHostHeader: Host): Uri = {
     @tailrec def findHostAndWsUpgrade(it: Iterator[HttpHeader], host: OptionVal[Host] = OptionVal.None,
         wsUpgrade: Option[Boolean] = None): (OptionVal[Host], Boolean) =
       if (host.isDefined && wsUpgrade.isDefined || !it.hasNext)
@@ -506,7 +505,7 @@ object HttpRequest {
   def apply(
       method: HttpMethod = HttpMethods.GET,
       uri: Uri = Uri./,
-      headers: immutable.Seq[HttpHeader] = Nil,
+      headers: Seq[HttpHeader] = Nil,
       entity: RequestEntity = HttpEntity.Empty,
       protocol: HttpProtocol = HttpProtocols.`HTTP/1.1`) =
     new HttpRequest(method, uri, headers, Map.empty, entity, protocol)
@@ -519,7 +518,7 @@ object HttpRequest {
  */
 final class HttpResponse(
     val status: StatusCode,
-    val headers: immutable.Seq[HttpHeader],
+    val headers: Seq[HttpHeader],
     val attributes: Map[AttributeKey[?], ?],
     val entity: ResponseEntity,
     val protocol: HttpProtocol)
@@ -536,7 +535,7 @@ final class HttpResponse(
   override def isRequest = false
   override def isResponse = true
 
-  override def withHeaders(headers: immutable.Seq[HttpHeader]): HttpResponse =
+  override def withHeaders(headers: Seq[HttpHeader]): HttpResponse =
     if (headers eq this.headers) this else copyImpl(headers = headers)
 
   def withAttributes(attributes: Map[AttributeKey[?], ?]): HttpResponse =
@@ -549,9 +548,9 @@ final class HttpResponse(
   override def withStatus(statusCode: pekko.http.javadsl.model.StatusCode): HttpResponse =
     copyImpl(status = statusCode.asInstanceOf[StatusCode])
 
-  override def withHeadersAndEntity(headers: immutable.Seq[HttpHeader], entity: MessageEntity): HttpResponse =
+  override def withHeadersAndEntity(headers: Seq[HttpHeader], entity: MessageEntity): HttpResponse =
     withHeadersAndEntity(headers, entity: ResponseEntity)
-  def withHeadersAndEntity(headers: immutable.Seq[HttpHeader], entity: ResponseEntity): HttpResponse =
+  def withHeadersAndEntity(headers: Seq[HttpHeader], entity: ResponseEntity): HttpResponse =
     copyImpl(headers = headers, entity = entity)
   override def withEntity(entity: jm.ResponseEntity): HttpResponse =
     copyImpl(entity = entity.asInstanceOf[ResponseEntity])
@@ -565,7 +564,7 @@ final class HttpResponse(
 
   private def copyImpl(
       status: StatusCode = status,
-      headers: immutable.Seq[HttpHeader] = headers,
+      headers: Seq[HttpHeader] = headers,
       attributes: Map[AttributeKey[?], ?] = attributes,
       entity: ResponseEntity = entity,
       protocol: HttpProtocol = protocol) = new HttpResponse(status, headers, attributes, entity, protocol)
@@ -605,7 +604,7 @@ object HttpResponse {
 
   def apply(
       status: StatusCode = StatusCodes.OK,
-      headers: immutable.Seq[HttpHeader] = Nil,
+      headers: Seq[HttpHeader] = Nil,
       entity: ResponseEntity = HttpEntity.Empty,
       protocol: HttpProtocol = HttpProtocols.`HTTP/1.1`) =
     new HttpResponse(status, headers, Map.empty, entity, protocol)

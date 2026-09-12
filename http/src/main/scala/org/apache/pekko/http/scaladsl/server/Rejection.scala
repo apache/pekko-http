@@ -17,7 +17,6 @@ import java.lang.Iterable
 import java.util.Optional
 import java.util.function.Function
 
-import scala.collection.immutable
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
 import scala.runtime.AbstractFunction2
@@ -120,7 +119,7 @@ final case class MalformedHeaderRejection(headerName: String, errorMsg: String, 
  * Rejection created by [[pekko.http.scaladsl.server.directives.HeaderDirectives.checkSameOrigin]].
  * Signals that the request was rejected because `Origin` header value is invalid.
  */
-final case class InvalidOriginRejection(allowedOrigins: immutable.Seq[SHttpOrigin])
+final case class InvalidOriginRejection(allowedOrigins: Seq[SHttpOrigin])
     extends jserver.InvalidOriginRejection with Rejection {
   override def getAllowedOrigins: java.util.List[JHttpOrigin] = allowedOrigins.map(_.asJava).asJava
 }
@@ -173,7 +172,7 @@ final case class UnsupportedRequestEncodingRejection(supported: HttpEncoding)
  * Signals that the request was rejected because the requests contains only unsatisfiable ByteRanges.
  * The actualEntityLength gives the client a hint to create satisfiable ByteRanges.
  */
-final case class UnsatisfiableRangeRejection(unsatisfiableRanges: immutable.Seq[ByteRange], actualEntityLength: Long)
+final case class UnsatisfiableRangeRejection(unsatisfiableRanges: Seq[ByteRange], actualEntityLength: Long)
     extends jserver.UnsatisfiableRangeRejection with Rejection {
   override def getUnsatisfiableRanges: Iterable[model.headers.ByteRange] = unsatisfiableRanges.map(_.asJava).asJava
 }
@@ -308,7 +307,7 @@ final case class ValidationRejection(message: String, cause: Option[Throwable] =
  * MethodRejection added by the `get` directive is canceled by the `put` directive (since the HTTP method
  * did indeed match eventually).
  */
-final case class TransformationRejection(transform: immutable.Seq[Rejection] => immutable.Seq[Rejection])
+final case class TransformationRejection(transform: Seq[Rejection] => Seq[Rejection])
     extends jserver.TransformationRejection with Rejection {
   override def getTransform = (t: Iterable[jserver.Rejection]) => {
     // explicit collects assignment is because of unidoc failing compilation on .asScala and .asJava here

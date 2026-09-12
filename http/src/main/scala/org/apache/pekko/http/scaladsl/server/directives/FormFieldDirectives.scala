@@ -55,12 +55,12 @@ trait FormFieldDirectives extends FormFieldDirectivesInstances with ToNameRecept
    *
    * @group form
    */
-  def formFieldSeq: Directive1[immutable.Seq[(String, String)]] = _formFieldSeq
+  def formFieldSeq: Directive1[Seq[(String, String)]] = _formFieldSeq
 }
 
 object FormFieldDirectives extends FormFieldDirectives {
 
-  private val _formFieldSeq: Directive1[immutable.Seq[(String, String)]] = {
+  private val _formFieldSeq: Directive1[Seq[(String, String)]] = {
     import FutureDirectives._
 
     import pekko.http.scaladsl.unmarshalling._
@@ -87,7 +87,7 @@ object FormFieldDirectives extends FormFieldDirectives {
   private val _formFieldMultiMap: Directive1[Map[String, List[String]]] = {
     @tailrec def append(
         map: Map[String, List[String]],
-        fields: immutable.Seq[(String, String)]): Map[String, List[String]] = {
+        fields: Seq[(String, String)]): Map[String, List[String]] = {
       if (fields.isEmpty) {
         map
       } else {

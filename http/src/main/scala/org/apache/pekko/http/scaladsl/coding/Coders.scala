@@ -14,7 +14,6 @@
 package org.apache.pekko.http.scaladsl.coding
 
 import scala.annotation.nowarn
-import scala.collection.immutable
 
 import org.apache.pekko
 import pekko.http.scaladsl.model.HttpMessage
@@ -35,5 +34,5 @@ object Coders {
 
   def NoCoding: Coder = pekko.http.scaladsl.coding.NoCoding
 
-  val DefaultCoders: immutable.Seq[Coder] = immutable.Seq(Gzip, Deflate, NoCoding)
+  val DefaultCoders: Seq[Coder] = Seq(Gzip, Deflate, NoCoding)
 }

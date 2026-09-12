@@ -27,7 +27,6 @@ import pekko.http.scaladsl.model.headers.`User-Agent`
 import pekko.io.Inet.SocketOption
 import com.typesafe.config.Config
 
-import scala.collection.immutable
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 /**
@@ -43,7 +42,7 @@ abstract class ClientConnectionSettings private[pekko] ()
   def requestHeaderSizeHint: Int
   def websocketSettings: WebSocketSettings
   def websocketRandomFactory: () => Random
-  def socketOptions: immutable.Seq[SocketOption]
+  def socketOptions: Seq[SocketOption]
   def parserSettings: ParserSettings
   def logUnencryptedNetworkBytes: Option[Int]
   def streamCancellationDelay: FiniteDuration
@@ -73,7 +72,7 @@ abstract class ClientConnectionSettings private[pekko] ()
     self.copy(userAgentHeader = newValue)
   def withLogUnencryptedNetworkBytes(newValue: Option[Int]): ClientConnectionSettings =
     self.copy(logUnencryptedNetworkBytes = newValue)
-  def withSocketOptions(newValue: immutable.Seq[SocketOption]): ClientConnectionSettings =
+  def withSocketOptions(newValue: Seq[SocketOption]): ClientConnectionSettings =
     self.copy(socketOptions = newValue)
   def withParserSettings(newValue: ParserSettings): ClientConnectionSettings = self.copy(parserSettings = newValue)
   def withLocalAddress(newValue: Option[InetSocketAddress]): ClientConnectionSettings =

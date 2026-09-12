@@ -81,7 +81,7 @@ trait MultipartUnmarshallers {
       createBodyPart: (BodyPartEntity, List[HttpHeader]) => BP,
       createStreamed: (MediaType.Multipart, Source[BP, Any]) => T,
       createStrictBodyPart: (HttpEntity.Strict, List[HttpHeader]) => BPS,
-      createStrict: (MediaType.Multipart, immutable.Seq[BPS]) => T)(implicit log: LoggingAdapter = NoLogging,
+      createStrict: (MediaType.Multipart, Seq[BPS]) => T)(implicit log: LoggingAdapter = NoLogging,
       parserSettings: ParserSettings = null): FromEntityUnmarshaller[T] =
     Unmarshaller.withMaterializer { implicit ec => implicit mat => entity =>
       if (entity.contentType.mediaType.isMultipart && mediaRange.matches(entity.contentType.mediaType)) {
