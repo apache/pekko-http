@@ -825,8 +825,10 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         val ConnectionBufferSize = 700000
         "release connection-level flow control accounting when a stream-level window is exceeded"
           .inAssertAllStagesStopped(new WaitingForRequestData {
+            // the oversized frame also exceeds the default max-frame-size; raise that limit so it reaches flow control
             override def settings: ServerSettings =
-              super.settings.mapHttp2Settings(_.withIncomingConnectionLevelBufferSize(ConnectionBufferSize))
+              super.settings.mapHttp2Settings(
+                _.withIncomingConnectionLevelBufferSize(ConnectionBufferSize).withMaxFrameSize(1024 * 1024))
 
             // get the request dispatched and both windows replenished to their configured sizes
             network.sendDATA(TheStreamId, endStream = false, ByteString("0000"))

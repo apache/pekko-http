@@ -17,6 +17,17 @@
 
 # new max-frame-size setting
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ClientSettings.maxFrameSize")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ClientSettings.withMaxFrameSize")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ServerSettings.getMaxFrameSize")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ServerSettings.withMaxFrameSize")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings.maxFrameSize")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings.maxFrameSize")
+ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2CommonSettings.maxFrameSize")
+
+# internal frame parser now takes the limit as a constructor parameter
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.impl.engine.http2.framing.Http2FrameParsing.this")
+
+# the new field shifts the positions of the private settings case class parameters after it
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings#Http2ClientSettingsImpl.copy$default$8")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings#Http2ClientSettingsImpl.copy$default$11")
+ProblemFilters.exclude[IncompatibleResultTypeProblem]("org.apache.pekko.http.scaladsl.settings.Http2ServerSettings#Http2ServerSettingsImpl.copy$default$9")
