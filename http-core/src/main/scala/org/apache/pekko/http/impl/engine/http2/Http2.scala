@@ -49,7 +49,6 @@ import pekko.util.ByteString
 import pekko.Done
 
 import javax.net.ssl.SSLEngine
-import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
@@ -199,7 +198,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 
         upgradeSettings match {
           // Must be exactly one
-          case immutable.Seq(Success(settingsFromHeader)) =>
+          case Seq(Success(settingsFromHeader)) =>
             // inject the actual upgrade request with a stream identifier of 1
             // https://http2.github.io/http2-spec/#rfc.section.3.2
             val injectedRequest = Source.single(req.addAttribute(Http2.streamId, 1))
@@ -217,11 +216,11 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
             Future.successful(
               HttpResponse(
                 StatusCodes.SwitchingProtocols,
-                immutable.Seq[HttpHeader](
+                Seq[HttpHeader](
                   ConnectionUpgradeHeader,
                   UpgradeHeader,
                   UpgradeToOtherProtocolResponseHeader(serverLayer))))
-          case immutable.Seq(Failure(e)) =>
+          case Seq(Failure(e)) =>
             log.warning("Failed to parse http2-settings header in upgrade [{}], continuing with HTTP/1.1", e.getMessage)
             handler(req)
           // A server MUST NOT upgrade the connection to HTTP/2 if this header field

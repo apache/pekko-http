@@ -38,8 +38,6 @@ import pekko.http.impl.util.LogByteStringTools
 import pekko.http.impl.util.{ SingletonException, StreamUtils }
 import pekko.stream.impl.fusing.GraphStages.SimpleLinearGraphStage
 
-import scala.collection.immutable
-
 /** INTERNAL API */
 @InternalApi
 private[http] object WebSocketClientBlueprint {
@@ -72,7 +70,7 @@ private[http] object WebSocketClientBlueprint {
 
     val valve = StreamUtils.OneTimeValve()
 
-    val subprotocols: immutable.Seq[String] = subprotocol.toList.flatMap(_.split(",")).map(_.trim)
+    val subprotocols: Seq[String] = subprotocol.toList.flatMap(_.split(",")).map(_.trim)
     val (initialRequest, key) =
       Handshake.Client.buildRequest(uri, extraHeaders, subprotocols, settings.websocketRandomFactory())
     val hostHeader = Host(uri.authority.normalizedFor(uri.scheme))

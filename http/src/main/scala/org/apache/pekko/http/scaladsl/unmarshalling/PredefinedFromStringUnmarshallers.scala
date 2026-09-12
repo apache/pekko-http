@@ -15,8 +15,6 @@ package org.apache.pekko.http.scaladsl.unmarshalling
 
 import java.util.UUID
 
-import scala.collection.immutable
-
 import org.apache.pekko
 import pekko.http.scaladsl.util.FastFuture
 import pekko.util.ByteString
@@ -70,8 +68,8 @@ trait PredefinedFromStringUnmarshallers {
     }
   }
 
-  implicit def CsvSeq[T](implicit unmarshaller: Unmarshaller[String, T]): Unmarshaller[String, immutable.Seq[T]] =
-    Unmarshaller.strict[String, immutable.Seq[String]] { string =>
+  implicit def CsvSeq[T](implicit unmarshaller: Unmarshaller[String, T]): Unmarshaller[String, Seq[T]] =
+    Unmarshaller.strict[String, Seq[String]] { string =>
       string.split(",", -1).toList
     }.flatMap { implicit ec => implicit mat => strings =>
       FastFuture.sequence(strings.map(unmarshaller(_)))

@@ -80,10 +80,10 @@ private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActi
     rule { `media-type` ~> ((mt, st, pm) => getMediaType(mt, st, pm contains "charset", TreeMap(pm: _*))) }
 
   // filter out subsequent `rel`, `media`, `title`, `type` and `type*` params
-  @tailrec private def sanitize(params: Seq[LinkParam], result: immutable.Seq[LinkParam] = Nil,
+  @tailrec private def sanitize(params: Seq[LinkParam], result: Seq[LinkParam] = Nil,
       seenRel: Boolean = false,
       seenMedia: Boolean = false, seenTitle: Boolean = false, seenTitleS: Boolean = false,
-      seenType: Boolean = false): immutable.Seq[LinkParam] =
+      seenType: Boolean = false): Seq[LinkParam] =
     params match {
       case Seq(x: LinkParams.rel, tail @ _*) =>
         sanitize(tail, if (seenRel) result else result :+ x, seenRel = true, seenMedia, seenTitle, seenTitleS, seenType)

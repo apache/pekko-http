@@ -14,7 +14,6 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import scala.collection.immutable
 import scala.concurrent.Future
 
 import org.apache.pekko
@@ -74,7 +73,7 @@ trait RouteDirectives {
    *
    * @group route
    */
-  def complete[T](status: StatusCode, headers: immutable.Seq[HttpHeader], v: => T)(
+  def complete[T](status: StatusCode, headers: Seq[HttpHeader], v: => T)(
       implicit m: ToEntityMarshaller[T]): StandardRoute =
     complete((status, headers, v))
 

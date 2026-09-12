@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
-import scala.collection.immutable
 import scala.concurrent.duration._
 import org.scalatest.matchers.Matcher
 import org.apache.pekko
@@ -314,10 +313,10 @@ class FramingSpec extends PekkoSpecWithMaterializer {
         result
     }
 
-  private def parseToEvents(bytes: Seq[ByteString]): immutable.Seq[FrameEvent] =
+  private def parseToEvents(bytes: Seq[ByteString]): Seq[FrameEvent] =
     Source(bytes.toVector).via(FrameEventParser).runFold(Vector.empty[FrameEvent])(_ :+ _)
       .awaitResult(1.second.dilated)
-  private def renderToByteString(events: immutable.Seq[FrameEvent]): ByteString =
+  private def renderToByteString(events: Seq[FrameEvent]): ByteString =
     Source(events).via(newRenderer()).runFold(ByteString.empty)(_ ++ _)
       .awaitResult(1.second.dilated)
 

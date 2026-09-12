@@ -359,7 +359,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   // http://tools.ietf.org/html/rfc6454#section-7.1
   // ******************************************************************************************
   def `origin-list-or-null` = rule {
-    "null" ~ OWS ~ push(immutable.Seq.empty[HttpOrigin]) | `origin-list`
+    "null" ~ OWS ~ push(Seq.empty[HttpOrigin]) | `origin-list`
   }
 
   def `origin-list` = rule {

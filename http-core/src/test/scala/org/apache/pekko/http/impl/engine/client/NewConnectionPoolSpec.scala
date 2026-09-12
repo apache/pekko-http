@@ -46,7 +46,6 @@ import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.testkit._
 import pekko.util.ByteString
 
-import scala.collection.immutable
 import scala.concurrent.{ Await, ExecutionContext, Future, Promise }
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
@@ -429,7 +428,7 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
       val gatewayConnection = hcpMinConnection.poolId
 
       acceptIncomingConnection()
-      requestIn.sendNext(HttpRequest(uri = "/minimumslots/1", headers = immutable.Seq(close)) -> 42)
+      requestIn.sendNext(HttpRequest(uri = "/minimumslots/1", headers = Seq(close)) -> 42)
       responseOutSub.request(1)
       responseOut.expectNextN(1)
 
@@ -451,7 +450,7 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
 
       (1 to 30).foreach { _ => // run a few requests
         (0 until minConnections).foreach { i =>
-          requestIn.sendNext(HttpRequest(uri = s"/minimumslots/5/$i", headers = immutable.Seq(close)) -> 42)
+          requestIn.sendNext(HttpRequest(uri = s"/minimumslots/5/$i", headers = Seq(close)) -> 42)
         }
         responseOutSub.request(minConnections)
         responseOut.expectNextN(minConnections)

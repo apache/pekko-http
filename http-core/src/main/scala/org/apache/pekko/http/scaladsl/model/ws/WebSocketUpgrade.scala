@@ -15,7 +15,6 @@ package org.apache.pekko.http.scaladsl.model.ws
 
 import java.lang.Iterable
 import java.util.function.{ Predicate => JPredicate }
-import scala.collection.immutable
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.stream._
@@ -38,7 +37,7 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    *
    * See http://tools.ietf.org/html/rfc6455#section-1.9
    */
-  def requestedProtocols: immutable.Seq[String]
+  def requestedProtocols: Seq[String]
 
   /**
    * The high-level interface to create a WebSocket server based on "messages".

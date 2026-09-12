@@ -18,8 +18,6 @@ package sse
 
 import java.util.{ List => JList }
 
-import scala.collection.immutable.Seq
-
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.scaladsl.model.HttpEntity

@@ -21,8 +21,6 @@ import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.Uri
 import org.parboiled2.UTF8
 
-import scala.collection.immutable
-
 abstract class HttpOriginRange extends jm.headers.HttpOriginRange with ValueRenderable {
   def matches(origin: HttpOrigin): Boolean
 
@@ -36,9 +34,9 @@ object HttpOriginRange {
     def render[R <: Rendering](r: R): r.type = r ~~ '*'
   }
 
-  def apply(origins: HttpOrigin*): Default = Default(immutable.Seq(origins: _*))
+  def apply(origins: HttpOrigin*): Default = Default(Seq(origins: _*))
 
-  final case class Default(origins: immutable.Seq[HttpOrigin]) extends HttpOriginRange {
+  final case class Default(origins: Seq[HttpOrigin]) extends HttpOriginRange {
     def matches(origin: HttpOrigin): Boolean = origins contains origin
     def render[R <: Rendering](r: R): r.type = r ~~ origins
   }
@@ -50,7 +48,7 @@ final case class HttpOrigin(scheme: String, host: Host) extends jm.headers.HttpO
 }
 
 object HttpOrigin {
-  implicit val originsRenderer: Renderer[immutable.Seq[HttpOrigin]] = Renderer.seqRenderer(" ", "null")
+  implicit val originsRenderer: Renderer[Seq[HttpOrigin]] = Renderer.seqRenderer(" ", "null")
 
   implicit def apply(str: String): HttpOrigin = {
     val parser = new UriParser(str, UTF8, Uri.ParsingMode.Relaxed)

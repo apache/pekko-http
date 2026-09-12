@@ -14,7 +14,6 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import scala.collection.immutable
 import scala.util.control.NonFatal
 
 import org.apache.pekko
@@ -75,7 +74,7 @@ trait CodingDirectives {
    * @group coding
    */
   def encodeResponseWith(first: Encoder, more: Encoder*): Directive0 =
-    _encodeResponse(immutable.Seq(first +: more: _*))
+    _encodeResponse(Seq(first +: more: _*))
 
   // decoding
 
@@ -154,17 +153,17 @@ trait CodingDirectives {
 }
 
 object CodingDirectives extends CodingDirectives {
-  def DefaultCoders: immutable.Seq[Coder] = Coders.DefaultCoders
+  def DefaultCoders: Seq[Coder] = Coders.DefaultCoders
 
   // same entries as DefaultCoders but in different order
-  private[http] val DefaultEncodeResponseEncoders = immutable.Seq(Coders.NoCoding, Coders.Gzip, Coders.Deflate)
+  private[http] val DefaultEncodeResponseEncoders = Seq(Coders.NoCoding, Coders.Gzip, Coders.Deflate)
 
   def theseOrDefault[T >: Coder](these: Seq[T]): Seq[T] = if (these.isEmpty) DefaultCoders else these
 
   import BasicDirectives._
   import RouteDirectives._
 
-  private def _encodeResponse(encoders: immutable.Seq[Encoder]): Directive0 =
+  private def _encodeResponse(encoders: Seq[Encoder]): Directive0 =
     BasicDirectives.extractRequest.flatMap { request =>
       val negotiator = EncodingNegotiator(request.headers)
       val encodings: List[HttpEncoding] = encoders.map(_.encoding).toList

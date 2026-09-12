@@ -14,7 +14,6 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.lang.{ Iterable => JIterable }
-import scala.collection.immutable
 import scala.util.Try
 import java.nio.charset.Charset
 import org.apache.pekko
@@ -58,7 +57,7 @@ object HttpCharsetRange {
   def apply(charset: HttpCharset, qValue: Float): HttpCharsetRange = One(charset, qValue)
 }
 
-final case class HttpCharset private[http] (override val value: String)(val aliases: immutable.Seq[String])
+final case class HttpCharset private[http] (override val value: String)(val aliases: Seq[String])
     extends jm.HttpCharset with SingletonValueRenderable with WithQValue[HttpCharsetRange] {
   @transient private var _nioCharset: Try[Charset] = HttpCharset.findNioCharset(value)
 
@@ -95,7 +94,7 @@ final case class HttpCharset private[http] (override val value: String)(val alia
 
 object HttpCharset {
   def custom(value: String, aliases: String*): HttpCharset =
-    HttpCharset(value)(immutable.Seq(aliases: _*))
+    HttpCharset(value)(Seq(aliases: _*))
 
   private[http] def findNioCharset(name: String): Try[Charset] = Try(Charset.forName(name))
 }
@@ -109,7 +108,7 @@ object HttpCharsets extends ObjectRegistry[String, HttpCharset] {
 
   /** Register standard charset that is required to be supported on all platforms */
   private def register(value: String)(aliases: String*): HttpCharset =
-    register(HttpCharset(value)(immutable.Seq(aliases: _*)))
+    register(HttpCharset(value)(Seq(aliases: _*)))
 
   /** Register non-standard charsets that may be missing on some platforms */
   private def tryRegister(value: String)(aliases: String*): Unit =

@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.impl.settings
 
-import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.util.Try
 
@@ -45,7 +44,7 @@ private[pekko] final case class ServerSettingsImpl(
     responseHeaderSizeHint: Int,
     backlog: Int,
     logUnencryptedNetworkBytes: Option[Int],
-    socketOptions: immutable.Seq[SocketOption],
+    socketOptions: Seq[SocketOption],
     defaultHostHeader: Host,
     websocketSettings: WebSocketSettings,
     parserSettings: ParserSettings,

@@ -69,7 +69,7 @@ sealed trait RouteResult
 
 object RouteResult {
   final case class Complete(response: HttpResponse) extends RouteResult
-  final case class Rejected(rejections: immutable.Seq[Rejection]) extends RouteResult
+  final case class Rejected(rejections: Seq[Rejection]) extends RouteResult
 }
 ```
 

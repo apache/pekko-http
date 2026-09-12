@@ -26,7 +26,7 @@ private[http2] trait PriorityNode {
   def streamId: Int
   def weight: Int
   def dependency: PriorityNode
-  def children: immutable.Seq[PriorityNode]
+  def children: Seq[PriorityNode]
 }
 
 /** INTERNAL API */
@@ -154,7 +154,7 @@ private[http2] object PriorityTree {
       def streamId: Int = _streamId
       def weight: Int = nodes(streamId).weight
       def dependency: PriorityNode = node(nodes(streamId).streamDependency)
-      def children: immutable.Seq[PriorityNode] = nodes(streamId).childrenIds.toVector.map(node)
+      def children: Seq[PriorityNode] = nodes(streamId).childrenIds.toVector.map(node)
     }
   }
 

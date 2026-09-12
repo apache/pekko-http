@@ -94,7 +94,7 @@ class MarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll w
       marshalToResponseForRequestAccepting(StatusCodes.EnhanceYourCalm, MediaTypes.`application/json`) shouldEqual
       HttpResponse(StatusCodes.EnhanceYourCalm, entity = HttpEntity(StatusCodes.EnhanceYourCalm.defaultMessage))
     }
-    val headers: immutable.Seq[HttpHeader] = RawHeader("X-Test", "test") :: Nil
+    val headers: Seq[HttpHeader] = RawHeader("X-Test", "test") :: Nil
     "fromStatusCodeAndHeaders should properly marshal for a status code that doesn't allow an entity" in {
       marshalToResponse(StatusCodes.NoContent -> headers) shouldEqual
       HttpResponse(StatusCodes.NoContent, headers = headers, entity = HttpEntity.Empty)

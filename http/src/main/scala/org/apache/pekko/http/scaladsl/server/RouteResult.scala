@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import scala.collection.immutable
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters._
 
@@ -36,7 +35,7 @@ object RouteResult {
   final case class Complete(response: HttpResponse) extends javadsl.server.Complete with RouteResult {
     override def getResponse = response
   }
-  final case class Rejected(rejections: immutable.Seq[Rejection]) extends javadsl.server.Rejected with RouteResult {
+  final case class Rejected(rejections: Seq[Rejection]) extends javadsl.server.Rejected with RouteResult {
     override def getRejections = rejections.map(r => r: javadsl.server.Rejection).asJava
   }
 

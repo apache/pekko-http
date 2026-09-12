@@ -24,7 +24,7 @@ import pekko.http.impl.util.JavaMapping.Implicits._
 sealed trait LanguageRange extends jm.headers.LanguageRange with ValueRenderable with WithQValue[LanguageRange] {
   def qValue: Float
   def primaryTag: String
-  def subTags: immutable.Seq[String]
+  def subTags: Seq[String]
   def matches(lang: Language): Boolean
   final def render[R <: Rendering](r: R): r.type = {
     r ~~ primaryTag
@@ -63,7 +63,7 @@ object LanguageRange {
   def apply(language: Language, qValue: Float): LanguageRange = One(language, qValue)
 }
 
-final case class Language(primaryTag: String, subTags: immutable.Seq[String])
+final case class Language(primaryTag: String, subTags: Seq[String])
     extends jm.headers.Language with ValueRenderable with WithQValue[LanguageRange] {
   def withQValue(qValue: Float) = LanguageRange(this, qValue.toFloat)
   def render[R <: Rendering](r: R): r.type = {
@@ -80,7 +80,7 @@ object Language {
     if (compoundTag.indexOf('-') >= 0) {
       val tags = compoundTag.split('-')
       new Language(tags.head, immutable.ArraySeq.unsafeWrapArray(tags.tail))
-    } else new Language(compoundTag, immutable.Seq.empty)
+    } else new Language(compoundTag, Seq.empty)
   def apply(primaryTag: String, firstSubTag: String, otherSubTags: String*): Language =
     new Language(primaryTag, firstSubTag +: otherSubTags)
 

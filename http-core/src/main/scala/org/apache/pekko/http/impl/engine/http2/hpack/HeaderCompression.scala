@@ -22,7 +22,6 @@ import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler, StageLogging }
 import pekko.util.ByteString
 
-import scala.collection.immutable
 import FrameEvent._
 
 /**
@@ -100,7 +99,7 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
         case x => push(eventsOut, x)
       }
 
-      def applySettings(s: immutable.Seq[Setting]): Unit =
+      def applySettings(s: Seq[Setting]): Unit =
         s.foreach {
           case Setting(SettingIdentifier.SETTINGS_HEADER_TABLE_SIZE, size) =>
             log.debug("Applied SETTINGS_HEADER_TABLE_SIZE({}) in header compression", size)

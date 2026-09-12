@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future }
 
 import org.apache.pekko
@@ -93,7 +92,7 @@ abstract class Http2SpecWithMaterializer(configOverrides: String) extends PekkoS
     network.sendBytes(Http2Protocol.ClientConnectionPreface)
     network.expectSETTINGS()
 
-    network.sendFrame(SettingsFrame(immutable.Seq.empty ++ initialClientSettings))
+    network.sendFrame(SettingsFrame(Seq.empty ++ initialClientSettings))
     network.expectSettingsAck()
   }
 

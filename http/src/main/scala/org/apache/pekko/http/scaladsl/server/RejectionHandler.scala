@@ -25,7 +25,7 @@ import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server.AuthenticationFailedRejection._
 import pekko.http.scaladsl.server.directives.BasicDirectives
 
-trait RejectionHandler extends (immutable.Seq[Rejection] => Option[Route]) { self =>
+trait RejectionHandler extends (Seq[Rejection] => Option[Route]) { self =>
   import RejectionHandler._
 
   /** Map any HTTP response which was returned by this RejectionHandler to a different one before rendering it. */
@@ -52,7 +52,7 @@ trait RejectionHandler extends (immutable.Seq[Rejection] => Option[Route]) { sel
       case (a: BuiltRejectionHandler, b: BuiltRejectionHandler) =>
         new BuiltRejectionHandler(a.cases ++ b.cases, a.notFound.orElse(b.notFound), b.isDefault)
       case _ => new RejectionHandler {
-          def apply(rejections: immutable.Seq[Rejection]): Option[Route] =
+          def apply(rejections: Seq[Rejection]): Option[Route] =
             self(rejections).orElse(that(rejections))
         }
     }
@@ -90,7 +90,7 @@ object RejectionHandler {
      * Handles several Rejections of the same type at the same time.
      * The seq passed to the given function is guaranteed to be non-empty.
      */
-    def handleAll[T <: Rejection](f: immutable.Seq[T] => Route)(implicit ct: ClassTag[T]): this.type = {
+    def handleAll[T <: Rejection](f: Seq[T] => Route)(implicit ct: ClassTag[T]): this.type = {
       val runtimeClass = ct.runtimeClass
       cases += TypeHandler[T](runtimeClass, f)
       this
@@ -126,7 +126,7 @@ object RejectionHandler {
     }
   }
   private final case class TypeHandler[T <: Rejection](
-      runtimeClass: Class[?], f: immutable.Seq[T] => Route) extends Handler with PartialFunction[Rejection, T] {
+      runtimeClass: Class[?], f: Seq[T] => Route) extends Handler with PartialFunction[Rejection, T] {
     def isDefinedAt(rejection: Rejection): Boolean = runtimeClass.isInstance(rejection)
     def apply(rejection: Rejection): T = rejection.asInstanceOf[T]
 
@@ -139,7 +139,7 @@ object RejectionHandler {
       val cases: Vector[Handler],
       val notFound: Option[Route],
       val isDefault: Boolean) extends RejectionHandler {
-    def apply(rejections: immutable.Seq[Rejection]): Option[Route] =
+    def apply(rejections: Seq[Rejection]): Option[Route] =
       if (rejections.nonEmpty) {
         @tailrec def rec(ix: Int): Option[Route] =
           if (ix < cases.length) {
@@ -317,7 +317,7 @@ object RejectionHandler {
    * Filters out all TransformationRejections from the given sequence and applies them (in order) to the
    * remaining rejections.
    */
-  def applyTransformations(rejections: immutable.Seq[Rejection]): immutable.Seq[Rejection] = {
+  def applyTransformations(rejections: Seq[Rejection]): Seq[Rejection] = {
     val (transformations, rest) = rejections.partition(_.isInstanceOf[TransformationRejection])
     transformations.asInstanceOf[Seq[TransformationRejection]].foldLeft(rest.distinct) {
       case (remaining, transformation) => transformation.transform(remaining)

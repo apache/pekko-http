@@ -15,7 +15,6 @@ package org.apache.pekko.http.impl.engine.http2
 
 import javax.net.ssl.SSLContext
 
-import scala.collection.immutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -1045,7 +1044,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
     network.toNet.expectBytes(Http2Protocol.ClientConnectionPreface)
     network.expectSETTINGS()
 
-    network.sendFrame(SettingsFrame(immutable.Seq.empty ++ initialServerSettings))
+    network.sendFrame(SettingsFrame(Seq.empty ++ initialServerSettings))
     network.expectSettingsAck()
 
     def connectionShouldStillBeUsable(): Unit = {

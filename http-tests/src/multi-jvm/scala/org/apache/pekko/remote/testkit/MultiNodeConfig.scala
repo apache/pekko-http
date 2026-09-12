@@ -19,7 +19,6 @@ import com.typesafe.config.{ Config, ConfigFactory, ConfigObject }
 
 import scala.concurrent.{ Await, Awaitable }
 import scala.concurrent.duration._
-import scala.collection.immutable
 import scala.util.control.NonFatal
 
 import org.apache.pekko
@@ -38,7 +37,7 @@ abstract class MultiNodeConfig {
   private var _commonConf: Option[Config] = None
   private var _nodeConf = Map[RoleName, Config]()
   private var _roles = Vector[RoleName]()
-  private var _deployments = Map[RoleName, immutable.Seq[String]]()
+  private var _deployments = Map[RoleName, Seq[String]]()
   private var _allDeploy = Vector[String]()
   private var _testTransport = false
 
@@ -124,10 +123,10 @@ abstract class MultiNodeConfig {
     configs.reduceLeft(_ withFallback _)
   }
 
-  private[testkit] def deployments(node: RoleName): immutable.Seq[String] =
+  private[testkit] def deployments(node: RoleName): Seq[String] =
     (_deployments.get(node).getOrElse(Nil)) ++ _allDeploy
 
-  private[testkit] def roles: immutable.Seq[RoleName] = _roles
+  private[testkit] def roles: Seq[RoleName] = _roles
 
 }
 
@@ -261,7 +260,7 @@ object MultiNodeSpec {
  * `AskTimeoutException: sending to terminated ref breaks promises`. Using lazy
  * val is fine.
  */
-abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles: immutable.Seq[RoleName],
+abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles: Seq[RoleName],
     deployments: RoleName => Seq[String])
     extends TestKit(_system) with MultiNodeSpecCallbacks {
 
@@ -328,7 +327,7 @@ abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles:
   /**
    * All registered roles
    */
-  def roles: immutable.Seq[RoleName] = _roles
+  def roles: Seq[RoleName] = _roles
 
   /**
    * TO BE DEFINED BY USER: Defines the number of participants required for starting the test. This
@@ -373,7 +372,7 @@ abstract class MultiNodeSpec(val myself: RoleName, _system: ActorSystem, _roles:
   def enterBarrier(name: String*): Unit =
     testConductor.enter(
       Timeout.durationToTimeout(remainingOr(testConductor.Settings.BarrierTimeout.duration)),
-      name.to(immutable.Seq))
+      name.to(Seq))
 
   /**
    * Query the controller for the transport address of the given node (by role name) and

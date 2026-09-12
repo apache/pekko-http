@@ -14,7 +14,6 @@
 package org.apache.pekko.http.impl.engine.rendering
 
 import scala.annotation.tailrec
-import scala.collection.immutable
 import scala.util.control.NonFatal
 
 import org.apache.pekko
@@ -164,7 +163,7 @@ private[http] class HttpResponseRendererFactory(
             entity.isChunked && (!entity.isKnownEmpty || ctx.requestMethod == HttpMethods.HEAD) &&
             (ctx.requestProtocol == `HTTP/1.1`)
 
-          def renderHeaders(headers: immutable.Seq[HttpHeader], alwaysClose: Boolean = false): Unit = {
+          def renderHeaders(headers: Seq[HttpHeader], alwaysClose: Boolean = false): Unit = {
             var connHeader: Connection = null
             var serverSeen: Boolean = false
             var transferEncodingSeen: Boolean = false

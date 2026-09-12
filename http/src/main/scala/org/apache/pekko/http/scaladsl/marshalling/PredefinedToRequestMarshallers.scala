@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.marshalling
 
-import scala.collection.immutable
-
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.util.FastFuture._
@@ -31,7 +29,7 @@ trait PredefinedToRequestMarshallers {
     fromMethodAndUriAndHeadersAndValue[T].compose { case (m, u, v) => (m, u, Nil, v) }
 
   implicit def fromMethodAndUriAndHeadersAndValue[T](
-      implicit mt: ToEntityMarshaller[T]): TRM[(HttpMethod, Uri, immutable.Seq[HttpHeader], T)] =
+      implicit mt: ToEntityMarshaller[T]): TRM[(HttpMethod, Uri, Seq[HttpHeader], T)] =
     Marshaller(implicit ec => {
       case (m, u, h, v) => mt(v).fast.map(_.map(_.map(HttpRequest(m, u, h, _))))
     })

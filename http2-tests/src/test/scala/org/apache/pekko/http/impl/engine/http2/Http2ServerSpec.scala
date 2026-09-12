@@ -15,7 +15,6 @@ package org.apache.pekko.http.impl.engine.http2
 
 import javax.net.ssl.SSLContext
 
-import scala.collection.immutable
 import scala.concurrent.{ Await, Promise }
 import scala.concurrent.duration._
 
@@ -1271,11 +1270,11 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           Source(List(
             HttpEntity.Chunk("foo"),
             HttpEntity.Chunk("bar"),
-            HttpEntity.LastChunk(trailer = immutable.Seq[HttpHeader](RawHeader("Status", "grpc-status 10")))))))
+            HttpEntity.LastChunk(trailer = Seq[HttpHeader](RawHeader("Status", "grpc-status 10")))))))
         user.emitResponse(TheStreamId, response)
         network.expectDecodedHEADERS(streamId = TheStreamId, endStream = false)
         network.expectDATA(TheStreamId, endStream = false, ByteString("foobar"))
-        network.expectDecodedHEADERS(streamId = TheStreamId).headers should be(immutable.Seq(RawHeader("status",
+        network.expectDecodedHEADERS(streamId = TheStreamId).headers should be(Seq(RawHeader("status",
           "grpc-status 10")))
       })
       "include the trailing headers even when the buffer is emptied before sending the last chunk".inAssertAllStagesStopped(
@@ -1295,10 +1294,10 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectDecodedHEADERS(streamId = TheStreamId, endStream = false)
           network.expectDATA(TheStreamId, endStream = false, ByteString("foobar"))
 
-          chunkQueue.offer(HttpEntity.LastChunk(trailer = immutable.Seq[HttpHeader](RawHeader("Status",
+          chunkQueue.offer(HttpEntity.LastChunk(trailer = Seq[HttpHeader](RawHeader("Status",
             "grpc-status 10"))))
           chunkQueue.complete()
-          network.expectDecodedHEADERS(streamId = TheStreamId).headers should be(immutable.Seq(RawHeader("status",
+          network.expectDecodedHEADERS(streamId = TheStreamId).headers should be(Seq(RawHeader("status",
             "grpc-status 10")))
         })
       "send the trailing headers immediately, even when the stream window is depleted".inAssertAllStagesStopped(
@@ -1326,10 +1325,10 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectDecodedHEADERS(streamId = TheStreamId, endStream = false)
           depleteWindow()
 
-          chunkQueue.offer(HttpEntity.LastChunk(trailer = immutable.Seq[HttpHeader](RawHeader("grpc-status", "10"))))
+          chunkQueue.offer(HttpEntity.LastChunk(trailer = Seq[HttpHeader](RawHeader("grpc-status", "10"))))
           chunkQueue.complete()
           network.expectDecodedHEADERS(streamId = TheStreamId, endStream = true).headers should be(
-            immutable.Seq(RawHeader("grpc-status", "10")))
+            Seq(RawHeader("grpc-status", "10")))
         })
       "send the trailing headers even when last data chunk was delayed by window depletion".inAssertAllStagesStopped(
         new WaitingForResponseSetup {
@@ -1358,7 +1357,7 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
 
           val lastData = ByteString("y" * 500)
           chunkQueue.offer(HttpEntity.Chunk(lastData)) // even out of connection window try to send one last chunk that will be buffered
-          chunkQueue.offer(HttpEntity.LastChunk(trailer = immutable.Seq[HttpHeader](RawHeader("grpc-status", "10"))))
+          chunkQueue.offer(HttpEntity.LastChunk(trailer = Seq[HttpHeader](RawHeader("grpc-status", "10"))))
           chunkQueue.complete()
 
           network.toNet.request(1)
@@ -1373,7 +1372,7 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectDATA(TheStreamId, endStream = false, lastData.drop(100))
 
           network.expectDecodedHEADERS(streamId = TheStreamId, endStream = true).headers should be(
-            immutable.Seq(RawHeader("grpc-status", "10")))
+            Seq(RawHeader("grpc-status", "10")))
         })
 
       "reject stream-level WINDOW_UPDATE that would overflow the flow-control window with FLOW_CONTROL_ERROR"

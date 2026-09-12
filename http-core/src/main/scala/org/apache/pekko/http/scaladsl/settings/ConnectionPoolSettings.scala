@@ -20,7 +20,6 @@ import pekko.http.javadsl.{ settings => js }
 import pekko.http.scaladsl.ClientTransport
 import com.typesafe.config.Config
 
-import scala.collection.immutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 import scala.util.matching.Regex
@@ -41,7 +40,7 @@ abstract class ConnectionPoolSettings extends js.ConnectionPoolSettings { self: 
   def keepAliveTimeout: Duration
   def connectionSettings: ClientConnectionSettings
   def maxConnectionLifetime: Duration
-  private[pekko] def hostOverrides: immutable.Seq[(Regex, ConnectionPoolSettings)]
+  private[pekko] def hostOverrides: Seq[(Regex, ConnectionPoolSettings)]
 
   /**
    * This checks to see if there's a matching host override. When multiple patterns match,
@@ -59,7 +58,7 @@ abstract class ConnectionPoolSettings extends js.ConnectionPoolSettings { self: 
   // ---
 
   @ApiMayChange
-  def withHostOverrides(hostOverrides: immutable.Seq[(String, ConnectionPoolSettings)]): ConnectionPoolSettings =
+  def withHostOverrides(hostOverrides: Seq[(String, ConnectionPoolSettings)]): ConnectionPoolSettings =
     self.copy(hostOverrides = hostOverrides.map { case (h, s) => ConnectionPoolSettingsImpl.hostRegex(h) -> s })
 
   @ApiMayChange

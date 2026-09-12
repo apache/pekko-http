@@ -19,7 +19,6 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.settings._
 import com.typesafe.config.Config
 
-import scala.collection.immutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.DurationConverters._
@@ -40,7 +39,7 @@ private[pekko] final case class ConnectionPoolSettingsImpl(
     keepAliveTimeout: Duration,
     connectionSettings: ClientConnectionSettings,
     responseEntitySubscriptionTimeout: Duration,
-    hostOverrides: immutable.Seq[(Regex, ConnectionPoolSettings)])
+    hostOverrides: Seq[(Regex, ConnectionPoolSettings)])
     extends ConnectionPoolSettings {
 
   require(maxConnections > 0, "max-connections must be > 0")

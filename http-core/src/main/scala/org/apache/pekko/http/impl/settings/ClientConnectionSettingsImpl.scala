@@ -27,7 +27,6 @@ import pekko.http.scaladsl.settings.{ Http2ClientSettings, ParserSettings, WebSo
 import pekko.io.Inet.SocketOption
 import com.typesafe.config.Config
 
-import scala.collection.immutable
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.jdk.DurationConverters._
 import scala.util.Try
@@ -41,7 +40,7 @@ private[pekko] final case class ClientConnectionSettingsImpl(
     requestHeaderSizeHint: Int,
     logUnencryptedNetworkBytes: Option[Int],
     websocketSettings: WebSocketSettings,
-    socketOptions: immutable.Seq[SocketOption],
+    socketOptions: Seq[SocketOption],
     parserSettings: ParserSettings,
     streamCancellationDelay: FiniteDuration,
     localAddress: Option[InetSocketAddress],

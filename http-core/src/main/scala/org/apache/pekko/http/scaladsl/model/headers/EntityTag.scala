@@ -35,7 +35,7 @@ object EntityTag {
 sealed abstract class EntityTagRange extends jm.headers.EntityTagRange with ValueRenderable
 
 object EntityTagRange {
-  def apply(tags: EntityTag*) = Default(immutable.Seq(tags: _*))
+  def apply(tags: EntityTag*) = Default(Seq(tags: _*))
 
   implicit val tagsRenderer: Renderer[immutable.Iterable[EntityTag]] = Renderer.defaultSeqRenderer[EntityTag] // cache
 
@@ -43,7 +43,7 @@ object EntityTagRange {
     def render[R <: Rendering](r: R): r.type = r ~~ '*'
   }
 
-  final case class Default(tags: immutable.Seq[EntityTag]) extends EntityTagRange {
+  final case class Default(tags: Seq[EntityTag]) extends EntityTagRange {
     require(tags.nonEmpty, "tags must not be empty")
     def render[R <: Rendering](r: R): r.type = r ~~ tags
   }

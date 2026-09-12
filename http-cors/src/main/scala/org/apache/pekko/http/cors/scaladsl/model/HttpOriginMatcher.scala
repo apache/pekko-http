@@ -17,8 +17,6 @@
 
 package org.apache.pekko.http.cors.scaladsl.model
 
-import scala.collection.immutable.Seq
-
 import org.apache.pekko
 import pekko.http.cors.javadsl
 import pekko.http.javadsl.{ model => jm }

@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import scala.collection.immutable.Seq
-
 import org.apache.pekko
 import pekko.http.impl.engine.http2.FrameEvent.{ ParsedHeadersFrame, Setting, SettingsFrame }
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier

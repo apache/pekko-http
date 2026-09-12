@@ -16,7 +16,6 @@ package org.apache.pekko.http.scaladsl.marshallers.xml
 import java.io.{ ByteArrayInputStream, InputStreamReader }
 import javax.xml.parsers.{ SAXParser, SAXParserFactory }
 
-import scala.collection.immutable
 import scala.xml.{ NodeSeq, XML }
 
 import org.apache.pekko
@@ -50,9 +49,9 @@ trait ScalaXmlSupport {
   protected def createSAXParser(): SAXParser = ScalaXmlSupport.createSaferSAXParser()
 }
 object ScalaXmlSupport extends ScalaXmlSupport {
-  val nodeSeqMediaTypes: immutable.Seq[MediaType.NonBinary] =
+  val nodeSeqMediaTypes: Seq[MediaType.NonBinary] =
     List(`text/xml`, `application/xml`, `text/html`, `application/xhtml+xml`)
-  val nodeSeqContentTypeRanges: immutable.Seq[ContentTypeRange] = nodeSeqMediaTypes.map(ContentTypeRange(_))
+  val nodeSeqContentTypeRanges: Seq[ContentTypeRange] = nodeSeqMediaTypes.map(ContentTypeRange(_))
 
   /** Creates a safer SAXParser. */
   def createSaferSAXParser(): SAXParser = {

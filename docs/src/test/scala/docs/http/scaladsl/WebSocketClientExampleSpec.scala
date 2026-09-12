@@ -112,7 +112,6 @@ class WebSocketClientExampleSpec extends AnyWordSpec with Matchers with CompileO
     import pekko.http.scaladsl.model.ws._
 
     implicit val system = ActorSystem()
-    import collection.immutable.Seq
 
     val flow: Flow[Message, Message, NotUsed] =
       Flow.fromSinkAndSource(

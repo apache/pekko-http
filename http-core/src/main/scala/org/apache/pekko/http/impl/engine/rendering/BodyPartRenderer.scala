@@ -16,7 +16,6 @@ package org.apache.pekko.http.impl.engine.rendering
 import org.apache.pekko
 import org.parboiled2.util.Base64
 
-import scala.collection.immutable
 import pekko.event.LoggingAdapter
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpEntity._
@@ -102,7 +101,7 @@ private[http] object BodyPartRenderer {
 
     }
 
-  def strict(parts: immutable.Seq[Multipart.BodyPart.Strict], boundary: String,
+  def strict(parts: Seq[Multipart.BodyPart.Strict], boundary: String,
       partHeadersSizeHint: Int, log: LoggingAdapter): ByteString = {
     val r = new ByteStringRendering(partHeadersSizeHint)
     if (parts.nonEmpty) {
@@ -125,7 +124,7 @@ private[http] object BodyPartRenderer {
   private def renderFinalBoundary(r: Rendering, boundary: String): Unit =
     r ~~ CrLf ~~ '-' ~~ '-' ~~ boundary ~~ '-' ~~ '-'
 
-  private def renderHeaders(r: Rendering, headers: immutable.Seq[HttpHeader], log: LoggingAdapter): Unit = {
+  private def renderHeaders(r: Rendering, headers: Seq[HttpHeader], log: LoggingAdapter): Unit = {
     headers.foreach(renderHeader(r, log))
     r ~~ CrLf
   }

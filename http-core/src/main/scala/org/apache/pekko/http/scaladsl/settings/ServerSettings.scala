@@ -26,7 +26,6 @@ import pekko.http.scaladsl.model.HttpResponse
 import pekko.http.scaladsl.model.headers.{ Host, Server }
 import pekko.io.Inet.SocketOption
 
-import scala.collection.immutable
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
@@ -47,7 +46,7 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   def verboseErrorMessages: Boolean
   def responseHeaderSizeHint: Int
   def backlog: Int
-  def socketOptions: immutable.Seq[SocketOption]
+  def socketOptions: Seq[SocketOption]
   def defaultHostHeader: Host
   def websocketSettings: WebSocketSettings
   def parserSettings: ParserSettings
@@ -124,7 +123,7 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   def withDefaultHostHeader(newValue: Host): ServerSettings = self.copy(defaultHostHeader = newValue)
   def withParserSettings(newValue: ParserSettings): ServerSettings = self.copy(parserSettings = newValue)
   def withWebsocketSettings(newValue: WebSocketSettings): ServerSettings = self.copy(websocketSettings = newValue)
-  def withSocketOptions(newValue: immutable.Seq[SocketOption]): ServerSettings = self.copy(socketOptions = newValue)
+  def withSocketOptions(newValue: Seq[SocketOption]): ServerSettings = self.copy(socketOptions = newValue)
   def withHttp2Settings(newValue: Http2ServerSettings): ServerSettings = copy(http2Settings = newValue)
 
   // Scala-only lenses

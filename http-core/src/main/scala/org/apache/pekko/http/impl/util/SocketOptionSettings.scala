@@ -16,13 +16,11 @@ package org.apache.pekko.http.impl.util
 import org.apache.pekko
 import pekko.io.{ Inet, Tcp }
 
-import scala.collection.immutable
-
 import pekko.io.Inet.SocketOption
 import com.typesafe.config.Config
 
 private[http] object SocketOptionSettings {
-  def fromSubConfig(root: Config, c: Config): immutable.Seq[SocketOption] = {
+  def fromSubConfig(root: Config, c: Config): Seq[SocketOption] = {
     def so[T](setting: String)(f: (Config, String) => T)(cons: T => SocketOption): List[SocketOption] =
       c.getString(setting) match {
         case "undefined" => Nil

@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.server
 
-import scala.collection.immutable
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
@@ -109,7 +108,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
       val request = HttpRequest(
         HttpMethods.POST,
         s"http:/${binding.localAddress}/noDirective",
-        immutable.Seq(`Content-Encoding`(HttpEncodings.gzip)),
+        Seq(`Content-Encoding`(HttpEncodings.gzip)),
         HttpEntity(ContentTypes.`text/plain(UTF-8)`, zippedData))
 
       zippedData.size should be <= maxContentLength
@@ -193,7 +192,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
       val request = HttpRequest(
         HttpMethods.POST,
         s"http:/${binding.localAddress}/noDirective",
-        immutable.Seq(`Content-Encoding`(HttpEncodings.gzip)),
+        Seq(`Content-Encoding`(HttpEncodings.gzip)),
         HttpEntity(ContentTypes.`text/plain(UTF-8)`, zippedData))
 
       zippedData.size should be <= maxContentLength
@@ -212,7 +211,7 @@ class SizeLimitSpec extends AnyWordSpec with Matchers with RequestBuilding with 
       val request = HttpRequest(
         HttpMethods.POST,
         s"http:/${binding.localAddress}/noDirective",
-        immutable.Seq(`Content-Encoding`(HttpEncodings.gzip)),
+        Seq(`Content-Encoding`(HttpEncodings.gzip)),
         HttpEntity(ContentTypes.`text/plain(UTF-8)`, zippedData))
 
       zippedData.size should be > maxContentLength

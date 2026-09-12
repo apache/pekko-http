@@ -134,7 +134,7 @@ private[http] object PerMessageDeflate {
           rsv1IndicatesCompression = false)))
 
   def negotiate(
-      requested: immutable.Seq[WebSocketExtension],
+      requested: Seq[WebSocketExtension],
       settings: WebSocketCompressionSettingsImpl): Option[Negotiated] = {
     if (!settings.enabled) None
     else {

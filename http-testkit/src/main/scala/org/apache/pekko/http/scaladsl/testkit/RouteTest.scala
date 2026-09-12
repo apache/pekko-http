@@ -13,7 +13,6 @@
 
 package org.apache.pekko.http.scaladsl.testkit
 
-import scala.collection.immutable
 import scala.concurrent.{ Await, ExecutionContext, ExecutionContextExecutor, Future }
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -79,7 +78,7 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
   def response: HttpResponse = result.response
   def responseEntity: HttpEntity = result.entity
   private def rawResponse: HttpResponse = result.rawResponse
-  def chunks: immutable.Seq[HttpEntity.ChunkStreamPart] = result.chunks
+  def chunks: Seq[HttpEntity.ChunkStreamPart] = result.chunks
   def chunksStream: Source[ChunkStreamPart, Any] = result.chunksStream
   def entityAs[T: FromEntityUnmarshaller: ClassTag](implicit timeout: Duration = 1.second): T = {
     def msg(e: Throwable) =
@@ -95,7 +94,7 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
   def mediaType: MediaType = contentType.mediaType
   def charsetOption: Option[HttpCharset] = contentType.charsetOption
   def charset: HttpCharset = charsetOption.getOrElse(sys.error("Binary entity does not have charset"))
-  def headers: immutable.Seq[HttpHeader] = rawResponse.headers
+  def headers: Seq[HttpHeader] = rawResponse.headers
   def header[T >: Null <: HttpHeader: ClassTag]: Option[T] = rawResponse.header[T](implicitly[ClassTag[T]])
   def header(name: String): Option[HttpHeader] = rawResponse.headers.find(_.is(toRootLowerCase(name)))
   def status: StatusCode = rawResponse.status
@@ -104,12 +103,12 @@ trait RouteTest extends RequestBuilding with WSTestRequestBuilding with RouteTes
     case Some(HttpEntity.LastChunk(extension, _)) => extension
     case _                                        => ""
   }
-  def trailer: immutable.Seq[HttpHeader] = chunks.lastOption match {
+  def trailer: Seq[HttpHeader] = chunks.lastOption match {
     case Some(HttpEntity.LastChunk(_, trailer)) => trailer
     case _                                      => Nil
   }
 
-  def rejections: immutable.Seq[Rejection] = result.rejections
+  def rejections: Seq[Rejection] = result.rejections
   def rejection: Rejection = {
     val r = rejections
     if (r.size == 1) r.head else failTest("Expected a single rejection but got %s (%s)".format(r.size, r))

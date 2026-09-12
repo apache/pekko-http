@@ -16,7 +16,6 @@ package directives
 
 import java.util.concurrent.TimeoutException
 
-import scala.collection.immutable
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
@@ -99,19 +98,19 @@ trait BasicDirectives {
   /**
    * @group basic
    */
-  def recoverRejections(f: immutable.Seq[Rejection] => RouteResult): Directive0 =
+  def recoverRejections(f: Seq[Rejection] => RouteResult): Directive0 =
     mapRouteResultPF { case RouteResult.Rejected(rejections) => f(rejections) }
 
   /**
    * @group basic
    */
-  def recoverRejectionsWith(f: immutable.Seq[Rejection] => Future[RouteResult]): Directive0 =
+  def recoverRejectionsWith(f: Seq[Rejection] => Future[RouteResult]): Directive0 =
     mapRouteResultWithPF { case RouteResult.Rejected(rejections) => f(rejections) }
 
   /**
    * @group basic
    */
-  def mapRejections(f: immutable.Seq[Rejection] => immutable.Seq[Rejection]): Directive0 =
+  def mapRejections(f: Seq[Rejection] => Seq[Rejection]): Directive0 =
     recoverRejections(rejections => RouteResult.Rejected(f(rejections)))
 
   /**
@@ -129,7 +128,7 @@ trait BasicDirectives {
   /**
    * @group basic
    */
-  def mapResponseHeaders(f: immutable.Seq[HttpHeader] => immutable.Seq[HttpHeader]): Directive0 =
+  def mapResponseHeaders(f: Seq[HttpHeader] => Seq[HttpHeader]): Directive0 =
     mapResponse(_.mapHeaders(f))
 
   /**

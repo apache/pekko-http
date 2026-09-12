@@ -19,7 +19,6 @@ package org.apache.pekko.http.cors.scaladsl
 
 import java.util
 
-import scala.collection.immutable.Seq
 import scala.jdk.CollectionConverters._
 
 import org.apache.pekko

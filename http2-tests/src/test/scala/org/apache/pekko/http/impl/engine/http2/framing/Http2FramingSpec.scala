@@ -14,7 +14,6 @@
 package org.apache.pekko.http.impl.engine.http2
 package framing
 
-import scala.collection.immutable
 import scala.concurrent.duration._
 
 import FrameEvent._
@@ -509,11 +508,11 @@ class Http2FramingSpec extends PekkoSpecWithMaterializer {
         result
     }
 
-  private def parseToEvents(bytes: Seq[ByteString]): immutable.Seq[FrameEvent] =
+  private def parseToEvents(bytes: Seq[ByteString]): Seq[FrameEvent] =
     Source(bytes.toVector).via(new Http2FrameParsing(shouldReadPreface = false,
       Logging(system, classOf[Http2FramingSpec]))).runWith(Sink.seq)
       .awaitResult(1.second.dilated)
-  private def renderToByteString(events: immutable.Seq[FrameEvent]): ByteString =
+  private def renderToByteString(events: Seq[FrameEvent]): ByteString =
     Source(events).map(FrameRenderer.render).runFold(ByteString.empty)(_ ++ _)
       .awaitResult(1.second.dilated)
 }

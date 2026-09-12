@@ -14,7 +14,6 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import scala.collection.immutable
 import scala.concurrent.Future
 import scala.util.{ Failure, Success, Try }
 
@@ -48,7 +47,7 @@ trait ParameterDirectives extends ParameterDirectivesInstances with ToNameRecept
    *
    * @group param
    */
-  def parameterSeq: Directive1[immutable.Seq[(String, String)]] = _parameterSeq
+  def parameterSeq: Directive1[Seq[(String, String)]] = _parameterSeq
 }
 
 object ParameterDirectives extends ParameterDirectives {
@@ -60,7 +59,7 @@ object ParameterDirectives extends ParameterDirectives {
   private val _parameterMultiMap: Directive1[Map[String, List[String]]] =
     extract(_.request.uri.query().toMultiMap)
 
-  private val _parameterSeq: Directive1[immutable.Seq[(String, String)]] =
+  private val _parameterSeq: Directive1[Seq[(String, String)]] =
     extract(_.request.uri.query().toSeq)
 
   trait ParamSpec {

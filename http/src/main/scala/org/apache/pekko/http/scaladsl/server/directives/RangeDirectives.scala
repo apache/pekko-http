@@ -14,8 +14,6 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
-import scala.collection.immutable
-
 import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
@@ -121,7 +119,7 @@ trait RangeDirectives {
         Multipart.ByteRanges(source)
       }
 
-      def rangeResponse(range: ByteRange, entity: UniversalEntity, length: Long, headers: immutable.Seq[HttpHeader]) = {
+      def rangeResponse(range: ByteRange, entity: UniversalEntity, length: Long, headers: Seq[HttpHeader]) = {
         val aiRange = indexRange(length)(range)
         HttpResponse(PartialContent, `Content-Range`(aiRange.contentRange(length)) +: headers, aiRange(entity))
       }
@@ -137,7 +135,7 @@ trait RangeDirectives {
         case _                  => None
       }
 
-      def applyRanges(ranges: immutable.Seq[ByteRange]): Directive0 =
+      def applyRanges(ranges: Seq[ByteRange]): Directive0 =
         extractRequestContext.flatMap { ctx =>
           mapRouteResultWithPF {
             case Complete(HttpResponse(OK, headers, entity, protocol)) =>
