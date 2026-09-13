@@ -172,15 +172,17 @@ public final class Encoder {
 
   /** Encode string literal according to Section 5.2. */
   private void encodeStringLiteral(OutputStream out, String string) throws IOException {
-    int length = string.length();
-    int huffmanLength = Huffman.ENCODER.getEncodedLength(string);
+    // convert once up front: the length computation, the Huffman coder and the raw literal all work
+    // on the octets
+    byte[] stringBytes = StringTools.asciiStringBytes(string);
+    int length = stringBytes.length;
+    int huffmanLength = Huffman.ENCODER.getEncodedLength(stringBytes);
     if ((huffmanLength < length && !forceHuffmanOff) || forceHuffmanOn) {
       encodeInteger(out, 0x80, 7, huffmanLength);
-      Huffman.ENCODER.encode(out, string);
+      out.write(Huffman.ENCODER.encode(stringBytes, huffmanLength), 0, huffmanLength);
     } else {
-      byte[] stringBytes = StringTools.asciiStringBytes(string);
       encodeInteger(out, 0x00, 7, length);
-      out.write(stringBytes, 0, stringBytes.length);
+      out.write(stringBytes, 0, length);
     }
   }
 
