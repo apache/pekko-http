@@ -29,9 +29,14 @@ private[http] object StringTools {
     // into a String without extra copying.
     new String(bytes, 0)
 
+  // Deprecated (not for removal) but the only JDK primitive that copies the low 8 bits of every char, so this is
+  // the exact inverse of asciiStringFromBytes: HPACK string literals are opaque octets and a char in 0x80-0xFF has
+  // to come out as that octet, not as the '?' that encoding with US-ASCII would substitute. For a Latin-1 coded
+  // string this is a single System.arraycopy.
+  @nowarn("cat=deprecation")
   def asciiStringBytes(string: String): Array[Byte] = {
-    // this is as fast as Unsafe.copyUSAsciiStrToBytes for recent JDK versions
-    // and avoids the use of deprecated Unsafe methods
-    string.getBytes(java.nio.charset.StandardCharsets.US_ASCII)
+    val bytes = new Array[Byte](string.length)
+    string.getBytes(0, string.length, bytes, 0)
+    bytes
   }
 }
