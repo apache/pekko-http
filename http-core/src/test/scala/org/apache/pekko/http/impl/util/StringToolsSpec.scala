@@ -50,5 +50,21 @@ class StringToolsSpec extends AnyWordSpec with Matchers {
     "encode an ASCII string to its US-ASCII bytes" in {
       StringTools.asciiStringBytes("abc") shouldEqual "abc".getBytes(StandardCharsets.US_ASCII)
     }
+
+    "be the inverse of asciiStringFromBytes for every octet" in {
+      // HPACK string literals are opaque octets, so a char in 0x80-0xFF must map back to that octet rather than
+      // to the '?' that encoding with US-ASCII would substitute
+      val allOctets = Array.tabulate(256)(_.toByte)
+      StringTools.asciiStringBytes(StringTools.asciiStringFromBytes(allOctets)) shouldEqual allOctets
+    }
+
+    "encode a character above 0xFF, which no octet can represent, as a single '?'" in {
+      // U+0100 forces the UTF-16 coder on JDK 9+, so this covers the non-arraycopy path too
+      StringTools.asciiStringBytes("aĀb") shouldEqual Array[Byte]('a', '?', 'b')
+    }
+
+    "encode the empty string to an empty array" in {
+      StringTools.asciiStringBytes("") shouldEqual Array.emptyByteArray
+    }
   }
 }

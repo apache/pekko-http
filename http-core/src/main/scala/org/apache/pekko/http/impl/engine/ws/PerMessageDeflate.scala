@@ -255,7 +255,7 @@ private[http] object PerMessageDeflate {
           output.write(buffer, 0, count)
           count = inflater.inflate(buffer)
         }
-        output.toByteStringUnsafe
+        output.takeByteString()
       } catch {
         case ex: DataFormatException =>
           throw new ProtocolException(s"Invalid WebSocket compressed message: ${ex.getMessage}")
@@ -351,7 +351,7 @@ private[http] object PerMessageDeflate {
         output.write(buffer, 0, count)
         count = deflater.deflate(buffer, 0, buffer.length, Deflater.SYNC_FLUSH)
       }
-      val bytes = output.toByteStringUnsafe
+      val bytes = output.takeByteString()
       if (removeTail && bytes.endsWith(EmptyStoredBlock)) bytes.dropRight(EmptyStoredBlock.length) else bytes
     }
 

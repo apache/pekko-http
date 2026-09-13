@@ -26,36 +26,53 @@ class ByteStringOutputStreamSpec extends AnyWordSpec with Matchers {
   "ByteStringOutputStream" must {
 
     "return an empty ByteString when nothing was written" in {
-      new ByteStringOutputStream(16).toByteStringUnsafe should ===(ByteString.empty)
+      new ByteStringOutputStream(16).takeByteString() should ===(ByteString.empty)
     }
 
     "return the bytes written when the buffer is exactly filled" in {
       val out = new ByteStringOutputStream(4)
       out.write(Array[Byte](1, 2, 3, 4))
-      out.toByteStringUnsafe should ===(ByteString(1, 2, 3, 4))
+      out.takeByteString() should ===(ByteString(1, 2, 3, 4))
     }
 
     "return the bytes written when the buffer was grown" in {
       val out = new ByteStringOutputStream(2)
       val data = Array.tabulate[Byte](1000)(i => i.toByte)
       out.write(data)
-      out.toByteStringUnsafe should ===(ByteString(data))
+      out.takeByteString() should ===(ByteString(data))
     }
 
     "return the bytes written when only a small part of the buffer is used" in {
       val out = new ByteStringOutputStream(1024)
       out.write(Array[Byte](1, 2, 3))
       out.write(4)
-      out.toByteStringUnsafe should ===(ByteString(1, 2, 3, 4))
+      out.takeByteString() should ===(ByteString(1, 2, 3, 4))
     }
 
     "not retain the buffer when only a small part of it is used" in {
       val out = new ByteStringOutputStream(1024)
       out.write(Array[Byte](1, 2, 3))
-      // the ByteString is a copy, so it is not affected by later writes to the stream
-      val result = out.toByteStringUnsafe
+      val array = out.array
+      // the ByteString is a copy, so it is not affected by later writes to the stream, which keeps its array
+      val result = out.takeByteString()
       out.write(Array[Byte](9, 9, 9))
       result should ===(ByteString(1, 2, 3))
+      (out.array eq array) shouldBe true
+    }
+
+    "hand over a mostly used buffer without copying and start the next block on a fresh array" in {
+      val out = new ByteStringOutputStream(4)
+      out.write(Array[Byte](1, 2, 3))
+      val array = out.array
+      val first = out.takeByteString()
+      first should ===(ByteString(1, 2, 3))
+      out.size shouldBe 0
+
+      // writes to the next block must not show up in the ByteString that was handed out
+      out.write(Array[Byte](9, 9, 9, 9), 0, 4)
+      (out.array eq array) shouldBe false
+      first should ===(ByteString(1, 2, 3))
+      out.takeByteString() should ===(ByteString(9, 9, 9, 9))
     }
 
     "write single bytes and byte ranges" in {
@@ -63,7 +80,25 @@ class ByteStringOutputStreamSpec extends AnyWordSpec with Matchers {
       out.write(1)
       out.write(Array[Byte](0, 2, 3, 0), 1, 2)
       out.write(Array[Byte](4, 5, 6, 7, 8))
-      out.toByteStringUnsafe should ===(ByteString(1, 2, 3, 4, 5, 6, 7, 8))
+      out.takeByteString() should ===(ByteString(1, 2, 3, 4, 5, 6, 7, 8))
+    }
+
+    "reserve a range that the caller fills in through the backing array" in {
+      val out = new ByteStringOutputStream(2)
+      out.write(7)
+      val position = out.reserve(3)
+      position shouldBe 1
+      out.size shouldBe 4
+      val array = out.array
+      array(position) = 1
+      array(position + 1) = 2
+      array(position + 2) = 3
+      out.write(8)
+      out.takeByteString() should ===(ByteString(7, 1, 2, 3, 8))
+    }
+
+    "reject a negative initial capacity" in {
+      an[IllegalArgumentException] should be thrownBy new ByteStringOutputStream(-1)
     }
   }
 }
