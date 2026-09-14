@@ -685,8 +685,13 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         val result = multiParse(newParser)(Seq("GET /\u0000HTTP/1.1 HTTP/1.1\r\n"))
         result.length shouldEqual 1
         result.head match {
-          case Left(MessageStartError(BadRequest, info, _)) =>
+          case Left(MessageStartError(BadRequest, info, context)) =>
             info.summary should startWith("Illegal request-target")
+            // the error details are logged under the default `error-logging-verbosity = full`, and the context's
+            // toString is documented as safe to log: neither may carry the client's NUL byte through raw
+            info.detail shouldEqual "/\\u0000HTTP/1.1\n ^"
+            context.rawRequestTarget shouldEqual Some("/\u0000HTTP/1.1")
+            context.toString shouldEqual "IllegalRequestContext(GET,/\\u0000HTTP/1.1,-)"
           case other => fail(s"Expected BadRequest MessageStartError but got $other")
         }
       }

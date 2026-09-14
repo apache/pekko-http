@@ -116,7 +116,7 @@ private[http] final class UriParser(
 
   def fail(error: ParseError, target: String): Nothing = {
     val formatter = new ErrorFormatter(showLine = false)
-    Uri.fail(s"Illegal $target: " + formatter.format(error, input), formatter.formatErrorLine(error, input))
+    Uri.fail(s"Illegal $target: " + formatter.format(error, input), ParseErrorLine.render(error, input))
   }
 
   private val `path-segment-char` = uriParsingMode match {

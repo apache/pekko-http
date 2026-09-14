@@ -211,6 +211,15 @@ class UriSpec extends AnyWordSpec with Matchers {
       // Nonhex
       a[IllegalUriException] should be thrownBy Host("[g:0:0:0:0:0:0]")
     }
+
+    "escape control characters in the error line of a parse failure" in {
+      // the error line is logged under the default `error-logging-verbosity = full`, so a raw ESC or NUL in it would
+      // let a client inject terminal control sequences or line breaks into log output
+      val error = the[IllegalUriException] thrownBy Uri("/a\u001b[31mb")
+      error.info.summary should startWith("Illegal URI reference: Invalid input '\\u001b'")
+      error.info.detail shouldEqual "/a\\u001b[31mb\n  ^"
+      (error.info.detail should not).include("\u001b")
+    }
   }
 
   "Uri.Path instances" should {
