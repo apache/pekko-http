@@ -63,9 +63,11 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
     out.toByteArray
   }
 
-  private def decode(in: InputStream): Seq[(String, String)] = {
+  private def decode(in: InputStream): Seq[(String, String)] =
+    decode(new Decoder(maxHeaderSize, maxHeaderTableSize), in)
+
+  private def decode(decoder: Decoder, in: InputStream): Seq[(String, String)] = {
     val decoded = ListBuffer.empty[(String, String)]
-    val decoder = new Decoder(maxHeaderSize, maxHeaderTableSize)
     decoder.decode(in,
       new HeaderListener {
         override def addHeader(name: String, value: String, parsed: AnyRef, sensitive: Boolean): AnyRef = {
@@ -115,6 +117,37 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
     "report a block that ends in the middle of a length prefix as a decompression failure" in {
       // a literal header field with incremental indexing, new name, whose name length never arrives
       a[IOException] should be thrownBy decode(new ByteArrayInputStream(Array[Byte](0x40)))
+    }
+
+    "decode string literals longer than its initial scratch space, Huffman coded and raw" in {
+      // the decoder reads literals into reusable arrays that start at 128 bytes; a value of letters is
+      // Huffman coded, a value of mostly '|' (a 15-bit code) is sent raw because that is shorter
+      val long = Seq("x-huffman" -> ("abcdefghij" * 50), "x-raw" -> ("|" * 500))
+      decode(new ByteArrayInputStream(encode(long: _*))) shouldEqual long
+    }
+
+    "decode consecutive header blocks of varying literal lengths with the same decoder" in {
+      // a literal shorter than the previous one must not pick up the tail the previous one left in the
+      // reused scratch arrays
+      val decoder = new Decoder(maxHeaderSize, maxHeaderTableSize)
+      val blocks = Seq(
+        Seq("x-a" -> ("abcdefghij" * 40)),
+        Seq("x-b" -> "short", "x-c" -> ("|" * 300)),
+        Seq("x-d" -> "s", "x-e" -> "|"),
+        Seq("x-f" -> ""))
+      blocks.foreach { block =>
+        // a fresh encoder per block, so no block refers to what an earlier one put in the dynamic table
+        decode(decoder, new ByteArrayInputStream(encode(block: _*))) shouldEqual block
+      }
+    }
+
+    "decode a raw string literal carrying opaque octets above 0x7F to the chars of the same value" in {
+      // literal header field without indexing (0x00), new name: raw name "x-opaque", raw 128-octet value
+      val name = "x-opaque".getBytes("US-ASCII")
+      val value = Array.tabulate(128)(i => (0x80 + i).toByte)
+      // 0x7f 0x01: 7-bit prefix integer 128 = 127 + 1, Huffman flag clear
+      val block = Array[Byte](0x00, name.length.toByte) ++ name ++ Array[Byte](0x7F, 0x01) ++ value
+      decode(new ByteArrayInputStream(block)) shouldEqual Seq("x-opaque" -> new String(value, "ISO-8859-1"))
     }
   }
 }
