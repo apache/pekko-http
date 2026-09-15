@@ -20,6 +20,47 @@ Basic client settings can be overridden in multiple ways:
 
 @@snip [reference.conf](/http-core/src/main/resources/reference.conf) { #client-settings }
 
+## Strict Response Entities
+
+By default response entities are streamed, so the application has to consume (or discard) each response entity before
+the connection can be used for the next request. Setting `pekko.http.client.strict-response-entity-timeout` to a
+duration makes the client collect every response entity into a strict entity (`HttpEntity.Strict`) before the response is
+dispatched to the application:
+
+```
+pekko.http.client.strict-response-entity-timeout = 10s
+```
+
+Keep in mind that this buffers each complete response body in memory. A response that is not fully received within the
+configured duration fails with a `TimeoutException`, and one that exceeds
+`pekko.http.client.strict-response-entity-max-bytes` (8 MB by default) fails with an `EntityStreamException`; in both
+cases the connection is failed. Trailing headers of chunked responses are dropped, as they are with
+`HttpEntity.toStrict`.
+
+This applies to the HTTP/1.1 client, which includes the connection pool backing the
+@ref[request-level](request-level.md) and @ref[host-level](host-level.md) APIs, and to the
+@ref[HTTP/2 client](http2.md).
+
+### On HTTP/2
+
+Responses on an HTTP/1.1 connection are sequential, so collecting one response entity never delays another. On HTTP/2
+several requests are in flight on one connection at the same time, which brings a few things to be aware of:
+
+ * Entities are collected for up to `pekko.http.client.http2.max-concurrent-streams` responses concurrently, so that a
+   large response does not hold up smaller ones on other streams.
+ * Responses are emitted in the order in which their entities complete, not in the order in which their headers
+   arrived. HTTP/2 responses are unordered anyway and have to be correlated to their request via a
+   @apidoc[RequestResponseAssociation], so this does not break the API contract, but it does change observed ordering.
+ * Worst-case memory usage per connection is `max-concurrent-streams` × `strict-response-entity-max-bytes`, which is
+   256 × 8 MB with the defaults. Tune both settings for the responses you actually expect.
+ * A response entity that times out or exceeds the maximum fails the whole connection, and with it every other stream
+   in flight on that connection. The remaining body cannot be skipped safely, so there is no way to fail only the one
+   response. With `Http().connectionTo(host).managedPersistentHttp2()` the connection is re-established afterwards
+   according to `pekko.http.client.http2.max-persistent-attempts`.
+ * Entity data is read from the network as fast as the peer sends it (up to the configured maximum) instead of at the
+   pace the application consumes it, so HTTP/2 flow control no longer reflects application backpressure for response
+   bodies.
+
 ## Pool Settings
 
 Pool settings influence the behavior of client connection pools as used with APIs like `Http.singleRequest`
