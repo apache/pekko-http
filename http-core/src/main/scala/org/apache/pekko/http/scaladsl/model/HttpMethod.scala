@@ -55,21 +55,6 @@ final case class HttpMethod private[http] (
 
 object HttpMethod {
 
-  // the allowsEntity condition was used to determine what responses provided the Content-Length header, before the fix
-  private def oldContentLengthCondition(status: StatusCode) = status.allowsEntity
-
-  /**
-   * Create a custom method type.
-   * @deprecated The created method will compute the presence of Content-Length headers based on deprecated logic.
-   */
-  @deprecated("Use the overload with contentLengthAllowed parameter", since = "1.4.0")
-  def custom(name: String, safe: Boolean, idempotent: Boolean, requestEntityAcceptance: RequestEntityAcceptance)
-      : HttpMethod = {
-    require(name.nonEmpty, "value must be non-empty")
-    require(!safe || idempotent, "An HTTP method cannot be safe without being idempotent")
-    apply(name, safe, idempotent, requestEntityAcceptance, oldContentLengthCondition)
-  }
-
   /**
    * Create a custom method type.
    */

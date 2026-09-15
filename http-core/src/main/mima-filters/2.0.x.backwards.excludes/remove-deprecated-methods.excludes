@@ -126,6 +126,9 @@ ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scalad
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.getWebsocketRandomFactory")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ServerSettings.withWebsocketRandomFactory")
 
+# Remove deprecated HttpMethod.custom 4-arg (since 1.4.0)
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.model.HttpMethod.custom")
+ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.javadsl.model.HttpMethods.custom")
 # Remove deprecated ParserSettings.apply/create (since Akka HTTP 10.2.0)
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ParserSettings.apply")
 ProblemFilters.exclude[DirectMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.ParserSettings.default")

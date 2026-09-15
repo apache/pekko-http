@@ -37,27 +37,6 @@ public final class HttpMethods {
   /**
    * Create a custom method type.
    *
-   * @deprecated The created method will compute the presence of Content-Length headers based on
-   *     deprecated logic, use {@link #custom(String, boolean, boolean,
-   *     org.apache.pekko.http.javadsl.model.RequestEntityAcceptance, boolean)} instead. Deprecated
-   *     since 1.4.0.
-   */
-  @Deprecated(since = "1.4.0")
-  public static HttpMethod custom(
-      String value,
-      boolean safe,
-      boolean idempotent,
-      org.apache.pekko.http.javadsl.model.RequestEntityAcceptance requestEntityAcceptance) {
-    // This cast is safe as implementation of RequestEntityAcceptance only exists in Scala
-    org.apache.pekko.http.scaladsl.model.RequestEntityAcceptance scalaRequestEntityAcceptance =
-        (org.apache.pekko.http.scaladsl.model.RequestEntityAcceptance) requestEntityAcceptance;
-    return org.apache.pekko.http.scaladsl.model.HttpMethod.custom(
-        value, safe, idempotent, scalaRequestEntityAcceptance);
-  }
-
-  /**
-   * Create a custom method type.
-   *
    * @since 1.4.0
    */
   public static HttpMethod custom(
