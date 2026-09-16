@@ -90,7 +90,7 @@ object FastFuture {
     def ready(atMost: Duration)(implicit permit: CanAwait) = this
     def transform[S](f: scala.util.Try[A] => scala.util.Try[S])(
         implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
-      FastFuture(f(Success(a)))
+      strictTransform(Success(a), f)
     def transformWith[S](f: scala.util.Try[A] => scala.concurrent.Future[S])(
         implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
       new FastFuture(this).transformWith(f)
@@ -103,11 +103,19 @@ object FastFuture {
     def ready(atMost: Duration)(implicit permit: CanAwait) = this
     def transform[S](f: scala.util.Try[Nothing] => scala.util.Try[S])(
         implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
-      FastFuture(f(Failure(error)))
+      strictTransform(Failure(error), f)
     def transformWith[S](f: scala.util.Try[Nothing] => scala.concurrent.Future[S])(
         implicit executor: scala.concurrent.ExecutionContext): scala.concurrent.Future[S] =
       new FastFuture(this).transformWith(f)
   }
+
+  /**
+   * Applies `f` to an already available result, turning an exception thrown by `f` into a failed future
+   * the way [[scala.concurrent.Future.transform]] does for asynchronously completed futures.
+   */
+  private def strictTransform[A, S](value: Try[A], f: Try[A] => Try[S]): Future[S] =
+    try FastFuture(f(value))
+    catch { case NonFatal(e) => ErrorFuture(e) }
 
   implicit class EnhancedFuture[T](val future: Future[T]) extends AnyVal {
     def fast: FastFuture[T] = new FastFuture[T](future)
