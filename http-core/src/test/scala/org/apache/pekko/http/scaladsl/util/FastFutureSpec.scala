@@ -171,6 +171,37 @@ class FastFutureSpec extends AnyFreeSpec with Matchers {
     }
   }
 
+  "FastFuture-produced futures should fail instead of throwing when a standard Future combinator's function throws" - {
+    // The already completed futures override `Future.transform`, which the standard `filter`, `collect` and
+    // `transform` combinators are built on, so an exception thrown by the user function must become a
+    // failed future exactly as it does for a `Future.successful` / `Future.failed` value.
+    "transform on a successful future" in {
+      testStdlib(Success(23), _.transform(_ => throw TheException))
+    }
+    "transform on a failed future" in {
+      testStdlib(Failure(UnexpectedException), _.transform(_ => throw TheException))
+    }
+    "filter with a throwing predicate" in {
+      testStdlib(Success(23), _.filter(_ => throw TheException))
+    }
+    "collect with a throwing partial function" in {
+      testStdlib(Success(23), _.collect { case _ => throw TheException })
+    }
+    "map with a throwing function" in {
+      testStdlib(Success(23), _.map(_ => throw TheException))
+    }
+    "recover with a throwing partial function" in {
+      testStdlib(Failure(UnexpectedException), _.recover { case _ => throw TheException })
+    }
+  }
+
+  def testStdlib(result: Try[Int], op: Future[Int] => Future[Int]): Unit = {
+    val f = FastFuture(result)
+    val transformed = op(f)
+    Await.ready(transformed, 500.millis)
+    transformed.value shouldEqual Some(Failure(TheException))
+  }
+
   def test(result: Try[Int], op: FastFuture[Int] => Future[Int])(check: Try[Int] => Unit): Unit = {
     def testStrictly(): Unit = {
       val f = FastFuture(result)
