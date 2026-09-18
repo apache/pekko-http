@@ -14,8 +14,6 @@
 import java.io._
 
 import MimaWithPrValidation.{ MimaResult, NoErrors, Problems }
-import net.virtualvoid.sbt.graph.ModuleGraph
-import net.virtualvoid.sbt.graph.backend.SbtUpdateReport
 import org.kohsuke.github.GHIssueComment
 import org.kohsuke.github.GitHubBuilder
 import sbt.Keys._
@@ -113,17 +111,17 @@ object ValidatePullRequest extends AutoPlugin {
   val BuildFilesAndDirectories = Set("project", "build.sbt", ".github")
 
   def changedDirectoryIsDependency(changedDirs: Set[String], name: String,
-      graphsToTest: Seq[(Configuration, ModuleGraph)])(log: Logger): Boolean = {
+      dependenciesToTest: Seq[(Configuration, Seq[ModuleID])])(log: Logger): Boolean = {
     val dirsOrExperimental = changedDirs.flatMap(dir => Set(dir, s"$dir-experimental"))
-    graphsToTest.exists { case (ivyScope, deps) =>
+    dependenciesToTest.exists { case (ivyScope, dependencies) =>
       log.debug(s"Analysing [$ivyScope] scoped dependencies...")
 
-      deps.nodes.foreach { m => log.debug(" -> " + m.id) }
+      dependencies.foreach { module => log.debug(" -> " + module) }
 
       // if this project depends on a modified module, we must test it
-      deps.nodes.exists { m =>
+      dependencies.exists { module =>
         // match just by name, we'd rather include too much than too little
-        val dependsOnModule = dirsOrExperimental.find(m.id.name contains _)
+        val dependsOnModule = dirsOrExperimental.find(module.name contains _)
         val depends = dependsOnModule.isDefined
         if (depends) log.info(s"Project [$name] must be verified, because depends on [${dependsOnModule.get}]")
         depends
@@ -226,19 +224,21 @@ object ValidatePullRequest extends AutoPlugin {
 
       val thisProjectId = CrossVersion(scalaVersion.value, scalaBinaryVersion.value)(projectID.value)
 
-      def graphFor(updateReport: UpdateReport, config: Configuration): (Configuration, ModuleGraph) =
-        config -> SbtUpdateReport.fromConfigurationReport(updateReport.configuration(config).get, thisProjectId)
+      def dependenciesFor(updateReport: UpdateReport, config: Configuration): (Configuration, Seq[ModuleID]) = {
+        val dependencies = updateReport.configuration(config).get.details.flatMap(_.modules).map(_.module)
+        config -> (thisProjectId +: dependencies)
+      }
 
       def isDependency: Boolean = {
         changedDirectoryIsDependency(
           changedDirs,
           name.value,
           Seq(
-            graphFor((Compile / updateFull).value, Compile),
-            graphFor((Test / updateFull).value, Test),
-            graphFor((Runtime / updateFull).value, Runtime),
-            graphFor((Provided / updateFull).value, Provided),
-            graphFor((Optional / updateFull).value, Optional)))(log)
+            dependenciesFor((Compile / updateFull).value, Compile),
+            dependenciesFor((Test / updateFull).value, Test),
+            dependenciesFor((Runtime / updateFull).value, Runtime),
+            dependenciesFor((Provided / updateFull).value, Provided),
+            dependenciesFor((Optional / updateFull).value, Optional)))(log)
       }
 
       if (githubCommandEnforcedBuildAll.isDefined)
