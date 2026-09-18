@@ -826,8 +826,35 @@ object RawHeader {
     Some(customHeader.name -> customHeader.value)
 }
 
-object `Raw-Request-URI` extends ModeledCompanion[`Raw-Request-URI`]
+object `Raw-Request-URI` extends ModeledCompanion[`Raw-Request-URI`] {
+  // A request target goes to the wire exactly as given: into the HTTP/1.1 request line, where a space, CR or LF ends
+  // the target early and lets whatever follows be read as the protocol, a header or a second request; and character
+  // by character truncated to a byte, so that a character outside ASCII lands as its low byte -- '\u010d' is sent
+  // as CR. Only visible ASCII (RFC 9112 section 3.2) can be rendered faithfully, so only visible ASCII is accepted.
+  private[http] def firstIllegalCharIndex(uri: String): Int = {
+    var ix = 0
+    while (ix < uri.length && { val c = uri.charAt(ix); c > ' ' && c < '\u007f' }) ix += 1
+    if (ix < uri.length) ix else -1
+  }
+}
+
+/**
+ * Carries a request target to send verbatim, in place of the one rendered from the request's `Uri`.
+ *
+ * The value is written to the wire as given, so it must be a request target that can be sent as it is: non-empty,
+ * and consisting of visible ASCII characters only (0x21-0x7E). Anything else -- a space, CR, LF, a control
+ * character, a character outside ASCII -- is rejected on construction rather than rendered into the request line.
+ * Percent-encode what the target has to carry; the encoded form is sent untouched.
+ */
 final case class `Raw-Request-URI`(uri: String) extends jm.headers.RawRequestURI with SyntheticHeader {
+  require(uri.nonEmpty, "Raw-Request-URI must not be empty")
+  require(
+    `Raw-Request-URI`.firstIllegalCharIndex(uri) < 0, {
+      val ix = `Raw-Request-URI`.firstIllegalCharIndex(uri)
+      "Raw-Request-URI may only contain visible ASCII characters (0x21-0x7E), the request target is sent to the " +
+      s"wire as given: found U+${"%04X".format(uri.charAt(ix).toInt)} at index $ix"
+    })
+
   def renderValue[R <: Rendering](r: R): r.type = r ~~ uri
   protected def companion = `Raw-Request-URI`
 }
