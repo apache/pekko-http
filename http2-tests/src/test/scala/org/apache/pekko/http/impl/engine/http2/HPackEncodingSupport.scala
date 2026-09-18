@@ -13,12 +13,10 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import java.io.ByteArrayOutputStream
-
 import org.apache.pekko
-import pekko.http.impl.util.StringRendering
 import pekko.http.scaladsl.model.{ HttpHeader, HttpRequest, HttpResponse }
 import pekko.http.scaladsl.model.headers.RawHeader
+import pekko.http.impl.util.{ ByteStringOutputStream, StringRendering }
 import pekko.http.shaded.com.twitter.hpack.Encoder
 import pekko.util.ByteString
 
@@ -62,12 +60,12 @@ trait HPackEncodingSupport {
     headers.map(h => h.lowercaseName -> h.value)
 
   def encodeHeaderPairs(headerPairs: Seq[(String, String)]): ByteString = {
-    val bos = new ByteArrayOutputStream()
+    val out = new ByteStringOutputStream(128)
 
-    def encode(name: String, value: String): Unit = encoder.encodeHeader(bos, name, value, false)
+    def encode(name: String, value: String): Unit = encoder.encodeHeader(out, name, value, false)
 
     headerPairs.foreach((encode _).tupled)
 
-    ByteString(bos.toByteArray)
+    out.takeByteString()
   }
 }

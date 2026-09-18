@@ -31,9 +31,8 @@
 
 package org.apache.pekko.http.shaded.com.twitter.hpack;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Arrays;
+import org.apache.pekko.http.impl.util.ByteStringOutputStream;
 import org.apache.pekko.http.impl.util.StringTools;
 import org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.IndexType;
 
@@ -75,8 +74,8 @@ public final class Encoder {
   }
 
   /** Encode the header field into the header block. */
-  public void encodeHeader(OutputStream out, String name, String value, boolean sensitive)
-      throws IOException {
+  public void encodeHeader(
+      ByteStringOutputStream out, String name, String value, boolean sensitive) {
 
     // If the header value is sensitive then it must never be indexed
     if (sensitive) {
@@ -130,7 +129,7 @@ public final class Encoder {
   }
 
   /** Set the maximum table size. */
-  public void setMaxHeaderTableSize(OutputStream out, int maxHeaderTableSize) throws IOException {
+  public void setMaxHeaderTableSize(ByteStringOutputStream out, int maxHeaderTableSize) {
     if (maxHeaderTableSize < 0) {
       throw new IllegalArgumentException("Illegal Capacity: " + maxHeaderTableSize);
     }
@@ -148,7 +147,7 @@ public final class Encoder {
   }
 
   /** Encode integer according to Section 5.1. */
-  private static void encodeInteger(OutputStream out, int mask, int n, int i) throws IOException {
+  private static void encodeInteger(ByteStringOutputStream out, int mask, int n, int i) {
     if (n < 0 || n > 8) {
       throw new IllegalArgumentException("N: " + n);
     }
@@ -171,23 +170,25 @@ public final class Encoder {
   }
 
   /** Encode string literal according to Section 5.2. */
-  private void encodeStringLiteral(OutputStream out, String string) throws IOException {
-    int length = string.length();
-    int huffmanLength = Huffman.ENCODER.getEncodedLength(string);
+  private void encodeStringLiteral(ByteStringOutputStream out, String string) {
+    // convert once up front: the length computation, the Huffman coder and the raw literal all work
+    // on the octets
+    byte[] stringBytes = StringTools.asciiStringBytes(string);
+    int length = stringBytes.length;
+    int huffmanLength = Huffman.ENCODER.getEncodedLength(stringBytes);
     if ((huffmanLength < length && !forceHuffmanOff) || forceHuffmanOn) {
       encodeInteger(out, 0x80, 7, huffmanLength);
-      Huffman.ENCODER.encode(out, string);
+      int position = out.reserve(huffmanLength);
+      Huffman.ENCODER.encode(stringBytes, out.array(), position, huffmanLength);
     } else {
-      byte[] stringBytes = StringTools.asciiStringBytes(string);
       encodeInteger(out, 0x00, 7, length);
-      out.write(stringBytes, 0, stringBytes.length);
+      out.write(stringBytes, 0, length);
     }
   }
 
   /** Encode literal header field according to Section 6.2. */
   private void encodeLiteral(
-      OutputStream out, String name, String value, IndexType indexType, int nameIndex)
-      throws IOException {
+      ByteStringOutputStream out, String name, String value, IndexType indexType, int nameIndex) {
     int mask;
     int prefixBits;
     switch (indexType) {
@@ -228,7 +229,7 @@ public final class Encoder {
    * Ensure that the dynamic table has enough room to hold 'headerSize' more bytes. Removes the
    * oldest entry from the dynamic table until sufficient space is available.
    */
-  private void ensureCapacity(int headerSize) throws IOException {
+  private void ensureCapacity(int headerSize) {
     while (size + headerSize > capacity) {
       int index = length();
       if (index == 0) {
