@@ -48,6 +48,21 @@ trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2Cli
    */
   def withMaxHeaderListSize(newValue: Int): Http2ClientSettings = copy(maxHeaderListSize = newValue)
 
+  /**
+   * The largest frame payload this endpoint accepts, in bytes. A larger incoming frame is rejected with a
+   * FRAME_SIZE_ERROR on its frame header, before the payload is buffered. No larger SETTINGS_MAX_FRAME_SIZE is
+   * advertised, so a peer that follows the spec keeps to the 16 KiB default and the extra room is leniency for peers
+   * that do not. RFC 9113, section 4.2 constrains it to be between 16 KiB and 16 MiB - 1.
+   *
+   * @since 2.0.0
+   */
+  def maxFrameSize: Int
+
+  /**
+   * @since 2.0.0
+   */
+  def withMaxFrameSize(newValue: Int): Http2ClientSettings = copy(maxFrameSize = newValue)
+
   def outgoingControlFrameBufferSize: Int
   def withOutgoingControlFrameBufferSize(newValue: Int): Http2ClientSettings =
     copy(outgoingControlFrameBufferSize = newValue)
