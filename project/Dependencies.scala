@@ -20,7 +20,7 @@ object Dependencies {
   import DependencyHelpers._
 
   val jacksonDatabindVersion = "2.22.3"
-  val jacksonDatabind3Version = "3.2.2"
+  val jacksonDatabind3Version = "3.2.3"
   val jacksonXmlVersion = jacksonDatabindVersion
   val junit4Version = "4.13.2"
   val h2specVersion = "2.6.0"
@@ -65,7 +65,7 @@ object Dependencies {
     // For pekko-http-jackson3 support
     val jacksonDatabind3 = "tools.jackson.core" % "jackson-databind" % jacksonDatabind3Version
 
-    val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % "3.2.4"
+    val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % "3.3.0"
 
     val scalafix = ("ch.epfl.scala" %% "scalafix-core" % Dependencies.scalafixVersion).cross(CrossVersion.for3Use2_13)
 
