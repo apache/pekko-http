@@ -31,9 +31,6 @@
 
 package org.apache.pekko.http.shaded.com.twitter.hpack;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 final class HuffmanEncoder {
 
   private final int[] codes;
@@ -51,25 +48,37 @@ final class HuffmanEncoder {
   }
 
   /**
-   * Compresses the input string literal using the Huffman coding.
+   * Compresses the input string literal using the Huffman coding, writing the result directly into
+   * <code>dst</code> instead of byte by byte to an <code>OutputStream</code>.
    *
-   * @param out the output stream for the compressed data
-   * @throws IOException if an I/O error occurs. In particular, an <code>IOException</code> may be
-   *     thrown if the output stream has been closed.
+   * @param data the string literal to be Huffman encoded
+   * @param dst the array to write the Huffman coded string literal to
+   * @param dstOffset the position in <code>dst</code> to start writing at
+   * @param encodedLength the value of {@link #getEncodedLength(byte[])} for <code>data</code>,
+   *     which the caller has typically already computed to decide whether to use Huffman coding and
+   *     to reserve room in <code>dst</code>
    */
-  public void encode(OutputStream out, String string) throws IOException {
-    if (out == null) {
-      throw new NullPointerException("out");
-    } else if (string == null) {
-      throw new NullPointerException("string");
+  public void encode(byte[] data, byte[] dst, int dstOffset, int encodedLength) {
+    if (data == null) {
+      throw new NullPointerException("data");
+    } else if (dst == null) {
+      throw new NullPointerException("dst");
+    } else if (dstOffset < 0 || encodedLength < 0 || dstOffset + encodedLength > dst.length) {
+      throw new IndexOutOfBoundsException(
+          "dstOffset "
+              + dstOffset
+              + ", encodedLength "
+              + encodedLength
+              + ", dst.length "
+              + dst.length);
     }
 
+    int pos = dstOffset;
     long current = 0;
     int n = 0;
-    int len = string.length();
 
-    for (int i = 0; i < len; i++) {
-      int b = string.charAt(i) & 0xFF;
+    for (byte value : data) {
+      int b = value & 0xFF;
       int code = codes[b];
       int nbits = lengths[b];
 
@@ -79,14 +88,22 @@ final class HuffmanEncoder {
 
       while (n >= 8) {
         n -= 8;
-        out.write(((int) (current >> n)));
+        dst[pos++] = (byte) (current >> n);
       }
     }
 
     if (n > 0) {
       current <<= (8 - n);
       current |= (0xFF >>> n); // this should be EOS symbol
-      out.write((int) current);
+      dst[pos++] = (byte) current;
+    }
+
+    if (pos - dstOffset != encodedLength) {
+      throw new IllegalArgumentException(
+          "encodedLength "
+              + encodedLength
+              + " does not match the Huffman encoded length "
+              + (pos - dstOffset));
     }
   }
 
@@ -96,13 +113,13 @@ final class HuffmanEncoder {
    * @param data the string literal to be Huffman encoded
    * @return the number of bytes required to Huffman encode <code>data</code>
    */
-  public int getEncodedLength(String data) {
+  public int getEncodedLength(byte[] data) {
     if (data == null) {
       throw new NullPointerException("data");
     }
     long len = 0;
-    for (int i = 0; i < data.length(); i++) {
-      len += lengths[data.charAt(i) & 0xFF];
+    for (byte b : data) {
+      len += lengths[b & 0xFF];
     }
     return (int) ((len + 7) >> 3);
   }

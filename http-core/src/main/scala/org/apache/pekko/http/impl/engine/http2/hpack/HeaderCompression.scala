@@ -13,11 +13,11 @@
 
 package org.apache.pekko.http.impl.engine.http2.hpack
 
-import java.io.ByteArrayOutputStream
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.http2._
+import pekko.http.impl.util.ByteStringOutputStream
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler, StageLogging }
 import pekko.util.ByteString
@@ -44,7 +44,7 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
       private val currentMaxFrameSize = Http2Protocol.InitialMaxFrameSize
 
       val encoder = new pekko.http.shaded.com.twitter.hpack.Encoder(Http2Protocol.InitialMaxHeaderTableSize)
-      val os = new ByteArrayOutputStream(128)
+      val os = new ByteStringOutputStream(128)
 
       def onPull(): Unit = pull(eventsIn)
       def onPush(): Unit = grab(eventsIn) match {
@@ -71,8 +71,7 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
                 throw new IllegalStateException(
                   s"Didn't expect key-value-pair [$key] -> [$value](${value.getClass}) here.")
             }
-            val result = ByteString.fromArrayUnsafe(os.toByteArray) // BAOS.toByteArray always creates a copy
-            os.reset()
+            val result = os.takeByteString() // hands the array over without copying and starts a new block
             if (result.size <= currentMaxFrameSize)
               push(eventsOut, HeadersFrame(streamId, endStream, endHeaders = true, result, prioInfo))
             else {

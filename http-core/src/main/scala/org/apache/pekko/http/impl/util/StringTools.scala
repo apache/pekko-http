@@ -27,9 +27,9 @@ private[http] object StringTools {
     // keeps the array as is with a LATIN1 coder, so it is the same single copy.
     new String(bytes, ISO88591)
 
-  def asciiStringBytes(string: String): Array[Byte] = {
-    // this is as fast as Unsafe.copyUSAsciiStrToBytes for recent JDK versions
-    // and avoids the use of deprecated Unsafe methods
-    string.getBytes(java.nio.charset.StandardCharsets.US_ASCII)
-  }
+  def asciiStringBytes(string: String): Array[Byte] =
+    // ISO-8859-1 makes this the exact inverse of asciiStringFromBytes: HPACK string literals are opaque octets and
+    // a character in 0x80-0xFF has to come out as that octet, not as the '?' that encoding with US-ASCII would
+    // substitute. Since JDK 9 (compact strings) it is a single array copy for a string with a LATIN1 coder.
+    string.getBytes(ISO88591)
 }

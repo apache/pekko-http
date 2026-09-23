@@ -17,11 +17,12 @@
 
 package org.apache.pekko.http.impl.engine.http2.hpack
 
-import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, IOException, InputStream, SequenceInputStream }
+import java.io.{ ByteArrayInputStream, IOException, InputStream, SequenceInputStream }
 import scala.jdk.CollectionConverters._
 
 import scala.collection.mutable.ListBuffer
 
+import org.apache.pekko.http.impl.util.ByteStringOutputStream
 import org.apache.pekko.http.shaded.com.twitter.hpack.{ Decoder, Encoder, HeaderListener }
 
 import org.scalatest.matchers.should.Matchers
@@ -57,10 +58,10 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
       bytes.grouped(chunkSize).map(chunk => new ByteArrayInputStream(chunk): InputStream).asJavaEnumeration)
 
   private def encode(headers: (String, String)*): Array[Byte] = {
-    val out = new ByteArrayOutputStream
+    val out = new ByteStringOutputStream(128)
     val encoder = new Encoder(maxHeaderTableSize)
     headers.foreach { case (name, value) => encoder.encodeHeader(out, name, value, false) }
-    out.toByteArray
+    out.takeByteString().toArray
   }
 
   private def decode(in: InputStream): Seq[(String, String)] = {
