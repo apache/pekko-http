@@ -124,12 +124,12 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
    * complete, and then closes the connection. The value `Duration.Inf` disables this mechanism and is the
    * default.
    *
-   * @since 2.0.0
+   * @since 1.4.2
    */
   def maxConnectionAge: Duration
 
   /**
-   * @since 2.0.0
+   * @since 1.4.2
    */
   def withMaxConnectionAge(age: Duration): Http2ServerSettings = copy(maxConnectionAge = age)
 
@@ -138,12 +138,12 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
    * the default of 0.1 each connection is closed after between 90% and 110% of the configured age, so that
    * connections that were opened together are not all closed at the same time. 0 disables jitter.
    *
-   * @since 2.0.0
+   * @since 1.4.2
    */
   def maxConnectionAgeJitter: Double
 
   /**
-   * @since 2.0.0
+   * @since 1.4.2
    */
   override def withMaxConnectionAgeJitter(jitter: Double): Http2ServerSettings =
     copy(maxConnectionAgeJitter = jitter)
