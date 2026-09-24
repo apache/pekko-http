@@ -96,12 +96,12 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
    * advertised to the peer via SETTINGS_MAX_HEADER_LIST_SIZE and the same limit is applied to the accumulated
    * header block fragments of a HEADERS frame and its CONTINUATION frames.
    *
-   * @since 2.0.0
+   * @since 1.4.1
    */
   def maxHeaderListSize: Int
 
   /**
-   * @since 2.0.0
+   * @since 1.4.1
    */
   override def withMaxHeaderListSize(newValue: Int): Http2ServerSettings = copy(maxHeaderListSize = newValue)
 
@@ -228,12 +228,12 @@ trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http
    * advertised to the peer via SETTINGS_MAX_HEADER_LIST_SIZE and the same limit is applied to the accumulated
    * header block fragments of a HEADERS frame and its CONTINUATION frames.
    *
-   * @since 2.0.0
+   * @since 1.4.1
    */
   def maxHeaderListSize: Int
 
   /**
-   * @since 2.0.0
+   * @since 1.4.1
    */
   override def withMaxHeaderListSize(newValue: Int): Http2ClientSettings = copy(maxHeaderListSize = newValue)
 

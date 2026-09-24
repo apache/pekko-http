@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# new max-header-list-size setting for HTTP/2
+# new max-header-list-size setting for HTTP/2 (1.4.1)
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ClientSettings.maxHeaderListSize")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ClientSettings.withMaxHeaderListSize")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ServerSettings.getMaxHeaderListSize")
