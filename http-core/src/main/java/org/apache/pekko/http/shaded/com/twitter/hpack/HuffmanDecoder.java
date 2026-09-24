@@ -31,7 +31,6 @@
 
 package org.apache.pekko.http.shaded.com.twitter.hpack;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 final class HuffmanDecoder {
@@ -55,20 +54,33 @@ final class HuffmanDecoder {
   }
 
   /**
-   * Decompresses the given Huffman coded string literal.
+   * The shortest code in the HPACK Huffman table is 5 bits long, so a coded string literal of
+   * <code>n</code> bytes decodes to at most <code>n * 8 / 5</code> symbols.
+   */
+  static int maxDecodedLength(int codedLength) {
+    return (int) (((long) codedLength * 8) / 5);
+  }
+
+  /**
+   * Decompresses the given Huffman coded string literal into <code>out</code>, which must hold at
+   * least {@link #maxDecodedLength(int)} bytes for <code>length</code>. The symbols are written by
+   * index instead of through an <code>OutputStream</code>, whose per-symbol <code>write(int)</code>
+   * (synchronized on <code>ByteArrayOutputStream</code>) together with the growth and copy-out of
+   * that stream dominated the cost of decoding.
    *
    * @param buf the string literal to be decoded
-   * @return the output stream for the compressed data
-   * @throws IOException if an I/O error occurs. In particular, an <code>IOException</code> may be
-   *     thrown if the output stream has been closed.
+   * @param length the number of bytes of <code>buf</code> that make up the string literal
+   * @param out the array to write the decoded symbols to, starting at index 0
+   * @return the number of symbols written to <code>out</code>
+   * @throws IOException if the coded data contains the EOS symbol or is not padded with the most
+   *     significant bits of the EOS code
    */
-  public byte[] decode(byte[] buf) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
+  public int decode(byte[] buf, int length, byte[] out) throws IOException {
     Node node = root;
     int current = 0;
     int bits = 0;
-    for (int i = 0; i < buf.length; i++) {
+    int pos = 0;
+    for (int i = 0; i < length; i++) {
       int b = buf[i] & 0xFF;
       current = (current << 8) | b;
       bits += 8;
@@ -80,7 +92,7 @@ final class HuffmanDecoder {
           if (node.symbol == HpackUtil.HUFFMAN_EOS) {
             throw EOS_DECODED;
           }
-          baos.write(node.symbol);
+          out[pos++] = (byte) node.symbol;
           node = root;
         }
       }
@@ -91,7 +103,7 @@ final class HuffmanDecoder {
       node = node.children[c];
       if (node.isTerminal() && node.bits <= bits) {
         bits -= node.bits;
-        baos.write(node.symbol);
+        out[pos++] = (byte) node.symbol;
         node = root;
       } else {
         break;
@@ -106,7 +118,7 @@ final class HuffmanDecoder {
       throw INVALID_PADDING;
     }
 
-    return baos.toByteArray();
+    return pos;
   }
 
   private static final class Node {
