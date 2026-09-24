@@ -165,7 +165,8 @@ private[http] object Http2FrameParsing {
 /** INTERNAL API */
 @InternalApi
 private[http2] class Http2FrameParsing(
-    shouldReadPreface: Boolean, log: LoggingAdapter) extends ByteStringParser[FrameEvent] {
+    shouldReadPreface: Boolean, log: LoggingAdapter,
+    maxFrameSize: Int = Http2Protocol.InitialMaxFrameSize) extends ByteStringParser[FrameEvent] {
   import ByteStringParser._
   import Http2FrameParsing._
 
@@ -190,6 +191,12 @@ private[http2] class Http2FrameParsing(
       object ReadFrame extends Step {
         override def parse(reader: ByteReader): ParseResult[FrameEvent] = {
           val length = reader.readShortBE() << 8 | reader.readByte()
+          // Reject before `reader.take(length)` below buffers the payload: the length field allows up to 16 MiB, so
+          // without this a peer could make the parser hold that much for a single frame. FRAME_SIZE_ERROR is what
+          // RFC 9113, section 4.2 asks for; we accept up to `maxFrameSize` rather than the 16 KiB default the peer
+          // is expected to keep to, so this only rejects a peer that already exceeds what it was told.
+          if (length > maxFrameSize)
+            throw new Http2Compliance.IllegalHttp2FrameSize(length, s"exceeds the maximum frame size of $maxFrameSize")
           val tpe = reader.readByte()
           val flags = new ByteFlag(reader.readByte())
           // RFC 9113 5.1.1: the high bit of the stream identifier is reserved and MUST be ignored when receiving.
