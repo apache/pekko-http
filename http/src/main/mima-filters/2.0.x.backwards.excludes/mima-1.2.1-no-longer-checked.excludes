@@ -1,0 +1,30 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# MiMa 1.2.1 reports members that are now private[..] or sealed in Scala terms
+# as no longer checked. These compression internals were narrowed to
+# private[http] / private[coding] in 2.0.x.
+ProblemFilters.exclude[ClassNoLongerCheckedProblem]("org.apache.pekko.http.scaladsl.coding.DeflateCompressor")
+ProblemFilters.exclude[ClassNoLongerCheckedProblem]("org.apache.pekko.http.scaladsl.coding.GzipCompressor")
+ProblemFilters.exclude[ClassNoLongerCheckedProblem]("org.apache.pekko.http.scaladsl.coding.NoCodingCompressor")
+ProblemFilters.exclude[ClassNoLongerCheckedProblem]("org.apache.pekko.http.scaladsl.coding.NoCodingCompressor$")
+ProblemFilters.exclude[MethodNoLongerCheckedProblem]("org.apache.pekko.http.scaladsl.coding.Deflate.newCompressor")
+ProblemFilters.exclude[MethodNoLongerCheckedProblem]("org.apache.pekko.http.scaladsl.coding.Deflate.withLevel")
+ProblemFilters.exclude[MethodNoLongerCheckedProblem]("org.apache.pekko.http.scaladsl.coding.Encoder.newCompressor")
+ProblemFilters.exclude[MethodNoLongerCheckedProblem]("org.apache.pekko.http.scaladsl.coding.Gzip.newCompressor")
+ProblemFilters.exclude[MethodNoLongerCheckedProblem]("org.apache.pekko.http.scaladsl.coding.Gzip.withLevel")
+ProblemFilters.exclude[MethodNoLongerCheckedProblem]("org.apache.pekko.http.scaladsl.coding.NoCoding.newCompressor")
