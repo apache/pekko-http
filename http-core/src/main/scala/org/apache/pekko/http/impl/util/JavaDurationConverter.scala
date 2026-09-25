@@ -35,4 +35,12 @@ private[http] object JavaDurationConverter {
     case scala.concurrent.duration.Duration.MinusInf  => ChronoUnit.FOREVER.getDuration.negated()
     case _                                            => ChronoUnit.FOREVER.getDuration
   }
+
+  /**
+   * Inverse of [[toJava]]: `ChronoUnit.FOREVER.getDuration` is mapped back to `Duration.Inf`,
+   * every other value is converted to a finite duration.
+   */
+  def toScala(d: java.time.Duration): scala.concurrent.duration.Duration =
+    if (d == ChronoUnit.FOREVER.getDuration) scala.concurrent.duration.Duration.Inf
+    else d.toScala
 }
