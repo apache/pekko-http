@@ -91,6 +91,9 @@ are already in flight complete, and then closes the connection. Streams that the
 frame was sent are refused, upon which well-behaved clients (for example, grpc-java) transparently retry them on
 a new connection.
 
+The setting applies to HTTP/2 connections only: HTTP/1.1 connections accepted on the same port are not
+age-limited.
+
 If the connection is already being terminated when its age expires, for example because the server binding is
 being terminated, the expiry has no effect and the termination in progress keeps its own deadline. Conversely,
 terminating the server binding with an earlier deadline shortens a drain that the age started.

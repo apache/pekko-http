@@ -2104,7 +2104,8 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
               default.http2Settings.withMaxConnectionAge(500.millis).withMaxConnectionAgeJitter(0))
           }
 
-          // with jitter disabled the connection is closed no earlier than the configured age
+          // with jitter disabled no GOAWAY is sent before the configured age: checked for 400 of the 500 ms,
+          // the rest is left as a margin for timer scheduling
           network.expectNoBytes(400.millis)
           val (_, errorCode) = network.expectGOAWAY()
           errorCode should ===(ErrorCode.NO_ERROR)
