@@ -74,12 +74,12 @@ trait Http2ServerSettings {
    * connection exceeds this value, the server sends a GOAWAY frame, lets requests that are already in flight
    * complete, and then closes the connection. An infinite duration disables this mechanism and is the default.
    *
-   * @since 1.4.2
+   * @since 2.0.0
    */
   def getMaxConnectionAge: Duration = JavaDurationConverter.toJava(maxConnectionAge)
 
   /**
-   * @since 1.4.2
+   * @since 2.0.0
    */
   def withMaxConnectionAge(age: Duration): Http2ServerSettings = withMaxConnectionAge(age.toMillis.millis)
 
@@ -88,12 +88,12 @@ trait Http2ServerSettings {
    * with the default of 0.1 each connection is closed after between 90% and 110% of the configured age, so
    * that connections that were opened together are not all closed at the same time. 0 disables jitter.
    *
-   * @since 1.4.2
+   * @since 2.0.0
    */
   def getMaxConnectionAgeJitter: Double = maxConnectionAgeJitter
 
   /**
-   * @since 1.4.2
+   * @since 2.0.0
    */
   def withMaxConnectionAgeJitter(jitter: Double): Http2ServerSettings
 
