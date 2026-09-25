@@ -39,6 +39,9 @@ private[http] object JavaDurationConverter {
   /**
    * Inverse of [[toJava]]: `ChronoUnit.FOREVER.getDuration` is mapped back to `Duration.Inf`,
    * every other value is converted to a finite duration.
+   *
+   * @throws IllegalArgumentException if the value is not `ChronoUnit.FOREVER.getDuration` but too large
+   *                                  for a finite Scala duration (about 292 years)
    */
   def toScala(d: java.time.Duration): scala.concurrent.duration.Duration =
     if (d == ChronoUnit.FOREVER.getDuration) scala.concurrent.duration.Duration.Inf
