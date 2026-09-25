@@ -91,6 +91,10 @@ are already in flight complete, and then closes the connection. Streams that the
 frame was sent are refused, upon which well-behaved clients (for example, grpc-java) transparently retry them on
 a new connection.
 
+If the connection is already being terminated when its age expires, for example because the server binding is
+being terminated, the expiry has no effect and the termination in progress keeps its own deadline. Conversely,
+terminating the server binding with an earlier deadline shortens a drain that the age started.
+
 Requests that are still in flight when the age expires are given a grace period to complete, after which the
 connection is closed even if they have not completed:
 
@@ -100,10 +104,6 @@ pekko.http.server.http2.max-connection-age-grace = 30s
 
 The default grace period is 30 seconds. Set it to `infinite` to wait for all requests in flight to complete,
 however long they take.
-
-A termination of the connection that is already in progress when the age expires (for example because the
-server binding is being terminated) keeps its own deadline: neither the age nor the grace period apply to it.
-Conversely, terminating the server binding with an earlier deadline shortens a drain that the age started.
 
 A jitter is applied to the configured value for each connection (by default +/- 10%, configurable via
 `pekko.http.server.http2.max-connection-age-jitter`), so that connections that were opened together are not

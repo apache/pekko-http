@@ -121,9 +121,10 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   /**
    * The maximum time a connection is kept open before the server closes it gracefully. When the age of a
    * connection exceeds this value, the server sends a GOAWAY frame, lets requests that are already in flight
-   * complete within [[maxConnectionAgeGrace]], and then closes the connection. A termination of the connection
-   * that is already in progress when the age expires (for example because the server binding is being
-   * terminated) keeps its own deadline. The value `Duration.Inf` disables this mechanism and is the default.
+   * complete within [[maxConnectionAgeGrace]], and then closes the connection. If the connection is already
+   * being terminated when its age expires, for example because the server binding is being terminated, the
+   * expiry has no effect and the termination in progress keeps its own deadline. The value `Duration.Inf`
+   * disables this mechanism and is the default.
    *
    * @since 2.0.0
    */
