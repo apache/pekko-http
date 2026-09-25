@@ -574,7 +574,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         case CompletionTimeout =>
           if (isServer)
             info(
-              "Timeout: Peer didn't finish in-flight requests within the termination deadline (the deadline passed to terminate, or the 'max-connection-age-grace' setting). Closing pending HTTP/2 streams.")
+              "Timeout: requests in flight did not complete within the termination deadline (the deadline passed to terminate, or the 'max-connection-age-grace' setting). Closing pending HTTP/2 streams.")
           else
             info(
               "Timeout: Peer didn't finish in-flight requests. Closing pending HTTP/2 streams. Increase this timeout via the 'completion-timeout' setting.")
