@@ -44,9 +44,13 @@ import pekko.stream.stage.{
 import pekko.util.ByteString
 import pekko.util.OptionVal
 
+import java.util.concurrent.ThreadLocalRandom
+
 import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.duration.Deadline
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration.DurationLong
 import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
 
@@ -67,6 +71,11 @@ private[http2] class Http2ClientDemux(http2Settings: Http2ClientSettings, master
   }
 
   override def completionTimeout: FiniteDuration = http2Settings.completionTimeout
+
+  // a maximum connection age is not supported on the client side
+  def maxConnectionAge: Duration = Duration.Inf
+  def maxConnectionAgeGrace: Duration = Duration.Inf
+  def maxConnectionAgeJitter: Double = 0.0
 }
 
 /**
@@ -81,6 +90,10 @@ private[http2] class Http2ServerDemux(http2Settings: Http2ServerSettings, initia
 
   def completionTimeout: FiniteDuration =
     throw new IllegalArgumentException("Completion timeout not supported for servers")
+
+  def maxConnectionAge: Duration = http2Settings.maxConnectionAge
+  def maxConnectionAgeGrace: Duration = http2Settings.maxConnectionAgeGrace
+  def maxConnectionAgeJitter: Double = http2Settings.maxConnectionAgeJitter
 }
 
 /**
@@ -230,13 +243,16 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
   def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart]
   def completionTimeout: FiniteDuration
+  def maxConnectionAge: Duration
+  def maxConnectionAgeGrace: Duration
+  def maxConnectionAgeJitter: Double
 
   override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, ServerTerminator) = {
     object Logic extends TimerGraphStageLogic(shape) with Http2MultiplexerSupport with Http2StreamHandling
         with GenericOutletSupport with StageLogging with LogHelper with ServerTerminator {
       logic =>
 
-      import Http2Demux.CompletionTimeout
+      import Http2Demux.{ CompletionTimeout, MaxConnectionAge }
 
       def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart] =
         stage.wrapTrailingHeaders(headers)
@@ -256,24 +272,38 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       private val terminationPromise = Promise[Http.HttpTerminated]()
       private var terminating: Boolean = false
       private var lastIdBeforeTermination: Int = 0
+      // when the forced close of a terminating connection is due, unset while no forced close is scheduled
+      private var forcedCloseDeadline: OptionVal[Deadline] = OptionVal.None
       private val terminateCallback = getAsyncCallback[FiniteDuration](triggerTermination)
       override def terminate(deadline: FiniteDuration)(implicit ex: ExecutionContext): Future[Http.HttpTerminated] = {
         terminateCallback.invoke(deadline)
         terminationPromise.future
       }
-      private def triggerTermination(deadline: FiniteDuration): Unit =
-        // check if we are already terminating, otherwise start termination
+      private def triggerTermination(deadline: Duration): Unit = {
         if (!terminating) {
           log.debug(
             "Termination of this connection was triggered. Sending GOAWAY and waiting for open requests to complete for {}.",
-            CompletionTimeout)
+            deadline)
           terminating = true
           pushGOAWAY(ErrorCode.NO_ERROR, "Voluntary connection close.")
           lastIdBeforeTermination = lastStreamId()
           completeIfDone()
-          if (!isClosed(frameOut))
-            scheduleOnce(CompletionTimeout, deadline)
         }
+        scheduleForcedCloseIfEarlier(deadline)
+      }
+      private def scheduleForcedCloseIfEarlier(deadline: Duration): Unit = deadline match {
+        case deadline: FiniteDuration if !isClosed(frameOut) =>
+          val due = Deadline.now + deadline
+          val earlier = forcedCloseDeadline match {
+            case OptionVal.Some(scheduled) => due < scheduled
+            case _                         => true
+          }
+          if (earlier) {
+            forcedCloseDeadline = OptionVal.Some(due)
+            scheduleOnce(CompletionTimeout, deadline)
+          }
+        case _ => // no deadline, wait for open requests to complete
+      }
 
       def frameOutFinished(): Unit = {
         // make sure we clean up/fail substreams with a custom failure before stage is canceled
@@ -315,6 +345,15 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         pingState.tickInterval().foreach(interval =>
           // to limit overhead rather than constantly rescheduling a timer and looking at system time we use a constant timer
           scheduleAtFixedRate(ConfigurablePing.Tick, interval, interval))
+
+        maxConnectionAge match {
+          case age: FiniteDuration =>
+            // The age of each connection is jittered so that connections that were opened together are not
+            // all closed at the same time, see `max-connection-age-jitter` in the configuration.
+            val jitterFactor = 1.0 + maxConnectionAgeJitter * (2 * ThreadLocalRandom.current().nextDouble() - 1)
+            scheduleOnce(MaxConnectionAge, (age.toMillis * jitterFactor).toLong.max(1L).millis)
+          case _ => // no maximum connection age configured
+        }
       }
 
       override def pushGOAWAY(errorCode: ErrorCode, debug: String): Unit = {
@@ -522,9 +561,23 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
           } else {
             pingState.clear()
           }
+        case MaxConnectionAge =>
+          // the max-connection-age and its grace period must not shorten the deadline of a termination
+          // that is already in progress
+          if (terminating)
+            debug(
+              "Connection reached the configured max-connection-age while a termination is already in progress, nothing to do")
+          else {
+            debug("Connection reached the configured max-connection-age, closing it gracefully")
+            triggerTermination(maxConnectionAgeGrace)
+          }
         case CompletionTimeout =>
-          info(
-            "Timeout: Peer didn't finish in-flight requests. Closing pending HTTP/2 streams. Increase this timeout via the 'completion-timeout' setting.")
+          if (isServer)
+            info(
+              "Timeout: requests in flight did not complete within the termination deadline (the deadline passed to terminate, or the 'max-connection-age-grace' setting). Closing pending HTTP/2 streams.")
+          else
+            info(
+              "Timeout: Peer didn't finish in-flight requests. Closing pending HTTP/2 streams. Increase this timeout via the 'completion-timeout' setting.")
 
           shutdownStreamHandling()
           completeStage()
@@ -545,4 +598,5 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 @InternalApi
 private[pekko] object Http2Demux {
   case object CompletionTimeout
+  case object MaxConnectionAge
 }

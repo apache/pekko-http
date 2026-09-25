@@ -118,6 +118,53 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def pingTimeout: FiniteDuration
   def withPingTimeout(timeout: FiniteDuration): Http2ServerSettings = copy(pingTimeout = timeout)
 
+  /**
+   * The maximum time a connection is kept open before the server closes it gracefully. When the age of a
+   * connection exceeds this value, the server sends a GOAWAY frame, lets requests that are already in flight
+   * complete within [[maxConnectionAgeGrace]], and then closes the connection. If the connection is already
+   * being terminated when its age expires, for example because the server binding is being terminated, the
+   * expiry has no effect and the termination in progress keeps its own deadline. The value `Duration.Inf`
+   * disables this mechanism and is the default.
+   *
+   * @since 2.0.0
+   */
+  def maxConnectionAge: Duration
+
+  /**
+   * @since 2.0.0
+   */
+  def withMaxConnectionAge(age: Duration): Http2ServerSettings = copy(maxConnectionAge = age)
+
+  /**
+   * The time that requests in flight are given to complete after a connection reached [[maxConnectionAge]]
+   * and the GOAWAY frame was sent. When the grace period expires, the connection is closed even if requests
+   * are still in flight. The value `Duration.Inf` disables the limit, so that the connection is closed only
+   * once all requests in flight have completed.
+   *
+   * @since 2.0.0
+   */
+  def maxConnectionAgeGrace: Duration
+
+  /**
+   * @since 2.0.0
+   */
+  def withMaxConnectionAgeGrace(grace: Duration): Http2ServerSettings = copy(maxConnectionAgeGrace = grace)
+
+  /**
+   * The jitter applied to [[maxConnectionAge]] per connection, as a fraction of the configured age: with
+   * the default of 0.1 each connection is closed after between 90% and 110% of the configured age, so that
+   * connections that were opened together are not all closed at the same time. 0 disables jitter.
+   *
+   * @since 2.0.0
+   */
+  def maxConnectionAgeJitter: Double
+
+  /**
+   * @since 2.0.0
+   */
+  override def withMaxConnectionAgeJitter(jitter: Double): Http2ServerSettings =
+    copy(maxConnectionAgeJitter = jitter)
+
   def frameTypeThrottleFrameTypes: Set[String]
   def withFrameTypeThrottleFrameTypes(frameTypes: Set[String]) = copy(frameTypeThrottleFrameTypes = frameTypes)
 
@@ -153,6 +200,9 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       logFrames: Boolean,
       pingInterval: FiniteDuration,
       pingTimeout: FiniteDuration,
+      maxConnectionAge: Duration,
+      maxConnectionAgeGrace: Duration,
+      maxConnectionAgeJitter: Double,
       frameTypeThrottleFrameTypes: Set[String],
       frameTypeThrottleCost: Int,
       frameTypeThrottleBurst: Int,
@@ -171,6 +221,10 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       "min-collect-strict-entity-size <= incoming-connection-level-buffer-size / max-concurrent-streams")
     require(outgoingControlFrameBufferSize > 0, "outgoing-control-frame-buffer-size must be > 0")
     require(frameTypeThrottleInterval.toMillis > 0, "frame-type-throttle.interval must be a positive duration")
+    require(maxConnectionAge > Duration.Zero, "max-connection-age must be > 0 or 'infinite' to disable")
+    require(maxConnectionAgeGrace >= Duration.Zero, "max-connection-age-grace must be >= 0 or 'infinite'")
+    require(maxConnectionAgeJitter >= 0 && maxConnectionAgeJitter < 1,
+      "max-connection-age-jitter must be >= 0 and < 1")
     Http2CommonSettings.validate(this)
   }
 
@@ -187,6 +241,9 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       logFrames = c.getBoolean("log-frames"),
       pingInterval = c.getFiniteDuration("ping-interval"),
       pingTimeout = c.getFiniteDuration("ping-timeout"),
+      maxConnectionAge = c.getPotentiallyInfiniteDuration("max-connection-age"),
+      maxConnectionAgeGrace = c.getPotentiallyInfiniteDuration("max-connection-age-grace"),
+      maxConnectionAgeJitter = c.getDouble("max-connection-age-jitter"),
       frameTypeThrottleFrameTypes = c.getStringList("frame-type-throttle.frame-types").asScala.toSet,
       frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),
       frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),

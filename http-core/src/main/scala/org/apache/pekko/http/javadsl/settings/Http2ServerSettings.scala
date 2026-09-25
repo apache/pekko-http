@@ -17,6 +17,7 @@ import java.time.Duration
 
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
+import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.scaladsl
 import com.typesafe.config.Config
 
@@ -67,6 +68,60 @@ trait Http2ServerSettings {
 
   def getPingTimeout: Duration = Duration.ofMillis(pingTimeout.toMillis)
   def withPingTimeout(timeout: Duration): Http2ServerSettings = withPingTimeout(timeout.toMillis.millis)
+
+  /**
+   * The maximum time a connection is kept open before the server closes it gracefully. When the age of a
+   * connection exceeds this value, the server sends a GOAWAY frame, lets requests that are already in flight
+   * complete within [[getMaxConnectionAgeGrace]], and then closes the connection. If the connection is
+   * already being terminated when its age expires, for example because the server binding is being
+   * terminated, the expiry has no effect and the termination in progress keeps its own deadline. The value
+   * `ChronoUnit.FOREVER.getDuration` represents an infinite age, which disables this mechanism and is the
+   * default.
+   *
+   * @since 2.0.0
+   */
+  def getMaxConnectionAge: Duration = JavaDurationConverter.toJava(maxConnectionAge)
+
+  /**
+   * Pass `ChronoUnit.FOREVER.getDuration` to disable the maximum connection age.
+   *
+   * @since 2.0.0
+   */
+  def withMaxConnectionAge(age: Duration): Http2ServerSettings =
+    withMaxConnectionAge(JavaDurationConverter.toScala(age))
+
+  /**
+   * The time that requests in flight are given to complete after a connection reached the maximum
+   * connection age and the GOAWAY frame was sent. When the grace period expires, the connection is closed
+   * even if requests are still in flight. The value `ChronoUnit.FOREVER.getDuration` represents an infinite
+   * grace period, which disables the limit, so that the connection is closed only once all requests in
+   * flight have completed.
+   *
+   * @since 2.0.0
+   */
+  def getMaxConnectionAgeGrace: Duration = JavaDurationConverter.toJava(maxConnectionAgeGrace)
+
+  /**
+   * Pass `ChronoUnit.FOREVER.getDuration` for an infinite grace period.
+   *
+   * @since 2.0.0
+   */
+  def withMaxConnectionAgeGrace(grace: Duration): Http2ServerSettings =
+    withMaxConnectionAgeGrace(JavaDurationConverter.toScala(grace))
+
+  /**
+   * The jitter applied to the maximum connection age per connection, as a fraction of the configured age:
+   * with the default of 0.1 each connection is closed after between 90% and 110% of the configured age, so
+   * that connections that were opened together are not all closed at the same time. 0 disables jitter.
+   *
+   * @since 2.0.0
+   */
+  def getMaxConnectionAgeJitter: Double = maxConnectionAgeJitter
+
+  /**
+   * @since 2.0.0
+   */
+  def withMaxConnectionAgeJitter(jitter: Double): Http2ServerSettings
 
   def getFrameTypeThrottleFrameTypes(): java.util.Set[String] = frameTypeThrottleFrameTypes.asJava
   def getFrameTypeThrottleCost(): Int = frameTypeThrottleCost
