@@ -34,7 +34,8 @@ class Http2ServerSettingsSpec extends PekkoSpec {
     }
 
     "round-trip an infinite value through the Java API" in {
-      val settings = Http2ServerSettings(system)
+      val settings = Http2ServerSettings(system).withMaxConnectionAge(Duration.Inf)
+      settings.getMaxConnectionAge should ===(ChronoUnit.FOREVER.getDuration)
       val roundTripped = settings.withMaxConnectionAge(settings.getMaxConnectionAge)
       roundTripped.getMaxConnectionAge should ===(ChronoUnit.FOREVER.getDuration)
     }
