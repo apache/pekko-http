@@ -285,9 +285,6 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
             "Termination of this connection was triggered. Sending GOAWAY and waiting for open requests to complete for {}.",
             deadline)
           terminating = true
-          // a terminating connection has no age: the max-connection-age and its grace period must not
-          // shorten the deadline of a termination that is already in progress
-          cancelTimer(MaxConnectionAge)
           pushGOAWAY(ErrorCode.NO_ERROR, "Voluntary connection close.")
           lastIdBeforeTermination = lastStreamId()
           completeIfDone()
@@ -566,8 +563,15 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
             pingState.clear()
           }
         case MaxConnectionAge =>
-          debug("Connection reached the configured max-connection-age, closing it gracefully")
-          triggerTermination(maxConnectionAgeGrace)
+          // the max-connection-age and its grace period must not shorten the deadline of a termination
+          // that is already in progress
+          if (terminating)
+            debug(
+              "Connection reached the configured max-connection-age while a termination is already in progress, nothing to do")
+          else {
+            debug("Connection reached the configured max-connection-age, closing it gracefully")
+            triggerTermination(maxConnectionAgeGrace)
+          }
         case CompletionTimeout =>
           info(
             "Timeout: Peer didn't finish in-flight requests. Closing pending HTTP/2 streams. Increase this timeout via the 'completion-timeout' setting.")
