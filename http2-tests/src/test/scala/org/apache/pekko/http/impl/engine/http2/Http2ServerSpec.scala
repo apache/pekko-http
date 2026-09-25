@@ -2152,6 +2152,66 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectNoBytes(100.millis)
           network.expectComplete()
         })
+      "close within the deadline of a later server binding termination while draining after the age expired".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings = {
+            val default = super.settings
+            default.withHttp2Settings(
+              default.http2Settings.withMaxConnectionAge(500.millis).withMaxConnectionAgeJitter(0))
+          }
+
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+
+          val (_, errorCode) = network.expectGOAWAY(1)
+          errorCode should ===(ErrorCode.NO_ERROR)
+
+          // the default grace period is much longer than the deadline of the termination, which must win
+          val terminated = serverTerminator.terminate(10.millis)
+          network.expectComplete()
+          terminated.futureValue
+        })
+      "keep the remaining grace period when a later server binding termination has a later deadline".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings = {
+            val default = super.settings
+            default.withHttp2Settings(
+              default.http2Settings.withMaxConnectionAge(500.millis).withMaxConnectionAgeJitter(0)
+                .withMaxConnectionAgeGrace(300.millis))
+          }
+
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+
+          val (_, errorCode) = network.expectGOAWAY(1)
+          errorCode should ===(ErrorCode.NO_ERROR)
+
+          val terminated = serverTerminator.terminate(1.minute)
+          network.expectNoBytes(100.millis)
+          network.expectComplete()
+          terminated.futureValue
+        })
+      "not shorten a server binding termination in progress when the age expires".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings = {
+            val default = super.settings
+            default.withHttp2Settings(
+              default.http2Settings.withMaxConnectionAge(300.millis).withMaxConnectionAgeJitter(0)
+                .withMaxConnectionAgeGrace(100.millis))
+          }
+
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+
+          val terminated = serverTerminator.terminate(1.second)
+          val (_, errorCode) = network.expectGOAWAY(1)
+          errorCode should ===(ErrorCode.NO_ERROR)
+
+          // the age expires while the termination is in progress, its grace period must not apply
+          network.expectNoBytes(700.millis)
+          network.expectComplete()
+          terminated.futureValue
+        })
     }
   }
 

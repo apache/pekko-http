@@ -72,9 +72,10 @@ trait Http2ServerSettings {
   /**
    * The maximum time a connection is kept open before the server closes it gracefully. When the age of a
    * connection exceeds this value, the server sends a GOAWAY frame, lets requests that are already in flight
-   * complete within [[getMaxConnectionAgeGrace]], and then closes the connection. The value
-   * `ChronoUnit.FOREVER.getDuration` represents an infinite age, which disables this mechanism and is the
-   * default.
+   * complete within [[getMaxConnectionAgeGrace]], and then closes the connection. A termination of the
+   * connection that is already in progress when the age expires (for example because the server binding is
+   * being terminated) keeps its own deadline. The value `ChronoUnit.FOREVER.getDuration` represents an
+   * infinite age, which disables this mechanism and is the default.
    *
    * @since 2.0.0
    */

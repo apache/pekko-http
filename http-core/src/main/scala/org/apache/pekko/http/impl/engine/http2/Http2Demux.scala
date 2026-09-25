@@ -47,6 +47,7 @@ import pekko.util.OptionVal
 import java.util.concurrent.ThreadLocalRandom
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.duration.Deadline
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.DurationLong
@@ -271,26 +272,42 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       private val terminationPromise = Promise[Http.HttpTerminated]()
       private var terminating: Boolean = false
       private var lastIdBeforeTermination: Int = 0
+      // when the forced close of a terminating connection is due, unset while no forced close is scheduled
+      private var forcedCloseDeadline: OptionVal[Deadline] = OptionVal.None
       private val terminateCallback = getAsyncCallback[FiniteDuration](triggerTermination)
       override def terminate(deadline: FiniteDuration)(implicit ex: ExecutionContext): Future[Http.HttpTerminated] = {
         terminateCallback.invoke(deadline)
         terminationPromise.future
       }
-      private def triggerTermination(deadline: Duration): Unit =
-        // check if we are already terminating, otherwise start termination
+      private def triggerTermination(deadline: Duration): Unit = {
         if (!terminating) {
           log.debug(
             "Termination of this connection was triggered. Sending GOAWAY and waiting for open requests to complete for {}.",
             deadline)
           terminating = true
+          // a terminating connection has no age: the max-connection-age and its grace period must not
+          // shorten the deadline of a termination that is already in progress
+          cancelTimer(MaxConnectionAge)
           pushGOAWAY(ErrorCode.NO_ERROR, "Voluntary connection close.")
           lastIdBeforeTermination = lastStreamId()
           completeIfDone()
-          deadline match {
-            case deadline: FiniteDuration if !isClosed(frameOut) => scheduleOnce(CompletionTimeout, deadline)
-            case _                                               => // no deadline, wait for open requests to complete
-          }
         }
+        // an earlier deadline shortens a termination that is already in progress, a later one is ignored
+        scheduleForcedClose(deadline)
+      }
+      private def scheduleForcedClose(deadline: Duration): Unit = deadline match {
+        case deadline: FiniteDuration if !isClosed(frameOut) =>
+          val due = Deadline.now + deadline
+          val earlier = forcedCloseDeadline match {
+            case OptionVal.Some(scheduled) => due < scheduled
+            case _                         => true
+          }
+          if (earlier) {
+            forcedCloseDeadline = OptionVal.Some(due)
+            scheduleOnce(CompletionTimeout, deadline)
+          }
+        case _ => // no deadline, wait for open requests to complete
+      }
 
       def frameOutFinished(): Unit = {
         // make sure we clean up/fail substreams with a custom failure before stage is canceled

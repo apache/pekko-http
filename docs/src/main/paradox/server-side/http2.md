@@ -101,6 +101,10 @@ pekko.http.server.http2.max-connection-age-grace = 30s
 The default grace period is 30 seconds. Set it to `infinite` to wait for all requests in flight to complete,
 however long they take.
 
+A termination of the connection that is already in progress when the age expires (for example because the
+server binding is being terminated) keeps its own deadline: neither the age nor the grace period apply to it.
+Conversely, terminating the server binding with an earlier deadline shortens a drain that the age started.
+
 A jitter is applied to the configured value for each connection (by default +/- 10%, configurable via
 `pekko.http.server.http2.max-connection-age-jitter`), so that connections that were opened together are not
 all closed at the same time.
