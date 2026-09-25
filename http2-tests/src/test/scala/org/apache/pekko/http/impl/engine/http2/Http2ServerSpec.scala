@@ -2134,6 +2134,24 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
 
           network.expectComplete()
         })
+      "close the connection when the grace period expires while requests are still in flight".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings = {
+            val default = super.settings
+            default.withHttp2Settings(
+              default.http2Settings.withMaxConnectionAge(500.millis).withMaxConnectionAgeGrace(300.millis))
+          }
+
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+
+          val (_, errorCode) = network.expectGOAWAY(1)
+          errorCode should ===(ErrorCode.NO_ERROR)
+
+          // the request in flight is never completed, the connection stays open until the grace period expires
+          network.expectNoBytes(100.millis)
+          network.expectComplete()
+        })
     }
   }
 

@@ -91,6 +91,16 @@ are already in flight complete, and then closes the connection. Streams that the
 frame was sent are refused, upon which well-behaved clients (for example, grpc-java) transparently retry them on
 a new connection.
 
+Requests that are still in flight when the age expires are given a grace period to complete, after which the
+connection is closed even if they have not completed:
+
+```
+pekko.http.server.http2.max-connection-age-grace = 30s
+```
+
+The default grace period is 30 seconds. Set it to `infinite` to wait for all requests in flight to complete,
+however long they take.
+
 A jitter is applied to the configured value for each connection (by default +/- 10%, configurable via
 `pekko.http.server.http2.max-connection-age-jitter`), so that connections that were opened together are not
 all closed at the same time.

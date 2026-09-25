@@ -73,6 +73,7 @@ private[http2] class Http2ClientDemux(http2Settings: Http2ClientSettings, master
 
   // a maximum connection age is not supported on the client side
   def maxConnectionAge: Duration = Duration.Inf
+  def maxConnectionAgeGrace: Duration = Duration.Inf
   def maxConnectionAgeJitter: Double = 0.0
 }
 
@@ -90,6 +91,7 @@ private[http2] class Http2ServerDemux(http2Settings: Http2ServerSettings, initia
     throw new IllegalArgumentException("Completion timeout not supported for servers")
 
   def maxConnectionAge: Duration = http2Settings.maxConnectionAge
+  def maxConnectionAgeGrace: Duration = http2Settings.maxConnectionAgeGrace
   def maxConnectionAgeJitter: Double = http2Settings.maxConnectionAgeJitter
 }
 
@@ -241,6 +243,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
   def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart]
   def completionTimeout: FiniteDuration
   def maxConnectionAge: Duration
+  def maxConnectionAgeGrace: Duration
   def maxConnectionAgeJitter: Double
 
   override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, ServerTerminator) = {
@@ -547,7 +550,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
           }
         case MaxConnectionAge =>
           debug("Connection reached the configured max-connection-age, closing it gracefully")
-          triggerTermination(Duration.Inf)
+          triggerTermination(maxConnectionAgeGrace)
         case CompletionTimeout =>
           info(
             "Timeout: Peer didn't finish in-flight requests. Closing pending HTTP/2 streams. Increase this timeout via the 'completion-timeout' setting.")

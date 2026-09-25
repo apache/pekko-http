@@ -72,8 +72,9 @@ trait Http2ServerSettings {
   /**
    * The maximum time a connection is kept open before the server closes it gracefully. When the age of a
    * connection exceeds this value, the server sends a GOAWAY frame, lets requests that are already in flight
-   * complete, and then closes the connection. The value `ChronoUnit.FOREVER.getDuration` represents an
-   * infinite age, which disables this mechanism and is the default.
+   * complete within [[getMaxConnectionAgeGrace]], and then closes the connection. The value
+   * `ChronoUnit.FOREVER.getDuration` represents an infinite age, which disables this mechanism and is the
+   * default.
    *
    * @since 2.0.0
    */
@@ -86,6 +87,25 @@ trait Http2ServerSettings {
    */
   def withMaxConnectionAge(age: Duration): Http2ServerSettings =
     withMaxConnectionAge(JavaDurationConverter.toScala(age))
+
+  /**
+   * The time that requests in flight are given to complete after a connection reached the maximum
+   * connection age and the GOAWAY frame was sent. When the grace period expires, the connection is closed
+   * even if requests are still in flight. The value `ChronoUnit.FOREVER.getDuration` represents an infinite
+   * grace period, which disables the limit, so that the connection is closed only once all requests in
+   * flight have completed.
+   *
+   * @since 2.0.0
+   */
+  def getMaxConnectionAgeGrace: Duration = JavaDurationConverter.toJava(maxConnectionAgeGrace)
+
+  /**
+   * Pass `ChronoUnit.FOREVER.getDuration` for an infinite grace period.
+   *
+   * @since 2.0.0
+   */
+  def withMaxConnectionAgeGrace(grace: Duration): Http2ServerSettings =
+    withMaxConnectionAgeGrace(JavaDurationConverter.toScala(grace))
 
   /**
    * The jitter applied to the maximum connection age per connection, as a fraction of the configured age:

@@ -121,8 +121,8 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   /**
    * The maximum time a connection is kept open before the server closes it gracefully. When the age of a
    * connection exceeds this value, the server sends a GOAWAY frame, lets requests that are already in flight
-   * complete, and then closes the connection. The value `Duration.Inf` disables this mechanism and is the
-   * default.
+   * complete within [[maxConnectionAgeGrace]], and then closes the connection. The value `Duration.Inf`
+   * disables this mechanism and is the default.
    *
    * @since 2.0.0
    */
@@ -132,6 +132,21 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
    * @since 2.0.0
    */
   def withMaxConnectionAge(age: Duration): Http2ServerSettings = copy(maxConnectionAge = age)
+
+  /**
+   * The time that requests in flight are given to complete after a connection reached [[maxConnectionAge]]
+   * and the GOAWAY frame was sent. When the grace period expires, the connection is closed even if requests
+   * are still in flight. The value `Duration.Inf` disables the limit, so that the connection is closed only
+   * once all requests in flight have completed.
+   *
+   * @since 2.0.0
+   */
+  def maxConnectionAgeGrace: Duration
+
+  /**
+   * @since 2.0.0
+   */
+  def withMaxConnectionAgeGrace(grace: Duration): Http2ServerSettings = copy(maxConnectionAgeGrace = grace)
 
   /**
    * The jitter applied to [[maxConnectionAge]] per connection, as a fraction of the configured age: with
@@ -184,6 +199,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       pingInterval: FiniteDuration,
       pingTimeout: FiniteDuration,
       maxConnectionAge: Duration,
+      maxConnectionAgeGrace: Duration,
       maxConnectionAgeJitter: Double,
       frameTypeThrottleFrameTypes: Set[String],
       frameTypeThrottleCost: Int,
@@ -204,6 +220,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
     require(outgoingControlFrameBufferSize > 0, "outgoing-control-frame-buffer-size must be > 0")
     require(frameTypeThrottleInterval.toMillis > 0, "frame-type-throttle.interval must be a positive duration")
     require(maxConnectionAge > Duration.Zero, "max-connection-age must be > 0 or 'infinite' to disable")
+    require(maxConnectionAgeGrace >= Duration.Zero, "max-connection-age-grace must be >= 0 or 'infinite'")
     require(maxConnectionAgeJitter >= 0 && maxConnectionAgeJitter < 1,
       "max-connection-age-jitter must be >= 0 and < 1")
     Http2CommonSettings.validate(this)
@@ -223,6 +240,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       pingInterval = c.getFiniteDuration("ping-interval"),
       pingTimeout = c.getFiniteDuration("ping-timeout"),
       maxConnectionAge = c.getPotentiallyInfiniteDuration("max-connection-age"),
+      maxConnectionAgeGrace = c.getPotentiallyInfiniteDuration("max-connection-age-grace"),
       maxConnectionAgeJitter = c.getDouble("max-connection-age-jitter"),
       frameTypeThrottleFrameTypes = c.getStringList("frame-type-throttle.frame-types").asScala.toSet,
       frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),

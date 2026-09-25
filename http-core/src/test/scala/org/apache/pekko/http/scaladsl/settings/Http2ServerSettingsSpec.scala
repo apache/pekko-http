@@ -47,4 +47,23 @@ class Http2ServerSettingsSpec extends PekkoSpec {
       roundTripped.getMaxConnectionAge should ===(java.time.Duration.ofMinutes(2))
     }
   }
+
+  "Http2ServerSettings max-connection-age-grace" should {
+
+    "default to 30 seconds" in {
+      Http2ServerSettings(system).maxConnectionAgeGrace should ===(30.seconds)
+    }
+
+    "accept 'infinite' from config" in {
+      val settings = Http2ServerSettings("pekko.http.server.http2.max-connection-age-grace = infinite")
+      settings.maxConnectionAgeGrace should ===(Duration.Inf)
+    }
+
+    "round-trip an infinite value through the Java API" in {
+      val settings = Http2ServerSettings(system).withMaxConnectionAgeGrace(Duration.Inf)
+      settings.getMaxConnectionAgeGrace should ===(ChronoUnit.FOREVER.getDuration)
+      val roundTripped = settings.withMaxConnectionAgeGrace(settings.getMaxConnectionAgeGrace)
+      roundTripped.getMaxConnectionAgeGrace should ===(ChronoUnit.FOREVER.getDuration)
+    }
+  }
 }
