@@ -289,10 +289,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
           lastIdBeforeTermination = lastStreamId()
           completeIfDone()
         }
-        // an earlier deadline shortens a termination that is already in progress, a later one is ignored
-        scheduleForcedClose(deadline)
+        scheduleForcedCloseIfEarlier(deadline)
       }
-      private def scheduleForcedClose(deadline: Duration): Unit = deadline match {
+      private def scheduleForcedCloseIfEarlier(deadline: Duration): Unit = deadline match {
         case deadline: FiniteDuration if !isClosed(frameOut) =>
           val due = Deadline.now + deadline
           val earlier = forcedCloseDeadline match {
