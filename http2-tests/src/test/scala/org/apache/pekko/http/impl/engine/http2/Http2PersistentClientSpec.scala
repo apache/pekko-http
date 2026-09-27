@@ -102,6 +102,42 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
         response.attribute(requestIdAttr).get.id shouldBe "request-1"
       })
 
+    "retire an aged connection after in-flight requests complete".inAssertAllStagesStopped(new TestSetup(tls) {
+      override def clientSettings: ClientConnectionSettings =
+        super.clientSettings.withHttp2Settings(Http2ClientSettings(
+          """
+            pekko.http.client.http2.persistent-connection-max-age = 300ms
+            pekko.http.client.http2.completion-timeout = 2s
+          """))
+
+      client.responsesIn.request(2)
+      client.sendRequest(HttpRequest(uri = "/first").addAttribute(requestIdAttr, RequestId("request-1")))
+
+      val first = server.expectRequest()
+      val firstClientPort = first.clientPort
+      killProbe.expectMsgType[UniqueKillSwitch]
+
+      // Let the configured age elapse while the first request is still in flight.
+      server.expectNoRequest(500.millis)
+
+      client.sendRequest(HttpRequest(uri = "/second").addAttribute(requestIdAttr, RequestId("request-2")))
+      // A request arriving after retirement starts must wait for the current in-flight request.
+      server.expectNoRequest(100.millis)
+
+      server.sendResponseFor(first, HttpResponse(entity = "first-response"))
+      val firstResponse = client.expectResponse()
+      Unmarshal(firstResponse.entity).to[String].futureValue shouldBe "first-response"
+      firstResponse.attribute(requestIdAttr).get.id shouldBe "request-1"
+
+      val second = server.expectRequest()
+      second.clientPort should not be firstClientPort
+      server.sendResponseFor(second, HttpResponse(entity = "second-response"))
+
+      val secondResponse = client.expectResponse()
+      Unmarshal(secondResponse.entity).to[String].futureValue shouldBe "second-response"
+      secondResponse.attribute(requestIdAttr).get.id shouldBe "request-2"
+    })
+
     def reconnectionTests(withBackoff: Boolean): Unit = {
       val changeSettings: Http2ClientSettings => Http2ClientSettings =
         if (withBackoff) s => s.withBaseConnectionBackoff(300.millis).withMaxConnectionBackoff(800.millis)
@@ -396,6 +432,7 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
       }
 
       def expectRequest(): ServerRequest = requestProbe.expectMsgType[ServerRequest]
+      def expectNoRequest(duration: FiniteDuration): Unit = requestProbe.expectNoMessage(duration)
       def sendResponseFor(request: ServerRequest, response: HttpResponse): Unit =
         request.sendResponse(response)
     }

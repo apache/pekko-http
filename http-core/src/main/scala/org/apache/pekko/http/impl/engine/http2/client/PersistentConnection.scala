@@ -18,7 +18,7 @@ import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.Http.OutgoingConnection
 import pekko.http.scaladsl.model.{ AttributeKey, HttpRequest, HttpResponse, RequestResponseAssociation, StatusCodes }
-import pekko.http.scaladsl.settings.Http2ClientSettings
+import pekko.http.scaladsl.settings.{ Http2ClientSettings, Http2PersistentConnectionSettings }
 import pekko.stream.scaladsl.{ Flow, Keep, Source }
 import pekko.stream.stage.TimerGraphStageLogic
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler, StageLogging }
@@ -35,6 +35,7 @@ import scala.util.{ Failure, Success }
 private[http2] object PersistentConnection {
 
   private case class EmbargoEnded(connectsLeft: Option[Int], embargo: FiniteDuration)
+  private case object MaxConnectionAgeReached
 
   /**
    * Wraps a connection flow with transparent reconnection support.
@@ -59,7 +60,10 @@ private[http2] object PersistentConnection {
       settings.maxPersistentAttempts match {
         case 0 => None
         case n => Some(n)
-      }, settings.baseConnectionBackoff, settings.maxConnectionBackoff))
+      }, settings.baseConnectionBackoff, settings.maxConnectionBackoff,
+      settings.internalSettings.collect {
+        case Http2PersistentConnectionSettings(maxAge) => maxAge
+      }.getOrElse(Duration.Zero)))
 
   private class AssociationTag extends RequestResponseAssociation
   private val associationTagKey = AttributeKey[AssociationTag]("PersistentConnection.associationTagKey")
@@ -69,7 +73,8 @@ private[http2] object PersistentConnection {
       entity = "The server closed the connection before delivering a response.")
 
   private class Stage(connectionFlow: Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]],
-      maxAttempts: Option[Int], baseEmbargo: FiniteDuration, _maxBackoff: FiniteDuration)
+      maxAttempts: Option[Int], baseEmbargo: FiniteDuration, _maxBackoff: FiniteDuration,
+      persistentConnectionMaxAge: FiniteDuration)
       extends GraphStage[FlowShape[HttpRequest, HttpResponse]] {
     val requestIn = Inlet[HttpRequest]("PersistentConnection.requestIn")
     val responseOut = Outlet[HttpResponse]("PersistentConnection.responseOut")
@@ -78,6 +83,8 @@ private[http2] object PersistentConnection {
     val shape: FlowShape[HttpRequest, HttpResponse] = FlowShape(requestIn, responseOut)
     override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
       new TimerGraphStageLogic(shape) with StageLogging {
+        private var maxConnectionAgeCallback: Option[() => Unit] = None
+
         become(Unconnected)
 
         def become(state: State): Unit = setHandlers(requestIn, responseOut, state)
@@ -86,7 +93,8 @@ private[http2] object PersistentConnection {
         object Unconnected extends State {
           override def onPush(): Unit = connect(maxAttempts, Duration.Zero)
           override def onPull(): Unit =
-            if (!isAvailable(requestIn) && !hasBeenPulled(requestIn)) // requestIn might already have been pulled when we failed and went back to Unconnected
+            if (isAvailable(requestIn)) connect(maxAttempts, Duration.Zero)
+            else if (!hasBeenPulled(requestIn)) // requestIn might already have been pulled when we failed and went back to Unconnected
               pull(requestIn)
         }
 
@@ -181,6 +189,8 @@ private[http2] object PersistentConnection {
             case EmbargoEnded(connectsLeft, nextEmbargo) =>
               log.debug("Reconnecting after backoff")
               connect(connectsLeft, nextEmbargo)
+            case MaxConnectionAgeReached =>
+              maxConnectionAgeCallback.foreach(_())
           }
         }
 
@@ -188,6 +198,13 @@ private[http2] object PersistentConnection {
             requestOut: SubSourceOutlet[HttpRequest],
             responseIn: SubSinkInlet[HttpResponse]) extends State {
           private var ongoingRequests: Map[AssociationTag, Map[AttributeKey[?], RequestResponseAssociation]] = Map.empty
+          private var retiring = false
+
+          if (persistentConnectionMaxAge > Duration.Zero) {
+            maxConnectionAgeCallback = Some(() => retire())
+            scheduleOnce(MaxConnectionAgeReached, persistentConnectionMaxAge)
+          }
+
           responseIn.pull()
 
           requestOut.setHandler(new OutHandler {
@@ -210,6 +227,9 @@ private[http2] object PersistentConnection {
             override def onUpstreamFailure(ex: Throwable): Unit = onDisconnected() // FIXME: log error
           })
           def onDisconnected(): Unit = {
+            cancelTimer(MaxConnectionAgeReached)
+            maxConnectionAgeCallback = None
+
             emitMultiple[HttpResponse](responseOut,
               ongoingRequests.values.map(errorResponse.withAttributes(_)).toVector,
               () => setHandler(responseOut, Unconnected))
@@ -223,9 +243,28 @@ private[http2] object PersistentConnection {
               // become(Unconnected) doesn't work because of using emit
               // so we need to do it more carefully here
               setHandler(requestIn, Unconnected)
-              if (isAvailable(responseOut) && !hasBeenPulled(requestIn)) pull(requestIn)
+              if (isAvailable(responseOut)) {
+                if (isAvailable(requestIn)) connect(maxAttempts, Duration.Zero)
+                else if (!hasBeenPulled(requestIn)) pull(requestIn)
+              }
             }
           }
+
+          def retire(): Unit =
+            if (!retiring) {
+              retiring = true
+              log.debug("Persistent HTTP/2 connection reached its configured maximum age, retiring it")
+              setHandler(requestIn,
+                new InHandler {
+                  override def onPush(): Unit = () // keep at most one next request in the inlet slot
+                  override def onUpstreamFinish(): Unit = ()
+                  override def onUpstreamFailure(ex: Throwable): Unit = {
+                    responseIn.cancel()
+                    failStage(ex)
+                  }
+                })
+              requestOut.complete()
+            }
 
           def dispatchRequest(req: HttpRequest): Unit = {
             val tag = new AssociationTag

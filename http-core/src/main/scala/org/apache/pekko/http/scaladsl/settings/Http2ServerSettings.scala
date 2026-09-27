@@ -282,6 +282,12 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
 @DoNotInherit
 private[http] trait Http2InternalClientSettings
 
+@InternalApi
+private[http] final case class Http2PersistentConnectionSettings(persistentConnectionMaxAge: FiniteDuration)
+    extends Http2InternalClientSettings {
+  require(persistentConnectionMaxAge >= Duration.Zero, "persistent-connection-max-age must be >= 0")
+}
+
 @ApiMayChange
 @DoNotInherit
 trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http2CommonSettings {
@@ -417,7 +423,8 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       completionTimeout = c.getFiniteDuration("completion-timeout"),
       baseConnectionBackoff = c.getFiniteDuration("base-connection-backoff"),
       maxConnectionBackoff = c.getFiniteDuration("max-connection-backoff"),
-      internalSettings = None // no possibility to configure internal settings with config
+      internalSettings =
+        Some(Http2PersistentConnectionSettings(c.getFiniteDuration("persistent-connection-max-age")))
     )
   }
 }

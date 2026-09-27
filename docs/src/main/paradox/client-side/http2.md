@@ -55,6 +55,25 @@ Java
 
 The Apache Pekko HTTP client doesn't support HTTP/1 to HTTP/2 negotiation over plaintext using the `Upgrade` mechanism.
 
+## Limiting managed persistent connection lifetime
+
+Managed persistent HTTP/2 clients can periodically retire long-lived connections so that later requests establish
+fresh connections. This is useful when clients would otherwise remain pinned to the same server instances after
+a scale-out or rolling deployment.
+
+Configure the maximum age under the HTTP/2 client settings:
+
+```
+pekko.http.client.http2.persistent-connection-max-age = 10m
+```
+
+The setting applies to `managedPersistentHttp2()` and `managedPersistentHttp2WithPriorKnowledge()`. When a
+connection reaches the configured age, the managed client stops assigning new requests to it, lets requests that
+are already in flight complete, closes the connection, and sends later requests through a newly established
+connection. The existing `completion-timeout` setting bounds how long an in-flight request may delay retirement.
+
+The default is `0s`, which disables age-based retirement.
+
 ## Request-response ordering
 
 For HTTP/2 connections the responses are not guaranteed to arrive in the same order that the requests were emitted to

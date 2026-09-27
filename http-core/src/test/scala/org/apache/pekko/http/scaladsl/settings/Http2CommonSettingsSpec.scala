@@ -19,6 +19,20 @@ import scala.concurrent.duration._
 
 class Http2CommonSettingsSpec extends PekkoSpec {
 
+  "HTTP2 persistent client settings" should {
+    "disable connection age retirement by default and parse an override" in {
+      Http2ClientSettings(system).internalSettings.get shouldBe Http2PersistentConnectionSettings(Duration.Zero)
+      Http2ClientSettings("pekko.http.client.http2.persistent-connection-max-age = 2s").internalSettings.get shouldBe
+      Http2PersistentConnectionSettings(2.seconds)
+    }
+
+    "reject a negative persistent connection age" in {
+      intercept[IllegalArgumentException] {
+        Http2ClientSettings("pekko.http.client.http2.persistent-connection-max-age = -1s")
+      }
+    }
+  }
+
   "Validation of HTTP2 settings" should {
 
     "require ping-timeout to be evenly divisable by ping-interval" in {
