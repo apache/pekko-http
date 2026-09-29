@@ -18,6 +18,7 @@ import java.time.Duration
 import org.apache.pekko.http.scaladsl
 
 import scala.concurrent.duration.DurationLong
+import scala.jdk.DurationConverters._
 
 trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2ClientSettingsImpl =>
   def requestEntityChunkSize: Int
@@ -85,13 +86,13 @@ trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2Cli
    *
    * @since 2.0.0
    */
-  def getPersistentConnectionMaxAge: Duration = Duration.ofMillis(persistentConnectionMaxAge.toMillis)
+  def getPersistentConnectionMaxAge: Duration = persistentConnectionMaxAge.toJava
 
   /**
    * @since 2.0.0
    */
   def withPersistentConnectionMaxAge(maxAge: Duration): Http2ClientSettings =
-    self.withPersistentConnectionMaxAge(maxAge.toMillis.millis)
+    self.withPersistentConnectionMaxAge(maxAge.toScala)
 
   /**
    * The jitter applied to the persistent connection maximum age per connection, as a fraction of the configured

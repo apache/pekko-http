@@ -40,6 +40,8 @@ class Http2CommonSettingsSpec extends PekkoSpec {
       default.withPersistentConnectionMaxAge(3.seconds).persistentConnectionMaxAge shouldBe 3.seconds
       default.withPersistentConnectionMaxAge(java.time.Duration.ofSeconds(4)).getPersistentConnectionMaxAge shouldBe
       java.time.Duration.ofSeconds(4)
+      val subMillisecondAge = java.time.Duration.ofNanos(1)
+      default.withPersistentConnectionMaxAge(subMillisecondAge).getPersistentConnectionMaxAge shouldBe subMillisecondAge
       default.withPersistentConnectionMaxAgeJitter(0.2).persistentConnectionMaxAgeJitter shouldBe 0.2
     }
 
