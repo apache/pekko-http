@@ -106,7 +106,8 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
       override def clientSettings: ClientConnectionSettings =
         super.clientSettings.withHttp2Settings(Http2ClientSettings(
           """
-            pekko.http.client.http2.persistent-connection-max-age = 300ms
+            pekko.http.client.http2.persistent-connection-max-age = 500ms
+            pekko.http.client.http2.persistent-connection-max-age-jitter = 0
             pekko.http.client.http2.completion-timeout = 2s
           """))
 
@@ -117,12 +118,15 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
       val firstClientPort = first.clientPort
       killProbe.expectMsgType[UniqueKillSwitch]
 
-      // Let the configured age elapse while the first request is still in flight.
-      server.expectNoRequest(500.millis)
+      // Let the configured age elapse while the first request is still in flight. Use a wide margin so this
+      // remains stable on slow CI workers.
+      server.expectNoRequest(1500.millis)
 
       client.sendRequest(HttpRequest(uri = "/second").addAttribute(requestIdAttr, RequestId("request-2")))
+      // Closing the request source with a buffered request must not drop that request during retirement.
+      client.requestsOut.sendComplete()
       // A request arriving after retirement starts must wait for the current in-flight request.
-      server.expectNoRequest(100.millis)
+      server.expectNoRequest(300.millis)
 
       server.sendResponseFor(first, HttpResponse(entity = "first-response"))
       val firstResponse = client.expectResponse()
@@ -137,6 +141,33 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
       Unmarshal(secondResponse.entity).to[String].futureValue shouldBe "second-response"
       secondResponse.attribute(requestIdAttr).get.id shouldBe "request-2"
     })
+
+    "retire an idle aged connection and reconnect lazily for the next request".inAssertAllStagesStopped(
+      new TestSetup(tls) {
+        override def clientSettings: ClientConnectionSettings =
+          super.clientSettings.withHttp2Settings(Http2ClientSettings(
+            """
+              pekko.http.client.http2.persistent-connection-max-age = 500ms
+              pekko.http.client.http2.persistent-connection-max-age-jitter = 0
+            """))
+
+        client.responsesIn.request(2)
+        client.sendRequest(HttpRequest(uri = "/first"))
+        val first = server.expectRequest()
+        val firstClientPort = first.clientPort
+        server.sendResponseFor(first, HttpResponse())
+        client.expectResponse()
+
+        // Allow the idle connection to reach its configured age with a generous scheduling margin.
+        server.expectNoRequest(1500.millis)
+
+        client.sendRequest(HttpRequest(uri = "/second"))
+        val second = server.expectRequest()
+        second.clientPort should not be firstClientPort
+        server.sendResponseFor(second, HttpResponse())
+        client.expectResponse()
+        client.requestsOut.sendComplete()
+      })
 
     def reconnectionTests(withBackoff: Boolean): Unit = {
       val changeSettings: Http2ClientSettings => Http2ClientSettings =

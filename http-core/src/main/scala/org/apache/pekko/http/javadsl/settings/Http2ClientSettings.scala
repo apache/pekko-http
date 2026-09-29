@@ -79,6 +79,33 @@ trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2Cli
   def getMaxPersistentAttempts: Int = maxPersistentAttempts
   def withMaxPersistentAttempts(max: Int): Http2ClientSettings = copy(maxPersistentAttempts = max)
 
+  /**
+   * The maximum age of a managed persistent HTTP/2 connection before it is retired. A zero duration disables
+   * age-based retirement.
+   *
+   * @since 2.0.0
+   */
+  def getPersistentConnectionMaxAge: Duration = Duration.ofMillis(persistentConnectionMaxAge.toMillis)
+
+  /**
+   * @since 2.0.0
+   */
+  def withPersistentConnectionMaxAge(maxAge: Duration): Http2ClientSettings =
+    self.withPersistentConnectionMaxAge(maxAge.toMillis.millis)
+
+  /**
+   * The jitter applied to the persistent connection maximum age per connection, as a fraction of the configured
+   * age. 0 disables jitter.
+   *
+   * @since 2.0.0
+   */
+  def getPersistentConnectionMaxAgeJitter: Double = persistentConnectionMaxAgeJitter
+
+  /**
+   * @since 2.0.0
+   */
+  def withPersistentConnectionMaxAgeJitter(jitter: Double): Http2ClientSettings
+
   def getCompletionTimeout: Duration = Duration.ofMillis(completionTimeout.toMillis)
   def withCompletionTimeout(timeout: Duration): Http2ClientSettings = copy(completionTimeout = timeout.toMillis.millis)
 

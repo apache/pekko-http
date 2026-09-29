@@ -61,18 +61,28 @@ Managed persistent HTTP/2 clients can periodically retire long-lived connections
 fresh connections. This is useful when clients would otherwise remain pinned to the same server instances after
 a scale-out or rolling deployment.
 
-Configure the maximum age under the HTTP/2 client settings:
+Configure the maximum age and optional jitter under the HTTP/2 client settings:
 
 ```
 pekko.http.client.http2.persistent-connection-max-age = 10m
+pekko.http.client.http2.persistent-connection-max-age-jitter = 0.1
 ```
 
-The setting applies to `managedPersistentHttp2()` and `managedPersistentHttp2WithPriorKnowledge()`. When a
-connection reaches the configured age, the managed client stops assigning new requests to it, lets requests that
-are already in flight complete, closes the connection, and sends later requests through a newly established
-connection. The existing `completion-timeout` setting bounds how long an in-flight request may delay retirement.
+The setting applies to `managedPersistentHttp2()` and `managedPersistentHttp2WithPriorKnowledge()`. Each
+connection gets an independently jittered age; with the default jitter of `0.1`, retirement happens between 90%
+and 110% of the configured maximum age. Set the jitter to `0` to disable it.
 
-The default is `0s`, which disables age-based retirement.
+Retirement is currently **break-before-make**. When a connection reaches its age, the managed client stops
+assigning new requests to it and lets requests already in flight drain before closing the connection. New requests
+are backpressured until the old connection disconnects, then a replacement connection is established. As a result,
+a retiring connection can add its drain time plus TCP/TLS/HTTP2 setup time to new-request latency.
+
+The existing `completion-timeout` bounds the drain period. If that timeout expires, the old connection is closed
+even when requests are still in flight, terminating long-lived requests such as streaming responses.
+
+The default maximum age is `0s`, which disables age-based retirement. The settings can also be changed
+programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
+`Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
 
 ## Request-response ordering
 

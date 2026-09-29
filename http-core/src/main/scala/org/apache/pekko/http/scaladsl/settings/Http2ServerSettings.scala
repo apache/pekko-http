@@ -282,12 +282,6 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
 @DoNotInherit
 private[http] trait Http2InternalClientSettings
 
-@InternalApi
-private[http] final case class Http2PersistentConnectionSettings(persistentConnectionMaxAge: FiniteDuration)
-    extends Http2InternalClientSettings {
-  require(persistentConnectionMaxAge >= Duration.Zero, "persistent-connection-max-age must be >= 0")
-}
-
 @ApiMayChange
 @DoNotInherit
 trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http2CommonSettings {
@@ -353,6 +347,35 @@ trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http
   def maxPersistentAttempts: Int
   override def withMaxPersistentAttempts(max: Int): Http2ClientSettings = copy(maxPersistentAttempts = max)
 
+  /**
+   * The maximum age of a managed persistent HTTP/2 connection before it is retired. A zero duration disables
+   * age-based retirement.
+   *
+   * @since 2.0.0
+   */
+  def persistentConnectionMaxAge: FiniteDuration
+
+  /**
+   * @since 2.0.0
+   */
+  def withPersistentConnectionMaxAge(maxAge: FiniteDuration): Http2ClientSettings =
+    copy(persistentConnectionMaxAge = maxAge)
+
+  /**
+   * The jitter applied to [[persistentConnectionMaxAge]] per connection, as a fraction of the configured age:
+   * with the default of 0.1 each connection is retired after between 90% and 110% of the configured age.
+   * 0 disables jitter.
+   *
+   * @since 2.0.0
+   */
+  def persistentConnectionMaxAgeJitter: Double
+
+  /**
+   * @since 2.0.0
+   */
+  override def withPersistentConnectionMaxAgeJitter(jitter: Double): Http2ClientSettings =
+    copy(persistentConnectionMaxAgeJitter = jitter)
+
   def completionTimeout: FiniteDuration
   def withCompletionTimeout(timeout: FiniteDuration): Http2ClientSettings = copy(completionTimeout = timeout)
 
@@ -386,6 +409,8 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       pingInterval: FiniteDuration,
       pingTimeout: FiniteDuration,
       maxPersistentAttempts: Int,
+      persistentConnectionMaxAge: FiniteDuration,
+      persistentConnectionMaxAgeJitter: Double,
       completionTimeout: FiniteDuration,
       baseConnectionBackoff: FiniteDuration,
       maxConnectionBackoff: FiniteDuration,
@@ -401,6 +426,9 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
     require(incomingStreamLevelBufferSize > 0, "incoming-stream-level-buffer-size must be > 0")
     require(outgoingControlFrameBufferSize > 0, "outgoing-control-frame-buffer-size must be > 0")
     require(maxPersistentAttempts >= 0, "max-persistent-attempts must be >= 0")
+    require(persistentConnectionMaxAge >= Duration.Zero, "persistent-connection-max-age must be >= 0")
+    require(persistentConnectionMaxAgeJitter >= 0 && persistentConnectionMaxAgeJitter < 1,
+      "persistent-connection-max-age-jitter must be >= 0 and < 1")
     require(completionTimeout > Duration.Zero, "completion-timeout must be > 0")
     require(baseConnectionBackoff <= maxConnectionBackoff, "base-connection-backoff must be <= max-connection-backoff")
     Http2CommonSettings.validate(this)
@@ -420,11 +448,12 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       pingInterval = c.getFiniteDuration("ping-interval"),
       pingTimeout = c.getFiniteDuration("ping-timeout"),
       maxPersistentAttempts = c.getInt("max-persistent-attempts"),
+      persistentConnectionMaxAge = c.getFiniteDuration("persistent-connection-max-age"),
+      persistentConnectionMaxAgeJitter = c.getDouble("persistent-connection-max-age-jitter"),
       completionTimeout = c.getFiniteDuration("completion-timeout"),
       baseConnectionBackoff = c.getFiniteDuration("base-connection-backoff"),
       maxConnectionBackoff = c.getFiniteDuration("max-connection-backoff"),
-      internalSettings =
-        Some(Http2PersistentConnectionSettings(c.getFiniteDuration("persistent-connection-max-age")))
+      internalSettings = None // no possibility to configure internal settings with config
     )
   }
 }
