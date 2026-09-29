@@ -55,7 +55,7 @@ object Common extends AutoPlugin {
       "-Wconf:cat=deprecation:s")).value,
     scalacOptions ++= onlyOnScala3(Seq(
       "-Werror",
-      "-Wconf:msg=Suspicious top-level unqualified call:s",
+      "-Wconf:id=E181:s", // https://docs.scala-lang.org/scala3/reference/error-codes/E181.html
       "-Wconf:msg=overrides concrete:s",
       "-Wconf:msg=Unreachable case except for null:s",
       "-Wconf:msg=match may not be exhaustive:s",
