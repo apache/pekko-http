@@ -1003,6 +1003,121 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
       netInSub.sendComplete()
       responses.expectComplete()
     }
+
+    "collect response entities into strict entities if configured".which {
+      val strictConfig = "pekko.http.client.strict-response-entity-timeout = 2s"
+
+      "collects a chunked response entity" in new TestSetup(config = strictConfig) {
+        sendStandardRequest()
+        sendWireData(
+          """HTTP/1.1 200 OK
+            |Content-Type: text/plain; charset=UTF-8
+            |Transfer-Encoding: chunked
+            |
+            |3
+            |ABC
+            |4
+            |DEFG
+            |0
+            |
+            |""")
+
+        expectResponse().entity shouldEqual
+        HttpEntity.Strict(ContentTypes.`text/plain(UTF-8)`, ByteString("ABCDEFG"))
+
+        requestsSub.sendComplete()
+        netOut.expectComplete()
+        netInSub.sendComplete()
+        responses.expectComplete()
+      }
+
+      "collects a default response entity" in new TestSetup(config = strictConfig) {
+        sendStandardRequest()
+        sendWireData(
+          """HTTP/1.1 200 OK
+            |Content-Type: text/plain; charset=UTF-8
+            |Content-Length: 7
+            |
+            |ABC""")
+        sendWireData("DEFG")
+
+        expectResponse().entity shouldEqual
+        HttpEntity.Strict(ContentTypes.`text/plain(UTF-8)`, ByteString("ABCDEFG"))
+
+        requestsSub.sendComplete()
+        netOut.expectComplete()
+        netInSub.sendComplete()
+        responses.expectComplete()
+      }
+
+      "collects a close-delimited response entity" in new TestSetup(config = strictConfig) {
+        sendStandardRequest()
+        sendWireData(
+          """HTTP/1.1 200 OK
+            |Content-Type: text/plain; charset=UTF-8
+            |
+            |ABCDEFG""")
+        closeNetworkInput()
+
+        expectResponse().entity shouldEqual
+        HttpEntity.Strict(ContentTypes.`text/plain(UTF-8)`, ByteString("ABCDEFG"))
+      }
+
+      "passes through an already strict response entity" in new TestSetup(config = strictConfig) {
+        sendStandardRequest()
+        sendWireData(
+          """HTTP/1.1 200 OK
+            |Content-Type: text/plain; charset=UTF-8
+            |Content-Length: 7
+            |
+            |ABCDEFG""")
+
+        expectResponse().entity shouldEqual
+        HttpEntity.Strict(ContentTypes.`text/plain(UTF-8)`, ByteString("ABCDEFG"))
+
+        requestsSub.sendComplete()
+        netOut.expectComplete()
+        netInSub.sendComplete()
+        responses.expectComplete()
+      }
+
+      "fails the connection if the response entity exceeds strict-response-entity-max-bytes" in new TestSetup(
+        config = strictConfig + "\npekko.http.client.strict-response-entity-max-bytes = 5") {
+        sendStandardRequest()
+        sendWireData(
+          """HTTP/1.1 200 OK
+            |Content-Type: text/plain; charset=UTF-8
+            |Transfer-Encoding: chunked
+            |
+            |3
+            |ABC
+            |4
+            |DEFG
+            |0
+            |
+            |""")
+
+        responsesSub.request(1)
+        responses.expectError().getMessage should include("longer than the maximum of 5")
+      }
+
+      "leaves response entities streamed by default" in new TestSetup {
+        sendStandardRequest()
+        sendWireData(
+          """HTTP/1.1 200 OK
+            |Content-Type: text/plain; charset=UTF-8
+            |Transfer-Encoding: chunked
+            |
+            |3
+            |ABC
+            |""")
+
+        inside(expectResponse()) {
+          case HttpResponse(_, _, entity: HttpEntity.Chunked, _) =>
+            entity.contentType shouldEqual ContentTypes.`text/plain(UTF-8)`
+        }
+      }
+    }
   }
 
   class TestSetup(maxResponseContentLength: Int = -1, config: String = "") {
