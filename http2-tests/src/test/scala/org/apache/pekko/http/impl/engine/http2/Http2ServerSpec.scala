@@ -2119,12 +2119,12 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           override def settings: ServerSettings = {
             val default = super.settings
             default.withHttp2Settings(
-              default.http2Settings.withMaxConnectionAge(500.millis).withMaxConnectionAgeJitter(0))
+              default.http2Settings.withMaxConnectionAge(1.second).withMaxConnectionAgeJitter(0))
           }
 
-          // with jitter disabled no GOAWAY is sent before the configured age: checked for 400 of the 500 ms,
+          // with jitter disabled no GOAWAY is sent before the configured age: checked for 700 of the 1000 ms,
           // the rest is left as a margin for timer scheduling
-          network.expectNoBytes(400.millis)
+          network.expectNoBytes(700.millis)
           val (_, errorCode) = network.expectGOAWAY()
           errorCode should ===(ErrorCode.NO_ERROR)
           network.expectComplete()
@@ -2190,6 +2190,29 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectComplete()
           terminated.futureValue
         })
+      "close within the deadline of a later server binding termination while draining with an infinite grace period".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings = {
+            val default = super.settings
+            default.withHttp2Settings(
+              default.http2Settings.withMaxConnectionAge(500.millis).withMaxConnectionAgeJitter(0)
+                .withMaxConnectionAgeGrace(Duration.Inf))
+          }
+
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+
+          val (_, errorCode) = network.expectGOAWAY(1)
+          errorCode should ===(ErrorCode.NO_ERROR)
+
+          // with an infinite grace period no forced close is scheduled, the connection waits for the request in flight
+          network.expectNoBytes(300.millis)
+
+          // so the deadline of a later termination always wins
+          val terminated = serverTerminator.terminate(10.millis)
+          network.expectComplete()
+          terminated.futureValue
+        })
       "keep the remaining grace period when a later server binding termination has a later deadline".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           override def settings: ServerSettings = {
@@ -2222,7 +2245,7 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.sendRequest(1, HttpRequest())
           user.expectRequest()
 
-          val terminated = serverTerminator.terminate(1.second)
+          val terminated = serverTerminator.terminate(2.seconds)
           val (_, errorCode) = network.expectGOAWAY(1)
           errorCode should ===(ErrorCode.NO_ERROR)
 
