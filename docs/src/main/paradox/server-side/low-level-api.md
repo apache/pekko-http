@@ -230,6 +230,35 @@ Note that this is when the TCP connection is closed correctly, if the client jus
 a network failure, it will not be seen as this kind of stream failure. It will instead be detected through the
 @ref[idle timeout](../common/timeouts.md#timeouts)).
 
+#### Requests that fail to parse
+
+A request can be so malformed that no @apidoc[HttpRequest] is ever created from it: an unknown method, a request target
+that is not a URI, a header the parser cannot read. Such a request never reaches your handler or any
+@ref[exception handler](../routing-dsl/exception-handling.md), because there is no request to hand over. Instead the
+server responds through a @apidoc[ParsingErrorHandler], selected by the `pekko.http.server.parsing.error-handler`
+setting. The default implementation logs the parse error and answers with the status code the parser chose, carrying
+only a short summary of the error unless `pekko.http.server.verbose-error-messages` is on.
+
+A custom handler can override the five-argument `handle` to receive an @apidoc[IllegalRequestContext] alongside the
+error: what is known about the request at the point where parsing gave up — its method, its raw request target and its
+protocol, each optional because a request can be rejected before that part of it has been read.
+
+@@@ warning
+
+`rawRequestTarget` is unvalidated, attacker-controlled input. It is by definition malformed whenever the request target
+is what failed to parse, and it can carry any byte the client chose to send — CR, LF, NUL, terminal control sequences.
+Written raw into a log it lets a client forge log lines or drive the terminal that displays them; written raw into a
+response body it is reflected input. A handler that logs or echoes it has to escape it first. The context's `toString`
+is escaped and safe to log as it is; the field itself is not.
+
+@@@
+
+The default handler never reads the raw request target, so nothing is echoed to the client under the default
+configuration. It does log the parse error, and with the default `pekko.http.server.parsing.error-logging-verbosity = full`
+the logged details include the input that failed to parse, with control characters escaped. Consider `simple` where logs
+are shipped or alerted on, since the input is attacker-chosen text of up to the configured length limit written at
+warning level.
+
 
 These failures can be described more or less infrastructure related, they are failing bindings or connections.
 Most of the time you won't need to dive into those very deeply, as Apache Pekko will simply log errors of this kind
