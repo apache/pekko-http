@@ -21,11 +21,11 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.settings.WebSocketSettingsImpl
+import pekko.http.impl.util.JavaDurationConverter
 import pekko.util.ByteString
 import com.typesafe.config.Config
 
 import scala.concurrent.duration.Duration
-import scala.jdk.DurationConverters._
 
 /**
  * Public API but not intended for subclassing
@@ -60,7 +60,7 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
    * @since 1.3.0
    */
   def withPeriodicKeepAliveMaxIdle(newValue: JDuration): WebSocketSettings =
-    copy(periodicKeepAliveMaxIdle = newValue.toScala)
+    copy(periodicKeepAliveMaxIdle = JavaDurationConverter.toScala(newValue))
   def withPeriodicKeepAliveData(newValue: Supplier[ByteString]): WebSocketSettings =
     copy(periodicKeepAliveData = () => newValue.get())
 

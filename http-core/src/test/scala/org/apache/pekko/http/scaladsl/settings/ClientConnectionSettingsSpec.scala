@@ -13,6 +13,26 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
+import java.time.temporal.ChronoUnit
+
+import scala.concurrent.duration._
+
 import org.apache.pekko.testkit.PekkoSpec
 
-class ClientConnectionSettingsSpec extends PekkoSpec {}
+class ClientConnectionSettingsSpec extends PekkoSpec {
+  "ClientConnectionSettings" should {
+    "round-trip an infinite idle-timeout through the Java API" in {
+      val settings = ClientConnectionSettings(system).withIdleTimeout(Duration.Inf)
+      settings.getIdleTimeout should ===(ChronoUnit.FOREVER.getDuration)
+      val roundTripped = settings.withIdleTimeout(settings.getIdleTimeout)
+      roundTripped.getIdleTimeout should ===(ChronoUnit.FOREVER.getDuration)
+    }
+
+    "round-trip an infinite websocket periodic-keep-alive-max-idle through the Java API" in {
+      val settings = ClientConnectionSettings(system).websocketSettings.withPeriodicKeepAliveMaxIdle(Duration.Inf)
+      settings.getPeriodicKeepAliveMaxIdle should ===(ChronoUnit.FOREVER.getDuration)
+      val roundTripped = settings.withPeriodicKeepAliveMaxIdle(settings.getPeriodicKeepAliveMaxIdle)
+      roundTripped.getPeriodicKeepAliveMaxIdle should ===(ChronoUnit.FOREVER.getDuration)
+    }
+  }
+}
