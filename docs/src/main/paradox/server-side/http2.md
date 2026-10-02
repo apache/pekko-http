@@ -74,6 +74,44 @@ server supports HTTP/2.
 For this reason the approach is known as HTTP/2 with
 [Prior Knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3).
 
+## Limiting the lifetime of connections
+
+Long-lived HTTP/2 connections, for example those used by gRPC, can lead to an uneven load distribution across
+server instances: clients stay connected to the instances they found at connect time, and instances added later
+(after a scale-out or a rolling deploy) receive no share of the existing traffic.
+
+To rebalance connections regularly, set a maximum connection age:
+
+```
+pekko.http.server.http2.max-connection-age = 120s
+```
+
+When the age of a connection exceeds the configured value, the server sends a GOAWAY frame, lets requests that
+are already in flight complete, and then closes the connection. Streams that the peer opens after the GOAWAY
+frame was sent are refused, upon which well-behaved clients (for example, grpc-java) transparently retry them on
+a new connection.
+
+The setting applies to HTTP/2 connections only: HTTP/1.1 connections accepted on the same port are not
+age-limited.
+
+If the connection is already being terminated when its age expires, for example because the server binding is
+being terminated, the expiry has no effect and the termination in progress keeps its own deadline. Conversely,
+terminating the server binding with an earlier deadline shortens a drain that the age started.
+
+Requests that are still in flight when the age expires are given a grace period to complete, after which the
+connection is closed even if they have not completed:
+
+```
+pekko.http.server.http2.max-connection-age-grace = 30s
+```
+
+The default grace period is 30 seconds. Set it to `infinite` to wait for all requests in flight to complete,
+however long they take.
+
+A jitter is applied to the configured value for each connection (by default +/- 10%, configurable via
+`pekko.http.server.http2.max-connection-age-jitter`), so that connections that were opened together are not
+all closed at the same time.
+
 ## Trailing headers
 
 Like in the [HTTP/1.1 'Chunked' transfer encoding](https://datatracker.ietf.org/doc/html/rfc7230#section-4.1.2),
