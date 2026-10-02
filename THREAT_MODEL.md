@@ -5,8 +5,8 @@
 | | |
 | --- | --- |
 | **Project** | Apache Pekko HTTP |
-| **Written against** | commit `40b07a2`, `main` |
-| **Date** | 2026-08-27 |
+| **Written against** | commit `478c58b`, `main` |
+| **Date** | 2026-10-02 |
 | **Authors** | ASF Security team, at the request of the Pekko PMC |
 | **Version binding** | Versioned alongside the project. A report against version *N* is triaged against the model as it stood at *N*, not at `main`. |
 | **Reporting** | Findings that violate a §8 property should be reported per [`SECURITY.md`](SECURITY.md). Findings under §3 or §9 will be closed citing this document. |
@@ -116,6 +116,7 @@ Pekko HTTP's resistance to malformed and abusive input is a function of `pekko.h
 | `max-to-strict-bytes` | `8m` | `toStrict` materialization |
 | `max-concurrent-streams` | `256` | HTTP/2 concurrent streams |
 | `max-header-list-size` | `64 KiB` | HTTP/2 decompressed header list, **and** the accumulated HEADERS + CONTINUATION fragments for one header block |
+| `max-frame-size` | `512kB` | HTTP/2 single incoming frame, checked on its frame header before the payload is buffered; a limit on what is accepted, not advertised as `SETTINGS_MAX_FRAME_SIZE` |
 | `incoming-connection-level-buffer-size` | `10 MB` | HTTP/2 incoming data buffered across one connection |
 | `incoming-stream-level-buffer-size` | `512kB` | HTTP/2 incoming data buffered for one stream |
 | `outgoing-control-frame-buffer-size` | `1024` | HTTP/2 outgoing control frames queued before the connection fails |
@@ -181,7 +182,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 | Any bound route | Entity body (fixed, chunked, streamed) | **Yes** | Pekko HTTP: size/chunk limits. App: content validation |
 | Route with a multipart unmarshaller | Body parts — boundaries, per-part headers, part count | **Yes** | Pekko HTTP: `max-part-count`, header limits per part, each part carrying only its own headers ([#1279](https://github.com/apache/pekko-http/pull/1279)). App: per-part validation |
 | Custom `ParsingErrorHandler` | `IllegalRequestContext.rawRequestTarget` | **Yes** — the bytes that failed to parse | **App** — escape before logging or echoing; documented at the class |
-| HTTP/2 | Frames, HPACK table, stream IDs | **Yes** | Pekko HTTP: `max-concurrent-streams`, `frame-type-throttle`, P9 |
+| HTTP/2 | Frames, HPACK table, stream IDs | **Yes** | Pekko HTTP: `max-frame-size`, `max-concurrent-streams`, `frame-type-throttle`, P9 |
 | Route with marshaller | Entity parsed to a domain type | **Yes** | Underlying JSON/XML library + app |
 | `cors()` | `Origin`, `Access-Control-Request-*` | **Yes** | Operator: §5a CORS config |
 | File-serving directives | Path segments | **Yes** | Pekko HTTP + app — see §9, §14 Q3 |
@@ -210,7 +211,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 
 | # | Property & conditions | Violation symptom | Severity | Provenance |
 | --- | --- | --- | --- | --- |
-| P1 | **Inbound messages are bounded** by the §5a limits: reaching a limit stops the parse, every header a message carries counts towards the count limits, and buffered bytes are released from the accounting when the buffer is discarded | OOM or unbounded buffering from input *within* documented limits; a limit reached without the parse stopping | **Critical** | *(documented — `reference.conf`, `HttpMessageParser.scala`, `Http2StreamHandling.scala`)* |
+| P1 | **Inbound messages are bounded** by the §5a limits: reaching a limit stops the parse, every header a message carries counts towards the count limits, and buffered bytes are released from the accounting when the buffer is discarded | OOM or unbounded buffering from input *within* documented limits; a limit reached without the parse stopping | **Critical** | *(documented — `reference.conf`, `HttpMessageParser.scala`, `Http2FrameParsing.scala`, `Http2StreamHandling.scala`)* |
 | P2 | **Response splitting is blocked**: illegal response header names and values are `error` by default, and the renderers drop any header whose rendered bytes contain CR, LF or NUL — on the HTTP/1.1 header block, chunked-response trailers and chunk extensions, and the HTTP/2 HPACK path alike | CRLF or NUL in an application-supplied header, trailer or chunk extension reaching the wire | **Critical** | *(documented — `reference.conf`, `Rendering.isIllegalHeaderChar`)* |
 | P3 | **Parse errors do not leak detail to the client** — `verbose-error-messages = off` | Internal parse state or stack detail in a 400 response under defaults | High | *(documented — `reference.conf`)* |
 | P4 | **Strict URI and RFC6265 cookie parsing by default**, rather than lenient normalization that invites smuggling | Two components disagreeing on a URI or cookie under `strict` | High | *(documented — `reference.conf`)* |
@@ -222,9 +223,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 
 **P1–P7 and P9 are default-on.** P8 holds only for a verifier that calls `Credentials.verify` (§10.4). The DoS boundary is the §14 Q1 content-vs-volume line.
 
-**How §8 was verified.** P1, P2 and P9 were first asserted from configuration and design, then checked against the code; each had defects, all fixed at or before the pinned commit. P1: `max-chunk-count` reported the limit without stopping the parse ([#1220](https://github.com/apache/pekko-http/pull/1220)); repeated `Connection` headers escaped `max-header-count` ([#1255](https://github.com/apache/pekko-http/pull/1255)); HTTP/2 connection-level buffer accounting leaked on discarded streams until the connection window drained and every stream stalled ([#1259](https://github.com/apache/pekko-http/pull/1259), [#1281](https://github.com/apache/pekko-http/pull/1281)); nothing bounded multipart part count ([#1266](https://github.com/apache/pekko-http/pull/1266)). P2: the CR/LF guard missed chunked trailers and extensions ([#1256](https://github.com/apache/pekko-http/pull/1256)), NUL ([#1260](https://github.com/apache/pekko-http/pull/1260)) and the HTTP/2 header path ([#1258](https://github.com/apache/pekko-http/pull/1258)). P9: a header that failed to parse desynchronised the HPACK dynamic table for every later frame ([#1252](https://github.com/apache/pekko-http/pull/1252)), and a field the HTTP/1.1 parser rejected failed the connection instead of the stream ([#1297](https://github.com/apache/pekko-http/pull/1297)). The properties as stated are claims about the merged code, not about the settings. *(maintainer)*
-
-**One P1 gap is open at the pinned commit.** The HTTP/2 frame parser buffers a frame of any declared length — up to 16 MiB − 1 — before HPACK decoding and before any §5a buffer bound applies, multiplied by connection count (`Http2FrameParsing.scala`). A `max-frame-size` setting is in flight ([#1264](https://github.com/apache/pekko-http/pull/1264)); until it lands, an oversized-frame report is `VALID` against P1, not a model gap. *(maintainer)*
+**How §8 was verified.** P1, P2 and P9 were first asserted from configuration and design, then checked against the code; each had defects, all fixed at or before the pinned commit. P1: `max-chunk-count` reported the limit without stopping the parse ([#1220](https://github.com/apache/pekko-http/pull/1220)); repeated `Connection` headers escaped `max-header-count` ([#1255](https://github.com/apache/pekko-http/pull/1255)); HTTP/2 connection-level buffer accounting leaked on discarded streams until the connection window drained and every stream stalled ([#1259](https://github.com/apache/pekko-http/pull/1259), [#1281](https://github.com/apache/pekko-http/pull/1281)); nothing bounded multipart part count ([#1266](https://github.com/apache/pekko-http/pull/1266)); the HTTP/2 frame parser buffered a frame of any declared length, up to 16 MiB − 1, before any other bound applied ([#1264](https://github.com/apache/pekko-http/pull/1264)). P2: the CR/LF guard missed chunked trailers and extensions ([#1256](https://github.com/apache/pekko-http/pull/1256)), NUL ([#1260](https://github.com/apache/pekko-http/pull/1260)) and the HTTP/2 header path ([#1258](https://github.com/apache/pekko-http/pull/1258)). P9: a header that failed to parse desynchronised the HPACK dynamic table for every later frame ([#1252](https://github.com/apache/pekko-http/pull/1252)), and a field the HTTP/1.1 parser rejected failed the connection instead of the stream ([#1297](https://github.com/apache/pekko-http/pull/1297)). The properties as stated are claims about the merged code, not about the settings. *(maintainer)*
 
 ---
 
@@ -280,7 +279,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 - **Comparing credentials with `==`** inside an `authenticateBasic` verifier, or `provideVerify` with a non-constant-time verifier.
 - **Passing a request path segment straight to `getFromFile` or `getFromResource`.** Neither filters what it is handed. `getFromResource` looks like the sibling of `getFromResourceDirectory` but skips the segment filter that directive applies, so `getFromResource(s"public/$name")` against a directory-backed class loader can be walked into `application.conf` or `logback.xml`.
 - **Turning `verbose-error-messages = on`** in production.
-- **Building a `Raw-Request-URI` header from request input.** It renders the request target verbatim — into the HTTP/1.1 request line, and since [#1280](https://github.com/apache/pekko-http/pull/1280) as the HTTP/2 `:path`. Under §6 it is application-supplied and trusted, which is exactly why it must not carry client bytes.
+- **Building a `Raw-Request-URI` header from request input.** It renders the request target verbatim — into the HTTP/1.1 request line, and since [#1280](https://github.com/apache/pekko-http/pull/1280) as the HTTP/2 `:path`. Since [#1296](https://github.com/apache/pekko-http/pull/1296) the header, and a custom `HttpMethod`, reject at construction anything that could corrupt the request line — the target must be visible ASCII, the method a token — so the misuse no longer reaches injection; what remains is that the client bytes choose the target the upstream sees, unnormalized. A value that passes construction and still corrupts the request line is `VALID` under §5b.4. *(documented — `headers.scala`, `HttpMethod.scala`, `http-model.md`)*
 - **Echoing `IllegalRequestContext.rawRequestTarget` from a custom `ParsingErrorHandler`** into the response or log without escaping it. The class documents it as attacker-controlled; the default handler never reads it.
 
 ---
@@ -387,7 +386,8 @@ Each links to the others rather than restating them. `security.md`'s "Security m
 | `max-concurrent-streams = 256` | `http-core/reference.conf` | §5a, §8 P6 |
 | `max-header-list-size = 64 KiB`, bounding HEADERS + CONTINUATION accumulation | `http-core/reference.conf` | §5a, §8 P7 |
 | `frame-type-throttle` charging `RST_STREAM` by default, against Rapid Reset (CVE-2023-44487) | `http-core/reference.conf` | §5a, §8 P6 |
-| HTTP/2 incoming buffer bounds and `outgoing-control-frame-buffer-size` | `http-core/reference.conf` | §5a, §8 P1 |
+| HTTP/2 `max-frame-size`, incoming buffer bounds and `outgoing-control-frame-buffer-size` | `http-core/reference.conf` | §5a, §8 P1 |
+| `Raw-Request-URI` must be visible ASCII and a custom method a token; neither should be built from request input | `http-model.md`, `headers.scala`, `HttpMethod.scala` | §11 |
 | Decoding limits (`decode-max-bytes-per-chunk`, `decode-max-size`), applied by the `decodeRequest*` directives | `http/reference.conf`, `CodingDirectives.scala` | §5a, §9 |
 | `Credentials.verify` compares via constant-time `secure_==` | `SecurityDirectives.scala`, `EnhancedByteArray.scala` | §7, §8 P8, §9, §10.4, §14 Q5 |
 | A request that fails to parse is answered with a `400` on its own HTTP/2 stream | `RequestErrorFlow.scala` | §8 P9 |
