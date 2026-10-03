@@ -1,5 +1,19 @@
 # 0. Release Notes (2.0.x)
 
+## 2.0.0-M2
+
+This is milestone release and is aimed at testing this new major version
+by early adopters. This is experimental. This release should not be used in production.
+
+### Main changes
+
+* Pekko 2.0.0-M4 is the new minimum Pekko version
+* Some deprecated code has been removed
+* HTTP/2 enabled by default
+* Add server-side WebSocket compression ([PR1114](https://github.com/apache/pekko-http/pull/1114))
+* Add max-connection-age setting for HTTP/2 server connections ([PR1316](https://github.com/apache/pekko-http/pull/1316))
+* Add client-side max connection age for HTTP/2 ([PR1320](https://github.com/apache/pekko-http/pull/1320))
+
 ## 2.0.0-M1
 
 This is milestone release and is aimed at testing this new major version
