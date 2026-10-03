@@ -72,7 +72,7 @@ private[http2] object PersistentConnection {
 
   private class Stage(connectionFlow: Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]],
       maxAttempts: Option[Int], baseEmbargo: FiniteDuration, _maxBackoff: FiniteDuration,
-      persistentConnectionMaxAge: FiniteDuration, persistentConnectionMaxAgeJitter: Double)
+      persistentConnectionMaxAge: Duration, persistentConnectionMaxAgeJitter: Double)
       extends GraphStage[FlowShape[HttpRequest, HttpResponse]] {
     val requestIn = Inlet[HttpRequest]("PersistentConnection.requestIn")
     val responseOut = Outlet[HttpResponse]("PersistentConnection.responseOut")
@@ -200,12 +200,14 @@ private[http2] object PersistentConnection {
           private var ongoingRequests: Map[AssociationTag, Map[AttributeKey[?], RequestResponseAssociation]] = Map.empty
           private var retiring = false
 
-          if (persistentConnectionMaxAge > Duration.Zero) {
-            // Jitter each connection independently so clients started together do not reconnect in lockstep.
-            val jitterFactor =
-              1.0 + persistentConnectionMaxAgeJitter * (2 * ThreadLocalRandom.current().nextDouble() - 1)
-            scheduleOnce(MaxConnectionAgeReached,
-              (persistentConnectionMaxAge.toMillis * jitterFactor).toLong.max(1L).millis)
+          persistentConnectionMaxAge match {
+            case age: FiniteDuration =>
+              // The age of each connection is jittered so that connections that were opened together are not
+              // all retired at the same time, see `persistent-connection-max-age-jitter` in the configuration.
+              val jitterFactor =
+                1.0 + persistentConnectionMaxAgeJitter * (2 * ThreadLocalRandom.current().nextDouble() - 1)
+              scheduleOnce(MaxConnectionAgeReached, (age.toMillis * jitterFactor).toLong.max(1L).millis)
+            case _ => // no maximum connection age configured
           }
 
           responseIn.pull()

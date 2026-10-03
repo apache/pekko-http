@@ -80,7 +80,7 @@ a retiring connection can add its drain time plus TCP/TLS/HTTP2 setup time to ne
 The existing `completion-timeout` bounds the drain period. If that timeout expires, the old connection is closed
 even when requests are still in flight, terminating long-lived requests such as streaming responses.
 
-The default maximum age is `0s`, which disables age-based retirement. The settings can also be changed
+The default maximum age is `infinite`, which disables age-based retirement. The settings can also be changed
 programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
 `Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
 

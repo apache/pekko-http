@@ -18,7 +18,4 @@
 # new persistent connection max-age settings for HTTP/2 clients
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings.persistentConnectionMaxAge")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.scaladsl.settings.Http2ClientSettings.persistentConnectionMaxAgeJitter")
-ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ClientSettings.getPersistentConnectionMaxAge")
-ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ClientSettings.getPersistentConnectionMaxAgeJitter")
-ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ClientSettings.withPersistentConnectionMaxAge")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ClientSettings.withPersistentConnectionMaxAgeJitter")
