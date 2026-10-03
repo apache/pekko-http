@@ -2,7 +2,7 @@
 
 ## 2.0.0-M2
 
-This is milestone release and is aimed at testing this new major version
+This is a milestone release and is aimed at testing this new major version
 by early adopters. This is experimental. This release should not be used in production.
 
 ### Main changes
@@ -16,7 +16,7 @@ by early adopters. This is experimental. This release should not be used in prod
 
 ## 2.0.0-M1
 
-This is milestone release and is aimed at testing this new major version
+This is a milestone release and is aimed at testing this new major version
 by early adopters. This is experimental. This release should not be used in production.
 
 ### Main changes
