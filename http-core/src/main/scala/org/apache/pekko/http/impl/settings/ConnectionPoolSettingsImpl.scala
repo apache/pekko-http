@@ -66,13 +66,13 @@ private[pekko] final case class ConnectionPoolSettingsImpl(
     withMaxConnectionBackoff(newValue.toScala)
 
   override def withIdleTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
-    withIdleTimeout(newValue.toScala)
+    withIdleTimeout(JavaDurationConverter.toScala(newValue))
 
   override def withKeepAliveTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
-    withKeepAliveTimeout(newValue.toScala)
+    withKeepAliveTimeout(JavaDurationConverter.toScala(newValue))
 
   override def withMaxConnectionLifetime(newValue: java.time.Duration): ConnectionPoolSettings =
-    withMaxConnectionLifetime(newValue.toScala)
+    withMaxConnectionLifetime(JavaDurationConverter.toScala(newValue))
 
   def withUpdatedConnectionSettings(
       f: ClientConnectionSettings => ClientConnectionSettings): ConnectionPoolSettingsImpl =
@@ -80,7 +80,7 @@ private[pekko] final case class ConnectionPoolSettingsImpl(
       hostOverrides = hostOverrides.map { case (k, v) => k -> v.withUpdatedConnectionSettings(f) })
 
   override def withResponseEntitySubscriptionTimeout(newValue: java.time.Duration): ConnectionPoolSettings =
-    withResponseEntitySubscriptionTimeout(newValue.toScala)
+    withResponseEntitySubscriptionTimeout(JavaDurationConverter.toScala(newValue))
 
   /** INTERNAL API */
   private[http] def copyDeep(

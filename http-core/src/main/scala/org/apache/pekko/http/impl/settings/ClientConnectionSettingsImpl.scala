@@ -60,7 +60,7 @@ private[pekko] final case class ClientConnectionSettingsImpl(
     withConnectingTimeout(newValue.toScala)
 
   override def withIdleTimeout(newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =
-    withIdleTimeout(newValue.toScala)
+    withIdleTimeout(JavaDurationConverter.toScala(newValue))
 
   override def withStreamCancellationDelay(
       newValue: java.time.Duration): pekko.http.scaladsl.settings.ClientConnectionSettings =

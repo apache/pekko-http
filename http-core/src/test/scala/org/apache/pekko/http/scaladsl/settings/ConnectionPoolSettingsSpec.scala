@@ -13,6 +13,10 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
+import java.time.temporal.ChronoUnit
+
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.testkit.PekkoSpec
 import pekko.http.scaladsl.model.headers.`User-Agent`
@@ -157,6 +161,37 @@ class ConnectionPoolSettingsSpec extends PekkoSpec {
       settings.forHost("other.io").minConnections shouldEqual 22
       settings.forHost("akka.com").minConnections shouldEqual 2
       settings.minConnections shouldEqual 2
+    }
+  }
+
+  "ConnectionPoolSettings Java API" should {
+    "round-trip infinite durations" in {
+      val settings = ConnectionPoolSettings(system)
+        .withIdleTimeout(Duration.Inf)
+        .withKeepAliveTimeout(Duration.Inf)
+        .withMaxConnectionLifetime(Duration.Inf)
+        .withResponseEntitySubscriptionTimeout(Duration.Inf)
+      val forever = ChronoUnit.FOREVER.getDuration
+      settings.getIdleTimeout should ===(forever)
+      settings.getKeepAliveTimeout should ===(forever)
+      settings.getMaxConnectionLifetime should ===(forever)
+      settings.getResponseEntitySubscriptionTimeout should ===(forever)
+
+      val roundTripped = settings
+        .withIdleTimeout(settings.getIdleTimeout)
+        .withKeepAliveTimeout(settings.getKeepAliveTimeout)
+        .withMaxConnectionLifetime(settings.getMaxConnectionLifetime)
+        .withResponseEntitySubscriptionTimeout(settings.getResponseEntitySubscriptionTimeout)
+      roundTripped.getIdleTimeout should ===(forever)
+      roundTripped.getKeepAliveTimeout should ===(forever)
+      roundTripped.getMaxConnectionLifetime should ===(forever)
+      roundTripped.getResponseEntitySubscriptionTimeout should ===(forever)
+    }
+
+    "round-trip finite durations" in {
+      val settings = ConnectionPoolSettings(system).withIdleTimeout(42.seconds)
+      settings.getIdleTimeout should ===(java.time.Duration.ofSeconds(42))
+      settings.withIdleTimeout(settings.getIdleTimeout).getIdleTimeout should ===(java.time.Duration.ofSeconds(42))
     }
   }
 
