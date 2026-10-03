@@ -35,6 +35,7 @@ import scala.util.{ Failure, Success }
 private[http2] object PersistentConnection {
 
   private case class EmbargoEnded(connectsLeft: Option[Int], embargo: FiniteDuration)
+  private case object MaxConnectionAgeReached
 
   /**
    * Wraps a connection flow with transparent reconnection support.
@@ -59,7 +60,8 @@ private[http2] object PersistentConnection {
       settings.maxPersistentAttempts match {
         case 0 => None
         case n => Some(n)
-      }, settings.baseConnectionBackoff, settings.maxConnectionBackoff))
+      }, settings.baseConnectionBackoff, settings.maxConnectionBackoff,
+      settings.persistentConnectionMaxAge, settings.persistentConnectionMaxAgeJitter))
 
   private class AssociationTag extends RequestResponseAssociation
   private val associationTagKey = AttributeKey[AssociationTag]("PersistentConnection.associationTagKey")
@@ -69,7 +71,8 @@ private[http2] object PersistentConnection {
       entity = "The server closed the connection before delivering a response.")
 
   private class Stage(connectionFlow: Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]],
-      maxAttempts: Option[Int], baseEmbargo: FiniteDuration, _maxBackoff: FiniteDuration)
+      maxAttempts: Option[Int], baseEmbargo: FiniteDuration, _maxBackoff: FiniteDuration,
+      persistentConnectionMaxAge: Duration, persistentConnectionMaxAgeJitter: Double)
       extends GraphStage[FlowShape[HttpRequest, HttpResponse]] {
     val requestIn = Inlet[HttpRequest]("PersistentConnection.requestIn")
     val responseOut = Outlet[HttpResponse]("PersistentConnection.responseOut")
@@ -78,6 +81,8 @@ private[http2] object PersistentConnection {
     val shape: FlowShape[HttpRequest, HttpResponse] = FlowShape(requestIn, responseOut)
     override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
       new TimerGraphStageLogic(shape) with StageLogging {
+        private var currentConnection: Option[Connected] = None
+
         become(Unconnected)
 
         def become(state: State): Unit = setHandlers(requestIn, responseOut, state)
@@ -86,7 +91,9 @@ private[http2] object PersistentConnection {
         object Unconnected extends State {
           override def onPush(): Unit = connect(maxAttempts, Duration.Zero)
           override def onPull(): Unit =
-            if (!isAvailable(requestIn) && !hasBeenPulled(requestIn)) // requestIn might already have been pulled when we failed and went back to Unconnected
+            if (isAvailable(requestIn)) connect(maxAttempts, Duration.Zero)
+            else if (isClosed(requestIn)) completeStage()
+            else if (!hasBeenPulled(requestIn)) // requestIn might already have been pulled when we failed and went back to Unconnected
               pull(requestIn)
         }
 
@@ -131,12 +138,13 @@ private[http2] object PersistentConnection {
           override def onPush(): Unit = () // Pull might have happened before the connection failed. Element is kept in slot.
 
           override def onPull(): Unit = {
-            if (!isAvailable(requestIn) && !hasBeenPulled(requestIn)) // requestIn might already have been pulled when we failed and went back to Unconnected
+            if (!isAvailable(requestIn) && !isClosed(requestIn) && !hasBeenPulled(requestIn)) // requestIn might already have been pulled when we failed and went back to Unconnected
               pull(requestIn)
           }
 
           val onConnected = getAsyncCallback[Unit] { _ =>
             val newState = new Connected(requestOut, responseIn)
+            currentConnection = Some(newState)
             become(newState)
             if (requestOutPulled) {
               if (isAvailable(requestIn)) newState.dispatchRequest(grab(requestIn))
@@ -181,6 +189,8 @@ private[http2] object PersistentConnection {
             case EmbargoEnded(connectsLeft, nextEmbargo) =>
               log.debug("Reconnecting after backoff")
               connect(connectsLeft, nextEmbargo)
+            case MaxConnectionAgeReached =>
+              currentConnection.foreach(_.retire())
           }
         }
 
@@ -188,12 +198,27 @@ private[http2] object PersistentConnection {
             requestOut: SubSourceOutlet[HttpRequest],
             responseIn: SubSinkInlet[HttpResponse]) extends State {
           private var ongoingRequests: Map[AssociationTag, Map[AttributeKey[?], RequestResponseAssociation]] = Map.empty
+          private var retiring = false
+
+          persistentConnectionMaxAge match {
+            case age: FiniteDuration =>
+              // The age of each connection is jittered so that connections that were opened together are not
+              // all retired at the same time, see `persistent-connection-max-age-jitter` in the configuration.
+              val jitterFactor =
+                1.0 + persistentConnectionMaxAgeJitter * (2 * ThreadLocalRandom.current().nextDouble() - 1)
+              scheduleOnce(MaxConnectionAgeReached, (age.toMillis * jitterFactor).toLong.max(1L).millis)
+            case _ => // no maximum connection age configured
+          }
+
           responseIn.pull()
 
           requestOut.setHandler(new OutHandler {
             override def onPull(): Unit =
-              if (!isAvailable(requestIn)) pull(requestIn)
-              else dispatchRequest(grab(requestIn))
+              if (isAvailable(requestIn)) {
+                dispatchRequest(grab(requestIn))
+                if (isClosed(requestIn)) requestOut.complete()
+              } else if (isClosed(requestIn)) requestOut.complete()
+              else if (!hasBeenPulled(requestIn)) pull(requestIn)
 
             override def onDownstreamFinish(cause: Throwable): Unit = onDisconnected()
           })
@@ -210,22 +235,44 @@ private[http2] object PersistentConnection {
             override def onUpstreamFailure(ex: Throwable): Unit = onDisconnected() // FIXME: log error
           })
           def onDisconnected(): Unit = {
+            cancelTimer(MaxConnectionAgeReached)
+            currentConnection = None
+
             emitMultiple[HttpResponse](responseOut,
               ongoingRequests.values.map(errorResponse.withAttributes(_)).toVector,
               () => setHandler(responseOut, Unconnected))
             responseIn.cancel()
             requestOut.fail(new RuntimeException("connection broken"))
 
-            if (isClosed(requestIn)) {
-              // user closed PersistentConnection before and we were waiting for remaining responses
+            if (isClosed(requestIn) && !isAvailable(requestIn)) {
+              // user closed PersistentConnection before and there is no buffered request left to dispatch
               completeStage()
             } else {
               // become(Unconnected) doesn't work because of using emit
               // so we need to do it more carefully here
               setHandler(requestIn, Unconnected)
-              if (isAvailable(responseOut) && !hasBeenPulled(requestIn)) pull(requestIn)
+              if (isAvailable(responseOut)) {
+                if (isAvailable(requestIn)) connect(maxAttempts, Duration.Zero)
+                else if (!hasBeenPulled(requestIn)) pull(requestIn)
+              }
             }
           }
+
+          def retire(): Unit =
+            if (!retiring) {
+              retiring = true
+              log.debug("Persistent HTTP/2 connection reached its configured maximum age, retiring it")
+              setHandler(requestIn,
+                new InHandler {
+                  override def onPush(): Unit = () // keep at most one next request in the inlet slot
+                  override def onUpstreamFinish(): Unit = ()
+                  override def onUpstreamFailure(ex: Throwable): Unit = {
+                    responseIn.cancel()
+                    failStage(ex)
+                  }
+                })
+              requestOut.complete()
+            }
 
           def dispatchRequest(req: HttpRequest): Unit = {
             val tag = new AssociationTag

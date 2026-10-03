@@ -15,7 +15,9 @@ package org.apache.pekko.http.javadsl.settings
 
 import java.time.Duration
 
-import org.apache.pekko.http.scaladsl
+import org.apache.pekko
+import pekko.http.impl.util.JavaDurationConverter
+import pekko.http.scaladsl
 
 import scala.concurrent.duration.DurationLong
 
@@ -78,6 +80,40 @@ trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2Cli
 
   def getMaxPersistentAttempts: Int = maxPersistentAttempts
   def withMaxPersistentAttempts(max: Int): Http2ClientSettings = copy(maxPersistentAttempts = max)
+
+  /**
+   * The maximum age of a connection created by `managedPersistentHttp2` or
+   * `managedPersistentHttp2WithPriorKnowledge`. When the age of a connection exceeds this value, the connection
+   * stops accepting new requests, lets requests that are already in flight complete within
+   * [[getCompletionTimeout]], and is then closed. Later requests are sent on a new connection. The value
+   * `ChronoUnit.FOREVER.getDuration` represents an infinite age, which disables this mechanism and is the
+   * default.
+   *
+   * @since 2.0.0
+   */
+  def getPersistentConnectionMaxAge: Duration = JavaDurationConverter.toJava(persistentConnectionMaxAge)
+
+  /**
+   * Pass `ChronoUnit.FOREVER.getDuration` to disable the maximum connection age.
+   *
+   * @since 2.0.0
+   */
+  def withPersistentConnectionMaxAge(maxAge: Duration): Http2ClientSettings =
+    self.withPersistentConnectionMaxAge(JavaDurationConverter.toScala(maxAge))
+
+  /**
+   * The jitter applied to the persistent connection maximum age per connection, as a fraction of the configured
+   * age: with the default of 0.1 each connection is retired after between 90% and 110% of the configured age, so
+   * that connections that were opened together are not all retired at the same time. 0 disables jitter.
+   *
+   * @since 2.0.0
+   */
+  def getPersistentConnectionMaxAgeJitter: Double = persistentConnectionMaxAgeJitter
+
+  /**
+   * @since 2.0.0
+   */
+  def withPersistentConnectionMaxAgeJitter(jitter: Double): Http2ClientSettings
 
   def getCompletionTimeout: Duration = Duration.ofMillis(completionTimeout.toMillis)
   def withCompletionTimeout(timeout: Duration): Http2ClientSettings = copy(completionTimeout = timeout.toMillis.millis)

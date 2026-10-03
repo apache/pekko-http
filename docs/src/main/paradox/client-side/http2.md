@@ -55,6 +55,35 @@ Java
 
 The Apache Pekko HTTP client doesn't support HTTP/1 to HTTP/2 negotiation over plaintext using the `Upgrade` mechanism.
 
+## Limiting managed persistent connection lifetime
+
+Managed persistent HTTP/2 clients can periodically retire long-lived connections so that later requests establish
+fresh connections. This is useful when clients would otherwise remain pinned to the same server instances after
+a scale-out or rolling deployment.
+
+Configure the maximum age and optional jitter under the HTTP/2 client settings:
+
+```
+pekko.http.client.http2.persistent-connection-max-age = 10m
+pekko.http.client.http2.persistent-connection-max-age-jitter = 0.1
+```
+
+The setting applies to `managedPersistentHttp2()` and `managedPersistentHttp2WithPriorKnowledge()`. Each
+connection gets an independently jittered age; with the default jitter of `0.1`, retirement happens between 90%
+and 110% of the configured maximum age. Set the jitter to `0` to disable it.
+
+Retirement is currently **break-before-make**. When a connection reaches its age, the managed client stops
+assigning new requests to it and lets requests already in flight drain before closing the connection. New requests
+are backpressured until the old connection disconnects, then a replacement connection is established. As a result,
+a retiring connection can add its drain time plus TCP/TLS/HTTP2 setup time to new-request latency.
+
+The existing `completion-timeout` bounds the drain period. If that timeout expires, the old connection is closed
+even when requests are still in flight, terminating long-lived requests such as streaming responses.
+
+The default maximum age is `infinite`, which disables age-based retirement. The settings can also be changed
+programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
+`Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
+
 ## Request-response ordering
 
 For HTTP/2 connections the responses are not guaranteed to arrive in the same order that the requests were emitted to

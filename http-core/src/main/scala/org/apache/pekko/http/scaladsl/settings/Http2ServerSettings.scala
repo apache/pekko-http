@@ -347,6 +347,38 @@ trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http
   def maxPersistentAttempts: Int
   override def withMaxPersistentAttempts(max: Int): Http2ClientSettings = copy(maxPersistentAttempts = max)
 
+  /**
+   * The maximum age of a connection created by `managedPersistentHttp2` or
+   * `managedPersistentHttp2WithPriorKnowledge`. When the age of a connection exceeds this value, the connection
+   * stops accepting new requests, lets requests that are already in flight complete within [[completionTimeout]],
+   * and is then closed. Later requests are sent on a new connection. The value `Duration.Inf` disables this
+   * mechanism and is the default.
+   *
+   * @since 2.0.0
+   */
+  def persistentConnectionMaxAge: Duration
+
+  /**
+   * @since 2.0.0
+   */
+  def withPersistentConnectionMaxAge(maxAge: Duration): Http2ClientSettings =
+    copy(persistentConnectionMaxAge = maxAge)
+
+  /**
+   * The jitter applied to [[persistentConnectionMaxAge]] per connection, as a fraction of the configured age:
+   * with the default of 0.1 each connection is retired after between 90% and 110% of the configured age, so
+   * that connections that were opened together are not all retired at the same time. 0 disables jitter.
+   *
+   * @since 2.0.0
+   */
+  def persistentConnectionMaxAgeJitter: Double
+
+  /**
+   * @since 2.0.0
+   */
+  override def withPersistentConnectionMaxAgeJitter(jitter: Double): Http2ClientSettings =
+    copy(persistentConnectionMaxAgeJitter = jitter)
+
   def completionTimeout: FiniteDuration
   def withCompletionTimeout(timeout: FiniteDuration): Http2ClientSettings = copy(completionTimeout = timeout)
 
@@ -380,6 +412,8 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       pingInterval: FiniteDuration,
       pingTimeout: FiniteDuration,
       maxPersistentAttempts: Int,
+      persistentConnectionMaxAge: Duration,
+      persistentConnectionMaxAgeJitter: Double,
       completionTimeout: FiniteDuration,
       baseConnectionBackoff: FiniteDuration,
       maxConnectionBackoff: FiniteDuration,
@@ -395,6 +429,10 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
     require(incomingStreamLevelBufferSize > 0, "incoming-stream-level-buffer-size must be > 0")
     require(outgoingControlFrameBufferSize > 0, "outgoing-control-frame-buffer-size must be > 0")
     require(maxPersistentAttempts >= 0, "max-persistent-attempts must be >= 0")
+    require(persistentConnectionMaxAge > Duration.Zero,
+      "persistent-connection-max-age must be > 0 or 'infinite' to disable")
+    require(persistentConnectionMaxAgeJitter >= 0 && persistentConnectionMaxAgeJitter < 1,
+      "persistent-connection-max-age-jitter must be >= 0 and < 1")
     require(completionTimeout > Duration.Zero, "completion-timeout must be > 0")
     require(baseConnectionBackoff <= maxConnectionBackoff, "base-connection-backoff must be <= max-connection-backoff")
     Http2CommonSettings.validate(this)
@@ -414,6 +452,8 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       pingInterval = c.getFiniteDuration("ping-interval"),
       pingTimeout = c.getFiniteDuration("ping-timeout"),
       maxPersistentAttempts = c.getInt("max-persistent-attempts"),
+      persistentConnectionMaxAge = c.getPotentiallyInfiniteDuration("persistent-connection-max-age"),
+      persistentConnectionMaxAgeJitter = c.getDouble("persistent-connection-max-age-jitter"),
       completionTimeout = c.getFiniteDuration("completion-timeout"),
       baseConnectionBackoff = c.getFiniteDuration("base-connection-backoff"),
       maxConnectionBackoff = c.getFiniteDuration("max-connection-backoff"),

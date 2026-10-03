@@ -72,7 +72,8 @@ private[http2] class Http2ClientDemux(http2Settings: Http2ClientSettings, master
 
   override def completionTimeout: FiniteDuration = http2Settings.completionTimeout
 
-  // a maximum connection age is not supported on the client side
+  // the client side limits the age of managed persistent connections in PersistentConnection instead,
+  // see `persistent-connection-max-age`
   def maxConnectionAge: Duration = Duration.Inf
   def maxConnectionAgeGrace: Duration = Duration.Inf
   def maxConnectionAgeJitter: Double = 0.0
