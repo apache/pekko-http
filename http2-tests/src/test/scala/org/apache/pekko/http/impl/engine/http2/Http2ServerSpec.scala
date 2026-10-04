@@ -98,6 +98,27 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         val (_, errorCode) = network.expectGOAWAY(0) // since we have not processed any stream
         errorCode should ===(ErrorCode.COMPRESSION_ERROR)
       })
+      "GOAWAY when a header field carries CR, LF or NUL" should {
+        abstract class MalformedHeaderSetup extends TestSetup with RequestResponseProbes {
+          def expectProtocolError(headerPairs: Seq[(String, String)]): Unit = {
+            user.requestIn.request(1)
+            network.sendHEADERS(1, endStream = true, endHeaders = true, network.encodeHeaderPairs(headerPairs))
+            val (_, errorCode) = network.expectGOAWAY(0)
+            errorCode should ===(ErrorCode.PROTOCOL_ERROR)
+            // the request, with or without its value truncated, never reaches the handler
+            user.requestIn.expectNoMessage(100.millis)
+          }
+          def request(extra: (String, String)*): Seq[(String, String)] =
+            Seq(":method" -> "GET", ":scheme" -> "https", ":path" -> "/", ":authority" -> "www.example.com") ++ extra
+        }
+
+        "for a value containing CR LF".inAssertAllStagesStopped(new MalformedHeaderSetup {
+          expectProtocolError(request("x-a" -> "foo\r\nx-b: bar"))
+        })
+        "for a value containing NUL".inAssertAllStagesStopped(new MalformedHeaderSetup {
+          expectProtocolError(request("x-a" -> "foo\u0000bar"))
+        })
+      }
       "GOAWAY when second request on different stream has invalid headers frame".inAssertAllStagesStopped(
         new SimpleRequestResponseRoundtripSetup {
           requestResponseRoundtrip(
