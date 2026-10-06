@@ -16,6 +16,7 @@ package directives
 
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 
 import scala.concurrent.duration._
 import scala.util.Properties
@@ -544,6 +545,26 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       shouldReject("..%255c", warnings = 0)
       shouldReject("..%c0%af", warnings = 0)
       shouldReject("..%c1%9c", warnings = 0)
+    }
+
+    "escape HTML special characters in file names to prevent XSS" in {
+      // Only test characters that are valid in filenames on all platforms (Windows, macOS, Linux).
+      // Windows forbids " < > | : * ? \ / in filenames.
+      val dir = Files.createTempDirectory("pekko-xss-test").toFile
+      try {
+        writeAllText("ampersand", new File(dir, "a&b.txt"))
+        writeAllText("apostrophe", new File(dir, "a'b.txt"))
+        Get() ~> withSettings(settings)(listDirectoryContents(dir.getAbsolutePath)) ~> check {
+          val body = responseAs[String]
+          body should include("a&amp;b.txt")
+          (body should not).include("a&b.txt")
+          body should include("a&#39;b.txt")
+          (body should not).include("a'b.txt")
+        }
+      } finally {
+        dir.listFiles().foreach(_.delete())
+        dir.delete()
+      }
     }
 
   }
