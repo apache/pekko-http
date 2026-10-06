@@ -63,7 +63,13 @@ object Common extends AutoPlugin {
       "-Wconf:msg=pattern binding uses refutable extractor:s",
       "-Wconf:msg=is more specialized than the right hand side:s",
       "-Wconf:cat=deprecation:s")).value,
-    scalacOptions ++= onlyOnScala38OrLater(Seq("-Wconf:any:s")).value,
+    // Scala 3.8+ migration warnings for syntax that has no replacement which also compiles on Scala 2.13.
+    // Silence only these, so that other warnings (e.g. `private[this]`) still fail the build.
+    scalacOptions ++= onlyOnScala38OrLater(Seq(
+      "-Wconf:msg=Implicit parameters should be provided with a `using` clause:s",
+      "-Wconf:msg=is no longer supported for vararg splices:s",
+      "-Wconf:msg=for eta-expansion is unnecessary:s",
+      "-Wconf:msg=with as a type operator has been deprecated:s")).value,
     scalacOptions ++= onlyOnScala33(Seq("-Yfuture-lazy-vals")).value,
     javacOptions ++=
       Seq("-encoding", "UTF-8", "--release", javacTarget),
