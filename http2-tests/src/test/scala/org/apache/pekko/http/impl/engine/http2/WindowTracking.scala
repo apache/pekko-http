@@ -54,9 +54,9 @@ trait WindowTracking extends Http2FrameProbeDelegator with Http2FrameSending {
 
       pollForWindowUpdates(duration)
     } catch {
-      case e: AssertionError if e.getMessage contains "but only got [0] bytes" =>
+      case e: AssertionError if e.getMessage.contains("but only got [0] bytes") =>
       // timeout, that's expected
-      case e: AssertionError if (e.getMessage contains "block took") && (e.getMessage contains "exceeding") =>
+      case e: AssertionError if (e.getMessage.contains("block took")) && (e.getMessage.contains("exceeding")) =>
         // pause like GC, poll again just to be sure
         pollForWindowUpdates(duration)
     }

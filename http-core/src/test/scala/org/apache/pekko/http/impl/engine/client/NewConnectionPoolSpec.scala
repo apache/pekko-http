@@ -254,7 +254,7 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
 
       override def asyncTestServerHandler(connNr: Int): HttpRequest => Future[HttpResponse] = { req =>
         req.discardEntityBytes()
-        if (req.uri.path.toString contains "a")
+        if (req.uri.path.toString.contains("a"))
           Future.successful(HttpResponse(200,
             entity = HttpEntity.CloseDelimited(ContentTypes.`application/octet-stream`, crashingEntity)))
         else {

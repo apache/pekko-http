@@ -44,10 +44,10 @@ import pekko.util.ByteString
 private[http] final class ByteStringOutputStream(initialCapacity: Int) extends OutputStream {
   if (initialCapacity < 0) throw new IllegalArgumentException(s"Illegal initial capacity: $initialCapacity")
 
-  private[this] var buf: Array[Byte] = Array.emptyByteArray
-  private[this] var count: Int = 0
+  private var buf: Array[Byte] = Array.emptyByteArray
+  private var count: Int = 0
   // the size of the last block handed over; the array for the next block is allocated to hold it
-  private[this] var lastCount: Int = 0
+  private var lastCount: Int = 0
 
   /** The number of bytes written since the last hand-over. */
   def size: Int = count

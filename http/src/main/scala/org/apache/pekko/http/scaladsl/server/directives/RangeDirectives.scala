@@ -77,7 +77,7 @@ trait RangeDirectives {
       def coalesceRanges(iRanges: Seq[IndexRange]): Seq[IndexRange] =
         iRanges.foldLeft(Seq.empty[IndexRange]) { (acc, iRange) =>
           val (mergeCandidates, otherCandidates) = acc.partition(_.distance(iRange) <= rangeCoalescingThreshold)
-          val merged = mergeCandidates.foldLeft(iRange)(_ mergeWith _)
+          val merged = mergeCandidates.foldLeft(iRange)(_.mergeWith(_))
           otherCandidates :+ merged
         }
 

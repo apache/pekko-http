@@ -135,17 +135,17 @@ private[http] object Http2Blueprint {
     dateHeaderRendering: DateHeaderRendering): BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] = {
     val masterHttpHeaderParser = HttpHeaderParser(settings.parserSettings, log) // FIXME: reuse for framing
     
-    val initialFlow = telemetry.serverConnection atop
-      httpLayer(settings, log, dateHeaderRendering) atopKeepRight
-      serverDemux(settings.http2Settings, initialDemuxerSettings, upgraded) atop
+    val initialFlow = (telemetry.serverConnection atop
+      httpLayer(settings, log, dateHeaderRendering))
+      .atopKeepRight(serverDemux(settings.http2Settings, initialDemuxerSettings, upgraded)) atop
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames) atop // enable for debugging
       hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize)
 
     val frameTypesForThrottle = getFrameTypesForThrottle(settings.http2Settings)
     
     val flowWithPossibleThrottle = if (frameTypesForThrottle.nonEmpty) {
-      initialFlow atop rapidResetMitigation(settings.http2Settings, frameTypesForThrottle) atopKeepLeft framing(log,
-        settings.http2Settings.maxFrameSize)
+      (initialFlow atop rapidResetMitigation(settings.http2Settings, frameTypesForThrottle))
+        .atopKeepLeft(framing(log, settings.http2Settings.maxFrameSize))
     } else initialFlow atop framing(log, settings.http2Settings.maxFrameSize)
 
     flowWithPossibleThrottle atop

@@ -50,7 +50,7 @@ abstract class MultiNodeConfig {
    * Register a config override for a specific participant.
    */
   def nodeConfig(roles: RoleName*)(configs: Config*): Unit = {
-    val c = configs.reduceLeft(_ withFallback _)
+    val c = configs.reduceLeft(_.withFallback(_))
     _nodeConf ++= roles.map { _ -> c }
   }
 
@@ -120,7 +120,7 @@ abstract class MultiNodeConfig {
     val configs = _nodeConf.get(
       myself).toList ::: _commonConf.toList ::: transportConfig :: MultiNodeSpec.nodeConfig ::
       MultiNodeSpec.baseConfig :: Nil
-    configs.reduceLeft(_ withFallback _)
+    configs.reduceLeft(_.withFallback(_))
   }
 
   private[testkit] def deployments(node: RoleName): Seq[String] =

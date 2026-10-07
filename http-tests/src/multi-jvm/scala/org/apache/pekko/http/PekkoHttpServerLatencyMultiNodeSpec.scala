@@ -261,7 +261,7 @@ class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerL
       val res = (loadGeneratorActor ? LoadGenCommand(cmd)).mapTo[LoadGenResults]
       val results = Await.result(res, timeout.duration)
 
-      if (id contains "warmup") ()
+      if (id.contains("warmup")) ()
       else if (cmd.startsWith("wrk")) printWrkPercentiles(id, results.lines)
       else if (cmd.startsWith("ab")) printAbPercentiles(id, results.lines)
       else throw new NotImplementedError(s"Unable to handle [$cmd] results!")
@@ -301,7 +301,7 @@ class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerL
 
     var i = 0
     val linesWithIndex = lines.zipWithIndex
-    val correctedDistributionStartsHere = linesWithIndex.find(p => p._1 contains "Latency Distribution").map(_._2).get
+    val correctedDistributionStartsHere = linesWithIndex.find(p => p._1.contains("Latency Distribution")).map(_._2).get
 
     var titles = List.empty[String]
     var metrics = List.empty[String]
@@ -321,7 +321,7 @@ class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerL
     }
     renderResults(prefix + "_corrected", titles, metrics)
 
-    val uncorrectedDistributionStartsHere = linesWithIndex.find(p => p._1 contains "Uncorrected Latency").map(_._2).get
+    val uncorrectedDistributionStartsHere = linesWithIndex.find(p => p._1.contains("Uncorrected Latency")).map(_._2).get
 
     titles = List.empty
     metrics = List.empty
@@ -343,7 +343,7 @@ class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerL
 
     titles = List.empty
     metrics = List.empty
-    val rpsLineNumber = linesWithIndex.find(p => p._1 contains "Requests/sec:").map(_._2).get
+    val rpsLineNumber = linesWithIndex.find(p => p._1.contains("Requests/sec:")).map(_._2).get
 
     i = rpsLineNumber
     val rps = lines(i).replace("Requests/sec:", "").trim
@@ -359,7 +359,7 @@ class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerL
 
     titles = List.empty
     metrics = List.empty
-    val transferLineNumber = linesWithIndex.find(p => p._1 contains "Transfer/sec:").map(_._2).get
+    val transferLineNumber = linesWithIndex.find(p => p._1.contains("Transfer/sec:")).map(_._2).get
     i = transferLineNumber
 
     val tps = lines(i).replace("Transfer/sec:", "").trim
@@ -376,7 +376,7 @@ class PekkoHttpServerLatencyMultiNodeSpec extends MultiNodeSpec(PekkoHttpServerL
 
     var i = 0
     val correctedDistributionStartsHere =
-      lines.zipWithIndex.find(p => p._1 contains "Percentage of the requests").map(_._2).get
+      lines.zipWithIndex.find(p => p._1.contains("Percentage of the requests")).map(_._2).get
 
     var titles = List.empty[String]
     var metrics = List.empty[String]

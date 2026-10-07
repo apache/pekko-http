@@ -43,7 +43,7 @@ object ModeledCustomHeaderSpec {
   object DifferentHeader extends ModeledCustomHeaderCompanion[DifferentHeader] {
     override val name = "different"
     override def parse(value: String) =
-      if (value contains " ") Failure(new Exception("Contains illegal whitespace!"))
+      if (value.contains(" ")) Failure(new Exception("Contains illegal whitespace!"))
       else Success(new DifferentHeader(value))
   }
 
