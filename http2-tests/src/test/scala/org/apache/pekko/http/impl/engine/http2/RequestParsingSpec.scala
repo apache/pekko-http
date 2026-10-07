@@ -23,6 +23,7 @@ import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.util.{ ByteString, OptionVal }
 import org.scalatest.{ Inside, Inspectors }
 import FrameEvent._
+import pekko.http.impl.engine.http2.Http2Compliance.Http2ProtocolException
 import pekko.http.impl.engine.http2.hpack.HeaderDecompression
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util.PekkoSpecWithMaterializer
@@ -73,6 +74,32 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       val thrown = the[RuntimeException] thrownBy block
       thrown.getMessage should startWith("Malformed request: ")
       thrown
+    }
+
+    "reject a malformed header field" should {
+      // RFC 9113 8.2.1: a field name or value carrying NUL, CR or LF makes the message malformed
+      def request(extra: (String, String)*): Vector[(String, String)] =
+        Vector(":method" -> "GET", ":scheme" -> "https", ":path" -> "/") ++ extra
+
+      "a header value containing CR LF" in {
+        // the HTTP/1.1 line parser this is handed to stops at the first CRLF it finds, so without the check the
+        // request was accepted with the value silently truncated to `foo`
+        val thrown = shouldThrowMalformedRequest(parse(request("x-a" -> "foo\r\nx-b: bar")))
+        thrown shouldBe an[Http2ProtocolException]
+        thrown.getMessage should include("header field value must not contain CR, LF or NUL")
+      }
+      "a header value containing a bare LF" in {
+        val thrown = shouldThrowMalformedRequest(parse(request("x-a" -> "foo\nbar")))
+        thrown.getMessage should include("header field value must not contain CR, LF or NUL")
+      }
+      "a header value containing NUL" in {
+        val thrown = shouldThrowMalformedRequest(parse(request("x-a" -> "foo\u0000bar")))
+        thrown.getMessage should include("header field value must not contain CR, LF or NUL")
+      }
+      "a header name containing CR LF" in {
+        val thrown = shouldThrowMalformedRequest(parse(request("x-a\r\nx-b" -> "v")))
+        thrown.getMessage should include("header field name must not contain CR, LF or NUL")
+      }
     }
 
     "follow RFC7540" should {

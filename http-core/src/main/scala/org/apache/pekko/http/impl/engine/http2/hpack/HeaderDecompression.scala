@@ -74,6 +74,14 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
         val headers = new VectorBuilder[(String, AnyRef)]
         object Receiver extends HeaderListener {
           def addHeader(name: String, value: String, parsed: AnyRef, sensitive: Boolean): AnyRef = {
+            // RFC 9113 8.2.1: a field name or value carrying a NUL, CR or LF makes the message malformed. Check it
+            // here, before the field is dispatched on its name: a regular field goes through the HTTP/1.1 line
+            // parser, which reads up to the first CRLF it finds and would silently accept the value truncated
+            // there. Neither the name nor the value is echoed, since either may be what is malformed.
+            if (HeaderCompression.hasIllegalChar(name))
+              throw new Http2ProtocolException("Malformed request: header field name must not contain CR, LF or NUL")
+            if (HeaderCompression.hasIllegalChar(value))
+              throw new Http2ProtocolException("Malformed request: header field value must not contain CR, LF or NUL")
             if (parsed ne null) {
               headers += name -> parsed
               parsed
@@ -110,6 +118,9 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
           if (truncated) headerListSizeExceeded(streamId)
           else push(eventsOut, ParsedHeadersFrame(streamId, endStream, headers.result(), prioInfo))
         } catch {
+          case ex: Http2ProtocolException =>
+            // a malformed header field, rejected by the listener above: fail with GOAWAY(PROTOCOL_ERROR)
+            failStage(ex)
           case _: IOException =>
             // this is signalled by the decoder when it failed, we want to react to this by rendering a GOAWAY frame
             fail(eventsOut,
