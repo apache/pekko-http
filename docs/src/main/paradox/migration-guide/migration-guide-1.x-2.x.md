@@ -4,6 +4,17 @@ Apache Pekko HTTP 2.x requires Apache Pekko 2.x. See the
 @extref:[Pekko 1.x to 2.x migration guide](pekko-docs:migration/migration-guide-1.x-2.x.html) for the changes in the core
 Pekko libraries.
 
+## General changes
+
+* Apache Pekko 2.x is the new minimum Pekko version.
+* Java 17 is the new minimum Java version.
+* Scala 2.12 is no longer supported.
+* Deprecated code has been removed, including a number of util classes that existed for compatibility across
+Scala versions. Before upgrading, build against the latest Pekko HTTP 1.x release and fix any deprecation warnings.
+* Java DSL methods that returned a Scala `Duration` now return a `java.time.Duration`.
+([PR788](https://github.com/apache/pekko-http/pull/788))
+* The new `pekko-http-jackson3` module supports Jackson 3. See the configuration change below.
+
 ## Configuration Changes in Pekko HTTP 2.x
 
 The `reference.conf` defaults have changed in a number of places. If you override any of the settings
@@ -15,17 +26,19 @@ upgrading from older 1.x versions, with a note of the release that introduced th
 ### Changed default values
 
 * `pekko.http.server.enable-http2` changed from `off` to `on`. The setting was added in Pekko HTTP 1.3.0
-to replace `pekko.http.server.preview.enable-http2` ([PR818](https://github.com/apache/pekko-http/pull/818)). Servers bound with `Http().newServerAt(...).bind(...)`
-now accept HTTP/2 connections (via ALPN for HTTPS, or prior knowledge and the `h2c` upgrade for plain HTTP). `bindFlow` and
-`connectionSource()` do not support HTTP/2. Set it to `off` to restore the Pekko HTTP 1.x behavior.
-See @ref:[Server-Side HTTP/2](../server-side/http2.md). ([PR928](https://github.com/apache/pekko-http/pull/928))
+to replace `pekko.http.server.preview.enable-http2` ([PR818](https://github.com/apache/pekko-http/pull/818)).
+Servers bound with `Http().newServerAt(...).bind(...)` now accept HTTP/2 connections (via ALPN for HTTPS, or
+prior knowledge and the `h2c` upgrade for plain HTTP). `bindFlow` and `connectionSource()` do not support HTTP/2.
+Set it to `off`, and leave `pekko.http.server.preview.enable-http2` unset or `off`, to restore the Pekko HTTP 1.x
+behavior. See @ref:[Server-Side HTTP/2](../server-side/http2.md). ([PR928](https://github.com/apache/pekko-http/pull/928))
 * `pekko.http.server.preview.enable-http2` changed to `null` (it was `off` up to Pekko HTTP 1.2.x and
-`${pekko.http.server.enable-http2}` in 1.3.x and 1.4.x). The setting
-is still supported for compatibility, but it is now ignored unless set explicitly, and it is ignored if
-`pekko.http.server.enable-http2` is `on`. ([PR928](https://github.com/apache/pekko-http/pull/928))
-* `pekko.http.server.http2.frame-type-throttle.frame-types` changed from `[]` to `["reset"]`, so incoming
-`RST_STREAM` frames are throttled by default to mitigate HTTP/2 Rapid Reset attacks (CVE-2023-44487).
-Set it to `[]` to disable throttling. ([PR1193](https://github.com/apache/pekko-http/pull/1193))
+`${pekko.http.server.enable-http2}` in 1.3.x and 1.4.x). The setting is still supported for compatibility:
+HTTP/2 is enabled if either setting is `on`. ([PR928](https://github.com/apache/pekko-http/pull/928))
+* `pekko.http.server.http2.frame-type-throttle.frame-types` changed from `[]` to `["reset"]`, so the rate of
+incoming `RST_STREAM` frames on a server connection is limited by default to mitigate HTTP/2 Rapid Reset attacks
+(CVE-2023-44487). With the default `cost`, `burst` and `interval` settings, a client that sends more than about
+100 `RST_STREAM` frames per second has its connection failed. Clients that legitimately cancel many streams, such
+as some gRPC clients, may need a higher limit. Set it to `[]` to disable throttling. ([PR1193](https://github.com/apache/pekko-http/pull/1193))
 
 ### Removed configuration
 
@@ -54,7 +67,8 @@ See @ref:[Limiting the lifetime of connections](../server-side/http2.md#limiting
 ([PR1316](https://github.com/apache/pekko-http/pull/1316), [PR1323](https://github.com/apache/pekko-http/pull/1323))
 * `pekko.http.server.websocket.compression` is a new section configuring server-side WebSocket compression
 (the RFC 7692 `permessage-deflate` extension). It is `enabled` by default and used only when the client requests it
-during the handshake; `max-allocation` (default `256k`) bounds the size of a decompressed message.
+during the handshake. Most browsers request it, so WebSocket connections from browsers are compressed by default
+after upgrading; set `pekko.http.server.websocket.compression.enabled = false` to turn it off. `max-allocation` (default `256k`) bounds the size of a decompressed message.
 See @ref:[WebSocket compression](../server-side/websocket-support.md#websocket-compression).
 ([PR1114](https://github.com/apache/pekko-http/pull/1114), [PR1173](https://github.com/apache/pekko-http/pull/1173))
 
@@ -68,9 +82,11 @@ See @ref:[Limiting managed persistent connection lifetime](../client-side/http2.
 
 pekko-http-core parsing settings:
 
-* `pekko.http.parsing.max-chunk-count` (default `100000`) bounds the number of chunks in a chunked entity.
+* `pekko.http.parsing.max-chunk-count` (default `100000`) bounds the number of chunks in a chunked entity;
+a larger entity fails the entity stream.
 ([PR1195](https://github.com/apache/pekko-http/pull/1195))
 * `pekko.http.parsing.max-part-count` (default `10000`) bounds the number of body parts in a multipart entity.
+Applications that receive large multipart uploads may need to raise these limits.
 ([PR1266](https://github.com/apache/pekko-http/pull/1266))
 
 pekko-http settings:
@@ -86,8 +102,8 @@ the server is running. ([PR1217](https://github.com/apache/pekko-http/pull/1217)
 
 pekko-http-testkit settings:
 
-* `pekko.http.testkit.routes.timeout` (default `1 s`) sets the default `RouteTestTimeout`.
-See @ref:[Accounting for Slow Test Systems](../routing-dsl/testkit.md#accounting-for-slow-test-systems).
+* `pekko.http.testkit.routes.timeout` (default `1 s`) sets the default `RouteTestTimeout` used by the
+Scala testkit. See @ref:[Increase Timeout](../routing-dsl/testkit.md#increase-timeout).
 ([PR1016](https://github.com/apache/pekko-http/pull/1016))
 
 pekko-http-jackson3 settings:
