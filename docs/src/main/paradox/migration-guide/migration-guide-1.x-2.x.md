@@ -34,7 +34,7 @@ Set it to `[]` to disable throttling. ([PR1193](https://github.com/apache/pekko-
 
 ### New configuration
 
-The full `reference.conf` for the main modules, with descriptions of every setting, is listed in the
+The full `reference.conf` for each module, with descriptions of every setting, is listed in the
 @ref:[configuration reference](../configuration.md).
 
 pekko-http-core server settings:
