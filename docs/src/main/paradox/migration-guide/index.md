@@ -2,6 +2,12 @@
 
 @@toc { depth=3 }
 
+@@@ index
+
+* [migration-guide-1.x-2.x](migration-guide-1.x-2.x.md)
+
+@@@
+
 * If you are currently using an old version of Akka HTTP or Spray, you should first follow the [Akka HTTP migration guide](https://doc.akka.io/docs/akka-http/10.2/migration-guide/index.html)
 * The @extref:[migration guide](pekko-docs:migration/index.html) for the core Apache Pekko libs is a useful guideline.
 * for Pekko jar dependencies, the groupId is "org.apache.pekko" instead of "com.typesafe.akka"
