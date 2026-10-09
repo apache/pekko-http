@@ -1,7 +1,5 @@
 # Marshalling
 
-@java[TODO @github[overhaul for Java](#1367)]
-
 Marshalling is the process of converting a higher-level (object) structure into some kind of lower-level
 representation, often a "wire format". Other popular names for marshalling are "serialization" or "pickling".
 
