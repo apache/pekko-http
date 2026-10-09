@@ -370,6 +370,28 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           trailingResponseHeaders should contain(("x-good", "fine"))
           trailingResponseHeaders.map(_._1) should not contain "x-evil"
         })
+      "release connection-level flow control accounting when a stream with buffered data is reset"
+        .inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings =
+            super.settings.mapHttp2Settings(_.withIncomingConnectionLevelBufferSize(Http2Protocol.InitialWindowSize))
+
+          // Each round buffers request data that the handler never reads and then resets the stream. Those bytes must
+          // be released from the connection-level accounting: otherwise the flow controller keeps counting them as
+          // buffered forever, stops replenishing the connection window, and the peer runs out of window entirely.
+          (0 until 6).foreach { i =>
+            val streamId = 1 + i * 2
+            network.sendHEADERS(streamId, endStream = false,
+              network.headersForRequest(HttpRequest(HttpMethods.POST, "/")))
+            user.expectRequest() // the entity is deliberately never read, so the data stays buffered
+            network.sendDATA(streamId, endStream = false, ByteString(new Array[Byte](20000)))
+            network.sendRST_STREAM(streamId, ErrorCode.CANCEL)
+            network.pollForWindowUpdates(100.millis)
+          }
+
+          // the connection is still usable because the window was replenished along the way
+          network.sendHEADERS(13, endStream = true, network.headersForRequest(Get("/")))
+          user.expectRequest()
+        })
       "consider stream as closed after sending out strict response > WINDOW_SIZE".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           override def settings: ServerSettings =
@@ -635,6 +657,31 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
 
             network.sendFrame(DataFrame(TheStreamId, endStream = false, ByteString("0" * 512001))) // more than default `incoming-stream-level-buffer-size = 512kB`
             network.expectRST_STREAM(TheStreamId, ErrorCode.FLOW_CONTROL_ERROR)
+          })
+        // The connection-level window is only replenished while `outstanding + buffered` stays below half of the
+        // buffer size, so a buffer of a bit more than twice the discarded frame makes the release observable: the
+        // WINDOW_UPDATE below can only arrive when the frame the server dropped stopped counting as buffered.
+        // These have to live outside of the setup below because `settings` is read while it is being constructed.
+        val OversizedFrameSize = 512001 // more than default `incoming-stream-level-buffer-size = 512kB`
+        val ConnectionBufferSize = 700000
+        "release connection-level flow control accounting when a stream-level window is exceeded"
+          .inAssertAllStagesStopped(new WaitingForRequestData {
+            override def settings: ServerSettings =
+              super.settings.mapHttp2Settings(_.withIncomingConnectionLevelBufferSize(ConnectionBufferSize))
+
+            // get the request dispatched and both windows replenished to their configured sizes
+            network.sendDATA(TheStreamId, endStream = false, ByteString("0000"))
+            entityDataIn.expectUtf8EncodedString("0000")
+            network.pollForWindowUpdates(500.millis)
+
+            // a peer ignoring the stream-level window: the stream is reset but the connection keeps running
+            network.sendFrame(DataFrame(TheStreamId, endStream = false, ByteString("0" * OversizedFrameSize)))
+            network.updateWindowForIncomingDataOnConnection(_ - OversizedFrameSize) // sendFrame bypasses the tracking
+            network.expectRST_STREAM(TheStreamId, ErrorCode.FLOW_CONTROL_ERROR)
+
+            // the dropped data does not stay reserved, so the peer gets its whole connection window back
+            network.pollForWindowUpdates(500.millis)
+            network.remainingWindowForIncomingDataOnConnection shouldEqual ConnectionBufferSize
           })
         "fail stream if request entity is not fully pulled when connection dies".inAssertAllStagesStopped(
           new WaitingForRequestData {
