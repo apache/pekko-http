@@ -157,13 +157,22 @@ private[http] object Http2Blueprint {
   // format: ON
 
   def clientStack(settings: ClientConnectionSettings, log: LoggingAdapter, telemetry: TelemetrySpi)
+      : BidiFlow[HttpRequest, ByteString, ByteString, HttpResponse, NotUsed] =
+    clientStack(settings, log, telemetry, "", Uri.Authority.Empty)
+
+  /**
+   * @param connectionScheme    the ':scheme' rendered for a request whose URI has none
+   * @param connectionAuthority the ':authority' rendered for a request whose URI and `Host` header have none
+   */
+  def clientStack(settings: ClientConnectionSettings, log: LoggingAdapter, telemetry: TelemetrySpi,
+      connectionScheme: String, connectionAuthority: Uri.Authority)
       : BidiFlow[HttpRequest, ByteString, ByteString, HttpResponse, NotUsed] = {
     // This is master header parser, every other usage should do .createShallowCopy()
     // HttpHeaderParser is not thread safe and should not be called concurrently,
     // the internal trie, however, has built-in protection and will do copy-on-write
     val masterHttpHeaderParser = HttpHeaderParser(settings.parserSettings, log)
     telemetry.client.atop(
-      httpLayerClient(masterHttpHeaderParser, settings, log)).atop(
+      httpLayerClient(masterHttpHeaderParser, settings, log, connectionScheme, connectionAuthority)).atop(
       clientDemux(settings.http2Settings, masterHttpHeaderParser)).atop(
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames)).atop( // enable for debugging
       hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize)).atop(
@@ -174,8 +183,14 @@ private[http] object Http2Blueprint {
 
   def httpLayerClient(masterHttpHeaderParser: HttpHeaderParser, settings: ClientConnectionSettings, log: LoggingAdapter)
       : BidiFlow[HttpRequest, Http2SubStream, Http2SubStream, HttpResponse, NotUsed] =
+    httpLayerClient(masterHttpHeaderParser, settings, log, "", Uri.Authority.Empty)
+
+  def httpLayerClient(masterHttpHeaderParser: HttpHeaderParser, settings: ClientConnectionSettings, log: LoggingAdapter,
+      connectionScheme: String, connectionAuthority: Uri.Authority)
+      : BidiFlow[HttpRequest, Http2SubStream, Http2SubStream, HttpResponse, NotUsed] =
     BidiFlow.fromFlows(
-      Flow[HttpRequest].statefulMap(() => new RequestRendering(settings, log))((renderer, request) =>
+      Flow[HttpRequest].statefulMap(() =>
+        new RequestRendering(settings, log, connectionScheme, connectionAuthority))((renderer, request) =>
           (renderer, renderer(request)), _ => None),
       StreamUtils.statefulAttrsMap[Http2SubStream, HttpResponse] { attrs =>
         val headerParser = masterHttpHeaderParser.createShallowCopy()
