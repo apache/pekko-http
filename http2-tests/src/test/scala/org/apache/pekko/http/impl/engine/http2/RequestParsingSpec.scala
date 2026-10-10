@@ -109,6 +109,12 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           futureValueEx.getCause.asInstanceOf[Http2ProtocolException]
       }
 
+    "accept a header value with whitespace inside it, or an empty value" in {
+      val request = parseExpectOk(Vector(":method" -> "GET", ":scheme" -> "https", ":path" -> "/", "x-a" -> "a b",
+        "x-b" -> ""))
+      (request.headers.map(h => h.lowercaseName -> h.value) should contain).allOf("x-a" -> "a b", "x-b" -> "")
+    }
+
     "reject a malformed header field with a bad request rather than accepting or failing the connection" should {
       // RFC 9113 8.2.1: a field name or value carrying NUL, CR or LF makes the message malformed
       def request(extra: (String, String)*): Vector[(String, String)] =
@@ -131,6 +137,20 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       "a header name containing CR LF" in {
         val info = parseExpectError(request("x-a\r\nx-b" -> "v"))
         info.summary should include("header field name must not contain CR, LF or NUL")
+      }
+      "a header name containing an uppercase character" in {
+        // the HTTP/1.1 parser this is handed to matches names case-insensitively, so without the check the
+        // request was accepted as if the name had been lowercase
+        for (name <- Seq("X-A", "x-A", "Content-Type"))
+          parseExpectError(request(name -> "v")).summary should ===(
+            "header field name must not contain uppercase characters")
+      }
+      "a header value with leading or trailing whitespace" in {
+        // the HTTP/1.1 parser this is handed to trims it, so without the check the request was accepted with the
+        // value silently changed
+        for (value <- Seq(" v", "v ", "\tv", "v\t"))
+          parseExpectError(request("x-a" -> value)).summary should ===(
+            "header field value must not start or end with whitespace")
       }
       "a header value longer than max-header-value-length" in {
         // the HTTP/1.1 parser reports this with its own, internal exception type, which used to escape the
@@ -182,9 +202,9 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           ":scheme" -> "https",
           ":path" -> "/")
         forAll(pseudoHeaders.indices: Seq[Int]) { (insertPoint: Int) =>
-          // Insert the Foo header so it occurs before at least one pseudo-header
+          // Insert the foo header so it occurs before at least one pseudo-header
           val (before, after) = pseudoHeaders.splitAt(insertPoint)
-          val modified = before ++ Vector("Foo" -> "bar") ++ after
+          val modified = before ++ Vector("foo" -> "bar") ++ after
           parseExpectProtocolError(modified)
         }
       }
@@ -200,8 +220,8 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           ":method" -> "GET",
           ":scheme" -> "https",
           ":path" -> "/",
-          "Connection" -> "foo",
-          "Foo" -> "bar"))
+          "connection" -> "foo",
+          "foo" -> "bar"))
       }
 
       "not accept TE with other values than 'trailers'" in {
@@ -213,7 +233,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           ":method" -> "GET",
           ":scheme" -> "https",
           ":path" -> "/",
-          "TE" -> "chunked"))
+          "te" -> "chunked"))
 
       }
 
@@ -222,7 +242,7 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           ":method" -> "GET",
           ":scheme" -> "https",
           ":path" -> "/",
-          "TE" -> "trailers"))
+          "te" -> "trailers"))
       }
 
       // 8.1.2.3.  Request Pseudo-Header Fields
@@ -301,7 +321,10 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
                 ":scheme" -> "https",
                 ":authority" -> authority,
                 ":path" -> "/"))
-            info.summary should include("http2-authority-pseudo-header")
+            // a value that is all whitespace is caught by the RFC 9113 8.2.1 field check before the URI parser
+            info.summary should
+            (include("http2-authority-pseudo-header").or(
+              include("header field value must not start or end with whitespace")))
           }
         }
       }
@@ -412,7 +435,10 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
             "http://localhost/foo")
           forAll(invalidAbsolutePaths) { (absPath: String) =>
             val info = parsePathExpectError(absPath)
-            info.summary should include("http2-path-pseudo-header")
+            // a value ending in whitespace is caught by the RFC 9113 8.2.1 field check before the URI parser
+            info.summary should
+            (include("http2-path-pseudo-header").or(
+              include("header field value must not start or end with whitespace")))
           }
         }
 

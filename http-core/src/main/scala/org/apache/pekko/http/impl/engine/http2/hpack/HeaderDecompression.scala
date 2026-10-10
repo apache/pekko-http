@@ -85,12 +85,17 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
             // here, before the field is dispatched on its name: a regular field goes through the HTTP/1.1 line
             // parser, which reads up to the first CRLF it finds and would silently accept the value truncated
             // there. Neither the name nor the value is echoed, since either may be what is malformed.
+            // The same section makes an uppercase name and a value with leading or trailing whitespace malformed;
+            // the HTTP/1.1 parser would otherwise match the name case-insensitively and trim the value.
+            // This stage decodes responses on the client too, so the messages do not say "request".
             if (HeaderCompression.hasIllegalChar(name))
-              throw new ParsingException(
-                ErrorInfo("Malformed request: header field name must not contain CR, LF or NUL"))
+              throw new ParsingException(ErrorInfo("header field name must not contain CR, LF or NUL"))
             if (HeaderCompression.hasIllegalChar(value))
-              throw new ParsingException(
-                ErrorInfo("Malformed request: header field value must not contain CR, LF or NUL"))
+              throw new ParsingException(ErrorInfo("header field value must not contain CR, LF or NUL"))
+            if (HeaderCompression.hasUppercase(name))
+              throw new ParsingException(ErrorInfo("header field name must not contain uppercase characters"))
+            if (HeaderCompression.hasSurroundingWhitespace(value))
+              throw new ParsingException(ErrorInfo("header field value must not start or end with whitespace"))
             if (parsed ne null) {
               headers += name -> parsed
               parsed
