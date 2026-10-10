@@ -445,6 +445,27 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         }
       }
 
+      "dropping a chunk extension whose value contains NUL" in new TestSetup() {
+        // NUL is as illegal in the chunk-size line as CR/LF; the trailer and header paths already drop it
+        HttpResponse(entity = Chunked(
+          ContentTypes.`text/plain(UTF-8)`,
+          source(
+            Chunk(ByteString("body123"), "ok\u0000bad"),
+            LastChunk))) should renderTo {
+          """HTTP/1.1 200 OK
+            |Server: pekko-http/1.0.0
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |Transfer-Encoding: chunked
+            |Content-Type: text/plain; charset=UTF-8
+            |
+            |7
+            |body123
+            |0
+            |
+            |"""
+        }
+      }
+
       "with one chunk and and extra LastChunks at the end (which should be ignored)" in new TestSetup() {
         HttpResponse(entity = Chunked(
           ContentTypes.`text/plain(UTF-8)`,
