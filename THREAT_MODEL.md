@@ -82,7 +82,9 @@ This is a graded claim, not a disclaimer of DoS as a class. §14 Q1 resolves it 
 - **Runtime.** A conformant JVM. Pekko HTTP does not defend against a hostile JVM or in-process attacker. *(maintainer — §14 Q7)*
 - **Fronting infrastructure.** Something sits in front in production *(documented — `security.md`)*. Per §14 Q1 this is load-bearing for *volume* only: the proxy is relied on for flood and slow-loris defence, not for bounding a single request, which is P1's job.
 - **TLS.** Pekko HTTP can terminate TLS itself (`HttpsConnectionContext`); in a fronted deployment termination is commonly the proxy's job. Cipher and protocol selection come from the JSSE context the application supplies — Pekko HTTP pins nothing and overrides no JDK default. *(maintainer — §14 Q8)*
-- **Client IP.** `remote-address-attribute` ships `off` *(documented — `reference.conf`)*. When on, the attribute is the **socket** peer — behind a proxy, the proxy. `extractClientIP` reads `X-Forwarded-For` / `X-Real-Ip` and is client-controllable; `extractDirectClientIP` reads the attribute alone and is not (§14 Q4). *(documented — `MiscDirectives.scala`)*
+- **Client IP.** `remote-address-attribute` ships `off` *(documented — `reference.conf`)*. When on, the attribute holds the address of whoever opened the TCP connection to Pekko HTTP. With a load balancer or reverse proxy in front, that's the proxy's address. 
+  - `extractClientIP` reads `X-Forwarded-For` / `X-Real-Ip` and is **client-controllable**;  
+  - `extractDirectClientIP` reads the attribute alone and is not (§14 Q4). *(documented —`MiscDirectives.scala`)*
 
 ### What Pekko HTTP does not do to its host
 
