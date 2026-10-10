@@ -184,6 +184,10 @@ private[http] final class HttpRequestParser(
             s"URI length exceeds the configured limit of $maxUriLength characters$remoteAddressStr")
 
         val uriEnd = findUriEnd()
+        // A CR or LF here ends the request line before any HTTP version. Skipping it as if it were the SP separator
+        // would read `GET /<LF>HTTP/1.1` as one request line where another hop may see a line without a version.
+        val separator = input(uriEnd)
+        if (separator == CR_BYTE || separator == LF_BYTE) onBadProtocol(input.drop(uriEnd))
         try {
           uriBytes = input.slice(uriStart, uriEnd)
           uriParser.reset(new ByteStringParserInput(uriBytes))

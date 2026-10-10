@@ -114,6 +114,10 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
                 case "cookie"         => handle(Cookie.parse(name, value, parserSettings))
                 case x if x(0) == ':' => handle(value)
                 case _                =>
+                  // RFC 9113 8.2.1: only a pseudo-header name may contain a colon. The HTTP/1.1 line parser below would
+                  // otherwise split `x:a` at it and read a field named `x` carrying `a: <value>`.
+                  if (name.indexOf(':') >= 0)
+                    throw new ParsingException(ErrorInfo("Malformed request: header field name must not contain ':'"))
                   // cannot use OtherHeader.parse because that doesn't has access to header parser
                   val header = parseHeaderPair(httpHeaderParser, name, value)
                   RequestParsing.validateHeader(header)

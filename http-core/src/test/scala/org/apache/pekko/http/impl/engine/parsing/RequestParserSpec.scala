@@ -702,6 +702,13 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           "The server does not support the HTTP protocol version")
       }
 
+      "a CR or LF between the request target and the HTTP version" in new Test {
+        // either ends the request line before the version, so it must not be skipped as if it were the SP separator
+        for (separator <- Seq("\r", "\n"))
+          rejectRawRequestLine(s"GET /${separator}HTTP/1.1\r\nHost: x\r\n\r\n", HttpVersionNotSupported,
+            "The server does not support the HTTP protocol version")
+      }
+
       "a NUL byte before or in the HTTP method" in new Test {
         for (requestLine <- Seq("\u0000GET / HTTP/1.1", "G\u0000ET / HTTP/1.1"))
           rejectRawRequestLine(s"$requestLine\r\nHost: x\r\n\r\n", NotImplemented, "Unsupported HTTP method")
