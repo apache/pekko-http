@@ -274,8 +274,7 @@ sealed trait ResponseEntity extends HttpEntity with jm.ResponseEntity {
 }
 
 object ResponseEntity {
-  implicit def fromJava(entity: pekko.http.javadsl.model.ResponseEntity)(
-      implicit m: JavaMapping[pekko.http.javadsl.model.ResponseEntity, ResponseEntity]): ResponseEntity =
+  implicit def fromJava(entity: pekko.http.javadsl.model.ResponseEntity): ResponseEntity =
     JavaMapping.toScala(entity)
 }
 
