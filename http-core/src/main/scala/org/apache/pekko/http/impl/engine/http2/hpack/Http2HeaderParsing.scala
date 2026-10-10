@@ -32,7 +32,17 @@ private[pekko] object Http2HeaderParsing {
     override def parse(name: String, value: String, parserSettings: ParserSettings): String = value
   }
 
-  object Scheme extends Verbatim(":scheme")
+  object Scheme extends HeaderParser[String](":scheme") {
+    // validated here, like ':path' and ':authority', so that a malformed value fails only its own stream: left to
+    // `Uri.apply` in RequestParsing, the IllegalUriException escapes the request parsing stage and with it the
+    // whole connection fails. An empty value is let through, since the Pekko HTTP client sends one for a request
+    // with a relative URI.
+    override def parse(name: String, value: String, parserSettings: ParserSettings): String =
+      try Uri.normalizeScheme(value)
+      catch {
+        case IllegalUriException(info) => throw new ParsingException(info)
+      }
+  }
   object Method extends HeaderParser[HttpMethod](":method") {
     override def parse(name: String, value: String, parserSettings: ParserSettings): HttpMethod =
       HttpMethods.getForKey(value)
