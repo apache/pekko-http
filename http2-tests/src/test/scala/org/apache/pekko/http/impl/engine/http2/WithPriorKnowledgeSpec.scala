@@ -16,6 +16,7 @@ package org.apache.pekko.http.impl.engine.http2
 import java.util.Base64
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 import org.apache.pekko
 import pekko.http.impl.util.PekkoSpecWithMaterializer
@@ -86,6 +87,18 @@ class WithPriorKnowledgeSpec extends PekkoSpecWithMaterializer("""
       response.entity.discardBytes()
       response.status should ===(StatusCodes.ImATeapot)
       queue.complete()
+    }
+
+    "send ':scheme' and ':authority' for a relative URI from the connection (connection level client API)" in {
+      val echoBinding = Http().newServerAt("127.0.0.1", 0).bind(request =>
+        Future.successful(HttpResponse(entity = request.uri.toString))).futureValue
+      val (host, port) = (echoBinding.localAddress.getHostName, echoBinding.localAddress.getPort)
+      val connectionFlow = Http().connectionTo(host).toPort(port).http2WithPriorKnowledge()
+
+      val response = Source.single(HttpRequest(uri = "/foo")).via(connectionFlow).runWith(Sink.head).futureValue
+      response.status should ===(StatusCodes.OK)
+      response.entity.toStrict(3.seconds).futureValue.data.utf8String should ===(s"http://$host:$port/foo")
+      echoBinding.unbind().futureValue
     }
   }
 }
