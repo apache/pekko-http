@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Project** | Apache Pekko HTTP |
-| **Written against** | commit `478c58b`, `main` |
+| **Written against** | commit `b1de40b`, `main` |
 | **Date** | 2026-10-02 |
 | **Authors** | ASF Security team, at the request of the Pekko PMC |
 | **Version binding** | Versioned alongside the project. A report against version *N* is triaged against the model as it stood at *N*, not at `main`. |
