@@ -38,6 +38,19 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
   private[http2] def hasIllegalChar(s: String): Boolean =
     s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0 || s.indexOf('\u0000') >= 0
 
+  /** RFC 9113 8.2.1: an HTTP/2 field name must not contain an uppercase character. */
+  private[http2] def hasUppercase(s: String): Boolean = {
+    var i = 0
+    while (i < s.length && !(s.charAt(i) >= 'A' && s.charAt(i) <= 'Z')) i += 1
+    i < s.length
+  }
+
+  /** RFC 9113 8.2.1: an HTTP/2 field value must not start or end with SP or HTAB. */
+  private[http2] def hasSurroundingWhitespace(s: String): Boolean =
+    s.nonEmpty && (isWhitespace(s.charAt(0)) || isWhitespace(s.charAt(s.length - 1)))
+
+  private def isWhitespace(c: Char): Boolean = c == ' ' || c == '\t'
+
   def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
     new GraphStageLogic(shape) with StageLogging with InHandler with OutHandler { logic =>
       setHandlers(eventsIn, eventsOut, this)

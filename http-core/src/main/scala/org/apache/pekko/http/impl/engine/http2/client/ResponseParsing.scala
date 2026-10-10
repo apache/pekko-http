@@ -118,7 +118,12 @@ private[http2] object ResponseParsing {
             headers += httpHeader)
       }
 
-    rec(subStream.initialHeaders.keyValuePairs)
+    subStream.initialHeaders.headerParseErrorDetails match {
+      // a field HeaderDecompression rejected leaves no headers behind, which would otherwise be reported as a
+      // missing ':status' rather than as what was wrong
+      case Some(info) => malformedResponse(info.summary)
+      case None       => rec(subStream.initialHeaders.keyValuePairs)
+    }
   }
 
   private def malformedResponse(msg: String): Nothing =
