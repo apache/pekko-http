@@ -89,7 +89,10 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
     "encode every octet with the code for that octet" in {
       // a byte above 0x7F must be looked up as an unsigned symbol, not as a negative array index
       val allOctets = Array.tabulate(256)(_.toByte)
-      Huffman.DECODER.decode(huffmanEncode(allOctets)) shouldEqual allOctets
+      val coded = huffmanEncode(allOctets)
+      val out = new Array[Byte](HuffmanDecoder.maxDecodedLength(coded.length))
+      val length = Huffman.DECODER.decode(coded, coded.length, out)
+      out.take(length) shouldEqual allOctets
     }
 
     "write at the given offset and reject an encoded length that does not match the input" in {
