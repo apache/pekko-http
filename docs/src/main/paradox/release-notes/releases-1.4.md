@@ -1,5 +1,24 @@
 # 0. Release Notes (1.4.x)
 
+## 1.4.2
+
+Release notes for Apache Pekko HTTP 1.4.2. See [GitHub Milestone for 1.4.2](https://github.com/apache/pekko-http/milestone/18?closed=1) for a fuller list of changes.
+
+This is a bug fix release. It includes further hardening changes to the HTTP parsing, HTTP/2 and directive code.
+
+### Bug Fixes
+* Escape HTML in `FileAndResourceDirectives` directory listings ([PR1191](https://github.com/apache/pekko-http/pull/1191))
+* Reject whitespace between chunk-size digits ([PR1257](https://github.com/apache/pekko-http/pull/1257))
+* HTTP/2: release connection-level buffered data accounting when data is discarded ([PR1259](https://github.com/apache/pekko-http/pull/1259), [PR1281](https://github.com/apache/pekko-http/pull/1281))
+* CORS: require every `Origin` to be allowed on a request ([PR1262](https://github.com/apache/pekko-http/pull/1262))
+* Reject a message whose `Transfer-Encoding` value cannot be parsed ([PR1267](https://github.com/apache/pekko-http/pull/1267))
+* Start each multipart part with its own header state ([PR1279](https://github.com/apache/pekko-http/pull/1279))
+* HTTP/2: reject a header field carrying CR, LF or NUL ([PR1297](https://github.com/apache/pekko-http/pull/1297))
+
+### Dependency Changes
+
+There are no dependency changes in this release.
+
 ## 1.4.1
 
 Release notes for Apache Pekko HTTP 1.4.1. See [GitHub Milestone for 1.4.1](https://github.com/apache/pekko-http/milestone/16?closed=1) for a fuller list of changes.
