@@ -81,7 +81,7 @@ private[http] class HeaderParser(
   def success(result: HttpHeader :: HNil): Result = HeaderParser.Success(result.head)
   def parseError(error: ParseError): HeaderParser.Failure = {
     val formatter = new ErrorFormatter(showLine = false)
-    HeaderParser.Failure(ErrorInfo(formatter.format(error, input), formatter.formatErrorLine(error, input)))
+    HeaderParser.Failure(ErrorInfo(formatter.format(error, input), ParseErrorLine.render(error, input)))
   }
   def failure(error: Throwable): HeaderParser.Failure =
     HeaderParser.Failure {
