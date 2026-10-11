@@ -38,6 +38,20 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
   private[http2] def hasIllegalChar(s: String): Boolean =
     s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0 || s.indexOf('\u0000') >= 0
 
+  /**
+   * RFC 9113 8.2.1: an HTTP/2 field name must not contain characters in the ranges 0x00-0x20, 0x41-0x5a or
+   * 0x7f-0xff, i.e. no control characters, SP, uppercase characters or non-ASCII characters. Anything above 0xff
+   * is rejected too, since such a character can only come from a non-ASCII octet sequence.
+   */
+  private[http2] def hasInvalidFieldNameChar(s: String): Boolean =
+    s.exists(c => c <= 0x20 || (c >= 'A' && c <= 'Z') || c >= 0x7F)
+
+  /** RFC 9113 8.2.1: an HTTP/2 field value must not start or end with SP or HTAB. */
+  private[http2] def hasSurroundingWhitespace(s: String): Boolean =
+    s.nonEmpty && (isWhitespace(s.charAt(0)) || isWhitespace(s.charAt(s.length - 1)))
+
+  private def isWhitespace(c: Char): Boolean = c == ' ' || c == '\t'
+
   def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
     new GraphStageLogic(shape) with StageLogging with InHandler with OutHandler { logic =>
       setHandlers(eventsIn, eventsOut, this)
