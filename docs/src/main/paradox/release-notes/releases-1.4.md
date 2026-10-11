@@ -31,7 +31,7 @@ It is strongly recommended that you avoid using Pekko 1.0.x jars with this relea
 ### Changes
 * Don't rely on Pekko Core ccompat ([PR890](https://github.com/apache/pekko-http/pull/890))
 * Correct Content-Length rendering based on method+status ([PR968](https://github.com/apache/pekko-http/pull/968))
-* Ensure end() is called on Inflaters and Deflaters to allow earlier tidy up of resources ([#1133](https://github.com/apache/pekko-http/issue/1133))
+* Ensure end() is called on Inflaters and Deflaters to allow earlier tidy up of resources ([#1133](https://github.com/apache/pekko-http/issues/1133))
 
 ### Dependency Changes
 
