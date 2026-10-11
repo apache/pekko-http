@@ -69,12 +69,12 @@ class ResponseParsingSpec extends PekkoSpecWithMaterializer {
       response.headers.map(h => h.lowercaseName -> h.value) should contain("x-a" -> "v")
     }
 
-    // RFC 9113 8.2.1: a field name must not contain uppercase characters and a value must not start or end with
+    // RFC 9113 8.2.1: a field name must not contain control, SP, uppercase or non-ASCII characters and a value must not start or end with
     // whitespace. HeaderDecompression rejects either, and the failure has to name what was wrong rather than surface as
     // the ':status' missing from the headers it dropped.
     "reject a field name containing an uppercase character" in {
       malformedResponseMessage(Seq(":status" -> "200", "X-A" -> "v")) should ===(
-        "Malformed response: header field name must not contain uppercase characters")
+        "Malformed response: header field name must not contain control, whitespace, uppercase or non-ASCII characters")
     }
 
     "reject a field value with leading or trailing whitespace" in {

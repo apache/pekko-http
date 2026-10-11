@@ -143,7 +143,13 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         // request was accepted as if the name had been lowercase
         for (name <- Seq("X-A", "x-A", "Content-Type"))
           parseExpectError(request(name -> "v")).summary should ===(
-            "header field name must not contain uppercase characters")
+            "header field name must not contain control, whitespace, uppercase or non-ASCII characters")
+      }
+      "a header name containing a control, whitespace or non-ASCII character" in {
+        // RFC 9113 8.2.1 also excludes 0x00-0x20 and 0x7f-0xff from field names
+        for (name <- Seq("x a", "x\ta", "x\u0001a", "x-a ", "x\u007fa", "x\u0080a", "x\u00ffa", "x\u00e9a"))
+          parseExpectError(request(name -> "v")).summary should ===(
+            "header field name must not contain control, whitespace, uppercase or non-ASCII characters")
       }
       "a header value with leading or trailing whitespace" in {
         // the HTTP/1.1 parser this is handed to trims it, so without the check the request was accepted with the
