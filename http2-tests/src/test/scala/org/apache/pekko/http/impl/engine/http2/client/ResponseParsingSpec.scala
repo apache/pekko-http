@@ -51,7 +51,8 @@ class ResponseParsingSpec extends PekkoSpecWithMaterializer {
               data = Right(Source.empty[ByteString]),
               correlationAttributes = Map.empty)
         }
-        .map(subStream => Try(ResponseParsing.parseResponse(headerParser, settings.parserSettings, Attributes())(subStream)))
+        .map(subStream =>
+          Try(ResponseParsing.parseResponse(headerParser, settings.parserSettings, Attributes())(subStream)))
         .runWith(Sink.head)
         .futureValue
     }
