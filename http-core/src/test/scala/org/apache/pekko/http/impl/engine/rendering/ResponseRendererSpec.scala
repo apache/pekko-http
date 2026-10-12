@@ -446,7 +446,7 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
       }
 
       "dropping a chunk extension whose value contains NUL" in new TestSetup() {
-        // NUL is as illegal in the chunk-size line as CR/LF; the trailer and header paths already drop it
+        // NUL is as illegal in the chunk-size line as CR/LF, consistent with how trailers and headers are rendered
         HttpResponse(entity = Chunked(
           ContentTypes.`text/plain(UTF-8)`,
           source(

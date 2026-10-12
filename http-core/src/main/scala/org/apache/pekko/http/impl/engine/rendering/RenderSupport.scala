@@ -152,7 +152,8 @@ private[http] object RenderSupport {
     val r = new ByteStringRendering(renderedSize)
     r ~~% data.length
     // drop an extension carrying CR, LF or NUL: it is rendered raw into the chunk-size line, so a CR/LF would break the
-    // chunk framing / split the response. The extension is optional metadata, so omitting an illegal one is safe
+    // chunk framing / split the response, and a NUL is not a legal character there and can truncate the line in a
+    // consumer that treats it as a C string. The extension is optional metadata, so omitting an illegal one is safe
     if (extension.nonEmpty && !extension.exists(ch => Rendering.isIllegalHeaderChar(ch))) r ~~ ';' ~~ extension
     r ~~ CrLf
     chunk match {
