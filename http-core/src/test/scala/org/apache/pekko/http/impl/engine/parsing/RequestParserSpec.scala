@@ -691,6 +691,34 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         }
       }
 
+      // A parser that strips control bytes around the version token before matching it can be made to agree with
+      // a request line that another hop rejects (https://github.com/netty/netty/issues/16970). The inputs below are
+      // not passed through `prep`, so that the CR cases keep their exact bytes in both line-ending variants.
+      "a control character before or after the HTTP version" in new Test {
+        for {
+          control <- Seq("\u0000", "\u000b", "\u000c", "\r")
+          requestLine <- Seq(s"GET / ${control}HTTP/1.1", s"GET / HTTP/1.1$control")
+        } rejectRawRequestLine(s"$requestLine\r\nHost: x\r\n\r\n", HttpVersionNotSupported,
+          "The server does not support the HTTP protocol version")
+      }
+
+      "a CR or LF between the request target and the HTTP version" in new Test {
+        // either ends the request line before the version, so it must not be skipped as if it were the SP separator
+        for (separator <- Seq("\r", "\n"))
+          rejectRawRequestLine(s"GET /${separator}HTTP/1.1\r\nHost: x\r\n\r\n", HttpVersionNotSupported,
+            "The server does not support the HTTP protocol version")
+      }
+
+      "a NUL byte before or in the HTTP method" in new Test {
+        for (requestLine <- Seq("\u0000GET / HTTP/1.1", "G\u0000ET / HTTP/1.1"))
+          rejectRawRequestLine(s"$requestLine\r\nHost: x\r\n\r\n", NotImplemented, "Unsupported HTTP method")
+      }
+
+      "a VT or FF byte in the request target" in new Test {
+        for (control <- Seq("\u000b", "\u000c"))
+          rejectRawRequestLine(s"GET /$control HTTP/1.1\r\nHost: x\r\n\r\n", BadRequest, "Illegal request-target")
+      }
+
       "with an illegal char in a header name" in new Test {
         """GET / HTTP/1.1
           |User@Agent: curl/7.19.7""" should parseToError(BadRequest, ErrorInfo("Illegal character '@' in header name"))
@@ -929,6 +957,18 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
       rawMultiParseTo(newParser, expected: _*)
     def rawMultiParseTo(parser: HttpRequestParser, expected: HttpRequest*): Matcher[Seq[String]] =
       generalRawMultiParseTo(parser, expected.map(Right(_)): _*)
+
+    def rejectRawRequestLine(input: String, status: StatusCode, summaryPrefix: String): Unit = {
+      val result = multiParse(newParser)(Seq(input))
+      result.length shouldEqual 1
+      result.head match {
+        case Left(MessageStartError(`status`, info, _)) => info.summary should startWith(summaryPrefix)
+        case other                                      =>
+          fail(s"Expected a $status MessageStartError for ${input.flatMap(c =>
+              if (c < 0x20) f"\\u${c.toInt}%04x" else c.toString)}" +
+            s" but got $other")
+      }
+    }
 
     def parseToError(status: StatusCode, info: ErrorInfo): Matcher[String] =
       generalMultiParseTo(Left(MessageStartError(status, info))).compose(_ :: Nil)
