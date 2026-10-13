@@ -172,6 +172,38 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
           conn2.pushResponse()
           expectResponse()
         })
+      if (clientServerImplementation == PassThrough) {
+        // the Pekko HTTP server engines close the connection themselves after an early response,
+        // so only PassThrough shows whether the pool would reuse the connection
+        "not reuse the connection after an early response".inWithShutdown(
+          new SetupWithServerProbes {
+            val reqEntityProbe = pushChunkedRequest()
+            responseOut.request(1)
+
+            val conn1 = expectNextConnection()
+            val reqInProbe = conn1.expectChunkedRequestBytesAsProbe()
+
+            reqEntityProbe.sendNext(ByteString("test"))
+            reqInProbe.expectUtf8EncodedString("test")
+
+            // the server responds before the request entity has been sent completely
+            conn1.pushResponse(HttpResponse(entity = "early"))
+            expectResponseEntityAsString() shouldEqual "early"
+
+            reqEntityProbe.sendNext(ByteString("test2"))
+            reqInProbe.expectUtf8EncodedString("test2")
+            reqEntityProbe.sendComplete()
+            reqInProbe.request(1)
+            reqInProbe.expectComplete()
+
+            // the next request must not be sent over the connection that saw the early response
+            pushRequest(HttpRequest(uri = "/next"))
+            val conn2 = expectNextConnection()
+            conn2.expectRequestToPath("/next")
+            conn2.pushResponse(HttpResponse())
+            expectResponse()
+          })
+      }
       "open up to max-connections when enough requests are pending".inWithShutdown(
         new SetupWithServerProbes(_.withMaxConnections(2)) {
           pushRequest(HttpRequest(uri = "/1"))

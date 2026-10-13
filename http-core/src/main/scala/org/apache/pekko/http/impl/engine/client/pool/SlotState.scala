@@ -358,15 +358,17 @@ private[pool] object SlotState {
       WaitingForEndOfResponseEntity(ongoingRequest, ongoingResponse, waitingForEndOfRequestEntity = false)
     }
   }
+
+  /**
+   * The response was completed before the request entity was fully sent, i.e. the server sent an "early" response.
+   * The connection is not reused afterwards: we cannot know whether the server read the rest of the request entity,
+   * and a server that did not could misinterpret the remaining data as the next request.
+   */
   case object WaitingForEndOfRequestEntity extends ConnectedState {
     final override def isIdle = false
 
-    override def onRequestEntityCompleted(ctx: SlotContext): SlotState =
-      if (ctx.isConnectionClosed) ToBeClosed
-      else idle(ctx)
-    override def onRequestEntityFailed(ctx: SlotContext, cause: Throwable): SlotState =
-      if (ctx.isConnectionClosed) ToBeClosed // ignore error here
-      else idle(ctx)
+    override def onRequestEntityCompleted(ctx: SlotContext): SlotState = ToBeClosed
+    override def onRequestEntityFailed(ctx: SlotContext, cause: Throwable): SlotState = ToBeClosed // ignore error here
     override def onConnectionCompleted(ctx: SlotContext): SlotState = ToBeClosed
     override def onConnectionFailed(ctx: SlotContext, cause: Throwable): SlotState = Failed(cause)
   }
