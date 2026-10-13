@@ -20,7 +20,7 @@ import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.http2.FrameEvent.ParsedHeadersFrame
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.`Raw-Request-URI`
+import pekko.http.scaladsl.model.headers.{ `Raw-Request-URI`, Host }
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.util.OptionVal
@@ -64,7 +64,9 @@ private[http2] class ResponseRendering(settings: ServerSettings, val log: Loggin
 /** INTERNAL API */
 @InternalApi
 private[http2] class RequestRendering(
-    settings: ClientConnectionSettings, val log: LoggingAdapter) extends MessageRendering[HttpRequest] {
+    settings: ClientConnectionSettings, val log: LoggingAdapter,
+    connectionScheme: String = "", connectionAuthority: Uri.Authority = Uri.Authority.Empty)
+    extends MessageRendering[HttpRequest] {
 
   private val streamId = new AtomicInteger(1)
   protected override def nextStreamId(r: HttpRequest): Int = streamId.getAndAdd(2)
@@ -72,8 +74,10 @@ private[http2] class RequestRendering(
   protected override def initialHeaderPairs(request: HttpRequest): VectorBuilder[(String, String)] = {
     val headerPairs = new VectorBuilder[(String, String)]()
     headerPairs += ":method" -> request.method.value
-    headerPairs += ":scheme" -> request.uri.scheme
-    headerPairs += ":authority" -> request.uri.authority.toString
+    // RFC 9113 8.3.1: ':scheme' is mandatory and ':authority', when present, must not be empty. A relative URI, as
+    // used with the connection-level client API, carries neither, so they are taken from the connection.
+    headerPairs += ":scheme" -> (if (request.uri.scheme.nonEmpty) request.uri.scheme else connectionScheme)
+    headerPairs += ":authority" -> authority(request)
     // a `Raw-Request-URI` header supplies the request target verbatim, as it does in the HTTP/1.1 renderer. `Uri`
     // percent-decodes path segments when parsing and re-encodes them with a keep-set that leaves sub-delims raw, so
     // it cannot round-trip an encoded pchar (`%2B` renders as `+`). Callers that must reproduce the target
@@ -82,6 +86,15 @@ private[http2] class RequestRendering(
       request.uri.toHttpRequestTargetOriginForm.toString)
     headerPairs
   }
+
+  // a `Host` header names the authority of a relative URI, as it does in HTTP/1.1, ahead of the connection's
+  private def authority(request: HttpRequest): String =
+    if (!request.uri.authority.isEmpty) request.uri.authority.toString
+    else
+      request.header[Host] match {
+        case Some(host) if !host.isEmpty => Uri.Authority(host.host, host.port).toString
+        case _                           => connectionAuthority.toString
+      }
 
   // `Raw-Request-URI` is a SyntheticHeader, so it is already excluded from the rendered header block by the
   // `renderInRequests` filter and is only consumed here. As in HTTP/1.1, the value is taken as given; the header

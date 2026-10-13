@@ -276,7 +276,8 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       engine
     }
 
-    val stack = Http2Blueprint.clientStack(clientConnectionSettings, log, telemetry).addAttributes(
+    val stack = Http2Blueprint.clientStack(clientConnectionSettings, log, telemetry, "https",
+      connectionAuthority(host, port, "https")).addAttributes(
       prepareClientAttributes(host, port)).atop(
       Http2Blueprint.unwrapTls).atop(
       LogByteStringTools.logTLSBidiBySetting("client-plain-text",
@@ -290,7 +291,8 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 
   def outgoingConnectionPriorKnowledge(host: String, port: Int, clientConnectionSettings: ClientConnectionSettings,
       log: LoggingAdapter): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
-    val stack = Http2Blueprint.clientStack(clientConnectionSettings, log, telemetry).addAttributes(
+    val stack = Http2Blueprint.clientStack(clientConnectionSettings, log, telemetry, "http",
+      connectionAuthority(host, port, "http")).addAttributes(
       prepareClientAttributes(host, port)).atop(
       Http2Blueprint.unwrapTls).atop(
       LogByteStringTools.logTLSBidiBySetting("client-plain-text",
@@ -301,6 +303,10 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       system.classicSystem))(Keep.right)
       .addAttributes(Http.cancellationStrategyAttributeForDelay(clientConnectionSettings.streamCancellationDelay))
   }
+
+  // the port is left out when it is the scheme's default, as a `Host` header for the same target would leave it out
+  private def connectionAuthority(host: String, port: Int, scheme: String): Uri.Authority =
+    Uri.Authority(Uri.Host(host), Uri.normalizePort(port, scheme))
 
   private def prepareClientAttributes(serverHost: String, port: Int): Attributes =
     if (telemetry == NoOpTelemetry) Attributes.none

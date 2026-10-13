@@ -150,6 +150,26 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       value1.exists(_._1 == "date") shouldBe false
     }
 
+    "take ':scheme' and ':authority' of a relative URI from the connection" in {
+      // RFC 9113 8.3.1: ':scheme' is mandatory and ':authority' must not be empty
+      pseudoHeaders(HttpRequest(uri = "/foo"), "https", Uri.Authority(Uri.Host("example.com"))) shouldEqual
+      Map(":method" -> "GET", ":scheme" -> "https", ":authority" -> "example.com", ":path" -> "/foo")
+      pseudoHeaders(HttpRequest(uri = "/foo"), "http", Uri.Authority(Uri.Host("example.com"), 8080)) shouldEqual
+      Map(":method" -> "GET", ":scheme" -> "http", ":authority" -> "example.com:8080", ":path" -> "/foo")
+    }
+
+    "take ':authority' of a relative URI from a Host header before the connection" in {
+      val request = HttpRequest(uri = "/foo", headers = List(Host("other.example.com", 8443)))
+      pseudoHeaders(request, "https", Uri.Authority(Uri.Host("example.com"))) should contain(
+        ":authority" -> "other.example.com:8443")
+    }
+
+    "keep ':scheme' and ':authority' of an absolute URI" in {
+      pseudoHeaders(HttpRequest(uri = "http://other.example.com:8080/foo"), "https",
+        Uri.Authority(Uri.Host("example.com"))) shouldEqual
+      Map(":method" -> "GET", ":scheme" -> "http", ":authority" -> "other.example.com:8080", ":path" -> "/foo")
+    }
+
     "handle empty trailer" in {
       val config = ConfigFactory.load("reference.conf")
       Try {
@@ -166,6 +186,13 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       }.isSuccess shouldBe true
     }
 
+  }
+
+  private def pseudoHeaders(request: HttpRequest, connectionScheme: String, connectionAuthority: Uri.Authority)
+      : Map[String, AnyRef] = {
+    val rendering = new RequestRendering(ClientConnectionSettings(ConfigFactory.load("reference.conf")), NoLogging,
+      connectionScheme, connectionAuthority)
+    rendering(request).initialHeaders.keyValuePairs.filter(_._1.startsWith(":")).toMap
   }
 
   private def renderClientHeaders(headers: Seq[HttpHeader], builder: VectorBuilder[(String, String)],
