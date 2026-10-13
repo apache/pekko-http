@@ -15,6 +15,8 @@ package io.pekko.integrationtest.http
 
 import com.typesafe.config.{ Config, ConfigFactory }
 
+import java.net.InetSocketAddress
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import org.scalatest.BeforeAndAfterAll
@@ -220,6 +222,25 @@ class HttpModelIntegrationSpec extends AnyWordSpec with Matchers with BeforeAndA
       // headers.
       ExampleLibrary.contentLength(3)
       ExampleLibrary.contentType(ContentTypes.`text/plain(UTF-8)`)
+    }
+
+    "be able to read an attribute without an implicit that is private to Pekko HTTP" in {
+      // HttpMessage.attribute used to take an implicit JavaMapping, which is private[http].
+      // Scala 3 warns about resolving it from outside the org.apache.pekko.http package
+      // and will stop finding it in Scala 3.10.
+      val address = InetSocketAddress.createUnresolved("example.com", 8080)
+      val remote = RemoteAddress(address)
+      val request = HttpRequest().addAttribute(AttributeKeys.remoteAddress, remote)
+
+      request.attribute(AttributeKeys.remoteAddress) shouldBe Some(remote)
+      request.attribute(AttributeKey[String]("missing")) shouldBe None
+    }
+
+    "be able to convert a Java ResponseEntity without an implicit that is private to Pekko HTTP" in {
+      val javaEntity: org.apache.pekko.http.javadsl.model.ResponseEntity = HttpEntity("hello")
+      val entity: ResponseEntity = javaEntity
+
+      entity shouldBe HttpEntity("hello")
     }
 
   }

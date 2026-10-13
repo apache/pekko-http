@@ -62,7 +62,10 @@ object Common extends AutoPlugin {
       "-Wconf:msg=type test for.*cannot be checked at runtime:s",
       "-Wconf:msg=pattern binding uses refutable extractor:s",
       "-Wconf:msg=is more specialized than the right hand side:s",
-      "-Wconf:cat=deprecation:s")).value,
+      "-Wconf:cat=deprecation:s",
+      // A public signature must not need an inaccessible implicit; Scala 3.10 stops resolving those.
+      // Tests in a package outside org.apache.pekko.http (e.g. HttpModelIntegrationSpec) catch it.
+      "-Wconf:msg=which is not accessible here:e")).value,
     // Scala 3.8+ migration warnings for syntax that has no replacement which also compiles on Scala 2.13.
     // Silence only these, so that other warnings (e.g. `private[this]`) still fail the build.
     scalacOptions ++= onlyOnScala38OrLater(Seq(
