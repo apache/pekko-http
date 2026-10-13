@@ -137,7 +137,7 @@ class SlotStateSpec extends PekkoSpec {
       state should be(Idle(Duration.Inf))
     }
 
-    "consider a slot 'idle' only when the request has been successfully sent" in {
+    "close the connection when the response completes before the request has been sent" in {
       var state: SlotState = Unconnected
       val context = new MockSlotContext(system.log)
       state = context.expectOpenConnection {
@@ -154,35 +154,8 @@ class SlotStateSpec extends PekkoSpec {
       state = state.onResponseDispatchable(context)
       state = state.onResponseEntitySubscribed(context)
       state = state.onResponseEntityCompleted(context)
-      // We don't want this slot to become idle yet, because consuming the request might still take
-      // a while, in which case putting this request on another connection would be lower latency.
-      // In theory we could get higher throughput by allowing requests on busy connections, but
-      // there are also situations where it would have an adverse effect, so better to be safe.
-      state.isIdle should be(false)
-
       // The response was completed before the request was sent completely (an "early" response), so the
-      // connection is closed rather than reused.
-      state = state.onRequestEntityCompleted(context)
-      state should be(ToBeClosed)
-    }
-
-    "close the connection when the request entity fails after an early response" in {
-      var state: SlotState = Unconnected
-      val context = new MockSlotContext(system.log)
-      state = context.expectOpenConnection {
-        state.onPreConnect(context)
-      }
-      state = state.onNewRequest(context, TheRequestContext)
-      state = state.onConnectionAttemptSucceeded(context, outgoingConnection)
-      state = state.onRequestDispatched(context)
-
-      state = state.onResponseReceived(context, HttpResponse())
-      state = state.onResponseDispatchable(context)
-      state = state.onResponseEntitySubscribed(context)
-      state = state.onResponseEntityCompleted(context)
-      state should be(WaitingForEndOfRequestEntity)
-
-      state = state.onRequestEntityFailed(context, new RuntimeException("request entity failed"))
+      // connection is closed right away rather than reused.
       state should be(ToBeClosed)
     }
   }

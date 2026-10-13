@@ -175,7 +175,7 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
       if (clientServerImplementation == PassThrough) {
         // the Pekko HTTP server engines close the connection themselves after an early response,
         // so only PassThrough shows whether the pool would reuse the connection
-        "not reuse the connection after an early response".inWithShutdown(
+        "abort the request entity and not reuse the connection after an early response".inWithShutdown(
           new SetupWithServerProbes {
             val reqEntityProbe = pushChunkedRequest()
             responseOut.request(1)
@@ -190,11 +190,10 @@ class HostConnectionPoolSpec extends PekkoSpecWithMaterializer(
             conn1.pushResponse(HttpResponse(entity = "early"))
             expectResponseEntityAsString() shouldEqual "early"
 
-            reqEntityProbe.sendNext(ByteString("test2"))
-            reqInProbe.expectUtf8EncodedString("test2")
-            reqEntityProbe.sendComplete()
+            // the rest of the request entity is not sent
+            reqEntityProbe.expectCancellation()
             reqInProbe.request(1)
-            reqInProbe.expectComplete()
+            reqInProbe.expectError()
 
             // the next request must not be sent over the connection that saw the early response
             pushRequest(HttpRequest(uri = "/next"))

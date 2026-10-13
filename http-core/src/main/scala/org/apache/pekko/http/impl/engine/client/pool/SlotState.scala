@@ -347,7 +347,11 @@ private[pool] object SlotState {
 
     override def onResponseEntityCompleted(ctx: SlotContext): SlotState =
       if (waitingForEndOfRequestEntity)
-        WaitingForEndOfRequestEntity
+        // The server sent an "early" response before the request entity was fully sent. We cannot know whether the
+        // server will read the rest of the request entity, and a server that does not could misinterpret the remaining
+        // data as the next request. Close the connection right away, which also aborts sending the rest of the
+        // request entity.
+        ToBeClosed
       else if (ctx.willCloseAfter(ongoingResponse) || ctx.isConnectionClosed)
         ToBeClosed // when would ctx.isConnectionClose be true? what that mean that the connection has already failed before? do we need that state at all?
       else
@@ -360,9 +364,8 @@ private[pool] object SlotState {
   }
 
   /**
-   * The response was completed before the request entity was fully sent, i.e. the server sent an "early" response.
-   * The connection is not reused afterwards: we cannot know whether the server read the rest of the request entity,
-   * and a server that did not could misinterpret the remaining data as the next request.
+   * The connection failed while the request entity was still being sent and the request has already been dispatched
+   * for retry. The connection is not reused after the request entity completes.
    */
   case object WaitingForEndOfRequestEntity extends ConnectedState {
     final override def isIdle = false
