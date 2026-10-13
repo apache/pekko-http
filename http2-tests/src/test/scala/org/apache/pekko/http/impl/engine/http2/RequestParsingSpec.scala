@@ -158,6 +158,26 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           parseExpectError(request("x-a" -> value)).summary should ===(
             "header field value must not start or end with whitespace")
       }
+      "a header value containing another control character" in {
+        for (control <- Seq("\u0001", "\u000b", "\u000c")) {
+          val info = parseExpectError(request("x-a" -> s"foo${control}bar"))
+          info.summary should include("Illegal character")
+        }
+      }
+      "a header name containing ':'" in {
+        // the HTTP/1.1 line parser this is handed to splits at the colon, so without the check the request was
+        // accepted with a field named `x` carrying `a: v`
+        val info = parseExpectError(request("x:a" -> "v"))
+        info.summary should include("header field name must not contain ':'")
+      }
+      "a ':scheme' containing a control character or whitespace" in {
+        // without validating it during decompression, `Uri.apply` threw an IllegalUriException that escaped the
+        // request parsing stage and failed the whole connection
+        for (scheme <- Seq("ht\u000btp", "ht\u000ctp", "ht\ttp", "ht tp", "http\u0001")) {
+          val info = parseExpectError(Vector(":method" -> "GET", ":scheme" -> scheme, ":path" -> "/"))
+          info.summary should include("Invalid URI scheme")
+        }
+      }
       "a header value longer than max-header-value-length" in {
         // the HTTP/1.1 parser reports this with its own, internal exception type, which used to escape the
         // decompression stage and fail the whole connection instead of answering the one stream
