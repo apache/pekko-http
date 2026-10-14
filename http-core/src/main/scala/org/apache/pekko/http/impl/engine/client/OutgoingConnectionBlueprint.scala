@@ -103,6 +103,12 @@ private[http] object OutgoingConnectionBlueprint {
       val responsePrep = Flow[List[ParserOutput.ResponseOutput]]
         .mapConcat(ConstantFun.scalaIdentityFunction)
         .via(new PrepareResponse(parserSettings))
+        .via(settings.strictResponseEntityTimeout match {
+          case Some(timeout) =>
+            // responses on an HTTP/1.1 connection are sequential, so collecting one entity never delays another
+            StreamUtils.strictifyResponseEntities(timeout, settings.strictResponseEntityMaxBytes, parallelism = 1)
+          case None => Flow[HttpResponse]
+        })
 
       val terminationFanout = b.add(Broadcast[HttpResponse](2))
 
