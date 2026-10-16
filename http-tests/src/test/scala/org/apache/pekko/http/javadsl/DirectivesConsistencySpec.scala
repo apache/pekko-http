@@ -31,6 +31,7 @@ object ClassGraphMembers {
 
   private lazy val scanResult =
     new ClassGraph()
+      .enableClassLoaders(getClass.getClassLoader)
       .acceptPackages("org.apache.pekko.http")
       .enableClassInfo()
       .enableMethodInfo()
@@ -61,12 +62,12 @@ object ClassGraphMembers {
 
   def allInterfaces(clazz: Class[?]): Vector[String] =
     interfacesCache.getOrElseUpdate(clazz.getName,
-      classInfo(clazz.getName).getInterfaces.directOnly.asScala.map(_.getName).toVector)
+      classInfo(clazz.getName).getDirectSuperinterfaces.asScala.map(_.getName).toVector)
 
   def superclasses(clazz: Class[?]): Vector[String] =
     superclassesCache.getOrElseUpdate(
       clazz.getName,
-      (classInfo(clazz.getName) +: classInfo(clazz.getName).getSuperclasses.asScala.toVector)
+      (classInfo(clazz.getName) +: classInfo(clazz.getName).getAllSuperclasses.asScala.toVector)
         .map(_.getName)
         .filterNot(_ == "java.lang.Object"))
 
@@ -81,7 +82,7 @@ object ClassGraphMembers {
     MethodInfo(
       method.getName,
       method.isStatic,
-      Option(method.getAnnotationInfo(correspondsToAnnotation))
+      Option(method.getDirectAnnotationInfo(correspondsToAnnotation))
         .flatMap(annotation => Option(annotation.getParameterValues.getValue("value")).map(_.toString)))
 }
 

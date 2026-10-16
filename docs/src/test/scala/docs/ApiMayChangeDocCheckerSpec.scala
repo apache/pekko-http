@@ -30,6 +30,7 @@ class ApiMayChangeDocCheckerSpec extends AnyWordSpec with Matchers with BeforeAn
 
   private lazy val scanResult =
     new ClassGraph()
+      .enableClassLoaders(getClass.getClassLoader)
       .acceptPackages("org.apache.pekko.http")
       .enableClassInfo()
       .enableMethodInfo()
