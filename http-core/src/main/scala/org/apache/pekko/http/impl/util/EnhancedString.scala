@@ -17,7 +17,7 @@ import java.util.Locale
 
 import org.apache.pekko.annotation.InternalApi
 
-import scala.annotation.tailrec
+import scala.annotation.{ nowarn, tailrec }
 import scala.collection.immutable
 
 /**
@@ -71,13 +71,13 @@ private[http] class EnhancedString(val underlying: String) extends AnyVal {
    * Truncates characters to 8-bit byte value.
    * If the array does not have enough space for the whole string only the portion that fits is copied.
    */
+  // `String.getBytes(int, int, byte[], int)` is deprecated (not for removal) but is the only JDK primitive that copies
+  // the low 8 bits of each char straight into an existing array: a single `System.arraycopy` for a Latin-1 coded
+  // string on JDK 9+, instead of a `charAt` call with its coder branch and bounds check per character.
+  @nowarn("cat=deprecation")
   def getAsciiBytes(array: Array[Byte], offset: Int): Unit = {
-    @tailrec def rec(ix: Int): Unit =
-      if (ix < array.length) {
-        array(ix) = underlying.charAt(ix - offset).asInstanceOf[Byte]
-        rec(ix + 1)
-      }
-    rec(offset)
+    val len = math.min(underlying.length, array.length - offset)
+    if (len > 0) underlying.getBytes(0, len, array, offset)
   }
 
   /**
