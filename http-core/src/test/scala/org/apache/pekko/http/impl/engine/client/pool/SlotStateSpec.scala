@@ -22,7 +22,7 @@ import pekko.http.impl.engine.client.pool.SlotState._
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.ContentTypes
 import pekko.http.scaladsl.model.HttpEntity
-import pekko.http.scaladsl.model.{ headers, HttpRequest, HttpResponse }
+import pekko.http.scaladsl.model.{ headers, HttpRequest, HttpResponse, StatusCodes }
 import pekko.http.scaladsl.settings.ConnectionPoolSettings
 import pekko.stream.scaladsl.Source
 import pekko.testkit.PekkoSpec
@@ -137,32 +137,51 @@ class SlotStateSpec extends PekkoSpec {
       state should be(Idle(Duration.Inf))
     }
 
-    "consider a slot 'idle' only when the request has been successfully sent" in {
-      var state: SlotState = Unconnected
+    "finish sending the request and then close the connection after an early successful response" in {
       val context = new MockSlotContext(system.log)
-      state = context.expectOpenConnection {
-        state.onPreConnect(context)
-      }
-      state = state.onNewRequest(context, TheRequestContext)
-
-      state = state.onConnectionAttemptSucceeded(context, outgoingConnection)
-
-      state should be(PushingRequestToConnection(TheRequestContext))
-      state = state.onRequestDispatched(context)
-
-      state = state.onResponseReceived(context, HttpResponse())
-      state = state.onResponseDispatchable(context)
-      state = state.onResponseEntitySubscribed(context)
-      state = state.onResponseEntityCompleted(context)
-      // We don't want this slot to become idle yet, because consuming the request might still take
-      // a while, in which case putting this request on another connection would be lower latency.
-      // In theory we could get higher throughput by allowing requests on busy connections, but
-      // there are also situations where it would have an adverse effect, so better to be safe.
-      state.isIdle should be(false)
+      var state = earlyResponseCompleted(context, HttpResponse())
+      // The response was completed before the request was sent completely (an "early" response). The server may
+      // still be reading the request entity, so it is sent completely, but the connection is not reused.
+      state should be(WaitingForEndOfRequestEntity)
 
       state = state.onRequestEntityCompleted(context)
-      state.isIdle should be(true)
+      state should be(ToBeClosed)
     }
+
+    "close the connection when the request entity fails after an early successful response" in {
+      val context = new MockSlotContext(system.log)
+      var state = earlyResponseCompleted(context, HttpResponse())
+      state should be(WaitingForEndOfRequestEntity)
+
+      state = state.onRequestEntityFailed(context, new RuntimeException("request entity failed"))
+      state should be(ToBeClosed)
+    }
+
+    "close the connection right away after an early error response" in {
+      earlyResponseCompleted(new MockSlotContext(system.log), HttpResponse(StatusCodes.PayloadTooLarge)) should
+      be(ToBeClosed)
+    }
+
+    "close the connection right away after an early response that closes the connection" in {
+      earlyResponseCompleted(new MockSlotContext(system.log),
+        HttpResponse(headers = headers.Connection("close") :: Nil)) should be(ToBeClosed)
+    }
+  }
+
+  /** Runs a slot through a streamed request whose response entity completes before the request entity */
+  private def earlyResponseCompleted(context: MockSlotContext, response: HttpResponse): SlotState = {
+    var state: SlotState = Unconnected
+    state = context.expectOpenConnection {
+      state.onPreConnect(context)
+    }
+    state = state.onNewRequest(context, TheRequestContext)
+    state = state.onConnectionAttemptSucceeded(context, outgoingConnection)
+    state = state.onRequestDispatched(context)
+
+    state = state.onResponseReceived(context, response)
+    state = state.onResponseDispatchable(context)
+    state = state.onResponseEntitySubscribed(context)
+    state.onResponseEntityCompleted(context)
   }
 
   class MockSlotContext(

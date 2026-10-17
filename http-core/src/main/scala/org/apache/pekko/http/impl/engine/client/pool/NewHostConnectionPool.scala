@@ -457,6 +457,7 @@ private[client] object NewHostConnectionPool {
             responseIn: SubSinkInlet[HttpResponse]) extends InHandler with OutHandler { connection =>
           var ongoingResponseEntity: Option[HttpEntity] = None
           var ongoingResponseEntityKillSwitch: Option[KillSwitch] = None
+          var ongoingRequestEntityKillSwitch: Option[KillSwitch] = None
           var connectionEstablished: Boolean = false
 
           /** Will only be executed if this connection is still the current connection for its slot */
@@ -468,10 +469,16 @@ private[client] object NewHostConnectionPool {
               request.entity match {
                 case _: HttpEntity.Strict => request
                 case e                    =>
-                  val (newEntity, entityComplete) = HttpEntity.captureTermination(request.entity)
-                  entityComplete.onComplete(safely {
-                    case Success(_)     => withSlot(_.onRequestEntityCompleted())
-                    case Failure(cause) => withSlot(_.onRequestEntityFailed(cause))
+                  val (newEntity, StreamUtils.StreamControl(_, entityComplete, entityKillSwitch)) =
+                    StreamUtils.transformEntityStream(request.entity,
+                      StreamUtils.CaptureMaterializationAndTerminationOp)
+                  ongoingRequestEntityKillSwitch = entityKillSwitch
+                  entityComplete.onComplete(safely { (res: Try[Unit]) =>
+                    ongoingRequestEntityKillSwitch = None
+                    res match {
+                      case Success(_)     => withSlot(_.onRequestEntityCompleted())
+                      case Failure(cause) => withSlot(_.onRequestEntityFailed(cause))
+                    }
                   })(ExecutionContext.parasitic)
                   request.withEntity(newEntity)
               }
@@ -497,6 +504,12 @@ private[client] object NewHostConnectionPool {
               failure.getOrElse(new IllegalStateException("Connection was closed while response was still in-flight"))
             ongoingResponseEntity.foreach(_.dataBytes.runWith(Sink.cancelled)(subFusingMaterializer))
             ongoingResponseEntityKillSwitch.foreach(_.abort(exception))
+            // Abort rather than complete a request entity that is still being sent, so that the remaining data is
+            // never sent and the request is not framed as complete.
+            ongoingRequestEntityKillSwitch.foreach(_.abort(failure.getOrElse(
+              new IllegalStateException("Connection was closed while request entity was still being sent")
+                with NoStackTrace)))
+            ongoingRequestEntityKillSwitch = None
           }
           def isClosed: Boolean = requestOut.isClosed || responseIn.isClosed
 
