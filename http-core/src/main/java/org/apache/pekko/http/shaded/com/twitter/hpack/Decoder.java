@@ -32,10 +32,10 @@
 package org.apache.pekko.http.shaded.com.twitter.hpack;
 
 import static org.apache.pekko.http.shaded.com.twitter.hpack.HeaderField.HEADER_ENTRY_OVERHEAD;
+import static org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.ISO_8859_1;
 
 import java.io.IOException;
 import java.io.InputStream;
-import org.apache.pekko.http.impl.util.StringTools;
 import org.apache.pekko.http.shaded.com.twitter.hpack.HpackUtil.IndexType;
 
 public final class Decoder {
@@ -66,6 +66,12 @@ public final class Decoder {
   private int nameLength;
   private int valueLength;
   private String name;
+
+  // scratch arrays for reading and Huffman decoding string literals, reused across header blocks;
+  // they grow to the longest literal seen on the connection, which the max header (list) size and
+  // the dynamic table capacity bound
+  private byte[] literalBuf = new byte[128];
+  private byte[] decodedBuf = new byte[128];
 
   private enum State {
     READ_HEADER_REPRESENTATION,
@@ -508,21 +514,32 @@ public final class Decoder {
   }
 
   private String readStringLiteral(InputStream in, int length) throws IOException {
+    // read the literal into the reusable scratch array: the String constructor copies anyway, so
+    // a per-literal array would be a second allocation and copy
+    literalBuf = ensureCapacity(literalBuf, length);
     // readNBytes rather than read: InputStream.read(byte[]) is free to return fewer bytes than
     // requested even when more are available, which would be reported here as a decompression
     // failure
-    byte[] buf = in.readNBytes(length);
-    if (buf.length != length) {
+    if (in.readNBytes(literalBuf, 0, length) != length) {
       throw DECOMPRESSION_EXCEPTION;
     }
-    final byte[] result;
 
     if (huffmanEncoded) {
-      result = Huffman.DECODER.decode(buf);
+      decodedBuf = ensureCapacity(decodedBuf, HuffmanDecoder.maxDecodedLength(length));
+      int decodedLength = Huffman.DECODER.decode(literalBuf, length, decodedBuf);
+      // ISO-8859-1 maps every octet to the char of the same value: string literals are opaque
+      // octets
+      return new String(decodedBuf, 0, decodedLength, ISO_8859_1);
     } else {
-      result = buf;
+      return new String(literalBuf, 0, length, ISO_8859_1);
     }
-    return StringTools.asciiStringFromBytes(result);
+  }
+
+  private static byte[] ensureCapacity(byte[] buf, int length) {
+    if (buf.length >= length) {
+      return buf;
+    }
+    return new byte[Math.max(length, buf.length << 1)];
   }
 
   private static byte readByte(InputStream in) throws IOException {
