@@ -23,7 +23,7 @@ import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.client.ResponseParsing
-import pekko.http.impl.engine.http2.framing.{ FrameRenderer, Http2FrameParsing }
+import pekko.http.impl.engine.http2.framing.{ FrameRenderer, Http2FrameParsing, RSTFrameLimit }
 import pekko.http.impl.engine.http2.hpack.{ HeaderCompression, HeaderDecompression }
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.rendering.DateHeaderRendering
@@ -143,12 +143,16 @@ private[http] object Http2Blueprint {
 
     val http2Settings = settings.http2Settings
     val frameTypesForThrottle = getFrameTypesForThrottle(http2Settings.frameTypeThrottleFrameTypes)
-    
+
+    // the RST limit (if configured) sees incoming frames before the frame type throttle (if configured)
+    val serverFraming =
+      rstFrameLimitIfConfigured(http2Settings) atop framing(log, http2Settings.maxFrameSize)
+
     val flowWithPossibleThrottle = if (frameTypesForThrottle.nonEmpty) {
       (initialFlow atop frameTypeThrottle(frameTypesForThrottle, http2Settings.frameTypeThrottleCost,
         http2Settings.frameTypeThrottleInterval, http2Settings.frameTypeThrottleBurst))
-        .atopKeepLeft(framing(log, http2Settings.maxFrameSize))
-    } else initialFlow atop framing(log, http2Settings.maxFrameSize)
+        .atopKeepLeft(serverFraming)
+    } else initialFlow atop serverFraming
 
     flowWithPossibleThrottle atop
       errorHandling(log) atop
@@ -267,6 +271,11 @@ private[http] object Http2Blueprint {
               s"Peer exceeded the configured frame-type-throttle rate of $cost per $interval (burst $burst) " +
               s"for frame types ${frameTypesForThrottle.mkString(", ")}")
         })
+
+  private def rstFrameLimitIfConfigured(
+      settings: Http2ServerSettings): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
+    if (settings.maxResets > 0) BidiFlow.fromFlows(Flow[FrameEvent], Flow[FrameEvent].via(new RSTFrameLimit(settings)))
+    else BidiFlow.identity
 
   private def getFrameTypesForThrottle(frameTypeAliases: Set[String]): Set[String] =
     frameTypeAliases.flatMap(frameTypeAliasToFrameTypeName)
