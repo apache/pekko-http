@@ -9,8 +9,6 @@
 name: Publish nightly 1.4 snapshots
 
 on:
-  schedule:
-    - cron: "30 1 * * *"
   workflow_dispatch:
 
 jobs:
