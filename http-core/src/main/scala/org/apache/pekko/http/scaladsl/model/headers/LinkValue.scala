@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.scaladsl.model.headers
@@ -46,7 +46,9 @@ object LinkParam {
 }
 
 object LinkParams {
-  private val reserved = CharPredicate(" ,;")
+  // Note rfc5988 only lists " ,;" but we add : to align with rfc8288 which quotes anything not a token as defined
+  // in rfc7230 (but without having to parse token)
+  private val reserved = CharPredicate(" ,;:")
 
   // A few convenience rels
   val next = rel("next")
