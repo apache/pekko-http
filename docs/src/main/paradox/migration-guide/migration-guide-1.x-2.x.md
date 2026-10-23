@@ -14,6 +14,37 @@ Scala versions. Before upgrading, build against the latest Pekko HTTP 1.x releas
 * Java DSL methods that returned a Scala `Duration` now return a `java.time.Duration`.
 ([PR788](https://github.com/apache/pekko-http/pull/788))
 * The new `pekko-http-jackson3` module supports Jackson 3. See the configuration change below.
+* `ClientTransport`, `RequestResponseAssociation`, `SimpleRequestResponseAttribute`, the Java DSL `anyOf`/`allOf`
+directive combinators and the `storeUploadedFile`, `storeUploadedFiles` and `fileUploadAll` directives are no longer
+marked `@ApiMayChange` and are now stable APIs. ([PR1364](https://github.com/apache/pekko-http/pull/1364))
+* `HttpMessage.attribute` and the `ResponseEntity.fromJava` implicit conversion no longer take an implicit
+`JavaMapping` parameter, so they can be used from Scala 3.10. This is source compatible but changes their binary
+signatures. ([PR1340](https://github.com/apache/pekko-http/pull/1340))
+
+## Behavior changes
+
+* After an early response (a response that completes before the streamed request entity has been fully sent), the
+client connection pool no longer reuses the connection. If the response is an error (4xx or 5xx) or carries
+`Connection: close`, the pool stops sending the request entity and closes the connection immediately; otherwise it
+finishes sending the request entity and then closes the connection. ([PR1350](https://github.com/apache/pekko-http/pull/1350))
+* Request parsing is stricter, so some malformed requests that Pekko HTTP 1.x accepted are now rejected:
+    * an HTTP/1.1 request line where a CR or LF ends the request target is rejected with `505 HTTP Version Not Supported`
+    ([PR1341](https://github.com/apache/pekko-http/pull/1341))
+    * an HTTP/2 request with an invalid `:scheme` pseudo-header, or with a regular field name containing `:`, is
+    rejected with a `400 Bad Request` for that stream; an invalid `:scheme` no longer fails the whole connection
+    ([PR1341](https://github.com/apache/pekko-http/pull/1341))
+    * an HTTP/2 field name containing an uppercase letter or another character that RFC 9113 excludes, or a field value with
+    leading or trailing whitespace, makes the request (400 for that stream) or response (protocol error) malformed
+    instead of being silently normalized. Pekko HTTP's own client and server always send lowercase field names.
+    ([PR1343](https://github.com/apache/pekko-http/pull/1343))
+* A chunk extension containing a NUL character is dropped when rendering, as one containing CR or LF already was.
+([PR1344](https://github.com/apache/pekko-http/pull/1344))
+* `Link` header parameter values that contain a `:`, such as URI relation types, are now rendered quoted
+(`rel="http://example.net/foo"`), as RFC 8288 requires. The unquoted form is still accepted when parsing.
+([PR1365](https://github.com/apache/pekko-http/pull/1365))
+* Parse error details logged with `pekko.http.parsing.error-logging-verbosity = full` (the default), and the
+`toString` of `IllegalRequestContext` passed to a custom `ParsingErrorHandler`, now escape control characters in the
+raw request target or header value. ([PR1294](https://github.com/apache/pekko-http/pull/1294))
 
 ## Configuration Changes in Pekko HTTP 2.x
 
