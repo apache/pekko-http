@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.javadsl
@@ -19,7 +19,6 @@ import java.util.function.BiFunction
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.annotation.ApiMayChange
 import pekko.http.impl.util.JavaMapping
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.impl.util.JavaMapping._
@@ -31,10 +30,9 @@ import pekko.util.ByteString
 import scala.concurrent.Future
 
 /**
- * (Still unstable) SPI for implementors of custom client transports.
+ * SPI for implementors of custom client transports.
  */
 // #client-transport-definition
-@ApiMayChange
 abstract class ClientTransport {
   def connectTo(host: String, port: Int, settings: ClientConnectionSettings, system: ActorSystem)
       : Flow[ByteString, ByteString, CompletionStage[OutgoingConnection]]
@@ -42,9 +40,8 @@ abstract class ClientTransport {
 // #client-transport-definition
 
 /**
- * (Still unstable) entry point to create or access predefined client transports.
+ * Entry point to create or access predefined client transports.
  */
-@ApiMayChange
 object ClientTransport {
   def TCP: ClientTransport = scaladsl.ClientTransport.TCP.asJava
 

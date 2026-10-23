@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.scaladsl
@@ -17,7 +17,6 @@ import java.net.InetSocketAddress
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
-import pekko.annotation.ApiMayChange
 import pekko.http.impl.engine.client.HttpsProxyGraphStage
 import pekko.http.scaladsl.Http.OutgoingConnection
 import pekko.http.scaladsl.model.headers.HttpCredentials
@@ -31,10 +30,9 @@ import scala.concurrent.{ ExecutionContext, Future }
 /**
  * Abstraction to allow the creation of alternative transports to run HTTP on.
  *
- * (Still unstable) SPI for implementors of custom client transports.
+ * SPI for implementors of custom client transports.
  */
 // #client-transport-definition
-@ApiMayChange
 trait ClientTransport {
   def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
       implicit system: ActorSystem): Flow[ByteString, ByteString, Future[OutgoingConnection]]
@@ -42,9 +40,8 @@ trait ClientTransport {
 // #client-transport-definition
 
 /**
- * (Still unstable) entry point to create or access predefined client transports.
+ * Entry point to create or access predefined client transports.
  */
-@ApiMayChange
 object ClientTransport {
   val TCP: ClientTransport = TCPTransport
 
