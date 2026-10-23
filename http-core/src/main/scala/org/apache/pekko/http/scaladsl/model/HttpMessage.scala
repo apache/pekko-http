@@ -144,6 +144,16 @@ sealed trait HttpMessage extends jm.HttpMessage {
     }
   }
 
+  /**
+   * Returns the first header with the given name (case-insensitive) if there is one
+   *
+   * @since 2.0.0
+   */
+  def header(headerName: String): Option[HttpHeader] = {
+    val lowerCased = headerName.toRootLowerCase
+    headers.find(_.is(lowerCased))
+  }
+
   /** Returns all the headers of the given type * */
   def headers[T <: jm.HttpHeader](implicit ct: ClassTag[T]): Seq[T] = headers.collect {
     case h: T => h
