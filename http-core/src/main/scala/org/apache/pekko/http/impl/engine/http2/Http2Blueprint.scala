@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.impl.engine.http2
@@ -20,7 +20,7 @@ import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.{ HttpConnectionIdleTimeoutBidi, HttpIdleTimeoutException }
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.client.ResponseParsing
-import pekko.http.impl.engine.http2.framing.{ FrameRenderer, Http2FrameParsing }
+import pekko.http.impl.engine.http2.framing.{ FrameRenderer, Http2FrameParsing, RSTFrameLimit }
 import pekko.http.impl.engine.http2.hpack.{ HeaderCompression, HeaderDecompression }
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.rendering.DateHeaderRendering
@@ -142,11 +142,15 @@ private[http] object Http2Blueprint {
       hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize)
 
     val frameTypesForThrottle = getFrameTypesForThrottle(settings.http2Settings)
+
+    // the RST limit (if configured) sees incoming frames before the frame type throttle (if configured)
+    val serverFraming =
+      rstFrameLimitIfConfigured(settings.http2Settings) atop framing(log, settings.http2Settings.maxFrameSize)
     
     val flowWithPossibleThrottle = if (frameTypesForThrottle.nonEmpty) {
       (initialFlow atop rapidResetMitigation(settings.http2Settings, frameTypesForThrottle))
-        .atopKeepLeft(framing(log, settings.http2Settings.maxFrameSize))
-    } else initialFlow atop framing(log, settings.http2Settings.maxFrameSize)
+        .atopKeepLeft(serverFraming)
+    } else initialFlow atop serverFraming
 
     flowWithPossibleThrottle atop
       errorHandling(log) atop
@@ -247,6 +251,11 @@ private[http] object Http2Blueprint {
       Flow[FrameEvent].throttle(settings.frameTypeThrottleCost, settings.frameTypeThrottleInterval,
         settings.frameTypeThrottleBurst, frameCost, ThrottleMode.Enforcing))
   }
+
+  private def rstFrameLimitIfConfigured(
+      settings: Http2ServerSettings): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
+    if (settings.maxResets > 0) BidiFlow.fromFlows(Flow[FrameEvent], Flow[FrameEvent].via(new RSTFrameLimit(settings)))
+    else BidiFlow.identity
 
   private def getFrameTypesForThrottle(settings: Http2ServerSettings): Set[String] = {
     val set = settings.frameTypeThrottleFrameTypes
