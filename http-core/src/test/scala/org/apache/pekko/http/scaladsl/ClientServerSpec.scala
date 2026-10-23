@@ -689,7 +689,7 @@ Host: example.com
       }
     }
 
-    "complete a request/response over https, disabling hostname verification with SSLConfigSettings" in
+    "complete a request/response over https, disabling hostname verification with a custom SSLEngine" in
     Utils.assertAllStagesStopped {
       val serverConnectionContext = ExampleHttpContexts.exampleServerContext
       val handlerFlow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest].map { _ =>

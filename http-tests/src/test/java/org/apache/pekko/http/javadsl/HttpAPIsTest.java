@@ -78,7 +78,8 @@ public class HttpAPIsTest extends JUnitJupiterRouteTest {
     http.outgoingConnection(toHost("pekko.apache.org"));
     http.outgoingConnection(toHost("pekko.apache.org", 8080));
     http.outgoingConnection(toHost("https://pekko.apache.org"));
-    http.outgoingConnection(toHostHttps("pekko.apache.org")); // default ssl context (ssl-config)
+    http.outgoingConnection(
+        toHostHttps("pekko.apache.org")); // default ssl context (SSLContext.getDefault)
     http.outgoingConnection(
         toHostHttps("ssh://pekko.apache.org")); // throws, we explicitly require https or ""
     http.outgoingConnection(
@@ -103,7 +104,7 @@ public class HttpAPIsTest extends JUnitJupiterRouteTest {
         .logTo(system().log())
         .https();
 
-    // in future we can add modify(context -> Context) to "keep ssl-config defaults, but tweak them
+    // in future we can add modify(context -> Context) to "keep the default context, but tweak it
     // in code)
 
     http.newHostConnectionPool("pekko.apache.org", materializer());
