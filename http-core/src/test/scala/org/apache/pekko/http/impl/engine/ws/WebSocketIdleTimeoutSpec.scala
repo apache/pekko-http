@@ -39,7 +39,8 @@ class WebSocketIdleTimeoutSpec extends PekkoSpecWithMaterializer(
   """) {
 
   private val idleTimeout = 500.millis
-  private def ticks(text: String): Source[Message, Cancellable] = Source.tick[Message](Duration.Zero, 100.millis, TextMessage(text))
+  private def ticks(text: String): Source[Message, Cancellable] =
+    Source.tick[Message](Duration.Zero, 100.millis, TextMessage(text))
 
   /** Binds a WebSocket server whose handler flow reports its termination to the given probe */
   private def bindServer(
@@ -75,7 +76,8 @@ class WebSocketIdleTimeoutSpec extends PekkoSpecWithMaterializer(
 
   "WebSocket settings" should {
     "disable the idle timeouts by default and allow them to be set programmatically" in {
-      for (settings <- Seq(ServerSettings(system).websocketSettings, ClientConnectionSettings(system).websocketSettings)) {
+      for (settings <-
+          Seq(ServerSettings(system).websocketSettings, ClientConnectionSettings(system).websocketSettings)) {
         settings.receiveIdleTimeout should ===(Duration.Inf)
         settings.sendIdleTimeout should ===(Duration.Inf)
 
@@ -108,7 +110,8 @@ class WebSocketIdleTimeoutSpec extends PekkoSpecWithMaterializer(
       binding.unbind().futureValue
     }
 
-    "not fail the handler flow when a silent client answers keep-alive Pings within receive-idle-timeout" in Utils.assertAllStagesStopped {
+    "not fail the handler flow when a silent client answers keep-alive Pings within receive-idle-timeout" in
+    Utils.assertAllStagesStopped {
       val probe = TestProbe()
       val binding = bindServer(probe, Source.maybe,
         _.withReceiveIdleTimeout(idleTimeout).withPeriodicKeepAliveMaxIdle(100.millis))
