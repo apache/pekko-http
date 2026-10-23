@@ -679,7 +679,8 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
 
   /**
    * Gets the current default client-side [[HttpsConnectionContext]].
-   * Defaults used here can be configured using ssl-config or the context can be replaced using [[setDefaultClientHttpsContext]]
+   * By default it is created from `SSLContext.getDefault` (which can be configured using the standard JSSE system
+   * properties), or the context can be replaced using [[setDefaultClientHttpsContext]]
    */
   def defaultClientHttpsContext: HttpsConnectionContext =
     synchronized {
