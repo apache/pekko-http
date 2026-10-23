@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.scaladsl.server
@@ -88,6 +88,15 @@ class ModeledCustomHeaderSpec extends RoutingSpec {
       val h = DifferentHeader("Hello")
       val request = HttpRequest().addHeader(h)
       request.header[DifferentHeader] should ===(Some(h))
+    }
+
+    "be able to be extracted using response.header(headerName) syntax" in {
+      val h = DifferentHeader("Hello")
+      val request = HttpRequest().addHeader(h)
+      request.header("different") should ===(Some(h))
+      // case insensitive
+      request.header("DIFFERENT") should ===(Some(h))
+      request.header("missing") should ===(None)
     }
 
     "be able to match from RawHeader" in {
