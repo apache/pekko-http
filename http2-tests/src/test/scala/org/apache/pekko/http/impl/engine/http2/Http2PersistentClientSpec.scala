@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2020-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2020-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.impl.engine.http2
