@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2017-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2017-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.javadsl.settings
@@ -49,6 +49,34 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
    */
   def getPeriodicKeepAliveData: Supplier[ByteString]
 
+  /**
+   * Maximum allowable time between two consecutive frames being received. If exceeded, the WebSocket flow is
+   * failed with a [[pekko.http.scaladsl.model.ws.WebSocketIdleTimeoutException]]. `Duration.Inf` disables the check.
+   *
+   * @since 2.0.0
+   */
+  def receiveIdleTimeout: Duration
+
+  /**
+   * Java API
+   * @since 2.0.0
+   */
+  def getReceiveIdleTimeout: JDuration
+
+  /**
+   * Maximum allowable time between two consecutive frames being sent. If exceeded, the WebSocket flow is
+   * failed with a [[pekko.http.scaladsl.model.ws.WebSocketIdleTimeoutException]]. `Duration.Inf` disables the check.
+   *
+   * @since 2.0.0
+   */
+  def sendIdleTimeout: Duration
+
+  /**
+   * Java API
+   * @since 2.0.0
+   */
+  def getSendIdleTimeout: JDuration
+
   def withRandomFactoryFactory(newValue: Supplier[Random]): WebSocketSettings =
     copy(randomFactory = () => newValue.get())
   def withPeriodicKeepAliveMode(newValue: String): WebSocketSettings =
@@ -63,6 +91,30 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
     copy(periodicKeepAliveMaxIdle = JavaDurationConverter.toScala(newValue))
   def withPeriodicKeepAliveData(newValue: Supplier[ByteString]): WebSocketSettings =
     copy(periodicKeepAliveData = () => newValue.get())
+
+  /**
+   * @since 2.0.0
+   */
+  def withReceiveIdleTimeout(newValue: Duration): WebSocketSettings =
+    copy(receiveIdleTimeout = newValue)
+
+  /**
+   * @since 2.0.0
+   */
+  def withReceiveIdleTimeout(newValue: JDuration): WebSocketSettings =
+    copy(receiveIdleTimeout = JavaDurationConverter.toScala(newValue))
+
+  /**
+   * @since 2.0.0
+   */
+  def withSendIdleTimeout(newValue: Duration): WebSocketSettings =
+    copy(sendIdleTimeout = newValue)
+
+  /**
+   * @since 2.0.0
+   */
+  def withSendIdleTimeout(newValue: JDuration): WebSocketSettings =
+    copy(sendIdleTimeout = JavaDurationConverter.toScala(newValue))
 
   def logFrames: Boolean
   def withLogFrames(shouldLog: Boolean): WebSocketSettings

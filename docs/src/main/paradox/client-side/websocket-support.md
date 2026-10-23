@@ -170,3 +170,22 @@ It is also possible to configure the keep-alive mechanism to send `Pong` frames 
 which enables an [uni-directional heartbeat](https://tools.ietf.org/html/rfc6455#section-5.5.3) mechanism (in which case 
 the client side will *not* reply to such heartbeat). You can configure this mode by setting: 
 `pekko.http.client.websocket.periodic-keep-alive-mode = pong`.
+
+## Idle timeouts
+
+A WebSocket connection whose network path is lost (for example a server that disappears without closing the TCP connection)
+may otherwise go unnoticed for a long time. To detect this, the client flow can be failed with a
+`org.apache.pekko.http.scaladsl.model.ws.WebSocketIdleTimeoutException` when no frame is received or sent within a configured time:
+
+```
+pekko.http.client.websocket.receive-idle-timeout = 30 seconds
+pekko.http.client.websocket.send-idle-timeout = 30 seconds
+```
+
+All frames count as activity, including Ping and Pong control frames. Combining `receive-idle-timeout` with the
+@ref[automatic keep-alive](#keep-alive-ping) in `ping` mode, using a `periodic-keep-alive-max-idle` shorter than the
+`receive-idle-timeout`, therefore detects a lost connection even when no messages are exchanged, as long as the
+server replies to Ping frames.
+
+Both timeouts are `infinite` (disabled) by default. They can also be set programmatically with
+`withReceiveIdleTimeout` and `withSendIdleTimeout` on the @apidoc[WebSocketSettings].
