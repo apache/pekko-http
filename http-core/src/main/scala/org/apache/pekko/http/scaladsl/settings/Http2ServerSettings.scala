@@ -194,6 +194,35 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def frameTypeThrottleInterval: FiniteDuration
   def withFrameTypeThrottleInterval(interval: FiniteDuration) = copy(frameTypeThrottleInterval = interval)
 
+  /**
+   * The maximum number of RST_STREAM frames a client is allowed to send on one connection within
+   * [[maxResetsInterval]]. If a connection goes over the limit, it is closed with a GOAWAY frame with the
+   * HTTP/2 error code ENHANCE_YOUR_CALM. 0 disables the limit.
+   *
+   * This is an alternative protection against HTTP/2 Rapid Reset attacks (CVE-2023-44487) to the
+   * `frame-type-throttle` settings. If both are enabled, whichever limit is exceeded first closes the connection.
+   *
+   * @since 2.0.0
+   */
+  def maxResets: Int
+
+  /**
+   * @since 2.0.0
+   */
+  override def withMaxResets(n: Int): Http2ServerSettings = copy(maxResets = n)
+
+  /**
+   * The interval over which [[maxResets]] is counted.
+   *
+   * @since 2.0.0
+   */
+  def maxResetsInterval: FiniteDuration
+
+  /**
+   * @since 2.0.0
+   */
+  def withMaxResetsInterval(interval: FiniteDuration): Http2ServerSettings = copy(maxResetsInterval = interval)
+
   @InternalApi
   private[http] def internalSettings: Option[Http2InternalServerSettings]
   @InternalApi
@@ -225,6 +254,8 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       frameTypeThrottleCost: Int,
       frameTypeThrottleBurst: Int,
       frameTypeThrottleInterval: FiniteDuration,
+      maxResets: Int,
+      maxResetsInterval: FiniteDuration,
       internalSettings: Option[Http2InternalServerSettings])
       extends Http2ServerSettings {
     require(maxConcurrentStreams >= 0, "max-concurrent-streams must be >= 0")
@@ -242,6 +273,8 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       "min-collect-strict-entity-size <= incoming-connection-level-buffer-size / max-concurrent-streams")
     require(outgoingControlFrameBufferSize > 0, "outgoing-control-frame-buffer-size must be > 0")
     require(frameTypeThrottleInterval.toMillis > 0, "frame-type-throttle.interval must be a positive duration")
+    require(maxResets >= 0, "max-resets must be >= 0")
+    require(maxResetsInterval > Duration.Zero, "max-resets-interval must be a positive duration")
     require(maxConnectionAge > Duration.Zero, "max-connection-age must be > 0 or 'infinite' to disable")
     require(maxConnectionAgeGrace >= Duration.Zero, "max-connection-age-grace must be >= 0 or 'infinite'")
     require(maxConnectionAgeJitter >= 0 && maxConnectionAgeJitter < 1,
@@ -270,6 +303,8 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),
       frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),
       frameTypeThrottleInterval = c.getFiniteDuration("frame-type-throttle.interval"),
+      maxResets = c.getInt("max-resets"),
+      maxResetsInterval = c.getFiniteDuration("max-resets-interval"),
       None // no possibility to configure internal settings with config
     )
   }
