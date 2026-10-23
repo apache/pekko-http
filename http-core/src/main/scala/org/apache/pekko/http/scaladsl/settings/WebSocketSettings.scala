@@ -37,6 +37,16 @@ abstract class WebSocketSettings extends pekko.http.javadsl.settings.WebSocketSe
   def periodicKeepAliveData: () => ByteString
   final def getPeriodicKeepAliveData: Supplier[ByteString] = () => self.periodicKeepAliveData()
 
+  /**
+   * @since 2.0.0
+   */
+  override def receiveIdleTimeout: Duration
+
+  /**
+   * @since 2.0.0
+   */
+  override def sendIdleTimeout: Duration
+
   override def withRandomFactoryFactory(newValue: Supplier[Random]): WebSocketSettings =
     copy(randomFactory = () => newValue.get())
   override def withPeriodicKeepAliveMode(newValue: String): WebSocketSettings =
@@ -45,6 +55,18 @@ abstract class WebSocketSettings extends pekko.http.javadsl.settings.WebSocketSe
     copy(periodicKeepAliveMaxIdle = newValue)
   def withPeriodicKeepAliveData(newValue: () => ByteString): WebSocketSettings =
     copy(periodicKeepAliveData = newValue)
+
+  /**
+   * @since 2.0.0
+   */
+  override def withReceiveIdleTimeout(newValue: Duration): WebSocketSettings =
+    copy(receiveIdleTimeout = newValue)
+
+  /**
+   * @since 2.0.0
+   */
+  override def withSendIdleTimeout(newValue: Duration): WebSocketSettings =
+    copy(sendIdleTimeout = newValue)
 
   def logFrames: Boolean
   override def withLogFrames(shouldLog: Boolean): WebSocketSettings = copy(logFrames = shouldLog)

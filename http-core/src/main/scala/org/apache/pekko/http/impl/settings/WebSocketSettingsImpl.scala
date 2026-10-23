@@ -32,7 +32,9 @@ private[pekko] final case class WebSocketSettingsImpl(
     periodicKeepAliveMaxIdle: Duration,
     periodicKeepAliveData: () => ByteString,
     logFrames: Boolean,
-    compression: WebSocketCompressionSettingsImpl)
+    compression: WebSocketCompressionSettingsImpl,
+    receiveIdleTimeout: Duration,
+    sendIdleTimeout: Duration)
     extends pekko.http.scaladsl.settings.WebSocketSettings {
 
   require(
@@ -41,6 +43,10 @@ private[pekko] final case class WebSocketSettingsImpl(
 
   override def getPeriodicKeepAliveMaxIdle: java.time.Duration =
     JavaDurationConverter.toJava(periodicKeepAliveMaxIdle)
+  override def getReceiveIdleTimeout: java.time.Duration =
+    JavaDurationConverter.toJava(receiveIdleTimeout)
+  override def getSendIdleTimeout: java.time.Duration =
+    JavaDurationConverter.toJava(sendIdleTimeout)
   override def productPrefix = "WebSocketSettings"
 
 }
@@ -74,7 +80,9 @@ private[pekko] object WebSocketSettingsImpl { // on purpose not extending Settin
       c.getPotentiallyInfiniteDuration("periodic-keep-alive-max-idle"),
       NoPeriodicKeepAliveData,
       c.getBoolean("log-frames"),
-      compression)
+      compression,
+      c.getPotentiallyInfiniteDuration("receive-idle-timeout"),
+      c.getPotentiallyInfiniteDuration("send-idle-timeout"))
   }
 
 }

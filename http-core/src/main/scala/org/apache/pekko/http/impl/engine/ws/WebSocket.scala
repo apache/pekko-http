@@ -68,6 +68,7 @@ private[http] object WebSocket {
       log: LoggingAdapter,
       shouldCompress: Message => Boolean): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] =
     masking(serverSide, websocketSettings.randomFactory).atop(
+      idleTimeout(websocketSettings)).atop(
       FrameLogger.logFramesIfEnabled(websocketSettings.logFrames)).atop(
       perMessageDeflate.map(_.messageBidiFlow).getOrElse(BidiFlow.identity)).atop(
       frameHandling(serverSide, closeTimeout, log)).atop(
@@ -86,6 +87,69 @@ private[http] object WebSocket {
       : BidiFlow[FrameEvent, FrameEventOrError, FrameEvent, FrameEvent, NotUsed] =
     Masking(serverSide, maskingRandomFactory)
       .named("ws-masking")
+
+  /**
+   * The layer that transparently monitors frames in both directions and fails the flow
+   * with a [[WebSocketIdleTimeoutException]] if no frame is passed within the configured time.
+   *
+   * It sits below frame handling, so that control frames (e.g. a Pong replying to a keep-alive Ping) count as activity.
+   */
+  def idleTimeout(settings: WebSocketSettings)
+      : BidiFlow[FrameEventOrError, FrameEventOrError, FrameEvent, FrameEvent, NotUsed] = {
+    if (settings.receiveIdleTimeout == Duration.Inf && settings.sendIdleTimeout == Duration.Inf) BidiFlow.identity
+    else {
+      val receiveIdleTimeoutFlow = settings.receiveIdleTimeout match {
+        case receiveIdleTimeout: FiniteDuration =>
+          Flow.fromGraph(new IdleTimeout[FrameEventOrError](receiveIdleTimeout, "received", "receive-idle-timeout"))
+        case _ => Flow[FrameEventOrError]
+      }
+      val sendIdleTimeoutFlow = settings.sendIdleTimeout match {
+        case sendIdleTimeout: FiniteDuration =>
+          Flow.fromGraph(new IdleTimeout[FrameEvent](sendIdleTimeout, "sent", "send-idle-timeout"))
+        case _ => Flow[FrameEvent]
+      }
+      BidiFlow.fromFlows(receiveIdleTimeoutFlow, sendIdleTimeoutFlow)
+    }
+  }
+
+  /**
+   * Like `Flow.idleTimeout`, but fails with a [[WebSocketIdleTimeoutException]] in both directions (downstream failure
+   * and upstream cancellation). The `StreamIdleTimeoutException` of `Flow.idleTimeout`, like any other `TimeoutException`,
+   * would be reported as a TCP idle timeout by the client side TCP connection.
+   */
+  private final class IdleTimeout[T](timeout: FiniteDuration, direction: String, setting: String)
+      extends GraphStage[FlowShape[T, T]] {
+    val in: Inlet[T] = Inlet("WebSocketIdleTimeout.in")
+    val out: Outlet[T] = Outlet("WebSocketIdleTimeout.out")
+    override val shape: FlowShape[T, T] = FlowShape(in, out)
+
+    override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+      new TimerGraphStageLogic(shape) with InHandler with OutHandler {
+        private val timeoutNanos = timeout.toNanos
+        private var nextDeadline: Long = System.nanoTime + timeoutNanos
+
+        setHandlers(in, out, this)
+
+        override def preStart(): Unit = {
+          // same check interval as the `Flow.idleTimeout` implementation
+          val checkInterval =
+            math.min(math.max(timeoutNanos / 8, 100.millis.toNanos), timeoutNanos / 2).nanos
+          scheduleWithFixedDelay(None, checkInterval, checkInterval)
+        }
+
+        override def onPush(): Unit = {
+          nextDeadline = System.nanoTime + timeoutNanos
+          push(out, grab(in))
+        }
+
+        override def onPull(): Unit = pull(in)
+
+        override protected def onTimer(timerKey: Any): Unit =
+          if (nextDeadline - System.nanoTime < 0)
+            failStage(new WebSocketIdleTimeoutException(
+              s"No WebSocket frame $direction within the $setting of ${timeout.toCoarsest}"))
+      }
+  }
 
   /** The layer that transparently injects (if enabled) keepAlive Ping or Pong messages when connection is idle */
   def periodicKeepAlive(settings: WebSocketSettings)
