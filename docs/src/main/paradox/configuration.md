@@ -18,4 +18,13 @@ pekko-http-caching
 pekko-http-cors
 :  @@snip [reference.conf](/http-cors/src/main/resources/reference.conf)
 
+pekko-http-jackson
+:  @@snip [reference.conf](/http-marshallers-java/http-jackson/src/main/resources/reference.conf)
+
+pekko-http-jackson3
+:  @@snip [reference.conf](/http-marshallers-java/http-jackson3/src/main/resources/reference.conf)
+
+pekko-http-testkit
+:  @@snip [reference.conf](/http-testkit/src/main/resources/reference.conf)
+
 The other Apache Pekko HTTP modules do not offer any configuration via [Typesafe Config](https://github.com/lightbend/config).
