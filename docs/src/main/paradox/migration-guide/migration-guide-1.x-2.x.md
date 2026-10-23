@@ -23,28 +23,72 @@ signatures. ([PR1340](https://github.com/apache/pekko-http/pull/1340))
 
 ## Behavior changes
 
-* After an early response (a response that completes before the streamed request entity has been fully sent), the
-client connection pool no longer reuses the connection. If the response is an error (4xx or 5xx) or carries
-`Connection: close`, the pool stops sending the request entity and closes the connection immediately; otherwise it
-finishes sending the request entity and then closes the connection. ([PR1350](https://github.com/apache/pekko-http/pull/1350))
-* Request parsing is stricter, so some malformed requests that Pekko HTTP 1.x accepted are now rejected:
-    * an HTTP/1.1 request line where a CR or LF ends the request target is rejected with `505 HTTP Version Not Supported`
-    ([PR1341](https://github.com/apache/pekko-http/pull/1341))
-    * an HTTP/2 request with an invalid `:scheme` pseudo-header, or with a regular field name containing `:`, is
-    rejected with a `400 Bad Request` for that stream; an invalid `:scheme` no longer fails the whole connection
-    ([PR1341](https://github.com/apache/pekko-http/pull/1341))
-    * an HTTP/2 field name containing an uppercase letter or another character that RFC 9113 excludes, or a field value with
-    leading or trailing whitespace, makes the request (400 for that stream) or response (protocol error) malformed
-    instead of being silently normalized. Pekko HTTP's own client and server always send lowercase field names.
-    ([PR1343](https://github.com/apache/pekko-http/pull/1343))
-* A chunk extension containing a NUL character is dropped when rendering, as one containing CR or LF already was.
-([PR1344](https://github.com/apache/pekko-http/pull/1344))
+Some of the changes listed below were made in Pekko HTTP 1.4.x releases. They are included here for users upgrading
+from older 1.x versions, with a note of the release that introduced them.
+
+### HTTP/1.1 parsing and rendering
+
+* Whether a response renders `Content-Length` now depends on the request method as well as the status code, following
+RFC 9110: a `2xx` response to `CONNECT` no longer renders it, and a `205 Reset Content` response now does.
+`HttpMethod.custom` has a new overload with a `contentLengthAllowed` parameter; the old overload is deprecated.
+Added in Pekko HTTP 1.4.0 ([PR968](https://github.com/apache/pekko-http/pull/968)).
+A `HEAD` response renders `Content-Length` only when its entity declares a length greater than zero. Added in Pekko
+HTTP 1.4.1 ([PR1244](https://github.com/apache/pekko-http/pull/1244))
+* A `Content-Length` value with whitespace between its digits, or without any digit, is rejected; it was previously
+read as the concatenated digits, or as `0`. Added in Pekko HTTP 1.4.1 ([PR1243](https://github.com/apache/pekko-http/pull/1243))
+* Repeated `Connection` headers count towards `pekko.http.parsing.max-header-count`. Added in Pekko HTTP 1.4.1
+([PR1268](https://github.com/apache/pekko-http/pull/1268))
+* A message whose `Transfer-Encoding` value cannot be parsed is rejected. Added in Pekko HTTP 1.4.2
+([PR1267](https://github.com/apache/pekko-http/pull/1267))
+* Whitespace between or before chunk-size digits is rejected; trailing whitespace is still tolerated. Added in Pekko
+HTTP 1.4.2 ([PR1257](https://github.com/apache/pekko-http/pull/1257))
+* A request line where a CR or LF ends the request target is rejected with `505 HTTP Version Not Supported`.
+([PR1341](https://github.com/apache/pekko-http/pull/1341))
+* Headers whose rendered name or value contains CR, LF or NUL are dropped instead of being sent. This covers trailer
+headers and chunk extensions as well as the main header block.
+Added in Pekko HTTP 1.4.1 for CR and LF in trailers and chunk extensions ([PR1270](https://github.com/apache/pekko-http/pull/1270))
+and NUL in headers ([PR1272](https://github.com/apache/pekko-http/pull/1272)); chunk extensions containing NUL are
+dropped from Pekko HTTP 2.0.0 ([PR1344](https://github.com/apache/pekko-http/pull/1344)).
 * `Link` header parameter values that contain a `:`, such as URI relation types, are now rendered quoted
 (`rel="http://example.net/foo"`), as RFC 8288 requires. The unquoted form is still accepted when parsing.
 ([PR1365](https://github.com/apache/pekko-http/pull/1365))
 * Parse error details logged with `pekko.http.parsing.error-logging-verbosity = full` (the default), and the
 `toString` of `IllegalRequestContext` passed to a custom `ParsingErrorHandler`, now escape control characters in the
 raw request target or header value. ([PR1294](https://github.com/apache/pekko-http/pull/1294))
+
+### HTTP/2
+
+* Outgoing header fields whose name or value contains CR, LF or NUL are dropped. Added in Pekko HTTP 1.4.1
+([PR1271](https://github.com/apache/pekko-http/pull/1271))
+* An incoming request with a header field containing CR, LF or NUL is rejected. In Pekko HTTP 1.4.2 the connection is
+closed with `GOAWAY(PROTOCOL_ERROR)`; from Pekko HTTP 2.0.0 the stream is answered with `400 Bad Request` and the
+connection is kept. ([PR1297](https://github.com/apache/pekko-http/pull/1297))
+* A request with an invalid `:scheme` pseudo-header, or with a regular field name containing `:`, is rejected with a
+`400 Bad Request` for that stream; an invalid `:scheme` no longer fails the whole connection.
+([PR1341](https://github.com/apache/pekko-http/pull/1341))
+* A field name containing an uppercase letter or another character that RFC 9113 excludes, or a field value with
+leading or trailing whitespace, makes the request (`400 Bad Request` for that stream) or response (protocol error)
+malformed instead of being silently normalized. Pekko HTTP's own client and server always send lowercase field names.
+([PR1343](https://github.com/apache/pekko-http/pull/1343))
+
+### Client
+
+* After an early response (a response that completes before the streamed request entity has been fully sent), the
+client connection pool no longer reuses the connection. If the response is an error (4xx or 5xx) or carries
+`Connection: close`, the pool stops sending the request entity and closes the connection immediately; otherwise it
+finishes sending the request entity and then closes the connection. ([PR1350](https://github.com/apache/pekko-http/pull/1350))
+
+### Routing DSL
+
+* The CORS directives accept an actual request only when every origin in its `Origin` header is allowed, instead of
+when any one of them is. Added in Pekko HTTP 1.4.2 ([PR1262](https://github.com/apache/pekko-http/pull/1262))
+* `FileAndResourceDirectives` compare path elements, rather than string prefixes, when checking that a served file
+is below the base directory, so a symbolic link to a sibling directory such as `/var/www-private` is no longer served
+from `/var/www`. Added in Pekko HTTP 1.4.1 ([PR1269](https://github.com/apache/pekko-http/pull/1269))
+* Directory listings rendered by `listDirectoryContents` and `getFromBrowseableDirectory` escape HTML in file names.
+Added in Pekko HTTP 1.4.2 ([PR1191](https://github.com/apache/pekko-http/pull/1191))
+* Server-Sent Events fields whose values contain Unicode line separators, such as U+2028, are parsed instead of being
+ignored. Added in Pekko HTTP 1.4.1 ([PR1186](https://github.com/apache/pekko-http/pull/1186))
 
 ## Configuration Changes in Pekko HTTP 2.x
 
