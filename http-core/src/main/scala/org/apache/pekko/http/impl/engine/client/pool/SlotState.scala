@@ -21,7 +21,7 @@ import pekko.annotation.InternalApi
 import pekko.http.impl.engine.client.PoolFlow.RequestContext
 import pekko.http.impl.util._
 import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.model.HttpResponse
+import pekko.http.scaladsl.model.{ headers, HttpResponse }
 import pekko.http.scaladsl.settings.ConnectionPoolSettings
 import pekko.macros.LogHelper
 
@@ -108,6 +108,15 @@ private[pool] sealed abstract class SlotState extends Product {
  */
 @InternalApi
 private[pool] object SlotState {
+
+  /**
+   * Whether an early response indicates that the server does not want the rest of the request entity: an error
+   * response or one that closes the connection. Not `SlotContext.willCloseAfter`, which also covers the client-side
+   * max-connection-lifetime.
+   */
+  private def serverRejectsRequestEntity(response: HttpResponse): Boolean =
+    response.status.isFailure || response.header[headers.Connection].exists(_.hasClose)
+
   sealed private[pool] /* to avoid warnings */ abstract class ConnectedState extends SlotState {
     def isConnected: Boolean = true
 
@@ -346,9 +355,16 @@ private[pool] object SlotState {
       waitingForEndOfRequestEntity: Boolean) extends ConnectedState with BusyWithResultAlreadyDetermined {
 
     override def onResponseEntityCompleted(ctx: SlotContext): SlotState =
-      if (waitingForEndOfRequestEntity)
-        WaitingForEndOfRequestEntity
-      else if (ctx.willCloseAfter(ongoingResponse) || ctx.isConnectionClosed)
+      if (waitingForEndOfRequestEntity) {
+        // The server sent an "early" response before the request entity was fully sent. We cannot know whether the
+        // server will read the rest of the request entity, and a server that does not could misinterpret the remaining
+        // data as the next request, so the connection is never reused.
+        // If the response indicates that the server does not want the rest of the request entity, close the
+        // connection right away, which also aborts sending the rest of the request entity (RFC 9112, section 9.3).
+        // Otherwise, the server may still be reading the request entity, so finish sending it before closing.
+        if (serverRejectsRequestEntity(ongoingResponse) || ctx.isConnectionClosed) ToBeClosed
+        else WaitingForEndOfRequestEntity
+      } else if (ctx.willCloseAfter(ongoingResponse) || ctx.isConnectionClosed)
         ToBeClosed // when would ctx.isConnectionClose be true? what that mean that the connection has already failed before? do we need that state at all?
       else
         idle(ctx)
@@ -358,15 +374,17 @@ private[pool] object SlotState {
       WaitingForEndOfResponseEntity(ongoingRequest, ongoingResponse, waitingForEndOfRequestEntity = false)
     }
   }
+
+  /**
+   * An early response was received while the request entity was still being sent, or the connection failed while the
+   * request entity was still being sent and the request has already been dispatched for retry. The connection is not
+   * reused after the request entity completes.
+   */
   case object WaitingForEndOfRequestEntity extends ConnectedState {
     final override def isIdle = false
 
-    override def onRequestEntityCompleted(ctx: SlotContext): SlotState =
-      if (ctx.isConnectionClosed) ToBeClosed
-      else idle(ctx)
-    override def onRequestEntityFailed(ctx: SlotContext, cause: Throwable): SlotState =
-      if (ctx.isConnectionClosed) ToBeClosed // ignore error here
-      else idle(ctx)
+    override def onRequestEntityCompleted(ctx: SlotContext): SlotState = ToBeClosed
+    override def onRequestEntityFailed(ctx: SlotContext, cause: Throwable): SlotState = ToBeClosed // ignore error here
     override def onConnectionCompleted(ctx: SlotContext): SlotState = ToBeClosed
     override def onConnectionFailed(ctx: SlotContext, cause: Throwable): SlotState = Failed(cause)
   }
