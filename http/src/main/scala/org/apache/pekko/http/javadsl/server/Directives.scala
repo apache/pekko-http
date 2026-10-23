@@ -18,7 +18,6 @@ import java.util.function.{ BiFunction, Function, Supplier }
 import scala.annotation.varargs
 
 import org.apache.pekko
-import pekko.annotation.ApiMayChange
 import pekko.http.javadsl.server.directives.FramedEntityStreamingDirectives
 
 abstract class AllDirectives extends FramedEntityStreamingDirectives
@@ -46,7 +45,6 @@ object Directives extends AllDirectives {
    * @param inner the inner route Producer
    * @return the resulting route
    */
-  @ApiMayChange
   def anyOf(first: Function[Supplier[Route], Route], second: Function[Supplier[Route], Route], inner: Supplier[Route])
       : Route = {
     first.apply(inner).orElse(second.apply(inner))
@@ -64,7 +62,6 @@ object Directives extends AllDirectives {
    * @tparam A the type of the parameter the directives extract and the inner route takes
    * @return the resulting route
    */
-  @ApiMayChange
   def anyOf[A](first: Function[Function[A, Route], Route], second: Function[Function[A, Route], Route],
       inner: Function[A, Route]): Route = {
     first.apply(inner).orElse(second.apply(inner))
@@ -79,7 +76,6 @@ object Directives extends AllDirectives {
    * @param inner the inner route function
    * @return the resulting route
    */
-  @ApiMayChange
   def allOf(first: Function[Supplier[Route], Route], second: Function[Supplier[Route], Route], inner: Supplier[Route])
       : Route = {
     first.apply(() => second.apply(inner))
@@ -96,7 +92,6 @@ object Directives extends AllDirectives {
    * @tparam B the type extracted from the second directive
    * @return the resulting route
    */
-  @ApiMayChange
   def allOf[A, B](first: Function[Function[A, Route], Route], second: Function[Function[B, Route], Route],
       inner: BiFunction[A, B, Route]): Route = {
     first.apply((a: A) => second.apply((b: B) => inner.apply(a, b)))
@@ -112,7 +107,6 @@ object Directives extends AllDirectives {
    * @tparam A the type extracted from the second directive
    * @return the resulting route
    */
-  @ApiMayChange
   def allOf[A](first: Function[Supplier[Route], Route], second: Function[Function[A, Route], Route],
       inner: Function[A, Route]): Route = {
     first.apply(() => second.apply((a: A) => inner.apply(a)))
