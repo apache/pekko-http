@@ -15,12 +15,12 @@ package org.apache.pekko.http.javadsl.server.directives
 
 import java.util.concurrent.CompletionException
 import java.util.concurrent.CompletionStage
-import java.util.function.{ Function => JFunction }
+import java.util.function.{ BiFunction, Function => JFunction }
 import java.util.function.Supplier
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.jdk.FutureConverters._
-import scala.util.Try
+import scala.util.{ Failure, Success, Try }
 
 import org.apache.pekko
 import pekko.http.javadsl.marshalling.Marshaller
@@ -56,6 +56,36 @@ abstract class FutureDirectives extends FormFieldDirectives {
   }
 
   /**
+   * "Unwraps" a `CompletionStage<T>` and runs the inner route after future
+   * completion. Like `CompletionStage.handle`, the inner function receives
+   * the value and a `null` failure if the stage succeeded, or a `null` value
+   * and the failure if it failed.
+   *
+   * @group future
+   * @since 2.0.0
+   */
+  def onComplete[T](f: Supplier[CompletionStage[T]], inner: BiFunction[T, Throwable, Route]) = RouteAdapter {
+    D.onComplete(f.get.asScala.recover(unwrapCompletionException)) { value =>
+      handle(value, inner).delegate
+    }
+  }
+
+  /**
+   * "Unwraps" a `CompletionStage<T>` and runs the inner route after future
+   * completion. Like `CompletionStage.handle`, the inner function receives
+   * the value and a `null` failure if the stage succeeded, or a `null` value
+   * and the failure if it failed.
+   *
+   * @group future
+   * @since 2.0.0
+   */
+  def onComplete[T](cs: CompletionStage[T], inner: BiFunction[T, Throwable, Route]) = RouteAdapter {
+    D.onComplete(cs.asScala.recover(unwrapCompletionException)) { value =>
+      handle(value, inner).delegate
+    }
+  }
+
+  /**
    * "Unwraps" a `CompletionStage[T]` and runs the inner route after future
    * completion with the future's value as an extraction of type `T` if
    * the supplied `CircuitBreaker` is closed.
@@ -69,6 +99,26 @@ abstract class FutureDirectives extends FormFieldDirectives {
       inner: JFunction[Try[T], Route]) = RouteAdapter {
     D.onCompleteWithBreaker(breaker)(f.get.asScala.recover(unwrapCompletionException)) { value =>
       inner(value).delegate
+    }
+  }
+
+  /**
+   * "Unwraps" a `CompletionStage<T>` and runs the inner route after future
+   * completion if the supplied `CircuitBreaker` is closed. Like
+   * `CompletionStage.handle`, the inner function receives the value and a
+   * `null` failure if the stage succeeded, or a `null` value and the failure
+   * if it failed.
+   *
+   * If the supplied `CircuitBreaker` is open the request is rejected
+   * with a [[pekko.http.javadsl.server.CircuitBreakerOpenRejection]].
+   *
+   * @group future
+   * @since 2.0.0
+   */
+  def onCompleteWithBreaker[T](breaker: CircuitBreaker, f: Supplier[CompletionStage[T]],
+      inner: BiFunction[T, Throwable, Route]) = RouteAdapter {
+    D.onCompleteWithBreaker(breaker)(f.get.asScala.recover(unwrapCompletionException)) { value =>
+      handle(value, inner).delegate
     }
   }
 
@@ -113,6 +163,11 @@ abstract class FutureDirectives extends FormFieldDirectives {
       inner: JFunction[Throwable, Route]): Route = RouteAdapter {
     val magnet = CompleteOrRecoverWithMagnet(f.get.asScala)(Marshaller.asScalaEntityMarshaller(marshaller))
     D.completeOrRecoverWith(magnet) { ex => inner(ex).delegate }
+  }
+
+  private def handle[T](value: Try[T], inner: BiFunction[T, Throwable, Route]): Route = value match {
+    case Success(v)  => inner.apply(v, null)
+    case Failure(ex) => inner.apply(null.asInstanceOf[T], ex)
   }
 
   // TODO: This might need to be raised as an issue to scala-java8-compat instead.

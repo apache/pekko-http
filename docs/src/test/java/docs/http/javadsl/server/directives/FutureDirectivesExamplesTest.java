@@ -21,7 +21,6 @@ import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-import org.apache.pekko.japi.pf.PFBuilder;
 import org.apache.pekko.pattern.CircuitBreaker;
 import org.apache.pekko.testkit.javadsl.TestKit;
 import org.junit.jupiter.api.Disabled;
@@ -65,18 +64,12 @@ public class FutureDirectivesExamplesTest extends JUnitJupiterRouteTest {
             (a, b) ->
                 onComplete(
                     () -> CompletableFuture.supplyAsync(() -> a / b),
-                    maybeResult ->
-                        maybeResult
-                            .map(result -> complete("The result was " + result))
-                            .recover(
-                                new PFBuilder<Throwable, Route>()
-                                    .matchAny(
-                                        ex ->
-                                            complete(
-                                                StatusCodes.INTERNAL_SERVER_ERROR,
-                                                "An error occurred: " + ex.getMessage()))
-                                    .build())
-                            .get()));
+                    (result, ex) ->
+                        ex == null
+                            ? complete("The result was " + result)
+                            : complete(
+                                StatusCodes.INTERNAL_SERVER_ERROR,
+                                "An error occurred: " + ex.getMessage())));
 
     testRoute(route).run(HttpRequest.GET("/divide/10/2")).assertEntity("The result was 5");
 
@@ -159,7 +152,6 @@ public class FutureDirectivesExamplesTest extends JUnitJupiterRouteTest {
   @Test
   public void testOnCompleteWithBreaker() throws InterruptedException {
     // #onCompleteWithBreaker
-    // import static scala.compat.java8.JFunction.func;
     // import static org.apache.pekko.http.javadsl.server.PathMatchers.*;
 
     final int maxFailures = 1;
@@ -175,18 +167,12 @@ public class FutureDirectivesExamplesTest extends JUnitJupiterRouteTest {
                 onCompleteWithBreaker(
                     breaker,
                     () -> CompletableFuture.supplyAsync(() -> a / b),
-                    maybeResult ->
-                        maybeResult
-                            .map(result -> complete("The result was " + result))
-                            .recover(
-                                new PFBuilder<Throwable, Route>()
-                                    .matchAny(
-                                        ex ->
-                                            complete(
-                                                StatusCodes.INTERNAL_SERVER_ERROR,
-                                                "An error occurred: " + ex.toString()))
-                                    .build())
-                            .get()));
+                    (result, ex) ->
+                        ex == null
+                            ? complete("The result was " + result)
+                            : complete(
+                                StatusCodes.INTERNAL_SERVER_ERROR,
+                                "An error occurred: " + ex.toString())));
 
     testRoute(route).run(HttpRequest.GET("/divide/10/2")).assertEntity("The result was 5");
 
