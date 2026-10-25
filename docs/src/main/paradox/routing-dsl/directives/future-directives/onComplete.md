@@ -10,9 +10,10 @@
 
 ## Description
 
-Evaluates its parameter of type @scala[`Future[T]`]@java[`CompletionStage<T>`], and once it has been completed, extracts its
-result as a value of type @scala[`Try[T]`]@java[`Try<T>`] and passes it to the inner route. @java[A `Try<T>` can either be a `Success` containing
-the `T` value or a `Failure` containing the `Throwable`.]
+Evaluates its parameter of type @scala[`Future[T]`]@java[`CompletionStage<T>`], and once it has been completed, @scala[extracts its
+result as a value of type `Try[T]` and passes it to the inner route.]@java[passes its result to the inner route. Like
+`CompletionStage.handle`, the inner function receives the `T` value and a `null` failure if the stage succeeded, or a `null`
+value and the `Throwable` if it failed. An overload that passes the result as a `scala.util.Try<T>` is also available.]
 
 To handle the `Failure` case automatically and only work with the result value, use @ref[onSuccess](onSuccess.md).
 

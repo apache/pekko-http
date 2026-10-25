@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.javadsl.server.directives
@@ -19,7 +19,6 @@ import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.function.{ BiFunction, Function => JFunction }
 
 import org.apache.pekko
-import pekko.annotation.ApiMayChange
 import pekko.http.javadsl.model.ContentType
 import pekko.http.javadsl.server.Route
 import pekko.http.scaladsl.server.{ Directives => D }
@@ -35,7 +34,6 @@ abstract class FileUploadDirectives extends FileAndResourceDirectives {
    * field the request will be rejected, if there are multiple file parts with the same name, the first one will be
    * used and the subsequent ones ignored.
    */
-  @ApiMayChange
   def storeUploadedFile(
       fieldName: String, destFn: JFunction[FileInfo, File], inner: BiFunction[FileInfo, File, Route]): Route =
     RouteAdapter {
@@ -47,7 +45,6 @@ abstract class FileUploadDirectives extends FileAndResourceDirectives {
    * If there is an error writing to disk the request will be failed with the thrown exception, if there is no such
    * field the request will be rejected. Stored files are cleaned up on exit but not on failure.
    */
-  @ApiMayChange
   def storeUploadedFiles(fieldName: String, destFn: JFunction[FileInfo, File],
       inner: JFunction[JList[JMap.Entry[FileInfo, File]], Route]): Route = RouteAdapter {
     D.storeUploadedFiles(fieldName, destFn.apply) { files =>
@@ -72,7 +69,6 @@ abstract class FileUploadDirectives extends FileAndResourceDirectives {
    * Files are buffered into temporary files on disk so in-memory buffers don't overflow. The temporary
    * files are cleaned up once materialized, or on exit if the stream is not consumed.
    */
-  @ApiMayChange
   def fileUploadAll(
       fieldName: String, inner: JFunction[JList[JMap.Entry[FileInfo, Source[ByteString, Any]]], Route]): Route =
     RouteAdapter {

@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2015-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2015-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.scaladsl.server.directives
@@ -22,7 +22,7 @@ import scala.util.{ Failure, Success }
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.{ CoordinatedShutdown, ExtendedActorSystem, Extension, ExtensionId }
-import pekko.annotation.{ ApiMayChange, InternalApi }
+import pekko.annotation.InternalApi
 import pekko.http.impl.util.StreamUtils
 import pekko.http.javadsl
 import pekko.http.scaladsl.model.{ ContentType, Multipart }
@@ -49,7 +49,6 @@ trait FileUploadDirectives {
    *
    * @group fileupload
    */
-  @ApiMayChange
   def storeUploadedFile(fieldName: String, destFn: FileInfo => File): Directive[(FileInfo, File)] =
     extractRequestContext.flatMap { ctx =>
       import ctx.executionContext
@@ -80,7 +79,6 @@ trait FileUploadDirectives {
    *
    * @group fileupload
    */
-  @ApiMayChange
   def storeUploadedFiles(fieldName: String, destFn: FileInfo => File): Directive1[Seq[(FileInfo, File)]] =
     entity(as[Multipart.FormData]).flatMap { formData =>
       extractRequestContext.flatMap { ctx =>
@@ -169,7 +167,6 @@ trait FileUploadDirectives {
    *
    * @group fileupload
    */
-  @ApiMayChange
   def fileUploadAll(fieldName: String): Directive1[Seq[(FileInfo, Source[ByteString, Any])]] =
     extractRequestContext.flatMap { ctx =>
       implicit val ec = ctx.executionContext

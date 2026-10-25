@@ -19,8 +19,8 @@ import scala.language.implicitConversions
 object Dependencies {
   import DependencyHelpers._
 
-  val jacksonDatabindVersion = "2.22.3"
-  val jacksonDatabind3Version = "3.2.3"
+  val jacksonDatabindVersion = "2.22.4"
+  val jacksonDatabind3Version = "3.2.4"
   val jacksonXmlVersion = jacksonDatabindVersion
   val junit4Version = "4.13.2"
   val h2specVersion = "2.6.0"
@@ -73,7 +73,7 @@ object Dependencies {
 
     object Docs {
       val sprayJson = Compile.sprayJson % "test"
-      val gson = "com.google.code.gson" % "gson" % "2.14.0" % "test"
+      val gson = "com.google.code.gson" % "gson" % "2.15.0" % "test"
       val jacksonXml = "com.fasterxml.jackson.dataformat" % "jackson-dataformat-xml" % jacksonXmlVersion % "test"
       val classGraph = "io.github.classgraph" % "classgraph" % classGraphVersion % "test"
     }

@@ -212,8 +212,8 @@ for further information.
 
 ## Increase Timeout
 
-The default timeout when testing your routes using the testkit is @scala[1 second]@java[3 seconds] second. Sometimes, though, this might not be enough.
-In order to extend this default timeout, to say 5 seconds, just add the following implicit in scope:
+The default timeout when testing your routes using the testkit is @scala[1 second]@java[3 seconds]. Sometimes, though, this might not be enough.
+@scala[The default can be changed with the `pekko.http.testkit.routes.timeout` setting. ]In order to extend the timeout, to say 5 seconds, just add the following implicit in scope:
 
 Scala
 :   @@snip [TestKitFragmentSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/TestKitFragmentSpec.scala) { #timeout-setting }
@@ -254,4 +254,4 @@ a server and bind to a port so use it only when necessary.
 ## Examples
 
 A great pool of examples are the tests for all the predefined directives in Apache Pekko HTTP.
-They can be found @scala[@github[here](/http-tests/src/test/scala/akka/http/scaladsl/server/directives/)]@java[@github[here](/http-tests/src/test/java/akka/http/javadsl/server/directives/)].
+They can be found @scala[@github[here](/http-tests/src/test/scala/org/apache/pekko/http/scaladsl/server/directives/)]@java[@github[here](/http-tests/src/test/java/org/apache/pekko/http/javadsl/server/directives/)].

@@ -8,13 +8,12 @@
  */
 
 /*
- * Copyright (C) 2020-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2020-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.scaladsl.model
 
 import org.apache.pekko
-import pekko.annotation.ApiMayChange
 import pekko.annotation.InternalStableApi
 
 import scala.concurrent.Promise
@@ -22,14 +21,12 @@ import scala.concurrent.Promise
 /**
  * A marker trait for attribute values that should be (automatically) carried over from request to response.
  */
-@ApiMayChange
 @InternalStableApi
 trait RequestResponseAssociation extends pekko.http.javadsl.model.RequestResponseAssociation
 
 /**
  * A simple value holder class implementing RequestResponseAssociation.
  */
-@ApiMayChange
 final case class SimpleRequestResponseAttribute[T](value: T) extends RequestResponseAssociation
 
 /**
