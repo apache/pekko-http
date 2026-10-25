@@ -384,6 +384,114 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     adaptTupleFlow(delegate.superPool[T](defaultClientHttpsContext.asScala, settings.asScala, log))
 
   /**
+   * Same as `newHostConnectionPool` but emits each response as an [[HttpResponseResult]] instead of a `scala.util.Try`.
+   *
+   * @since 2.0.0
+   */
+  def newHostConnectionPoolWithResult[T](host: String, materializer: Materializer)
+      : Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], HostConnectionPool] =
+    withResult(newHostConnectionPool[T](host, materializer))
+
+  /**
+   * Same as `newHostConnectionPool` but emits each response as an [[HttpResponseResult]] instead of a `scala.util.Try`.
+   *
+   * @since 2.0.0
+   */
+  def newHostConnectionPoolWithResult[T](to: ConnectHttp, materializer: Materializer)
+      : Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], HostConnectionPool] =
+    withResult(newHostConnectionPool[T](to, materializer))
+
+  /**
+   * Same as `newHostConnectionPool` but emits each response as an [[HttpResponseResult]] instead of a `scala.util.Try`.
+   *
+   * @since 2.0.0
+   */
+  def newHostConnectionPoolWithResult[T](
+      to: ConnectHttp,
+      settings: ConnectionPoolSettings,
+      log: LoggingAdapter, materializer: Materializer)
+      : Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], HostConnectionPool] =
+    withResult(newHostConnectionPool[T](to, settings, log, materializer))
+
+  /**
+   * Same as `cachedHostConnectionPool` but emits each response as an [[HttpResponseResult]] instead of a `scala.util.Try`.
+   *
+   * @since 2.0.0
+   */
+  def cachedHostConnectionPoolWithResult[T](
+      host: String): Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], HostConnectionPool] =
+    withResult(cachedHostConnectionPool[T](host))
+
+  /**
+   * Same as `cachedHostConnectionPool` but emits each response as an [[HttpResponseResult]] instead of a `scala.util.Try`.
+   *
+   * @since 2.0.0
+   */
+  def cachedHostConnectionPoolWithResult[T](
+      to: ConnectHttp): Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], HostConnectionPool] =
+    withResult(cachedHostConnectionPool[T](to))
+
+  /**
+   * Same as `cachedHostConnectionPool` but emits each response as an [[HttpResponseResult]] instead of a `scala.util.Try`.
+   *
+   * @since 2.0.0
+   */
+  def cachedHostConnectionPoolWithResult[T](
+      to: ConnectHttp,
+      settings: ConnectionPoolSettings,
+      log: LoggingAdapter): Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], HostConnectionPool] =
+    withResult(cachedHostConnectionPool[T](to, settings, log))
+
+  /**
+   * Same as `cachedHostConnectionPoolHttps` but emits each response as an [[HttpResponseResult]] instead of a `scala.util.Try`.
+   *
+   * @since 2.0.0
+   */
+  def cachedHostConnectionPoolHttpsWithResult[T](
+      to: ConnectHttp,
+      settings: ConnectionPoolSettings,
+      log: LoggingAdapter): Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], HostConnectionPool] =
+    withResult(cachedHostConnectionPoolHttps[T](to, settings, log))
+
+  /**
+   * Same as `cachedHostConnectionPoolHttps` but emits each response as an [[HttpResponseResult]] instead of a `scala.util.Try`.
+   *
+   * @since 2.0.0
+   */
+  def cachedHostConnectionPoolHttpsWithResult[T](
+      to: ConnectHttp): Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], HostConnectionPool] =
+    withResult(cachedHostConnectionPoolHttps[T](to))
+
+  /**
+   * Same as `superPool` but emits each response as an [[HttpResponseResult]] instead of a `scala.util.Try`.
+   *
+   * @since 2.0.0
+   */
+  def superPoolWithResult[T](): Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], NotUsed] =
+    withResult(superPool[T]())
+
+  /**
+   * Same as `superPool` but emits each response as an [[HttpResponseResult]] instead of a `scala.util.Try`.
+   *
+   * @since 2.0.0
+   */
+  def superPoolWithResult[T](
+      settings: ConnectionPoolSettings,
+      connectionContext: HttpsConnectionContext,
+      log: LoggingAdapter): Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], NotUsed] =
+    withResult(superPool[T](settings, connectionContext, log))
+
+  /**
+   * Same as `superPool` but emits each response as an [[HttpResponseResult]] instead of a `scala.util.Try`.
+   *
+   * @since 2.0.0
+   */
+  def superPoolWithResult[T](
+      settings: ConnectionPoolSettings,
+      log: LoggingAdapter): Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], NotUsed] =
+    withResult(superPool[T](settings, log))
+
+  /**
    * Fires a single `HttpRequest` across the (cached) host connection pool for the request's
    * effective URI to produce a response future.
    *
@@ -569,6 +677,10 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
       Pair[
         Try[HttpResponse], T], (Try[scaladsl.model.HttpResponse], T), Mat, Mat])
   }
+
+  private def withResult[T, Mat](flow: Flow[Pair[HttpRequest, T], Pair[Try[HttpResponse], T], Mat])
+      : Flow[Pair[HttpRequest, T], Pair[HttpResponseResult, T], Mat] =
+    flow.map(pair => Pair(HttpResponseResult.fromTry(pair.first), pair.second))
 
   private def adaptOutgoingFlow[T, Mat](
       scalaFlow: stream.scaladsl.Flow[scaladsl.model.HttpRequest, scaladsl.model.HttpResponse,
