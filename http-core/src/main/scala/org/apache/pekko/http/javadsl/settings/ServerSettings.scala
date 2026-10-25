@@ -107,7 +107,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
    * @since 2.0.0
    */
   def withStreamCancellationDelay(newValue: JDuration): ServerSettings =
-    withStreamCancellationDelay(newValue.toScala)
+    self.copy(streamCancellationDelay = newValue.toScala)
 
   /**
    * @since 1.3.0
