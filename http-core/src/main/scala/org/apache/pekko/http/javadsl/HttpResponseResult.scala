@@ -34,7 +34,8 @@ import pekko.http.javadsl.model.HttpResponse
  *
  * @since 2.0.0
  */
-final class HttpResponseResult private (private val responseOrNull: HttpResponse, private val failureOrNull: Throwable) {
+final class HttpResponseResult private (private val responseOrNull: HttpResponse,
+    private val failureOrNull: Throwable) {
 
   /** Returns `true` if a response was received. */
   def isSuccess: Boolean = failureOrNull eq null
@@ -73,8 +74,9 @@ final class HttpResponseResult private (private val responseOrNull: HttpResponse
   def handle[R](f: BiFunction[HttpResponse, Throwable, R]): R = f.apply(responseOrNull, failureOrNull)
 
   override def equals(other: Any): Boolean = other match {
-    case that: HttpResponseResult => Objects.equals(responseOrNull, that.responseOrNull) && Objects.equals(failureOrNull, that.failureOrNull)
-    case _                        => false
+    case that: HttpResponseResult => Objects.equals(responseOrNull, that.responseOrNull) &&
+      Objects.equals(failureOrNull, that.failureOrNull)
+    case _ => false
   }
 
   override def hashCode(): Int = Objects.hash(responseOrNull, failureOrNull)
