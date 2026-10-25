@@ -89,7 +89,6 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   override def getTerminationDeadlineExceededResponse: pekko.http.javadsl.model.HttpResponse =
     this.terminationDeadlineExceededResponse
   override def getParsingErrorHandler: String = this.parsingErrorHandler
-  override def getStreamCancellationDelay: FiniteDuration = this.streamCancellationDelay
   // ---
 
   // override for more specific return type
@@ -114,6 +113,8 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   override def withParsingErrorHandler(newValue: String): ServerSettings = self.copy(parsingErrorHandler = newValue)
   override def withStreamCancellationDelay(newValue: FiniteDuration): ServerSettings =
     self.copy(streamCancellationDelay = newValue)
+  override def withStreamCancellationDelay(newValue: java.time.Duration): ServerSettings =
+    withStreamCancellationDelay(newValue.toScala)
   override def withEnableHttp2(newValue: Boolean): ServerSettings = self.copy(enableHttp2 = newValue)
 
   // overloads for Scala idiomatic use

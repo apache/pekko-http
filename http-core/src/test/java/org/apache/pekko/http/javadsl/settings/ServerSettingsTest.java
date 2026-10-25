@@ -60,4 +60,14 @@ public class ServerSettingsTest {
     assertEquals(Duration.ofMillis(500), timeouts.getBindTimeout());
     assertEquals(Duration.ofSeconds(7), timeouts.getLingerTimeout());
   }
+
+  @Test
+  public void testStreamCancellationDelayWithJavaDurations() {
+    ServerSettings settings =
+        ServerSettings.create("pekko.http.server.stream-cancellation-delay = 150 ms");
+    assertEquals(Duration.ofMillis(150), settings.getStreamCancellationDelay());
+
+    ServerSettings updated = settings.withStreamCancellationDelay(Duration.ofSeconds(2));
+    assertEquals(Duration.ofSeconds(2), updated.getStreamCancellationDelay());
+  }
 }

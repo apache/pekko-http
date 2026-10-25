@@ -56,7 +56,12 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def getDefaultHttpsPort: Int
   def getTerminationDeadlineExceededResponse: pekko.http.javadsl.model.HttpResponse
   def getParsingErrorHandler: String
-  def getStreamCancellationDelay: FiniteDuration
+
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.FiniteDuration`
+   * to `java.time.Duration`.
+   */
+  def getStreamCancellationDelay: JDuration = self.streamCancellationDelay.toJava
 
   /**
    * Configures the Http extension to bind using HTTP/2 if given an
@@ -95,6 +100,14 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def withParsingErrorHandler(newValue: String): ServerSettings = self.copy(parsingErrorHandler = parsingErrorHandler)
   def withStreamCancellationDelay(newValue: FiniteDuration): ServerSettings =
     self.copy(streamCancellationDelay = newValue)
+
+  /**
+   * Java API
+   *
+   * @since 2.0.0
+   */
+  def withStreamCancellationDelay(newValue: JDuration): ServerSettings =
+    withStreamCancellationDelay(newValue.toScala)
 
   /**
    * @since 1.3.0
