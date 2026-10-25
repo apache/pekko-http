@@ -28,6 +28,7 @@ import pekko.io.Inet.SocketOption
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.jdk.CollectionConverters._
+import scala.jdk.DurationConverters._
 import scala.jdk.OptionConverters._
 
 /**
@@ -153,6 +154,13 @@ object ServerSettings extends SettingsCompanion[ServerSettings] {
     override def withRequestTimeout(newValue: Duration): Timeouts = self.copy(requestTimeout = newValue)
     override def withBindTimeout(newValue: FiniteDuration): Timeouts = self.copy(bindTimeout = newValue)
     override def withLingerTimeout(newValue: Duration): Timeouts = self.copy(lingerTimeout = newValue)
+    override def withIdleTimeout(newValue: java.time.Duration): Timeouts =
+      withIdleTimeout(JavaDurationConverter.toScala(newValue))
+    override def withRequestTimeout(newValue: java.time.Duration): Timeouts =
+      withRequestTimeout(JavaDurationConverter.toScala(newValue))
+    override def withBindTimeout(newValue: java.time.Duration): Timeouts = withBindTimeout(newValue.toScala)
+    override def withLingerTimeout(newValue: java.time.Duration): Timeouts =
+      withLingerTimeout(JavaDurationConverter.toScala(newValue))
   }
 
   implicit def timeoutsShortcut(s: ServerSettings): Timeouts = s.timeouts

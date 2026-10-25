@@ -13,6 +13,10 @@
 
 package org.apache.pekko.http.javadsl.settings;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import org.apache.pekko.actor.ActorSystem;
 import org.junit.jupiter.api.Test;
 
@@ -22,5 +26,38 @@ public class ServerSettingsTest {
   public void testCreateWithActorSystem() {
     ActorSystem sys = ActorSystem.create("test");
     ServerSettings settings = ServerSettings.create(sys);
+  }
+
+  @Test
+  public void testTimeoutsGettersReturnJavaDurations() {
+    ServerSettings.Timeouts timeouts =
+        ServerSettings.create(
+                "pekko.http.server { idle-timeout = 61 s, request-timeout = infinite, "
+                    + "bind-timeout = 2 s, linger-timeout = 3 min }")
+            .getTimeouts();
+    assertEquals(Duration.ofSeconds(61), timeouts.getIdleTimeout());
+    assertEquals(ChronoUnit.FOREVER.getDuration(), timeouts.getRequestTimeout());
+    assertEquals(Duration.ofSeconds(2), timeouts.getBindTimeout());
+    assertEquals(Duration.ofMinutes(3), timeouts.getLingerTimeout());
+  }
+
+  @Test
+  public void testTimeoutsWithJavaDurations() {
+    ServerSettings settings = ServerSettings.create("");
+    ServerSettings updated =
+        settings.withTimeouts(
+            settings
+                .getTimeouts()
+                .withIdleTimeout(ChronoUnit.FOREVER.getDuration())
+                .withRequestTimeout(Duration.ofSeconds(5))
+                .withBindTimeout(Duration.ofMillis(500))
+                .withLingerTimeout(Duration.ofSeconds(7)));
+
+    ServerSettings.Timeouts timeouts = updated.getTimeouts();
+    assertEquals(scala.concurrent.duration.Duration.Inf(), timeouts.idleTimeout());
+    assertEquals(ChronoUnit.FOREVER.getDuration(), timeouts.getIdleTimeout());
+    assertEquals(Duration.ofSeconds(5), timeouts.getRequestTimeout());
+    assertEquals(Duration.ofMillis(500), timeouts.getBindTimeout());
+    assertEquals(Duration.ofSeconds(7), timeouts.getLingerTimeout());
   }
 }
