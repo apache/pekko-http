@@ -15,6 +15,8 @@ package org.apache.pekko.http.javadsl.model
 
 import org.apache.pekko.http.scaladsl.{ model => sm }
 
+import scala.jdk.CollectionConverters._
+
 /** Trailing headers for HTTP/2 responses */
 trait Trailer {
 
@@ -32,6 +34,20 @@ trait Trailer {
    * Returns a copy of this trailer with new headers.
    */
   def withHeaders(headers: Iterable[HttpHeader]): Trailer
+
+  /**
+   * Java API: Returns a copy of this trailer with the given headers added to the list of headers.
+   *
+   * @since 2.0.0
+   */
+  def addHeaders(headers: java.lang.Iterable[HttpHeader]): Trailer = addHeaders(headers.asScala)
+
+  /**
+   * Java API: Returns a copy of this trailer with new headers.
+   *
+   * @since 2.0.0
+   */
+  def withHeaders(headers: java.lang.Iterable[HttpHeader]): Trailer = withHeaders(headers.asScala)
 }
 object Trailer {
   def create(): Trailer = new sm.Trailer(Seq.empty)
