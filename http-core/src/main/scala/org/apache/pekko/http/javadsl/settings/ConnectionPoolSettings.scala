@@ -27,6 +27,7 @@ import pekko.http.impl.settings.ConnectionPoolSettingsImpl
 import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.ClientTransport
+import pekko.japi.Pair
 
 /**
  * Public API but not intended for subclassing
@@ -75,11 +76,18 @@ abstract class ConnectionPoolSettings private[pekko] () { self: ConnectionPoolSe
 
   // ---
 
+  /**
+   * Replaces the per-host overrides. Each pair holds a host pattern and the settings to use for matching hosts;
+   * when several patterns match a host, the first one in the list is used.
+   *
+   * In 2.0.0, the parameter type of this method changed from `java.util.List[scala.Tuple2[String, ConnectionPoolSettings]]`
+   * to `java.util.List[pekko.japi.Pair[String, ConnectionPoolSettings]]`.
+   */
   @ApiMayChange
-  def withHostOverrides(hostOverrides: java.util.List[(String, ConnectionPoolSettings)]): ConnectionPoolSettings = {
+  def withHostOverrides(hostOverrides: java.util.List[Pair[String, ConnectionPoolSettings]]): ConnectionPoolSettings = {
     import scala.jdk.CollectionConverters._
-    self.copy(hostOverrides = hostOverrides.asScala.toList.map { case (h, s) =>
-      ConnectionPoolSettingsImpl.hostRegex(h) -> s.asScala
+    self.copy(hostOverrides = hostOverrides.asScala.toList.map { pair =>
+      ConnectionPoolSettingsImpl.hostRegex(pair.first) -> pair.second.asScala
     })
   }
 
