@@ -18,13 +18,13 @@
 package org.apache.pekko.http.javadsl
 
 import java.util.Objects
-import java.util.function.{ BiFunction, Function => JFunction }
 
 import scala.util.{ Failure, Success, Try }
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.javadsl.model.HttpResponse
+import pekko.japi.function.{ Function, Function2 }
 
 /**
  * The outcome of sending a request through a connection pool flow: either the [[HttpResponse]] or the
@@ -62,16 +62,17 @@ final class HttpResponseResult private (private val responseOrNull: HttpResponse
     else throw new IllegalStateException("No failure available, the request succeeded")
 
   /**
-   * Applies `onSuccess` to the response if this result is a success, otherwise applies `onFailure` to the failure.
+   * Applies `onSuccess` to the response if this result is a success, otherwise applies `onFailure` to the failure. Exceptions
+   * thrown by either function are rethrown to the caller.
    */
-  def fold[R](onSuccess: JFunction[HttpResponse, R], onFailure: JFunction[Throwable, R]): R =
+  def fold[R](onSuccess: Function[HttpResponse, R], onFailure: Function[Throwable, R]): R =
     if (isSuccess) onSuccess.apply(responseOrNull) else onFailure.apply(failureOrNull)
 
   /**
    * Like `CompletionStage.handle`, applies `f` to the response and a `null` failure if this result is a
-   * success, or to a `null` response and the failure otherwise.
+   * success, or to a `null` response and the failure otherwise. Exceptions thrown by `f` are rethrown to the caller.
    */
-  def handle[R](f: BiFunction[HttpResponse, Throwable, R]): R = f.apply(responseOrNull, failureOrNull)
+  def handle[R](f: Function2[HttpResponse, Throwable, R]): R = f.apply(responseOrNull, failureOrNull)
 
   override def equals(other: Any): Boolean = other match {
     case that: HttpResponseResult => Objects.equals(responseOrNull, that.responseOrNull) &&

@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,32 @@ public class HttpResponseResultTest {
     assertSame(failure, thrown.getCause());
     assertEquals("failed: boom", result.fold(r -> "ok", ex -> "failed: " + ex.getMessage()));
     assertNull(result.handle((r, ex) -> r));
+  }
+
+  @Test
+  public void functionsMayThrowCheckedExceptions() {
+    IOException ioe = new IOException("cannot read");
+    HttpResponseResult result = HttpResponseResult.success(response);
+
+    assertSame(
+        ioe,
+        assertThrows(
+            IOException.class,
+            () ->
+                result.fold(
+                    r -> {
+                      throw ioe;
+                    },
+                    ex -> "failed")));
+    assertSame(
+        ioe,
+        assertThrows(
+            IOException.class,
+            () ->
+                result.handle(
+                    (r, ex) -> {
+                      throw ioe;
+                    })));
   }
 
   @Test
