@@ -17,8 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.junit.jupiter.api.Test;
 
 public class HttpMessageTest {
@@ -71,5 +73,23 @@ public class HttpMessageTest {
         HttpRequest.create().addAttribute(AttributeKeys.sslSession, SslSessionInfo.create(session));
 
     assertTrue(request.getAttribute(AttributeKeys.sslSession).get().getSession() == session);
+  }
+
+  @Test
+  public void testAddAndWithHeadersAcceptIterableOfHeaderSubtype() {
+    List<RawHeader> headers = List.of(RawHeader.create("x-b", "2"), RawHeader.create("x-c", "3"));
+
+    HttpRequest added =
+        HttpRequest.create().addHeader(RawHeader.create("x-a", "1")).addHeaders(headers);
+    HttpResponse replaced =
+        HttpResponse.create().addHeader(RawHeader.create("x-a", "1")).withHeaders(headers);
+
+    assertEquals(
+        List.of(
+            RawHeader.create("x-a", "1"),
+            RawHeader.create("x-b", "2"),
+            RawHeader.create("x-c", "3")),
+        added.getHeaders());
+    assertEquals(headers, replaced.getHeaders());
   }
 }

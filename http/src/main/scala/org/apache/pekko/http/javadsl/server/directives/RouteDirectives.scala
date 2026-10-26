@@ -117,22 +117,26 @@ abstract class RouteDirectives extends RespondWithDirectives {
   /**
    * Completes the request using the given status code and headers, marshalling the given value as response entity.
    */
-  def complete[T](status: StatusCode, headers: java.lang.Iterable[HttpHeader], value: T,
+  def complete[T](status: StatusCode, headers: java.lang.Iterable[? <: HttpHeader], value: T,
       marshaller: Marshaller[T, RequestEntity]) = RouteAdapter {
-    D.complete(ToResponseMarshallable(value)(fromToEntityMarshaller(status.asScala, headers.asScala)(marshaller)))
+    D.complete(ToResponseMarshallable(value)(fromToEntityMarshaller(status.asScala, headersAsScala(headers))(
+      marshaller)))
   }
 
   /**
    * Completes the request using the given status code, headers, and response entity.
    */
-  def complete(status: StatusCode, headers: java.lang.Iterable[HttpHeader], entity: ResponseEntity) = RouteAdapter {
-    D.complete(scaladsl.model.HttpResponse(status = status.asScala, entity = entity.asScala, headers = headers.asScala))
-  }
+  def complete(status: StatusCode, headers: java.lang.Iterable[? <: HttpHeader], entity: ResponseEntity) =
+    RouteAdapter {
+      D.complete(scaladsl.model.HttpResponse(status = status.asScala, entity = entity.asScala,
+        headers = headersAsScala(headers)))
+    }
 
   /**
    * Completes the request using the given status code, headers, and response entity.
    */
-  def complete(status: StatusCode, headers: java.lang.Iterable[HttpHeader], entity: RequestEntity): RouteAdapter = {
+  def complete(status: StatusCode, headers: java.lang.Iterable[? <: HttpHeader], entity: RequestEntity)
+      : RouteAdapter = {
     complete(status, headers, entity: ResponseEntity)
   }
 
@@ -165,22 +169,22 @@ abstract class RouteDirectives extends RespondWithDirectives {
   /**
    * Completes the request as HTTP 200 OK, adding the given headers, and marshalling the given value as response entity.
    */
-  def complete[T](headers: java.lang.Iterable[HttpHeader], value: T, marshaller: Marshaller[T, RequestEntity]) =
+  def complete[T](headers: java.lang.Iterable[? <: HttpHeader], value: T, marshaller: Marshaller[T, RequestEntity]) =
     RouteAdapter {
-      D.complete(ToResponseMarshallable(value)(fromToEntityMarshaller(headers = headers.asScala)(marshaller)))
+      D.complete(ToResponseMarshallable(value)(fromToEntityMarshaller(headers = headersAsScala(headers))(marshaller)))
     }
 
   /**
    * Completes the request as HTTP 200 OK, adding the given headers and response entity.
    */
-  def complete(headers: java.lang.Iterable[HttpHeader], entity: ResponseEntity) = RouteAdapter {
-    D.complete(scaladsl.model.HttpResponse(headers = headers.asScala, entity = entity.asScala))
+  def complete(headers: java.lang.Iterable[? <: HttpHeader], entity: ResponseEntity) = RouteAdapter {
+    D.complete(scaladsl.model.HttpResponse(headers = headersAsScala(headers), entity = entity.asScala))
   }
 
   /**
    * Completes the request as HTTP 200 OK, adding the given headers and response entity.
    */
-  def complete(headers: java.lang.Iterable[HttpHeader], entity: RequestEntity): RouteAdapter =
+  def complete(headers: java.lang.Iterable[? <: HttpHeader], entity: RequestEntity): RouteAdapter =
     complete(headers, entity: ResponseEntity)
 
   /**
@@ -318,6 +322,10 @@ abstract class RouteDirectives extends RespondWithDirectives {
   // Right now, having this in Java:
   //     CompletableFuture.supplyAsync(() -> { throw new IllegalArgumentException("always failing"); })
   // will in fact fail the future with CompletionException.
+  // java.lang.Iterable is read-only, so widening the element type is safe
+  private def headersAsScala(headers: java.lang.Iterable[? <: HttpHeader]) =
+    headers.asInstanceOf[java.lang.Iterable[HttpHeader]].asScala
+
   private def unwrapCompletionException[T]: PartialFunction[Throwable, T] = {
     case x: CompletionException if x.getCause ne null =>
       throw x.getCause

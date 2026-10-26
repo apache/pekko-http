@@ -32,6 +32,10 @@ object Marshaller {
 
   import JavaMapping.Implicits._
 
+  // java.lang.Iterable is read-only, so widening the element type is safe
+  private def headersAsScala(headers: java.lang.Iterable[? <: HttpHeader]) =
+    headers.asInstanceOf[java.lang.Iterable[HttpHeader]].asScala
+
   def fromScala[A, B](scalaMarshaller: marshalling.Marshaller[A, B]): Marshaller[A, B] =
     new Marshaller()(scalaMarshaller)
 
@@ -97,14 +101,16 @@ object Marshaller {
     fromScala(marshalling.Marshaller.fromToEntityMarshaller[A](status.asScala)(m.asScalaCastOutput))
   }
 
-  def entityToResponse[A](status: StatusCode, headers: java.lang.Iterable[HttpHeader],
+  def entityToResponse[A](status: StatusCode, headers: java.lang.Iterable[? <: HttpHeader],
       m: Marshaller[A, ? <: RequestEntity]): Marshaller[A, HttpResponse] = {
-    fromScala(marshalling.Marshaller.fromToEntityMarshaller[A](status.asScala, headers.asScala)(m.asScalaCastOutput))
+    fromScala(marshalling.Marshaller.fromToEntityMarshaller[A](status.asScala, headersAsScala(headers))(
+      m.asScalaCastOutput))
   }
 
   def entityToOKResponse[A](
-      headers: java.lang.Iterable[HttpHeader], m: Marshaller[A, ? <: RequestEntity]): Marshaller[A, HttpResponse] = {
-    fromScala(marshalling.Marshaller.fromToEntityMarshaller[A](headers = headers.asScala)(m.asScalaCastOutput))
+      headers: java.lang.Iterable[? <: HttpHeader], m: Marshaller[A, ? <: RequestEntity])
+      : Marshaller[A, HttpResponse] = {
+    fromScala(marshalling.Marshaller.fromToEntityMarshaller[A](headers = headersAsScala(headers))(m.asScalaCastOutput))
   }
 
   // these are methods not varargs to avoid call site warning about unchecked type params

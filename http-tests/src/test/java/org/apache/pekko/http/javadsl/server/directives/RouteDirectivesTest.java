@@ -13,9 +13,12 @@
 
 package org.apache.pekko.http.javadsl.server.directives;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.apache.pekko.http.javadsl.model.*;
+import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.model.headers.Location;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.TestRoute;
@@ -146,5 +149,55 @@ public class RouteDirectivesTest extends JUnitJupiterRouteTest {
             complete(StatusCodes.IM_A_TEAPOT));
 
     route.run(HttpRequest.create("/foo")).assertEntity("There was an internal server error.");
+  }
+
+  @Test
+  public void testCompleteAcceptsIterableOfHeaderSubtype() {
+    List<RawHeader> headers = List.of(RawHeader.create("x-a", "1"));
+    ResponseEntity responseEntity = HttpEntities.create("response");
+    RequestEntity requestEntity = HttpEntities.create("request");
+
+    TestRoute route =
+        testRoute(
+            path(
+                "status-value",
+                () ->
+                    complete(StatusCodes.ACCEPTED, headers, "value", Marshaller.stringToEntity())),
+            path("status-response", () -> complete(StatusCodes.ACCEPTED, headers, responseEntity)),
+            path("status-request", () -> complete(StatusCodes.ACCEPTED, headers, requestEntity)),
+            path("value", () -> complete(headers, "value", Marshaller.stringToEntity())),
+            path("response", () -> complete(headers, responseEntity)),
+            path("request", () -> complete(headers, requestEntity)),
+            path(
+                "marshaller",
+                () ->
+                    complete(
+                        "value",
+                        Marshaller.entityToResponse(
+                            StatusCodes.ACCEPTED, headers, Marshaller.stringToEntity()))),
+            path(
+                "ok-marshaller",
+                () ->
+                    complete(
+                        "value",
+                        Marshaller.entityToOKResponse(headers, Marshaller.stringToEntity()))));
+
+    String[][] expectations = {
+      {"status-value", "202", "value"},
+      {"status-response", "202", "response"},
+      {"status-request", "202", "request"},
+      {"value", "200", "value"},
+      {"response", "200", "response"},
+      {"request", "200", "request"},
+      {"marshaller", "202", "value"},
+      {"ok-marshaller", "200", "value"}
+    };
+    for (String[] e : expectations) {
+      route
+          .run(HttpRequest.GET("/" + e[0]))
+          .assertStatusCode(Integer.parseInt(e[1]))
+          .assertHeaderExists("x-a", "1")
+          .assertEntity(e[2]);
+    }
   }
 }
