@@ -188,7 +188,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 | Route with marshaller | Entity parsed to a domain type | **Yes** | Underlying JSON/XML library + app |
 | `cors()` | `Origin`, `Access-Control-Request-*` | **Yes** | Operator: §5a CORS config |
 | File-serving directives | Path segments | **Yes** | Pekko HTTP + app — see §9, §14 Q3 |
-| Client API | Response from an upstream server | **Yes** if the upstream is untrusted | App: treat responses as untrusted |
+| Client API | Response from an upstream server | **Yes** if the upstream is untrusted | App: treat responses as untrusted. Which request a response answers follows the origin's HTTP/1.1 framing, which the pool trusts (§14 Q12) |
 | Config | `application.conf` | **No** — trusted deployment input | Operator |
 
 ---
@@ -198,7 +198,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 **In scope:**
 
 - **The remote HTTP client.** Arbitrary bytes, malformed framing, oversized or deeply-nested input, many concurrent connections, abusive HTTP/2 frame sequences. The primary adversary — though what it achieves through sheer *volume* is the proxy's problem (§14 Q1). *(maintainer — §14 Q7)*
-- **A malicious upstream server**, where the application uses the client API against an untrusted endpoint. *(maintainer — §14 Q7)*
+- **A malicious upstream server**, where the application uses the client API against an untrusted endpoint. *(maintainer — §14 Q7)* What it controls is its own responses: a host connection pool talks to that one origin and trusts its HTTP/1.1 framing to send one response per request, so an origin that answers a request it was never sent is answering its own client, not crossing a boundary (§14 Q12). *(maintainer)*
 - **A cross-origin web attacker**, where the application enables CORS. *(maintainer — §14 Q2)*
 
 **Explicitly out of scope:**
@@ -237,6 +237,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 - **No CSRF protection.** *(maintainer — §14 Q7)*
 - **No output encoding / XSS defence.** Pekko HTTP renders what the application marshals. *(maintainer — §14 Q7)*
 - **No trusted client-IP derivation from headers.** `extractClientIP` surfaces `X-Forwarded-For` / `X-Real-Ip` unvalidated; there is no trusted-proxy chain configuration. `extractDirectClientIP` is trustworthy but yields the last proxy, not the client (§14 Q4).
+- **No defence against an origin that misframes its own responses.** A host connection pool pairs responses with requests in the order they were sent and trusts the origin's HTTP/1.1 framing. An origin that sends a response with no request outstanding can have it delivered to a later request on the same connection (§14 Q12).
 
 ### False friends
 
@@ -297,6 +298,7 @@ Pekko HTTP therefore takes the following position *(maintainer)*:
 - **"`allow-credentials = yes` with `allowed-origins = "*"` sends `Access-Control-Allow-Origin: *` with credentials."** It does not — the literal `*` is sent only when credentials are not allowed; otherwise the request `Origin` is echoed (`CorsSettingsImpl.scala`, covered by `CorsDirectivesSpec`). Factually wrong.
 - **"Credential comparison is vulnerable to a timing attack."** Wrong against `Credentials.verify` (P8); against an application's own `provideVerify` comparator it is a finding in that application.
 - **"A malformed HTTP/2 pseudo-header closes the whole connection."** A framing violation from the peer closing that peer's own connection with `GOAWAY` rather than `RST_STREAM`. `BY-DESIGN: property-disclaimed` per §14 Q11.
+- **"The client pool delivers a stray response to the next request."** Requires the origin to send more responses than it was sent requests — for example by framing a conformant request body by a different rule and answering part of it as a further request, or by writing a response onto an idle keep-alive connection. The pool only talks to that origin and trusts its framing. An early response no longer leaves the connection open for reuse (§14 Q12). `BY-DESIGN: property-disclaimed` per §14 Q12.
 - **Findings in `*-tests`, `http-testkit*`, `http-bench-jmh`, `http-scalafix`, `docs`** — `OUT-OF-MODEL: unsupported-component` per §3.
 - **"The process registers JVM shutdown hooks."** Pekko HTTP registers none (§5). The hooks are `CoordinatedShutdown`'s and, with remoting, Artery's — `apache/pekko`'s model. `OUT-OF-MODEL: unsupported-component`.
 - **Findings in the actor or stream layer** — `apache/pekko`'s model, not this one.
@@ -369,6 +371,8 @@ Questions the draft put to the maintainers, with the ruling each received. All a
 Each links to the others rather than restating them. `security.md`'s "Security model" section stays as the documented source §4 quotes. **One statement is referred:** `security.md`'s upstream-coordination sentence (*"any issues affecting Apache Pekko and Akka should be reported to Apache team first…"*) is a reporting statement outside `SECURITY.md`; it is left in place pending a maintainer decision to promote it verbatim or drop it.
 
 **Q11 — HTTP/2 framing violations close the connection.** A missing, duplicate, misplaced or unknown pseudo-header, or a connection-specific header, is raised by `RequestParsing.protocolError` as `Http2ProtocolException` and answered with `GOAWAY`, not the stream error RFC 9113 §8.1.1 asks for. Only the violating peer's connection is lost; a proxy multiplexing many clients onto one connection owns generating conformant pseudo-headers and stripping connection-specific ones. A report of this is `BY-DESIGN: property-disclaimed` — it falls outside P9. Answering with `RST_STREAM` instead is a compliance improvement for an ordinary issue, not a security report. *(maintainer)*
+
+**Q12 — The HTTP client trusts the origin's HTTP/1.1 response framing.** A host connection pool talks to exactly one origin, and on each connection it pairs responses with requests in the order the requests were sent. It trusts the origin to send exactly one response per request. An origin that sends a response for which no request is outstanding — for example after framing a conformant request body by a different rule and answering the rest of it as a further request, or by writing a response onto an idle keep-alive connection — can have that response delivered to a later request on the same connection: the client parses data on a connection only against the next request sent on it (`ResponseParsingMerge`), so bytes that arrive with no request outstanding are held and parsed as the response to the next request. Every response involved still comes from the origin the application pointed the pool at, which it already trusts to answer those requests; no trust boundary is crossed, and nothing reaches a different pool or origin. An origin that desynchronises this way has a request-smuggling defect of its own, and a gateway that fans many users' requests onto it inherits that defect from the origin, not from Pekko HTTP. A report of this is `BY-DESIGN: property-disclaimed`. The pool already never reuses a connection after an early response — one that completes before the request entity is fully sent — and stops sending the request entity when that response is an error or carries `Connection: close` ([#1350](https://github.com/apache/pekko-http/pull/1350)), so the leftover request body cannot be answered on a later request. Making the pool more defensive still against non-conforming origins — such as discarding a connection that receives data with no request outstanding — is hardening for an ordinary issue or PR, not a security report. Still in scope: a response crossing between pools or origins, or the client framing a conformant origin's response by a different rule than RFC 9112 — Pekko HTTP's own framing decision, as in §9. *(maintainer)*
 
 ---
 
