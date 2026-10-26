@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.scaladsl.model
@@ -142,6 +142,16 @@ sealed trait HttpMessage extends jm.HttpMessage {
       case _ if clazz == classOf[`Content-Type`] => Some(`Content-Type`(entity.contentType)).asInstanceOf[Option[T]]
       case _                                     => None
     }
+  }
+
+  /**
+   * Returns the first header with the given name (case-insensitive) if there is one
+   *
+   * @since 2.0.0
+   */
+  def header(headerName: String): Option[HttpHeader] = {
+    val lowerCased = headerName.toRootLowerCase
+    headers.find(_.is(lowerCased))
   }
 
   /** Returns all the headers of the given type * */

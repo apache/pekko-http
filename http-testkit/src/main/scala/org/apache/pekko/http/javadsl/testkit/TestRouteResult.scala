@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.javadsl.testkit
@@ -114,7 +114,7 @@ abstract class TestRouteResult(_result: Future[RouteResult], awaitAtMost: Finite
    * Returns the first header of the response which is of the given class.
    */
   def header[T >: Null <: HttpHeader](clazz: Class[T]): T =
-    response.header(ClassTag(clazz))
+    response.header(ClassTag[T](clazz))
       .getOrElse(doFail(s"Expected header of type ${clazz.getSimpleName} but wasn't found."))
 
   /**
