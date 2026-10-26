@@ -13,12 +13,14 @@
 
 package org.apache.pekko.http.javadsl.settings
 
+import java.time.{ Duration => JDuration }
 import java.util.Optional
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.{ DoNotInherit, InternalApi }
 import pekko.http.impl.settings.ServerSettingsImpl
+import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.headers.Host
 import pekko.http.javadsl.model.headers.Server
@@ -26,6 +28,7 @@ import pekko.io.Inet.SocketOption
 import com.typesafe.config.Config
 
 import scala.jdk.CollectionConverters._
+import scala.jdk.DurationConverters._
 import scala.jdk.OptionConverters._
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 
@@ -53,7 +56,12 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def getDefaultHttpsPort: Int
   def getTerminationDeadlineExceededResponse: pekko.http.javadsl.model.HttpResponse
   def getParsingErrorHandler: String
-  def getStreamCancellationDelay: FiniteDuration
+
+  /**
+   * In 2.0.0, the return type of this method changed from `scala.concurrent.duration.FiniteDuration`
+   * to `java.time.Duration`.
+   */
+  def getStreamCancellationDelay: JDuration = self.streamCancellationDelay.toJava
 
   /**
    * Configures the Http extension to bind using HTTP/2 if given an
@@ -94,6 +102,14 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
     self.copy(streamCancellationDelay = newValue)
 
   /**
+   * Java API
+   *
+   * @since 2.0.0
+   */
+  def withStreamCancellationDelay(newValue: JDuration): ServerSettings =
+    self.copy(streamCancellationDelay = newValue.toScala)
+
+  /**
    * @since 1.3.0
    */
   def withEnableHttp2(newValue: Boolean): ServerSettings = self.copy(enableHttp2 = newValue)
@@ -111,6 +127,63 @@ object ServerSettings extends SettingsCompanion[ServerSettings] {
     def withRequestTimeout(newValue: Duration): Timeouts = self.copy(requestTimeout = newValue)
     def withBindTimeout(newValue: FiniteDuration): Timeouts = self.copy(bindTimeout = newValue)
     def withLingerTimeout(newValue: Duration): Timeouts = self.copy(lingerTimeout = newValue)
+
+    /**
+     * Java API: an infinite idle timeout is returned as `ChronoUnit.FOREVER.getDuration`.
+     *
+     * @since 2.0.0
+     */
+    def getIdleTimeout: JDuration = JavaDurationConverter.toJava(idleTimeout)
+
+    /**
+     * Java API: an infinite request timeout is returned as `ChronoUnit.FOREVER.getDuration`.
+     *
+     * @since 2.0.0
+     */
+    def getRequestTimeout: JDuration = JavaDurationConverter.toJava(requestTimeout)
+
+    /**
+     * Java API
+     *
+     * @since 2.0.0
+     */
+    def getBindTimeout: JDuration = bindTimeout.toJava
+
+    /**
+     * Java API: an infinite linger timeout is returned as `ChronoUnit.FOREVER.getDuration`.
+     *
+     * @since 2.0.0
+     */
+    def getLingerTimeout: JDuration = JavaDurationConverter.toJava(lingerTimeout)
+
+    /**
+     * Java API: use `ChronoUnit.FOREVER.getDuration` for an infinite idle timeout.
+     *
+     * @since 2.0.0
+     */
+    def withIdleTimeout(newValue: JDuration): Timeouts = withIdleTimeout(JavaDurationConverter.toScala(newValue))
+
+    /**
+     * Java API: use `ChronoUnit.FOREVER.getDuration` for an infinite request timeout.
+     *
+     * @since 2.0.0
+     */
+    def withRequestTimeout(newValue: JDuration): Timeouts =
+      withRequestTimeout(JavaDurationConverter.toScala(newValue))
+
+    /**
+     * Java API
+     *
+     * @since 2.0.0
+     */
+    def withBindTimeout(newValue: JDuration): Timeouts = withBindTimeout(newValue.toScala)
+
+    /**
+     * Java API: use `ChronoUnit.FOREVER.getDuration` for an infinite linger timeout.
+     *
+     * @since 2.0.0
+     */
+    def withLingerTimeout(newValue: JDuration): Timeouts = withLingerTimeout(JavaDurationConverter.toScala(newValue))
 
     /** INTERNAL API */
     @InternalApi

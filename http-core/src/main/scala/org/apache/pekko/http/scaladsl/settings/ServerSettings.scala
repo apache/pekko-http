@@ -28,6 +28,7 @@ import pekko.io.Inet.SocketOption
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.jdk.CollectionConverters._
+import scala.jdk.DurationConverters._
 import scala.jdk.OptionConverters._
 
 /**
@@ -88,7 +89,6 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   override def getTerminationDeadlineExceededResponse: pekko.http.javadsl.model.HttpResponse =
     this.terminationDeadlineExceededResponse
   override def getParsingErrorHandler: String = this.parsingErrorHandler
-  override def getStreamCancellationDelay: FiniteDuration = this.streamCancellationDelay
   // ---
 
   // override for more specific return type
@@ -113,6 +113,8 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   override def withParsingErrorHandler(newValue: String): ServerSettings = self.copy(parsingErrorHandler = newValue)
   override def withStreamCancellationDelay(newValue: FiniteDuration): ServerSettings =
     self.copy(streamCancellationDelay = newValue)
+  override def withStreamCancellationDelay(newValue: java.time.Duration): ServerSettings =
+    withStreamCancellationDelay(newValue.toScala)
   override def withEnableHttp2(newValue: Boolean): ServerSettings = self.copy(enableHttp2 = newValue)
 
   // overloads for Scala idiomatic use
@@ -153,6 +155,13 @@ object ServerSettings extends SettingsCompanion[ServerSettings] {
     override def withRequestTimeout(newValue: Duration): Timeouts = self.copy(requestTimeout = newValue)
     override def withBindTimeout(newValue: FiniteDuration): Timeouts = self.copy(bindTimeout = newValue)
     override def withLingerTimeout(newValue: Duration): Timeouts = self.copy(lingerTimeout = newValue)
+    override def withIdleTimeout(newValue: java.time.Duration): Timeouts =
+      withIdleTimeout(JavaDurationConverter.toScala(newValue))
+    override def withRequestTimeout(newValue: java.time.Duration): Timeouts =
+      withRequestTimeout(JavaDurationConverter.toScala(newValue))
+    override def withBindTimeout(newValue: java.time.Duration): Timeouts = withBindTimeout(newValue.toScala)
+    override def withLingerTimeout(newValue: java.time.Duration): Timeouts =
+      withLingerTimeout(JavaDurationConverter.toScala(newValue))
   }
 
   implicit def timeoutsShortcut(s: ServerSettings): Timeouts = s.timeouts
