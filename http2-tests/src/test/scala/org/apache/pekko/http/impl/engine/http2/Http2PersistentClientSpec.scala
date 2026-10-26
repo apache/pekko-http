@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2020-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2020-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.impl.engine.http2
@@ -67,7 +67,10 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
      pekko.http.client.http2.completion-timeout=100ms
   """) with ScalaFutures {
   override def failOnSevereMessages: Boolean = true
-  private val notSevere = Set("ChannelReadable", "WriteAck")
+  private val notSevere = Set("ChannelReadable", "WriteAck",
+    // previous test case shutting stuff down race condition
+    // https://github.com/akka/akka-http/issues/4244
+    "Unexpected termination of TLS actor")
   override protected def isSevere(event: Logging.LogEvent): Boolean =
     event.level <= Logging.WarningLevel &&
     // fix for https://github.com/akka/akka-http/issues/3732 / https://github.com/akka/akka/issues/29330
@@ -337,10 +340,23 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
               .addAttribute(requestIdAttr, RequestId("request-1")))
           // need some demand on response side, otherwise, no requests will be pulled in
           client.responsesIn.request(1)
+
+          def expectFailedResponse(max: FiniteDuration): Unit = {
+            val response: HttpResponse = client.responsesIn.expectNext(max)
+            response.attribute(requestIdAttr) should be(Some(RequestId("request-1")))
+            response.status should be(StatusCodes.ServiceUnavailable)
+          }
+
           if (withBackoff) {
             // not immediate when using backoff, 4 retries before failing, backoff is 300-800ms (so at least 1.2s)
             client.responsesIn.expectNoMessage(clientSettings.http2Settings.baseConnectionBackoff * 4)
+            // total max backoff for 4 tries with the random factor could worst case be
+            // 600 + 800 + 800 + 800 - those 1200 ms = 1800 ms, plus the time for the failing connection attempts
+            expectFailedResponse(3.seconds)
+          } else {
+            expectFailedResponse(remainingOrDefault)
           }
+          // failed response then failed stream
           client.responsesIn.expectError()
           client.requestsOut.expectCancellation()
 
@@ -378,6 +394,8 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
       probe.expectMsg("saw-reconnect")
 
       // max 4 attempts, giving up after that
+      val error = client.responsesIn.expectNext() // error response
+      error.status should ===(StatusCodes.ServiceUnavailable)
       client.responsesIn.expectError()
       client.requestsOut.expectCancellation()
     }

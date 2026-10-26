@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2020-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2020-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.impl.engine.http2.client
@@ -158,7 +158,18 @@ private[http2] object PersistentConnection {
             requestOut.fail(new StreamTcpException("connection broken"))
 
             if (connectsLeft.contains(0)) {
-              failStage(new RuntimeException(s"Connection failed after $maxAttempts attempts", cause))
+              if (isAvailable(requestIn)) {
+                // fail the triggering request before failing the stream
+                val request = grab(requestIn)
+                val response = HttpResponse(
+                  StatusCodes.ServiceUnavailable,
+                  entity = s"Connection failed after $maxAttempts attempts")
+                  .withAttributes(request.attributes)
+                emit(responseOut, response,
+                  () => failStage(new RuntimeException(s"Connection failed after $maxAttempts attempts", cause)))
+              } else {
+                failStage(new RuntimeException(s"Connection failed after $maxAttempts attempts", cause))
+              }
             } else {
               setHandler(requestIn, Unconnected)
               if (baseEmbargo == Duration.Zero) {
