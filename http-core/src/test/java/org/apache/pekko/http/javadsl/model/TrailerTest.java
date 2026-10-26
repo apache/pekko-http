@@ -57,6 +57,18 @@ public class TrailerTest {
   }
 
   @Test
+  public void acceptsArrayListOfHttpHeader() {
+    ArrayList<HttpHeader> headers = new ArrayList<>();
+    headers.add(RawHeader.create("b", "2"));
+
+    Trailer added = Trailer.create().addHeader(RawHeader.create("a", "1")).addHeaders(headers);
+    Trailer replaced = Trailer.create().addHeader(RawHeader.create("a", "1")).withHeaders(headers);
+
+    assertEquals(List.of(new Tuple2<>("a", "1"), new Tuple2<>("b", "2")), headersOf(added));
+    assertEquals(List.of(new Tuple2<>("b", "2")), headersOf(replaced));
+  }
+
+  @Test
   public void acceptsIterableOfHttpHeaderSubtype() {
     List<RawHeader> rawHeaders = List.of(RawHeader.create("b", "2"));
 
