@@ -40,14 +40,14 @@ trait Trailer {
    *
    * @since 2.0.0
    */
-  def addHeaders(headers: java.lang.Iterable[HttpHeader]): Trailer = addHeaders(headers.asScala)
+  def addHeaders(headers: java.lang.Iterable[? <: HttpHeader]): Trailer = addHeaders(headers.asScala)
 
   /**
    * Java API: Returns a copy of this trailer with new headers.
    *
    * @since 2.0.0
    */
-  def withHeaders(headers: java.lang.Iterable[HttpHeader]): Trailer = withHeaders(headers.asScala)
+  def withHeaders(headers: java.lang.Iterable[? <: HttpHeader]): Trailer = withHeaders(headers.asScala)
 }
 object Trailer {
   def create(): Trailer = new sm.Trailer(Seq.empty)

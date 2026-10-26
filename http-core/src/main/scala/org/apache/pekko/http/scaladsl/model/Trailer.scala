@@ -43,12 +43,12 @@ class Trailer(@ApiMayChange val headers: Seq[(String, String)]) extends jm.Trail
   /**
    * Java API
    */
-  override def addHeaders(headers: java.lang.Iterable[jm.HttpHeader]): Trailer = addHeaders(headers.asScala)
+  override def addHeaders(headers: java.lang.Iterable[? <: jm.HttpHeader]): Trailer = addHeaders(headers.asScala)
 
   /**
    * Java API
    */
-  override def withHeaders(headers: java.lang.Iterable[jm.HttpHeader]): Trailer = withHeaders(headers.asScala)
+  override def withHeaders(headers: java.lang.Iterable[? <: jm.HttpHeader]): Trailer = withHeaders(headers.asScala)
 }
 object Trailer {
   def apply(): Trailer = new Trailer(Seq.empty)
