@@ -66,6 +66,15 @@ Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool]
 ```java
 Flow<Pair<HttpRequest, T>, Pair<Try<HttpResponse>, T>, HostConnectionPool>
 ```
+
+To avoid working with `scala.util.Try`, use the `WithResult` variants of the pool methods, such as
+`cachedHostConnectionPoolWithResult(...)`, `newHostConnectionPoolWithResult(...)` and `superPoolWithResult(...)`.
+They emit an @apidoc[HttpResponseResult] instead, which provides `isSuccess()`, `getResponse()`, `getFailure()`,
+`fold(...)` and `handle(...)`:
+
+```java
+Flow<Pair<HttpRequest, T>, Pair<HttpResponseResult, T>, HostConnectionPool>
+```
 @@@
 
 This means it consumes pairs of type @scala[`(HttpRequest, T)`]@java[@apidoc[Pair[HttpRequest, T]]] and produces pairs of type @scala[`(Try[HttpResponse], T)`]@java[`Pair<Try<HttpResponse>, T>`]

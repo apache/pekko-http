@@ -279,6 +279,73 @@ class HttpExtensionApiSpec extends PekkoSpecWithMaterializer(
       waitFor(binding.unbind())
     }
 
+    "create a host connection pool emitting HttpResponseResult" in {
+      val (host, port, binding) = runServer()
+
+      val poolFlow: Flow[Pair[HttpRequest, String], Pair[HttpResponseResult, String], HostConnectionPool] =
+        http.newHostConnectionPoolWithResult[String](toHost(host, port), materializer)
+
+      val pair: Pair[HostConnectionPool, CompletionStage[Pair[HttpResponseResult, String]]] =
+        Source.single(new Pair(get(host, port), "context"))
+          .viaMat(poolFlow, Keep.right[NotUsed, HostConnectionPool])
+          .toMat(
+            Sink.head(),
+            Keep.both[HostConnectionPool, CompletionStage[Pair[HttpResponseResult, String]]])
+          .run(materializer)
+
+      val result = waitFor(pair.second)
+      result.first.isSuccess should be(true)
+      result.first.getResponse.status() should be(StatusCodes.OK)
+      result.second should be("context")
+      pair.first.shutdown()
+      waitFor(binding.unbind())
+    }
+
+    "create a cached connection pool emitting HttpResponseResult" in {
+      val (host, port, binding) = runServer()
+
+      val poolFlow: Flow[Pair[HttpRequest, String], Pair[HttpResponseResult, String], HostConnectionPool] =
+        http.cachedHostConnectionPoolWithResult[String](toHost(host, port))
+
+      val result: Pair[HttpResponseResult, String] = waitFor(
+        Source.single(new Pair(get(host, port), "context"))
+          .via(poolFlow)
+          .runWith(Sink.head[Pair[HttpResponseResult, String]](), materializer))
+
+      result.first.getResponse.status() should be(StatusCodes.OK)
+      result.second should be("context")
+      waitFor(binding.unbind())
+    }
+
+    "create a super pool emitting HttpResponseResult" in {
+      val (host, port, binding) = runServer()
+
+      val result: Pair[HttpResponseResult, String] = waitFor(
+        Source.single(new Pair(HttpRequest.GET(s"http://$host:$port/"), "context"))
+          .via(http.superPoolWithResult[String]())
+          .runWith(Sink.head[Pair[HttpResponseResult, String]](), materializer))
+
+      result.first.isSuccess should be(true)
+      result.first.getResponse.status() should be(StatusCodes.OK)
+      result.second should be("context")
+      waitFor(binding.unbind())
+    }
+
+    "emit a failed HttpResponseResult from a super pool when the request fails" in {
+      val (host, port, binding) = runServer()
+      waitFor(binding.unbind())
+
+      val settings = ConnectionPoolSettings.create(system).withMaxRetries(0)
+      val result: Pair[HttpResponseResult, String] = waitFor(
+        Source.single(new Pair(HttpRequest.GET(s"http://$host:$port/"), "context"))
+          .via(http.superPoolWithResult[String](settings, loggingAdapter))
+          .runWith(Sink.head[Pair[HttpResponseResult, String]](), materializer))
+
+      result.first.isFailure should be(true)
+      result.first.getFailure should not be null
+      result.second should be("context")
+    }
+
     "allow access to the default client https context" in {
       http.defaultClientHttpsContext.isSecure should equal(true)
     }
