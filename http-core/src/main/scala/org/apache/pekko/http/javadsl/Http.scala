@@ -600,7 +600,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    */
   def singleWebSocketRequest[T](
       request: WebSocketRequest,
-      clientFlow: Flow[Message, Message, T],
+      clientFlow: Flow[? >: Message, ? <: Message, T],
       materializer: Materializer): Pair[CompletionStage[WebSocketUpgradeResponse], T] =
     adaptWsResultTuple {
       delegate.singleWebSocketRequest(
@@ -616,7 +616,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    */
   def singleWebSocketRequest[T](
       request: WebSocketRequest,
-      clientFlow: Flow[Message, Message, T],
+      clientFlow: Flow[? >: Message, ? <: Message, T],
       connectionContext: ConnectionContext,
       materializer: Materializer): Pair[CompletionStage[WebSocketUpgradeResponse], T] =
     adaptWsResultTuple {
@@ -632,7 +632,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    */
   def singleWebSocketRequest[T](
       request: WebSocketRequest,
-      clientFlow: Flow[Message, Message, T],
+      clientFlow: Flow[? >: Message, ? <: Message, T],
       connectionContext: ConnectionContext,
       localAddress: Optional[InetSocketAddress],
       settings: ClientConnectionSettings,
@@ -716,7 +716,7 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     Flow.fromGraph(JavaMapping.adapterBidiFlow[Message, sm.ws.Message, sm.ws.Message, Message].joinMat(wsLayer)(
       Keep.right).mapMaterializedValue(adaptWsUpgradeResponse _))
 
-  private def adaptWsFlow[Mat](javaFlow: Flow[Message, Message, Mat])
+  private def adaptWsFlow[Mat](javaFlow: Flow[? >: Message, ? <: Message, Mat])
       : stream.scaladsl.Flow[scaladsl.model.ws.Message, scaladsl.model.ws.Message, Mat] =
     stream.scaladsl.Flow[scaladsl.model.ws.Message]
       .map(Message.adapt)

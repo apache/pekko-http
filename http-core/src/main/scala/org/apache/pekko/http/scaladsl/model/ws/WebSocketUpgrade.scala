@@ -196,8 +196,9 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
   /**
    * Java API
    */
-  def handleMessagesWith(handlerFlow: Graph[FlowShape[jm.ws.Message, jm.ws.Message], ? <: Any]): HttpResponse =
-    handleMessages(JavaMapping.toScala(handlerFlow))
+  def handleMessagesWith(
+      handlerFlow: Graph[? <: FlowShape[? >: jm.ws.Message, ? <: jm.ws.Message], ? <: Any]): HttpResponse =
+    handleMessages(javaFlowToScala(handlerFlow))
 
   /**
    * Java API
@@ -205,9 +206,9 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    * @since 2.0.0
    */
   def handleMessagesWith(
-      handlerFlow: Graph[FlowShape[jm.ws.Message, jm.ws.Message], ? <: Any],
+      handlerFlow: Graph[? <: FlowShape[? >: jm.ws.Message, ? <: jm.ws.Message], ? <: Any],
       compressionEnabled: Boolean): HttpResponse =
-    handleMessages(JavaMapping.toScala(handlerFlow), None, compressionEnabled)
+    handleMessages(javaFlowToScala(handlerFlow), None, compressionEnabled)
 
   /**
    * Java API
@@ -215,16 +216,17 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    * @since 2.0.0
    */
   override def handleMessagesWith(
-      handlerFlow: Graph[FlowShape[jm.ws.Message, jm.ws.Message], ? <: Any],
+      handlerFlow: Graph[? <: FlowShape[? >: jm.ws.Message, ? <: jm.ws.Message], ? <: Any],
       shouldCompress: JPredicate[jm.ws.Message]): HttpResponse =
-    handleMessages(JavaMapping.toScala(handlerFlow), message => shouldCompress.test(message))
+    handleMessages(javaFlowToScala(handlerFlow), message => shouldCompress.test(message))
 
   /**
    * Java API
    */
   def handleMessagesWith(
-      handlerFlow: Graph[FlowShape[jm.ws.Message, jm.ws.Message], ? <: Any], subprotocol: String): HttpResponse =
-    handleMessages(JavaMapping.toScala(handlerFlow), subprotocol = Some(subprotocol))
+      handlerFlow: Graph[? <: FlowShape[? >: jm.ws.Message, ? <: jm.ws.Message], ? <: Any], subprotocol: String)
+      : HttpResponse =
+    handleMessages(javaFlowToScala(handlerFlow), subprotocol = Some(subprotocol))
 
   /**
    * Java API
@@ -232,10 +234,10 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    * @since 2.0.0
    */
   def handleMessagesWith(
-      handlerFlow: Graph[FlowShape[jm.ws.Message, jm.ws.Message], ? <: Any],
+      handlerFlow: Graph[? <: FlowShape[? >: jm.ws.Message, ? <: jm.ws.Message], ? <: Any],
       subprotocol: String,
       compressionEnabled: Boolean): HttpResponse =
-    handleMessages(JavaMapping.toScala(handlerFlow), subprotocol = Some(subprotocol), compressionEnabled)
+    handleMessages(javaFlowToScala(handlerFlow), subprotocol = Some(subprotocol), compressionEnabled)
 
   /**
    * Java API
@@ -243,16 +245,16 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    * @since 2.0.0
    */
   override def handleMessagesWith(
-      handlerFlow: Graph[FlowShape[jm.ws.Message, jm.ws.Message], ? <: Any],
+      handlerFlow: Graph[? <: FlowShape[? >: jm.ws.Message, ? <: jm.ws.Message], ? <: Any],
       subprotocol: String,
       shouldCompress: JPredicate[jm.ws.Message]): HttpResponse =
-    handleMessages(JavaMapping.toScala(handlerFlow), Some(subprotocol), message => shouldCompress.test(message))
+    handleMessages(javaFlowToScala(handlerFlow), Some(subprotocol), message => shouldCompress.test(message))
 
   /**
    * Java API
    */
-  def handleMessagesWith(inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
-      outSource: Graph[SourceShape[jm.ws.Message], ? <: Any]): HttpResponse =
+  def handleMessagesWith(inSink: Graph[? <: SinkShape[? >: jm.ws.Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: jm.ws.Message], ? <: Any]): HttpResponse =
     handleMessages(createScalaFlow(inSink, outSource))
 
   /**
@@ -261,8 +263,8 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    * @since 2.0.0
    */
   def handleMessagesWith(
-      inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
-      outSource: Graph[SourceShape[jm.ws.Message], ? <: Any],
+      inSink: Graph[? <: SinkShape[? >: jm.ws.Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: jm.ws.Message], ? <: Any],
       compressionEnabled: Boolean): HttpResponse =
     handleMessages(createScalaFlow(inSink, outSource), None, compressionEnabled)
 
@@ -272,8 +274,8 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    * @since 2.0.0
    */
   override def handleMessagesWith(
-      inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
-      outSource: Graph[SourceShape[jm.ws.Message], ? <: Any],
+      inSink: Graph[? <: SinkShape[? >: jm.ws.Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: jm.ws.Message], ? <: Any],
       shouldCompress: JPredicate[jm.ws.Message]): HttpResponse =
     handleMessages(createScalaFlow(inSink, outSource), message => shouldCompress.test(message))
 
@@ -283,8 +285,8 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    * @since 2.0.0
    */
   def handleMessagesWith(
-      inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
-      outSource: Graph[SourceShape[jm.ws.Message], ? <: Any],
+      inSink: Graph[? <: SinkShape[? >: jm.ws.Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: jm.ws.Message], ? <: Any],
       subprotocol: String): HttpResponse =
     handleMessages(createScalaFlow(inSink, outSource), subprotocol = Some(subprotocol))
 
@@ -294,8 +296,8 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    * @since 2.0.0
    */
   def handleMessagesWith(
-      inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
-      outSource: Graph[SourceShape[jm.ws.Message], ? <: Any],
+      inSink: Graph[? <: SinkShape[? >: jm.ws.Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: jm.ws.Message], ? <: Any],
       subprotocol: String,
       compressionEnabled: Boolean): HttpResponse =
     handleMessages(createScalaFlow(inSink, outSource), subprotocol = Some(subprotocol), compressionEnabled)
@@ -306,14 +308,21 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
    * @since 2.0.0
    */
   override def handleMessagesWith(
-      inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
-      outSource: Graph[SourceShape[jm.ws.Message], ? <: Any],
+      inSink: Graph[? <: SinkShape[? >: jm.ws.Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: jm.ws.Message], ? <: Any],
       subprotocol: String,
       shouldCompress: JPredicate[jm.ws.Message]): HttpResponse =
     handleMessages(createScalaFlow(inSink, outSource), Some(subprotocol), message => shouldCompress.test(message))
 
-  private def createScalaFlow(inSink: Graph[SinkShape[jm.ws.Message], ? <: Any],
-      outSource: Graph[SourceShape[jm.ws.Message], ? <: Any]): Graph[FlowShape[Message, Message], NotUsed] =
-    JavaMapping.toScala(scaladsl.Flow.fromSinkAndSourceMat(inSink, outSource)(scaladsl.Keep.none): Graph[FlowShape[
+  // Graph and the stream shapes are declared variant, so widening the wildcard types to the exact types is safe
+  // (Scala 3 does not infer this subtyping for the nested wildcards, hence the casts)
+  private def javaFlowToScala(handlerFlow: Graph[? <: FlowShape[? >: jm.ws.Message, ? <: jm.ws.Message], ? <: Any])
+      : Graph[FlowShape[Message, Message], Any] =
+    JavaMapping.toScala(handlerFlow.asInstanceOf[Graph[FlowShape[jm.ws.Message, jm.ws.Message], Any]])
+
+  private def createScalaFlow(inSink: Graph[? <: SinkShape[? >: jm.ws.Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: jm.ws.Message], ? <: Any]): Graph[FlowShape[Message, Message], NotUsed] =
+    JavaMapping.toScala(scaladsl.Flow.fromSinkAndSourceMat(inSink.asInstanceOf[Graph[SinkShape[jm.ws.Message], Any]],
+      outSource.asInstanceOf[Graph[SourceShape[jm.ws.Message], Any]])(scaladsl.Keep.none): Graph[FlowShape[
         jm.ws.Message, jm.ws.Message], NotUsed])
 }
