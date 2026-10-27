@@ -256,16 +256,16 @@ abstract class RouteDirectives extends RespondWithDirectives {
    * Completes the request by marshalling the given future value into an http response.
    */
   @CorrespondsTo("complete")
-  def completeWithFuture(value: CompletionStage[HttpResponse]) = RouteAdapter {
-    D.complete(value.asScala.fast.map((h: HttpResponse) => h.asScala).recover(unwrapCompletionException))
+  def completeWithFuture(value: CompletionStage[? <: HttpResponse]) = RouteAdapter {
+    D.complete(widen(value).asScala.fast.map((h: HttpResponse) => h.asScala).recover(unwrapCompletionException))
   }
 
   /**
    * Completes the request by marshalling the given future value into an http response.
    */
   @CorrespondsTo("complete")
-  def completeOKWithFuture(value: CompletionStage[RequestEntity]) = RouteAdapter {
-    D.complete(value.asScala.fast.map((r: RequestEntity) => r.asScala).recover(unwrapCompletionException))
+  def completeOKWithFuture(value: CompletionStage[? <: RequestEntity]) = RouteAdapter {
+    D.complete(widen(value).asScala.fast.map((r: RequestEntity) => r.asScala).recover(unwrapCompletionException))
   }
 
   /**
@@ -280,8 +280,8 @@ abstract class RouteDirectives extends RespondWithDirectives {
    * Completes the request using the given future status code.
    */
   @CorrespondsTo("complete")
-  def completeWithFutureStatus(status: CompletionStage[StatusCode]): Route = RouteAdapter {
-    D.complete(status.asScala.fast.map((s: StatusCode) => s.asScala).recover(unwrapCompletionException))
+  def completeWithFutureStatus(status: CompletionStage[? <: StatusCode]): Route = RouteAdapter {
+    D.complete(widen(status).asScala.fast.map((s: StatusCode) => s.asScala).recover(unwrapCompletionException))
   }
 
   /**
@@ -318,14 +318,17 @@ abstract class RouteDirectives extends RespondWithDirectives {
     RouteAdapter { ctx => FastFuture.successful(RouteResult.Complete(handler(ctx.request).asScala)) }
   }
 
-  // TODO: This might need to be raised as an issue to scala-java8-compat instead.
-  // Right now, having this in Java:
-  //     CompletableFuture.supplyAsync(() -> { throw new IllegalArgumentException("always failing"); })
-  // will in fact fail the future with CompletionException.
   // java.lang.Iterable is read-only, so widening the element type is safe
   private def headersAsScala(headers: java.lang.Iterable[? <: HttpHeader]) =
     headers.asInstanceOf[java.lang.Iterable[HttpHeader]].asScala
 
+  // the stage is only read, so widening its result type is safe
+  private def widen[T](stage: CompletionStage[? <: T]): CompletionStage[T] = stage.asInstanceOf[CompletionStage[T]]
+
+  // TODO: This might need to be raised as an issue to scala-java8-compat instead.
+  // Right now, having this in Java:
+  //     CompletableFuture.supplyAsync(() -> { throw new IllegalArgumentException("always failing"); })
+  // will in fact fail the future with CompletionException.
   private def unwrapCompletionException[T]: PartialFunction[Throwable, T] = {
     case x: CompletionException if x.getCause ne null =>
       throw x.getCause
