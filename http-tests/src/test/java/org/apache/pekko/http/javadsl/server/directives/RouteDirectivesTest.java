@@ -13,7 +13,15 @@
 
 package org.apache.pekko.http.javadsl.server.directives;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
@@ -152,8 +160,31 @@ public class RouteDirectivesTest extends JUnitJupiterRouteTest {
   }
 
   @Test
-  public void testCompleteAcceptsIterableOfHeaderSubtype() {
-    List<RawHeader> headers = List.of(RawHeader.create("x-a", "1"));
+  public void testCompleteAcceptsAnyIterableOfHeaderSubtype() {
+    List<RawHeader> headers = List.of(RawHeader.create("x-a", "1"), RawHeader.create("x-b", "2"));
+
+    iterablesOf(headers)
+        .forEach(
+            (shape, iterable) ->
+                assertDoesNotThrow(
+                    () -> assertCompleteOverloadsRespondWithHeaders(iterable),
+                    "complete/entityToResponse with " + shape));
+  }
+
+  @Test
+  public void testCompleteWithDifferentHeaderTypes() {
+    Location location = Location.create("/elsewhere");
+    List<HttpHeader> headers = List.of(location, RawHeader.create("x-a", "1"));
+
+    testRoute(complete(StatusCodes.CREATED, headers, HttpEntities.create("created")))
+        .run(HttpRequest.GET("/"))
+        .assertStatusCode(StatusCodes.CREATED)
+        .assertHeaderExists(location)
+        .assertHeaderExists("x-a", "1")
+        .assertEntity("created");
+  }
+
+  private void assertCompleteOverloadsRespondWithHeaders(Iterable<? extends HttpHeader> headers) {
     ResponseEntity responseEntity = HttpEntities.create("response");
     RequestEntity requestEntity = HttpEntities.create("request");
 
@@ -197,7 +228,20 @@ public class RouteDirectivesTest extends JUnitJupiterRouteTest {
           .run(HttpRequest.GET("/" + e[0]))
           .assertStatusCode(Integer.parseInt(e[1]))
           .assertHeaderExists("x-a", "1")
+          .assertHeaderExists("x-b", "2")
           .assertEntity(e[2]);
     }
+  }
+
+  /** The same elements as different kinds of {@link Iterable}, keyed by a description. */
+  private static <T> Map<String, Iterable<T>> iterablesOf(List<T> items) {
+    Map<String, Iterable<T>> shapes = new LinkedHashMap<>();
+    shapes.put("ArrayList", new ArrayList<>(items));
+    shapes.put("LinkedHashSet", new LinkedHashSet<>(items));
+    shapes.put("ArrayDeque", new ArrayDeque<>(items));
+    shapes.put("unmodifiable Collection", Collections.unmodifiableCollection(items));
+    // not a java.util.Collection at all, only an Iterable
+    shapes.put("non-Collection Iterable", items::iterator);
+    return shapes;
   }
 }
