@@ -107,7 +107,7 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
     self.copy(websocketSettings = websocketSettings.withRandomFactoryFactory(() => newValue.get()))
   def withWebsocketSettings(newValue: WebSocketSettings): ClientConnectionSettings =
     self.copy(websocketSettings = newValue.asScala)
-  def withSocketOptions(newValue: java.lang.Iterable[SocketOption]): ClientConnectionSettings =
+  def withSocketOptions(newValue: java.lang.Iterable[? <: SocketOption]): ClientConnectionSettings =
     self.copy(socketOptions = newValue.asScala.toList)
   def withParserSettings(newValue: ParserSettings): ClientConnectionSettings =
     self.copy(parserSettings = newValue.asScala)
