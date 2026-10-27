@@ -136,10 +136,10 @@ public interface HttpMessage {
     Self addHeader(HttpHeader header);
 
     /** Returns a copy of this message with the given headers added to the list of headers. */
-    Self addHeaders(Iterable<HttpHeader> headers);
+    Self addHeaders(Iterable<? extends HttpHeader> headers);
 
     /** Returns a copy of this message with new headers. */
-    Self withHeaders(Iterable<HttpHeader> headers);
+    Self withHeaders(Iterable<? extends HttpHeader> headers);
 
     <T> Self addAttribute(AttributeKey<T> key, T value);
 
