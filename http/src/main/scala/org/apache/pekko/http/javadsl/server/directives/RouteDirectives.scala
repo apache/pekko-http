@@ -257,7 +257,8 @@ abstract class RouteDirectives extends RespondWithDirectives {
    */
   @CorrespondsTo("complete")
   def completeWithFuture(value: CompletionStage[? <: HttpResponse]) = RouteAdapter {
-    D.complete(widen(value).asScala.fast.map((h: HttpResponse) => h.asScala).recover(unwrapCompletionException))
+    D.complete(
+      widen[HttpResponse](value).asScala.fast.map((h: HttpResponse) => h.asScala).recover(unwrapCompletionException))
   }
 
   /**
@@ -265,7 +266,8 @@ abstract class RouteDirectives extends RespondWithDirectives {
    */
   @CorrespondsTo("complete")
   def completeOKWithFuture(value: CompletionStage[? <: RequestEntity]) = RouteAdapter {
-    D.complete(widen(value).asScala.fast.map((r: RequestEntity) => r.asScala).recover(unwrapCompletionException))
+    D.complete(
+      widen[RequestEntity](value).asScala.fast.map((r: RequestEntity) => r.asScala).recover(unwrapCompletionException))
   }
 
   /**
@@ -281,7 +283,8 @@ abstract class RouteDirectives extends RespondWithDirectives {
    */
   @CorrespondsTo("complete")
   def completeWithFutureStatus(status: CompletionStage[? <: StatusCode]): Route = RouteAdapter {
-    D.complete(widen(status).asScala.fast.map((s: StatusCode) => s.asScala).recover(unwrapCompletionException))
+    D.complete(
+      widen[StatusCode](status).asScala.fast.map((s: StatusCode) => s.asScala).recover(unwrapCompletionException))
   }
 
   /**
