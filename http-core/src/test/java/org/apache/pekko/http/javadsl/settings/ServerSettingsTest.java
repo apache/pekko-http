@@ -17,7 +17,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.io.Inet;
+import org.apache.pekko.io.TcpSO;
 import org.junit.jupiter.api.Test;
 
 public class ServerSettingsTest {
@@ -69,5 +73,18 @@ public class ServerSettingsTest {
 
     ServerSettings updated = settings.withStreamCancellationDelay(Duration.ofSeconds(2));
     assertEquals(Duration.ofSeconds(2), updated.getStreamCancellationDelay());
+  }
+
+  @Test
+  public void testWithSocketOptionsAcceptsIterableOfSocketOptionSubtype() {
+    // TcpSO factories return concrete subtypes such as Tcp.SO.KeepAlive
+    List<? extends Inet.SocketOption> options =
+        List.of(TcpSO.keepAlive(true), TcpSO.receiveBufferSize(1024));
+
+    ServerSettings updated = ServerSettings.create("").withSocketOptions(options);
+
+    List<Inet.SocketOption> actual = new ArrayList<>();
+    updated.getSocketOptions().forEach(actual::add);
+    assertEquals(options, actual);
   }
 }

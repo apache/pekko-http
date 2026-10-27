@@ -84,7 +84,7 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   def withVerboseErrorMessages(newValue: Boolean): ServerSettings = self.copy(verboseErrorMessages = newValue)
   def withResponseHeaderSizeHint(newValue: Int): ServerSettings = self.copy(responseHeaderSizeHint = newValue)
   def withBacklog(newValue: Int): ServerSettings = self.copy(backlog = newValue)
-  def withSocketOptions(newValue: java.lang.Iterable[SocketOption]): ServerSettings =
+  def withSocketOptions(newValue: java.lang.Iterable[? <: SocketOption]): ServerSettings =
     self.copy(socketOptions = newValue.asScala.toList)
   def withDefaultHostHeader(newValue: Host): ServerSettings = self.copy(defaultHostHeader = newValue.asScala)
   def withParserSettings(newValue: ParserSettings): ServerSettings = self.copy(parserSettings = newValue.asScala)
