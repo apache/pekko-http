@@ -19,6 +19,12 @@ package org.apache.pekko.http.javadsl.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
@@ -78,5 +84,71 @@ public class TrailerTest {
 
     assertEquals(List.of(new Tuple2<>("a", "1"), new Tuple2<>("b", "2")), headersOf(added));
     assertEquals(List.of(new Tuple2<>("b", "2")), headersOf(replaced));
+  }
+
+  @Test
+  public void addAndWithHeadersAcceptAnyIterable() {
+    List<RawHeader> headers = List.of(RawHeader.create("b", "2"), RawHeader.create("c", "3"));
+
+    iterablesOf(headers)
+        .forEach(
+            (shape, iterable) -> {
+              Trailer added =
+                  Trailer.create().addHeader(RawHeader.create("a", "1")).addHeaders(iterable);
+              Trailer replaced =
+                  Trailer.create().addHeader(RawHeader.create("a", "1")).withHeaders(iterable);
+
+              assertEquals(
+                  List.of(new Tuple2<>("a", "1"), new Tuple2<>("b", "2"), new Tuple2<>("c", "3")),
+                  headersOf(added),
+                  "addHeaders(" + shape + ")");
+              assertEquals(
+                  List.of(new Tuple2<>("b", "2"), new Tuple2<>("c", "3")),
+                  headersOf(replaced),
+                  "withHeaders(" + shape + ")");
+            });
+  }
+
+  @Test
+  public void addAndWithHeadersTraverseTheIterableOnce() {
+    List<RawHeader> headers = List.of(RawHeader.create("a", "1"));
+
+    assertEquals(
+        List.of(new Tuple2<>("a", "1")), headersOf(Trailer.create().addHeaders(oneShot(headers))));
+    assertEquals(
+        List.of(new Tuple2<>("a", "1")), headersOf(Trailer.create().withHeaders(oneShot(headers))));
+  }
+
+  @Test
+  public void withHeadersOfEmptyIterableRemovesAllHeaders() {
+    Trailer trailer =
+        Trailer.create()
+            .addHeader(RawHeader.create("a", "1"))
+            .withHeaders(Collections.<RawHeader>emptySet());
+
+    assertEquals(List.of(), headersOf(trailer));
+  }
+
+  /** The same elements as different kinds of {@link Iterable}, keyed by a description. */
+  private static <T> Map<String, Iterable<T>> iterablesOf(List<T> items) {
+    Map<String, Iterable<T>> shapes = new LinkedHashMap<>();
+    shapes.put("ArrayList", new ArrayList<>(items));
+    shapes.put("LinkedHashSet", new LinkedHashSet<>(items));
+    shapes.put("ArrayDeque", new ArrayDeque<>(items));
+    shapes.put("unmodifiable Collection", Collections.unmodifiableCollection(items));
+    // not a java.util.Collection at all, only an Iterable
+    shapes.put("non-Collection Iterable", items::iterator);
+    return shapes;
+  }
+
+  /** An {@link Iterable} that fails if it is traversed more than once. */
+  private static <T> Iterable<T> oneShot(List<T> items) {
+    AtomicBoolean traversed = new AtomicBoolean();
+    return () -> {
+      if (traversed.getAndSet(true)) {
+        throw new IllegalStateException("Iterable traversed more than once");
+      }
+      return items.iterator();
+    };
   }
 }
