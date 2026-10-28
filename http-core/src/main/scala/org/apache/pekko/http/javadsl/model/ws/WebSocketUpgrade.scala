@@ -40,7 +40,7 @@ trait WebSocketUpgrade {
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
    * use the given handlerFlow to handle WebSocket messages from the client.
    */
-  def handleMessagesWith(handlerFlow: Graph[FlowShape[Message, Message], ? <: Any]): HttpResponse
+  def handleMessagesWith(handlerFlow: Graph[? <: FlowShape[? >: Message, ? <: Message], ? <: Any]): HttpResponse
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
@@ -51,7 +51,8 @@ trait WebSocketUpgrade {
    * @since 2.0.0
    */
   def handleMessagesWith(
-      handlerFlow: Graph[FlowShape[Message, Message], ? <: Any], compressionEnabled: Boolean): HttpResponse
+      handlerFlow: Graph[? <: FlowShape[? >: Message, ? <: Message], ? <: Any], compressionEnabled: Boolean)
+      : HttpResponse
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
@@ -69,7 +70,8 @@ trait WebSocketUpgrade {
    * @since 2.0.0
    */
   def handleMessagesWith(
-      handlerFlow: Graph[FlowShape[Message, Message], ? <: Any], shouldCompress: Predicate[Message]): HttpResponse =
+      handlerFlow: Graph[? <: FlowShape[? >: Message, ? <: Message], ? <: Any], shouldCompress: Predicate[Message])
+      : HttpResponse =
     handleMessagesWith(handlerFlow)
 
   /**
@@ -77,7 +79,8 @@ trait WebSocketUpgrade {
    * use the given handlerFlow to handle WebSocket messages from the client. The given subprotocol must be one
    * of the ones offered by the client.
    */
-  def handleMessagesWith(handlerFlow: Graph[FlowShape[Message, Message], ? <: Any], subprotocol: String): HttpResponse
+  def handleMessagesWith(handlerFlow: Graph[? <: FlowShape[? >: Message, ? <: Message], ? <: Any], subprotocol: String)
+      : HttpResponse
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
@@ -89,7 +92,7 @@ trait WebSocketUpgrade {
    * @since 2.0.0
    */
   def handleMessagesWith(
-      handlerFlow: Graph[FlowShape[Message, Message], ? <: Any],
+      handlerFlow: Graph[? <: FlowShape[? >: Message, ? <: Message], ? <: Any],
       subprotocol: String,
       compressionEnabled: Boolean): HttpResponse
 
@@ -110,7 +113,7 @@ trait WebSocketUpgrade {
    * @since 2.0.0
    */
   def handleMessagesWith(
-      handlerFlow: Graph[FlowShape[Message, Message], ? <: Any],
+      handlerFlow: Graph[? <: FlowShape[? >: Message, ? <: Message], ? <: Any],
       subprotocol: String,
       shouldCompress: Predicate[Message]): HttpResponse =
     handleMessagesWith(handlerFlow, subprotocol)
@@ -120,7 +123,8 @@ trait WebSocketUpgrade {
    * use the given inSink to handle WebSocket messages from the client and the given outSource to send messages to the client.
    */
   def handleMessagesWith(
-      inSink: Graph[SinkShape[Message], ? <: Any], outSource: Graph[SourceShape[Message], ? <: Any]): HttpResponse
+      inSink: Graph[? <: SinkShape[? >: Message], ? <: Any], outSource: Graph[? <: SourceShape[? <: Message], ? <: Any])
+      : HttpResponse
 
   /**
    * Returns a response that can be used to answer a WebSocket handshake request. The connection will afterwards
@@ -130,7 +134,8 @@ trait WebSocketUpgrade {
    *
    * @since 2.0.0
    */
-  def handleMessagesWith(inSink: Graph[SinkShape[Message], ? <: Any], outSource: Graph[SourceShape[Message], ? <: Any],
+  def handleMessagesWith(inSink: Graph[? <: SinkShape[? >: Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: Message], ? <: Any],
       compressionEnabled: Boolean): HttpResponse
 
   /**
@@ -150,8 +155,8 @@ trait WebSocketUpgrade {
    * @since 2.0.0
    */
   def handleMessagesWith(
-      inSink: Graph[SinkShape[Message], ? <: Any],
-      outSource: Graph[SourceShape[Message], ? <: Any],
+      inSink: Graph[? <: SinkShape[? >: Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: Message], ? <: Any],
       shouldCompress: Predicate[Message]): HttpResponse =
     handleMessagesWith(inSink, outSource)
 
@@ -161,7 +166,8 @@ trait WebSocketUpgrade {
    *
    * The given subprotocol must be one of the ones offered by the client.
    */
-  def handleMessagesWith(inSink: Graph[SinkShape[Message], ? <: Any], outSource: Graph[SourceShape[Message], ? <: Any],
+  def handleMessagesWith(inSink: Graph[? <: SinkShape[? >: Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: Message], ? <: Any],
       subprotocol: String): HttpResponse
 
   /**
@@ -173,7 +179,8 @@ trait WebSocketUpgrade {
    *
    * @since 2.0.0
    */
-  def handleMessagesWith(inSink: Graph[SinkShape[Message], ? <: Any], outSource: Graph[SourceShape[Message], ? <: Any],
+  def handleMessagesWith(inSink: Graph[? <: SinkShape[? >: Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: Message], ? <: Any],
       subprotocol: String, compressionEnabled: Boolean): HttpResponse
 
   /**
@@ -193,8 +200,8 @@ trait WebSocketUpgrade {
    * @since 2.0.0
    */
   def handleMessagesWith(
-      inSink: Graph[SinkShape[Message], ? <: Any],
-      outSource: Graph[SourceShape[Message], ? <: Any],
+      inSink: Graph[? <: SinkShape[? >: Message], ? <: Any],
+      outSource: Graph[? <: SourceShape[? <: Message], ? <: Any],
       subprotocol: String,
       shouldCompress: Predicate[Message]): HttpResponse =
     handleMessagesWith(inSink, outSource, subprotocol)

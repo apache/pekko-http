@@ -14,7 +14,7 @@
 package docs.http.javadsl;
 
 import java.net.InetSocketAddress;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -145,14 +145,14 @@ public class WebSocketClientExampleTest {
     // #half-closed-WebSocket-finite
 
     // emit "one" and then "two" and then keep the source from completing
-    final Source<Message, CompletableFuture<Optional<Message>>> source =
-        Source.from(Arrays.<Message>asList(TextMessage.create("one"), TextMessage.create("two")))
+    final Source<TextMessage, CompletableFuture<Optional<TextMessage>>> source =
+        Source.from(List.of(TextMessage.create("one"), TextMessage.create("two")))
             .concatMat(Source.maybe(), Keep.right());
 
-    final Flow<Message, Message, CompletableFuture<Optional<Message>>> flow =
+    final Flow<Message, TextMessage, CompletableFuture<Optional<TextMessage>>> flow =
         Flow.fromSinkAndSourceMat(Sink.foreach(System.out::println), source, Keep.right());
 
-    final Pair<CompletionStage<WebSocketUpgradeResponse>, CompletableFuture<Optional<Message>>>
+    final Pair<CompletionStage<WebSocketUpgradeResponse>, CompletableFuture<Optional<TextMessage>>>
         pair =
             http.singleWebSocketRequest(
                 WebSocketRequest.create("ws://example.com:8080/some/path"), flow, materializer);
