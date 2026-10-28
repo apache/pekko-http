@@ -586,6 +586,11 @@ object MimaWithPrValidation extends AutoPlugin {
           (stringWriter.toString, result)
         }
 
+        val reportSignatureProblems = mimaReportSignatureProblems.value
+        def reportable(problems: List[core.Problem]): List[core.Problem] =
+          if (reportSignatureProblems) problems
+          else problems.filterNot(_.isInstanceOf[core.IncompatibleSignatureProblem])
+
         val allResults =
           mimaPreviousClassfiles.value.toSeq.map {
             case (moduleId, file) =>
@@ -605,7 +610,7 @@ object MimaWithPrValidation extends AutoPlugin {
               withLogger { logger =>
                 reportModuleErrors(
                   moduleId,
-                  problems._1, problems._2,
+                  reportable(problems._1), reportable(problems._2),
                   binary,
                   backward,
                   forward,

@@ -76,7 +76,6 @@ object Common extends AutoPlugin {
     scalacOptions ++= onlyOnScala33(Seq("-Yfuture-lazy-vals")).value,
     javacOptions ++=
       Seq("-encoding", "UTF-8", "--release", javacTarget),
-    mimaReportSignatureProblems := true,
     Compile / doc / scalacOptions --= Seq("-Xfatal-warnings"),
     Global / parallelExecution := sys.props.getOrElse("pekko.http.parallelExecution", "true") != "false")
 
@@ -98,4 +97,16 @@ object Common extends AutoPlugin {
   }
   def scalaMinorVersion: Def.Initialize[Long] = Def.setting { CrossVersion.partialVersion(scalaVersion.value).get._2 }
 
+}
+
+/**
+ * Scala 3 emits different generic signatures than Scala 2.13 (and they change between
+ * Scala 3 patch releases), so only report signature problems for Scala 2.13.
+ * Requires the sbt-pekko-build MiMa plugin so that this overrides its `mimaReportSignatureProblems := true`.
+ */
+object MiMaSignatureProblems extends AutoPlugin {
+  override def requires = com.github.pjfanning.pekkobuild.MiMa
+  override def trigger: PluginTrigger = allRequirements
+  override lazy val projectSettings = Seq(
+    mimaReportSignatureProblems := !scalaVersion.value.startsWith("3"))
 }
