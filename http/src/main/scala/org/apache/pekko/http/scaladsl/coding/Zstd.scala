@@ -24,6 +24,7 @@ import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ HttpEncoding, HttpEncodings }
+import pekko.stream.ZstdDecompressionSettings
 import pekko.stream.scaladsl.{ Compression, Flow }
 import pekko.util.ByteString
 
@@ -34,29 +35,39 @@ import pekko.util.ByteString
  *
  * zstd is implemented by pekko-stream, which needs the optional `com.github.luben:zstd-jni` dependency
  * on the classpath.
+ *
+ * RFC 9659 limits the window of the 'zstd' content coding to 8 MB: encoders must not need a larger window, and
+ * decoders only have to support up to that. So the encoder caps the window of the compression levels that
+ * would use a larger one, and the decoder rejects frames that need more than `2^windowLogMax` bytes.
+ *
+ * @param windowLogMax the log2 of the largest window the decoder accepts, 0 uses the limit of libzstd (128 MB)
  */
 @InternalApi
 private[http] final class Zstd private[http] (
     compressionLevel: Int,
     val messageFilter: HttpMessage => Boolean,
-    override val maxBytesPerChunk: Int) extends Coder {
+    override val maxBytesPerChunk: Int,
+    windowLogMax: Int) extends Coder {
   require(
     compressionLevel >= Compression.ZstdMinCompressionLevel && compressionLevel <= Compression.ZstdMaxCompressionLevel,
     s"Compression level needs to be between ${Compression.ZstdMinCompressionLevel} and " +
     s"${Compression.ZstdMaxCompressionLevel}, was $compressionLevel")
-  require(maxBytesPerChunk > 0, s"maxBytesPerChunk must be greater than 0, was $maxBytesPerChunk")
+  // validates maxBytesPerChunk and windowLogMax, and does not need zstd-jni
+  private val decompressionSettings =
+    ZstdDecompressionSettings().withMaxBytesPerChunk(maxBytesPerChunk).withWindowLogMax(windowLogMax)
 
   val encoding: HttpEncoding = HttpEncodings.zstd
 
   @nowarn("msg=deprecated")
-  private[http] def newCompressor: Compressor = new ZstdCompressor(compressionLevel)
+  private[http] def newCompressor: Compressor =
+    new ZstdCompressor(compressionLevel, Zstd.windowLogFor(compressionLevel))
 
   def withMaxBytesPerChunk(newMaxBytesPerChunk: Int): Decoder =
-    new Zstd(compressionLevel, messageFilter, newMaxBytesPerChunk)
+    new Zstd(compressionLevel, messageFilter, newMaxBytesPerChunk, windowLogMax)
 
-  def decoderFlow: Flow[ByteString, ByteString, NotUsed] = Compression.zstdDecompress(maxBytesPerChunk)
+  def decoderFlow: Flow[ByteString, ByteString, NotUsed] = Compression.zstdDecompress(decompressionSettings)
 
-  private[http] def withLevel(level: Int): Zstd = new Zstd(level, messageFilter, maxBytesPerChunk)
+  private[http] def withLevel(level: Int): Zstd = new Zstd(level, messageFilter, maxBytesPerChunk, windowLogMax)
 }
 
 /** INTERNAL API */
@@ -64,7 +75,20 @@ private[http] final class Zstd private[http] (
 private[http] object Zstd {
   val DefaultCompressionLevel: Int = Compression.ZstdDefaultCompressionLevel
 
-  val Default: Zstd = new Zstd(DefaultCompressionLevel, Encoder.DefaultFilter, Decoder.MaxBytesPerChunkDefault)
+  /** The 8 MB window that RFC 9659 allows for the 'zstd' content coding */
+  val MaxWindowLog: Int = 23
+
+  val DefaultWindowLogMax: Int = MaxWindowLog
+
+  // libzstd only uses a window larger than 8 MB from level 20 on (levels 20 to 22 use window logs 25 to 27 for
+  // large inputs), so only those are capped: setting the window log at lower levels would enlarge their window
+  private val LargestLevelWithinMaxWindow = 19
+
+  private[coding] def windowLogFor(compressionLevel: Int): Int =
+    if (compressionLevel > LargestLevelWithinMaxWindow) MaxWindowLog else 0
+
+  val Default: Zstd =
+    new Zstd(DefaultCompressionLevel, Encoder.DefaultFilter, Decoder.MaxBytesPerChunkDefault, DefaultWindowLogMax)
 }
 
 /**
@@ -75,10 +99,10 @@ private[http] object Zstd {
  */
 @InternalApi
 @nowarn("msg=deprecated")
-private[coding] class ZstdCompressor(compressionLevel: Int) extends Compressor {
+private[coding] class ZstdCompressor(compressionLevel: Int, windowLog: Int) extends Compressor {
   private var underlyingCreated = false
   private lazy val underlying = {
-    val compressor = new pekko.stream.impl.io.compression.ZstdCompressor(compressionLevel)
+    val compressor = new pekko.stream.impl.io.compression.ZstdCompressor(compressionLevel, windowLog = windowLog)
     underlyingCreated = true
     compressor
   }

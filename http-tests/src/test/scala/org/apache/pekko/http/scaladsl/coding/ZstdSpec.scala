@@ -29,7 +29,8 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest }
 import pekko.http.scaladsl.model.HttpMethods.POST
 import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncoding, HttpEncodings }
-import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.stream.ZstdCompressionSettings
+import pekko.stream.scaladsl.{ Compression, Sink, Source }
 import pekko.testkit._
 import pekko.util.ByteString
 
@@ -65,6 +66,36 @@ class ZstdSpec extends CoderSpec {
     "reject a compression level outside the zstd range" in {
       an[IllegalArgumentException] should be thrownBy Coders.Zstd(compressionLevel = 23)
     }
+    "reject a frame that needs a window larger than 8 MB" in {
+      val compressed = streamEncodeWithWindowLog(24)
+      (the[RuntimeException] thrownBy ourDecode(compressed)).ultimateCause.getMessage should include("memory")
+    }
+    "decode a frame that needs a window larger than 8 MB if windowLogMax allows it" in {
+      val compressed = streamEncodeWithWindowLog(24)
+      Coders.Zstd(windowLogMax = 24).decode(compressed).awaitResult(3.seconds.dilated) should readAs(largeText)
+      Coders.Zstd(windowLogMax = 0).decode(compressed).awaitResult(3.seconds.dilated) should readAs(largeText)
+    }
+    "reject an invalid windowLogMax" in {
+      an[IllegalArgumentException] should be thrownBy Coders.Zstd(windowLogMax = 5)
+    }
+    "not use a window larger than 8 MB at the highest compression level" in {
+      val coder = Coders.Zstd(compressionLevel = Compression.ZstdMaxCompressionLevel)
+      // several elements, so that the size is unknown when the frame header is written and the level's own
+      // window (2^27 for level 22) would be declared without the cap
+      val compressed = Source(largeTextBytes.grouped(1000).toVector)
+        .via(coder.encoderFlow)
+        .runWith(Sink.fold(ByteString.empty)(_ ++ _))
+        .awaitResult(3.seconds.dilated)
+      Coders.Zstd.decode(compressed).awaitResult(3.seconds.dilated) should readAs(largeText)
+      zstdFrameWindowSize(compressed) should be <= (1L << Zstd.MaxWindowLog)
+
+      // without the cap, the level uses a larger window
+      val uncapped = Source(largeTextBytes.grouped(1000).toVector)
+        .via(Compression.zstd(ZstdCompressionSettings().withLevel(Compression.ZstdMaxCompressionLevel)))
+        .runWith(Sink.fold(ByteString.empty)(_ ++ _))
+        .awaitResult(3.seconds.dilated)
+      zstdFrameWindowSize(uncapped) should be > (1L << Zstd.MaxWindowLog)
+    }
     "close the compressor when encoding completes" in {
       val compressor = new TrackingZstdCompressor
       Source.single(smallTextBytes)
@@ -85,6 +116,23 @@ class ZstdSpec extends CoderSpec {
     }
   }
 
+  // compressed in several elements, so that the frame declares the window instead of the content size
+  private def streamEncodeWithWindowLog(windowLog: Int): ByteString =
+    Source(largeTextBytes.grouped(1000).toVector)
+      .via(Compression.zstd(ZstdCompressionSettings().withWindowLog(windowLog)))
+      .runWith(Sink.fold(ByteString.empty)(_ ++ _))
+      .awaitResult(3.seconds.dilated)
+
+  /** The window size declared by the Window_Descriptor of a zstd frame header (RFC 8878, section 3.1.1.1.2) */
+  private def zstdFrameWindowSize(frame: ByteString): Long = {
+    val frameHeaderDescriptor = frame(4)
+    val singleSegment = (frameHeaderDescriptor & 0x20) != 0
+    singleSegment shouldEqual false
+    val windowDescriptor = frame(5) & 0xFF
+    val windowBase = 1L << (10 + (windowDescriptor >> 3))
+    windowBase + (windowBase / 8) * (windowDescriptor & 0x7)
+  }
+
   @nowarn("msg=deprecated")
   private def encoderWith(compressor: Compressor): Encoder =
     new Encoder {
@@ -93,7 +141,7 @@ class ZstdSpec extends CoderSpec {
       override private[http] def newCompressor: Compressor = compressor
     }
 
-  private class TrackingZstdCompressor extends ZstdCompressor(Zstd.DefaultCompressionLevel) {
+  private class TrackingZstdCompressor extends ZstdCompressor(Zstd.DefaultCompressionLevel, windowLog = 0) {
     @volatile var cleanupCalls = 0
 
     private[coding] override def cleanup(): Unit = {

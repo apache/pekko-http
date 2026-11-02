@@ -6,11 +6,12 @@ The [HTTP spec](https://tools.ietf.org/html/rfc7231#section-3.1.2.1) defines a `
 Currently, Apache Pekko HTTP supports the compression and decompression of HTTP requests and responses with the `gzip`,
 `deflate` or `zstd` encodings.
 
-`zstd` support needs the optional `com.github.luben:zstd-jni` dependency on the classpath, so it is not one of the default
-encodings and has to be requested explicitly, for example with
+`zstd` support needs the optional `com.github.luben:zstd-jni` dependency (1.5.7-25 or later) on the classpath, so it is
+not one of the default encodings and has to be requested explicitly, for example with
 @ref[encodeResponseWith](../routing-dsl/directives/coding-directives/encodeResponseWith.md) and
 @ref[decodeRequestWith](../routing-dsl/directives/coding-directives/decodeRequestWith.md). Compression dictionaries are not
-supported.
+supported. As required by [RFC 9659](https://www.rfc-editor.org/rfc/rfc9659), `zstd` does not compress with a window larger
+than 8 MB, and by default does not decode messages that need a larger window.
 The core logic for this lives in the @scala[@scaladoc[org.apache.pekko.http.scaladsl.coding](org.apache.pekko.http.scaladsl.coding.index) package.]@java[@javadoc[org.apache.pekko.http.javadsl.coding.Coder](org.apache.pekko.http.javadsl.coding.Coder) enum class.]
 
 ## Server side
