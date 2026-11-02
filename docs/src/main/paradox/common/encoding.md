@@ -3,8 +3,14 @@
 The [HTTP spec](https://tools.ietf.org/html/rfc7231#section-3.1.2.1) defines a `Content-Encoding` header, which signifies whether the entity body of an HTTP message is
 "encoded" and, if so, by which algorithm. The only commonly used content encodings are compression algorithms.
 
-Currently, Apache Pekko HTTP supports the compression and decompression of HTTP requests and responses with the `gzip` or
-`deflate` encodings.
+Currently, Apache Pekko HTTP supports the compression and decompression of HTTP requests and responses with the `gzip`,
+`deflate` or `zstd` encodings.
+
+`zstd` support needs the optional `com.github.luben:zstd-jni` dependency on the classpath, so it is not one of the default
+encodings and has to be requested explicitly, for example with
+@ref[encodeResponseWith](../routing-dsl/directives/coding-directives/encodeResponseWith.md) and
+@ref[decodeRequestWith](../routing-dsl/directives/coding-directives/decodeRequestWith.md). Compression dictionaries are not
+supported.
 The core logic for this lives in the @scala[@scaladoc[org.apache.pekko.http.scaladsl.coding](org.apache.pekko.http.scaladsl.coding.index) package.]@java[@javadoc[org.apache.pekko.http.javadsl.coding.Coder](org.apache.pekko.http.javadsl.coding.Coder) enum class.]
 
 ## Server side
@@ -19,9 +25,11 @@ a hint whether content of a given media type would benefit from compression.
 
 ## Client side
 
-There is currently no high-level or automatic support for decoding responses on the client-side.
+Responses are not decoded automatically on the client-side.
 
-The following example shows how to decode responses manually based on the `Content-Encoding` header:
+@scala[`Coders.decodeMessage`]@java[`Coder.decodeResponse`] decodes a response with the coder that matches its `Content-Encoding`
+header. A response whose encoding is not supported by any of the given coders is returned unchanged, with its
+`Content-Encoding` header kept:
 
 Scala
 :   @@snip [HttpClientDecodingExampleSpec.scala](/docs/src/test/scala/docs/http/scaladsl/HttpClientDecodingExampleSpec.scala) { #single-request-decoding-example }

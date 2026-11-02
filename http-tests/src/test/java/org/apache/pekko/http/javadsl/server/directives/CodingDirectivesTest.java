@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
 import org.apache.pekko.http.javadsl.model.headers.ContentEncoding;
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
@@ -126,5 +127,34 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
         .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
         .toCompletableFuture()
         .get(); // Wait for result
+  }
+
+  @Test
+  public void testDecodeResponseWithMatchingCoder() throws Exception {
+    for (Coder coder : List.of(Coder.Zstd, Coder.Gzip, Coder.Deflate)) {
+      HttpResponse encoded = coder.encodeMessage(HttpResponse.create().withEntity("tester"));
+      Assertions.assertEquals(coder._underlyingScalaCoder().encoding(), encoded.encoding());
+
+      HttpResponse decoded = Coder.decodeResponse(encoded, Coder.Zstd, Coder.Gzip, Coder.Deflate);
+      Assertions.assertEquals(HttpEncodings.IDENTITY, decoded.encoding());
+      Assertions.assertEquals(
+          "tester",
+          decoded
+              .entity()
+              .toStrict(3000, materializer())
+              .toCompletableFuture()
+              .get(3, TimeUnit.SECONDS)
+              .getData()
+              .utf8String());
+    }
+  }
+
+  @Test
+  public void testDecodeResponseLeavesUnsupportedEncodingUnchanged() {
+    HttpResponse encoded = Coder.Zstd.encodeMessage(HttpResponse.create().withEntity("tester"));
+    // zstd is not one of the default coders
+    HttpResponse decoded = Coder.decodeResponse(encoded);
+    Assertions.assertEquals(HttpEncodings.ZSTD, decoded.encoding());
+    Assertions.assertEquals(encoded, decoded);
   }
 }
