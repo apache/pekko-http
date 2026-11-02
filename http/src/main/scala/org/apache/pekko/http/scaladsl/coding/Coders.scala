@@ -34,5 +34,25 @@ object Coders {
 
   def NoCoding: Coder = pekko.http.scaladsl.coding.NoCoding
 
+  /**
+   * A coder for the 'zstd' encoding. It is not one of the [[DefaultCoders]], as it needs the optional
+   * `com.github.luben:zstd-jni` dependency on the classpath.
+   *
+   * @since 2.0.0
+   */
+  def Zstd: Coder = pekko.http.scaladsl.coding.Zstd.Default
+
+  /**
+   * A coder for the 'zstd' encoding with a custom message filter and compression level, see [[Zstd]].
+   *
+   * @param compressionLevel must be between `Compression.ZstdMinCompressionLevel` and
+   *                         `Compression.ZstdMaxCompressionLevel` of pekko-stream
+   * @since 2.0.0
+   */
+  def Zstd(
+      messageFilter: HttpMessage => Boolean = Encoder.DefaultFilter,
+      compressionLevel: Int = pekko.http.scaladsl.coding.Zstd.DefaultCompressionLevel): Coder =
+    new Zstd(compressionLevel, messageFilter, Decoder.MaxBytesPerChunkDefault)
+
   val DefaultCoders: Seq[Coder] = Seq(Gzip, Deflate, NoCoding)
 }

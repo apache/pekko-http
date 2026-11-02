@@ -19,6 +19,7 @@ import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.scaladsl.coding.Deflate$;
 import org.apache.pekko.http.scaladsl.coding.Gzip$;
 import org.apache.pekko.http.scaladsl.coding.NoCoding$;
+import org.apache.pekko.http.scaladsl.coding.Zstd$;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.util.ByteString;
 import scala.jdk.javaapi.FutureConverters;
@@ -32,7 +33,14 @@ public enum Coder {
   DeflateLevel1(Deflate$.MODULE$.withLevel(1)),
   DeflateLevel9(Deflate$.MODULE$.withLevel(9)),
   GzipLevel1(Gzip$.MODULE$.withLevel(1)),
-  GzipLevel9(Gzip$.MODULE$.withLevel(9));
+  GzipLevel9(Gzip$.MODULE$.withLevel(9)),
+  /**
+   * The 'zstd' encoding, which needs the optional {@code com.github.luben:zstd-jni} dependency on
+   * the classpath.
+   *
+   * @since 2.0.0
+   */
+  Zstd(Zstd$.MODULE$.Default());
 
   private org.apache.pekko.http.scaladsl.coding.Coder underlying;
 

@@ -304,6 +304,36 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
     }
   }
 
+  "the Zstd coder" should {
+    "decode the request content if it has encoding 'zstd'" in {
+      Post("/", compress("Hello", Zstd)) ~> `Content-Encoding`(zstd) ~> {
+        decodeRequestWith(Zstd) { echoRequestContent }
+      } ~> check { responseAs[String] shouldEqual "Hello" }
+    }
+    "encode the response content with zstd if the client accepts it" in {
+      Post() ~> `Accept-Encoding`(zstd) ~> {
+        encodeResponseWith(Zstd) { yeah }
+      } ~> check {
+        response should haveContentEncoding(zstd)
+        Zstd.decode(strictify(responseEntity).data).awaitResult(1.second.dilated) should readAs("Yeah!")
+      }
+    }
+    "prefer zstd if it is the first coder and the client accepts it" in {
+      Post() ~> `Accept-Encoding`(gzip, zstd) ~> {
+        encodeResponseWith(Zstd, Gzip) { yeah }
+      } ~> check {
+        response should haveContentEncoding(zstd)
+      }
+    }
+    "not be used by the default coders" in {
+      Post() ~> `Accept-Encoding`(zstd) ~> {
+        encodeResponse { yeah }
+      } ~> check {
+        response should haveNoContentEncoding
+      }
+    }
+  }
+
   "the encodeResponseWith(NoEncoding) directive" should {
     "produce a response if no Accept-Encoding is present in the request" in {
       Post() ~> encodeResponseWith(NoCoding) { completeOk } ~> check {
