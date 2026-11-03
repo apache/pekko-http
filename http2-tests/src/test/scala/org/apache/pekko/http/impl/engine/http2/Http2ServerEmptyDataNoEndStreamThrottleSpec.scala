@@ -20,12 +20,13 @@ package org.apache.pekko.http.impl.engine.http2
 import org.apache.pekko
 import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.http.impl.engine.http2.framing.FrameRenderer
+import pekko.http.scaladsl.model.{ HttpMethods, HttpRequest }
 import pekko.util.ByteString
 
 /**
  * Tests that DATA frames which carry no payload and do not end their stream are throttled by default. They consume
  * no flow-control window, so unlike data-carrying frames their number is not bounded by flow control, and unlike the
- * empty DATA frame that carries END_STREAM they have no legitimate use.
+ * empty DATA frame that carries END_STREAM they do not close anything.
  *
  * The config deliberately does not set `frame-type-throttle.frame-types`, so this covers the default.
  */
@@ -38,6 +39,8 @@ class Http2ServerEmptyDataNoEndStreamThrottleSpec extends Http2SpecWithMateriali
   "The Http/2 server implementation" should {
     "cancel connection when flooded with empty DATA frames that do not end the stream".inAssertAllStagesStopped(
       new TestSetup with RequestResponseProbes {
+        // open the stream first, so the flood arrives on an open stream rather than an idle one
+        network.sendRequestHEADERS(1, HttpRequest(HttpMethods.POST), endStream = false)
         val emptyDataFrame = FrameRenderer.renderFrame(FrameType.DATA, ByteFlag.Zero, 1, ByteString.empty)
         network.sendBytes(Seq.fill(1000)(emptyDataFrame).reduce(_ ++ _))
       })

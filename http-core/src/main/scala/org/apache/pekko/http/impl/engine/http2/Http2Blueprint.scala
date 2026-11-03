@@ -266,7 +266,8 @@ private[http] object Http2Blueprint {
    * As [[EmptyDataFrameThrottleName]], but only for the empty DATA frames that do not carry END_STREAM. An empty
    * DATA frame with END_STREAM is how a client closes a request body whose length it did not know up front, so it is
    * both legitimate and self-limiting: one per stream, after which the stream is half-closed. An empty DATA frame
-   * that does not end its stream has no such use, which is why this is the alias that is throttled by default.
+   * that does not end its stream is allowed by HTTP/2 but carries nothing and closes nothing, so a well-behaved peer
+   * sends few if any, which is why this is the alias that is throttled by default (see CVE-2019-9518).
    */
   private[http2] val EmptyDataFrameNoEndStreamThrottleName = "EmptyDataFrameNoEndStream"
 
