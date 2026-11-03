@@ -42,8 +42,8 @@ final class CsvEntityStreamingSupport private[pekko] (
     Framing.delimiter(ByteString("\n"), maxLineLength)
 
   override def withFramingRendererFlow(
-      framingRendererFlow: pekko.stream.javadsl.Flow[ByteString, ByteString, NotUsed]): CsvEntityStreamingSupport =
-    withFramingRenderer(framingRendererFlow.asScala)
+      framingRendererFlow: pekko.stream.javadsl.Flow[ByteString, ByteString, ?]): CsvEntityStreamingSupport =
+    withFramingRenderer(framingRendererFlow.asScala.mapMaterializedValue(_ => NotUsed))
   def withFramingRenderer(framingRendererFlow: Flow[ByteString, ByteString, NotUsed]): CsvEntityStreamingSupport =
     new CsvEntityStreamingSupport(maxLineLength, supported, contentType, framingRendererFlow, parallelism, unordered)
 

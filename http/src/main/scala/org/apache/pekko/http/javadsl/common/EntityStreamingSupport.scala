@@ -164,7 +164,7 @@ abstract class JsonEntityStreamingSupport extends common.EntityStreamingSupport 
    * `Flow[ByteString].intersperse(ByteString("["), ByteString(","), ByteString("]"))`
    * and for rendering a new-line separated CSV simply `Flow[ByteString].intersperse(ByteString("\n"))`.
    */
-  def withFramingRendererFlow(flow: Flow[ByteString, ByteString, NotUsed]): JsonEntityStreamingSupport
+  def withFramingRendererFlow(flow: Flow[ByteString, ByteString, ?]): JsonEntityStreamingSupport
 }
 
 // extends Scala base, in order to get linearization right and (as we can't go into traits here, because companion object needed)
@@ -179,5 +179,5 @@ abstract class CsvEntityStreamingSupport extends common.EntityStreamingSupport {
    * `Flow[ByteString].intersperse(ByteString("["), ByteString(","), ByteString("]"))`
    * and for rendering a new-line separated CSV simply `Flow[ByteString].intersperse(ByteString("\n"))`.
    */
-  def withFramingRendererFlow(flow: Flow[ByteString, ByteString, NotUsed]): CsvEntityStreamingSupport
+  def withFramingRendererFlow(flow: Flow[ByteString, ByteString, ?]): CsvEntityStreamingSupport
 }

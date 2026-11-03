@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.model.headers.Location;
@@ -243,5 +244,30 @@ public class RouteDirectivesTest extends JUnitJupiterRouteTest {
     // not a java.util.Collection at all, only an Iterable
     shapes.put("non-Collection Iterable", items::iterator);
     return shapes;
+  }
+
+  @Test
+  public void testCompleteWithFutureAcceptsResultSubtypes() {
+    // HttpEntities.create returns HttpEntity.Strict, e.g. as from entity.toStrict(...)
+    CompletionStage<HttpEntity.Strict> entity =
+        CompletableFuture.completedFuture(HttpEntities.create("strict"));
+    CompletionStage<? extends HttpResponse> response =
+        CompletableFuture.completedFuture(
+            HttpResponse.create().withStatus(StatusCodes.ACCEPTED).withEntity("response"));
+    CompletionStage<? extends StatusCode> status =
+        CompletableFuture.completedFuture(StatusCodes.CREATED);
+
+    TestRoute route =
+        testRoute(
+            path("entity", () -> completeOKWithFuture(entity)),
+            path("response", () -> completeWithFuture(response)),
+            path("status", () -> completeWithFutureStatus(status)));
+
+    route.run(HttpRequest.GET("/entity")).assertStatusCode(StatusCodes.OK).assertEntity("strict");
+    route
+        .run(HttpRequest.GET("/response"))
+        .assertStatusCode(StatusCodes.ACCEPTED)
+        .assertEntity("response");
+    route.run(HttpRequest.GET("/status")).assertStatusCode(StatusCodes.CREATED);
   }
 }

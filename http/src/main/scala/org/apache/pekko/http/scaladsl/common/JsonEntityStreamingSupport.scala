@@ -42,8 +42,8 @@ final class JsonEntityStreamingSupport private[pekko] (
     pekko.stream.scaladsl.JsonFraming.objectScanner(maxObjectSize)
 
   override def withFramingRendererFlow(
-      framingRendererFlow: pekko.stream.javadsl.Flow[ByteString, ByteString, NotUsed]): JsonEntityStreamingSupport =
-    withFramingRenderer(framingRendererFlow.asScala)
+      framingRendererFlow: pekko.stream.javadsl.Flow[ByteString, ByteString, ?]): JsonEntityStreamingSupport =
+    withFramingRenderer(framingRendererFlow.asScala.mapMaterializedValue(_ => NotUsed))
   def withFramingRenderer(framingRendererFlow: Flow[ByteString, ByteString, NotUsed]): JsonEntityStreamingSupport =
     new JsonEntityStreamingSupport(maxObjectSize, supported, contentType, framingRendererFlow, parallelism, unordered)
 
