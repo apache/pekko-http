@@ -102,7 +102,7 @@ abstract class ServerSettings private[pekko] () extends pekko.http.javadsl.setti
   override def withVerboseErrorMessages(newValue: Boolean): ServerSettings = self.copy(verboseErrorMessages = newValue)
   override def withResponseHeaderSizeHint(newValue: Int): ServerSettings = self.copy(responseHeaderSizeHint = newValue)
   override def withBacklog(newValue: Int): ServerSettings = self.copy(backlog = newValue)
-  override def withSocketOptions(newValue: java.lang.Iterable[SocketOption]): ServerSettings =
+  override def withSocketOptions(newValue: java.lang.Iterable[? <: SocketOption]): ServerSettings =
     self.copy(socketOptions = newValue.asScala.toList)
   override def getWebsocketSettings: WebSocketSettings = self.websocketSettings
   override def withDefaultHttpPort(newValue: Int): ServerSettings = self.copy(defaultHttpPort = newValue)
