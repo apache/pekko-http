@@ -1,0 +1,31 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+
+# Java API WebSocket handlers accept Flow<? super Message, ? extends Message, T> and the matching Graph shapes; only the generic signature changes, the erased signature is unchanged.
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.javadsl.Http.singleWebSocketRequest(org.apache.pekko.http.javadsl.model.ws.WebSocketRequest,org.apache.pekko.stream.javadsl.Flow,org.apache.pekko.http.javadsl.ConnectionContext,java.util.Optional,org.apache.pekko.http.javadsl.settings.ClientConnectionSettings,org.apache.pekko.event.LoggingAdapter,org.apache.pekko.stream.Materializer)org.apache.pekko.japi.Pair")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.javadsl.Http.singleWebSocketRequest(org.apache.pekko.http.javadsl.model.ws.WebSocketRequest,org.apache.pekko.stream.javadsl.Flow,org.apache.pekko.http.javadsl.ConnectionContext,org.apache.pekko.stream.Materializer)org.apache.pekko.japi.Pair")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.javadsl.Http.singleWebSocketRequest(org.apache.pekko.http.javadsl.model.ws.WebSocketRequest,org.apache.pekko.stream.javadsl.Flow,org.apache.pekko.stream.Materializer)org.apache.pekko.japi.Pair")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.javadsl.model.ws.WebSocket.handleWebSocketRequestWith(org.apache.pekko.http.javadsl.model.HttpRequest,org.apache.pekko.stream.javadsl.Flow)org.apache.pekko.http.javadsl.model.HttpResponse")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.javadsl.model.ws.WebSocketUpgrade.handleMessagesWith(org.apache.pekko.stream.Graph,java.lang.String)org.apache.pekko.http.javadsl.model.HttpResponse")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.javadsl.model.ws.WebSocketUpgrade.handleMessagesWith(org.apache.pekko.stream.Graph,org.apache.pekko.stream.Graph,java.lang.String)org.apache.pekko.http.javadsl.model.HttpResponse")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.javadsl.model.ws.WebSocketUpgrade.handleMessagesWith(org.apache.pekko.stream.Graph,org.apache.pekko.stream.Graph)org.apache.pekko.http.javadsl.model.HttpResponse")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.javadsl.model.ws.WebSocketUpgrade.handleMessagesWith(org.apache.pekko.stream.Graph)org.apache.pekko.http.javadsl.model.HttpResponse")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.scaladsl.model.ws.WebSocketUpgrade.handleMessagesWith(org.apache.pekko.stream.Graph,java.lang.String)org.apache.pekko.http.scaladsl.model.HttpResponse")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.scaladsl.model.ws.WebSocketUpgrade.handleMessagesWith(org.apache.pekko.stream.Graph,org.apache.pekko.stream.Graph,java.lang.String)org.apache.pekko.http.scaladsl.model.HttpResponse")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.scaladsl.model.ws.WebSocketUpgrade.handleMessagesWith(org.apache.pekko.stream.Graph,org.apache.pekko.stream.Graph)org.apache.pekko.http.scaladsl.model.HttpResponse")
+ProblemFilters.exclude[IncompatibleSignatureProblem]("org.apache.pekko.http.scaladsl.model.ws.WebSocketUpgrade.handleMessagesWith(org.apache.pekko.stream.Graph)org.apache.pekko.http.scaladsl.model.HttpResponse")

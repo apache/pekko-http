@@ -24,6 +24,7 @@ import pekko.http.javadsl.model.ws.Message
 import pekko.http.javadsl.model.ws.WebSocketUpgrade
 import pekko.http.scaladsl.model.{ ws => s }
 import pekko.http.scaladsl.server.{ Directives => D }
+import pekko.stream.{ FlowShape, Graph }
 import pekko.stream.javadsl.Flow
 import pekko.stream.scaladsl
 
@@ -55,7 +56,7 @@ abstract class WebSocketDirectives extends SecurityDirectives {
    * Handles WebSocket requests with the given handler and rejects other requests with an
    * [[ExpectedWebSocketRequestRejection]].
    */
-  def handleWebSocketMessages[T](handler: Flow[Message, Message, T]): Route = RouteAdapter {
+  def handleWebSocketMessages[T](handler: Flow[? >: Message, ? <: Message, T]): Route = RouteAdapter {
     D.handleWebSocketMessages(adapt(handler))
   }
 
@@ -68,7 +69,8 @@ abstract class WebSocketDirectives extends SecurityDirectives {
    *
    * @since 2.0.0
    */
-  def handleWebSocketMessages[T](handler: Flow[Message, Message, T], shouldCompress: Predicate[Message]): Route =
+  def handleWebSocketMessages[T](handler: Flow[? >: Message, ? <: Message, T], shouldCompress: Predicate[Message])
+      : Route =
     RouteAdapter {
       D.handleWebSocketMessages(adapt(handler), message => shouldCompress.test(message))
     }
@@ -77,7 +79,7 @@ abstract class WebSocketDirectives extends SecurityDirectives {
    * Handles WebSocket requests with the given handler if the given subprotocol is offered in the request and
    * rejects other requests with an [[ExpectedWebSocketRequestRejection]] or an [[UnsupportedWebSocketSubprotocolRejection]].
    */
-  def handleWebSocketMessagesForProtocol[T](handler: Flow[Message, Message, T], subprotocol: String): Route =
+  def handleWebSocketMessagesForProtocol[T](handler: Flow[? >: Message, ? <: Message, T], subprotocol: String): Route =
     RouteAdapter {
       D.handleWebSocketMessagesForProtocol(adapt(handler), subprotocol)
     }
@@ -92,7 +94,7 @@ abstract class WebSocketDirectives extends SecurityDirectives {
    * @since 2.0.0
    */
   def handleWebSocketMessagesForProtocol[T](
-      handler: Flow[Message, Message, T],
+      handler: Flow[? >: Message, ? <: Message, T],
       subprotocol: String,
       shouldCompress: Predicate[Message]): Route =
     RouteAdapter {
@@ -111,7 +113,7 @@ abstract class WebSocketDirectives extends SecurityDirectives {
    * To support several subprotocols you may chain several `handleWebSocketMessagesForOptionalProtocol` routes.
    */
   def handleWebSocketMessagesForOptionalProtocol[T](
-      handler: Flow[Message, Message, T], subprotocol: Optional[String]): Route = RouteAdapter {
+      handler: Flow[? >: Message, ? <: Message, T], subprotocol: Optional[String]): Route = RouteAdapter {
     D.handleWebSocketMessagesForOptionalProtocol(adapt(handler), subprotocol.asScala)
   }
 
@@ -125,7 +127,7 @@ abstract class WebSocketDirectives extends SecurityDirectives {
    * @since 2.0.0
    */
   def handleWebSocketMessagesForOptionalProtocol[T](
-      handler: Flow[Message, Message, T],
+      handler: Flow[? >: Message, ? <: Message, T],
       subprotocol: Optional[String],
       shouldCompress: Predicate[Message]): Route = RouteAdapter {
     D.handleWebSocketMessagesForOptionalProtocol(
@@ -134,7 +136,9 @@ abstract class WebSocketDirectives extends SecurityDirectives {
       message => shouldCompress.test(message))
   }
 
-  private def adapt[T](handler: Flow[Message, Message, T]): scaladsl.Flow[s.Message, s.Message, NotUsed] = {
-    scaladsl.Flow[s.Message].map(_.asJava).via(handler).map(_.asScala)
+  private def adapt[T](handler: Flow[? >: Message, ? <: Message, T]): scaladsl.Flow[s.Message, s.Message, NotUsed] = {
+    // Graph and FlowShape are declared variant, so widening the wildcard handler to the exact type is safe
+    scaladsl.Flow[s.Message].map(_.asJava).via(handler.asInstanceOf[Graph[FlowShape[Message, Message], T]]).map(
+      _.asScala)
   }
 }

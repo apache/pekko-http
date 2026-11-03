@@ -14,7 +14,6 @@
 package org.apache.pekko.http.javadsl;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -50,15 +49,15 @@ public class WSEchoTestClientApp {
     try {
       final Materializer materializer = Materializer.createMaterializer(system);
 
-      final CompletableFuture<Message> ignoredMessage =
-          CompletableFuture.completedFuture((Message) TextMessage.create("blub"));
-      final CompletionStage<Message> delayedCompletion =
+      final CompletableFuture<TextMessage> ignoredMessage =
+          CompletableFuture.completedFuture(TextMessage.create("blub"));
+      final CompletionStage<TextMessage> delayedCompletion =
           org.apache.pekko.pattern.Patterns.after(
               Duration.ofSeconds(1), system.scheduler(), system.dispatcher(), () -> ignoredMessage);
 
-      Source<Message, NotUsed> echoSource =
+      Source<TextMessage, NotUsed> echoSource =
           Source.from(
-                  Arrays.<Message>asList(
+                  List.of(
                       TextMessage.create("abc"),
                       TextMessage.create("def"),
                       TextMessage.create("ghi")))
@@ -70,7 +69,7 @@ public class WSEchoTestClientApp {
               .grouped(1000)
               .toMat(Sink.<List<String>>head(), Keep.right());
 
-      Flow<Message, Message, CompletionStage<List<String>>> echoClient =
+      Flow<Message, TextMessage, CompletionStage<List<String>>> echoClient =
           Flow.fromSinkAndSourceMat(echoSink, echoSource, Keep.left());
 
       CompletionStage<List<String>> result =
