@@ -26,6 +26,7 @@ import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
+import pekko.http.impl.engine.http2.framing.FrameRenderer
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.LogByteStringTools
@@ -834,6 +835,52 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         val (_, errorCode) = network.expectGOAWAY(streamId)
         errorCode should ===(ErrorCode.PROTOCOL_ERROR)
       })
+    }
+
+    "throttle frame types" should {
+      val throttleExceeded = "HTTP2 connection failed with error [Maximum throttle throughput exceeded.]"
+
+      abstract class WaitingForResponseData extends TestSetup with NetProbes {
+        user.emitRequest(Get("/"))
+        val streamId = network.expect[HeadersFrame]().streamId
+        network.sendHEADERS(streamId, endStream = false, Seq(RawHeader(":status", "200")))
+        val entityDataIn = ByteStringSinkProbe(user.expectResponse().entity.dataBytes)
+
+        def emptyDataFrames(count: Int): ByteString =
+          Seq.fill(count)(FrameRenderer.renderFrame(FrameType.DATA, ByteFlag.Zero, streamId, ByteString.empty))
+            .reduce(_ ++ _)
+      }
+
+      "fail the connection when flooded with RST_STREAM frames by default".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(Get("/"))
+          val streamId = network.expect[HeadersFrame]().streamId
+          val rstFrame = FrameRenderer.render(RstStreamFrame(streamId, ErrorCode.CANCEL))
+
+          EventFilter.error(start = throttleExceeded, occurrences = 1).intercept {
+            network.sendBytes(Seq.fill(1000)(rstFrame).reduce(_ ++ _))
+            network.expectGOAWAY()._2 should ===(ErrorCode.INTERNAL_ERROR)
+          }
+        })
+
+      "fail the connection when flooded with empty DATA frames that do not end the stream by default".inAssertAllStagesStopped(
+        new WaitingForResponseData {
+          EventFilter.error(start = throttleExceeded, occurrences = 1).intercept {
+            network.sendBytes(emptyDataFrames(1000))
+            network.expectGOAWAY()._2 should ===(ErrorCode.INTERNAL_ERROR)
+          }
+        })
+
+      "not fail the connection on empty DATA frames when the throttle is disabled".inAssertAllStagesStopped(
+        new WaitingForResponseData {
+          override def settings = super.settings.mapHttp2Settings(_.withFrameTypeThrottleFrameTypes(Set.empty))
+
+          // more than the default burst of 100
+          network.sendBytes(emptyDataFrames(200))
+          network.sendDATA(streamId, endStream = true, ByteString("abc"))
+          entityDataIn.expectBytes(ByteString("abc"))
+          entityDataIn.expectComplete()
+        })
     }
 
     "delay stage completion" should {

@@ -141,10 +141,12 @@ private[http] object Http2Blueprint {
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames) atop // enable for debugging
       hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize)
 
-    val frameTypesForThrottle = getFrameTypesForThrottle(settings.http2Settings)
+    val http2Settings = settings.http2Settings
+    val frameTypesForThrottle = getFrameTypesForThrottle(http2Settings.frameTypeThrottleFrameTypes)
     
     val flowWithPossibleThrottle = if (frameTypesForThrottle.nonEmpty) {
-      (initialFlow atop rapidResetMitigation(settings.http2Settings, frameTypesForThrottle))
+      (initialFlow atop frameTypeThrottle(frameTypesForThrottle, http2Settings.frameTypeThrottleCost,
+        http2Settings.frameTypeThrottleInterval, http2Settings.frameTypeThrottleBurst))
         .atopKeepLeft(framing(log, settings.http2Settings.maxFrameSize))
     } else initialFlow atop framing(log, settings.http2Settings.maxFrameSize)
 
@@ -171,12 +173,20 @@ private[http] object Http2Blueprint {
     // HttpHeaderParser is not thread safe and should not be called concurrently,
     // the internal trie, however, has built-in protection and will do copy-on-write
     val masterHttpHeaderParser = HttpHeaderParser(settings.parserSettings, log)
+    val http2Settings = settings.http2Settings
+    val frameTypesForThrottle = getFrameTypesForThrottle(http2Settings.frameTypeThrottleFrameTypes)
+    val possibleThrottle =
+      if (frameTypesForThrottle.nonEmpty)
+        frameTypeThrottle(frameTypesForThrottle, http2Settings.frameTypeThrottleCost,
+          http2Settings.frameTypeThrottleInterval, http2Settings.frameTypeThrottleBurst)
+      else BidiFlow.identity[FrameEvent, FrameEvent]
     telemetry.client.atop(
       httpLayerClient(masterHttpHeaderParser, settings, log, connectionScheme, connectionAuthority)).atop(
-      clientDemux(settings.http2Settings, masterHttpHeaderParser)).atop(
-      FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames)).atop( // enable for debugging
-      hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize)).atop(
-      framingClient(log, settings.http2Settings.maxFrameSize)).atop(
+      clientDemux(http2Settings, masterHttpHeaderParser)).atop(
+      FrameLogger.logFramesIfEnabled(http2Settings.logFrames)).atop( // enable for debugging
+      hpackCoding(masterHttpHeaderParser, settings.parserSettings, http2Settings.maxHeaderListSize)).atop(
+      possibleThrottle).atop(
+      framingClient(log, http2Settings.maxFrameSize)).atop(
       errorHandling(log)).atop(
       idleTimeoutIfConfigured(settings.idleTimeout))
   }
@@ -236,21 +246,15 @@ private[http] object Http2Blueprint {
       Flow[FrameEvent].map(FrameRenderer.render).prepend(Source.single(Http2Protocol.ClientConnectionPreface)),
       Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = false, log, maxFrameSize)))
 
-  private def rapidResetMitigation(settings: Http2ServerSettings,
-      frameTypesForThrottle: Set[String]): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
+  /** Fails the connection when incoming frames of the throttled types exceed the configured rate. */
+  private def frameTypeThrottle(frameTypesForThrottle: Set[String], cost: Int, interval: FiniteDuration,
+      burst: Int): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
     BidiFlow.fromFlows(
       Flow[FrameEvent],
-      Flow[FrameEvent].throttle(settings.frameTypeThrottleCost, settings.frameTypeThrottleInterval,
-        settings.frameTypeThrottleBurst, frameCost(frameTypesForThrottle, _), ThrottleMode.Enforcing))
+      Flow[FrameEvent].throttle(cost, interval, burst, frameCost(frameTypesForThrottle, _), ThrottleMode.Enforcing))
 
-  private def getFrameTypesForThrottle(settings: Http2ServerSettings): Set[String] = {
-    val set = settings.frameTypeThrottleFrameTypes
-    if (set.isEmpty) {
-      Set.empty
-    } else {
-      set.flatMap(frameTypeAliasToFrameTypeName)
-    }
-  }
+  private def getFrameTypesForThrottle(frameTypeAliases: Set[String]): Set[String] =
+    frameTypeAliases.flatMap(frameTypeAliasToFrameTypeName)
 
   /**
    * Not a real `frameTypeName`, so it never matches one directly: [[frameCost]] recognises it and charges every DATA

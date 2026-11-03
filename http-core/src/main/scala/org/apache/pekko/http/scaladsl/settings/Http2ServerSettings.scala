@@ -388,6 +388,51 @@ trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http
   def maxConnectionBackoff: FiniteDuration
   def withMaxConnectionBackoff(backoff: FiniteDuration): Http2ClientSettings = copy(maxConnectionBackoff = backoff)
 
+  /**
+   * The frame types to rate-limit on incoming frames, using the same aliases as the server-side
+   * `frame-type-throttle.frame-types`. An empty set disables the throttle.
+   *
+   * @since 2.0.0
+   */
+  def frameTypeThrottleFrameTypes: Set[String]
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleFrameTypes(frameTypes: Set[String]): Http2ClientSettings =
+    copy(frameTypeThrottleFrameTypes = frameTypes)
+
+  /**
+   * @since 2.0.0
+   */
+  def frameTypeThrottleCost: Int
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleCost(cost: Int): Http2ClientSettings = copy(frameTypeThrottleCost = cost)
+
+  /**
+   * @since 2.0.0
+   */
+  def frameTypeThrottleBurst: Int
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleBurst(burst: Int): Http2ClientSettings = copy(frameTypeThrottleBurst = burst)
+
+  /**
+   * @since 2.0.0
+   */
+  def frameTypeThrottleInterval: FiniteDuration
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleInterval(interval: FiniteDuration): Http2ClientSettings =
+    copy(frameTypeThrottleInterval = interval)
+
   @InternalApi
   private[http] def internalSettings: Option[Http2InternalClientSettings]
   @InternalApi
@@ -417,6 +462,10 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       completionTimeout: FiniteDuration,
       baseConnectionBackoff: FiniteDuration,
       maxConnectionBackoff: FiniteDuration,
+      frameTypeThrottleFrameTypes: Set[String],
+      frameTypeThrottleCost: Int,
+      frameTypeThrottleBurst: Int,
+      frameTypeThrottleInterval: FiniteDuration,
       internalSettings: Option[Http2InternalClientSettings])
       extends Http2ClientSettings with javadsl.settings.Http2ClientSettings {
     require(maxConcurrentStreams >= 0, "max-concurrent-streams must be >= 0")
@@ -435,6 +484,7 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       "persistent-connection-max-age-jitter must be >= 0 and < 1")
     require(completionTimeout > Duration.Zero, "completion-timeout must be > 0")
     require(baseConnectionBackoff <= maxConnectionBackoff, "base-connection-backoff must be <= max-connection-backoff")
+    require(frameTypeThrottleInterval.toMillis > 0, "frame-type-throttle.interval must be a positive duration")
     Http2CommonSettings.validate(this)
   }
 
@@ -457,6 +507,10 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       completionTimeout = c.getFiniteDuration("completion-timeout"),
       baseConnectionBackoff = c.getFiniteDuration("base-connection-backoff"),
       maxConnectionBackoff = c.getFiniteDuration("max-connection-backoff"),
+      frameTypeThrottleFrameTypes = c.getStringList("frame-type-throttle.frame-types").asScala.toSet,
+      frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),
+      frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),
+      frameTypeThrottleInterval = c.getFiniteDuration("frame-type-throttle.interval"),
       internalSettings = None // no possibility to configure internal settings with config
     )
   }

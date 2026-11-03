@@ -158,6 +158,12 @@ pekko-http-core client settings:
 `managedPersistentHttp2` and `managedPersistentHttp2WithPriorKnowledge`. The feature is disabled by default.
 See @ref:[Limiting managed persistent connection lifetime](../client-side/http2.md#limiting-managed-persistent-connection-lifetime).
 ([PR1320](https://github.com/apache/pekko-http/pull/1320))
+* `pekko.http.client.http2.frame-type-throttle` limits the rate of incoming frames of the configured types on an
+HTTP/2 client connection, like `pekko.http.server.http2.frame-type-throttle` does for the server and with the same
+settings. By default, `frame-types = ["reset", "empty-data-no-end-stream"]`: a server that sends more than about 100
+`RST_STREAM` frames, or DATA frames that carry no payload and do not end their stream, per second has the connection
+failed. A client with many requests in flight on one connection may need a higher limit. Set `frame-types` to `[]` to
+disable throttling. ([#1393](https://github.com/apache/pekko-http/issues/1393))
 
 pekko-http-core parsing settings:
 
