@@ -20,6 +20,7 @@ package org.apache.pekko.http.javadsl.server.directives;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -52,7 +53,8 @@ public class WebSocketHandlerTypesTest extends JUnitJupiterRouteTest {
   // what Flow.of(Message.class).map(...) infers when the function returns a TextMessage
   private static final Flow<Message, TextMessage, NotUsed> upperCase =
       Flow.of(Message.class)
-          .map(msg -> TextMessage.create(msg.asTextMessage().getStrictText().toUpperCase()));
+          .flatMapConcat(WebSocketHandlerTypesTest::fullText)
+          .map(text -> TextMessage.create(text.toUpperCase(Locale.ROOT)));
 
   private static final Source<TextMessage, NotUsed> greeting =
       Source.single(TextMessage.create("hello"))
@@ -130,15 +132,19 @@ public class WebSocketHandlerTypesTest extends JUnitJupiterRouteTest {
 
   @Test
   public void testkitClientHandlerAcceptsMessageSubtype() throws Exception {
-    CompletableFuture<Message> reply = new CompletableFuture<>();
+    CompletableFuture<String> reply = new CompletableFuture<>();
     Flow<Message, TextMessage, NotUsed> client =
-        Flow.fromSinkAndSource(Sink.<Message>foreach(reply::complete), clientSource("hi"));
+        Flow.fromSinkAndSource(
+            Flow.of(Message.class)
+                .flatMapConcat(WebSocketHandlerTypesTest::fullText)
+                .to(Sink.foreach(reply::complete)),
+            clientSource("hi"));
 
     testRoute(route)
         .run(WS(Uri.create("/directive"), client, materializer()))
         .assertStatusCode(StatusCodes.SWITCHING_PROTOCOLS);
 
-    assertEquals("HI", reply.get(3, TimeUnit.SECONDS).asTextMessage().getStrictText());
+    assertEquals("HI", reply.get(3, TimeUnit.SECONDS));
   }
 
   @Test
@@ -147,27 +153,33 @@ public class WebSocketHandlerTypesTest extends JUnitJupiterRouteTest {
     ServerBinding binding =
         http.newServerAt("127.0.0.1", 0).bind(route).toCompletableFuture().get(3, TimeUnit.SECONDS);
     try {
-      Flow<Message, TextMessage, CompletionStage<Message>> client =
-          Flow.fromSinkAndSourceMat(Sink.<Message>head(), clientSource("hi"), Keep.left());
+      // reads the whole reply, which may arrive streamed over a real connection
+      Sink<Message, CompletionStage<String>> firstText =
+          Flow.of(Message.class)
+              .flatMapConcat(WebSocketHandlerTypesTest::fullText)
+              .toMat(Sink.head(), Keep.right());
+      Flow<Message, TextMessage, CompletionStage<String>> client =
+          Flow.fromSinkAndSourceMat(firstText, clientSource("hi"), Keep.left());
 
-      Pair<?, CompletionStage<Message>> result =
+      Pair<?, CompletionStage<String>> result =
           http.singleWebSocketRequest(
               WebSocketRequest.create(
                   "ws://127.0.0.1:" + binding.localAddress().getPort() + "/directive"),
               client,
               materializer());
 
-      assertEquals(
-          "HI",
-          result
-              .second()
-              .toCompletableFuture()
-              .get(3, TimeUnit.SECONDS)
-              .asTextMessage()
-              .getStrictText());
+      assertEquals("HI", result.second().toCompletableFuture().get(3, TimeUnit.SECONDS));
     } finally {
       binding.unbind().toCompletableFuture().get(3, TimeUnit.SECONDS);
     }
+  }
+
+  // the complete text of a strict or streamed message
+  private static Source<String, NotUsed> fullText(Message msg) {
+    return msg.asTextMessage()
+        .getStreamedText()
+        .fold("", String::concat)
+        .mapMaterializedValue(m -> NotUsed.getInstance());
   }
 
   // keeps the client side open after sending, so the server's reply is received
