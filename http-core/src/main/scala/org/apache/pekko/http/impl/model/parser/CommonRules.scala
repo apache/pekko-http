@@ -456,7 +456,8 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   // ******************************************************************************************
   def token0 = rule { oneOrMore(tchar) }
 
-  def listSep = rule { ',' ~ OWS }
+  // RFC 9110 section 5.6.1 allows optional whitespace on both sides of the separator
+  def listSep = rule { OWS ~ ',' ~ OWS }
 
   def digit = rule { DIGIT ~ push(digitInt(lastChar)) }
 

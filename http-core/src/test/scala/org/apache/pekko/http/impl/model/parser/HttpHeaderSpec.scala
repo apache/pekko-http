@@ -248,6 +248,23 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         `Cache-Control`(`private`(), immutableDirective)
     }
 
+    "Cache-Control with whitespace before the list separator" in {
+      "Cache-Control: no-store , public" =!=> "no-store, public"
+      "Cache-Control: no-transform , public" =!=> "no-transform, public"
+      "Cache-Control: only-if-cached , public" =!=> "only-if-cached, public"
+      "Cache-Control: public , no-store" =!=> "public, no-store"
+      "Cache-Control: private , no-store" =!=> "private, no-store"
+      "Cache-Control: no-cache , no-store" =!=> "no-cache, no-store"
+      "Cache-Control: must-revalidate , public" =!=> "must-revalidate, public"
+      "Cache-Control: proxy-revalidate , public" =!=> "proxy-revalidate, public"
+      "Cache-Control: immutable , public" =!=> "immutable, public"
+      "Cache-Control: max-stale , public" =!=> "max-stale, public"
+      "Cache-Control: no-store\t, public" =!=> "no-store, public"
+      "Cache-Control: private=\"a\" , public" =!=> "private=\"a\", public"
+      "Cache-Control: no-cache=\"a\" , public" =!=> "no-cache=\"a\", public"
+      "Cache-Control: no-cache=\"a , b\"" =!= `Cache-Control`(`no-cache`("a", "b")).renderedTo("no-cache=\"a,b\"")
+    }
+
     "Connection" in {
       "Connection: close" =!= Connection("close")
       "Connection: pipapo, close" =!= Connection("pipapo", "close")
@@ -440,6 +457,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       """If-Match: "938fz3f83z3z38z"""" =!= `If-Match`(EntityTag("938fz3f83z3z38z"))
       """If-Match: "938fz3f83z3z38z", "0293f34hhv0nc"""" =!=
         `If-Match`(EntityTag("938fz3f83z3z38z"), EntityTag("0293f34hhv0nc"))
+      """If-Match: "a" , W/"b"""" =!= `If-Match`(EntityTag("a"), EntityTag("b", weak = true)).renderedTo(
+        """"a", W/"b"""")
     }
 
     "If-Modified-Since" in {
@@ -457,6 +476,8 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       """If-None-Match: "938fz3f83z3z38z", "0293f34hhv0nc"""" =!=
         `If-None-Match`(EntityTag("938fz3f83z3z38z"), EntityTag("0293f34hhv0nc"))
       """If-None-Match: W/"938fz3f83z3z38z"""" =!= `If-None-Match`(EntityTag("938fz3f83z3z38z", weak = true))
+      """If-None-Match: W/"a" , "b"""" =!= `If-None-Match`(EntityTag("a", weak = true), EntityTag("b")).renderedTo(
+        """W/"a", "b"""")
     }
 
     "If-Range" in {
@@ -562,6 +583,10 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         includeSubDomains = false)
       "Strict-Transport-Security: max-age=31536000; includeSubDomains" =!= `Strict-Transport-Security`(
         maxAge = 31536000, includeSubDomains = true)
+      "Strict-Transport-Security: includeSubDomains ; max-age=1" =!= `Strict-Transport-Security`(
+        maxAge = 1, includeSubDomains = true).renderedTo("max-age=1; includeSubDomains")
+      "Strict-Transport-Security: max-age=1; includeSubDomains ;" =!= `Strict-Transport-Security`(
+        maxAge = 1, includeSubDomains = true).renderedTo("max-age=1; includeSubDomains")
     }
 
     "TE" in {
@@ -622,6 +647,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     "Sec-WebSocket-Version" in {
       "Sec-WebSocket-Version: 25" =!= `Sec-WebSocket-Version`(Vector(25))
       "Sec-WebSocket-Version: 13, 8, 7" =!= `Sec-WebSocket-Version`(Vector(13, 8, 7))
+      "Sec-WebSocket-Version: 13 , 8" =!= `Sec-WebSocket-Version`(Vector(13, 8)).renderedTo("13, 8")
 
       "Sec-WebSocket-Version: 255" =!= `Sec-WebSocket-Version`(Vector(255))
       "Sec-WebSocket-Version: 0" =!= `Sec-WebSocket-Version`(Vector(0))
@@ -815,6 +841,11 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "X-Forwarded-For: 1:2:3:4:5::7:8" =!=> "1:2:3:4:5:0:7:8"
       "X-Forwarded-For: 1:2:3:4:5:6::8" =!=> "1:2:3:4:5:6:0:8"
       "X-Forwarded-For: ::" =!=> "0:0:0:0:0:0:0:0"
+      "X-Forwarded-For: 1.2.3.4 , 5.6.7.8" =!= `X-Forwarded-For`(remoteAddress("1.2.3.4"),
+        remoteAddress("5.6.7.8")).renderedTo("1.2.3.4, 5.6.7.8")
+      "X-Forwarded-For: ::1 , 5.6.7.8" =!=> "0:0:0:0:0:0:0:1, 5.6.7.8"
+      "X-Forwarded-For: unknown , 5.6.7.8" =!= `X-Forwarded-For`(RemoteAddress.Unknown,
+        remoteAddress("5.6.7.8")).renderedTo("unknown, 5.6.7.8")
       "X-Forwarded-For: 1.2.3.4, pekko.apache.org" =!=
         ErrorInfo(
           "Illegal HTTP header 'X-Forwarded-For': Invalid input 'p', expected WSP, CRLF or addr (line 1, column 10)",
