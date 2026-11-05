@@ -59,6 +59,7 @@ This can be used to signal parts of the application that the HTTP server is shut
 Note also that for more advanced shut down scenarios you may want to use the @extref[Coordinated Shutdown](pekko-docs:/actors.html#coordinated-shutdown) capabilities of Apache Pekko.
 
 Next, all in flight requests will be handled. If a request is "in-flight" (being handled by user code), it is given `hardDeadline` time to complete.
+If the request stream completes while a response is pending, the server continues waiting for that response until the deadline.
 
 - if a connection has no "in-flight" request, it is terminated immediately  
 - if user code emits a response within the timeout, then this response is sent to the client with a `Connection: close` header and connection is closed.

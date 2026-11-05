@@ -335,6 +335,9 @@ private[http] final class GracefulTerminatorStage(settings: ServerSettings)
               push(toNet, settings.terminationDeadlineExceededResponse.withHeaders(Connection("close")))
               completeStage()
             }
+
+            // keep the response side open for the pending reply until the termination deadline
+            override def onUpstreamFinish(): Unit = complete(toUser)
           })
 
         // we continue pulling from user, to make sure we'd get the "final user reply" that may be sent during termination

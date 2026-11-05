@@ -18,6 +18,7 @@ import java.util.concurrent.{ ArrayBlockingQueue, TimeUnit }
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.ActorSystem
+import pekko.http.impl.engine.server.GracefulTerminatorStage
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model.HttpEntity._
 import pekko.http.scaladsl.model._
@@ -26,7 +27,7 @@ import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.{ ConnectionPoolSettings, ServerSettings }
 import pekko.stream.scaladsl._
 import pekko.stream.testkit.TestSubscriber.OnError
-import pekko.stream.testkit.scaladsl.{ StreamTestKit, TestSink }
+import pekko.stream.testkit.scaladsl.{ StreamTestKit, TestSink, TestSource }
 import pekko.stream.{ Server => _, _ }
 import pekko.testkit._
 import pekko.util.ByteString
@@ -317,6 +318,29 @@ class GracefulTerminationSpec
 
         Await.result(serverBinding.whenTerminated, 3.seconds)
       }
+    }
+
+    "preserve a pending response when the request stream completes during termination" in {
+      val userSide = Flow.fromSinkAndSourceMat(TestSink[HttpRequest](), TestSource[HttpResponse]())(Keep.both)
+      val ((requests, (terminator, (userRequests, userResponses))), responses) =
+        TestSource[HttpRequest]()
+          .viaMat(GracefulTerminatorStage(system, ServerSettings(system)).reversed.joinMat(userSide)(Keep.both))(
+            Keep.both)
+          .toMat(TestSink[HttpResponse]())(Keep.both)
+          .run()
+
+      responses.request(1)
+      requests.sendNext(HttpRequest())
+      userRequests.requestNext() // the request is in the user's hands before we cause termination
+
+      // parasitic, so the termination signal is enqueued before the request stream completion
+      val termination = terminator.terminate(3.seconds)(ExecutionContext.parasitic)
+      requests.sendComplete()
+      userResponses.sendNext(HttpResponse(StatusCodes.OK))
+
+      responses.expectNext().header[Connection] shouldBe Some(Connection("close"))
+      responses.expectComplete()
+      termination.futureValue shouldBe Http.HttpConnectionTerminated
     }
 
   }
