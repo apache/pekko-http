@@ -18,6 +18,7 @@ import java.util.concurrent.{ ArrayBlockingQueue, TimeUnit }
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.ActorSystem
+import pekko.http.impl.engine.server.GracefulTerminatorStage
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model.HttpEntity._
 import pekko.http.scaladsl.model._
@@ -26,7 +27,7 @@ import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.{ ConnectionPoolSettings, ServerSettings }
 import pekko.stream.scaladsl._
 import pekko.stream.testkit.TestSubscriber.OnError
-import pekko.stream.testkit.scaladsl.{ StreamTestKit, TestSink }
+import pekko.stream.testkit.scaladsl.{ StreamTestKit, TestSink, TestSource }
 import pekko.stream.{ Server => _, _ }
 import pekko.testkit._
 import pekko.util.ByteString
@@ -259,6 +260,39 @@ class GracefulTerminationSpec
       ensureConnectionIsClosed(r2)
 
       Await.result(serverBinding.whenTerminated, 3.seconds)
+    }
+
+    "deliver the pending response when the network side only pulls after termination started" in {
+      StreamTestKit.assertAllStagesStopped {
+        val userFlow = Flow.fromSinkAndSourceMat(TestSink[HttpRequest](), TestSource[HttpResponse]())(Keep.both)
+          .joinMat(GracefulTerminatorStage(system, ServerSettings(system)))(Keep.both)
+        val ((netIn, ((userIn, userOut), terminator)), netOut) =
+          TestSource[HttpRequest]()
+            .viaMat(userFlow)(Keep.both)
+            .toMat(TestSink[HttpResponse]())(Keep.both)
+            .run()
+
+        netOut.request(1)
+        userIn.request(2)
+        netIn.sendNext(HttpRequest())
+        userIn.expectNext()
+        userOut.sendNext(HttpResponse(StatusCodes.Accepted))
+        netOut.expectNext().status should ===(StatusCodes.Accepted)
+
+        // the next request is in the user's hands while the network side has no outstanding demand
+        netIn.sendNext(HttpRequest())
+        userIn.expectNext()
+
+        // the parasitic context signals the stage before the demand below is sent
+        terminator.terminate(10.seconds)(ExecutionContext.parasitic)
+        netOut.request(1)
+
+        userOut.sendNext(HttpResponse(StatusCodes.OK))
+        val response = netOut.expectNext()
+        response.status should ===(StatusCodes.OK)
+        response.header[Connection] shouldBe Some(Connection("close"))
+        netOut.expectComplete()
+      }
     }
 
     "allow configuring the automatic termination response (in config)" in {

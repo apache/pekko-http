@@ -342,7 +342,7 @@ private[http] final class GracefulTerminatorStage(settings: ServerSettings)
           new OutHandler {
             override def onPull(): Unit = {
               if (pendingUserHandlerResponse) {
-                if (isAvailable(fromUser)) pull(fromUser)
+                if (!hasBeenPulled(fromUser)) pull(fromUser)
               }
             }
           })
