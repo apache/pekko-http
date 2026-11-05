@@ -225,7 +225,8 @@ private[parser] trait SimpleHeaders {
     }
 
     rule {
-      oneOrMore(directives | ignoredDirective).separatedBy(oneOrMore(ws(";"))) ~ zeroOrMore(ws(";")) ~ EOI ~>
+      oneOrMore(directives | ignoredDirective).separatedBy(OWS ~ oneOrMore(ws(";"))) ~ OWS ~ zeroOrMore(ws(";")) ~
+      EOI ~>
       (`Strict-Transport-Security`.fromDirectives(_: _*))
     }
   }
