@@ -284,7 +284,7 @@ class GracefulTerminationSpec
         userIn.expectNext()
 
         // the parasitic context signals the stage before the demand below is sent
-        terminator.terminate(10.seconds)(ExecutionContext.parasitic)
+        val termination = terminator.terminate(10.seconds)(ExecutionContext.parasitic)
         netOut.request(1)
 
         userOut.sendNext(HttpResponse(StatusCodes.OK))
@@ -292,6 +292,7 @@ class GracefulTerminationSpec
         response.status should ===(StatusCodes.OK)
         response.header[Connection] shouldBe Some(Connection("close"))
         netOut.expectComplete()
+        termination.futureValue shouldBe Http.HttpConnectionTerminated
       }
     }
 
