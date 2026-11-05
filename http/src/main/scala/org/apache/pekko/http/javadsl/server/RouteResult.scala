@@ -37,8 +37,10 @@ object RouteResults {
     s.RouteResult.Complete(JavaMapping.toScala(response))
   }
 
-  def rejected(rejections: java.lang.Iterable[Rejection]): Rejected = {
-    s.RouteResult.Rejected(Util.convertIterable[Rejection, Rejection](rejections).map(_.asScala))
+  def rejected(rejections: java.lang.Iterable[? <: Rejection]): Rejected = {
+    // java.lang.Iterable is read-only, so widening the element type is safe
+    s.RouteResult.Rejected(
+      Util.convertIterable[Rejection, Rejection](rejections.asInstanceOf[java.lang.Iterable[Rejection]]).map(_.asScala))
   }
 
 }

@@ -401,14 +401,15 @@ object Rejections {
     s.MalformedHeaderRejection(headerName, errorMsg, cause.toScala)
 
   def unsupportedRequestContentType(
-      supported: java.lang.Iterable[MediaType],
-      contentType: Optional[ContentType]): UnsupportedRequestContentTypeRejection =
+      supported: java.lang.Iterable[? <: MediaType],
+      contentType: Optional[? <: ContentType]): UnsupportedRequestContentTypeRejection =
     s.UnsupportedRequestContentTypeRejection(
       supported = supported.asScala.map((m: MediaType) => scaladsl.model.ContentTypeRange(m.asScala)).toSet,
       contentType = contentType.toScala.map((c: ContentType) => c.asScala))
 
   // for backwards compatibility
-  def unsupportedRequestContentType(supported: java.lang.Iterable[MediaType]): UnsupportedRequestContentTypeRejection =
+  def unsupportedRequestContentType(
+      supported: java.lang.Iterable[? <: MediaType]): UnsupportedRequestContentTypeRejection =
     s.UnsupportedRequestContentTypeRejection(
       supported = supported.asScala.map((m: MediaType) => scaladsl.model.ContentTypeRange(m.asScala)).toSet,
       contentType = None)
@@ -416,8 +417,10 @@ object Rejections {
   def unsupportedRequestEncoding(supported: HttpEncoding): UnsupportedRequestEncodingRejection =
     s.UnsupportedRequestEncodingRejection(supported.asScala)
 
-  def unsatisfiableRange(unsatisfiableRanges: java.lang.Iterable[ByteRange], actualEntityLength: Long) =
-    UnsatisfiableRangeRejection(Util.convertIterable[ByteRange, ByteRange](unsatisfiableRanges).map(_.asScala),
+  def unsatisfiableRange(unsatisfiableRanges: java.lang.Iterable[? <: ByteRange], actualEntityLength: Long) =
+    // java.lang.Iterable is read-only, so widening the element type is safe
+    UnsatisfiableRangeRejection(
+      Util.convertIterable[ByteRange, ByteRange](unsatisfiableRanges.asInstanceOf[JIterable[ByteRange]]).map(_.asScala),
       actualEntityLength)
 
   def tooManyRanges(maxRanges: Int) = TooManyRangesRejection(maxRanges)
