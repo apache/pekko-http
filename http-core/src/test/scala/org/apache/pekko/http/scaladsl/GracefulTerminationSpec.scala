@@ -321,26 +321,31 @@ class GracefulTerminationSpec
     }
 
     "preserve a pending response when the request stream completes during termination" in {
-      val userSide = Flow.fromSinkAndSourceMat(TestSink[HttpRequest](), TestSource[HttpResponse]())(Keep.both)
-      val ((requests, (terminator, (userRequests, userResponses))), responses) =
-        TestSource[HttpRequest]()
-          .viaMat(GracefulTerminatorStage(system, ServerSettings(system)).reversed.joinMat(userSide)(Keep.both))(
-            Keep.both)
-          .toMat(TestSink[HttpResponse]())(Keep.both)
-          .run()
+      StreamTestKit.assertAllStagesStopped {
+        val userSide = Flow.fromSinkAndSourceMat(TestSink[HttpRequest](), TestSource[HttpResponse]())(Keep.both)
+        val ((requests, (terminator, (userRequests, userResponses))), responses) =
+          TestSource[HttpRequest]()
+            .viaMat(GracefulTerminatorStage(system, ServerSettings(system)).reversed.joinMat(userSide)(Keep.both))(
+              Keep.both)
+            .toMat(TestSink[HttpResponse]())(Keep.both)
+            .run()
 
-      responses.request(1)
-      requests.sendNext(HttpRequest())
-      userRequests.requestNext() // the request is in the user's hands before we cause termination
+        responses.request(1)
+        requests.sendNext(HttpRequest())
+        userRequests.requestNext() // the request is in the user's hands before we cause termination
 
-      // parasitic, so the termination signal is enqueued before the request stream completion
-      val termination = terminator.terminate(3.seconds)(ExecutionContext.parasitic)
-      requests.sendComplete()
-      userResponses.sendNext(HttpResponse(StatusCodes.OK))
+        // parasitic, so the termination signal is enqueued before the request stream completion
+        val termination = terminator.terminate(3.seconds)(ExecutionContext.parasitic)
+        requests.sendComplete()
+        userRequests.expectComplete()
+        userResponses.sendNext(HttpResponse(StatusCodes.OK))
 
-      responses.expectNext().header[Connection] shouldBe Some(Connection("close"))
-      responses.expectComplete()
-      termination.futureValue shouldBe Http.HttpConnectionTerminated
+        val response = responses.expectNext()
+        response.status should ===(StatusCodes.OK)
+        response.header[Connection] shouldBe Some(Connection("close"))
+        responses.expectComplete()
+        termination.futureValue shouldBe Http.HttpConnectionTerminated
+      }
     }
 
   }
