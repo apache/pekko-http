@@ -249,21 +249,20 @@ private[http] object Http2Blueprint {
     frameTypesForThrottle.contains(EmptyDataFrameThrottleName) ||
     (!frame.endStream && frameTypesForThrottle.contains(EmptyDataFrameNoEndStreamThrottleName))
 
-  private[http2] def frameTypeAliasToFrameTypeName(frameType: String): Option[String] = {
-    toRootLowerCase(frameType) match {
-      case "empty-data"               => Some(EmptyDataFrameThrottleName)
-      case "empty-data-no-end-stream" => Some(EmptyDataFrameNoEndStreamThrottleName)
-      case "reset"                    => Some("RstStreamFrame")
-      case "headers"                  => Some("HeadersFrame")
-      case "continuation"             => Some("ContinuationFrame")
-      case "go-away"                  => Some("GoAwayFrame")
-      case "priority"                 => Some("PriorityFrame")
-      case "ping"                     => Some("PingFrame")
-      case "push-promise"             => Some("PushPromiseFrame")
-      case "window-update"            => Some("WindowUpdateFrame")
-      case _                          => None
-    }
-  }
+  private val FrameTypeAliases: Map[String, String] = Map(
+    "empty-data" -> EmptyDataFrameThrottleName,
+    "empty-data-no-end-stream" -> EmptyDataFrameNoEndStreamThrottleName,
+    "reset" -> "RstStreamFrame",
+    "headers" -> "HeadersFrame",
+    "continuation" -> "ContinuationFrame",
+    "go-away" -> "GoAwayFrame",
+    "priority" -> "PriorityFrame",
+    "ping" -> "PingFrame",
+    "push-promise" -> "PushPromiseFrame",
+    "window-update" -> "WindowUpdateFrame")
+
+  private[http2] def frameTypeAliasToFrameTypeName(frameType: String): Option[String] =
+    FrameTypeAliases.get(toRootLowerCase(frameType))
 
   /**
    * Runs hpack encoding and decoding. Incoming frames that are processed are HEADERS and CONTINUATION.
