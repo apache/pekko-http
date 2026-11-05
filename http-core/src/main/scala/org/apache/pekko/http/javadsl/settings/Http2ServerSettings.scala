@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2009-2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2009-2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package org.apache.pekko.http.javadsl.settings
@@ -145,6 +145,36 @@ trait Http2ServerSettings {
 
   def withFrameTypeThrottleInterval(interval: Duration): Http2ServerSettings =
     withFrameTypeThrottleInterval(interval.toMillis.millis)
+
+  /**
+   * The maximum number of RST_STREAM frames a client is allowed to send on one connection within
+   * [[getMaxResetsInterval]]. If a connection goes over the limit, it is closed with a GOAWAY frame with the
+   * HTTP/2 error code ENHANCE_YOUR_CALM. 0 disables the limit.
+   *
+   * This is an alternative protection against HTTP/2 Rapid Reset attacks (CVE-2023-44487) to the
+   * `frame-type-throttle` settings. If both are enabled, whichever limit is exceeded first closes the connection.
+   *
+   * @since 2.0.0
+   */
+  def getMaxResets: Int = maxResets
+
+  /**
+   * @since 2.0.0
+   */
+  def withMaxResets(n: Int): Http2ServerSettings
+
+  /**
+   * The interval over which [[getMaxResets]] is counted.
+   *
+   * @since 2.0.0
+   */
+  def getMaxResetsInterval: Duration = Duration.ofMillis(maxResetsInterval.toMillis)
+
+  /**
+   * @since 2.0.0
+   */
+  def withMaxResetsInterval(interval: Duration): Http2ServerSettings =
+    withMaxResetsInterval(interval.toMillis.millis)
 }
 object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
   def create(config: Config): Http2ServerSettings = scaladsl.settings.Http2ServerSettings(config)
