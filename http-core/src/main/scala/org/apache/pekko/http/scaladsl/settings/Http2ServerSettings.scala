@@ -186,10 +186,10 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def withFrameTypeThrottleFrameTypes(frameTypes: Set[String]) = copy(frameTypeThrottleFrameTypes = frameTypes)
 
   def frameTypeThrottleCost: Int
-  def withFrameTypeThrottleCost(cost: Int) = copy(frameTypeThrottleCost = cost)
+  override def withFrameTypeThrottleCost(cost: Int) = copy(frameTypeThrottleCost = cost)
 
   def frameTypeThrottleBurst: Int
-  def withFrameTypeThrottleBurst(burst: Int) = copy(frameTypeThrottleBurst = burst)
+  override def withFrameTypeThrottleBurst(burst: Int) = copy(frameTypeThrottleBurst = burst)
 
   def frameTypeThrottleInterval: FiniteDuration
   def withFrameTypeThrottleInterval(interval: FiniteDuration) = copy(frameTypeThrottleInterval = interval)
@@ -241,6 +241,8 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
     require(minCollectStrictEntitySize <= (incomingConnectionLevelBufferSize / maxConcurrentStreams),
       "min-collect-strict-entity-size <= incoming-connection-level-buffer-size / max-concurrent-streams")
     require(outgoingControlFrameBufferSize > 0, "outgoing-control-frame-buffer-size must be > 0")
+    require(frameTypeThrottleCost > 0, "frame-type-throttle.cost must be > 0")
+    require(frameTypeThrottleBurst >= 0, "frame-type-throttle.burst must be >= 0")
     require(frameTypeThrottleInterval.toMillis > 0, "frame-type-throttle.interval must be a positive duration")
     require(maxConnectionAge > Duration.Zero, "max-connection-age must be > 0 or 'infinite' to disable")
     require(maxConnectionAgeGrace >= Duration.Zero, "max-connection-age-grace must be >= 0 or 'infinite'")
