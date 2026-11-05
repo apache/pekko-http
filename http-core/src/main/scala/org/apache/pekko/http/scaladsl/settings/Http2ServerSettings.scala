@@ -410,7 +410,7 @@ trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http
   /**
    * @since 2.0.0
    */
-  def withFrameTypeThrottleCost(cost: Int): Http2ClientSettings = copy(frameTypeThrottleCost = cost)
+  override def withFrameTypeThrottleCost(cost: Int): Http2ClientSettings = copy(frameTypeThrottleCost = cost)
 
   /**
    * @since 2.0.0
@@ -420,7 +420,7 @@ trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http
   /**
    * @since 2.0.0
    */
-  def withFrameTypeThrottleBurst(burst: Int): Http2ClientSettings = copy(frameTypeThrottleBurst = burst)
+  override def withFrameTypeThrottleBurst(burst: Int): Http2ClientSettings = copy(frameTypeThrottleBurst = burst)
 
   /**
    * @since 2.0.0
@@ -484,6 +484,8 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       "persistent-connection-max-age-jitter must be >= 0 and < 1")
     require(completionTimeout > Duration.Zero, "completion-timeout must be > 0")
     require(baseConnectionBackoff <= maxConnectionBackoff, "base-connection-backoff must be <= max-connection-backoff")
+    require(frameTypeThrottleCost > 0, "frame-type-throttle.cost must be > 0")
+    require(frameTypeThrottleBurst >= 0, "frame-type-throttle.burst must be >= 0")
     require(frameTypeThrottleInterval.toMillis > 0, "frame-type-throttle.interval must be a positive duration")
     Http2CommonSettings.validate(this)
   }

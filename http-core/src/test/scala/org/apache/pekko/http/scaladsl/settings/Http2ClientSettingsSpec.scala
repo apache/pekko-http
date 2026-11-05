@@ -20,6 +20,7 @@ package org.apache.pekko.http.scaladsl.settings
 import java.time.temporal.ChronoUnit
 
 import org.apache.pekko
+import pekko.http.javadsl
 import pekko.testkit.PekkoSpec
 
 import scala.concurrent.duration._
@@ -91,6 +92,35 @@ class Http2ClientSettingsSpec extends PekkoSpec {
       }
       intercept[IllegalArgumentException] {
         Http2ClientSettings("pekko.http.client.http2.persistent-connection-max-age-jitter = 1")
+      }
+    }
+  }
+
+  "Http2ClientSettings frame-type-throttle" should {
+
+    "set the cost and burst through the Java API" in {
+      val settings: javadsl.settings.Http2ClientSettings = Http2ClientSettings(system)
+      val updated = settings.withFrameTypeThrottleCost(5).withFrameTypeThrottleBurst(7)
+      updated.getFrameTypeThrottleCost() should ===(5)
+      updated.getFrameTypeThrottleBurst() should ===(7)
+    }
+
+    "accept a burst of zero" in {
+      Http2ClientSettings("pekko.http.client.http2.frame-type-throttle.burst = 0").frameTypeThrottleBurst should ===(0)
+    }
+
+    "reject a zero or negative cost" in {
+      intercept[IllegalArgumentException] {
+        Http2ClientSettings("pekko.http.client.http2.frame-type-throttle.cost = 0")
+      }
+      intercept[IllegalArgumentException] {
+        Http2ClientSettings("pekko.http.client.http2.frame-type-throttle.cost = -1")
+      }
+    }
+
+    "reject a negative burst" in {
+      intercept[IllegalArgumentException] {
+        Http2ClientSettings("pekko.http.client.http2.frame-type-throttle.burst = -1")
       }
     }
   }

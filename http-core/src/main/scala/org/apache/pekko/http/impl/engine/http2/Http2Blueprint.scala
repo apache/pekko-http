@@ -147,8 +147,8 @@ private[http] object Http2Blueprint {
     val flowWithPossibleThrottle = if (frameTypesForThrottle.nonEmpty) {
       (initialFlow atop frameTypeThrottle(frameTypesForThrottle, http2Settings.frameTypeThrottleCost,
         http2Settings.frameTypeThrottleInterval, http2Settings.frameTypeThrottleBurst))
-        .atopKeepLeft(framing(log, settings.http2Settings.maxFrameSize))
-    } else initialFlow atop framing(log, settings.http2Settings.maxFrameSize)
+        .atopKeepLeft(framing(log, http2Settings.maxFrameSize))
+    } else initialFlow atop framing(log, http2Settings.maxFrameSize)
 
     flowWithPossibleThrottle atop
       errorHandling(log) atop

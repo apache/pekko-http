@@ -146,7 +146,17 @@ trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2Cli
   /**
    * @since 2.0.0
    */
+  def withFrameTypeThrottleCost(cost: Int): Http2ClientSettings = copy(frameTypeThrottleCost = cost)
+
+  /**
+   * @since 2.0.0
+   */
   def getFrameTypeThrottleBurst(): Int = frameTypeThrottleBurst
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleBurst(burst: Int): Http2ClientSettings = copy(frameTypeThrottleBurst = burst)
 
   /**
    * @since 2.0.0
