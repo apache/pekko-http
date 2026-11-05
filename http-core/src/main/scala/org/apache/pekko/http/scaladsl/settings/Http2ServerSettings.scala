@@ -241,8 +241,9 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
     require(minCollectStrictEntitySize <= (incomingConnectionLevelBufferSize / maxConcurrentStreams),
       "min-collect-strict-entity-size <= incoming-connection-level-buffer-size / max-concurrent-streams")
     require(outgoingControlFrameBufferSize > 0, "outgoing-control-frame-buffer-size must be > 0")
-    require(frameTypeThrottleCost > 0, "frame-type-throttle.cost must be > 0")
-    require(frameTypeThrottleBurst >= 0, "frame-type-throttle.burst must be >= 0")
+    require(frameTypeThrottleFrameTypes.isEmpty || frameTypeThrottleCost > 0, "frame-type-throttle.cost must be > 0")
+    require(frameTypeThrottleFrameTypes.isEmpty || frameTypeThrottleBurst >= 0,
+      "frame-type-throttle.burst must be >= 0")
     require(frameTypeThrottleInterval.toMillis > 0, "frame-type-throttle.interval must be a positive duration")
     require(maxConnectionAge > Duration.Zero, "max-connection-age must be > 0 or 'infinite' to disable")
     require(maxConnectionAgeGrace >= Duration.Zero, "max-connection-age-grace must be >= 0 or 'infinite'")
@@ -486,8 +487,9 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       "persistent-connection-max-age-jitter must be >= 0 and < 1")
     require(completionTimeout > Duration.Zero, "completion-timeout must be > 0")
     require(baseConnectionBackoff <= maxConnectionBackoff, "base-connection-backoff must be <= max-connection-backoff")
-    require(frameTypeThrottleCost > 0, "frame-type-throttle.cost must be > 0")
-    require(frameTypeThrottleBurst >= 0, "frame-type-throttle.burst must be >= 0")
+    require(frameTypeThrottleFrameTypes.isEmpty || frameTypeThrottleCost > 0, "frame-type-throttle.cost must be > 0")
+    require(frameTypeThrottleFrameTypes.isEmpty || frameTypeThrottleBurst >= 0,
+      "frame-type-throttle.burst must be >= 0")
     require(frameTypeThrottleInterval.toMillis > 0, "frame-type-throttle.interval must be a positive duration")
     Http2CommonSettings.validate(this)
   }

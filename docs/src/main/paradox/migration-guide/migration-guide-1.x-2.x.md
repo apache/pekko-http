@@ -118,8 +118,6 @@ per second has its connection failed. Clients that legitimately cancel many stre
 need a higher limit. The empty DATA frame with END_STREAM that closes a request body is not charged unless
 `empty-data` is added. Set it to `[]` to disable throttling. ([PR1193](https://github.com/apache/pekko-http/pull/1193),
 [PR1265](https://github.com/apache/pekko-http/pull/1265))
-* `pekko.http.server.http2.frame-type-throttle.cost` must now be greater than 0 and `burst` must be at least 0, even when
-`frame-types` is `[]`. Invalid values now fail when the settings are created. ([PR1394](https://github.com/apache/pekko-http/pull/1394))
 
 ### Removed configuration
 

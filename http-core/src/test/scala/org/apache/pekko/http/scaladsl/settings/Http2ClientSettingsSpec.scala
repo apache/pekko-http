@@ -123,5 +123,17 @@ class Http2ClientSettingsSpec extends PekkoSpec {
         Http2ClientSettings("pekko.http.client.http2.frame-type-throttle.burst = -1")
       }
     }
+
+    "accept an invalid cost and burst when no frame types are throttled" in {
+      val settings = Http2ClientSettings("""
+        pekko.http.client.http2.frame-type-throttle {
+          frame-types = []
+          cost = 0
+          burst = -1
+        }
+      """)
+      settings.frameTypeThrottleCost should ===(0)
+      settings.frameTypeThrottleBurst should ===(-1)
+    }
   }
 }
