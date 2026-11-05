@@ -24,7 +24,6 @@ sourceDistName := "apache-pekko-http"
 sourceDistIncubating := false
 
 ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
-ThisBuild / resolvers += Resolver.ApacheMavenStagingRepo
 
 ThisBuild / javafmtFormatterCompatibleJavaVersion := 17
 ThisBuild / javafmtSortImports := false
