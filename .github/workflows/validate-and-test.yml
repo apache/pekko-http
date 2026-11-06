@@ -38,7 +38,9 @@ jobs:
           java-version: 17
 
       - name: Install sbt
-        uses: sbt/setup-sbt@b113b960ba361e87e08ce02a390d51871b7ee459 # v1.5.13
+        uses: coursier/setup-action@648df969f41ef15fda2baba8b37f9fa3d16390a3 # v3.0.4
+        with:
+          apps: sbt
 
       - name: Cache Coursier cache
         uses: coursier/cache-action@ee0650f98295f27a505e4bfd284c9bfaa913a465 # v9.0.1
@@ -86,7 +88,9 @@ jobs:
           java-version: ${{ matrix.JDK }}
 
       - name: Install sbt
-        uses: sbt/setup-sbt@b113b960ba361e87e08ce02a390d51871b7ee459 # v1.5.13
+        uses: coursier/setup-action@648df969f41ef15fda2baba8b37f9fa3d16390a3 # v3.0.4
+        with:
+          apps: sbt
 
       - name: Cache Coursier cache
         uses: coursier/cache-action@ee0650f98295f27a505e4bfd284c9bfaa913a465 # v9.0.1
