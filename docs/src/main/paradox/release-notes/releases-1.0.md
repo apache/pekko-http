@@ -2,6 +2,8 @@
 
 ## 1.0.1
 
+Release notes for Apache Pekko HTTP 1.0.1. See [GitHub Milestone for 1.0.1](https://github.com/apache/pekko-http/milestone/3?closed=1) for a fuller list of changes.
+
 This is a bug fix release. There have also been some doc and build improvements.
 
 ### Bug Fixes
