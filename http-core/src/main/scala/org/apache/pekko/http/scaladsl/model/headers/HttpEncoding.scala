@@ -63,11 +63,13 @@ object HttpEncodings extends ObjectRegistry[String, HttpEncoding] {
   // format: OFF
   val compress         = register("compress")
   val chunked          = register("chunked")
+  val dcz              = register("dcz")
   val deflate          = register("deflate")
   val gzip             = register("gzip")
   val identity         = register("identity")
   val `x-compress`     = register("x-compress")
   val `x-zip`          = register("x-zip")
+  val zstd             = register("zstd")
   // format: ON
 
   private def register(encoding: HttpEncoding): HttpEncoding = register(encoding.value.toRootLowerCase, encoding)

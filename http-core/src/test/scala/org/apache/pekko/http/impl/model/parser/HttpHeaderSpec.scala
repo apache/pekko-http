@@ -29,6 +29,7 @@ import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.headers.{ Trailer => `Trailer`, _ }
 import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.model.headers.HttpEncodings._
+import pekko.util.ByteString
 
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
@@ -577,6 +578,49 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Server: as fghf.fdf/xx" =!= `Server`(Vector(ProductVersion("as"), ProductVersion("fghf.fdf", "xx")))
     }
 
+    "Available-Dictionary" in {
+      val hash = ByteString(java.util.Base64.getDecoder.decode("pZGm1Av0IEBKARczz7exkNYsZb8LzaMrV7J32a2fFG4="))
+      "Available-Dictionary: :pZGm1Av0IEBKARczz7exkNYsZb8LzaMrV7J32a2fFG4=:" =!= `Available-Dictionary`(hash)
+      an[IllegalArgumentException] should be thrownBy `Available-Dictionary`(hash.drop(1))
+      HttpHeader.parse("Available-Dictionary", "pZGm1Av0IEBKARczz7exkNYsZb8LzaMrV7J32a2fFG4=") should beInvalid
+      HttpHeader.parse("Available-Dictionary", ":AAAA:") should beInvalid
+      HttpHeader.parse("Available-Dictionary", ":not base64:") should beInvalid
+    }
+
+    "Dictionary-ID" in {
+      """Dictionary-ID: "dictionary-12345"""" =!= `Dictionary-ID`("dictionary-12345")
+      """Dictionary-ID: "with \"quote\" and \\"""" =!= `Dictionary-ID`("""with "quote" and \""")
+      an[IllegalArgumentException] should be thrownBy `Dictionary-ID`("a" * 1025)
+      an[IllegalArgumentException] should be thrownBy `Dictionary-ID`("caf\u00e9")
+      HttpHeader.parse("Dictionary-ID", "token") should beInvalid
+    }
+
+    "Use-As-Dictionary" in {
+      """Use-As-Dictionary: match="/app/*/main.js"""" =!= `Use-As-Dictionary`("/app/*/main.js")
+      """Use-As-Dictionary: match="/product/*", match-dest=("document" "frame"), id="v1", type=other""" =!=
+        `Use-As-Dictionary`("/product/*", Seq("document", "frame"), "v1", "other")
+      // the defaults are not rendered, and members that are not known are ignored
+      """Use-As-Dictionary: unknown, other=1;a=b, match="/*";p, match-dest=(), id="", type=raw, list=(1 a "b")""" =!=
+        `Use-As-Dictionary`("/*").renderedTo("""match="/*"""")
+
+      // whitespace around the whole value, around the separators and in inner lists
+      val expected = HttpHeader.ParsingResult.Ok(`Use-As-Dictionary`("/*", Seq("a", "b"), "v1"), Nil)
+      HttpHeader.parse("Use-As-Dictionary", """  match="/*", match-dest=("a" "b"), id="v1"  """) shouldEqual expected
+      HttpHeader.parse("Use-As-Dictionary", """match="/*" ,match-dest=( "a"  "b" )  ,  id="v1"""") shouldEqual expected
+      HttpHeader.parse("Use-As-Dictionary", """match="/*"; p=1, match-dest=("a" "b"), id="v1"""") shouldEqual expected
+      // but not around the '=' of a member
+      HttpHeader.parse("Use-As-Dictionary", """match ="/*"""") should beInvalid
+      HttpHeader.parse("Use-As-Dictionary", """match= "/*"""") should beInvalid
+      HttpHeader.parse("Available-Dictionary", ": pZGm1Av0IEBKARczz7exkNYsZb8LzaMrV7J32a2fFG4=:") should beInvalid
+
+      HttpHeader.parse("Use-As-Dictionary", """id="v1"""") should beInvalid // no match
+      HttpHeader.parse("Use-As-Dictionary", "match=token") should beInvalid
+      HttpHeader.parse("Use-As-Dictionary", """match="/*", match-dest="document"""") should beInvalid
+      HttpHeader.parse("Use-As-Dictionary", """match="/*", id=1""") should beInvalid
+      HttpHeader.parse("Use-As-Dictionary", """match="/*", type="raw"""") should beInvalid
+      an[IllegalArgumentException] should be thrownBy `Use-As-Dictionary`("/*", dictionaryType = "not a token")
+    }
+
     "Strict-Transport-Security" in {
       "Strict-Transport-Security: max-age=31536000" =!= `Strict-Transport-Security`(maxAge = 31536000)
       "Strict-Transport-Security: max-age=31536000" =!= `Strict-Transport-Security`(maxAge = 31536000,
@@ -991,6 +1035,14 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     }
 
   }
+
+  // an invalid value of a modeled header is kept as a raw header, together with the error
+  def beInvalid: Matcher[HttpHeader.ParsingResult] =
+    Matcher {
+      case HttpHeader.ParsingResult.Ok(_: RawHeader, errors) if errors.nonEmpty =>
+        MatchResult(matches = true, "", "")
+      case other => MatchResult(matches = false, s"$other was not invalid", "")
+    }
 
   implicit class TestLine(line: String) {
     def =!=(testHeader: TestExample) = testHeader(line)

@@ -76,6 +76,36 @@ trait CodingDirectives {
   def encodeResponseWith(first: Encoder, more: Encoder*): Directive0 =
     _encodeResponse(Seq(first +: more: _*))
 
+  /**
+   * Encodes the response with the 'dcz' encoding of RFC 9842 if the client accepts it and `lookup` finds the
+   * dictionary with the hash in the request's `Available-Dictionary` header. Otherwise the response is encoded like
+   * in [[encodeResponse]].
+   *
+   * All responses get a `Vary: Accept-Encoding, Available-Dictionary` header, as caches must not reuse them for other
+   * dictionaries. Following RFC 9842, section 9.3.3, the dictionary is not used for a cross-origin request whose
+   * response cannot be read by the client. This looks at `Access-Control-Allow-Origin`, so a directive that adds this
+   * header has to be inside this one.
+   *
+   * @param lookup finds the coder of the dictionary with the given SHA-256 hash, see [[Coders.Dcz]]. It should not
+   *               create the coder on every call, as that hashes the dictionary
+   * @group coding
+   * @since 2.0.0
+   */
+  def encodeResponseWithDictionary(lookup: ByteString => Option[DictionaryCoder]): Directive0 =
+    _encodeResponseWithDictionary(lookup, DefaultEncodeResponseEncoders)
+
+  /**
+   * Encodes the response with the 'dcz' encoding of RFC 9842 if possible, see
+   * [[encodeResponseWithDictionary(lookup:* encodeResponseWithDictionary]]. Otherwise the response is encoded like in
+   * [[encodeResponseWith]], except that a response that could not be encoded is not rejected if a dictionary was found.
+   *
+   * @group coding
+   * @since 2.0.0
+   */
+  def encodeResponseWithDictionary(
+      lookup: ByteString => Option[DictionaryCoder], first: Encoder, more: Encoder*): Directive0 =
+    _encodeResponseWithDictionary(lookup, Seq(first +: more: _*))
+
   // decoding
 
   /**
@@ -175,4 +205,63 @@ object CodingDirectives extends CodingDirectives {
           else reject(UnacceptedResponseEncodingRejection(encodings.toSet))
       }
     }
+
+  private val DictionaryVaryHeader = headers.RawHeader("Vary", "Accept-Encoding, Available-Dictionary")
+
+  private def _encodeResponseWithDictionary(
+      lookup: ByteString => Option[DictionaryCoder], encoders: Seq[Encoder]): Directive0 =
+    BasicDirectives.extractRequest.flatMap { request =>
+      def addVary(response: HttpResponse): HttpResponse = response.addHeader(DictionaryVaryHeader)
+
+      val dictionaryCoder =
+        if (acceptsDcz(request))
+          request.header[headers.`Available-Dictionary`].flatMap { available =>
+            lookup(available.hash).filter(_.dictionaryHash == available.hash)
+          }
+        else None
+
+      dictionaryCoder match {
+        case Some(coder) =>
+          val fallback = EncodingNegotiator(request.headers)
+            .pickEncoding(encoders.map(_.encoding).toList)
+            .flatMap(encoding => encoders.find(_.encoding == encoding))
+          mapResponse { response =>
+            val encoded: HttpResponse =
+              if (dictionaryAllowedFor(request, response)) coder.encodeMessage(response) else response
+            // does nothing if the dictionary was used, as there is a Content-Encoding header then
+            addVary(fallback.fold(encoded)(_.encodeMessage(encoded)))
+          }
+        case None => mapResponse(addVary) & _encodeResponse(encoders)
+      }
+    }
+
+  // Only an explicit 'dcz' counts: a client sends it only if it has the dictionary, which a wildcard says nothing about
+  private def acceptsDcz(request: HttpRequest): Boolean =
+    request.headers.exists {
+      case headers.`Accept-Encoding`(encodings) =>
+        encodings.exists {
+          case headers.HttpEncodingRange.One(encoding, qValue) => encoding == HttpEncodings.dcz && qValue > 0f
+          case _                                               => false
+        }
+      case _ => false
+    }
+
+  // https://www.rfc-editor.org/rfc/rfc9842#section-9.3.3
+  private def dictionaryAllowedFor(request: HttpRequest, response: HttpResponse): Boolean = {
+    def headerValue(lowercaseName: String) = request.headers.find(_.is(lowercaseName)).map(_.value)
+
+    headerValue("sec-fetch-site") match {
+      case None | Some("same-origin") => true
+      case _                          =>
+        headerValue("sec-fetch-mode") match {
+          case None | Some("navigate") | Some("same-origin") => true
+          case Some("cors")                                  =>
+            (response.header[headers.`Access-Control-Allow-Origin`], request.header[headers.Origin]) match {
+              case (Some(allowed), Some(origin)) => allowed.value == "*" || allowed.value == origin.value
+              case _                             => false
+            }
+          case _ => false
+        }
+    }
+  }
 }

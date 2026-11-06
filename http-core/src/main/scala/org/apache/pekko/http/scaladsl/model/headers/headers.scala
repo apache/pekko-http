@@ -36,6 +36,7 @@ import pekko.http.impl.model.parser.CharacterClasses.`attr-char`
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model._
 import pekko.stream.scaladsl.ScalaSessionAPI
+import pekko.util.ByteString
 
 sealed abstract class ModeledCompanion[T: ClassTag] extends Renderable {
   val name = ModeledCompanion.nameFromClass(getClass)
@@ -430,6 +431,20 @@ final case class Authorization(credentials: HttpCredentials) extends jm.headers.
   protected def companion = Authorization
 }
 
+// https://www.rfc-editor.org/rfc/rfc9842#section-2.2
+object `Available-Dictionary` extends ModeledCompanion[`Available-Dictionary`]
+
+/** @param hash the SHA-256 hash of the dictionary */
+final case class `Available-Dictionary`(hash: ByteString) extends jm.headers.AvailableDictionary with RequestHeader {
+  require(hash.length == 32, s"hash must be a SHA-256 hash of 32 bytes, was ${hash.length} bytes")
+  def renderValue[R <: Rendering](r: R): r.type =
+    r ~~ ':' ~~ Base64.rfc2045().encodeToString(hash.toArray, false) ~~ ':'
+  protected def companion = `Available-Dictionary`
+
+  /** Java API */
+  def getHash: ByteString = hash
+}
+
 // https://tools.ietf.org/html/rfc7234#section-5.2
 object `Cache-Control` extends ModeledCompanion[`Cache-Control`] {
   def apply(first: CacheDirective, more: CacheDirective*): `Cache-Control` = apply(Seq(first +: more: _*))
@@ -605,6 +620,24 @@ object Date extends ModeledCompanion[Date]
 final case class Date(date: DateTime) extends jm.headers.Date with RequestResponseHeader {
   def renderValue[R <: Rendering](r: R): r.type = date.renderRfc1123DateTimeString(r)
   protected def companion = Date
+}
+
+// https://www.rfc-editor.org/rfc/rfc9842#section-2.3
+object `Dictionary-ID` extends ModeledCompanion[`Dictionary-ID`] {
+  private[headers] val MaxLength = 1024
+
+  // the characters of a string in a structured field, which are the printable ASCII characters
+  private[headers] val StringChars = CharPredicate('\u0020' to '\u007E')
+}
+final case class `Dictionary-ID`(id: String) extends jm.headers.DictionaryID with RequestHeader {
+  import `Dictionary-ID`._
+  require(id.length <= MaxLength, s"id must have at most $MaxLength characters, was ${id.length}")
+  require(StringChars.matchesAll(id), "id must only contain printable ASCII characters")
+  def renderValue[R <: Rendering](r: R): r.type = r ~~#! id
+  protected def companion = `Dictionary-ID`
+
+  /** Java API */
+  def getId: String = id
 }
 
 /**
@@ -1155,6 +1188,62 @@ final case class Upgrade(protocols: Seq[UpgradeProtocol]) extends RequestRespons
   protected def companion = Upgrade
 
   def hasWebSocket: Boolean = protocols.exists(_.name.equalsIgnoreCase("websocket"))
+}
+
+// https://www.rfc-editor.org/rfc/rfc9842#section-2.1
+object `Use-As-Dictionary` extends ModeledCompanion[`Use-As-Dictionary`] {
+  private[http] val RawType = "raw"
+  private val TokenStart = CharPredicate.Alpha ++ '*'
+  private val TokenChars = CharacterClasses.tchar ++ ":/"
+
+  private def isToken(value: String): Boolean =
+    value.nonEmpty && TokenStart(value.charAt(0)) && TokenChars.matchesAll(value)
+}
+
+/**
+ * @param matchPattern   the URL pattern of the requests that the dictionary can be used for
+ * @param matchDest      the Fetch request destinations that the dictionary can be used for, empty for all of them
+ * @param id             an identifier that clients send back in the `Dictionary-ID` header, empty for none
+ * @param dictionaryType the format of the dictionary
+ */
+final case class `Use-As-Dictionary`(
+    matchPattern: String,
+    matchDest: Seq[String] = Nil,
+    id: String = "",
+    dictionaryType: String = `Use-As-Dictionary`.RawType) extends jm.headers.UseAsDictionary with ResponseHeader {
+  import `Use-As-Dictionary`._
+  import `Dictionary-ID`.{ MaxLength, StringChars }
+  require(StringChars.matchesAll(matchPattern), "matchPattern must only contain printable ASCII characters")
+  require(matchDest.forall(StringChars.matchesAll(_)), "matchDest must only contain printable ASCII characters")
+  require(id.length <= MaxLength, s"id must have at most $MaxLength characters, was ${id.length}")
+  require(StringChars.matchesAll(id), "id must only contain printable ASCII characters")
+  require(isToken(dictionaryType), s"dictionaryType must be a token, was [$dictionaryType]")
+
+  def renderValue[R <: Rendering](r: R): r.type = {
+    r ~~ "match=" ~~#! matchPattern
+    if (matchDest.nonEmpty) {
+      r ~~ ", match-dest=("
+      r ~~#! matchDest.head
+      matchDest.tail.foreach(dest => r ~~ ' ' ~~#! dest)
+      r ~~ ')'
+    }
+    if (id.nonEmpty) r ~~ ", id=" ~~#! id
+    if (dictionaryType != RawType) r ~~ ", type=" ~~ dictionaryType
+    r
+  }
+  protected def companion = `Use-As-Dictionary`
+
+  /** Java API */
+  def getMatchPattern: String = matchPattern
+
+  /** Java API */
+  def getMatchDest: Iterable[String] = matchDest.asJava
+
+  /** Java API */
+  def getId: String = id
+
+  /** Java API */
+  def getDictionaryType: String = dictionaryType
 }
 
 // https://tools.ietf.org/html/rfc7231#section-5.5.3

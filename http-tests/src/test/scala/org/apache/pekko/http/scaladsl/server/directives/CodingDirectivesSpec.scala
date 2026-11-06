@@ -304,6 +304,148 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
     }
   }
 
+  "the Zstd coder" should {
+    "decode the request content if it has encoding 'zstd'" in {
+      Post("/", compress("Hello", Zstd)) ~> `Content-Encoding`(zstd) ~> {
+        decodeRequestWith(Zstd) { echoRequestContent }
+      } ~> check { responseAs[String] shouldEqual "Hello" }
+    }
+    "encode the response content with zstd if the client accepts it" in {
+      Post() ~> `Accept-Encoding`(zstd) ~> {
+        encodeResponseWith(Zstd) { yeah }
+      } ~> check {
+        response should haveContentEncoding(zstd)
+        Zstd.decode(strictify(responseEntity).data).awaitResult(1.second.dilated) should readAs("Yeah!")
+      }
+    }
+    "prefer zstd if it is the first coder and the client accepts it" in {
+      Post() ~> `Accept-Encoding`(gzip, zstd) ~> {
+        encodeResponseWith(Zstd, Gzip) { yeah }
+      } ~> check {
+        response should haveContentEncoding(zstd)
+      }
+    }
+    "not be used by the default coders" in {
+      Post() ~> `Accept-Encoding`(zstd) ~> {
+        encodeResponse { yeah }
+      } ~> check {
+        response should haveNoContentEncoding
+      }
+    }
+  }
+
+  "the encodeResponseWithDictionary directive" should {
+    val dictionary = ByteString("the content of the dictionary, Yeah!")
+    lazy val coder = Dcz(dictionary)
+    lazy val route = encodeResponseWithDictionary(hash => if (hash == coder.dictionaryHash) Some(coder) else None) {
+      yeah
+    }
+    lazy val available = `Available-Dictionary`(coder.dictionaryHash)
+    val otherHash = `Available-Dictionary`(ByteString(new Array[Byte](32)))
+    val site = RawHeader("Sec-Fetch-Site", "cross-site")
+    val origin = Origin(HttpOrigin("https://example.com"))
+    def varyHeader = response.headers.filter(_.is("vary")).map(_.value)
+    val vary = Seq("Accept-Encoding, Available-Dictionary")
+
+    def shouldBeDcz() = {
+      response should haveContentEncoding(dcz)
+      coder.decode(strictify(responseEntity).data).awaitResult(1.second.dilated) should readAs("Yeah!")
+      varyHeader shouldEqual vary
+    }
+
+    "use the dictionary if the client accepts dcz and has it" in {
+      Get() ~> `Accept-Encoding`(dcz, gzip) ~> available ~> route ~> check { shouldBeDcz() }
+      Get() ~> `Accept-Encoding`(dcz)       ~> available ~> route ~> check { shouldBeDcz() }
+    }
+    "fall back to the default coders for an unknown dictionary" in {
+      Get() ~> `Accept-Encoding`(dcz, gzip) ~> otherHash ~> route ~> check {
+        response should haveContentEncoding(gzip)
+        varyHeader shouldEqual vary
+      }
+    }
+    "fall back to the default coders if the client does not accept dcz" in {
+      Get() ~> `Accept-Encoding`(gzip) ~> available ~> route ~> check {
+        response should haveContentEncoding(gzip)
+        varyHeader shouldEqual vary
+      }
+      Get() ~> `Accept-Encoding`(dcz.withQValue(0f), gzip) ~> available ~> route ~> check {
+        response should haveContentEncoding(gzip)
+      }
+    }
+    "not treat a wildcard in Accept-Encoding as accepting dcz" in {
+      Get() ~> `Accept-Encoding`(HttpEncodingRange.`*`) ~> available ~> route ~> check {
+        (response.encoding should not).equal(dcz)
+      }
+    }
+    "not use a coder of another dictionary than the requested one" in {
+      val wrongRoute = encodeResponseWithDictionary(_ => Some(coder)) { yeah }
+      Get() ~> `Accept-Encoding`(dcz, gzip) ~> otherHash ~> wrongRoute ~> check {
+        response should haveContentEncoding(gzip)
+      }
+    }
+    "use the given fallback encoders" in {
+      val withFallback =
+        encodeResponseWithDictionary(hash => if (hash == coder.dictionaryHash) Some(coder) else None, Deflate) { yeah }
+      Get() ~> `Accept-Encoding`(deflate) ~> withFallback ~> check {
+        response should haveContentEncoding(deflate)
+      }
+      Get() ~> `Accept-Encoding`(gzip) ~> withFallback ~> check {
+        rejection shouldEqual UnacceptedResponseEncodingRejection(deflate)
+      }
+    }
+    "not encode a response that the message filter excludes" in {
+      val binary = encodeResponseWithDictionary(_ => Some(coder)) {
+        complete(HttpEntity(ContentType(`image/png`), ByteString("png")))
+      }
+      Get() ~> `Accept-Encoding`(dcz) ~> available ~> binary ~> check {
+        response should haveNoContentEncoding
+      }
+    }
+    "follow the cross-origin rules of RFC 9842" in {
+      def withMode(mode: String) = Get() ~> `Accept-Encoding`(dcz, gzip) ~> available ~> site ~>
+        RawHeader("Sec-Fetch-Mode", mode)
+      def corsRoute(allowed: `Access-Control-Allow-Origin`) =
+        encodeResponseWithDictionary(_ => Some(coder)) { respondWithHeader(allowed) { yeah } }
+
+      Get()                                  ~> `Accept-Encoding`(dcz) ~> available ~> RawHeader("Sec-Fetch-Site", "same-origin") ~>
+      RawHeader("Sec-Fetch-Mode", "no-cors") ~> route                  ~> check { shouldBeDcz() }
+      Get()                                  ~> `Accept-Encoding`(dcz) ~> available ~> site                                       ~> route ~> check { shouldBeDcz() }
+      withMode("navigate")                   ~> route                  ~> check { shouldBeDcz() }
+
+      withMode("no-cors") ~> route ~> check { response should haveContentEncoding(gzip) }
+      // no Access-Control-Allow-Origin
+      withMode("cors") ~> origin ~> route ~> check { response should haveContentEncoding(gzip) }
+      // no Origin
+      withMode("cors") ~> corsRoute(`Access-Control-Allow-Origin`.`*`) ~> check {
+        response should haveContentEncoding(gzip)
+      }
+      withMode("cors") ~> origin ~> corsRoute(`Access-Control-Allow-Origin`.`*`) ~> check {
+        response should haveContentEncoding(dcz)
+      }
+      withMode("cors") ~> origin ~> corsRoute(`Access-Control-Allow-Origin`(origin.origins.head)) ~> check {
+        response should haveContentEncoding(dcz)
+      }
+      withMode("cors") ~> origin ~> corsRoute(`Access-Control-Allow-Origin`(HttpOrigin("https://other.org"))) ~> check {
+        response should haveContentEncoding(gzip)
+      }
+    }
+  }
+
+  "the Dcz coder" should {
+    "decode a request with decodeRequestWith, and reject one for another dictionary with 400" in {
+      val coder = Dcz(ByteString("the content of the dictionary"))
+      Post("/", compress("Hello", coder)) ~> `Content-Encoding`(dcz) ~> {
+        decodeRequestWith(coder) { echoRequestContent }
+      } ~> check { responseAs[String] shouldEqual "Hello" }
+
+      Post("/", compress("Hello", Dcz(ByteString("another dictionary")))) ~> `Content-Encoding`(dcz) ~> {
+        handleExceptions(ExceptionHandler { case e: IllegalRequestException => complete(e.status) }) {
+          decodeRequestWith(coder) { echoRequestContent }
+        }
+      } ~> check { status shouldEqual BadRequest }
+    }
+  }
+
   "the encodeResponseWith(NoEncoding) directive" should {
     "produce a response if no Accept-Encoding is present in the request" in {
       Post() ~> encodeResponseWith(NoCoding) { completeOk } ~> check {

@@ -23,7 +23,6 @@ import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
-import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
 
 public class HttpClientDecodingExampleTest {
 
@@ -41,21 +40,10 @@ public class HttpClientDecodingExampleTest {
 
     final Http http = Http.get(system);
 
+    // picks the coder matching the Content-Encoding of the response, add Coder.Zstd to also
+    // decode zstd
     final Function<HttpResponse, HttpResponse> decodeResponse =
-        response -> {
-          // Pick the right coder
-          final Coder coder;
-          if (HttpEncodings.GZIP.equals(response.encoding())) {
-            coder = Coder.Gzip;
-          } else if (HttpEncodings.DEFLATE.equals(response.encoding())) {
-            coder = Coder.Deflate;
-          } else {
-            coder = Coder.NoCoding;
-          }
-
-          // Decode the entity
-          return coder.decodeMessage(response);
-        };
+        response -> Coder.decodeResponse(response, Coder.Gzip, Coder.Deflate, Coder.NoCoding);
 
     List<CompletableFuture<HttpResponse>> futureResponses =
         httpRequests.stream()
