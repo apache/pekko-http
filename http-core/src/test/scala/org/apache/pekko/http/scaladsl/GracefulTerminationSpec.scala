@@ -262,6 +262,40 @@ class GracefulTerminationSpec
       Await.result(serverBinding.whenTerminated, 3.seconds)
     }
 
+    "deliver the pending response when the network side only pulls after termination started" in {
+      StreamTestKit.assertAllStagesStopped {
+        val userFlow = Flow.fromSinkAndSourceMat(TestSink[HttpRequest](), TestSource[HttpResponse]())(Keep.both)
+          .joinMat(GracefulTerminatorStage(system, ServerSettings(system)))(Keep.both)
+        val ((netIn, ((userIn, userOut), terminator)), netOut) =
+          TestSource[HttpRequest]()
+            .viaMat(userFlow)(Keep.both)
+            .toMat(TestSink[HttpResponse]())(Keep.both)
+            .run()
+
+        netOut.request(1)
+        userIn.request(2)
+        netIn.sendNext(HttpRequest())
+        userIn.expectNext()
+        userOut.sendNext(HttpResponse(StatusCodes.Accepted))
+        netOut.expectNext().status should ===(StatusCodes.Accepted)
+
+        // the next request is in the user's hands while the network side has no outstanding demand
+        netIn.sendNext(HttpRequest())
+        userIn.expectNext()
+
+        // the parasitic context signals the stage before the demand below is sent
+        val termination = terminator.terminate(10.seconds)(ExecutionContext.parasitic)
+        netOut.request(1)
+
+        userOut.sendNext(HttpResponse(StatusCodes.OK))
+        val response = netOut.expectNext()
+        response.status should ===(StatusCodes.OK)
+        response.header[Connection] shouldBe Some(Connection("close"))
+        netOut.expectComplete()
+        termination.futureValue shouldBe Http.HttpConnectionTerminated
+      }
+    }
+
     "allow configuring the automatic termination response (in config)" in {
       new TestSetup {
 
