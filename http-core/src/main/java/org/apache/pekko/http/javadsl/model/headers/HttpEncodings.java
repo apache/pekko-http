@@ -34,6 +34,12 @@ public final class HttpEncodings {
   /**
    * @since 2.0.0
    */
+  public static final HttpEncoding DCZ =
+      org.apache.pekko.http.scaladsl.model.headers.HttpEncodings.dcz();
+
+  /**
+   * @since 2.0.0
+   */
   public static final HttpEncoding ZSTD =
       org.apache.pekko.http.scaladsl.model.headers.HttpEncodings.zstd();
 }

@@ -25,6 +25,7 @@ import pekko.annotation.InternalApi
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ HttpEncoding, HttpEncodings }
 import pekko.stream.ZstdDecompressionSettings
+import pekko.stream.impl.io.compression.ZstdDictionaryImpl
 import pekko.stream.scaladsl.{ Compression, Flow }
 import pekko.util.ByteString
 
@@ -99,10 +100,13 @@ private[http] object Zstd {
  */
 @InternalApi
 @nowarn("msg=deprecated")
-private[coding] class ZstdCompressor(compressionLevel: Int, windowLog: Int) extends Compressor {
+private[coding] class ZstdCompressor(
+    compressionLevel: Int,
+    windowLog: Int,
+    dictionary: Option[ZstdDictionaryImpl] = None) extends Compressor {
   private var underlyingCreated = false
   private lazy val underlying = {
-    val compressor = new pekko.stream.impl.io.compression.ZstdCompressor(compressionLevel, windowLog = windowLog)
+    val compressor = new pekko.stream.impl.io.compression.ZstdCompressor(compressionLevel, dictionary, windowLog)
     underlyingCreated = true
     compressor
   }

@@ -48,6 +48,7 @@ private[http] class HeaderParser(
     with ContentDispositionHeader
     with ContentTypeHeader
     with CommonActions
+    with CompressionDictionaryHeaders
     with IpAddressParsing
     with LinkHeader
     with SimpleHeaders
@@ -170,6 +171,7 @@ private[http] object HeaderParser {
     "age",
     "allow",
     "authorization",
+    "available-dictionary",
     "cache-control",
     "connection",
     "content-disposition",
@@ -180,6 +182,7 @@ private[http] object HeaderParser {
     "content-type",
     "cookie",
     "date",
+    "dictionary-id",
     "etag",
     "expect",
     "expires",
@@ -209,6 +212,7 @@ private[http] object HeaderParser {
     "te",
     "transfer-encoding",
     "upgrade",
+    "use-as-dictionary",
     "user-agent",
     "www-authenticate",
     "x-forwarded-for",
