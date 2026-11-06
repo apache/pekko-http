@@ -62,12 +62,12 @@ trait Http2ServerSettings {
    * advertised, so a peer that follows the spec keeps to the 16 KiB default and the extra room is leniency for peers
    * that do not. RFC 9113, section 4.2 constrains it to be between 16 KiB and 16 MiB - 1.
    *
-   * @since 1.4.2
+   * @since 1.5.0
    */
   def getMaxFrameSize: Int = maxFrameSize
 
   /**
-   * @since 1.4.2
+   * @since 1.5.0
    */
   def withMaxFrameSize(newValue: Int): Http2ServerSettings
 

@@ -113,12 +113,12 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
    * advertised, so a peer that follows the spec keeps to the 16 KiB default and the extra room is leniency for peers
    * that do not. RFC 9113, section 4.2 constrains it to be between 16 KiB and 16 MiB - 1.
    *
-   * @since 1.4.2
+   * @since 1.5.0
    */
   def maxFrameSize: Int
 
   /**
-   * @since 1.4.2
+   * @since 1.5.0
    */
   override def withMaxFrameSize(newValue: Int): Http2ServerSettings = copy(maxFrameSize = newValue)
 
@@ -265,12 +265,12 @@ trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http
    * advertised, so a peer that follows the spec keeps to the 16 KiB default and the extra room is leniency for peers
    * that do not. RFC 9113, section 4.2 constrains it to be between 16 KiB and 16 MiB - 1.
    *
-   * @since 1.4.2
+   * @since 1.5.0
    */
   def maxFrameSize: Int
 
   /**
-   * @since 1.4.2
+   * @since 1.5.0
    */
   override def withMaxFrameSize(newValue: Int): Http2ClientSettings = copy(maxFrameSize = newValue)
 

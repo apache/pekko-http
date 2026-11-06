@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# new max-frame-size setting for HTTP/2 (1.4.2)
+# new max-frame-size setting for HTTP/2 (1.5.0)
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ClientSettings.maxFrameSize")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ClientSettings.withMaxFrameSize")
 ProblemFilters.exclude[ReversedMissingMethodProblem]("org.apache.pekko.http.javadsl.settings.Http2ServerSettings.getMaxFrameSize")
