@@ -19,9 +19,11 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.MediaTypes;
 import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
+import org.apache.pekko.http.javadsl.model.headers.AvailableDictionary;
 import org.apache.pekko.http.javadsl.model.headers.ContentEncoding;
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
 import org.apache.pekko.http.javadsl.coding.Coder;
+import org.apache.pekko.http.javadsl.coding.DictionaryCoder;
 import org.apache.pekko.http.javadsl.server.Rejections;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
@@ -32,6 +34,7 @@ import org.apache.pekko.stream.javadsl.Source;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller.entityToString;
 
@@ -50,6 +53,11 @@ import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.encodeResponseWith;
 
 // #encodeResponseWith
+// #encodeResponseWithDictionary
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.encodeResponseWithDictionary;
+
+// #encodeResponseWithDictionary
 // #decodeRequest
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.decodeRequest;
@@ -107,6 +115,27 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
     //    ).assertHeaderExists(ContentEncoding.create(HttpEncodings.IDENTITY));
 
     // #encodeResponse
+  }
+
+  @Test
+  public void testEncodeResponseWithDictionary() {
+    // #encodeResponseWithDictionary
+    final DictionaryCoder coder =
+        DictionaryCoder.create(ByteString.fromString("a dictionary that the client got earlier"));
+
+    final Route route =
+        encodeResponseWithDictionary(
+            hash -> hash.equals(coder.getDictionaryHash()) ? Optional.of(coder) : Optional.empty(),
+            () -> complete("content"));
+
+    // tests:
+    testRoute(route)
+        .run(
+            HttpRequest.GET("/")
+                .addHeader(AcceptEncoding.create(HttpEncodings.DCZ))
+                .addHeader(AvailableDictionary.create(coder.getDictionaryHash())))
+        .assertHeaderExists(ContentEncoding.create(HttpEncodings.DCZ));
+    // #encodeResponseWithDictionary
   }
 
   @Test

@@ -14,15 +14,18 @@
 package org.apache.pekko.http.javadsl.server
 package directives
 
-import java.util.function.Supplier
+import java.util.Optional
+import java.util.function.{ Function => JFunction, Supplier }
 
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 
 import org.apache.pekko
 import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.http.javadsl.coding.Coder
+import pekko.http.javadsl.coding.{ Coder, DictionaryCoder }
 import pekko.http.javadsl.model.headers.HttpEncoding
 import pekko.http.scaladsl.server.{ Directives => D }
+import pekko.util.ByteString
 
 abstract class CodingDirectives extends CacheConditionDirectives {
 
@@ -73,6 +76,54 @@ abstract class CodingDirectives extends CacheConditionDirectives {
         inner.get.delegate
     }
   }
+
+  /**
+   * Encodes the response with the 'dcz' encoding of RFC 9842 if the client accepts it and `lookup` finds the
+   * dictionary with the hash in the request's `Available-Dictionary` header. Otherwise the response is encoded like
+   * in [[encodeResponse]].
+   *
+   * All responses get a `Vary: Accept-Encoding, Available-Dictionary` header, as caches must not reuse them for other
+   * dictionaries. Following RFC 9842, section 9.3.3, the dictionary is not used for a cross-origin request whose
+   * response cannot be read by the client. This looks at `Access-Control-Allow-Origin`, so a directive that adds this
+   * header has to be inside this one.
+   *
+   * @param lookup finds the coder of the dictionary with the given SHA-256 hash. It should not create the coder on
+   *               every call, as that hashes the dictionary
+   * @since 2.0.0
+   */
+  def encodeResponseWithDictionary(
+      lookup: JFunction[ByteString, Optional[DictionaryCoder]], inner: Supplier[Route]): Route = RouteAdapter {
+    D.encodeResponseWithDictionary(scalaLookup(lookup)) {
+      inner.get.delegate
+    }
+  }
+
+  /**
+   * Encodes the response with the 'dcz' encoding of RFC 9842 if possible, see the overload without `coders`. Otherwise
+   * the response is encoded like in [[encodeResponseWith]], except that a response that could not be encoded is not
+   * rejected if a dictionary was found. If `coders` is empty, the default coders are used.
+   *
+   * @since 2.0.0
+   */
+  def encodeResponseWithDictionary(
+      lookup: JFunction[ByteString, Optional[DictionaryCoder]],
+      coders: java.lang.Iterable[Coder],
+      inner: Supplier[Route]): Route = RouteAdapter {
+    coders.asScala.toList match {
+      case head :: tail =>
+        D.encodeResponseWithDictionary(scalaLookup(lookup), head._underlyingScalaCoder,
+          tail.map(_._underlyingScalaCoder): _*) {
+          inner.get.delegate
+        }
+      case _ =>
+        D.encodeResponseWithDictionary(scalaLookup(lookup)) {
+          inner.get.delegate
+        }
+    }
+  }
+
+  private def scalaLookup(lookup: JFunction[ByteString, Optional[DictionaryCoder]]) =
+    (hash: ByteString) => lookup.apply(hash).toScala.map(_._underlyingScalaCoder)
 
   /**
    * Decodes the incoming request using the given Decoder.

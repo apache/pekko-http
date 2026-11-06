@@ -16,14 +16,17 @@ package org.apache.pekko.http.javadsl.server.directives;
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.http.javadsl.coding.Coder;
+import org.apache.pekko.http.javadsl.coding.DictionaryCoder;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
+import org.apache.pekko.http.javadsl.model.headers.AvailableDictionary;
 import org.apache.pekko.http.javadsl.model.headers.ContentEncoding;
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
 import org.apache.pekko.http.javadsl.testkit.*;
@@ -156,5 +159,52 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
     HttpResponse decoded = Coder.decodeResponse(encoded);
     Assertions.assertEquals(HttpEncodings.ZSTD, decoded.encoding());
     Assertions.assertEquals(encoded, decoded);
+  }
+
+  @Test
+  public void testDictionaryCoder() throws Exception {
+    DictionaryCoder coder = DictionaryCoder.create(ByteString.fromString("a dictionary"));
+    HttpResponse encoded = coder.encodeMessage(HttpResponse.create().withEntity("tester"));
+    Assertions.assertEquals(HttpEncodings.DCZ, encoded.encoding());
+    Assertions.assertEquals(32, coder.getDictionaryHash().length());
+
+    HttpResponse decoded = coder.decodeResponse(encoded);
+    Assertions.assertEquals(HttpEncodings.IDENTITY, decoded.encoding());
+    Assertions.assertEquals(
+        "tester",
+        decoded
+            .entity()
+            .toStrict(1000, materializer())
+            .toCompletableFuture()
+            .get(3, TimeUnit.SECONDS)
+            .getData()
+            .utf8String());
+
+    // a message with another encoding is not decoded
+    HttpResponse gzipped = Coder.Gzip.encodeMessage(HttpResponse.create().withEntity("tester"));
+    Assertions.assertEquals(HttpEncodings.GZIP, coder.decodeResponse(gzipped).encoding());
+  }
+
+  @Test
+  public void testEncodeResponseWithDictionary() {
+    DictionaryCoder coder = DictionaryCoder.create(ByteString.fromString("a dictionary"));
+    TestRoute route =
+        testRoute(
+            encodeResponseWithDictionary(
+                hash ->
+                    hash.equals(coder.getDictionaryHash()) ? Optional.of(coder) : Optional.empty(),
+                List.of(Coder.Gzip),
+                () -> complete("tester")));
+
+    route
+        .run(
+            HttpRequest.create()
+                .addHeader(AcceptEncoding.create(HttpEncodings.DCZ))
+                .addHeader(AvailableDictionary.create(coder.getDictionaryHash())))
+        .assertHeaderExists(ContentEncoding.create(HttpEncodings.DCZ));
+
+    route
+        .run(HttpRequest.create().addHeader(AcceptEncoding.create(HttpEncodings.GZIP)))
+        .assertHeaderExists(ContentEncoding.create(HttpEncodings.GZIP));
   }
 }
