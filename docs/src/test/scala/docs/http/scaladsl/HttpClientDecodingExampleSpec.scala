@@ -26,7 +26,7 @@ class HttpClientDecodingExampleSpec extends PekkoSpec with CompileOnlySpec with 
     import pekko.actor.ActorSystem
     import pekko.http.scaladsl.Http
     import pekko.http.scaladsl.coding.Coders
-    import pekko.http.scaladsl.model._, headers.HttpEncodings
+    import pekko.http.scaladsl.model._
 
     import scala.concurrent.Future
 
@@ -41,21 +41,9 @@ class HttpClientDecodingExampleSpec extends PekkoSpec with CompileOnlySpec with 
       "https://httpbin.org/get" // no Content-Encoding in response
     ).map(uri => HttpRequest(uri = uri))
 
-    def decodeResponse(response: HttpResponse): HttpResponse = {
-      val decoder = response.encoding match {
-        case HttpEncodings.gzip =>
-          Coders.Gzip
-        case HttpEncodings.deflate =>
-          Coders.Deflate
-        case HttpEncodings.identity =>
-          Coders.NoCoding
-        case other =>
-          log.warning("Unknown encoding [{}], not decoding", other)
-          Coders.NoCoding
-      }
-
-      decoder.decodeMessage(response)
-    }
+    // picks the decoder matching the Content-Encoding of the response, add Coders.Zstd to also decode zstd
+    def decodeResponse(response: HttpResponse): HttpResponse =
+      Coders.decodeMessage(response, Coders.DefaultCoders)
 
     val futureResponses: Future[Seq[HttpResponse]] =
       Future.traverse(requests)(http.singleRequest(_).map(decodeResponse))

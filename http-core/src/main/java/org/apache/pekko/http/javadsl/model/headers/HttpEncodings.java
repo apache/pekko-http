@@ -30,4 +30,10 @@ public final class HttpEncodings {
       org.apache.pekko.http.scaladsl.model.headers.HttpEncodings.x$minuscompress();
   public static final HttpEncoding X_ZIP =
       org.apache.pekko.http.scaladsl.model.headers.HttpEncodings.x$minuszip();
+
+  /**
+   * @since 2.0.0
+   */
+  public static final HttpEncoding ZSTD =
+      org.apache.pekko.http.scaladsl.model.headers.HttpEncodings.zstd();
 }
