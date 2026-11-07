@@ -18,8 +18,10 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import org.apache.pekko
+import pekko.http.impl.engine.http2.FrameEvent.HeadersFrame
 import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.http.impl.engine.http2.framing.FrameRenderer
+import pekko.http.scaladsl.model.{ HttpMethods, HttpRequest }
 import pekko.util.ByteString
 
 /**
@@ -35,10 +37,17 @@ class Http2ServerEmptyDataThrottleSpec extends Http2SpecWithMaterializer("""
     "HTTP2 connection failed with error [Maximum throttle throughput exceeded.]. Sending INTERNAL_ERROR and closing connection.")
 
   "The Http/2 server implementation" should {
-    "cancel connection when flooded with empty DATA frames".inAssertAllStagesStopped(
+    "cancel connection when flooded with empty DATA frames that end their stream".inAssertAllStagesStopped(
       new TestSetup with RequestResponseProbes {
-        val emptyDataFrame = FrameRenderer.renderFrame(FrameType.DATA, ByteFlag.Zero, 1, ByteString.empty)
-        network.sendBytes(Seq.fill(1000)(emptyDataFrame).reduce(_ ++ _))
+        // each request is opened with HEADERS and closed with an empty DATA frame carrying END_STREAM, which only
+        // "empty-data" charges; 200 streams stays below max-concurrent-streams but exceeds the burst of 100
+        val requests = (0 until 200).map { i =>
+          val streamId = 2 * i + 1
+          val headerBlock = network.encodeRequestHeaders(HttpRequest(HttpMethods.POST))
+          FrameRenderer.render(HeadersFrame(streamId, endStream = false, endHeaders = true, headerBlock, None)) ++
+          FrameRenderer.renderFrame(FrameType.DATA, Http2Protocol.Flags.END_STREAM, streamId, ByteString.empty)
+        }
+        network.sendBytes(requests.reduce(_ ++ _))
       })
   }
 }

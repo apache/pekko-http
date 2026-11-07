@@ -139,8 +139,27 @@ trait Http2ServerSettings {
   def withMaxConnectionAgeJitter(jitter: Double): Http2ServerSettings
 
   def getFrameTypeThrottleFrameTypes(): java.util.Set[String] = frameTypeThrottleFrameTypes.asJava
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleFrameTypes(frameTypes: java.util.Set[String]): Http2ServerSettings =
+    copy(frameTypeThrottleFrameTypes = frameTypes.asScala.toSet)
+
   def getFrameTypeThrottleCost(): Int = frameTypeThrottleCost
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleCost(cost: Int): Http2ServerSettings = copy(frameTypeThrottleCost = cost)
+
   def getFrameTypeThrottleBurst(): Int = frameTypeThrottleBurst
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleBurst(burst: Int): Http2ServerSettings = copy(frameTypeThrottleBurst = burst)
+
   def getFrameTypeThrottleInterval: Duration = Duration.ofMillis(frameTypeThrottleInterval.toMillis)
 
   def withFrameTypeThrottleInterval(interval: Duration): Http2ServerSettings =
