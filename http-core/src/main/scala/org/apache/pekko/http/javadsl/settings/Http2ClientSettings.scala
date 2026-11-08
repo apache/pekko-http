@@ -20,6 +20,7 @@ import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.scaladsl
 
 import scala.concurrent.duration.DurationLong
+import scala.jdk.CollectionConverters._
 
 trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2ClientSettingsImpl =>
   def requestEntityChunkSize: Int
@@ -125,5 +126,47 @@ trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2Cli
   def getMaxConnectionBackoff: Duration = Duration.ofMillis(maxConnectionBackoff.toMillis)
   def withMaxConnectionBackoff(backoff: Duration): Http2ClientSettings =
     copy(maxConnectionBackoff = backoff.toMillis.millis)
+
+  /**
+   * @since 2.0.0
+   */
+  def getFrameTypeThrottleFrameTypes(): java.util.Set[String] = frameTypeThrottleFrameTypes.asJava
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleFrameTypes(frameTypes: java.util.Set[String]): Http2ClientSettings =
+    copy(frameTypeThrottleFrameTypes = frameTypes.asScala.toSet)
+
+  /**
+   * @since 2.0.0
+   */
+  def getFrameTypeThrottleCost(): Int = frameTypeThrottleCost
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleCost(cost: Int): Http2ClientSettings = copy(frameTypeThrottleCost = cost)
+
+  /**
+   * @since 2.0.0
+   */
+  def getFrameTypeThrottleBurst(): Int = frameTypeThrottleBurst
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleBurst(burst: Int): Http2ClientSettings = copy(frameTypeThrottleBurst = burst)
+
+  /**
+   * @since 2.0.0
+   */
+  def getFrameTypeThrottleInterval: Duration = Duration.ofMillis(frameTypeThrottleInterval.toMillis)
+
+  /**
+   * @since 2.0.0
+   */
+  def withFrameTypeThrottleInterval(interval: Duration): Http2ClientSettings =
+    copy(frameTypeThrottleInterval = interval.toMillis.millis)
 
 }
