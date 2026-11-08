@@ -51,9 +51,10 @@ abstract class FileAndResourceDirectives extends ExecutionDirectives {
    * using the default content type resolver.
    * If the resource cannot be found or read the Route rejects the request.
    *
-   * The path is passed to the class loader as given: unlike `getFromResourceDirectory` this directive does not
-   * reject `..` or separator characters, so a path built from request input can resolve to a resource outside the
-   * intended prefix. Validate any request-derived part of the path, or use `getFromResourceDirectory` instead.
+   * A path that contains a `..` segment, a backslash or a NUL character is rejected, unless the
+   * `pekko.http.routing.reject-unsafe-resource-names` setting is turned off. The directive does not otherwise know
+   * which prefix a path was built from, so validate any request-derived part of the path, or use
+   * `getFromResourceDirectory`, which serves only resources below the given directory.
    */
   def getFromResource(path: String): Route = RouteAdapter {
     D.getFromResource(path)

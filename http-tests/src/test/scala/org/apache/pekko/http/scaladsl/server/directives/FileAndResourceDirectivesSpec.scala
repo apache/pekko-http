@@ -320,6 +320,30 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
         responseAs[String] shouldEqual ""
       }
     }
+    "reject resource names containing a '..' segment" in {
+      // resolves to sample.html against the directory-backed test class path when not rejected
+      Get() ~> getFromResource("subDirectory/../sample.html") ~> check { handled shouldEqual false }
+      Get() ~> getFromResource("../sample.html")              ~> check { handled shouldEqual false }
+      Get() ~> getFromResource("subDirectory/..")             ~> check { handled shouldEqual false }
+    }
+    "reject resource names containing a backslash or a NUL character" in {
+      Get() ~> getFromResource("subDirectory\\..\\sample.html") ~> check { handled shouldEqual false }
+      Get() ~> getFromResource("sample.html\u0000")             ~> check { handled shouldEqual false }
+    }
+    "serve resource names with a '.' segment" in {
+      Get() ~> getFromResource("subDirectory/./fileA.txt") ~> check { handled shouldEqual true }
+    }
+    "pass resource names containing a '..' segment to the class loader when reject-unsafe-resource-names is off" in {
+      Get() ~> withSettings(RoutingSettings(system).withRejectUnsafeResourceNames(false)) {
+        getFromResource("subDirectory/../sample.html")
+      } ~> check {
+        mediaType shouldEqual `text/html`
+        responseAs[String] shouldEqual "<p>Lorem ipsum!</p>"
+      }
+    }
+    "reject a '..' segment in the directory name given to getFromResourceDirectory" in {
+      Get("sample.html") ~> getFromResourceDirectory("subDirectory/..") ~> check { handled shouldEqual false }
+    }
   }
 
   "getFromResourceDirectory" should {

@@ -37,6 +37,14 @@ abstract class RoutingSettings private[pekko] () { self: RoutingSettingsImpl =>
    */
   def getUseJarFileCache: Boolean
 
+  /**
+   * Whether `getFromResource` rejects a resource name that contains a `..` segment, a backslash or a NUL character
+   * instead of passing it to the class loader.
+   *
+   * @since 2.0.0
+   */
+  def getRejectUnsafeResourceNames: Boolean
+
   def withVerboseErrorMessages(verboseErrorMessages: Boolean): RoutingSettings =
     self.copy(verboseErrorMessages = verboseErrorMessages)
   def withFileGetConditional(fileGetConditional: Boolean): RoutingSettings =
@@ -54,6 +62,12 @@ abstract class RoutingSettings private[pekko] () { self: RoutingSettingsImpl =>
    * @since 2.0.0
    */
   def withUseJarFileCache(useJarFileCache: Boolean): RoutingSettings = self.copy(useJarFileCache = useJarFileCache)
+
+  /**
+   * @since 2.0.0
+   */
+  def withRejectUnsafeResourceNames(rejectUnsafeResourceNames: Boolean): RoutingSettings =
+    self.copy(rejectUnsafeResourceNames = rejectUnsafeResourceNames)
 }
 
 object RoutingSettings extends SettingsCompanion[RoutingSettings] {

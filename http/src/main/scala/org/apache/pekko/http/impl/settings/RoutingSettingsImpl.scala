@@ -29,7 +29,8 @@ private[http] final case class RoutingSettingsImpl(
     rangeCoalescingThreshold: Long,
     decodeMaxBytesPerChunk: Int,
     decodeMaxSize: Long,
-    useJarFileCache: Boolean) extends pekko.http.scaladsl.settings.RoutingSettings {
+    useJarFileCache: Boolean,
+    rejectUnsafeResourceNames: Boolean) extends pekko.http.scaladsl.settings.RoutingSettings {
 
   override def productPrefix = "RoutingSettings"
 }
@@ -43,5 +44,6 @@ object RoutingSettingsImpl extends SettingsCompanionImpl[RoutingSettingsImpl]("p
     c.getBytes("range-coalescing-threshold"),
     c.getIntBytes("decode-max-bytes-per-chunk"),
     c.getPossiblyInfiniteBytes("decode-max-size"),
-    c.getBoolean("use-jar-file-cache"))
+    c.getBoolean("use-jar-file-cache"),
+    c.getBoolean("reject-unsafe-resource-names"))
 }
