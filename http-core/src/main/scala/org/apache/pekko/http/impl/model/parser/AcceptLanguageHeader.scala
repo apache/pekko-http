@@ -21,7 +21,7 @@ private[parser] trait AcceptLanguageHeader { this: Parser with CommonRules with 
 
   // http://tools.ietf.org/html/rfc7231#section-5.3.5
   def `accept-language` = rule {
-    oneOrMore(`language-range-decl`).separatedBy(listSep) ~ EOI ~> (`Accept-Language`(_))
+    listStart ~ oneOrMore(`language-range-decl`).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Accept-Language`(_))
   }
 
   def `language-range-decl` = rule {

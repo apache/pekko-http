@@ -52,6 +52,10 @@ dropped from Pekko HTTP 2.0.0 ([PR1344](https://github.com/apache/pekko-http/pul
 * `Link` header parameter values that contain a `:`, such as URI relation types, are now rendered quoted
 (`rel="http://example.net/foo"`), as RFC 8288 requires. The unquoted form is still accepted when parsing.
 ([PR1365](https://github.com/apache/pekko-http/pull/1365))
+* Comma-separated list headers, such as `Cache-Control`, `Connection`, `Accept` or `If-None-Match`, accept and ignore
+empty list elements (`no-store,, public`, `, no-store` or `no-store,`) as RFC 9110 section 5.6.1 requires, instead of
+staying a `RawHeader`. A list that must have at least one element and contains only empty elements, such as
+`Cache-Control: ,`, is still not parsed. ([#1396](https://github.com/apache/pekko-http/issues/1396))
 * Parse error details logged with `pekko.http.parsing.error-logging-verbosity = full` (the default), and the
 `toString` of `IllegalRequestContext` passed to a custom `ParsingErrorHandler`, now escape control characters in the
 raw request target or header value. ([PR1294](https://github.com/apache/pekko-http/pull/1294))

@@ -27,7 +27,7 @@ private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActi
 
   // http://tools.ietf.org/html/rfc5988#section-5
   def `link` = rule {
-    zeroOrMore(`link-value`).separatedBy(listSep) ~ EOI ~> (Link(_))
+    listStart ~ zeroOrMore(`link-value`).separatedBy(listSep) ~ listEnd ~ EOI ~> (Link(_))
   }
 
   def `link-value` = rule {

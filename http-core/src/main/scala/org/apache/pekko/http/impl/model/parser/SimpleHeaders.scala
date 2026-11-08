@@ -30,7 +30,7 @@ private[parser] trait SimpleHeaders {
 
   // http://tools.ietf.org/html/rfc7233#section-2.3
   def `accept-ranges` = rule {
-    ("none" ~ push(Nil) | zeroOrMore(ws(',')) ~ oneOrMore(`range-unit`).separatedBy(listSep)) ~ EOI ~>
+    ("none" ~ push(Nil) | listStart ~ oneOrMore(`range-unit`).separatedBy(listSep) ~ listEnd) ~ EOI ~>
     (`Accept-Ranges`(
       _))
   }
@@ -43,12 +43,12 @@ private[parser] trait SimpleHeaders {
 
   // https://www.w3.org/TR/cors/#access-control-allow-headers-response-header
   def `access-control-allow-headers` = rule {
-    zeroOrMore(token).separatedBy(listSep) ~ EOI ~> (`Access-Control-Allow-Headers`(_))
+    listStart ~ zeroOrMore(token).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Access-Control-Allow-Headers`(_))
   }
 
   // https://www.w3.org/TR/cors/#access-control-allow-methods-response-header
   def `access-control-allow-methods` = rule {
-    zeroOrMore(httpMethodDef).separatedBy(listSep) ~ EOI ~> (`Access-Control-Allow-Methods`(_))
+    listStart ~ zeroOrMore(httpMethodDef).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Access-Control-Allow-Methods`(_))
   }
 
   // https://www.w3.org/TR/cors/#access-control-allow-origin-response-header
@@ -58,7 +58,7 @@ private[parser] trait SimpleHeaders {
 
   // https://www.w3.org/TR/cors/#access-control-expose-headers-response-header
   def `access-control-expose-headers` = rule {
-    zeroOrMore(token).separatedBy(listSep) ~ EOI ~> (`Access-Control-Expose-Headers`(_))
+    listStart ~ zeroOrMore(token).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Access-Control-Expose-Headers`(_))
   }
 
   // https://www.w3.org/TR/cors/#access-control-max-age-response-header
@@ -68,7 +68,7 @@ private[parser] trait SimpleHeaders {
 
   // https://www.w3.org/TR/cors/#access-control-request-headers-request-header
   def `access-control-request-headers` = rule {
-    zeroOrMore(token).separatedBy(listSep) ~ EOI ~> (`Access-Control-Request-Headers`(_))
+    listStart ~ zeroOrMore(token).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Access-Control-Request-Headers`(_))
   }
 
   // https://www.w3.org/TR/cors/#access-control-request-method-request-header
@@ -81,7 +81,7 @@ private[parser] trait SimpleHeaders {
 
   // http://tools.ietf.org/html/rfc7231#section-7.4.1
   def allow = rule {
-    zeroOrMore(httpMethodDef).separatedBy(listSep) ~ EOI ~> (Allow(_))
+    listStart ~ zeroOrMore(httpMethodDef).separatedBy(listSep) ~ listEnd ~ EOI ~> (Allow(_))
   }
 
   // http://tools.ietf.org/html/rfc7235#section-4.2
@@ -89,14 +89,14 @@ private[parser] trait SimpleHeaders {
 
   // http://tools.ietf.org/html/rfc7230#section-6.1
   def connection = rule {
-    oneOrMore(token).separatedBy(listSep) ~ EOI ~> (Connection(_))
+    listStart ~ oneOrMore(token).separatedBy(listSep) ~ listEnd ~ EOI ~> (Connection(_))
   }
 
   // http://tools.ietf.org/html/rfc7231#section-3.1.2.2
   // http://tools.ietf.org/html/rfc7231#appendix-D
   def `content-encoding` = rule {
-    oneOrMore(token ~> (x => HttpEncodings.getForKeyCaseInsensitive(x).getOrElse(HttpEncoding.custom(x))))
-      .separatedBy(listSep) ~ EOI ~> (`Content-Encoding`(_))
+    listStart ~ oneOrMore(token ~> (x => HttpEncodings.getForKeyCaseInsensitive(x).getOrElse(HttpEncoding.custom(x))))
+      .separatedBy(listSep) ~ listEnd ~ EOI ~> (`Content-Encoding`(_))
   }
 
   // http://tools.ietf.org/html/rfc7230#section-3.3.2
@@ -159,7 +159,8 @@ private[parser] trait SimpleHeaders {
   // http://tools.ietf.org/html/rfc7232#section-3.1
   def `if-match` = rule(
     ws('*') ~ EOI ~ push(`If-Match`.`*`)
-    | oneOrMore(`entity-tag`).separatedBy(listSep) ~ EOI ~> (tags => `If-Match`(EntityTagRange(tags: _*))))
+    | listStart ~ oneOrMore(`entity-tag`).separatedBy(
+      listSep) ~ listEnd ~ EOI ~> (tags => `If-Match`(EntityTagRange(tags: _*))))
 
   // http://tools.ietf.org/html/rfc7232#section-3.3
   def `if-modified-since` = rule { `HTTP-date` ~ EOI ~> (`If-Modified-Since`(_)) }
@@ -167,7 +168,8 @@ private[parser] trait SimpleHeaders {
   // http://tools.ietf.org/html/rfc7232#section-3.2
   def `if-none-match` = rule {
     ws('*') ~ EOI ~ push(`If-None-Match`.`*`) |
-    oneOrMore(`entity-tag`).separatedBy(listSep) ~ EOI ~> (tags => `If-None-Match`(EntityTagRange(tags: _*)))
+    listStart ~ oneOrMore(`entity-tag`).separatedBy(
+      listSep) ~ listEnd ~ EOI ~> (tags => `If-None-Match`(EntityTagRange(tags: _*)))
   }
 
   // http://tools.ietf.org/html/rfc7232#section-3.5
@@ -190,7 +192,7 @@ private[parser] trait SimpleHeaders {
 
   // http://tools.ietf.org/html/rfc7235#section-4.3
   def `proxy-authenticate` = rule {
-    oneOrMore(challenge).separatedBy(listSep) ~ EOI ~> (`Proxy-Authenticate`(_))
+    listStart ~ oneOrMore(challenge).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Proxy-Authenticate`(_))
   }
 
   // http://tools.ietf.org/html/rfc7235#section-4.4
@@ -232,12 +234,12 @@ private[parser] trait SimpleHeaders {
   }
 
   def te = rule {
-    oneOrMore(`transfer-coding`).separatedBy(listSep) ~ EOI ~> (TE(_))
+    listStart ~ oneOrMore(`transfer-coding`).separatedBy(listSep) ~ listEnd ~ EOI ~> (TE(_))
   }
 
   // http://tools.ietf.org/html/rfc7230#section-3.3.1
   def `transfer-encoding` = rule {
-    oneOrMore(`transfer-coding`).separatedBy(listSep) ~ EOI ~> (`Transfer-Encoding`(_))
+    listStart ~ oneOrMore(`transfer-coding`).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Transfer-Encoding`(_))
   }
 
   // https://tools.ietf.org/html/rfc6265
@@ -247,7 +249,7 @@ private[parser] trait SimpleHeaders {
 
   // http://tools.ietf.org/html/rfc7230#section-6.7
   def upgrade = rule {
-    oneOrMore(protocol).separatedBy(listSep) ~ EOI ~> (Upgrade(_))
+    listStart ~ oneOrMore(protocol).separatedBy(listSep) ~ listEnd ~ EOI ~> (Upgrade(_))
   }
 
   def protocol = rule {
@@ -259,7 +261,7 @@ private[parser] trait SimpleHeaders {
 
   // http://tools.ietf.org/html/rfc7235#section-4.1
   def `www-authenticate` = rule {
-    oneOrMore(challenge).separatedBy(listSep) ~ EOI ~> (`WWW-Authenticate`(_))
+    listStart ~ oneOrMore(challenge).separatedBy(listSep) ~ listEnd ~ EOI ~> (`WWW-Authenticate`(_))
   }
 
   // de-facto standard as per http://en.wikipedia.org/wiki/X-Forwarded-For
@@ -269,7 +271,7 @@ private[parser] trait SimpleHeaders {
   def `x-forwarded-for` = {
     def addr =
       rule { (`ip-v4-address` | `ip-v6-address`) ~> (RemoteAddress(_)) | "unknown" ~ push(RemoteAddress.Unknown) }
-    rule { oneOrMore(addr).separatedBy(listSep) ~ EOI ~> (`X-Forwarded-For`(_)) }
+    rule { listStart ~ oneOrMore(addr).separatedBy(listSep) ~ listEnd ~ EOI ~> (`X-Forwarded-For`(_)) }
   }
 
   // de-facto standard as per https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-Host
@@ -287,6 +289,6 @@ private[parser] trait SimpleHeaders {
   }
 
   def trailer = rule {
-    zeroOrMore(token).separatedBy(listSep) ~ EOI ~> (Trailer(_))
+    listStart ~ zeroOrMore(token).separatedBy(listSep) ~ listEnd ~ EOI ~> (Trailer(_))
   }
 }

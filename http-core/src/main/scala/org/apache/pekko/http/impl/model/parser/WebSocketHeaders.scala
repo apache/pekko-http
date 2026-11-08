@@ -27,7 +27,7 @@ private[parser] trait WebSocketHeaders { this: Parser with CommonRules with Comm
   }
 
   def `sec-websocket-extensions` = rule {
-    oneOrMore(extension).separatedBy(listSep) ~ EOI ~> (`Sec-WebSocket-Extensions`(_))
+    listStart ~ oneOrMore(extension).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Sec-WebSocket-Extensions`(_))
   }
 
   def `sec-websocket-key` = rule {
@@ -35,11 +35,11 @@ private[parser] trait WebSocketHeaders { this: Parser with CommonRules with Comm
   }
 
   def `sec-websocket-protocol` = rule {
-    oneOrMore(token).separatedBy(listSep) ~ EOI ~> (`Sec-WebSocket-Protocol`(_))
+    listStart ~ oneOrMore(token).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Sec-WebSocket-Protocol`(_))
   }
 
   def `sec-websocket-version` = rule {
-    oneOrMore(version).separatedBy(listSep) ~ EOI ~> (`Sec-WebSocket-Version`(_))
+    listStart ~ oneOrMore(version).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Sec-WebSocket-Version`(_))
   }
 
   private def `base64-value-non-empty` = rule {

@@ -270,6 +270,49 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Connection: pipapo, close" =!= Connection("pipapo", "close")
     }
 
+    "list headers with empty list elements (RFC 9110 section 5.6.1)" in {
+      "Cache-Control: no-store,, public" =!= `Cache-Control`(`no-store`, `public`).renderedTo("no-store, public")
+      "Cache-Control: , no-store, public" =!= `Cache-Control`(`no-store`, `public`).renderedTo("no-store, public")
+      "Cache-Control: no-store, public," =!= `Cache-Control`(`no-store`, `public`).renderedTo("no-store, public")
+      "Cache-Control: ,, no-store , , public ,," =!=
+        `Cache-Control`(`no-store`, `public`).renderedTo("no-store, public")
+      "Cache-Control: no-cache=\"a,, b\"" =!= `Cache-Control`(`no-cache`("a", "b")).renderedTo("no-cache=\"a,b\"")
+      "Connection: close,, foo" =!= Connection("close", "foo").renderedTo("close, foo")
+      "Allow: GET,, POST" =!= Allow(GET, POST).renderedTo("GET, POST")
+      "If-None-Match: \"a\",, \"b\"" =!=
+        `If-None-Match`(EntityTag("a"), EntityTag("b")).renderedTo("\"a\", \"b\"")
+      "Accept: text/plain,, text/html" =!=
+        Accept(`text/plain`, `text/html`).renderedTo("text/plain, text/html")
+      "Accept-Ranges: , bytes," =!= `Accept-Ranges`(RangeUnits.Bytes).renderedTo("bytes")
+      "Range: bytes=0-1,, 3-4," =!= Range(ByteRange(0, 1), ByteRange(3, 4)).renderedTo("bytes=0-1, 3-4")
+      "Transfer-Encoding: , gzip,, chunked" =!=
+        `Transfer-Encoding`(TransferEncodings.gzip, TransferEncodings.chunked).renderedTo("gzip, chunked")
+      "WWW-Authenticate: Basic realm=\"a\",, foo=bar,, Bearer," =!=
+        `WWW-Authenticate`(HttpChallenge("Basic", Some("a"), Map("foo" -> "bar")), HttpChallenge("Bearer", None))
+          .renderedTo("Basic realm=\"a\",foo=bar, Bearer")
+    }
+
+    "Connection with an empty list element is still recognised as closing the connection" in {
+      val HttpHeader.ParsingResult.Ok(header, Nil) = HttpHeader.parse("Connection", "close,, foo")
+      header shouldBe a[Connection]
+      withClue(s"parsed header $header: ") { header.asInstanceOf[Connection].hasClose shouldBe true }
+    }
+
+    "a list header that requires an element but contains only empty list elements is not parsed" in {
+      for ((name, value) <- List("Cache-Control" -> ",", "Connection" -> ", ,", "If-None-Match" -> ",")) {
+        val HttpHeader.ParsingResult.Ok(header, errors) = HttpHeader.parse(name, value)
+        withClue(s"$name: $value parsed to $header: ") {
+          header shouldBe a[RawHeader]
+          errors should have size 1
+        }
+      }
+    }
+
+    "a list header that allows no elements accepts only empty list elements" in {
+      val HttpHeader.ParsingResult.Ok(header, Nil) = HttpHeader.parse("Allow", ", ,")
+      header shouldEqual Allow()
+    }
+
     "Content-Disposition" in {
       "Content-Disposition: form-data" =!= `Content-Disposition`(ContentDispositionTypes.`form-data`)
       "Content-Disposition: attachment; filename=\"file/txt\"; name=\"field1\"" =!=
@@ -848,7 +891,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         remoteAddress("5.6.7.8")).renderedTo("unknown, 5.6.7.8")
       "X-Forwarded-For: 1.2.3.4, pekko.apache.org" =!=
         ErrorInfo(
-          "Illegal HTTP header 'X-Forwarded-For': Invalid input 'p', expected WSP, CRLF or addr (line 1, column 10)",
+          "Illegal HTTP header 'X-Forwarded-For': Invalid input 'p', expected WSP, CRLF, ',' or addr (line 1, column 10)",
           "1.2.3.4, pekko.apache.org\n         ^")
     }
 
@@ -919,7 +962,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Trailer: X-Custom-Hash, X-Custom-Signature" =!= `Trailer`(Seq("X-Custom-Hash", "X-Custom-Signature"))
       "Trailer: Content@Md5" =!= ErrorInfo(
         summary =
-          "Illegal HTTP header 'Trailer': Invalid input '@', expected tchar, OWS, listSep or 'EOI' (line 1, column 8)",
+          "Illegal HTTP header 'Trailer': Invalid input '@', expected tchar, OWS, listSep, listEnd or 'EOI' (line 1, column 8)",
         detail = "Content@Md5\n       ^")
       "Trailer: Content-Length" =!= ErrorInfo(
         summary = "Illegal HTTP header 'Trailer': Trailer values must not contain forbidden header names",
