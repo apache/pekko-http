@@ -22,7 +22,7 @@ private[parser] trait AcceptCharsetHeader { this: Parser with CommonRules with C
 
   // http://tools.ietf.org/html/rfc7231#section-5.3.3
   def `accept-charset` = rule {
-    oneOrMore(`charset-range-decl`).separatedBy(listSep) ~ EOI ~> (`Accept-Charset`(_))
+    listStart ~ oneOrMore(`charset-range-decl`).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Accept-Charset`(_))
   }
 
   def `charset-range-decl` = rule {

@@ -21,7 +21,7 @@ private[parser] trait CacheControlHeader { this: HeaderParser =>
 
   // http://tools.ietf.org/html/rfc7234#section-5.2
   def `cache-control` = rule {
-    oneOrMore(`cache-directive`).separatedBy(listSep) ~ EOI ~> (`Cache-Control`(_))
+    listStart ~ oneOrMore(`cache-directive`).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Cache-Control`(_))
   }
 
   def `cache-directive` = rule(

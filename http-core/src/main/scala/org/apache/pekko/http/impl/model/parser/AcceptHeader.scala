@@ -30,14 +30,14 @@ private[parser] trait AcceptHeader { this: Parser with CommonRules with CommonAc
 
   // http://tools.ietf.org/html/rfc7231#section-5.3.2
   def accept = rule {
-    zeroOrMore(`media-range-decl`).separatedBy(listSep) ~ EOI ~> (Accept(_))
+    listStart ~ zeroOrMore(`media-range-decl`).separatedBy(listSep) ~ listEnd ~ EOI ~> (Accept(_))
   }
 
   // https://www.rfc-editor.org/rfc/rfc10008.html#section-3
   // Accept-Query uses Structured Fields syntax (RFC 9651): media types may appear
   // as tokens (application/json) or quoted strings ("application/jsonpath").
   def `accept-query` = rule {
-    zeroOrMore(`accept-query-media-range-decl`).separatedBy(listSep) ~ EOI ~> (`Accept-Query`(_))
+    listStart ~ zeroOrMore(`accept-query-media-range-decl`).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Accept-Query`(_))
   }
 
   def `accept-query-media-range-decl` = rule {

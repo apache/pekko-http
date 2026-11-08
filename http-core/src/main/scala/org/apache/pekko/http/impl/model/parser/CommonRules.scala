@@ -381,7 +381,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   }
 
   def `byte-range-set` = rule {
-    zeroOrMore(ws(',')) ~ oneOrMore(`byte-range-spec` | `suffix-byte-range-spec`).separatedBy(listSep)
+    listStart ~ oneOrMore(`byte-range-spec` | `suffix-byte-range-spec`).separatedBy(listSep) ~ listEnd
   }
 
   def `byte-range-spec` = rule {
@@ -456,8 +456,12 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   // ******************************************************************************************
   def token0 = rule { oneOrMore(tchar) }
 
-  // RFC 9110 section 5.6.1 allows optional whitespace on both sides of the separator
-  def listSep = rule { OWS ~ ',' ~ OWS }
+  // RFC 9110 section 5.6.1 allows optional whitespace on both sides of the separator, and a recipient must accept
+  // and ignore empty list elements: `listSep` therefore also takes up empty interior elements, `listStart` leading
+  // and `listEnd` trailing ones. Empty elements do not count towards the elements a `1#element` list requires.
+  def listSep = rule { OWS ~ oneOrMore(',' ~ OWS) }
+  def listStart = rule { zeroOrMore(ws(',')) }
+  def listEnd = rule { zeroOrMore(OWS ~ ',') ~ OWS }
 
   def digit = rule { DIGIT ~ push(digitInt(lastChar)) }
 
