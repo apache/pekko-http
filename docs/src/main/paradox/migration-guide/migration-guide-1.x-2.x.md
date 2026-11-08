@@ -20,6 +20,19 @@ marked `@ApiMayChange` and are now stable APIs. ([PR1364](https://github.com/apa
 * `HttpMessage.attribute` and the `ResponseEntity.fromJava` implicit conversion no longer take an implicit
 `JavaMapping` parameter, so they can be used from Scala 3.10. This is source compatible but changes their binary
 signatures. ([PR1340](https://github.com/apache/pekko-http/pull/1340))
+* The Java DSL `ConnectionPoolSettings.withHostOverrides` takes a `java.util.List<Pair<String, ConnectionPoolSettings>>`
+(using `org.apache.pekko.japi.Pair`) instead of a list of `scala.Tuple2`. Java code that builds the overrides with
+`Tuple2` has to be changed to use `Pair.create(pattern, settings)`. ([PR1377](https://github.com/apache/pekko-http/pull/1377))
+* Many Java DSL methods accept wildcard generic types, such as `Iterable<? extends HttpHeader>` instead of
+`Iterable<HttpHeader>`, so collections of subtypes can be passed. The erased signatures are unchanged.
+([PR1379](https://github.com/apache/pekko-http/pull/1379), [PR1380](https://github.com/apache/pekko-http/pull/1380),
+[PR1381](https://github.com/apache/pekko-http/pull/1381), [PR1382](https://github.com/apache/pekko-http/pull/1382),
+[PR1384](https://github.com/apache/pekko-http/pull/1384))
+* Java DSL alternatives to Scala types have been added: `java.time.Duration` accessors for `ServerSettings` timeouts
+([PR1373](https://github.com/apache/pekko-http/pull/1373)), `onComplete` overloads that take a
+`CompletionStage.handle` style callback instead of a `scala.util.Try` ([PR1375](https://github.com/apache/pekko-http/pull/1375))
+and connection pool flows that emit an `HttpResponseResult` instead of a `scala.util.Try`
+([PR1376](https://github.com/apache/pekko-http/pull/1376)).
 
 ## Behavior changes
 
@@ -56,6 +69,8 @@ dropped from Pekko HTTP 2.0.0 ([PR1344](https://github.com/apache/pekko-http/pul
 empty list elements (`no-store,, public`, `, no-store` or `no-store,`) as RFC 9110 section 5.6.1 requires, instead of
 staying a `RawHeader`. A list that must have at least one element and contains only empty elements, such as
 `Cache-Control: ,`, is still not parsed. ([#1396](https://github.com/apache/pekko-http/issues/1396))
+Whitespace before a list separator (`no-store , public`) is also accepted.
+([PR1395](https://github.com/apache/pekko-http/pull/1395))
 * Parse error details logged with `pekko.http.parsing.error-logging-verbosity = full` (the default), and the
 `toString` of `IllegalRequestContext` passed to a custom `ParsingErrorHandler`, now escape control characters in the
 raw request target or header value. ([PR1294](https://github.com/apache/pekko-http/pull/1294))
@@ -74,6 +89,20 @@ connection is kept. ([PR1297](https://github.com/apache/pekko-http/pull/1297))
 leading or trailing whitespace, makes the request (`400 Bad Request` for that stream) or response (protocol error)
 malformed instead of being silently normalized. Pekko HTTP's own client and server always send lowercase field names.
 ([PR1343](https://github.com/apache/pekko-http/pull/1343))
+
+* The HTTP/2 client sends the connection's scheme and authority in the `:scheme` and `:authority` pseudo-headers for
+a request with a relative URI, instead of leaving them empty. A non-empty `Host` header supplies the authority first.
+A Pekko HTTP server now sees the full request URI for such requests.
+([PR1342](https://github.com/apache/pekko-http/pull/1342))
+* When an HTTP/2 managed persistent connection gives up after its last connection attempt fails, the request that
+triggered the attempts is answered with a `503 Service Unavailable` response, which carries the request's attributes,
+before the stream fails. ([PR1368](https://github.com/apache/pekko-http/pull/1368))
+
+### Server
+
+* During graceful termination, a response for a request that is already being handled is delivered (with
+`Connection: close`) instead of being lost when the request side completes or the network side pulls late.
+([PR1398](https://github.com/apache/pekko-http/pull/1398), [PR1400](https://github.com/apache/pekko-http/pull/1400))
 
 ### Client
 
@@ -158,6 +187,10 @@ during the handshake. Most browsers request it, so WebSocket connections from br
 after upgrading; set `pekko.http.server.websocket.compression.enabled = false` to turn it off. `max-allocation` (default `256k`) bounds the size of a decompressed message.
 See @ref:[WebSocket compression](../server-side/websocket-support.md#websocket-compression).
 ([PR1114](https://github.com/apache/pekko-http/pull/1114), [PR1173](https://github.com/apache/pekko-http/pull/1173))
+* `pekko.http.server.websocket.receive-idle-timeout` and `pekko.http.server.websocket.send-idle-timeout` (default
+`infinite`, which disables them) fail a WebSocket connection with a `WebSocketIdleTimeoutException` when no frame is
+received or sent within the timeout. Ping and Pong frames count as activity. The same settings were added for the
+client under `pekko.http.client.websocket`. ([PR1369](https://github.com/apache/pekko-http/pull/1369))
 
 pekko-http-core client settings:
 
