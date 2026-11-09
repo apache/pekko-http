@@ -121,7 +121,7 @@ from `/var/www`. Added in Pekko HTTP 1.4.1 ([PR1269](https://github.com/apache/p
 * `getFromResource` rejects a resource name that contains a `..` segment, a backslash or a NUL character, instead of
 passing it to the class loader. Such names only ever resolved against directory-backed class loaders, not against
 resources inside jar files. Set `pekko.http.routing.reject-unsafe-resource-names = off` to restore the previous
-behavior.
+behavior. ([PR1406](https://github.com/apache/pekko-http/pull/1406))
 * Directory listings rendered by `listDirectoryContents` and `getFromBrowseableDirectory` escape HTML in file names.
 Added in Pekko HTTP 1.4.2 ([PR1191](https://github.com/apache/pekko-http/pull/1191))
 * Server-Sent Events fields whose values contain Unicode line separators, such as U+2028, are parsed instead of being
@@ -151,7 +151,8 @@ so the rate of incoming `RST_STREAM` frames on a server connection is limited by
 Reset attacks (CVE-2023-44487), as is the rate of incoming DATA frames that carry no payload and do not end their
 stream, which consume no flow-control window (Empty Frames Flood, CVE-2019-9518). All throttled frames share one
 budget: with the default `cost`, `burst` and `interval` settings, a client that sends more than about 100 of them
-per second has its connection failed. Clients that legitimately cancel many streams, such as some gRPC clients, may
+per second has its connection closed with `GOAWAY(ENHANCE_YOUR_CALM)`
+([PR1413](https://github.com/apache/pekko-http/pull/1413)). Clients that legitimately cancel many streams, such as some gRPC clients, may
 need a higher limit. The empty DATA frame with END_STREAM that closes a request body is not charged unless
 `empty-data` is added. Set it to `[]` to disable throttling. ([PR1193](https://github.com/apache/pekko-http/pull/1193),
 [PR1265](https://github.com/apache/pekko-http/pull/1265))
@@ -203,7 +204,7 @@ See @ref:[Limiting managed persistent connection lifetime](../client-side/http2.
 HTTP/2 client connection, like `pekko.http.server.http2.frame-type-throttle` does for the server and with the same
 settings. By default, `frame-types = ["reset", "empty-data-no-end-stream"]`: a server that sends more than about 100
 `RST_STREAM` frames, or DATA frames that carry no payload and do not end their stream, per second has the connection
-failed. A client with many requests in flight on one connection may need a higher limit. Set `frame-types` to `[]` to
+closed with `GOAWAY(ENHANCE_YOUR_CALM)`. A client with many requests in flight on one connection may need a higher limit. Set `frame-types` to `[]` to
 disable throttling. ([#1393](https://github.com/apache/pekko-http/issues/1393))
 
 pekko-http-core parsing settings:

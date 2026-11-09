@@ -7,6 +7,7 @@ from the 2.0.0-M1 and 2.0.0-M2 milestone releases. See the GitHub milestones for
 [2.0.0-M1](https://github.com/apache/pekko-http/milestone/11?closed=1),
 [2.0.0-M2](https://github.com/apache/pekko-http/milestone/14?closed=1) and
 [2.0.0-M3](https://github.com/apache/pekko-http/milestone/17?closed=1) for a fuller list of changes.
+The 2.0.0 release is built from the `v2.0.0-RC1` tag.
 
 Pekko HTTP 2.0.0 is not binary compatible with Pekko HTTP 1.x. Read the
 @ref:[migration guide](../migration-guide/migration-guide-1.x-2.x.md) before upgrading. It lists the API, behavior
@@ -19,11 +20,14 @@ and configuration changes, including the changed default values.
 * Scala 2.12 support has been dropped
 * Deprecated code has been removed, including a number of util classes for Scala version compatibility
 * HTTP/2 is enabled by default for servers bound with `Http().newServerAt(...).bind(...)` ([PR928](https://github.com/apache/pekko-http/pull/928))
-* The rate of incoming `RST_STREAM` frames, and of empty DATA frames that do not end their stream, is limited by default on HTTP/2 server and client connections ([PR1193](https://github.com/apache/pekko-http/pull/1193), [PR1265](https://github.com/apache/pekko-http/pull/1265), [PR1394](https://github.com/apache/pekko-http/pull/1394))
+* The rate of incoming `RST_STREAM` frames, and of empty DATA frames that do not end their stream, is limited by default on HTTP/2 server and client connections ([PR1193](https://github.com/apache/pekko-http/pull/1193), [PR1265](https://github.com/apache/pekko-http/pull/1265), [PR1394](https://github.com/apache/pekko-http/pull/1394)). A connection that exceeds the limit is closed with `GOAWAY(ENHANCE_YOUR_CALM)` ([PR1413](https://github.com/apache/pekko-http/pull/1413))
+* `getFromResource` rejects resource names that contain a `..` segment, a backslash or a NUL character by default; set `pekko.http.routing.reject-unsafe-resource-names = off` to restore the 1.x behavior ([PR1406](https://github.com/apache/pekko-http/pull/1406))
 * Jackson 3 is supported in the new `pekko-http-jackson3` module ([PR837](https://github.com/apache/pekko-http/pull/837))
 * Java DSL methods that returned Scala Durations now return Java Durations ([PR788](https://github.com/apache/pekko-http/pull/788))
 
 ### Additions
+* `zstd` content coding (`Coders.Zstd`), with a decoder window limited to 8 MB as RFC 9659 requires. It is not part of `Coders.DefaultCoders` and needs the optional `com.github.luben:zstd-jni` dependency (1.5.7-25 or later) ([PR1391](https://github.com/apache/pekko-http/pull/1391))
+* `Coders.decodeMessage(message, decoders)` and Java DSL `Coder.decodeResponse` / `Coder.decodeRequest` decode a message with the decoder matching its `Content-Encoding` ([PR1391](https://github.com/apache/pekko-http/pull/1391))
 * Server-side WebSocket compression ([PR1114](https://github.com/apache/pekko-http/pull/1114))
 * WebSocket `receive-idle-timeout` and `send-idle-timeout` settings ([PR1369](https://github.com/apache/pekko-http/pull/1369))
 * `max-connection-age` settings for HTTP/2 server connections ([PR1316](https://github.com/apache/pekko-http/pull/1316))
@@ -64,6 +68,6 @@ This release also includes the bug fixes from the Pekko HTTP 1.4.x releases. See
 Most of the dependency changes are small patch level upgrades. Some exceptions include:
 
 * Pekko 2.0.0
-* Jackson 2.22.4
-* Jackson 3.2.4 (new `pekko-http-jackson3` module)
+* Jackson 2.23.0
+* Jackson 3.3.0 (new `pekko-http-jackson3` module)
 * scala-xml 2.5.0
