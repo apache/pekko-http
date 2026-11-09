@@ -64,6 +64,21 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
    */
   final def getStreamCancellationDelay: JDuration = streamCancellationDelay.toJava
   final def getRequestHeaderSizeHint: Int = requestHeaderSizeHint
+
+  /**
+   * If present, response entities are collected into strict entities (using the given timeout)
+   * before the response is dispatched to the application. Only supported by the HTTP/1.1 client.
+   *
+   * @since 2.0.0
+   */
+  final def getStrictResponseEntityTimeout: Optional[JDuration] = strictResponseEntityTimeout.map(_.toJava).toJava
+
+  /**
+   * The maximum number of bytes collected per response entity when a strict response entity timeout is set.
+   *
+   * @since 2.0.0
+   */
+  final def getStrictResponseEntityMaxBytes: Long = strictResponseEntityMaxBytes
   final def getWebsocketSettings: WebSocketSettings = websocketSettings
   final def getWebsocketRandomFactory: Supplier[Random] = () => websocketRandomFactory()
   final def getLocalAddress: Optional[InetSocketAddress] = localAddress.toJava
@@ -78,6 +93,9 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
   def withIdleTimeout(newValue: Duration): ClientConnectionSettings
   def withRequestHeaderSizeHint(newValue: Int): ClientConnectionSettings
   def withStreamCancellationDelay(newValue: FiniteDuration): ClientConnectionSettings
+
+  /** @since 2.0.0 */
+  def withStrictResponseEntityMaxBytes(newValue: Long): ClientConnectionSettings
 
   // Java API versions of mutators
 
@@ -113,6 +131,13 @@ abstract class ClientConnectionSettings private[pekko] () { self: ClientConnecti
     self.copy(parserSettings = newValue.asScala)
   def withLocalAddress(newValue: Optional[InetSocketAddress]): ClientConnectionSettings =
     self.copy(localAddress = newValue.toScala)
+
+  /**
+   * Java API
+   * @since 2.0.0
+   */
+  def withStrictResponseEntityTimeout(newValue: Optional[JDuration]): ClientConnectionSettings =
+    self.copy(strictResponseEntityTimeout = newValue.toScala.map(_.toScala))
 
   @ApiMayChange
   def withTransport(newValue: ClientTransport): ClientConnectionSettings = self.copy(transport = newValue.asScala)
