@@ -89,6 +89,10 @@ when any one of them is. Added in Pekko HTTP 1.4.2 ([PR1262](https://github.com/
 * `FileAndResourceDirectives` compare path elements, rather than string prefixes, when checking that a served file
 is below the base directory, so a symbolic link to a sibling directory such as `/var/www-private` is no longer served
 from `/var/www`. Added in Pekko HTTP 1.4.1 ([PR1269](https://github.com/apache/pekko-http/pull/1269))
+* `getFromResource` rejects a resource name that contains a `..` segment, a backslash or a NUL character, instead of
+passing it to the class loader. Such names only ever resolved against directory-backed class loaders, not against
+resources inside jar files. Set `pekko.http.routing.reject-unsafe-resource-names = off` to restore the previous
+behavior.
 * Directory listings rendered by `listDirectoryContents` and `getFromBrowseableDirectory` escape HTML in file names.
 Added in Pekko HTTP 1.4.2 ([PR1191](https://github.com/apache/pekko-http/pull/1191))
 * Server-Sent Events fields whose values contain Unicode line separators, such as U+2028, are parsed instead of being
@@ -188,6 +192,8 @@ Pekko HTTP 1.3.0. See @ref:[Oversized Message Handling](../common/sse-support.md
 * `pekko.http.routing.use-jar-file-cache` (default `on`) controls whether `FileAndResourceDirectives` use the JDK's
 jar file cache when serving resources from jar files. Turn it off if those jar files have to be replaceable while
 the server is running. ([PR1217](https://github.com/apache/pekko-http/pull/1217))
+* `pekko.http.routing.reject-unsafe-resource-names` (default `on`) controls whether `getFromResource` rejects resource
+names that contain a `..` segment, a backslash or a NUL character. See @ref:[Routing DSL](#routing-dsl).
 
 pekko-http-testkit settings:
 

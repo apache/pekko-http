@@ -95,9 +95,10 @@ trait FileAndResourceDirectives {
    * Completes GET requests with the content of the given class-path resource.
    * If the resource cannot be found or read the Route rejects the request.
    *
-   * The resource name is passed to the class loader as given: unlike `getFromResourceDirectory` this directive does
-   * not reject `..` or separator characters, so a name built from request input can resolve to a resource outside the
-   * intended prefix. Validate any request-derived part of the name, or use `getFromResourceDirectory` instead.
+   * A resource name that contains a `..` segment, a backslash or a NUL character is rejected, unless the
+   * `pekko.http.routing.reject-unsafe-resource-names` setting is turned off. The directive does not otherwise know
+   * which prefix a name was built from, so validate any request-derived part of the name, or use
+   * `getFromResourceDirectory`, which serves only resources below the given directory.
    *
    * @group fileandresource
    */
@@ -108,7 +109,7 @@ trait FileAndResourceDirectives {
    * Completes GET requests with the content of the given resource.
    * If the resource is a directory or cannot be found or read the Route rejects the request.
    *
-   * The resource name is not checked for path traversal, see `getFromResource(resourceName)` above.
+   * Unsafe resource names are rejected as described for `getFromResource(resourceName)` above.
    *
    * @group fileandresource
    */
@@ -117,22 +118,40 @@ trait FileAndResourceDirectives {
     if (!resourceName.endsWith('/'))
       get {
         extractSettings { settings =>
-          val useJarFileCache = settings.useJarFileCache
-          Option(classLoader.getResource(resourceName)).flatMap(ResourceFile(_, useJarFileCache)) match {
-            case Some(ResourceFile(url, length, lastModified)) =>
-              conditionalFor(length, lastModified) {
-                if (length > 0) {
-                  withRangeSupportAndPrecompressedMediaTypeSupport {
-                    complete(HttpEntity.Default(contentType, length,
-                      StreamConverters.fromInputStream(() => openStream(url, useJarFileCache))))
-                  }
-                } else complete(HttpEntity.Empty)
-              }
-            case _ => reject // not found or directory
-          }
+          if (settings.rejectUnsafeResourceNames && !isSafeResourceName(resourceName))
+            extractLog { log =>
+              log.warning(
+                "Resource name [{}] contains a '..' segment, a backslash or a NUL character, GET access was " +
+                "disallowed. Set pekko.http.routing.reject-unsafe-resource-names = off to allow it.", resourceName)
+              reject
+            }
+          else serveResource(resourceName, contentType, classLoader, settings.useJarFileCache)
         }
       }
     else reject // don't serve the content of resource "directories"
+
+  private def serveResource(
+      resourceName: String, contentType: ContentType, classLoader: ClassLoader, useJarFileCache: Boolean): Route =
+    Option(classLoader.getResource(resourceName)).flatMap(ResourceFile(_, useJarFileCache)) match {
+      case Some(ResourceFile(url, length, lastModified)) =>
+        conditionalFor(length, lastModified) {
+          if (length > 0) {
+            withRangeSupportAndPrecompressedMediaTypeSupport {
+              complete(HttpEntity.Default(contentType, length,
+                StreamConverters.fromInputStream(() => openStream(url, useJarFileCache))))
+            }
+          } else complete(HttpEntity.Empty)
+        }
+      case _ => reject // not found or directory
+    }
+
+  /**
+   * A resource name is unsafe when a `..` segment could make it resolve outside the prefix it was built from: either
+   * a plain `..` segment or one hidden behind a backslash, which a directory-backed class loader on Windows treats as
+   * a separator. NUL is rejected as no resource name can hold it.
+   */
+  private def isSafeResourceName(resourceName: String): Boolean =
+    resourceName.indexOf('\\') < 0 && resourceName.indexOf('\u0000') < 0 && !resourceName.split('/').contains("..")
 
   /**
    * Completes GET requests with the content of a file underneath the given directory.

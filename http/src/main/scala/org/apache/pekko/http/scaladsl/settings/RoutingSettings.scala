@@ -41,6 +41,14 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
    */
   def useJarFileCache: Boolean
 
+  /**
+   * Whether `getFromResource` rejects a resource name that contains a `..` segment, a backslash or a NUL character
+   * instead of passing it to the class loader.
+   *
+   * @since 2.0.0
+   */
+  def rejectUnsafeResourceNames: Boolean
+
   /* Java APIs */
   def getVerboseErrorMessages: Boolean = this.verboseErrorMessages
   def getFileGetConditional: Boolean = this.fileGetConditional
@@ -54,6 +62,11 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
    * @since 2.0.0
    */
   def getUseJarFileCache: Boolean = this.useJarFileCache
+
+  /**
+   * @since 2.0.0
+   */
+  def getRejectUnsafeResourceNames: Boolean = this.rejectUnsafeResourceNames
 
   override def withVerboseErrorMessages(verboseErrorMessages: Boolean): RoutingSettings =
     self.copy(verboseErrorMessages = verboseErrorMessages)
@@ -73,6 +86,12 @@ abstract class RoutingSettings private[pekko] () extends pekko.http.javadsl.sett
    */
   override def withUseJarFileCache(useJarFileCache: Boolean): RoutingSettings =
     self.copy(useJarFileCache = useJarFileCache)
+
+  /**
+   * @since 2.0.0
+   */
+  override def withRejectUnsafeResourceNames(rejectUnsafeResourceNames: Boolean): RoutingSettings =
+    self.copy(rejectUnsafeResourceNames = rejectUnsafeResourceNames)
 }
 
 object RoutingSettings extends SettingsCompanion[RoutingSettings] {
