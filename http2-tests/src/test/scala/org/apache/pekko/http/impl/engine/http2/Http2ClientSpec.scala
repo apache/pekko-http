@@ -838,8 +838,6 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
     }
 
     "throttle frame types" should {
-      val throttleExceeded = "HTTP2 connection failed with error [Maximum throttle throughput exceeded.]"
-
       abstract class WaitingForResponseData extends TestSetup with NetProbes {
         user.emitRequest(Get("/"))
         val streamId = network.expect[HeadersFrame]().streamId
@@ -853,22 +851,30 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
 
       "fail the connection when flooded with RST_STREAM frames by default".inAssertAllStagesStopped(
         new TestSetup with NetProbes {
-          user.emitRequest(Get("/"))
-          val streamId = network.expect[HeadersFrame]().streamId
-          val rstFrame = FrameRenderer.render(RstStreamFrame(streamId, ErrorCode.CANCEL))
-
-          EventFilter.error(start = throttleExceeded, occurrences = 1).intercept {
-            network.sendBytes(Seq.fill(1000)(rstFrame).reduce(_ ++ _))
-            network.expectGOAWAY()._2 should ===(ErrorCode.INTERNAL_ERROR)
+          // Reset each stream once, after its response HEADERS, so that every RST_STREAM is valid on its own.
+          // More streams than the default burst of 100.
+          val streamIds = (1 to 200).map { _ =>
+            user.emitRequest(Get("/"))
+            // expect[HeadersFrame] only supports stream ids below 256
+            val header = network.expectFrameHeader()
+            header.frameType should ===(FrameType.HEADERS)
+            network.expectBytes(header.payloadLength)
+            header.streamId
           }
+          streamIds.foreach { id =>
+            network.sendHEADERS(id, endStream = false, Seq(RawHeader(":status", "200")))
+            user.expectResponse()
+          }
+          network.sendBytes(
+            streamIds.map(id => FrameRenderer.render(RstStreamFrame(id, ErrorCode.CANCEL))).reduce(_ ++ _))
+          network.expectGOAWAYSkippingOtherFrames() should ===(ErrorCode.ENHANCE_YOUR_CALM)
         })
 
       "fail the connection when flooded with empty DATA frames that do not end the stream by default".inAssertAllStagesStopped(
         new WaitingForResponseData {
-          EventFilter.error(start = throttleExceeded, occurrences = 1).intercept {
-            network.sendBytes(emptyDataFrames(1000))
-            network.expectGOAWAY()._2 should ===(ErrorCode.INTERNAL_ERROR)
-          }
+          network.sendBytes(emptyDataFrames(1000))
+          // the client may send frames, such as WINDOW_UPDATE, for the frames it processed before the throttle failed
+          network.expectGOAWAYSkippingOtherFrames() should ===(ErrorCode.ENHANCE_YOUR_CALM)
         })
 
       "not fail the connection on empty DATA frames when the throttle is disabled".inAssertAllStagesStopped(

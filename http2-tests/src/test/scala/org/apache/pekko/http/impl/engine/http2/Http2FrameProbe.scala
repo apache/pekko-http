@@ -51,6 +51,9 @@ private[http2] trait Http2FrameProbe {
 
   def expectGOAWAY(lastStreamId: Int = -1): (Int, ErrorCode)
 
+  /** Skips any frames sent before the next GOAWAY frame, and returns its [[ErrorCode]] */
+  def expectGOAWAYSkippingOtherFrames(): ErrorCode
+
   def expectFrame(frameType: FrameType, expectedFlags: ByteFlag, streamId: Int, payload: ByteString): Unit
 
   def expectFramePayload(frameType: FrameType, expectedFlags: ByteFlag, streamId: Int): ByteString
@@ -100,6 +103,7 @@ private[http2] trait Http2FrameProbeDelegator extends Http2FrameProbe {
     frameProbeDelegate.expectRST_STREAM(streamId, errorCode)
   def expectRST_STREAM(streamId: Int): ErrorCode = frameProbeDelegate.expectRST_STREAM(streamId)
   def expectGOAWAY(lastStreamId: Int): (Int, ErrorCode) = frameProbeDelegate.expectGOAWAY(lastStreamId)
+  def expectGOAWAYSkippingOtherFrames(): ErrorCode = frameProbeDelegate.expectGOAWAYSkippingOtherFrames()
   def expectSETTINGS(): SettingsFrame = frameProbeDelegate.expectSETTINGS()
   def expectSettingsAck(): Unit = frameProbeDelegate.expectSettingsAck()
   def expectFrame(frameType: FrameType, expectedFlags: ByteFlag, streamId: Int, payload: ByteString): Unit =
@@ -200,6 +204,16 @@ private[http] object Http2FrameProbe extends Matchers {
         val incomingLastStreamId = reader.readIntBE()
         if (lastStreamId > 0) incomingLastStreamId should ===(lastStreamId)
         (lastStreamId, ErrorCode.byId(reader.readIntBE()))
+      }
+
+      @tailrec final def expectGOAWAYSkippingOtherFrames(): ErrorCode = {
+        val header = expectFrameHeader()
+        val payload = expectBytes(header.payloadLength)
+        if (header.frameType == FrameType.GOAWAY) {
+          val reader = new ByteReader(payload)
+          reader.readIntBE() // lastStreamId
+          ErrorCode.byId(reader.readIntBE())
+        } else expectGOAWAYSkippingOtherFrames()
       }
 
       override def expectSETTINGS(): SettingsFrame = {
