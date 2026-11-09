@@ -30,6 +30,7 @@ object Dependencies {
   val h2specUrl =
     s"https://github.com/summerwind/h2spec/releases/download/v$h2specVersion/$h2specName.$h2specArtifactExtension"
   val classGraphVersion = "5.0.2"
+  val zstdJniVersion = "1.5.7-25"
 
   val scalaTestVersion = "3.2.20"
   val scalaCheckVersion = "1.19.0"
@@ -71,6 +72,9 @@ object Dependencies {
 
     val parboiled = "org.parboiled" %% "parboiled" % "2.5.1"
 
+    // optional, users of the zstd coder need to add it themselves (pekko-stream also has it as optional)
+    val zstdJni = "com.github.luben" % "zstd-jni" % zstdJniVersion
+
     object Docs {
       val sprayJson = Compile.sprayJson % "test"
       val gson = "com.google.code.gson" % "gson" % "2.15.0" % "test"
@@ -92,6 +96,7 @@ object Dependencies {
       val scalatestplusScalacheck = "org.scalatestplus" %% "scalacheck-1-19" % (scalaTestVersion + ".0") % "test"
       val scalatestplusJUnit = "org.scalatestplus" %% "junit-4-13" % (scalaTestVersion + ".0") % "test"
       val classGraph = "io.github.classgraph" % "classgraph" % classGraphVersion % "test"
+      val zstdJni = Compile.zstdJni % "test"
 
       // HTTP/2
 
@@ -134,7 +139,8 @@ object Dependencies {
 
   lazy val httpCors = l ++= Seq(Test.scalatest)
 
-  lazy val http = Seq()
+  lazy val http = Seq(
+    l ++= Seq(zstdJni % Optional))
 
   lazy val http2Tests = Seq(
     l ++= Seq(Test.h2spec) ++ junitJupiterTestDeps.value)
@@ -151,7 +157,7 @@ object Dependencies {
     l ++= Seq(Test.munit % "provided; test")
 
   lazy val httpTests = Seq(
-    l ++= junitJupiterTestDeps.value ++ Seq(Test.scalatest, Test.classGraph))
+    l ++= junitJupiterTestDeps.value ++ Seq(Test.scalatest, Test.classGraph, Test.zstdJni))
 
   lazy val httpXml = Seq(
     versionDependentDeps(scalaXml),
