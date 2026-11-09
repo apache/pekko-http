@@ -7,7 +7,6 @@ from the 2.0.0-M1 and 2.0.0-M2 milestone releases. See the GitHub milestones for
 [2.0.0-M1](https://github.com/apache/pekko-http/milestone/11?closed=1),
 [2.0.0-M2](https://github.com/apache/pekko-http/milestone/14?closed=1) and
 [2.0.0-M3](https://github.com/apache/pekko-http/milestone/17?closed=1) for a fuller list of changes.
-The 2.0.0 release is built from the `v2.0.0-RC1` tag.
 
 Pekko HTTP 2.0.0 is not binary compatible with Pekko HTTP 1.x. Read the
 @ref:[migration guide](../migration-guide/migration-guide-1.x-2.x.md) before upgrading. It lists the API, behavior
