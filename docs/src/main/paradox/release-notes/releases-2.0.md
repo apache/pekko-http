@@ -2,6 +2,15 @@
 
 ## 2.0.0
 
+@@@ warning
+
+Pekko HTTP 2.0.0 and Pekko 2.0.0 are not binary compatible with their 1.x releases. Libraries built against
+Pekko 1.x or Pekko HTTP 1.x cannot be trusted to work with Pekko HTTP 2.x, and need to be rebuilt and released for
+Pekko 2.x. See the @extref:[Pekko 2.0 release notes](pekko-docs:release-notes/releases-2.0.html) for the binary
+compatibility changes in the core Pekko modules.
+
+@@@
+
 Release notes for Apache Pekko HTTP 2.0.0. This is the first release of a new major version and includes the changes
 from the 2.0.0-M1 and 2.0.0-M2 milestone releases. See the GitHub milestones for
 [2.0.0-M1](https://github.com/apache/pekko-http/milestone/11?closed=1),
