@@ -33,8 +33,8 @@ import pekko.util.ByteString
 class Http2ServerEmptyDataNoEndStreamThrottleSpec extends Http2SpecWithMaterializer("""
     pekko.http.server.http2.log-frames = on
   """) {
-  override val expectSevereLogsOnlyToMatch: Option[String] = Some(
-    "HTTP2 connection failed with error [Maximum throttle throughput exceeded.]. Sending INTERNAL_ERROR and closing connection.")
+  // exceeding the throttle is provoked by the peer, so it must not be logged at ERROR level
+  override def failOnSevereMessages: Boolean = true
 
   "The Http/2 server implementation" should {
     "cancel connection when flooded with empty DATA frames that do not end the stream".inAssertAllStagesStopped(
@@ -43,6 +43,8 @@ class Http2ServerEmptyDataNoEndStreamThrottleSpec extends Http2SpecWithMateriali
         network.sendRequestHEADERS(1, HttpRequest(HttpMethods.POST), endStream = false)
         val emptyDataFrame = FrameRenderer.renderFrame(FrameType.DATA, ByteFlag.Zero, 1, ByteString.empty)
         network.sendBytes(Seq.fill(1000)(emptyDataFrame).reduce(_ ++ _))
+        // the server may send frames, such as WINDOW_UPDATE, for the frames it processed before the throttle failed
+        network.expectGOAWAYSkippingOtherFrames() should ===(Http2Protocol.ErrorCode.ENHANCE_YOUR_CALM)
       })
   }
 }

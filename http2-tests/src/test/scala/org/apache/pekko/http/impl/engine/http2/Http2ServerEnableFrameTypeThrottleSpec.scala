@@ -13,12 +13,35 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import java.nio.ByteOrder
+import scala.concurrent.{ Future, Promise }
 
 import org.apache.pekko
-import pekko.http.impl.engine.http2.Http2Protocol.FrameType
+import pekko.NotUsed
+import pekko.http.impl.engine.http2.FrameEvent.{ HeadersFrame, RstStreamFrame }
+import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.http2.framing.FrameRenderer
-import pekko.util.ByteStringBuilder
+import pekko.http.scaladsl.model.{ HttpProtocols, HttpRequest, HttpResponse }
+import pekko.stream.scaladsl.Flow
+import pekko.util.ByteString
+
+object Http2ServerEnableFrameTypeThrottleSpec {
+  private val request = HttpRequest(protocol = HttpProtocols.`HTTP/2.0`, uri = "/foo")
+
+  /**
+   * `count` new streams, each opened with a HEADERS frame and immediately reset by the client (CVE-2023-44487).
+   * The header blocks are encoded one at a time, since the HPACK encoder is stateful.
+   */
+  def rapidResets(count: Int, encodeRequestHeaders: HttpRequest => ByteString): ByteString =
+    (1 until count * 2 by 2).map { streamId =>
+      FrameRenderer.render(
+        HeadersFrame(streamId, endStream = true, endHeaders = true, encodeRequestHeaders(request), None)) ++
+      FrameRenderer.render(RstStreamFrame(streamId, ErrorCode.CANCEL))
+    }.reduce(_ ++ _)
+
+  /** A handler that never responds, so that the server sends no frames of its own for the reset streams */
+  def neverRespond: Flow[HttpRequest, HttpResponse, NotUsed] =
+    Flow[HttpRequest].mapAsyncUnordered(1000)(_ => Promise[HttpResponse]().future: Future[HttpResponse])
+}
 
 /**
  * This tests the http2 server throttle support for rapid resets.
@@ -27,17 +50,19 @@ class Http2ServerEnableFrameTypeThrottleSpec extends Http2SpecWithMaterializer("
     pekko.http.server.http2.log-frames = on
     pekko.http.server.http2.frame-type-throttle.frame-types = ["reset"]
   """) {
-  override val expectSevereLogsOnlyToMatch: Option[String] = Some(
-    "HTTP2 connection failed with error [Maximum throttle throughput exceeded.]. Sending INTERNAL_ERROR and closing connection.")
+  import Http2ServerEnableFrameTypeThrottleSpec._
+
+  // exceeding the throttle is provoked by the peer, so it must not be logged at ERROR level
+  override def failOnSevereMessages: Boolean = true
 
   "The Http/2 server implementation" should {
-    "cancel connection during rapid reset attack".inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
-      implicit val bigEndian: ByteOrder = ByteOrder.BIG_ENDIAN
-      val bb = new ByteStringBuilder
-      bb.putInt(0)
-      val rstFrame = FrameRenderer.renderFrame(FrameType.RST_STREAM, ByteFlag.Zero, 1, bb.result())
-      val longFrame = Seq.fill(1000)(rstFrame).reduce(_ ++ _)
-      network.sendBytes(longFrame)
-    })
+    "close the connection with ENHANCE_YOUR_CALM during a rapid reset attack".inAssertAllStagesStopped(
+      new TestSetup {
+        override def handlerFlow = neverRespond
+
+        // more than the default burst of 100, fewer than max-concurrent-streams
+        network.sendBytes(rapidResets(200, network.encodeRequestHeaders))
+        network.expectGOAWAY()._2 should ===(ErrorCode.ENHANCE_YOUR_CALM)
+      })
   }
 }

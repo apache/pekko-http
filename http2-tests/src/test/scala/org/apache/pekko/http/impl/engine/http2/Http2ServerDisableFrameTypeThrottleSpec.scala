@@ -13,12 +13,7 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import java.nio.ByteOrder
-
-import org.apache.pekko
-import pekko.http.impl.engine.http2.Http2Protocol.FrameType
-import pekko.http.impl.engine.http2.framing.FrameRenderer
-import pekko.util.ByteStringBuilder
+import scala.concurrent.duration._
 
 /**
  * This tests the http2 server throttle support for rapid resets when explicitly disabled.
@@ -27,17 +22,18 @@ class Http2ServerDisableFrameTypeThrottleSpec extends Http2SpecWithMaterializer(
     pekko.http.server.http2.log-frames = on
     pekko.http.server.http2.frame-type-throttle.frame-types = []
   """) {
+  import Http2ServerEnableFrameTypeThrottleSpec._
+
   override def failOnSevereMessages: Boolean = true
 
   "The Http/2 server implementation" should {
-    "not cancel connection during rapid reset attack (throttle disabled)".inAssertAllStagesStopped(
-      new TestSetup with RequestResponseProbes {
-        implicit val bigEndian: ByteOrder = ByteOrder.BIG_ENDIAN
-        val bb = new ByteStringBuilder
-        bb.putInt(0)
-        val rstFrame = FrameRenderer.renderFrame(FrameType.RST_STREAM, ByteFlag.Zero, 1, bb.result())
-        val longFrame = Seq.fill(1000)(rstFrame).reduce(_ ++ _)
-        network.sendBytes(longFrame)
+    "not close the connection during a rapid reset attack (throttle disabled)".inAssertAllStagesStopped(
+      new TestSetup {
+        override def handlerFlow = neverRespond
+
+        // more than the default burst of 100, fewer than max-concurrent-streams
+        network.sendBytes(rapidResets(200, network.encodeRequestHeaders))
+        network.toNet.expectNoBytes(200.millis)
       })
   }
 }

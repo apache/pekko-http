@@ -35,7 +35,7 @@ import pekko.http.scaladsl.settings.{
   ParserSettings,
   ServerSettings
 }
-import pekko.stream.{ BidiShape, Graph, StreamTcpException, ThrottleMode }
+import pekko.stream.{ BidiShape, Graph, RateExceededException, StreamTcpException, ThrottleMode }
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Source }
 import pekko.util.{ ByteString, OptionVal }
@@ -246,12 +246,24 @@ private[http] object Http2Blueprint {
       Flow[FrameEvent].map(FrameRenderer.render).prepend(Source.single(Http2Protocol.ClientConnectionPreface)),
       Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = false, log, maxFrameSize)))
 
-  /** Fails the connection when incoming frames of the throttled types exceed the configured rate. */
+  /**
+   * Fails the connection when incoming frames of the throttled types exceed the configured rate.
+   *
+   * Exceeding the throttle is provoked by the peer, so it is reported as a protocol error with ENHANCE_YOUR_CALM
+   * (RFC 9113, section 7: "the endpoint detected that its peer is exhibiting a behavior that might be generating
+   * excessive load"), which [[errorHandling]] logs at DEBUG level, rather than as an internal error.
+   */
   private def frameTypeThrottle(frameTypesForThrottle: Set[String], cost: Int, interval: FiniteDuration,
       burst: Int): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
     BidiFlow.fromFlows(
       Flow[FrameEvent],
-      Flow[FrameEvent].throttle(cost, interval, burst, frameCost(frameTypesForThrottle, _), ThrottleMode.Enforcing))
+      Flow[FrameEvent]
+        .throttle(cost, interval, burst, frameCost(frameTypesForThrottle, _), ThrottleMode.Enforcing)
+        .mapError {
+          case _: RateExceededException =>
+            new Http2Compliance.Http2ProtocolException(Http2Protocol.ErrorCode.ENHANCE_YOUR_CALM,
+              "Peer exceeded the configured frame-type-throttle rate")
+        })
 
   private def getFrameTypesForThrottle(frameTypeAliases: Set[String]): Set[String] =
     frameTypeAliases.flatMap(frameTypeAliasToFrameTypeName)
