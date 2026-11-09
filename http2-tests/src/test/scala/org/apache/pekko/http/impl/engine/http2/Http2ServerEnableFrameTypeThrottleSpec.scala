@@ -19,8 +19,10 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.impl.engine.http2.FrameEvent.{ HeadersFrame, RstStreamFrame }
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
+import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.http.impl.engine.http2.framing.FrameRenderer
 import pekko.http.scaladsl.model.{ HttpProtocols, HttpRequest, HttpResponse }
+import pekko.stream.impl.io.ByteStringParser.ByteReader
 import pekko.stream.scaladsl.Flow
 import pekko.util.ByteString
 
@@ -63,6 +65,17 @@ class Http2ServerEnableFrameTypeThrottleSpec extends Http2SpecWithMaterializer("
         // more than the default burst of 100, fewer than max-concurrent-streams
         network.sendBytes(rapidResets(200, network.encodeRequestHeaders))
         network.expectGOAWAY()._2 should ===(ErrorCode.ENHANCE_YOUR_CALM)
+      })
+    "include the configured rate in the GOAWAY debug data when the throttle is exceeded".inAssertAllStagesStopped(
+      new TestSetup {
+        override def handlerFlow = neverRespond
+
+        network.sendBytes(rapidResets(200, network.encodeRequestHeaders))
+        val payload = network.expectFramePayload(FrameType.GOAWAY, ByteFlag.Zero, streamId = 0)
+        val reader = new ByteReader(payload)
+        reader.readIntBE() // last stream id
+        ErrorCode.byId(reader.readIntBE()) should ===(ErrorCode.ENHANCE_YOUR_CALM)
+        reader.takeAll().utf8String should include("rate of 100 per 1 second (burst 100)")
       })
   }
 }

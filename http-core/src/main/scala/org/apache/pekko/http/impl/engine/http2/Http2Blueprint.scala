@@ -262,7 +262,8 @@ private[http] object Http2Blueprint {
         .mapError {
           case _: RateExceededException =>
             new Http2Compliance.Http2ProtocolException(Http2Protocol.ErrorCode.ENHANCE_YOUR_CALM,
-              "Peer exceeded the configured frame-type-throttle rate")
+              s"Peer exceeded the configured frame-type-throttle rate of $cost per $interval (burst $burst) " +
+              s"for frame types ${frameTypesForThrottle.mkString(", ")}")
         })
 
   private def getFrameTypesForThrottle(frameTypeAliases: Set[String]): Set[String] =
