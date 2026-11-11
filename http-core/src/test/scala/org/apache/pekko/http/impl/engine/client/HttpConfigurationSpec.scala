@@ -22,7 +22,7 @@ import pekko.http.scaladsl.settings.{
   ParserSettings,
   ServerSettings
 }
-import pekko.testkit.PekkoSpec
+import pekko.testkit.{ PekkoSpec, TestKit }
 import com.typesafe.config.ConfigFactory
 
 class HttpConfigurationSpec extends PekkoSpec {
@@ -220,7 +220,7 @@ class HttpConfigurationSpec extends PekkoSpec {
     // we go via ActorSystem in order to hit the settings caching infrastructure
     val sys = ActorSystem("config-testing", config)
     try block(sys)
-    finally sys.terminate()
+    finally TestKit.shutdownActorSystem(sys)
   }
 
 }

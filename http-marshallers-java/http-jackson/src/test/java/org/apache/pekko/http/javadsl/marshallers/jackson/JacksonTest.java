@@ -26,7 +26,6 @@ import com.typesafe.config.ConfigFactory;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpEntities;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
@@ -50,7 +49,6 @@ public class JacksonTest extends JUnitJupiterRouteTest {
 
   @Test
   public void failingToUnmarshallShouldProvideFailureDetails() throws Exception {
-    ActorSystem sys = ActorSystem.create("test");
     try {
       CompletionStage<SomeData> unmarshalled =
           Jackson.unmarshaller(SomeData.class).unmarshal(invalidEntity, system());
@@ -63,8 +61,6 @@ public class JacksonTest extends JUnitJupiterRouteTest {
           ex.getCause()
               .getMessage()
               .startsWith("Cannot unmarshal JSON as SomeData: Unrecognized field \"droids\""));
-    } finally {
-      sys.terminate();
     }
   }
 

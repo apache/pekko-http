@@ -13,7 +13,8 @@
 
 package org.apache.pekko.http.scaladsl.marshallers.sprayjson
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ Await, ExecutionContext }
+import scala.concurrent.duration._
 
 import spray.json.{ JsArray, JsString, JsValue }
 import spray.json.RootJsonFormat
@@ -25,11 +26,12 @@ import pekko.http.scaladsl.model.MessageEntity
 import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.util.ByteString
 
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class SprayJsonSupportSpec extends AnyWordSpec with Matchers with ScalaFutures {
+class SprayJsonSupportSpec extends AnyWordSpec with Matchers with ScalaFutures with BeforeAndAfterAll {
   import SprayJsonSupport._
   import SprayJsonSupportSpec._
   import spray.json.DefaultJsonProtocol._
@@ -37,6 +39,11 @@ class SprayJsonSupportSpec extends AnyWordSpec with Matchers with ScalaFutures {
   implicit val exampleFormat: RootJsonFormat[Example] = jsonFormat1(Example.apply)
   implicit val sys: ActorSystem = ActorSystem("SprayJsonSupportSpec")
   implicit val ec: ExecutionContext = sys.dispatcher
+
+  override def afterAll(): Unit = {
+    Await.result(sys.terminate(), 10.seconds)
+    super.afterAll()
+  }
 
   val TestString =
     "Contains all UTF-8 characters: 2-byte: £, 3-byte: ﾖ, 4-byte: 😁, 4-byte as a literal surrogate pair: \uD83D\uDE01"
