@@ -14,14 +14,22 @@
 package org.apache.pekko.http.scaladsl.settings
 
 import com.typesafe.config.ConfigFactory
-import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko
+import pekko.actor.ActorSystem
+import pekko.testkit.TestKit
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class SettingsEqualitySpec extends AnyWordSpec with Matchers {
+class SettingsEqualitySpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
 
   val config = ConfigFactory.load.resolve
   implicit val system: ActorSystem = ActorSystem("test", config)
+
+  override def afterAll(): Unit = {
+    TestKit.shutdownActorSystem(system)
+    super.afterAll()
+  }
 
   "equality" should {
     "hold for ConnectionPoolSettings" in {

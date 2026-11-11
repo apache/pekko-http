@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.List;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.japi.Pair;
+import org.apache.pekko.testkit.javadsl.TestKit;
 import org.junit.jupiter.api.Test;
 
 public class ConnectionPoolSettingsTest {
@@ -25,7 +26,11 @@ public class ConnectionPoolSettingsTest {
   @Test
   public void testCreateWithActorSystem() {
     ActorSystem sys = ActorSystem.create("test");
-    ConnectionPoolSettings settings = ConnectionPoolSettings.create(sys);
+    try {
+      ConnectionPoolSettings settings = ConnectionPoolSettings.create(sys);
+    } finally {
+      TestKit.shutdownActorSystem(sys);
+    }
   }
 
   @Test

@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.io.Inet;
 import org.apache.pekko.io.TcpSO;
+import org.apache.pekko.testkit.javadsl.TestKit;
 import org.junit.jupiter.api.Test;
 
 public class ServerSettingsTest {
@@ -36,7 +37,11 @@ public class ServerSettingsTest {
   @Test
   public void testCreateWithActorSystem() {
     ActorSystem sys = ActorSystem.create("test");
-    ServerSettings settings = ServerSettings.create(sys);
+    try {
+      ServerSettings settings = ServerSettings.create(sys);
+    } finally {
+      TestKit.shutdownActorSystem(sys);
+    }
   }
 
   @Test

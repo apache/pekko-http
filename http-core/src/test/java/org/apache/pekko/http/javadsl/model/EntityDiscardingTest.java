@@ -22,15 +22,28 @@ import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.japi.function.Procedure;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
+import org.apache.pekko.testkit.javadsl.TestKit;
 import org.apache.pekko.util.ByteString;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import scala.util.Try;
 
 public class EntityDiscardingTest {
 
-  private ActorSystem sys = ActorSystem.create("test");
+  private static ActorSystem sys;
   private Iterable<ByteString> testData =
       List.of(ByteString.fromString("abc"), ByteString.fromString("def"));
+
+  @BeforeAll
+  public static void setup() {
+    sys = ActorSystem.create("test");
+  }
+
+  @AfterAll
+  public static void teardown() {
+    TestKit.shutdownActorSystem(sys);
+  }
 
   @Test
   public void testHttpRequestDiscardEntity() {

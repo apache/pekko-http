@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.io.Inet;
 import org.apache.pekko.io.TcpSO;
+import org.apache.pekko.testkit.javadsl.TestKit;
 import org.junit.jupiter.api.Test;
 
 public class ClientConnectionSettingsTest {
@@ -34,7 +35,11 @@ public class ClientConnectionSettingsTest {
   @Test
   public void testCreateWithActorSystem() {
     ActorSystem sys = ActorSystem.create("test");
-    ClientConnectionSettings settings = ClientConnectionSettings.create(sys);
+    try {
+      ClientConnectionSettings settings = ClientConnectionSettings.create(sys);
+    } finally {
+      TestKit.shutdownActorSystem(sys);
+    }
   }
 
   @Test

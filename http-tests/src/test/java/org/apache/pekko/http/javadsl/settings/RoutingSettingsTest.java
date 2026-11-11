@@ -16,6 +16,7 @@ package org.apache.pekko.http.javadsl.settings;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.testkit.javadsl.TestKit;
 import org.junit.jupiter.api.Test;
 
 public class RoutingSettingsTest {
@@ -24,6 +25,10 @@ public class RoutingSettingsTest {
   public void testCreateWithActorSystem() {
     Config config = ConfigFactory.load().resolve();
     ActorSystem sys = ActorSystem.create("test", config);
-    RoutingSettings settings = RoutingSettings.create(sys);
+    try {
+      RoutingSettings settings = RoutingSettings.create(sys);
+    } finally {
+      TestKit.shutdownActorSystem(sys);
+    }
   }
 }
