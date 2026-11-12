@@ -83,7 +83,7 @@ object ConnectionContext {
 /**
  *  Context with all information needed to set up a HTTPS connection
  *
- * This constructor is INTERNAL API, use ConnectionContext.https instead
+ * This constructor is INTERNAL API, use ConnectionContext.httpsClient or ConnectionContext.httpsServer instead
  */
 @InternalApi
 final class HttpsConnectionContext private[http] (
