@@ -89,8 +89,40 @@ class HuffmanDecoderSpec extends AnyWordSpec with Matchers {
       new String(out, 0, length, StandardCharsets.ISO_8859_1) shouldEqual "no-cache"
     }
 
+    "accept every legal padding length from zero through seven bits" in {
+      (1 to 8).foreach { count =>
+        // The 5-bit code for '0' makes these literals exercise every final bit offset.
+        val plain = Array.fill[Byte](count)('0')
+        decode(encode(plain)) shouldEqual plain
+      }
+    }
+
+    "reject padding longer than seven bits even when whole bytes were consumed" in {
+      (1 to 3).foreach { count =>
+        (the[IOException] thrownBy decode(Array.fill[Byte](count)(0xFF.toByte)))
+          .getMessage shouldEqual "Invalid Padding"
+      }
+    }
+
+    "reject excessive padding after decoded symbols at every bit offset" in {
+      (1 to 8).foreach { count =>
+        val coded = encode(Array.fill[Byte](count)('0')) ++ Array[Byte](0xFF.toByte)
+        (the[IOException] thrownBy decode(coded)).getMessage shouldEqual "Invalid Padding"
+      }
+    }
+
     "reject a literal containing the EOS symbol" in {
       (the[IOException] thrownBy decode(bytes("ffffffff"))).getMessage shouldEqual "EOS Decoded"
+    }
+
+    "reject the EOS symbol starting at every bit offset" in {
+      (0 until 8).foreach { count =>
+        // Each '0' takes five bits, followed here by the forbidden 30-bit EOS symbol.
+        val bits = ("00000" * count) + ("1" * 30)
+        val padded = bits + ("1" * ((8 - bits.length % 8) % 8))
+        val coded = padded.grouped(8).map(Integer.parseInt(_, 2).toByte).toArray
+        (the[IOException] thrownBy decode(coded)).getMessage shouldEqual "EOS Decoded"
+      }
     }
 
     "reject padding that is not the most significant bits of the EOS code" in {
