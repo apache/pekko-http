@@ -531,7 +531,13 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
           case Setting(Http2Protocol.SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, value) =>
             if (value >= 0) {
               debug(s"Setting initial window to $value")
-              multiplexer.updateDefaultWindow(value)
+              try multiplexer.updateDefaultWindow(value)
+              catch {
+                case ex: Http2Compliance.Http2ProtocolException =>
+                  // A peer-caused flow-control error must not be logged as an unexpected stage exception.
+                  failStage(ex)
+                  settingsAppliedOk = false
+              }
             } else {
               pushGOAWAY(FLOW_CONTROL_ERROR, s"Invalid value for SETTINGS_INITIAL_WINDOW_SIZE: $value")
               settingsAppliedOk = false
