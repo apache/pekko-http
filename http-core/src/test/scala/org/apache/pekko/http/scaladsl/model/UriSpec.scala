@@ -484,6 +484,24 @@ class UriSpec extends AnyWordSpec with Matchers {
       Query() shouldEqual Empty
       Query("k" -> "v") shouldEqual ("k" -> "v") +: Empty
     }
+    "preserve characters following unpaired surrogates when rendering query parameters" in {
+      val inputs = Seq("plain", "é中", "\uD83D\uDE00", "\uD800", "\uDC00", "\uD800A", "\uD800é",
+        "\uD800中", "\uD800\uD83D\uDE00", "\uD800\uD800A", "\uDC00A")
+      for (charset <- Seq(UTF8, Charset.forName("US-ASCII"), Charset.forName("ISO-8859-1")); input <- inputs) {
+        val encoded = java.net.URLEncoder.encode(input, charset.name())
+        val rendered = UriRendering.renderQuery(new StringRendering, Query(input -> input), charset).get
+        withClue(s"charset=$charset, code units=${input.toList.map(_.toInt)}: ") {
+          rendered shouldEqual s"$encoded=$encoded"
+        }
+      }
+      Query("value" -> "\uD800A").toString() shouldEqual "value=%3FA"
+    }
+    "preserve characters following unpaired surrogates in paths and fragments" in {
+      val input = "\uD800A\uD83D\uDE00"
+      val encoded = "%3FA%F0%9F%98%80"
+      UriRendering.renderPath(new StringRendering, Path.Segment(input, Path.Empty), UTF8).get shouldEqual encoded
+      Uri(fragment = Some(input)).toString shouldEqual s"#$encoded"
+    }
     "encode special separators in query parameter names" in {
       Query("a=b" -> "c").toString() shouldEqual "a%3Db=c"
       Query("a&b" -> "c").toString() shouldEqual "a%26b=c"
