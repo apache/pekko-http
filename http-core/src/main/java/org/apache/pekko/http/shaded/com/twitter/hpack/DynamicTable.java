@@ -162,12 +162,15 @@ final class DynamicTable {
       maxEntries++;
     }
 
+    // Keep one unused slot so a full table cannot be mistaken for an empty one (head == tail).
+    int arrayLength = maxEntries + 1;
+
     // check if capacity change requires us to reallocate the array
-    if (headerFields != null && headerFields.length == maxEntries) {
+    if (headerFields != null && headerFields.length == arrayLength) {
       return;
     }
 
-    HeaderField[] tmp = new HeaderField[maxEntries];
+    HeaderField[] tmp = new HeaderField[arrayLength];
 
     // initially length will be 0 so there will be no copy
     int len = length();
