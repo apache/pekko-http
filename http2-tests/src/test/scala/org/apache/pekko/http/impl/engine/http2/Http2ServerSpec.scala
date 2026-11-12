@@ -1144,6 +1144,96 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectDATA(TheStreamId, true, 0)
         })
 
+      "apply SETTINGS_INITIAL_WINDOW_SIZE reductions to active streams".inAssertAllStagesStopped(
+        new WaitingForResponseDataSetup {
+          entityDataOut.sendNext(ByteString("abcd"))
+          network.expectDATA(TheStreamId, false, ByteString("abcd"))
+          network.sendSETTING(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, 2)
+          network.expectSettingsAck()
+          // The test probe only represents non-negative windows; track zero until the debt is repaid.
+          network.updateFromServerWindows(TheStreamId, _ => 0)
+          entityDataOut.sendNext(ByteString("ef"))
+          network.expectNoBytes(100.millis)
+          // The window is -2, so repaying that debt does not permit sending yet.
+          network.sendFrame(WindowUpdateFrame(TheStreamId, 2))
+          network.expectNoBytes(100.millis)
+          network.sendWINDOW_UPDATE(TheStreamId, 2)
+          network.expectDATA(TheStreamId, false, ByteString("ef"))
+          entityDataOut.sendComplete()
+          network.expectDATA(TheStreamId, true, 0)
+        })
+
+      "fail the connection when SETTINGS_INITIAL_WINDOW_SIZE overflows an active stream window".inAssertAllStagesStopped(
+        new WaitingForResponseDataSetup {
+          network.sendRequest(3, theRequest)
+          user.expectRequest() shouldBe theRequest
+          val otherEntityDataOut = TestPublisher.probe[ByteString]()
+          user.emitResponse(3,
+            HttpResponse(entity = HttpEntity(ContentTypes.`application/octet-stream`,
+              Source.fromPublisher(otherEntityDataOut))))
+          network.expectDecodedHEADERS(3, endStream = false)
+          network.sendWINDOW_UPDATE(TheStreamId, Int.MaxValue - Http2Protocol.InitialWindowSize)
+          network.sendSETTING(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, Http2Protocol.InitialWindowSize + 1)
+          val (_, errorCode) = network.expectGOAWAY()
+          errorCode shouldBe ErrorCode.FLOW_CONTROL_ERROR
+          entityDataOut.expectCancellation()
+          otherEntityDataOut.expectCancellation()
+        })
+
+      "allow empty END_STREAM with a negative SETTINGS_INITIAL_WINDOW_SIZE-adjusted window".inAssertAllStagesStopped(
+        new WaitingForResponseDataSetup {
+          entityDataOut.sendNext(ByteString("abcd"))
+          network.expectDATA(TheStreamId, false, ByteString("abcd"))
+          network.sendSETTING(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, 2)
+          network.expectSettingsAck()
+          network.updateFromServerWindows(TheStreamId, _ => 0)
+          entityDataOut.sendComplete()
+          network.expectDATA(TheStreamId, true, 0)
+        })
+
+      "accept SETTINGS_INITIAL_WINDOW_SIZE reaching the maximum stream window".inAssertAllStagesStopped(
+        new WaitingForResponseDataSetup {
+          network.sendSETTING(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, Int.MaxValue)
+          network.expectSettingsAck()
+          network.updateFromServerWindows(TheStreamId, _ => Int.MaxValue)
+          entityDataOut.sendNext(ByteString("ok"))
+          network.expectDATA(TheStreamId, false, ByteString("ok"))
+          entityDataOut.sendComplete()
+          network.expectDATA(TheStreamId, true, 0)
+        })
+
+      "fail SETTINGS_INITIAL_WINDOW_SIZE overflow before an outgoing stream is created".inAssertAllStagesStopped(
+        new WaitingForResponseSetup {
+          network.sendWINDOW_UPDATE(TheStreamId, Int.MaxValue - Http2Protocol.InitialWindowSize)
+          network.sendSETTING(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, Http2Protocol.InitialWindowSize + 1)
+          val (_, errorCode) = network.expectGOAWAY()
+          errorCode shouldBe ErrorCode.FLOW_CONTROL_ERROR
+        })
+
+      "dequeue a buffered stream when SETTINGS_INITIAL_WINDOW_SIZE makes its window negative".inAssertAllStagesStopped(
+        new WaitingForResponseDataSetup {
+          entityDataOut.sendNext(bytes(Http2Protocol.InitialWindowSize, 0x23))
+          network.expectDATA(TheStreamId, false, Http2Protocol.InitialWindowSize)
+          network.sendWINDOW_UPDATE(TheStreamId, 100)
+          entityDataOut.sendNext(ByteString("ok"))
+          network.sendSETTING(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, 0)
+          network.expectSettingsAck()
+          network.sendWINDOW_UPDATE(0, 2)
+          network.expectNoBytes(100.millis)
+          network.sendFrame(WindowUpdateFrame(TheStreamId, Http2Protocol.InitialWindowSize - 100 + 2))
+          network.updateFromServerWindows(TheStreamId, _ => 2)
+          network.expectDATA(TheStreamId, false, ByteString("ok"))
+          entityDataOut.sendComplete()
+          network.expectDATA(TheStreamId, true, 0)
+        })
+
+      "keep WINDOW_UPDATE overflow scoped to its stream".inAssertAllStagesStopped(
+        new WaitingForResponseDataSetup {
+          network.sendWINDOW_UPDATE(TheStreamId, Int.MaxValue - Http2Protocol.InitialWindowSize)
+          network.sendFrame(WindowUpdateFrame(TheStreamId, 1))
+          network.expectRST_STREAM(TheStreamId, ErrorCode.FLOW_CONTROL_ERROR)
+        })
+
       "handle RST_STREAM while waiting for a window update".inAssertAllStagesStopped(new WaitingForResponseDataSetup {
         entityDataOut.sendNext(bytes(70000, 0x23)) // 70000 > Http2Protocol.InitialWindowSize
         network.sendWINDOW_UPDATE(TheStreamId, 10000) // enough window for the stream but not for the window
@@ -1596,9 +1686,6 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
     "respect flow-control" should {
       "not exceed connection-level window while sending" in pending
       "not exceed stream-level window while sending" in pending
-      "not exceed stream-level window while sending after SETTINGS_INITIAL_WINDOW_SIZE changed" in pending
-      "not exceed stream-level window while sending after SETTINGS_INITIAL_WINDOW_SIZE changed when window became negative through setting" in
-      pending
 
       "reject WINDOW_UPDATE for connection with zero increment with PROTOCOL_ERROR".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
