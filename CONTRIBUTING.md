@@ -267,6 +267,15 @@ The project uses [scalafmt](https://scalameta.org/scalafmt/) to ensure code qual
 every PR. If you would like to check for any potential code style problems locally you can run `sbt checkCodeStyle`
 and if you want to apply the code style then you can run `sbt applyCodeStyle`.
 
+### Formatter alignment with Pekko core
+
+The build aligns its import-selector layout with Pekko core: one selector per
+line for multiline imports (`binPack.importSelectors = unfold`). Project-specific
+exclusions and dialect overrides remain in `.scalafmt.conf`. Run
+`sbt scalafmtAll scalafmtSbt javafmtAll` to apply formatting and
+`sbt scalafmtCheckAll scalafmtSbtCheck javafmtCheckAll` to check it. Java formatting
+requires JDK 17 and preserves import ordering.
+
 ### Ignoring formatting commits in git blame
 
 Throughout the history of the codebase various formatting commits have been applied as the scalafmt style has evolved over time, if desired
