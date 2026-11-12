@@ -1060,8 +1060,11 @@ object UriRendering {
           case c if c <= 127 && asciiCompatible => { appendEncoded(c.toByte); 1 }
           case c                                =>
             def append(s: String) = s.getBytes(charset).foreach(appendEncoded)
-            if (Character.isHighSurrogate(c)) { append(new String(Array(string.codePointAt(ix)), 0, 1)); 2 }
-            else { append(c.toString); 1 }
+            if (Character.isHighSurrogate(c)) {
+              val codePoint = string.codePointAt(ix)
+              append(new String(Array(codePoint), 0, 1))
+              Character.charCount(codePoint)
+            } else { append(c.toString); 1 }
         }
         rec(ix + charSize)
       } else r

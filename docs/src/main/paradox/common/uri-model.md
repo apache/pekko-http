@@ -89,6 +89,10 @@ URI that was used. For an example check the reference configuration.
 Although any part of URI can have special characters, it is more common for the query string in URI to have special characters,
 which are typically [percent encoded](https://en.wikipedia.org/wiki/Percent-encoding).
 
+When rendering URI components from Java or Scala strings, valid UTF-16 surrogate pairs are encoded together.
+Unpaired surrogates are encoded using the selected charset's replacement bytes (for UTF-8, `%3F`),
+without discarding subsequent characters.
+
 @scala[@apidoc[Uri] class's `query()` method]@java[The method `Uri::query()`] returns the query string of the URI, which is modeled in an instance of the `Query` class.
 When you instantiate a @apidoc[Uri] class by passing a URI string, the query string is stored in its raw string form.
 Then, when you call the `query()` method, the query string is parsed from the raw string.
