@@ -158,3 +158,10 @@ $ curl -k -v https://localhost:8443
 ```
 
 If your curl output looks like above, you have successfully configured HTTP/2.
+
+## Header compression validation
+
+HTTP/2 uses HPACK to encode header fields. Huffman-encoded string literals must use at most seven padding bits,
+all matching the prefix of the EOS code, as required by
+[RFC 7541 section 5.2](https://www.rfc-editor.org/rfc/rfc7541.html#section-5.2).
+Invalid padding or an embedded EOS symbol is rejected as a header-compression error; valid header blocks and HTTP/1.1 behavior are unchanged.
