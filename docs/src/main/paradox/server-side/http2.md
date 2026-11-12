@@ -74,6 +74,15 @@ server supports HTTP/2.
 For this reason the approach is known as HTTP/2 with
 [Prior Knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3).
 
+## Flow-control window updates
+
+Changes to a peer's `SETTINGS_INITIAL_WINDOW_SIZE` apply to existing HTTP/2 streams, including decreases.
+If a decrease leaves a stream's send window negative, no DATA payload is sent until subsequent window updates
+restore a positive window. A settings change that makes any stream window exceed `2^31 - 1` closes the
+connection with `FLOW_CONTROL_ERROR`, as required by [RFC 9113 section 6.9.2](https://www.rfc-editor.org/rfc/rfc9113.html#section-6.9.2).
+An overflow caused by a stream-specific `WINDOW_UPDATE` still affects only that stream. These rules also
+apply to the HTTP/2 client and do not change HTTP/1.1 fallback behavior.
+
 ## Limiting the lifetime of connections
 
 Long-lived HTTP/2 connections, for example those used by gRPC, can lead to an uneven load distribution across
