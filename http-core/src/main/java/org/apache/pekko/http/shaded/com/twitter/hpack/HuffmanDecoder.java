@@ -79,6 +79,7 @@ final class HuffmanDecoder {
     Node node = root;
     int current = 0;
     int bits = 0;
+    int pendingBits = 0;
     int pos = 0;
     for (int i = 0; i < length; i++) {
       int b = buf[i] & 0xFF;
@@ -94,6 +95,10 @@ final class HuffmanDecoder {
           }
           out[pos++] = (byte) node.symbol;
           node = root;
+          pendingBits = 0;
+        } else {
+          // These bits have left current but still belong to an incomplete symbol.
+          pendingBits += node.bits;
         }
       }
     }
@@ -102,9 +107,13 @@ final class HuffmanDecoder {
       int c = (current << (8 - bits)) & 0xFF;
       node = node.children[c];
       if (node.isTerminal() && node.bits <= bits) {
+        if (node.symbol == HpackUtil.HUFFMAN_EOS) {
+          throw EOS_DECODED;
+        }
         bits -= node.bits;
         out[pos++] = (byte) node.symbol;
         node = root;
+        pendingBits = 0;
       } else {
         break;
       }
@@ -114,7 +123,7 @@ final class HuffmanDecoder {
     // Padding not corresponding to the most significant bits of the code
     // for the EOS symbol (0xFF) MUST be treated as a decoding error.
     int mask = (1 << bits) - 1;
-    if ((current & mask) != mask) {
+    if (pendingBits + bits > 7 || (current & mask) != mask) {
       throw INVALID_PADDING;
     }
 
