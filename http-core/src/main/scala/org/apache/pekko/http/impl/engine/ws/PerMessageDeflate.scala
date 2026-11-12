@@ -352,7 +352,11 @@ private[http] object PerMessageDeflate {
         count = deflater.deflate(buffer, 0, buffer.length, Deflater.SYNC_FLUSH)
       }
       val bytes = output.takeByteString()
-      if (removeTail && bytes.endsWith(EmptyStoredBlock)) bytes.dropRight(EmptyStoredBlock.length) else bytes
+      // An empty final fragment still needs a DEFLATE block header before the peer restores the tail
+      // (RFC 7692, section 7.2.3.6). SYNC_FLUSH may produce nothing after a previous fragment's flush.
+      if (removeTail && bytes.isEmpty) ByteString(0)
+      else if (removeTail && bytes.endsWith(EmptyStoredBlock)) bytes.dropRight(EmptyStoredBlock.length)
+      else bytes
     }
 
     override def close(): Unit =
