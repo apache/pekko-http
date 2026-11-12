@@ -48,6 +48,9 @@ public final class Decoder {
   private static final IOException MAX_DYNAMIC_TABLE_SIZE_CHANGE_REQUIRED =
       new IOException("max dynamic table size change required");
 
+  private static final IOException DYNAMIC_TABLE_SIZE_UPDATE_AFTER_HEADER_FIELD =
+      new IOException("dynamic table size update after a header field");
+
   private static final String EMPTY = "";
 
   private final DynamicTable dynamicTable;
@@ -57,6 +60,7 @@ public final class Decoder {
   private int encoderMaxDynamicTableSize;
   private boolean maxDynamicTableSizeChangeRequired;
 
+  private boolean headerFieldSeen;
   private long headerSize;
   private State state;
   private IndexType indexType;
@@ -99,6 +103,7 @@ public final class Decoder {
   }
 
   private void reset() {
+    headerFieldSeen = false;
     headerSize = 0;
     state = State.READ_HEADER_REPRESENTATION;
     indexType = IndexType.NONE;
@@ -123,9 +128,18 @@ public final class Decoder {
             return;
           }
           byte b = (byte) nextByte;
-          if (maxDynamicTableSizeChangeRequired && (b & 0xE0) != 0x20) {
+          boolean dynamicTableSizeUpdate = (b & 0xE0) == 0x20;
+          if (maxDynamicTableSizeChangeRequired && !dynamicTableSizeUpdate) {
             // Encoder MUST signal maximum dynamic table size change
             throw MAX_DYNAMIC_TABLE_SIZE_CHANGE_REQUIRED;
+          }
+          if (dynamicTableSizeUpdate) {
+            // RFC 7541 section 4.2: size updates precede all header fields in a block.
+            if (headerFieldSeen) {
+              throw DYNAMIC_TABLE_SIZE_UPDATE_AFTER_HEADER_FIELD;
+            }
+          } else {
+            headerFieldSeen = true;
           }
           if (b < 0) {
             // Indexed Header Field

@@ -129,6 +129,13 @@ Java
 
 Having both a `trailingHeaders` attribute and a `LastChunk` element is not supported.
 
+## HPACK dynamic table updates
+
+HPACK dynamic table size updates must precede all header fields in a header block, as required by
+[RFC 7541 section 4.2](https://www.rfc-editor.org/rfc/rfc7541.html#section-4.2).
+An update after a header field is rejected as a compression error. Leading updates remain supported
+for each new header block; this does not change HTTP/1.1 behavior or the configured table size limit.
+
 ## Testing with cURL
 
 At this point you should be able to connect, but HTTP/2 may still not be available.
