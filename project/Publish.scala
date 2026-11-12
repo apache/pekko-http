@@ -37,6 +37,9 @@ object Publish extends AutoPlugin {
 
   override lazy val projectSettings = Seq(
     startYear := Some(2022),
+    releaseNotesURL :=
+      (if (isSnapshot.value) None
+       else Some(url(s"https://github.com/apache/pekko-http/releases/tag/v${version.value}"))),
     developers := List(
       Developer(
         "pekko-http-contributors",
