@@ -16,6 +16,12 @@ package org.apache.pekko.http.impl.engine.client.pool
 import java.time.Instant
 import java.util
 
+import scala.concurrent.duration._
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.jdk.CollectionConverters._
+import scala.util.control.{ NoStackTrace, NonFatal }
+import scala.util.{ Failure, Random, Success, Try }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.Cancellable
@@ -25,18 +31,12 @@ import pekko.http.impl.engine.client.PoolFlow.{ RequestContext, ResponseContext 
 import pekko.http.impl.engine.client.pool.SlotState._
 import pekko.http.impl.util.{ RichHttpRequest, StageLoggingWithOverride, StreamUtils }
 import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.model.{ headers, HttpEntity, HttpRequest, HttpResponse }
+import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest, HttpResponse, headers }
 import pekko.http.scaladsl.settings.ConnectionPoolSettings
-import pekko.util.OptionVal
 import pekko.stream._
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
-
-import scala.concurrent.{ ExecutionContext, Future }
-import scala.concurrent.duration._
-import scala.jdk.CollectionConverters._
-import scala.util.control.{ NoStackTrace, NonFatal }
-import scala.util.{ Failure, Random, Success, Try }
+import pekko.util.OptionVal
 
 /**
  * Internal API

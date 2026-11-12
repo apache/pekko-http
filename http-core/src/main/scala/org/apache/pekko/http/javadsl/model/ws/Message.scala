@@ -15,15 +15,15 @@ package org.apache.pekko.http.javadsl.model.ws
 
 import java.util.concurrent.CompletionStage
 
+import scala.concurrent.duration._
+import scala.jdk.FutureConverters._
+
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.scaladsl.{ model => sm }
 import pekko.stream.Materializer
 import pekko.stream.javadsl.Source
 import pekko.util.ByteString
-
-import scala.concurrent.duration._
-import scala.jdk.FutureConverters._
 
 /**
  * Represents a WebSocket message. A message can either be a binary message or a text message.

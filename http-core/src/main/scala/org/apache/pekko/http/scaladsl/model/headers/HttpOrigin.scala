@@ -13,13 +13,14 @@
 
 package org.apache.pekko.http.scaladsl.model.headers
 
+import org.parboiled2.UTF8
+
 import org.apache.pekko
 import pekko.http.impl.model.parser.UriParser
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.Uri
-import org.parboiled2.UTF8
 
 abstract class HttpOriginRange extends jm.headers.HttpOriginRange with ValueRenderable {
   def matches(origin: HttpOrigin): Boolean

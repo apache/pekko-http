@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.model.headers
 
 import scala.collection.immutable
+
 import org.apache.pekko.http.impl.util.{ Rendering, ValueRenderable }
 
 /**

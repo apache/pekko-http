@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.model.headers
 
 import scala.collection.immutable
+
 import org.apache.pekko
 import pekko.http.impl.util.{ Renderer, Rendering, ValueRenderable }
 import pekko.http.javadsl.{ model => jm }

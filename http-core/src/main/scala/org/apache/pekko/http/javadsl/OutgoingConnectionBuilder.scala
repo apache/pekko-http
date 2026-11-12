@@ -13,11 +13,11 @@
 
 package org.apache.pekko.http.javadsl
 
+import java.util.concurrent.CompletionStage
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.ApiMayChange
-
-import java.util.concurrent.CompletionStage
 import pekko.annotation.DoNotInherit
 import pekko.event.LoggingAdapter
 import pekko.http.javadsl.model.HttpRequest

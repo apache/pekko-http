@@ -15,19 +15,19 @@ package org.apache.pekko.http.scaladsl.settings
 
 import java.net.InetSocketAddress
 import java.util.Random
-import java.util.function.Supplier
+
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
 import pekko.annotation.DoNotInherit
-import pekko.http.impl.util._
 import pekko.http.impl.settings.ClientConnectionSettingsImpl
+import pekko.http.impl.util._
 import pekko.http.scaladsl.ClientTransport
 import pekko.http.scaladsl.model.headers.`User-Agent`
 import pekko.io.Inet.SocketOption
-import com.typesafe.config.Config
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
+import com.typesafe.config.Config
 
 /**
  * Public API but not intended for subclassing

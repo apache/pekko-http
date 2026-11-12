@@ -14,10 +14,12 @@
 import com.typesafe.sbt.MultiJvmPlugin
 import MultiJvmPlugin.autoImport._
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
+import scalafix.sbt.ScalafixPlugin
+import scalafix.sbt.ScalafixPlugin.autoImport.scalafixConfigSettings
 import sbt._
 import sbt.Keys._
 
-object MultiNode extends AutoPlugin {
+object MultiNode extends AutoPlugin with ScalafixSupport {
 
   object CliOptions {
     val multiNode = CliOption("pekko.test.multi-node", false)
@@ -34,7 +36,7 @@ object MultiNode extends AutoPlugin {
   val multiTest = CliOptions.multiNode.ifTrue(MultiJvm / multiNodeTest).getOrElse(MultiJvm / test)
 
   override def trigger = noTrigger
-  override def requires = plugins.JvmPlugin && MultiJvmPlugin
+  override def requires = plugins.JvmPlugin && MultiJvmPlugin && ScalafixPlugin
 
   override lazy val projectSettings = multiJvmSettings
 
@@ -60,6 +62,8 @@ object MultiNode extends AutoPlugin {
   private val multiJvmSettings =
     MultiJvmPlugin.multiJvmSettings ++
     scalafmtConfigSettings(MultiJvm) ++
+    scalafixConfigSettings(MultiJvm) ++
+    Seq(ignore(MultiJvm)) ++
     inConfig(MultiJvm)(Seq(
       MultiJvm / jvmOptions := defaultMultiJvmOptions,
       MultiJvm / scalacOptions := (Test / scalacOptions).value,

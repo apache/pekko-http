@@ -13,8 +13,9 @@
 
 package org.apache.pekko.http.impl.model.parser
 
-import org.apache.pekko
 import org.parboiled2.Parser
+
+import org.apache.pekko
 import pekko.http.scaladsl.model.headers._
 
 private[parser] trait AcceptLanguageHeader { this: Parser with CommonRules with CommonActions =>

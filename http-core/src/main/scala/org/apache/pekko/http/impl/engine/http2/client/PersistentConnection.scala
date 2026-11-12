@@ -13,6 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.http2.client
 
+import java.util.concurrent.ThreadLocalRandom
+
+import scala.concurrent.duration.{ Duration, DurationLong, FiniteDuration }
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.util.{ Failure, Success }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
@@ -24,11 +30,6 @@ import pekko.stream.stage.TimerGraphStageLogic
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler, StageLogging }
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet, StreamTcpException }
 import pekko.util.PrettyDuration
-
-import java.util.concurrent.ThreadLocalRandom
-import scala.concurrent.duration.{ Duration, DurationLong, FiniteDuration }
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.util.{ Failure, Success }
 
 /** INTERNAL API */
 @InternalApi

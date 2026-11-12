@@ -15,15 +15,16 @@ package org.apache.pekko.http.scaladsl.model.headers
 
 import java.util.{ Optional, OptionalLong }
 
-import org.apache.pekko
-import pekko.http.impl.model.parser.CharacterClasses
-import pekko.http.impl.util._
-import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.http.javadsl.{ model => jm }
-import pekko.http.scaladsl.model.DateTime
+import scala.jdk.OptionConverters._
+
 import org.parboiled2.CharPredicate
 
-import scala.jdk.OptionConverters._
+import org.apache.pekko
+import pekko.http.impl.model.parser.CharacterClasses
+import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.impl.util._
+import pekko.http.javadsl.{ model => jm }
+import pekko.http.scaladsl.model.DateTime
 
 /**
  * for a full definition of the http cookie header fields, see

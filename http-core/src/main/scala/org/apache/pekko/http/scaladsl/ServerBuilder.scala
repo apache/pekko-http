@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.scaladsl
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.InternalApi
@@ -22,10 +24,8 @@ import pekko.http.scaladsl.Http.ServerBinding
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.http.scaladsl.util.FastFuture
-import pekko.stream.{ Materializer, SystemMaterializer }
 import pekko.stream.scaladsl.{ Flow, Source }
-
-import scala.concurrent.Future
+import pekko.stream.{ Materializer, SystemMaterializer }
 
 /**
  * Builder API to create server bindings.

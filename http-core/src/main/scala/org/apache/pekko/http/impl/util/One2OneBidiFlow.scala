@@ -16,9 +16,8 @@ package org.apache.pekko.http.impl.util
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
-import pekko.stream.scaladsl.BidiFlow
-
 import pekko.stream._
+import pekko.stream.scaladsl.BidiFlow
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 
 /**

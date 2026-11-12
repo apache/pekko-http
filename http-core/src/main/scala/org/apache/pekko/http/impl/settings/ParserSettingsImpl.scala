@@ -13,10 +13,13 @@
 
 package org.apache.pekko.http.impl.settings
 
-import com.typesafe.config.Config
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.settings.ParserSettings.{
   ConflictingContentTypeHeaderProcessingMode,
   CookieParsingMode,
@@ -24,12 +27,10 @@ import pekko.http.scaladsl.settings.ParserSettings.{
   IllegalResponseHeaderNameProcessingMode,
   IllegalResponseHeaderValueProcessingMode
 }
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.settings.ParserSettings
 import pekko.util.ConstantFun
 import pekko.util.Helpers.toRootLowerCase
 
-import scala.jdk.CollectionConverters._
+import com.typesafe.config.Config
 
 /** INTERNAL API */
 @InternalApi

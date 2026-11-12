@@ -14,6 +14,11 @@
 package org.apache.pekko.http.impl.engine.http2
 package client
 
+import javax.net.ssl.SSLSession
+
+import scala.annotation.tailrec
+import scala.collection.immutable.VectorBuilder
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.Http2Compliance.Http2ProtocolException
@@ -27,10 +32,6 @@ import pekko.http.scaladsl.model.headers.`Tls-Session-Info`
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.stream.Attributes
 import pekko.util.OptionVal
-import javax.net.ssl.SSLSession
-
-import scala.annotation.tailrec
-import scala.collection.immutable.VectorBuilder
 
 @InternalApi
 private[http2] object ResponseParsing {

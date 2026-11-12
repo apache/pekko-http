@@ -18,9 +18,9 @@ import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.RequestParsing.ParseRequestResult
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes }
-import pekko.stream.{ Attributes, BidiShape, Inlet, Outlet }
 import pekko.stream.scaladsl.BidiFlow
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
+import pekko.stream.{ Attributes, BidiShape, Inlet, Outlet }
 
 /**
  * INTERNAL API

@@ -16,9 +16,9 @@ package org.apache.pekko.http.impl.util
 import java.io.File
 import java.nio.file.Path
 
-import JavaMapping.Implicits._
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import JavaMapping.Implicits._
 import pekko.http.javadsl.model._
 import pekko.http.scaladsl.model
 

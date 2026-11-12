@@ -15,9 +15,10 @@ package org.apache.pekko.http.impl.util
 
 import java.nio.charset.StandardCharsets
 
+import org.parboiled2.ParserInput.DefaultParserInput
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import org.parboiled2.ParserInput.DefaultParserInput
 import pekko.util.ByteString
 
 /**

@@ -13,6 +13,11 @@
 
 package org.apache.pekko.http.impl.engine.http2.hpack
 
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+
+import scala.collection.immutable.VectorBuilder
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.FrameEvent._
@@ -27,10 +32,6 @@ import pekko.http.shaded.com.twitter.hpack.HeaderListener
 import pekko.stream._
 import pekko.stream.stage.{ GraphStage, GraphStageLogic }
 import pekko.util.ByteString
-
-import java.io.IOException
-import java.nio.charset.StandardCharsets
-import scala.collection.immutable.VectorBuilder
 
 /**
  * INTERNAL API

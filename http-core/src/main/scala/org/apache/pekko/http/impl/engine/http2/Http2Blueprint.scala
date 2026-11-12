@@ -13,11 +13,14 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
-import pekko.http.impl.engine.{ HttpConnectionIdleTimeoutBidi, HttpIdleTimeoutException }
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.client.ResponseParsing
 import pekko.http.impl.engine.http2.framing.{ FrameRenderer, Http2FrameParsing }
@@ -25,6 +28,7 @@ import pekko.http.impl.engine.http2.hpack.{ HeaderCompression, HeaderDecompressi
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.impl.engine.server.ServerTerminator
+import pekko.http.impl.engine.{ HttpConnectionIdleTimeoutBidi, HttpIdleTimeoutException }
 import pekko.http.impl.util.LogByteStringTools.logTLSBidiBySetting
 import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.model._
@@ -35,15 +39,11 @@ import pekko.http.scaladsl.settings.{
   ParserSettings,
   ServerSettings
 }
-import pekko.stream.{ BidiShape, Graph, RateExceededException, StreamTcpException, ThrottleMode }
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Source }
-import pekko.util.{ ByteString, OptionVal }
+import pekko.stream.{ BidiShape, Graph, RateExceededException, StreamTcpException, ThrottleMode }
 import pekko.util.Helpers.toRootLowerCase
-
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.control.NonFatal
+import pekko.util.{ ByteString, OptionVal }
 
 /**
  * Represents one direction of an Http2 substream.

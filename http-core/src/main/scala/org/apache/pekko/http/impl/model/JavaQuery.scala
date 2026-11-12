@@ -16,19 +16,20 @@ package org.apache.pekko.http.impl.model
 import java.util.Optional
 import java.{ util => ju }
 
+import scala.jdk.CollectionConverters._
+
+import org.parboiled2.CharPredicate
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.model.parser.CharacterClasses
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.impl.util.StringRendering
 import pekko.http.javadsl.model.HttpCharset
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.UriRendering
 import pekko.http.scaladsl.{ model => sm }
 import pekko.japi.Pair
-import org.parboiled2.CharPredicate
-
-import scala.jdk.CollectionConverters._
-import pekko.http.impl.util.JavaMapping.Implicits._
 
 /** INTERNAL API */
 @InternalApi

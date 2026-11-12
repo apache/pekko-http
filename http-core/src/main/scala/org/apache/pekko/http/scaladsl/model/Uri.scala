@@ -13,23 +13,24 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import java.net.{ Inet4Address, Inet6Address, InetAddress }
 import java.lang.{ Iterable, StringBuilder => JStringBuilder }
+import java.net.{ Inet4Address, Inet6Address, InetAddress }
 import java.nio.charset.Charset
 
 import scala.annotation.tailrec
 import scala.collection.mutable
 
+import org.parboiled2.{ CharPredicate, CharUtils, ParserInput }
+
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.ccompat.{ Builder, QuerySeqOptimized }
-import pekko.http.javadsl.{ model => jm }
-import pekko.http.impl.model.parser.UriParser
 import pekko.http.impl.model.parser.CharacterClasses._
+import pekko.http.impl.model.parser.UriParser
 import pekko.http.impl.util._
-import pekko.util.Helpers.toRootLowerCase
+import pekko.http.javadsl.{ model => jm }
 import Uri._
-import org.parboiled2.{ CharPredicate, CharUtils, ParserInput }
+import pekko.util.Helpers.toRootLowerCase
 
 /**
  * An immutable model of an internet URI as defined by https://tools.ietf.org/html/rfc3986.

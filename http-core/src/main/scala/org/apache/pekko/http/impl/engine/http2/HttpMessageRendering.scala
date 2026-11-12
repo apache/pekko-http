@@ -14,19 +14,19 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import java.util.concurrent.atomic.AtomicInteger
+
+import scala.collection.immutable.VectorBuilder
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.http2.FrameEvent.ParsedHeadersFrame
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.{ `Raw-Request-URI`, Host }
+import pekko.http.scaladsl.model.headers.{ Host, `Raw-Request-URI` }
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.util.OptionVal
-
-import scala.collection.immutable
-import scala.collection.immutable.VectorBuilder
 
 /** INTERNAL API */
 @InternalApi

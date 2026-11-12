@@ -15,14 +15,15 @@ package org.apache.pekko.http.javadsl.settings
 
 import java.time.Duration
 
+import scala.concurrent.duration.DurationLong
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.scaladsl
-import com.typesafe.config.Config
 
-import scala.concurrent.duration.DurationLong
-import scala.jdk.CollectionConverters._
+import com.typesafe.config.Config
 
 @DoNotInherit
 trait Http2ServerSettings {

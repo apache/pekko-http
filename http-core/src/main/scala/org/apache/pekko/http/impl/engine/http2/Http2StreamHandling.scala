@@ -13,22 +13,22 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.collection.mutable
+import scala.util.control.NoStackTrace
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.rendering.DateHeaderRendering
-import pekko.http.scaladsl.model.{ AttributeKey, HttpEntity, HttpMethods }
 import pekko.http.scaladsl.model.http2.PeerClosedStreamException
+import pekko.http.scaladsl.model.{ AttributeKey, HttpEntity, HttpMethods }
 import pekko.http.scaladsl.settings.Http2CommonSettings
 import pekko.macros.LogHelper
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.stream.stage.{ GraphStageLogic, InHandler, OutHandler }
 import pekko.util.ByteString
 import pekko.util.OptionVal
-
-import scala.collection.mutable
-import scala.util.control.NoStackTrace
 
 /**
  * INTERNAL API

@@ -20,17 +20,17 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
-import pekko.http.impl.engine.server.UpgradeToOtherProtocolResponseHeader
-import pekko.http.impl.util._
-import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.HttpProtocols._
-import pekko.http.scaladsl.model.headers._
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
-import pekko.stream.scaladsl.{ Flow, Sink, Source }
-import pekko.stream.stage._
-import pekko.util.{ ByteString, OptionVal }
 import RenderSupport._
 import ResponseRenderingContext.CloseRequested
+import pekko.http.impl.engine.server.UpgradeToOtherProtocolResponseHeader
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model.HttpProtocols._
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers._
+import pekko.stream.scaladsl.{ Flow, Sink, Source }
+import pekko.stream.stage._
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
+import pekko.util.{ ByteString, OptionVal }
 
 /**
  * INTERNAL API

@@ -15,6 +15,11 @@ package org.apache.pekko.http.impl.engine.server
 
 import java.util.concurrent.atomic.AtomicReference
 
+import scala.annotation.tailrec
+import scala.concurrent.duration.{ Deadline, FiniteDuration }
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.util.{ Failure, Success }
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.InternalApi
@@ -28,11 +33,6 @@ import pekko.stream._
 import pekko.stream.scaladsl.BidiFlow
 import pekko.stream.stage._
 import pekko.util.PrettyDuration
-
-import scala.annotation.tailrec
-import scala.concurrent.duration.{ Deadline, FiniteDuration }
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.util.{ Failure, Success }
 
 /**
  * INTERNAL API: Used to start the termination process of a Pekko HTTP server.

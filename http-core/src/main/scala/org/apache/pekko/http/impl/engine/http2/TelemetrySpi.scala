@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.net.InetSocketAddress
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ActorSystem
@@ -26,8 +28,6 @@ import pekko.stream.Attributes.Attribute
 import pekko.stream.scaladsl.BidiFlow
 import pekko.stream.scaladsl.Flow
 import pekko.stream.scaladsl.Tcp
-
-import java.net.InetSocketAddress
 
 /**
  * INTERNAL API

@@ -13,6 +13,10 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
 import pekko.annotation.DoNotInherit
@@ -20,11 +24,8 @@ import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.Http2Protocol
 import pekko.http.impl.util._
 import pekko.http.javadsl
-import com.typesafe.config.Config
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration.FiniteDuration
-import scala.jdk.CollectionConverters._
+import com.typesafe.config.Config
 
 /**
  * INTERNAL API

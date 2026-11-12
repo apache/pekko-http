@@ -13,12 +13,13 @@
 
 package org.apache.pekko.http.scaladsl.model.headers
 
-import org.apache.pekko
 import org.parboiled2.util.Base64
-import pekko.http.scaladsl.model.HttpCharsets._
+
+import org.apache.pekko
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.impl.util.{ Rendering, ValueRenderable }
 import pekko.http.javadsl.{ model => jm }
-import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.scaladsl.model.HttpCharsets._
 
 abstract class HttpCredentials extends jm.headers.HttpCredentials with ValueRenderable {
   def scheme: String

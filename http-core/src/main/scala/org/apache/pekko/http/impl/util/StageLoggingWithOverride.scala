@@ -18,8 +18,8 @@ package org.apache.pekko.http.impl.util
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.stream.stage.GraphStageLogic
 import pekko.event.{ LogSource, LoggingAdapter }
+import pekko.stream.stage.GraphStageLogic
 
 // TODO Try to reconcile with what Pekko provides in StageLogging.
 // We thought this could be removed when https://github.com/akka/akka/issues/18793 had been implemented

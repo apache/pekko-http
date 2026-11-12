@@ -13,7 +13,15 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import javax.net.ssl.SSLEngine
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.control.NonFatal
+import scala.util.{ Failure, Success }
+
 import org.apache.pekko
+import pekko.Done
 import pekko.actor.{
   ActorSystem,
   ClassicActorSystemProvider,
@@ -33,26 +41,19 @@ import pekko.http.impl.engine.server.{
 }
 import pekko.http.impl.util.LogByteStringTools
 import pekko.http.scaladsl.Http.OutgoingConnection
-import pekko.http.scaladsl.{ ConnectionContext, Http, HttpsConnectionContext }
 import pekko.http.scaladsl.Http.ServerBinding
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ Connection, RawHeader, Upgrade, UpgradeProtocol }
 import pekko.http.scaladsl.model.http2.Http2SettingsHeader
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.ServerSettings
+import pekko.http.scaladsl.{ ConnectionContext, Http, HttpsConnectionContext }
 import pekko.stream.Attributes
 import pekko.stream.TLSClosing
 import pekko.stream.TLSProtocol.{ SslTlsInbound, SslTlsOutbound }
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source, TLS, TLSPlacebo, Tcp }
 import pekko.stream.{ IgnoreComplete, Materializer }
 import pekko.util.ByteString
-import pekko.Done
-
-import javax.net.ssl.SSLEngine
-import scala.concurrent.{ ExecutionContext, Future }
-import scala.concurrent.duration.Duration
-import scala.util.control.NonFatal
-import scala.util.{ Failure, Success }
 
 /**
  * INTERNAL API

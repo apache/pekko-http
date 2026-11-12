@@ -13,8 +13,11 @@
 
 package org.apache.pekko.http.javadsl.settings
 
-import java.{ util => ju }
 import java.util.Optional
+import java.{ util => ju }
+
+import scala.annotation.varargs
+import scala.jdk.CollectionConverters._
 
 import org.apache.pekko
 import pekko.actor.{ ActorSystem, ClassicActorSystemProvider }
@@ -24,10 +27,6 @@ import pekko.http.impl.settings.ParserSettingsImpl
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.{ HttpMethod, MediaType, StatusCode, Uri }
 import pekko.util.Helpers.toRootLowerCase
-import com.typesafe.config.Config
-
-import scala.annotation.varargs
-import scala.jdk.CollectionConverters._
 
 /**
  * Public API but not intended for subclassing

@@ -13,16 +13,17 @@
 
 package org.apache.pekko.http.impl.settings
 
-import org.apache.pekko
-import pekko.annotation.InternalApi
-import pekko.http.impl.util._
-import pekko.http.scaladsl.settings._
-import com.typesafe.config.Config
-
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.DurationConverters._
 import scala.util.matching.Regex
+
+import org.apache.pekko
+import pekko.annotation.InternalApi
+import pekko.http.impl.util._
+import pekko.http.scaladsl.settings._
+
+import com.typesafe.config.Config
 
 /** INTERNAL API */
 @InternalApi

@@ -15,10 +15,10 @@ package org.apache.pekko.http.impl.util
 
 import java.util.Locale
 
-import org.apache.pekko.annotation.InternalApi
-
 import scala.annotation.{ nowarn, tailrec }
 import scala.collection.immutable
+
+import org.apache.pekko.annotation.InternalApi
 
 /**
  * INTERNAL API

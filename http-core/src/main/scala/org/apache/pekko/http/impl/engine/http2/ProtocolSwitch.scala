@@ -13,6 +13,10 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import javax.net.ssl.SSLException
+
+import scala.concurrent.{ Future, Promise }
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.Http2.HttpImplementation
@@ -22,9 +26,6 @@ import pekko.stream.TLSProtocol.{ SessionBytes, SessionTruncated, SslTlsInbound,
 import pekko.stream._
 import pekko.stream.scaladsl.Flow
 import pekko.stream.stage.{ GraphStageLogic, GraphStageWithMaterializedValue, InHandler, OutHandler }
-
-import javax.net.ssl.SSLException
-import scala.concurrent.{ Future, Promise }
 
 /** INTERNAL API */
 @InternalApi

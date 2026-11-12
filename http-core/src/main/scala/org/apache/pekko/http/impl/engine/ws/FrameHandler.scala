@@ -13,17 +13,17 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.NotUsed
-import pekko.stream.scaladsl.Flow
-import pekko.util.ByteString
-import Protocol.Opcode
 import pekko.annotation.InternalApi
 import pekko.event.Logging
+import Protocol.Opcode
+import pekko.stream.scaladsl.Flow
 import pekko.stream.stage._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
-
-import scala.util.control.NonFatal
+import pekko.util.ByteString
 
 /**
  * The frame handler validates frames, multiplexes data to the user handler or to the bypass and

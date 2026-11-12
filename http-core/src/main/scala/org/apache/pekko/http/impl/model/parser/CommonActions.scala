@@ -13,12 +13,12 @@
 
 package org.apache.pekko.http.impl.model.parser
 
+import scala.annotation.tailrec
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
-
-import scala.annotation.tailrec
 
 /** INTERNAL API */
 @InternalApi

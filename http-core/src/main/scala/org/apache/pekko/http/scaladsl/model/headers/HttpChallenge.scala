@@ -14,10 +14,11 @@
 package org.apache.pekko.http.scaladsl.model.headers
 
 import java.util
+
 import org.apache.pekko
-import pekko.http.javadsl.{ model => jm }
-import pekko.http.impl.util._
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.impl.util._
+import pekko.http.javadsl.{ model => jm }
 
 /**
  * Note: the token of challenge is stored in the params Map as a parameter whose name is empty String("") for binary

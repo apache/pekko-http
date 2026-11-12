@@ -13,6 +13,13 @@
 
 package org.apache.pekko.http.impl.util
 
+import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.Cancellable
@@ -25,13 +32,6 @@ import pekko.stream.impl.fusing.GraphStages.SimpleLinearGraphStage
 import pekko.stream.scaladsl._
 import pekko.stream.stage._
 import pekko.util.{ ByteString, OptionVal }
-
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-import scala.util.control.NonFatal
 
 /**
  * INTERNAL API

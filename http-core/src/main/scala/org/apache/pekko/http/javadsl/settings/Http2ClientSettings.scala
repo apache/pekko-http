@@ -15,12 +15,12 @@ package org.apache.pekko.http.javadsl.settings
 
 import java.time.Duration
 
+import scala.concurrent.duration.DurationLong
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
 import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.scaladsl
-
-import scala.concurrent.duration.DurationLong
-import scala.jdk.CollectionConverters._
 
 trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2ClientSettingsImpl =>
   def requestEntityChunkSize: Int

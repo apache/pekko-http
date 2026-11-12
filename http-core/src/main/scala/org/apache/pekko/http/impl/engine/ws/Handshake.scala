@@ -17,17 +17,16 @@ import java.util.Random
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-
 import pekko.event.LoggingAdapter
-import pekko.http.impl.util._
 import pekko.http.impl.engine.server.UpgradeToOtherProtocolResponseHeader
 import pekko.http.impl.settings.WebSocketSettingsImpl
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.model.ws.Message
-import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.WebSocketSettings
-import pekko.util.OptionVal
 import pekko.stream.{ FlowShape, Graph }
+import pekko.util.OptionVal
 
 /**
  * Server-side implementation of the WebSocket handshake

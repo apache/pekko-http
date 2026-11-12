@@ -15,11 +15,12 @@ package org.apache.pekko.http.impl.model.parser
 
 import scala.collection.immutable.TreeMap
 
-import org.apache.pekko
 import org.parboiled2.{ CharPredicate, Parser, Rule1 }
+
+import org.apache.pekko
+import pekko.http.impl.util._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.model.{ MediaRange, MediaRanges, ParsingException }
-import pekko.http.impl.util._
 
 private[parser] trait AcceptHeader { this: Parser with CommonRules with CommonActions =>
   import CharacterClasses._

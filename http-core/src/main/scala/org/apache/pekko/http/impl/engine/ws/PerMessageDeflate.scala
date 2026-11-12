@@ -18,9 +18,12 @@
 package org.apache.pekko.http.impl.engine.ws
 
 import java.util.Random
+import java.util.zip.DataFormatException
 import java.util.zip.Deflater
 import java.util.zip.Inflater
-import java.util.zip.DataFormatException
+
+import scala.collection.immutable
+import scala.collection.immutable.ListMap
 
 import org.apache.pekko
 import pekko.NotUsed
@@ -36,9 +39,6 @@ import pekko.stream.stage.InHandler
 import pekko.stream.stage.OutHandler
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.util.{ ByteString, ByteStringBuilder }
-
-import scala.collection.immutable
-import scala.collection.immutable.ListMap
 
 /**
  * INTERNAL API

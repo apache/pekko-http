@@ -14,13 +14,12 @@
 package org.apache.pekko.http.impl.engine
 
 import org.apache.pekko
-import pekko.http.scaladsl.settings.ParserSettings
-
 import pekko.event.LoggingAdapter
-import pekko.util.ByteString
-import pekko.http.scaladsl.model.{ ErrorInfo, StatusCode, StatusCodes }
 import pekko.http.impl.util.ISO88591
 import pekko.http.impl.util.SingletonException
+import pekko.http.scaladsl.model.{ ErrorInfo, StatusCode, StatusCodes }
+import pekko.http.scaladsl.settings.ParserSettings
+import pekko.util.ByteString
 
 /**
  * INTERNAL API

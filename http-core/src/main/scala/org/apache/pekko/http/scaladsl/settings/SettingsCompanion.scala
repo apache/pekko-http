@@ -16,8 +16,9 @@ package org.apache.pekko.http.scaladsl.settings
 import org.apache.pekko
 import pekko.actor.{ ActorRefFactory, ActorSystem, ClassicActorSystemProvider }
 import pekko.annotation.InternalApi
-import com.typesafe.config.Config
 import pekko.http.impl.util._
+
+import com.typesafe.config.Config
 
 /** INTERNAL API */
 @InternalApi

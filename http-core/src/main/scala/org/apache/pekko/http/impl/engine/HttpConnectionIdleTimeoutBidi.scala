@@ -16,14 +16,14 @@ package org.apache.pekko.http.impl.engine
 import java.net.InetSocketAddress
 import java.util.concurrent.TimeoutException
 
+import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.util.control.NoStackTrace
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.stream.scaladsl.{ BidiFlow, Flow }
 import pekko.util.ByteString
-
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.util.control.NoStackTrace
 
 /** INTERNAL API */
 @InternalApi

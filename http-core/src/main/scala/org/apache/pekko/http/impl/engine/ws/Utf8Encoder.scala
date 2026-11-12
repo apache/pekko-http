@@ -15,8 +15,8 @@ package org.apache.pekko.http.impl.engine.ws
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.stage._
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.util.{ ByteString, ByteStringBuilder }
 
 /**

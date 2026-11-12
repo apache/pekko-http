@@ -13,6 +13,9 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import scala.annotation.tailrec
+import scala.concurrent.duration.{ Deadline, FiniteDuration }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
@@ -22,9 +25,6 @@ import pekko.http.impl.engine.ws.WebSocket.Tick
 import pekko.stream.scaladsl.Flow
 import pekko.stream.stage._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
-
-import scala.annotation.tailrec
-import scala.concurrent.duration.{ Deadline, FiniteDuration }
 
 /**
  * Implements the transport connection close handling at the end of the pipeline.

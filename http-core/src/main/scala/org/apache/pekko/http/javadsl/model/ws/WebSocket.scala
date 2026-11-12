@@ -14,9 +14,9 @@
 package org.apache.pekko.http.javadsl.model.ws
 
 import org.apache.pekko
-import pekko.stream.javadsl.Flow
-import pekko.http.javadsl.model._
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.javadsl.model._
+import pekko.stream.javadsl.Flow
 
 object WebSocket {
 

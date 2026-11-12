@@ -14,9 +14,9 @@
 package org.apache.pekko.http.impl.util
 
 import org.apache.pekko
+import pekko.io.Inet.SocketOption
 import pekko.io.{ Inet, Tcp }
 
-import pekko.io.Inet.SocketOption
 import com.typesafe.config.Config
 
 private[http] object SocketOptionSettings {

@@ -13,12 +13,12 @@
 
 package org.apache.pekko.http.scaladsl
 
+import scala.concurrent.duration.Duration
+
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
-
-import scala.concurrent.duration.Duration
 
 /**
  * Enables programmatic access to the server-side request timeout logic.

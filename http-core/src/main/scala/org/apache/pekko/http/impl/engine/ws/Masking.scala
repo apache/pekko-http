@@ -18,9 +18,9 @@ import java.util.Random
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep }
 import pekko.stream.stage._
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 
 /**
  * Implements WebSocket Frame masking.

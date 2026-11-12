@@ -13,14 +13,14 @@
 
 package org.apache.pekko.http.impl.model.parser
 
-import scala.collection.immutable
 import scala.collection.immutable.TreeMap
+
+import org.parboiled2._
+import org.parboiled2.support.hlist._
 
 import org.apache.pekko
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
-import org.parboiled2._
-import org.parboiled2.support.hlist._
 
 private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   protected def maxCommentParsingDepth: Int

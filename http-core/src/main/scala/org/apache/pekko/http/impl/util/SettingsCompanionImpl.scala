@@ -15,15 +15,16 @@ package org.apache.pekko.http.impl.util
 
 import java.net.{ InetAddress, InetSocketAddress }
 
-import com.typesafe.config.{ Config, ConfigFactory }
-import com.typesafe.config.ConfigFactory._
-
-import scala.util.control.NonFatal
 import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters._
+import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.actor.{ ActorRefFactory, ActorSystem }
 import pekko.annotation.InternalApi
+
+import com.typesafe.config.ConfigFactory._
+import com.typesafe.config.{ Config, ConfigFactory }
 
 /**
  * INTERNAL API

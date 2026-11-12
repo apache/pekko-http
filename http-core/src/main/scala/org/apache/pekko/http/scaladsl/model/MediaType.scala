@@ -15,9 +15,9 @@ package org.apache.pekko.http.scaladsl.model
 
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
-import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.util.Helpers.toRootLowerCase
 
 /**

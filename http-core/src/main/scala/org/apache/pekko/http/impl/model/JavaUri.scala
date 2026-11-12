@@ -19,10 +19,10 @@ import java.{ lang => jl }
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.http.scaladsl.model.Uri.ParsingMode
-import pekko.http.javadsl.{ model => jm }
-import pekko.http.scaladsl.{ model => sm }
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.javadsl.{ model => jm }
+import pekko.http.scaladsl.model.Uri.ParsingMode
+import pekko.http.scaladsl.{ model => sm }
 
 /** INTERNAL API */
 @InternalApi

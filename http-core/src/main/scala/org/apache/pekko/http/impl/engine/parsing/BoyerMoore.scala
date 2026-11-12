@@ -14,6 +14,7 @@
 package org.apache.pekko.http.impl.engine.parsing
 
 import scala.annotation.tailrec
+
 import org.apache.pekko.util.ByteString
 
 /**

@@ -13,12 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.collection.immutable
+import scala.collection.immutable.{ TreeMap, TreeSet }
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.util.AsciiTreeLayout
-
-import scala.collection.immutable
-import scala.collection.immutable.{ TreeMap, TreeSet }
 
 /** INTERNAL API */
 @InternalApi

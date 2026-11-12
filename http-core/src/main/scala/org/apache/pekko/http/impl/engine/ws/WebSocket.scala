@@ -15,6 +15,8 @@ package org.apache.pekko.http.impl.engine.ws
 
 import java.util.Random
 
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
@@ -23,14 +25,12 @@ import pekko.http.impl.engine.ws.FrameOutHandler.Input
 import pekko.http.impl.engine.ws.Protocol.Opcode
 import pekko.http.impl.settings.WebSocketSettingsImpl
 import pekko.http.impl.util.StreamUtils
-import pekko.util.ByteString
-
-import scala.concurrent.duration._
+import pekko.http.scaladsl.model.ws._
+import pekko.http.scaladsl.settings.WebSocketSettings
 import pekko.stream._
 import pekko.stream.scaladsl._
 import pekko.stream.stage._
-import pekko.http.scaladsl.model.ws._
-import pekko.http.scaladsl.settings.WebSocketSettings
+import pekko.util.ByteString
 
 /**
  * INTERNAL API

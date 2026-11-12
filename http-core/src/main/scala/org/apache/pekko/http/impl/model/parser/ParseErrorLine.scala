@@ -17,9 +17,10 @@
 
 package org.apache.pekko.http.impl.model.parser
 
+import org.parboiled2.{ ParseError, ParserInput }
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import org.parboiled2.{ ParseError, ParserInput }
 
 /**
  * INTERNAL API

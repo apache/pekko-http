@@ -17,15 +17,16 @@ import java.time.{ Duration => JDuration }
 import java.util.Random
 import java.util.function.Supplier
 
+import scala.concurrent.duration.Duration
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.settings.WebSocketSettingsImpl
 import pekko.http.impl.util.JavaDurationConverter
 import pekko.util.ByteString
-import com.typesafe.config.Config
 
-import scala.concurrent.duration.Duration
+import com.typesafe.config.Config
 
 /**
  * Public API but not intended for subclassing
