@@ -1980,6 +1980,46 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
 
     }
     "support graceful shutdown" should {
+      "close when the last request entity is cancelled during graceful shutdown".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          network.sendRequestHEADERS(1, HttpRequest(), endStream = false)
+          val request = user.expectRequest()
+          val entityData = ByteStringSinkProbe(request.entity.dataBytes)
+          network.sendDATA(1, endStream = false, ByteString("abc"))
+          entityData.expectUtf8EncodedString("abc")
+          network.expectWindowUpdate()
+          network.expectWindowUpdate()
+
+          val terminated = serverTerminator.terminate(1.minute)
+          network.expectGOAWAY(1)
+          entityData.cancel()
+          network.expectRST_STREAM(1, ErrorCode.CANCEL)
+          network.expectComplete()
+          terminated.futureValue
+        })
+      "keep draining other requests when a request entity is cancelled".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          network.sendRequestHEADERS(1, HttpRequest(), endStream = false)
+          val request = user.expectRequest()
+          val entityData = ByteStringSinkProbe(request.entity.dataBytes)
+          network.sendDATA(1, endStream = false, ByteString("abc"))
+          entityData.expectUtf8EncodedString("abc")
+          network.expectWindowUpdate()
+          network.expectWindowUpdate()
+          network.sendRequest(3, HttpRequest())
+          user.expectRequest()
+
+          val terminated = serverTerminator.terminate(1.minute)
+          network.expectGOAWAY(3)
+          entityData.cancel()
+          network.expectRST_STREAM(1, ErrorCode.CANCEL)
+          terminated.isCompleted shouldBe false
+
+          user.emitResponse(3, HttpResponse())
+          network.expectDecodedHEADERS(3)
+          network.expectComplete()
+          terminated.futureValue
+        })
       "immediately shutdown when no requests are pending".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           val terminated = serverTerminator.terminate(1.minute)
