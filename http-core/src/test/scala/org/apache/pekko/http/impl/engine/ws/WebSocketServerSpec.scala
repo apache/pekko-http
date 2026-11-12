@@ -733,6 +733,42 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
+      for (noContext <- List(false, true)) {
+        s"round-trip empty non-final and final fragments with no-context-takeover=$noContext" in
+        Utils.assertAllStagesStopped {
+          val tracking = new TrackingCompression
+          val payload = ByteString("Hello world, hello world, hello world!")
+          val frames = List(
+            FrameEvent.fullFrame(Protocol.Opcode.Text, None, ByteString.empty, fin = false),
+            FrameEvent.fullFrame(Protocol.Opcode.Continuation, None, ByteString.empty, fin = false),
+            FrameEvent.fullFrame(Protocol.Opcode.Continuation, None, payload, fin = false),
+            FrameEvent.fullFrame(Protocol.Opcode.Continuation, None, ByteString.empty, fin = true),
+            FrameEvent.fullFrame(Protocol.Opcode.Text, None, payload, fin = true))
+          val encoded = Source(frames)
+            .via(PerMessageDeflate.createDeflaterFlow(noContext, compressionSettings, tracking))
+            .runWith(Sink.seq)
+            .futureValue
+            .map(_.asInstanceOf[FrameStart])
+
+          encoded(3).data shouldEqual ByteString(0) // RFC 7692, section 7.2.3.6
+          encoded.map(_.header.rsv1) shouldEqual Seq(true, false, false, false, true)
+          encoded.map(_.header.fin) shouldEqual frames.map(_.header.fin)
+          encoded.map(_.header.opcode) shouldEqual frames.map(_.header.opcode)
+
+          val decoded = Source(encoded.map(frame => frame: FrameEventOrError))
+            .via(PerMessageDeflate.createInflaterFlow(noContext, compressionSettings, tracking))
+            .runWith(Sink.seq)
+            .futureValue
+            .map(_.asInstanceOf[FrameStart])
+          decoded.map(_.data) shouldEqual frames.map(_.data)
+
+          // RFC 7692: with no context takeover, an empty final fragment must still reset the compressor.
+          // A fresh inflater must be able to decode the following message on its own.
+          if (noContext) inflatePerMessage(encoded.last.data) shouldEqual payload
+          tracking.awaitAllEnded()
+        }
+      }
+
       "release compression resources after normal completion" in Utils.assertAllStagesStopped {
         val tracking = new TrackingCompression
 
