@@ -344,8 +344,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         multiplexer.pushControlFrame(SettingsFrame(initialLocalSettings))
 
         pingState.tickInterval().foreach(interval =>
-          // to limit overhead rather than constantly rescheduling a timer and looking at system time we use a constant timer
-          scheduleAtFixedRate(ConfigurablePing.Tick, interval, interval))
+          // Use periodic ticks instead of reading the clock for every frame. Fixed delay avoids
+          // catching up missed ticks after a pause and timing out a newly sent ping.
+          scheduleWithFixedDelay(ConfigurablePing.Tick, interval, interval))
 
         maxConnectionAge match {
           case age: FiniteDuration =>
