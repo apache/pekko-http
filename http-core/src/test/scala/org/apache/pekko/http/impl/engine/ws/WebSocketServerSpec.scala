@@ -280,18 +280,24 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
-      "inflate inbound permessage-deflate messages before passing them to the application" in
-      Utils.assertAllStagesStopped {
-        new TestSetup {
-          sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
+      val inboundCompressedMessages = List(
+        ("single flush", deflatePerMessage(ByteString("compressed client message")), "compressed client message"),
+        // RFC 7692 section 7.2.3.5: two data blocks with an empty block between them, in one message.
+        ("multiple blocks in one frame",
+          ByteString(0xF2, 0x48, 0x05, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xCA, 0xC9, 0xC9, 0x07, 0x00), "Hello"))
+      inboundCompressedMessages.foreach { case (description, payload, text) =>
+        s"inflate inbound permessage-deflate messages before passing them to the application ($description)" in
+        Utils.assertAllStagesStopped {
+          new TestSetup {
+            sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
 
-          val request = expectRequest()
-          val upgrade = request.attribute(webSocketUpgrade)
-          val response = upgrade.get.handleMessages(Flow[Message])
-          responses.sendNext(response)
+            val request = expectRequest()
+            val upgrade = request.attribute(webSocketUpgrade)
+            val response = upgrade.get.handleMessages(Flow[Message])
+            responses.sendNext(response)
 
-          expectResponseWithWipedDate(
-            """HTTP/1.1 101 Switching Protocols
+            expectResponseWithWipedDate(
+              """HTTP/1.1 101 Switching Protocols
               |Upgrade: websocket
               |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
               |Sec-WebSocket-Extensions: permessage-deflate
@@ -301,16 +307,18 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
               |
               |""")
 
-          sendWSFrame(Protocol.Opcode.Text, deflatePerMessage(ByteString("compressed client message")), fin = true,
-            mask = true, rsv1 = true)
-          expectCompressedTextFrame("compressed client message")
+            sendWSFrame(Protocol.Opcode.Text, payload, fin = true,
+              mask = true, rsv1 = true)
+            expectCompressedTextFrame(text)
 
-          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
-          expectWSCloseFrame(Protocol.CloseCodes.Regular)
+            sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+            expectWSCloseFrame(Protocol.CloseCodes.Regular)
 
-          closeNetworkInput()
-          expectNetworkClose()
+            closeNetworkInput()
+            expectNetworkClose()
+          }
         }
+
       }
 
       "inflate empty inbound permessage-deflate messages before passing them to the application" in
