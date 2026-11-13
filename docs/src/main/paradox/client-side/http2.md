@@ -84,6 +84,13 @@ The default maximum age is `infinite`, which disables age-based retirement. The 
 programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
 `Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
 
+## Response entities after connection closure
+
+When a peer cleanly closes its sending side of the connection after a complete response (`END_STREAM`), buffered response data
+and trailers remain available to the application. Consume or discard the entity to release retained resources, even if the outer response
+stream has already completed. An entity that did not receive `END_STREAM` fails instead of completing with truncated
+data. Closing the connection does not turn an unfinished request upload into a successful upload.
+
 ## Request-response ordering
 
 For HTTP/2 connections the responses are not guaranteed to arrive in the same order that the requests were emitted to

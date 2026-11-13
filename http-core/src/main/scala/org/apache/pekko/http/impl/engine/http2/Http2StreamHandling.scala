@@ -96,6 +96,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     activeStreamCount() < maxConcurrentStreams
   }
 
+  def incomingReadClosed: Boolean
+
   /** Called when all streams in StreamHandling buffers are closed and the stage is completing. */
   def onAllStreamsClosed(): Unit
 
@@ -204,8 +206,6 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       case Closed =>
         streamStates.remove(streamId)
         headRequestStreamIds -= streamId
-        if (streamStates.isEmpty) onAllStreamsClosed()
-        tryPullSubStreams()
       case newState => streamStates.put(streamId, newState)
     }
 
@@ -222,8 +222,31 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       if (streamStates.contains(streamId))
         multiplexer.enqueueOutStream(streamId)
     }
+    // Completion can tear down other streams, so never invoke it inside a state transition.
+    if (newState == Closed) {
+      if (streamStates.isEmpty) onAllStreamsClosed()
+      tryPullSubStreams()
+    }
     ret
   }
+
+  /** Stop unfinished incoming messages without discarding already completed messages. */
+  def handleIncomingReadComplete(): Unit =
+    streamStates.keys.toVector.foreach { id =>
+      updateState(id.toInt, _.handleIncomingReadComplete(), "handleIncomingReadComplete")
+    }
+
+  /** No more application responses can arrive for streams that are still waiting for one. */
+  def handleResponseInputComplete(): Unit =
+    streamStates.keys.toVector.foreach { id =>
+      updateState(id.toInt,
+        {
+          case state @ (_: HalfClosedRemoteWaitingForOutgoingStream | _: OpenReceivingDataFirst) =>
+            state.shutdown()
+            Closed
+          case state => state
+        }, "handleResponseInputComplete")
+    }
 
   /** Called to cleanup any state when the connection is torn down */
   def shutdownStreamHandling(): Unit = updateAllStates({ id => id.shutdown(); Closed }, "shutdownStreamHandling")
@@ -346,6 +369,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     def incomingStreamPulled(): StreamState =
       throw new IllegalStateException(s"incomingStreamPulled not supported in state $stateName")
 
+    def handleIncomingReadComplete(): StreamState = {
+      shutdown()
+      Closed
+    }
+
     /** Called to cleanup any state when the connection is torn down */
     def shutdown(): Unit = ()
   }
@@ -388,6 +416,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         copy(collectedData = newData)
     }
 
+    override def shutdown(): Unit = {
+      totalBufferedData -= collectedData.length
+      super.shutdown()
+    }
+
     override protected def onTrailer(parsedHeadersFrame: ParsedHeadersFrame): StreamState = this // trailing headers not supported for requests right now
     override protected def incrementWindow(delta: Int): StreamState =
       copy(extraInitialWindow = extraInitialWindow + delta)
@@ -414,6 +447,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
   trait Sending extends StreamState { self: Product =>
     protected def outStream: OutStream
+
+    def cancelOutgoingAfterReadComplete(): Unit = outStream.cancelStream()
 
     override def pullNextFrame(maxSize: Int): (StreamState, PullFrameResult) = {
       val frame = outStream.nextFrame(maxSize)
@@ -520,6 +555,18 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     self: Product =>
     protected def buffer: IncomingStreamBuffer
 
+    override def handleIncomingReadComplete(): StreamState =
+      if (!buffer.receivedEndStream) super.handleIncomingReadComplete()
+      else if (isServer) this
+      else {
+        // A closed client transport cannot finish an upload, but the received response remains usable.
+        this match {
+          case sending: Sending => sending.cancelOutgoingAfterReadComplete()
+          case _                =>
+        }
+        HalfClosedLocal(buffer)
+      }
+
     override protected def onDataFrame(dataFrame: DataFrame): StreamState = {
       buffer.onDataFrame(dataFrame)
       afterBufferEvent
@@ -574,6 +621,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
 
   case class HalfClosedRemoteWaitingForOutgoingStream(extraInitialWindow: Int) extends StreamState {
+    override def handleIncomingReadComplete(): StreamState = this
     // FIXME: DRY with below
     override def handle(event: StreamFrameEvent): StreamState = event match {
       case r: RstStreamFrame    => Closed
@@ -597,6 +645,12 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
    * They have closed the incoming stream, but the outgoing stream is still going.
    */
   case class HalfClosedRemoteSendingData(outStream: OutStream) extends StreamState with Sending {
+    override def handleIncomingReadComplete(): StreamState =
+      if (isServer) this
+      else {
+        outStream.cancelStream()
+        Closed
+      }
     def handle(event: StreamFrameEvent): StreamState = event match {
       case r: RstStreamFrame =>
         outStream.cancelStream()
@@ -637,13 +691,22 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     def onPull(): Unit = incomingStreamPulled(streamId)
     override def onDownstreamFinish(cause: Throwable): Unit = {
       debug(s"Incoming side of stream [$streamId]: cancelling because downstream finished")
-      multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
-      // FIXME: go through state machine and don't manipulate vars directly here
-      streamStates.remove(streamId)
-      headRequestStreamIds -= streamId
-      wasClosed = true
-      discardBuffer()
-      trailingHeaders = None
+      if (incomingReadClosed) {
+        multiplexer.closeStream(streamId)
+        updateState(streamId,
+          state => {
+            state.shutdown()
+            Closed
+          }, "incomingStreamCancelled")
+      } else {
+        multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
+        // FIXME: go through state machine and don't manipulate vars directly here
+        streamStates.remove(streamId)
+        headRequestStreamIds -= streamId
+        wasClosed = true
+        discardBuffer()
+        trailingHeaders = None
+      }
     }
 
     /**
@@ -655,6 +718,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       totalBufferedData -= buffer.length
       buffer = ByteString.empty
     }
+
+    def receivedEndStream: Boolean = wasClosed
 
     def isDone: Boolean = outlet.isClosed
 
@@ -705,7 +770,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
         debug(
           s"Dispatched chunk of $dataSize for stream [$streamId], remaining window space now $outstandingStreamWindow, buffered: ${buffer.length}")
-        updateWindows()
+        if (!incomingReadClosed) updateWindows()
       }
       if (buffer.isEmpty && wasClosed) {
         trailingHeaders match {

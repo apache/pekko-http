@@ -15,17 +15,16 @@ package org.apache.pekko.http.impl.engine.http2
 
 import java.net.InetSocketAddress
 
-import scala.concurrent.{ Future, Promise }
 import scala.concurrent.duration._
+import scala.concurrent.{ Future, Promise }
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.Logging
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
-import pekko.http.scaladsl.{ ClientTransport, Http }
+import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.http.scaladsl.model.{
-  headers,
   AttributeKey,
   AttributeKeys,
   ContentTypes,
@@ -38,17 +37,18 @@ import pekko.http.scaladsl.model.{
   RequestResponseAssociation,
   StatusCode,
   StatusCodes,
-  Uri
+  Uri,
+  headers
 }
-import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.Http2ClientSettings
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.stream.{ KillSwitches, StreamTcpException, UniqueKillSwitch }
+import pekko.http.scaladsl.{ ClientTransport, Http }
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
-import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.stream.testkit.scaladsl.StreamTestKit
+import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
+import pekko.stream.{ KillSwitches, StreamTcpException, UniqueKillSwitch }
 import pekko.testkit.TestProbe
 import pekko.util.ByteString
 
@@ -539,5 +539,129 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
         setup.shutdown()
         // and then assert that all stages, substreams in particular, are stopped
       }
+  }
+}
+
+class Http2PersistentEofSpec extends PekkoSpecWithMaterializer with ScalaFutures {
+  import pekko.http.impl.engine.http2.client.PersistentConnection
+  import pekko.http.scaladsl.model.headers.RawHeader
+
+  case class RequestId(id: Int) extends RequestResponseAssociation
+  val requestId = AttributeKey[RequestId]("eof-request-id")
+  implicit val executionContext: scala.concurrent.ExecutionContext = system.dispatcher
+  val address = new InetSocketAddress("localhost", 12345)
+  val settings = ClientConnectionSettings(system)
+
+  "A managed HTTP/2 connection" should {
+    "drain responses after clean read-EOF cancellation and reconnect without duplicate errors" in
+    StreamTestKit.assertAllStagesStopped {
+      val connections = TestProbe()
+      val connectionFlow = Flow.fromMaterializer { (_, _) =>
+        val requests = TestSubscriber.probe[HttpRequest]()
+        val responses = TestPublisher.probe[HttpResponse]()
+        connections.ref ! ((requests, responses))
+        Flow.fromSinkAndSource(Sink.fromSubscriber(requests), Source.fromPublisher(responses))
+          .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(address, address)))
+      }.mapMaterializedValue(_.flatten)
+      val input = TestPublisher.probe[HttpRequest]()
+      val output = TestSubscriber.probe[HttpResponse]()
+      Source.fromPublisher(input)
+        .via(PersistentConnection.managedConnection(connectionFlow, settings.http2Settings))
+        .runWith(Sink.fromSubscriber(output))
+      output.request(4)
+      input.sendNext(HttpRequest(uri = "/one").addAttribute(requestId, RequestId(1)))
+      val (requests, responses) =
+        connections.expectMsgType[(TestSubscriber.Probe[HttpRequest], TestPublisher.Probe[HttpResponse])]
+      val first = requests.requestNext()
+      input.sendNext(HttpRequest(uri = "/two").addAttribute(requestId, RequestId(2)))
+      requests.requestNext()
+      requests.request(1) // leave demand for the next request when the old connection stops accepting requests
+      requests.cancel(Http2Demux.IncomingReadComplete)
+      responses.sendNext(HttpResponse(entity = "received").withAttributes(first.attributes))
+      val valid = output.expectNext()
+      valid.status shouldBe StatusCodes.OK
+      valid.attribute(requestId) shouldBe Some(RequestId(1))
+      // This request must survive in the input slot while the old response side finishes draining.
+      input.sendNext(HttpRequest(uri = "/three").addAttribute(requestId, RequestId(3)))
+      responses.sendComplete()
+      val missing = output.expectNext()
+      missing.status shouldBe StatusCodes.BadGateway
+      missing.attribute(requestId) shouldBe Some(RequestId(2))
+      val (nextRequests, nextResponses) =
+        connections.expectMsgType[(TestSubscriber.Probe[HttpRequest], TestPublisher.Probe[HttpResponse])]
+      val third = nextRequests.requestNext()
+      third.attribute(requestId) shouldBe Some(RequestId(3))
+      nextResponses.sendNext(HttpResponse(entity = "next").withAttributes(third.attributes))
+      output.expectNext().attribute(requestId) shouldBe Some(RequestId(3))
+      input.sendComplete()
+      nextRequests.expectComplete()
+      nextResponses.sendComplete()
+      output.expectComplete()
+    }
+
+    for (missingSibling <- Seq(false, true)) {
+      s"preserve a complete response body after queued network EOF (missing sibling = $missingSibling)" in
+      StreamTestKit.assertAllStagesStopped {
+        class Network extends Http2FrameHpackSupport {
+          val fromNet = TestPublisher.probe[ByteString]()
+          val frameProbeDelegate = Http2FrameProbe()
+          def sendBytes(bytes: ByteString): Unit = fromNet.sendNext(bytes)
+          def handshake(): Unit = {
+            expectBytes(Http2Protocol.ClientConnectionPreface)
+            expectSETTINGS()
+            // The first request starts this managed connection, so it may precede the peer SETTINGS.
+            expectDecodedResponseHEADERSPairs(1)
+            sendFrame(FrameEvent.SettingsFrame(Nil))
+            expectSettingsAck()
+          }
+        }
+        val connections = TestProbe()
+        val connectionFlow = Flow.fromMaterializer { (_, _) =>
+          val network = new Network
+          connections.ref ! network
+          val transport = Flow.fromSinkAndSource(network.sink, Source.fromPublisher(network.fromNet))
+          Http2Blueprint.clientStack(settings, system.log, NoOpTelemetry).join(transport)
+            .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(address, address)))
+        }.mapMaterializedValue(_.flatten)
+        val input = TestPublisher.probe[HttpRequest]()
+        val output = TestSubscriber.probe[HttpResponse]()
+        Source.fromPublisher(input)
+          .via(PersistentConnection.managedConnection(connectionFlow, settings.http2Settings))
+          .runWith(Sink.fromSubscriber(output))
+        output.request(3)
+        input.sendNext(HttpRequest(uri = "https://example.com/one").addAttribute(requestId, RequestId(1)))
+        val network = connections.expectMsgType[Network]
+        network.handshake()
+        if (missingSibling) {
+          input.sendNext(HttpRequest(uri = "https://example.com/two").addAttribute(requestId, RequestId(2)))
+          network.expectDecodedResponseHEADERSPairs(3)
+        }
+        network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+        // Without a sibling, receiving the headers removes the last ongoing request before EOF.
+        val delivered = if (missingSibling) None else Some(output.expectNext())
+        network.sendDATA(1, endStream = true, ByteString("received"))
+        network.fromNet.sendComplete()
+        val valid = delivered.getOrElse(output.expectNext())
+        valid.status shouldBe StatusCodes.OK
+        valid.attribute(requestId) shouldBe Some(RequestId(1))
+        if (missingSibling) {
+          val missing = output.expectNext()
+          missing.status shouldBe StatusCodes.BadGateway
+          missing.attribute(requestId) shouldBe Some(RequestId(2))
+        }
+        input.sendNext(HttpRequest(uri = "https://example.com/three").addAttribute(requestId, RequestId(3)))
+        val next = connections.expectMsgType[Network]
+        next.handshake()
+        next.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "204")))
+        output.expectNext().attribute(requestId) shouldBe Some(RequestId(3))
+        // Reconnection proves EOF was processed before the old entity is consumed.
+        valid.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe ByteString("received")
+        input.sendComplete()
+        next.fromNet.sendComplete()
+        output.expectComplete()
+        network.plainDataProbe.cancel()
+        next.plainDataProbe.cancel()
+      }
+    }
   }
 }

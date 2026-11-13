@@ -62,6 +62,8 @@ private[http2] final class RequestErrorFlow
           }
         }
 
+        override def onUpstreamFinish(): Unit = complete(requestOut)
+
         override def onPull(): Unit = pull(requestIn)
       })
     setHandlers(responseIn, responseOut,
