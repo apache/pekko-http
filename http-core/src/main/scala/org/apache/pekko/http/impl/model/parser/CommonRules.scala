@@ -297,7 +297,28 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   }
 
   def `expires-av` = rule {
-    ignoreCase("expires=") ~ OWS ~ `expires-date` ~> { (c: HttpCookie, dt: DateTime) => c.withExpires(dt) }
+    ignoreCase("expires=") ~ OWS ~ `cookie-expires-date` ~> { (c: HttpCookie, dt: DateTime) => c.withExpires(dt) }
+  }
+
+  // Cookie receivers accept one or two digits per time component (RFC 6265, section 5.1.1).
+  // Keep this separate from HTTP-date: this only extends the existing date shapes, not the full token algorithm.
+  def `cookie-expires-date`: Rule1[DateTime] = rule {
+    (`HTTP-date` | `cookie-IMF-fixdate` | `cookie-asctime-date` |
+    zeroOrMore(ANY) ~ push(DateTime.MinValue)) ~ OWS
+  }
+
+  def `cookie-time-of-day` = rule { (digit2 | digit) ~ ':' ~ (digit2 | digit) ~ ':' ~ (digit2 | digit) }
+
+  def `cookie-IMF-fixdate` = rule {
+    (`day-name-l` | `day-name`) ~ ", " ~ (date1 | date2) ~ ' ' ~ `cookie-time-of-day` ~ ' ' ~ ("GMT" | "UTC") ~> {
+      (wkday, day, month, year, hour, min, sec) => createDateTime(year, month, day, hour, min, sec, wkday)
+    }
+  }
+
+  def `cookie-asctime-date` = rule {
+    `day-name` ~ ' ' ~ date3 ~ ' ' ~ `cookie-time-of-day` ~ ' ' ~ year ~> {
+      (wkday, month, day, hour, min, sec, year) => createDateTime(year, month, day, hour, min, sec, wkday)
+    }
   }
 
   def `max-age-av` = rule {
