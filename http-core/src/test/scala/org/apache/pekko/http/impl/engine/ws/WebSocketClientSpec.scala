@@ -24,7 +24,7 @@ import pekko.stream.TLSProtocol._
 import scala.concurrent.duration._
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.model.headers.{ `User-Agent`, ProductVersion }
+import pekko.http.scaladsl.model.headers.{ `User-Agent`, ProductVersion, RawHeader }
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.Uri
 import pekko.stream.scaladsl._
@@ -69,6 +69,46 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
     }
 
     "reject invalid handshakes" should {
+      for (extension <- List("permessage-deflate", "unknown-extension")) {
+        s"an unrequested extension: $extension" in new TestSetup with ClientEchoes {
+          expectWireData(UpgradeRequestBytes)
+          sendWireData(s"""HTTP/1.1 101 Switching Protocols
+                       |Upgrade: websocket
+                       |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
+                       |Sec-WebSocket-Extensions: $extension
+                       |Connection: upgrade
+                       |
+                       |""")
+
+          expectInvalidUpgradeResponseCause(
+            "WebSocket server at ws://example.org/ws returned response with an unsupported WebSocket extension.")
+          expectNetworkAbort()
+        }
+
+      }
+
+      "an unsupported extension offered through extraHeaders" in new TestSetup with ClientEchoes {
+        override def clientLayer: Http.WebSocketClientLayer =
+          Http(system).webSocketClientLayer(
+            WebSocketRequest(targetUri,
+              extraHeaders = List(RawHeader("Sec-WebSocket-Extensions", "permessage-deflate"))),
+            settings = settings)
+
+        expectWireData(ByteString(UpgradeRequestBytes.utf8String.replace(
+          "Host: example.org", "Sec-WebSocket-Extensions: permessage-deflate\r\nHost: example.org")))
+        sendWireData("""HTTP/1.1 101 Switching Protocols
+                       |Upgrade: websocket
+                       |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
+                       |Sec-WebSocket-Extensions: permessage-deflate
+                       |Connection: upgrade
+                       |
+                       |""")
+
+        expectInvalidUpgradeResponseCause(
+          "WebSocket server at ws://example.org/ws returned response with an unsupported WebSocket extension.")
+        expectNetworkAbort()
+      }
+
       "other status code" in new TestSetup with ClientEchoes {
         expectWireData(UpgradeRequestBytes)
 

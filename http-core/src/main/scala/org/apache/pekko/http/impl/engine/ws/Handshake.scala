@@ -372,7 +372,10 @@ private[http] object Handshake {
         check(_.status)(_ == StatusCodes.SwitchingProtocols, "unexpected status code: " + _) &&
         headerExists(UpgradeHeader, caseInsensitive = true) &&
         headerExists(ConnectionUpgradeHeader, caseInsensitive = true) &&
-        headerExists(`Sec-WebSocket-Accept`.forKey(key), showExactOther = false)
+        headerExists(`Sec-WebSocket-Accept`.forKey(key), showExactOther = false) &&
+        // The client stack does not implement WebSocket extensions.
+        check(_.headers.exists(_.is("sec-websocket-extensions")))(!_,
+          _ => "response with an unsupported WebSocket extension.")
 
       expectations(response) match {
         case None =>
