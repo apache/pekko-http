@@ -53,6 +53,36 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
   s"The response parsing logic should (mode: $mode)" should {
     "properly parse" should {
 
+      "status reason: normalize standard status reasons containing non-line-ending controls" in new Test {
+        val controls = (0 to 31).filterNot(Set(9, 10, 13)) :+ 127
+        controls.foreach { code =>
+          val input = s"HTTP/1.1 200 A${code.toChar}B${newLine}Content-Length: 0${newLine}${newLine}"
+          val output = collectBlocking(rawParse(GET, input))
+          output.size shouldBe 1
+          output.head.toOption.get.status.reason shouldBe "OK"
+        }
+      }
+
+      "status reason: reject non-line-ending controls in unknown status reasons" in new Test {
+        val controls = (0 to 31).filterNot(Set(9, 10, 13)) :+ 127
+        controls.foreach { code =>
+          val reason = s"A${code.toChar}B"
+          val input = s"HTTP/1.1 299 $reason${newLine}Content-Length: 0${newLine}${newLine}"
+          val output = collectBlocking(rawParse(GET, input))
+          output.size shouldBe 1
+          output.head.swap.toOption.get shouldBe a[MessageStartError]
+        }
+      }
+
+      "status reason: preserve legal ASCII reason characters" in new Test {
+        Seq("", "A B", "A\tB", "A~B").foreach { reason =>
+          val input = s"HTTP/1.1 299 $reason${newLine}Content-Length: 0${newLine}${newLine}"
+          val output = collectBlocking(rawParse(GET, input))
+          output.size shouldBe 1
+          output.head.toOption.get.status.reason shouldBe reason
+        }
+      }
+
       // http://tools.ietf.org/html/rfc7230#section-3.3.3
       "a 200 response to a HEAD request" in new Test {
         """HTTP/1.1 200 OK

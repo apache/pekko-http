@@ -46,6 +46,72 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
 
   "The response preparation logic should properly render" - {
     "a response with no body," - {
+      "status reason: reject invalid characters at all construction boundaries" in {
+        val invalid = (0 to 31).filterNot(_ == 9) ++ Seq(127, 256, 0x1009, 0xD800)
+        val factories: Seq[String => StatusCode] = Seq(
+          reason => StatusCodes.custom(199, reason),
+          reason => StatusCodes.custom(299, reason),
+          reason => StatusCodes.custom(399, reason),
+          reason => StatusCodes.custom(499, reason),
+          reason => StatusCodes.custom(599, reason),
+          reason => StatusCodes.custom(700, reason, "", true, true),
+          reason => StatusCodes.Continue.copy(199)(reason, ""),
+          reason => StatusCodes.OK.copy(299)(reason, "", true),
+          reason => StatusCodes.Found.copy(399)(reason, "", "", true),
+          reason => StatusCodes.BadRequest.copy(499)(reason, ""),
+          reason => StatusCodes.InternalServerError.copy(599)(reason, ""),
+          reason =>
+            StatusCodes.custom(700, "OK", "", true, true)
+              .asInstanceOf[StatusCodes.CustomStatusCode].copy(700)(reason, "", true, true))
+        factories.foreach { factory =>
+          intercept[IllegalArgumentException](factory(null))
+        }
+        intercept[IllegalArgumentException] {
+          pekko.http.javadsl.model.StatusCodes.custom(299, null, "")
+        }
+        intercept[IllegalArgumentException] {
+          pekko.http.javadsl.model.StatusCodes.custom(299, null, "", true, true)
+        }
+        invalid.foreach { code =>
+          val reason = s"A${code.toChar}B"
+          factories.foreach { factory =>
+            val error = intercept[IllegalArgumentException](factory(reason))
+            (error.getMessage should not).include(reason)
+          }
+          intercept[IllegalArgumentException] {
+            pekko.http.javadsl.model.StatusCodes.custom(299, reason, "")
+          }
+          intercept[IllegalArgumentException] {
+            pekko.http.javadsl.model.StatusCodes.custom(299, reason, "", true, true)
+          }
+        }
+      }
+
+      "status reason: preserve all legal reason bytes in the model rendering" in {
+        val legal = Seq(9) ++ (32 to 126) ++ (128 to 255)
+        legal.foreach { code =>
+          val reason = s"A${code.toChar}B"
+          val status = StatusCodes.custom(299, reason)
+          status.reason shouldBe reason
+          val rendering = new ByteArrayRendering(32)
+          status.render(rendering)
+          rendering.get.toSeq shouldBe Seq[Byte](50, 57, 57, 32, 65, code.toByte, 66)
+        }
+      }
+
+      "status reason: custom model and renderer preserve legal ASCII reasons" in new TestSetup() {
+        Seq("", "A B", "A\tB", "A~B").foreach { reason =>
+          HttpResponse(StatusCodes.custom(299, reason)) should renderTo {
+            s"""HTTP/1.1 299 $reason
+               |Server: pekko-http/1.0.0
+               |Date: Thu, 25 Aug 2011 09:10:29 GMT
+               |Content-Length: 0
+               |
+               |"""
+          }
+        }
+      }
+
       "status 200 and no headers" in new TestSetup() {
         HttpResponse(200) should renderTo {
           """HTTP/1.1 200 OK
