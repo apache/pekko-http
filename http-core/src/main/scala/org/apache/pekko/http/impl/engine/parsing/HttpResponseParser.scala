@@ -44,6 +44,7 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
 
   private var contextForCurrentResponse: Option[ResponseContext] = None
   private var statusCode: StatusCode = StatusCodes.OK
+  private var pendingResetContentResponse: Option[ResponseStart] = None
 
   final override val isResponseParser = true
 
@@ -56,9 +57,21 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
 
   final def onUpstreamFinish(): Boolean = shouldComplete()
 
-  override final def emit(output: ResponseOutput): Unit = {
-    if (output == MessageEnd) contextForCurrentResponse = None
-    super.emit(output)
+  override final def emit(output: ResponseOutput): Unit = output match {
+    case EntityChunk(chunk) if pendingResetContentResponse.isDefined =>
+      if (!chunk.isLastChunk) throw new ParsingException("A 205 response must not contain content")
+    case MessageEnd =>
+      pendingResetContentResponse.foreach(super.emit)
+      pendingResetContentResponse = None
+      contextForCurrentResponse = None
+      super.emit(output)
+    case EntityStreamError(info) if pendingResetContentResponse.isDefined =>
+      pendingResetContentResponse = None
+      super.emit(MessageStartError(StatusCodes.BadRequest, info))
+    case _: MessageStartError =>
+      pendingResetContentResponse = None
+      super.emit(output)
+    case _ => super.emit(output)
   }
 
   override protected def parseMessage(input: ByteString, offset: Int): StateResult =
@@ -146,7 +159,9 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
 
     def emitResponseStart(
         createEntity: EntityCreator[ResponseOutput, ResponseEntity],
-        headers: List[HttpHeader] = headers) = {
+        headers: List[HttpHeader] = headers,
+        defer: Boolean = false,
+        forceClose: Boolean = false) = {
 
       val attributes: Map[AttributeKey[?], Any] =
         if (settings.includeSslSessionAttribute) Map(AttributeKeys.sslSession -> SslSessionInfo(sslSession))
@@ -162,7 +177,9 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
             trigger.tryFailure(OneHundredContinueError)
             true
         }
-      emit(ResponseStart(statusCode, protocol, attributes, headers, createEntity, close))
+      val start = ResponseStart(statusCode, protocol, attributes, headers, createEntity, close || forceClose)
+      if (defer) pendingResetContentResponse = Some(start)
+      else emit(start)
     }
 
     def finishEmptyResponse() =
@@ -183,7 +200,28 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
           startNewMessage(input, bodyStart)
       }
 
-    if (statusCode.allowsEntity) {
+    // A 205 forbids content, but unlike 204 it still uses HTTP/1 message framing (RFC 9112, 6.3).
+    // Keep its public entity known-empty and publish it only once that framing has completed.
+    if (statusCode == StatusCodes.ResetContent &&
+      contextForCurrentResponse.get.requestMethod != HttpMethods.HEAD &&
+      contextForCurrentResponse.get.requestMethod != HttpMethods.CONNECT) {
+      if (isChunked) {
+        if (clh.isEmpty) {
+          emitResponseStart(emptyEntity(cth), defer = true)
+          parseChunk(input, bodyStart, closeAfterResponseCompletion, totalBytesRead = 0L)
+        } else failMessageStart("A chunked response must not contain a Content-Length header")
+      } else clh match {
+        case Some(`Content-Length`(0)) => finishEmptyResponse()
+        case Some(_)                   => failMessageStart("A 205 response must not contain content")
+        case None                      =>
+          emitResponseStart(emptyEntity(cth), defer = true, forceClose = true)
+          setCompletionHandling(() => {
+            emit(MessageEnd)
+            None
+          })
+          parseEmptyResetContentBody(input, bodyStart)
+      }
+    } else if (statusCode.allowsEntity) {
       contextForCurrentResponse.get.requestMethod match {
         case HttpMethods.HEAD => clh match {
             case Some(`Content-Length`(contentLength)) if contentLength > 0 =>
@@ -230,6 +268,11 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
           }
       }
     } else finishEmptyResponse()
+  }
+
+  private def parseEmptyResetContentBody(input: ByteString, bodyStart: Int): StateResult = {
+    if (input.length > bodyStart) throw new ParsingException("A 205 response must not contain content")
+    continue(parseEmptyResetContentBody)
   }
 
   private def parseToCloseBody(input: ByteString, bodyStart: Int, totalBytesRead: Long): StateResult = {
