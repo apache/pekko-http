@@ -52,6 +52,25 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
     }
 
+    Seq(
+      "keep-alive, UpGrAdE",
+      "upgrade, keep-alive",
+      "keep-alive, custom, upgrade",
+      "keep-alive, upgrade, custom").foreach { connection =>
+      s"establish connection with Connection tokens [$connection]" in new TestSetup with ClientEchoes {
+        expectWireData(UpgradeRequestBytes)
+        sendWireData(s"""HTTP/1.1 101 Switching Protocols
+                       |Upgrade: websocket
+                       |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
+                       |Connection: $connection
+                       |
+                       |""")
+
+        sendWSFrame(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
+        expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
+      }
+    }
+
     "establish connection with header values sent in parts" in new TestSetup with ClientEchoes {
       expectWireData(UpgradeRequestBytes)
       sendWireData("""HTTP/1.1 101 """)
@@ -69,6 +88,21 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
     }
 
     "reject invalid handshakes" should {
+      Seq("keep-alive", "keep-alive, xupgrade", "upgraded").foreach { connection =>
+        s"Connection tokens without upgrade [$connection]" in new TestSetup with ClientEchoes {
+          expectWireData(UpgradeRequestBytes)
+          sendWireData(s"""HTTP/1.1 101 Switching Protocols
+                         |Upgrade: websocket
+                         |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
+                         |Connection: $connection
+                         |
+                         |""")
+
+          expectNetworkAbort()
+          expectInvalidUpgradeResponseCause(
+            s"WebSocket server at ws://example.org/ws returned response that was missing required `Connection: upgrade` header. Found `Connection: $connection` with the wrong value.")
+        }
+      }
       "other status code" in new TestSetup with ClientEchoes {
         expectWireData(UpgradeRequestBytes)
 

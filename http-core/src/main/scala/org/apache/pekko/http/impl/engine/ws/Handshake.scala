@@ -372,7 +372,12 @@ private[http] object Handshake {
       val expectations: Expectation =
         check(_.status)(_ == StatusCodes.SwitchingProtocols, "unexpected status code: " + _) &&
         headerExists(UpgradeHeader, caseInsensitive = true) &&
-        headerExists(ConnectionUpgradeHeader, caseInsensitive = true) &&
+        check(_.header[Connection])(_.exists(_.hasUpgrade),
+          {
+            case Some(other) =>
+              s"response that was missing required `$ConnectionUpgradeHeader` header. Found `$other` with the wrong value."
+            case None => "response that was missing required `Connection` header."
+          }) &&
         headerExists(`Sec-WebSocket-Accept`.forKey(key), showExactOther = false)
 
       expectations(response) match {

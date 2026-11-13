@@ -20,7 +20,9 @@ from the server, this is modelled with @apidoc[WebSocketUpgradeResponse].
 
 The methods of the WebSocket client API handle the upgrade to WebSocket on connection success and materializes
 the connected WebSocket stream. If the connection fails, for example with a `404 NotFound` error, this regular
-HTTP result can be found in `WebSocketUpgradeResponse.response`
+HTTP result can be found in `WebSocketUpgradeResponse.response`.
+The upgrade response must include an `Upgrade` token in its `Connection` header, matched case-insensitively.
+Other connection tokens are allowed, for example `Connection: keep-alive, Upgrade`.
 
 @@@ note
 Make sure to read and understand the section about [Half-Closed WebSockets](#half-closed-client-websockets) as the behavior
