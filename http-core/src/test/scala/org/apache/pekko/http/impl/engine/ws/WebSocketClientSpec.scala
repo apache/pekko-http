@@ -28,7 +28,7 @@ import pekko.http.scaladsl.model.headers.{ `User-Agent`, ProductVersion }
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.Uri
 import pekko.stream.scaladsl._
-import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
+import pekko.stream.testkit.{ TestPublisher, TestSubscriber, Utils }
 import pekko.util.ByteString
 import pekko.testkit._
 import pekko.http.impl.util._
@@ -36,6 +36,48 @@ import pekko.http.impl.util._
 class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.websocket.log-frames = on") {
   "The client-side WebSocket implementation should" should {
     "establish a websocket connection when the user requests it" in new EstablishedConnectionSetup with ClientEchoes
+
+    "complete the upgrade result when the peer closes before responding" in {
+      Utils.assertAllStagesStopped {
+        new TestSetup with ClientProbes {
+          try {
+            expectWireData(UpgradeRequestBytes)
+            messagesIn.request(1)
+            closeNetworkInput()
+            // The independent application sink proves that clean network EOF has propagated.
+            // Keep the application publisher open until after observing the upgrade result.
+            messagesIn.expectComplete()
+            response.failed.awaitResult(1.second.dilated).getMessage shouldEqual
+            "Connection closed before WebSocket upgrade completed."
+          } finally {
+            messagesOut.sendComplete()
+            messagesIn.cancel()
+            netOut.cancel()
+          }
+        }
+      }
+    }
+
+    "retain a successful upgrade result after the peer closes" in {
+      Utils.assertAllStagesStopped {
+        new TestSetup with ClientProbes {
+          try {
+            expectWireData(UpgradeRequestBytes)
+            messagesIn.request(1)
+            sendWireData(UpgradeResponseBytes)
+            val upgrade = response.awaitResult(1.second.dilated)
+            upgrade shouldBe a[ValidUpgrade]
+            closeNetworkInput()
+            messagesIn.expectComplete()
+            response.awaitResult(1.second.dilated) shouldEqual upgrade
+          } finally {
+            messagesOut.sendComplete()
+            messagesIn.cancel()
+            netOut.cancel()
+          }
+        }
+      }
+    }
 
     "establish connection with case insensitive header values" in new TestSetup with ClientEchoes {
       expectWireData(UpgradeRequestBytes)
