@@ -127,5 +127,41 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
         decodeHeaders(bytes) shouldEqual Seq("x-opaque" -> value)
       }
     }
+
+    "use Huffman coding automatically only when it reduces the literal length" in {
+      // RFC 7541 allows either representation. These assertions protect Pekko's size-selection policy.
+      Seq("" -> false, "a" -> false, "aa" -> false, "aaa" -> true, "|" -> false).foreach {
+        case (value, huffman) =>
+          val bytes = encodeHeader(":method", value, forceHuffmanOn = false, forceHuffmanOff = false)
+          bytes(0) shouldEqual 0x02.toByte // Literal without indexing, static name :method.
+          (bytes(1) & 0x80) shouldEqual (if (huffman) 0x80 else 0)
+          decodeHeaders(bytes) shouldEqual Seq(":method" -> value)
+      }
+    }
+
+    "encode raw and Huffman literal lengths across seven-bit prefix boundaries" in {
+      // The wire length counts encoded octets, not input characters (RFC 7541 sections 5.1 and 5.2).
+      // Appendix B assigns 'a' a five-bit code; the listed input sizes yield the target octet lengths.
+      val cases = Seq(
+        (126, 201, "7e"),
+        (127, 202, "7f00"),
+        (128, 204, "7f01"),
+        (254, 406, "7f7f"),
+        (255, 407, "7f8001"))
+      cases.foreach {
+        case (wireLength, huffmanInputLength, rawPrefix) =>
+          Seq(false, true).foreach { huffman =>
+            val value = "a" * (if (huffman) huffmanInputLength else wireLength)
+            val bytes = encodeHeader(":authority", value, forceHuffmanOn = huffman, forceHuffmanOff = !huffman)
+            val prefixLength = rawPrefix.length / 2
+            val prefix = bytes.slice(1, 1 + prefixLength)
+            (prefix(0) & 0x80) shouldEqual (if (huffman) 0x80 else 0)
+            prefix(0) = (prefix(0) & 0x7F).toByte
+            hex(prefix) shouldEqual rawPrefix
+            bytes.length shouldEqual 1 + prefixLength + wireLength
+            decodeHeaders(bytes) shouldEqual Seq(":authority" -> value)
+          }
+      }
+    }
   }
 }
