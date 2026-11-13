@@ -101,3 +101,10 @@ Scala
 Java
 
 :  @@snip [HttpClientExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/Http2ClientApp.java) { #response-future-association }
+
+## Connection preface
+
+The peer's first HTTP/2 frame must be a SETTINGS frame without the ACK flag, as required by
+[RFC 9113, section 3.4](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.4).
+Pekko HTTP terminates the connection if the first frame does not satisfy this requirement.
+This check does not delay sending the local connection preface until the peer's preface arrives.
