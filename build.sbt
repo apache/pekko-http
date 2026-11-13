@@ -24,6 +24,8 @@ sourceDistName := "apache-pekko-http"
 sourceDistIncubating := false
 
 ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
+// MiMa filters for changes made after 2.0.0 go in src/main/mima-filters/2.1.x.backwards.excludes (or a later 2.x directory)
+ThisBuild / pekkoMimaPreviousVersion := "2.0.0"
 
 ThisBuild / javafmtFormatterCompatibleJavaVersion := 17
 ThisBuild / javafmtSortImports := false
@@ -285,7 +287,6 @@ lazy val httpJackson3 =
     .dependsOn(httpTestkit % "test")
     .settings(Dependencies.httpJackson3)
     .enablePlugins(ScaladocNoVerificationOfDiagrams)
-    .disablePlugins(MimaPlugin)
 
 lazy val httpCaching = project("http-caching")
   .settings(
