@@ -91,6 +91,9 @@ are already in flight complete, and then closes the connection. Streams that the
 frame was sent are refused, upon which well-behaved clients (for example, grpc-java) transparently retry them on
 a new connection.
 
+Cancelling the last active request stream also completes a graceful connection drain once its reset frame
+has been flushed; the connection does not wait for the grace deadline after all streams are closed.
+
 The setting applies to HTTP/2 connections only: HTTP/1.1 connections accepted on the same port are not
 age-limited.
 

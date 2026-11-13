@@ -644,6 +644,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       wasClosed = true
       discardBuffer()
       trailingHeaders = None
+      if (streamStates.isEmpty) onAllStreamsClosed()
     }
 
     /**
