@@ -22,6 +22,29 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 class HeaderSpec extends AnyFreeSpec with Matchers {
+  "Sec-WebSocket-Accept should" - {
+    "produce the RFC 6455 handshake example" in {
+      `Sec-WebSocket-Accept`.forKey(`Sec-WebSocket-Key`("dGhlIHNhbXBsZSBub25jZQ==")).key shouldEqual
+      "s3pPLMBiTxaQ9kYGzzhZRbK+xOo="
+    }
+
+    "preserve concatenated-input hashing for generated keys and directly constructed values" in {
+      val random = new java.util.Random(0L)
+      val generated = (0 until 100).map { _ =>
+        val bytes = new Array[Byte](16)
+        random.nextBytes(bytes)
+        java.util.Base64.getEncoder.encodeToString(bytes)
+      }
+      val values = generated ++ List(null, "", "é", "\uD83D\uDE00", "\uD800", "abc\uDC00")
+      values.foreach { value =>
+        val salted = value + `Sec-WebSocket-Accept`.MagicGuid
+        val hash = java.security.MessageDigest.getInstance("sha1").digest(salted.asciiBytes)
+        val expected = java.util.Base64.getEncoder.encodeToString(hash)
+        `Sec-WebSocket-Accept`.forKey(`Sec-WebSocket-Key`(value)).key shouldEqual expected
+      }
+    }
+  }
+
   "ModeledCompanion should" - {
     "provide parseFromValueString method" - {
       "successful parse run" in {
