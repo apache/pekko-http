@@ -158,3 +158,12 @@ $ curl -k -v https://localhost:8443
 ```
 
 If your curl output looks like above, you have successfully configured HTTP/2.
+
+## Initial response fields
+
+The HTTP/2 renderer ignores explicitly supplied `Connection`, `Keep-Alive`, `Proxy-Connection`,
+`Transfer-Encoding`, `Upgrade`, and `TE` fields in initial response headers, including raw and custom
+headers that opt into response rendering. HTTP/1 rendering is unchanged.
+
+This normalization applies only to initial headers. It does not change streamed or attribute-supplied
+trailers, or implement removal of arbitrary fields named by `Connection` in intermediary forwarding.

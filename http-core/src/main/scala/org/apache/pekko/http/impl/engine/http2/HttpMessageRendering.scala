@@ -125,11 +125,35 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
    */
   protected def contentLengthAllowed(r: R): Boolean = true
 
+  // Initial field sections only: the shared renderHeaders helper also renders streamed trailers.
+  private def normalizeInitialHeaders(r: R): Seq[HttpHeader] =
+    r.headers.flatMap { header =>
+      val rendersInDirection =
+        if (r.isResponse) header.renderInResponses else header.renderInRequests
+      if (!rendersInDirection) Some(header)
+      else {
+        def suppress(): Option[HttpHeader] = {
+          log.warning("Explicitly set HTTP header '{}' is ignored, header is not allowed in HTTP/2 initial fields",
+            header)
+          None
+        }
+        header.lowercaseName match {
+          case "connection" | "keep-alive" | "proxy-connection" | "transfer-encoding" | "upgrade" => suppress()
+          case "te"                                                                               =>
+            if (!r.isResponse && header.value.trim.equalsIgnoreCase("trailers"))
+              Some(pekko.http.scaladsl.model.headers.RawHeader("te", "trailers"))
+            else suppress()
+          case _ => Some(header)
+        }
+      }
+    }
+
   def apply(r: R): Http2SubStream = {
     val headerPairs = initialHeaderPairs(r)
 
     HttpMessageRendering.addContentHeaders(headerPairs, r.entity, contentLengthAllowed(r))
-    HttpMessageRendering.renderHeaders(r.headers, headerPairs, peerIdHeader, log, isServer = r.isResponse,
+    HttpMessageRendering.renderHeaders(normalizeInitialHeaders(r), headerPairs, peerIdHeader, log,
+      isServer = r.isResponse,
       shouldRenderAutoHeaders = true, dateHeaderRendering)
 
     val streamId = nextStreamId(r)

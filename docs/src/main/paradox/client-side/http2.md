@@ -101,3 +101,16 @@ Scala
 Java
 
 :  @@snip [HttpClientExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/Http2ClientApp.java) { #response-future-association }
+
+## Initial request fields
+
+The HTTP/2 renderer ignores explicitly supplied `Connection`, `Keep-Alive`, `Proxy-Connection`,
+`Transfer-Encoding`, and `Upgrade` fields in initial request headers. This also applies to raw and custom
+headers that opt into request rendering. HTTP/1 rendering and `Host` handling are unchanged.
+
+A request `TE` field is retained only when its entire value, ignoring surrounding whitespace and case,
+is `trailers`; the emitted value is `trailers`. Other values, including mixed coding lists, are ignored
+rather than extracting a `trailers` token. Separate fields are considered independently.
+
+These rules concern initial headers, not streamed or attribute-supplied trailers. They do not implement
+removal of arbitrary fields named by `Connection` when forwarding messages as an intermediary.
