@@ -250,34 +250,55 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
-      "negotiate permessage-deflate from a fallback offer in the same extension header" in
-      Utils.assertAllStagesStopped {
-        new TestSetup {
-          sendWebSocketRequest(
-            "Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=14, permessage-deflate\r\n")
+      for ((scenario, offers, selected) <- List(
+          ("unsupported server window", "permessage-deflate; server_max_window_bits=14, permessage-deflate",
+            "permessage-deflate"),
+          ("rejected client parameters",
+            "permessage-deflate; client_max_window_bits=10; client_no_context_takeover; server_max_window_bits=14, permessage-deflate",
+            "permessage-deflate"),
+          ("rejected server parameters",
+            "permessage-deflate; server_no_context_takeover; server_max_window_bits=14, permessage-deflate; client_max_window_bits=12",
+            "permessage-deflate; client_max_window_bits=12"),
+          // Pekko selects the first supported offer; RFC 7692 recommends, but does not require, this preference.
+          ("first supported offer",
+            "permessage-deflate; client_max_window_bits=12, permessage-deflate; client_max_window_bits=10",
+            "permessage-deflate; client_max_window_bits=12"))) {
+        s"negotiate independent permessage-deflate offers: $scenario" in Utils.assertAllStagesStopped {
+          new TestSetup {
+            override def settings = {
+              val defaults = super.settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
+              super.settings.withWebsocketSettings(
+                defaults.copy(compression = defaults.compression.copy(
+                  allowServerNoContext = true,
+                  preferredClientNoContext = true)))
+            }
 
-          val request = expectRequest()
-          val upgrade = request.attribute(webSocketUpgrade)
-          val response = upgrade.get.handleMessages(Flow[Message])
-          responses.sendNext(response)
+            sendWebSocketRequest(s"Sec-WebSocket-Extensions: $offers\r\n")
 
-          expectResponseWithWipedDate(
-            """HTTP/1.1 101 Switching Protocols
+            val request = expectRequest()
+            val upgrade = request.attribute(webSocketUpgrade)
+            val response = upgrade.get.handleMessages(Flow[Message])
+            responses.sendNext(response)
+
+            expectResponseWithWipedDate(
+              s"""HTTP/1.1 101 Switching Protocols
               |Upgrade: websocket
               |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-              |Sec-WebSocket-Extensions: permessage-deflate
+              |Sec-WebSocket-Extensions: $selected
               |Server: pekko-http/test
               |Date: XXXX
               |Connection: upgrade
               |
               |""")
 
-          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
-          expectWSCloseFrame(Protocol.CloseCodes.Regular)
+            sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+            expectWSCloseFrame(Protocol.CloseCodes.Regular)
 
-          closeNetworkInput()
-          expectNetworkClose()
+            closeNetworkInput()
+            expectNetworkClose()
+          }
         }
+
       }
 
       "inflate inbound permessage-deflate messages before passing them to the application" in
