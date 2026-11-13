@@ -304,6 +304,36 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
     }
   }
 
+  "response encoding negotiation across header fields" should {
+    val scenarios = Seq(
+      ("select a supported coding regardless of field grouping or order",
+        Seq[HttpEncodingRange](HttpEncoding("unknown"), gzip.withQValue(.5f), deflate.withQValue(0f)), Some(Gzip)),
+      ("apply an explicit exclusion over a wildcard",
+        Seq[HttpEncodingRange](HttpEncodingRange.`*`(.8f), gzip.withQValue(0f)), Some(Deflate)),
+      ("reject when all available codings are excluded",
+        Seq[HttpEncodingRange](HttpEncoding("unknown"), gzip.withQValue(0f), deflate.withQValue(0f)), None))
+
+    for {
+      (description, ranges, expected) <- scenarios
+      split <- Seq(false, true)
+      reversed <- Seq(false, true)
+    } {
+      s"$description (split=$split, reversed=$reversed)" in {
+        val ordered = if (reversed) ranges.reverse else ranges
+        val fields = if (split) ordered.map(range => `Accept-Encoding`(range)) else Seq(`Accept-Encoding`(ordered))
+        Get().withHeaders(fields) ~> encodeResponseWith(Gzip, Deflate) { yeah } ~> check {
+          expected match {
+            case Some(coder) =>
+              response should haveContentEncoding(coder.encoding)
+              coder.decode(strictify(responseEntity).data).awaitResult(1.second.dilated) should readAs("Yeah!")
+            case None =>
+              rejection shouldEqual UnacceptedResponseEncodingRejection(Set(gzip, deflate))
+          }
+        }
+      }
+    }
+  }
+
   "the Zstd coder" should {
     "decode the request content if it has encoding 'zstd'" in {
       Post("/", compress("Hello", Zstd)) ~> `Content-Encoding`(zstd) ~> {
