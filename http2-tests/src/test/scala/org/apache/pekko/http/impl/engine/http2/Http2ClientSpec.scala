@@ -33,21 +33,21 @@ import pekko.http.impl.util.LogByteStringTools
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.client.RequestBuilding.Post
-import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpEntity.Chunk
 import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.model.HttpEntity.Chunked
 import pekko.http.scaladsl.model.HttpEntity.LastChunk
 import pekko.http.scaladsl.model.HttpMethods.GET
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.model.headers.{
+  RawHeader,
   `Access-Control-Allow-Origin`,
   `Cache-Control`,
   `Content-Length`,
   `Content-Type`,
-  `Raw-Request-URI`,
-  RawHeader
+  `Raw-Request-URI`
 }
-import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.stream.Attributes
 import pekko.stream.Attributes.LogLevels
@@ -85,6 +85,148 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
   override def failOnSevereMessages: Boolean = true
 
   "The Http/2 client implementation" should {
+    "accept content-free status responses" should {
+      def conditionalGet(uri: String): HttpRequest =
+        Get(uri).withHeaders(RawHeader("if-none-match", "\"cached\""))
+
+      for (status <- Seq(StatusCodes.NoContent, StatusCodes.NotModified); endInHeaders <- Seq(true, false)) {
+        s"accept ${status.intValue} with END_STREAM in ${if (endInHeaders) "HEADERS" else "empty DATA"}".inAssertAllStagesStopped(
+          new TestSetup with NetProbes {
+            user.emitRequest(conditionalGet("https://www.example.com/"))
+            network.expect[HeadersFrame]().streamId shouldBe 1
+            network.sendHEADERS(1, endStream = endInHeaders, Seq(RawHeader(":status", status.intValue.toString)))
+            if (!endInHeaders) network.sendDATA(1, endStream = true, ByteString.empty)
+            val response = user.expectResponse()
+            response.status shouldBe status
+            response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe ByteString.empty
+          })
+      }
+      for (status <- Seq(StatusCodes.NoContent, StatusCodes.NotModified)) {
+        s"deliver ${status.intValue} before its wire end without blocking a sibling response".inAssertAllStagesStopped(
+          new TestSetup with NetProbes {
+            user.emitRequest(conditionalGet("https://www.example.com/one"))
+            user.emitRequest(conditionalGet("https://www.example.com/two"))
+            network.expect[HeadersFrame]().streamId shouldBe 1
+            network.expect[HeadersFrame]().streamId shouldBe 3
+            network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", status.intValue.toString)))
+            user.expectResponse().entity shouldBe HttpEntity.Empty
+            network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "200")))
+            user.expectResponse().status shouldBe StatusCodes.OK
+            network.sendDATA(1, endStream = false, ByteString.empty)
+            network.expectWindowUpdate()
+            network.sendDATA(1, endStream = true, ByteString.empty)
+            user.emitRequest(conditionalGet("https://www.example.com/three"))
+            network.expect[HeadersFrame]().streamId shouldBe 5
+            network.sendHEADERS(5, endStream = true, Seq(RawHeader(":status", "200")))
+            user.expectResponse().status shouldBe StatusCodes.OK
+          })
+
+        for (remoteEndsFirst <- Seq(true, false) if status == StatusCodes.NoContent) {
+          s"finish an active upload around ${status.intValue} wire end (remote first = $remoteEndsFirst)".inAssertAllStagesStopped(
+            new TestSetup with NetProbes {
+              val upload = TestPublisher.probe[ByteString]()
+              user.emitRequest(Post("https://www.example.com/",
+                HttpEntity.Chunked.fromData(
+                  ContentTypes.`application/octet-stream`, Source.fromPublisher(upload))))
+              network.expect[HeadersFrame]().streamId shouldBe 1
+              network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", status.intValue.toString)))
+              user.expectResponse().status shouldBe status
+              if (remoteEndsFirst) {
+                network.sendDATA(1, endStream = true, ByteString.empty)
+                network.expectWindowUpdate()
+              }
+              upload.sendNext(ByteString("tail"))
+              network.expectDATA(1, endStream = false, ByteString("tail"))
+              upload.sendComplete()
+              network.expectDATA(1, endStream = true, ByteString.empty)
+              if (!remoteEndsFirst) {
+                network.sendDATA(1, endStream = true, ByteString.empty)
+                network.expectWindowUpdate()
+              }
+              user.emitRequest(conditionalGet("https://www.example.com/next"))
+              network.expect[HeadersFrame]().streamId shouldBe 3
+              network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "200")))
+              user.expectResponse().status shouldBe StatusCodes.OK
+            })
+        }
+
+        s"reject content after ${status.intValue} without failing a sibling".inAssertAllStagesStopped(
+          new TestSetup with NetProbes {
+            user.emitRequest(conditionalGet("https://www.example.com/"))
+            network.expect[HeadersFrame]().streamId shouldBe 1
+            network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", status.intValue.toString)))
+            user.expectResponse().status shouldBe status
+            network.sendDATA(1, endStream = true, ByteString("body"))
+            network.expect[RstStreamFrame]() shouldBe RstStreamFrame(1, ErrorCode.PROTOCOL_ERROR)
+            network.expectWindowUpdate()
+            user.emitRequest(conditionalGet("https://www.example.com/next"))
+            network.expect[HeadersFrame]().streamId shouldBe 3
+            network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "200")))
+            user.expectResponse().status shouldBe StatusCodes.OK
+          })
+      }
+
+      "reject a trailer section after a content-free response and cancel its active upload".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          val upload = TestPublisher.probe[ByteString]()
+          user.emitRequest(Post("https://www.example.com/",
+            HttpEntity.Chunked.fromData(
+              ContentTypes.`application/octet-stream`, Source.fromPublisher(upload))))
+          network.expect[HeadersFrame]().streamId shouldBe 1
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "204")))
+          user.expectResponse().status shouldBe StatusCodes.NoContent
+          network.sendHEADERS(1, endStream = true, Seq(RawHeader("x-trailer", "value")))
+          network.expect[RstStreamFrame]() shouldBe RstStreamFrame(1, ErrorCode.PROTOCOL_ERROR)
+          upload.expectCancellation()
+          user.emitRequest(conditionalGet("https://www.example.com/next"))
+          network.expect[HeadersFrame]().streamId shouldBe 3
+          network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "200")))
+          user.expectResponse().status shouldBe StatusCodes.OK
+        })
+
+      "cancel an active upload when the peer resets a content-free response".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          val upload = TestPublisher.probe[ByteString]()
+          user.emitRequest(Post("https://www.example.com/",
+            HttpEntity.Chunked.fromData(
+              ContentTypes.`application/octet-stream`, Source.fromPublisher(upload))))
+          network.expect[HeadersFrame]().streamId shouldBe 1
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "204")))
+          user.expectResponse().status shouldBe StatusCodes.NoContent
+          network.sendFrame(RstStreamFrame(1, ErrorCode.CANCEL))
+          upload.expectCancellation()
+          user.emitRequest(conditionalGet("https://www.example.com/next"))
+          network.expect[HeadersFrame]().streamId shouldBe 3
+          network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "200")))
+          user.expectResponse().status shouldBe StatusCodes.OK
+        })
+
+      "treat a 304 representation Content-Length as metadata, not received content".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(conditionalGet("https://www.example.com/"))
+          network.expect[HeadersFrame]().streamId shouldBe 1
+          network.sendHEADERS(1, endStream = false,
+            Seq(RawHeader(":status", "304"), RawHeader("content-length", "123")))
+          val response = user.expectResponse()
+          response.status shouldBe StatusCodes.NotModified
+          response.entity shouldBe HttpEntity.Empty
+          network.sendDATA(1, endStream = true, ByteString.empty)
+        })
+
+      "cancel an unfinished upload when the connection ends before a content-free response wire end".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          val upload = TestPublisher.probe[ByteString]()
+          user.emitRequest(Post("https://www.example.com/",
+            HttpEntity.Chunked.fromData(
+              ContentTypes.`application/octet-stream`, Source.fromPublisher(upload))))
+          network.expect[HeadersFrame]().streamId shouldBe 1
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "204")))
+          user.expectResponse().status shouldBe StatusCodes.NoContent
+          network.fromNet.sendComplete()
+          upload.expectCancellation()
+        })
+    }
+
     "support simple round-trips" should {
       abstract class SimpleRequestResponseRoundtripSetup extends TestSetup with NetProbes {
 
