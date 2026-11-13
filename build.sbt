@@ -24,6 +24,8 @@ sourceDistName := "apache-pekko-http"
 sourceDistIncubating := false
 
 ThisBuild / reproducibleBuildsCheckResolver := Resolver.ApacheMavenStagingRepo
+// MiMa filters for changes made after 2.0.0 go in src/main/mima-filters/2.1.x.backwards.excludes (or a later 2.x directory)
+ThisBuild / pekkoMimaPreviousVersion := "2.0.0"
 
 ThisBuild / javafmtFormatterCompatibleJavaVersion := 17
 ThisBuild / javafmtSortImports := false
@@ -198,7 +200,6 @@ lazy val httpTestkit = project("http-testkit")
     Test / run / mainClass := Some("org.apache.pekko.http.javadsl.SimpleServerApp"))
   .enablePlugins(BootstrapGenjavadoc, MultiNodeScalaTest, ScaladocNoVerificationOfDiagrams)
   .enablePlugins(ReproducibleBuildsPlugin)
-  .disablePlugins(MimaPlugin) // testkit, no bin compat guaranteed
 
 lazy val httpTestkitMunit = project("http-testkit-munit")
   .settings(AutomaticModuleName.settings("pekko.http.testkit.munit"))
@@ -206,7 +207,6 @@ lazy val httpTestkitMunit = project("http-testkit-munit")
   .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-testkit", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.httpTestkitMunit)
-  .disablePlugins(MimaPlugin) // testkit, no bin compat guaranteed
 
 lazy val httpTests = project("http-tests")
   .settings(Dependencies.httpTests)
@@ -284,7 +284,6 @@ lazy val httpJackson3 =
     .dependsOn(httpTestkit % "test")
     .settings(Dependencies.httpJackson3)
     .enablePlugins(ScaladocNoVerificationOfDiagrams)
-    .disablePlugins(MimaPlugin)
 
 lazy val httpCaching = project("http-caching")
   .settings(
