@@ -39,6 +39,19 @@ and connection pool flows that emit an `HttpResponseResult` instead of a `scala.
 Some of the changes listed below were made in Pekko HTTP 1.4.x releases. They are included here for users upgrading
 from older 1.x versions, with a note of the release that introduced them.
 
+### URL-encoded form data
+
+The default `application/x-www-form-urlencoded` unmarshaller now ignores empty components between `&` separators,
+including leading and trailing separators. For example, `&a=1&&` produces only the field `a=1`, rather than additional
+empty-name fields. This matches the empty-component handling in the
+[URL Standard form parser](https://url.spec.whatwg.org/#urlencoded-parsing).
+Explicit empty-name fields (`=` and `=x`) and nonempty names without `=` remain supported, and charset handling is unchanged.
+
+Applications relying on the additional empty-name fields should account for this behavior change. It also affects
+round-tripping a manually constructed `FormData` containing `"" -> Uri.Query.EmptyValue`: this tuple renders as an
+empty component and is discarded when unmarshalling. Use `"" -> ""` to represent an explicit empty-name, empty-value
+field, which renders as `=` and is preserved. Generic `Uri.Query` parsing and rendering are unchanged.
+
 ### HTTP/1.1 parsing and rendering
 
 * Whether a response renders `Content-Length` now depends on the request method as well as the status code, following
