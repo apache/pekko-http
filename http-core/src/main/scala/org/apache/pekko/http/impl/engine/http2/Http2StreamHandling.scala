@@ -315,6 +315,18 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         nextStateStream: IncomingStreamBuffer => StreamState,
         correlationAttributes: Map[AttributeKey[?], ?] = Map.empty): StreamState =
       event match {
+        case frame: ParsedHeadersFrame if !isServer && !frame.endStream && frame.keyValuePairs.exists {
+              case (":status", status: String) =>
+                status.length == 3 && status.charAt(0) == '1' &&
+                status.charAt(1) >= '0' && status.charAt(1) <= '9' &&
+                status.charAt(2) >= '0' && status.charAt(2) <= '9' && status != "101"
+              case _ => false
+            } =>
+          // Validate informational headers in the HTTP layer, which filters them before delivery.
+          // Keep waiting for the final response without changing an ongoing request upload.
+          dispatchSubstream(frame, Left(ByteString.empty), correlationAttributes)
+          this
+
         case frame @ ParsedHeadersFrame(streamId, endStream, _, _, _) =>
           if (isServer && isHeadRequest(frame)) headRequestStreamIds += streamId
           if (endStream) {
