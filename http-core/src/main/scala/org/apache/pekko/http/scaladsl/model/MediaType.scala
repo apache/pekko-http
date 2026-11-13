@@ -417,6 +417,7 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
   val `application/vnd.openxmlformats-officedocument.spreadsheetml.template`      = abin("vnd.openxmlformats-officedocument.spreadsheetml.template", Compressible, "xltx")
   val `application/vnd.openxmlformats-officedocument.wordprocessingml.document`   = abin("vnd.openxmlformats-officedocument.wordprocessingml.document", Compressible, "docx")
   val `application/vnd.openxmlformats-officedocument.wordprocessingml.template`   = abin("vnd.openxmlformats-officedocument.wordprocessingml.template", Compressible, "dotx")
+  val `application/wasm`                                                          = abin("wasm", Compressible, "wasm")
   val `application/x-7z-compressed`                                               = abin("x-7z-compressed", NotCompressible, "7z", "s7z")
   val `application/x-ace-compressed`                                              = abin("x-ace-compressed", NotCompressible, "ace")
   val `application/x-apple-diskimage`                                             = abin("x-apple-diskimage", NotCompressible, "dmg")
@@ -468,6 +469,7 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
   val `font/woff`  = fnt("woff", NotCompressible, "woff")
   val `font/woff2` = fnt("woff2", NotCompressible, "woff2")
 
+  val `image/avif`        = img("avif", NotCompressible, "avif")
   val `image/gif`         = img("gif", NotCompressible, "gif")
   val `image/jpeg`        = img("jpeg", NotCompressible, "jpe", "jpeg", "jpg")
   val `image/pict`        = img("pict", Compressible, "pic", "pict")

@@ -35,6 +35,29 @@ import org.scalatest.{ Inside, Inspectors }
 
 class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Inside {
 
+  "ContentTypeResolver.Default" should {
+    "use the registered binary WebAssembly and AVIF media types in Scala and Java" in {
+      ContentTypeResolver.Default("asset.wasm") shouldEqual ContentType(`application/wasm`)
+      ContentTypeResolver.Default("asset.avif") shouldEqual ContentType(`image/avif`)
+      pekko.http.javadsl.model.MediaTypes.APPLICATION_WASM shouldEqual `application/wasm`
+      pekko.http.javadsl.model.MediaTypes.IMAGE_AVIF shouldEqual `image/avif`
+      ContentType.parse("application/wasm") shouldEqual Right(ContentType(`application/wasm`))
+      ContentType.parse("image/avif") shouldEqual Right(ContentType(`image/avif`))
+    }
+
+    for ((extension, expected, compressible) <- Seq(
+        ("wasm", "application/wasm", true),
+        ("avif", "image/avif", false));
+      suffix <- Seq(extension, extension.toUpperCase(java.util.Locale.ROOT))) {
+      s"resolve .$suffix as $expected without a charset" in {
+        val contentType = ContentTypeResolver.Default(s"asset.$suffix")
+        contentType.toString shouldEqual expected
+        contentType.mediaType.isCompressible shouldEqual compressible
+        contentType shouldBe a[ContentType.Binary]
+      }
+    }
+  }
+
   // operations touch files, can be randomly hit by slowness
   implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(3.seconds.dilated)
 

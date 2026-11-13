@@ -160,6 +160,8 @@ public final class MediaTypes {
       APPLICATION_VND_OPENXMLFORMATS_OFFICEDOCUMENT_WORDPROCESSINGML_TEMPLATE =
           org.apache.pekko.http.scaladsl.model.MediaTypes
               .application$divvnd$u002Eopenxmlformats$minusofficedocument$u002Ewordprocessingml$u002Etemplate();
+  public static final MediaType.Binary APPLICATION_WASM =
+      org.apache.pekko.http.scaladsl.model.MediaTypes.application$divwasm();
   public static final MediaType.Binary APPLICATION_X_7Z_COMPRESSED =
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divx$minus7z$minuscompressed();
   public static final MediaType.Binary APPLICATION_X_ACE_COMPRESSED =
@@ -258,6 +260,8 @@ public final class MediaTypes {
   public static final MediaType.Binary FONT_WOFF_2 =
       org.apache.pekko.http.scaladsl.model.MediaTypes.font$divwoff2();
 
+  public static final MediaType.Binary IMAGE_AVIF =
+      org.apache.pekko.http.scaladsl.model.MediaTypes.image$divavif();
   public static final MediaType.Binary IMAGE_GIF =
       org.apache.pekko.http.scaladsl.model.MediaTypes.image$divgif();
   public static final MediaType.Binary IMAGE_JPEG =
