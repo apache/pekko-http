@@ -1459,6 +1459,69 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
+      for (noContextTakeover <- List(false, true); emptyFirst <- List(false, true)) {
+        s"support low-level server compression with empty non-final fragments (first=$emptyFirst, noContextTakeover=$noContextTakeover)" in
+        Utils.assertAllStagesStopped {
+          new TestSetup {
+            override def settings = {
+              val defaults = super.settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
+              super.settings.withWebsocketSettings(
+                defaults.copy(compression = defaults.compression.copy(allowServerNoContext = true)))
+            }
+
+            val extension =
+              if (noContextTakeover) "permessage-deflate; server_no_context_takeover" else "permessage-deflate"
+            sendWebSocketRequest(s"Sec-WebSocket-Extensions: $extension\r\n")
+
+            val request = expectRequest()
+            val upgrade = request.attribute(webSocketUpgrade)
+            val first = if (emptyFirst) ByteString.empty else ByteString("first ")
+            val last = ByteString("fragment")
+            val next = first ++ last
+            val response = upgrade.get.asInstanceOf[UpgradeToWebSocketLowLevel].handleFrames(
+              Flow.fromSinkAndSource(
+                Sink.ignore,
+                Source(List(
+                  FrameEvent.fullFrame(Protocol.Opcode.Text, None, first, fin = false),
+                  FrameEvent.fullFrame(Protocol.Opcode.Continuation, None, ByteString.empty, fin = false),
+                  FrameEvent.fullFrame(Protocol.Opcode.Ping, None, ByteString("ping"), fin = true),
+                  FrameEvent.fullFrame(Protocol.Opcode.Continuation, None, last, fin = true),
+                  FrameEvent.fullFrame(Protocol.Opcode.Text, None, next, fin = true)))),
+              None,
+              compressionEnabled = true,
+              shouldCompress = _ => true)
+            responses.sendNext(response)
+
+            expectResponseWithWipedDate(
+              s"""HTTP/1.1 101 Switching Protocols
+                 |Upgrade: websocket
+                 |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+                 |Sec-WebSocket-Extensions: $extension
+                 |Server: pekko-http/test
+                 |Date: XXXX
+                 |Connection: upgrade
+                 |
+                 |""")
+
+            val firstPayload = expectCompressedFrame(Protocol.Opcode.Text, fin = false, rsv1 = true)
+            val emptyPayload = expectCompressedFrame(Protocol.Opcode.Continuation, fin = false, rsv1 = false)
+            expectWSFrame(Protocol.Opcode.Ping, ByteString("ping"), fin = true)
+            val lastPayload = expectCompressedFrame(Protocol.Opcode.Continuation, fin = true, rsv1 = false)
+            val nextPayload = expectCompressedFrame(Protocol.Opcode.Text, fin = true, rsv1 = true)
+            val messagePayload = firstPayload ++ emptyPayload ++ lastPayload
+            if (noContextTakeover) {
+              inflatePerMessage(messagePayload) shouldEqual first ++ last
+              inflatePerMessage(nextPayload) shouldEqual next
+            } else
+              inflatePerMessagesWithContext(messagePayload, nextPayload) shouldEqual Seq(first ++ last, next)
+            netOut.expectComplete()
+
+            sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+            closeNetworkInput()
+          }
+        }
+      }
+
       "select compression separately for low-level outbound messages" in Utils.assertAllStagesStopped {
         new TestSetup {
           sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
