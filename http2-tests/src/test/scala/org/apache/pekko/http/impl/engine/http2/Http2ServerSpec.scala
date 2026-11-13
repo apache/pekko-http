@@ -2045,6 +2045,40 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectComplete()
           terminated.futureValue
         })
+      "drain a flow-control-blocked response before completing local graceful shutdown".inAssertAllStagesStopped(
+        new TestSetup(Setting(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, 8)) with RequestResponseProbes {
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+          network.sendRequest(3, HttpRequest())
+          user.expectRequest()
+
+          val body = ByteString("abcdefghijklmnop")
+          user.emitResponse(1,
+            HttpResponse(entity = HttpEntity(ContentTypes.`application/octet-stream`, body)))
+          network.expectDecodedHEADERS(1, endStream = false)
+
+          var first = ByteString.empty
+          while (first.length < 8) {
+            val (endStream, data) = network.expectDATAFrame(1)
+            endStream shouldBe false
+            first ++= data
+            first.length should be <= 8
+          }
+          first shouldBe body.take(8)
+
+          val terminated = serverTerminator.terminate(1.minute)
+          network.expectGOAWAY(3)
+          // Another accepted stream can finish while the first waits for more stream-level credit.
+          user.emitResponse(3, HttpResponse())
+          network.expectDecodedHEADERS(3, endStream = true)
+          terminated.isCompleted shouldBe false
+
+          network.sendWINDOW_UPDATE(1, 8)
+          val rest = network.expectDATA(1, endStream = true, numBytes = 8)
+          first ++ rest shouldBe body
+          network.expectComplete()
+          terminated.futureValue
+        })
       "refuse late incoming requests".inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
         network.sendRequest(1, HttpRequest())
         user.expectRequest()
