@@ -41,6 +41,38 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
   "the storeUploadedFile directive" should {
     val data = s"<int>${"42" * 1000000}</int>" // ~2MB of data
 
+    for (streamed <- Seq(false, true)) {
+      s"store an empty file from a ${if (streamed) "streamed" else "strict"} multipart input" in {
+        val directory = Files.createTempDirectory("http-empty-file-upload")
+        val destination = directory.resolve("upload.dat")
+        val contentType = ContentTypes.`text/plain(UTF-8)`
+        val entity: BodyPartEntity =
+          if (streamed) HttpEntity.IndefiniteLength(contentType, Source.empty[ByteString])
+          else HttpEntity.Strict(contentType, ByteString.empty)
+        val upload = Multipart.FormData(
+          Multipart.FormData.BodyPart("fieldName", entity, Map("filename" -> "empty.txt")))
+        @volatile var storedFile: Option[File] = None
+
+        try {
+          Files.exists(destination) shouldEqual false
+          Post("/", upload) ~>
+          storeUploadedFile("fieldName", _ => destination.toFile) { (info, file) =>
+            storedFile = Some(file)
+            complete(info.toString)
+          } ~> check {
+            status shouldEqual StatusCodes.OK
+            responseAs[String] shouldEqual FileInfo("fieldName", "empty.txt", contentType).toString
+            storedFile.map(_.toPath) shouldEqual Some(destination)
+            Files.isRegularFile(destination) shouldEqual true
+            Files.size(destination) shouldEqual 0L
+          }
+        } finally {
+          Files.deleteIfExists(destination)
+          Files.deleteIfExists(directory)
+        }
+      }
+    }
+
     def withUpload(entityType: String, formDataUpload: Multipart.FormData) =
       s"for $entityType" should {
         s"write a posted file to a temporary file on disk from $entityType entity" in {
