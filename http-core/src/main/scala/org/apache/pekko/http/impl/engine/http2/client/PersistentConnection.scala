@@ -22,6 +22,7 @@ import scala.util.{ Failure, Success }
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
+import pekko.http.impl.engine.http2.Http2Demux
 import pekko.http.scaladsl.Http.OutgoingConnection
 import pekko.http.scaladsl.model.{ AttributeKey, HttpRequest, HttpResponse, RequestResponseAssociation, StatusCodes }
 import pekko.http.scaladsl.settings.Http2ClientSettings
@@ -211,6 +212,7 @@ private[http2] object PersistentConnection {
             responseIn: SubSinkInlet[HttpResponse]) extends State {
           private var ongoingRequests: Map[AssociationTag, Map[AttributeKey[?], RequestResponseAssociation]] = Map.empty
           private var retiring = false
+          private var disconnected = false
 
           persistentConnectionMaxAge match {
             case age: FiniteDuration =>
@@ -232,7 +234,12 @@ private[http2] object PersistentConnection {
               } else if (isClosed(requestIn)) requestOut.complete()
               else if (!hasBeenPulled(requestIn)) pull(requestIn)
 
-            override def onDownstreamFinish(cause: Throwable): Unit = onDisconnected()
+            override def onDownstreamFinish(cause: Throwable): Unit = if (!disconnected) {
+              // A peer can stop accepting requests while responses already received are still draining.
+              // Keep the response side alive and retain an already-pulled next request for reconnection.
+              if (cause eq Http2Demux.IncomingReadComplete) stopAcceptingRequests()
+              else onDisconnected()
+            }
           })
           responseIn.setHandler(new InHandler {
             override def onPush(): Unit = {
@@ -246,7 +253,8 @@ private[http2] object PersistentConnection {
             override def onUpstreamFinish(): Unit = onDisconnected()
             override def onUpstreamFailure(ex: Throwable): Unit = onDisconnected() // FIXME: log error
           })
-          def onDisconnected(): Unit = {
+          def onDisconnected(): Unit = if (!disconnected) {
+            disconnected = true
             cancelTimer(MaxConnectionAgeReached)
             currentConnection = None
 
@@ -274,17 +282,22 @@ private[http2] object PersistentConnection {
             if (!retiring) {
               retiring = true
               log.debug("Persistent HTTP/2 connection reached its configured maximum age, retiring it")
-              setHandler(requestIn,
-                new InHandler {
-                  override def onPush(): Unit = () // keep at most one next request in the inlet slot
-                  override def onUpstreamFinish(): Unit = ()
-                  override def onUpstreamFailure(ex: Throwable): Unit = {
-                    responseIn.cancel()
-                    failStage(ex)
-                  }
-                })
+              stopAcceptingRequests()
               requestOut.complete()
             }
+
+          def stopAcceptingRequests(): Unit = {
+            cancelTimer(MaxConnectionAgeReached)
+            setHandler(requestIn,
+              new InHandler {
+                override def onPush(): Unit = () // retain the pending request until the next connection
+                override def onUpstreamFinish(): Unit = ()
+                override def onUpstreamFailure(ex: Throwable): Unit = {
+                  responseIn.cancel()
+                  failStage(ex)
+                }
+              })
+          }
 
           def dispatchRequest(req: HttpRequest): Unit = {
             val tag = new AssociationTag
