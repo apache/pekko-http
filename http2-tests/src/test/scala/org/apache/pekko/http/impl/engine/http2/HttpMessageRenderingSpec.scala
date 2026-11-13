@@ -188,6 +188,111 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
 
   }
 
+  "Outgoing HTTP/2 modeled fields" should {
+    def requestPairs(headers: HttpHeader*): Seq[(String, AnyRef)] = {
+      val rendering = new RequestRendering(ClientConnectionSettings(ConfigFactory.load("reference.conf")), NoLogging,
+        "https", Uri.Authority(Uri.Host("example.com")))
+      rendering(HttpRequest(uri = "/ordinary").withHeaders(headers.toList)).initialHeaders.keyValuePairs
+    }
+
+    def responsePairs(headers: HttpHeader*): Seq[(String, AnyRef)] = {
+      val rendering = new ResponseRendering(ServerSettings(ConfigFactory.load("reference.conf")), NoLogging,
+        dateHeaderRendering)
+      rendering(HttpResponse().withHeaders(headers.toList).addAttribute(Http2.streamId, 1))
+        .initialHeaders.keyValuePairs
+    }
+
+    val marker = RawHeader("x-end-to-end", "kept")
+    val upgrade = Upgrade(immutable.Seq(UpgradeProtocol("websocket")))
+
+    "omit modeled Upgrade from request initial fields" in {
+      val pairs = requestPairs(upgrade, Connection("upgrade"), marker)
+      withClue(s"Actual request fields: $pairs") {
+        pairs should contain(":method" -> "GET")
+        pairs should contain(":path" -> "/ordinary")
+        pairs should contain("x-end-to-end" -> "kept")
+        pairs.map(_._1) should not contain "connection"
+        pairs.map(_._1) should not contain "upgrade"
+      }
+    }
+
+    "omit modeled Upgrade from response initial fields" in {
+      val pairs = responsePairs(upgrade, Connection("upgrade"), marker)
+      withClue(s"Actual response fields: $pairs") {
+        pairs should contain(":status" -> "200")
+        pairs should contain("x-end-to-end" -> "kept")
+        pairs.map(_._1) should not contain "connection"
+        pairs.map(_._1) should not contain "upgrade"
+      }
+    }
+
+    "omit unsupported modeled request TE coding" in {
+      val pairs = requestPairs(TE(TransferEncodings.gzip), marker)
+      withClue(s"Actual request fields: $pairs") {
+        pairs should contain(":method" -> "GET")
+        pairs should contain("x-end-to-end" -> "kept")
+        pairs.map(_._1) should not contain "te"
+      }
+    }
+
+    "preserve allowed trailers and request authority" in {
+      val pairs = requestPairs(TE(TransferEncodings.trailers), Host("example.com"), marker)
+      withClue(s"Actual request fields: $pairs") {
+        pairs should contain("te" -> "trailers")
+        pairs should contain(":authority" -> "example.com")
+        pairs should contain("x-end-to-end" -> "kept")
+      }
+    }
+
+    for (name <- List("connection", "keep-alive", "proxy-connection", "transfer-encoding", "upgrade")) {
+      s"omit raw $name from both initial field directions" in {
+        val header = RawHeader(name, "ordinary")
+        for (pairs <- List(requestPairs(header, marker), responsePairs(header, marker))) {
+          withClue(s"Actual fields: $pairs") {
+            pairs should contain("x-end-to-end" -> "kept")
+            pairs.map(_._1) should not contain name
+          }
+        }
+      }
+    }
+
+    "omit a mixed modeled TE field rather than retaining unsupported codings" in {
+      val pairs = requestPairs(TE(TransferEncodings.gzip, TransferEncodings.trailers), marker)
+      pairs should contain("x-end-to-end" -> "kept")
+      pairs.map(_._1) should not contain "te"
+    }
+
+    "canonicalize a whole trailers value and preserve only allowed separate TE fields" in {
+      val pairs = requestPairs(RawHeader("TE", "gzip"), RawHeader("TE", "  Trailers  "), marker)
+      pairs.filter(_._1 == "te") shouldEqual Seq("te" -> "trailers")
+      pairs should contain("x-end-to-end" -> "kept")
+      responsePairs(RawHeader("TE", "trailers"), marker).map(_._1) should not contain "te"
+    }
+
+    "respect custom header direction before normalizing initial fields" in {
+      def custom(headerName: String, headerValue: String, requests: Boolean): CustomHeader = new CustomHeader {
+        override def name: String = headerName
+        override def value: String = headerValue
+        override def renderInRequests: Boolean = requests
+        override def renderInResponses: Boolean = true
+      }
+      val upgradeHeader = custom("Upgrade", "websocket", requests = true)
+      requestPairs(upgradeHeader, marker).map(_._1) should not contain "upgrade"
+      responsePairs(upgradeHeader, marker).map(_._1) should not contain "upgrade"
+      requestPairs(custom("TE", "trailers", requests = false), marker).map(_._1) should not contain "te"
+      requestPairs(custom("TE", "trailers", requests = true), marker) should contain("te" -> "trailers")
+    }
+
+    "retain the modeled TE response direction filter" in {
+      val pairs = responsePairs(TE(TransferEncodings.gzip), marker)
+      withClue(s"Actual response fields: $pairs") {
+        pairs should contain(":status" -> "200")
+        pairs should contain("x-end-to-end" -> "kept")
+        pairs.map(_._1) should not contain "te"
+      }
+    }
+  }
+
   private def pseudoHeaders(request: HttpRequest, connectionScheme: String, connectionAuthority: Uri.Authority)
       : Map[String, AnyRef] = {
     val rendering = new RequestRendering(ClientConnectionSettings(ConfigFactory.load("reference.conf")), NoLogging,
