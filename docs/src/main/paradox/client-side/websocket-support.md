@@ -12,6 +12,8 @@ a @apidoc[Sink[Message, Mat]] to.
 @@@ note
 Client-side WebSocket compression is not currently implemented. Apache Pekko HTTP can negotiate
 `permessage-deflate` compression for server-side WebSocket connections when a client requests it.
+The client rejects responses selecting WebSocket extensions. Advertising an extension through
+`WebSocketRequest.extraHeaders` does not install support for it and does not enable extension negotiation.
 @@@
 
 A WebSocket request starts with a regular HTTP request which contains an `Upgrade` header (and possibly
