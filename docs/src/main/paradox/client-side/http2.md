@@ -101,3 +101,14 @@ Scala
 Java
 
 :  @@snip [HttpClientExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/Http2ClientApp.java) { #response-future-association }
+
+## Responses without content
+
+Responses with status `204` or `304` have an empty entity even when the peer ends the HTTP/2 stream with a
+later empty DATA frame instead of ending it in the initial HEADERS frame. The response can be delivered before
+that wire-level termination; other responses and an already active request upload can continue independently.
+
+While this content-free response is still awaiting its wire-level end, receiving content or trailers causes a stream reset.
+This does not change
+an already delivered empty response into a second response or a failed entity. A `304` response's Content-Length
+can describe the selected representation rather than content carried by this response.
