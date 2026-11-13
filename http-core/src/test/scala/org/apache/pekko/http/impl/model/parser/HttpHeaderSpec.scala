@@ -38,6 +38,51 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
   val `application/vnd.spray` = MediaType.applicationBinary("vnd.spray", MediaType.Compressible)
   val PROPFIND = HttpMethod.custom("PROPFIND")
 
+  for ((time, hour, minute, second) <- Seq(
+      ("08:09:07", 8, 9, 7), ("8:9:7", 8, 9, 7), ("8:09:07", 8, 9, 7),
+      ("08:9:07", 8, 9, 7), ("08:09:7", 8, 9, 7), ("0:0:0", 0, 0, 0), ("23:59:59", 23, 59, 59))) {
+    s"cookie expiry time-width $time" in {
+      val expected = DateTime(1994, 11, 6, hour, minute, second)
+      val result = HttpHeader.parse("Set-Cookie", s"sid=value; Expires=Sun, 06 Nov 1994 $time GMT; Path=/")
+      result match {
+        case HttpHeader.ParsingResult.Ok(header: `Set-Cookie`, errors) =>
+          errors shouldBe empty
+          header.cookie.expires shouldEqual Some(expected)
+          header.cookie.path shouldEqual Some("/")
+          header.value shouldEqual s"sid=value; Expires=${expected.toRfc1123DateTimeString}; Path=/"
+        case other => fail(s"Expected a modeled Set-Cookie, got $other")
+      }
+    }
+  }
+
+  for (date <- Seq("Sunday, 06-Nov-94 8:9:7 GMT", "Sun Nov 06 8:9:7 1994")) {
+    s"cookie expiry time-width retains date shape $date" in {
+      s"Set-Cookie: sid=value; Expires=$date; Path=/" =!=
+        `Set-Cookie`(HttpCookie("sid", "value", expires = Some(DateTime(1994, 11, 6, 8, 9, 7)), path = Some("/")))
+          .renderedTo("sid=value; Expires=Sun, 06 Nov 1994 08:09:07 GMT; Path=/")
+    }
+  }
+
+  "cookie expiry time-width does not extend shared HTTP dates" in {
+    HttpHeader.parse("Date", "Sun, 06 Nov 1994 8:9:7 GMT") match {
+      case HttpHeader.ParsingResult.Ok(_: RawHeader, errors) => errors should not be empty
+      case other                                             => fail(s"Expected an unmodeled Date with errors, got $other")
+    }
+    "Expires: Sun, 06 Nov 1994 8:9:7 GMT" =!=
+      Expires(DateTime.MinValue).renderedTo("Wed, 01 Jan 1800 00:00:00 GMT")
+  }
+
+  "cookie expiry time-width retains numeric and weekday validation" in {
+    for (date <- Seq("Sun, 06 Nov 1994 24:0:0 GMT", "Sun, 06 Nov 1994 8:60:0 GMT",
+        "Sun, 06 Nov 1994 8:9:60 GMT", "Mon, 06 Nov 1994 8:9:7 GMT",
+        "Mon, 06 Nov 1994 08:09:07 GMT")) {
+      HttpHeader.parse("Set-Cookie", s"sid=value; Expires=$date") match {
+        case HttpHeader.ParsingResult.Ok(_: RawHeader, errors) => errors should not be empty
+        case other                                             => fail(s"Expected an unmodeled invalid cookie date with errors, got $other")
+      }
+    }
+  }
+
   "The HTTP header model must correctly parse and render the headers" - {
 
     "Accept" in {
