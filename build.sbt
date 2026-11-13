@@ -201,7 +201,6 @@ lazy val httpTestkit = project("http-testkit")
     Test / run / mainClass := Some("org.apache.pekko.http.javadsl.SimpleServerApp"))
   .enablePlugins(BootstrapGenjavadoc, MultiNodeScalaTest, ScaladocNoVerificationOfDiagrams)
   .enablePlugins(ReproducibleBuildsPlugin)
-  .disablePlugins(MimaPlugin) // testkit, no bin compat guaranteed
 
 lazy val httpTestkitMunit = project("http-testkit-munit")
   .settings(AutomaticModuleName.settings("pekko.http.testkit.munit"))
@@ -209,7 +208,6 @@ lazy val httpTestkitMunit = project("http-testkit-munit")
   .addPekkoModuleDependency("pekko-stream-testkit", "provided", PekkoCoreDependency.default)
   .addPekkoModuleDependency("pekko-testkit", "provided", PekkoCoreDependency.default)
   .settings(Dependencies.httpTestkitMunit)
-  .disablePlugins(MimaPlugin) // testkit, no bin compat guaranteed
 
 lazy val httpTests = project("http-tests")
   .settings(Dependencies.httpTests)
