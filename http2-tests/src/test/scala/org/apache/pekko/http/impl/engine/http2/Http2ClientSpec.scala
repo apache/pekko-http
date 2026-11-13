@@ -753,6 +753,40 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
 
     }
 
+    "transport failure diagnostics" should {
+      "preserve the connection failure in the delivered entity".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(Get("/"))
+          network.expectDecodedHEADERS(1, endStream = true)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val entity = user.expectResponse().entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem))
+          entity.request(2)
+          network.sendDATA(1, endStream = false, ByteString("data"))
+          entity.expectNext(ByteString("data"))
+          val cause = new java.io.IOException("ordinary transport failure marker")
+          network.fromNet.sendError(cause)
+          user.responseIn.expectError() shouldBe theSameInstanceAs(cause)
+          val error = entity.expectError()
+          error shouldBe theSameInstanceAs(cause)
+        })
+
+      "keep a normal connection cancellation free of an unrelated cause".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(Get("/"))
+          network.expectDecodedHEADERS(1, endStream = true)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val entity = user.expectResponse().entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem))
+          entity.request(2)
+          network.sendDATA(1, endStream = false, ByteString("data"))
+          entity.expectNext(ByteString("data"))
+          network.toNet.cancel()
+          val error = entity.expectError()
+          error shouldBe a[IllegalStateException]
+          error.getMessage shouldBe "The HTTP/2 connection was shut down while the request was still ongoing"
+          error.getCause shouldBe null
+        })
+    }
+
     "expose synthetic headers" should {
       "expose Tls-Session-Info".inAssertAllStagesStopped(new TestSetup {
         lazy val expectedSession = SSLContext.getDefault.createSSLEngine.getSession
