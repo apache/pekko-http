@@ -106,6 +106,73 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
   }
 
   "Encoder" should {
+    "preserve same-name entries across eviction and table resizing" in {
+      val encoder = new Encoder(4096, true, false, true)
+      val decoder = new Decoder(8192, 4096)
+      val out = new ByteStringOutputStream(32)
+
+      def block(expected: Seq[(String, String)], resize: Option[Int] = None): Array[Byte] = {
+        resize.foreach(encoder.setMaxHeaderTableSize(out, _))
+        expected.foreach { case (name, value) => encoder.encodeHeader(out, name, value, false) }
+        val bytes = out.takeByteString().toArray
+        val decoded = new VectorBuilder[(String, String)]()
+        decoder.decode(new ByteArrayInputStream(bytes),
+          (name: String, value: String, parsedValue: AnyRef, _: Boolean) => {
+            decoded += name -> value
+            parsedValue
+          })
+        decoder.endHeaderBlock() shouldBe false
+        decoded.result() shouldEqual expected
+        bytes
+      }
+
+      // Exact bytes pin the current indexing policy with Huffman disabled, not the only RFC-valid encoding.
+      // Each entry occupies 34 bytes (RFC 7541 section 4.1). At 67 only the newest fits.
+      hex(block(Seq("k" -> "x", "k" -> "y"))) shouldEqual "40016b01787e0179"
+      hex(block(Seq("k" -> "x", "k" -> "y"))) shouldEqual "bfbe"
+      block(Seq("k" -> "x"), Some(67))
+      encoder.length() shouldEqual 1
+      encoder.size() shouldEqual 34
+      block(Seq("k" -> "y"), Some(1000))
+      hex(block(Seq("k" -> "x", "k" -> "y"))) shouldEqual "bfbe"
+      block(Seq("k" -> "x"), Some(0))
+      encoder.length() shouldEqual 0
+      encoder.size() shouldEqual 0
+      block(Seq("k" -> "y"), Some(4096))
+      hex(block(Seq("k" -> "y"))) shouldEqual "be"
+    }
+
+    "never index sensitive values even when an exact table entry already exists" in {
+      val encoder = new Encoder(4096, true, false, true)
+      val out = new ByteStringOutputStream(32)
+      encoder.encodeHeader(out, "k", "x", false)
+      out.takeByteString()
+      encoder.encodeHeader(out, "k", "x", true)
+      // RFC 7541 section 6.2.3: never-indexed literal, indexed name 62, literal value x.
+      hex(out.takeByteString().toArray) shouldEqual "1f2f0178"
+      encoder.encodeHeader(out, ":method", "GET", true)
+      hex(out.takeByteString().toArray) shouldEqual "1203474554"
+      encoder.length() shouldEqual 1
+      encoder.size() shouldEqual 34
+      encoder.encodeHeader(out, "k", "x", false)
+      hex(out.takeByteString().toArray) shouldEqual "be"
+    }
+
+    "resolve every static table entry and reject mismatched names or values" in {
+      (1 to StaticTable.length).foreach { index =>
+        val entry = StaticTable.getEntry(index)
+        StaticTable.getIndex(entry.name, entry.value) shouldEqual index
+        val firstIndex = StaticTable.getIndex(entry.name)
+        firstIndex should be > 0
+        firstIndex should be <= index
+        StaticTable.getEntry(firstIndex).name shouldEqual entry.name
+        StaticTable.getIndex(entry.name, entry.value + "-not-in-the-table") shouldEqual -1
+      }
+      StaticTable.getIndex("x-not-in-the-table", "https") shouldEqual -1
+      StaticTable.getIndex(":scheme", "") shouldEqual -1
+      StaticTable.getIndex("content-language", "") shouldEqual 27
+    }
+
     "encode the value from RFC 7541 Appendix C.4.1 with Huffman coding when it is shorter" in {
       // 0x01: literal without indexing, name index 1 (:authority); 0x8c: Huffman coded, 12 octets
       hex(encodeHeader(":authority", "www.example.com", forceHuffmanOn = false, forceHuffmanOff = false)) shouldEqual
