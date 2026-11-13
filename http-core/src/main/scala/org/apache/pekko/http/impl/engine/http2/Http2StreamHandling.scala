@@ -96,6 +96,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     activeStreamCount() < maxConcurrentStreams
   }
 
+  def onDrainingStreamStateChanged(): Unit
+  def peerIsDraining: Boolean
   def incomingReadClosed: Boolean
 
   /** Called when all streams in StreamHandling buffers are closed and the stage is completing. */
@@ -227,8 +229,19 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       if (streamStates.isEmpty) onAllStreamsClosed()
       tryPullSubStreams()
     }
+    if (peerIsDraining) onDrainingStreamStateChanged()
     ret
   }
+
+  /** GOAWAY rejects only locally initiated streams beyond the peer's accepted boundary. */
+  def rejectStreamsAfter(lastStreamId: Int): Unit =
+    streamStates.keys.toVector.filter(_ > lastStreamId).foreach { id =>
+      multiplexer.closeStream(id.toInt)
+      updateState(id.toInt, state => { state.rejectAfterGoAway(id.toInt); Closed }, "peerGoAway")
+    }
+
+  def allIncomingMessagesComplete: Boolean = streamStates.valuesIterator.forall(_.incomingMessageComplete)
+  def allOutgoingMessagesComplete: Boolean = streamStates.valuesIterator.forall(_.outgoingMessageComplete)
 
   /** Stop unfinished incoming messages without discarding already completed messages. */
   def handleIncomingReadComplete(): Unit =
@@ -369,6 +382,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     def incomingStreamPulled(): StreamState =
       throw new IllegalStateException(s"incomingStreamPulled not supported in state $stateName")
 
+    def rejectAfterGoAway(streamId: Int): Unit = shutdown()
+
+    def incomingMessageComplete: Boolean = false
+    def outgoingMessageComplete: Boolean = true
+
     def handleIncomingReadComplete(): StreamState = {
       shutdown()
       Closed
@@ -447,6 +465,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
   trait Sending extends StreamState { self: Product =>
     protected def outStream: OutStream
+    override def outgoingMessageComplete: Boolean = outStream.isDone
 
     def cancelOutgoingAfterReadComplete(): Unit = outStream.cancelStream()
 
@@ -554,6 +573,14 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   sealed abstract class ReceivingDataWithBuffer(afterEndStreamReceived: StreamState) extends ReceivingData {
     self: Product =>
     protected def buffer: IncomingStreamBuffer
+    override def incomingMessageComplete: Boolean = buffer.receivedEndStream
+    override def rejectAfterGoAway(streamId: Int): Unit = {
+      buffer.onRstStreamFrame(RstStreamFrame(streamId, ErrorCode.REFUSED_STREAM))
+      this match {
+        case sending: Sending => sending.cancelOutgoingAfterReadComplete()
+        case _                =>
+      }
+    }
 
     override def handleIncomingReadComplete(): StreamState =
       if (!buffer.receivedEndStream) super.handleIncomingReadComplete()
@@ -645,6 +672,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
    * They have closed the incoming stream, but the outgoing stream is still going.
    */
   case class HalfClosedRemoteSendingData(outStream: OutStream) extends StreamState with Sending {
+    override def incomingMessageComplete: Boolean = true
     override def handleIncomingReadComplete(): StreamState =
       if (isServer) this
       else {
@@ -691,7 +719,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     def onPull(): Unit = incomingStreamPulled(streamId)
     override def onDownstreamFinish(cause: Throwable): Unit = {
       debug(s"Incoming side of stream [$streamId]: cancelling because downstream finished")
-      if (incomingReadClosed) {
+      if (incomingReadClosed || peerIsDraining) {
+        if (!incomingReadClosed) multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
         multiplexer.closeStream(streamId)
         updateState(streamId,
           state => {

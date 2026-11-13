@@ -237,7 +237,7 @@ private[http2] object PersistentConnection {
             override def onDownstreamFinish(cause: Throwable): Unit = if (!disconnected) {
               // A peer can stop accepting requests while responses already received are still draining.
               // Keep the response side alive and retain an already-pulled next request for reconnection.
-              if (cause eq Http2Demux.IncomingReadComplete) stopAcceptingRequests()
+              if (cause eq Http2Demux.RequestAdmissionClosed) stopAcceptingRequests()
               else onDisconnected()
             }
           })

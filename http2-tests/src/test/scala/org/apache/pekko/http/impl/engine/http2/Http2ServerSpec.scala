@@ -2129,6 +2129,18 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
 
     }
     "support graceful shutdown" should {
+      "continue an accepted response after receiving client GOAWAY".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+          network.sendFrame(GoAwayFrame(0, ErrorCode.NO_ERROR))
+          val data = ByteString("goaway03")
+          network.sendFrame(PingFrame(ack = false, data))
+          network.expect[PingFrame]() shouldEqual PingFrame(ack = true, data)
+          user.emitResponse(1, HttpResponse())
+          network.expectDecodedHEADERS(1)
+        })
+
       "immediately shutdown when no requests are pending".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           val terminated = serverTerminator.terminate(1.minute)

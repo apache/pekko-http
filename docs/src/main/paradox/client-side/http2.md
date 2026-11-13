@@ -84,6 +84,22 @@ The default maximum age is `infinite`, which disables age-based retirement. The 
 programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
 `Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
 
+## Peer-initiated connection retirement
+
+After receiving a `GOAWAY` frame, the client does not open new streams on that connection, even when the
+peer initially advertises the largest possible last-stream identifier. With `NO_ERROR`, responses and uploads
+for accepted streams can finish. Streams above the peer's last-stream identifier are treated as unprocessed;
+a later `GOAWAY` can reduce that boundary but cannot reopen request admission.
+
+The managed client retains requests not yet dispatched for a replacement connection. Requests already dispatched
+without a response receive the existing connection-failure response when the old response stream ends. They are
+not automatically replayed. If response headers have already been delivered, refusal of a still-active stream is reported through its entity
+rather than a second response. Complete accepted response entities still need to be consumed
+or discarded, independently of the outer response stream completing.
+
+A `GOAWAY` carrying an error code other than `NO_ERROR` terminates the connection as an error. Graceful draining
+and preservation of buffered entities are not promised for that error path.
+
 ## Response entities after connection closure
 
 When a peer cleanly closes its sending side of the connection after a complete response (`END_STREAM`), buffered response data
