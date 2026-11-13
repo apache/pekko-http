@@ -229,6 +229,24 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           pushInput(header1 ++ data1)
           sub.expectNext("äbcdef€")
         }
+        "preserve a split utf8 code point across an interleaved pong" in new ClientTestSetup {
+          val data = ByteString("€", UTF_8)
+          pushInput(frameHeader(Opcode.Text, 1, fin = false) ++ data.take(1))
+
+          val sub = TestSubscriber.manualProbe[String]()
+          expectTextMessage().textStream.runWith(Sink.fromSubscriber(sub))
+          val subscription = sub.expectSubscription()
+          subscription.request(4)
+
+          // Control payload is opaque, not part of the text message's UTF-8 sequence.
+          val pong = ByteString(0xFF.toByte)
+          pushInput(frameHeader(Opcode.Pong, pong.size, fin = true) ++ pong)
+          pushInput(frameHeader(Opcode.Continuation, data.size - 1, fin = true) ++ data.drop(1))
+
+          sub.expectNext("€")
+          sub.expectComplete()
+          expectNoNetworkData()
+        }
         "unmask masked input on the server side" in new ServerTestSetup {
           val mask = Random.nextInt()
           val (data, _) = maskedUTF8("äbcdef€", mask)
