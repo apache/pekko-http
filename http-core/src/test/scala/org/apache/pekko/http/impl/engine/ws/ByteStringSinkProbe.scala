@@ -13,6 +13,9 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import scala.annotation.tailrec
+import scala.concurrent.duration.FiniteDuration
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.{ ActorSystem, ClassicActorSystemProvider }
@@ -21,9 +24,6 @@ import pekko.http.impl.util.LogByteStringTools
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.stream.testkit.TestSubscriber
 import pekko.util.ByteString
-
-import scala.annotation.tailrec
-import scala.concurrent.duration.FiniteDuration
 
 /** INTERNAL API */
 @InternalApi
@@ -40,6 +40,7 @@ private[http] trait ByteStringSinkProbe {
   def expectNoBytes(timeout: FiniteDuration): Unit
 
   def expectSubscriptionAndComplete(): Unit
+  def drainToComplete(): ByteString
   def expectComplete(): Unit
   def expectError(): Throwable
   def expectError(cause: Throwable): Unit
@@ -58,6 +59,20 @@ private[http] object ByteStringSinkProbe {
     new ByteStringSinkProbe {
       val probe = TestSubscriber.probe[ByteString]()
       val sink: Sink[ByteString, NotUsed] = Sink.fromSubscriber(probe)
+
+      def drainToComplete(): ByteString = {
+        var result = inBuffer
+        inBuffer = ByteString.empty
+        var done = false
+        while (!done) {
+          probe.request(1)
+          probe.expectNextOrComplete() match {
+            case Right(bytes) => result ++= bytes
+            case Left(_)      => done = true
+          }
+        }
+        result
+      }
 
       def ensureRequested(): Unit = {
         probe.ensureSubscription()

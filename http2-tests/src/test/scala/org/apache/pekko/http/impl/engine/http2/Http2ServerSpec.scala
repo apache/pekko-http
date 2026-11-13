@@ -15,8 +15,8 @@ package org.apache.pekko.http.impl.engine.http2
 
 import javax.net.ssl.SSLContext
 
-import scala.concurrent.{ Await, Promise }
 import scala.concurrent.duration._
+import scala.concurrent.{ Await, Promise }
 
 import org.apache.pekko
 import pekko.NotUsed
@@ -56,6 +56,155 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
   override def failOnSevereMessages: Boolean = true
 
   "The Http/2 server implementation" should {
+    "handle ordinary network EOF" should {
+      "send a response after the request side has closed".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+          network.fromNet.sendComplete()
+          user.requestIn.expectComplete()
+          user.emitResponse(1, HttpResponse(entity = "response"))
+          network.expectDecodedHEADERS(1, endStream = false)
+          network.expectDATA(1, endStream = true, ByteString("response"))
+          network.expectComplete()
+        })
+
+      "fail an unfinished request without losing a completed sibling".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          network.sendRequestHEADERS(1, HttpRequest(), endStream = false)
+          val unfinished = user.expectRequest()
+          network.sendDATA(1, endStream = false, ByteString("partial"))
+          network.sendRequest(3, HttpRequest())
+          user.expectRequest()
+          network.fromNet.sendComplete()
+          user.requestIn.expectComplete()
+          unfinished.entity.dataBytes.runWith(pekko.stream.scaladsl.Sink.seq).failed.futureValue shouldBe a[Exception]
+          network.expectWindowUpdate()
+          user.emitResponse(3, HttpResponse())
+          network.expectDecodedHEADERS(3, endStream = true)
+          network.expectComplete()
+        })
+
+      "discard an unfinished collected request while retaining a completed sibling".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings =
+            super.settings.mapHttp2Settings(_.withMinCollectStrictEntitySize(64))
+          network.sendRequestHEADERS(1, HttpRequest(), endStream = false)
+          network.sendDATA(1, endStream = false, ByteString("partial"))
+          network.sendRequest(3, HttpRequest())
+          user.expectRequestRaw().attribute(Http2.streamId) shouldBe Some(3)
+          network.fromNet.sendComplete()
+          user.requestIn.expectComplete()
+          network.expectWindowUpdate()
+          user.emitResponse(3, HttpResponse())
+          network.expectDecodedHEADERS(3, endStream = true)
+          network.expectComplete()
+        })
+
+      "retain a complete collected request before sending the response".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings =
+            super.settings.mapHttp2Settings(_.withMinCollectStrictEntitySize(64))
+          network.sendRequestHEADERS(1, HttpRequest(), endStream = false)
+          network.sendDATA(1, endStream = true, ByteString("complete"))
+          network.fromNet.sendComplete()
+          user.expectRequest().entity.asInstanceOf[HttpEntity.Strict].data shouldBe ByteString("complete")
+          user.requestIn.expectComplete()
+          network.expectWindowUpdate()
+          user.emitResponse(1, HttpResponse())
+          network.expectDecodedHEADERS(1, endStream = true)
+          network.expectComplete()
+        })
+
+      "terminate a flow-control-blocked response after read EOF".inAssertAllStagesStopped(
+        new TestSetup(Setting(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, 0)) with RequestResponseProbes {
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+          network.fromNet.sendComplete()
+          user.requestIn.expectComplete()
+          user.emitResponse(1, HttpResponse(entity = "blocked"))
+          network.expectDecodedHEADERS(1, endStream = false)
+          val terminated = serverTerminator.terminate(50.millis)
+          network.expectGOAWAY(1)
+          network.expectComplete()
+          terminated.futureValue
+        })
+
+      "apply the existing idle timeout to a flow-control-blocked response after read EOF".inAssertAllStagesStopped(
+        new TestSetup(Setting(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, 0)) with RequestResponseProbes {
+          override def settings: ServerSettings = super.settings.mapTimeouts(_.withIdleTimeout(500.millis))
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+          network.fromNet.sendComplete()
+          user.requestIn.expectComplete()
+          user.emitResponse(1, HttpResponse(entity = "blocked"))
+          network.expectDecodedHEADERS(1, endStream = false)
+          network.toNet.expectError() shouldBe a[pekko.http.impl.engine.HttpIdleTimeoutException]
+        })
+
+      "cancel a response producer when its retained request entity is cancelled after EOF".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings =
+            super.settings.mapHttp2Settings(_.withRequestEntityChunkSize(1))
+          network.sendRequestHEADERS(1, HttpRequest(), endStream = false)
+          val request = user.expectRequest()
+          network.sendDATA(1, endStream = true, ByteString("x" * 128))
+          network.expectWindowUpdate()
+          val responseData = TestPublisher.probe[ByteString]()
+          user.emitResponse(1,
+            HttpResponse(entity = HttpEntity(ContentTypes.`application/octet-stream`,
+              Source.fromPublisher(responseData))))
+          network.expectDecodedHEADERS(1, endStream = false)
+          network.fromNet.sendComplete()
+          user.requestIn.expectComplete()
+          request.entity.dataBytes.runWith(pekko.stream.scaladsl.Sink.cancelled)
+          responseData.expectCancellation()
+          network.expectComplete()
+        })
+
+      "close when the handler completes without a response after read EOF".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          override def settings: ServerSettings = super.settings.mapTimeouts(_.withIdleTimeout(Duration.Inf))
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+          network.fromNet.sendComplete()
+          user.requestIn.expectComplete()
+          user.responseOut.sendComplete()
+          network.expectComplete()
+        })
+
+      "finish an already materialized response when the handler completes after read EOF".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+          network.fromNet.sendComplete()
+          user.requestIn.expectComplete()
+          val responseData = TestPublisher.probe[ByteString]()
+          user.emitResponse(1,
+            HttpResponse(entity = HttpEntity(ContentTypes.`application/octet-stream`,
+              Source.fromPublisher(responseData))))
+          network.expectDecodedHEADERS(1, endStream = false)
+          user.responseOut.sendComplete()
+          responseData.sendNext(ByteString("response"))
+          network.expectDATA(1, endStream = false, ByteString("response"))
+          responseData.sendComplete()
+          network.expectDATA(1, endStream = true, ByteString.empty)
+          network.expectComplete()
+        })
+
+      "honor a termination deadline with a pending response after read EOF".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+          network.fromNet.sendComplete()
+          user.requestIn.expectComplete()
+          val terminated = serverTerminator.terminate(50.millis)
+          network.expectGOAWAY(1)
+          network.expectComplete()
+          terminated.futureValue
+        })
+    }
+
     "answer a malformed header field with a 400 on its stream and keep the connection" should {
       abstract class MalformedHeaderSetup extends TestSetup with RequestResponseProbes {
         def badRequestThenStillUsable(streamId: Int, headerPairs: Seq[(String, String)]): Unit = {
@@ -1980,6 +2129,18 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
 
     }
     "support graceful shutdown" should {
+      "continue an accepted response after receiving client GOAWAY".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+          network.sendFrame(GoAwayFrame(0, ErrorCode.NO_ERROR))
+          val data = ByteString("goaway03")
+          network.sendFrame(PingFrame(ack = false, data))
+          network.expect[PingFrame]() shouldEqual PingFrame(ack = true, data)
+          user.emitResponse(1, HttpResponse())
+          network.expectDecodedHEADERS(1)
+        })
+
       "immediately shutdown when no requests are pending".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           val terminated = serverTerminator.terminate(1.minute)

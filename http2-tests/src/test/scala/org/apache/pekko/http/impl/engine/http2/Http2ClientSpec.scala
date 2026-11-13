@@ -33,21 +33,21 @@ import pekko.http.impl.util.LogByteStringTools
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.client.RequestBuilding.Post
-import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpEntity.Chunk
 import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.model.HttpEntity.Chunked
 import pekko.http.scaladsl.model.HttpEntity.LastChunk
 import pekko.http.scaladsl.model.HttpMethods.GET
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.model.headers.{
+  RawHeader,
   `Access-Control-Allow-Origin`,
   `Cache-Control`,
   `Content-Length`,
   `Content-Type`,
-  `Raw-Request-URI`,
-  RawHeader
+  `Raw-Request-URI`
 }
-import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.stream.Attributes
 import pekko.stream.Attributes.LogLevels
@@ -889,7 +889,403 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         })
     }
 
+    "drain received GOAWAY" should {
+      abstract class QueuedRequests extends TestSetup with NetProbes {
+        lazy val queued = Source.queue[HttpRequest](4, pekko.stream.OverflowStrategy.backpressure).preMaterialize()
+        override def requestSource: Source[HttpRequest, NotUsed] = queued._2
+        def offer(request: HttpRequest = Get("https://www.example.com/")): Unit = { queued._1.offer(request); () }
+        def barrier(): Unit = {
+          val data = ByteString("goaway01")
+          network.sendFrame(PingFrame(ack = false, data))
+          network.expect[PingFrame]() shouldEqual PingFrame(ack = true, data)
+        }
+        def assertNoNewHeaders(bytes: ByteString): Unit = {
+          var remaining = bytes
+          while (remaining.nonEmpty) {
+            remaining.length should be >= 9
+            val length = ((remaining(0) & 255) << 16) | ((remaining(1) & 255) << 8) | (remaining(2) & 255)
+            remaining(3) should not be 1.toByte // HEADERS, including requests already pulled before GOAWAY
+            remaining.length should be >= (9 + length)
+            remaining = remaining.drop(9 + length)
+          }
+        }
+      }
+
+      Seq(1, Int.MaxValue).foreach { lastId =>
+        s"stop new requests and finish the outer responses before consuming a complete entity (lastId = $lastId)"
+          .inAssertAllStagesStopped(new QueuedRequests {
+            offer()
+            network.expect[HeadersFrame]().streamId shouldBe 1
+            network.sendFrame(GoAwayFrame(lastId, ErrorCode.NO_ERROR))
+            barrier()
+            offer() // May be queued or rejected: no requirement to wait for admission after GOAWAY.
+            network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+            val response = user.expectResponse()
+            network.sendDATA(1, endStream = true, ByteString("body"))
+            user.responseIn.expectComplete()
+            assertNoNewHeaders(network.toNet.drainToComplete())
+            response.entity.toStrict(2.seconds).futureValue.data shouldEqual ByteString("body")
+          })
+      }
+
+      "apply decreasing boundaries without accepting a later increase".inAssertAllStagesStopped(new QueuedRequests {
+        offer()
+        offer()
+        network.expect[HeadersFrame]().streamId shouldBe 1
+        network.expect[HeadersFrame]().streamId shouldBe 3
+        network.sendFrame(GoAwayFrame(3, ErrorCode.NO_ERROR))
+        barrier()
+        network.sendFrame(GoAwayFrame(1, ErrorCode.NO_ERROR))
+        barrier()
+        network.sendFrame(GoAwayFrame(3, ErrorCode.NO_ERROR))
+        barrier()
+        offer()
+        network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+        user.expectResponse().status shouldBe StatusCodes.OK
+        user.responseIn.expectComplete()
+        assertNoNewHeaders(network.toNet.drainToComplete())
+      })
+
+      "deliver queued responses before requiring their complete entities to be consumed".inAssertAllStagesStopped(
+        new QueuedRequests {
+          offer()
+          offer()
+          network.expect[HeadersFrame]().streamId shouldBe 1
+          network.expect[HeadersFrame]().streamId shouldBe 3
+          network.sendFrame(GoAwayFrame(3, ErrorCode.NO_ERROR))
+          barrier()
+          network.sendFrame(GoAwayFrame(3, ErrorCode.NO_ERROR))
+          barrier()
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          network.sendDATA(1, endStream = true, ByteString("queued"))
+          network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "204")))
+          val first = user.expectResponse()
+          user.expectResponse().status shouldBe StatusCodes.NoContent
+          user.responseIn.expectComplete()
+          assertNoNewHeaders(network.toNet.drainToComplete())
+          first.entity.toStrict(2.seconds).futureValue.data shouldEqual ByteString("queued")
+        })
+
+      "close after an accepted entity is cancelled during draining".inAssertAllStagesStopped(new QueuedRequests {
+        offer()
+        network.expect[HeadersFrame]().streamId shouldBe 1
+        network.sendFrame(GoAwayFrame(1, ErrorCode.NO_ERROR))
+        barrier()
+        network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+        val body = user.expectResponse().entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem))
+        body.ensureSubscription()
+        body.cancel()
+        network.expectRST_STREAM(1, ErrorCode.CANCEL)
+        user.responseIn.expectComplete()
+        assertNoNewHeaders(network.toNet.drainToComplete())
+      })
+
+      Seq(false, true).foreach { readEof =>
+        s"preserve accepted response trailers across retirement (read EOF = $readEof)".inAssertAllStagesStopped(
+          new QueuedRequests {
+            offer()
+            network.expect[HeadersFrame]().streamId shouldBe 1
+            network.sendFrame(GoAwayFrame(1, ErrorCode.NO_ERROR))
+            barrier()
+            network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+            val response = user.expectResponse()
+            network.sendDATA(1, endStream = false, ByteString("received"))
+            network.sendHEADERS(1, endStream = true, Seq(RawHeader("grpc-status", "0")))
+            if (readEof) network.fromNet.sendComplete()
+            user.responseIn.expectComplete()
+            assertNoNewHeaders(network.toNet.drainToComplete())
+            response.entity.asInstanceOf[Chunked].chunks.runWith(Sink.seq).futureValue shouldBe
+            Seq(Chunk(ByteString("received")), LastChunk("", List(RawHeader("grpc-status", "0"))))
+          })
+      }
+
+      "refuse an unprocessed first request without opening another stream".inAssertAllStagesStopped(new QueuedRequests {
+        offer()
+        network.expect[HeadersFrame]().streamId shouldBe 1
+        network.sendFrame(GoAwayFrame(0, ErrorCode.NO_ERROR))
+        user.responseIn.request(1).expectComplete()
+        offer()
+        assertNoNewHeaders(network.toNet.drainToComplete())
+      })
+
+      "terminate only the entity of an already delivered response above the accepted boundary".inAssertAllStagesStopped(
+        new QueuedRequests {
+          offer()
+          offer()
+          network.expect[HeadersFrame]().streamId shouldBe 1
+          network.expect[HeadersFrame]().streamId shouldBe 3
+          network.sendHEADERS(3, endStream = false, Seq(RawHeader(":status", "200")))
+          val rejected = user.expectResponse()
+          val rejectedBody = rejected.entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem))
+          rejectedBody.ensureSubscription()
+          network.sendFrame(GoAwayFrame(1, ErrorCode.NO_ERROR))
+          barrier()
+          rejectedBody.request(1).expectError()
+          network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+          user.expectResponse().status shouldBe StatusCodes.OK
+          user.responseIn.expectComplete()
+          assertNoNewHeaders(network.toNet.drainToComplete())
+        })
+
+      "finish accepted upload trailers before closing the transport".inAssertAllStagesStopped(new QueuedRequests {
+        val chunks = TestPublisher.probe[ChunkStreamPart]()
+        offer(Post("https://www.example.com/",
+          HttpEntity.Chunked(
+            ContentTypes.`application/octet-stream`, Source.fromPublisher(chunks))))
+        network.expectDecodedResponseHEADERSPairs(1, endStream = false)
+        network.sendFrame(GoAwayFrame(1, ErrorCode.NO_ERROR))
+        barrier()
+        network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+        user.expectResponse().status shouldBe StatusCodes.OK
+        user.responseIn.expectComplete()
+        chunks.sendNext(Chunk(ByteString("tail")))
+        network.expectDATA(1, endStream = false, ByteString("tail"))
+        chunks.sendNext(LastChunk(trailer = List(RawHeader("x-trailer", "done"))))
+        chunks.sendComplete()
+        network.expectDecodedResponseHEADERSPairs(1, endStream = true) shouldEqual Seq("x-trailer" -> "done")
+        assertNoNewHeaders(network.toNet.drainToComplete())
+      })
+
+      "fail the connection for a peer error GOAWAY".inAssertAllStagesStopped(new QueuedRequests {
+        offer()
+        network.expect[HeadersFrame]().streamId shouldBe 1
+        network.sendFrame(GoAwayFrame(1, ErrorCode.INTERNAL_ERROR))
+        user.responseIn.request(1).expectError() shouldBe a[Http2Compliance.Http2ProtocolException]
+        network.expectGOAWAY(0)._2 shouldBe ErrorCode.INTERNAL_ERROR
+        network.toNet.expectComplete()
+      })
+
+      "keep reading flow-control updates for an accepted upload while retiring".inAssertAllStagesStopped(
+        new QueuedRequests {
+          network.sendSETTING(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, 0)
+          network.expectSettingsAck()
+          val upload = TestPublisher.probe[ByteString]()
+          offer(Post("https://www.example.com/",
+            HttpEntity.Chunked.fromData(
+              ContentTypes.`application/octet-stream`, Source.fromPublisher(upload))))
+          network.expect[HeadersFrame]().streamId shouldBe 1
+          network.sendFrame(GoAwayFrame(1, ErrorCode.NO_ERROR))
+          barrier()
+          network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+          user.expectResponse().status shouldBe StatusCodes.OK
+          user.responseIn.expectComplete()
+          upload.sendNext(ByteString("last"))
+          network.expectNoBytes(100.millis)
+          network.sendWINDOW_UPDATE(1, 4)
+          network.expectDATA(1, endStream = false, ByteString("last"))
+          upload.sendComplete()
+          network.expectDATA(1, endStream = true, ByteString.empty)
+          assertNoNewHeaders(network.toNet.drainToComplete())
+        })
+
+      "finish an accepted upload after its response and the outer response stream complete".inAssertAllStagesStopped(
+        new QueuedRequests {
+          val upload = TestPublisher.probe[ByteString]()
+          offer(Post("https://www.example.com/",
+            HttpEntity.Chunked.fromData(
+              ContentTypes.`application/octet-stream`, Source.fromPublisher(upload))))
+          network.expect[HeadersFrame]().streamId shouldBe 1
+          network.sendFrame(GoAwayFrame(1, ErrorCode.NO_ERROR))
+          barrier()
+          network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+          user.expectResponse().status shouldBe StatusCodes.OK
+          user.responseIn.expectComplete()
+          upload.sendNext(ByteString("last"))
+          network.expectDATA(1, endStream = false, ByteString("last"))
+          upload.sendComplete()
+          network.expectDATA(1, endStream = true, ByteString.empty)
+          assertNoNewHeaders(network.toNet.drainToComplete())
+        })
+    }
+
     "delay stage completion" should {
+
+      "preserve a completed response entity when network EOF is queued after consumption".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val response = user.expectResponse()
+          response.entity shouldBe a[HttpEntity.Chunked]
+          network.sendDATA(1, endStream = true, ByteString("received"))
+          response.entity.dataBytes.runWith(Sink.seq).futureValue.foldLeft(ByteString.empty)(_ ++ _) shouldEqual
+          ByteString("received")
+          network.fromNet.sendComplete()
+          user.responseIn.expectComplete()
+          network.toNet.cancel()
+          user.requestOut.sendComplete()
+        })
+
+      "preserve a completed response entity when network EOF is queued before consumption".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val response = user.expectResponse()
+          response.entity shouldBe a[HttpEntity.Chunked]
+          network.sendDATA(1, endStream = true, ByteString("received"))
+          network.fromNet.sendComplete()
+          response.entity.dataBytes.runWith(Sink.seq).futureValue.foldLeft(ByteString.empty)(_ ++ _) shouldEqual
+          ByteString("received")
+          user.responseIn.expectComplete()
+          network.toNet.cancel()
+          user.requestOut.sendComplete()
+        })
+
+      "fail an unfinished response entity when network EOF is queued before consumption".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val response = user.expectResponse()
+          response.entity shouldBe a[HttpEntity.Chunked]
+          network.sendDATA(1, endStream = false, ByteString("received"))
+          network.fromNet.sendComplete()
+          response.entity.dataBytes.runWith(Sink.seq).failed.futureValue shouldBe a[Exception]
+          user.responseIn.expectComplete()
+          network.toNet.cancel()
+          user.requestOut.sendComplete()
+        })
+
+      "preserve trailers when network EOF is queued before consumption".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val response = user.expectResponse()
+          network.sendDATA(1, endStream = false, ByteString("received"))
+          network.sendHEADERS(1, endStream = true, Seq(RawHeader("grpc-status", "0")))
+          network.fromNet.sendComplete()
+          response.entity.asInstanceOf[Chunked].chunks.runWith(Sink.seq).futureValue shouldBe
+          Seq(Chunk(ByteString("received")), LastChunk("", List(RawHeader("grpc-status", "0"))))
+          user.responseIn.expectComplete()
+          network.toNet.cancel()
+        })
+
+      for (completeFirst <- Seq(true, false))
+        s"isolate complete and unfinished entities when network EOF is queued (completeFirst=$completeFirst)".inAssertAllStagesStopped(
+          new TestSetup with NetProbes {
+            user.emitRequest(Get("https://www.example.com/"))
+            user.emitRequest(Get("https://www.example.com/"))
+            network.expectDecodedResponseHEADERSPairs(1)
+            network.expectDecodedResponseHEADERSPairs(3)
+            val completeId = if (completeFirst) 1 else 3
+            val unfinishedId = if (completeFirst) 3 else 1
+            val responses = Seq(1, 3).map { id =>
+              network.sendHEADERS(id, endStream = false, Seq(RawHeader(":status", "200")))
+              id -> user.expectResponse()
+            }.toMap
+            val complete = responses(completeId)
+            val unfinished = responses(unfinishedId)
+            network.sendDATA(completeId, endStream = true, ByteString("complete"))
+            network.sendDATA(unfinishedId, endStream = false, ByteString("partial"))
+            network.fromNet.sendComplete()
+            user.responseIn.expectComplete()
+            unfinished.entity.dataBytes.runWith(Sink.seq).failed.futureValue shouldBe a[Exception]
+            complete.entity.dataBytes.runWith(Sink.seq).futureValue.foldLeft(ByteString.empty)(_ ++ _) shouldBe
+            ByteString("complete")
+            network.toNet.cancel()
+          })
+
+      "deliver a queued response despite a missing sibling when network EOF is queued".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(Get("https://www.example.com/"))
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+          network.expectDecodedResponseHEADERSPairs(3)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          network.sendDATA(1, endStream = true, ByteString("complete"))
+          network.fromNet.sendComplete()
+          val response = user.expectResponse()
+          user.responseIn.expectComplete()
+          network.expectWindowUpdate()
+          network.toNet.expectComplete()
+          response.entity.dataBytes.runWith(Sink.seq).futureValue.foldLeft(ByteString.empty)(_ ++ _) shouldBe
+          ByteString("complete")
+          network.toNet.cancel()
+        })
+
+      "drain a backpressured entity when network EOF is queued".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val entity = user.expectResponse().entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem))
+          network.sendDATA(1, endStream = true, ByteString("received"))
+          network.fromNet.sendComplete()
+          user.responseIn.expectComplete()
+          entity.requestNext() shouldBe ByteString("received")
+          entity.expectComplete()
+          network.toNet.cancel()
+        })
+
+      "release an entity cancelled after network EOF is queued".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val response = user.expectResponse()
+          network.sendDATA(1, endStream = true, ByteString("received"))
+          network.fromNet.sendComplete()
+          user.responseIn.expectComplete()
+          response.entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem)).cancel()
+          network.toNet.cancel()
+        })
+
+      "cancel an unfinished upload without discarding its completed response when network EOF is queued".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          val upload = TestPublisher.probe[ByteString]()
+          user.emitRequest(Post("https://www.example.com/",
+            HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(upload))))
+          network.expectDecodedHEADERS(1, endStream = false)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val response = user.expectResponse()
+          network.sendDATA(1, endStream = true, ByteString("received"))
+          network.fromNet.sendComplete()
+          user.responseIn.expectComplete()
+          upload.expectCancellation()
+          network.expectWindowUpdate()
+          network.toNet.expectComplete()
+          response.entity.dataBytes.runWith(Sink.seq).futureValue.foldLeft(ByteString.empty)(_ ++ _) shouldBe
+          ByteString("received")
+        })
+
+      "complete an idle connection when network EOF is queued".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.responseIn.ensureSubscription()
+          network.fromNet.sendComplete()
+          user.responseIn.expectComplete()
+          network.toNet.expectComplete()
+        })
+
+      "retain an empty response when network EOF is queued".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+          network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+          network.fromNet.sendComplete()
+          user.expectResponse().entity shouldBe HttpEntity.Empty
+          user.responseIn.expectComplete()
+          network.toNet.expectComplete()
+        })
+
+      "release a partially consumed entity when network EOF is queued".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          override def settings: ClientConnectionSettings =
+            super.settings.mapHttp2Settings(_.withRequestEntityChunkSize(1))
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val response = user.expectResponse()
+          network.sendDATA(1, endStream = true, ByteString("x" * 128))
+          network.fromNet.sendComplete()
+          user.responseIn.expectComplete()
+          network.expectWindowUpdate()
+          network.toNet.expectComplete()
+          val entity = response.entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem))
+          entity.requestNext() shouldBe ByteString("x")
+          entity.cancel()
+        })
 
       "until in-flight responses are received".inAssertAllStagesStopped(new TestSetup with NetProbes {
         // Given an in-flight request...
@@ -1064,6 +1460,8 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
     private lazy val responseIn = TestSubscriber.probe[HttpResponse]()
     private lazy val requestOut = TestPublisher.probe[HttpRequest]()
 
+    def requestSource: Source[HttpRequest, NotUsed] = Source.fromPublisher(requestOut)
+
     def netFlow: Flow[ByteString, ByteString, NotUsed]
 
     // hook to modify client, for example to add attributes
@@ -1080,7 +1478,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
 
     netFlow
       .join(theClient)
-      .join(Flow.fromSinkAndSource(Sink.fromSubscriber(responseIn), Source.fromPublisher(requestOut)))
+      .join(Flow.fromSinkAndSource(Sink.fromSubscriber(responseIn), requestSource))
       .withAttributes(Attributes.inputBuffer(1, 1))
       .run()
 

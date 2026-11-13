@@ -15,17 +15,16 @@ package org.apache.pekko.http.impl.engine.http2
 
 import java.net.InetSocketAddress
 
-import scala.concurrent.{ Future, Promise }
 import scala.concurrent.duration._
+import scala.concurrent.{ Future, Promise }
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.event.Logging
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
-import pekko.http.scaladsl.{ ClientTransport, Http }
+import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.http.scaladsl.model.{
-  headers,
   AttributeKey,
   AttributeKeys,
   ContentTypes,
@@ -38,17 +37,18 @@ import pekko.http.scaladsl.model.{
   RequestResponseAssociation,
   StatusCode,
   StatusCodes,
-  Uri
+  Uri,
+  headers
 }
-import pekko.http.scaladsl.model.headers.HttpEncodings
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.Http2ClientSettings
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.http.scaladsl.unmarshalling.Unmarshal
-import pekko.stream.{ KillSwitches, StreamTcpException, UniqueKillSwitch }
+import pekko.http.scaladsl.{ ClientTransport, Http }
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
-import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.stream.testkit.scaladsl.StreamTestKit
+import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
+import pekko.stream.{ KillSwitches, StreamTcpException, UniqueKillSwitch }
 import pekko.testkit.TestProbe
 import pekko.util.ByteString
 
@@ -539,5 +539,281 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
         setup.shutdown()
         // and then assert that all stages, substreams in particular, are stopped
       }
+  }
+}
+
+class Http2PersistentEofSpec extends PekkoSpecWithMaterializer with ScalaFutures {
+  import pekko.http.impl.engine.http2.client.PersistentConnection
+  import pekko.http.scaladsl.model.headers.RawHeader
+
+  case class RequestId(id: Int) extends RequestResponseAssociation
+  val requestId = AttributeKey[RequestId]("eof-request-id")
+  implicit val executionContext: scala.concurrent.ExecutionContext = system.dispatcher
+  val address = new InetSocketAddress("localhost", 12345)
+  val settings = ClientConnectionSettings(system)
+
+  "A managed HTTP/2 connection" should {
+    "drain responses after clean read-EOF cancellation and reconnect without duplicate errors" in
+    StreamTestKit.assertAllStagesStopped {
+      val connections = TestProbe()
+      val connectionFlow = Flow.fromMaterializer { (_, _) =>
+        val requests = TestSubscriber.probe[HttpRequest]()
+        val responses = TestPublisher.probe[HttpResponse]()
+        connections.ref ! ((requests, responses))
+        Flow.fromSinkAndSource(Sink.fromSubscriber(requests), Source.fromPublisher(responses))
+          .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(address, address)))
+      }.mapMaterializedValue(_.flatten)
+      val input = TestPublisher.probe[HttpRequest]()
+      val output = TestSubscriber.probe[HttpResponse]()
+      Source.fromPublisher(input)
+        .via(PersistentConnection.managedConnection(connectionFlow, settings.http2Settings))
+        .runWith(Sink.fromSubscriber(output))
+      output.request(4)
+      input.sendNext(HttpRequest(uri = "/one").addAttribute(requestId, RequestId(1)))
+      val (requests, responses) =
+        connections.expectMsgType[(TestSubscriber.Probe[HttpRequest], TestPublisher.Probe[HttpResponse])]
+      val first = requests.requestNext()
+      input.sendNext(HttpRequest(uri = "/two").addAttribute(requestId, RequestId(2)))
+      requests.requestNext()
+      requests.request(1) // leave demand for the next request when the old connection stops accepting requests
+      requests.cancel(Http2Demux.RequestAdmissionClosed)
+      responses.sendNext(HttpResponse(entity = "received").withAttributes(first.attributes))
+      val valid = output.expectNext()
+      valid.status shouldBe StatusCodes.OK
+      valid.attribute(requestId) shouldBe Some(RequestId(1))
+      // This request must survive in the input slot while the old response side finishes draining.
+      input.sendNext(HttpRequest(uri = "/three").addAttribute(requestId, RequestId(3)))
+      responses.sendComplete()
+      val missing = output.expectNext()
+      missing.status shouldBe StatusCodes.BadGateway
+      missing.attribute(requestId) shouldBe Some(RequestId(2))
+      val (nextRequests, nextResponses) =
+        connections.expectMsgType[(TestSubscriber.Probe[HttpRequest], TestPublisher.Probe[HttpResponse])]
+      val third = nextRequests.requestNext()
+      third.attribute(requestId) shouldBe Some(RequestId(3))
+      nextResponses.sendNext(HttpResponse(entity = "next").withAttributes(third.attributes))
+      output.expectNext().attribute(requestId) shouldBe Some(RequestId(3))
+      input.sendComplete()
+      nextRequests.expectComplete()
+      nextResponses.sendComplete()
+      output.expectComplete()
+    }
+
+    for (missingSibling <- Seq(false, true)) {
+      s"preserve a complete response body after queued network EOF (missing sibling = $missingSibling)" in
+      StreamTestKit.assertAllStagesStopped {
+        class Network extends Http2FrameHpackSupport {
+          val fromNet = TestPublisher.probe[ByteString]()
+          val frameProbeDelegate = Http2FrameProbe()
+          def sendBytes(bytes: ByteString): Unit = fromNet.sendNext(bytes)
+          def handshake(): Unit = {
+            expectBytes(Http2Protocol.ClientConnectionPreface)
+            expectSETTINGS()
+            // The first request starts this managed connection, so it may precede the peer SETTINGS.
+            expectDecodedResponseHEADERSPairs(1)
+            sendFrame(FrameEvent.SettingsFrame(Nil))
+            expectSettingsAck()
+          }
+        }
+        val connections = TestProbe()
+        val connectionFlow = Flow.fromMaterializer { (_, _) =>
+          val network = new Network
+          connections.ref ! network
+          val transport = Flow.fromSinkAndSource(network.sink, Source.fromPublisher(network.fromNet))
+          Http2Blueprint.clientStack(settings, system.log, NoOpTelemetry).join(transport)
+            .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(address, address)))
+        }.mapMaterializedValue(_.flatten)
+        val input = TestPublisher.probe[HttpRequest]()
+        val output = TestSubscriber.probe[HttpResponse]()
+        Source.fromPublisher(input)
+          .via(PersistentConnection.managedConnection(connectionFlow, settings.http2Settings))
+          .runWith(Sink.fromSubscriber(output))
+        output.request(3)
+        input.sendNext(HttpRequest(uri = "https://example.com/one").addAttribute(requestId, RequestId(1)))
+        val network = connections.expectMsgType[Network]
+        network.handshake()
+        if (missingSibling) {
+          input.sendNext(HttpRequest(uri = "https://example.com/two").addAttribute(requestId, RequestId(2)))
+          network.expectDecodedResponseHEADERSPairs(3)
+        }
+        network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+        // Without a sibling, receiving the headers removes the last ongoing request before EOF.
+        val delivered = if (missingSibling) None else Some(output.expectNext())
+        network.sendDATA(1, endStream = true, ByteString("received"))
+        network.fromNet.sendComplete()
+        val valid = delivered.getOrElse(output.expectNext())
+        valid.status shouldBe StatusCodes.OK
+        valid.attribute(requestId) shouldBe Some(RequestId(1))
+        if (missingSibling) {
+          val missing = output.expectNext()
+          missing.status shouldBe StatusCodes.BadGateway
+          missing.attribute(requestId) shouldBe Some(RequestId(2))
+        }
+        input.sendNext(HttpRequest(uri = "https://example.com/three").addAttribute(requestId, RequestId(3)))
+        val next = connections.expectMsgType[Network]
+        next.handshake()
+        next.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "204")))
+        output.expectNext().attribute(requestId) shouldBe Some(RequestId(3))
+        // Reconnection proves EOF was processed before the old entity is consumed.
+        valid.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe ByteString("received")
+        input.sendComplete()
+        next.fromNet.sendComplete()
+        output.expectComplete()
+        network.plainDataProbe.cancel()
+        next.plainDataProbe.cancel()
+      }
+    }
+  }
+}
+
+class Http2PersistentGoAwaySpec extends PekkoSpecWithMaterializer with ScalaFutures {
+  import pekko.http.impl.engine.http2.client.PersistentConnection
+  import pekko.http.scaladsl.model.headers.RawHeader
+
+  case class RequestId(id: Int) extends RequestResponseAssociation
+  val requestId = AttributeKey[RequestId]("goaway-request-id")
+  implicit val executionContext: scala.concurrent.ExecutionContext = system.dispatcher
+  val address = new InetSocketAddress("localhost", 12345)
+  val settings = ClientConnectionSettings(system)
+
+  "A managed HTTP/2 connection receiving GOAWAY" should {
+    for ((missingSibling, deliveredSibling) <- Seq((false, false), (true, false), (true, true))) {
+      s"retire after GOAWAY without replaying submitted requests or losing a delivered body (missing sibling = $missingSibling, sibling headers delivered = $deliveredSibling)" in
+      StreamTestKit.assertAllStagesStopped {
+        class Network extends Http2FrameHpackSupport {
+          val fromNet = TestPublisher.probe[ByteString]()
+          val frameProbeDelegate = Http2FrameProbe()
+          def sendBytes(bytes: ByteString): Unit = fromNet.sendNext(bytes)
+          def handshake(): Unit = {
+            expectBytes(Http2Protocol.ClientConnectionPreface)
+            expectSETTINGS()
+            // The first request starts this managed connection, so it may precede the peer SETTINGS.
+            expectDecodedResponseHEADERSPairs(1)
+            sendFrame(FrameEvent.SettingsFrame(Nil))
+            expectSettingsAck()
+          }
+        }
+        val connections = TestProbe()
+        val connectionFlow = Flow.fromMaterializer { (_, _) =>
+          val network = new Network
+          connections.ref ! network
+          val transport = Flow.fromSinkAndSource(network.sink, Source.fromPublisher(network.fromNet))
+          Http2Blueprint.clientStack(settings, system.log, NoOpTelemetry).join(transport)
+            .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(address, address)))
+        }.mapMaterializedValue(_.flatten)
+        val input = TestPublisher.probe[HttpRequest]()
+        val output = TestSubscriber.probe[HttpResponse]()
+        Source.fromPublisher(input)
+          .via(PersistentConnection.managedConnection(connectionFlow, settings.http2Settings))
+          .runWith(Sink.fromSubscriber(output))
+        output.request(3)
+        input.sendNext(HttpRequest(uri = "https://example.com/one").addAttribute(requestId, RequestId(1)))
+        val network = connections.expectMsgType[Network]
+        network.handshake()
+        if (missingSibling) {
+          input.sendNext(HttpRequest(uri = "https://example.com/two").addAttribute(requestId, RequestId(2)))
+          network.expectDecodedResponseHEADERSPairs(3)
+        }
+        val refusedResponse = if (deliveredSibling) {
+          network.sendHEADERS(3, endStream = false, Seq(RawHeader(":status", "200")))
+          val response = output.expectNext()
+          response.attribute(requestId) shouldBe Some(RequestId(2))
+          Some(response)
+        } else None
+        network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+        // The response is already delivered, so its association is no longer an ongoing request.
+        val valid = output.expectNext()
+        network.sendFrame(FrameEvent.GoAwayFrame(1, Http2Protocol.ErrorCode.NO_ERROR, ByteString.empty))
+        val ping = ByteString("goaway01")
+        network.sendFrame(FrameEvent.PingFrame(ack = false, ping))
+        network.expect[FrameEvent.PingFrame]() shouldBe FrameEvent.PingFrame(ack = true, ping)
+        // Submit a new request after observed GOAWAY processing while stream 1 still needs DATA.
+        input.sendNext(HttpRequest(uri = "https://example.com/three").addAttribute(requestId, RequestId(3)))
+        network.sendDATA(1, endStream = true, ByteString("received"))
+        valid.status shouldBe StatusCodes.OK
+        valid.attribute(requestId) shouldBe Some(RequestId(1))
+        if (missingSibling && !deliveredSibling) {
+          val missing = output.expectNext()
+          missing.status shouldBe StatusCodes.BadGateway
+          missing.attribute(requestId) shouldBe Some(RequestId(2))
+        }
+        refusedResponse.foreach { response =>
+          // Headers already consumed the association: fail only the entity, never emit a second response.
+          response.entity.dataBytes.runWith(Sink.ignore).failed.futureValue shouldBe a[Throwable]
+        }
+        val next = connections.expectMsgType[Network]
+        next.handshake()
+        next.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "204")))
+        output.expectNext().attribute(requestId) shouldBe Some(RequestId(3))
+        // A successful new connection proves retirement before the old entity is consumed.
+        valid.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe ByteString("received")
+        input.sendComplete()
+        next.fromNet.sendComplete()
+        output.expectComplete()
+        network.fromNet.sendComplete()
+        network.plainDataProbe.cancel()
+        next.plainDataProbe.cancel()
+      }
+    }
+    "finish an accepted upload after its response and a replacement connection have completed" in
+    StreamTestKit.assertAllStagesStopped {
+      class Network extends Http2FrameHpackSupport {
+        val fromNet = TestPublisher.probe[ByteString]()
+        val frameProbeDelegate = Http2FrameProbe()
+        def sendBytes(bytes: ByteString): Unit = fromNet.sendNext(bytes)
+        def handshake(endStream: Boolean): Unit = {
+          expectBytes(Http2Protocol.ClientConnectionPreface)
+          expectSETTINGS()
+          expectDecodedResponseHEADERSPairs(1, endStream)
+          sendFrame(FrameEvent.SettingsFrame(Nil))
+          expectSettingsAck()
+        }
+      }
+      val connections = TestProbe()
+      val connectionFlow = Flow.fromMaterializer { (_, _) =>
+        val network = new Network
+        connections.ref ! network
+        val transport = Flow.fromSinkAndSource(network.sink, Source.fromPublisher(network.fromNet))
+        Http2Blueprint.clientStack(settings, system.log, NoOpTelemetry).join(transport)
+          .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(address, address)))
+      }.mapMaterializedValue(_.flatten)
+      val input = TestPublisher.probe[HttpRequest]()
+      val output = TestSubscriber.probe[HttpResponse]()
+      val upload = TestPublisher.probe[HttpEntity.ChunkStreamPart]()
+      Source.fromPublisher(input)
+        .via(PersistentConnection.managedConnection(connectionFlow, settings.http2Settings))
+        .runWith(Sink.fromSubscriber(output))
+      output.request(2)
+      input.sendNext(HttpRequest(method = HttpMethods.POST, uri = "https://example.com/upload",
+        entity = HttpEntity.Chunked(ContentTypes.`application/octet-stream`, Source.fromPublisher(upload)))
+        .addAttribute(requestId, RequestId(1)))
+      val network = connections.expectMsgType[Network]
+      network.handshake(endStream = false)
+      upload.sendNext(HttpEntity.Chunk(ByteString("first")))
+      network.expectDATA(1, endStream = false, ByteString("first"))
+      network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "204")))
+      output.expectNext().attribute(requestId) shouldBe Some(RequestId(1))
+      network.sendFrame(FrameEvent.GoAwayFrame(1, Http2Protocol.ErrorCode.NO_ERROR, ByteString.empty))
+      val ping = ByteString("upload01")
+      network.sendFrame(FrameEvent.PingFrame(ack = false, ping))
+      network.expect[FrameEvent.PingFrame]() shouldBe FrameEvent.PingFrame(ack = true, ping)
+      input.sendNext(HttpRequest(uri = "https://example.com/next").addAttribute(requestId, RequestId(2)))
+      val next = connections.expectMsgType[Network]
+      next.handshake(endStream = true)
+      next.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "204")))
+      output.expectNext().attribute(requestId) shouldBe Some(RequestId(2))
+      // The managed wrapper has retired the connection, but this upload belongs to its accepted stream.
+      upload.sendNext(HttpEntity.Chunk(ByteString("last")))
+      network.expectDATA(1, endStream = false, ByteString("last"))
+      upload.sendNext(HttpEntity.LastChunk(trailer = List(RawHeader("upload-result", "complete"))))
+      upload.sendComplete()
+      network.expectDecodedResponseHEADERSPairs(1, endStream = true) shouldBe Seq("upload-result" -> "complete")
+      input.sendComplete()
+      next.fromNet.sendComplete()
+      output.expectComplete()
+      network.fromNet.sendComplete()
+      network.plainDataProbe.cancel()
+      next.plainDataProbe.cancel()
+    }
   }
 }
