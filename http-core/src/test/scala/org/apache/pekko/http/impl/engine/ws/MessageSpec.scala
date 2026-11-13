@@ -632,20 +632,6 @@ class MessageSpec extends PekkoSpecWithMaterializer(
         netOut.expectComplete()
 
       }
-      List(1012, 1013, 1014).foreach { code =>
-        s"preserve registered peer close code $code" in new ClientTestSetup {
-          val reason = "peer service unavailable"
-          pushInput(closeFrame(code, mask = false, msg = reason))
-          val error = expectError(messageIn).asInstanceOf[PeerClosedConnectionException]
-          error.closeCode shouldEqual code
-          error.closeReason shouldEqual reason
-
-          expectCloseCodeOnNetwork(code)
-          messageOut.sendError(error)
-          netIn.sendComplete()
-          netOut.expectComplete()
-        }
-      }
       "after receiving error close frame with close code and without reason" in new ServerTestSetup {
         pushInput(closeFrame(Protocol.CloseCodes.UnexpectedCondition, mask = true))
         val error = expectError(messageIn).asInstanceOf[PeerClosedConnectionException]
@@ -668,6 +654,38 @@ class MessageSpec extends PekkoSpecWithMaterializer(
         messageOut.sendError(error)
         netOut.expectComplete()
         netIn.expectCancellation()
+      }
+      List(
+        Protocol.CloseCodes.InconsistentData,
+        Protocol.CloseCodes.ServiceRestart,
+        Protocol.CloseCodes.TryAgainLater,
+        Protocol.CloseCodes.BadGateway,
+        3000,
+        4999).foreach { code =>
+        s"after receiving error close frame with valid close code $code (client)" in new ClientTestSetup {
+          val reason = "peer service unavailable"
+          pushInput(closeFrame(code, mask = false, msg = reason))
+          val error = expectError(messageIn).asInstanceOf[PeerClosedConnectionException]
+          error.closeCode shouldEqual code
+          error.closeReason shouldEqual reason
+
+          expectCloseCodeOnNetwork(code)
+          messageOut.sendError(error)
+          netIn.sendComplete()
+          netOut.expectComplete()
+        }
+        s"after receiving error close frame with valid close code $code (server)" in new ServerTestSetup {
+          val reason = "peer service unavailable"
+          pushInput(closeFrame(code, mask = true, msg = reason))
+          val error = expectError(messageIn).asInstanceOf[PeerClosedConnectionException]
+          error.closeCode shouldEqual code
+          error.closeReason shouldEqual reason
+
+          expectCloseCodeOnNetwork(code)
+          messageOut.sendError(error)
+          netOut.expectComplete()
+          netIn.expectCancellation()
+        }
       }
       "after peer closes connection without sending a close frame" in new ServerTestSetup {
         netIn.expectRequest()
