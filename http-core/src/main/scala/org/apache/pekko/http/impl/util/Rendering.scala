@@ -17,12 +17,14 @@ import java.nio.CharBuffer
 import java.nio.charset.Charset
 import java.text.{ DecimalFormat, DecimalFormatSymbols }
 import java.util.Locale
-import org.apache.pekko
-import pekko.annotation.InternalApi
 
 import scala.annotation.tailrec
-import scala.collection.{ immutable, LinearSeq }
+import scala.collection.{ LinearSeq, immutable }
+
 import org.parboiled2.{ CharPredicate, CharUtils }
+
+import org.apache.pekko
+import pekko.annotation.InternalApi
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.scaladsl.model.HttpHeader
 import pekko.util.{ ByteString, ByteStringBuilder }

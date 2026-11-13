@@ -13,11 +13,11 @@
 
 package org.apache.pekko.http.scaladsl.util
 
+import scala.collection.BuildFrom
+import scala.concurrent._
+import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
-import scala.collection.BuildFrom
-import scala.concurrent.duration.Duration
-import scala.concurrent._
 
 /**
  * Provides alternative implementations of the basic transformation operations defined on [[scala.concurrent.Future]],

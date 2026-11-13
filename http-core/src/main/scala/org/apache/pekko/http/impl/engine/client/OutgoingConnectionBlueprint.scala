@@ -13,30 +13,30 @@
 
 package org.apache.pekko.http.impl.engine.client
 
+import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.Promise
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
-import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ParserSettings }
-import pekko.util.ConstantFun
-
-import scala.annotation.tailrec
-import scala.concurrent.Promise
-import scala.collection.mutable.ListBuffer
-import pekko.stream.TLSProtocol._
-import pekko.util.ByteString
 import pekko.event.LoggingAdapter
-import pekko.stream._
-import pekko.stream.scaladsl._
+import pekko.http.impl.engine.parsing._
+import pekko.http.impl.engine.rendering.{ HttpRequestRendererFactory, RequestRenderingContext }
+import pekko.http.impl.util.LogByteStringTools._
+import pekko.http.impl.util._
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.headers
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, IllegalResponseException, ResponseEntity }
-import pekko.http.impl.engine.rendering.{ HttpRequestRendererFactory, RequestRenderingContext }
-import pekko.http.impl.engine.parsing._
-import pekko.http.impl.util._
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ParserSettings }
+import pekko.stream.TLSProtocol._
+import pekko.stream._
+import pekko.stream.scaladsl._
 import pekko.stream.stage.GraphStage
 import pekko.stream.stage.GraphStageLogic
 import pekko.stream.stage.{ InHandler, OutHandler }
-import pekko.http.impl.util.LogByteStringTools._
+import pekko.util.ByteString
+import pekko.util.ConstantFun
 
 /**
  * INTERNAL API

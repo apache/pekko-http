@@ -22,7 +22,6 @@ import scala.jdk.FutureConverters._
 import scala.util.Try
 
 import org.apache.pekko
-import pekko.{ stream, NotUsed }
 import pekko.actor.{ ActorSystem, ClassicActorSystemProvider, ExtendedActorSystem, ExtensionId, ExtensionIdProvider }
 import pekko.event.LoggingAdapter
 import pekko.http._
@@ -30,14 +29,15 @@ import pekko.http.impl.util.JavaMapping
 import pekko.http.impl.util.JavaMapping.HttpsConnectionContext
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model._
-import pekko.http.scaladsl.{ model => sm }
 import pekko.http.javadsl.model.ws._
 import pekko.http.javadsl.settings.{ ClientConnectionSettings, ConnectionPoolSettings, ServerSettings }
+import pekko.http.scaladsl.{ model => sm }
 import pekko.japi.Pair
-import pekko.stream.TLSProtocol._
 import pekko.stream.Materializer
+import pekko.stream.TLSProtocol._
 import pekko.stream.javadsl.{ BidiFlow, Flow }
 import pekko.stream.scaladsl.Keep
+import pekko.{ NotUsed, stream }
 
 object Http extends ExtensionId[Http] with ExtensionIdProvider {
   override def get(system: ActorSystem): Http = super.get(system)

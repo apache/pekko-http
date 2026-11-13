@@ -14,19 +14,19 @@
 package org.apache.pekko.http.impl.engine.http2
 package framing
 
+import scala.annotation.tailrec
+
 import org.apache.pekko
-import pekko.event.LoggingAdapter
-import pekko.stream.Attributes
-import pekko.stream.impl.io.ByteStringParser
-import pekko.stream.stage.GraphStageLogic
-import pekko.util.OptionVal
-import Http2Protocol.{ ErrorCode, Flags, FrameType, SettingIdentifier }
 import pekko.annotation.InternalApi
+import pekko.event.LoggingAdapter
 import FrameEvent._
 import pekko.http.impl.engine.http2.Http2Compliance.Http2ProtocolException
+import Http2Protocol.{ ErrorCode, Flags, FrameType, SettingIdentifier }
+import pekko.stream.Attributes
+import pekko.stream.impl.io.ByteStringParser
 import pekko.stream.impl.io.ByteStringParser.ByteReader
-
-import scala.annotation.tailrec
+import pekko.stream.stage.GraphStageLogic
+import pekko.util.OptionVal
 
 /** INTERNAL API */
 @InternalApi

@@ -17,11 +17,11 @@ import java.nio.charset.StandardCharsets
 
 import org.apache.pekko
 import pekko.NotUsed
-import pekko.util.ByteString
-import pekko.stream.scaladsl.{ Flow, Source }
-import Protocol.Opcode
 import pekko.annotation.InternalApi
+import Protocol.Opcode
 import pekko.http.scaladsl.model.ws._
+import pekko.stream.scaladsl.{ Flow, Source }
+import pekko.util.ByteString
 
 /**
  * Renders messages to full frames.

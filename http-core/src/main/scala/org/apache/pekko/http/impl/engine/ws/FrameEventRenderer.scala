@@ -13,13 +13,13 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import scala.annotation.tailrec
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.stream.stage._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.util.ByteString
-
-import scala.annotation.tailrec
 
 /**
  * Renders FrameEvents to ByteString.

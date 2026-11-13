@@ -14,14 +14,15 @@
 package org.apache.pekko.http.impl.engine.http2
 package framing
 
+import java.nio.ByteOrder
+
+import scala.annotation.tailrec
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.util.ByteString
-
-import java.nio.ByteOrder
-import scala.annotation.tailrec
 
 /** INTERNAL API */
 @InternalApi

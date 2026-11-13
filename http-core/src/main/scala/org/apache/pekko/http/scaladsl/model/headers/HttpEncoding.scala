@@ -14,10 +14,10 @@
 package org.apache.pekko.http.scaladsl.model.headers
 
 import org.apache.pekko
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.WithQValue
-import pekko.http.impl.util.JavaMapping.Implicits._
 
 sealed abstract class HttpEncodingRange extends jm.headers.HttpEncodingRange with ValueRenderable
     with WithQValue[HttpEncodingRange] {

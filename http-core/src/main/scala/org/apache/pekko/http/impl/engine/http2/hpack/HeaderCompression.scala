@@ -15,14 +15,13 @@ package org.apache.pekko.http.impl.engine.http2.hpack
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.http2._
 import pekko.http.impl.util.ByteStringOutputStream
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler, StageLogging }
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.util.ByteString
-
-import FrameEvent._
 
 /**
  * INTERNAL API

@@ -16,7 +16,6 @@ package org.apache.pekko.http.impl.settings
 import scala.concurrent.duration._
 import scala.util.Try
 
-import com.typesafe.config.Config
 import org.apache.pekko
 import pekko.ConfigurationException
 import pekko.actor.{ ActorSystem, ExtendedActorSystem }
@@ -24,11 +23,13 @@ import pekko.annotation.InternalApi
 import pekko.http.ParsingErrorHandler
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ settings => js }
-import pekko.http.scaladsl.model.{ HttpHeader, HttpResponse, StatusCodes }
 import pekko.http.scaladsl.model.headers.{ Host, Server }
-import pekko.http.scaladsl.settings.{ SettingsCompanion => _, _ }
+import pekko.http.scaladsl.model.{ HttpHeader, HttpResponse, StatusCodes }
 import pekko.http.scaladsl.settings.ServerSettings.LogUnencryptedNetworkBytes
+import pekko.http.scaladsl.settings.{ SettingsCompanion => _, _ }
 import pekko.io.Inet.SocketOption
+
+import com.typesafe.config.Config
 
 /** INTERNAL API */
 @InternalApi

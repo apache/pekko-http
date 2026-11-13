@@ -14,28 +14,28 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.io.File
-import java.nio.file.Path
 import java.lang.{ Iterable => JIterable }
+import java.nio.file.Path
 import java.util.Optional
 import java.util.concurrent.{ CompletionStage, Executor }
 
 import scala.annotation.tailrec
-import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.jdk.FutureConverters._
 import scala.reflect.ClassTag
 
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.ClassicActorSystemProvider
-import pekko.util.{ ByteString, HashCode, OptionVal }
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
-import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.util.FastFuture._
 import pekko.stream.scaladsl.Flow
 import pekko.stream.{ FlowShape, Graph, Materializer, SystemMaterializer }
 import pekko.util.OptionalUtil
+import pekko.util.{ ByteString, HashCode, OptionVal }
 
 /**
  * Common base class of HttpRequest and HttpResponse.

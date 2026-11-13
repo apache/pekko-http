@@ -13,11 +13,12 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import org.apache.pekko
-import pekko.http.impl.util._
 import java.util.Optional
-import pekko.http.javadsl.{ model => jm }
+
+import org.apache.pekko
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.impl.util._
+import pekko.http.javadsl.{ model => jm }
 
 final case class ContentTypeRange(mediaRange: MediaRange, charsetRange: HttpCharsetRange) extends jm.ContentTypeRange
     with ValueRenderable {

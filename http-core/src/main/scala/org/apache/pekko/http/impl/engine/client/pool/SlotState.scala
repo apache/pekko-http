@@ -16,18 +16,18 @@ package org.apache.pekko.http.impl.engine.client.pool
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeoutException
 
+import scala.concurrent.duration._
+import scala.util.control.NoStackTrace
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.client.PoolFlow.RequestContext
 import pekko.http.impl.util._
 import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.model.{ headers, HttpResponse }
+import pekko.http.scaladsl.model.{ HttpResponse, headers }
 import pekko.http.scaladsl.settings.ConnectionPoolSettings
 import pekko.macros.LogHelper
-
-import scala.concurrent.duration._
-import scala.util.control.NoStackTrace
-import scala.util.{ Failure, Success, Try }
 
 /**
  * Internal API

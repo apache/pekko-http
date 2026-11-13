@@ -33,7 +33,7 @@ ThisBuild / JupiterKeys.junitPlatformVersion := "6.1.3"
 
 addCommandAlias("checkCodeStyle", "scalafmtCheckAll; scalafmtSbtCheck; javafmtCheckAll; +headerCheckAll")
 addCommandAlias("applyCodeStyle", "+headerCreateAll; scalafmtAll; scalafmtSbt; javafmtAll")
-addCommandAlias(name = "sortImports", value = ";scalafixEnable; scalafixAll SortImports; scalafmtAll")
+addCommandAlias(name = "sortImports", value = ";scalafixEnable; scalafixAll OrganizeImports; scalafmtAll")
 
 inThisBuild(Def.settings(
   apiURL := {
@@ -132,7 +132,6 @@ lazy val httpCore = project("http-core")
   .settings(scalaMacroSupport)
   .enablePlugins(BootstrapGenjavadoc)
   .enablePlugins(ReproducibleBuildsPlugin)
-  .disablePlugins(ScalafixPlugin)
 
 lazy val http = project("http")
   .settings(AutomaticModuleName.settings("pekko.http"))
@@ -349,6 +348,8 @@ lazy val httpScalafixRules =
 
 lazy val httpScalafixTestInput =
   Project(id = "http-scalafix-test-input", base = file("http-scalafix/scalafix-test-input"))
+    // These are exact input/output fixtures for migration rules, not production imports.
+    .settings(Compile / scalafix / unmanagedSources := Seq.empty)
     .dependsOn(http)
     .addPekkoModuleDependency("pekko-stream", "", PekkoCoreDependency.default)
     .enablePlugins(NoPublish, NoScala3)
@@ -363,6 +364,8 @@ lazy val httpScalafixTestInput =
 
 lazy val httpScalafixTestOutput =
   Project(id = "http-scalafix-test-output", base = file("http-scalafix/scalafix-test-output"))
+    // These are exact input/output fixtures for migration rules, not production imports.
+    .settings(Compile / scalafix / unmanagedSources := Seq.empty)
     .dependsOn(http)
     .addPekkoModuleDependency("pekko-stream", "", PekkoCoreDependency.default)
     .enablePlugins(NoPublish, NoScala3)

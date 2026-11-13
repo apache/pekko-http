@@ -13,10 +13,11 @@
 
 package org.apache.pekko.http.impl.model.parser
 
-import org.apache.pekko
 import org.parboiled2.Parser
-import pekko.http.scaladsl.model.headers.`Accept-Charset`
+
+import org.apache.pekko
 import pekko.http.scaladsl.model.HttpCharsetRange
+import pekko.http.scaladsl.model.headers.`Accept-Charset`
 
 private[parser] trait AcceptCharsetHeader { this: Parser with CommonRules with CommonActions =>
 

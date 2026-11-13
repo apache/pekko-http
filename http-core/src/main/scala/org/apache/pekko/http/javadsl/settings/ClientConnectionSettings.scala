@@ -18,7 +18,11 @@ import java.time.{ Duration => JDuration }
 import java.util.function.Supplier
 import java.util.{ Optional, Random }
 
-import com.typesafe.config.Config
+import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.jdk.CollectionConverters._
+import scala.jdk.DurationConverters._
+import scala.jdk.OptionConverters._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.ApiMayChange
@@ -30,10 +34,7 @@ import pekko.http.javadsl.ClientTransport
 import pekko.http.javadsl.model.headers.UserAgent
 import pekko.io.Inet.SocketOption
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.jdk.CollectionConverters._
-import scala.jdk.DurationConverters._
-import scala.jdk.OptionConverters._
+import com.typesafe.config.Config
 
 /**
  * Public API but not intended for subclassing

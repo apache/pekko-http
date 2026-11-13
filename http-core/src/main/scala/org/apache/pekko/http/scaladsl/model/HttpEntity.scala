@@ -14,12 +14,11 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.io.File
-import java.nio.file.{ Files, Path }
 import java.lang.{ Iterable => JIterable }
+import java.nio.file.{ Files, Path }
 import java.util.OptionalLong
 import java.util.concurrent.CompletionStage
 
-import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.jdk.FutureConverters._
@@ -29,15 +28,15 @@ import scala.util.control.NonFatal
 import org.apache.pekko
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.{ DoNotInherit, InternalApi }
-import pekko.util.ByteString
+import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.impl.util.{ JavaMapping, StreamUtils }
+import pekko.http.javadsl.{ model => jm }
+import pekko.http.scaladsl.util.FastFuture
+import pekko.stream._
 import pekko.stream.scaladsl._
 import pekko.stream.stage._
-import pekko.stream._
-import pekko.{ stream, Done, NotUsed }
-import pekko.http.scaladsl.util.FastFuture
-import pekko.http.javadsl.{ model => jm }
-import pekko.http.impl.util.{ JavaMapping, StreamUtils }
-import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.util.ByteString
+import pekko.{ Done, NotUsed, stream }
 
 /**
  * Models the entity (aka "body" or "content") of an HTTP message.

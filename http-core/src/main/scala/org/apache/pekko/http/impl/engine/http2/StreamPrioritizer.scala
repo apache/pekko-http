@@ -13,10 +13,9 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import org.apache.pekko.annotation.InternalApi
-
 import scala.collection.immutable
 
+import org.apache.pekko.annotation.InternalApi
 import FrameEvent.PriorityFrame
 
 /**

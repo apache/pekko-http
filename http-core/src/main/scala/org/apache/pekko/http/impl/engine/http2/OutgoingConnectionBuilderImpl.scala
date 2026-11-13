@@ -14,26 +14,27 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import java.util.concurrent.CompletionStage
+
+import scala.concurrent.{ ExecutionContext, Future }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.http2.client.PersistentConnection
-import pekko.http.scaladsl.Http.OutgoingConnection
-import pekko.http.scaladsl.model.HttpRequest
-import pekko.http.scaladsl.model.HttpResponse
-import pekko.http.scaladsl.settings.ClientConnectionSettings
-import pekko.stream.scaladsl.Flow
 import pekko.http.javadsl
 import pekko.http.javadsl.{ OutgoingConnectionBuilder => JOutgoingConnectionBuilder }
 import pekko.http.scaladsl.ConnectionContext
 import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.Http.OutgoingConnection
 import pekko.http.scaladsl.HttpsConnectionContext
 import pekko.http.scaladsl.OutgoingConnectionBuilder
+import pekko.http.scaladsl.model.HttpRequest
+import pekko.http.scaladsl.model.HttpResponse
+import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.stream.javadsl.{ Flow => JFlow }
-
-import scala.concurrent.{ ExecutionContext, Future }
+import pekko.stream.scaladsl.Flow
 
 /**
  * INTERNAL API

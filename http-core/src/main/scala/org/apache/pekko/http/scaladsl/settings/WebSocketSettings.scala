@@ -15,12 +15,12 @@ package org.apache.pekko.http.scaladsl.settings
 import java.util.Random
 import java.util.function.Supplier
 
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.annotation.DoNotInherit
 import pekko.http.impl.settings.WebSocketSettingsImpl
 import pekko.util.ByteString
-
-import scala.concurrent.duration._
 
 @DoNotInherit
 abstract class WebSocketSettings extends pekko.http.javadsl.settings.WebSocketSettings { self: WebSocketSettingsImpl =>

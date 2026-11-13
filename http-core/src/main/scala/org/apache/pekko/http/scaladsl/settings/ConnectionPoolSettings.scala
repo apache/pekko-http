@@ -13,16 +13,17 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
+import scala.util.matching.Regex
+
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.http.impl.settings.ConnectionPoolSettingsImpl
 import pekko.http.javadsl.{ settings => js }
 import pekko.http.scaladsl.ClientTransport
-import com.typesafe.config.Config
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration.FiniteDuration
-import scala.util.matching.Regex
+import com.typesafe.config.Config
 
 /**
  * Public API but not intended for subclassing

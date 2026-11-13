@@ -11,18 +11,25 @@
  * Copyright (C) 2020-2022 Lightbend Inc. <https://www.lightbend.com>
  */
 
-import sbt.{ AutoPlugin, PluginTrigger, Plugins }
-import scalafix.sbt.ScalafixPlugin
+import sbt._
+import sbt.Keys._
+import _root_.scalafix.sbt.ScalafixPlugin
 
 object ScalaFixExtraRulesPlugin extends AutoPlugin with ScalafixSupport {
   override lazy val trigger: PluginTrigger = allRequirements
 
   override lazy val requires: Plugins = ScalafixPlugin
 
-  import sbt._
-  import scalafix.sbt.ScalafixPlugin.autoImport.scalafixDependencies
-  override lazy val projectSettings: Seq[Def.Setting[?]] = super.projectSettings ++ {
-    ThisBuild / scalafixDependencies ++= Seq(
-      "com.nequissimus" %% "sort-imports" % "0.6.1")
+  override lazy val projectSettings = Seq(ignore(Compile), ignore(Test)) ++ Seq(Compile, Test).map { config =>
+    config / scalacOptions := {
+      val options = (config / scalacOptions).value
+      if (semanticdbEnabled.value) {
+        // OrganizeImports needs unused-import diagnostics, but must be able to repair them before warnings fail the build.
+        options.filterNot(option =>
+          Set("-Xfatal-warnings", "-Werror").contains(option) ||
+          (option.startsWith("-Wconf:") && option.toLowerCase.contains("unused import"))) :+
+        (if (scalaVersion.value.startsWith("2.12.")) "-Ywarn-unused:imports" else "-Wunused:imports")
+      } else options
+    }
   }
 }

@@ -18,10 +18,9 @@ import java.nio.charset.StandardCharsets
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ Await, Future }
 import scala.reflect.ClassTag
-import scala.util.{ Failure, Success }
 import scala.util.matching.Regex
+import scala.util.{ Failure, Success }
 
-import com.typesafe.config.Config
 import org.apache.pekko
 import pekko.actor._
 import pekko.http.impl.engine.parsing.ParserOutput.RequestStart
@@ -29,6 +28,8 @@ import pekko.http.scaladsl.model.{ HttpEntity, HttpRequest, HttpResponse }
 import pekko.stream.scaladsl.Source
 import pekko.stream.stage._
 import pekko.util.ByteString
+
+import com.typesafe.config.Config
 
 package object util {
   private[http] val UTF8 = StandardCharsets.UTF_8

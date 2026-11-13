@@ -16,6 +16,10 @@ package org.apache.pekko.http.impl.settings
 import java.net.InetSocketAddress
 import java.util.Random
 
+import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.jdk.DurationConverters._
+import scala.util.Try
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.util._
@@ -25,11 +29,8 @@ import pekko.http.scaladsl.settings.ClientConnectionSettings.LogUnencryptedNetwo
 import pekko.http.scaladsl.settings.Http2ClientSettings.Http2ClientSettingsImpl
 import pekko.http.scaladsl.settings.{ Http2ClientSettings, ParserSettings, WebSocketSettings }
 import pekko.io.Inet.SocketOption
-import com.typesafe.config.Config
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.jdk.DurationConverters._
-import scala.util.Try
+import com.typesafe.config.Config
 
 /** INTERNAL API */
 @InternalApi

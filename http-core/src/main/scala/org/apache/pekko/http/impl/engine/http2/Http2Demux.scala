@@ -13,6 +13,16 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.util.concurrent.ThreadLocalRandom
+
+import scala.concurrent.duration.Deadline
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration.DurationLong
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.util.control.NonFatal
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.FrameEvent._
@@ -23,9 +33,9 @@ import pekko.http.impl.engine.http2.RequestParsing.parseHeaderPair
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.server.ServerTerminator
 import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.model.{ AttributeKey, HttpEntity, HttpHeader }
 import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.model.HttpEntity.LastChunk
+import pekko.http.scaladsl.model.{ AttributeKey, HttpEntity, HttpHeader }
 import pekko.http.scaladsl.settings.{ Http2ClientSettings, Http2CommonSettings, Http2ServerSettings }
 import pekko.macros.LogHelper
 import pekko.stream.Attributes
@@ -43,16 +53,6 @@ import pekko.stream.stage.{
 }
 import pekko.util.ByteString
 import pekko.util.OptionVal
-
-import java.util.concurrent.ThreadLocalRandom
-
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.concurrent.duration.Deadline
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.duration.DurationLong
-import scala.concurrent.duration.FiniteDuration
-import scala.util.control.NonFatal
 
 /**
  * INTERNAL API

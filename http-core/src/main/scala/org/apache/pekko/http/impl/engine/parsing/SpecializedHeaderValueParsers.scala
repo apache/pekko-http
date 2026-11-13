@@ -13,15 +13,15 @@
 
 package org.apache.pekko.http.impl.engine.parsing
 
+import scala.annotation.tailrec
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
-
-import scala.annotation.tailrec
-import pekko.util.ByteString
 import pekko.http.impl.model.parser.CharacterClasses._
 import pekko.http.impl.util.HttpConstants._
-import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader }
 import pekko.http.scaladsl.model.headers.`Content-Length`
+import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader }
+import pekko.util.ByteString
 
 /**
  * INTERNAL API

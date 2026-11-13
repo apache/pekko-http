@@ -13,12 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.client
 
+import scala.concurrent.Promise
+import scala.util.Try
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.model._
-
-import scala.concurrent.Promise
-import scala.util.Try
 
 /** Internal API */
 @InternalApi

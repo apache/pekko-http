@@ -15,14 +15,15 @@ package org.apache.pekko.http.impl.model.parser
 
 import java.nio.charset.Charset
 
+import org.parboiled2.Parser.DeliveryScheme.Either
+import org.parboiled2._
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.http.impl.util.{ enhanceString_, CharUtils => CU, StringRendering }
-import pekko.http.scaladsl.model.{ Uri, UriRendering }
+import pekko.http.impl.util.{ CharUtils => CU, StringRendering, enhanceString_ }
+import pekko.http.scaladsl.model.Uri._
 import pekko.http.scaladsl.model.headers.HttpOrigin
-import Uri._
-import org.parboiled2._
-import org.parboiled2.Parser.DeliveryScheme.Either
+import pekko.http.scaladsl.model.{ Uri, UriRendering }
 
 /**
  * INTERNAL API

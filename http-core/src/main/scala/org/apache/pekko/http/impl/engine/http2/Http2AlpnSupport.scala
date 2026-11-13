@@ -13,11 +13,11 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import org.apache.pekko
-import pekko.annotation.InternalApi
-
 import java.{ util => ju }
 import javax.net.ssl.SSLEngine
+
+import org.apache.pekko
+import pekko.annotation.InternalApi
 
 /**
  * INTERNAL API

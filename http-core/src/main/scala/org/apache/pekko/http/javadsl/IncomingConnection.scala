@@ -13,19 +13,19 @@
 
 package org.apache.pekko.http.javadsl
 
-import java.util.concurrent.CompletionStage
 import java.net.InetSocketAddress
-
-import org.apache.pekko
-import pekko.NotUsed
-import pekko.japi.function.Function
-import pekko.stream.Materializer
-import pekko.stream.javadsl.Flow
-import pekko.http.javadsl.model._
-import pekko.http.scaladsl.{ model => sm }
+import java.util.concurrent.CompletionStage
 
 import scala.concurrent.Future
 import scala.jdk.FutureConverters._
+
+import org.apache.pekko
+import pekko.NotUsed
+import pekko.http.javadsl.model._
+import pekko.http.scaladsl.{ model => sm }
+import pekko.japi.function.Function
+import pekko.stream.Materializer
+import pekko.stream.javadsl.Flow
 
 /**
  * Represents one accepted incoming HTTP connection.

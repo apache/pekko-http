@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.impl.util
 
-import org.apache.pekko.annotation.InternalApi
-
 import scala.concurrent.duration._
+
+import org.apache.pekko.annotation.InternalApi
 
 /**
  * INTERNAL API

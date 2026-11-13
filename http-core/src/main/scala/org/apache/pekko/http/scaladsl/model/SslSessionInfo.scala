@@ -13,10 +13,11 @@
 
 package org.apache.pekko.http.scaladsl.model
 
+import javax.net.ssl.SSLSession
+
 import org.apache.pekko
 import pekko.http.javadsl.{ model => jm }
 import pekko.stream.scaladsl.ScalaSessionAPI
-import javax.net.ssl.SSLSession
 
 class SslSessionInfo(val session: SSLSession) extends jm.SslSessionInfo with ScalaSessionAPI {
 

@@ -16,8 +16,9 @@ package org.apache.pekko.http.impl.model.parser
 import scala.annotation.tailrec
 import scala.collection.immutable.TreeMap
 
-import org.apache.pekko
 import org.parboiled2.Parser
+
+import org.apache.pekko
 import pekko.http.scaladsl.model._
 
 private[parser] trait ContentTypeHeader { this: Parser with CommonRules with CommonActions =>

@@ -16,13 +16,12 @@ package org.apache.pekko.http.impl.engine.http2
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
-import pekko.stream.scaladsl.{ BidiFlow, Flow }
-import pekko.util.ByteString
-
-import FrameEvent._
 import pekko.event.Logging
+import FrameEvent._
 import pekko.stream.Attributes
 import pekko.stream.Attributes.LogLevels
+import pekko.stream.scaladsl.{ BidiFlow, Flow }
+import pekko.util.ByteString
 
 /**
  * INTERNAL API

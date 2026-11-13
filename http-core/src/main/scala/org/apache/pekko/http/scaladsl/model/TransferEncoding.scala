@@ -14,9 +14,9 @@
 package org.apache.pekko.http.scaladsl.model
 
 import org.apache.pekko
+import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.impl.util.{ Renderable, Rendering, SingletonValueRenderable }
 import pekko.http.javadsl.{ model => jm }
-import pekko.http.impl.util.JavaMapping.Implicits._
 
 sealed abstract class TransferEncoding extends jm.TransferEncoding with Renderable {
   def name: String

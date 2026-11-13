@@ -17,7 +17,12 @@ import java.net.InetSocketAddress
 import java.util.concurrent.CompletionStage
 import javax.net.ssl._
 
-import com.typesafe.config.Config
+import scala.concurrent._
+import scala.concurrent.duration._
+import scala.jdk.FutureConverters._
+import scala.util.control.NonFatal
+import scala.util.{ Success, Try }
+
 import org.apache.pekko
 import pekko.actor._
 import pekko.annotation.{ DoNotInherit, InternalApi, InternalStableApi }
@@ -39,18 +44,14 @@ import pekko.http.scaladsl.util.FastFuture
 import pekko.stream.Attributes.CancellationStrategy
 import pekko.stream.Attributes.CancellationStrategy.AfterDelay
 import pekko.stream.Attributes.CancellationStrategy.FailStage
-import pekko.{ Done, NotUsed }
-import pekko.stream._
 import pekko.stream.TLSProtocol._
+import pekko.stream._
 import pekko.stream.scaladsl._
 import pekko.util.ByteString
 import pekko.util.ManifestInfo
+import pekko.{ Done, NotUsed }
 
-import scala.concurrent._
-import scala.concurrent.duration._
-import scala.jdk.FutureConverters._
-import scala.util.{ Success, Try }
-import scala.util.control.NonFatal
+import com.typesafe.config.Config
 
 /**
  * Pekko extension for HTTP which serves as the main entry point into pekko-http.

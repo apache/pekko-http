@@ -14,6 +14,7 @@
 package org.apache.pekko.http.javadsl.settings
 
 import org.apache.pekko.actor.ActorSystem
+
 import com.typesafe.config.Config
 
 trait SettingsCompanion[T] {

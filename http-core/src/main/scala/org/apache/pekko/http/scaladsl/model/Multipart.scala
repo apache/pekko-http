@@ -18,6 +18,12 @@ import java.nio.file.Path
 import java.util.Optional
 import java.util.concurrent.CompletionStage
 
+import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
+import scala.jdk.CollectionConverters._
+import scala.jdk.FutureConverters._
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
@@ -25,20 +31,13 @@ import pekko.http.impl.engine.rendering.BodyPartRenderer
 import pekko.http.impl.util.DefaultNoLogging
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.{ model => jm }
+import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
-import pekko.http.scaladsl.model.headers._
 import pekko.stream.Materializer
 import pekko.stream.javadsl.{ Source => JSource }
 import pekko.stream.scaladsl._
 import pekko.util.{ ConstantFun, OptionalUtil }
-
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.Future
-import scala.collection.immutable
-import scala.jdk.CollectionConverters._
-import scala.jdk.FutureConverters._
-import scala.util.{ Failure, Success, Try }
 
 /**
  * The model of multipart content for media-types `multipart/\*` (general multipart content),

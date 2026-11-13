@@ -13,17 +13,18 @@
 
 package org.apache.pekko.http.impl.model.parser
 
+import java.nio.charset.Charset
+
 import scala.collection.immutable.TreeMap
 
-import org.apache.pekko
-import pekko.http.scaladsl.model.headers._
-import pekko.http.impl.util._
-import pekko.http.impl.model.parser.CharacterClasses.`attr-char`
-import pekko.http.impl.model.parser.CharacterClasses.HEXDIG
-import pekko.http.scaladsl.model.Uri
 import org.parboiled2.Parser
 
-import java.nio.charset.Charset
+import org.apache.pekko
+import pekko.http.impl.model.parser.CharacterClasses.HEXDIG
+import pekko.http.impl.model.parser.CharacterClasses.`attr-char`
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model.Uri
+import pekko.http.scaladsl.model.headers._
 
 private[parser] trait ContentDispositionHeader { this: Parser with CommonRules with CommonActions =>
 

@@ -13,13 +13,13 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import scala.annotation.tailrec
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.stream.Attributes
 import pekko.stream.impl.io.ByteStringParser
 import pekko.util.ByteString
-
-import scala.annotation.tailrec
-import pekko.stream.Attributes
 
 /**
  * Streaming parser for the WebSocket framing protocol as defined in RFC6455

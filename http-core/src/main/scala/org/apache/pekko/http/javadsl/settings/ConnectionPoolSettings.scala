@@ -15,8 +15,6 @@ package org.apache.pekko.http.javadsl.settings
 
 import java.time.{ Duration => JDuration }
 
-import com.typesafe.config.Config
-
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.jdk.DurationConverters._
 
@@ -28,6 +26,8 @@ import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.ClientTransport
 import pekko.japi.Pair
+
+import com.typesafe.config.Config
 
 /**
  * Public API but not intended for subclassing

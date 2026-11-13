@@ -13,22 +13,23 @@
 
 package org.apache.pekko.http.impl.model.parser
 
+import scala.util.control.NonFatal
+
+import org.parboiled2._
+import org.parboiled2.support.hlist._
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.util.SingletonException
+import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.headers.HttpCookiePair
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.settings.ParserSettings.CookieParsingMode
 import pekko.http.scaladsl.settings.ParserSettings.{
   IllegalResponseHeaderNameProcessingMode,
   IllegalResponseHeaderValueProcessingMode
 }
-import pekko.http.scaladsl.model.headers.HttpCookiePair
 import pekko.util.ConstantFun
-
-import scala.util.control.NonFatal
-import pekko.http.impl.util.SingletonException
-import org.parboiled2._
-import org.parboiled2.support.hlist._
-import pekko.http.scaladsl.model._
 
 /**
  * INTERNAL API.

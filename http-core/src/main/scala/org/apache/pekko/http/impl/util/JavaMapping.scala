@@ -18,29 +18,28 @@ import java.util.Optional
 import java.util.concurrent.CompletionStage
 import java.{ lang => jl, util => ju }
 
-import org.apache.pekko
-import pekko.japi.Pair
-import pekko.stream.{ javadsl, scaladsl, FlowShape, Graph }
-
-import pekko.NotUsed
-import pekko.annotation.InternalApi
-import pekko.http.impl.model.{ JavaQuery, JavaUri }
-import pekko.http.javadsl.{
-  model => jm,
-  settings => js,
-  ConnectionContext,
-  HttpConnectionContext,
-  HttpsConnectionContext
-}
-import pekko.http.{ javadsl => jdsl, scaladsl => sdsl }
-import pekko.http.scaladsl.{ model => sm }
-
 import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.jdk.FutureConverters._
 import scala.jdk.OptionConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
+
+import org.apache.pekko
+import pekko.NotUsed
+import pekko.annotation.InternalApi
+import pekko.http.impl.model.{ JavaQuery, JavaUri }
+import pekko.http.javadsl.{
+  ConnectionContext,
+  HttpConnectionContext,
+  HttpsConnectionContext,
+  model => jm,
+  settings => js
+}
+import pekko.http.scaladsl.{ model => sm }
+import pekko.http.{ javadsl => jdsl, scaladsl => sdsl }
+import pekko.japi.Pair
+import pekko.stream.{ FlowShape, Graph, javadsl, scaladsl }
 
 /** INTERNAL API */
 @InternalApi

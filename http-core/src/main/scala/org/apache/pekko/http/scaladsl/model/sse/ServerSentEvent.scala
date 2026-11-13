@@ -18,12 +18,12 @@ package sse
 
 import java.nio.charset.StandardCharsets.UTF_8
 
+import scala.annotation.tailrec
+import scala.jdk.OptionConverters._
+
 import org.apache.pekko
 import pekko.http.javadsl.model
 import pekko.util.ByteString
-
-import scala.annotation.tailrec
-import scala.jdk.OptionConverters._
 
 object ServerSentEvent {
 

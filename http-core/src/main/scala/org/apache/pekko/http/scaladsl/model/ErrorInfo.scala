@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import StatusCodes.ClientError
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import StatusCodes.ClientError
 import pekko.util.Helpers.toRootLowerCase
 
 /**

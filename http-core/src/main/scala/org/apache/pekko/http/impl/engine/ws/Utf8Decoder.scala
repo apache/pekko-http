@@ -34,11 +34,11 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import scala.util.Try
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.util.ByteString
-
-import scala.util.Try
 
 /**
  * A Utf8 -> Utf16 (= Java char) decoder.

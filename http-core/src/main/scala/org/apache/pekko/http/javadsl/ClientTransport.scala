@@ -17,6 +17,8 @@ import java.net.InetSocketAddress
 import java.util.concurrent.CompletionStage
 import java.util.function.BiFunction
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.impl.util.JavaMapping
@@ -27,7 +29,6 @@ import pekko.http.javadsl.settings.ClientConnectionSettings
 import pekko.http.{ javadsl, scaladsl }
 import pekko.stream.javadsl.Flow
 import pekko.util.ByteString
-import scala.concurrent.Future
 
 /**
  * SPI for implementors of custom client transports.

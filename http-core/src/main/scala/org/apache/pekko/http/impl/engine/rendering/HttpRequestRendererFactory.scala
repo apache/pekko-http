@@ -13,22 +13,22 @@
 
 package org.apache.pekko.http.impl.engine.rendering
 
+import scala.annotation.tailrec
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.NotUsed
-import pekko.http.impl.engine.parsing.HttpResponseParser
-import pekko.http.scaladsl.settings.ClientConnectionSettings
-import pekko.http.scaladsl.model.RequestEntityAcceptance._
-
-import scala.concurrent.Future
-import scala.annotation.tailrec
-import pekko.event.LoggingAdapter
-import pekko.util.ByteString
-import pekko.stream.scaladsl.Source
-import pekko.http.scaladsl.model._
-import pekko.http.impl.util._
-import RenderSupport._
 import pekko.annotation.InternalApi
+import pekko.event.LoggingAdapter
+import pekko.http.impl.engine.parsing.HttpResponseParser
+import RenderSupport._
+import pekko.http.impl.util._
+import pekko.http.scaladsl.model.RequestEntityAcceptance._
+import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.settings.ClientConnectionSettings
+import pekko.stream.scaladsl.Source
+import pekko.util.ByteString
 
 /**
  * INTERNAL API

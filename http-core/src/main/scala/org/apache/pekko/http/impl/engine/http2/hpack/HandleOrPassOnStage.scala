@@ -15,8 +15,8 @@ package org.apache.pekko.http.impl.engine.http2.hpack
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.stream.{ FlowShape, Inlet, Outlet }
 import pekko.stream.stage.{ GraphStageLogic, InHandler, OutHandler }
+import pekko.stream.{ FlowShape, Inlet, Outlet }
 
 /**
  * INTERNAL API

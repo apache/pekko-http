@@ -15,6 +15,8 @@ package org.apache.pekko.http.scaladsl
 
 import java.net.InetSocketAddress
 
+import scala.concurrent.{ ExecutionContext, Future }
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.impl.engine.client.HttpsProxyGraphStage
@@ -24,8 +26,6 @@ import pekko.http.scaladsl.settings.{ ClientConnectionSettings, HttpsProxySettin
 import pekko.stream.OverflowStrategy
 import pekko.stream.scaladsl.{ Flow, Keep, Source, Tcp }
 import pekko.util.ByteString
-
-import scala.concurrent.{ ExecutionContext, Future }
 
 /**
  * Abstraction to allow the creation of alternative transports to run HTTP on.

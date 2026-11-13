@@ -13,10 +13,10 @@
 
 package org.apache.pekko.http.scaladsl.model
 
+import scala.concurrent.Promise
+
 import org.apache.pekko
 import pekko.annotation.InternalStableApi
-
-import scala.concurrent.Promise
 
 /**
  * A marker trait for attribute values that should be (automatically) carried over from request to response.

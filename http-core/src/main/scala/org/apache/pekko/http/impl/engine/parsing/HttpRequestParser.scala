@@ -19,25 +19,26 @@ import javax.net.ssl.SSLSession
 
 import scala.annotation.{ switch, tailrec }
 
+import org.parboiled2.ParserInput
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.IllegalRequestContext
+import ParserOutput._
 import pekko.http.impl.engine.server.HttpAttributes
-import pekko.http.impl.util.ByteStringParserInput
-import pekko.http.impl.util.HttpConstants._
 import pekko.http.impl.engine.ws.Handshake
 import pekko.http.impl.model.parser.{ CharacterClasses, UriParser }
-import pekko.http.scaladsl.model.{ ParsingException => _, _ }
-import pekko.http.scaladsl.model.headers._
+import pekko.http.impl.util.ByteStringParserInput
+import pekko.http.impl.util.HttpConstants._
 import pekko.http.scaladsl.model.StatusCodes._
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.model.{ ParsingException => _, _ }
 import pekko.http.scaladsl.settings.{ ParserSettings, WebSocketSettings }
-import ParserOutput._
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.TLSProtocol.SessionBytes
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.util.ByteString
 import pekko.util.OptionVal
-import org.parboiled2.ParserInput
 
 /**
  * INTERNAL API

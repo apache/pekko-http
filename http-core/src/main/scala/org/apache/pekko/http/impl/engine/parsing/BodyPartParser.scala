@@ -13,22 +13,23 @@
 
 package org.apache.pekko.http.impl.engine.parsing
 
+import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
+
+import org.parboiled2.CharPredicate
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
-import pekko.http.impl.util._
 import pekko.http.impl.util.HttpConstants._
+import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.scaladsl.Source
 import pekko.stream.stage._
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.util.ByteString
-import org.parboiled2.CharPredicate
-
-import scala.annotation.tailrec
-import scala.collection.mutable.ListBuffer
 
 /**
  * INTERNAL API

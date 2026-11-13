@@ -15,12 +15,12 @@ package org.apache.pekko.http.impl.model
 
 import java.nio.charset.Charset
 
+import scala.collection.immutable.ArraySeq
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.model.Uri
 import pekko.http.scaladsl.model.Uri.Host
-
-import scala.collection.immutable.ArraySeq
 
 /**
  * INTERNAL API.

@@ -13,9 +13,10 @@
 
 package org.apache.pekko.http.impl.model.parser
 
+import org.parboiled2.Parser
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import org.parboiled2.Parser
 import pekko.http.scaladsl.model.RemoteAddress
 import pekko.http.scaladsl.model.headers._
 

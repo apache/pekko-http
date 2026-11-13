@@ -13,13 +13,14 @@
 
 package org.apache.pekko.http.scaladsl.model.headers
 
-import org.apache.pekko
-import pekko.http.impl.util._
-import pekko.http.scaladsl.model._
-import pekko.http.javadsl.{ model => jm }
-import pekko.http.impl.util.JavaMapping.Implicits._
-import UriRendering.UriRenderer
 import org.parboiled2.CharPredicate
+
+import org.apache.pekko
+import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.impl.util._
+import pekko.http.javadsl.{ model => jm }
+import pekko.http.scaladsl.model.UriRendering.UriRenderer
+import pekko.http.scaladsl.model._
 
 final case class LinkValue(uri: Uri, params: Seq[LinkParam]) extends jm.headers.LinkValue
     with ValueRenderable {

@@ -15,14 +15,15 @@ package org.apache.pekko.http.impl.settings
 
 import java.util.Random
 
+import scala.concurrent.duration.Duration
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.ws.Randoms
 import pekko.http.impl.util._
 import pekko.util.ByteString
-import com.typesafe.config.Config
 
-import scala.concurrent.duration.Duration
+import com.typesafe.config.Config
 
 /** INTERNAL API */
 @InternalApi

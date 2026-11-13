@@ -13,11 +13,11 @@
 
 package org.apache.pekko.http.scaladsl.model
 
+import scala.jdk.CollectionConverters._
+
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
 import pekko.http.javadsl.{ model => jm }
-
-import scala.jdk.CollectionConverters._
 
 class Trailer(@ApiMayChange val headers: Seq[(String, String)]) extends jm.Trailer {
 

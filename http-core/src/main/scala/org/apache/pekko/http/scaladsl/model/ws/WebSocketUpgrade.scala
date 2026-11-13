@@ -15,12 +15,13 @@ package org.apache.pekko.http.scaladsl.model.ws
 
 import java.lang.Iterable
 import java.util.function.{ Predicate => JPredicate }
+
 import org.apache.pekko
 import pekko.NotUsed
-import pekko.stream._
 import pekko.http.impl.util.JavaMapping
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.HttpResponse
+import pekko.stream._
 
 /**
  * An attribute that will be added to an WebSocket upgrade HttpRequest that

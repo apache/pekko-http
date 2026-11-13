@@ -13,10 +13,10 @@
 
 package org.apache.pekko.http.scaladsl.model.headers
 
+import scala.annotation.{ tailrec, varargs }
+
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
-
-import scala.annotation.{ tailrec, varargs }
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
 

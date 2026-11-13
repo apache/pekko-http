@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.javadsl.model
 
-import org.apache.pekko.annotation.DoNotInherit
-
 import java.util.Optional
+
+import org.apache.pekko.annotation.DoNotInherit
 
 // Has to be defined in Scala even though it's JavaDSL because of:
 // https://issues.scala-lang.org/browse/SI-9621

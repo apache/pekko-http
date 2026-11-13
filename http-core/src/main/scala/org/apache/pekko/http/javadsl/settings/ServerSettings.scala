@@ -16,6 +16,11 @@ package org.apache.pekko.http.javadsl.settings
 import java.time.{ Duration => JDuration }
 import java.util.Optional
 
+import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.jdk.CollectionConverters._
+import scala.jdk.DurationConverters._
+import scala.jdk.OptionConverters._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.{ DoNotInherit, InternalApi }
@@ -25,12 +30,8 @@ import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.headers.Host
 import pekko.http.javadsl.model.headers.Server
 import pekko.io.Inet.SocketOption
-import com.typesafe.config.Config
 
-import scala.jdk.CollectionConverters._
-import scala.jdk.DurationConverters._
-import scala.jdk.OptionConverters._
-import scala.concurrent.duration.{ Duration, FiniteDuration }
+import com.typesafe.config.Config
 
 /**
  * Public API but not intended for subclassing

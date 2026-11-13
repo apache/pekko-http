@@ -13,23 +13,24 @@
 
 package org.apache.pekko.http.scaladsl.settings
 
-import com.typesafe.config.Config
+import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.jdk.CollectionConverters._
+import scala.jdk.DurationConverters._
+import scala.jdk.OptionConverters._
+
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.annotation.{ DoNotInherit, InternalApi }
 import pekko.http.ParsingErrorHandler
 import pekko.http.impl.settings.ServerSettingsImpl
-import pekko.http.impl.util._
 import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.impl.util._
 import pekko.http.javadsl.{ settings => js }
 import pekko.http.scaladsl.model.HttpResponse
 import pekko.http.scaladsl.model.headers.{ Host, Server }
 import pekko.io.Inet.SocketOption
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
-import scala.jdk.CollectionConverters._
-import scala.jdk.DurationConverters._
-import scala.jdk.OptionConverters._
+import com.typesafe.config.Config
 
 /**
  * Public API but not intended for subclassing

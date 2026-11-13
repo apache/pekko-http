@@ -16,15 +16,15 @@ package org.apache.pekko.http.javadsl
 import java.net.InetSocketAddress
 import java.util.concurrent.{ CompletionStage, TimeUnit }
 
-import org.apache.pekko
-import pekko.Done
-import pekko.actor.ClassicActorSystemProvider
-import pekko.annotation.DoNotInherit
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.DurationConverters._
 import scala.jdk.FutureConverters._
+
+import org.apache.pekko
+import pekko.Done
+import pekko.actor.ClassicActorSystemProvider
+import pekko.annotation.DoNotInherit
 
 /**
  * Represents a prospective HTTP server binding.

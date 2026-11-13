@@ -13,18 +13,18 @@
 
 package org.apache.pekko.http.scaladsl
 
+import scala.concurrent.Future
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.{ ApiMayChange, DoNotInherit, InternalApi }
 import pekko.event.LoggingAdapter
+import pekko.http.javadsl.{ OutgoingConnectionBuilder => JOutgoingConnectionBuilder }
 import pekko.http.scaladsl.Http.OutgoingConnection
 import pekko.http.scaladsl.model.HttpRequest
 import pekko.http.scaladsl.model.HttpResponse
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.stream.scaladsl.Flow
-import pekko.http.javadsl.{ OutgoingConnectionBuilder => JOutgoingConnectionBuilder }
-
-import scala.concurrent.Future
 
 /**
  * Builder for setting up a flow that will create one single connection per materialization to the specified host.

@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.impl.util
 
-import org.apache.pekko.annotation.InternalApi
-
 import scala.util.matching.Regex
+
+import org.apache.pekko.annotation.InternalApi
 
 /**
  * INTERNAL API

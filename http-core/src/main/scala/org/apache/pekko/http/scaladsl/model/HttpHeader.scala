@@ -13,17 +13,18 @@
 
 package org.apache.pekko.http.scaladsl.model
 
+import scala.util.{ Failure, Success }
+
+import org.parboiled2.ParseError
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
-
-import scala.util.{ Failure, Success }
-import org.parboiled2.ParseError
-import pekko.http.impl.util.ToStringRenderable
 import pekko.http.impl.model.parser.{ CharacterClasses, HeaderParser }
+import pekko.http.impl.util.ToStringRenderable
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.headers._
-import pekko.util.OptionVal
 import pekko.util.Helpers.toRootLowerCase
+import pekko.util.OptionVal
 
 /**
  * Marker trait for headers which contain portentially secret / sensitive information.

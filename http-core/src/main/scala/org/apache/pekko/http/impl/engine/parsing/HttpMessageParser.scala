@@ -23,12 +23,12 @@ import org.parboiled2.CharUtils
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.IllegalRequestContext
+import ParserOutput._
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.impl.util.HttpConstants._
-import pekko.http.scaladsl.model.{ ParsingException => _, _ }
+import pekko.http.scaladsl.model.HttpProtocols._
 import pekko.http.scaladsl.model.headers._
-import HttpProtocols._
-import ParserOutput._
+import pekko.http.scaladsl.model.{ ParsingException => _, _ }
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.settings.ParserSettings.ConflictingContentTypeHeaderProcessingMode
 import pekko.stream.TLSProtocol._

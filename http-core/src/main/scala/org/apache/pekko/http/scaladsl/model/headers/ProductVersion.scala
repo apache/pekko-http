@@ -14,11 +14,13 @@
 package org.apache.pekko.http.scaladsl.model.headers
 
 import scala.util.{ Failure, Success }
-import org.apache.pekko
+
 import org.parboiled2.ParseError
-import pekko.http.javadsl.{ model => jm }
+
+import org.apache.pekko
 import pekko.http.impl.model.parser.HeaderParser
 import pekko.http.impl.util._
+import pekko.http.javadsl.{ model => jm }
 
 final case class ProductVersion(product: String = "", version: String = "", comment: String = "")
     extends jm.headers.ProductVersion with ValueRenderable {

@@ -13,22 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import scala.concurrent.{ Future, Promise }
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
-import pekko.http.scaladsl.model.ws._
-
-import scala.concurrent.{ Future, Promise }
-import pekko.util.ByteString
 import pekko.event.LoggingAdapter
-import pekko.stream.stage._
-import pekko.stream._
-import pekko.stream.TLSProtocol._
-import pekko.stream.scaladsl._
-import pekko.http.scaladsl.settings.ClientConnectionSettings
-import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.model.{ HttpEntity, HttpMethods, HttpResponse }
-import pekko.http.scaladsl.model.headers.Host
 import pekko.http.impl.engine.parsing.HttpMessageParser.StateResult
 import pekko.http.impl.engine.parsing.ParserOutput.{ MessageStartError, NeedMoreData, RemainingBytes, ResponseStart }
 import pekko.http.impl.engine.parsing.{ HttpHeaderParser, HttpResponseParser, ParserOutput }
@@ -36,7 +26,17 @@ import pekko.http.impl.engine.rendering.{ HttpRequestRendererFactory, RequestRen
 import pekko.http.impl.engine.ws.Handshake.Client.NegotiatedWebSocketSettings
 import pekko.http.impl.util.LogByteStringTools
 import pekko.http.impl.util.{ SingletonException, StreamUtils }
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.model.headers.Host
+import pekko.http.scaladsl.model.ws._
+import pekko.http.scaladsl.model.{ HttpEntity, HttpMethods, HttpResponse }
+import pekko.http.scaladsl.settings.ClientConnectionSettings
+import pekko.stream.TLSProtocol._
+import pekko.stream._
 import pekko.stream.impl.fusing.GraphStages.SimpleLinearGraphStage
+import pekko.stream.scaladsl._
+import pekko.stream.stage._
+import pekko.util.ByteString
 
 /** INTERNAL API */
 @InternalApi

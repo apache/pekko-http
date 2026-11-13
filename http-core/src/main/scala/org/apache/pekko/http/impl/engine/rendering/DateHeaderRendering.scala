@@ -13,16 +13,17 @@
 
 package org.apache.pekko.http.impl.engine.rendering
 
+import java.util.concurrent.atomic.AtomicReference
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.actor.{ ClassicActorSystemProvider, Scheduler }
 import pekko.annotation.InternalApi
 import pekko.http.impl.util.Rendering.CrLf
 import pekko.http.impl.util.{ ByteArrayRendering, StringRendering }
-import pekko.http.scaladsl.model.{ headers, DateTime }
-
-import java.util.concurrent.atomic.AtomicReference
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
+import pekko.http.scaladsl.model.{ DateTime, headers }
 
 /** INTERNAL API */
 @InternalApi private[http] trait DateHeaderRendering {

@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import org.apache.pekko.http.javadsl.{ model => jm }
-
 import scala.reflect.ClassTag
+
+import org.apache.pekko.http.javadsl.{ model => jm }
 
 case class AttributeKey[T](name: String, private val clazz: Class[?]) extends jm.AttributeKey[T]
 

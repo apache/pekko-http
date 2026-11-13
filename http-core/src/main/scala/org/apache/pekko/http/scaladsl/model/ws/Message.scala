@@ -15,14 +15,14 @@ package org.apache.pekko.http.scaladsl.model.ws
 
 import java.util.concurrent.CompletionStage
 
-import org.apache.pekko
-import pekko.stream.{ javadsl, Materializer }
-import pekko.stream.scaladsl.Source
-import pekko.util.{ ByteString, ByteStringBuilder }
-
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.jdk.FutureConverters._
+
+import org.apache.pekko
+import pekko.stream.scaladsl.Source
+import pekko.stream.{ Materializer, javadsl }
+import pekko.util.{ ByteString, ByteStringBuilder }
 
 //#message-model
 /**

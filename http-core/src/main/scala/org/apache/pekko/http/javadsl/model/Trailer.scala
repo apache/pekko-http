@@ -13,9 +13,9 @@
 
 package org.apache.pekko.http.javadsl.model
 
-import org.apache.pekko.http.scaladsl.{ model => sm }
-
 import scala.jdk.CollectionConverters._
+
+import org.apache.pekko.http.scaladsl.{ model => sm }
 
 /** Trailing headers for HTTP/2 responses */
 trait Trailer {

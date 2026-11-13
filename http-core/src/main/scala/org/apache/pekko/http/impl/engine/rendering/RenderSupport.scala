@@ -13,21 +13,22 @@
 
 package org.apache.pekko.http.impl.engine.rendering
 
+import org.parboiled2.CharUtils
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import org.parboiled2.CharUtils
-import pekko.stream.{ Attributes, SourceShape }
-import pekko.util.ByteString
 import pekko.event.LoggingAdapter
-import pekko.stream.impl.fusing.GraphStages.SimpleLinearGraphStage
-import pekko.stream.scaladsl._
-import pekko.stream.stage._
-import pekko.http.scaladsl.model._
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model.ContentTypes._
-import pekko.stream.stage.GraphStage
+import pekko.http.scaladsl.model._
 import pekko.stream._
+import pekko.stream.impl.fusing.GraphStages.SimpleLinearGraphStage
+import pekko.stream.scaladsl._
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
+import pekko.stream.stage.GraphStage
+import pekko.stream.stage._
+import pekko.stream.{ Attributes, SourceShape }
+import pekko.util.ByteString
 
 /**
  * INTERNAL API

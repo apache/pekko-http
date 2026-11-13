@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.collection.mutable
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
@@ -22,8 +24,6 @@ import pekko.macros.LogHelper
 import pekko.stream.stage.GraphStageLogic
 import pekko.stream.stage.OutHandler
 import pekko.stream.stage.StageLogging
-
-import scala.collection.mutable
 
 /**
  * INTERNAL API

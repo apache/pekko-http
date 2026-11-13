@@ -14,6 +14,11 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import javax.net.ssl.SSLSession
+
+import scala.annotation.tailrec
+import scala.collection.immutable.VectorBuilder
+import scala.util.control.NoStackTrace
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.parsing.HttpHeaderParser
@@ -25,10 +30,6 @@ import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.util.ByteString
 import pekko.util.OptionVal
-
-import scala.annotation.tailrec
-import scala.collection.immutable.VectorBuilder
-import scala.util.control.NoStackTrace
 
 /**
  * INTERNAL API

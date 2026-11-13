@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.impl.util
 
+import scala.reflect.ClassTag
+
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
@@ -21,8 +23,6 @@ import pekko.stream.Attributes
 import pekko.stream.TLSProtocol._
 import pekko.stream.scaladsl.{ BidiFlow, Flow }
 import pekko.util.ByteString
-
-import scala.reflect.ClassTag
 
 /**
  * INTERNAL API

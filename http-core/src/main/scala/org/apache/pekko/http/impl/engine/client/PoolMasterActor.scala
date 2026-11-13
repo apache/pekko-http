@@ -13,6 +13,9 @@
 
 package org.apache.pekko.http.impl.engine.client
 
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
 import pekko.Done
 import pekko.actor.{
@@ -29,9 +32,6 @@ import pekko.annotation.InternalApi
 import pekko.http.impl.engine.client.PoolInterface.ShutdownReason
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import pekko.stream.Materializer
-
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.util.{ Failure, Success, Try }
 
 /**
  * INTERNAL API

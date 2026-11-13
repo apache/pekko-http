@@ -19,10 +19,10 @@ package org.apache.pekko.http.impl.util
 
 import java.time.temporal.ChronoUnit
 
+import scala.jdk.DurationConverters._
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
-
-import scala.jdk.DurationConverters._
 
 /**
  * Internal Pekko HTTP API

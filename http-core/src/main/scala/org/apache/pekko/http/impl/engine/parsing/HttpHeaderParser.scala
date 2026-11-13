@@ -13,28 +13,28 @@
 
 package org.apache.pekko.http.impl.engine.parsing
 
+import java.lang.{ StringBuilder => JStringBuilder }
 import java.nio.{ ByteBuffer, CharBuffer }
 import java.util.Arrays.copyOf
-import java.lang.{ StringBuilder => JStringBuilder }
+
+import scala.annotation.tailrec
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.model.parser.CharacterClasses._
 import pekko.http.impl.model.parser.HeaderParser
-import pekko.http.impl.util._
 import pekko.http.impl.util.CharUtils.toLowerCase
 import pekko.http.impl.util.HttpConstants._
-import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
+import pekko.http.impl.util._
 import pekko.http.scaladsl.model.headers.{ EmptyHeader, RawHeader }
+import pekko.http.scaladsl.model.{ ErrorInfo, HttpHeader, MediaTypes, StatusCode, StatusCodes }
 import pekko.http.scaladsl.settings.ParserSettings.{
   ErrorLoggingVerbosity,
   IllegalResponseHeaderNameProcessingMode,
   IllegalResponseHeaderValueProcessingMode
 }
 import pekko.util.ByteString
-
-import scala.annotation.tailrec
 
 /**
  * INTERNAL API

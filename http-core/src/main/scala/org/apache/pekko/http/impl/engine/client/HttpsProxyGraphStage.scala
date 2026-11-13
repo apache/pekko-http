@@ -21,7 +21,7 @@ import pekko.http.impl.engine.parsing.ParserOutput.{ NeedMoreData, RemainingByte
 import pekko.http.impl.engine.parsing.{ HttpHeaderParser, HttpResponseParser, ParserOutput }
 import pekko.http.impl.util.ByteStringRendering
 import pekko.http.impl.util.Rendering.CrLf
-import pekko.http.scaladsl.model.headers.{ `Proxy-Authorization`, HttpCredentials }
+import pekko.http.scaladsl.model.headers.{ HttpCredentials, `Proxy-Authorization` }
 import pekko.http.scaladsl.model.{ HttpMethods, StatusCodes }
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.stream.scaladsl.BidiFlow

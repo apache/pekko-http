@@ -14,11 +14,13 @@
 package org.apache.pekko.http.scaladsl.model
 
 import java.lang.{ Iterable => JIterable }
-import scala.util.Try
 import java.nio.charset.Charset
+
+import scala.util.Try
+
 import org.apache.pekko
-import pekko.http.javadsl.{ model => jm }
 import pekko.http.impl.util._
+import pekko.http.javadsl.{ model => jm }
 
 /**
  * A charset range as encountered in `Accept-Charset`. Can either be a single charset, or `*`

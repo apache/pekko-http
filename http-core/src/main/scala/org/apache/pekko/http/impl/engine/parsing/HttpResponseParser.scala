@@ -14,21 +14,22 @@
 package org.apache.pekko.http.impl.engine.parsing
 
 import javax.net.ssl.SSLSession
+
 import scala.annotation.tailrec
 import scala.concurrent.Promise
 import scala.util.control.{ NoStackTrace, NonFatal }
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.http.scaladsl.settings.ParserSettings
+import ParserOutput._
 import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.impl.util.HttpConstants._
-import pekko.util.ByteString
-import pekko.http.scaladsl.model.{ ParsingException => _, _ }
-import pekko.http.scaladsl.model.headers._
-import ParserOutput._
 import pekko.http.impl.util.LogByteStringTools
+import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.model.{ ParsingException => _, _ }
+import pekko.http.scaladsl.settings.ParserSettings
 import pekko.stream.scaladsl.Source
+import pekko.util.ByteString
 
 /**
  * INTERNAL API

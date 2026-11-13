@@ -13,17 +13,18 @@
 
 package org.apache.pekko.http.scaladsl.model.http2
 
+import scala.util.Try
+
 import org.parboiled2.Base64Parsing
 import org.parboiled2.util.Base64
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
-import pekko.http.impl.engine.http2.framing.Http2FrameParsing
 import pekko.http.impl.engine.http2.FrameEvent.Setting
+import pekko.http.impl.engine.http2.framing.Http2FrameParsing
 import pekko.stream.impl.io
 import pekko.util.ByteString
-
-import scala.util.Try
 
 /**
  * Internal API

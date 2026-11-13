@@ -13,11 +13,11 @@
 
 package org.apache.pekko.http.scaladsl.model.http2
 
+import scala.util.control.NoStackTrace
+
 import org.apache.pekko
 import pekko.annotation.ApiMayChange
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
-
-import scala.util.control.NoStackTrace
 
 /**
  * Base class for HTTP2 exceptions.

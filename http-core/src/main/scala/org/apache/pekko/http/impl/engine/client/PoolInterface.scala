@@ -13,6 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.client
 
+import java.util
+
+import scala.concurrent.duration._
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.pekko
 import pekko.Done
 import pekko.actor._
@@ -21,8 +27,8 @@ import pekko.event.{ LogSource, Logging, LoggingAdapter }
 import pekko.http.impl.engine.client.PoolFlow._
 import pekko.http.impl.engine.client.pool.NewHostConnectionPool
 import pekko.http.impl.util._
-import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.model._
 import pekko.macros.LogHelper
 import pekko.stream.Attributes
 import pekko.stream.FlowShape
@@ -35,11 +41,6 @@ import pekko.stream.stage.InHandler
 import pekko.stream.stage.OutHandler
 import pekko.stream.stage.TimerGraphStageLogic
 import pekko.stream.{ BufferOverflowException, Materializer }
-
-import java.util
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.concurrent.duration._
-import scala.util.{ Failure, Success, Try }
 
 /**
  * The pool interface is a push style interface to a pool of connections against a single host.

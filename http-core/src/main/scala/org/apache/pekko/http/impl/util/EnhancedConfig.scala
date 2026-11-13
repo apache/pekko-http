@@ -13,12 +13,13 @@
 
 package org.apache.pekko.http.impl.util
 
-import com.typesafe.config.Config
-
 import scala.concurrent.duration.{ Duration, FiniteDuration }
+
 import org.apache.pekko
 import pekko.ConfigurationException
 import pekko.annotation.InternalApi
+
+import com.typesafe.config.Config
 
 /**
  * INTERNAL API
