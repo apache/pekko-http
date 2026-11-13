@@ -68,14 +68,14 @@ private[http] object Protocol {
   }
 
   /**
-   * Close status codes as defined at http://tools.ietf.org/html/rfc6455#section-7.4.1
+   * Close status codes as defined by RFC 6455 and the IANA WebSocket Close Code Number Registry.
    */
   object CloseCodes {
     def isError(code: Int): Boolean = !(code == Regular || code == GoingAway)
     def isValid(code: Int): Boolean =
       ((code >= 1000) && (code <= 1003)) ||
       (code >= 1007) &&
-      (code <= 1011) ||
+      (code <= 1014) ||
       (code >= 3000) &&
       (code <= 4999)
 

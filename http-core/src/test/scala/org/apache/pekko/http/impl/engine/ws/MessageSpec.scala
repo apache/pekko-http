@@ -632,6 +632,20 @@ class MessageSpec extends PekkoSpecWithMaterializer(
         netOut.expectComplete()
 
       }
+      List(1012, 1013, 1014).foreach { code =>
+        s"preserve registered peer close code $code" in new ClientTestSetup {
+          val reason = "peer service unavailable"
+          pushInput(closeFrame(code, mask = false, msg = reason))
+          val error = expectError(messageIn).asInstanceOf[PeerClosedConnectionException]
+          error.closeCode shouldEqual code
+          error.closeReason shouldEqual reason
+
+          expectCloseCodeOnNetwork(code)
+          messageOut.sendError(error)
+          netIn.sendComplete()
+          netOut.expectComplete()
+        }
+      }
       "after receiving error close frame with close code and without reason" in new ServerTestSetup {
         pushInput(closeFrame(Protocol.CloseCodes.UnexpectedCondition, mask = true))
         val error = expectError(messageIn).asInstanceOf[PeerClosedConnectionException]
@@ -716,16 +730,18 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           }
       }
       "if peer closes with invalid close frame" should {
-        "close code outside of the valid range" in new ServerTestSetup {
-          pushInput(closeFrame(5700, mask = true))
+        List(1004, 1005, 1006, 1015, 1016, 2999, 5000, 5700).foreach { code =>
+          s"reject reserved or out-of-range close code $code" in new ServerTestSetup {
+            pushInput(closeFrame(code, mask = true))
 
-          val error = expectError(messageIn).asInstanceOf[PeerClosedConnectionException]
-          error.closeCode shouldEqual Protocol.CloseCodes.ProtocolError
-          error.closeReason shouldEqual "Peer sent illegal close frame (invalid close code '5700')."
+            val error = expectError(messageIn).asInstanceOf[PeerClosedConnectionException]
+            error.closeCode shouldEqual Protocol.CloseCodes.ProtocolError
+            error.closeReason shouldEqual s"Peer sent illegal close frame (invalid close code '$code')."
 
-          expectCloseCodeOnNetwork(Protocol.CloseCodes.ProtocolError)
-          netOut.expectComplete()
-          netIn.expectCancellation()
+            expectCloseCodeOnNetwork(Protocol.CloseCodes.ProtocolError)
+            netOut.expectComplete()
+            netIn.expectCancellation()
+          }
         }
         "close data of size 1" in new ServerTestSetup {
           pushInput(frameHeader(Opcode.Close, 1, mask = Some(Random.nextInt()), fin = true) ++ ByteString("x"))
