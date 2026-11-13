@@ -238,13 +238,15 @@ private[http] object Http2Blueprint {
       : BidiFlow[FrameEvent, ByteString, ByteString, FrameEvent, NotUsed] =
     BidiFlow.fromFlows(
       Flow[FrameEvent].map(FrameRenderer.render),
-      Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = true, log, maxFrameSize)))
+      Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = true, log, maxFrameSize,
+        requireInitialSettings = true)))
 
   def framingClient(log: LoggingAdapter,
       maxFrameSize: Int): BidiFlow[FrameEvent, ByteString, ByteString, FrameEvent, NotUsed] =
     BidiFlow.fromFlows(
       Flow[FrameEvent].map(FrameRenderer.render).prepend(Source.single(Http2Protocol.ClientConnectionPreface)),
-      Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = false, log, maxFrameSize)))
+      Flow[ByteString].via(new Http2FrameParsing(shouldReadPreface = false, log, maxFrameSize,
+        requireInitialSettings = true)))
 
   /**
    * Fails the connection when incoming frames of the throttled types exceed the configured rate.

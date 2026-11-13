@@ -443,6 +443,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
           override def onUpstreamFailure(ex: Throwable): Unit = {
             ex match {
+              case e: Http2Compliance.InvalidConnectionPreface =>
+                failStage(e)
+
               // every IllegalHttp2StreamIdException will be a GOAWAY with PROTOCOL_ERROR
               case e: Http2Compliance.IllegalHttp2StreamIdException =>
                 pushGOAWAY(ErrorCode.PROTOCOL_ERROR, e.getMessage)

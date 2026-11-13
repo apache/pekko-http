@@ -56,6 +56,9 @@ private[http2] object Http2Compliance {
   class Http2ProtocolException(val errorCode: ErrorCode, message: String) extends IllegalStateException(message) {
     def this(message: String) = this(ErrorCode.PROTOCOL_ERROR, message)
   }
+  final class InvalidConnectionPreface
+      extends Http2ProtocolException(ErrorCode.PROTOCOL_ERROR, "Expected initial non-ACK SETTINGS frame")
+
   class Http2ProtocolStreamException(val streamId: Int, val errorCode: ErrorCode, message: String)
       extends IllegalStateException(message)
 
