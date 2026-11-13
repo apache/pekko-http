@@ -61,6 +61,11 @@ private[http2] object ResponseParsing {
         // https://httpwg.org/specs/rfc7540.html#rfc.section.8.1.2.4: these pseudo header fields are mandatory for a response
         checkRequiredPseudoHeader(":status", status)
 
+        if (status == StatusCodes.SwitchingProtocols)
+          malformedResponse("HTTP/2 does not support the 101 status code")
+        if (status.intValue >= 100 && status.intValue < 200 && subStream.initialHeaders.endStream)
+          malformedResponse("Informational responses must not end the stream")
+
         val entity = subStream.createEntity(contentLength, contentType)
 
         // user access to tls session info

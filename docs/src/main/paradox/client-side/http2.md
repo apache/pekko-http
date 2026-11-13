@@ -12,6 +12,10 @@ concepts, tuning the client settings and HTTPS context and how to handle the Req
 unexpected when coming from a background with non-"streaming first" HTTP Clients.
 @@@
 
+Informational responses, such as `103 Early Hints`, are processed internally. The client delivers only the final
+response for each request; interim headers are not exposed through the response stream. This does not add an
+`Expect: 100-continue` request-body handshake.
+
 ## Create the client 
 
 There are three mechanisms for a client to establish an HTTP/2 connection. Apache Pekko HTTP supports:

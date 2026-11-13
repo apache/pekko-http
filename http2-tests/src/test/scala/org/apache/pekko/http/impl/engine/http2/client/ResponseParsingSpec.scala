@@ -35,11 +35,12 @@ import pekko.util.{ ByteString, OptionVal }
 class ResponseParsingSpec extends PekkoSpecWithMaterializer {
   "ResponseParsing" should {
 
-    def parse(keyValuePairs: Seq[(String, String)]): Try[HttpResponse] = {
+    def parse(keyValuePairs: Seq[(String, String)], endStream: Boolean = true): Try[HttpResponse] = {
       val settings = ClientConnectionSettings(system)
       val headerParser = HttpHeaderParser(settings.parserSettings, log)
       val encoder = new HPackEncodingSupport {}
-      val frame = HeadersFrame(1, endStream = true, endHeaders = true, encoder.encodeHeaderPairs(keyValuePairs), None)
+      val frame =
+        HeadersFrame(1, endStream = endStream, endHeaders = true, encoder.encodeHeaderPairs(keyValuePairs), None)
 
       Source.single(frame)
         .via(new HeaderDecompression(headerParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize))
@@ -67,6 +68,23 @@ class ResponseParsingSpec extends PekkoSpecWithMaterializer {
       val response = parse(Seq(":status" -> "200", "x-a" -> "v")).get
       response.status should ===(StatusCodes.OK)
       response.headers.map(h => h.lowercaseName -> h.value) should contain("x-a" -> "v")
+    }
+
+    "parse internally dispatched informational headers with an empty entity" in {
+      val response = parse(Seq(":status" -> "103", "link" -> "</style.css>; rel=preload"), endStream = false).get
+      response.status shouldBe StatusCodes.EarlyHints
+      response.entity shouldBe HttpEntity.Empty
+    }
+
+    for ((status, endStream, error) <- Seq(
+        ("101", false, "HTTP/2 does not support the 101 status code"),
+        ("101", true, "HTTP/2 does not support the 101 status code"),
+        ("103", true, "Informational responses must not end the stream"))) {
+      s"reject status $status with END_STREAM=$endStream" in {
+        val failure = parse(Seq(":status" -> status), endStream).failed.get
+        failure shouldBe a[Http2ProtocolException]
+        failure.getMessage should include(error)
+      }
     }
 
     // RFC 9113 8.2.1: a field name must not contain control, SP, uppercase or non-ASCII characters and a value must not start or end with

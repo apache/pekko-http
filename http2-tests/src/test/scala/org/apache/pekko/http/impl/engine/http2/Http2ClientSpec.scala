@@ -85,6 +85,60 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
   override def failOnSevereMessages: Boolean = true
 
   "The Http/2 client implementation" should {
+    for {
+      interimStatuses <- Seq(Seq.empty[Int], Seq(103), Seq(102, 103), Seq(103, 103))
+      finalBody <- Seq(ByteString.empty, ByteString("final response"))
+    } {
+      s"retain the final response after ordinary interim statuses ${interimStatuses.mkString(",")} with ${finalBody.length} bytes" in
+      StreamTestKit.assertAllStagesStopped {
+        val setup = new TestSetup with NetProbes
+        try {
+          setup.user.emitRequest(Get("https://www.example.com/"))
+          setup.network.expectDecodedResponseHEADERSPairs(1)
+          interimStatuses.foreach { status =>
+            setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", status.toString)))
+          }
+          setup.network.sendHEADERS(1, endStream = finalBody.isEmpty, Seq(RawHeader(":status", "200")))
+          if (finalBody.nonEmpty) setup.network.sendDATA(1, endStream = true, finalBody)
+          val response = setup.user.expectResponse()
+          response.status shouldBe StatusCodes.OK
+          response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe finalBody
+        } finally {
+          setup.network.fromNet.sendError(new RuntimeException("test cleanup"))
+          setup.network.toNet.cancel()
+        }
+      }
+    }
+
+    "retain uploads and sibling responses after ordinary interim statuses" in
+    StreamTestKit.assertAllStagesStopped {
+      val setup = new TestSetup with NetProbes
+      val upload = TestPublisher.probe[ByteString]()
+      try {
+        setup.user.emitRequest(HttpRequest(method = HttpMethods.POST, uri = "https://www.example.com/",
+          entity = HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(upload))))
+        setup.network.expectDecodedResponseHEADERSPairs(1, endStream = false)
+        setup.user.emitRequest(Get("https://www.example.com/sibling"))
+        setup.network.expectDecodedResponseHEADERSPairs(3)
+        setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "103")))
+        setup.network.sendHEADERS(3, endStream = false, Seq(RawHeader(":status", "102")))
+        upload.sendNext(ByteString("request body"))
+        setup.network.expectDATA(1, endStream = false, ByteString("request body"))
+        setup.network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "201")))
+        setup.user.expectResponse().status shouldBe StatusCodes.Created
+        upload.sendComplete()
+        setup.network.expectDATA(1, endStream = true, ByteString.empty)
+        setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+        setup.network.sendDATA(1, endStream = true, ByteString("final body"))
+        val response = setup.user.expectResponse()
+        response.status shouldBe StatusCodes.OK
+        response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe ByteString("final body")
+      } finally {
+        setup.network.fromNet.sendError(new RuntimeException("test cleanup"))
+        setup.network.toNet.cancel()
+      }
+    }
+
     "support simple round-trips" should {
       abstract class SimpleRequestResponseRoundtripSetup extends TestSetup with NetProbes {
 
