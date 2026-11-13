@@ -13,14 +13,17 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import java.nio.charset.Charset
 import java.net.InetAddress
+import java.nio.charset.Charset
+
+import org.parboiled2.UTF8
+
 import org.apache.pekko
 import pekko.http.impl.util.StringRendering
-import org.scalatest.matchers.{ MatchResult, Matcher }
-import org.parboiled2.UTF8
 import Uri._
+
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.matchers.{ MatchResult, Matcher }
 import org.scalatest.wordspec.AnyWordSpec
 
 class UriSpec extends AnyWordSpec with Matchers {
@@ -476,6 +479,25 @@ class UriSpec extends AnyWordSpec with Matchers {
     "preserve the order of repeated parameters when retrieving as a multimap" in {
       val query = Query("a=1&b=1&b=2&b=3&b=4&c=1")
       query.toMultiMap shouldEqual Map("a" -> List("1"), "b" -> List("1", "2", "3", "4"), "c" -> List("1"))
+    }
+    "aggregate bounded query parameter groups without changing their values or order" in {
+      Query.Empty.toMultiMap shouldEqual Map.empty
+      Query("" -> "").toMultiMap shouldEqual Map("" -> List(""))
+      val emptyValues = Query("k" -> Query.EmptyValue, "k" -> "").toMultiMap("k")
+      (emptyValues.head eq Query.EmptyValue) shouldBe true
+      Query(emptyValues.map("k" -> _): _*).toString shouldEqual "k&k="
+      val cases = Seq(
+        Vector("" -> "", "a" -> "", "" -> "second", "a" -> "", "a" -> Query.EmptyValue),
+        Vector.tabulate(256)(i => s"key$i" -> s"value$i"),
+        Vector.tabulate(256)(i => "key" -> i.toString),
+        Vector.tabulate(256)(i => s"key${i % 4}" -> i.toString))
+      cases.foreach { pairs =>
+        val query = Query(pairs: _*)
+        val expected = pairs.groupBy(_._1).map { case (key, values) => key -> values.map(_._2).toList }
+        query.toMultiMap shouldEqual expected
+        query.toMultiMap shouldEqual expected // conversion must not mutate the query
+        query.toList shouldEqual pairs.toList
+      }
     }
     "support conversion from list of name/value pairs" in {
       import Query._
