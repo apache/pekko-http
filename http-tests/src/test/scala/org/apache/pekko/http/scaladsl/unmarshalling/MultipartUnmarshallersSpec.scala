@@ -436,6 +436,29 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
           Multipart.FormData.BodyPart.Strict("email",
             HttpEntity(`application/octet-stream`, ByteString("test@there.com"))))
       }
+      for (streamed <- Seq(false, true)) {
+        s"without interpreting a part Content-Encoding header (${if (streamed) "streamed" else "strict"})" in {
+          // RFC 7578 section 4.8: other Content-* part headers do not affect form-data interpretation.
+          val contentType = `multipart/form-data`.withBoundary("XYZABC")
+          val content = ByteString("""--XYZABC
+                                    |Content-Disposition: form-data; name="file"; filename="data.txt"
+                                    |Content-Type: application/octet-stream
+                                    |Content-Encoding: gzip
+                                    |
+                                    |These are the original, uncompressed bytes.
+                                    |--XYZABC--""".stripMarginWithNewline(lineFeed))
+          val entity =
+            if (streamed) HttpEntity.Default(contentType, content.length, Source(content.grouped(1).toList))
+            else HttpEntity(contentType, content)
+
+          Unmarshal(entity).to[Multipart.FormData] should haveParts(
+            Multipart.FormData.BodyPart.Strict(
+              "file",
+              HttpEntity(`application/octet-stream`, ByteString("These are the original, uncompressed bytes.")),
+              Map("filename" -> "data.txt"),
+              List(`Content-Encoding`(HttpEncodings.gzip))))
+        }
+      }
       "with a file" in {
         Unmarshal {
           HttpEntity.Default(
