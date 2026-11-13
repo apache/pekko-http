@@ -707,9 +707,16 @@ object Uri {
      * }}}
      */
     def toMultiMap: Map[String, List[String]] = {
-      @tailrec def append(map: Map[String, List[String]], q: Query): Map[String, List[String]] =
-        if (q.isEmpty) map else append(map.updated(q.key, map.getOrElse(q.key, Nil) :+ q.value), q.tail)
-      append(Map.empty, this)
+      @tailrec def collect(map: Map[String, List[String]], q: Query,
+          repeatedKeys: List[String]): Map[String, List[String]] =
+        if (q.isEmpty)
+          repeatedKeys.foldLeft(map)((result, key) => result.updated(key, result(key).reverse))
+        else {
+          val previous = map.getOrElse(q.key, Nil)
+          val keys = if (previous.nonEmpty && previous.tail.isEmpty) q.key :: repeatedKeys else repeatedKeys
+          collect(map.updated(q.key, q.value :: previous), q.tail, keys)
+        }
+      collect(Map.empty, this, Nil)
     }
     override def toString = UriRendering.QueryRenderer.render(new StringRendering, this).get
   }
