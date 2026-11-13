@@ -158,7 +158,13 @@ Java
 
 @@@
 
+A `205 Reset Content` response has an empty entity. For HTTP/1 responses, the client still consumes
+its message framing before delivering the response: a zero content length, an empty chunked body,
+or connection closure when no length is specified. This does not change the requirement that
+applications must not attach content to a `205` response.
+
 <a id="httpentity"></a>
+
 ## HttpEntity
 
 An @apidoc[HttpEntity] carries the data bytes of a message together with its Content-Type and, if known, its Content-Length.

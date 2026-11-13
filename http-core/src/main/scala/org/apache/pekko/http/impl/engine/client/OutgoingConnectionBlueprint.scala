@@ -337,7 +337,7 @@ private[http] object OutgoingConnectionBlueprint {
                 completeStage()
               } else {
                 completeStagePending = true
-                emit(responseOut, parser.onPull() :: Nil, () => completeStage())
+                drainParser(parser.onPull())
               }
             }
         })
