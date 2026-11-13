@@ -43,6 +43,28 @@ class GzipSpec extends CoderSpec {
     "decode concatenated compressions" in {
       ourDecode(Seq(encode("Hello, "), encode("dear "), encode("User!")).join) should readAs("Hello, dear User!")
     }
+    for {
+      concatenated <- Seq(false, true)
+      fragmented <- Seq(false, true)
+    } {
+      s"decode a gzip extra field (concatenated=$concatenated, fragmented=$fragmented)" in {
+        val first = ByteString("first member")
+        val second = ByteString(" and a second member")
+        val encoded = streamEncode(first)
+        // RFC 1952 section 2.3.1.1: XLEN includes the subfield header, but not XLEN itself.
+        // The JDK produces no optional fields, so adding FEXTRA does not invalidate a header CRC.
+        encoded(3) shouldEqual 0.toByte
+        val extra = ByteString('P'.toByte, 'K'.toByte, 2, 0, 17, 23)
+        val withExtra = encoded.take(3) ++ ByteString(4) ++ encoded.slice(4, 10) ++
+          ByteString(extra.length, 0) ++ extra ++ encoded.drop(10)
+        val input = if (concatenated) withExtra ++ streamEncode(second) else withExtra
+        val expected = if (concatenated) first ++ second else first
+
+        streamDecode(input) shouldEqual expected // independent JDK decoder checks the fixture
+        val chunks = if (fragmented) input.grouped(1).toVector else Vector(input)
+        decodeChunks(Source(chunks)) shouldEqual expected
+      }
+    }
     "provide a better compression ratio than the standard Gzip/Gunzip streams" in pendingUntilFixed {
       // for this input, it seems gzip level 5-9 provide almost the same compression, so < is too strict
       // TODO: find better input where level makes a more significant difference
