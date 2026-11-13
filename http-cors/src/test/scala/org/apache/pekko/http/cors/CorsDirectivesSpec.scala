@@ -63,13 +63,64 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
         responseAs[String] shouldBe actual
         response.status shouldBe exampleStatus
         response.headers should contain theSameElementsAs Seq(
+          RawHeader("Vary", "Origin"),
           `Access-Control-Allow-Origin`.*)
       }
     }
   }
 
   "The cors(settings) directive" should {
-    "not affect actual requests when not strict" in {
+    for {
+      allowCredentials <- Seq(true, false)
+      origin <- Seq(None, Some(Origin(exampleOrigin)), Some(Origin(HttpOrigin("https://other.example"))),
+        Some(Origin(Seq.empty)))
+    } {
+      s"vary responses by Origin with credentials=$allowCredentials and origin=${origin.map(_.value)}" in {
+        val request = origin.fold(Get())(o => Get().withHeaders(o))
+        request ~> route(referenceSettings.withAllowCredentials(allowCredentials)) ~> check {
+          response.status shouldBe exampleStatus
+          response.headers.filter(_.is("vary")).flatMap(_.value.split(',').map(_.trim.toLowerCase)) should
+          contain("origin")
+        }
+      }
+    }
+
+    for {
+      varyValues <- Seq(
+        Seq("Accept-Encoding"),
+        Seq("origin"),
+        Seq("*"),
+        Seq("Accept-Encoding, oRiGiN"),
+        Seq("Accept-Encoding", "Origin"),
+        Seq("Accept-Encoding", "*"))
+    } {
+      s"preserve existing Vary fields $varyValues without duplicating Origin or wildcard" in {
+        val existing = varyValues.map(RawHeader("Vary", _))
+        Get() ~> Origin(exampleOrigin) ~> route(referenceSettings, existing) ~> check {
+          val varyHeaders = response.headers.filter(_.is("vary"))
+          varyHeaders should contain allElementsOf existing
+          val fields = varyHeaders.flatMap(_.value.split(',').map(_.trim.toLowerCase))
+          if (varyValues == Seq("Accept-Encoding")) fields should contain("origin")
+          else varyHeaders shouldBe existing
+        }
+      }
+    }
+
+    "vary a completed alternative inside cors" in {
+      Get() ~> cors(referenceSettings) { reject ~ complete(actual) } ~> check {
+        responseAs[String] shouldBe actual
+        response.headers should contain(RawHeader("Vary", "Origin"))
+      }
+    }
+
+    "leave a completed alternative outside cors unchanged" in {
+      Get() ~> (cors(referenceSettings) { reject } ~ complete(actual)) ~> check {
+        responseAs[String] shouldBe actual
+        response.headers.filter(_.is("vary")) shouldBe empty
+      }
+    }
+
+    "preserve generic response headers apart from Vary when not strict" in {
       val settings = referenceSettings
       val responseHeaders = Seq(Host("my-host"), `Access-Control-Max-Age`(60))
       Get() ~> {
@@ -77,8 +128,8 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
       } ~> check {
         responseAs[String] shouldBe actual
         response.status shouldBe exampleStatus
-        // response headers should be untouched, including the CORS-related ones
-        response.headers shouldBe responseHeaders
+        // Existing response headers are untouched, including the CORS-related ones.
+        response.headers shouldBe RawHeader("Vary", "Origin") +: responseHeaders
       }
     }
 
@@ -99,6 +150,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
         responseAs[String] shouldBe actual
         response.status shouldBe exampleStatus
         response.headers should contain theSameElementsAs Seq(
+          RawHeader("Vary", "Origin"),
           `Access-Control-Allow-Origin`(exampleOrigin),
           `Access-Control-Allow-Credentials`(true))
       }
@@ -124,6 +176,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
       } ~> check {
         status shouldBe StatusCodes.OK
         response.headers should contain theSameElementsAs Seq(
+          RawHeader("Vary", "Origin"),
           `Access-Control-Allow-Origin`.`null`,
           `Access-Control-Allow-Methods`(settings.allowedMethods),
           `Access-Control-Max-Age`(1800),
@@ -148,6 +201,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
         responseAs[String] shouldBe actual
         response.status shouldBe exampleStatus
         response.headers should contain theSameElementsAs Seq(
+          RawHeader("Vary", "Origin"),
           `Access-Control-Allow-Origin`.`null`,
           `Access-Control-Allow-Credentials`(true))
       }
@@ -164,6 +218,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
         responseAs[String] shouldBe actual
         response.status shouldBe exampleStatus
         response.headers should contain theSameElementsAs Seq(
+          RawHeader("Vary", "Origin"),
           `Access-Control-Allow-Origin`(subdomainOrigin),
           `Access-Control-Allow-Credentials`(true))
       }
@@ -177,6 +232,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
         responseAs[String] shouldBe actual
         response.status shouldBe exampleStatus
         response.headers shouldBe Seq(
+          RawHeader("Vary", "Origin"),
           `Access-Control-Allow-Origin`.*)
       }
     }
@@ -190,6 +246,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
         responseAs[String] shouldBe actual
         response.status shouldBe exampleStatus
         response.headers shouldBe Seq(
+          RawHeader("Vary", "Origin"),
           `Access-Control-Allow-Origin`(exampleOrigin),
           `Access-Control-Expose-Headers`(exposedHeaders),
           `Access-Control-Allow-Credentials`(true))
@@ -213,6 +270,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
         responseAs[String] shouldBe actual
         response.status shouldBe exampleStatus
         response.headers should contain theSameElementsAs Seq(
+          RawHeader("Vary", "Origin"),
           `Access-Control-Allow-Origin`(exampleOrigin),
           `Access-Control-Expose-Headers`("X-good"),
           `Access-Control-Allow-Credentials`(true),
@@ -228,6 +286,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
         response.entity shouldBe HttpEntity.Empty
         status shouldBe StatusCodes.OK
         response.headers should contain theSameElementsAs Seq(
+          RawHeader("Vary", "Origin"),
           `Access-Control-Allow-Origin`(exampleOrigin),
           `Access-Control-Allow-Methods`(settings.allowedMethods),
           `Access-Control-Max-Age`(1800),
@@ -243,6 +302,7 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
         responseAs[String] shouldBe actual
         response.status shouldBe exampleStatus
         response.headers should contain theSameElementsAs Seq(
+          RawHeader("Vary", "Origin"),
           `Access-Control-Allow-Origin`(exampleOrigin),
           `Access-Control-Allow-Credentials`(true))
       }
