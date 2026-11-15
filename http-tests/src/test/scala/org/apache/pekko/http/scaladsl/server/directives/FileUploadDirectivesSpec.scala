@@ -14,10 +14,12 @@
 package org.apache.pekko.http.scaladsl.server.directives
 
 import java.io.File
-import java.nio.file.Files
+import java.nio.file.{ Files, Path }
+import java.util.Comparator
 
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
+import scala.util.control.NonFatal
 
 import org.apache.pekko
 import pekko.NotUsed
@@ -38,38 +40,26 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
   // tests touches filesystem, so reqs may take longer than the default of 1.second to complete
   implicit val routeTimeout: RouteTestTimeout = RouteTestTimeout(6.seconds.dilated)
 
+  // an empty upload and a one-byte control case, which shows that the streamed body is actually consumed
+  private val SmallPayloads = Seq("an empty" -> ByteString.empty, "a one-byte" -> ByteString("x"))
+  private val SmallFileInfo = FileInfo("fieldName", "small.txt", ContentTypes.`text/plain(UTF-8)`)
+
   "the storeUploadedFile directive" should {
     val data = s"<int>${"42" * 1000000}</int>" // ~2MB of data
 
-    for (streamed <- Seq(false, true)) {
-      s"store an empty file from a ${if (streamed) "streamed" else "strict"} multipart input" in {
-        val directory = Files.createTempDirectory("http-empty-file-upload")
-        val destination = directory.resolve("upload.dat")
-        val contentType = ContentTypes.`text/plain(UTF-8)`
-        val entity: BodyPartEntity =
-          if (streamed) HttpEntity.IndefiniteLength(contentType, Source.empty[ByteString])
-          else HttpEntity.Strict(contentType, ByteString.empty)
-        val upload = Multipart.FormData(
-          Multipart.FormData.BodyPart("fieldName", entity, Map("filename" -> "empty.txt")))
-        @volatile var storedFile: Option[File] = None
-
-        try {
-          Files.exists(destination) shouldEqual false
-          Post("/", upload) ~>
-          storeUploadedFile("fieldName", _ => destination.toFile) { (info, file) =>
-            storedFile = Some(file)
-            complete(info.toString)
-          } ~> check {
-            status shouldEqual StatusCodes.OK
-            responseAs[String] shouldEqual FileInfo("fieldName", "empty.txt", contentType).toString
-            storedFile.map(_.toPath) shouldEqual Some(destination)
-            Files.isRegularFile(destination) shouldEqual true
-            Files.size(destination) shouldEqual 0L
-          }
-        } finally {
-          Files.deleteIfExists(destination)
-          Files.deleteIfExists(directory)
-        }
+    for {
+      (description, payload) <- SmallPayloads
+      entityType <- Seq("strict", "streamed")
+    } s"store $description file from a $entityType multipart input" in withTempDirectory { directory =>
+      val destination = directory.resolve("upload.dat")
+      Post("/", smallFileUpload(entityType, payload)) ~>
+      storeUploadedFile("fieldName", _ => destination.toFile) { (info, file) =>
+        complete(s"$info stored at ${file.getPath}")
+      } ~> check {
+        status shouldEqual StatusCodes.OK
+        responseAs[String] shouldEqual s"$SmallFileInfo stored at $destination"
+        Files.isRegularFile(destination) shouldEqual true
+        ByteString.fromArray(Files.readAllBytes(destination)) shouldEqual payload
       }
     }
 
@@ -129,6 +119,22 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
   "the storeUploadedFiles directive" should {
     val txt = "42" * 1000000 // ~2MB of data
     val xml = s"<int>$txt</int>" // ~2MB of data
+
+    for {
+      (description, payload) <- SmallPayloads
+      entityType <- Seq("strict", "streamed")
+    } s"store $description file from a $entityType multipart input" in withTempDirectory { directory =>
+      val destination = directory.resolve(SmallFileInfo.fileName)
+      Post("/", smallFileUpload(entityType, payload)) ~>
+      storeUploadedFiles("fieldName", info => directory.resolve(info.fileName).toFile) { files =>
+        complete(files.map { case (info, file) => s"$info stored at ${file.getPath}" }.mkString("\n"))
+      } ~> check {
+        status shouldEqual StatusCodes.OK
+        responseAs[String] shouldEqual s"$SmallFileInfo stored at $destination"
+        Files.isRegularFile(destination) shouldEqual true
+        ByteString.fromArray(Files.readAllBytes(destination)) shouldEqual payload
+      }
+    }
 
     def withUpload(entityType: String, formDataUpload: Multipart.FormData) = {
       s"for $entityType" should {
@@ -530,6 +536,42 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
       }
     }
 
+  }
+
+  private def smallFileUpload(entityType: String, payload: ByteString): Multipart.FormData = {
+    val contentType = SmallFileInfo.contentType
+    val entity: BodyPartEntity = entityType match {
+      case "strict"   => HttpEntity.Strict(contentType, payload)
+      case "streamed" =>
+        HttpEntity.IndefiniteLength(contentType, if (payload.isEmpty) Source.empty else Source.single(payload))
+    }
+    Multipart.FormData(
+      Multipart.FormData.BodyPart(SmallFileInfo.fieldName, entity, Map("filename" -> SmallFileInfo.fileName)))
+  }
+
+  /** Runs `body` with a fresh temporary directory; cleanup errors never hide a failure of `body`. */
+  private def withTempDirectory[T](body: Path => T): T = {
+    val directory = Files.createTempDirectory("http-FileUploadDirectivesSpec")
+    var failure: Throwable = null
+    try body(directory)
+    catch {
+      case t: Throwable =>
+        failure = t
+        throw t
+    } finally {
+      try deleteRecursively(directory)
+      catch {
+        case NonFatal(e) => if (failure ne null) failure.addSuppressed(e) else throw e
+      }
+    }
+  }
+
+  private def deleteRecursively(directory: Path): Unit = {
+    val paths = Files.walk(directory)
+    try {
+      val deepestFirst = paths.sorted(Comparator.reverseOrder[Path]()).iterator()
+      while (deepestFirst.hasNext) Files.deleteIfExists(deepestFirst.next())
+    } finally paths.close()
   }
 
   private def read(file: File): String = {
