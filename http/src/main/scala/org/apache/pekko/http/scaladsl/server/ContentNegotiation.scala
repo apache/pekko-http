@@ -178,12 +178,16 @@ final class EncodingNegotiator(requestHeaders: Seq[HttpHeader]) {
       case x                        => -x.qValue // all others come first
     }.toList
 
+  private lazy val hasAcceptEncoding = requestHeaders.exists(_.isInstanceOf[`Accept-Encoding`])
+
   /**
    * Returns the q-value that the client (implicitly or explicitly) attaches to the given encoding.
    * See http://tools.ietf.org/html/rfc7231#section-5.3.1 for details.
    */
   def qValueFor(encoding: HttpEncoding): Float =
     acceptedEncodingRanges match {
+      case Nil if encoding != HttpEncodings.identity && hasAcceptEncoding =>
+        0.0f // An explicitly empty field accepts no content coding (RFC 9110, section 12.5.3).
       case Nil => 1.0f
       case x   => x.collectFirst { case r if r.matches(encoding) => r.qValue }.getOrElse(0f)
     }
