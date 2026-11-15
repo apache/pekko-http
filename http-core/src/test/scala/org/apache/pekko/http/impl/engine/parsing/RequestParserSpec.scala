@@ -112,6 +112,18 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      "with a QUERY method and a body" in new Test {
+        """QUERY /search HTTP/1.1
+          |Host: example.com
+          |Content-Type: text/plain; charset=UTF-8
+          |Content-Length: 9
+          |
+          |find cats""" should parseTo {
+          HttpRequest(QUERY, "/search", List(Host("example.com")),
+            HttpEntity(`text/plain(UTF-8)`, "find cats"))
+        }
+      }
+
       "with 3 headers, a body and remaining content" in new Test {
         """POST /resource/yes HTTP/1.0
           |User-Agent: curl/7.19.7 xyz
