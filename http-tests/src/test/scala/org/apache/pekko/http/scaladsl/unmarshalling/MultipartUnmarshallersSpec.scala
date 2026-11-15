@@ -34,22 +34,23 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
 
   def lineFeed: String
 
-  val entityBuilders: Seq[(String, (ContentType, ByteString) => RequestEntity)] = Seq(
+  private val entityBuilders: Seq[(String, (ContentType, ByteString) => RequestEntity)] = Seq(
     "Strict" -> ((ct: ContentType, bytes: ByteString) => HttpEntity(ct, bytes)),
-    "Default, one-byte chunks" ->
+    "Default, one-byte ByteStrings" ->
     ((ct: ContentType, bytes: ByteString) =>
       HttpEntity.Default(ct, bytes.length, Source(bytes.grouped(1).toList))))
 
   "The MultipartUnmarshallers." should {
 
     "multipartGeneralUnmarshaller should correctly unmarshal 'multipart/*' content with" should {
-      for {
-        parameters <- Seq("format=flowed; charset=\"ISO-8859-1\"", "charset=\"ISO-8859-1\"; format=flowed")
-        (entityName, buildEntity) <- entityBuilders
-      } {
-        s"part media parameters and quoted charset ($parameters, $entityName)" in {
-          val content = s"""--params
-                           |Content-Type: text/plain; $parameters
+      for ((entityName, buildEntity) <- entityBuilders) {
+        s"part media parameters and quoted charset after a preceding part ($entityName)" in {
+          val content = """--params
+                           |Content-Type: text/plain; charset=UTF-8
+                           |
+                           |first
+                           |--params
+                           |Content-Type: text/plain; format=flowed; charset="ISO-8859-1"
                            |
                            |caf\u00e9
                            |--params--""".stripMarginWithNewline(lineFeed)
@@ -57,6 +58,7 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
           val entity = buildEntity(`multipart/mixed`.withBoundary("params"), bytes)
           val partType = ContentType(`text/plain`.withParams(Map("format" -> "flowed")), HttpCharsets.`ISO-8859-1`)
           Unmarshal(entity).to[Multipart.General] should haveParts(
+            Multipart.General.BodyPart.Strict(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "first")),
             Multipart.General.BodyPart.Strict(HttpEntity(partType, "caf\u00e9")))
         }
       }
@@ -405,14 +407,16 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
     }
 
     "multipartByteRangesUnmarshaller should correctly unmarshal multipart/byteranges content with" should {
-      for {
-        parameters <- Seq("format=flowed; charset=\"ISO-8859-1\"", "charset=\"ISO-8859-1\"; format=flowed")
-        (entityName, buildEntity) <- entityBuilders
-      } {
-        s"part media parameters and quoted charset ($parameters, $entityName)" in {
-          val content = s"""--params
-                           |Content-Type: text/plain; $parameters
-                           |Content-Range: bytes 0-3/4
+      for ((entityName, buildEntity) <- entityBuilders) {
+        s"part media parameters and quoted charset after a preceding part ($entityName)" in {
+          val content = """--params
+                           |Content-Type: text/plain; charset=UTF-8
+                           |Content-Range: bytes 0-4/9
+                           |
+                           |first
+                           |--params
+                           |Content-Type: text/plain; format=flowed; charset="ISO-8859-1"
+                           |Content-Range: bytes 5-8/9
                            |
                            |caf\u00e9
                            |--params--""".stripMarginWithNewline(lineFeed)
@@ -420,7 +424,9 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
           val entity = buildEntity(`multipart/byteranges`.withBoundary("params"), bytes)
           val partType = ContentType(`text/plain`.withParams(Map("format" -> "flowed")), HttpCharsets.`ISO-8859-1`)
           Unmarshal(entity).to[Multipart.ByteRanges] should haveParts(
-            Multipart.ByteRanges.BodyPart.Strict(ContentRange(0, 3, 4), HttpEntity(partType, "caf\u00e9")))
+            Multipart.ByteRanges.BodyPart.Strict(ContentRange(0, 4, 9),
+              HttpEntity(ContentTypes.`text/plain(UTF-8)`, "first")),
+            Multipart.ByteRanges.BodyPart.Strict(ContentRange(5, 8, 9), HttpEntity(partType, "caf\u00e9")))
         }
       }
       "two different parts" in {
@@ -442,17 +448,18 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
           Multipart.ByteRanges.BodyPart.Strict(ContentRange(23, 25, 26),
             HttpEntity(ContentTypes.`text/plain(UTF-8)`, "XYZ")))
       }
-
     }
 
     "multipartFormDataUnmarshaller should correctly unmarshal 'multipart/form-data' content" should {
-      for {
-        parameters <- Seq("format=flowed; charset=\"ISO-8859-1\"", "charset=\"ISO-8859-1\"; format=flowed")
-        (entityName, buildEntity) <- entityBuilders
-      } {
-        s"part media parameters and quoted charset ($parameters, $entityName)" in {
-          val content = s"""--params
-                           |Content-Type: text/plain; $parameters
+      for ((entityName, buildEntity) <- entityBuilders) {
+        s"part media parameters and quoted charset after a preceding part ($entityName)" in {
+          val content = """--params
+                           |Content-Type: text/plain; charset=UTF-8
+                           |Content-Disposition: form-data; name="first"
+                           |
+                           |first
+                           |--params
+                           |Content-Type: text/plain; format=flowed; charset="ISO-8859-1"
                            |Content-Disposition: form-data; name="field"
                            |
                            |caf\u00e9
@@ -461,6 +468,7 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
           val entity = buildEntity(`multipart/form-data`.withBoundary("params"), bytes)
           val partType = ContentType(`text/plain`.withParams(Map("format" -> "flowed")), HttpCharsets.`ISO-8859-1`)
           Unmarshal(entity).to[Multipart.FormData] should haveParts(
+            Multipart.FormData.BodyPart.Strict("first", HttpEntity(ContentTypes.`text/plain(UTF-8)`, "first")),
             Multipart.FormData.BodyPart.Strict("field", HttpEntity(partType, "caf\u00e9")))
         }
       }
