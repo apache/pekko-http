@@ -36,11 +36,17 @@ import pekko.http.impl.settings.WebSocketCompressionSettingsImpl
 import pekko.http.impl.settings.WebSocketSettingsImpl
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.websocket.log-frames = on") { spec =>
+  import WebSocketServerSpec._
 
   private val EmptyDeflateBlock = ByteString(0x00)
+
+  // RFC 7692 section 7.2.3.2: "Hello" compressed, then "Hello" compressed again using the first message's context.
+  private val CompressedHello = ByteString(0xF2, 0x48, 0xCD, 0xC9, 0xC9, 0x07, 0x00)
+  private val CompressedHelloWithContext = ByteString(0xF2, 0x00, 0x11, 0x00, 0x00)
 
   "The server-side WebSocket integration should" should {
     "establish a websocket connection when the user requests it" should {
@@ -345,15 +351,69 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
-      List(false, true).foreach { withContext =>
-        s"pass uncompressed inbound messages through when permessage-deflate is negotiated (context=$withContext)" in
+      "pass uncompressed inbound messages through when permessage-deflate is negotiated" in
+      Utils.assertAllStagesStopped {
+        new TestSetup {
+          sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
+
+          val request = expectRequest()
+          val upgrade = request.attribute(webSocketUpgrade)
+          val response = upgrade.get.handleMessages(Flow[Message])
+          responses.sendNext(response)
+
+          expectResponseWithWipedDate(
+            """HTTP/1.1 101 Switching Protocols
+              |Upgrade: websocket
+              |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+              |Sec-WebSocket-Extensions: permessage-deflate
+              |Server: pekko-http/test
+              |Date: XXXX
+              |Connection: upgrade
+              |
+              |""")
+
+          sendWSFrame(Protocol.Opcode.Text, ByteString("plain client message"), fin = true, mask = true)
+          expectCompressedTextFrame("plain client message")
+
+          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+          expectWSCloseFrame(Protocol.CloseCodes.Regular)
+
+          closeNetworkInput()
+          expectNetworkClose()
+        }
+      }
+
+      List(
+        UncompressedInbound(
+          "a single-frame text message",
+          List(InboundFrame(Protocol.Opcode.Text, ByteString("plain client message"), fin = true)),
+          echoOpcode = Some(Protocol.Opcode.Text)),
+        UncompressedInbound(
+          "a fragmented text message",
+          List(
+            InboundFrame(Protocol.Opcode.Text, ByteString("plain fragmented "), fin = false),
+            InboundFrame(Protocol.Opcode.Continuation, ByteString("client message"), fin = true)),
+          echoOpcode = Some(Protocol.Opcode.Text)),
+        UncompressedInbound(
+          "a binary message",
+          List(InboundFrame(Protocol.Opcode.Binary, ByteString(0x00, 0xFF, 0x10, 0x80, 0x7F), fin = true)),
+          echoOpcode = Some(Protocol.Opcode.Binary)),
+        UncompressedInbound(
+          "a ping",
+          List(InboundFrame(Protocol.Opcode.Ping, ByteString("ping"), fin = true)),
+          echoOpcode = None)).foreach { inbound =>
+        s"keep the inflater context across ${inbound.description} sent uncompressed between compressed messages" in
         Utils.assertAllStagesStopped {
           new TestSetup {
             sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
 
             val request = expectRequest()
             val upgrade = request.attribute(webSocketUpgrade)
-            val response = upgrade.get.handleMessages(Flow[Message])
+            // Echo strict messages so each echo is a single compressed frame; this test covers the inbound inflater.
+            val response = upgrade.get.handleMessages(Flow[Message].mapAsync(1) {
+              case text: TextMessage     => text.toStrict(3.seconds): Future[Message]
+              case binary: BinaryMessage => binary.toStrict(3.seconds)
+            })
             responses.sendNext(response)
 
             expectResponseWithWipedDate(
@@ -367,18 +427,30 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
               |
               |""")
 
-            val plain = (ByteString("plain client message"), false, "plain client message")
-            // RFC 7692 section 7.2.3.2: the second Hello payload uses the first message's context.
-            val messages = if (withContext) List(
-              (ByteString(0xF2, 0x48, 0xCD, 0xC9, 0xC9, 0x07, 0x00), true, "Hello"),
-              plain,
-              (ByteString(0xF2, 0x00, 0x11, 0x00, 0x00), true, "Hello"))
-            else List(plain)
-            val echoes = messages.map { case (payload, compressed, _) =>
-              sendWSFrame(Protocol.Opcode.Text, payload, fin = true, mask = true, rsv1 = compressed)
-              expectCompressedFrame(Protocol.Opcode.Text, fin = true, rsv1 = true)
+            sendWSFrame(Protocol.Opcode.Text, CompressedHello, fin = true, mask = true, rsv1 = true)
+            val firstEcho = expectCompressedMessage(Protocol.Opcode.Text)
+
+            inbound.frames.foreach { frame =>
+              sendWSFrame(frame.opcode, frame.payload, fin = frame.fin, mask = true)
             }
-            inflatePerMessagesWithContext(echoes: _*).map(_.utf8String) shouldEqual messages.map(_._3)
+            val middleEcho = inbound.echoOpcode match {
+              case Some(opcode) =>
+                val echo = expectCompressedMessage(opcode)
+                withClue("echo of the uncompressed message should be compressed: ") {
+                  echo should not be inbound.payload
+                }
+                Some(echo)
+              case None =>
+                expectWSFrame(Protocol.Opcode.Pong, inbound.payload, fin = true)
+                None
+            }
+
+            sendWSFrame(Protocol.Opcode.Text, CompressedHelloWithContext, fin = true, mask = true, rsv1 = true)
+            val lastEcho = expectCompressedMessage(Protocol.Opcode.Text)
+
+            val echoes = (firstEcho +: middleEcho.toList) :+ lastEcho
+            val expected = (ByteString("Hello") +: middleEcho.map(_ => inbound.payload).toList) :+ ByteString("Hello")
+            inflatePerMessagesWithContext(echoes: _*) shouldEqual expected
 
             sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
             expectWSCloseFrame(Protocol.CloseCodes.Regular)
@@ -387,7 +459,6 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
             expectNetworkClose()
           }
         }
-
       }
 
       "handle fragmented compressed messages with interleaved control frames" in Utils.assertAllStagesStopped {
@@ -1699,29 +1770,43 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
     }
 
     def expectCompressedFrame(opcode: Protocol.Opcode, fin: Boolean, rsv1: Boolean): ByteString = {
-      val header = expectBytes(2)
-      ((header(0) & Protocol.FIN_MASK) != 0) shouldEqual fin
-      ((header(0) & Protocol.RSV1_MASK) != 0) shouldEqual rsv1
-      (header(0) & Protocol.OP_MASK) shouldEqual opcode.code
-      (header(1) & Protocol.MASK_MASK) shouldEqual 0
-      val length = header(1) & 0x7F
-      expectBytes(length)
+      val (actualFin, payload) = expectServerFrame(opcode, rsv1)
+      withClue(s"FIN bit of $opcode frame: ") { actualFin shouldEqual fin }
+      payload
+    }
+
+    /** Reads one complete server message (first frame plus any continuations) and returns its payload. */
+    def expectCompressedMessage(opcode: Protocol.Opcode): ByteString = {
+      val (fin, payload) = expectServerFrame(opcode, rsv1 = true)
+      if (fin) payload else (payload +: expectCompressedContinuationFramesUntilFinal()).reduce(_ ++ _)
     }
 
     def expectCompressedContinuationFramesUntilFinal(): Seq[ByteString] = {
       def read(acc: Vector[ByteString]): Vector[ByteString] = {
-        val header = expectBytes(2)
-        val fin = (header(0) & Protocol.FIN_MASK) != 0
-        ((header(0) & Protocol.RSV1_MASK) != 0) shouldEqual false
-        (header(0) & Protocol.OP_MASK) shouldEqual Protocol.Opcode.Continuation.code
-        (header(1) & Protocol.MASK_MASK) shouldEqual 0
-        val length = header(1) & 0x7F
-        val payload = expectBytes(length)
+        val (fin, payload) = expectServerFrame(Protocol.Opcode.Continuation, rsv1 = false)
         val next = acc :+ payload
         if (fin) next else read(next)
       }
 
       read(Vector.empty)
+    }
+
+    /** Reads one unmasked server frame with a short payload and returns its FIN bit and payload. */
+    private def expectServerFrame(opcode: Protocol.Opcode, rsv1: Boolean): (Boolean, ByteString) = {
+      val header = expectBytes(2)
+      val actualOpcode = header(0) & Protocol.OP_MASK
+      val length = header(1) & 0x7F
+      if (actualOpcode == Protocol.Opcode.Close.code && opcode != Protocol.Opcode.Close) {
+        val closeData = expectBytes(length)
+        val closeCode =
+          if (closeData.length >= 2) (((closeData(0) & 0xFF) << 8) | (closeData(1) & 0xFF)).toString else "none"
+        fail(s"expected a $opcode frame but the server sent Close (code $closeCode), " +
+          "for example because it failed to process the previous inbound frame")
+      }
+      withClue("frame opcode: ") { actualOpcode shouldEqual opcode.code }
+      withClue(s"RSV1 bit of $opcode frame: ") { ((header(0) & Protocol.RSV1_MASK) != 0) shouldEqual rsv1 }
+      withClue(s"MASK bit of $opcode frame: ") { (header(1) & Protocol.MASK_MASK) shouldEqual 0 }
+      ((header(0) & Protocol.FIN_MASK) != 0, expectBytes(length))
     }
   }
 
@@ -1901,5 +1986,20 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
       inflaterEnded.get() shouldEqual inflaterCreated.get()
       deflaterEnded.get() shouldEqual deflaterCreated.get()
     }
+  }
+}
+
+object WebSocketServerSpec {
+  final case class InboundFrame(opcode: Protocol.Opcode, payload: ByteString, fin: Boolean)
+
+  /**
+   * An inbound message sent without RSV1 although permessage-deflate is negotiated.
+   * `echoOpcode` is the opcode of the compressed echo, or `None` for control frames answered directly.
+   */
+  final case class UncompressedInbound(
+      description: String,
+      frames: List[InboundFrame],
+      echoOpcode: Option[Protocol.Opcode]) {
+    def payload: ByteString = frames.map(_.payload).reduce(_ ++ _)
   }
 }
