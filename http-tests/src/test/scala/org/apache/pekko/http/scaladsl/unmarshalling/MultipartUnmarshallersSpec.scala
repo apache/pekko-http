@@ -436,28 +436,34 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
           Multipart.FormData.BodyPart.Strict("email",
             HttpEntity(`application/octet-stream`, ByteString("test@there.com"))))
       }
-      for (streamed <- Seq(false, true)) {
-        s"without interpreting a part Content-Encoding header (${if (streamed) "streamed" else "strict"})" in {
-          // RFC 7578 section 4.8: other Content-* part headers do not affect form-data interpretation.
-          val contentType = `multipart/form-data`.withBoundary("XYZABC")
-          val content = ByteString("""--XYZABC
-                                    |Content-Disposition: form-data; name="file"; filename="data.txt"
-                                    |Content-Type: application/octet-stream
-                                    |Content-Encoding: gzip
-                                    |
-                                    |These are the original, uncompressed bytes.
-                                    |--XYZABC--""".stripMarginWithNewline(lineFeed))
-          val entity =
-            if (streamed) HttpEntity.Default(contentType, content.length, Source(content.grouped(1).toList))
-            else HttpEntity(contentType, content)
-
-          Unmarshal(entity).to[Multipart.FormData] should haveParts(
-            Multipart.FormData.BodyPart.Strict(
-              "file",
-              HttpEntity(`application/octet-stream`, ByteString("These are the original, uncompressed bytes.")),
-              Map("filename" -> "data.txt"),
-              List(`Content-Encoding`(HttpEncodings.gzip))))
+      "without decoding a part body that carries a Content-Encoding header" in {
+        // RFC 7578 section 4.8: form-data parts ignore Content-Encoding, so the body must be passed through as is.
+        // The body is real gzip data, so a decoder (even one that fell back to the raw bytes on failure) would change it.
+        val gzipped = {
+          val bytes = new java.io.ByteArrayOutputStream
+          val gzip = new java.util.zip.GZIPOutputStream(bytes)
+          gzip.write("These are the original, uncompressed bytes.".getBytes("UTF-8"))
+          gzip.close()
+          ByteString(bytes.toByteArray)
         }
+        val header = ByteString("""--XYZABC
+                                  |Content-Disposition: form-data; name="file"; filename="data.txt"
+                                  |Content-Type: application/octet-stream
+                                  |Content-Encoding: gzip
+                                  |
+                                  |""".stripMarginWithNewline(lineFeed))
+        val content = header ++ gzipped ++ ByteString(lineFeed + "--XYZABC--")
+
+        val parts = Unmarshal(HttpEntity(`multipart/form-data`.withBoundary("XYZABC"), content))
+          .to[Multipart.FormData]
+          .flatMap(_.toStrict(1.second.dilated))
+          .awaitResult(5.second.dilated)
+          .strictParts
+        parts should have size 1
+        val part = parts.head
+        part.name shouldEqual "file"
+        part.filename shouldEqual Some("data.txt")
+        part.entity shouldEqual HttpEntity(`application/octet-stream`, gzipped)
       }
       "with a file" in {
         Unmarshal {
