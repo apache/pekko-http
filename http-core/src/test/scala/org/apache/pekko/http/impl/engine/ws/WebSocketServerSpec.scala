@@ -345,18 +345,19 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
-      "pass uncompressed inbound messages through when permessage-deflate is negotiated" in
-      Utils.assertAllStagesStopped {
-        new TestSetup {
-          sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
+      List(false, true).foreach { withContext =>
+        s"pass uncompressed inbound messages through when permessage-deflate is negotiated (context=$withContext)" in
+        Utils.assertAllStagesStopped {
+          new TestSetup {
+            sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
 
-          val request = expectRequest()
-          val upgrade = request.attribute(webSocketUpgrade)
-          val response = upgrade.get.handleMessages(Flow[Message])
-          responses.sendNext(response)
+            val request = expectRequest()
+            val upgrade = request.attribute(webSocketUpgrade)
+            val response = upgrade.get.handleMessages(Flow[Message])
+            responses.sendNext(response)
 
-          expectResponseWithWipedDate(
-            """HTTP/1.1 101 Switching Protocols
+            expectResponseWithWipedDate(
+              """HTTP/1.1 101 Switching Protocols
               |Upgrade: websocket
               |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
               |Sec-WebSocket-Extensions: permessage-deflate
@@ -366,15 +367,27 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
               |
               |""")
 
-          sendWSFrame(Protocol.Opcode.Text, ByteString("plain client message"), fin = true, mask = true)
-          expectCompressedTextFrame("plain client message")
+            val plain = (ByteString("plain client message"), false, "plain client message")
+            // RFC 7692 section 7.2.3.2: the second Hello payload uses the first message's context.
+            val messages = if (withContext) List(
+              (ByteString(0xF2, 0x48, 0xCD, 0xC9, 0xC9, 0x07, 0x00), true, "Hello"),
+              plain,
+              (ByteString(0xF2, 0x00, 0x11, 0x00, 0x00), true, "Hello"))
+            else List(plain)
+            val echoes = messages.map { case (payload, compressed, _) =>
+              sendWSFrame(Protocol.Opcode.Text, payload, fin = true, mask = true, rsv1 = compressed)
+              expectCompressedFrame(Protocol.Opcode.Text, fin = true, rsv1 = true)
+            }
+            inflatePerMessagesWithContext(echoes: _*).map(_.utf8String) shouldEqual messages.map(_._3)
 
-          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
-          expectWSCloseFrame(Protocol.CloseCodes.Regular)
+            sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+            expectWSCloseFrame(Protocol.CloseCodes.Regular)
 
-          closeNetworkInput()
-          expectNetworkClose()
+            closeNetworkInput()
+            expectNetworkClose()
+          }
         }
+
       }
 
       "handle fragmented compressed messages with interleaved control frames" in Utils.assertAllStagesStopped {
