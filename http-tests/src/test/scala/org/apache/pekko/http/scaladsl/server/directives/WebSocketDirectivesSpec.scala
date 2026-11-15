@@ -117,6 +117,34 @@ class WebSocketDirectivesSpec extends RoutingSpec {
         }
       }
     }
+    for (withCompressionSelector <- Seq(false, true)) {
+      def protocolRoute(handler: Flow[Message, Message, Any], protocol: String): Route =
+        if (withCompressionSelector)
+          handleWebSocketMessagesForProtocol(handler, protocol, _ => true)
+        else
+          handleWebSocketMessagesForProtocol(handler, protocol)
+
+      s"reject a case-distinct subprotocol (compression selector: $withCompressionSelector)" in {
+        WS("http://localhost/", Flow[Message], List("Chat")) ~> protocolRoute(echo, "chat") ~> check {
+          rejection shouldEqual UnsupportedWebSocketSubprotocolRejection("chat")
+        }
+      }
+
+      s"fall back to an exact subprotocol match (compression selector: $withCompressionSelector)" in {
+        val wsClient = WSProbe()
+        val route = protocolRoute(greeter, "chat") ~ protocolRoute(echo, "Chat")
+
+        WS("http://localhost/", wsClient.flow, List("Chat")) ~> route ~> check {
+          expectWebSocketUpgradeWithProtocol { protocol =>
+            protocol shouldEqual "Chat"
+            wsClient.sendMessage("Peter")
+            wsClient.expectMessage("Peter")
+            wsClient.sendCompletion()
+            wsClient.expectCompletion()
+          }
+        }
+      }
+    }
     "reject websocket requests if no subprotocol matches" in {
       WS("http://localhost/", Flow[Message], List("other")) ~> websocketMultipleProtocolRoute ~> check {
         rejections.collect {
