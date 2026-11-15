@@ -568,6 +568,14 @@ class UriSpec extends AnyWordSpec with Matchers {
       Uri("?").query().toMap shouldBe empty
     }
 
+    "preserve literal plus signs outside of parsed form query parameters" in {
+      val uri = Uri("/a+b?q=c+d%2Be")
+      uri.path shouldEqual Path / "a+b"
+      uri.rawQueryString shouldEqual Some("q=c+d%2Be")
+      uri.queryString() shouldEqual Some("q=c+d+e")
+      uri.query() shouldEqual ("q", "c d+e") +: Query.Empty
+    }
+
     "properly complete a normalization cycle" in {
 
       // http://tools.ietf.org/html/rfc3986#section-6.2.2
