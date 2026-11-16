@@ -52,7 +52,7 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
                            |--params
                            |Content-Type: text/plain; format=flowed; charset="ISO-8859-1"
                            |
-                           |caf\u00e9
+                           |café
                            |--params--""".stripMarginWithNewline(lineFeed)
           val bytes = ByteString(content, "ISO-8859-1")
           val entity = buildEntity(`multipart/mixed`.withBoundary("params"), bytes)
@@ -418,7 +418,7 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
                            |Content-Type: text/plain; format=flowed; charset="ISO-8859-1"
                            |Content-Range: bytes 5-8/9
                            |
-                           |caf\u00e9
+                           |café
                            |--params--""".stripMarginWithNewline(lineFeed)
           val bytes = ByteString(content, "ISO-8859-1")
           val entity = buildEntity(`multipart/byteranges`.withBoundary("params"), bytes)
@@ -462,7 +462,7 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
                            |Content-Type: text/plain; format=flowed; charset="ISO-8859-1"
                            |Content-Disposition: form-data; name="field"
                            |
-                           |caf\u00e9
+                           |café
                            |--params--""".stripMarginWithNewline(lineFeed)
           val bytes = ByteString(content, "ISO-8859-1")
           val entity = buildEntity(`multipart/form-data`.withBoundary("params"), bytes)
