@@ -24,6 +24,8 @@ import java.util.zip.Inflater
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.javadsl.model.ws.{ Message => JavaMessage, TextMessage => JavaTextMessage }
+import pekko.http.scaladsl.model.HttpHeader
+import pekko.http.scaladsl.model.headers.`Sec-WebSocket-Extensions`
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.stream.Materializer
@@ -257,28 +259,57 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
-      for ((scenario, offers, selected) <- List(
-          ("unsupported server window", "permessage-deflate; server_max_window_bits=14, permessage-deflate",
+      case class OfferCase(
+          scenario: String,
+          offers: String,
+          selected: String,
+          // permit no-context negotiation where the case is about parameters of a rejected offer not leaking, so it
+          // cannot pass merely because those parameters are disabled by default
+          allowNoContext: Boolean = false,
+          selectedServerNoContext: Boolean = false,
+          selectedClientNoContext: Boolean = false)
+
+      for (offerCase <- List(
+          OfferCase("unsupported server window", "permessage-deflate; server_max_window_bits=14, permessage-deflate",
             "permessage-deflate"),
-          ("rejected client parameters",
+          OfferCase("rejected client parameters",
             "permessage-deflate; client_max_window_bits=10; client_no_context_takeover; server_max_window_bits=14, permessage-deflate",
-            "permessage-deflate"),
-          ("rejected server parameters",
+            "permessage-deflate", allowNoContext = true),
+          OfferCase("rejected server parameters",
             "permessage-deflate; server_no_context_takeover; server_max_window_bits=14, permessage-deflate; client_max_window_bits=12",
-            "permessage-deflate; client_max_window_bits=12"),
+            "permessage-deflate; client_max_window_bits=12", allowNoContext = true),
+          OfferCase("selected no-context parameters",
+            "permessage-deflate; server_max_window_bits=14, permessage-deflate; server_no_context_takeover; client_no_context_takeover",
+            "permessage-deflate; server_no_context_takeover; client_no_context_takeover", allowNoContext = true,
+            selectedServerNoContext = true, selectedClientNoContext = true),
           // Pekko selects the first supported offer; RFC 7692 recommends, but does not require, this preference.
-          ("first supported offer",
+          OfferCase("first supported offer",
             "permessage-deflate; client_max_window_bits=12, permessage-deflate; client_max_window_bits=10",
             "permessage-deflate; client_max_window_bits=12"))) {
+        import offerCase._
         s"negotiate independent permessage-deflate offers: $scenario" in Utils.assertAllStagesStopped {
           new TestSetup {
             override def settings = {
               val defaults = super.settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
-              super.settings.withWebsocketSettings(
-                defaults.copy(compression = defaults.compression.copy(
-                  allowServerNoContext = true,
-                  preferredClientNoContext = true)))
+              if (allowNoContext)
+                super.settings.withWebsocketSettings(
+                  defaults.copy(compression = defaults.compression.copy(
+                    allowServerNoContext = true,
+                    preferredClientNoContext = true)))
+              else super.settings
             }
+
+            // The response header does not show the no-context flags that configure the compression stages, so check
+            // that a rejected offer's flags do not leak into the selected one.
+            val compressionSettings =
+              settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl].compression
+            val offeredExtensions = HttpHeader.parse("Sec-WebSocket-Extensions", offers) match {
+              case HttpHeader.ParsingResult.Ok(header: `Sec-WebSocket-Extensions`, Nil) => header.extensions
+              case other                                                                => fail(s"Unexpected parsing result $other")
+            }
+            val negotiated = PerMessageDeflate.negotiate(offeredExtensions, compressionSettings).get
+            negotiated.serverNoContextTakeover shouldEqual selectedServerNoContext
+            negotiated.clientNoContextTakeover shouldEqual selectedClientNoContext
 
             sendWebSocketRequest(s"Sec-WebSocket-Extensions: $offers\r\n")
 
