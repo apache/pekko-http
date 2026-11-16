@@ -24,16 +24,15 @@ import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.util.ByteString;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import scala.concurrent.duration.FiniteDuration;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -63,8 +62,8 @@ import static org.apache.pekko.http.javadsl.server.Directives.onSuccess;
 public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
 
   @Override
-  public FiniteDuration defaultAwaitDuration() {
-    return new FiniteDuration(7, TimeUnit.SECONDS);
+  public Duration defaultAwaitTimeout() {
+    return Duration.ofSeconds(7);
   }
 
   @Test
