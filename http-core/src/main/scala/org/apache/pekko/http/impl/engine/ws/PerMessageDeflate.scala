@@ -51,6 +51,9 @@ private[http] object PerMessageDeflate {
   private val ClientNoContextTakeover = "client_no_context_takeover"
   private val ServerNoContextTakeover = "server_no_context_takeover"
   private val EmptyStoredBlock = ByteString(0x00, 0x00, 0xFF.toByte, 0xFF.toByte)
+  // Header of an empty non-final stored DEFLATE block: what remains of a sync flush once the
+  // EmptyStoredBlock tail is removed (RFC 7692, section 7.2.3.6).
+  private val EmptyDeflateBlockHeader = ByteString(0x00)
 
   private[ws] trait CompressionFactory {
     def newInflater(): Inflater
@@ -193,6 +196,9 @@ private[http] object PerMessageDeflate {
     private var compressedMessageInProgress = false
     private var decompressedMessageBytes = 0L
     private var bypassFrameInProgress = false
+    // The last (up to 4) compressed bytes of the message received so far, to detect whether the previous
+    // fragment of the message already ended with a complete sync flush.
+    private var messageTail = ByteString.empty
     private val buffer = new Array[Byte](8192)
 
     override def apply(event: FrameEventOrError): immutable.Iterable[FrameEventOrError] = event match {
@@ -233,7 +239,14 @@ private[http] object PerMessageDeflate {
     private def finishFrame(): immutable.Iterable[FrameEventOrError] = {
       val frame = compressedFrame.get
       compressedFrame = None
-      val inflated = inflate(frame.data, frame.appendTail)
+      val data = frame.data
+      val inflated =
+        // Some peers (including Pekko HTTP before this was fixed) send an empty final fragment after a fragment
+        // that already ended with a complete sync flush. Appending the tail there would be read as the start of a
+        // stored block and corrupt the following messages, so there is nothing left to inflate instead.
+        if (frame.appendTail && data.isEmpty && messageTail == EmptyStoredBlock) ByteString.empty
+        else inflate(data, frame.appendTail)
+      messageTail = if (frame.appendTail) ByteString.empty else (messageTail ++ data).takeRight(EmptyStoredBlock.length)
       if (frame.appendTail) decompressedMessageBytes = 0L
       if (frame.appendTail && noContextTakeover) {
         inflater.end()
@@ -354,7 +367,7 @@ private[http] object PerMessageDeflate {
       val bytes = output.takeByteString()
       // An empty final fragment still needs a DEFLATE block header before the peer restores the tail
       // (RFC 7692, section 7.2.3.6). SYNC_FLUSH may produce nothing after a previous fragment's flush.
-      if (removeTail && bytes.isEmpty) ByteString(0)
+      if (removeTail && bytes.isEmpty) EmptyDeflateBlockHeader
       else if (removeTail && bytes.endsWith(EmptyStoredBlock)) bytes.dropRight(EmptyStoredBlock.length)
       else bytes
     }
