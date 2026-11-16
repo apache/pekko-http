@@ -837,6 +837,101 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
+      for {
+        noContext <- List(false, true)
+        compressionLevel <- List(0, 6)
+        splitFrames <- List(false, true)
+      } {
+        s"round-trip empty non-final and final fragments with no-context-takeover=$noContext, " +
+        s"compression level $compressionLevel and split frame data=$splitFrames" in
+        Utils.assertAllStagesStopped {
+          val tracking = new TrackingCompression
+          val settings = compressionSettings.copy(compressionLevel = compressionLevel)
+          val payload = ByteString("Hello world, hello world, hello world!")
+          val frames = List(
+            FrameEvent.fullFrame(Protocol.Opcode.Text, None, ByteString.empty, fin = false),
+            FrameEvent.fullFrame(Protocol.Opcode.Continuation, None, ByteString.empty, fin = false),
+            FrameEvent.fullFrame(Protocol.Opcode.Continuation, None, payload, fin = false),
+            FrameEvent.fullFrame(Protocol.Opcode.Continuation, None, ByteString.empty, fin = true),
+            FrameEvent.fullFrame(Protocol.Opcode.Text, None, payload, fin = true))
+          // streamed messages usually reach the compression stages as a FrameStart followed by FrameData
+          def maybeSplit(frames: Seq[FrameStart]): Seq[FrameEvent] =
+            if (splitFrames) frames.flatMap { frame =>
+              if (frame.data.isEmpty) frame :: Nil
+              else frame.copy(data = ByteString.empty) :: FrameData(frame.data, lastPart = true) :: Nil
+            }
+            else frames
+
+          val encoded = Source(maybeSplit(frames))
+            .via(PerMessageDeflate.createDeflaterFlow(noContext, settings, tracking))
+            .runWith(Sink.seq)
+            .futureValue
+            .map(_.asInstanceOf[FrameStart])
+
+          encoded(3).data shouldEqual EmptyDeflateBlock // RFC 7692, section 7.2.3.6
+          encoded.map(_.header.rsv1) shouldEqual Seq(true, false, false, false, true)
+          encoded.map(_.header.fin) shouldEqual frames.map(_.header.fin)
+          encoded.map(_.header.opcode) shouldEqual frames.map(_.header.opcode)
+
+          // check the encoded messages with an independent JDK inflater, not only with Pekko's own InflaterFlow
+          val encodedMessages = Seq(encoded.take(4).map(_.data), Seq(encoded.last.data))
+          val independentlyInflated =
+            if (noContext) encodedMessages.map(inflatePerMessageFrames)
+            else inflatePerMessageFramesWithContext(encodedMessages: _*)
+          independentlyInflated shouldEqual Seq(payload, payload)
+
+          val decoded = Source(maybeSplit(encoded).map(frame => frame: FrameEventOrError))
+            .via(PerMessageDeflate.createInflaterFlow(noContext, settings, tracking))
+            .runWith(Sink.seq)
+            .futureValue
+            .map(_.asInstanceOf[FrameStart])
+          decoded.map(_.data) shouldEqual frames.map(_.data)
+          tracking.awaitAllEnded()
+        }
+      }
+
+      "inflate an empty final fragment after a fragment that already ended with a sync flush" in
+      Utils.assertAllStagesStopped {
+        // as sent by peers that do not add the empty block header to an empty final fragment
+        val first = ByteString("Hello world, hello world, hello world!")
+        val second = ByteString("Next message using the shared compression context")
+        val deflater = new Deflater(6, true)
+        val (flushedFragment, nextMessage) =
+          try (deflateFrame(deflater, first, removeTail = false), deflateFrame(deflater, second, removeTail = true))
+          finally deflater.end()
+        val frames = List[FrameEventOrError](
+          FrameEvent.fullFrame(Protocol.Opcode.Text, None, flushedFragment, fin = false, rsv1 = true),
+          FrameEvent.fullFrame(Protocol.Opcode.Continuation, None, ByteString.empty, fin = true),
+          FrameEvent.fullFrame(Protocol.Opcode.Text, None, nextMessage, fin = true, rsv1 = true))
+
+        val decoded = Source(frames)
+          .via(inflaterFlow(new TrackingCompression))
+          .runWith(Sink.seq)
+          .futureValue
+          .map(_.asInstanceOf[FrameStart].data)
+        decoded shouldEqual Seq(first, ByteString.empty, second)
+      }
+
+      "append the tail to an empty final fragment when the previous fragment did not end with a sync flush" in
+      Utils.assertAllStagesStopped {
+        // a compressed message may be split anywhere, so the final fragment can be empty once the tail is removed
+        val first = ByteString("Hello world, hello world, hello world!")
+        val second = ByteString("Next message using the shared compression context")
+        val messages = deflatePerMessagesWithContext(first, second)
+        val (firstMessage, nextMessage) = (messages.head, messages(1))
+        val frames = List[FrameEventOrError](
+          FrameEvent.fullFrame(Protocol.Opcode.Text, None, firstMessage, fin = false, rsv1 = true),
+          FrameEvent.fullFrame(Protocol.Opcode.Continuation, None, ByteString.empty, fin = true),
+          FrameEvent.fullFrame(Protocol.Opcode.Text, None, nextMessage, fin = true, rsv1 = true))
+
+        val decoded = Source(frames)
+          .via(inflaterFlow(new TrackingCompression))
+          .runWith(Sink.seq)
+          .futureValue
+          .map(_.asInstanceOf[FrameStart].data)
+        decoded shouldEqual Seq(first, ByteString.empty, second)
+      }
+
       "release compression resources after normal completion" in Utils.assertAllStagesStopped {
         val tracking = new TrackingCompression
 
@@ -2063,6 +2158,17 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
           inflated ++ inflateFrame(inflater, data)
       }
     } finally {
+      inflater.end()
+    }
+  }
+
+  private def inflatePerMessageFramesWithContext(messages: Seq[ByteString]*): Seq[ByteString] = {
+    val inflater = new Inflater(true)
+    try messages.map { frames =>
+        val inflatedInit = frames.init.map(inflateFrame(inflater, _)).foldLeft(ByteString.empty)(_ ++ _)
+        inflatedInit ++ inflateFrame(inflater, frames.last ++ ByteString(0x00, 0x00, 0xFF.toByte, 0xFF.toByte))
+      }
+    finally {
       inflater.end()
     }
   }

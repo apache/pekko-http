@@ -157,6 +157,9 @@ Apache Pekko HTTP can negotiate the RFC 7692 `permessage-deflate` WebSocket exte
 connections. Compression is enabled by default, but is only used when the client requests it with the
 `Sec-WebSocket-Extensions: permessage-deflate` header during the WebSocket handshake.
 
+Compressed streamed messages support empty fragments, including an empty final fragment, with or without
+compression context takeover between messages.
+
 You can disable WebSocket compression globally for the server:
 
 ```
