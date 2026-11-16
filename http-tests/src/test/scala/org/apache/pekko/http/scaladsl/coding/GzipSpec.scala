@@ -31,6 +31,8 @@ import pekko.testkit._
 import pekko.util.ByteString
 
 class GzipSpec extends CoderSpec {
+  import GzipSpec.HeaderFields
+
   protected def Coder: Coder = Coders.Gzip(compressionLevel = 9)
 
   protected def newDecodedInputStream(underlying: InputStream): InputStream =
@@ -42,6 +44,33 @@ class GzipSpec extends CoderSpec {
   override def extraTests(): Unit = {
     "decode concatenated compressions" in {
       ourDecode(Seq(encode("Hello, "), encode("dear "), encode("User!")).join) should readAs("Hello, dear User!")
+    }
+    val headerVariants = Seq(
+      "an extra field" -> HeaderFields(extra = Some(subfield('P', 'K', ByteString(17, 23)))),
+      // XLEN of 304 exercises both bytes of the little-endian length
+      "an extra field longer than 255 bytes" ->
+      HeaderFields(extra = Some(subfield('A', 'p', ByteString(Array.fill[Byte](300)(42))))),
+      "an extra field, a file name and a header CRC" ->
+      HeaderFields(extra = Some(subfield('P', 'K', ByteString(17, 23))), name = Some("data.txt"), headerCrc = true))
+    for {
+      (variant, fields) <- headerVariants
+      placement <- Seq("a single member", "the first of two members", "the second of two members")
+      fragmented <- Seq(false, true)
+    } {
+      s"decode $variant in $placement (fragmented=$fragmented)" in {
+        val first = ByteString("first member")
+        val second = ByteString(" and a second member")
+        val (input, expected) = placement match {
+          case "a single member"          => (withHeaderFields(streamEncode(first), fields), first)
+          case "the first of two members" =>
+            (withHeaderFields(streamEncode(first), fields) ++ streamEncode(second), first ++ second)
+          case _ => (streamEncode(first) ++ withHeaderFields(streamEncode(second), fields), first ++ second)
+        }
+
+        streamDecode(input) shouldEqual expected // independent JDK decoder checks the fixture
+        val chunks = if (fragmented) input.grouped(1).toVector else Vector(input)
+        decodeChunks(Source(chunks)) shouldEqual expected
+      }
     }
     "provide a better compression ratio than the standard Gzip/Gunzip streams" in pendingUntilFixed {
       // for this input, it seems gzip level 5-9 provide almost the same compression, so < is too strict
@@ -161,4 +190,43 @@ class GzipSpec extends CoderSpec {
       super.end()
     }
   }
+
+  // RFC 1952 section 2.3.1.1: an extra subfield is SI1, SI2, a little-endian LEN, then LEN data bytes.
+  private def subfield(si1: Char, si2: Char, data: ByteString): ByteString =
+    ByteString(si1.toByte, si2.toByte) ++ littleEndianShort(data.length) ++ data
+
+  private def littleEndianShort(value: Long): ByteString =
+    ByteString((value & 0xFF).toByte, ((value >> 8) & 0xFF).toByte)
+
+  /**
+   * Adds optional header fields (RFC 1952 section 2.3.1) to a JDK-produced gzip member, which has none.
+   * XLEN counts the subfields but not itself; the header CRC covers every header byte before it.
+   */
+  private def withHeaderFields(member: ByteString, fields: HeaderFields): ByteString = {
+    val FHCRC = 2
+    val FEXTRA = 4
+    val FNAME = 8
+    val FCOMMENT = 16
+    val flags = member(3) & 0xFF
+    require((flags & (FHCRC | FEXTRA | FNAME | FCOMMENT)) == 0, s"unexpected optional header fields, FLG=$flags")
+    val newFlags = flags |
+      fields.extra.fold(0)(_ => FEXTRA) | fields.name.fold(0)(_ => FNAME) | (if (fields.headerCrc) FHCRC else 0)
+    val header = member.take(3) ++ ByteString(newFlags.toByte) ++ member.slice(4, 10) ++
+      fields.extra.fold(ByteString.empty)(extra => littleEndianShort(extra.length) ++ extra) ++
+      fields.name.fold(ByteString.empty)(name => ByteString(name, StandardCharsets.ISO_8859_1) ++ ByteString(0))
+    val headerCrc =
+      if (fields.headerCrc) {
+        val crc = new java.util.zip.CRC32
+        crc.update(header.toArray)
+        littleEndianShort(crc.getValue)
+      } else ByteString.empty
+    header ++ headerCrc ++ member.drop(10)
+  }
+}
+
+object GzipSpec {
+  // Kept outside the class: extraTests() runs during the CoderSpec constructor, before
+  // GzipSpec's own fields (including Scala 3 nested companion objects) are initialized.
+  private final case class HeaderFields(extra: Option[ByteString] = None, name: Option[String] = None,
+      headerCrc: Boolean = false)
 }
