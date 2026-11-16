@@ -229,6 +229,57 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           pushInput(header1 ++ data1)
           sub.expectNext("äbcdef€")
         }
+        for {
+          server <- Seq(false, true)
+          control <- Seq(Opcode.Ping, Opcode.Pong)
+          oneChunk <- Seq(false, true)
+        } {
+          val controlName = if (control == Opcode.Ping) "ping" else "pong"
+          val side = if (server) "server side, masked" else "client side"
+          val delivery = if (oneChunk) "control and continuation in one chunk" else "separate chunks"
+          s"preserve a split utf8 code point across an interleaved $controlName ($side, $delivery)" in new TestSetup {
+            protected def serverSide: Boolean = server
+
+            // inbound frames are masked on the server side, each with its own mask key
+            def frame(opcode: Opcode, data: ByteString, fin: Boolean): ByteString =
+              if (server) {
+                val mask = Random.nextInt()
+                frameHeader(opcode, data.size, fin, mask = Some(mask)) ++ maskedBytes(data, mask)._1
+              } else frameHeader(opcode, data.size, fin) ++ data
+
+            val data = ByteString("€", UTF_8)
+            val data0 = data.take(1)
+            val data1 = data.drop(1)
+            pushInput(frame(Opcode.Text, data0, fin = false))
+
+            val sub = TestSubscriber.manualProbe[String]()
+            expectTextMessage().textStream.runWith(Sink.fromSubscriber(sub))
+            sub.expectSubscription().request(4)
+            sub.expectNoMessage(100.millis) // the code point is still incomplete
+
+            // Control payload is opaque, not part of the text message's UTF-8 sequence.
+            val controlData = ByteString(0xFF.toByte)
+            val controlFrame = frame(control, controlData, fin = true)
+            val continuation = frame(Opcode.Continuation, data1, fin = true)
+            if (oneChunk) pushInput(controlFrame ++ continuation)
+            else {
+              pushInput(controlFrame)
+              sub.expectNoMessage(100.millis)
+              pushInput(continuation)
+            }
+
+            sub.expectNext("€")
+            sub.expectComplete()
+            if (control == Opcode.Ping) {
+              if (server) expectFrameOnNetwork(Opcode.Pong, controlData, fin = true)
+              else expectMaskedFrameOnNetwork(Opcode.Pong, controlData, fin = true)
+            }
+            expectNoNetworkData()
+            // the control frame must not surface as a user-facing message
+            messageIn.request(1)
+            messageIn.expectNoMessage(100.millis)
+          }
+        }
         "unmask masked input on the server side" in new ServerTestSetup {
           val mask = Random.nextInt()
           val (data, _) = maskedUTF8("äbcdef€", mask)
