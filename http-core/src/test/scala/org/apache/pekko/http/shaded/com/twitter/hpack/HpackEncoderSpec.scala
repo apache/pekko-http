@@ -48,16 +48,24 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
     out.takeByteString().toArray
   }
 
-  private def decodeHeaders(bytes: Array[Byte]): Seq[(String, String)] = {
-    val decoder = new Decoder(8192, 4096)
-    val headers = new VectorBuilder[(String, String)]()
+  // decodes one complete header block, keeping the sensitive flag the decoder reports for each field
+  private def decodeHeaderFields(decoder: Decoder, bytes: Array[Byte]): Seq[(String, String, Boolean)] = {
+    val headers = new VectorBuilder[(String, String, Boolean)]()
     decoder.decode(new ByteArrayInputStream(bytes),
-      (name: String, value: String, parsedValue: AnyRef, _: Boolean) => {
-        headers += name -> value
+      (name: String, value: String, parsedValue: AnyRef, sensitive: Boolean) => {
+        headers += ((name, value, sensitive))
         parsedValue
       })
+    withClue("header block truncated:") {
+      decoder.endHeaderBlock() shouldBe false
+    }
     headers.result()
   }
+
+  private def decodeHeaders(decoder: Decoder, bytes: Array[Byte]): Seq[(String, String)] =
+    decodeHeaderFields(decoder, bytes).map { case (name, value, _) => name -> value }
+
+  private def decodeHeaders(bytes: Array[Byte]): Seq[(String, String)] = decodeHeaders(new Decoder(8192, 4096), bytes)
 
   "HuffmanEncoder" should {
     // the string literals from RFC 7541 Appendix C.4 with their expected Huffman codes
@@ -70,14 +78,18 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
     "produce the Huffman codes from RFC 7541 Appendix C.4" in {
       rfc7541Examples.foreach {
         case (literal, expected) =>
-          hex(huffmanEncode(literal)) shouldEqual expected
+          withClue(s"literal=$literal") {
+            hex(huffmanEncode(literal)) shouldEqual expected
+          }
       }
     }
 
     "report the encoded length that encode actually produces" in {
       rfc7541Examples.foreach {
         case (literal, expected) =>
-          Huffman.ENCODER.getEncodedLength(StringTools.asciiStringBytes(literal)) shouldEqual expected.length / 2
+          withClue(s"literal=$literal") {
+            Huffman.ENCODER.getEncodedLength(StringTools.asciiStringBytes(literal)) shouldEqual expected.length / 2
+          }
       }
     }
 
@@ -111,51 +123,92 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
       val decoder = new Decoder(8192, 4096)
       val out = new ByteStringOutputStream(32)
 
-      def block(expected: Seq[(String, String)], resize: Option[Int] = None): Array[Byte] = {
+      def block(expected: Seq[(String, String)], resize: Option[Int] = None): String = {
         resize.foreach(encoder.setMaxHeaderTableSize(out, _))
         expected.foreach { case (name, value) => encoder.encodeHeader(out, name, value, false) }
         val bytes = out.takeByteString().toArray
-        val decoded = new VectorBuilder[(String, String)]()
-        decoder.decode(new ByteArrayInputStream(bytes),
-          (name: String, value: String, parsedValue: AnyRef, _: Boolean) => {
-            decoded += name -> value
-            parsedValue
-          })
-        decoder.endHeaderBlock() shouldBe false
-        decoded.result() shouldEqual expected
-        bytes
+        decodeHeaders(decoder, bytes) shouldEqual expected
+        // the decoder has to end up with the same dynamic table as the encoder
+        decoder.length() shouldEqual encoder.length()
+        decoder.size() shouldEqual encoder.size()
+        hex(bytes)
       }
 
       // Exact bytes pin the current indexing policy with Huffman disabled, not the only RFC-valid encoding.
       // Each entry occupies 34 bytes (RFC 7541 section 4.1). At 67 only the newest fits.
-      hex(block(Seq("k" -> "x", "k" -> "y"))) shouldEqual "40016b01787e0179"
-      hex(block(Seq("k" -> "x", "k" -> "y"))) shouldEqual "bfbe"
-      block(Seq("k" -> "x"), Some(67))
+      block(Seq("k" -> "x", "k" -> "y")) shouldEqual "40016b01787e0179"
+      block(Seq("k" -> "x", "k" -> "y")) shouldEqual "bfbe"
+      // 0x3f24: dynamic table size update to 67 (RFC 7541 section 6.3, 5-bit prefix 31 + 36), which evicts k: x.
+      // 0x7e: incremental indexing with name index 62, the k: y entry that adding k: x evicts (section 4.4).
+      block(Seq("k" -> "x"), Some(67)) shouldEqual "3f247e0178"
       encoder.length() shouldEqual 1
       encoder.size() shouldEqual 34
-      block(Seq("k" -> "y"), Some(1000))
-      hex(block(Seq("k" -> "x", "k" -> "y"))) shouldEqual "bfbe"
-      block(Seq("k" -> "x"), Some(0))
+      // 0x3fc907: dynamic table size update to 1000 (31 + 969, 969 = 0x49 | 0x80 followed by 7)
+      block(Seq("k" -> "y"), Some(1000)) shouldEqual "3fc9077e0179"
+      encoder.length() shouldEqual 2
+      encoder.size() shouldEqual 68
+      block(Seq("k" -> "x", "k" -> "y")) shouldEqual "bfbe"
+      // 0x20: dynamic table size update to 0, which empties the table; then a literal without indexing, new name
+      block(Seq("k" -> "x"), Some(0)) shouldEqual "2000016b0178"
       encoder.length() shouldEqual 0
       encoder.size() shouldEqual 0
-      block(Seq("k" -> "y"), Some(4096))
-      hex(block(Seq("k" -> "y"))) shouldEqual "be"
+      // 0x3fe11f: dynamic table size update to 4096 (31 + 4065, 4065 = 0x61 | 0x80 followed by 31)
+      block(Seq("k" -> "y"), Some(4096)) shouldEqual "3fe11f40016b0179"
+      encoder.length() shouldEqual 1
+      encoder.size() shouldEqual 34
+      block(Seq("k" -> "y")) shouldEqual "be"
     }
 
     "never index sensitive values even when an exact table entry already exists" in {
       val encoder = new Encoder(4096, true, false, true)
+      val decoder = new Decoder(8192, 4096)
       val out = new ByteStringOutputStream(32)
-      encoder.encodeHeader(out, "k", "x", false)
-      out.takeByteString()
-      encoder.encodeHeader(out, "k", "x", true)
+
+      def encode(name: String, value: String, sensitive: Boolean): Array[Byte] = {
+        encoder.encodeHeader(out, name, value, sensitive)
+        out.takeByteString().toArray
+      }
+
+      def encodeSensitive(name: String, value: String): String = {
+        val bytes = encode(name, value, sensitive = true)
+        withClue(s"$name: $value") {
+          decodeHeaderFields(decoder, bytes) shouldEqual Seq((name, value, true))
+          decoder.length() shouldEqual 1
+          decoder.size() shouldEqual 34
+        }
+        hex(bytes)
+      }
+
+      decodeHeaders(decoder, encode("k", "x", sensitive = false)) shouldEqual Seq("k" -> "x")
       // RFC 7541 section 6.2.3: never-indexed literal, indexed name 62, literal value x.
-      hex(out.takeByteString().toArray) shouldEqual "1f2f0178"
-      encoder.encodeHeader(out, ":method", "GET", true)
-      hex(out.takeByteString().toArray) shouldEqual "1203474554"
+      encodeSensitive("k", "x") shouldEqual "1f2f0178"
+      // never-indexed literal, static name index 2, although (:method, GET) is static entry 2
+      encodeSensitive(":method", "GET") shouldEqual "1203474554"
+      // never-indexed literal with a literal name that is in neither table
+      encodeSensitive("secret", "x") shouldEqual "10067365637265740178"
       encoder.length() shouldEqual 1
       encoder.size() shouldEqual 34
-      encoder.encodeHeader(out, "k", "x", false)
-      hex(out.takeByteString().toArray) shouldEqual "be"
+      hex(encode("k", "x", sensitive = false)) shouldEqual "be"
+    }
+
+    "never index sensitive values when the peer only allows the static table" in {
+      val encoder = new Encoder(0, true, false, true)
+      val out = new ByteStringOutputStream(32)
+
+      def encode(name: String, value: String, sensitive: Boolean): Array[Byte] = {
+        encoder.encodeHeader(out, name, value, sensitive)
+        out.takeByteString().toArray
+      }
+
+      // without the sensitive flag the exact static table hit is sent as indexed field 2
+      hex(encode(":method", "GET", sensitive = false)) shouldEqual "82"
+      val bytes = encode(":method", "GET", sensitive = true)
+      hex(bytes) shouldEqual "1203474554"
+      val decoder = new Decoder(8192, 4096)
+      decodeHeaderFields(decoder, bytes) shouldEqual Seq((":method", "GET", true))
+      decoder.length() shouldEqual 0
+      encoder.length() shouldEqual 0
+      encoder.size() shouldEqual 0
     }
 
     "resolve every static table entry and reject mismatched names or values" in {
@@ -171,6 +224,28 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
       StaticTable.getIndex("x-not-in-the-table", "https") shouldEqual -1
       StaticTable.getIndex(":scheme", "") shouldEqual -1
       StaticTable.getIndex("content-language", "") shouldEqual 27
+    }
+
+    "match the static table values listed in RFC 7541 Appendix A" in {
+      StaticTable.length shouldEqual 61
+      Seq(
+        1 -> (":authority" -> ""),
+        2 -> (":method" -> "GET"),
+        7 -> (":scheme" -> "https"),
+        8 -> (":status" -> "200"),
+        16 -> ("accept-encoding" -> "gzip, deflate"),
+        32 -> ("cookie" -> ""),
+        61 -> ("www-authenticate" -> "")).foreach {
+        case (index, (name, value)) =>
+          withClue(s"index=$index") {
+            val entry = StaticTable.getEntry(index)
+            entry.name shouldEqual name
+            entry.value shouldEqual value
+            StaticTable.getIndex(name, value) shouldEqual index
+          }
+      }
+      an[IndexOutOfBoundsException] should be thrownBy StaticTable.getEntry(0)
+      an[IndexOutOfBoundsException] should be thrownBy StaticTable.getEntry(62)
     }
 
     "encode the value from RFC 7541 Appendix C.4.1 with Huffman coding when it is shorter" in {
@@ -190,8 +265,10 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
       // encoder has to map each such char back to that byte, in the raw form as well as the Huffman form
       val value = new String(Array.tabulate(256)(_.toChar))
       Seq(true, false).foreach { huffman =>
-        val bytes = encodeHeader("x-opaque", value, forceHuffmanOn = huffman, forceHuffmanOff = !huffman)
-        decodeHeaders(bytes) shouldEqual Seq("x-opaque" -> value)
+        withClue(s"huffman=$huffman") {
+          val bytes = encodeHeader("x-opaque", value, forceHuffmanOn = huffman, forceHuffmanOff = !huffman)
+          decodeHeaders(bytes) shouldEqual Seq("x-opaque" -> value)
+        }
       }
     }
 
@@ -199,34 +276,48 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
       // RFC 7541 allows either representation. These assertions protect Pekko's size-selection policy.
       Seq("" -> false, "a" -> false, "aa" -> false, "aaa" -> true, "|" -> false).foreach {
         case (value, huffman) =>
-          val bytes = encodeHeader(":method", value, forceHuffmanOn = false, forceHuffmanOff = false)
-          bytes(0) shouldEqual 0x02.toByte // Literal without indexing, static name :method.
-          (bytes(1) & 0x80) shouldEqual (if (huffman) 0x80 else 0)
-          decodeHeaders(bytes) shouldEqual Seq(":method" -> value)
+          withClue(s"value=$value huffman=$huffman") {
+            val bytes = encodeHeader(":method", value, forceHuffmanOn = false, forceHuffmanOff = false)
+            bytes(0) shouldEqual 0x02.toByte // Literal without indexing, static name :method.
+            (bytes(1) & 0x80) shouldEqual (if (huffman) 0x80 else 0)
+            decodeHeaders(bytes) shouldEqual Seq(":method" -> value)
+          }
       }
     }
 
     "encode raw and Huffman literal lengths across seven-bit prefix boundaries" in {
       // The wire length counts encoded octets, not input characters (RFC 7541 sections 5.1 and 5.2).
-      // Appendix B assigns 'a' a five-bit code; the listed input sizes yield the target octet lengths.
+      // Appendix B assigns 'a' a five-bit code, so floor(8 * wireLength / 5) characters Huffman code to wireLength
+      // octets. 16510 = 127 + 128^2 - 1 is the longest length whose prefix still fits two continuation bytes.
       val cases = Seq(
-        (126, 201, "7e"),
-        (127, 202, "7f00"),
-        (128, 204, "7f01"),
-        (254, 406, "7f7f"),
-        (255, 407, "7f8001"))
+        (126, "7e"),
+        (127, "7f00"),
+        (128, "7f01"),
+        (254, "7f7f"),
+        (255, "7f8001"),
+        (16510, "7fff7f"),
+        (16511, "7f808001"))
       cases.foreach {
-        case (wireLength, huffmanInputLength, rawPrefix) =>
+        case (wireLength, rawPrefix) =>
           Seq(false, true).foreach { huffman =>
-            val value = "a" * (if (huffman) huffmanInputLength else wireLength)
-            val bytes = encodeHeader(":authority", value, forceHuffmanOn = huffman, forceHuffmanOff = !huffman)
-            val prefixLength = rawPrefix.length / 2
-            val prefix = bytes.slice(1, 1 + prefixLength)
-            (prefix(0) & 0x80) shouldEqual (if (huffman) 0x80 else 0)
-            prefix(0) = (prefix(0) & 0x7F).toByte
-            hex(prefix) shouldEqual rawPrefix
-            bytes.length shouldEqual 1 + prefixLength + wireLength
-            decodeHeaders(bytes) shouldEqual Seq(":authority" -> value)
+            withClue(s"wireLength=$wireLength huffman=$huffman") {
+              val value = "a" * (if (huffman) wireLength * 8 / 5 else wireLength)
+              if (huffman) {
+                withClue("test fixture: Huffman input does not code to the intended wire length:") {
+                  Huffman.ENCODER.getEncodedLength(StringTools.asciiStringBytes(value)) shouldEqual wireLength
+                }
+              }
+              val bytes = encodeHeader(":authority", value, forceHuffmanOn = huffman, forceHuffmanOff = !huffman)
+              // 0x01: literal without indexing, name index 1 (:authority)
+              bytes(0) shouldEqual 0x01.toByte
+              val prefixLength = rawPrefix.length / 2
+              (bytes(1) & 0x80) shouldEqual (if (huffman) 0x80 else 0)
+              // compare the length prefix with the Huffman flag masked off
+              val prefix = bytes.slice(1, 1 + prefixLength).updated(0, (bytes(1) & 0x7F).toByte)
+              hex(prefix) shouldEqual rawPrefix
+              bytes.length shouldEqual 1 + prefixLength + wireLength
+              decodeHeaders(new Decoder(32768, 4096), bytes) shouldEqual Seq(":authority" -> value)
+            }
           }
       }
     }

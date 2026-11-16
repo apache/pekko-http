@@ -13,6 +13,7 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.io.IOException
 import javax.net.ssl.SSLContext
 
 import scala.concurrent.ExecutionContext
@@ -754,36 +755,44 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
     }
 
     "transport failure diagnostics" should {
-      "preserve the connection failure in the delivered entity".inAssertAllStagesStopped(
-        new TestSetup with NetProbes {
-          user.emitRequest(Get("/"))
-          network.expectDecodedHEADERS(1, endStream = true)
-          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
-          val entity = user.expectResponse().entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem))
-          entity.request(2)
+      abstract class ReceivingResponseEntity extends TestSetup with NetProbes {
+        user.emitRequest(Get("/"))
+        network.expectDecodedHEADERS(1, endStream = true)
+        network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+        val entity = user.expectResponse().entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem))
+        entity.request(2)
+
+        def receiveEntityData(): Unit = {
           network.sendDATA(1, endStream = false, ByteString("data"))
           entity.expectNext(ByteString("data"))
-          val cause = new java.io.IOException("ordinary transport failure marker")
+        }
+      }
+
+      "preserve the connection failure in the delivered entity".inAssertAllStagesStopped(
+        new ReceivingResponseEntity {
+          // a second request that is still sending its entity and has no response yet when the connection fails
+          val secondRequestEntity = TestPublisher.probe[ByteString]()
+          user.emitRequest(HttpRequest(entity = HttpEntity(ContentTypes.`application/octet-stream`,
+            Source.fromPublisher(secondRequestEntity))))
+          network.expectDecodedHEADERS(3, endStream = false)
+          secondRequestEntity.expectRequest()
+          receiveEntityData()
+
+          val cause = new IOException("ordinary transport failure marker")
           network.fromNet.sendError(cause)
           user.responseIn.expectError() shouldBe theSameInstanceAs(cause)
-          val error = entity.expectError()
-          error shouldBe theSameInstanceAs(cause)
+          entity.expectError() shouldBe theSameInstanceAs(cause)
+          // the request still in flight has its entity source cancelled with the same cause
+          secondRequestEntity.expectCancellationWithCause[Throwable]() shouldBe theSameInstanceAs(cause)
         })
 
       "keep a normal connection cancellation free of an unrelated cause".inAssertAllStagesStopped(
-        new TestSetup with NetProbes {
-          user.emitRequest(Get("/"))
-          network.expectDecodedHEADERS(1, endStream = true)
-          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
-          val entity = user.expectResponse().entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem))
-          entity.request(2)
-          network.sendDATA(1, endStream = false, ByteString("data"))
-          entity.expectNext(ByteString("data"))
+        new ReceivingResponseEntity {
+          receiveEntityData()
           network.toNet.cancel()
-          val error = entity.expectError()
-          error shouldBe a[IllegalStateException]
-          error.getMessage shouldBe "The HTTP/2 connection was shut down while the request was still ongoing"
-          error.getCause shouldBe null
+          entity.expectError() shouldBe theSameInstanceAs(Http2StreamHandling.ConnectionWasAbortedException)
+          // the connection was shut down from the network side without a failure, so the response outlet completes
+          user.responseIn.expectComplete()
         })
     }
 
