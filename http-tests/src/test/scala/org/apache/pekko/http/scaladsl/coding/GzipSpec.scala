@@ -31,6 +31,8 @@ import pekko.testkit._
 import pekko.util.ByteString
 
 class GzipSpec extends CoderSpec {
+  import GzipSpec.HeaderFields
+
   protected def Coder: Coder = Coders.Gzip(compressionLevel = 9)
 
   protected def newDecodedInputStream(underlying: InputStream): InputStream =
@@ -189,9 +191,6 @@ class GzipSpec extends CoderSpec {
     }
   }
 
-  private case class HeaderFields(extra: Option[ByteString] = None, name: Option[String] = None,
-      headerCrc: Boolean = false)
-
   // RFC 1952 section 2.3.1.1: an extra subfield is SI1, SI2, a little-endian LEN, then LEN data bytes.
   private def subfield(si1: Char, si2: Char, data: ByteString): ByteString =
     ByteString(si1.toByte, si2.toByte) ++ littleEndianShort(data.length) ++ data
@@ -223,4 +222,11 @@ class GzipSpec extends CoderSpec {
       } else ByteString.empty
     header ++ headerCrc ++ member.drop(10)
   }
+}
+
+object GzipSpec {
+  // Kept outside the class: extraTests() runs during the CoderSpec constructor, before
+  // GzipSpec's own fields (including Scala 3 nested companion objects) are initialized.
+  private final case class HeaderFields(extra: Option[ByteString] = None, name: Option[String] = None,
+      headerCrc: Boolean = false)
 }
