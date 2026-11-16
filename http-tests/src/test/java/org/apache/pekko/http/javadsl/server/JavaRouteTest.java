@@ -27,13 +27,11 @@ import java.util.regex.Pattern;
 import org.apache.pekko.http.javadsl.marshalling.Marshaller;
 import org.apache.pekko.http.javadsl.model.*;
 import org.apache.pekko.http.javadsl.model.headers.Accept;
+import org.apache.pekko.http.javadsl.model.headers.ModeledCustomHeader;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
-// FIXME discuss how to provide a javadsl.CustomHeader where render() is either pre-implemented or
-// trivial to write in Java
 import org.apache.pekko.http.javadsl.unmarshalling.StringUnmarshallers;
 import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
-import org.apache.pekko.http.scaladsl.model.headers.CustomHeader;
 import org.apache.pekko.japi.pf.PFBuilder;
 import org.apache.pekko.util.ByteString;
 import org.junit.jupiter.api.Test;
@@ -111,21 +109,12 @@ public class JavaRouteTest extends JUnitJupiterRouteTest {
         });
   }
 
-  private class UUIDHeader extends CustomHeader {
+  private class UUIDHeader extends ModeledCustomHeader {
     private final UUID value;
 
     public UUIDHeader(UUID value) {
+      super("UUID", value.toString());
       this.value = value;
-    }
-
-    @Override
-    public String name() {
-      return "UUID";
-    }
-
-    @Override
-    public String value() {
-      return value.toString();
     }
 
     public UUID uuid() {
