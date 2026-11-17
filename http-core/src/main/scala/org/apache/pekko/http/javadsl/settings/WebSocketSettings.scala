@@ -17,7 +17,7 @@ import java.time.{ Duration => JDuration }
 import java.util.Random
 import java.util.function.Supplier
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
@@ -116,6 +116,28 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
    */
   def withSendIdleTimeout(newValue: JDuration): WebSocketSettings =
     copy(sendIdleTimeout = JavaDurationConverter.toScala(newValue))
+
+  /**
+   * Wait for the peer close frame or, on the client, for the underlying transport to close.
+   * Must be positive and at most one hour. Scheduler granularity can make the observed wait longer.
+   *
+   * @since 2.1.0
+   */
+  // A concrete, non-recursive fallback preserves the existing trait ABI.
+  def closeTimeout: FiniteDuration = WebSocketSettingsImpl.DefaultCloseTimeout
+
+  /** Java API. @since 2.1.0 */
+  def getCloseTimeout: JDuration = JavaDurationConverter.toJava(self.closeTimeout)
+
+  /** @since 2.1.0 */
+  def withCloseTimeout(newValue: FiniteDuration): WebSocketSettings = copy(closeTimeout = newValue)
+
+  /** Java API. @since 2.1.0 */
+  def withCloseTimeout(newValue: JDuration): WebSocketSettings =
+    JavaDurationConverter.toScala(newValue) match {
+      case timeout: FiniteDuration => withCloseTimeout(timeout)
+      case _                       => throw new IllegalArgumentException("websocket close-timeout must be finite")
+    }
 
   def logFrames: Boolean
   def withLogFrames(shouldLog: Boolean): WebSocketSettings

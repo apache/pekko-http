@@ -68,6 +68,9 @@ abstract class WebSocketSettings extends pekko.http.javadsl.settings.WebSocketSe
   override def withSendIdleTimeout(newValue: Duration): WebSocketSettings =
     copy(sendIdleTimeout = newValue)
 
+  /** @since 2.1.0 */
+  override def withCloseTimeout(newValue: FiniteDuration): WebSocketSettings = copy(closeTimeout = newValue)
+
   def logFrames: Boolean
   override def withLogFrames(shouldLog: Boolean): WebSocketSettings = copy(logFrames = shouldLog)
 }

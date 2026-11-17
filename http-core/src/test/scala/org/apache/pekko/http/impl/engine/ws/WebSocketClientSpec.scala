@@ -109,6 +109,81 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       }
     }
 
+    "use the configured close wait when the peer delays its close response" in {
+      Utils.assertAllStagesStopped {
+        new TestSetup with ClientProbes {
+          override def settings = {
+            val defaults = super.settings
+            defaults.withWebsocketSettings(defaults.websocketSettings.withCloseTimeout(100.millis))
+          }
+          try {
+            expectWireData(UpgradeRequestBytes)
+            messagesIn.request(1)
+            sendWireData(UpgradeResponseBytes)
+            response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+            // An idle healthy connection must not start its close wait at materialization.
+            netOut.expectNoBytes(200.millis)
+            messagesOut.sendComplete()
+            expectMaskedFrameOnNetwork(Protocol.Opcode.Close, ByteString(3, 232), fin = true)
+            // This comfortably allows the configured wait, but not the historical three seconds.
+            netOut.within(1.second) {
+              expectNetworkClose()
+            }
+          } finally {
+            messagesOut.sendComplete()
+            messagesIn.cancel()
+            netIn.sendComplete()
+            netOut.cancel()
+          }
+        }
+      }
+    }
+
+    "share the close wait between the peer close frame and transport closure" in {
+      Utils.assertAllStagesStopped {
+        new TestSetup with ClientProbes {
+          override def settings = {
+            val defaults = super.settings
+            defaults.withWebsocketSettings(defaults.websocketSettings.withCloseTimeout(4.seconds.dilated))
+          }
+          try {
+            expectWireData(UpgradeRequestBytes)
+            messagesIn.request(1)
+            sendWireData(UpgradeResponseBytes)
+            response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+            messagesOut.sendComplete()
+            expectMaskedFrameOnNetwork(Protocol.Opcode.Close, ByteString(3, 232), fin = true)
+
+            // Spend half the budget waiting for the server's normal close reply.
+            netOut.expectNoBytes(2.seconds.dilated)
+            sendWSCloseFrame(Protocol.CloseCodes.Regular)
+            netOut.within(3.seconds) {
+              messagesIn.expectComplete()
+              // Keep network input open: the close reply must neither close the transport immediately
+              // nor restart a full four-second wait. Allow a second of scheduling margin either way.
+              netOut.expectNoBytes(200.millis.dilated)
+              expectNetworkClose()
+            }
+            netIn.expectCancellation()
+          } finally {
+            messagesOut.sendComplete()
+            messagesIn.cancel()
+            netIn.sendComplete()
+            netOut.cancel()
+          }
+        }
+      }
+    }
+
+    "exchange text with a configured graceful-close wait" in new EstablishedConnectionSetup with ClientEchoes {
+      override def settings: ClientConnectionSettings = {
+        val defaults = super.settings
+        defaults.withWebsocketSettings(defaults.websocketSettings.withCloseTimeout(750.millis))
+      }
+      sendWSFrame(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
+      expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
+    }
+
     "establish connection with case insensitive header values" in new TestSetup with ClientEchoes {
       expectWireData(UpgradeRequestBytes)
       sendWireData("""HTTP/1.1 101 Switching Protocols

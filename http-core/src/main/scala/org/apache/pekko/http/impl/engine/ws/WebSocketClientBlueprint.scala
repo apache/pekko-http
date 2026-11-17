@@ -53,7 +53,8 @@ private[http] object WebSocketClientBlueprint {
       .atop(simpleTls)
       .atopMat(handshake(request, settings, log))(Keep.right)
       .atop(WebSocket.framing)
-      .atop(WebSocket.stack(serverSide = false, settings.websocketSettings, log = log))
+      .atop(WebSocket.stack(serverSide = false, settings.websocketSettings,
+        log = log))
       .reversed
 
   /**
