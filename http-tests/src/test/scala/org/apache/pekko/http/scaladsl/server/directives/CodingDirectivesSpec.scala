@@ -18,6 +18,7 @@ import scala.concurrent.duration._
 
 import org.apache.pekko
 import pekko.http.impl.util._
+import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.coding.Coders._
 import pekko.http.scaladsl.coding.Encoder
 import pekko.http.scaladsl.model._
@@ -300,6 +301,47 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
         response should haveContentEncoding(gzip)
         val bytes = chunks.foldLeft(ByteString.empty)(_ ++ _.data)
         Gzip.decode(bytes).awaitResult(1.second.dilated) should readAs("")
+      }
+    }
+  }
+
+  "response encoding negotiation across repeated Accept-Encoding header fields" should {
+    // Each scenario lists Accept-Encoding field values, sent over the network either as separate header lines or
+    // combined into one line, so that the server's parsing of repeated header lines is covered too.
+    val scenarios = Seq(
+      ("weight codings listed in different fields", Seq("gzip;q=0.5", "deflate;q=0.9"), Some(Deflate)),
+      ("apply an explicit exclusion over a wildcard", Seq("*;q=0.8", "gzip;q=0"), Some(Deflate)),
+      ("reject when all available codings are explicitly excluded", Seq("*", "gzip;q=0", "deflate;q=0"), None),
+      // RFC 9110 doesn't define the meaning of a repeated coding; the range with the highest q-value wins,
+      // regardless of field order.
+      ("prefer the higher q-value when a coding is excluded and then accepted", Seq("gzip;q=0", "gzip"), Some(Gzip)),
+      ("prefer the higher q-value when a coding is accepted and then excluded", Seq("gzip", "gzip;q=0"), Some(Gzip)))
+
+    for {
+      (description, fieldValues, expected) <- scenarios
+      split <- Seq(false, true)
+    } {
+      s"$description (split=$split)" in {
+        val headers =
+          if (split) fieldValues.map(RawHeader("Accept-Encoding", _))
+          else Seq(RawHeader("Accept-Encoding", fieldValues.mkString(", ")))
+        val binding =
+          Http().newServerAt("127.0.0.1", 0).bind(encodeResponseWith(Gzip, Deflate) { yeah })
+            .awaitResult(3.seconds.dilated)
+        try {
+          val uri = s"http://127.0.0.1:${binding.localAddress.getPort}/"
+          val response = Http().singleRequest(HttpRequest(uri = uri, headers = headers)).awaitResult(3.seconds.dilated)
+          val data = response.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated).data
+          expected match {
+            case Some(coder) =>
+              response.status shouldEqual OK
+              response should haveContentEncoding(coder.encoding)
+              coder.decode(data).awaitResult(1.second.dilated) should readAs("Yeah!")
+            case None =>
+              response.status shouldEqual NotAcceptable
+              response.header[`Content-Encoding`] shouldEqual None
+          }
+        } finally binding.terminate(1.second.dilated).awaitResult(3.seconds.dilated)
       }
     }
   }
