@@ -58,17 +58,20 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
 
       val encoder = new pekko.http.shaded.com.twitter.hpack.Encoder(Http2Protocol.InitialMaxHeaderTableSize)
       val os = new ByteStringOutputStream(128)
+      private var smallestPendingTableSize = Int.MaxValue
+      private var pendingTableSize = -1
 
       def onPull(): Unit = pull(eventsIn)
       def onPush(): Unit = grab(eventsIn) match {
         case ack @ SettingsAckFrame(s) =>
-          applySettings(s)
+          recordSettings(s)
           push(eventsOut, ack)
         case ParsedHeadersFrame(streamId, endStream, kvs, prioInfo, _) =>
           // When ending the stream without any payload, use a DATA frame rather than
           // a HEADERS frame to work around https://github.com/golang/go/issues/47851.
           if (endStream && kvs.isEmpty) push(eventsOut, DataFrame(streamId, endStream, ByteString.empty))
           else {
+            applyPendingTableSize()
             kvs.foreach {
               case (key, value: String) =>
                 // RFC 9113 8.2.1: a field name or value carrying a NUL, CR or LF is malformed and must not be sent.
@@ -111,15 +114,28 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
         case x => push(eventsOut, x)
       }
 
-      def applySettings(s: Seq[Setting]): Unit =
+      // RFC 7541 section 4.2 requires preserving the intervening minimum as well as the final size.
+      // Keep only those sizes instead of accumulating encoded updates while no headers are being sent.
+      def recordSettings(s: Seq[Setting]): Unit =
         s.foreach {
           case Setting(SettingIdentifier.SETTINGS_HEADER_TABLE_SIZE, size) =>
-            log.debug("Applied SETTINGS_HEADER_TABLE_SIZE({}) in header compression", size)
-            // 'size' is strictly spoken unsigned, but the encoder is allowed to
-            // pick any size equal to or less than this value (6.5.2)
-            if (size >= 0) encoder.setMaxHeaderTableSize(os, size)
-            else encoder.setMaxHeaderTableSize(os, Int.MaxValue)
+            log.debug("Received SETTINGS_HEADER_TABLE_SIZE({}) in header compression", size)
+            // The unsigned peer limit may exceed Int.MaxValue; the encoder may choose a smaller size.
+            val tableSize = if (size >= 0) size else Int.MaxValue
+            smallestPendingTableSize = math.min(smallestPendingTableSize, tableSize)
+            pendingTableSize = tableSize
           case _ => // ignore, not applicable to this stage
+        }
+
+      def applyPendingTableSize(): Unit =
+        if (pendingTableSize >= 0) {
+          // Eviction is deferred until this header block, but applying the minimum first prevents regrowth
+          // from retaining entries that the peer must have evicted. An idle connection keeps its old table.
+          encoder.setMaxHeaderTableSize(os, smallestPendingTableSize)
+          if (pendingTableSize != smallestPendingTableSize)
+            encoder.setMaxHeaderTableSize(os, pendingTableSize)
+          smallestPendingTableSize = Int.MaxValue
+          pendingTableSize = -1
         }
     }
 }
