@@ -17,6 +17,7 @@ import scala.annotation.varargs
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
+import scala.jdk.DurationConverters._
 
 import org.apache.pekko
 import pekko.actor.ActorSystem
@@ -45,8 +46,33 @@ abstract class RouteTest extends AllDirectives with WSTestRequestBuilding {
   implicit def materializer: Materializer
   implicit def executionContext: ExecutionContextExecutor = system.dispatcher
 
+  /**
+   * The default timeout for awaiting route results, before it is scaled by the `pekko.test.timefactor`.
+   * Override this or [[defaultAwaitTimeout]] to change it.
+   */
   protected def defaultAwaitDuration = 3.seconds
-  protected def awaitDuration: FiniteDuration = defaultAwaitDuration.dilated
+
+  /**
+   * Java API: the default timeout for awaiting route results, before it is scaled by the `pekko.test.timefactor`.
+   * Defaults to [[defaultAwaitDuration]]. Override this or [[defaultAwaitDuration]] to change it.
+   *
+   * @since 2.1.0
+   */
+  protected def defaultAwaitTimeout: java.time.Duration = defaultAwaitDuration.toJava
+
+  /**
+   * The timeout for awaiting route results. Defaults to [[defaultAwaitTimeout]] scaled by the
+   * `pekko.test.timefactor`. Override this or [[awaitTimeout]] to change it.
+   */
+  protected def awaitDuration: FiniteDuration = defaultAwaitTimeout.toScala.dilated
+
+  /**
+   * Java API: the timeout for awaiting route results. Defaults to [[awaitDuration]].
+   * Override this or [[awaitDuration]] to change it.
+   *
+   * @since 2.1.0
+   */
+  protected def awaitTimeout: java.time.Duration = awaitDuration.toJava
 
   protected def defaultHostInfo: DefaultHostInfo = DefaultHostInfo(Host.create("example.com"), false)
 

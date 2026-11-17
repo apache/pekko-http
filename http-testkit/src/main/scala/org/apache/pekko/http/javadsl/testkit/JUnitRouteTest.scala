@@ -15,6 +15,7 @@ package org.apache.pekko.http.javadsl.testkit
 
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
+import scala.jdk.DurationConverters._
 
 import org.junit.{ Assert, Rule }
 import org.junit.rules.ExternalResource
@@ -40,7 +41,7 @@ abstract class JUnitRouteTestBase extends RouteTest {
   implicit def materializer: Materializer = systemResource.materializer
 
   protected def createTestRouteResultAsync(request: HttpRequest, result: Future[RouteResult]): TestRouteResult =
-    new TestRouteResult(result, awaitDuration)(system.dispatcher, materializer) {
+    new TestRouteResult(result, awaitTimeout.toScala)(system.dispatcher, materializer) {
       protected def assertEquals(expected: AnyRef, actual: AnyRef, message: String): Unit =
         reportDetails { Assert.assertEquals(message, expected, actual) }
 

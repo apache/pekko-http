@@ -10,6 +10,7 @@
 package org.apache.pekko.http.javadsl.testkit
 
 import scala.concurrent.Future
+import scala.jdk.DurationConverters._
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -38,7 +39,7 @@ abstract class JUnitJupiterRouteTestBase extends RouteTest {
   implicit def materializer: Materializer = systemExtension.materializer
 
   protected def createTestRouteResultAsync(request: HttpRequest, result: Future[RouteResult]): TestRouteResult =
-    new TestRouteResult(result, awaitDuration)(system.dispatcher, materializer) {
+    new TestRouteResult(result, awaitTimeout.toScala)(system.dispatcher, materializer) {
       protected def assertEquals(expected: AnyRef, actual: AnyRef, message: String): Unit =
         reportDetails { Assertions.assertEquals(expected, actual, message) }
 
