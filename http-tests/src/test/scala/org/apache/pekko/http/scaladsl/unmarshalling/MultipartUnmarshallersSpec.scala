@@ -472,6 +472,29 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
             Multipart.FormData.BodyPart.Strict("field", HttpEntity(partType, "caf\u00e9")))
         }
       }
+      for ((entityName, buildEntity) <- entityBuilders) {
+        s"preserve files sharing one field name in wire order ($entityName)" in {
+          val files = List("first.txt" -> "alpha", "second.txt" -> "bravo", "third.txt" -> "charlie")
+          val boundary = "same-field"
+          val content = files.map { case (filename, data) =>
+            List(
+              s"--$boundary",
+              "Content-Type: application/octet-stream",
+              s"""Content-Disposition: form-data; name="files"; filename="$filename"""",
+              "",
+              data,
+              "").mkString(lineFeed)
+          }.mkString + s"--$boundary--"
+          val entity = buildEntity(`multipart/form-data`.withBoundary(boundary), ByteString(content))
+          val expected = files.map { case (filename, data) =>
+            Multipart.FormData.BodyPart.Strict("files", HttpEntity(`application/octet-stream`, ByteString(data)),
+              Map("filename" -> filename))
+          }
+
+          Unmarshal(entity).to[Multipart.FormData].flatMap(_.toStrict(1.second.dilated)) should haveParts(expected: _*)
+        }
+      }
+
       "with one element and no explicit content-type" in {
         Unmarshal(HttpEntity(
           `multipart/form-data`.withBoundary("XYZABC"),

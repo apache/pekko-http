@@ -231,6 +231,30 @@ class MarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll w
                       |--$randomBoundaryValue--""".stripMarginWithNewline("\r\n")))
       }
 
+      "three files sharing one field name in order" in {
+        val files = List("first.txt" -> "alpha", "second.txt" -> "bravo", "third.txt" -> "charlie")
+        val parts = files.map { case (filename, content) =>
+          Multipart.FormData.BodyPart.Strict("files", HttpEntity(`application/octet-stream`, ByteString(content)),
+            Map("filename" -> filename))
+        }
+        val renderedParts = files.map { case (filename, content) =>
+          s"--$randomBoundaryValue\r\n" +
+          "Content-Type: application/octet-stream\r\n" +
+          s"""Content-Disposition: form-data; filename="$filename"; name="files"""" +
+          s"\r\n\r\n$content\r\n"
+        }
+        val expected = HttpEntity(
+          `multipart/form-data`.withBoundary(randomBoundaryValue).toContentType,
+          ByteString(renderedParts.mkString + s"--$randomBoundaryValue--"))
+
+        withClue("strict: ") {
+          marshal(Multipart.FormData.Strict(parts)) shouldEqual expected
+        }
+        withClue("streamed: ") {
+          marshal(Multipart.FormData(Source(parts))) shouldEqual expected
+        }
+      }
+
       "two fields having a custom `Content-Disposition`" in {
         marshal(Multipart.FormData(Source(List(
           Multipart.FormData.BodyPart("attachment[0]",
