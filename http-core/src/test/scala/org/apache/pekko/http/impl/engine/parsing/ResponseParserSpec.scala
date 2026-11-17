@@ -69,6 +69,36 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      "a 205 response only after its empty transfer framing completes" in new Test {
+        val parser = new HttpResponseParser(parserSettings, HttpHeaderParser(parserSettings, system.log))
+        parser.setContextForNextResponse(HttpResponseParser.ResponseContext(GET, None))
+        parser.parseBytes(ByteString(prep("HTTP/1.1 205 Reset Content\nTransfer-Encoding: chunked\n\n"))) shouldEqual
+        NeedMoreData
+        parser.parseBytes(ByteString("0")) shouldEqual NeedMoreData
+        parser.parseBytes(ByteString(newLine)) shouldEqual NeedMoreData
+        val start = parser.parseBytes(ByteString(newLine)).asInstanceOf[ResponseStart]
+        start.statusCode shouldEqual ResetContent
+        start.createEntity shouldEqual StrictEntityCreator(HttpEntity.Empty)
+        parser.onPull() shouldEqual MessageEnd
+      }
+
+      "a close-delimited empty 205 response only at EOF" in new Test {
+        val parser = new HttpResponseParser(parserSettings, HttpHeaderParser(parserSettings, system.log))
+        parser.setContextForNextResponse(HttpResponseParser.ResponseContext(GET, None))
+        parser.parseBytes(ByteString(prep("HTTP/1.1 205 Reset Content\n\n"))) shouldEqual NeedMoreData
+        parser.onUpstreamFinish() shouldBe false
+        val start = parser.onPull().asInstanceOf[ResponseStart]
+        start.statusCode shouldEqual ResetContent
+        start.createEntity shouldEqual StrictEntityCreator(HttpEntity.Empty)
+        start.closeRequested shouldBe true
+        parser.onPull() shouldEqual MessageEnd
+        parser.onPull() shouldEqual StreamEnd
+      }
+
+      "a 205 response to HEAD without waiting for framing" in new Test {
+        "HTTP/1.1 205 Reset Content\n\n" should parseTo(HEAD, HttpResponse(ResetContent))
+      }
+
       "a response with a simple body" in new Test {
         collectBlocking(rawParse(
           GET,

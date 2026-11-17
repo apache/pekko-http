@@ -331,6 +331,40 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
       }
     }
 
+    "handle empty 205 responses on a persistent connection" should {
+      for ((framing, body) <- Seq(
+          "Content-Length: 0" -> "",
+          "Transfer-Encoding: chunked" -> "0\n\n")) {
+        s"consume $framing before the next response" in new TestSetup {
+          sendStandardRequest()
+          sendWireData(s"HTTP/1.1 205 Reset Content\n$framing\n\n$body")
+          val reset = expectResponse()
+          reset.status shouldEqual StatusCodes.ResetContent
+          reset.entity.isKnownEmpty shouldBe true
+
+          sendStandardRequest()
+          sendWireData("HTTP/1.1 200 OK\nContent-Length: 0\n\n")
+          expectResponse() shouldEqual HttpResponse()
+
+          requestsSub.sendComplete()
+          netOut.expectComplete()
+          netInSub.sendComplete()
+          responses.expectComplete()
+        }
+      }
+    }
+
+    "complete a close-delimited empty 205 response at EOF" in new TestSetup {
+      sendStandardRequest()
+      sendWireData("HTTP/1.1 205 Reset Content\n\n")
+      netInSub.sendComplete()
+      val reset = expectResponse()
+      reset.status shouldEqual StatusCodes.ResetContent
+      reset.entity.isKnownEmpty shouldBe true
+      responses.expectComplete()
+      netOut.expectComplete()
+    }
+
     "handle several requests on one persistent connection".which {
       "has a first response that was chunked" in new TestSetup {
         requestsSub.sendNext(HttpRequest())
