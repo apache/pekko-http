@@ -307,6 +307,10 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       }
 
       def frameOutFinished(): Unit = {
+        // Fail the client response outlet before cleanup: closing the last stream can otherwise
+        // complete it normally when the request input has already completed.
+        if (!isServer && !isClosed(substreamOut))
+          bufferedSubStreamOutput.fail(Http2StreamHandling.ConnectionWasAbortedException)
         // make sure we clean up/fail substreams with a custom failure before stage is canceled
         // and substream autoclean kicks in
         shutdownStreamHandling()

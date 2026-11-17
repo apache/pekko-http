@@ -791,8 +791,30 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           receiveEntityData()
           network.toNet.cancel()
           entity.expectError() shouldBe theSameInstanceAs(Http2StreamHandling.ConnectionWasAbortedException)
-          // the connection was shut down from the network side without a failure, so the response outlet completes
-          user.responseIn.expectComplete()
+          // the response outlet reports the lost connection like the in-flight entity instead of completing
+          user.responseIn.expectError() shouldBe theSameInstanceAs(
+            Http2StreamHandling.ConnectionWasAbortedException)
+        })
+
+      "fail the response outlet when the network side cancels with a request awaiting its response".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(HttpRequest(uri = "https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+
+          network.toNet.cancel()
+          user.responseIn.expectSubscriptionAndError() shouldBe theSameInstanceAs(
+            Http2StreamHandling.ConnectionWasAbortedException)
+        })
+
+      "fail the response outlet after request input completion when the network side cancels".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(HttpRequest(uri = "https://www.example.com/"))
+          user.requestOut.sendComplete()
+          network.expectDecodedResponseHEADERSPairs(1)
+
+          network.toNet.cancel()
+          user.responseIn.expectSubscriptionAndError() shouldBe theSameInstanceAs(
+            Http2StreamHandling.ConnectionWasAbortedException)
         })
     }
 
