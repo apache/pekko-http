@@ -24,7 +24,13 @@ import pekko.stream.TLSProtocol._
 import scala.concurrent.duration._
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.model.headers.{ `User-Agent`, ProductVersion }
+import pekko.http.scaladsl.model.headers.{
+  `Sec-WebSocket-Extensions`,
+  `User-Agent`,
+  ProductVersion,
+  RawHeader,
+  WebSocketExtension
+}
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.Uri
 import pekko.stream.scaladsl._
@@ -110,7 +116,90 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
     }
 
+    for ((extensionValue, label) <- Seq("" -> "empty", " \t " -> "whitespace-only")) {
+      s"establish a connection when the extension response value is $label" in new TestSetup with ClientEchoes {
+        expectWireData(UpgradeRequestBytes)
+        sendWireData(s"""HTTP/1.1 101 Switching Protocols
+                       |Upgrade: websocket
+                       |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
+                       |Sec-WebSocket-Extensions: $extensionValue
+                       |Connection: upgrade
+                       |
+                       |""")
+
+        sendWSFrame(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
+        expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
+      }
+    }
+
+    for ((offeredHeader, label) <- Seq(
+        RawHeader("Sec-WebSocket-Extensions", "x-custom; level=1") -> "raw",
+        `Sec-WebSocket-Extensions`(List(WebSocketExtension("x-custom", Map("level" -> "1")))) -> "typed")) {
+      s"establish a connection when the server selects an extension offered through $label extraHeaders" in
+      new TestSetup
+        with ClientEchoes {
+        override def clientLayer: Http.WebSocketClientLayer =
+          Http(system).webSocketClientLayer(
+            WebSocketRequest(targetUri,
+              extraHeaders = List(offeredHeader)),
+            settings = settings)
+
+        expectWireData(ByteString(UpgradeRequestBytes.utf8String.replace(
+          "Host: example.org", "Sec-WebSocket-Extensions: x-custom; level=1\r\nHost: example.org")))
+        sendWireData("""HTTP/1.1 101 Switching Protocols
+                     |Upgrade: websocket
+                     |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
+                     |Sec-WebSocket-Extensions: X-Custom; level=1
+                     |Connection: upgrade
+                     |
+                     |""")
+
+        sendWSFrame(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
+        expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("Message 1"), fin = true)
+      }
+    }
+
     "reject invalid handshakes" should {
+      for (extension <- List("permessage-deflate", "unknown-extension")) {
+        s"an unrequested extension: $extension" in new TestSetup with ClientEchoes {
+          expectWireData(UpgradeRequestBytes)
+          sendWireData(s"""HTTP/1.1 101 Switching Protocols
+                       |Upgrade: websocket
+                       |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
+                       |Sec-WebSocket-Extensions: $extension
+                       |Connection: upgrade
+                       |
+                       |""")
+
+          expectInvalidUpgradeResponseCause(
+            "WebSocket server at ws://example.org/ws returned response with an unsupported WebSocket extension.")
+          expectNetworkAbort()
+        }
+
+      }
+
+      "an extension other than the one offered through extraHeaders" in new TestSetup with ClientEchoes {
+        override def clientLayer: Http.WebSocketClientLayer =
+          Http(system).webSocketClientLayer(
+            WebSocketRequest(targetUri,
+              extraHeaders = List(RawHeader("Sec-WebSocket-Extensions", "x-custom; level=1"))),
+            settings = settings)
+
+        expectWireData(ByteString(UpgradeRequestBytes.utf8String.replace(
+          "Host: example.org", "Sec-WebSocket-Extensions: x-custom; level=1\r\nHost: example.org")))
+        sendWireData("""HTTP/1.1 101 Switching Protocols
+                       |Upgrade: websocket
+                       |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
+                       |Sec-WebSocket-Extensions: permessage-deflate
+                       |Connection: upgrade
+                       |
+                       |""")
+
+        expectInvalidUpgradeResponseCause(
+          "WebSocket server at ws://example.org/ws returned response with an unsupported WebSocket extension.")
+        expectNetworkAbort()
+      }
+
       "other status code" in new TestSetup with ClientEchoes {
         expectWireData(UpgradeRequestBytes)
 

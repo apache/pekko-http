@@ -286,11 +286,25 @@ private[http] object Handshake {
       (HttpRequest(HttpMethods.GET, uri.toRelative, headers), key)
     }
 
+    /** Lower-cased names of the extensions listed in `Sec-WebSocket-Extensions` headers; empty values list none. */
+    def extensionNames(headers: Seq[HttpHeader]): Set[String] =
+      headers.iterator
+        .filter(_.is("sec-websocket-extensions"))
+        .flatMap(_.value.split(','))
+        .map(_.takeWhile(_ != ';').trim.toRootLowerCase)
+        .filter(_.nonEmpty)
+        .toSet
+
     /**
      * Tries to validate the HTTP response. Returns either Right(settings) or an error message if
      * the response cannot be validated.
      */
     def validateResponse(response: HttpResponse, subprotocols: Seq[String], key: `Sec-WebSocket-Key`)
+        : Either[String, NegotiatedWebSocketSettings] =
+      validateResponse(response, subprotocols, key, Set.empty)
+
+    def validateResponse(response: HttpResponse, subprotocols: Seq[String], key: `Sec-WebSocket-Key`,
+        offeredExtensions: Set[String])
         : Either[String, NegotiatedWebSocketSettings] = {
       /*
        From http://tools.ietf.org/html/rfc6455#section-4.1
@@ -372,7 +386,11 @@ private[http] object Handshake {
         check(_.status)(_ == StatusCodes.SwitchingProtocols, "unexpected status code: " + _) &&
         headerExists(UpgradeHeader, caseInsensitive = true) &&
         headerExists(ConnectionUpgradeHeader, caseInsensitive = true) &&
-        headerExists(`Sec-WebSocket-Accept`.forKey(key), showExactOther = false)
+        headerExists(`Sec-WebSocket-Accept`.forKey(key), showExactOther = false) &&
+        // RFC 6455 section 4.1 item 5: fail if the server selects an extension the client didn't offer.
+        // The client implements no extensions itself; one the caller offered through `extraHeaders` is accepted.
+        check(r => extensionNames(r.headers).forall(offeredExtensions.contains))(identity,
+          _ => "response with an unsupported WebSocket extension.")
 
       expectations(response) match {
         case None =>

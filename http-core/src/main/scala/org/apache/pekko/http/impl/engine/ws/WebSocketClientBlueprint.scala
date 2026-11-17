@@ -73,6 +73,7 @@ private[http] object WebSocketClientBlueprint {
     val subprotocols: Seq[String] = subprotocol.toList.flatMap(_.split(",")).map(_.trim)
     val (initialRequest, key) =
       Handshake.Client.buildRequest(uri, extraHeaders, subprotocols, settings.websocketRandomFactory())
+    val offeredExtensions = Handshake.Client.extensionNames(extraHeaders)
     val hostHeader = Host(uri.authority.normalizedFor(uri.scheme))
     val renderedInitialRequest =
       HttpRequestRendererFactory.renderStrict(RequestRenderingContext(initialRequest, hostHeader), settings, log)
@@ -114,7 +115,7 @@ private[http] object WebSocketClientBlueprint {
               case NeedMoreData                                                        => pull(in)
               case ResponseStart(status, protocol, attributes, headers, entity, close) =>
                 val response = new HttpResponse(status, headers, attributes, HttpEntity.Empty, protocol)
-                Handshake.Client.validateResponse(response, subprotocols, key) match {
+                Handshake.Client.validateResponse(response, subprotocols, key, offeredExtensions) match {
                   case Right(NegotiatedWebSocketSettings(protocol)) =>
                     result.success(ValidUpgrade(response, protocol))
 
