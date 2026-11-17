@@ -101,3 +101,5 @@ Scala
 Java
 
 :  @@snip [HttpClientExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/Http2ClientApp.java) { #response-future-association }
+
+Connection-specific headers set on the model are dropped with a warning when sent over HTTP/2.
