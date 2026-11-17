@@ -205,7 +205,7 @@ private[http] object Http2Blueprint {
       StreamUtils.statefulAttrsMap[Http2SubStream, HttpResponse] { attrs =>
         val headerParser = masterHttpHeaderParser.createShallowCopy()
         stream => ResponseParsing.parseResponse(headerParser, settings.parserSettings, attrs)(stream)
-      })
+      }.filterNot(response => Http2ResponseStatus.isInformational(response.status.intValue)))
 
   def idleTimeoutIfConfigured(timeout: Duration): BidiFlow[ByteString, ByteString, ByteString, ByteString, NotUsed] =
     timeout match {
