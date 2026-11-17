@@ -12,12 +12,11 @@
 
 Encodes the response with the encoding that is requested by the client via the `Accept-Encoding` if it is among the provided encoders or rejects the request with an `UnacceptedResponseEncodingRejection(supportedEncodings)`.
 
-The response encoding is determined by the rules specified in [RFC7231](https://tools.ietf.org/html/rfc7231#section-5.3.4).
+The response encoding is determined by the rules specified in [RFC 9110 §12.5.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.3).
 
 If the `Accept-Encoding` header is missing then the response is encoded using the `first` encoder.
 
-If the `Accept-Encoding` header is empty and `NoCoding` is part of the encoders then no
-response encoding is used. Otherwise the request is rejected.
+An explicitly empty `Accept-Encoding` header accepts no content coding. Include `NoCoding` among the offered encoders to return an unencoded response. If `NoCoding` is not offered, the directive rejects with `UnacceptedResponseEncodingRejection`; the default rejection handler returns `406 Not Acceptable`. This does not affect `encodeResponse`, which includes `NoCoding` by default.
 
 ## Example
 
