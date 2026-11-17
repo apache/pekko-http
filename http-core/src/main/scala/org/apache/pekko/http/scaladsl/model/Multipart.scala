@@ -339,8 +339,8 @@ object Multipart {
   }
 
   /**
-   * Model for `multipart/form-data` content as defined in http://tools.ietf.org/html/rfc2388.
-   * All parts must have distinct names. (This is not verified!)
+   * Model for `multipart/form-data` content as defined in https://www.rfc-editor.org/rfc/rfc7578.html.
+   * Multiple files for one field use separate parts with the same name.
    */
   sealed abstract class FormData extends Multipart with jm.Multipart.FormData {
     def mediaType = MediaTypes.`multipart/form-data`
