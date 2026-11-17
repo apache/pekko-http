@@ -60,6 +60,7 @@ private[http] object MessageToFrameRenderer {
         }
       }
   }
+  // statefulMap can emit its completion value on failure. Only finish a frame on successful upstream completion.
   private final class StreamedFrames(opcode: Opcode, compress: Boolean)
       extends GraphStage[FlowShape[ByteString, FrameStart]] {
     private val in = Inlet[ByteString]("StreamedFrames.in")
