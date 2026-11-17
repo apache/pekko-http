@@ -38,6 +38,19 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
   val `application/vnd.spray` = MediaType.applicationBinary("vnd.spray", MediaType.Compressible)
   val PROPFIND = HttpMethod.custom("PROPFIND")
 
+  for (date <- Seq(
+      "Sun, 06 Nov 1994 08:09:07 -0000",
+      "Sunday, 06-Nov-94 08:09:07 -0000",
+      "Sun Nov 06 08:09:07 1994 -0000",
+      "Sun, 06 Nov 1994 8:9:7 -0000",
+      "Sun Nov 06 8:9:7 1994 -0000")) {
+    s"cookie expiry zero-offset suffix $date" in {
+      s"Set-Cookie: sid=value; Expires=$date; Path=/" =!=
+        `Set-Cookie`(HttpCookie("sid", "value", expires = Some(DateTime(1994, 11, 6, 8, 9, 7)), path = Some("/")))
+          .renderedTo("sid=value; Expires=Sun, 06 Nov 1994 08:09:07 GMT; Path=/")
+    }
+  }
+
   for ((time, hour, minute, second) <- Seq(
       ("08:09:07", 8, 9, 7), ("8:9:7", 8, 9, 7), ("8:09:07", 8, 9, 7),
       ("08:9:07", 8, 9, 7), ("08:09:7", 8, 9, 7), ("0:0:0", 0, 0, 0), ("23:59:59", 23, 59, 59))) {
