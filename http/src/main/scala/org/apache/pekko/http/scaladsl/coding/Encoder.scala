@@ -31,6 +31,9 @@ trait Encoder {
 
   def messageFilter: HttpMessage => Boolean
 
+  /**
+   * Encodes a message unless it already declares a Content-Encoding, including an application-provided raw header.
+   */
   def encodeMessage(message: HttpMessage): message.Self =
     if (messageFilter(message) && !message.headers.exists(Encoder.isContentEncodingHeader))
       message.transformEntityDataBytes(singleUseEncoderFlow()).withHeaders(
@@ -68,7 +71,11 @@ object Encoder {
   private[coding] def isCompressible(msg: HttpMessage): Boolean =
     msg.entity.contentType.mediaType.isCompressible
 
-  private[coding] val isContentEncodingHeader: HttpHeader => Boolean = _.isInstanceOf[`Content-Encoding`]
+  /**
+   * Matches a `Content-Encoding` header by name, so that a `RawHeader` is treated like the modeled header.
+   * Shared by `Encoder.encodeMessage` and `Decoder.decodeMessage` to keep both sides consistent.
+   */
+  private[coding] val isContentEncodingHeader: HttpHeader => Boolean = _.is(`Content-Encoding`.lowercaseName)
 }
 
 /** A stateful object representing ongoing compression. */

@@ -38,6 +38,40 @@ class CodersSpec extends AnyWordSpec with CodecSpecSupport {
   private def body(response: HttpResponse): String =
     response.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated).data.utf8String
 
+  "Encoder.encodeMessage" should {
+    for (coder <- Seq(Coders.Gzip, Coders.Deflate)) {
+      s"preserve a pre-encoded request with a raw ${coder.encoding} Content-Encoding header" in {
+        val bytes = coder.encodeAsync(ByteString(smallText)).awaitResult(3.seconds.dilated)
+        val header = RawHeader("cOnTeNt-EnCoDiNg", coder.encoding.value)
+        val entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, bytes)
+        val request = HttpRequest(method = HttpMethods.POST, headers = List(header), entity = entity)
+
+        val encoded = coder.encodeMessage(request)
+
+        (encoded should be).theSameInstanceAs(request)
+        encoded.headers shouldEqual List(header)
+        encoded.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated) shouldEqual entity
+      }
+    }
+  }
+
+  "Decoder.decodeMessage" should {
+    for (coder <- Seq(Coders.Gzip, Coders.Deflate)) {
+      s"decode a request with a raw ${coder.encoding} Content-Encoding header and remove the header" in {
+        val bytes = coder.encodeAsync(ByteString(smallText)).awaitResult(3.seconds.dilated)
+        val header = RawHeader("cOnTeNt-EnCoDiNg", coder.encoding.value)
+        val other = RawHeader("X-Other", "kept")
+        val request = HttpRequest(method = HttpMethods.POST, headers = List(header, other),
+          entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, bytes))
+
+        val decoded = coder.decodeMessage(request)
+
+        decoded.headers shouldEqual List(other)
+        decoded.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated).data.utf8String shouldEqual smallText
+      }
+    }
+  }
+
   "Coders.decodeMessage" should {
     "decode a message with the decoder matching its Content-Encoding" in {
       for (coder <- Seq(Coders.Zstd, Coders.Gzip, Coders.Deflate)) {
