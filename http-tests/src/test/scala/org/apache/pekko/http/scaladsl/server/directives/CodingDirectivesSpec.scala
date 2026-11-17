@@ -495,10 +495,28 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
     }
     "produce a response with no encoding if the request has an empty Accept-Encoding header" in {
       Get("/") ~> `Accept-Encoding`() ~> {
-        encodeResponseWith(Gzip, Deflate, NoCoding) { completeOk }
+        encodeResponseWith(Gzip, Deflate, NoCoding) { yeah }
       } ~> check {
-        response shouldEqual Ok
+        responseAs[String] shouldEqual "Yeah!"
         response should haveNoContentEncoding
+      }
+    }
+    "reject an empty Accept-Encoding header when no identity encoder is offered" in {
+      Get("/") ~> `Accept-Encoding`() ~> {
+        encodeResponseWith(Gzip, Deflate) { yeah }
+      } ~> check {
+        rejection shouldEqual UnacceptedResponseEncodingRejection(Set(gzip, deflate))
+      }
+    }
+    "combine an empty Accept-Encoding field with a non-empty field in either order" in {
+      for (fields <- List(List(`Accept-Encoding`(), `Accept-Encoding`(gzip)),
+          List(`Accept-Encoding`(gzip), `Accept-Encoding`()))) {
+        Get("/").withHeaders(fields) ~> {
+          encodeResponseWith(Gzip, Deflate) { yeah }
+        } ~> check {
+          response should haveContentEncoding(gzip)
+          strictify(responseEntity) shouldEqual HttpEntity(ContentType(`text/plain`, `UTF-8`), yeahGzipped)
+        }
       }
     }
     "negotiate the correct content encoding" in {
