@@ -538,8 +538,10 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
               try multiplexer.updateDefaultWindow(value)
               catch {
                 case ex: Http2Compliance.Http2ProtocolException =>
-                  // A peer-caused flow-control error must not be logged as an unexpected stage exception.
-                  failStage(ex)
+                  // Fail the stage, rather than only pushing a GOAWAY, so that all active streams are shut down and the
+                  // connection is closed. `Http2Blueprint.errorHandling` renders the GOAWAY; pass on the last stream id,
+                  // so the peer knows which streams were processed and does not retry them.
+                  failStage(new Http2Compliance.Http2ProtocolException(ex.errorCode, ex.getMessage, lastStreamId()))
                   settingsAppliedOk = false
               }
             } else {

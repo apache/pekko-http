@@ -221,7 +221,7 @@ private[http] object Http2Blueprint {
           log.debug(
             "HTTP2 connection failed with error [{}]. Sending {} and closing connection.",
             ex.getMessage, ex.errorCode)
-          FrameRenderer.render(GoAwayFrame(0, ex.errorCode))
+          FrameRenderer.render(GoAwayFrame(ex.lastStreamId, ex.errorCode))
         case ex: StreamTcpException       => throw ex // TCP connection is probably broken: just forward exception
         case ex: HttpIdleTimeoutException =>
           // idle timeout stage is propagating this error but since it is already coming back we just propagate without logging

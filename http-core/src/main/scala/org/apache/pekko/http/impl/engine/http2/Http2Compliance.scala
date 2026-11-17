@@ -53,7 +53,13 @@ private[http2] object Http2Compliance {
       s"MAX_FRAME_SIZE MUST NOT be > than $MaxFrameSize, attempted setting to: $value!")
   }
 
-  class Http2ProtocolException(val errorCode: ErrorCode, message: String) extends IllegalStateException(message) {
+  /**
+   * @param lastStreamId the last-stream-id reported in the GOAWAY frame that `Http2Blueprint.errorHandling` sends when
+   *                     this exception fails the connection
+   */
+  class Http2ProtocolException(val errorCode: ErrorCode, message: String, val lastStreamId: Int)
+      extends IllegalStateException(message) {
+    def this(errorCode: ErrorCode, message: String) = this(errorCode, message, 0)
     def this(message: String) = this(ErrorCode.PROTOCOL_ERROR, message)
   }
   class Http2ProtocolStreamException(val streamId: Int, val errorCode: ErrorCode, message: String)

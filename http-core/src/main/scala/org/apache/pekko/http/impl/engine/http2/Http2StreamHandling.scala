@@ -162,6 +162,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   /** Called by multiplexer to distribute changes from INITIAL_WINDOW_SIZE to all streams */
   def distributeWindowDeltaToAllStreams(delta: Int): Unit = {
     var overflow = false
+    def overflowsWithInitialWindow(extraInitialWindow: Int): Boolean =
+      multiplexer.currentInitialWindow.toLong + extraInitialWindow > Http2Protocol.MaxWindowSize
     updateAllStates({
         case s: Sending =>
           if (!s.applyInitialWindowDelta(delta)) overflow = true
@@ -169,16 +171,13 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         // Before the response starts, WINDOW_UPDATE credit is stored separately; a future OutStream will use
         // the new initial window. Validate that sum now rather than deferring the error until the response.
         case s: CollectingIncomingData =>
-          if (multiplexer.currentInitialWindow.toLong + s.extraInitialWindow > Http2Protocol.MaxWindowSize)
-            overflow = true
+          if (overflowsWithInitialWindow(s.extraInitialWindow)) overflow = true
           s
         case s: OpenReceivingDataFirst =>
-          if (multiplexer.currentInitialWindow.toLong + s.extraInitialWindow > Http2Protocol.MaxWindowSize)
-            overflow = true
+          if (overflowsWithInitialWindow(s.extraInitialWindow)) overflow = true
           s
         case s: HalfClosedRemoteWaitingForOutgoingStream =>
-          if (multiplexer.currentInitialWindow.toLong + s.extraInitialWindow > Http2Protocol.MaxWindowSize)
-            overflow = true
+          if (overflowsWithInitialWindow(s.extraInitialWindow)) overflow = true
           s
         case x => x
       }, "distributeWindowDeltaToAllStreams")
@@ -909,6 +908,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
     def bufferedBytes: Int = buffer.length
 
+    // `increment` is negative only for a SETTINGS_INITIAL_WINDOW_SIZE decrease (via `applyInitialWindowDelta`).
+    // WINDOW_UPDATE increments are always positive: frame parsing rejects others (`requirePositiveWindowUpdateIncrement`).
     override def increaseWindow(increment: Int): Boolean = {
       val newWindow = outboundWindowLeft.toLong + increment
       if (newWindow > Http2Protocol.MaxWindowSize) {

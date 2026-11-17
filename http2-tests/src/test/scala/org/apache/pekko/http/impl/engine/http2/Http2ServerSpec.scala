@@ -1174,7 +1174,8 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectDecodedHEADERS(3, endStream = false)
           network.sendWINDOW_UPDATE(TheStreamId, Int.MaxValue - Http2Protocol.InitialWindowSize)
           network.sendSETTING(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, Http2Protocol.InitialWindowSize + 1)
-          val (_, errorCode) = network.expectGOAWAY()
+          // The GOAWAY reports the last processed stream, so the peer doesn't retry streams 1 and 3.
+          val (_, errorCode) = network.expectGOAWAY(3)
           errorCode shouldBe ErrorCode.FLOW_CONTROL_ERROR
           entityDataOut.expectCancellation()
           otherEntityDataOut.expectCancellation()
@@ -1206,7 +1207,7 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         new WaitingForResponseSetup {
           network.sendWINDOW_UPDATE(TheStreamId, Int.MaxValue - Http2Protocol.InitialWindowSize)
           network.sendSETTING(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, Http2Protocol.InitialWindowSize + 1)
-          val (_, errorCode) = network.expectGOAWAY()
+          val (_, errorCode) = network.expectGOAWAY(TheStreamId)
           errorCode shouldBe ErrorCode.FLOW_CONTROL_ERROR
         })
 
