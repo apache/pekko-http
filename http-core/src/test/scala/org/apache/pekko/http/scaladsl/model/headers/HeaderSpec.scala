@@ -22,6 +22,13 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 class HeaderSpec extends AnyFreeSpec with Matchers {
+  "Sec-WebSocket-Accept should" - {
+    "produce the RFC 6455 handshake example" in {
+      `Sec-WebSocket-Accept`.forKey(`Sec-WebSocket-Key`("dGhlIHNhbXBsZSBub25jZQ==")).key shouldEqual
+      "s3pPLMBiTxaQ9kYGzzhZRbK+xOo="
+    }
+  }
+
   "ModeledCompanion should" - {
     "provide parseFromValueString method" - {
       "successful parse run" in {
