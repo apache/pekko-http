@@ -463,6 +463,12 @@ in the right style / place.
 
 Similarly to media types, Apache Pekko HTTP @scala[@scaladoc:[predefines](org.apache.pekko.http.scaladsl.model.StatusCodes$)]@java[@javadoc:[predefines](org.apache.pekko.http.javadsl.model.StatusCodes)]
 well-known status codes, however sometimes you may need to use a custom one (or are forced to use an API which returns custom status codes).
+Custom status reasons may be empty and may contain horizontal tabs, printable ASCII and ISO-8859-1
+characters above DEL, as specified by RFC 9112 section 4. Other control characters, DEL and characters
+outside the ISO-8859-1 range are rejected with `IllegalArgumentException` at construction, including
+when copying a status code. This also rejects invalid reasons when parsing an unregistered status code;
+for registered status codes the parser continues to use the registered reason instead of the received one.
+
 Similarly to the media types registration, you can register custom status codes by configuring @apidoc[ParserSettings] like this:
 
 Scala
