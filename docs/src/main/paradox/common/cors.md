@@ -125,7 +125,7 @@ List of methods that can be used when making an actual request. The list is retu
 
 The preflight request will be rejected if the `Access-Control-Request-Method` header's method is not part of the list.
 
-#### exposedHeaders / getAllowedMethods
+#### exposedHeaders / getExposedHeaders
 List of headers (other than [simple response headers](https://www.w3.org/TR/cors/#simple-response-header)) that browsers are allowed to access. If not empty, this list is returned as part of the `Access-Control-Expose-Headers` header in the actual response.
 
 #### maxAge / getMaxAge
