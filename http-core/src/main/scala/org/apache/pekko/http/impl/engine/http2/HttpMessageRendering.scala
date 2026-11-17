@@ -129,7 +129,8 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
     val headerPairs = initialHeaderPairs(r)
 
     HttpMessageRendering.addContentHeaders(headerPairs, r.entity, contentLengthAllowed(r))
-    HttpMessageRendering.renderHeaders(r.headers, headerPairs, peerIdHeader, log, isServer = r.isResponse,
+    HttpMessageRendering.renderHeaders(r.headers, headerPairs, peerIdHeader, log,
+      isServer = r.isResponse,
       shouldRenderAutoHeaders = true, dateHeaderRendering)
 
     val streamId = nextStreamId(r)
@@ -137,7 +138,11 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
     val trailingHeadersFrame =
       r.attribute(AttributeKeys.trailer) match {
         case Some(trailer) if trailer.headers.nonEmpty =>
-          OptionVal.Some(ParsedHeadersFrame(streamId, endStream = true, trailer.headers, None, None))
+          val pairs = trailer.headers.filter { case (name, value) =>
+            val header = pekko.http.scaladsl.model.headers.RawHeader(name, value)
+            HttpMessageRendering.allowsHeader(header, r.isResponse, isTrailer = true, log)
+          }
+          OptionVal.Some(ParsedHeadersFrame(streamId, endStream = true, pairs, None, None))
         case _ => OptionVal.None
       }
 
@@ -149,6 +154,23 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
 /** INTERNAL API */
 @InternalApi
 private[http2] object HttpMessageRendering {
+
+  // One policy for initial fields and both streamed and attribute-supplied trailers.
+  def allowsHeader(header: HttpHeader, isServer: Boolean, isTrailer: Boolean,
+      log: LoggingAdapter): Boolean = {
+    def suppress(): Boolean = {
+      log.warning("Explicitly set HTTP header '{}' is ignored, header is not allowed in this HTTP/2 field section",
+        header)
+      false
+    }
+    header.lowercaseName match {
+      case "connection" | "keep-alive" | "proxy-connection" | "transfer-encoding" | "upgrade" => suppress()
+      case "te"                                                                               =>
+        if (!isServer && !isTrailer && header.value.trim.equalsIgnoreCase("trailers")) true
+        else suppress()
+      case _ => true
+    }
+  }
 
   /**
    * Mutates `headerPairs` adding headers related to content (type and length).
@@ -185,6 +207,8 @@ private[http2] object HttpMessageRendering {
       isServer: Boolean,
       shouldRenderAutoHeaders: Boolean,
       dateHeaderRendering: DateHeaderRendering): Unit = {
+    // Initial sections render automatic headers; the streamed-trailer caller disables them.
+    val isTrailer = !shouldRenderAutoHeaders
     def suppressionWarning(h: HttpHeader, msg: String): Unit =
       log.warning("Explicitly set HTTP header '{}' is ignored, {}", h, msg)
 
@@ -196,43 +220,42 @@ private[http2] object HttpMessageRendering {
       import pekko.http.scaladsl.model.headers._
       val header = it.next()
       if ((header.renderInResponses && isServer) || (header.renderInRequests && !isServer)) {
-        header match {
-          case x: Server if isServer =>
-            addHeader(x)
-            peerIdSeen = true
+        if (allowsHeader(header, isServer, isTrailer, log)) {
+          header match {
+            case x if x.is("te") =>
+              headerPairs += "te" -> "trailers"
 
-          case x: `User-Agent` if !isServer =>
-            addHeader(x)
-            peerIdSeen = true
+            case x: Server if isServer =>
+              addHeader(x)
+              peerIdSeen = true
 
-          case x: Date if isServer =>
-            addHeader(x)
-            dateSeen = true
+            case x: `User-Agent` if !isServer =>
+              addHeader(x)
+              peerIdSeen = true
 
-          case x: CustomHeader =>
-            addHeader(x)
+            case x: Date if isServer =>
+              addHeader(x)
+              dateSeen = true
 
-          case x: RawHeader
-              if (x.is("content-type")) || (x.is("content-length")) || (x.is("transfer-encoding")) ||
-              (x.is("date")) || (x.is("server")) || (x.is("user-agent")) || (x.is("connection")) =>
-            suppressionWarning(x, "illegal RawHeader")
+            case x: CustomHeader =>
+              addHeader(x)
 
-          case x: `Content-Length` =>
-            suppressionWarning(x,
-              "explicit `Content-Length` header is not allowed. Use the appropriate HttpEntity subtype.")
+            case x: RawHeader
+                if (x.is("content-type")) || (x.is("content-length")) ||
+                (x.is("date")) || (x.is("server")) || (x.is("user-agent")) =>
+              suppressionWarning(x, "illegal RawHeader")
 
-          case x: `Content-Type` =>
-            suppressionWarning(x,
-              "explicit `Content-Type` header is not allowed. Set `HttpResponse.entity.contentType` instead.")
+            case x: `Content-Length` =>
+              suppressionWarning(x,
+                "explicit `Content-Length` header is not allowed. Use the appropriate HttpEntity subtype.")
 
-          case x: `Transfer-Encoding` =>
-            suppressionWarning(x, "`Transfer-Encoding` header is not allowed for HTTP/2")
+            case x: `Content-Type` =>
+              suppressionWarning(x,
+                "explicit `Content-Type` header is not allowed. Set `HttpResponse.entity.contentType` instead.")
 
-          case x: Connection =>
-            suppressionWarning(x, "`Connection` header is not allowed for HTTP/2")
-
-          case x =>
-            addHeader(x)
+            case x =>
+              addHeader(x)
+          }
         }
       }
     }
