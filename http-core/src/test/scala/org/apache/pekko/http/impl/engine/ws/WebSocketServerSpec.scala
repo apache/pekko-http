@@ -24,6 +24,8 @@ import java.util.zip.Inflater
 import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.javadsl.model.ws.{ Message => JavaMessage, TextMessage => JavaTextMessage }
+import pekko.http.scaladsl.model.HttpHeader
+import pekko.http.scaladsl.model.headers.`Sec-WebSocket-Extensions`
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.stream.Materializer
@@ -257,34 +259,84 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         }
       }
 
-      "negotiate permessage-deflate from a fallback offer in the same extension header" in
-      Utils.assertAllStagesStopped {
-        new TestSetup {
-          sendWebSocketRequest(
-            "Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=14, permessage-deflate\r\n")
+      case class OfferCase(
+          scenario: String,
+          offers: String,
+          selected: String,
+          // permit no-context negotiation where the case is about parameters of a rejected offer not leaking, so it
+          // cannot pass merely because those parameters are disabled by default
+          allowNoContext: Boolean = false,
+          selectedServerNoContext: Boolean = false,
+          selectedClientNoContext: Boolean = false)
 
-          val request = expectRequest()
-          val upgrade = request.attribute(webSocketUpgrade)
-          val response = upgrade.get.handleMessages(Flow[Message])
-          responses.sendNext(response)
+      for (offerCase <- List(
+          OfferCase("unsupported server window", "permessage-deflate; server_max_window_bits=14, permessage-deflate",
+            "permessage-deflate"),
+          OfferCase("rejected client parameters",
+            "permessage-deflate; client_max_window_bits=10; client_no_context_takeover; server_max_window_bits=14, permessage-deflate",
+            "permessage-deflate", allowNoContext = true),
+          OfferCase("rejected server parameters",
+            "permessage-deflate; server_no_context_takeover; server_max_window_bits=14, permessage-deflate; client_max_window_bits=12",
+            "permessage-deflate; client_max_window_bits=12", allowNoContext = true),
+          OfferCase("selected no-context parameters",
+            "permessage-deflate; server_max_window_bits=14, permessage-deflate; server_no_context_takeover; client_no_context_takeover",
+            "permessage-deflate; server_no_context_takeover; client_no_context_takeover", allowNoContext = true,
+            selectedServerNoContext = true, selectedClientNoContext = true),
+          // Pekko selects the first supported offer; RFC 7692 recommends, but does not require, this preference.
+          OfferCase("first supported offer",
+            "permessage-deflate; client_max_window_bits=12, permessage-deflate; client_max_window_bits=10",
+            "permessage-deflate; client_max_window_bits=12"))) {
+        import offerCase._
+        s"negotiate independent permessage-deflate offers: $scenario" in Utils.assertAllStagesStopped {
+          new TestSetup {
+            override def settings = {
+              val defaults = super.settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
+              if (allowNoContext)
+                super.settings.withWebsocketSettings(
+                  defaults.copy(compression = defaults.compression.copy(
+                    allowServerNoContext = true,
+                    preferredClientNoContext = true)))
+              else super.settings
+            }
 
-          expectResponseWithWipedDate(
-            """HTTP/1.1 101 Switching Protocols
+            // The response header does not show the no-context flags that configure the compression stages, so check
+            // that a rejected offer's flags do not leak into the selected one.
+            val compressionSettings =
+              settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl].compression
+            val offeredExtensions = HttpHeader.parse("Sec-WebSocket-Extensions", offers) match {
+              case HttpHeader.ParsingResult.Ok(header: `Sec-WebSocket-Extensions`, Nil) => header.extensions
+              case other                                                                => fail(s"Unexpected parsing result $other")
+            }
+            val negotiated = PerMessageDeflate.negotiate(offeredExtensions, compressionSettings).get
+            negotiated.serverNoContextTakeover shouldEqual selectedServerNoContext
+            negotiated.clientNoContextTakeover shouldEqual selectedClientNoContext
+
+            sendWebSocketRequest(s"Sec-WebSocket-Extensions: $offers\r\n")
+
+            val request = expectRequest()
+            val upgrade = request.attribute(webSocketUpgrade)
+            val response = upgrade.get.handleMessages(Flow[Message])
+            responses.sendNext(response)
+
+            expectResponseWithWipedDate(
+              s"""HTTP/1.1 101 Switching Protocols
               |Upgrade: websocket
               |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-              |Sec-WebSocket-Extensions: permessage-deflate
+              |Sec-WebSocket-Extensions: $selected
               |Server: pekko-http/test
               |Date: XXXX
               |Connection: upgrade
               |
               |""")
 
-          sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
-          expectWSCloseFrame(Protocol.CloseCodes.Regular)
+            sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+            expectWSCloseFrame(Protocol.CloseCodes.Regular)
 
-          closeNetworkInput()
-          expectNetworkClose()
+            closeNetworkInput()
+            expectNetworkClose()
+          }
         }
+
       }
 
       case class InboundCase(description: String, payload: () => ByteString, text: String)
