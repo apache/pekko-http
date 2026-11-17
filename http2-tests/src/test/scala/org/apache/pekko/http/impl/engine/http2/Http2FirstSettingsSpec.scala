@@ -27,7 +27,6 @@ import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
-import pekko.stream.testkit.TestSubscriber.{ OnComplete, OnError, OnNext }
 import pekko.stream.testkit.scaladsl.StreamTestKit
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.util.ByteString
@@ -87,18 +86,10 @@ class Http2FirstSettingsSpec extends PekkoSpecWithMaterializer("") {
             output.requestNext() shouldBe a[SettingsAckFrame]
             output.requestNext() shouldBe PingFrame(true, pingData)
           } else {
-            output.request(1).expectEvent() match {
-              case OnNext(frame: GoAwayFrame) =>
-                info("Observed PROTOCOL_ERROR GOAWAY followed by connection completion")
-                frame.errorCode shouldBe ErrorCode.PROTOCOL_ERROR
-                output.request(1).expectComplete()
-              case OnComplete =>
-                info("Observed connection completion without GOAWAY, permitted by RFC 9113 section 3.4")
-                succeed
-              case OnError(ex) =>
-                fail("Termination error requires provenance review before classification", ex)
-              case other => fail(s"Expected connection termination for an invalid preface, observed $other")
-            }
+            // The invalid preface fails the stage, and Http2Blueprint.errorHandling renders the GOAWAY.
+            // No stream can have been processed yet, so the last stream id is 0.
+            output.requestNext() shouldBe GoAwayFrame(0, ErrorCode.PROTOCOL_ERROR)
+            output.request(1).expectComplete()
           }
         } finally {
           finishApp()

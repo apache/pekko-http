@@ -168,8 +168,6 @@ private[http2] class Http2FrameParsing(
     shouldReadPreface: Boolean, log: LoggingAdapter,
     maxFrameSize: Int = Http2Protocol.InitialMaxFrameSize,
     requireInitialSettings: Boolean = false) extends ByteStringParser[FrameEvent] {
-  def this(shouldReadPreface: Boolean, log: LoggingAdapter, maxFrameSize: Int) =
-    this(shouldReadPreface, log, maxFrameSize, false)
   import ByteStringParser._
   import Http2FrameParsing._
 
