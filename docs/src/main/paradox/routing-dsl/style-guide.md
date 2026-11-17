@@ -1,3 +1,12 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  license agreements; and to You under the Apache License, version 2.0:
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+  This file is part of the Apache Pekko project, which was derived from Akka.
+-->
+
 # Routing DSL style guide
 
 Apache Pekko HTTP's routing DSL is at the center of most Apache Pekko HTTP-based servers. It's where the incoming requests diverge into the different parts of the implemented services.
