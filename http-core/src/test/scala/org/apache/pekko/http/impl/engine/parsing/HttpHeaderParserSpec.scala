@@ -136,6 +136,12 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
         123)
     }
 
+    "parse and cache a Content-Type with empty parameter slots" in new TestSetup() {
+      val mediaType = pekko.http.scaladsl.model.MediaTypes.`multipart/form-data`.withBoundary("x")
+      parseAndCache(s"Content-Type: multipart/form-data;;boundary=x;${newLine}x")() shouldEqual
+      `Content-Type`(mediaType.toContentType)
+    }
+
     "parse and cache a Set-Cookie header with a value in double quotes" in new TestSetup() {
       parseAndCache(s"""Set-Cookie: tralala="cookie-value-here"${newLine}x""")() shouldEqual `Set-Cookie`(
         HttpCookie("tralala", "cookie-value-here"))

@@ -29,7 +29,7 @@ private[parser] trait AcceptHeader { this: Parser with CommonRules with CommonAc
   private val sfStringChar = CharPredicate('\u0020' to '\u0021', '\u0023' to '\u005B', '\u005D' to '\u007E')
   private val sfStringEscapedChar = CharPredicate('"', '\\')
 
-  // http://tools.ietf.org/html/rfc7231#section-5.3.2
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.1
   def accept = rule {
     listStart ~ zeroOrMore(`media-range-decl`).separatedBy(listSep) ~ listEnd ~ EOI ~> (Accept(_))
   }
@@ -115,18 +115,20 @@ private[parser] trait AcceptHeader { this: Parser with CommonRules with CommonAc
   private def invalidAcceptQueryMediaRange(value: String): Nothing =
     throw ParsingException(s"Illegal Accept-Query media range '$value'")
 
+  // RFC 9110 sections 5.6.6 and 12.5.1: parameter slots may be empty.
   def `media-range-decl` = rule {
-    `media-range-def` ~ OWS ~ zeroOrMore(ws(';') ~ parameter) ~> { (main, sub, params) =>
-      if (sub == "*") {
-        val mainLower = main.toRootLowerCase
-        MediaRanges.getForKey(mainLower) match {
-          case Some(registered) => if (params.isEmpty) registered else registered.withParams(TreeMap(params: _*))
-          case None             => MediaRange.custom(mainLower, TreeMap(params: _*))
+    `media-range-def` ~ OWS ~ zeroOrMore(oneOrMore(ws(';')) ~ parameter) ~ zeroOrMore(ws(';')) ~> {
+      (main, sub, params) =>
+        if (sub == "*") {
+          val mainLower = main.toRootLowerCase
+          MediaRanges.getForKey(mainLower) match {
+            case Some(registered) => if (params.isEmpty) registered else registered.withParams(TreeMap(params: _*))
+            case None             => MediaRange.custom(mainLower, TreeMap(params: _*))
+          }
+        } else {
+          val (p, q) = MediaRange.splitOffQValue(TreeMap(params: _*))
+          MediaRange(getMediaType(main, sub, p contains "charset", p), q)
         }
-      } else {
-        val (p, q) = MediaRange.splitOffQValue(TreeMap(params: _*))
-        MediaRange(getMediaType(main, sub, p contains "charset", p), q)
-      }
     }
   }
 
