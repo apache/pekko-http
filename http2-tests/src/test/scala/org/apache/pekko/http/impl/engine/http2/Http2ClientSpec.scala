@@ -805,6 +805,17 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           user.responseIn.expectSubscriptionAndError() shouldBe theSameInstanceAs(
             Http2StreamHandling.ConnectionWasAbortedException)
         })
+
+      "fail the response outlet after request input completion when the network side cancels".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          user.emitRequest(HttpRequest(uri = "https://www.example.com/"))
+          user.requestOut.sendComplete()
+          network.expectDecodedResponseHEADERSPairs(1)
+
+          network.toNet.cancel()
+          user.responseIn.expectSubscriptionAndError() shouldBe theSameInstanceAs(
+            Http2StreamHandling.ConnectionWasAbortedException)
+        })
     }
 
     "expose synthetic headers" should {
