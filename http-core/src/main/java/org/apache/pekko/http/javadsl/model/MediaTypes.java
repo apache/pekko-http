@@ -223,6 +223,8 @@ public final class MediaTypes {
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divxml();
   public static final MediaType.Binary APPLICATION_ZIP =
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divzip();
+  public static final MediaType.Binary APPLICATION_ZSTD =
+      org.apache.pekko.http.scaladsl.model.MediaTypes.application$divzstd();
 
   public static final MediaType.Binary AUDIO_AIFF =
       org.apache.pekko.http.scaladsl.model.MediaTypes.audio$divaiff();

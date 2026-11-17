@@ -35,6 +35,26 @@ import org.scalatest.{ Inside, Inspectors }
 
 class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Inside {
 
+  "The registered application/zstd media type" should {
+    "be available through Scala and Java and parse as a binary media type" in {
+      pekko.http.javadsl.model.MediaTypes.APPLICATION_ZSTD shouldEqual `application/zstd`
+      ContentType.parse("application/zstd") shouldEqual Right(ContentType(`application/zstd`))
+      ContentType.parse("APPLICATION/ZSTD") shouldEqual Right(ContentType(`application/zstd`))
+      MediaTypes.forExtension("zst") shouldEqual `application/zstd`
+      MediaTypes.forExtension("ZST") shouldEqual `application/zstd`
+    }
+
+    for (suffix <- Seq("zst", "ZST")) {
+      s"resolve .$suffix without adding a charset" in {
+        val contentType = ContentTypeResolver.Default(s"archive.tar.$suffix")
+        contentType shouldEqual ContentType(`application/zstd`)
+        contentType.toString shouldEqual "application/zstd"
+        contentType shouldBe a[ContentType.Binary]
+        contentType.mediaType.isCompressible shouldEqual false
+      }
+    }
+  }
+
   // operations touch files, can be randomly hit by slowness
   implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(3.seconds.dilated)
 
