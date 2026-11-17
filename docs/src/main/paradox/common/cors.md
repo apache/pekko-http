@@ -59,6 +59,17 @@ final Route route = cors(settings, () -> {
 ```
 @@@
 
+## Response variation and caching
+
+The `cors` directive adds `Vary: Origin` to responses completed within it, including preflight responses and
+responses to requests without an `Origin` header. Existing `Vary` fields are preserved, and no additional
+`Origin` entry is added if any field already contains `Origin` (case-insensitively) or `*`.
+
+This also applies when all origins are allowed and credentials are disabled. Shared caches and CDNs that
+honor `Vary` distinguish these responses by the request's `Origin`, including its absence, which can reduce
+cache reuse for static or public content. Responses completed by alternatives or rejection handlers outside
+`cors` are not changed by the directive.
+
 ## Rejection
 The CORS directives can reject requests using the `CorsRejection` class. Requests can be either malformed or not allowed to access the resource.
 

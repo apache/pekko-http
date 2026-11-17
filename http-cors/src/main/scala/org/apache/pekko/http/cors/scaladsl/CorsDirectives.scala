@@ -93,7 +93,19 @@ trait CorsDirectives {
       }
     }
 
-    extractRequest.flatMap { request =>
+    // Even wildcard responses depend on Origin being present: generic requests do not receive CORS headers.
+    // Preserve existing Vary fields and avoid adding a redundant Origin when Origin or * is already listed.
+    val varyByOrigin = mapResponseHeaders { headers =>
+      val variesByOrigin = headers.exists { header =>
+        header.is("vary") && header.value.split(',').exists { field =>
+          val name = field.trim
+          name == "*" || name.equalsIgnoreCase("Origin")
+        }
+      }
+      if (variesByOrigin) headers else RawHeader("Vary", "Origin") +: headers
+    }
+
+    varyByOrigin & extractRequest.flatMap[Unit] { request =>
       import request._
 
       (method, header[Origin].map(_.origins.toSeq), header[`Access-Control-Request-Method`].map(_.method)) match {
