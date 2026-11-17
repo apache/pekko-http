@@ -157,6 +157,7 @@ private[http] final class HttpRequestParser(
           case 'D'  => parseMethod(DELETE)
           case 'H'  => parseMethod(HEAD)
           case 'O'  => parseMethod(OPTIONS)
+          case 'Q'  => parseMethod(QUERY)
           case 'T'  => parseMethod(TRACE)
           case 'C'  => parseMethod(CONNECT)
           case 0x16 =>
