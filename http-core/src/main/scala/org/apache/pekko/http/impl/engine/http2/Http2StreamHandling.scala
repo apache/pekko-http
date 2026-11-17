@@ -298,6 +298,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
    *   * HalfClosedLocalWaitingForPeerStream -> HalfClosedLocal: on receiving response HEADERS with endStream = false
    *   * HalfClosedLocalWaitingForPeerStream -> Closed: on receiving response HEADERS with endStream = true
    *   * HalfClosedLocal -> Closed: on receiving response DATA with endStream = true
+   *   * OpenSendingData -> OpenReceivingNoContent: on receiving content-free (204/205/304) HEADERS without END_STREAM
+   *   * HalfClosedLocalWaitingForPeerStream -> HalfClosedLocalReceivingNoContent: same, after the upload ended
+   *   * OpenReceivingNoContent -> HalfClosedLocalReceivingNoContent: on ending the upload before the response wire end
+   *   * OpenReceivingNoContent -> HalfClosedRemoteSendingData: on receiving the empty response DATA with END_STREAM
+   *   * HalfClosedLocalReceivingNoContent -> Closed: on receiving the empty response DATA with END_STREAM
    *   * Open -> HalfClosedLocal: on sending out request DATA with endStream = true
    *   * Open -> HalfClosedRemoteSendingData: on receiving response DATA with endStream = true before request has been fully sent out (uncommon)
    *   * HalfClosedRemoteSendingData -> Closed: on sending out request DATA with endStream = true
@@ -338,11 +343,23 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       Closed
     }
 
+    /**
+     * A final response whose built-in status forbids content (`allowsEntity == false`), e.g. 204, 205 or 304. Such a response can
+     * end in a later empty DATA frame. Informational (1xx) responses are not final and are excluded.
+     */
+    protected def isContentFreeFinalResponse(frame: ParsedHeadersFrame): Boolean =
+      frame.keyValuePairs.exists {
+        case (":status", status: String) =>
+          Http2ResponseStatus.isContentFreeFinal(status)
+        case _ => false
+      }
+
     protected def expectIncomingStream(
         event: StreamFrameEvent,
         nextStateEmpty: StreamState,
         nextStateStream: IncomingStreamBuffer => StreamState,
-        correlationAttributes: Map[AttributeKey[?], ?] = Map.empty): StreamState =
+        correlationAttributes: Map[AttributeKey[?], ?] = Map.empty,
+        noContentState: Option[StreamState] = None): StreamState =
       event match {
         case frame: ParsedHeadersFrame if !isServer && !frame.endStream && frame.keyValuePairs.exists {
               case (":status", status: String) =>
@@ -360,6 +377,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
           if (endStream) {
             dispatchSubstream(frame, Left(ByteString.empty), correlationAttributes)
             nextStateEmpty
+          } else if (noContentState.isDefined && isContentFreeFinalResponse(frame)) {
+            // A content-free response can end in a later empty DATA frame. Expose its known-empty entity now,
+            // but keep the wire stream alive until END_STREAM, without creating an unconsumed entity source.
+            dispatchSubstream(frame, Left(ByteString.empty), correlationAttributes)
+            noContentState.get
           } else if (settings.minCollectStrictEntitySize > 0)
             CollectingIncomingData(frame, correlationAttributes, ByteString.empty, extraInitialWindow = 0)
           else
@@ -498,7 +520,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       with Sending {
     override def handle(event: StreamFrameEvent): StreamState = event match {
       case _: ParsedHeadersFrame =>
-        expectIncomingStream(event, HalfClosedRemoteSendingData(outStream), Open(_, outStream), correlationAttributes)
+        expectIncomingStream(event, HalfClosedRemoteSendingData(outStream), Open(_, outStream), correlationAttributes,
+          Some(OpenReceivingNoContent(outStream)))
       case w: WindowUpdateFrame =>
         handleWindowUpdate(w)
       case r: RstStreamFrame =>
@@ -517,9 +540,46 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         // We're not planning on sending any data on this stream anymore, so we don't care about window updates.
         this
       case _ =>
-        expectIncomingStream(event, Closed, HalfClosedLocal(_), correlationAttributes)
+        expectIncomingStream(event, Closed, HalfClosedLocal(_), correlationAttributes,
+          Some(HalfClosedLocalReceivingNoContent(event.streamId)))
     }
   }
+
+  /** Receives the wire termination of a content-free (204/205/304) response whose known-empty entity has already been delivered. */
+  sealed abstract class ReceivingNoContent extends ReceivingData { self: Product =>
+    protected def streamId: Int
+    protected def afterRemoteEnd: StreamState
+
+    private def rejectContent(): StreamState = {
+      shutdown()
+      multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.PROTOCOL_ERROR))
+      Closed
+    }
+
+    override protected def onDataFrame(frame: DataFrame): StreamState = {
+      // ReceivingData accounted for these bytes; this state does not retain a body buffer.
+      totalBufferedData -= frame.payload.length
+      if (frame.payload.nonEmpty) rejectContent()
+      else if (frame.endStream) afterRemoteEnd
+      else this
+    }
+
+    override protected def onTrailer(frame: ParsedHeadersFrame): StreamState = rejectContent()
+    override protected def onRstStreamFrame(frame: RstStreamFrame): Unit = shutdown()
+  }
+
+  case class HalfClosedLocalReceivingNoContent(streamId: Int) extends ReceivingNoContent {
+    override protected def afterRemoteEnd: StreamState = Closed
+    override protected def incrementWindow(delta: Int): StreamState = this
+  }
+
+  case class OpenReceivingNoContent(outStream: OutStream) extends ReceivingNoContent with Sending {
+    override protected def streamId: Int = outStream.streamId
+    override protected def afterRemoteEnd: StreamState = HalfClosedRemoteSendingData(outStream)
+    override protected def incrementWindow(delta: Int): StreamState = increaseWindow(delta)
+    override def handleOutgoingEnded(): StreamState = HalfClosedLocalReceivingNoContent(streamId)
+  }
+
   sealed abstract class ReceivingData extends StreamState { self: Product =>
     def handle(event: StreamFrameEvent): StreamState = event match {
       case d: DataFrame =>

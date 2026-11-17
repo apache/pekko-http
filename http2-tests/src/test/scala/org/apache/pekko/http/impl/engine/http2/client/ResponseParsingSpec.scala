@@ -88,6 +88,15 @@ class ResponseParsingSpec extends PekkoSpecWithMaterializer {
       }
     }
 
+    "classify built-in content-free final statuses separately from informational statuses" in {
+      for (code <- Seq(204, 205, 304)) {
+        Http2ResponseStatus.isContentFreeFinal(code.toString) shouldBe true
+        Http2ResponseStatus.isInformational(code) shouldBe false
+      }
+      for (code <- Seq(100, 102, 103, 200, 201, 299))
+        Http2ResponseStatus.isContentFreeFinal(code.toString) shouldBe false
+    }
+
     "parse internally dispatched informational headers with an empty entity" in {
       val response = parse(Seq(":status" -> "103", "link" -> "</style.css>; rel=preload"), endStream = false).get
       response.status shouldBe StatusCodes.EarlyHints
