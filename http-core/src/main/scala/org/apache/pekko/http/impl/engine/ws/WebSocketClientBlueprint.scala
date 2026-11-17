@@ -148,6 +148,11 @@ private[http] object WebSocketClientBlueprint {
 
           setHandlers(in, out, this)
 
+          override def onUpstreamFinish(): Unit = {
+            result.tryFailure(new RuntimeException("Connection closed before WebSocket upgrade completed."))
+            super.onUpstreamFinish()
+          }
+
           override def onUpstreamFailure(ex: Throwable): Unit = {
             result.tryFailure(new RuntimeException("Connection failed.", ex))
             super.onUpstreamFailure(ex)
