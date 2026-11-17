@@ -63,14 +63,16 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         }
       }
 
-      "status reason: reject non-line-ending controls in unknown status reasons" in new Test {
+      "status reason: drop non-line-ending controls from unknown status reasons" in new Test {
         val controls = (0 to 31).filterNot(Set(9, 10, 13)) :+ 127
         controls.foreach { code =>
           val reason = s"A${code.toChar}B"
           val input = s"HTTP/1.1 299 $reason${newLine}Content-Length: 0${newLine}${newLine}"
           val output = collectBlocking(rawParse(GET, input))
           output.size shouldBe 1
-          output.head.swap.toOption.get shouldBe a[MessageStartError]
+          val status = output.head.toOption.get.status
+          status.intValue shouldBe 299
+          status.reason shouldBe "AB"
         }
       }
 
