@@ -105,8 +105,10 @@ private[http] object BodyPartRenderer {
       partHeadersSizeHint: Int, log: LoggingAdapter): ByteString = {
     val r = new ByteStringRendering(partHeadersSizeHint)
     if (parts.nonEmpty) {
+      var first = true
       for (part <- parts) {
-        renderBoundary(r, boundary, suppressInitialCrLf = part eq parts.head)
+        renderBoundary(r, boundary, suppressInitialCrLf = first)
+        first = false
         renderEntityContentType(r, part.entity)
         renderHeaders(r, part.headers, log)
         r ~~ part.entity.data

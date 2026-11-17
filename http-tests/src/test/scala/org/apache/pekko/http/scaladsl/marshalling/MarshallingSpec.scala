@@ -190,6 +190,25 @@ class MarshallingSpec extends AnyFreeSpec with Matchers with BeforeAndAfterAll w
                       |filecontent
                       |--$randomBoundaryValue--""".stripMarginWithNewline("\r\n")))
       }
+
+      "the same part instance twice" in {
+        val part = Multipart.General.BodyPart.Strict(HttpEntity("plain text"))
+        val parts = Vector(part, part)
+        val expected = HttpEntity(
+          contentType = `multipart/mixed`.withBoundary(randomBoundaryValue).toContentType,
+          data = ByteString(s"""--$randomBoundaryValue
+                      |Content-Type: text/plain; charset=UTF-8
+                      |
+                      |plain text
+                      |--$randomBoundaryValue
+                      |Content-Type: text/plain; charset=UTF-8
+                      |
+                      |plain text
+                      |--$randomBoundaryValue--""".stripMarginWithNewline("\r\n")))
+
+        marshal(Multipart.General(`multipart/mixed`, Source(parts))) shouldEqual expected
+        marshal(Multipart.General.Strict(`multipart/mixed`, parts)) shouldEqual expected
+      }
     }
 
     "multipartFormDataMarshaller should correctly marshal 'multipart/form-data' content with" - {
