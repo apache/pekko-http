@@ -114,7 +114,7 @@ trait WebSocketDirectives {
   def handleWebSocketMessagesForOptionalProtocol(
       handler: Flow[Message, Message, Any], subprotocol: Option[String]): Route =
     extractWebSocketUpgrade { upgrade =>
-      if (subprotocol.forall(sub => upgrade.requestedProtocols.exists(_.equalsIgnoreCase(sub))))
+      if (subprotocol.forall(sub => upgrade.requestedProtocols.contains(sub)))
         complete(upgrade.handleMessages(handler, subprotocol))
       else
         reject(UnsupportedWebSocketSubprotocolRejection(subprotocol.get)) // None.forall == true
@@ -135,7 +135,7 @@ trait WebSocketDirectives {
       subprotocol: Option[String],
       shouldCompress: Message => Boolean): Route =
     extractWebSocketUpgrade { upgrade =>
-      if (subprotocol.forall(sub => upgrade.requestedProtocols.exists(_.equalsIgnoreCase(sub))))
+      if (subprotocol.forall(sub => upgrade.requestedProtocols.contains(sub)))
         complete(upgrade.handleMessages(handler, subprotocol, shouldCompress))
       else
         reject(UnsupportedWebSocketSubprotocolRejection(subprotocol.get)) // None.forall == true
