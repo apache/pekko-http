@@ -904,12 +904,13 @@ final case class `Retry-After`(delaySecondsOrDateTime: RetryAfterParameter) exte
 private[http] object `Sec-WebSocket-Accept` extends ModeledCompanion[`Sec-WebSocket-Accept`] {
   // Defined at https://tools.ietf.org/html/rfc6455#section-4.2.2
   val MagicGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+  private val magicGuidBytes = MagicGuid.asciiBytes
 
   /** Generates the matching accept header for this key */
   def forKey(key: `Sec-WebSocket-Key`): `Sec-WebSocket-Accept` = {
     val sha1 = MessageDigest.getInstance("sha1")
-    val salted = key.key + MagicGuid
-    val hash = sha1.digest(salted.asciiBytes)
+    sha1.update(String.valueOf(key.key).asciiBytes)
+    val hash = sha1.digest(magicGuidBytes)
     val acceptKey = Base64.rfc2045().encodeToString(hash, false)
     `Sec-WebSocket-Accept`(acceptKey)
   }
