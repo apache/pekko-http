@@ -541,3 +541,66 @@ abstract class Http2PersistentClientSpec(tls: Boolean) extends PekkoSpecWithMate
       }
   }
 }
+
+class Http2PersistentInterimSpec extends PekkoSpecWithMaterializer with ScalaFutures {
+  import pekko.http.impl.engine.http2.client.PersistentConnection
+  import pekko.http.scaladsl.model.headers.RawHeader
+
+  case class RequestId(id: Int) extends RequestResponseAssociation
+  val requestId = AttributeKey[RequestId]("interim-request-id")
+  implicit val executionContext: scala.concurrent.ExecutionContext = system.dispatcher
+
+  "A managed HTTP/2 connection" should {
+    "retain request associations across ordinary interim statuses" in StreamTestKit.assertAllStagesStopped {
+      class Network extends Http2FrameHpackSupport {
+        val fromNet = TestPublisher.probe[ByteString]()
+        val frameProbeDelegate = Http2FrameProbe()
+        def sendBytes(bytes: ByteString): Unit = fromNet.sendNext(bytes)
+      }
+      val settings = ClientConnectionSettings(system)
+      val address = new InetSocketAddress("localhost", 12345)
+      val connections = TestProbe()
+      val connectionFlow = Flow.fromMaterializer { (_, _) =>
+        val network = new Network
+        connections.ref ! network
+        val transport = Flow.fromSinkAndSource(network.sink, Source.fromPublisher(network.fromNet))
+        Http2Blueprint.clientStack(settings, system.log, NoOpTelemetry).join(transport)
+          .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(address, address)))
+      }.mapMaterializedValue(_.flatten)
+      val input = TestPublisher.probe[HttpRequest]()
+      val output = TestSubscriber.probe[HttpResponse]()
+      Source.fromPublisher(input)
+        .via(PersistentConnection.managedConnection(connectionFlow, settings.http2Settings))
+        .runWith(Sink.fromSubscriber(output))
+      output.request(3)
+      input.sendNext(HttpRequest(uri = "https://example.com/one").addAttribute(requestId, RequestId(1)))
+      val network = connections.expectMsgType[Network]
+      try {
+        network.expectBytes(Http2Protocol.ClientConnectionPreface)
+        network.expectSETTINGS()
+        network.expectDecodedResponseHEADERSPairs(1)
+        network.sendFrame(FrameEvent.SettingsFrame(Nil))
+        network.expectSettingsAck()
+        input.sendNext(HttpRequest(uri = "https://example.com/two").addAttribute(requestId, RequestId(2)))
+        network.expectDecodedResponseHEADERSPairs(3)
+        network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "103")))
+        network.sendHEADERS(3, endStream = false, Seq(RawHeader(":status", "102")))
+        network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "103")))
+        network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "201")))
+        network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+        val second = output.expectNext()
+        second.status shouldBe StatusCodes.Created
+        second.attribute(requestId) shouldBe Some(RequestId(2))
+        val first = output.expectNext()
+        first.status shouldBe StatusCodes.OK
+        first.attribute(requestId) shouldBe Some(RequestId(1))
+        input.sendComplete()
+        output.expectComplete()
+      } finally {
+        output.cancel()
+        network.fromNet.sendComplete()
+        network.frameProbeDelegate.plainDataProbe.cancel()
+      }
+    }
+  }
+}

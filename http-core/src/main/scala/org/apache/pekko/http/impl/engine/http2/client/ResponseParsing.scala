@@ -22,6 +22,7 @@ import scala.collection.immutable.VectorBuilder
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.Http2Compliance.Http2ProtocolException
+import pekko.http.impl.engine.http2.Http2ResponseStatus
 import pekko.http.impl.engine.http2.RequestParsing._
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.server.HttpAttributes
@@ -60,6 +61,11 @@ private[http2] object ResponseParsing {
       if (remainingHeaders.isEmpty) {
         // https://httpwg.org/specs/rfc7540.html#rfc.section.8.1.2.4: these pseudo header fields are mandatory for a response
         checkRequiredPseudoHeader(":status", status)
+
+        if (status == StatusCodes.SwitchingProtocols)
+          malformedResponse("HTTP/2 does not support the 101 status code")
+        if (Http2ResponseStatus.isInformational(status.intValue) && subStream.initialHeaders.endStream)
+          malformedResponse("Informational responses must not end the stream")
 
         val entity = subStream.createEntity(contentLength, contentType)
 
