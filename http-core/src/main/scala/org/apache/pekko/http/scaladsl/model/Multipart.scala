@@ -257,6 +257,7 @@ object Multipart {
 
     /**
      * Strict [[General]] multipart content.
+     * Each part in the sequence is rendered separately, even when the same part instance occurs more than once.
      */
     case class Strict(mediaType: MediaType.Multipart, strictParts: Seq[Multipart.General.BodyPart.Strict])
         extends Multipart.General with Multipart.Strict with jm.Multipart.General.Strict {
