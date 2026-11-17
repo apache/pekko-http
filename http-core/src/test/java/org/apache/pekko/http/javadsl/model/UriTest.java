@@ -82,6 +82,12 @@ public class UriTest {
     assertEquals(Optional.of("foo=bar"), uri.rawQueryString());
   }
 
+  @Test
+  public void testQueryPreservesCharacterAfterUnpairedSurrogate() {
+    Uri uri = Uri.create("/").query(Query.create(Pair.create("value", "\uD800A")));
+    assertEquals(Optional.of("value=%3FA"), uri.rawQueryString());
+  }
+
   // #illegal-scheme
   @Test
   public void testIllegalScheme() {
