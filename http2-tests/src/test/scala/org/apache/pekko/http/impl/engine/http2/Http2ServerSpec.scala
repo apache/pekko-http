@@ -2045,6 +2045,47 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectComplete()
           terminated.futureValue
         })
+      for (withTrailer <- Seq(false, true)) {
+        s"drain a flow-control-blocked response before completing local graceful shutdown (trailer=$withTrailer)".inAssertAllStagesStopped(
+          new TestSetup(Setting(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, 8)) with RequestResponseProbes {
+            // The probe tracks stream windows from the default initial window size, so tell it about the 8-byte window
+            // as well, which lets it detect the server sending past its stream credit.
+            network.updateFromServerWindows(1, _ => 8)
+            network.sendRequest(1, HttpRequest())
+            user.expectRequest()
+            network.sendRequest(3, HttpRequest())
+            user.expectRequest()
+
+            val body = ByteString("abcdefghijklmnop")
+            val response = HttpResponse(entity = HttpEntity(ContentTypes.`application/octet-stream`, body))
+            user.emitResponse(1,
+              if (withTrailer)
+                response.addAttribute(AttributeKeys.trailer, Trailer(RawHeader("x-result", "complete")))
+              else response)
+            network.expectDecodedHEADERS(1, endStream = false)
+
+            val first = network.expectDATA(1, endStream = false, numBytes = 8)
+            first shouldBe body.take(8)
+
+            val terminated = serverTerminator.terminate(1.minute)
+            network.expectGOAWAY(3)
+            // Another accepted stream can finish while the first waits for more stream-level credit.
+            user.emitResponse(3, HttpResponse())
+            network.expectDecodedHEADERS(3, endStream = true)
+            // Smoke check only: the positive DATA/trailer and completion assertions below establish the result.
+            network.expectNoBytes(100.millis)
+            terminated.isCompleted shouldBe false
+
+            network.sendWINDOW_UPDATE(1, 8)
+            val rest = network.expectDATA(1, endStream = !withTrailer, numBytes = 8)
+            first ++ rest shouldBe body
+            if (withTrailer)
+              network.expectDecodedResponseHEADERSPairs(1, endStream = true) shouldEqual
+              Seq("x-result" -> "complete")
+            network.expectComplete()
+            terminated.futureValue
+          })
+      }
       "refuse late incoming requests".inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
         network.sendRequest(1, HttpRequest())
         user.expectRequest()

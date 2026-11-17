@@ -47,6 +47,10 @@ private[http2] trait Http2Multiplexer {
 
   def maxBytesToBufferPerSubstream: Int
 
+  /**
+   * True only when no frames remain buffered and no state transition is in progress.
+   * A stream can close synchronously while its final frame is still being handed downstream.
+   */
   def hasFlushedAllData: Boolean
 }
 
@@ -143,7 +147,13 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
 
       private var _state: MultiplexerState = Idle
 
-      def hasFlushedAllData: Boolean = allDataFlushed(_state)
+      // A transition can close the last stream before its final frame is pushed, e.g. when `sendDataFrame` pulls the
+      // last DATA frame of a stream. Don't report all data as flushed until the transition is done; `updateState` calls
+      // `onAllDataFlushed` afterwards if the new state has flushed everything.
+      // This depth only guards the flushed-data observation during synchronous callbacks. It does not
+      // make nested state transitions safe: the outer transition still owns the resulting state.
+      private var transitionDepth = 0
+      def hasFlushedAllData: Boolean = transitionDepth == 0 && allDataFlushed(_state)
       private def allDataFlushed(state: MultiplexerState): Boolean = (state eq WaitingForData) || (state eq Idle)
 
       private val controlFrameBuffer: mutable.Queue[FrameEvent] = new mutable.Queue[FrameEvent]
@@ -158,7 +168,10 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
 
       private def updateState(transition: MultiplexerState => MultiplexerState): Unit = {
         val oldState = _state
-        val newState = transition(_state)
+        transitionDepth += 1
+        val newState =
+          try transition(_state)
+          finally transitionDepth -= 1
         _state = newState
 
         if (isDebugEnabled && newState.name != oldState.name) recordStateChange(oldState.name, newState.name)

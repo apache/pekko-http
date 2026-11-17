@@ -1078,6 +1078,31 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         user.responseIn.expectComplete()
       })
 
+      "until an in-flight request body and trailer are sent after the response completes".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          val requestStreamProbe = TestPublisher.probe[ChunkStreamPart]()
+          val requestEntity = Chunked(ContentTypes.`application/octet-stream`, Source.fromPublisher(requestStreamProbe))
+          user.emitRequest(HttpRequest(method = HttpMethods.POST, uri = "https://www.example.com/",
+            entity = requestEntity))
+          network.expectDecodedResponseHEADERSPairs(1, endStream = false)
+
+          network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+          user.expectResponse().status shouldBe StatusCodes.OK
+          requestStreamProbe.sendNext(Chunk(ByteString("hello")))
+          network.expectDATA(1, endStream = false, ByteString("hello"))
+          user.requestOut.sendComplete()
+
+          requestStreamProbe.sendNext(Chunk(ByteString("world")))
+          requestStreamProbe.sendNext(LastChunk(trailer = Seq(RawHeader("x-result", "complete"))))
+          requestStreamProbe.sendComplete()
+          network.expectDATA(1, endStream = false, ByteString("world"))
+          network.expectDecodedResponseHEADERSPairs(1, endStream = true) shouldEqual
+          Seq("x-result" -> "complete")
+          user.responseIn.expectComplete()
+          network.toNet.expectComplete()
+          network.fromNet.expectCancellation()
+        })
+
       "until in-flight streaming requests are fully sent (after response is already complete) (uncommon)".inAssertAllStagesStopped(
         new TestSetup with NetProbes {
           val requestStreamProbe = TestPublisher.probe[ByteString]()
