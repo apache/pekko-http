@@ -47,8 +47,21 @@ private[http] object WebSocket {
   def stack(
       serverSide: Boolean,
       websocketSettings: WebSocketSettings,
+      log: LoggingAdapter): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] =
+    stack(serverSide, websocketSettings, None, websocketSettings.closeTimeout, log)
+
+  def stack(
+      serverSide: Boolean,
+      websocketSettings: WebSocketSettings,
+      perMessageDeflate: Option[PerMessageDeflate.Negotiated],
+      log: LoggingAdapter): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] =
+    stack(serverSide, websocketSettings, perMessageDeflate, websocketSettings.closeTimeout, log)
+
+  def stack(
+      serverSide: Boolean,
+      websocketSettings: WebSocketSettings,
       perMessageDeflate: Option[PerMessageDeflate.Negotiated] = None,
-      closeTimeout: FiniteDuration = 3.seconds, // TODO put close timeout into the settings?
+      closeTimeout: FiniteDuration,
       log: LoggingAdapter): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] =
     stack(serverSide, websocketSettings, perMessageDeflate, closeTimeout, log, _ => true)
 
@@ -58,7 +71,7 @@ private[http] object WebSocket {
       perMessageDeflate: Option[PerMessageDeflate.Negotiated],
       log: LoggingAdapter,
       shouldCompress: Message => Boolean): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] =
-    stack(serverSide, websocketSettings, perMessageDeflate, 3.seconds, log, shouldCompress)
+    stack(serverSide, websocketSettings, perMessageDeflate, websocketSettings.closeTimeout, log, shouldCompress)
 
   def stack(
       serverSide: Boolean,
@@ -73,7 +86,7 @@ private[http] object WebSocket {
       perMessageDeflate.map(_.messageBidiFlow).getOrElse(BidiFlow.identity)).atop(
       frameHandling(serverSide, closeTimeout, log)).atop(
       periodicKeepAlive(websocketSettings)).atop(
-      messageAPI(serverSide, closeTimeout, perMessageDeflate.map(_ => shouldCompress)))
+      messageAPI(serverSide, perMessageDeflate.map(_ => shouldCompress)))
 
   /** The lowest layer that implements the binary protocol */
   def framing: BidiFlow[ByteString, FrameEvent, FrameEvent, ByteString, NotUsed] =
@@ -233,14 +246,8 @@ private[http] object WebSocket {
   /**
    * The layer that provides the high-level user facing API on top of frame handling.
    */
-  def messageAPI(
-      serverSide: Boolean,
-      closeTimeout: FiniteDuration): BidiFlow[FrameHandler.Output, Message, Message, FrameOutHandler.Input, NotUsed] =
-    messageAPI(serverSide, closeTimeout, None)
-
   private def messageAPI(
       serverSide: Boolean,
-      closeTimeout: FiniteDuration,
       shouldCompress: Option[Message => Boolean])
       : BidiFlow[FrameHandler.Output, Message, Message, FrameOutHandler.Input, NotUsed] = {
     /* Collects user-level API messages from MessageDataParts */
@@ -285,7 +292,6 @@ private[http] object WebSocket {
       import GraphDSL.Implicits._
 
       val split = b.add(BypassRouter)
-      val tick = Source.tick(closeTimeout, closeTimeout, Tick)
       val merge = b.add(BypassMerge)
       val messagePreparation = b.add(prepareMessages)
       val messageRendering = b.add(renderMessages.via(LiftCompletions))
@@ -296,9 +302,6 @@ private[http] object WebSocket {
 
       // bypass
       split.out0 ~> merge.in0
-
-      // timeout support
-      tick ~> merge.in2
 
       BidiShape(
         split.in,
@@ -338,15 +341,14 @@ private[http] object WebSocket {
     }
   }
 
-  private case object BypassMerge extends GraphStage[FanInShape3[BypassEvent, AnyRef, Tick.type, AnyRef]] {
+  private case object BypassMerge extends GraphStage[FanInShape2[BypassEvent, AnyRef, AnyRef]] {
     private val bypassIn = Inlet[BypassEvent]("BypassMerge.bypassIn")
     private val messageIn = Inlet[AnyRef]("BypassMerge.messageIn")
-    private val tickIn = Inlet[Tick.type]("BypassMerge.tickIn")
     private val messageOut = Outlet[AnyRef]("BypassMerge.messageOut")
 
     override def initialAttributes = Attributes.name("BypassMerge")
 
-    val shape = new FanInShape3(bypassIn, messageIn, tickIn, messageOut)
+    val shape = new FanInShape2(bypassIn, messageIn, messageOut)
 
     def createLogic(effectiveAttributes: Attributes) = new GraphStageLogic(shape) {
 
@@ -358,14 +360,12 @@ private[http] object WebSocket {
       }
       setHandler(bypassIn, new PassAlong(bypassIn))
       setHandler(messageIn, new PassAlong(messageIn))
-      passAlong(tickIn, messageOut, doFinish = false, doFail = false)
 
       setHandler(messageOut, eagerTerminateOutput)
 
       override def preStart(): Unit = {
         pull(bypassIn)
         pull(messageIn)
-        pull(tickIn)
       }
     }
   }
@@ -388,5 +388,4 @@ private[http] object WebSocket {
     }
   }
 
-  case object Tick
 }
