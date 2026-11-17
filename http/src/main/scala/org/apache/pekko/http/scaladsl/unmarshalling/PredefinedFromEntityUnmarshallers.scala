@@ -53,8 +53,11 @@ trait PredefinedFromEntityUnmarshallers extends MultipartUnmarshallers {
     stringUnmarshaller.forContentTypes(ranges: _*).mapWithInput { (entity, string) =>
       if (entity.isKnownEmpty) FormData.Empty
       else {
-        try FormData(Uri.Query(string, Unmarshaller.bestUnmarshallingCharsetFor(entity).nioCharset))
-        catch {
+        try {
+          val query = Uri.Query(string, Unmarshaller.bestUnmarshallingCharsetFor(entity).nioCharset)
+          // EmptyValue distinguishes an empty component from an explicit empty-name field ("=").
+          FormData(query.filterNot { case (key, value) => key.isEmpty && (value eq Uri.Query.EmptyValue) })
+        } catch {
           case IllegalUriException(info) =>
             throw new IllegalArgumentException(info.formatPretty.replace("Query,", "form content,"))
         }

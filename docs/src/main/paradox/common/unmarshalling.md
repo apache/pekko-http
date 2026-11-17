@@ -59,6 +59,22 @@ Specifically these are:
 Additional unmarshallers are available in separate modules for specific content types, such as
 @ref[JSON](json-support.md)@scala[ and @ref[XML](xml-support.md)].
 
+## URL-encoded form data
+
+Since Pekko HTTP 2.1.0, the default `application/x-www-form-urlencoded` unmarshaller ignores empty components between `&` separators,
+including leading and trailing separators. For example, `&a=1&&` produces only the field `a=1`, rather than additional
+empty-name fields. This matches the empty-component handling in the
+[URL Standard form parser](https://url.spec.whatwg.org/#urlencoded-parsing).
+Explicit empty-name fields (`=` and `=x`) and nonempty names without `=` remain supported, and charset handling is unchanged.
+
+Applications relying on the additional empty-name fields should account for this behavior change. It also affects
+round-tripping a manually constructed `FormData` containing `"" -> Uri.Query.EmptyValue`: this tuple renders as an
+empty component and is discarded when unmarshalling. Use `"" -> ""` to represent an explicit empty-name, empty-value
+field, which renders as `=` and is preserved. Generic `Uri.Query` parsing and rendering are unchanged.
+Consequently, form-field directives discard these empty components in URL-encoded request bodies, while query-parameter
+directives still retain them in the URI query. For example, `&a=1&&` as a form body yields only `a=1`, but the same
+string as a URI query also contains empty-name parameters.
+
 @@@ div { .group-scala }
 
 ## Implicit Resolution
