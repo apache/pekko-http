@@ -354,15 +354,22 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
       }
     }
 
-    "complete a close-delimited empty 205 response at EOF" in new TestSetup {
+    "deliver an empty 205 without framing headers immediately on a persistent connection" in new TestSetup {
       sendStandardRequest()
       sendWireData("HTTP/1.1 205 Reset Content\n\n")
-      netInSub.sendComplete()
       val reset = expectResponse()
       reset.status shouldEqual StatusCodes.ResetContent
       reset.entity.isKnownEmpty shouldBe true
-      responses.expectComplete()
+
+      // A server that keeps the connection open must not stall the next response.
+      sendStandardRequest()
+      sendWireData("HTTP/1.1 200 OK\nContent-Length: 0\n\n")
+      expectResponse() shouldEqual HttpResponse()
+
+      requestsSub.sendComplete()
       netOut.expectComplete()
+      netInSub.sendComplete()
+      responses.expectComplete()
     }
 
     "handle several requests on one persistent connection".which {

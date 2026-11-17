@@ -82,17 +82,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         parser.onPull() shouldEqual MessageEnd
       }
 
-      "a close-delimited empty 205 response only at EOF" in new Test {
-        val parser = new HttpResponseParser(parserSettings, HttpHeaderParser(parserSettings, system.log))
-        parser.setContextForNextResponse(HttpResponseParser.ResponseContext(GET, None))
-        parser.parseBytes(ByteString(prep("HTTP/1.1 205 Reset Content\n\n"))) shouldEqual NeedMoreData
-        parser.onUpstreamFinish() shouldBe false
-        val start = parser.onPull().asInstanceOf[ResponseStart]
-        start.statusCode shouldEqual ResetContent
-        start.createEntity shouldEqual StrictEntityCreator(HttpEntity.Empty)
-        start.closeRequested shouldBe true
-        parser.onPull() shouldEqual MessageEnd
-        parser.onPull() shouldEqual StreamEnd
+      "an empty 205 response without framing headers immediately" in new Test {
+        "HTTP/1.1 205 Reset Content\n\n" should parseTo(GET, HttpResponse(ResetContent))
       }
 
       "a 205 response to HEAD without waiting for framing" in new Test {
