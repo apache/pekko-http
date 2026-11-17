@@ -20,11 +20,14 @@ import pekko.NotUsed
 import pekko.annotation.InternalApi
 import Protocol.Opcode
 import pekko.http.scaladsl.model.ws._
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.stream.scaladsl.{ Flow, Source }
+import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import pekko.util.ByteString
 
 /**
- * Renders messages to full frames.
+ * Renders messages to full frames. A successfully completed empty stream is rendered as an empty
+ * message of its original type; a failed stream is not completed with a final frame.
  *
  * INTERNAL API
  */
@@ -43,11 +46,8 @@ private[http] object MessageToFrameRenderer {
       // FIXME: fragment?
       Source.single(FrameEvent.fullFrame(opcode, None, data, fin = true, rsv1 = compress))
 
-    def streamedFrames[M](opcode: Opcode, data: Source[ByteString, M], compress: Boolean): Source[FrameStart, Any] =
-      data.statefulMap(() => true)((isFirst, data) => {
-          val frameOpcode = if (isFirst) opcode else Opcode.Continuation
-          (false, FrameEvent.fullFrame(frameOpcode, None, data, fin = false, rsv1 = isFirst && compress))
-        }, _ => None) ++ Source.single(FrameEvent.emptyLastContinuationFrame)
+    def streamedFrames[M](opcode: Opcode, data: Source[ByteString, M], compress: Boolean): Source[FrameStart, M] =
+      data.via(new StreamedFrames(opcode, compress))
 
     Flow[Message]
       .flatMapConcat { message =>
@@ -60,4 +60,35 @@ private[http] object MessageToFrameRenderer {
         }
       }
   }
+  // statefulMap can emit its completion value on failure. Only finish a frame on successful upstream completion.
+  private final class StreamedFrames(opcode: Opcode, compress: Boolean)
+      extends GraphStage[FlowShape[ByteString, FrameStart]] {
+    private val in = Inlet[ByteString]("StreamedFrames.in")
+    private val out = Outlet[FrameStart]("StreamedFrames.out")
+    override val shape: FlowShape[ByteString, FrameStart] = FlowShape(in, out)
+
+    override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+      new GraphStageLogic(shape) with InHandler with OutHandler {
+        private var first = true
+        setHandlers(in, out, this)
+
+        override def onPull(): Unit = pull(in)
+
+        override def onPush(): Unit = {
+          val data = grab(in)
+          val frameOpcode = if (first) opcode else Opcode.Continuation
+          val frame = FrameEvent.fullFrame(frameOpcode, None, data, fin = false, rsv1 = first && compress)
+          first = false
+          push(out, frame)
+        }
+
+        override def onUpstreamFinish(): Unit = {
+          val frame =
+            if (first) FrameEvent.fullFrame(opcode, None, ByteString.empty, fin = true, rsv1 = compress)
+            else FrameEvent.emptyLastContinuationFrame
+          emit(out, frame, () => completeStage())
+        }
+      }
+  }
+
 }

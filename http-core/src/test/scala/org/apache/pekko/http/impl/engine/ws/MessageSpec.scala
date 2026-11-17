@@ -27,11 +27,12 @@ import pekko.http.scaladsl.settings.WebSocketSettings
 import pekko.stream.OverflowStrategy
 import pekko.stream.scaladsl._
 import pekko.stream.testkit._
+import pekko.stream.testkit.scaladsl.TestSink
 import pekko.testkit._
 import pekko.util.ByteString
 import org.scalatest.concurrent.Eventually
 
-import scala.concurrent.Await
+import scala.concurrent.{ Await, Promise }
 import scala.concurrent.duration._
 import scala.util.{ Failure, Random }
 
@@ -326,6 +327,47 @@ class MessageSpec extends PekkoSpecWithMaterializer(
       }
     }
     "render frames from messages" should {
+      "render empty streamed messages with their original message type" in new ServerTestSetup {
+        pushMessage(BinaryMessage(Source.empty[ByteString]))
+        expectFrameOnNetwork(Opcode.Binary, ByteString.empty, fin = true)
+        pushMessage(TextMessage(Source.empty[String]))
+        expectFrameOnNetwork(Opcode.Text, ByteString.empty, fin = true)
+        pushMessage(TextMessage(Source.single("")))
+        expectFrameOnNetwork(Opcode.Text, ByteString.empty, fin = true)
+        pushMessage(TextMessage("next"))
+        expectFrameOnNetwork(Opcode.Text, ByteString("next"), fin = true)
+      }
+      "mask an empty streamed message on the client side" in new ClientTestSetup {
+        pushMessage(BinaryMessage(Source.empty[ByteString]))
+        expectMaskedFrameOnNetwork(Opcode.Binary, ByteString.empty, fin = true)
+      }
+      "retain a single zero-byte binary chunk" in new ServerTestSetup {
+        pushMessage(BinaryMessage(Source.single(ByteString.empty)))
+        expectFrameOnNetwork(Opcode.Binary, ByteString.empty, fin = false)
+        expectFrameOnNetwork(Opcode.Continuation, ByteString.empty, fin = true)
+      }
+      "not send a final frame when a streamed message fails" in {
+        val error = new IllegalStateException("application message failed")
+        Source.single(BinaryMessage(Source.failed[ByteString](error)))
+          .via(MessageToFrameRenderer.create(serverSide = true))
+          .runWith(TestSink[FrameStart]())
+          .request(1)
+          .expectError() shouldBe error
+      }
+      "not send a final continuation when a streamed message fails after its first frame" in {
+        val tail = Promise[ByteString]()
+        val error = new IllegalStateException("application message failed")
+        val payload = ByteString("first")
+        val chunks = Source.single(payload).concat(Source.future(tail.future))
+        val out = Source.single(BinaryMessage(chunks))
+          .via(MessageToFrameRenderer.create(serverSide = true))
+          .runWith(TestSink[FrameStart]())
+        try {
+          out.request(2).expectNext(FrameEvent.fullFrame(Opcode.Binary, None, payload, fin = false))
+          tail.failure(error)
+          out.expectError() shouldBe error
+        } finally tail.tryFailure(error)
+      }
       "for binary messages" should {
         "for a short strict message" in new ServerTestSetup {
           val data = ByteString("abcdef", "ASCII")
