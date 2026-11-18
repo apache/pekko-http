@@ -28,7 +28,7 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.rendering.BodyPartRenderer
-import pekko.http.impl.util.DefaultNoLogging
+import pekko.http.impl.util.{ DefaultNoLogging, MultipartFilenameDecoding }
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.headers._
@@ -527,6 +527,17 @@ object Multipart {
        * The value of the `filename` Content-Disposition parameter, if available.
        */
       def filename: Option[String] = additionalDispositionParams.get("filename")
+
+      /**
+       * The value of the `filename` Content-Disposition parameter, if available, percent-decoded as UTF-8.
+       *
+       * RFC 7578 allows senders to percent-encode non-ASCII filenames, e.g. `filename="caf%C3%A9.txt"`.
+       * Use this accessor only when clients are known to do so: a literal `%` is also valid in a filename.
+       * If the value is not valid percent-encoded UTF-8 (e.g. `100%.txt`), it is returned unchanged.
+       *
+       * The result is untrusted client input. Sanitize it before using it as a file system path.
+       */
+      def percentDecodedFilename: Option[String] = filename.map(MultipartFilenameDecoding.decode)
 
       def toStrict(timeout: FiniteDuration)(implicit fm: Materializer): Future[Multipart.FormData.BodyPart.Strict] = {
         import fm.executionContext

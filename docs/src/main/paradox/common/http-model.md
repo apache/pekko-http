@@ -299,6 +299,16 @@ Also, when a HEAD response has an @scala[*HttpEntity.CloseDelimited*]@java[*Http
 connection after the response has been sent. This allows the sending of HEAD responses without *Content-Length*
 header across persistent HTTP connections.
 
+### Multipart form-data filenames
+
+The @scala[`filename`]@java[`getFilename`] accessor of a form-data body part returns the `filename` parameter as received.
+[RFC 7578](https://www.rfc-editor.org/rfc/rfc7578#section-4.2) allows senders to percent-encode non-ASCII filenames,
+e.g. `filename="caf%C3%A9.txt"`. If your clients do this, use @scala[`percentDecodedFilename`]@java[`getPercentDecodedFilename`]
+to read the filename percent-decoded as UTF-8. Values that are not valid percent-encoded UTF-8 (e.g. `100%.txt`) are
+returned unchanged. Decoding is opt-in because a literal `%` is also valid in a filename.
+
+The filename is untrusted client input. Sanitize it before using it as a file system path.
+
 <a id="header-model"></a>
 ## Header Model
 

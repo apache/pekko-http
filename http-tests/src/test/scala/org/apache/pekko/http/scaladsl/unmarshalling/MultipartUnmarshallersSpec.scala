@@ -495,6 +495,23 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
         }
       }
 
+      "with a percent-encoded filename, exposed raw and decoded on request" in {
+        val parts = Unmarshal(HttpEntity(
+          `multipart/form-data`.withBoundary("XYZABC"),
+          ByteString("""--XYZABC
+                       |Content-Disposition: form-data; name="file"; filename="caf%C3%A9 100%25.txt"
+                       |Content-Type: application/octet-stream
+                       |
+                       |data
+                       |--XYZABC--""".stripMarginWithNewline(lineFeed))))
+          .to[Multipart.FormData]
+          .flatMap(_.toStrict(1.second.dilated))
+          .awaitResult(5.second.dilated)
+          .strictParts
+        parts should have size 1
+        parts.head.filename shouldEqual Some("caf%C3%A9 100%25.txt")
+        parts.head.percentDecodedFilename shouldEqual Some("café 100%.txt")
+      }
       "with one element and no explicit content-type" in {
         Unmarshal(HttpEntity(
           `multipart/form-data`.withBoundary("XYZABC"),
