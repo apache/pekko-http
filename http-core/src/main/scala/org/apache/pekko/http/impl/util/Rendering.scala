@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.impl.util
 
-import java.nio.CharBuffer
-import java.nio.charset.Charset
 import java.text.{ DecimalFormat, DecimalFormatSymbols }
 import java.util.Locale
 
@@ -428,79 +426,6 @@ private[http] class ByteStringRendering(sizeHint: Int, logDiscardedHeader: Strin
         if (Rendering.isIllegalHeaderChar(ch)) {
           logDiscardedHeader(
             "Invalid outgoing header was discarded. " + LogByteStringTools.printByteString(contents.drop(origMark)))
-          builder.clear()
-          builder.append(contents.take(origMark))
-          false
-        } else rec(mark + 1)
-      } else true
-
-    rec(mark)
-  }
-}
-
-/**
- * INTERNAL API
- */
-@InternalApi
-private[http] class CustomCharsetByteStringRendering(nioCharset: Charset, sizeHint: Int) extends Rendering {
-  private val charBuffer = CharBuffer.allocate(64)
-  private val builder = new ByteStringBuilder
-  builder.sizeHint(sizeHint)
-
-  def get: ByteString = {
-    flushCharBuffer()
-    builder.result()
-  }
-
-  def ~~(char: Char): this.type = {
-    if (!charBuffer.hasRemaining) flushCharBuffer()
-    charBuffer.put(char)
-    this
-  }
-
-  def ~~(bytes: Array[Byte]): this.type = {
-    if (bytes.length > 0) {
-      flushCharBuffer()
-      builder.putByteArrayUnsafe(bytes)
-    }
-    this
-  }
-
-  def ~~(bytes: ByteString): this.type = {
-    if (bytes.length > 0) {
-      flushCharBuffer()
-      builder ++= bytes
-    }
-    this
-  }
-
-  private def flushCharBuffer(): Unit = {
-    charBuffer.flip()
-    if (charBuffer.hasRemaining) {
-      val byteBuffer = nioCharset.encode(charBuffer)
-      // TODO: optimize by adding another `putByteArrayUnsafe` overload taking an byte array slice
-      // and thus enabling `builder.putByteArrayUnsafe(byteBuffer.array(), 0, byteBuffer.remaining())`
-      val bytes = new Array[Byte](byteBuffer.remaining())
-      byteBuffer.get(bytes)
-      builder.putByteArrayUnsafe(bytes)
-    }
-    charBuffer.clear()
-  }
-
-  override protected def mark: Int = {
-    flushCharBuffer()
-    builder.length
-  }
-  override protected def check(mark: Int): Boolean = {
-    flushCharBuffer()
-
-    val origMark = mark
-    val contents = builder.result()
-
-    @tailrec def rec(mark: Int): Boolean =
-      if (mark < builder.length) {
-        val ch = contents(mark)
-        if (Rendering.isIllegalHeaderChar(ch)) {
           builder.clear()
           builder.append(contents.take(origMark))
           false
