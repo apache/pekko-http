@@ -119,6 +119,30 @@ class MultipartSpec extends PekkoSpecWithMaterializer {
       }
     }
 
+    "percent-decode the filename only on request" in {
+      for ((raw, decoded) <- Seq(
+          "caf%C3%A9.txt" -> "café.txt",
+          "a%20b%22c%25.txt" -> "a b\"c%.txt",
+          "%E2%82%AC%20%F0%9F%98%80" -> "€ 😀",
+          "plain.txt" -> "plain.txt",
+          "café%20x.txt" -> "café x.txt",
+          // not valid percent-encoded UTF-8: returned unchanged
+          "100%.txt" -> "100%.txt",
+          "100%2" -> "100%2",
+          "%zz.txt" -> "%zz.txt",
+          "caf%E9.txt" -> "caf%E9.txt",
+          "%C3" -> "%C3",
+          "%C3x%A9" -> "%C3x%A9")) {
+        val part = Multipart.FormData.BodyPart.Strict("upload", HttpEntity("body"), Map("filename" -> raw))
+        part.filename shouldEqual Some(raw)
+        part.percentDecodedFilename shouldEqual Some(decoded)
+        part.getPercentDecodedFilename shouldEqual java.util.Optional.of(decoded)
+      }
+      val noFilename = Multipart.FormData.BodyPart.Strict("field", HttpEntity("body"))
+      noFilename.percentDecodedFilename shouldEqual None
+      noFilename.getPercentDecodedFilename shouldEqual java.util.Optional.empty[String]()
+    }
+
     "support `toStrict` on the streamed model" in {
       val streamed = Multipart.FormData(Source(
         Multipart.FormData.BodyPart("foo", defaultEntity("FOO")) ::

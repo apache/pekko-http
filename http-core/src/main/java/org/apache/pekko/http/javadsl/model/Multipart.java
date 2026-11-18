@@ -157,6 +157,21 @@ public interface Multipart {
 
       Optional<String> getFilename();
 
+      /**
+       * The value of the {@code filename} Content-Disposition parameter, if available,
+       * percent-decoded as UTF-8.
+       *
+       * <p>RFC 7578 allows senders to percent-encode non-ASCII filenames, e.g. {@code
+       * filename="caf%C3%A9.txt"}. Use this accessor only when clients are known to do so: a
+       * literal {@code %} is also valid in a filename. If the value is not valid percent-encoded
+       * UTF-8 (e.g. {@code 100%.txt}), it is returned unchanged.
+       *
+       * <p>The result is untrusted client input. Sanitize it before using it as a file system path.
+       */
+      default Optional<String> getPercentDecodedFilename() {
+        return getFilename().map(org.apache.pekko.http.impl.util.MultipartFilenameDecoding::decode);
+      }
+
       CompletionStage<Multipart.FormData.BodyPart.Strict> toStrict(
           long timeoutMillis, Materializer materializer);
 
