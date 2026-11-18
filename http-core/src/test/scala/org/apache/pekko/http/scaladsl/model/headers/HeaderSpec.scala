@@ -58,6 +58,10 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
       "successful parse run" in {
         MediaType.parse("application/gnutar") shouldEqual Right(MediaTypes.`application/gnutar`)
       }
+      "ignore empty parameter slots while preserving multipart parameters" in {
+        MediaType.parse("multipart/form-data;;boundary=x;") shouldEqual Right(
+          MediaTypes.`multipart/form-data`.withBoundary("x"))
+      }
       "failing parse run" in {
         val Left(List(ErrorInfo(summary, detail))) = MediaType.parse("application//gnutar")
         summary shouldEqual
@@ -75,6 +79,28 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
         ContentType.parse("text/plain; charset=UTF8") shouldEqual Right(
           MediaTypes.`text/plain`.withCharset(HttpCharsets.`UTF-8`))
       }
+      "ignore empty parameter slots" in {
+        ContentType.parse("text/plain;;charset=UTF-8") shouldEqual Right(
+          MediaTypes.`text/plain`.withCharset(HttpCharsets.`UTF-8`))
+        ContentType.parse("multipart/form-data;;boundary=x") shouldEqual Right(
+          MediaTypes.`multipart/form-data`.withBoundary("x").toContentType)
+        ContentType.parse("text/plain ; ") shouldEqual ContentType.parse("text/plain")
+        ContentType.parse("text/plain; ; charset=UTF8; ; ") shouldEqual Right(
+          MediaTypes.`text/plain`.withCharset(HttpCharsets.`UTF-8`))
+        ContentType.parse("""text/plain; ; example="a;b"; charset=UTF8;""") shouldEqual
+        ContentType.parse("""text/plain; example="a;b"; charset=UTF8""")
+      }
+      "render without empty parameter slots" in {
+        ContentType.parse("application/json;").map(_.toString) shouldEqual Right("application/json")
+      }
+      "reject a nonempty parameter without a value" in {
+        val Left(List(ErrorInfo(summary, detail))) = ContentType.parse("text/plain; ; invalid;")
+        summary shouldEqual
+        "Illegal HTTP header 'Content-Type': Invalid input ';', expected tchar, OWS or ws (line 1, column 22)"
+        detail shouldEqual
+        """text/plain; ; invalid;
+            |                     ^""".stripMarginWithNewline("\n")
+      }
       "failing parse run" in {
         val Left(List(ErrorInfo(summary, detail))) = ContentType.parse("text/plain, charset=UTF8")
         summary shouldEqual
@@ -83,6 +109,37 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
         """text/plain, charset=UTF8
             |          ^""".stripMarginWithNewline("\n")
       }
+    }
+  }
+
+  "Accept should" - {
+    "ignore empty slots before parameters and after media ranges" in {
+      val expected = Right(Accept(MediaTypes.`text/plain`))
+      Seq("text/plain", "text/plain;", "text/plain;;", "text/plain ; ; ").foreach { value =>
+        Accept.parseFromValueString(value) shouldEqual expected
+      }
+    }
+    "preserve media parameters and weights while ignoring empty slots" in {
+      val Right(parsed) = Accept.parseFromValueString("""text/plain;;example="a;b"; ;q=0.5; ;""")
+      parsed shouldEqual Accept(MediaRange(MediaTypes.`text/plain`.withParams(Map("example" -> "a;b")), 0.5f))
+      parsed.mediaRanges.head.params shouldEqual Map("example" -> "a;b")
+      parsed.mediaRanges.head.qValue shouldEqual 0.5f
+    }
+    "preserve wildcard parameters, weights and range order" in {
+      val Right(parsed) = Accept.parseFromValueString(
+        "text/*;;level=1;;q=0.5;, application/json;, */*;;q=0;")
+      parsed shouldEqual Accept(
+        MediaRanges.`text/*`.withParams(Map("level" -> "1", "q" -> "0.5")),
+        MediaRange(MediaTypes.`application/json`),
+        MediaRanges.`*/*`.withQValue(0f))
+      parsed.mediaRanges.map(_.qValue) shouldEqual Seq(0.5f, 1f, 0f)
+      parsed.mediaRanges.map(_.params) shouldEqual Seq(Map("level" -> "1"), Map.empty, Map.empty)
+    }
+    "render the same value as the equivalent header without empty slots" in {
+      val Right(parsed) = Accept.parseFromValueString("text/plain;;q=0.5;, application/json;")
+      val Right(canonical) = Accept.parseFromValueString("text/plain;q=0.5, application/json")
+      parsed shouldEqual canonical
+      parsed.value shouldEqual canonical.value
     }
   }
 

@@ -23,9 +23,10 @@ import pekko.http.scaladsl.model._
 
 private[parser] trait ContentTypeHeader { this: Parser with CommonRules with CommonActions =>
 
-  // http://tools.ietf.org/html/rfc7231#section-3.1.1.5
+  // RFC 9110 sections 5.6.6 and 8.3.1: parameter slots may be empty.
   def `content-type` = rule {
-    `media-type` ~ EOI ~> ((main, sub, params) => headers.`Content-Type`(contentType(main, sub, params)))
+    `type` ~ '/' ~ subtype ~ zeroOrMore(oneOrMore(ws(';')) ~ parameter) ~ zeroOrMore(ws(';')) ~ EOI ~>
+    ((main, sub, params) => headers.`Content-Type`(contentType(main, sub, params)))
   }
 
   @tailrec private def contentType(
