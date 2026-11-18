@@ -70,6 +70,16 @@ public final class HttpEntities {
         (org.apache.pekko.http.scaladsl.model.ContentType) contentType, file, chunkSize);
   }
 
+  /**
+   * Creates an entity with a known positive content length.
+   *
+   * <p>This overload currently returns {@link HttpEntity.Default}, which cannot represent an empty
+   * entity, so a zero length is not supported. For an empty entity with this content type, use
+   * {@link #create(ContentType, byte[])} with an empty byte array or {@link #create(ContentType,
+   * ByteString)} with an empty ByteString instead.
+   *
+   * @throws IllegalArgumentException if {@code contentLength} is not positive
+   */
   public static HttpEntity.Default create(
       ContentType contentType, long contentLength, Source<ByteString, ?> data) {
     return new org.apache.pekko.http.scaladsl.model.HttpEntity.Default(
