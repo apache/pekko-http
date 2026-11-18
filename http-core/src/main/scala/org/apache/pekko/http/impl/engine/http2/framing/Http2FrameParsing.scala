@@ -166,7 +166,8 @@ private[http] object Http2FrameParsing {
 @InternalApi
 private[http2] class Http2FrameParsing(
     shouldReadPreface: Boolean, log: LoggingAdapter,
-    maxFrameSize: Int = Http2Protocol.InitialMaxFrameSize) extends ByteStringParser[FrameEvent] {
+    maxFrameSize: Int = Http2Protocol.InitialMaxFrameSize,
+    requireInitialSettings: Boolean = false) extends ByteStringParser[FrameEvent] {
   import ByteStringParser._
   import Http2FrameParsing._
 
@@ -174,6 +175,8 @@ private[http2] class Http2FrameParsing(
 
   def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
     new ParsingLogic {
+      private var expectInitialSettings = requireInitialSettings
+
       startWith {
         if (shouldReadPreface) ReadPreface
         else ReadFrame
@@ -203,6 +206,8 @@ private[http2] class Http2FrameParsing(
           // Without masking it a peer that sets it yields a negative stream id, which never matches the stream the
           // frame is really for and fails the connection instead.
           val streamId = reader.readIntBE() & 0x7FFFFFFF
+          if (expectInitialSettings && (tpe != FrameType.SETTINGS.id || Flags.ACK.isSet(flags)))
+            throw new Http2Compliance.InvalidConnectionPreface
           val payload = reader.take(length)
           val maybeframe = FrameType.byId(tpe) match {
             case OptionVal.Some(ft) =>
@@ -211,6 +216,8 @@ private[http2] class Http2FrameParsing(
               log.debug("Ignoring unknown frame type {}", tpe)
               None
           }
+          // Clear only after the entire frame was parsed: incomplete payloads retry this step.
+          expectInitialSettings = false
           ParseResult(maybeframe, ReadFrame, acceptUpstreamFinish = true)
         }
       }
