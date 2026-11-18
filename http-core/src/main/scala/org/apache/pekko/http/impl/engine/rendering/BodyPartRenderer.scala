@@ -36,10 +36,22 @@ import pekko.util.ByteString
 @InternalApi
 private[http] object BodyPartRenderer {
 
+  type FilenameEncoding = pekko.http.javadsl.model.Multipart.FormData.FilenameEncoding
+  val ExtendedFilename = pekko.http.javadsl.model.Multipart.FormData.FilenameEncoding.Extended
+  val AsciiFilename = pekko.http.javadsl.model.Multipart.FormData.FilenameEncoding.Ascii
+  val PercentEncodedFilename = pekko.http.javadsl.model.Multipart.FormData.FilenameEncoding.PercentEncoded
+
   def streamed(
       boundary: String,
       partHeadersSizeHint: Int,
-      _log: LoggingAdapter): GraphStage[FlowShape[Multipart.BodyPart, Source[ChunkStreamPart, Any]]] =
+      log: LoggingAdapter): GraphStage[FlowShape[Multipart.BodyPart, Source[ChunkStreamPart, Any]]] =
+    streamed(boundary, partHeadersSizeHint, log, ExtendedFilename)
+
+  def streamed(
+      boundary: String,
+      partHeadersSizeHint: Int,
+      _log: LoggingAdapter,
+      filenameEncoding: FilenameEncoding): GraphStage[FlowShape[Multipart.BodyPart, Source[ChunkStreamPart, Any]]] =
     new GraphStage[FlowShape[Multipart.BodyPart, Source[ChunkStreamPart, Any]]] {
       var firstBoundaryRendered = false
 
@@ -72,7 +84,7 @@ private[http] object BodyPartRenderer {
 
             val bodyPart = grab(in)
             renderEntityContentType(r, bodyPart.entity)
-            renderHeaders(r, bodyPart.headers, log)
+            renderHeaders(r, partHeaders(bodyPart, filenameEncoding), log)
 
             push(out, completePartRendering(bodyPart.entity))
           }
@@ -102,7 +114,11 @@ private[http] object BodyPartRenderer {
     }
 
   def strict(parts: Seq[Multipart.BodyPart.Strict], boundary: String,
-      partHeadersSizeHint: Int, log: LoggingAdapter): ByteString = {
+      partHeadersSizeHint: Int, log: LoggingAdapter): ByteString =
+    strict(parts, boundary, partHeadersSizeHint, log, ExtendedFilename)
+
+  def strict(parts: Seq[Multipart.BodyPart.Strict], boundary: String,
+      partHeadersSizeHint: Int, log: LoggingAdapter, filenameEncoding: FilenameEncoding): ByteString = {
     val r = new ByteStringRendering(partHeadersSizeHint)
     if (parts.nonEmpty) {
       var first = true
@@ -110,13 +126,38 @@ private[http] object BodyPartRenderer {
         renderBoundary(r, boundary, suppressInitialCrLf = first)
         first = false
         renderEntityContentType(r, part.entity)
-        renderHeaders(r, part.headers, log)
+        renderHeaders(r, partHeaders(part, filenameEncoding), log)
         r ~~ part.entity.data
       }
     }
     renderFinalBoundary(r, boundary)
     r.get
   }
+
+  private def partHeaders(part: Multipart.BodyPart, encoding: FilenameEncoding): Seq[HttpHeader] =
+    if (encoding == ExtendedFilename || !part.isInstanceOf[Multipart.FormData.BodyPart]) part.headers
+    else part.headers.map {
+      case header: `Content-Disposition`
+          if header.dispositionType == ContentDispositionTypes.`form-data` && header.params.contains("filename") =>
+        val params = header.params - "filename*"
+        val renderedParams = params.get("filename").fold(params) { filename =>
+          val r = new StringRendering
+          if (encoding == AsciiFilename)
+            r.putReplaced(filename, keep = Rendering.contentDispositionFilenameSafeChars, placeholder = '?')
+          else
+            UriRendering.encode(r, filename, java.nio.charset.StandardCharsets.UTF_8,
+              keep = Rendering.contentDispositionFilenameSafeChars, replaceSpaces = false)
+          params.updated("filename", r.get)
+        }
+        // The shared header renderer treats percent signs as requiring filename*.
+        // Keep form-data encoding local to multipart serialization.
+        renderedParams.get("filename").fold[HttpHeader](header.copy(params = renderedParams)) { filename =>
+          val disposition = header.copy(params = Map.empty).value
+          val otherParams = header.copy(params = renderedParams - "filename").value.drop(disposition.length)
+          RawHeader("Content-Disposition", disposition + "; filename=\"" + filename + "\"" + otherParams)
+        }
+      case header => header
+    }
 
   private def renderBoundary(r: Rendering, boundary: String, suppressInitialCrLf: Boolean): Unit = {
     if (!suppressInitialCrLf) r ~~ CrLf

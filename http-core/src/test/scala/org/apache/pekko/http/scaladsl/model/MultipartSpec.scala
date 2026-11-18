@@ -14,7 +14,8 @@
 package org.apache.pekko.http.scaladsl.model
 
 import org.apache.pekko
-import pekko.http.impl.util.PekkoSpecWithMaterializer
+import pekko.http.impl.engine.rendering.BodyPartRenderer
+import pekko.http.impl.util.{ DefaultNoLogging, PekkoSpecWithMaterializer }
 import pekko.http.scaladsl.model.headers._
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.testkit._
@@ -50,6 +51,74 @@ class MultipartSpec extends PekkoSpecWithMaterializer {
   }
 
   "Multipart.FormData" should {
+    "render explicit filename strategies identically for strict and streamed parts" in {
+      import BodyPartRenderer._
+      for {
+        filename <- Seq("café.txt", "plain.txt", "100%.txt")
+        strategy <- if (filename == "100%.txt") Seq(PercentEncodedFilename)
+        else Seq(ExtendedFilename, AsciiFilename, PercentEncodedFilename)
+      } {
+        val part = Multipart.FormData.BodyPart.Strict("upload", HttpEntity("body"), Map("filename" -> filename))
+        val filenameParams =
+          if (filename == "plain.txt") """filename="plain.txt"; name="upload"."""
+          else if (filename == "100%.txt") """filename="100%25.txt"; name="upload"."""
+          else strategy match {
+            case ExtendedFilename => """filename="caf?.txt"; filename*=UTF-8''caf%C3%A9.txt; name="upload"."""
+            case AsciiFilename    => """filename="caf?.txt"; name="upload"."""
+            case _                => """filename="caf%C3%A9.txt"; name="upload"."""
+          }
+        val expected = ByteString("--boundary\r\nContent-Type: text/plain; charset=UTF-8\r\n" +
+          "Content-Disposition: form-data; " + filenameParams.dropRight(1) + "\r\n\r\nbody\r\n--boundary--")
+        val strict = BodyPartRenderer.strict(Seq(part), "boundary", 128, DefaultNoLogging, strategy)
+        val streamedPart = Multipart.FormData.BodyPart("upload", defaultEntity("body"), Map("filename" -> filename))
+        val streamed = Source.single[Multipart.BodyPart](streamedPart)
+          .via(BodyPartRenderer.streamed("boundary", 128, DefaultNoLogging, strategy))
+          .flatMapConcat(identity)
+          .map(_.data)
+          .runFold(ByteString.empty)(_ ++ _)
+        Multipart.FormData.Strict(Seq(part)).toEntity("boundary", strategy).data shouldEqual expected
+        val javaStrict: pekko.http.javadsl.model.Multipart.FormData.Strict = Multipart.FormData.Strict(Seq(part))
+        javaStrict.toEntity("boundary", strategy).getData shouldEqual expected
+        val directStreamed = Multipart.FormData(Source.single(streamedPart)).toEntity("boundary", strategy)
+        Await.result(directStreamed.dataBytes.runFold(ByteString.empty)(_ ++ _), 1.second.dilated) shouldEqual expected
+        strict shouldEqual expected
+        Await.result(streamed, 1.second.dilated) shouldEqual expected
+        if (strategy == ExtendedFilename) {
+          BodyPartRenderer.strict(Seq(part), "boundary", 128, DefaultNoLogging) shouldEqual expected
+          Multipart.FormData.Strict(Seq(part)).toEntity("boundary").data shouldEqual expected
+        }
+      }
+    }
+
+    "apply explicit filename precedence only when a normal filename is present" in {
+      import BodyPartRenderer._
+      val part = Multipart.FormData.BodyPart.Strict("upload", HttpEntity("body"),
+        Map("filename" -> "café.txt", "filename*" -> "résumé.txt"))
+      for ((strategy, filename) <- Seq(AsciiFilename -> "caf?.txt", PercentEncodedFilename -> "caf%C3%A9.txt")) {
+        val data = Multipart.FormData.Strict(Seq(part)).toEntity("boundary", strategy).data.utf8String
+        data should include("filename=\"" + filename + "\"")
+        (data should not).include("filename*")
+      }
+      val legacy = Multipart.FormData.Strict(Seq(part)).toEntity("boundary").data.utf8String
+      legacy should include("filename*=UTF-8''r%C3%A9sum%C3%A9.txt")
+      val extendedOnly = Multipart.FormData.BodyPart.Strict("upload", HttpEntity("body"),
+        Map("filename*" -> "résumé.txt"))
+      val form = Multipart.FormData.Strict(Seq(extendedOnly))
+      for (strategy <- Seq(AsciiFilename, PercentEncodedFilename))
+        form.toEntity("boundary", strategy).data shouldEqual form.toEntity("boundary").data
+    }
+
+    "leave attachment filename rendering unchanged for every multipart strategy" in {
+      import BodyPartRenderer._
+      val attachment = `Content-Disposition`(ContentDispositionTypes.attachment, Map("filename" -> "café.txt"))
+      val part = Multipart.General.BodyPart.Strict(HttpEntity("body"), List(attachment))
+      val expected = BodyPartRenderer.strict(Seq(part), "boundary", 128, DefaultNoLogging)
+      attachment.value shouldEqual """attachment; filename="caf?.txt"; filename*=UTF-8''caf%C3%A9.txt"""
+      for (strategy <- Seq(ExtendedFilename, AsciiFilename, PercentEncodedFilename)) {
+        BodyPartRenderer.strict(Seq(part), "boundary", 128, DefaultNoLogging, strategy) shouldEqual expected
+      }
+    }
+
     "support `toStrict` on the streamed model" in {
       val streamed = Multipart.FormData(Source(
         Multipart.FormData.BodyPart("foo", defaultEntity("FOO")) ::

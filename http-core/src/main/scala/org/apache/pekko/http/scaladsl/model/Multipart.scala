@@ -343,6 +343,21 @@ object Multipart {
    * Multiple files for one field use separate parts with the same name.
    */
   sealed abstract class FormData extends Multipart with jm.Multipart.FormData {
+
+    /**
+     * Renders form data with an explicit outgoing filename encoding.
+     * Existing overloads retain their current extended filename behavior.
+     * A nonlegacy encoding overrides filename* only when filename is present.
+     * Percent encoding requires support from the recipient; it does not change decoding.
+     */
+    override def toEntity(boundary: String, encoding: jm.Multipart.FormData.FilenameEncoding): MessageEntity = {
+      require(encoding != null, "filename encoding must not be null")
+      val chunks = parts
+        .via(BodyPartRenderer.streamed(boundary, 128, DefaultNoLogging, encoding))
+        .flatMapConcat(ConstantFun.scalaIdentityFunction)
+      HttpEntity.Chunked(mediaType.withBoundary(boundary), chunks)
+    }
+
     def mediaType = MediaTypes.`multipart/form-data`
 
     def parts: Source[Multipart.FormData.BodyPart, Any]
@@ -362,6 +377,41 @@ object Multipart {
       super.toStrict(timeoutMillis, materializer).asScala.asInstanceOf[Future[jm.Multipart.FormData.Strict]].asJava
   }
   object FormData {
+
+    /** INTERNAL API: adapt public Java accessors without casting the Multipart implementation. */
+    @InternalApi
+    private[http] def renderJava(value: jm.Multipart.FormData, boundary: String,
+        encoding: jm.Multipart.FormData.FilenameEncoding): MessageEntity = {
+      import pekko.http.impl.util.JavaMapping
+      val parts = value.getParts.asScala.map { part =>
+        val entity = JavaMapping.HttpEntity.toScala(part.getEntity) match {
+          case entity: BodyPartEntity => entity
+          case _                      => throw new IllegalArgumentException("Expected a body part entity")
+        }
+        BodyPart(part.getName, entity, part.getAdditionalDispositionParams.asScala.toMap,
+          scala.jdk.CollectionConverters.IterableHasAsScala(part.getAdditionalHeaders).asScala.iterator
+            .map(JavaMapping.HttpHeader.toScala).toVector)
+      }
+      FormData(parts).toEntity(boundary, encoding)
+    }
+
+    /** INTERNAL API: preserve strict output when adapting public Java accessors. */
+    @InternalApi
+    private[http] def renderJavaStrict(value: jm.Multipart.FormData.Strict, boundary: String,
+        encoding: jm.Multipart.FormData.FilenameEncoding): HttpEntity.Strict = {
+      import pekko.http.impl.util.JavaMapping
+      val parts = value.getStrictParts.asScala.iterator.map { part =>
+        val entity = JavaMapping.HttpEntity.toScala(part.getEntity) match {
+          case entity: HttpEntity.Strict => entity
+          case _                         => throw new IllegalArgumentException("Expected a strict entity")
+        }
+        BodyPart.Strict(part.getName, entity, part.getAdditionalDispositionParams.asScala.toMap,
+          scala.jdk.CollectionConverters.IterableHasAsScala(part.getAdditionalHeaders).asScala.iterator
+            .map(JavaMapping.HttpHeader.toScala).toVector)
+      }.toVector
+      Strict(parts).toEntity(boundary, encoding)
+    }
+
     def apply(parts: Multipart.FormData.BodyPart.Strict*): Multipart.FormData.Strict = Strict(parts.toVector)
     def apply(parts: Multipart.FormData.BodyPart*): Multipart.FormData = Multipart.FormData(Source(parts.toVector))
 
@@ -429,6 +479,12 @@ object Multipart {
      */
     case class Strict(strictParts: Seq[Multipart.FormData.BodyPart.Strict])
         extends FormData with Multipart.Strict with jm.Multipart.FormData.Strict {
+      override def toEntity(boundary: String, encoding: jm.Multipart.FormData.FilenameEncoding): HttpEntity.Strict = {
+        require(encoding != null, "filename encoding must not be null")
+        HttpEntity(mediaType.withBoundary(boundary),
+          BodyPartRenderer.strict(strictParts, boundary, 128, DefaultNoLogging, encoding))
+      }
+
       def parts: Source[Multipart.FormData.BodyPart.Strict, Any] = Source(strictParts)
       override def toStrict(timeout: FiniteDuration)(implicit fm: Materializer) = FastFuture.successful(this)
       override def productPrefix = "FormData.Strict"

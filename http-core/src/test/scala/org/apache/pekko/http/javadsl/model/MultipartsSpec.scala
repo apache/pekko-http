@@ -39,6 +39,38 @@ class MultipartsSpec extends AnyWordSpec with Matchers with Inside with BeforeAn
   val materializer = SystemMaterializer.get(system).materializer
   override def afterAll() = TestKit.shutdownActorSystem(system)
 
+  "Explicit form-data filename encoding" should {
+    "support Java interface implementations through default methods" in {
+      val part = Multiparts.createFormDataBodyPartStrict("upload", HttpEntities.create("body"),
+        util.Collections.singletonMap("filename", "café.txt"))
+      val delegate = Multiparts.createStrictFormDataFromParts(part)
+      val wrapper = new Multipart.FormData.Strict {
+        override def getMediaType = delegate.getMediaType
+        override def getParts = delegate.getParts
+        override def getStrictParts = delegate.getStrictParts
+        override def toStrict(timeout: Long, mat: org.apache.pekko.stream.Materializer) =
+          delegate.toStrict(timeout, mat)
+        override def toEntity(boundary: String) = delegate.toEntity(boundary)
+        override def toEntity() = delegate.toEntity()
+      }
+      val strict: HttpEntity.Strict = wrapper.toEntity("boundary", Multipart.FormData.FilenameEncoding.PercentEncoded)
+      strict.getData.utf8String should include("filename=\"caf%C3%A9.txt\"")
+      (strict.getData.utf8String should not).include("filename*")
+
+      val streamedDelegate = Multiparts.createFormDataFromParts(part)
+      val streamedWrapper = new Multipart.FormData {
+        override def getMediaType = streamedDelegate.getMediaType
+        override def getParts = streamedDelegate.getParts
+        override def toStrict(timeout: Long, mat: org.apache.pekko.stream.Materializer) =
+          streamedDelegate.toStrict(timeout, mat)
+        override def toEntity(boundary: String) = streamedDelegate.toEntity(boundary)
+        override def toEntity() = streamedDelegate.toEntity()
+      }
+      val encoded = streamedWrapper.toEntity("boundary", Multipart.FormData.FilenameEncoding.PercentEncoded)
+      Await.result(encoded.toStrict(1000, materializer).asScala, 1.second.dilated).getData shouldEqual strict.getData
+    }
+  }
+
   "Multiparts.createFormDataFromParts" should {
     "create a model from Multiparts.createFormDataBodyPartparts" in {
       val streamed = Multiparts.createFormDataFromParts(

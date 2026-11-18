@@ -111,12 +111,38 @@ public interface Multipart {
    * parts must have distinct names. (This is not verified!)
    */
   interface FormData extends Multipart {
+    /** Outgoing form-data filename encoding. Existing toEntity methods retain Extended. */
+    enum FilenameEncoding {
+      /** Existing ASCII fallback plus extended filename parameter. */
+      Extended,
+      /** ASCII filename only, replacing unsupported characters with question marks. */
+      Ascii,
+      /** UTF-8 percent-encoded filename only; the recipient must support this encoding. */
+      PercentEncoded
+    }
+
+    /**
+     * Creates an entity with an explicit outgoing filename policy. Nonlegacy policies override
+     * filename* only when filename is also present. This does not change how incoming filenames are
+     * decoded.
+     */
+    default RequestEntity toEntity(String boundary, FilenameEncoding encoding) {
+      return org.apache.pekko.http.scaladsl.model.Multipart.FormData$.MODULE$.renderJava(
+          this, boundary, encoding);
+    }
+
     Source<? extends Multipart.FormData.BodyPart, Object> getParts();
 
     CompletionStage<Multipart.FormData.Strict> toStrict(
         long timeoutMillis, Materializer materializer);
 
     interface Strict extends Multipart.FormData, Multipart.Strict {
+      @Override
+      default HttpEntity.Strict toEntity(String boundary, FilenameEncoding encoding) {
+        return org.apache.pekko.http.scaladsl.model.Multipart.FormData$.MODULE$.renderJavaStrict(
+            this, boundary, encoding);
+      }
+
       Source<Multipart.FormData.BodyPart.Strict, Object> getParts();
 
       Iterable<? extends Multipart.FormData.BodyPart.Strict> getStrictParts();
