@@ -169,3 +169,10 @@ $ curl -k -v https://localhost:8443
 If your curl output looks like above, you have successfully configured HTTP/2.
 
 Connection-specific headers set on the model are dropped with a warning when sent over HTTP/2.
+
+## Connection half-close
+
+A peer that finishes sending on the connection can still receive responses to fully received requests. Buffered
+request entities remain consumable after this read-side closure; unfinished request entities fail. Existing idle
+timeouts and explicit server termination deadlines still apply, including when a response cannot progress because
+no further flow-control window updates can arrive.

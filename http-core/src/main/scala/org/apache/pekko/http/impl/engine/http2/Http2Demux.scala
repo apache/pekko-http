@@ -272,6 +272,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
       private val terminationPromise = Promise[Http.HttpTerminated]()
       private var terminating: Boolean = false
+      private var readClosed = false
+      override def incomingReadClosed: Boolean = readClosed
+      private var processingReadCompletion = false
       private var lastIdBeforeTermination: Int = 0
       // when the forced close of a terminating connection is due, unset while no forced close is scheduled
       private var forcedCloseDeadline: OptionVal[Deadline] = OptionVal.None
@@ -371,7 +374,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         if (allow != allowReadingIncomingFrames)
           if (allow) {
             debug("Resume reading incoming frames")
-            if (!hasBeenPulled(frameIn)) pull(frameIn)
+            if (!isClosed(frameIn) && !hasBeenPulled(frameIn)) pull(frameIn)
           } else debug("Suspended reading incoming frames") // can't retract pending pull but that's ok
 
         allowReadingIncomingFrames = allow
@@ -380,7 +383,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         if (allowReadingIncomingFrames && !hasBeenPulled(frameIn) && !isClosed(frameIn)) pull(frameIn)
 
       def tryPullSubStreams(): Unit = {
-        if (!hasBeenPulled(substreamIn) && !isClosed(substreamIn)) {
+        if ((!readClosed || isServer) && !hasBeenPulled(substreamIn) && !isClosed(substreamIn)) {
           // While we don't support PUSH_PROMISE there's only capacity control on the client
           if (isServer) pull(substreamIn)
           else if (hasCapacityToCreateStreams) pull(substreamIn)
@@ -445,6 +448,20 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
             pullFrameIn()
           }
 
+          override def onUpstreamFinish(): Unit = {
+            readClosed = true
+            cancelTimer(ConfigurablePing.Tick)
+            processingReadCompletion = true
+            // The outer response stream and transport can finish before retained entity sources are consumed.
+            setKeepGoing(true)
+            if (!isServer) cancel(substreamIn, Http2Demux.IncomingReadComplete)
+            handleIncomingReadComplete()
+            if (!isServer) complete(frameOut)
+            bufferedSubStreamOutput.complete()
+            processingReadCompletion = false
+            completeIfDone()
+          }
+
           override def onUpstreamFailure(ex: Throwable): Unit = {
             ex match {
               // every IllegalHttp2StreamIdException will be a GOAWAY with PROTOCOL_ERROR
@@ -467,7 +484,16 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       // -----------------------------------------------------------------
       // FIXME: What if user handler doesn't pull in new substreams? Should we reject them
       //        after a while or buffer only a limited amount?
-      val bufferedSubStreamOutput = new BufferedOutlet[Http2SubStream](fromOutlet(substreamOut))
+      val bufferedSubStreamOutput = new BufferedOutlet[Http2SubStream](fromOutlet(substreamOut)) {
+        override def onPull(): Unit = {
+          super.onPull()
+          if (readClosed) completeIfDone()
+        }
+        override def onDownstreamFinish(cause: Throwable): Unit = {
+          shutdownStreamHandling()
+          completeStage()
+        }
+      }
       override def dispatchSubstream(initialHeaders: ParsedHeadersFrame, data: Either[ByteString, Source[Any, Any]],
           correlationAttributes: Map[AttributeKey[?], ?]): Unit =
         bufferedSubStreamOutput.push(Http2SubStream(initialHeaders, OptionVal.None, data, correlationAttributes))
@@ -477,6 +503,12 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       override def onAllDataFlushed(): Unit = completeIfDone()
 
       private def completeIfDone(): Unit = {
+        if (processingReadCompletion) return
+        if (readClosed) {
+          if (activeStreamCount() == 0 && bufferedSubStreamOutput.buffer.isEmpty &&
+            (isClosed(frameOut) || multiplexer.hasFlushedAllData)) completeStage()
+          return
+        }
         val noMoreOutgoingStreams = (terminating || isClosed(substreamIn)) && activeStreamCount() == 0
         def allOutgoingDataFlushed = isClosed(frameOut) || multiplexer.hasFlushedAllData
         if (noMoreOutgoingStreams && allOutgoingDataFlushed) {
@@ -505,13 +537,28 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         new InHandler {
           def onPush(): Unit = {
             val sub = grab(substreamIn)
-            handleOutgoingCreated(sub)
+            if (readClosed && !isServer)
+              sub.data.foreach(_.runWith(pekko.stream.scaladsl.Sink.cancelled)(subFusingMaterializer))
+            else handleOutgoingCreated(sub)
             // Once the incoming stream is handled, we decide if we need to pull more.
             tryPullSubStreams()
           }
 
+          override def onUpstreamFailure(cause: Throwable): Unit =
+            // Managed clients fail their request producer after observing response-stream completion.
+            // That feedback must not discard already completed response entities.
+            if (readClosed && !isServer) completeIfDone()
+            else super.onUpstreamFailure(cause)
+
           override def onUpstreamFinish(): Unit =
-            if (isServer) // on the server side conservatively shut everything down if user handler completes prematurely
+            if (readClosed) {
+              if (isServer) {
+                processingReadCompletion = true
+                handleResponseInputComplete()
+                processingReadCompletion = false
+              }
+              completeIfDone()
+            } else if (isServer) // on the server side conservatively shut everything down if user handler completes prematurely
               super.onUpstreamFinish()
             else { // on the client side allow ongoing responses to be delivered for a while even if requests are done
               completeIfDone()
@@ -602,6 +649,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
  */
 @InternalApi
 private[pekko] object Http2Demux {
+  case object IncomingReadComplete extends RuntimeException("HTTP/2 peer completed its input")
+      with scala.util.control.NoStackTrace
+
   case object CompletionTimeout
   case object MaxConnectionAge
 }
