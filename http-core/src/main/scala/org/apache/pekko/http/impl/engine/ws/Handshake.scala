@@ -385,7 +385,12 @@ private[http] object Handshake {
       val expectations: Expectation =
         check(_.status)(_ == StatusCodes.SwitchingProtocols, "unexpected status code: " + _) &&
         headerExists(UpgradeHeader, caseInsensitive = true) &&
-        headerExists(ConnectionUpgradeHeader, caseInsensitive = true) &&
+        check(_.header[Connection])(_.exists(_.hasUpgrade),
+          {
+            case Some(other) =>
+              s"response that was missing required `$ConnectionUpgradeHeader` header. Found `$other` with the wrong value."
+            case None => "response that was missing required `Connection` header."
+          }) &&
         headerExists(`Sec-WebSocket-Accept`.forKey(key), showExactOther = false) &&
         // RFC 6455 section 4.1 item 5: fail if the server selects an extension the client didn't offer.
         // The client implements no extensions itself; one the caller offered through `extraHeaders` is accepted.
