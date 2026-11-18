@@ -170,11 +170,17 @@ private[coding] abstract class DeflateDecompressorBase(maxBytesPerChunk: Int = D
       extends ParseStep[ByteString] {
     protected def afterBytesRead(buffer: Array[Byte], offset: Int, length: Int): Unit = {}
 
+    // Output buffer kept across calls, so that inflating a small input doesn't allocate a whole `maxBytesPerChunk`
+    // array each time. A result that fills at most half of it is copied out and the buffer is reused; a fuller one is
+    // handed over without copying, and a new buffer is allocated on the next call.
+    private var outputBuffer: Array[Byte] = null
+
     override def canWorkWithPartialData = true
     override def parse(reader: ByteStringParser.ByteReader): ParseResult[ByteString] = {
       inflater.setInput(reader.remainingData.asByteBuffer)
 
-      val buffer = new Array[Byte](maxBytesPerChunk)
+      if (outputBuffer eq null) outputBuffer = new Array[Byte](maxBytesPerChunk)
+      val buffer = outputBuffer
       val read = inflater.inflate(buffer)
 
       reader.skip(reader.remainingSize - inflater.getRemaining)
@@ -182,7 +188,12 @@ private[coding] abstract class DeflateDecompressorBase(maxBytesPerChunk: Int = D
       if (read > 0) {
         afterBytesRead(buffer, 0, read)
         val next = if (inflater.finished()) afterInflate else this
-        ParseResult(Some(ByteString.fromArray(buffer, 0, read)), next, noPostProcessing)
+        val chunk =
+          if (read > buffer.length / 2) {
+            outputBuffer = null
+            ByteString.fromArrayUnsafe(buffer, 0, read)
+          } else ByteString.fromArray(buffer, 0, read)
+        ParseResult(Some(chunk), next, noPostProcessing)
       } else {
         if (inflater.finished()) ParseResult(None, afterInflate, noPostProcessing)
         else throw ByteStringParser.NeedMoreData

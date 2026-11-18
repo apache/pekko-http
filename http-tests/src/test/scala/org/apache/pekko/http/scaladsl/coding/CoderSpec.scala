@@ -155,6 +155,26 @@ abstract class CoderSpec extends AnyWordSpec with CodecSpecSupport with Inspecto
       result should equal(array)
     }
 
+    "keep emitted chunks intact while the decoder reuses its output buffer" in {
+      // random letters inflate to small outputs from small inputs (copied out of a reused buffer); the run of 'a's
+      // inflates to full outputs (handed over without copying). All outputs are kept until the end, so a chunk that
+      // still shared a buffer which a later inflate wrote into would no longer match.
+      val random = new java.util.Random(42)
+      val letters = Array.fill[Byte](20000)(('a' + random.nextInt(26)).toByte)
+      val input = ByteString(letters) ++ ByteString(Array.fill[Byte](50000)('a')) ++ ByteString(letters)
+      val compressed = streamEncode(input)
+      val outputs =
+        Source(compressed.grouped(64).toVector)
+          .via(Coder.withMaxBytesPerChunk(1000).decoderFlow)
+          .runWith(Sink.seq)
+          .awaitResult(3.seconds.dilated)
+
+      forAll(outputs) { bs =>
+        bs.length should be <= 1000
+      }
+      outputs.reduce(_ ++ _) should equal(input)
+    }
+
     "be able to decode chunk-by-chunk (depending on input chunks)" in {
       val minLength = 100
       val maxLength = 1000
