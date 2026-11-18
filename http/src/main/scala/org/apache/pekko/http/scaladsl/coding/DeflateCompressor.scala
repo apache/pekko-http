@@ -19,6 +19,7 @@ import scala.annotation.tailrec
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.util.ByteStringOutputStream
 import pekko.stream.Attributes
 import pekko.stream.impl.io.ByteStringParser
 import pekko.stream.impl.io.ByteStringParser.{ ParseResult, ParseStep }
@@ -170,30 +171,25 @@ private[coding] abstract class DeflateDecompressorBase(maxBytesPerChunk: Int = D
       extends ParseStep[ByteString] {
     protected def afterBytesRead(buffer: Array[Byte], offset: Int, length: Int): Unit = {}
 
-    // Output buffer kept across calls, so that inflating a small input doesn't allocate a whole `maxBytesPerChunk`
-    // array each time. A result that fills at most half of it is copied out and the buffer is reused; a fuller one is
-    // handed over without copying, and a new buffer is allocated on the next call.
-    private var outputBuffer: Array[Byte] = null
+    // Output kept across calls, so that inflating a small input doesn't allocate a whole `maxBytesPerChunk` array
+    // each time. `takeByteString` copies a result that fills at most half of the array and keeps the array for the
+    // next call; a fuller result is handed over without copying.
+    private val output = new ByteStringOutputStream(maxBytesPerChunk)
 
     override def canWorkWithPartialData = true
     override def parse(reader: ByteStringParser.ByteReader): ParseResult[ByteString] = {
       inflater.setInput(reader.remainingData.asByteBuffer)
 
-      if (outputBuffer eq null) outputBuffer = new Array[Byte](maxBytesPerChunk)
-      val buffer = outputBuffer
-      val read = inflater.inflate(buffer)
+      val position = output.reserve(maxBytesPerChunk)
+      val read = inflater.inflate(output.array, position, maxBytesPerChunk)
+      output.unreserve(maxBytesPerChunk - read)
 
       reader.skip(reader.remainingSize - inflater.getRemaining)
 
       if (read > 0) {
-        afterBytesRead(buffer, 0, read)
+        afterBytesRead(output.array, position, read)
         val next = if (inflater.finished()) afterInflate else this
-        val chunk =
-          if (read > buffer.length / 2) {
-            outputBuffer = null
-            ByteString.fromArrayUnsafe(buffer, 0, read)
-          } else ByteString.fromArray(buffer, 0, read)
-        ParseResult(Some(chunk), next, noPostProcessing)
+        ParseResult(Some(output.takeByteString()), next, noPostProcessing)
       } else {
         if (inflater.finished()) ParseResult(None, afterInflate, noPostProcessing)
         else throw ByteStringParser.NeedMoreData

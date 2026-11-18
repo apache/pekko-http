@@ -77,6 +77,16 @@ private[http] final class ByteStringOutputStream(initialCapacity: Int) extends O
   }
 
   /**
+   * Gives back the last `length` bytes of the buffered data, typically the unused tail of a [[reserve]]d range whose
+   * final size is only known after filling it in (e.g. by `Inflater.inflate` or `Deflater.deflate`).
+   */
+  def unreserve(length: Int): Unit = {
+    if (length < 0 || length > count)
+      throw new IllegalArgumentException(s"Cannot unreserve $length bytes when $count are buffered")
+    count -= length
+  }
+
+  /**
    * The array backing the buffered data. Only valid until the next write, reserve or hand-over, any of
    * which may replace it.
    */
