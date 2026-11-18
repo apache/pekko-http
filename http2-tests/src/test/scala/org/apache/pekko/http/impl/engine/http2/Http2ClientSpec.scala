@@ -726,6 +726,25 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           network.expect[HeadersFrame]().streamId shouldBe 11
           network.expect[HeadersFrame]().streamId shouldBe 13
         })
+      "pull the next request when a cancelled response entity frees a stream slot".inAssertAllStagesStopped(
+        new TestSetup(Setting(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, 1)) with NetProbes {
+          val request = HttpRequest(uri = "https://www.example.com/")
+          user.emitRequest(request)
+          user.emitRequest(request) // buffered until stream 1 closes
+          network.expect[HeadersFrame]().streamId shouldBe 1
+          network.expectNoBytes(100.millis)
+
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val entity = user.expectResponse().entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem))
+          entity.ensureSubscription()
+          entity.cancel()
+          network.expectRST_STREAM(1, ErrorCode.CANCEL)
+
+          // The cancellation closed stream 1 outside the state machine; the freed slot must be used right away.
+          network.expect[HeadersFrame]().streamId shouldBe 3
+          network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "200")))
+          user.expectResponse().status shouldBe StatusCodes.OK
+        })
       "increasing SETTINGS_MAX_CONCURRENT_STREAMS should flush backpressured outgoing streams".inAssertAllStagesStopped(
         new TestSetup(
           Setting(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, 2)) with NetProbes {
@@ -1009,6 +1028,25 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
     }
 
     "delay stage completion" should {
+
+      "complete when the last response entity is cancelled after request input completion".inAssertAllStagesStopped(
+        new TestSetup with NetProbes {
+          // Keep the fallback deadline outside the probes' normal completion expectations.
+          override def settings = super.settings.mapHttp2Settings(_.withCompletionTimeout(30.seconds))
+
+          user.emitRequest(HttpRequest(uri = "https://www.example.com/"))
+          user.requestOut.sendComplete()
+          network.expectDecodedResponseHEADERSPairs(1)
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val entity = user.expectResponse().entity.dataBytes.runWith(TestSink[ByteString]()(system.classicSystem))
+
+          entity.ensureSubscription()
+          entity.cancel()
+          network.expectRST_STREAM(1, ErrorCode.CANCEL)
+          user.responseIn.expectComplete()
+          network.toNet.expectComplete()
+          network.fromNet.expectCancellation()
+        })
 
       "until in-flight responses are received".inAssertAllStagesStopped(new TestSetup with NetProbes {
         // Given an in-flight request...

@@ -191,6 +191,17 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   } else
     multiplexer.enqueueOutStream(streamId)
 
+  /**
+   * Removes a closed stream, then reports when the last stream has closed and pulls more substreams if the freed
+   * capacity allows. Shared by the state machine and the incoming-entity cancellation path, which bypasses it.
+   */
+  private def streamClosed(streamId: Int): Unit = {
+    streamStates.remove(streamId)
+    headRequestStreamIds -= streamId
+    if (streamStates.isEmpty) onAllStreamsClosed()
+    tryPullSubStreams()
+  }
+
   private var stateMachineRunning = false
   private def updateStateAndReturn[R](streamId: Int, handle: StreamState => (StreamState, R), event: String,
       eventArg: AnyRef = null): R = {
@@ -201,11 +212,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
     val (newState, ret) = handle(oldState)
     newState match {
-      case Closed =>
-        streamStates.remove(streamId)
-        headRequestStreamIds -= streamId
-        if (streamStates.isEmpty) onAllStreamsClosed()
-        tryPullSubStreams()
+      case Closed   => streamClosed(streamId)
       case newState => streamStates.put(streamId, newState)
     }
 
@@ -649,12 +656,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     override def onDownstreamFinish(cause: Throwable): Unit = {
       debug(s"Incoming side of stream [$streamId]: cancelling because downstream finished")
       multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
-      // FIXME: go through state machine and don't manipulate vars directly here
-      streamStates.remove(streamId)
-      headRequestStreamIds -= streamId
       wasClosed = true
       discardBuffer()
       trailingHeaders = None
+      // FIXME: go through state machine and don't manipulate vars directly here
+      streamClosed(streamId)
     }
 
     /**
