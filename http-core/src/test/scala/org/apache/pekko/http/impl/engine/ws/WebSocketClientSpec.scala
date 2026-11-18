@@ -37,6 +37,30 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
   "The client-side WebSocket implementation should" should {
     "establish a websocket connection when the user requests it" in new EstablishedConnectionSetup with ClientEchoes
 
+    Seq(
+      "ws://example.org/path%20with%20spaces?q=two%20words" -> "/path%20with%20spaces?q=two%20words",
+      "ws://example.org" -> "/",
+      "ws://example.org?q=two%20words" -> "/?q=two%20words").foreach { case (uri, target) =>
+      s"render the handshake resource name for $uri" in {
+        Utils.assertAllStagesStopped {
+          new TestSetup with ClientProbes {
+            override def targetUri: Uri = Uri(uri)
+            try {
+              val expected = UpgradeRequestBytes.utf8String.replace("GET /ws HTTP/1.1", s"GET $target HTTP/1.1")
+              expectWireData(ByteString(expected))
+              sendWireData(UpgradeResponseBytes)
+              response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+            } finally {
+              messagesOut.sendComplete()
+              messagesIn.cancel()
+              netOut.cancel()
+              netIn.sendComplete()
+            }
+          }
+        }
+      }
+    }
+
     "complete the upgrade result when the peer closes before responding" in {
       Utils.assertAllStagesStopped {
         new TestSetup with ClientProbes {
