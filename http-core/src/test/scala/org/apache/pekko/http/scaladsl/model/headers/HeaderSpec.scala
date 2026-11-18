@@ -54,6 +54,22 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
   }
 
   "MediaType should" - {
+    "prefer text/javascript for JavaScript filenames while retaining the legacy media type" in {
+      val javascript: MediaType.WithOpenCharset = MediaTypes.`text/javascript`
+      Seq("js", "mjs", "JS", "MJS").foreach { extension =>
+        MediaTypes.forExtension(extension) shouldEqual javascript
+        MediaTypes.forExtensionOption(extension) shouldEqual Some(javascript)
+      }
+      javascript.fileExtensions shouldEqual List("js", "mjs")
+      MediaType.parse("text/javascript") shouldEqual Right(javascript)
+      MediaType.parse("application/javascript") shouldEqual Right(MediaTypes.`application/javascript`)
+      MediaTypes.`application/javascript`.fileExtensions shouldEqual List("js", "mjs")
+      ContentType.parse("text/javascript; charset=UTF-8") shouldEqual
+      Right(javascript.withCharset(HttpCharsets.`UTF-8`))
+      MediaTypes.forExtension("css") shouldEqual MediaTypes.`text/css`
+      MediaTypes.forExtension("unknown-extension") shouldEqual MediaTypes.`application/octet-stream`
+    }
+
     "provide parse method" - {
       "successful parse run" in {
         MediaType.parse("application/gnutar") shouldEqual Right(MediaTypes.`application/gnutar`)

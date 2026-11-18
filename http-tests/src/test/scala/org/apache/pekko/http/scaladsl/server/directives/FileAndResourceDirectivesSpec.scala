@@ -36,6 +36,14 @@ import org.scalatest.{ Inside, Inspectors }
 class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Inside {
 
   "ContentTypeResolver.Default" should {
+    "resolve JavaScript filenames with the default or explicitly selected charset" in {
+      Seq("asset.js", "asset.mjs", "asset.JS", "asset.MJS").foreach { filename =>
+        ContentTypeResolver.Default(filename) shouldEqual `text/javascript`.withCharset(HttpCharsets.`UTF-8`)
+        ContentTypeResolver.withDefaultCharset(HttpCharsets.`ISO-8859-1`)(filename) shouldEqual
+        `text/javascript`.withCharset(HttpCharsets.`ISO-8859-1`)
+      }
+    }
+
     for ((extension, expected, compressible) <- Seq(
         ("wasm", "application/wasm", true),
         ("avif", "image/avif", false));
@@ -165,7 +173,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       try {
         writeAllText("456", file)
         Get() ~> getFromFile(file) ~> check {
-          mediaType shouldEqual `application/javascript`
+          mediaType shouldEqual `text/javascript`
           header[`Content-Encoding`] shouldEqual Some(`Content-Encoding`(HttpEncodings.gzip))
           responseAs[String] shouldEqual "456"
         }

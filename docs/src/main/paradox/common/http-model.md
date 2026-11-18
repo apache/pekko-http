@@ -464,6 +464,12 @@ or @scala[`Http().superPool`]@java[`Http.get(sys).superPool`], usually need the 
 ## Registering Custom Media Types
 
 Apache Pekko HTTP @scala[@scaladoc[predefines](org.apache.pekko.http.scaladsl.model.MediaTypes$)]@java[@javadoc[predefines](org.apache.pekko.http.javadsl.model.MediaTypes)] most commonly encountered media types and emits them in their well-typed form while parsing http messages.
+
+By default, JavaScript files with `.js` or `.mjs` extensions are resolved to `text/javascript`, following
+[RFC 9239](https://www.rfc-editor.org/rfc/rfc9239.html#section-6.1.1). This also applies to precompressed
+JavaScript files served by the file and resource directives. The legacy `application/javascript`
+media type remains available for explicit use and is still accepted when parsing messages.
+
 Sometimes you may want to define a custom media type and inform the parser infrastructure about how to handle these custom
 media types, e.g. that `application/custom` is to be treated as `NonBinary` with `WithFixedCharset`. To achieve this you
 need to register the custom media type in the server's settings by configuring @apidoc[ParserSettings] like this:
