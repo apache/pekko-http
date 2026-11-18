@@ -168,7 +168,6 @@ Java
 @@@
 
 <a id="httpentity"></a>
-
 ## HttpEntity
 
 An @apidoc[HttpEntity] carries the data bytes of a message together with its Content-Type and, if known, its Content-Length.
