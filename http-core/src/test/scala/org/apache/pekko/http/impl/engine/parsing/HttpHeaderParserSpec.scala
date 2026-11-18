@@ -242,6 +242,50 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
         "Illegal character '\\u0001' in header value")
     }
 
+    "parse a name/value pair like the equivalent ISO-8859-1 header line" in new TestSetup() {
+      def latin1(s: String) = new String(s.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+        java.nio.charset.StandardCharsets.ISO_8859_1)
+      val pairs = Seq(
+        "content-length" -> "42",
+        "accept" -> "application/json, text/plain",
+        "user-agent" -> "curl/8.0",
+        "x-custom" -> "some value",
+        "x-empty" -> "",
+        // what HPACK hands out for a UTF-8 value: one char per octet
+        "x-utf8" -> latin1("café €"),
+        // an octet that is not valid UTF-8 at the end of the value
+        "x-latin1" -> "café",
+        // not produced by HPACK: a char above U+00FF becomes '?'
+        "x-wide" -> "aĊb")
+      for ((name, value) <- pairs) {
+        val expected = {
+          parser.parseHeaderLine(ByteString(s"$name: $value\r\nx", java.nio.charset.StandardCharsets.ISO_8859_1))()
+          parser.resultHeader
+        }
+        parser.parseHeaderPair(name, value) shouldEqual expected
+        parser.resultHeader shouldEqual expected
+      }
+      parser.parseHeaderPair("x-utf8", latin1("café €")) shouldEqual RawHeader("x-utf8", "café €")
+      parser.parseHeaderPair("x-wide", "aĊb") shouldEqual RawHeader("x-wide", "a?b")
+    }
+
+    "parse name/value pairs of decreasing length with a reused buffer" in new TestSetup() {
+      parser.parseHeaderPair("x-long", "v" * 900) shouldEqual RawHeader("x-long", "v" * 900)
+      parser.parseHeaderPair("x-short", "w") shouldEqual RawHeader("x-short", "w")
+      parser.parseHeaderPair("x-long", "u" * 500) shouldEqual RawHeader("x-long", "u" * 500)
+    }
+
+    "return the cached header for a repeated name/value pair" in new TestSetup() {
+      val first = parser.parseHeaderPair("accept-encoding", "gzip, deflate")
+      (parser.parseHeaderPair("accept-encoding", "gzip, deflate") should be).theSameInstanceAs(first)
+    }
+
+    "reject a name/value pair larger than the retained buffer like the equivalent header line" in new TestSetup() {
+      val value = "v" * (17 * 1024)
+      val expected = the[ParsingException] thrownBy parser.parseHeaderLine(ByteString(s"x-big: $value\r\nx"))()
+      (the[ParsingException] thrownBy parser.parseHeaderPair("x-big", value)).info shouldEqual expected.info
+    }
+
     "parse multiple header lines subsequently with UTF-8 characters one after another without crashing" in
     new TestSetup {
       parseLine(s"""Content-Disposition: form-data; name="test"; filename="λ"${newLine}x""")
