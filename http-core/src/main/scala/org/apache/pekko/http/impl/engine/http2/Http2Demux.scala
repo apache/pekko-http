@@ -110,7 +110,7 @@ private[http2] object ConfigurablePing {
     def apply(settings: Http2CommonSettings): PingState = {
       if (settings.pingInterval == 0.seconds) DisabledPingState
       else {
-        // this means timeout is always one tick, but ping interval can be multiple ticks
+        // The tick interval is the configured acknowledgment timeout (or ping interval when zero).
         val tickInterval =
           if (settings.pingTimeout == Duration.Zero) settings.pingInterval
           else settings.pingInterval.min(settings.pingTimeout)
@@ -140,9 +140,15 @@ private[http2] object ConfigurablePing {
     def sendingPing(): Unit = ()
     def pingAckOverdue(): Boolean = false
   }
-  final class EnabledPingState(_tickInterval: FiniteDuration, pingEveryNTickWithoutData: Long) extends PingState {
+  final class EnabledPingState(
+      _tickInterval: FiniteDuration,
+      pingEveryNTickWithoutData: Long,
+      nanoTime: () => Long) extends PingState {
+    // Keep the existing internal constructor for compiled callers.
+    def this(tickInterval: FiniteDuration, pingEveryNTickWithoutData: Long) =
+      this(tickInterval, pingEveryNTickWithoutData, () => System.nanoTime())
     private var ticksWithoutData = 0L
-    private var ticksSincePing = 0L
+    private var pingSentAtNanos = 0L
     private var pingInFlight = false
 
     def tickInterval(): Option[FiniteDuration] = Some(_tickInterval)
@@ -151,27 +157,26 @@ private[http2] object ConfigurablePing {
       ticksWithoutData = 0L
     }
     def onPingAck(): Unit = {
-      ticksSincePing = 0L
       pingInFlight = false
     }
     def onTick(): Unit = {
       ticksWithoutData += 1L
-      if (pingInFlight) ticksSincePing += 1L
     }
     def clear(): Unit = {
       ticksWithoutData = 0L
-      ticksSincePing = 0L
+      if (pingInFlight) pingSentAtNanos = nanoTime()
     }
     def shouldEmitPing(): Boolean =
-      ticksWithoutData > 0L && ticksWithoutData % pingEveryNTickWithoutData == 0
+      !pingInFlight && ticksWithoutData > 0L && ticksWithoutData % pingEveryNTickWithoutData == 0
 
     def sendingPing(): Unit = {
-      ticksSincePing = 0L
+      pingSentAtNanos = nanoTime()
       pingInFlight = true
     }
 
     def pingAckOverdue(): Boolean = {
-      pingInFlight && ticksSincePing > 1L
+      // Tick callbacks may queue while the stage is delayed. Count elapsed monotonic time, not callbacks.
+      pingInFlight && nanoTime() - pingSentAtNanos > _tickInterval.toNanos
     }
   }
 }
@@ -348,8 +353,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         multiplexer.pushControlFrame(SettingsFrame(initialLocalSettings))
 
         pingState.tickInterval().foreach(interval =>
-          // to limit overhead rather than constantly rescheduling a timer and looking at system time we use a constant timer
-          scheduleAtFixedRate(ConfigurablePing.Tick, interval, interval))
+          // Use periodic ticks instead of reading the clock for every frame. Fixed delay avoids
+          // catching up missed ticks after a pause and timing out a newly sent ping.
+          scheduleWithFixedDelay(ConfigurablePing.Tick, interval, interval))
 
         maxConnectionAge match {
           case age: FiniteDuration =>
