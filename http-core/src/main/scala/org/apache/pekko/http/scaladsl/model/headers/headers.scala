@@ -909,7 +909,7 @@ private[http] object `Sec-WebSocket-Accept` extends ModeledCompanion[`Sec-WebSoc
   /** Generates the matching accept header for this key */
   def forKey(key: `Sec-WebSocket-Key`): `Sec-WebSocket-Accept` = {
     val sha1 = MessageDigest.getInstance("sha1")
-    sha1.update(String.valueOf(key.key).asciiBytes)
+    sha1.update(key.key.asciiBytes)
     val hash = sha1.digest(magicGuidBytes)
     val acceptKey = Base64.rfc2045().encodeToString(hash, false)
     `Sec-WebSocket-Accept`(acceptKey)

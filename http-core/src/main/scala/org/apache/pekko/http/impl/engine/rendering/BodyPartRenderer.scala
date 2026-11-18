@@ -36,10 +36,10 @@ import pekko.util.ByteString
 @InternalApi
 private[http] object BodyPartRenderer {
 
-  type FilenameEncoding = pekko.http.javadsl.model.Multipart.FormData.FilenameEncoding
-  val ExtendedFilename = pekko.http.javadsl.model.Multipart.FormData.FilenameEncoding.Extended
-  val AsciiFilename = pekko.http.javadsl.model.Multipart.FormData.FilenameEncoding.Ascii
-  val PercentEncodedFilename = pekko.http.javadsl.model.Multipart.FormData.FilenameEncoding.PercentEncoded
+  type FilenameEncoding = Multipart.FormData.FilenameEncoding
+  val ExtendedFilename = Multipart.FormData.FilenameEncoding.Extended
+  val AsciiFilename = Multipart.FormData.FilenameEncoding.Ascii
+  val PercentEncodedFilename = Multipart.FormData.FilenameEncoding.PercentEncoded
 
   def streamed(
       boundary: String,
@@ -149,12 +149,20 @@ private[http] object BodyPartRenderer {
               keep = Rendering.contentDispositionFilenameSafeChars, replaceSpaces = false)
           params.updated("filename", r.get)
         }
-        // The shared header renderer treats percent signs as requiring filename*.
-        // Keep form-data encoding local to multipart serialization.
+        // Render the header here rather than with the shared `Content-Disposition` renderer, which would add a
+        // filename* parameter for the percent signs that the percent-encoded filename contains. `filename` comes
+        // first, the other parameters follow as the shared renderer writes them.
         renderedParams.get("filename").fold[HttpHeader](header.copy(params = renderedParams)) { filename =>
-          val disposition = header.copy(params = Map.empty).value
-          val otherParams = header.copy(params = renderedParams - "filename").value.drop(disposition.length)
-          RawHeader("Content-Disposition", disposition + "; filename=\"" + filename + "\"" + otherParams)
+          val r = new StringRendering
+          r ~~ header.dispositionType ~~ "; filename=\"" ~~ filename ~~ '"'
+          (renderedParams - "filename").foreach {
+            case (k, v) if k.endsWith("*") =>
+              r ~~ "; " ~~ k ~~ '=' ~~ "UTF-8''"
+              UriRendering.encode(r, v, java.nio.charset.StandardCharsets.UTF_8,
+                keep = pekko.http.impl.model.parser.CharacterClasses.`attr-char`, replaceSpaces = false)
+            case (k, v) => r ~~ "; " ~~ k ~~ '=' ~~#! v
+          }
+          RawHeader("Content-Disposition", r.get)
         }
       case header => header
     }

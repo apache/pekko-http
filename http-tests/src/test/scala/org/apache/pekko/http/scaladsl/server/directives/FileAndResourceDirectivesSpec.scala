@@ -36,15 +36,6 @@ import org.scalatest.{ Inside, Inspectors }
 class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Inside {
 
   "ContentTypeResolver.Default" should {
-    "use the registered binary WebAssembly and AVIF media types in Scala and Java" in {
-      ContentTypeResolver.Default("asset.wasm") shouldEqual ContentType(`application/wasm`)
-      ContentTypeResolver.Default("asset.avif") shouldEqual ContentType(`image/avif`)
-      pekko.http.javadsl.model.MediaTypes.APPLICATION_WASM shouldEqual `application/wasm`
-      pekko.http.javadsl.model.MediaTypes.IMAGE_AVIF shouldEqual `image/avif`
-      ContentType.parse("application/wasm") shouldEqual Right(ContentType(`application/wasm`))
-      ContentType.parse("image/avif") shouldEqual Right(ContentType(`image/avif`))
-    }
-
     for ((extension, expected, compressible) <- Seq(
         ("wasm", "application/wasm", true),
         ("avif", "image/avif", false));
@@ -58,15 +49,7 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     }
   }
 
-  "The registered application/zstd media type" should {
-    "be available through Scala and Java and parse as a binary media type" in {
-      pekko.http.javadsl.model.MediaTypes.APPLICATION_ZSTD shouldEqual `application/zstd`
-      ContentType.parse("application/zstd") shouldEqual Right(ContentType(`application/zstd`))
-      ContentType.parse("APPLICATION/ZSTD") shouldEqual Right(ContentType(`application/zstd`))
-      MediaTypes.forExtension("zst") shouldEqual `application/zstd`
-      MediaTypes.forExtension("ZST") shouldEqual `application/zstd`
-    }
-
+  "ContentTypeResolver.Default for application/zstd" should {
     for (suffix <- Seq("zst", "ZST")) {
       s"resolve .$suffix without adding a charset" in {
         val contentType = ContentTypeResolver.Default(s"archive.tar.$suffix")

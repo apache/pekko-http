@@ -131,7 +131,7 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
     HttpMessageRendering.addContentHeaders(headerPairs, r.entity, contentLengthAllowed(r))
     HttpMessageRendering.renderHeaders(r.headers, headerPairs, peerIdHeader, log,
       isServer = r.isResponse,
-      shouldRenderAutoHeaders = true, dateHeaderRendering)
+      shouldRenderAutoHeaders = true, isTrailer = false, dateHeaderRendering)
 
     val streamId = nextStreamId(r)
     val headersFrame = ParsedHeadersFrame(streamId, endStream = r.entity.isKnownEmpty, headerPairs.result(), None, None)
@@ -188,9 +188,10 @@ private[http2] object HttpMessageRendering {
       log: LoggingAdapter,
       isServer: Boolean,
       shouldRenderAutoHeaders: Boolean,
+      isTrailer: Boolean,
       dateHeaderRendering: DateHeaderRendering): Seq[(String, String)] = {
     val headerPairs = new VectorBuilder[(String, String)]()
-    renderHeaders(headers, headerPairs, None, log, isServer, shouldRenderAutoHeaders, dateHeaderRendering)
+    renderHeaders(headers, headerPairs, None, log, isServer, shouldRenderAutoHeaders, isTrailer, dateHeaderRendering)
     headerPairs.result()
   }
 
@@ -198,6 +199,8 @@ private[http2] object HttpMessageRendering {
    * Mutates `headerPairs` adding any valid header from `headersSeq`.
    * @param peerIdHeader a header providing extra information (e.g. vendor and version) about the
    *                     peer. For example, a User-Agent on the client or a Server header on the server.
+   * @param isTrailer whether the headers are rendered for a trailer section rather than an initial one, which
+   *                  changes which fields are allowed (see `allowsHeader`)
    */
   def renderHeaders(
       headersSeq: Seq[HttpHeader],
@@ -206,9 +209,8 @@ private[http2] object HttpMessageRendering {
       log: LoggingAdapter,
       isServer: Boolean,
       shouldRenderAutoHeaders: Boolean,
+      isTrailer: Boolean,
       dateHeaderRendering: DateHeaderRendering): Unit = {
-    // Initial sections render automatic headers; the streamed-trailer caller disables them.
-    val isTrailer = !shouldRenderAutoHeaders
     def suppressionWarning(h: HttpHeader, msg: String): Unit =
       log.warning("Explicitly set HTTP header '{}' is ignored, {}", h, msg)
 

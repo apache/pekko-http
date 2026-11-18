@@ -143,10 +143,7 @@ private[http2] object ConfigurablePing {
   final class EnabledPingState(
       _tickInterval: FiniteDuration,
       pingEveryNTickWithoutData: Long,
-      nanoTime: () => Long) extends PingState {
-    // Keep the existing internal constructor for compiled callers.
-    def this(tickInterval: FiniteDuration, pingEveryNTickWithoutData: Long) =
-      this(tickInterval, pingEveryNTickWithoutData, () => System.nanoTime())
+      nanoTime: () => Long = () => System.nanoTime()) extends PingState {
     private var ticksWithoutData = 0L
     private var pingSentAtNanos = 0L
     private var pingInFlight = false

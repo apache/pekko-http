@@ -945,7 +945,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
               "Found both an attribute with trailing headers, and headers in the `LastChunk`. This is not supported.")
           trailer = OptionVal.Some(ParsedHeadersFrame(streamId, endStream = true,
             HttpMessageRendering.renderHeaders(headers, log, isServer, shouldRenderAutoHeaders = false,
-              dateHeaderRendering = DateHeaderRendering.Unavailable), None, None))
+              isTrailer = true, dateHeaderRendering = DateHeaderRendering.Unavailable), None, None))
       }
 
       maybePull()

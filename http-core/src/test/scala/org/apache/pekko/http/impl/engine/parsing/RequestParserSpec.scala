@@ -179,6 +179,22 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(true)
       }
 
+      // QUERY has a first-byte fast path: other methods starting with 'Q', including ones that share a prefix
+      // with QUERY, must still fall back to the custom method lookup
+      for (name <- Seq("QUOTE", "QUERYX")) {
+        val method = HttpMethod.custom(name, safe = false, idempotent = false, requestEntityAcceptance = Expected,
+          contentLengthAllowed = true)
+        s"with a custom HTTP method starting with 'Q': $name" in new Test {
+          override protected def parserSettings: ParserSettings =
+            super.parserSettings.withCustomMethods(method)
+
+          s"""$name / HTTP/1.1
+            |Host: example.com
+            |
+            |""" should parseTo(HttpRequest(method, "/", List(Host("example.com"))))
+        }
+      }
+
       "with several identical `Content-Type` headers" in new Test {
         """GET /data HTTP/1.1
           |Host: x
