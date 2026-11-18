@@ -55,13 +55,17 @@ class MultipartSpec extends PekkoSpecWithMaterializer {
       import BodyPartRenderer._
       for {
         filename <- Seq("café.txt", "plain.txt", "100%.txt")
-        strategy <- if (filename == "100%.txt") Seq(PercentEncodedFilename)
-        else Seq(ExtendedFilename, AsciiFilename, PercentEncodedFilename)
+        strategy <- Seq(ExtendedFilename, AsciiFilename, PercentEncodedFilename)
       } {
         val part = Multipart.FormData.BodyPart.Strict("upload", HttpEntity("body"), Map("filename" -> filename))
         val filenameParams =
           if (filename == "plain.txt") """filename="plain.txt"; name="upload"."""
-          else if (filename == "100%.txt") """filename="100%25.txt"; name="upload"."""
+          else if (filename == "100%.txt") strategy match {
+            // `%` is not a safe filename character, so the ASCII fallback replaces it
+            case ExtendedFilename => """filename="100?.txt"; filename*=UTF-8''100%25.txt; name="upload"."""
+            case AsciiFilename    => """filename="100?.txt"; name="upload"."""
+            case _                => """filename="100%25.txt"; name="upload"."""
+          }
           else strategy match {
             case ExtendedFilename => """filename="caf?.txt"; filename*=UTF-8''caf%C3%A9.txt; name="upload"."""
             case AsciiFilename    => """filename="caf?.txt"; name="upload"."""
