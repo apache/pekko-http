@@ -38,6 +38,23 @@ class HttpEntitySpec extends PekkoSpecWithMaterializer {
   val awaitAtMost = 3.seconds.dilated
 
   "HttpEntity" should {
+    "construct entities with an explicit length" should {
+      "reject a negative length in the Scala factory" in {
+        intercept[IllegalArgumentException] {
+          HttpEntity(tpe, -1L, Source.empty[ByteString])
+        }.getMessage should include("contentLength must be positive")
+      }
+      "return a known-empty entity for zero length in the Scala factory" in {
+        val entity = HttpEntity(tpe, 0L, Source.empty[ByteString])
+        entity shouldEqual HttpEntity.empty(tpe)
+      }
+      "preserve the declared positive length in the Scala factory" in {
+        val entity = HttpEntity(tpe, 3L, source(abc))
+        entity.contentLengthOption shouldEqual Some(3L)
+        entity.isKnownEmpty shouldBe false
+        entity should collectBytesTo(abc)
+      }
+    }
     "support dataBytes" should {
       "Strict" in {
         Strict(tpe, abc) should collectBytesTo(abc)
