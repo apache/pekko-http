@@ -544,7 +544,15 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
           case Setting(Http2Protocol.SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, value) =>
             if (value >= 0) {
               debug(s"Setting initial window to $value")
-              multiplexer.updateDefaultWindow(value)
+              try multiplexer.updateDefaultWindow(value)
+              catch {
+                case ex: Http2Compliance.Http2ProtocolException =>
+                  // Fail the stage, rather than only pushing a GOAWAY, so that all active streams are shut down and the
+                  // connection is closed. `Http2Blueprint.errorHandling` renders the GOAWAY; pass on the last stream id,
+                  // so the peer knows which streams were processed and does not retry them.
+                  failStage(new Http2Compliance.Http2ProtocolException(ex.errorCode, ex.getMessage, lastStreamId()))
+                  settingsAppliedOk = false
+              }
             } else {
               pushGOAWAY(FLOW_CONTROL_ERROR, s"Invalid value for SETTINGS_INITIAL_WINDOW_SIZE: $value")
               settingsAppliedOk = false

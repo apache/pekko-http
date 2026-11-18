@@ -160,11 +160,33 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     updateState(streamId, _.handleOutgoingFailed(cause), "handleOutgoingFailed")
 
   /** Called by multiplexer to distribute changes from INITIAL_WINDOW_SIZE to all streams */
-  def distributeWindowDeltaToAllStreams(delta: Int): Unit =
+  def distributeWindowDeltaToAllStreams(delta: Int): Unit = {
+    var overflow = false
+    def overflowsWithInitialWindow(extraInitialWindow: Int): Boolean =
+      multiplexer.currentInitialWindow.toLong + extraInitialWindow > Http2Protocol.MaxWindowSize
     updateAllStates({
-        case s: Sending => s.increaseWindow(delta)
-        case x          => x
+        case s: Sending =>
+          if (!s.applyInitialWindowDelta(delta)) overflow = true
+          s
+        // Before the response starts, WINDOW_UPDATE credit is stored separately; a future OutStream will use
+        // the new initial window. Validate that sum now rather than deferring the error until the response.
+        case s: CollectingIncomingData =>
+          if (overflowsWithInitialWindow(s.extraInitialWindow)) overflow = true
+          s
+        case s: OpenReceivingDataFirst =>
+          if (overflowsWithInitialWindow(s.extraInitialWindow)) overflow = true
+          s
+        case s: HalfClosedRemoteWaitingForOutgoingStream =>
+          if (overflowsWithInitialWindow(s.extraInitialWindow)) overflow = true
+          s
+        case x => x
       }, "distributeWindowDeltaToAllStreams")
+    // SETTINGS changes have connection error scope, unlike a stream's WINDOW_UPDATE. Throw only after the
+    // state machine has completed its update, so that postStop can still shut down all remaining streams.
+    if (overflow)
+      throw new Http2Compliance.Http2ProtocolException(ErrorCode.FLOW_CONTROL_ERROR,
+        "SETTINGS_INITIAL_WINDOW_SIZE would exceed maximum stream-level flow-control window size")
+  }
 
   /** Called by the multiplexer if ready to send a data frame */
   def pullNextFrame(streamId: Int, maxSize: Int): PullFrameResult =
@@ -461,6 +483,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       super.shutdown()
     }
 
+    def applyInitialWindowDelta(delta: Int): Boolean = outStream.increaseWindow(delta)
+
     def increaseWindow(delta: Int): StreamState = {
       if (outStream.increaseWindow(delta)) this
       else {
@@ -688,8 +712,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
           totalBufferedData -= data.payload.length
           shutdown()
           multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.FLOW_CONTROL_ERROR))
-          // also close response delivery if that has already started
-          multiplexer.closeStream(streamId)
+          // also stop sending the response if that has already started
+          multiplexer.dequeueOutStream(streamId)
         } else {
           buffer ++= data.payload
           debug(
@@ -886,21 +910,29 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
     def cancelStream(): Unit = {
       cleanupStream()
-      if (isEnqueued) multiplexer.closeStream(streamId)
+      if (isEnqueued) multiplexer.dequeueOutStream(streamId)
     }
     def bufferedBytes: Int = buffer.length
 
-    override def increaseWindow(increment: Int): Boolean = if (increment >= 0) {
+    // `increment` is negative only for a SETTINGS_INITIAL_WINDOW_SIZE decrease (via `applyInitialWindowDelta`).
+    // WINDOW_UPDATE increments are always positive: frame parsing rejects others (`requirePositiveWindowUpdateIncrement`).
+    override def increaseWindow(increment: Int): Boolean = {
       val newWindow = outboundWindowLeft.toLong + increment
       if (newWindow > Http2Protocol.MaxWindowSize) {
         false
       } else {
         outboundWindowLeft = newWindow.toInt
         debug(s"Updating window for $streamId by $increment to $outboundWindowLeft buffered bytes: $bufferedBytes")
+        if (outboundWindowLeft <= 0 && isEnqueued) {
+          // nothing can be sent until the window grows again: stop scheduling the stream, `enqueueIfPossible`
+          // enqueues it again once a later increase makes it sendable
+          multiplexer.dequeueOutStream(streamId)
+          isEnqueued = false
+        }
         enqueueIfPossible()
         true
       }
-    } else true
+    }
 
     // external callbacks, need to make sure that potential stream state changing events are run through the state machine
     override def onPush(): Unit = {
