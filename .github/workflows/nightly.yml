@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         SCALA_VERSION: [2.13, 3]
-        JDK: [17, 25, 27]
+        JDK: [17, 25]
         PEKKO_VERSION: ['main']
         TLS_ENGINE_CONFIG: ['legacy-actor', 'graph-stage']
     steps:
