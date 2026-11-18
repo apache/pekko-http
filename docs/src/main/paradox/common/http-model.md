@@ -332,12 +332,6 @@ always pass on all received headers to the application. Unknown headers as well 
 to the header parser) will be made available as @apidoc[RawHeader] instances. For the ones exhibiting parsing errors a
 warning message is logged depending on the value of the `illegal-header-warnings` config setting.
 
-The modeled `Content-Type` and `Accept` headers ignore empty parameter slots, as allowed by
-[RFC 9110 sections 5.6.6, 8.3.1 and 12.5.1](https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.6).
-For example, `text/plain;;charset=UTF-8;` parses like `text/plain;charset=UTF-8`, and
-`text/plain;;q=0.5;` in `Accept` parses like `text/plain;q=0.5`. Named media parameters,
-quality weights, and media-range order are preserved; rendering omits the empty slots.
-
 Some headers have special status in HTTP and are therefore treated differently from "regular" headers:
 
 Content-Type

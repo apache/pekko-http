@@ -41,6 +41,25 @@ class HttpMessageSpec extends AnyWordSpec with Matchers {
       "consider setting `pekko.http.server.default-host-header`")
   }
 
+  "HttpMessage.encoding" should {
+    "be identity without a Content-Encoding header" in {
+      HttpRequest().encoding shouldEqual HttpEncodings.identity
+    }
+    "use the first coding of a modeled Content-Encoding header" in {
+      HttpRequest().withHeaders(`Content-Encoding`(HttpEncodings.gzip, HttpEncodings.deflate)).encoding shouldEqual
+      HttpEncodings.gzip
+    }
+    "use the first coding of a raw Content-Encoding header, as Encoder and Decoder do" in {
+      HttpRequest().withHeaders(RawHeader("cOnTeNt-EnCoDiNg", "gzip")).encoding shouldEqual HttpEncodings.gzip
+      HttpRequest().withHeaders(RawHeader("Content-Encoding", "deflate, gzip")).encoding shouldEqual
+      HttpEncodings.deflate
+    }
+    "not report identity for a raw Content-Encoding header that doesn't parse" in {
+      HttpRequest().withHeaders(RawHeader("Content-Encoding", "gzip;q=1")).encoding shouldEqual
+      HttpEncoding.custom("gzip;q=1")
+    }
+  }
+
   "HttpRequest" should {
     "provide an effective URI for relative URIs or matching Host-headers" in {
       test("/segment", "http://example.com/segment", Host("example.com"))

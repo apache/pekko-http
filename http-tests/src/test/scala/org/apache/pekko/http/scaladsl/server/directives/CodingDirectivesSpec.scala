@@ -125,6 +125,11 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
         decodeRequestWith(Gzip) { echoRequestContent }
       } ~> check { responseAs[String] shouldEqual "Hello" }
     }
+    "decode the request content if a raw Content-Encoding header says 'gzip'" in {
+      Post("/", helloGzipped) ~> RawHeader("Content-Encoding", "gzip") ~> {
+        decodeRequestWith(Gzip) { echoRequestContent }
+      } ~> check { responseAs[String] shouldEqual "Hello" }
+    }
     "reject the request content if it has encoding 'gzip' but is corrupt" in {
       // make sure there are no extra error logs
       EventFilter[IllegalRequestException](occurrences = 0).intercept {
