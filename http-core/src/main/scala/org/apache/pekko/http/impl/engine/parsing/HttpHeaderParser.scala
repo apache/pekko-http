@@ -609,42 +609,37 @@ private[http] object HttpHeaderParser {
         case '\n' =>
           if (WSP(byteChar(input, ix + 1))) scanHeaderValue(hhp, input, start, limit, log, mode)(appended(' '), ix + 2)
           else (if (sb != null) sb.toString else asciiString(input, start, ix), ix + 1)
+        case c if c >= 0xC0 && c <= 0xF7 => // lead byte of a 2-, 3- or 4-byte UTF-8 sequence
+          val length = if (c < 0xE0) 2 else if (c < 0xF0) 3 else 4
+          var i = 0
+          while (i < length) {
+            hhp.byteBuffer.put(byteAt(input, ix + i))
+            i += 1
+          }
+          val cc = hhp.decodeByteBuffer()
+          if (cc != -1) scanHeaderValue(hhp, input, start, limit, log, mode)(appended2(cc), ix + length)
+          else {
+            // Not valid UTF-8: copy the bytes as they are, one char per byte. Only the lead byte and the continuation
+            // bytes (10xxxxxx) right after it are taken as the sequence. Anything else - CR and LF in particular - is
+            // left for the next step, so that a stray lead byte at the end of a value cannot consume the line end
+            // and pull the next header line into this value.
+            var end = ix + 1
+            while (end < ix + length && (byteAt(input, end) & 0xC0) == 0x80) end += 1
+            val nsb =
+              if (sb != null) {
+                var j = ix
+                while (j < end) {
+                  sb.append(byteChar(input, j))
+                  j += 1
+                }
+                sb
+              } else null
+            scanHeaderValue(hhp, input, start, limit, log, mode)(nsb, end)
+          }
         case c =>
-          var nix = ix + 1
           val nsb =
             if (' ' <= c && c <= '\u007F') if (sb != null) sb.append(c) else null // legal 7-Bit ASCII
-            else if ((c & 0xE0) == 0xC0) { // 2-byte UTF-8 sequence?
-              hhp.byteBuffer.put(c.toByte)
-              hhp.byteBuffer.put(byteAt(input, ix + 1))
-              nix = ix + 2
-              hhp.decodeByteBuffer() match { // if we cannot decode as UTF8 we don't decode but simply copy
-                case -1 => if (sb != null) sb.append(c).append(byteChar(input, ix + 1)) else null
-                case cc => appended2(cc)
-              }
-            } else if ((c & 0xF0) == 0xE0) { // 3-byte UTF-8 sequence?
-              hhp.byteBuffer.put(c.toByte)
-              hhp.byteBuffer.put(byteAt(input, ix + 1))
-              hhp.byteBuffer.put(byteAt(input, ix + 2))
-              nix = ix + 3
-              hhp.decodeByteBuffer() match { // if we cannot decode as UTF8 we don't decode but simply copy
-                case -1 =>
-                  if (sb != null) sb.append(c).append(byteChar(input, ix + 1)).append(byteChar(input, ix + 2)) else null
-                case cc => appended2(cc)
-              }
-            } else if ((c & 0xF8) == 0xF0) { // 4-byte UTF-8 sequence?
-              hhp.byteBuffer.put(c.toByte)
-              hhp.byteBuffer.put(byteAt(input, ix + 1))
-              hhp.byteBuffer.put(byteAt(input, ix + 2))
-              hhp.byteBuffer.put(byteAt(input, ix + 3))
-              nix = ix + 4
-              hhp.decodeByteBuffer() match { // if we cannot decode as UTF8 we don't decode but simply copy
-                case -1 =>
-                  if (sb != null) sb.append(c).append(byteChar(input, ix + 1)).append(byteChar(input, ix + 2)).append(
-                    byteChar(input, ix + 3))
-                  else null
-                case cc => appended2(cc)
-              }
-            } else {
+            else {
               mode match {
                 case IllegalResponseHeaderValueProcessingMode.Error =>
                   fail(s"Illegal character '${escape(c)}' in header value")
@@ -656,9 +651,8 @@ private[http] object HttpHeaderParser {
                   // just ignore the illegal character
                   sb
               }
-
             }
-          scanHeaderValue(hhp, input, start, limit, log, mode)(nsb, nix)
+          scanHeaderValue(hhp, input, start, limit, log, mode)(nsb, ix + 1)
       }
     else fail(s"HTTP header value exceeds the configured limit of ${limit - start - 2} characters",
       StatusCodes.RequestHeaderFieldsTooLarge)
