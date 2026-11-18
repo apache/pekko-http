@@ -39,7 +39,7 @@ private[http2] trait Http2Multiplexer {
   def updatePriority(priorityFrame: PriorityFrame): Unit
 
   def enqueueOutStream(streamId: Int): Unit
-  def closeStream(streamId: Int): Unit
+  def dequeueOutStream(streamId: Int): Unit
 
   def currentInitialWindow: Int
 
@@ -71,7 +71,8 @@ private[http2] object PullFrameResult {
  * - if there's connection window and the network pulls and there are no control frames to send, the multiplexer
  *   state machine calls `sendDataFrame` here. This calls `pullNextFrame` to get the next frame and more info about
  *   what the state of the stream is afterwards.
- * - stream handling can call `closeStream` to remove a potentially enqueued stream
+ * - stream handling can call `dequeueOutStream` to remove a potentially enqueued stream, e.g. when it was cancelled
+ *   or its window is used up. This only stops scheduling the stream: it does not close or reset it.
  *
  * Mixed into the Http2ServerDemux graph logic.
  */
@@ -131,7 +132,7 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
       override def updatePriority(info: PriorityFrame): Unit = prioritizer.updatePriority(info)
 
       def enqueueOutStream(streamId: Int): Unit = updateState(_.enqueueOutStream(streamId))
-      def closeStream(streamId: Int): Unit = updateState(_.closeStream(streamId))
+      def dequeueOutStream(streamId: Int): Unit = updateState(_.dequeueOutStream(streamId))
 
       /** Network pulls in new frames */
       def onPull(): Unit = updateState(_.onPull())
@@ -173,7 +174,7 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
         def pushControlFrame(frame: FrameEvent): MultiplexerState
         def connectionWindowAvailable(): MultiplexerState
         def enqueueOutStream(streamId: Int): MultiplexerState
-        def closeStream(streamId: Int): MultiplexerState
+        def dequeueOutStream(streamId: Int): MultiplexerState
 
         protected def sendDataFrame(streamId: Int): MultiplexerState = {
           val maxBytesToSend = currentMaxFrameSize min connectionWindowLeft
@@ -219,7 +220,7 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
           enqueueStream(streamId)
           WaitingForNetworkToSendData
         }
-        def closeStream(streamId: Int): MultiplexerState = this
+        def dequeueOutStream(streamId: Int): MultiplexerState = this
       }
 
       case object WaitingForData extends MultiplexerState {
@@ -234,7 +235,7 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
             enqueueStream(streamId)
             WaitingForConnectionWindow
           } else sendDataFrame(streamId)
-        def closeStream(streamId: Int): MultiplexerState = this
+        def dequeueOutStream(streamId: Int): MultiplexerState = this
       }
 
       /** Not yet pulled but data waiting to be sent */
@@ -256,8 +257,8 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
           this
         }
 
-        def closeStream(streamId: Int): MultiplexerState = {
-          // expensive operation, but only called for cancelled streams
+        def dequeueOutStream(streamId: Int): MultiplexerState = {
+          // expensive operation, but only called for cancelled streams and streams whose window is used up
           dequeueStream(streamId)
           this
         }
@@ -274,8 +275,8 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
             sendDataFrame(chosenId)
           }
 
-        def closeStream(streamId: Int): MultiplexerState = {
-          // expensive operation, but only called for cancelled streams
+        def dequeueOutStream(streamId: Int): MultiplexerState = {
+          // expensive operation, but only called for cancelled streams and streams whose window is used up
           dequeueStream(streamId)
           if (sendableOutstreams.nonEmpty) this
           else if (pulled) WaitingForData

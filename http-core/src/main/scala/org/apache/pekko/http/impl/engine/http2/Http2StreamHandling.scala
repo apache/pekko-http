@@ -706,8 +706,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
           totalBufferedData -= data.payload.length
           shutdown()
           multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.FLOW_CONTROL_ERROR))
-          // also close response delivery if that has already started
-          multiplexer.closeStream(streamId)
+          // also stop sending the response if that has already started
+          multiplexer.dequeueOutStream(streamId)
         } else {
           buffer ++= data.payload
           debug(
@@ -904,7 +904,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
     def cancelStream(): Unit = {
       cleanupStream()
-      if (isEnqueued) multiplexer.closeStream(streamId)
+      if (isEnqueued) multiplexer.dequeueOutStream(streamId)
     }
     def bufferedBytes: Int = buffer.length
 
@@ -918,7 +918,9 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         outboundWindowLeft = newWindow.toInt
         debug(s"Updating window for $streamId by $increment to $outboundWindowLeft buffered bytes: $bufferedBytes")
         if (outboundWindowLeft <= 0 && isEnqueued) {
-          multiplexer.closeStream(streamId)
+          // nothing can be sent until the window grows again: stop scheduling the stream, `enqueueIfPossible`
+          // enqueues it again once a later increase makes it sendable
+          multiplexer.dequeueOutStream(streamId)
           isEnqueued = false
         }
         enqueueIfPossible()
