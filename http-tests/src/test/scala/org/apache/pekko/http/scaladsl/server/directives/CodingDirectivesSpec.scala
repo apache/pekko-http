@@ -270,6 +270,19 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
         }
       } ~> check { response shouldEqual Ok.withHeaders(`Content-Encoding`(identity)) }
     }
+    "leave a pre-encoded response with a raw Content-Encoding header unchanged" in {
+      val header = RawHeader("cOnTeNt-EnCoDiNg", "gzip")
+      val entity = HttpEntity(ContentType(`text/plain`, `UTF-8`), helloGzipped)
+
+      Post() ~> `Accept-Encoding`(gzip) ~> {
+        encodeResponseWith(Gzip) {
+          complete(Ok.withHeaders(header).withEntity(entity))
+        }
+      } ~> check {
+        response.headers.filter(_.is("content-encoding")) shouldEqual List(header)
+        strictify(responseEntity) shouldEqual entity
+      }
+    }
     "correctly encode the chunk stream produced by a chunked response" in {
       val text = "This is a somewhat lengthy text that is being chunked by the autochunk directive!"
       val textChunks =
