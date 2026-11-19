@@ -15,6 +15,7 @@ package org.apache.pekko.http.impl.engine.http2
 
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.nio.charset.StandardCharsets
 
 import FrameEvent._
 
@@ -113,6 +114,41 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       val request = parseExpectOk(Vector(":method" -> "GET", ":scheme" -> "https", ":path" -> "/", "x-a" -> "a b",
         "x-b" -> ""))
       (request.headers.map(h => h.lowercaseName -> h.value) should contain).allOf("x-a" -> "a b", "x-b" -> "")
+    }
+
+    "decode non-ASCII octets in a header value as the HTTP/1.1 parser does" should {
+      // HPACK hands out string literals as ISO-8859-1, one char per octet, and `encodeHeaderPairs` writes each
+      // char back as that octet: a pair value here is what was on the wire
+      def wire(s: String): String = new String(s.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1)
+      def request(extra: (String, String)*): Vector[(String, String)] =
+        Vector(":method" -> "GET", ":scheme" -> "https", ":path" -> "/") ++ extra
+      def headerValues(request: HttpRequest): Seq[(String, String)] =
+        request.headers.map(h => h.lowercaseName -> h.value)
+
+      "a UTF-8 value" in {
+        val req = parseExpectOk(request("x-a" -> wire("café €"), "x-b" -> "b"))
+        (headerValues(req) should contain).allOf("x-a" -> "café €", "x-b" -> "b")
+      }
+      "an octet that is not valid UTF-8, copied as one char" in {
+        // 0xE9 alone is the lead byte of a 3-byte sequence: it must not take the line end with it, or the next
+        // field would be lost
+        val req = parseExpectOk(request("x-a" -> "café", "x-b" -> "b"))
+        (headerValues(req) should contain).allOf("x-a" -> "café", "x-b" -> "b")
+      }
+      "an obs-text octet that cannot start a UTF-8 sequence, copied as one char" in {
+        // ISO-8859-1 '°' (0xB0), 'ü' (0xFC) and 'ÿ' (0xFF): a lone continuation byte and octets that never occur in
+        // UTF-8, kept as obs-text rather than rejected as illegal characters
+        val req = parseExpectOk(request("x-a" -> "° ü ÿ", "x-b" -> "b"))
+        (headerValues(req) should contain).allOf("x-a" -> "° ü ÿ", "x-b" -> "b")
+      }
+      "a 4-byte UTF-8 sequence, decoded to a surrogate pair" in {
+        val req = parseExpectOk(request("x-a" -> wire("a \uD801\uDC1B b"), "x-b" -> "b"))
+        (headerValues(req) should contain).allOf("x-a" -> "a \uD801\uDC1B b", "x-b" -> "b")
+      }
+      "UTF-8 in cookie fields, which are joined before parsing" in {
+        val req = parseExpectOk(request("cookie" -> wire("a=café"), "cookie" -> wire("b=€")))
+        headerValues(req) should contain("cookie" -> "a=café; b=€")
+      }
     }
 
     "reject a malformed header field with a bad request rather than accepting or failing the connection" should {

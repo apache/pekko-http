@@ -17,6 +17,8 @@
 
 package org.apache.pekko.http.impl.engine.http2.client
 
+import java.nio.charset.StandardCharsets
+
 import scala.util.Try
 
 import org.apache.pekko
@@ -69,6 +71,14 @@ class ResponseParsingSpec extends PekkoSpecWithMaterializer {
       val response = parse(Seq(":status" -> "200", "x-a" -> "v")).get
       response.status should ===(StatusCodes.OK)
       response.headers.map(h => h.lowercaseName -> h.value) should contain("x-a" -> "v")
+    }
+
+    "decode non-ASCII octets in a header value as the HTTP/1.1 parser does" in {
+      // HPACK hands out string literals as ISO-8859-1, one char per octet: a pair value here is what was on the wire
+      def wire(s: String): String = new String(s.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1)
+      val response = parse(Seq(":status" -> "200", "x-a" -> wire("café €"), "x-b" -> "° ü ÿ", "x-c" -> "c")).get
+      (response.headers.map(h => h.lowercaseName -> h.value) should contain).allOf(
+        "x-a" -> "café €", "x-b" -> "° ü ÿ", "x-c" -> "c")
     }
 
     "classify ordinary status strings and status values consistently" in {
