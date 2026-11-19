@@ -483,6 +483,8 @@ Java
 You may also want to read about MediaType [Registration trees](https://en.wikipedia.org/wiki/Media_type#Registration_trees), in order to register your vendor specific media types
 in the right style / place.
 
+The default file content-type resolver maps `.aac` (ADTS) and `.loas` (LATM/LOAS) audio files to the binary `audio/aac` media type, without a charset parameter.
+
 <a id="registeringcustomstatuscodes"></a>
 ## Registering Custom Status Codes
 
