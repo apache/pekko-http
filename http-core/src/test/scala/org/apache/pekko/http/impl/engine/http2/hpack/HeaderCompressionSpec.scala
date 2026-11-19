@@ -20,12 +20,13 @@ package org.apache.pekko.http.impl.engine.http2.hpack
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-import org.apache.pekko.http.impl.engine.http2.FrameEvent
-import org.apache.pekko.http.impl.engine.http2.FrameEvent._
-import org.apache.pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
-import org.apache.pekko.stream.scaladsl.{ Sink, Source }
-import org.apache.pekko.testkit.PekkoSpec
-import org.apache.pekko.util.ByteString
+import org.apache.pekko
+import pekko.http.impl.engine.http2.FrameEvent
+import pekko.http.impl.engine.http2.FrameEvent._
+import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
+import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.testkit._
+import pekko.util.ByteString
 
 class HeaderCompressionSpec extends PekkoSpec {
   private def setting(size: Int): SettingsAckFrame =
@@ -35,7 +36,7 @@ class HeaderCompressionSpec extends PekkoSpec {
     ParsedHeadersFrame(streamId, endStream = false, values, None, None)
 
   private def compress(events: FrameEvent*): Seq[FrameEvent] =
-    Await.result(Source(events.toList).via(HeaderCompression).runWith(Sink.seq), 3.seconds)
+    Await.result(Source(events.toList).via(HeaderCompression).runWith(Sink.seq), 3.seconds.dilated)
 
   private def hex(frame: FrameEvent): String =
     frame.asInstanceOf[HeadersFrame].headerBlockFragment.map(b => f"$b%02x").mkString

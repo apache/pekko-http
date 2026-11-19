@@ -297,7 +297,7 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
         else requestPairs(custom, marker).map(_._1) should not contain name
         for (header <- Seq(RawHeader(name, "trailers"), custom); isServer <- Seq(false, true)) {
           val pairs = HttpMessageRendering.renderHeaders(Seq(header, marker), NoLogging, isServer,
-            shouldRenderAutoHeaders = false, dateHeaderRendering)
+            shouldRenderAutoHeaders = false, isTrailer = true, dateHeaderRendering)
           pairs shouldEqual Seq("x-end-to-end" -> "kept")
         }
         val trailer = Trailer(Seq(RawHeader(name, "trailers"), marker))
@@ -334,12 +334,12 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
   private def renderClientHeaders(headers: Seq[HttpHeader], builder: VectorBuilder[(String, String)],
       peerIdHeader: Option[(String, String)] = None): Unit =
     HttpMessageRendering.renderHeaders(headers, builder, peerIdHeader, NoLogging, isServer = false,
-      shouldRenderAutoHeaders = true, dateHeaderRendering = DateHeaderRendering.Unavailable)
+      shouldRenderAutoHeaders = true, isTrailer = false, dateHeaderRendering = DateHeaderRendering.Unavailable)
 
   private def renderServerHeaders(headers: Seq[HttpHeader], builder: VectorBuilder[(String, String)],
       peerIdHeader: Option[(String, String)] = None): Unit =
     HttpMessageRendering.renderHeaders(headers, builder, peerIdHeader, NoLogging, isServer = true,
-      shouldRenderAutoHeaders = true,
+      shouldRenderAutoHeaders = true, isTrailer = false,
       dateHeaderRendering = dateHeaderRendering)
 
   private lazy val dateHeaderRendering: DateHeaderRendering = new DateHeaderRendering {

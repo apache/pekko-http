@@ -298,11 +298,10 @@ private[http] object Handshake {
     /**
      * Tries to validate the HTTP response. Returns either Right(settings) or an error message if
      * the response cannot be validated.
+     *
+     * @param offeredExtensions lower-cased names of the extensions the request offered (see `extensionNames`); the
+     *                          response may only select these
      */
-    def validateResponse(response: HttpResponse, subprotocols: Seq[String], key: `Sec-WebSocket-Key`)
-        : Either[String, NegotiatedWebSocketSettings] =
-      validateResponse(response, subprotocols, key, Set.empty)
-
     def validateResponse(response: HttpResponse, subprotocols: Seq[String], key: `Sec-WebSocket-Key`,
         offeredExtensions: Set[String])
         : Either[String, NegotiatedWebSocketSettings] = {

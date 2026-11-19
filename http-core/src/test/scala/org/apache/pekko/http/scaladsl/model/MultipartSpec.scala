@@ -52,7 +52,11 @@ class MultipartSpec extends PekkoSpecWithMaterializer {
 
   "Multipart.FormData" should {
     "render explicit filename strategies identically for strict and streamed parts" in {
-      import BodyPartRenderer._
+      import Multipart.FormData.FilenameEncoding.{
+        Ascii => AsciiFilename,
+        Extended => ExtendedFilename,
+        PercentEncoded => PercentEncodedFilename
+      }
       for {
         filename <- Seq("café.txt", "plain.txt", "100%.txt")
         strategy <- Seq(ExtendedFilename, AsciiFilename, PercentEncodedFilename)
@@ -95,7 +99,11 @@ class MultipartSpec extends PekkoSpecWithMaterializer {
     }
 
     "apply explicit filename precedence only when a normal filename is present" in {
-      import BodyPartRenderer._
+      import Multipart.FormData.FilenameEncoding.{
+        Ascii => AsciiFilename,
+        Extended => ExtendedFilename,
+        PercentEncoded => PercentEncodedFilename
+      }
       val part = Multipart.FormData.BodyPart.Strict("upload", HttpEntity("body"),
         Map("filename" -> "café.txt", "filename*" -> "résumé.txt"))
       for ((strategy, filename) <- Seq(AsciiFilename -> "caf?.txt", PercentEncodedFilename -> "caf%C3%A9.txt")) {
@@ -113,7 +121,11 @@ class MultipartSpec extends PekkoSpecWithMaterializer {
     }
 
     "leave attachment filename rendering unchanged for every multipart strategy" in {
-      import BodyPartRenderer._
+      import Multipart.FormData.FilenameEncoding.{
+        Ascii => AsciiFilename,
+        Extended => ExtendedFilename,
+        PercentEncoded => PercentEncodedFilename
+      }
       val attachment = `Content-Disposition`(ContentDispositionTypes.attachment, Map("filename" -> "café.txt"))
       val part = Multipart.General.BodyPart.Strict(HttpEntity("body"), List(attachment))
       val expected = BodyPartRenderer.strict(Seq(part), "boundary", 128, DefaultNoLogging)

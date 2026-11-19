@@ -350,7 +350,7 @@ object Multipart {
      * A nonlegacy encoding overrides filename* only when filename is present.
      * Percent encoding requires support from the recipient; it does not change decoding.
      */
-    override def toEntity(boundary: String, encoding: jm.Multipart.FormData.FilenameEncoding): MessageEntity = {
+    override def toEntity(boundary: String, encoding: Multipart.FormData.FilenameEncoding): MessageEntity = {
       require(encoding != null, "filename encoding must not be null")
       val chunks = parts
         .via(BodyPartRenderer.streamed(boundary, 128, DefaultNoLogging, encoding))
@@ -377,6 +377,25 @@ object Multipart {
       super.toStrict(timeoutMillis, materializer).asScala.asInstanceOf[Future[jm.Multipart.FormData.Strict]].asJava
   }
   object FormData {
+
+    /**
+     * Outgoing filename encoding for `toEntity(boundary, encoding)`. This is the Java API's `FilenameEncoding`
+     * type, so Scala code can use it and its values from here, without importing from `javadsl`.
+     */
+    type FilenameEncoding = jm.Multipart.FormData.FilenameEncoding
+
+    /** The available outgoing filename encodings. */
+    object FilenameEncoding {
+
+      /** ASCII `filename` fallback plus an extended `filename*` parameter. This is what `toEntity` does by default. */
+      val Extended: FilenameEncoding = jm.Multipart.FormData.FilenameEncoding.Extended
+
+      /** ASCII `filename` only, replacing unsupported characters with `?`. */
+      val Ascii: FilenameEncoding = jm.Multipart.FormData.FilenameEncoding.Ascii
+
+      /** UTF-8 percent-encoded `filename` only. The recipient must support this encoding. */
+      val PercentEncoded: FilenameEncoding = jm.Multipart.FormData.FilenameEncoding.PercentEncoded
+    }
 
     /** INTERNAL API: adapt public Java accessors without casting the Multipart implementation. */
     @InternalApi
@@ -479,7 +498,7 @@ object Multipart {
      */
     case class Strict(strictParts: Seq[Multipart.FormData.BodyPart.Strict])
         extends FormData with Multipart.Strict with jm.Multipart.FormData.Strict {
-      override def toEntity(boundary: String, encoding: jm.Multipart.FormData.FilenameEncoding): HttpEntity.Strict = {
+      override def toEntity(boundary: String, encoding: Multipart.FormData.FilenameEncoding): HttpEntity.Strict = {
         require(encoding != null, "filename encoding must not be null")
         HttpEntity(mediaType.withBoundary(boundary),
           BodyPartRenderer.strict(strictParts, boundary, 128, DefaultNoLogging, encoding))

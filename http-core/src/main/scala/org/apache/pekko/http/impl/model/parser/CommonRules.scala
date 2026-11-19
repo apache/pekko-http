@@ -98,6 +98,8 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
     (`IMF-fixdate` | `asctime-date` | '0' ~ push(DateTime.MinValue)) ~ OWS
   }
 
+  // `cookie-IMF-fixdate` below is a copy of this rule for cookie Expires dates: keep the two in sync when
+  // the date shape changes.
   def `IMF-fixdate` = rule { // mixture of the spec-ed `IMF-fixdate` and `rfc850-date`
     (`day-name-l` | `day-name`) ~ ", " ~ (date1 | date2) ~ ' ' ~ `time-of-day` ~ ' ' ~ ("GMT" | "UTC") ~> {
       (wkday, day, month, year, hour, min, sec) => createDateTime(year, month, day, hour, min, sec, wkday)
@@ -139,6 +141,8 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
     "Sunday" ~ push(0) | "Monday" ~ push(1) | "Tuesday" ~ push(2) | "Wednesday" ~ push(3) | "Thursday" ~ push(4) |
     "Friday" ~ push(5) | "Saturday" ~ push(6))
 
+  // `cookie-asctime-date` below is a copy of this rule for cookie Expires dates: keep the two in sync when
+  // the date shape changes.
   def `asctime-date` = rule {
     `day-name` ~ ' ' ~ date3 ~ ' ' ~ `time-of-day` ~ ' ' ~ year ~> {
       (wkday, month, day, hour, min, sec, year) => createDateTime(year, month, day, hour, min, sec, wkday)
@@ -309,6 +313,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
 
   def `cookie-time-of-day` = rule { (digit2 | digit) ~ ':' ~ (digit2 | digit) ~ ':' ~ (digit2 | digit) }
 
+  // Copy of `IMF-fixdate` with `cookie-time-of-day` and the `-0000` zone: keep the two in sync.
   def `cookie-IMF-fixdate` = rule {
     (`day-name-l` | `day-name`) ~ ", " ~
     (date1 | date2) ~ ' ' ~ `cookie-time-of-day` ~ ' ' ~
@@ -317,6 +322,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
     }
   }
 
+  // Copy of `asctime-date` with `cookie-time-of-day` and an optional ` -0000` zone: keep the two in sync.
   def `cookie-asctime-date` = rule {
     `day-name` ~ ' ' ~ date3 ~ ' ' ~ `cookie-time-of-day` ~ ' ' ~ year ~ optional(" -0000") ~> {
       (wkday, month, day, hour, min, sec, year) => createDateTime(year, month, day, hour, min, sec, wkday)
