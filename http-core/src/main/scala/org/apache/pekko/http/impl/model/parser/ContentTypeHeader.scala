@@ -25,7 +25,7 @@ private[parser] trait ContentTypeHeader { this: Parser with CommonRules with Com
 
   // RFC 9110 sections 5.6.6 and 8.3.1: parameter slots may be empty.
   def `content-type` = rule {
-    `type` ~ '/' ~ subtype ~ zeroOrMore(oneOrMore(ws(';')) ~ parameter) ~ zeroOrMore(ws(';')) ~ EOI ~>
+    `media-type` ~ EOI ~>
     ((main, sub, params) => headers.`Content-Type`(contentType(main, sub, params)))
   }
 

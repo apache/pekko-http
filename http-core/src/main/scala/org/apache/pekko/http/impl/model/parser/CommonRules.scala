@@ -167,8 +167,10 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   // http://tools.ietf.org/html/rfc7231#section-3.1.1.1
   // ******************************************************************************************
 
+  // RFC 9110 sections 5.6.6 and 8.3.1: parameter slots may be empty. Shared by `Content-Type` and the `type`
+  // parameter of `Link`.
   def `media-type`: RuleN[String :: String :: Seq[(String, String)] :: HNil] = rule {
-    `type` ~ '/' ~ subtype ~ zeroOrMore(ws(';') ~ parameter)
+    `type` ~ '/' ~ subtype ~ zeroOrMore(oneOrMore(ws(';')) ~ parameter) ~ zeroOrMore(ws(';'))
   }
 
   def `type` = rule { token }

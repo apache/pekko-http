@@ -618,6 +618,10 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       """Link: </>; rev=foo; hreflang=de-de; media=print; type=application/json""" =!=
         Link(Uri("/"), LinkParams.rev("foo"), LinkParams.hreflang(Language("de", "de")), LinkParams.media("print"),
           LinkParams.`type`(`application/json`))
+      // empty parameter slots in the media type, as for Content-Type
+      """Link: </>; type="application/json;;foo=bar;"""" =!=
+        Link(Uri("/"), LinkParams.`type`(`application/json`.withParams(Map("foo" -> "bar")))).renderedTo(
+          """</>; type="application/json; foo=bar"""")
 
       /* RFC 5988 examples */
       """Link: <http://example.com/TheBook/chapter2>; rel="previous"; title="previous chapter"""" =!=

@@ -127,11 +127,21 @@ sealed trait HttpMessage extends jm.HttpMessage {
 
   /**
    * The content encoding as specified by the Content-Encoding header. If no Content-Encoding header is present the
-   * default value 'identity' is returned.
+   * default value 'identity' is returned. A Content-Encoding header given as a `RawHeader` (for example one added by
+   * an application) counts as well, as it does for `Encoder.encodeMessage` and `Decoder.decodeMessage`.
    */
   def encoding: HttpEncoding = header[`Content-Encoding`] match {
     case Some(x) => x.encodings.head
-    case None    => HttpEncodings.identity
+    case None    =>
+      headers.find(_.is(`Content-Encoding`.lowercaseName)) match {
+        case Some(raw) =>
+          `Content-Encoding`.parseFromValueString(raw.value) match {
+            case Right(parsed) => parsed.encodings.head
+            // not identity: that would let the still-encoded entity pass as unencoded
+            case Left(_) => HttpEncoding.custom(raw.value.trim)
+          }
+        case None => HttpEncodings.identity
+      }
   }
 
   /** Returns the first header of the given type if there is one */
