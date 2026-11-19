@@ -96,7 +96,10 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
                 // treat an unrecognized status code as being equivalent to the x00 status code of that class
                 // https://tools.ietf.org/html/rfc7231#section-6
                 try {
+                  // RFC 9112 section 4: a client SHOULD ignore the reason-phrase content. Drop characters that a
+                  // status model can't carry (controls other than HTAB, and DEL) instead of failing the response.
                   val reason = asciiString(input, reasonStartIdx, reasonEndIdx)
+                    .filter(c => c == '\t' || (c >= ' ' && c != '\u007f'))
                   StatusCodes.custom(code, reason)
                 } catch {
                   case NonFatal(_) => badStatusCodeSpecific(code)
