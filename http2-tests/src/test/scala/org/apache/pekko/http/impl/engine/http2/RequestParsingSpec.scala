@@ -135,6 +135,12 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         val req = parseExpectOk(request("x-a" -> "café", "x-b" -> "b"))
         (headerValues(req) should contain).allOf("x-a" -> "café", "x-b" -> "b")
       }
+      "an obs-text octet that cannot start a UTF-8 sequence, copied as one char" in {
+        // ISO-8859-1 '°' (0xB0), 'ü' (0xFC) and 'ÿ' (0xFF): a lone continuation byte and octets that never occur in
+        // UTF-8, kept as obs-text rather than rejected as illegal characters
+        val req = parseExpectOk(request("x-a" -> "° ü ÿ", "x-b" -> "b"))
+        (headerValues(req) should contain).allOf("x-a" -> "° ü ÿ", "x-b" -> "b")
+      }
     }
 
     "reject a malformed header field with a bad request rather than accepting or failing the connection" should {
