@@ -222,6 +222,26 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
         ByteString(s"${newLine}x"))._2 shouldEqual RawHeader("X-B", "x café")
     }
 
+    "copy an obs-text octet that cannot start a UTF-8 sequence into the value one char per byte" in new TestSetup() {
+      // lone continuation bytes and 0xF8-0xFF, e.g. ISO-8859-1 '°', '£', 'ø', 'ü' and 'ÿ'
+      for (octet <- Seq(0x80, 0xA3, 0xB0, 0xBF, 0xF8, 0xFC, 0xFF)) {
+        val bytes =
+          ByteString("X-A: ") ++ ByteString(octet.toByte) ++ ByteString(s"x${newLine}X-B: b${newLine}x")
+        val (nextLine, header) = parseLineFromBytes(bytes)
+        header shouldEqual RawHeader("X-A", s"${octet.toChar}x")
+        parser.parseHeaderLine(bytes, nextLine)()
+        parser.resultHeader shouldEqual RawHeader("X-B", "b")
+        // the same with a tab earlier in the value, which makes the parser build the value char by char
+        parseLineFromBytes(ByteString("X-C: a\t") ++ ByteString(octet.toByte) ++
+          ByteString(s"${newLine}x"))._2 shouldEqual RawHeader("X-C", s"a ${octet.toChar}")
+      }
+    }
+
+    "still reject a control character in a header value" in new TestSetup() {
+      (the[ParsingException] thrownBy parseLine(s"X-A: a\u0001b${newLine}x") should have).message(
+        "Illegal character '\\u0001' in header value")
+    }
+
     "parse multiple header lines subsequently with UTF-8 characters one after another without crashing" in
     new TestSetup {
       parseLine(s"""Content-Disposition: form-data; name="test"; filename="λ"${newLine}x""")
