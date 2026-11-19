@@ -158,3 +158,5 @@ $ curl -k -v https://localhost:8443
 ```
 
 If your curl output looks like above, you have successfully configured HTTP/2.
+
+Connection-specific headers set on the model are dropped with a warning when sent over HTTP/2.
