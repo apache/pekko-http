@@ -141,6 +141,14 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         val req = parseExpectOk(request("x-a" -> "° ü ÿ", "x-b" -> "b"))
         (headerValues(req) should contain).allOf("x-a" -> "° ü ÿ", "x-b" -> "b")
       }
+      "a 4-byte UTF-8 sequence, decoded to a surrogate pair" in {
+        val req = parseExpectOk(request("x-a" -> wire("a \uD801\uDC1B b"), "x-b" -> "b"))
+        (headerValues(req) should contain).allOf("x-a" -> "a \uD801\uDC1B b", "x-b" -> "b")
+      }
+      "UTF-8 in cookie fields, which are joined before parsing" in {
+        val req = parseExpectOk(request("cookie" -> wire("a=café"), "cookie" -> wire("b=€")))
+        headerValues(req) should contain("cookie" -> "a=café; b=€")
+      }
     }
 
     "reject a malformed header field with a bad request rather than accepting or failing the connection" should {
