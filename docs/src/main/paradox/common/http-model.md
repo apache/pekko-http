@@ -470,6 +470,8 @@ By default, JavaScript files with `.js` or `.mjs` extensions are resolved to `te
 JavaScript files served by the file and resource directives. The legacy `application/javascript`
 media type remains available for explicit use and is still accepted when parsing messages.
 
+The registered `application/manifest+json` type uses UTF-8; the default file content-type resolver maps `.webmanifest` files to it without a charset parameter.
+
 Sometimes you may want to define a custom media type and inform the parser infrastructure about how to handle these custom
 media types, e.g. that `application/custom` is to be treated as `NonBinary` with `WithFixedCharset`. To achieve this you
 need to register the custom media type in the server's settings by configuring @apidoc[ParserSettings] like this:

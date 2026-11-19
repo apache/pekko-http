@@ -375,6 +375,7 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
     register("application" -> "javascript", applicationWithOpenCharset("javascript", "js", "mjs"))
   val `application/json`                                                          = awfc("json", HttpCharsets.`UTF-8`, "json")
   val `application/json-patch+json`                                               = awfc("json-patch+json", HttpCharsets.`UTF-8`)
+  val `application/manifest+json`                                                 = awfc("manifest+json", HttpCharsets.`UTF-8`, "webmanifest")
   val `application/merge-patch+json`                                              = awfc("merge-patch+json", HttpCharsets.`UTF-8`)
   val `application/problem+json`                                                  = awfc("problem+json", HttpCharsets.`UTF-8`)
   val `application/grpc+proto`                                                    = abin("grpc+proto", NotCompressible)
