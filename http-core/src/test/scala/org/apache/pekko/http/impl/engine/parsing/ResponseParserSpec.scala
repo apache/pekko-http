@@ -118,8 +118,14 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         "HTTP/1.1 205 Reset Content\n\n" should parseTo(GET, HttpResponse(ResetContent))
       }
 
-      "a 205 response to HEAD without waiting for framing" in new Test {
-        "HTTP/1.1 205 Reset Content\n\n" should parseTo(HEAD, HttpResponse(ResetContent))
+      "a chunked 205 response to HEAD without waiting for a chunk" in new Test {
+        val parser = new HttpResponseParser(parserSettings, HttpHeaderParser(parserSettings, system.log))
+        parser.setContextForNextResponse(HttpResponseParser.ResponseContext(HEAD, None))
+        val start = parser.parseBytes(ByteString(prep("HTTP/1.1 205 Reset Content\nTransfer-Encoding: chunked\n\n")))
+          .asInstanceOf[ResponseStart]
+        start.statusCode shouldEqual ResetContent
+        start.createEntity shouldEqual StrictEntityCreator(HttpEntity.Empty)
+        parser.onPull() shouldEqual MessageEnd
       }
 
       "a response with a simple body" in new Test {
@@ -435,6 +441,26 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
           |
           |""" should parseToError(MessageStartError(BadRequest,
           ErrorInfo("A chunked response must not contain a Content-Length header")))
+      }
+
+      "a 205 response with a non-zero Content-Length" in new Test {
+        """HTTP/1.1 205 Reset Content
+          |Content-Length: 3
+          |
+          |abc""" should parseToError(MessageStartError(BadRequest,
+          ErrorInfo("A 205 response must not contain content")))
+      }
+
+      "a chunked 205 response with a non-empty chunk" in new Test {
+        """HTTP/1.1 205 Reset Content
+          |Transfer-Encoding: chunked
+          |
+          |3
+          |abc
+          |0
+          |
+          |""" should parseToError(MessageStartError(BadRequest,
+          ErrorInfo("A 205 response must not contain content")))
       }
     }
   }
