@@ -636,6 +636,11 @@ private[http] object HttpHeaderParser {
               } else null
             scanHeaderValue(hhp, input, start, limit, log, mode)(nsb, end)
           }
+        case c if c >= 0x80 =>
+          // Any other obs-text octet (RFC 9110 section 5.5): a continuation byte without a lead byte, or 0xF8-0xFF,
+          // which never occur in UTF-8. Recipients should treat obs-text as opaque data, so copy it as one char per
+          // byte, as for an invalid sequence above, rather than rejecting it as an illegal character.
+          scanHeaderValue(hhp, input, start, limit, log, mode)(if (sb != null) sb.append(c) else null, ix + 1)
         case c =>
           val nsb =
             if (' ' <= c && c <= '\u007F') if (sb != null) sb.append(c) else null // legal 7-Bit ASCII
