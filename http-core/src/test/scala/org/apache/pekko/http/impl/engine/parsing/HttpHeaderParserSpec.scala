@@ -224,7 +224,8 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
         val bytes =
           ByteString("X-A: ") ++ ByteString(octet.toByte) ++ ByteString(s"x${newLine}X-B: b${newLine}x")
         val (nextLine, header) = parseLineFromBytes(bytes)
-        header shouldEqual RawHeader("X-A", s"${octet.toChar}x")
+        // on 1.5.x a value without a tab is copied with Byte.toChar, which sign-extends non-ASCII bytes
+        header shouldEqual RawHeader("X-A", s"${octet.toByte.toChar}x")
         parser.parseHeaderLine(bytes, nextLine)()
         parser.resultHeader shouldEqual RawHeader("X-B", "b")
         // the same with a tab earlier in the value, which makes the parser build the value char by char
