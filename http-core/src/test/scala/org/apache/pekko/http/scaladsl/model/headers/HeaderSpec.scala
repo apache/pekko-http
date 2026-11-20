@@ -70,6 +70,19 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
       MediaTypes.forExtension("unknown-extension") shouldEqual MediaTypes.`application/octet-stream`
     }
 
+    "register web app manifests with fixed UTF-8 and no rendered charset parameter" in {
+      val manifest: MediaType.WithFixedCharset = MediaTypes.`application/manifest+json`
+      MediaTypes.forExtension("manifest") shouldEqual MediaTypes.`text/cache-manifest`
+      manifest.charset shouldEqual HttpCharsets.`UTF-8`
+      manifest.fileExtensions shouldEqual List("webmanifest")
+      MediaTypes.forExtension("webmanifest") shouldEqual manifest
+      MediaTypes.forExtension("WEBMANIFEST") shouldEqual manifest
+      ContentType.parse("application/manifest+json") shouldEqual Right(ContentType(manifest))
+      ContentType.parse("APPLICATION/MANIFEST+JSON") shouldEqual Right(ContentType(manifest))
+      ContentType(manifest).toString shouldEqual "application/manifest+json"
+      MediaTypes.forExtension("json") shouldEqual MediaTypes.`application/json`
+    }
+
     "provide parse method" - {
       "successful parse run" in {
         MediaType.parse("application/gnutar") shouldEqual Right(MediaTypes.`application/gnutar`)

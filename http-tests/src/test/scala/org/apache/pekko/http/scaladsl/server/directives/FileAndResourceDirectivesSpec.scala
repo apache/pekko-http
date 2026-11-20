@@ -44,6 +44,18 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       }
     }
 
+    "resolve web app manifests with fixed UTF-8 regardless of the default charset" in {
+      val resolvers =
+        Seq(ContentTypeResolver.Default, ContentTypeResolver.withDefaultCharset(HttpCharsets.`ISO-8859-1`))
+      resolvers.foreach { resolver =>
+        Seq("app.webmanifest", "app.WEBMANIFEST").foreach { filename =>
+          val contentType = resolver(filename)
+          contentType shouldEqual ContentType(`application/manifest+json`)
+          contentType.toString shouldEqual "application/manifest+json"
+        }
+      }
+    }
+
     for ((extension, expected, compressible) <- Seq(
         ("wasm", "application/wasm", true),
         ("avif", "image/avif", false));

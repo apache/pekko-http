@@ -37,6 +37,8 @@ public final class MediaTypes {
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divjson();
   public static final MediaType.WithFixedCharset APPLICATION_JSON_PATCH_JSON =
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divjson$minuspatch$plusjson();
+  public static final MediaType.WithFixedCharset APPLICATION_MANIFEST_JSON =
+      org.apache.pekko.http.scaladsl.model.MediaTypes.application$divmanifest$plusjson();
   public static final MediaType.WithFixedCharset APPLICATION_MERGE_PATCH_JSON =
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divmerge$minuspatch$plusjson();
   public static final MediaType.Binary APPLICATION_LHA =

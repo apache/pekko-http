@@ -46,6 +46,16 @@ public class HttpMessageTest {
   }
 
   @Test
+  public void testWebManifestMediaType() {
+    MediaType.WithFixedCharset manifest = MediaTypes.APPLICATION_MANIFEST_JSON;
+    assertEquals(HttpCharsets.UTF_8, manifest.toContentType().charset());
+    assertEquals("application/manifest+json", manifest.toString());
+    assertEquals(
+        "application/manifest+json",
+        HttpEntities.create(manifest.toContentType(), "{}").getContentType().toString());
+  }
+
+  @Test
   public void testRetrieveAttributeByKey() {
     AttributeKey<String> oneStringKey = AttributeKey.create("one", String.class);
     // keys with the same type but different names should be considered different
