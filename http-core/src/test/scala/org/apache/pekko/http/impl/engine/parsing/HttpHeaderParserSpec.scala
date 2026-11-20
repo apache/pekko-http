@@ -195,6 +195,50 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
       RawHeader("4-UTF8-Bytes", "Surrogate pairs: \uD801\uDC1B\uD801\uDC04\uD801\uDC1B!")
     }
 
+    "not let an invalid UTF-8 sequence at the end of a value consume the line end" in new TestSetup() {
+      // lead bytes of a 2-, 3- and 4-byte sequence, followed directly by the line end
+      for (lead <- Seq(0xC3, 0xE9, 0xF0)) {
+        val bytes = ByteString("X-A: caf") ++ ByteString(lead.toByte) ++ ByteString(s"${newLine}X-B: b${newLine}x")
+        val (nextLine, header) = parseLineFromBytes(bytes)
+        // on 1.5.x a value without a tab is copied with Byte.toChar, which sign-extends non-ASCII bytes
+        header shouldEqual RawHeader("X-A", "caf" + lead.toByte.toChar)
+        nextLine shouldEqual 9 + newLine.length
+        parser.parseHeaderLine(bytes, nextLine)()
+        parser.resultHeader shouldEqual RawHeader("X-B", "b")
+      }
+    }
+
+    "copy an invalid UTF-8 sequence into the value one char per byte" in new TestSetup() {
+      // 0xE9 0x80 is cut short by 'a', which is then read as an ordinary char
+      parseLineFromBytes(ByteString("X-A: caf") ++ ByteString(0xE9.toByte, 0x80.toByte) ++
+        ByteString(s"abc${newLine}x"))._2 shouldEqual RawHeader("X-A",
+        "caf" + 0xE9.toByte.toChar + 0x80.toByte.toChar + "abc")
+      // the same with a tab earlier in the value, which makes the parser build the value char by char
+      parseLineFromBytes(ByteString("X-B: x\tcaf") ++ ByteString(0xE9.toByte) ++
+        ByteString(s"${newLine}x"))._2 shouldEqual RawHeader("X-B", "x café")
+    }
+
+    "copy an obs-text octet that cannot start a UTF-8 sequence into the value one char per byte" in new TestSetup() {
+      // lone continuation bytes and 0xF8-0xFF, e.g. ISO-8859-1 '°', '£', 'ø', 'ü' and 'ÿ'
+      for (octet <- Seq(0x80, 0xA3, 0xB0, 0xBF, 0xF8, 0xFC, 0xFF)) {
+        val bytes =
+          ByteString("X-A: ") ++ ByteString(octet.toByte) ++ ByteString(s"x${newLine}X-B: b${newLine}x")
+        val (nextLine, header) = parseLineFromBytes(bytes)
+        // on 1.5.x a value without a tab is copied with Byte.toChar, which sign-extends non-ASCII bytes
+        header shouldEqual RawHeader("X-A", s"${octet.toByte.toChar}x")
+        parser.parseHeaderLine(bytes, nextLine)()
+        parser.resultHeader shouldEqual RawHeader("X-B", "b")
+        // the same with a tab earlier in the value, which makes the parser build the value char by char
+        parseLineFromBytes(ByteString("X-C: a\t") ++ ByteString(octet.toByte) ++
+          ByteString(s"${newLine}x"))._2 shouldEqual RawHeader("X-C", s"a ${octet.toChar}")
+      }
+    }
+
+    "still reject a control character in a header value" in new TestSetup() {
+      (the[ParsingException] thrownBy parseLine(s"X-A: a\u0001b${newLine}x") should have).message(
+        "Illegal character '\\u0001' in header value")
+    }
+
     "parse multiple header lines subsequently with UTF-8 characters one after another without crashing" in new TestSetup {
       parseLine(s"""Content-Disposition: form-data; name="test"; filename="λ"${newLine}x""")
       // The failing parsing line is one that must share a prefix with the utf-8 line up to the non-ascii char. The next character
