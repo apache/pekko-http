@@ -228,6 +228,8 @@ public final class MediaTypes {
   public static final MediaType.Binary APPLICATION_ZSTD =
       org.apache.pekko.http.scaladsl.model.MediaTypes.application$divzstd();
 
+  public static final MediaType.Binary AUDIO_AAC =
+      org.apache.pekko.http.scaladsl.model.MediaTypes.audio$divaac();
   public static final MediaType.Binary AUDIO_AIFF =
       org.apache.pekko.http.scaladsl.model.MediaTypes.audio$divaiff();
   public static final MediaType.Binary AUDIO_BASIC =

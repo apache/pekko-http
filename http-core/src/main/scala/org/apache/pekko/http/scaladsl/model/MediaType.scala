@@ -453,6 +453,7 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
   val `application/zip`                                                           = abin("zip", NotCompressible, "zip")
   val `application/zstd`                                                          = abin("zstd", NotCompressible, "zst")
 
+  val `audio/aac`         = aud("aac", NotCompressible, "aac", "loas")
   val `audio/aiff`        = aud("aiff", Compressible, "aif", "aifc", "aiff")
   val `audio/basic`       = aud("basic", Compressible, "au", "snd")
   val `audio/midi`        = aud("midi", Compressible, "mid", "midi", "kar")

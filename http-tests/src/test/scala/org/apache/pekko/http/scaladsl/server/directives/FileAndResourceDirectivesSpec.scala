@@ -57,6 +57,22 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     }
   }
 
+  "ContentTypeResolver.Default for audio/aac" should {
+    "resolve AAC and LOAS audio as binary without a charset" in {
+      val resolvers =
+        Seq(ContentTypeResolver.Default, ContentTypeResolver.withDefaultCharset(HttpCharsets.`ISO-8859-1`))
+      resolvers.foreach { resolver =>
+        Seq("audio.aac", "audio.AAC", "audio.loas", "audio.LOAS").foreach { filename =>
+          val contentType = resolver(filename)
+          contentType shouldEqual ContentType(`audio/aac`)
+          contentType shouldBe a[ContentType.Binary]
+          contentType.toString shouldEqual "audio/aac"
+          contentType.mediaType.isCompressible shouldBe false
+        }
+      }
+    }
+  }
+
   "ContentTypeResolver.Default for application/zstd" should {
     for (suffix <- Seq("zst", "ZST")) {
       s"resolve .$suffix without adding a charset" in {

@@ -89,6 +89,20 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
     }
   }
 
+  "AAC media type" - {
+    "register AAC audio as a non-compressible binary media type" in {
+      val aac: MediaType.Binary = MediaTypes.`audio/aac`
+      aac.isCompressible shouldBe false
+      aac.fileExtensions shouldEqual List("aac", "loas")
+      for (extension <- Seq("aac", "AAC", "loas", "LOAS"))
+        MediaTypes.forExtension(extension) shouldEqual aac
+      ContentType.parse("audio/aac") shouldEqual Right(ContentType(aac))
+      ContentType.parse("AUDIO/AAC") shouldEqual Right(ContentType(aac))
+      ContentType(aac).toString shouldEqual "audio/aac"
+      MediaTypes.forExtension("mp3") shouldEqual MediaTypes.`audio/mpeg`
+    }
+  }
+
   "ContentType should" - {
     "provide parse method" - {
       "successful parse run" in {
