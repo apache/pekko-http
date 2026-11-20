@@ -54,27 +54,48 @@ object StatusCodes extends ObjectRegistry[Int, StatusCode] {
   // format: OFF
   final case class Informational private[StatusCodes] (intValue: Int)(val reason: String,
                                                                 val defaultMessage: String) extends HttpSuccess {
+    validateReason(reason)
     def allowsEntity = false
     def isRedirection: Boolean = false
   }
   final case class Success       private[StatusCodes] (intValue: Int)(val reason: String, val defaultMessage: String,
                                                                 val allowsEntity: Boolean = true) extends HttpSuccess {
+    validateReason(reason)
     def isRedirection: Boolean = false
   }
   final case class Redirection   private[StatusCodes] (intValue: Int)(val reason: String, val defaultMessage: String,
                                                                 val htmlTemplate: String, val allowsEntity: Boolean = true) extends HttpSuccess {
+    validateReason(reason)
     def isRedirection: Boolean = true
   }
-  final case class ClientError   private[StatusCodes] (intValue: Int)(val reason: String, val defaultMessage: String) extends HttpFailure
-  final case class ServerError   private[StatusCodes] (intValue: Int)(val reason: String, val defaultMessage: String) extends HttpFailure
+  final case class ClientError   private[StatusCodes] (intValue: Int)(val reason: String, val defaultMessage: String) extends HttpFailure {
+    validateReason(reason)
+  }
+  final case class ServerError   private[StatusCodes] (intValue: Int)(val reason: String, val defaultMessage: String) extends HttpFailure {
+    validateReason(reason)
+  }
 
   final case class CustomStatusCode private[StatusCodes] (intValue: Int)(
     val reason: String,
     val defaultMessage: String,
     val isSuccess: Boolean,
     val allowsEntity: Boolean) extends StatusCode {
+    validateReason(reason)
     def isFailure: Boolean = !isSuccess
     def isRedirection: Boolean = false
+  }
+
+  // Validate at construction so generated case-class apply/copy methods share the same invariant.
+  private def validateReason(reason: String): Unit = {
+    require(reason != null, "Status code reason must not be null")
+    var index = 0
+    while (index < reason.length) {
+      val char = reason.charAt(index)
+      // RFC 9112 section 4: HTAB / SP / VCHAR / obs-text. Rendering writes one byte per character.
+      if ((char < 0x20 && char != '\t') || char == 0x7f || char > 0xff)
+        throw new IllegalArgumentException(s"Invalid character in status code reason at index $index")
+      index += 1
+    }
   }
 
   private def reg[T <: StatusCode](code: T): T = {
@@ -88,11 +109,17 @@ object StatusCodes extends ObjectRegistry[Int, StatusCode] {
    * changes the parser behavior: If it is set to true, a response with this status code is required to include a
    * `Content-Length` header to be parsed correctly when keep-alive is enabled (which is the default in HTTP/1.1).
    * If `allowsEntity` is false, an entity is never expected.
+   * The reason must contain only HTAB, printable ASCII or ISO-8859-1 characters above DEL; it may be empty.
+   * Invalid reasons are rejected with an `IllegalArgumentException`.
    */
   def custom(intValue: Int, reason: String, defaultMessage: String, isSuccess: Boolean, allowsEntity: Boolean): StatusCode =
     StatusCodes.CustomStatusCode(intValue)(reason, defaultMessage, isSuccess, allowsEntity)
 
-  /** Create a custom status code with default behavior for its value region. */
+  /**
+   * Create a custom status code with default behavior for its value region.
+   * The reason must contain only HTAB, printable ASCII or ISO-8859-1 characters above DEL; it may be empty.
+   * Invalid reasons are rejected with an `IllegalArgumentException`.
+   */
   def custom(intValue: Int, reason: String, defaultMessage: String = ""): StatusCode =
     if (100 to 199 contains intValue) Informational(intValue)(reason, defaultMessage)
     else if (200 to 299 contains intValue) Success(intValue)(reason, defaultMessage)

@@ -183,14 +183,20 @@ public final class StatusCodes {
   public static final StatusCode NETWORK_CONNECT_TIMEOUT =
       org.apache.pekko.http.scaladsl.model.StatusCodes.NetworkConnectTimeout();
 
-  /** Create a custom status code. */
+  /**
+   * Create a custom status code. The reason may be empty and may contain HTAB, printable ASCII, or
+   * ISO-8859-1 characters above DEL. Invalid reasons cause an IllegalArgumentException.
+   */
   public static StatusCode custom(
       int intValue, String reason, String defaultMessage, boolean isSuccess, boolean allowsEntity) {
     return org.apache.pekko.http.scaladsl.model.StatusCodes.custom(
         intValue, reason, defaultMessage, isSuccess, allowsEntity);
   }
 
-  /** Create a custom status code. */
+  /**
+   * Create a custom status code. The reason may be empty and may contain HTAB, printable ASCII, or
+   * ISO-8859-1 characters above DEL. Invalid reasons cause an IllegalArgumentException.
+   */
   public static StatusCode custom(int intValue, String reason, String defaultMessage) {
     return org.apache.pekko.http.scaladsl.model.StatusCodes.custom(
         intValue, reason, defaultMessage);
