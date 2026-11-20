@@ -17,6 +17,23 @@ request themselves without passing it on to an inner route.
 So in most cases the inner-most element of a route structure branch is one of the @ref[RouteDirectives](../route-directives/index.md) or
 @apidoc[FileAndResourceDirectives].
 
+## Content types
+
+The file and resource directives pick the `Content-Type` of a response from the file name using a `ContentTypeResolver`.
+@scala[It is passed implicitly, and defaults to `ContentTypeResolver.Default`]@java[By default they use the same
+resolver as the Scala DSL's `ContentTypeResolver.Default`; overloads taking a `ContentTypeResolver` let you pass your
+own], which looks up the file extension among the predefined media types.
+
+To serve file types that Pekko HTTP does not predefine, or to override a predefined mapping, use
+`ContentTypeResolver.withExtensions`. It looks up the given extensions first, ignoring case, and otherwise behaves
+like the default, including for precompressed `.gz` files:
+
+Scala
+:  @@snip [FileAndResourceDirectivesExamplesSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/directives/FileAndResourceDirectivesExamplesSpec.scala) { #content-type-resolver-with-extensions }
+
+Java
+:  @@snip [FileAndResourceDirectivesExamplesTest.java](/docs/src/test/java/docs/http/javadsl/server/directives/FileAndResourceDirectivesExamplesTest.java) { #content-type-resolver-with-extensions }
+
 @@toc { depth=1 }
 
 @@@ index
