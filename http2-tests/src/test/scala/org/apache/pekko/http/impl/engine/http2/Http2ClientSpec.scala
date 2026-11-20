@@ -841,6 +841,20 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         }
       }
 
+      "fail an exposed unfinished response entity when the peer closes its sending side".inAssertAllStagesStopped(
+        new ReceivingResponseEntity {
+          receiveEntityData()
+          // Drain the connection- and stream-level window updates.
+          network.expectWindowUpdate()
+          network.expectWindowUpdate()
+
+          network.fromNet.sendComplete()
+
+          entity.expectError() shouldBe theSameInstanceAs(Http2StreamHandling.ConnectionWasAbortedException)
+          expectGracefulCompletion()
+          user.requestOut.expectCancellation()
+        })
+
       "preserve the connection failure in the delivered entity".inAssertAllStagesStopped(
         new ReceivingResponseEntity {
           // a second request that is still sending its entity and has no response yet when the connection fails
