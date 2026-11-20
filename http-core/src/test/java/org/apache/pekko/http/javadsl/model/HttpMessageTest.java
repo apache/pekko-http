@@ -33,6 +33,19 @@ import org.junit.jupiter.api.Test;
 
 public class HttpMessageTest {
   @Test
+  public void testJavaScriptMediaType() {
+    MediaType.WithOpenCharset javascript = MediaTypes.TEXT_JAVASCRIPT;
+    HttpResponse response =
+        HttpResponse.create()
+            .withEntity(
+                HttpEntities.create(
+                    javascript.toContentType(HttpCharsets.UTF_8), "const answer = 42;"));
+    assertEquals("text/javascript", response.entity().getContentType().mediaType().toString());
+    assertEquals("application/javascript", MediaTypes.APPLICATION_JAVASCRIPT.toString());
+    assertEquals("text/javascript; charset=UTF-8", response.entity().getContentType().toString());
+  }
+
+  @Test
   public void testRetrieveAttributeByKey() {
     AttributeKey<String> oneStringKey = AttributeKey.create("one", String.class);
     // keys with the same type but different names should be considered different

@@ -370,7 +370,9 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
   val `application/cbor`                                                          = abin("cbor", Compressible, "cbor")
   val `application/gnutar`                                                        = abin("gnutar", NotCompressible, "tgz")
   val `application/java-archive`                                                  = abin("java-archive", NotCompressible, "jar", "war", "ear")
-  val `application/javascript`                                                    = awoc("javascript", "js", "mjs")
+  val `application/javascript`                                                    =
+    // Retain the legacy media type and its extension metadata, but prefer text/javascript for filename lookup.
+    register("application" -> "javascript", applicationWithOpenCharset("javascript", "js", "mjs"))
   val `application/json`                                                          = awfc("json", HttpCharsets.`UTF-8`, "json")
   val `application/json-patch+json`                                               = awfc("json-patch+json", HttpCharsets.`UTF-8`)
   val `application/merge-patch+json`                                              = awfc("merge-patch+json", HttpCharsets.`UTF-8`)
@@ -517,6 +519,7 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
   val `text/csv`                  = txt("csv", "csv")
   val `text/event-stream`         = txtfc("event-stream", HttpCharsets.`UTF-8`)
   val `text/html`                 = txt("html", "htm", "html", "htmls", "htx")
+  val `text/javascript`          = txt("javascript", "js", "mjs")
   val `text/markdown`             = txt("markdown", "markdown", "md")
   val `text/mcf`                  = txt("mcf", "mcf")
   val `text/plain`                = txt("plain", "conf", "text", "txt", "properties")
