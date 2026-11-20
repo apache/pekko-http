@@ -97,6 +97,50 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
     }
   }
 
+  "ContentTypeResolver.withExtensions" should {
+    val custom = MediaType.applicationBinary("x-custom", MediaType.NotCompressible)
+    val customText = MediaType.text("x-custom")
+    val resolver = ContentTypeResolver.withExtensions(Map("Custom" -> custom, "ctext" -> customText, "js" -> custom))
+
+    "resolve custom extensions, ignoring case" in {
+      for (filename <- Seq("file.custom", "file.CUSTOM", "file.Custom"))
+        resolver(filename) shouldEqual ContentType(custom)
+    }
+    "take precedence over the built-in registry" in {
+      ContentTypeResolver.Default("app.js").mediaType shouldEqual `text/javascript`
+      resolver("app.js") shouldEqual ContentType(custom)
+    }
+    "fall back to the built-in registry for other extensions" in {
+      for (filename <- Seq("index.html", "data.zst", "no-extension", "archive.unknown"))
+        resolver(filename) shouldEqual ContentTypeResolver.Default(filename)
+    }
+    "resolve precompressed custom files with gzip compression" in {
+      resolver("file.custom.gz") shouldEqual ContentType(custom.withComp(MediaType.Gzipped))
+      resolver("index.html.gz") shouldEqual ContentTypeResolver.Default("index.html.gz")
+    }
+    "apply the default charset to non-binary custom types" in {
+      resolver("file.ctext") shouldEqual customText.withCharset(HttpCharsets.`UTF-8`)
+      ContentTypeResolver.withExtensions(Map("ctext" -> customText), HttpCharsets.`ISO-8859-1`)(
+        "file.ctext") shouldEqual
+      customText.withCharset(HttpCharsets.`ISO-8859-1`)
+    }
+    "be usable as the resolver for file directives" in {
+      val file = File.createTempFile("pekko-http-test", ".custom")
+      try {
+        writeAllText("custom content", file)
+        Get() ~> getFromFile(file)(resolver) ~> check {
+          contentType shouldEqual ContentType(custom)
+          responseAs[String] shouldEqual "custom content"
+        }
+      } finally file.delete
+    }
+    "reject invalid extensions" in {
+      for (extensions <- Seq(Map("" -> custom), Map("tar.x" -> custom), Map(".x" -> custom), Map("GZ" -> custom),
+          Map("dup" -> custom, "DUP" -> custom)))
+        an[IllegalArgumentException] should be thrownBy ContentTypeResolver.withExtensions(extensions)
+    }
+  }
+
   // operations touch files, can be randomly hit by slowness
   implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(3.seconds.dilated)
 

@@ -63,7 +63,33 @@ import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
 
 // #getFromResourceDirectory
 
+// #content-type-resolver-with-extensions
+import java.util.Map;
+import org.apache.pekko.http.javadsl.model.MediaType;
+import org.apache.pekko.http.javadsl.model.MediaTypes;
+import org.apache.pekko.http.javadsl.server.directives.ContentTypeResolver;
+
+import static org.apache.pekko.http.javadsl.server.Directives.getFromDirectory;
+import static org.apache.pekko.http.javadsl.server.Directives.pathPrefix;
+
+// #content-type-resolver-with-extensions
+
 public class FileAndResourceDirectivesExamplesTest extends JUnitJupiterRouteTest {
+
+  @Disabled("Compile only test")
+  @Test
+  public void testContentTypeResolverWithExtensions() {
+    // #content-type-resolver-with-extensions
+    final MediaType.Binary gltfBinary =
+        MediaTypes.customBinary("model", "gltf-binary", MediaTypes.NOT_COMPRESSIBLE);
+
+    // serve .glb files as model/gltf-binary, and everything else as by default
+    final ContentTypeResolver resolver =
+        ContentTypeResolver.withExtensions(Map.of("glb", gltfBinary));
+
+    final Route route = pathPrefix("models", () -> getFromDirectory("/var/www/models", resolver));
+    // #content-type-resolver-with-extensions
+  }
 
   @Disabled("Compile only test")
   @Test

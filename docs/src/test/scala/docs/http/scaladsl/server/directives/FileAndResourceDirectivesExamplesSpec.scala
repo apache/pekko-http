@@ -54,6 +54,22 @@ class FileAndResourceDirectivesExamplesSpec extends RoutingSpec with CompileOnly
     }
     // #getFromResource-examples
   }
+  "content-type-resolver-with-extensions" in compileOnlySpec {
+    // #content-type-resolver-with-extensions
+    import org.apache.pekko.http.scaladsl.model.MediaType
+    import org.apache.pekko.http.scaladsl.server.directives.ContentTypeResolver
+
+    val gltfBinary = MediaType.customBinary("model", "gltf-binary", MediaType.NotCompressible)
+
+    // serve .glb files as model/gltf-binary, and everything else as by default
+    implicit val resolver: ContentTypeResolver = ContentTypeResolver.withExtensions(Map("glb" -> gltfBinary))
+
+    val route =
+      pathPrefix("models") {
+        getFromDirectory("/var/www/models") // uses the implicit resolver
+      }
+    // #content-type-resolver-with-extensions
+  }
   "listDirectoryContents-examples" in compileOnlySpec {
     // #listDirectoryContents-examples
     val route =
