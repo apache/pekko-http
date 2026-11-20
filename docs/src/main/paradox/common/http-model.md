@@ -465,13 +465,6 @@ or @scala[`Http().superPool`]@java[`Http.get(sys).superPool`], usually need the 
 
 Apache Pekko HTTP @scala[@scaladoc[predefines](org.apache.pekko.http.scaladsl.model.MediaTypes$)]@java[@javadoc[predefines](org.apache.pekko.http.javadsl.model.MediaTypes)] most commonly encountered media types and emits them in their well-typed form while parsing http messages.
 
-By default, JavaScript files with `.js` or `.mjs` extensions are resolved to `text/javascript`, following
-[RFC 9239](https://www.rfc-editor.org/rfc/rfc9239.html#section-6.1.1). This also applies to precompressed
-JavaScript files served by the file and resource directives. The legacy `application/javascript`
-media type remains available for explicit use and is still accepted when parsing messages.
-
-The registered `application/manifest+json` type uses UTF-8; the default file content-type resolver maps `.webmanifest` files to it without a charset parameter.
-
 Sometimes you may want to define a custom media type and inform the parser infrastructure about how to handle these custom
 media types, e.g. that `application/custom` is to be treated as `NonBinary` with `WithFixedCharset`. To achieve this you
 need to register the custom media type in the server's settings by configuring @apidoc[ParserSettings] like this:
@@ -485,7 +478,19 @@ Java
 You may also want to read about MediaType [Registration trees](https://en.wikipedia.org/wiki/Media_type#Registration_trees), in order to register your vendor specific media types
 in the right style / place.
 
-The default file content-type resolver maps `.aac` (ADTS) and `.loas` (LATM/LOAS) audio files to the binary `audio/aac` media type, without a charset parameter.
+<a id="fileextensionmappings"></a>
+## File Extension Mappings
+
+The default content-type resolver used by the file and resource directives picks a file's media type from its
+extension, ignoring case. Some mappings worth noting:
+
+* `.js` and `.mjs` resolve to `text/javascript`, following
+  [RFC 9239](https://www.rfc-editor.org/rfc/rfc9239.html#section-6.1.1), including for precompressed files.
+  The legacy `application/javascript` media type remains available for explicit use and is still accepted when
+  parsing messages.
+* `.webmanifest` resolves to `application/manifest+json`, which always uses UTF-8 and is rendered without a
+  charset parameter.
+* `.aac` (ADTS) and `.loas` (LATM/LOAS) resolve to the binary `audio/aac` media type, without a charset parameter.
 
 <a id="registeringcustomstatuscodes"></a>
 ## Registering Custom Status Codes

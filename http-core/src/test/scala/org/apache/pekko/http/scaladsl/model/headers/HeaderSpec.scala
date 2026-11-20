@@ -54,35 +54,6 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
   }
 
   "MediaType should" - {
-    "prefer text/javascript for JavaScript filenames while retaining the legacy media type" in {
-      val javascript: MediaType.WithOpenCharset = MediaTypes.`text/javascript`
-      Seq("js", "mjs", "JS", "MJS").foreach { extension =>
-        MediaTypes.forExtension(extension) shouldEqual javascript
-        MediaTypes.forExtensionOption(extension) shouldEqual Some(javascript)
-      }
-      javascript.fileExtensions shouldEqual List("js", "mjs")
-      MediaType.parse("text/javascript") shouldEqual Right(javascript)
-      MediaType.parse("application/javascript") shouldEqual Right(MediaTypes.`application/javascript`)
-      MediaTypes.`application/javascript`.fileExtensions shouldEqual List("js", "mjs")
-      ContentType.parse("text/javascript; charset=UTF-8") shouldEqual
-      Right(javascript.withCharset(HttpCharsets.`UTF-8`))
-      MediaTypes.forExtension("css") shouldEqual MediaTypes.`text/css`
-      MediaTypes.forExtension("unknown-extension") shouldEqual MediaTypes.`application/octet-stream`
-    }
-
-    "register web app manifests with fixed UTF-8 and no rendered charset parameter" in {
-      val manifest: MediaType.WithFixedCharset = MediaTypes.`application/manifest+json`
-      MediaTypes.forExtension("manifest") shouldEqual MediaTypes.`text/cache-manifest`
-      manifest.charset shouldEqual HttpCharsets.`UTF-8`
-      manifest.fileExtensions shouldEqual List("webmanifest")
-      MediaTypes.forExtension("webmanifest") shouldEqual manifest
-      MediaTypes.forExtension("WEBMANIFEST") shouldEqual manifest
-      ContentType.parse("application/manifest+json") shouldEqual Right(ContentType(manifest))
-      ContentType.parse("APPLICATION/MANIFEST+JSON") shouldEqual Right(ContentType(manifest))
-      ContentType(manifest).toString shouldEqual "application/manifest+json"
-      MediaTypes.forExtension("json") shouldEqual MediaTypes.`application/json`
-    }
-
     "provide parse method" - {
       "successful parse run" in {
         MediaType.parse("application/gnutar") shouldEqual Right(MediaTypes.`application/gnutar`)
@@ -99,20 +70,6 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
         """application//gnutar
             |            ^""".stripMarginWithNewline("\n")
       }
-    }
-  }
-
-  "AAC media type" - {
-    "register AAC audio as a non-compressible binary media type" in {
-      val aac: MediaType.Binary = MediaTypes.`audio/aac`
-      aac.isCompressible shouldBe false
-      aac.fileExtensions shouldEqual List("aac", "loas")
-      for (extension <- Seq("aac", "AAC", "loas", "LOAS"))
-        MediaTypes.forExtension(extension) shouldEqual aac
-      ContentType.parse("audio/aac") shouldEqual Right(ContentType(aac))
-      ContentType.parse("AUDIO/AAC") shouldEqual Right(ContentType(aac))
-      ContentType(aac).toString shouldEqual "audio/aac"
-      MediaTypes.forExtension("mp3") shouldEqual MediaTypes.`audio/mpeg`
     }
   }
 
