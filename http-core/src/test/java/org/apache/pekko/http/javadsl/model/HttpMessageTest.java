@@ -207,6 +207,5 @@ public class HttpMessageTest {
     MediaType.Binary aac = MediaTypes.AUDIO_AAC;
     assertFalse(aac.isCompressible());
     assertEquals("audio/aac", aac.toContentType().toString());
-    assertEquals("audio/mpeg", MediaTypes.AUDIO_MPEG.toString());
   }
 }

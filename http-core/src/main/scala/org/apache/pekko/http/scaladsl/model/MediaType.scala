@@ -521,7 +521,7 @@ object MediaTypes extends ObjectRegistry[(String, String), MediaType] {
   val `text/csv`                  = txt("csv", "csv")
   val `text/event-stream`         = txtfc("event-stream", HttpCharsets.`UTF-8`)
   val `text/html`                 = txt("html", "htm", "html", "htmls", "htx")
-  val `text/javascript`          = txt("javascript", "js", "mjs")
+  val `text/javascript`           = txt("javascript", "js", "mjs")
   val `text/markdown`             = txt("markdown", "markdown", "md")
   val `text/mcf`                  = txt("mcf", "mcf")
   val `text/plain`                = txt("plain", "conf", "text", "txt", "properties")
