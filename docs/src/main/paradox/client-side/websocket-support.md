@@ -108,7 +108,9 @@ The returned layer forms a @scala[@apidoc[BidiFlow[Message, SslTlsOutbound, SslT
 ## Half-Closed WebSockets
 
 The Apache Pekko HTTP WebSocket API does not support half-closed connections which means that if either stream completes the
-entire connection is closed (after a "Closing Handshake" has been exchanged or a timeout of 3 seconds has passed).
+entire connection is closed. After sending its Close frame, the client waits for the closing handshake and for
+the peer to close the underlying connection, up to `pekko.http.client.websocket.close-timeout` (3 seconds by
+default). The scheduler can make the observed wait slightly longer.
 This may lead to unexpected behavior, for example if we are trying to only consume messages coming from the server,
 like this:
 

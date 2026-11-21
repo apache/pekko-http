@@ -30,7 +30,7 @@ import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.stream.Materializer
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
-import pekko.stream.testkit.Utils
+import pekko.stream.testkit.{ TestPublisher, Utils }
 import pekko.stream.testkit.scaladsl.TestSink
 import pekko.util.ByteString
 import pekko.http.impl.engine.server.HttpServerTestSetupBase
@@ -53,8 +53,49 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
 
   "The server-side WebSocket integration should" should {
     "establish a websocket connection when the user requests it" should {
-      "when user handler instantly tries to send messages" in Utils.assertAllStagesStopped {
+      "use the configured close wait when the peer delays its close response" in Utils.assertAllStagesStopped {
         new TestSetup {
+          override def settings = {
+            val defaults = super.settings
+            defaults.withWebsocketSettings(defaults.websocketSettings.withCloseTimeout(100.millis))
+          }
+          val outgoing = TestPublisher.probe[Message]()
+          try {
+            sendWebSocketRequest("")
+            val upgrade = expectRequest().attribute(webSocketUpgrade).get
+            responses.sendNext(upgrade.handleMessages(
+              Flow.fromSinkAndSourceMat(Sink.ignore, Source.fromPublisher(outgoing))(Keep.none)))
+            expectResponseWithWipedDate(
+              """HTTP/1.1 101 Switching Protocols
+                |Upgrade: websocket
+                |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+                |Server: pekko-http/test
+                |Date: XXXX
+                |Connection: upgrade
+                |
+                |""")
+            // An idle healthy connection must not start its close wait at materialization.
+            netOut.expectNoBytes(200.millis)
+            outgoing.sendComplete()
+            expectWSCloseFrame(Protocol.CloseCodes.Regular)
+            // This comfortably allows the configured wait, but not the historical three seconds.
+            netOut.within(1.second) {
+              expectNetworkClose()
+            }
+          } finally {
+            outgoing.sendComplete()
+            closeNetworkInput()
+            netOut.cancel()
+          }
+        }
+      }
+      "when user handler instantly tries to send messages with a configured close wait" in
+      Utils.assertAllStagesStopped {
+        new TestSetup {
+          override def settings = {
+            val defaults = super.settings
+            defaults.withWebsocketSettings(defaults.websocketSettings.withCloseTimeout(750.millis))
+          }
           send(
             """GET /chat HTTP/1.1
               |Host: server.example.com

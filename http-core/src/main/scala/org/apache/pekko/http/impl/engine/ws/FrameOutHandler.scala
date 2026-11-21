@@ -14,14 +14,13 @@
 package org.apache.pekko.http.impl.engine.ws
 
 import scala.annotation.tailrec
-import scala.concurrent.duration.{ Deadline, FiniteDuration }
+import scala.concurrent.duration.FiniteDuration
 
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.ws.FrameHandler.{ UserHandlerErredOut, _ }
-import pekko.http.impl.engine.ws.WebSocket.Tick
 import pekko.stream.scaladsl.Flow
 import pekko.stream.stage._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
@@ -39,9 +38,25 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
 
   override def shape = FlowShape(in, out)
 
-  private def closeDeadline(): Deadline = Deadline.now + _closeTimeout
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new TimerGraphStageLogic(shape) {
 
-  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
+    private val closeTimer = "close-timeout"
+
+    private def startCloseTimer(): Unit =
+      if (!isTimerActive(closeTimer)) scheduleOnce(closeTimer, _closeTimeout)
+
+    override protected def onTimer(timerKey: Any): Unit =
+      if (timerKey == closeTimer) getHandler(in) match {
+        case _: WaitingForPeerCloseFrame =>
+          log.debug("Peer did not acknowledge CLOSE frame after {}, closing underlying connection now.", _closeTimeout)
+          completeStage()
+        case _: WaitingForTransportClose =>
+          log.debug(
+            "Peer did not close TCP connection after sending CLOSE frame after {}, closing underlying connection now.",
+            _closeTimeout)
+          completeStage()
+        case _ =>
+      }
 
     private def absorbTermination() =
       if (isAvailable(out)) getHandler(out).onPull()
@@ -68,16 +83,15 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
             }
           case ActivelyCloseWithCode(code, reason) =>
             val closeFrame = FrameEvent.closeFrame(code.getOrElse(Protocol.CloseCodes.Regular), reason)
-            setHandler(in, new WaitingForPeerCloseFrame())
+            setHandler(in, new WaitingForPeerCloseFrame)
             push(out, closeFrame)
           case UserHandlerCompleted =>
-            setHandler(in, new WaitingForPeerCloseFrame())
+            setHandler(in, new WaitingForPeerCloseFrame)
             push(out, FrameEvent.closeFrame(Protocol.CloseCodes.Regular))
           case UserHandlerErredOut(e) =>
             log.error(e, "Websocket handler failed with {}", e.getMessage)
-            setHandler(in, new WaitingForPeerCloseFrame())
+            setHandler(in, new WaitingForPeerCloseFrame)
             push(out, FrameEvent.closeFrame(Protocol.CloseCodes.UnexpectedCondition, "internal error"))
-          case Tick => pull(in) // ignore
         }
 
       override def onUpstreamFinish(): Unit = {
@@ -105,7 +119,7 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
           push(out, closeFrame)
           completeStage()
         } else {
-          setHandler(in, new WaitingForTransportClose())
+          setHandler(in, new WaitingForTransportClose)
           push(out, closeFrame)
         }
 
@@ -116,20 +130,16 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
     /**
      * we have sent out close frame and wait for peer to sent its close frame
      */
-    private class WaitingForPeerCloseFrame(deadline: Deadline = closeDeadline()) extends InHandler
-        with ProcotolExceptionHandling {
+    private class WaitingForPeerCloseFrame extends InHandler with ProcotolExceptionHandling {
+      startCloseTimer()
+
       override def onPush() =
         grab(in) match {
-          case Tick =>
-            if (deadline.isOverdue()) {
-              log.debug(
-                "Peer did not acknowledge CLOSE frame after {}, closing underlying connection now.", _closeTimeout)
-              completeStage()
-            } else pull(in)
           case PeerClosed(code, reason) =>
             if (serverSide) completeStage()
             else {
-              setHandler(in, new WaitingForTransportClose(deadline))
+              // Keep the original close budget while waiting for the server to close the transport.
+              setHandler(in, new WaitingForTransportClose)
               pull(in)
             }
           case _ => pull(in) // ignore
@@ -137,21 +147,14 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
     }
 
     /**
-     * Both side have sent their close frames, server should close the connection first
+     * Both sides have sent their close frames, server should close the connection first
      */
-    private class WaitingForTransportClose(deadline: Deadline = closeDeadline()) extends InHandler
-        with ProcotolExceptionHandling {
-      override def onPush() = {
-        grab(in) match {
-          case Tick =>
-            if (deadline.isOverdue()) {
-              log.debug(
-                "Peer did not close TCP connection after sendind CLOSE frame after {}, closing underlying connection now.",
-                _closeTimeout)
-              completeStage()
-            } else pull(in)
-          case _ => pull(in) // ignore
-        }
+    private class WaitingForTransportClose extends InHandler with ProcotolExceptionHandling {
+      startCloseTimer()
+
+      override def onPush(): Unit = {
+        grab(in)
+        pull(in)
       }
     }
 
@@ -171,6 +174,7 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
     }
 
     def becomeSendOutCloseFrameAndComplete(frameStart: FrameStart): Unit = {
+      cancelTimer(closeTimer)
       val inNOutHandler = new SendOutCloseFrameAndComplete(frameStart)
       setHandler(in, inNOutHandler)
       setHandler(out, inNOutHandler)
