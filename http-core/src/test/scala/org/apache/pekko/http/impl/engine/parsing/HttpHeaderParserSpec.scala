@@ -200,8 +200,7 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
       for (lead <- Seq(0xC3, 0xE9, 0xF0)) {
         val bytes = ByteString("X-A: caf") ++ ByteString(lead.toByte) ++ ByteString(s"${newLine}X-B: b${newLine}x")
         val (nextLine, header) = parseLineFromBytes(bytes)
-        // on 1.5.x a value without a tab is copied with Byte.toChar, which sign-extends non-ASCII bytes
-        header shouldEqual RawHeader("X-A", "caf" + lead.toByte.toChar)
+        header shouldEqual RawHeader("X-A", "caf" + lead.toChar)
         nextLine shouldEqual 9 + newLine.length
         parser.parseHeaderLine(bytes, nextLine)()
         parser.resultHeader shouldEqual RawHeader("X-B", "b")
@@ -212,7 +211,7 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
       // 0xE9 0x80 is cut short by 'a', which is then read as an ordinary char
       parseLineFromBytes(ByteString("X-A: caf") ++ ByteString(0xE9.toByte, 0x80.toByte) ++
         ByteString(s"abc${newLine}x"))._2 shouldEqual RawHeader("X-A",
-        "caf" + 0xE9.toByte.toChar + 0x80.toByte.toChar + "abc")
+        "caf" + 0xE9.toChar + 0x80.toChar + "abc")
       // the same with a tab earlier in the value, which makes the parser build the value char by char
       parseLineFromBytes(ByteString("X-B: x\tcaf") ++ ByteString(0xE9.toByte) ++
         ByteString(s"${newLine}x"))._2 shouldEqual RawHeader("X-B", "x café")
@@ -224,8 +223,7 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
         val bytes =
           ByteString("X-A: ") ++ ByteString(octet.toByte) ++ ByteString(s"x${newLine}X-B: b${newLine}x")
         val (nextLine, header) = parseLineFromBytes(bytes)
-        // on 1.5.x a value without a tab is copied with Byte.toChar, which sign-extends non-ASCII bytes
-        header shouldEqual RawHeader("X-A", s"${octet.toByte.toChar}x")
+        header shouldEqual RawHeader("X-A", s"${octet.toChar}x")
         parser.parseHeaderLine(bytes, nextLine)()
         parser.resultHeader shouldEqual RawHeader("X-B", "b")
         // the same with a tab earlier in the value, which makes the parser build the value char by char
