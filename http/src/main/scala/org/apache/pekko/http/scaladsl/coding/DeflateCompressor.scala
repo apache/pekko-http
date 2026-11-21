@@ -19,6 +19,7 @@ import scala.annotation.tailrec
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.util.ByteStringOutputStream
 import pekko.stream.Attributes
 import pekko.stream.impl.io.ByteStringParser
 import pekko.stream.impl.io.ByteStringParser.{ ParseResult, ParseStep }
@@ -170,19 +171,25 @@ private[coding] abstract class DeflateDecompressorBase(maxBytesPerChunk: Int = D
       extends ParseStep[ByteString] {
     protected def afterBytesRead(buffer: Array[Byte], offset: Int, length: Int): Unit = {}
 
+    // Output kept across calls, so that inflating a small input doesn't allocate a whole `maxBytesPerChunk` array
+    // each time. `takeByteString` copies a result that fills at most half of the array and keeps the array for the
+    // next call; a fuller result is handed over without copying.
+    private val output = new ByteStringOutputStream(maxBytesPerChunk)
+
     override def canWorkWithPartialData = true
     override def parse(reader: ByteStringParser.ByteReader): ParseResult[ByteString] = {
       inflater.setInput(reader.remainingData.asByteBuffer)
 
-      val buffer = new Array[Byte](maxBytesPerChunk)
-      val read = inflater.inflate(buffer)
+      val position = output.reserve(maxBytesPerChunk)
+      val read = inflater.inflate(output.array, position, maxBytesPerChunk)
+      output.unreserve(maxBytesPerChunk - read)
 
       reader.skip(reader.remainingSize - inflater.getRemaining)
 
       if (read > 0) {
-        afterBytesRead(buffer, 0, read)
+        afterBytesRead(output.array, position, read)
         val next = if (inflater.finished()) afterInflate else this
-        ParseResult(Some(ByteString.fromArray(buffer, 0, read)), next, noPostProcessing)
+        ParseResult(Some(output.takeByteString()), next, noPostProcessing)
       } else {
         if (inflater.finished()) ParseResult(None, afterInflate, noPostProcessing)
         else throw ByteStringParser.NeedMoreData
