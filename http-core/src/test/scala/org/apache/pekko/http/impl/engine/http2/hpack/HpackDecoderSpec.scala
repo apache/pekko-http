@@ -83,6 +83,37 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
   "The HPACK decoder" should {
     val headers = Seq("x-custom-header" -> "some-fairly-long-header-value", "another-header" -> "value")
 
+    "accept dynamic table size updates before header fields" in {
+      // Set the capacity to zero, restore it to 4096, then emit indexed :method: GET.
+      val block = Array[Byte](0x20, 0x3F, 0xE1.toByte, 0x1F, 0x82.toByte)
+      decode(chunkedStream(block, chunkSize = 1)) shouldEqual Seq(":method" -> "GET")
+    }
+
+    "reject dynamic table size updates after any header representation" in {
+      val representations = Seq(
+        Array[Byte](0x82.toByte), // indexed :method: GET
+        Array[Byte](0x40, 1, 'x'.toByte, 1, 'a'.toByte), // incremental indexing
+        Array[Byte](0x00, 1, 'x'.toByte, 1, 'a'.toByte), // without indexing
+        Array[Byte](0x10, 1, 'x'.toByte, 1, 'a'.toByte)) // never indexed
+      val updates = Seq(Array[Byte](0x20), Array[Byte](0x3F, 0xE1.toByte, 0x1F))
+      for (header <- representations; update <- updates) {
+        a[IOException] should be thrownBy decode(chunkedStream(header ++ update, chunkSize = 1))
+      }
+    }
+
+    "accept leading table size updates again after ending a header block" in {
+      val decoder = new Decoder(maxHeaderSize, maxHeaderTableSize)
+      decode(decoder, new ByteArrayInputStream(Array[Byte](0x82.toByte))) shouldEqual Seq(":method" -> "GET")
+      decode(decoder, chunkedStream(Array[Byte](0x20, 0x82.toByte), chunkSize = 1)) shouldEqual Seq(":method" -> "GET")
+      decode(decoder, new ByteArrayInputStream(Array.emptyByteArray)) shouldBe empty
+      decode(decoder, new ByteArrayInputStream(Array[Byte](0x20, 0x82.toByte))) shouldEqual Seq(":method" -> "GET")
+    }
+
+    "reject a late table size update even when the header list limit has been exceeded" in {
+      val decoder = new Decoder(0, maxHeaderTableSize)
+      a[IOException] should be thrownBy decode(decoder, new ByteArrayInputStream(Array[Byte](0x82.toByte, 0x20)))
+    }
+
     "decode a header block from a stream that returns everything at once" in {
       decode(new ByteArrayInputStream(encode(headers: _*))) shouldEqual headers
     }
