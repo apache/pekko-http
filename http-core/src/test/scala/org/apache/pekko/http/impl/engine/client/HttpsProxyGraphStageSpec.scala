@@ -28,6 +28,33 @@ import scala.concurrent.duration._
 class HttpsProxyGraphStageSpec extends PekkoSpecWithMaterializer {
 
   "A ProxyGraphStage" should {
+    for ((inputHost, port, wireHost, hostHeader) <- Seq(
+        ("example.test", 80, "example.test", "example.test"),
+        ("example.test", 8443, "example.test", "example.test:8443"),
+        ("2001:db8::1", 8443, "[2001:db8::1]", "[2001:db8::1]:8443"),
+        ("[2001:db8::1]", 8443, "[2001:db8::1]", "[2001:db8::1]:8443"))) {
+      s"render a CONNECT request for $inputHost at port $port" in new Context {
+        override val targetHostName = inputHost
+        override val targetPort = port
+
+        testCase() { (source, flowInProbe, flowOutProbe, sink) =>
+          source.sendNext(ByteString("request"))
+          sink.request(1)
+
+          val expected = s"CONNECT $wireHost:$port HTTP/1.1\r\nHost: $hostHeader\r\n\r\n"
+          flowInProbe.requestNext().utf8String shouldBe expected
+          flowOutProbe.sendNext(ByteString("HTTP/1.1 200 Connection established\r\n\r\n"))
+          flowInProbe.requestNext(ByteString("request"))
+          flowOutProbe.sendNext(ByteString("response"))
+          sink.expectNext(ByteString("response"))
+
+          source.sendComplete()
+          flowOutProbe.sendComplete()
+          sink.expectComplete()
+        }
+      }
+    }
+
     "send CONNECT message and then forward incoming messages" in new Context {
       testCase() { (source, flowInProbe, flowOutProbe, sink) =>
         source.sendNext(ByteString("anything"))

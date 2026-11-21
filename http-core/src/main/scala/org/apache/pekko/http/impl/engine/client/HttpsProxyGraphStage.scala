@@ -69,8 +69,15 @@ private final class HttpsProxyGraphStage(
   private val connectMsg = {
     val r = new ByteStringRendering(256)
 
-    r ~~ "CONNECT " ~~ targetHostName ~~ ':' ~~ targetPort ~~ " HTTP/1.1" ~~ CrLf
-    r ~~ "Host: " ~~ targetHostName ~~ CrLf
+    val host =
+      if (targetHostName.indexOf(':') >= 0 && !targetHostName.startsWith("[")) s"[$targetHostName]"
+      else targetHostName
+    r ~~ "CONNECT " ~~ host ~~ ':' ~~ targetPort ~~ " HTTP/1.1" ~~ CrLf
+    r ~~ "Host: " ~~ host
+    // The transport has an effective port but no target scheme. Preserve bare Host for
+    // the conventional HTTP and HTTPS ports, and include the port otherwise.
+    if (targetPort != 80 && targetPort != 443) r ~~ ':' ~~ targetPort
+    r ~~ CrLf
     proxyAuthorization.foreach { creds =>
       r ~~ `Proxy-Authorization`(creds)
     }
