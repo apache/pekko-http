@@ -97,6 +97,9 @@ private[http2] object RequestParsing {
 
         if (tlsSessionInfoHeader.isDefined) headers += tlsSessionInfoHeader.get
 
+        val allHeaders = headers.result()
+        if ((authority ne null) && !authority.isEmpty) checkHostMatchesAuthority(scheme, authority, allHeaders)
+
         val entity = subStream.createEntity(contentLength, contentType)
 
         // mirrors HttpServerBluePrint's ControllerStage for HTTP/1.1: the handler sees a GET, while the substream
@@ -109,7 +112,7 @@ private[http2] object RequestParsing {
         val uri = Uri(scheme, authorityOrDefault, path, rawQueryString)
         val attributes = baseAttributes.updated(Http2.streamId, subStream.streamId)
 
-        new HttpRequest(effectiveMethod, uri, headers.result(), attributes, entity, HttpProtocols.`HTTP/2.0`)
+        new HttpRequest(effectiveMethod, uri, allHeaders, attributes, entity, HttpProtocols.`HTTP/2.0`)
       }
 
       @tailrec
@@ -251,6 +254,25 @@ private[http2] object RequestParsing {
       }
     if (value.isEmpty) -1L else rec(0, 0L)
   }
+
+  /**
+   * RFC 9113 section 8.3.1: a server should treat a request as malformed if it has a `Host` header that identifies
+   * a different entity than `:authority`. The request URI is built from `:authority`, so without this check the
+   * application could see one authority in `request.uri` and another in the `Host` header. Ports are compared after
+   * dropping the default port of the scheme, so `example.com:443` and `example.com` match for `https`.
+   */
+  private[http2] def checkHostMatchesAuthority(scheme: String, authority: Uri.Authority, headers: Seq[HttpHeader])
+      : Unit =
+    headers.foreach {
+      case model.headers.Host(host, port) =>
+        if (!host.address.equalsIgnoreCase(authority.host.address) ||
+          Uri.normalizePort(port, scheme) != Uri.normalizePort(authority.port, scheme))
+          parseError("'host' header does not match the ':authority' pseudo-header", "host")
+      // `host` is always modelled, so a RawHeader means its value did not parse and cannot be shown to match
+      case h: model.headers.RawHeader if h.lowercaseName == "host" =>
+        parseError("'host' header does not match the ':authority' pseudo-header", "host")
+      case _ =>
+    }
 
   private[http2] def checkRequiredPseudoHeader(name: String, value: AnyRef): Unit =
     if (value eq null) protocolError(s"Mandatory pseudo-header '$name' missing")

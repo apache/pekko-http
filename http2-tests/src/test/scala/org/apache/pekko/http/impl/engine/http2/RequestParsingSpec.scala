@@ -778,6 +778,43 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       request.protocol should ===(HttpProtocols.`HTTP/2.0`)
     }
 
+    // RFC 9113 section 8.3.1: a Host header that identifies a different entity than :authority makes the request
+    // malformed, otherwise request.uri and the Host header would name different authorities
+    "accept a 'host' header that matches ':authority'" in {
+      val request: HttpRequest = parseExpectOk(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "Example.org:443",
+          ":path" -> "/",
+          "host" -> "example.org"))
+
+      request.uri.authority.host.address should ===("example.org")
+      request.headers should contain(Host(Uri.Host("example.org")))
+    }
+
+    "reject a 'host' header that names another host than ':authority'" in {
+      val info = parseExpectError(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "example.org",
+          ":path" -> "/",
+          "host" -> "other.example"))
+      info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
+    }
+
+    "reject a 'host' header that names another port than ':authority'" in {
+      val info = parseExpectError(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "localhost:8000",
+          ":path" -> "/",
+          "host" -> "localhost:9000"))
+      info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
+    }
+
     "reject requests with multiple content length headers" in {
       val info = parseExpectError(
         keyValuePairs = Vector(
