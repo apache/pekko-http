@@ -443,6 +443,16 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
           ErrorInfo("A chunked response must not contain a Content-Length header")))
       }
 
+      "an HTTP/1.0 response with a Transfer-Encoding header" in new Test {
+        """HTTP/1.0 200 OK
+          |Transfer-Encoding: chunked
+          |
+          |0
+          |
+          |""" should parseToError(MessageStartError(BadRequest,
+          ErrorInfo("An HTTP/1.0 message must not contain a Transfer-Encoding header")))
+      }
+
       "a 205 response with a non-zero Content-Length" in new Test {
         """HTTP/1.1 205 Reset Content
           |Content-Length: 3

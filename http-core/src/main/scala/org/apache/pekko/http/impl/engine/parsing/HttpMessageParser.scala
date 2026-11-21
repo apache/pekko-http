@@ -208,6 +208,11 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
                     Some(`Content-Type`(ContentTypes.`NoContentType`)), isChunked, e100c, hh)
               }
           }
+        // RFC 9112, section 6.1: an HTTP/1.0 message with Transfer-Encoding must be treated as having faulty framing,
+        // even if it also has a Content-Length. HTTP/1.0 has no transfer codings, so an HTTP/1.0 recipient on the
+        // path would frame the message by Content-Length or by connection close rather than by chunked encoding.
+        case _: `Transfer-Encoding` if protocol == `HTTP/1.0` =>
+          failMessageStart("An HTTP/1.0 message must not contain a Transfer-Encoding header")
         case h: `Transfer-Encoding` =>
           if (!isChunked) {
             h.encodings match {
