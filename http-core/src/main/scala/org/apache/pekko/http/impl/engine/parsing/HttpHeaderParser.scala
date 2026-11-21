@@ -220,8 +220,17 @@ private[engine] final class HttpHeaderParser private (
       case 0   => parseAndInsertHeader()
       case msb => node & 0xFF match {
           case 0 => // leaf node
-            resultHeader = values(msb - 1).asInstanceOf[HttpHeader]
-            cursor
+            // A cached value ends with its line end. If the next line starts with whitespace it continues this value
+            // (obs-fold), so the value is a different one: parse it as if it were not cached, which joins the folded
+            // line as the uncached path does, and leave the cache alone (the cached value is a prefix of this line).
+            if (WSP(byteChar(input, cursor))) {
+              val (header, endIx) = branch.parser(this, input, valueStart, onIllegalHeader)
+              resultHeader = header
+              endIx
+            } else {
+              resultHeader = values(msb - 1).asInstanceOf[HttpHeader]
+              cursor
+            }
           case nodeChar => // branching node
             val signum = math.signum(char - nodeChar)
             branchData(rowIx(msb) + 1 + signum) match {
