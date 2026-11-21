@@ -707,9 +707,25 @@ object Uri {
      * }}}
      */
     def toMultiMap: Map[String, List[String]] = {
-      @tailrec def append(map: Map[String, List[String]], q: Query): Map[String, List[String]] =
-        if (q.isEmpty) map else append(map.updated(q.key, map.getOrElse(q.key, Nil) :+ q.value), q.tail)
-      append(Map.empty, this)
+      def reverseValues(map: Map[String, List[String]]): Map[String, List[String]] =
+        map.transform((_, values) => if (values.tail.isEmpty) values else values.reverse)
+
+      @tailrec def collect(map: Map[String, List[String]], q: Query, reversed: Boolean): Map[String, List[String]] =
+        if (q.isEmpty) {
+          if (reversed) reverseValues(map) else map
+        } else {
+          val key = q.key
+          val value = q.value
+          val previous = map.getOrElse(key, Nil)
+          if (reversed || previous.isEmpty)
+            collect(map.updated(key, value :: previous), q.tail, reversed)
+          // A pair can be kept in input order without recording its key or reversing later.
+          else if (previous.tail.isEmpty)
+            collect(map.updated(key, previous.head :: value :: Nil), q.tail, reversed = false)
+          else
+            collect(reverseValues(map), q, reversed = true)
+        }
+      collect(Map.empty, this, reversed = false)
     }
     override def toString = UriRendering.QueryRenderer.render(new StringRendering, this).get
   }
