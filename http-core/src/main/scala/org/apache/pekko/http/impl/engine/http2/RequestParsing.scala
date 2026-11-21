@@ -13,6 +13,7 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.nio.charset.StandardCharsets
 import javax.net.ssl.SSLSession
 import org.apache.pekko
 import pekko.annotation.InternalApi
@@ -205,8 +206,12 @@ private[http2] object RequestParsing {
     //        or use a separate, simpler, parser for Http2
     // The odd-looking 'x' below is a by-product of how current parser and HTTP/1.1 work.
     // Without '\r\n\x' (x being any additional byte) parsing will fail. See HttpHeaderParserSpec for examples.
+    // HPACK decodes string literals as ISO-8859-1, one char per octet, so encoding the line as ISO-8859-1 again hands
+    // the parser the octets that were on the wire. It then decodes UTF-8 in a value exactly as it does for HTTP/1.1.
+    // Encoding as UTF-8 here would encode each octet above 0x7F as a char of its own, so a UTF-8 value such as "café"
+    // came out as "cafÃ©".
     val concHeaderLine = name + ": " + value + "\r\nx"
-    httpHeaderParser.parseHeaderLine(ByteString(concHeaderLine))()
+    httpHeaderParser.parseHeaderLine(ByteString(concHeaderLine, StandardCharsets.ISO_8859_1))()
     httpHeaderParser.resultHeader
   }
 

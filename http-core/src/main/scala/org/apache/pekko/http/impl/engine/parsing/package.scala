@@ -43,7 +43,8 @@ package object parsing {
 
   private[http] def asciiString(input: ByteString, start: Int, end: Int): String = {
     @tailrec def build(ix: Int = start, sb: JStringBuilder = new JStringBuilder(end - start)): String =
-      if (ix == end) sb.toString else build(ix + 1, sb.append(input(ix).toChar))
+      // one char per octet, as ISO-8859-1: `Byte.toChar` would sign-extend an octet above 0x7F to a char in U+FF80-U+FFFF
+      if (ix == end) sb.toString else build(ix + 1, sb.append((input(ix) & 0xFF).toChar))
     if (start == end) "" else build()
   }
 

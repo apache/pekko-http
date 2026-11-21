@@ -299,6 +299,18 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      "message chunk with obs-text in a quoted extension value" in new Test {
+        // RFC 9112 section 7.1.1: a chunk-ext value may be a quoted-string, which allows obs-text. Each octet is kept
+        // as the char of the same value (ISO-8859-1), rather than sign-extended to a char in U+FF80-U+FFFF
+        val input = prep(start) + s"3;name=\"caf\u00e9\"${newLine}abc${newLine}0${newLine}${newLine}"
+        val outputs =
+          Source.single(SessionBytes(TLSPlacebo.dummySession,
+            ByteString(input, java.nio.charset.StandardCharsets.ISO_8859_1)))
+            .via(newParser).runWith(Sink.seq).awaitResult(awaitAtMost)
+        outputs.collect { case EntityChunk(chunk) if !chunk.isLastChunk => chunk.extension } shouldEqual
+        Seq("name=\"caf\u00e9\"")
+      }
+
       "message end" in new Test {
         Seq(
           start,

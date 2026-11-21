@@ -30,6 +30,7 @@ import pekko.http.impl.util.PekkoSpecWithMaterializer
 
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.nio.charset.StandardCharsets
 
 class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Inspectors {
   "RequestParsing" should {
@@ -74,6 +75,52 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       val thrown = the[RuntimeException] thrownBy block
       thrown.getMessage should startWith("Malformed request: ")
       thrown
+    }
+
+    "decode non-ASCII octets in a header value as the HTTP/1.1 parser does" should {
+      // HPACK hands out string literals as ISO-8859-1, one char per octet, and `encodeHeaderPairs` writes each
+      // char back as that octet: a pair value here is what was on the wire
+      def wire(s: String): String = new String(s.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1)
+      def request(extra: (String, String)*): Vector[(String, String)] =
+        Vector(":method" -> "GET", ":scheme" -> "https", ":path" -> "/") ++ extra
+      def headerValues(request: HttpRequest): Seq[(String, String)] =
+        request.headers.map(h => h.lowercaseName -> h.value)
+
+      "a UTF-8 value" in {
+        val req = parse(request("x-a" -> wire("café €"), "x-b" -> "b"))
+        (headerValues(req) should contain).allOf("x-a" -> "café €", "x-b" -> "b")
+      }
+      "an octet that is not valid UTF-8, copied as one char" in {
+        // 0xE9 alone is the lead byte of a 3-byte sequence: it must not take the line end with it, or the next
+        // field would be lost
+        val req = parse(request("x-a" -> "café", "x-b" -> "b"))
+        (headerValues(req) should contain).allOf("x-a" -> "café", "x-b" -> "b")
+      }
+      "an obs-text octet that cannot start a UTF-8 sequence, copied as one char" in {
+        // ISO-8859-1 '°' (0xB0), 'ü' (0xFC) and 'ÿ' (0xFF): a lone continuation byte and octets that never occur in
+        // UTF-8, kept as obs-text rather than rejected as illegal characters
+        val req = parse(request("x-a" -> "° ü ÿ", "x-b" -> "b"))
+        (headerValues(req) should contain).allOf("x-a" -> "° ü ÿ", "x-b" -> "b")
+      }
+      "a 4-byte UTF-8 sequence, decoded to a surrogate pair" in {
+        val req = parse(request("x-a" -> wire("a \uD801\uDC1B b"), "x-b" -> "b"))
+        (headerValues(req) should contain).allOf("x-a" -> "a \uD801\uDC1B b", "x-b" -> "b")
+      }
+      "octets that are valid UTF-8 and also ISO-8859-1 text, decoded as UTF-8 as over HTTP/1.1" in {
+        // 0xC3 0xA9 is UTF-8 'é' and ISO-8859-1 'Ã©'; the HTTP/1.1 parser reads it as UTF-8, and HTTP/2 now does too,
+        // while the lone 0xE9 that follows is not UTF-8 and is kept as one char
+        val req = parse(request("x-a" -> "\u00c3\u00a9\u00e9", "x-b" -> "b"))
+        (headerValues(req) should contain).allOf("x-a" -> "\u00e9\u00e9", "x-b" -> "b")
+      }
+      "a header value that is still rejected for a control character" in {
+        // RFC 9110 section 5.5: field values exclude controls other than HTAB; decoding non-ASCII must not change that
+        val thrown = the[RuntimeException] thrownBy parse(request("x-a" -> "caf\u00e9\u0001"))
+        thrown.getMessage should include("Illegal character")
+      }
+      "UTF-8 in cookie fields, which are joined before parsing" in {
+        val req = parse(request("cookie" -> wire("a=café"), "cookie" -> wire("b=€")))
+        headerValues(req) should contain("cookie" -> "a=café; b=€")
+      }
     }
 
     "reject a malformed header field" should {

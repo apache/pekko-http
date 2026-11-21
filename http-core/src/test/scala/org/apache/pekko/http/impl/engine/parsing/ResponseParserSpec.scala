@@ -84,6 +84,24 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         }
       }
 
+      "status reason: keep obs-text in an unknown status reason, one char per octet" in new Test {
+        // RFC 9112 section 4: reason-phrase = 1*( HTAB / SP / VCHAR / obs-text ). An octet above 0x7F used to be
+        // sign-extended to a char above 0xFF, which the status model rejects, so the whole response failed
+        def parseReason(reasonBytes: ByteString): StatusCode = {
+          val parser = newParserStage(GET)
+          val output = collectBlocking(Source.single(SessionBytes(TLSPlacebo.dummySession,
+            ByteString("HTTP/1.1 299 ") ++ reasonBytes ++ ByteString(
+              s"${newLine}Content-Length: 0${newLine}${newLine}")))
+            .via(parser).collect { case ResponseStart(status, _, _, _, _, _) => status })
+          output.size shouldBe 1
+          output.head
+        }
+        // ISO-8859-1 'Café'
+        parseReason(ByteString("Caf") ++ ByteString(0xE9.toByte)).reason shouldBe "Caf\u00e9"
+        // UTF-8 'Café' is not decoded: a client should ignore the reason, so its octets are only carried over
+        parseReason(ByteString("Caf") ++ ByteString(0xC3.toByte, 0xA9.toByte)).reason shouldBe "Caf\u00c3\u00a9"
+      }
+
       // http://tools.ietf.org/html/rfc7230#section-3.3.3
       "a 200 response to a HEAD request" in new Test {
         """HTTP/1.1 200 OK
