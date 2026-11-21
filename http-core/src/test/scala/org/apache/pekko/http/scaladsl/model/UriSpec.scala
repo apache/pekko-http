@@ -477,6 +477,59 @@ class UriSpec extends AnyWordSpec with Matchers {
       val query = Query("a=1&b=1&b=2&b=3&b=4&c=1")
       query.toMultiMap shouldEqual Map("a" -> List("1"), "b" -> List("1", "2", "3", "4"), "c" -> List("1"))
     }
+    "aggregate bounded query parameter groups without changing their values or order" in {
+      Query.Empty.toMultiMap shouldEqual Map.empty
+      Query("" -> "").toMultiMap shouldEqual Map("" -> List(""))
+      val emptyValues = Query("k" -> Query.EmptyValue, "k" -> "").toMultiMap("k")
+      (emptyValues.head should be).theSameInstanceAs(Query.EmptyValue)
+      Query(emptyValues.map("k" -> _): _*).toString shouldEqual "k&k="
+      val cases = Seq(
+        Vector("" -> "", "a" -> "", "" -> "second", "a" -> "", "a" -> Query.EmptyValue),
+        Vector.tabulate(256)(i => s"key$i" -> s"value$i"),
+        Vector.tabulate(256)(i => "key" -> i.toString),
+        Vector.tabulate(256)(i => s"key${i % 4}" -> i.toString))
+      cases.foreach { pairs =>
+        val query = Query(pairs: _*)
+        val expected = pairs.groupBy(_._1).map { case (key, values) => key -> values.map(_._2).toList }
+        query.toMultiMap shouldEqual expected
+        query.toList shouldEqual pairs.toList
+      }
+    }
+    "preserve repeated values among mostly unique query keys" in {
+      val pairs = Vector.tabulate(16) { i =>
+        (if (i == 0 || i == 8) "repeated" else s"k$i") -> s"v$i"
+      }
+      val grouped = Query(pairs: _*).toMultiMap
+      grouped("repeated") shouldEqual List("v0", "v8")
+      pairs.filterNot(_._1 == "repeated").foreach { case (key, value) =>
+        grouped(key) shouldEqual List(value)
+      }
+    }
+    "retain first-seen key iteration order for small query multimaps" in {
+      (1 to 4).foreach { size =>
+        val keys = Vector.tabulate(size)(i => s"k${size - i}")
+        val pairs = keys.map(_ -> "first") ++ keys.reverse.map(_ -> "second")
+        val grouped = Query(pairs: _*).toMultiMap
+        grouped.keysIterator.toList shouldEqual keys.toList
+        keys.foreach(key => grouped(key) shouldEqual List("first", "second"))
+      }
+    }
+    "preserve key iteration order across hash collisions and the small-map boundary" in {
+      val keys = Vector("BB", "Aa", "AaAa", "BBBB", "AaBB", "BBAa", "other")
+      for (size <- 1 to keys.size; hasThirdValue <- Seq(false, true)) {
+        val distinct = keys.take(size)
+        val firstTwo = distinct.map(_ -> "first") ++ distinct.reverse.map(_ -> Query.EmptyValue)
+        val pairs = if (hasThirdValue) firstTwo :+ (distinct.last -> "third") else firstTwo
+        val expected = pairs.foldLeft(Map.empty[String, List[String]]) {
+          case (map, (key, value)) => map.updated(key, map.getOrElse(key, Nil) :+ value)
+        }
+        val grouped = Query(pairs: _*).toMultiMap
+        grouped.iterator.toList shouldEqual expected.iterator.toList
+        distinct.foreach { key =>
+          (grouped(key)(1) should be).theSameInstanceAs(Query.EmptyValue)
+        }
+      }
+    }
     "support conversion from list of name/value pairs" in {
       import Query._
       val pairs = List("key1" -> "value1", "key2" -> "value2", "key3" -> "value3")
