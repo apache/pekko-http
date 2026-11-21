@@ -27,7 +27,7 @@ import pekko.http.impl.engine.http2.RequestParsing.ParseRequestResult
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.{ Accept, Cookie, Host }
+import pekko.http.scaladsl.model.headers.{ Accept, Cookie, Host, `Raw-Request-URI` }
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Sink, Source }
@@ -571,16 +571,29 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
 
       }
 
-      // ... A request in asterisk form includes the
-      // value '*' for the ":path" pseudo-header field.
+      "handle server-wide OPTIONS with an application-visible asterisk target" in {
+        val pseudoHeaders = Vector(
+          ":method" -> "OPTIONS",
+          ":scheme" -> "https",
+          ":authority" -> "example.com")
+        val asterisk = parseExpectOk(pseudoHeaders :+ (":path" -> "*"))
+        asterisk.method shouldBe HttpMethods.OPTIONS
+        asterisk.uri shouldBe Uri("https://example.com")
+        asterisk.header[`Raw-Request-URI`] shouldBe Some(`Raw-Request-URI`("*"))
 
-      "handle a ':path' with an asterisk" in pendingUntilFixed {
-        val request: HttpRequest = parseExpectOk(
-          keyValuePairs = Vector(
-            ":method" -> "OPTIONS",
-            ":scheme" -> "http",
-            ":path" -> "*"))
-        request.uri.toString should ===("*") // FIXME: Compare in a better way
+        val root = parseExpectOk(pseudoHeaders :+ (":path" -> "/"))
+        root.uri shouldBe Uri("https://example.com/")
+        root.header[`Raw-Request-URI`] shouldBe None
+      }
+
+      "handle server-wide OPTIONS with an asterisk and no explicit authority" in {
+        val request = parseExpectOk(Vector(
+          ":method" -> "OPTIONS",
+          ":scheme" -> "http",
+          ":path" -> "*"))
+        request.uri.scheme shouldBe "http"
+        request.uri.authority shouldBe Uri.Authority.Empty
+        request.header[`Raw-Request-URI`] shouldBe Some(`Raw-Request-URI`("*"))
       }
 
       // [The ":path"] pseudo-header field MUST NOT be empty for "http" or "https"

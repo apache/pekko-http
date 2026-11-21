@@ -26,7 +26,7 @@ import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.scaladsl.model
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.`Tls-Session-Info`
+import pekko.http.scaladsl.model.headers.{ `Raw-Request-URI`, `Tls-Session-Info` }
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.util.ByteString
@@ -105,8 +105,17 @@ private[http2] object RequestParsing {
           if (method == HttpMethods.HEAD && serverSettings.transparentHeadRequests) HttpMethods.GET else method
 
         val (path, rawQueryString) = pathAndRawQuery
+        val effectivePath = path match {
+          case Uri.Path.Segment("*", Uri.Path.Empty) =>
+            if (method != HttpMethods.OPTIONS)
+              parseError("An asterisk request target is only supported for OPTIONS", ":path")
+            // The effective URI retains the scheme and authority; the raw target is not a URI path.
+            headers += `Raw-Request-URI`("*")
+            Uri.Path.Empty
+          case other => other
+        }
         val authorityOrDefault: Uri.Authority = if (authority == null) Uri.Authority.Empty else authority
-        val uri = Uri(scheme, authorityOrDefault, path, rawQueryString)
+        val uri = Uri(scheme, authorityOrDefault, effectivePath, rawQueryString)
         val attributes = baseAttributes.updated(Http2.streamId, subStream.streamId)
 
         new HttpRequest(effectiveMethod, uri, headers.result(), attributes, entity, HttpProtocols.`HTTP/2.0`)
