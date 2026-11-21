@@ -1097,7 +1097,47 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
             entityDataIn.expectError().getMessage shouldBe
             "The HTTP/2 connection was shut down while the request was still ongoing"
           })
-        "fail entity stream if advertised content-length doesn't match" in pending
+        // RFC 9113 section 8.1.1: a request whose DATA does not add up to its content-length is malformed
+        abstract class WaitingForRequestDataWithContentLength extends WaitingForRequestData {
+          override lazy val request = HttpRequest(method = HttpMethods.POST, uri = "https://example.com/upload",
+            entity = HttpEntity(ContentTypes.`application/octet-stream`, 6, Source.single(ByteString("abcdef"))),
+            protocol = HttpProtocols.`HTTP/2.0`)
+        }
+        "fail entity stream and reset the stream if more DATA arrives than the content-length announces"
+          .inAssertAllStagesStopped(new WaitingForRequestDataWithContentLength {
+            network.sendDATA(TheStreamId, endStream = false, ByteString("abc"))
+            entityDataIn.expectBytes(ByteString("abc"))
+            network.pollForWindowUpdates(10.millis)
+
+            network.sendDATA(TheStreamId, endStream = false, ByteString("defg"))
+            network.expectRST_STREAM(TheStreamId, ErrorCode.PROTOCOL_ERROR)
+            entityDataIn.expectError().getMessage should include("does not match its content-length")
+          })
+        "fail entity stream and reset the stream if it ends before the content-length is reached"
+          .inAssertAllStagesStopped(new WaitingForRequestDataWithContentLength {
+            network.sendDATA(TheStreamId, endStream = false, ByteString("abc"))
+            entityDataIn.expectBytes(ByteString("abc"))
+            network.pollForWindowUpdates(10.millis)
+
+            network.sendDATA(TheStreamId, endStream = true, ByteString("de"))
+            network.expectRST_STREAM(TheStreamId, ErrorCode.PROTOCOL_ERROR)
+            entityDataIn.expectError().getMessage should include("does not match its content-length")
+          })
+        "reset a stream whose HEADERS end it although its content-length announces content".inAssertAllStagesStopped(
+          new TestSetup with RequestResponseProbes {
+            override def settings: ServerSettings =
+              super.settings.mapHttp2Settings(_.withMinCollectStrictEntitySize(minCollectStrictEntityBytes))
+            network.sendRequestHEADERS(1,
+              HttpRequest(HttpMethods.POST, entity = HttpEntity("abcdef"), protocol = HttpProtocols.`HTTP/2.0`),
+              endStream = true)
+            network.expectRST_STREAM(1, ErrorCode.PROTOCOL_ERROR)
+            user.requestIn.ensureSubscription()
+            user.requestIn.expectNoMessage(100.millis)
+
+            // only that stream is affected, the connection carries on
+            network.sendRequest(3, HttpRequest(protocol = HttpProtocols.`HTTP/2.0`))
+            user.expectRequest().method shouldEqual HttpMethods.GET
+          })
 
         "collect Strict entity for single DATA frame".inAssertAllStagesStopped(new TestSetup
           with RequestResponseProbes {
@@ -1115,7 +1155,7 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           new TestSetup with RequestResponseProbes {
             override def settings: ServerSettings =
               super.settings.mapHttp2Settings(_.withMinCollectStrictEntitySize(10))
-            network.sendRequestHEADERS(1, HttpRequest(HttpMethods.POST, entity = HttpEntity("abcde")),
+            network.sendRequestHEADERS(1, HttpRequest(HttpMethods.POST, entity = HttpEntity("abcdefghij")),
               endStream = false)
             user.requestIn.ensureSubscription()
             user.requestIn.expectNoMessage(100.millis) // don't expect request yet
@@ -1131,7 +1171,7 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           new TestSetup with RequestResponseProbes {
             override def settings: ServerSettings =
               super.settings.mapHttp2Settings(_.withMinCollectStrictEntitySize(10))
-            network.sendRequestHEADERS(1, HttpRequest(HttpMethods.POST, entity = HttpEntity("abcde")),
+            network.sendRequestHEADERS(1, HttpRequest(HttpMethods.POST, entity = HttpEntity("abcdefghijklmnop")),
               endStream = false)
             user.requestIn.ensureSubscription()
             user.requestIn.expectNoMessage(100.millis) // don't expect request yet
