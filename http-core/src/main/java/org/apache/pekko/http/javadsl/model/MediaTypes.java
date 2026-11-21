@@ -337,9 +337,11 @@ public final class MediaTypes {
       org.apache.pekko.http.scaladsl.model.MediaTypes.text$divevent$minusstream();
   public static final MediaType.WithOpenCharset TEXT_HTML =
       org.apache.pekko.http.scaladsl.model.MediaTypes.text$divhtml();
+
   /** Preferred JavaScript media type, as registered by RFC 9239. */
   public static final MediaType.WithOpenCharset TEXT_JAVASCRIPT =
       org.apache.pekko.http.scaladsl.model.MediaTypes.text$divjavascript();
+
   public static final MediaType.WithOpenCharset TEXT_MARKDOWN =
       org.apache.pekko.http.scaladsl.model.MediaTypes.text$divmarkdown();
   public static final MediaType.WithOpenCharset TEXT_MCF =
