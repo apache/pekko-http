@@ -93,6 +93,16 @@ HTTP Server side by turning on the `pekko.http.server.raw-request-uri-header` fl
 When enabled, a `Raw-Request-URI` header will be added to each request. This header will hold the original raw request's
 URI that was used. For an example check the reference configuration.
 
+For a server-wide HTTP/2 `OPTIONS *` request, the server supplies the synthetic `Raw-Request-URI` header with
+the value `*` even when this setting is off. Check that header to distinguish server-wide `OPTIONS` from
+`OPTIONS /`. The effective URI retains the scheme and any supplied authority and has an empty path.
+
+@scala[Read the header with ``request.header[`Raw-Request-URI`].exists(_.uri == "*")``.]
+@java[Read the header with `request.getHeader(RawRequestURI.class).filter(h -> "*".equals(h.uri())).isPresent()`.]
+
+If you reuse the request with a different target, remove the synthetic header: the HTTP client uses
+it to override the request target.
+
 ### Query string in URI
 
 Although any part of URI can have special characters, it is more common for the query string in URI to have special characters,
