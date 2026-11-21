@@ -17,6 +17,18 @@
 
 # 0. Release Notes (2.0.x)
 
+@@@ warning
+
+Pekko HTTP 2.x and Pekko 2.x are not binary compatible with their 1.x releases. Libraries built against
+Pekko 1.x or Pekko HTTP 1.x cannot be trusted to work with Pekko HTTP 2.x, and need to be rebuilt and released for
+Pekko 2.x. See the @extref:[Pekko 2.0 release notes](pekko-docs:release-notes/releases-2.0.html) for the binary
+compatibility changes in the core Pekko modules.
+
+Read the @ref:[migration guide](../migration-guide/migration-guide-1.x-2.x.md) before upgrading from Pekko HTTP 1.x,
+and upgrade directly to the latest 2.0.x release.
+
+@@@
+
 ## 2.0.1
 
 Release notes for Apache Pekko HTTP 2.0.1. See [GitHub Milestone for 2.0.1](https://github.com/apache/pekko-http/milestone/21?closed=1) for a fuller list of changes.
@@ -49,12 +61,9 @@ edge cases; see the notes below.
 
 ## 2.0.0
 
-@@@ warning
+@@@ note
 
-Pekko HTTP 2.0.0 and Pekko 2.0.0 are not binary compatible with their 1.x releases. Libraries built against
-Pekko 1.x or Pekko HTTP 1.x cannot be trusted to work with Pekko HTTP 2.x, and need to be rebuilt and released for
-Pekko 2.x. See the @extref:[Pekko 2.0 release notes](pekko-docs:release-notes/releases-2.0.html) for the binary
-compatibility changes in the core Pekko modules.
+Read the binary compatibility warning at the top of this page before upgrading from Pekko HTTP 1.x.
 
 @@@
 
