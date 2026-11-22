@@ -18,6 +18,7 @@ import pekko.http.impl.engine.client.OutgoingConnectionBlueprint.ResponseParsing
 import pekko.http.impl.engine.parsing.HttpResponseParser.ResponseContext
 import pekko.http.impl.engine.parsing.ParserOutput.EntityStreamError
 import pekko.http.impl.engine.parsing.{ HttpHeaderParser, HttpResponseParser, ParserOutput }
+import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.stream.TLSProtocol.SessionBytes
@@ -80,7 +81,7 @@ class ResponseParsingMergeSpec extends PekkoSpec {
           |4
           |0123
           |5
-          |01234""".stripMargin)))
+          |01234""".stripMarginWithNewline("\r\n"))))
 
       inSessionBytesSub.sendNext(SessionBytes(null,
         ByteString(
@@ -92,7 +93,7 @@ class ResponseParsingMergeSpec extends PekkoSpec {
           |8
           |01234567
           |9
-          |012345678""".stripMargin)))
+          |012345678""".stripMarginWithNewline("\r\n"))))
 
       inSessionBytesSub.sendComplete()
 
