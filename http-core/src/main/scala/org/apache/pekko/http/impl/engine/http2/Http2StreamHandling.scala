@@ -258,8 +258,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def shutdownStreamHandling(): Unit = updateAllStates({ id => id.shutdown(); Closed }, "shutdownStreamHandling")
 
   def resetStream(streamId: Int, errorCode: ErrorCode): Unit = {
-    updateState(streamId, _ => Closed, "resetStream") // force stream to be closed
+    // Hand the RST_STREAM to the multiplexer first: closing the last stream can complete the connection once all
+    // outgoing data is flushed, and a frame pushed after that would be lost.
     multiplexer.pushControlFrame(RstStreamFrame(streamId, errorCode))
+    updateState(streamId, _ => Closed, "resetStream") // force stream to be closed
   }
 
   /**
