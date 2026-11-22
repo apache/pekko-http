@@ -66,6 +66,12 @@ private final class HttpsProxyGraphStage(
   override def shape: BidiShape[ByteString, ByteString, ByteString, ByteString] =
     BidiShape.apply(sslIn, bytesOut, bytesIn, sslOut)
 
+  // The host name is rendered verbatim into the CONNECT request line and the Host header, so
+  // whitespace or control characters in it would change the structure of the request.
+  require(
+    targetHostName.nonEmpty && targetHostName.forall(c => c > ' ' && c != '\u007f'),
+    "The target host name of an HTTP(S) proxy connection must not be empty or contain whitespace or control characters")
+
   private val connectMsg = {
     val r = new ByteStringRendering(256)
 

@@ -28,6 +28,28 @@ import scala.concurrent.duration._
 class HttpsProxyGraphStageSpec extends PekkoSpecWithMaterializer {
 
   "A ProxyGraphStage" should {
+    "reject target host names that would change the structure of the CONNECT request" in {
+      val settings = ClientConnectionSettings(system)
+      for (host <- Seq(
+          "",
+          "example.test\r\nProxy-Authorization: Basic injected",
+          "example.test\nX-Injected: yes",
+          "example.test:443 HTTP/1.1",
+          "example.test\tinjected",
+          "example.test\u0000",
+          "example.test\u007f")) {
+        withClue(s"host with chars ${host.map(_.toInt).mkString(",")}: ") {
+          an[IllegalArgumentException] should be thrownBy HttpsProxyGraphStage(host, 443, settings, None)
+        }
+      }
+    }
+
+    "accept host names and IP literals as target host names" in {
+      val settings = ClientConnectionSettings(system)
+      for (host <- Seq("example.test", "192.0.2.1", "2001:db8::1", "[2001:db8::1]"))
+        HttpsProxyGraphStage(host, 443, settings, None)
+    }
+
     "send CONNECT message and then forward incoming messages" in new Context {
       testCase() { (source, flowInProbe, flowOutProbe, sink) =>
         source.sendNext(ByteString("anything"))
