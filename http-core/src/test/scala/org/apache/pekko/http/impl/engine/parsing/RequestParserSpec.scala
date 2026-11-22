@@ -827,6 +827,29 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
           |
           |""" should parseToError(BadRequest, ErrorInfo("A chunked request must not contain a Content-Length header"))
       }
+
+      // RFC 9112, section 6.1: an HTTP/1.0 message with Transfer-Encoding has faulty framing
+      "an HTTP/1.0 chunked request on a persistent connection" in new Test {
+        """POST /data HTTP/1.0
+          |Connection: keep-alive
+          |Transfer-Encoding: chunked
+          |
+          |3
+          |abc
+          |0
+          |
+          |""" should parseToError(BadRequest,
+          ErrorInfo("An HTTP/1.0 message must not contain a Transfer-Encoding header"))
+      }
+
+      "an HTTP/1.0 chunked request with a content length" in new Test {
+        """POST /data HTTP/1.0
+          |Content-Length: 3
+          |Transfer-Encoding: chunked
+          |
+          |abc""" should parseToError(BadRequest,
+          ErrorInfo("An HTTP/1.0 message must not contain a Transfer-Encoding header"))
+      }
     }
   }
 
