@@ -1284,6 +1284,42 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           network.fromNet.expectCancellation()
         })
 
+      for (withTrailer <- Seq(false, true)) {
+        s"until a flow-control-blocked request body is sent after the response completes (trailer=$withTrailer)".inAssertAllStagesStopped(
+          new TestSetup(Setting(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, 8)) with NetProbes {
+            // The probe tracks stream windows from the default initial window size, so tell it about the 8-byte window
+            // as well, which lets it detect the client sending past its stream credit.
+            network.updateFromServerWindows(1, _ => 8)
+
+            // A strict entity (and a trailer attribute) means that everything the stream still has to send is known
+            // up front. The final DATA frame and the trailer are then pulled by the multiplexer itself once the peer
+            // grants more stream-level credit, which closes the last stream in the middle of a multiplexer transition.
+            val body = ByteString("abcdefghijklmnop")
+            val request = HttpRequest(method = HttpMethods.POST, uri = "https://www.example.com/",
+              entity = HttpEntity(ContentTypes.`application/octet-stream`, body))
+            user.emitRequest(
+              if (withTrailer) request.addAttribute(AttributeKeys.trailer, Trailer(RawHeader("x-result", "complete")))
+              else request)
+            network.expectDecodedResponseHEADERSPairs(1, endStream = false)
+            val first = network.expectDATA(1, endStream = false, numBytes = 8)
+            first shouldBe body.take(8)
+
+            network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+            user.expectResponse().status shouldBe StatusCodes.OK
+            user.requestOut.sendComplete()
+
+            network.sendWINDOW_UPDATE(1, 8)
+            val rest = network.expectDATA(1, endStream = !withTrailer, numBytes = 8)
+            first ++ rest shouldBe body
+            if (withTrailer)
+              network.expectDecodedResponseHEADERSPairs(1, endStream = true) shouldEqual
+              Seq("x-result" -> "complete")
+            user.responseIn.expectComplete()
+            network.toNet.expectComplete()
+            network.fromNet.expectCancellation()
+          })
+      }
+
       "until in-flight streaming requests are fully sent (after response is already complete) (uncommon)".inAssertAllStagesStopped(
         new TestSetup with NetProbes {
           val requestStreamProbe = TestPublisher.probe[ByteString]()
