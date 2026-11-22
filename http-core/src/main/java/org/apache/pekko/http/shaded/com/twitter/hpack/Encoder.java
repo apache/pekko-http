@@ -180,7 +180,9 @@ public final class Encoder {
       Huffman.ENCODER.encode(out, string);
     } else {
       byte[] stringBytes = StringTools.asciiStringBytes(string);
-      encodeInteger(out, 0x00, 7, length);
+      // the prefix counts the octets written, which are fewer than the chars when the string has a
+      // surrogate pair: ISO-8859-1 encoding writes a single '?' for it
+      encodeInteger(out, 0x00, 7, stringBytes.length);
       out.write(stringBytes, 0, stringBytes.length);
     }
   }
