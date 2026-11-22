@@ -79,8 +79,12 @@ class ClientConnectionSettingsSpec extends PekkoSpec {
           intercept[ConfigurationException](read(infinite)).getMessage shouldBe
           "Config setting 'close-timeout' must be a finite duration"
         }
-        val tooLarge = com.typesafe.config.ConfigFactory.parseString("close-timeout = 300d").withFallback(section)
-        intercept[IllegalArgumentException](read(tooLarge)).getMessage should include("at most 1 hour")
+        for (outOfRange <- Seq("0s", "300d")) {
+          val invalid =
+            com.typesafe.config.ConfigFactory.parseString(s"close-timeout = $outOfRange").withFallback(section)
+          intercept[ConfigurationException](read(invalid)).getMessage shouldBe
+          "Config setting 'close-timeout' must be > 0 and at most 1 hour"
+        }
       }
     }
 
