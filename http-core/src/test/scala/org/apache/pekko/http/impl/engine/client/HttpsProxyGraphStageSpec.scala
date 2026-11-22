@@ -54,6 +54,35 @@ class HttpsProxyGraphStageSpec extends PekkoSpecWithMaterializer {
         HttpsProxyGraphStage(host, 443, settings, None)
     }
 
+    for ((inputHost, port, wireHost) <- Seq(
+        ("example.test", 80, "example.test"),
+        ("example.test", 443, "example.test"),
+        ("example.test", 8443, "example.test"),
+        ("2001:db8::1", 443, "[2001:db8::1]"),
+        ("2001:db8::1", 8443, "[2001:db8::1]"),
+        ("[2001:db8::1]", 8443, "[2001:db8::1]"))) {
+      s"render a CONNECT request for $inputHost at port $port" in new Context {
+        override val targetHostName = inputHost
+        override val targetPort = port
+
+        testCase() { (source, flowInProbe, flowOutProbe, sink) =>
+          source.sendNext(ByteString("request"))
+          sink.request(1)
+
+          val expected = s"CONNECT $wireHost:$port HTTP/1.1\r\nHost: $wireHost:$port\r\n\r\n"
+          flowInProbe.requestNext().utf8String shouldBe expected
+          flowOutProbe.sendNext(ByteString("HTTP/1.1 200 Connection established\r\n\r\n"))
+          flowInProbe.requestNext(ByteString("request"))
+          flowOutProbe.sendNext(ByteString("response"))
+          sink.expectNext(ByteString("response"))
+
+          source.sendComplete()
+          flowOutProbe.sendComplete()
+          sink.expectComplete()
+        }
+      }
+    }
+
     "send CONNECT message and then forward incoming messages" in new Context {
       testCase() { (source, flowInProbe, flowOutProbe, sink) =>
         source.sendNext(ByteString("anything"))
@@ -89,7 +118,7 @@ class HttpsProxyGraphStageSpec extends PekkoSpecWithMaterializer {
         val connectMsg = flowInProbe.requestNext()
         connectMsg.utf8String should startWith(
           new EnhancedString(s"""CONNECT $targetHostName:$targetPort HTTP/1.1
-            |Host: $targetHostName
+            |Host: $targetHostName:$targetPort
             |Proxy-Authorization: Basic dGVzdFVzZXJuYW1lOnRlc3RQYXNzd29yZA==
             |
             |""").stripMarginWithNewline("\r\n"))
@@ -151,7 +180,9 @@ class HttpsProxyGraphStageSpec extends PekkoSpecWithMaterializer {
       }
     }
 
-    "fail in case of non-2xx Proxy response for CONNECT message" in new Context {
+    "report the rendered IPv6 authority if the proxy rejects CONNECT" in new Context {
+      override val targetHostName = "2001:db8::1"
+
       testCase() { (source, flowInProbe, flowOutProbe, sink) =>
         source.sendNext(ByteString("anything"))
         sink.request(100)
@@ -161,8 +192,9 @@ class HttpsProxyGraphStageSpec extends PekkoSpecWithMaterializer {
         flowOutProbe.sendNext(ByteString("HTTP/1.0 501 Some Error\r\n\r\n"))
 
         sink.expectError() match {
-          case _: ProxyConnectionFailedException =>
-          case e                                 =>
+          case e: ProxyConnectionFailedException =>
+            e.getMessage should include(s"[2001:db8::1]:$targetPort")
+          case e =>
             fail(s"should be ProxyConnectionFailedException, caught ${e.getClass.getName} instead")
         }
       }

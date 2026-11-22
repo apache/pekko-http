@@ -51,6 +51,10 @@ still work (if TLS breaks, then the proxy might be fussing with your data).
 This approach is commonly used to securely proxy requests to HTTPS endpoints. In theory it could also be used to proxy
 requests targeting HTTP endpoints, but we have not yet found a proxy that in fact allows this.
 
+The proxy transport uses the same destination authority in the CONNECT request-target and the `Host` field.
+For compatibility with proxies that compare these values, both include the destination port, even when it is 443.
+IPv6 literals are enclosed in brackets. When calling `connectTo` directly, supply the host and port as separate arguments.
+
 Instantiate the HTTP(S) proxy transport using `ClientTransport.httpsProxy(proxyAddress)`.
 
 The proxy transport can also be setup using `ClientTransport.httpsProxy()` or `ClientTransport.httpsProxy(basicHttpCredentials)`

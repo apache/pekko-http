@@ -22,7 +22,7 @@ import pekko.http.impl.engine.parsing.{ HttpHeaderParser, HttpResponseParser, Pa
 import pekko.http.impl.util.ByteStringRendering
 import pekko.http.impl.util.Rendering.CrLf
 import pekko.http.scaladsl.model.headers.{ HttpCredentials, `Proxy-Authorization` }
-import pekko.http.scaladsl.model.{ HttpMethods, StatusCodes }
+import pekko.http.scaladsl.model.{ HttpMethods, StatusCodes, Uri }
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.stream.scaladsl.BidiFlow
 import pekko.stream.stage._
@@ -75,12 +75,20 @@ private final class HttpsProxyGraphStage(
     targetHostName.nonEmpty && targetHostName.forall(c => c > ' ' && c < '\u007f'),
     "The target host name of an HTTP(S) proxy connection must not be empty and must only contain visible ASCII " +
     "characters")
+  private val authority = {
+    // The transport supplies a host and port separately. Parse IP literals as hosts,
+    // not as authorities, and let Uri.Host render the IPv6 brackets.
+    val host =
+      if (targetHostName.indexOf(':') >= 0 || targetHostName.startsWith("[")) Uri.Host(targetHostName).toString
+      else targetHostName
+    s"$host:$targetPort"
+  }
 
   private val connectMsg = {
     val r = new ByteStringRendering(256)
 
-    r ~~ "CONNECT " ~~ targetHostName ~~ ':' ~~ targetPort ~~ " HTTP/1.1" ~~ CrLf
-    r ~~ "Host: " ~~ targetHostName ~~ CrLf
+    r ~~ "CONNECT " ~~ authority ~~ " HTTP/1.1" ~~ CrLf
+    r ~~ "Host: " ~~ authority ~~ CrLf
     proxyAuthorization.foreach { creds =>
       r ~~ `Proxy-Authorization`(creds)
     }
@@ -160,15 +168,14 @@ private final class HttpsProxyGraphStage(
                     }
                     parser.onUpstreamFinish()
 
-                    log.debug("HTTP(S) proxy connection to {}:{} established. Now forwarding data.", targetHostName,
-                      targetPort)
+                    log.debug("HTTP(S) proxy connection to {} established. Now forwarding data.", authority)
 
                     state = Connected
                     if (isAvailable(bytesOut)) pull(sslIn)
                     if (isAvailable(sslOut)) pull(bytesIn)
                   case ResponseStart(statusCode, _, _, _, _, _) =>
                     failStage(new ProxyConnectionFailedException(
-                      s"The HTTP(S) proxy rejected to open a connection to $targetHostName:$targetPort with status code: $statusCode"))
+                      s"The HTTP(S) proxy rejected to open a connection to $authority with status code: $statusCode"))
                   case other =>
                     throw new IllegalStateException(s"unexpected element of type $other")
                 }
@@ -188,8 +195,8 @@ private final class HttpsProxyGraphStage(
             state match {
               case Starting =>
                 log.debug(
-                  "TCP connection to HTTP(S) proxy connection established. Sending CONNECT {}:{} to HTTP(S) proxy",
-                  targetHostName, targetPort)
+                  "TCP connection to HTTP(S) proxy established. Sending CONNECT {} to HTTP(S) proxy.",
+                  authority)
                 push(bytesOut, connectMsg)
                 state = Connecting
               case Connecting =>
