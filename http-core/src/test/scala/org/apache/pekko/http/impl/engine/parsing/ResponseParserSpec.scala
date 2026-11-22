@@ -124,7 +124,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         parser.parseBytes(ByteString(prep("HTTP/1.1 205 Reset Content\nTransfer-Encoding: chunked\n\n"))) shouldEqual
         NeedMoreData
         parser.parseBytes(ByteString("0")) shouldEqual NeedMoreData
-        parser.parseBytes(ByteString(newLine)) shouldEqual NeedMoreData
+        // the last-chunk line ends with CRLF whatever the line ends of the header section
+        parser.parseBytes(ByteString("\r\n")) shouldEqual NeedMoreData
         val start = parser.parseBytes(ByteString(newLine)).asInstanceOf[ResponseStart]
         start.statusCode shouldEqual ResetContent
         start.createEntity shouldEqual StrictEntityCreator(HttpEntity.Empty)
@@ -313,21 +314,20 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
 
       "message chunk with and without extension" in new Test {
         Seq(
-          start +
-          """3
+          prep(start) + crlf("""3
             |abc
             |10;some=stuff;bla
             |0123456789ABCDEF
-            |""",
+            |"""),
           "10;foo=",
-          """bar
+          crlf("""bar
             |0123456789ABCDEF
             |10
-            |0123456789""",
-          """ABCDEF
+            |0123456789"""),
+          crlf("""ABCDEF
             |0
             |
-            |""") should generalMultiParseTo(
+            |""")) should generalRawMultiParseTo(
           Right(baseResponse.withEntity(Chunked(`application/pdf`,
             source(
               Chunk(ByteString("abc")),
@@ -339,28 +339,46 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
 
       "message end" in new Test {
         Seq(
-          start,
-          """0
+          prep(start),
+          crlf("""0
             |
-            |""") should generalMultiParseTo(
+            |""")) should generalRawMultiParseTo(
           Right(baseResponse.withEntity(Chunked(`application/pdf`, source(LastChunk)))))
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
       "message end with extension, trailer and remaining content" in new Test {
         Seq(
-          start,
-          """000;nice=true
-            |Foo: pip
+          prep(start),
+          crlf("""000;nice=true
+            |""") + prep("""Foo: pip
             | apo
             |Bar: xyz
             |
-            |HT""") should generalMultiParseTo(
+            |HT""")) should generalRawMultiParseTo(
           Right(baseResponse.withEntity(Chunked(
             `application/pdf`,
             source(LastChunk("nice=true", List(RawHeader("Foo", "pip apo"), RawHeader("Bar", "xyz"))))))),
           Left(MessageStartError(400: StatusCode, ErrorInfo("Illegal HTTP message start"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
+      "reject a chunk-size line ending in a bare LF" in new Test {
+        Seq(prep(start), "3\nabc\r\n0\r\n\r\n") should generalRawMultiParseTo(
+          Right(baseResponse.withEntity(Chunked(`application/pdf`, source()))),
+          Left(EntityStreamError(ErrorInfo("Illegal character '\\n' in chunk start"))))
+      }
+
+      "reject chunk data followed by a bare LF" in new Test {
+        Seq(prep(start), "3\r\nabc\n0\r\n\r\n") should generalRawMultiParseTo(
+          Right(baseResponse.withEntity(Chunked(`application/pdf`, source()))),
+          Left(EntityStreamError(ErrorInfo("Illegal chunk termination"))))
+      }
+
+      "reject a bare CR in a chunk extension" in new Test {
+        Seq(prep(start), "3;a\rb\r\nabc\r\n0\r\n\r\n") should generalRawMultiParseTo(
+          Right(baseResponse.withEntity(Chunked(`application/pdf`, source()))),
+          Left(EntityStreamError(ErrorInfo("Illegal character '\\r' in chunk extension"))))
       }
 
       "a response configured to override a built-in media type" in new Test {
@@ -554,6 +572,9 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         .fast.recover { case _: NoSuchElementException => source() }
 
     def prep(response: String) = response.stripMarginWithNewline(newLine)
+
+    /** The chunked coding requires CRLF line ends whatever the line ends of the status line and header fields */
+    def crlf(chunks: String) = chunks.stripMarginWithNewline("\r\n")
 
     def source[T](elems: T*): Source[T, NotUsed] = Source(elems.toList)
   }
