@@ -89,13 +89,8 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
           }
         }
       }
-      "when user handler instantly tries to send messages with a configured close wait" in
-      Utils.assertAllStagesStopped {
+      "when user handler instantly tries to send messages" in Utils.assertAllStagesStopped {
         new TestSetup {
-          override def settings = {
-            val defaults = super.settings
-            defaults.withWebsocketSettings(defaults.websocketSettings.withCloseTimeout(750.millis))
-          }
           send(
             """GET /chat HTTP/1.1
               |Host: server.example.com

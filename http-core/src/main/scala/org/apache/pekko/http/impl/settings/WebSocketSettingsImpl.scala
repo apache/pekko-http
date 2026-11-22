@@ -80,8 +80,7 @@ private[pekko] final case class WebSocketSettingsImpl(
       logFrames,
       compression, receiveIdleTimeout, sendIdleTimeout, closeTimeout)
 
-  require(
-    closeTimeout > Duration.Zero && closeTimeout <= WebSocketSettingsImpl.MaxCloseTimeout,
+  require(WebSocketSettingsImpl.isValidCloseTimeout(closeTimeout),
     "websocket close-timeout must be > 0 and at most 1 hour")
 
   require(
@@ -104,6 +103,8 @@ private[pekko] object WebSocketSettingsImpl { // on purpose not extending Settin
 
   val DefaultCloseTimeout: FiniteDuration = 3.seconds
   private val MaxCloseTimeout: FiniteDuration = 1.hour
+  private def isValidCloseTimeout(timeout: FiniteDuration): Boolean =
+    timeout > Duration.Zero && timeout <= MaxCloseTimeout
 
   // Preserve the existing internal factory descriptor.
   def apply(
@@ -153,8 +154,12 @@ private[pekko] object WebSocketSettingsImpl { // on purpose not extending Settin
   private def readCloseTimeout(config: Config): FiniteDuration =
     if (!config.hasPath("close-timeout")) DefaultCloseTimeout
     else config.getPotentiallyInfiniteDuration("close-timeout") match {
-      case timeout: FiniteDuration => timeout
-      case _                       => throw new ConfigurationException("Config setting 'close-timeout' must be a finite duration")
+      // Report every invalid configured value the same way, naming the setting, rather than letting the range check
+      // fall through to the constructor's `require`.
+      case timeout: FiniteDuration if isValidCloseTimeout(timeout) => timeout
+      case _: FiniteDuration                                       =>
+        throw new ConfigurationException("Config setting 'close-timeout' must be > 0 and at most 1 hour")
+      case _ => throw new ConfigurationException("Config setting 'close-timeout' must be a finite duration")
     }
 
 }
