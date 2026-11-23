@@ -185,6 +185,34 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           pushInput(input)
           expectMessage(TextMessage.Strict(""))
         }
+        for {
+          server <- Seq(false, true)
+          middle <- Seq("", "hello")
+        } {
+          val side = if (server) "server side, masked" else "client side"
+          val label = if (middle.isEmpty) "empty" else "nonempty"
+          s"decode fragmented text with empty first and final fragments ($side, $label middle)" in new TestSetup {
+            protected def serverSide: Boolean = server
+
+            def frame(opcode: Opcode, text: String, fin: Boolean): ByteString = {
+              val payload = ByteString(text, UTF_8)
+              if (server) {
+                val mask = Random.nextInt()
+                frameHeader(opcode, payload.size, fin, mask = Some(mask)) ++ maskedBytes(payload, mask)._1
+              } else frameHeader(opcode, payload.size, fin) ++ payload
+            }
+
+            pushInput(
+              frame(Opcode.Text, "", fin = false) ++
+              frame(Opcode.Continuation, middle, fin = false) ++
+              frame(Opcode.Continuation, "", fin = true))
+
+            Await.result(expectTextMessage().toStrict(3.seconds), 3.seconds) shouldBe TextMessage.Strict(middle)
+
+            pushInput(frame(Opcode.Text, "next", fin = true))
+            expectTextMessage(TextMessage.Strict("next"))
+          }
+        }
         "decode complete, strict frame from utf8" in new ClientTestSetup {
           val msg = "äbcdef€\uffff"
           val data = ByteString(msg, UTF_8)
