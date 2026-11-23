@@ -2150,6 +2150,21 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectComplete()
           terminated.futureValue
         })
+      "send RST_STREAM for a stream error on the last open stream before closing".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          network.sendRequest(1, HttpRequest())
+          user.expectRequest()
+          val terminated = serverTerminator.terminate(1.minute)
+          network.expectGOAWAY(1)
+
+          // Resetting the last open stream is what allows the connection to close, so the RST_STREAM has to be
+          // handed to the multiplexer before the stream is closed.
+          network.sendWINDOW_UPDATE(1, 0) // illegal
+          network.expectRST_STREAM(1, ErrorCode.PROTOCOL_ERROR)
+
+          network.expectComplete()
+          terminated.futureValue
+        })
       "close after current requests have been processed (while response data was outstanding)".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           network.sendRequest(1, HttpRequest())
