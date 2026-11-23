@@ -21,6 +21,14 @@
 
 Adds a header to the response to request the update of the cookie with the given name on the client.
 
+Use `withPartitioned(true)` on an `HttpCookie` to emit the `Partitioned` attribute. Browsers require
+`Secure` for partitioned cookies, so also set `withSecure(true)`. Pekko HTTP models and renders the
+attribute; it does not implement browser-side cookie storage or partitioning. Parsing a bare
+`Partitioned` attribute sets `partitioned` instead of storing it as a generic extension.
+Disabling the typed attribute does not change an existing raw extension set with `withExtension`.
+If the raw extension is exactly the bare `Partitioned` attribute (ignoring case) and the typed
+attribute is also enabled, it is rendered once using the raw spelling.
+
 Use the @ref[deleteCookie](deleteCookie.md) directive to delete a cookie.
 
 ## Example

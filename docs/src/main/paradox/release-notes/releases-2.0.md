@@ -29,6 +29,15 @@ and upgrade directly to the latest 2.0.x release.
 
 @@@
 
+## Unreleased
+
+### Behavior Changes
+
+* A bare `Partitioned` attribute in a parsed `Set-Cookie` header is now stored in the typed
+  `HttpCookie.partitioned` field instead of the generic `extension` field. If your code detects
+  partitioned cookies by inspecting `extension` (`getExtension()` in Java), use `partitioned`
+  (`partitioned()` in Java) instead ([PR1562](https://github.com/apache/pekko-http/pull/1562)).
+
 ## 2.0.1
 
 Release notes for Apache Pekko HTTP 2.0.1. See [GitHub Milestone for 2.0.1](https://github.com/apache/pekko-http/milestone/21?closed=1) for a fuller list of changes.

@@ -40,6 +40,11 @@ public abstract class HttpCookie {
 
   public abstract boolean httpOnly();
 
+  /** Returns whether the typed Partitioned attribute is enabled. */
+  public boolean partitioned() {
+    return false;
+  }
+
   public abstract Optional<String> getExtension();
 
   public abstract Optional<SameSite> getSameSite();
@@ -114,6 +119,25 @@ public abstract class HttpCookie {
 
   /** Returns a copy of this HttpCookie instance with the given secure flag set. */
   public abstract HttpCookie withSecure(boolean secure);
+
+  /**
+   * Returns a copy with the typed Partitioned attribute enabled or disabled. Browsers require
+   * Secure for partitioned cookies; this method does not change Secure or the raw extension.
+   */
+  public HttpCookie withPartitioned(boolean partitioned) {
+    return create(
+            name(),
+            value(),
+            getExpires(),
+            getMaxAge(),
+            getDomain(),
+            getPath(),
+            secure(),
+            httpOnly(),
+            getExtension(),
+            getSameSite())
+        .withPartitioned(partitioned);
+  }
 
   /** Returns a copy of this HttpCookie instance with the given http-only flag set. */
   public abstract HttpCookie withHttpOnly(boolean httpOnly);
