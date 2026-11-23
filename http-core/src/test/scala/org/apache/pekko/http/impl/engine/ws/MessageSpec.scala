@@ -748,7 +748,10 @@ class MessageSpec extends PekkoSpecWithMaterializer(
         netOut.expectComplete()
         netIn.expectCancellation()
       }
+      // the inclusive bounds of the ranges CloseCodes.isValid accepts (1000 and 1001 are not error codes), and the
+      // codes registered after RFC 6455
       List(
+        Protocol.CloseCodes.Unacceptable,
         Protocol.CloseCodes.InconsistentData,
         Protocol.CloseCodes.ServiceRestart,
         Protocol.CloseCodes.TryAgainLater,
