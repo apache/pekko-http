@@ -16,6 +16,7 @@ package org.apache.pekko.http.javadsl.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import org.apache.pekko.http.scaladsl.model.IllegalUriException;
 import org.apache.pekko.japi.Pair;
@@ -72,6 +73,21 @@ public class UriTest {
     Uri uri2 = Uri.create("http://foo.com?foo=%2F%5C");
     assertEquals(Optional.of("/\\"), uri2.query().get("foo"));
     // #dont-double-decode
+  }
+
+  @Test
+  public void testUtf8PathAndQueryPlusSigns() {
+    String path = "/caf%C3%A9+menu%20du%20jour";
+    String query = "dish=Caff%C3%A9+%E2%98%BA%2B";
+    String rendered = "https://example.com" + path + "?" + query;
+    Uri uri = Uri.create(rendered);
+
+    assertEquals(path, uri.getPathString());
+    assertEquals("café+menu du jour", uri.pathSegments().iterator().next());
+    assertEquals(Optional.of(query), uri.rawQueryString());
+    assertEquals(Optional.of("dish=Caffé+☺+"), uri.queryString(StandardCharsets.UTF_8));
+    assertEquals(Optional.of("Caffé ☺+"), uri.query().get("dish"));
+    assertEquals(rendered, uri.toString());
   }
 
   @Test
