@@ -159,6 +159,42 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
       block(Seq("k" -> "y")) shouldEqual "be"
     }
 
+    "not index a field with a char above 0xFF, which is not written as its own octet" in {
+      // The encoder's dynamic table keeps the Strings and counts their chars, while the peer records the octets it
+      // received and counts those (RFC 7541 section 4.1). A char above 0xFF is written as '?' and a surrogate pair as
+      // a single '?', so the peer would record another value than the String, and fewer octets for the pair.
+      Seq("\uD83D\uDE00", "\u20acuro").foreach { value =>
+        Seq(true, false).foreach { huffman =>
+          withClue(s"value=$value huffman=$huffman") {
+            val encoder = new Encoder(4096, true, huffman, !huffman)
+            val decoder = new Decoder(8192, 4096)
+            val out = new ByteStringOutputStream(32)
+
+            def encode(name: String, value: String): Array[Byte] = {
+              encoder.encodeHeader(out, name, value, false)
+              out.takeByteString().toArray
+            }
+
+            val first = encode("x-a", value)
+            val received = StringTools.asciiStringFromBytes(StringTools.asciiStringBytes(value))
+            (received should not).equal(value)
+            decodeHeaders(decoder, first) shouldEqual Seq("x-a" -> received)
+            encoder.length() shouldEqual 0
+            decoder.length() shouldEqual 0
+
+            // it is sent as the same literal again, and later entries are still in step
+            val second = encode("x-a", value)
+            hex(second) shouldEqual hex(first)
+            decodeHeaders(decoder, second) shouldEqual Seq("x-a" -> received)
+            decodeHeaders(decoder, encode("x-b", "next")) shouldEqual Seq("x-b" -> "next")
+            encoder.length() shouldEqual 1
+            decoder.length() shouldEqual 1
+            decoder.size() shouldEqual encoder.size()
+          }
+        }
+      }
+    }
+
     "never index sensitive values even when an exact table entry already exists" in {
       val encoder = new Encoder(4096, true, false, true)
       val decoder = new Decoder(8192, 4096)
