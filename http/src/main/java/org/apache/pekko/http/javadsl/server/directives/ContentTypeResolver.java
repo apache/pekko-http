@@ -41,7 +41,7 @@ public interface ContentTypeResolver {
    * @throws IllegalArgumentException if an extension is invalid
    * @since 2.1.0
    */
-  static ContentTypeResolver withExtensions(Map<String, MediaType> extensions) {
+  static ContentTypeResolver withExtensions(Map<String, ? extends MediaType> extensions) {
     return withExtensions(extensions, HttpCharsets.UTF_8);
   }
 
@@ -53,10 +53,10 @@ public interface ContentTypeResolver {
    * @since 2.1.0
    */
   static ContentTypeResolver withExtensions(
-      Map<String, MediaType> extensions, HttpCharset defaultCharset) {
+      Map<String, ? extends MediaType> extensions, HttpCharset defaultCharset) {
     scala.collection.immutable.Map<String, org.apache.pekko.http.scaladsl.model.MediaType>
         scalaMap = scala.collection.immutable.Map$.MODULE$.empty();
-    for (Map.Entry<String, MediaType> entry : extensions.entrySet()) {
+    for (Map.Entry<String, ? extends MediaType> entry : extensions.entrySet()) {
       scalaMap =
           scalaMap.updated(
               entry.getKey(), (org.apache.pekko.http.scaladsl.model.MediaType) entry.getValue());

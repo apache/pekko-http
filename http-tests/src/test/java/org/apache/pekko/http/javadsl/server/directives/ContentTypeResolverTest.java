@@ -58,6 +58,19 @@ public class ContentTypeResolverTest {
   }
 
   @Test
+  public void testWithExtensionsAcceptsAMapOfAMediaTypeSubtype() {
+    Map<String, MediaType.Binary> extensions = new HashMap<>();
+    extensions.put("custom", custom);
+
+    assertEquals(
+        custom.toContentType(), ContentTypeResolver.withExtensions(extensions).resolve("a.custom"));
+    assertEquals(
+        custom.toContentType(),
+        ContentTypeResolver.withExtensions(extensions, HttpCharsets.ISO_8859_1)
+            .resolve("a.custom"));
+  }
+
+  @Test
   public void testWithExtensionsRejectsInvalidExtensions() {
     Map<String, MediaType> extensions = new HashMap<>();
     extensions.put("gz", custom);
