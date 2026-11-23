@@ -66,6 +66,16 @@ private final class HttpsProxyGraphStage(
   override def shape: BidiShape[ByteString, ByteString, ByteString, ByteString] =
     BidiShape.apply(sslIn, bytesOut, bytesIn, sslOut)
 
+  // The host name is rendered verbatim into the CONNECT request line and the Host header, so
+  // whitespace or control characters in it would change the structure of the request. The renderer
+  // writes one byte per char, dropping the high byte, so a non-ASCII char such as '\u010a' would
+  // come out as a control character: only visible ASCII is allowed. An internationalized domain
+  // name has to be given in its ASCII (punycode) form.
+  require(
+    targetHostName.nonEmpty && targetHostName.forall(c => c > ' ' && c < '\u007f'),
+    "The target host name of an HTTP(S) proxy connection must not be empty and must only contain visible ASCII " +
+    "characters")
+
   private val connectMsg = {
     val r = new ByteStringRendering(256)
 
