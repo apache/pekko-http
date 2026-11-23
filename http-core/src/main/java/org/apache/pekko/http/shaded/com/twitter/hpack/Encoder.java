@@ -117,17 +117,33 @@ public final class Encoder {
           encodeInteger(out, 0x80, 7, staticTableIndex);
         } else {
           int nameIndex = getNameIndex(name);
-          if (useIndexing) {
+          // The dynamic table keeps the Strings and counts their chars, while the peer records the
+          // octets it received and counts those (RFC 7541 section 4.1). They only agree if every
+          // char is written as its own octet: a char above 0xFF is written as '?' or as its low
+          // byte, and a surrogate pair in a literal that is not Huffman coded as a single '?'.
+          // Such a field is not indexed, so that both tables keep the same entries and size.
+          boolean index = useIndexing && isLatin1(name) && isLatin1(value);
+          if (index) {
             ensureCapacity(headerSize);
           }
-          IndexType indexType = useIndexing ? IndexType.INCREMENTAL : IndexType.NONE;
+          IndexType indexType = index ? IndexType.INCREMENTAL : IndexType.NONE;
           encodeLiteral(out, name, value, indexType, nameIndex);
-          if (useIndexing) {
+          if (index) {
             add(name, value);
           }
         }
       }
     }
+  }
+
+  /** Whether every char of the string is written as the octet of the same value. */
+  private static boolean isLatin1(String string) {
+    for (int i = 0; i < string.length(); i++) {
+      if (string.charAt(i) > 0xFF) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /** Set the maximum table size. */
