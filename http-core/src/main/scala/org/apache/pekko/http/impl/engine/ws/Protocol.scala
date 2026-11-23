@@ -74,10 +74,8 @@ private[http] object Protocol {
     def isError(code: Int): Boolean = !(code == Regular || code == GoingAway)
     def isValid(code: Int): Boolean =
       ((code >= 1000) && (code <= 1003)) ||
-      (code >= 1007) &&
-      (code <= 1014) ||
-      (code >= 3000) &&
-      (code <= 4999)
+      ((code >= 1007) && (code <= 1014)) ||
+      ((code >= 3000) && (code <= 4999))
 
     val Regular = 1000
     val GoingAway = 1001
@@ -91,6 +89,9 @@ private[http] object Protocol {
     val TooBig = 1009
     val ClientRejectsExtension = 1010
     val UnexpectedCondition = 1011
+    val ServiceRestart = 1012
+    val TryAgainLater = 1013
+    val BadGateway = 1014
     val TLSHandshakeFailure = 1015
   }
 }
