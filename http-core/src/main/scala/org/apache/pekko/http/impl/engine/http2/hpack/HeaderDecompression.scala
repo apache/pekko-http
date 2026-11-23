@@ -129,7 +129,9 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
                   // cannot use OtherHeader.parse because that doesn't has access to header parser
                   val header = parseHeaderPair(httpHeaderParser, name, value)
                   RequestParsing.validateHeader(header)
-                  handle(header)
+                  headers += name -> header
+                  // RFC 850 dates may resolve to a different century on the next indexed use.
+                  if (httpHeaderParser.resultCanBeCached) header else null
               }
             }
           } catch {

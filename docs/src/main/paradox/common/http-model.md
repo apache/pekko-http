@@ -332,6 +332,11 @@ always pass on all received headers to the application. Unknown headers as well 
 to the header parser) will be made available as @apidoc[RawHeader] instances. For the ones exhibiting parsing errors a
 warning message is logged depending on the value of the `illegal-header-warnings` config setting.
 
+When parsing an obsolete RFC 850 HTTP date, Pekko HTTP interprets its two-digit year against the current UTC
+time: if the resolved time would be more than 50 years ahead, it uses the preceding century, as specified in
+[RFC 9110, Section 5.6.7](https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.7). This does not change
+the two-digit year rule for `Set-Cookie` expiry dates.
+
 Some headers have special status in HTTP and are therefore treated differently from "regular" headers:
 
 Content-Type

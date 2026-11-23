@@ -123,6 +123,17 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
       parseAndCache(newLine)() shouldEqual EmptyHeader
     }
 
+    "cache absolute dates but reparse a clock-dependent date" in new TestSetup() {
+      val absolute = s"Last-Modified: Sun, 06 Nov 1994 08:49:37 GMT${newLine}x"
+      val relative = s"Last-Modified: Sunday, 06-Nov-94 08:49:37 GMT${newLine}x"
+      val original = parseLine(relative)._2
+      val cached = parseAndCache(absolute)()
+      val reparsed = parseLine(relative)._2
+      reparsed shouldEqual cached
+      (reparsed eq original) shouldBe false
+      (parseLine(absolute)._2 eq cached) shouldBe true
+    }
+
     "retrieve a cached header with an exact header name match" in new TestSetup() {
       parseAndCache(s"Connection: close${newLine}x")() shouldEqual Connection("close")
     }

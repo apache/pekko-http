@@ -25,7 +25,8 @@ import pekko.http.impl.engine.http2.FrameEvent
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.parsing.HttpHeaderParser
-import pekko.http.scaladsl.model.headers.RawHeader
+import pekko.http.scaladsl.model.DateTime
+import pekko.http.scaladsl.model.headers.{ RawHeader, `Last-Modified` }
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.testkit._
@@ -45,6 +46,24 @@ class HeaderCompressionSpec extends PekkoSpec {
     frame.asInstanceOf[HeadersFrame].headerBlockFragment.map(b => f"$b%02x").mkString
 
   "Header compression" should {
+    "reuse absolute parsed dates but reparse an indexed clock-dependent date" in {
+      val relative = headers(1, Seq("last-modified" -> "Sunday, 06-Nov-94 08:49:37 GMT"))
+      val absolute = headers(3, Seq("last-modified" -> "Sun, 06 Nov 1994 08:49:37 GMT"))
+      val blocks = compress(relative, absolute, relative.copy(streamId = 5), absolute.copy(streamId = 7))
+      // Ensure the repeated values are actually indexed, not second literals.
+      blocks.drop(2).foreach { block =>
+        block.asInstanceOf[HeadersFrame].headerBlockFragment.size shouldBe 1
+      }
+
+      val settings = ParserSettings(system)
+      val decompression = new HeaderDecompression(HttpHeaderParser(settings, system.log), settings, 8192)
+      val decoded = Await.result(Source(blocks.toList).via(decompression).runWith(Sink.seq), 3.seconds.dilated)
+        .map(_.asInstanceOf[ParsedHeadersFrame].keyValuePairs.head._2)
+      decoded shouldEqual Seq.fill(4)(`Last-Modified`(DateTime(1994, 11, 6, 8, 49, 37)))
+      (decoded(0) eq decoded(2)) shouldBe false
+      (decoded(1) eq decoded(3)) shouldBe true
+    }
+
     "emit only the smallest and final table sizes while preserving every settings acknowledgement" in {
       val updates = Seq(setting(2048), setting(1024), setting(2048))
       val result = compress((updates :+ headers()): _*)

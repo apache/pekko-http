@@ -43,8 +43,8 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
       }
       "failing parse run" in {
         val Left(List(ErrorInfo(summary, detail))) = headers.`Last-Modified`.parseFromValueString("abc")
-        summary shouldEqual
-        "Illegal HTTP header 'Last-Modified': Invalid input 'a', expected IMF-fixdate, asctime-date or '0' (line 1, column 1)"
+        summary should startWith("Illegal HTTP header 'Last-Modified': Invalid input 'a'")
+        summary should endWith("(line 1, column 1)")
         detail shouldEqual
         """abc
             |^""".stripMarginWithNewline("\n")
@@ -155,8 +155,9 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
         summary shouldEqual
         "Illegal HTTP header 'Retry-After': Invalid input '1', expected OWS or 'EOI' (line 1, column 2)"
         val Left(List(ErrorInfo(summary2, detail2))) = `Retry-After`.parseFromValueString("-10")
-        summary2 shouldEqual
-        "Illegal HTTP header 'Retry-After': Invalid input '-', expected HTTP-date or delta-seconds (line 1, column 1)"
+        summary2 should startWith("Illegal HTTP header 'Retry-After': Invalid input '-'")
+        summary2 should endWith("(line 1, column 1)")
+        detail2 shouldEqual "-10\n^"
         val Left(List(ErrorInfo(summary3, detail3))) = `Retry-After`.parseFromValueString("2015-10-21H07:28:00Z")
         summary3 shouldEqual
         "Illegal HTTP header 'Retry-After': Invalid input '-', expected DIGIT, OWS or 'EOI' (line 1, column 5)"

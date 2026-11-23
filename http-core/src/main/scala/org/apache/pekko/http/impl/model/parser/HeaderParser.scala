@@ -55,6 +55,9 @@ private[http] class HeaderParser(
     with WebSocketHeaders {
   import CharacterClasses._
 
+  private var timeDependentDate = false
+  protected override def markTimeDependentDate(): Unit = timeDependentDate = true
+
   override def customMediaTypes = settings.customMediaTypes
   protected def maxCommentParsingDepth: Int = settings.maxCommentParsingDepth
 
@@ -121,11 +124,18 @@ private[http] object HeaderParser {
   object EmptyCookieException extends SingletonException("Cookie header contained no parsable cookie values.")
 
   def lookupParser(headerName: String, settings: Settings = DefaultSettings): Option[String => HeaderParser.Result] =
-    Some { (value: String) =>
+    lookupParserWithTimeDependence(headerName, settings).map { parse => (value: String) => parse(value, () => ()) }
+
+  private[http] def lookupParserWithTimeDependence(
+      headerName: String,
+      settings: Settings): Option[(String, () => Unit) => HeaderParser.Result] =
+    Some { (value: String, markTimeDependent: () => Unit) =>
       import org.parboiled2.EOI
       val v = value + EOI // this makes sure the parser isn't broken even if there's no trailing garbage in this value
       val parser = new HeaderParser(v, settings)
-      dispatch(parser, headerName) match {
+      val result = dispatch(parser, headerName)
+      if (parser.timeDependentDate) markTimeDependent()
+      result match {
         case r @ Success(_) if parser.cursor == v.length => r
         case r @ Success(_)                              =>
           Failure(ErrorInfo(
