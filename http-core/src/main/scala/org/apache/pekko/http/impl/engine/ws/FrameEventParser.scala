@@ -13,7 +13,8 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
-import scala.annotation.tailrec
+import java.lang.invoke.MethodHandles
+import java.nio.ByteOrder
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
@@ -127,40 +128,34 @@ private[http] object FrameEventParser extends ByteStringParser[FrameEvent] {
     }
 
   def mask(bytes: ByteString, mask: Int): (ByteString, Int) = {
-    val m0 = ((mask >> 24) & 0xFF).toByte
-    val m1 = ((mask >> 16) & 0xFF).toByte
-    val m2 = ((mask >> 8) & 0xFF).toByte
-    val m3 = ((mask >> 0) & 0xFF).toByte
-
-    @tailrec def rec(bytes: Array[Byte], offset: Int, last: Int): Unit =
-      if (offset < last) {
-        // process four bytes each turn
-        bytes(offset + 0) = (bytes(offset + 0) ^ m0).toByte
-        bytes(offset + 1) = (bytes(offset + 1) ^ m1).toByte
-        bytes(offset + 2) = (bytes(offset + 2) ^ m2).toByte
-        bytes(offset + 3) = (bytes(offset + 3) ^ m3).toByte
-
-        rec(bytes, offset + 4, last)
-      } else {
-        val len = bytes.length
-
-        if (last < len) {
-          bytes(last) = (bytes(last) ^ m0).toByte
-
-          if (last + 1 < len) {
-            bytes(last + 1) = (bytes(last + 1) ^ m1).toByte
-
-            if (last + 2 < len)
-              bytes(last + 2) = (bytes(last + 2) ^ m2).toByte
-          }
-        }
-      }
-
     val buffer = bytes.toArray[Byte]
-    rec(buffer, 0, (bytes.length / 4) * 4)
+    val end = buffer.length & ~7
+    if (end != 0) maskWords(buffer, end, mask)
+
+    var offset = end
+    while (offset < buffer.length) {
+      val shift = 24 - ((offset & 3) << 3)
+      buffer(offset) = (buffer(offset) ^ (mask >>> shift)).toByte
+      offset += 1
+    }
 
     val newMask = Integer.rotateLeft(mask, (bytes.length % 4) * 8)
     (ByteString.fromArrayUnsafe(buffer), newMask)
+  }
+
+  private val MaskWordView = MethodHandles.byteArrayViewVarHandle(classOf[Array[Long]], ByteOrder.BIG_ENDIAN)
+
+  private def maskWords(buffer: Array[Byte], end: Int, mask: Int): Unit = {
+    // The network-order mask repeats every four bytes.
+    val key = Integer.toUnsignedLong(mask)
+    val repeated = (key << 32) | key
+    var offset = 0
+    while (offset < end) {
+      // An explicit type ascription keeps the VarHandle load primitive on both Scala 2 and 3.
+      val word = MaskWordView.get(buffer, offset): Long
+      MaskWordView.set(buffer, offset, word ^ repeated)
+      offset += java.lang.Long.BYTES
+    }
   }
 
   def parseCloseCode(data: ByteString): Option[(Int, String)] = {
