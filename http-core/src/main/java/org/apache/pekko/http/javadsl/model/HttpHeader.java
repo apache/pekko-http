@@ -47,7 +47,7 @@ public abstract class HttpHeader {
   /**
    * Attempts to parse the given header name and value string into a header model instance.
    *
-   * @throws IllegalArgumentException if parsing is unsuccessful.
+   * @throws IllegalHeaderException if parsing is unsuccessful.
    */
   public static HttpHeader parse(String name, String value) {
     final org.apache.pekko.http.scaladsl.model.HttpHeader.ParsingResult result =
