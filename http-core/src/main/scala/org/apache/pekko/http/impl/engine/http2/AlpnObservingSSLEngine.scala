@@ -45,7 +45,7 @@ private[http] final class AlpnObservingSSLEngine(delegate: SSLEngine, onNegotiat
     extends SSLEngine(delegate.getPeerHost, delegate.getPeerPort) {
 
   // only ever touched from the TLS stage, whose calls into the engine are serialized
-  private[this] var reported = false
+  private var reported = false
 
   private def observe(): Unit =
     if (!reported) {
