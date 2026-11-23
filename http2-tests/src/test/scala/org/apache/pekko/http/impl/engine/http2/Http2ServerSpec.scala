@@ -112,6 +112,36 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         }
       }
 
+      "split a large response header block into HEADERS and CONTINUATION frames".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          val streamId = 1
+          val request = HttpRequest(uri = "https://www.example.com/")
+          network.sendRequest(streamId, request)
+          user.expectRequest()
+
+          // Tildes do not give HPACK a shorter Huffman representation. The distinct fields make
+          // the encoded block larger than two default frames without exceeding the per-field limit.
+          val metadata = (1 to 6).map(i => RawHeader(s"x-metadata-$i", "~" * 6000 + s"-end-$i"))
+          user.emitResponse(streamId, HttpResponse(headers = metadata))
+
+          val maxFrameSize = Http2Protocol.InitialMaxFrameSize
+          val first = network.expectFramePayload(FrameType.HEADERS, Flags.END_STREAM, streamId)
+          first.size should be <= maxFrameSize
+          val middle = network.expectFramePayload(FrameType.CONTINUATION, ByteFlag.Zero, streamId)
+          middle.size should be <= maxFrameSize
+          val last = network.expectFramePayload(FrameType.CONTINUATION, Flags.END_HEADERS, streamId)
+          last.size should be <= maxFrameSize
+
+          val fields = network.decodeHeaders(first ++ middle ++ last)
+          fields should contain(":status" -> "200")
+          fields.filter(_._1.startsWith("x-metadata-")) shouldBe metadata.map(h => h.name -> h.value)
+
+          network.sendRequest(3, request)
+          user.expectRequest()
+          user.emitResponse(3, HttpResponse())
+          network.expectDecodedHEADERS(3).status shouldBe StatusCodes.OK
+        })
+
       "GET request in one HEADERS frame".inAssertAllStagesStopped(new SimpleRequestResponseRoundtripSetup {
         requestResponseRoundtrip(
           streamId = 1,
