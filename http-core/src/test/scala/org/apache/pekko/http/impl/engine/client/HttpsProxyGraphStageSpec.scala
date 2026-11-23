@@ -37,7 +37,11 @@ class HttpsProxyGraphStageSpec extends PekkoSpecWithMaterializer {
           "example.test:443 HTTP/1.1",
           "example.test\tinjected",
           "example.test\u0000",
-          "example.test\u007f")) {
+          "example.test\u007f",
+          // the renderer writes one byte per char, so these would come out as CR LF, a space and 0xE4
+          "example.test\u010d\u010aX-Injected: yes",
+          "example.test\u0120injected",
+          "ex\u00e4mple.test")) {
         withClue(s"host with chars ${host.map(_.toInt).mkString(",")}: ") {
           an[IllegalArgumentException] should be thrownBy HttpsProxyGraphStage(host, 443, settings, None)
         }
@@ -46,7 +50,7 @@ class HttpsProxyGraphStageSpec extends PekkoSpecWithMaterializer {
 
     "accept host names and IP literals as target host names" in {
       val settings = ClientConnectionSettings(system)
-      for (host <- Seq("example.test", "192.0.2.1", "2001:db8::1", "[2001:db8::1]"))
+      for (host <- Seq("example.test", "xn--exmple-cua.test", "192.0.2.1", "2001:db8::1", "[2001:db8::1]"))
         HttpsProxyGraphStage(host, 443, settings, None)
     }
 
