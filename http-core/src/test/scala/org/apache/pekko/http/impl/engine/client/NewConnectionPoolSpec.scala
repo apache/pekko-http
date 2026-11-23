@@ -491,11 +491,14 @@ class NewConnectionPoolSpec extends PekkoSpecWithMaterializer("""
       responseHeaders should contain(RawHeader("Req-Host", s"$serverHostName:$serverPort"))
     }
 
-    "support absolute request URIs without path component" in new LocalTestSetup {
-      val request = HttpRequest(uri = s"http://$serverHostName:$serverPort")
-      val responseFuture = Http().singleRequest(request)
-      val responseHeaders = Await.result(responseFuture, 1.second.dilated).headers
-      responseHeaders should contain(RawHeader("Req-Raw-Request-URI", "/"))
+    "render the root path and preserve the query of an absolute request URI without a path component" in
+    new LocalTestSetup {
+      for ((query, target) <- Seq("" -> "/", "?" -> "/?", "?mode=full" -> "/?mode=full")) {
+        val request = HttpRequest(uri = s"http://$serverHostName:$serverPort$query")
+        val response = Await.result(Http().singleRequest(request), 1.second.dilated)
+        Await.result(response.discardEntityBytes().future, 1.second.dilated)
+        response.headers should contain(RawHeader("Req-Raw-Request-URI", target))
+      }
     }
 
     "support absolute request URIs with a double slash path component" in new LocalTestSetup {
