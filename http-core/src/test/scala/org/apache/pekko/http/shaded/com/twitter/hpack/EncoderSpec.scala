@@ -86,7 +86,7 @@ class EncoderSpec extends AnyWordSpec with Matchers {
           val first = encode("x-a", value)
           val decoded = decode(first)
           decoded.map(_._1) shouldEqual List("x-a")
-          decoded.head._2 should not equal value
+          (decoded.head._2 should not).equal(value)
           encoder.length() shouldEqual 0
           tablesShouldAgree()
 
