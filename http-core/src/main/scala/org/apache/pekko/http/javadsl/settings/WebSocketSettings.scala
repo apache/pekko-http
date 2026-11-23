@@ -141,6 +141,20 @@ trait WebSocketSettings { self: WebSocketSettingsImpl =>
 
   def logFrames: Boolean
   def withLogFrames(shouldLog: Boolean): WebSocketSettings
+
+  /** Client only: timeout for receiving and validating the opening upgrade response. Infinite disables the deadline. */
+  def openingTimeout: Duration = Duration.Inf
+
+  /** Client-only opening upgrade response timeout. */
+  def getOpeningTimeout: JDuration = JavaDurationConverter.toJava(self.openingTimeout)
+
+  /** Client-only opening upgrade response timeout; use `Duration.Inf` to disable it. */
+  def withOpeningTimeout(newValue: Duration): WebSocketSettings = copy(openingTimeout = newValue)
+
+  /** Client-only opening upgrade response timeout; use `ChronoUnit.FOREVER.getDuration()` to disable it. */
+  def withOpeningTimeout(newValue: JDuration): WebSocketSettings =
+    copy(openingTimeout = JavaDurationConverter.toScala(newValue))
+
 }
 
 object WebSocketSettings {

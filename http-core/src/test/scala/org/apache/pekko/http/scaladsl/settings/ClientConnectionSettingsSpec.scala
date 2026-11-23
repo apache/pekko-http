@@ -36,6 +36,36 @@ class ClientConnectionSettingsSpec extends PekkoSpec {
       val roundTripped = settings.withPeriodicKeepAliveMaxIdle(settings.getPeriodicKeepAliveMaxIdle)
       roundTripped.getPeriodicKeepAliveMaxIdle should ===(ChronoUnit.FOREVER.getDuration)
     }
+    "configure the client WebSocket opening timeout" in {
+      val original = ClientConnectionSettings(system).websocketSettings
+      original.openingTimeout shouldBe Duration.Inf
+      original.getOpeningTimeout shouldBe ChronoUnit.FOREVER.getDuration
+      val updated = original.withOpeningTimeout(750.millis)
+      updated.openingTimeout shouldBe 750.millis
+      updated.getOpeningTimeout shouldBe java.time.Duration.ofMillis(750)
+      updated.withCloseTimeout(1.second).openingTimeout shouldBe 750.millis
+      val javaSettings = updated: pekko.http.javadsl.settings.WebSocketSettings
+      javaSettings.withOpeningTimeout(ChronoUnit.FOREVER.getDuration).openingTimeout shouldBe Duration.Inf
+      intercept[IllegalArgumentException](original.withOpeningTimeout(Duration.Zero))
+      intercept[IllegalArgumentException](original.withOpeningTimeout(1.hour + 1.millis))
+    }
+
+    "read only the client WebSocket opening timeout from config" in {
+      val clientConfig = system.settings.config.getConfig("pekko.http.client.websocket")
+      org.apache.pekko.http.javadsl.settings.WebSocketSettings.client(clientConfig.withoutPath("opening-timeout"))
+        .openingTimeout shouldBe Duration.Inf
+      val finite = com.typesafe.config.ConfigFactory.parseString("opening-timeout = 750ms")
+      org.apache.pekko.http.javadsl.settings.WebSocketSettings.client(finite.withFallback(clientConfig))
+        .openingTimeout shouldBe 750.millis
+      org.apache.pekko.http.javadsl.settings.WebSocketSettings
+        .server(finite.withFallback(system.settings.config.getConfig("pekko.http.server.websocket")))
+        .openingTimeout shouldBe Duration.Inf
+      val invalid = com.typesafe.config.ConfigFactory.parseString("opening-timeout = 0ms").withFallback(clientConfig)
+      intercept[ConfigurationException] {
+        org.apache.pekko.http.javadsl.settings.WebSocketSettings.client(invalid)
+      }.getMessage should include("opening-timeout")
+    }
+
     for ((side, settings) <- Seq(
         "client" -> ClientConnectionSettings(system).websocketSettings,
         "server" -> ServerSettings(system).websocketSettings)) {

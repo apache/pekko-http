@@ -13,7 +13,10 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
-import scala.concurrent.{ Future, Promise }
+import java.util.concurrent.TimeoutException
+
+import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.duration.FiniteDuration
 
 import org.apache.pekko
 import pekko.NotUsed
@@ -70,6 +73,10 @@ private[http] object WebSocketClientBlueprint {
     val result = Promise[WebSocketUpgradeResponse]()
 
     val valve = StreamUtils.OneTimeValve()
+    val openingDeadline = settings.websocketSettings.openingTimeout match {
+      case timeout: FiniteDuration => Some(timeout -> Promise[Unit]())
+      case _                       => None
+    }
 
     val subprotocols: Seq[String] = subprotocol.toList.flatMap(_.split(",")).map(_.trim)
     val (initialRequest, key) =
@@ -82,7 +89,22 @@ private[http] object WebSocketClientBlueprint {
     class UpgradeStage extends SimpleLinearGraphStage[ByteString] {
 
       override def createLogic(attributes: Attributes): GraphStageLogic =
-        new GraphStageLogic(shape) with InHandler with OutHandler {
+        new TimerGraphStageLogic(shape) with InHandler with OutHandler {
+          private val OpeningDeadline = "websocket-opening"
+          override def preStart(): Unit =
+            openingDeadline.foreach { case (timeout, dispatched) =>
+              val startTimer = getAsyncCallback[Unit] { _ =>
+                if (!result.isCompleted) scheduleOnce(OpeningDeadline, timeout)
+              }
+              dispatched.future.foreach(startTimer.invoke)(ExecutionContext.parasitic)
+            }
+
+          override protected def onTimer(timerKey: Any): Unit =
+            openingDeadline.foreach { case (timeout, _) =>
+              val failure = new TimeoutException(s"WebSocket opening handshake did not complete within $timeout.")
+              if (result.tryFailure(failure)) failStage(failure)
+            }
+
           // a special version of the parser which only parses one message and then reports the remaining data
           // if some is available
           val parser: HttpResponseParser =
@@ -118,6 +140,7 @@ private[http] object WebSocketClientBlueprint {
                 val response = new HttpResponse(status, headers, attributes, HttpEntity.Empty, protocol)
                 Handshake.Client.validateResponse(response, subprotocols, key, offeredExtensions) match {
                   case Right(NegotiatedWebSocketSettings(protocol)) =>
+                    if (openingDeadline.isDefined) cancelTimer(OpeningDeadline)
                     result.success(ValidUpgrade(response, protocol))
 
                     setHandler(in,
@@ -150,6 +173,20 @@ private[http] object WebSocketClientBlueprint {
 
           setHandlers(in, out, this)
 
+          override def onDownstreamFinish(cause: Throwable): Unit = {
+            if (openingDeadline.isDefined && !result.isCompleted)
+              result.tryFailure(new RuntimeException("WebSocket opening handshake was cancelled before completion.",
+                cause))
+            super.onDownstreamFinish(cause)
+          }
+
+          override def postStop(): Unit = {
+            // TimerGraphStageLogic cancels the deadline on stop, so an unexpected terminal path must settle the result.
+            if (openingDeadline.isDefined && !result.isCompleted)
+              result.tryFailure(new RuntimeException("WebSocket opening handshake stopped before completion."))
+            super.postStop()
+          }
+
           override def onUpstreamFinish(): Unit = {
             result.tryFailure(new RuntimeException("Connection closed before WebSocket upgrade completed."))
             super.onUpstreamFinish()
@@ -176,11 +213,23 @@ private[http] object WebSocketClientBlueprint {
       handshakeRequestSource ~> httpRequestBytesAndThenWSBytes
       wsIn.outlet            ~> httpRequestBytesAndThenWSBytes
 
-      BidiShape(
-        networkIn.in,
-        networkIn.out,
-        wsIn.in,
-        httpRequestBytesAndThenWSBytes.out)
+      val networkOut = openingDeadline match {
+        case Some((_, dispatched)) =>
+          // Observe dispatch from the WebSocket layer, not TCP write completion or TLS negotiation.
+          var first = true
+          val dispatch = b.add(Flow[ByteString].map { bytes =>
+            if (first) {
+              first = false
+              dispatched.success(())
+            }
+            bytes
+          })
+          httpRequestBytesAndThenWSBytes.out ~> dispatch.in
+          dispatch.out
+        case None => httpRequestBytesAndThenWSBytes.out
+      }
+
+      BidiShape(networkIn.in, networkIn.out, wsIn.in, networkOut)
     }).mapMaterializedValue(_ => result.future)
   }
 
