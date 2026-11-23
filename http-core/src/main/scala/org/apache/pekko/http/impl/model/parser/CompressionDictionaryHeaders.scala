@@ -62,13 +62,13 @@ private[parser] trait CompressionDictionaryHeaders {
 
   def `sf-bare-item`: Rule1[SfValue] = rule {
     `sf-string` ~> ((value: String) => SfString(value): SfValue) |
-    `sf-token` ~> ((value: String) => SfToken(value): SfValue) |
+    `sf-token`  ~> ((value: String) => SfToken(value): SfValue) |
     oneOrMore(`sf-other-char`) ~ OWS ~ push(SfOther: SfValue)
   }
 
   def `sf-parameters` = rule {
     zeroOrMore(';' ~ zeroOrMore(' ') ~ `sf-key` ~ optional('=' ~ `sf-bare-item`) ~>
-    ((_: String, _: Option[SfValue]) => ()))
+      ((_: String, _: Option[SfValue]) => ()))
   }
 
   def `sf-binary`: Rule1[String] = rule { ':' ~ capture(zeroOrMore(`sf-base64-char`)) ~ ':' }
