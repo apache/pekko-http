@@ -31,6 +31,10 @@ object ParadoxSupport {
       new SignatureDirective(context.location.tree.label, context.properties, context)),
     pekkoParadoxGithub := Some("https://github.com/apache/pekko-http"),
     Global / pekkoParadoxIncubatorNotice := None,
+    pekkoParadoxCopyright :=
+      """Copyright © 2011-2023 <a href="https://www.lightbend.com/">Lightbend, Inc</a>.
+        | Apache Pekko, Pekko, Apache, the Apache logo, and the Apache Pekko project logo are either registered trademarks
+        | or trademarks of The Apache Software Foundation in the United States and other countries.""".stripMargin,
     Compile / paradoxMarkdownToHtml / sourceGenerators += Def.taskDyn {
       val targetFile = (Compile / paradox / sourceManaged).value / "license-report.md"
 
