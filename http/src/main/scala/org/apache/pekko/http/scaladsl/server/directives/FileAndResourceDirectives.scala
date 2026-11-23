@@ -442,6 +442,44 @@ object ContentTypeResolver {
   implicit val Default: ContentTypeResolver = withDefaultCharset(HttpCharsets.`UTF-8`)
 
   def withDefaultCharset(charset: HttpCharset): ContentTypeResolver =
+    extensionBased(MediaTypes.forExtension, charset)
+
+  /**
+   * Resolves file names like [[Default]], but looks up the given file extensions before the built-in media type
+   * registry, so applications can serve types that Pekko HTTP does not predefine, or override a predefined mapping.
+   *
+   * Extensions are matched ignoring case and must not be empty, contain a `.` or be `gz`, which is reserved for
+   * precompressed files: `file.ext.gz` resolves to the media type for `ext` with gzip compression, as for built-in
+   * types. Non-binary media types that do not fix their own charset get UTF-8.
+   *
+   * @throws IllegalArgumentException if an extension is invalid
+   * @since 2.1.0
+   */
+  def withExtensions(extensions: Map[String, MediaType]): ContentTypeResolver =
+    withExtensions(extensions, HttpCharsets.`UTF-8`)
+
+  /**
+   * Resolves file names like [[withDefaultCharset]], but looks up the given file extensions before the built-in
+   * media type registry. Extensions are matched as described for the single-argument `withExtensions`.
+   *
+   * @param defaultCharset the charset used for non-binary media types that do not fix their own charset
+   * @throws IllegalArgumentException if an extension is invalid
+   * @since 2.1.0
+   */
+  def withExtensions(extensions: Map[String, MediaType], defaultCharset: HttpCharset): ContentTypeResolver = {
+    val custom = extensions.map {
+      case (ext, mediaType) =>
+        require(ext.nonEmpty, "File extension must not be empty")
+        require(ext.indexOf('.') < 0, s"File extension '$ext' must not contain '.'")
+        val lcExt = ext.toRootLowerCase
+        require(lcExt != "gz", "File extension 'gz' is reserved for precompressed files")
+        lcExt -> mediaType
+    }
+    require(custom.size == extensions.size, "File extensions must be unique ignoring case")
+    extensionBased(ext => custom.getOrElse(ext.toRootLowerCase, MediaTypes.forExtension(ext)), defaultCharset)
+  }
+
+  private def extensionBased(forExtension: String => MediaType, charset: HttpCharset): ContentTypeResolver =
     new ContentTypeResolver {
       def apply(fileName: String) = {
         val lastDotIx = fileName.lastIndexOf('.')
@@ -449,9 +487,9 @@ object ContentTypeResolver {
           fileName.substring(lastDotIx + 1) match {
             case "gz" => fileName.lastIndexOf('.', lastDotIx - 1) match {
                 case -1 => MediaTypes.`application/octet-stream`
-                case x  => MediaTypes.forExtension(fileName.substring(x + 1, lastDotIx)).withComp(MediaType.Gzipped)
+                case x  => forExtension(fileName.substring(x + 1, lastDotIx)).withComp(MediaType.Gzipped)
               }
-            case ext => MediaTypes.forExtension(ext)
+            case ext => forExtension(ext)
           }
         } else MediaTypes.`application/octet-stream`
         ContentType(mediaType, () => charset)
