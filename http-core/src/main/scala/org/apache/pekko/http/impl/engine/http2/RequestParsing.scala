@@ -258,14 +258,15 @@ private[http2] object RequestParsing {
   /**
    * RFC 9113 section 8.3.1: a server should treat a request as malformed if it has a `Host` header that identifies
    * a different entity than `:authority`. The request URI is built from `:authority`, so without this check the
-   * application could see one authority in `request.uri` and another in the `Host` header. Ports are compared after
+   * application could see one authority in `request.uri` and another in the `Host` header. Host names are compared
+   * ignoring case and IP addresses by their bytes, so two spellings of one IPv6 address match. Ports are compared after
    * dropping the default port of the scheme, so `example.com:443` and `example.com` match for `https`.
    */
   private[http2] def checkHostMatchesAuthority(scheme: String, authority: Uri.Authority, headers: Seq[HttpHeader])
       : Unit =
     headers.foreach {
       case model.headers.Host(host, port) =>
-        if (!host.address.equalsIgnoreCase(authority.host.address) ||
+        if (!host.equalsIgnoreCase(authority.host) ||
           Uri.normalizePort(port, scheme) != Uri.normalizePort(authority.port, scheme))
           parseError("'host' header does not match the ':authority' pseudo-header", "host")
       // `host` is always modelled, so a RawHeader means its value did not parse and cannot be shown to match

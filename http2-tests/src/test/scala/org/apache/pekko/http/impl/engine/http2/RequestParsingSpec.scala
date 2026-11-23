@@ -793,6 +793,30 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       request.headers should contain(Host(Uri.Host("example.org")))
     }
 
+    "accept a 'host' header that spells the IPv6 address of ':authority' differently" in {
+      val request: HttpRequest = parseExpectOk(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "[2001:db8::1]:8443",
+          ":path" -> "/",
+          "host" -> "[2001:0DB8:0:0:0:0:0:1]:8443"))
+
+      request.uri.authority.host should ===(Uri.Host("[2001:db8::1]"))
+      request.uri.authority.port should ===(8443)
+    }
+
+    "reject a 'host' header that names another IPv6 address than ':authority'" in {
+      val info = parseExpectError(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "[2001:db8::1]",
+          ":path" -> "/",
+          "host" -> "[2001:db8::2]"))
+      info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
+    }
+
     "reject a 'host' header that names another host than ':authority'" in {
       val info = parseExpectError(
         keyValuePairs = Vector(
