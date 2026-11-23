@@ -27,6 +27,8 @@ import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.headers.{
   `Sec-WebSocket-Extensions`,
   `User-Agent`,
+  HttpOrigin,
+  Origin,
   ProductVersion,
   RawHeader,
   WebSocketExtension
@@ -42,6 +44,31 @@ import pekko.http.impl.util._
 class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.websocket.log-frames = on") {
   "The client-side WebSocket implementation should" should {
     "establish a websocket connection when the user requests it" in new EstablishedConnectionSetup with ClientEchoes
+
+    "send the caller's Origin header when establishing a WebSocket connection" in new TestSetup with ClientEchoes {
+      override def clientLayer: Http.WebSocketClientLayer =
+        Http(system).webSocketClientLayer(
+          WebSocketRequest(targetUri, extraHeaders = List(Origin(HttpOrigin("https://app.example.com")))),
+          settings = settings)
+
+      val endOfHeaders = "\r\n\r\n"
+      val request = new StringBuilder
+      while (request.length < 4096 && !request.endsWith(endOfHeaders))
+        request.append(netOut.expectByte().toChar)
+      request.result() should endWith(endOfHeaders)
+      request.result().split("\r\n").toList
+        .filter(_.regionMatches(true, 0, "Origin:", 0, "Origin:".length))
+        .map(_.drop("Origin:".length).trim) shouldEqual List("https://app.example.com")
+      sendWireData(UpgradeResponseBytes)
+
+      sendWSFrame(Protocol.Opcode.Text, ByteString("echo"), fin = true)
+      expectMaskedFrameOnNetwork(Protocol.Opcode.Text, ByteString("echo"), fin = true)
+
+      sendWSCloseFrame(Protocol.CloseCodes.Regular)
+      expectMaskedCloseFrame(Protocol.CloseCodes.Regular)
+      closeNetworkInput()
+      expectNetworkClose()
+    }
 
     Seq(
       "ws://example.org/path%20with%20spaces?q=two%20words" -> "/path%20with%20spaces?q=two%20words",
