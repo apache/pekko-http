@@ -97,6 +97,42 @@ class ByteStringOutputStreamSpec extends AnyWordSpec with Matchers {
       out.takeByteString() should ===(ByteString(7, 1, 2, 3, 8))
     }
 
+    "give back the unused tail of a reserved range" in {
+      val out = new ByteStringOutputStream(16)
+      out.write(7)
+      val position = out.reserve(10)
+      out.array(position) = 1
+      out.array(position + 1) = 2
+      out.unreserve(8)
+      out.size shouldBe 3
+      out.write(8)
+      out.takeByteString() should ===(ByteString(7, 1, 2, 8))
+    }
+
+    "apply the hand-over policy to the size left after giving back part of a reservation" in {
+      val out = new ByteStringOutputStream(16)
+      // 4 of 16 reserved bytes kept: copied out, and the stream keeps its array
+      out.reserve(16)
+      val array = out.array
+      out.unreserve(12)
+      out.takeByteString().length shouldBe 4
+      out.reserve(16)
+      (out.array eq array) shouldBe true
+      // 12 of 16 kept: handed over without copying, and the stream starts a fresh array
+      out.unreserve(4)
+      out.takeByteString().length shouldBe 12
+      out.reserve(16)
+      (out.array eq array) shouldBe false
+    }
+
+    "reject giving back more than is buffered, or a negative length" in {
+      val out = new ByteStringOutputStream(16)
+      out.reserve(4)
+      an[IllegalArgumentException] should be thrownBy out.unreserve(5)
+      an[IllegalArgumentException] should be thrownBy out.unreserve(-1)
+      out.size shouldBe 4
+    }
+
     "reject a negative initial capacity" in {
       an[IllegalArgumentException] should be thrownBy new ByteStringOutputStream(-1)
     }
