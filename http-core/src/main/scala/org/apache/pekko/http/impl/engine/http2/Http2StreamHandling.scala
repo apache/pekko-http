@@ -81,12 +81,14 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
    */
   private val remainingContentLength = mutable.Map.empty[Int, Long]
 
-  /** The `content-length` of a request, or -1 if it has none or none that is plain digits (left to RequestParsing) */
+  /**
+   * The `content-length` of a request, or -1 if it has none or one that `RequestParsing` rejects with a 400. Both use
+   * the same parser, so every length the request parser accepts is accounted for here.
+   */
   private def declaredContentLength(frame: ParsedHeadersFrame): Long =
     frame.keyValuePairs.collectFirst { case ("content-length", value: String) => value } match {
-      case Some(value) if value.nonEmpty && value.length <= 18 && value.forall(c => c >= '0' && c <= '9') =>
-        value.toLong
-      case _ => -1L
+      case Some(value) => RequestParsing.parseContentLength(value)
+      case None        => -1L
     }
 
   /**

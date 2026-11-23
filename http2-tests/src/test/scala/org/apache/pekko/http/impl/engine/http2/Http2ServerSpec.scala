@@ -1123,6 +1123,20 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
             network.expectRST_STREAM(TheStreamId, ErrorCode.PROTOCOL_ERROR)
             entityDataIn.expectError().getMessage should include("does not match its content-length")
           })
+        "reset the stream if it ends before a content-length of Long.MaxValue is reached"
+          .inAssertAllStagesStopped(new WaitingForRequestData {
+            override lazy val request = HttpRequest(method = HttpMethods.POST, uri = "https://example.com/upload",
+              entity = HttpEntity(ContentTypes.`application/octet-stream`, Long.MaxValue, Source.empty),
+              protocol = HttpProtocols.`HTTP/2.0`)
+
+            network.sendDATA(TheStreamId, endStream = false, ByteString("abc"))
+            entityDataIn.expectBytes(ByteString("abc"))
+            network.pollForWindowUpdates(10.millis)
+
+            network.sendDATA(TheStreamId, endStream = true, ByteString("de"))
+            network.expectRST_STREAM(TheStreamId, ErrorCode.PROTOCOL_ERROR)
+            entityDataIn.expectError().getMessage should include("does not match its content-length")
+          })
         "reset a stream whose HEADERS end it although its content-length announces content".inAssertAllStagesStopped(
           new TestSetup with RequestResponseProbes {
             override def settings: ServerSettings =
