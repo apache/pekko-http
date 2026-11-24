@@ -44,7 +44,8 @@ import scala.util.{ Failure, Success, Try }
  *
  * Because that future is completed on the TLS stage's thread and delivered through an `AsyncCallback`, inbound
  * elements can overtake it — an HTTP/2 server sends its SETTINGS frame immediately after the handshake. Those are
- * buffered and replayed into the installed layer.
+ * buffered and replayed into the installed layer. The close of the connection can overtake it as well; in that case
+ * the layer is installed right away, so that it still gets the buffered elements followed by the completion.
  */
 @InternalApi
 private[http] object ClientProtocolSwitch {
@@ -70,9 +71,9 @@ private[http] object ClientProtocolSwitch {
           pull(netIn)
 
           val callback = getAsyncCallback[Try[String]] {
-            case Success(protocol) =>
-              if (!installed) install(if (protocol == Http2AlpnSupport.H2) http2 else http1)
-            case Failure(cause) => failStage(cause)
+            // the layer is already installed if the connection was closed while this callback was queued
+            case Success(protocol) => if (!installed) install(layerFor(protocol), netInFinished = false)
+            case Failure(cause)    => failStage(cause)
           }
           negotiatedProtocol.onComplete(callback.invoke)(ExecutionContext.parasitic)
         }
@@ -92,14 +93,25 @@ private[http] object ClientProtocolSwitch {
             // buffer and stop pulling: whatever arrives here is already past the handshake
             override def onPush(): Unit = pendingInbound :+= grab(netIn)
             override def onUpstreamFinish(): Unit =
-              failStage(new SSLException("Connection closed before the ALPN protocol was negotiated"))
+              negotiatedProtocol.value match {
+                case Some(Success(protocol)) =>
+                  // The negotiation did succeed, the close has merely overtaken the callback that installs the
+                  // layer. That is an ordinary end of the connection, so install the layer here and let it see
+                  // the buffered inbound data followed by the completion.
+                  install(layerFor(protocol), netInFinished = true)
+                case Some(Failure(cause)) => failStage(cause)
+                case None                 =>
+                  failStage(new SSLException("Connection closed before the ALPN protocol was negotiated"))
+              }
             override def onUpstreamFailure(cause: Throwable): Unit = failStage(cause)
           })
 
         setHandler(netOut, GraphStageLogic.EagerTerminateOutput)
         setHandler(appOut, GraphStageLogic.EagerTerminateOutput)
 
-        def install(layer: ClientLayer): Unit = {
+        def layerFor(protocol: String): ClientLayer = if (protocol == Http2AlpnSupport.H2) http2 else http1
+
+        def install(layer: ClientLayer, netInFinished: Boolean): Unit = {
           installed = true
 
           val appDataOut = new SubSourceOutlet[HttpRequest]("ClientProtocolSwitch.appDataOut")
@@ -111,7 +123,7 @@ private[http] object ClientProtocolSwitch {
           pendingInbound = Vector.empty
 
           connectIn(appIn, appDataOut, Vector.empty, appInFinished)
-          connectIn(netIn, netDataOut, replay, upstreamFinished = false)
+          connectIn(netIn, netDataOut, replay, upstreamFinished = netInFinished)
           connectOut(appDataIn, appOut)
           connectOut(netDataIn, netOut)
 
