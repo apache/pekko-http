@@ -24,6 +24,9 @@ import org.apache.pekko
 import pekko.http.impl.engine.http2.FrameEvent
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
+import pekko.http.impl.engine.parsing.HttpHeaderParser
+import pekko.http.scaladsl.model.headers.RawHeader
+import pekko.http.scaladsl.settings.ParserSettings
 import pekko.stream.scaladsl.{ Sink, Source }
 import pekko.testkit._
 import pekko.util.ByteString
@@ -78,6 +81,24 @@ class HeaderCompressionSpec extends PekkoSpec {
       val blocks = result.collect { case frame: HeadersFrame => hex(frame) }
       // Regrowth must not resurrect the old entry: the next block is a literal, then it can be indexed again.
       blocks shouldEqual Seq("40016b0178", "203fe11f40016b0178", "be")
+    }
+
+    "decode successive header blocks after a temporary table shrink and regrowth" in {
+      def responseHeaders(streamId: Int, value: String) =
+        headers(streamId, Seq(":status" -> "200", "x-example" -> value))
+
+      val blocks = compress(responseHeaders(1, "first"), setting(0), setting(4096),
+        responseHeaders(3, "second"), responseHeaders(5, "second")).collect { case frame: HeadersFrame => frame }
+      hex(blocks(1)) should startWith("203fe11f")
+      hex(blocks(2)) shouldEqual "88be"
+      val parserSettings = ParserSettings(system)
+      val decompression = new HeaderDecompression(HttpHeaderParser(parserSettings, system.log),
+        parserSettings, maxHeaderListSize = 65536)
+      val decoded = Await.result(Source(blocks.toList).via(decompression).runWith(Sink.seq), 3.seconds.dilated)
+
+      def expected(streamId: Int, value: String) =
+        headers(streamId, Seq(":status" -> "200", "x-example" -> RawHeader("x-example", value)))
+      decoded shouldEqual Seq(expected(1, "first"), expected(3, "second"), expected(5, "second"))
     }
 
     "retain pending updates when empty trailing headers are encoded as DATA" in {
