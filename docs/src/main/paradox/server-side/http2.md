@@ -93,6 +93,15 @@ server supports HTTP/2.
 For this reason the approach is known as HTTP/2 with
 [Prior Knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3).
 
+## Requests with both `:authority` and `Host`
+
+The URI of an HTTP/2 request is built from the `:authority` pseudo-header. A request that also has a `Host`
+header is rejected with a `400 Bad Request` response if that header names a different host or port than
+`:authority`, as recommended by [RFC 9113 section 8.3.1](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.1),
+so that `request.uri` and the `Host` header never disagree. Host names are compared ignoring case, IP addresses by
+value, and a port equal to the default port of the scheme is the same as no port. A `Host` header whose value cannot
+be parsed is rejected as well. A request without `:authority` is not affected.
+
 ## Flow-control window updates
 
 Changes to a peer's `SETTINGS_INITIAL_WINDOW_SIZE` apply to existing HTTP/2 streams, including decreases.

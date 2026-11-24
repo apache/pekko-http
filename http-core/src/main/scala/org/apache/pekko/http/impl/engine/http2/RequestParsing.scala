@@ -278,7 +278,6 @@ private[http2] object RequestParsing {
         if (!host.equalsIgnoreCase(authority.host) ||
           Uri.normalizePort(port, scheme) != Uri.normalizePort(authority.port, scheme))
           parseError("'host' header does not match the ':authority' pseudo-header", "host")
-      // `host` is always modelled, so a RawHeader means its value did not parse and cannot be shown to match
       // `host` is always modelled, so anything else means its value did not parse and cannot be shown to match
       case _ =>
         parseError("'host' header does not match the ':authority' pseudo-header", "host")

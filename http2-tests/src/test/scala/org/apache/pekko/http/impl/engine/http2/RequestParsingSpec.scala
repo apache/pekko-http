@@ -839,6 +839,29 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
     }
 
+    "accept a 'host' header with the default port of the scheme when ':authority' has no port" in {
+      val request: HttpRequest = parseExpectOk(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "http",
+          ":authority" -> "example.org",
+          ":path" -> "/",
+          "host" -> "example.org:80"))
+
+      request.uri.authority should ===(Uri.Authority(Uri.Host("example.org")))
+    }
+
+    "reject a 'host' header whose value cannot be parsed" in {
+      val info = parseExpectError(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "example.org",
+          ":path" -> "/",
+          "host" -> "exa mple.org"))
+      info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
+    }
+
     "reject a second 'host' header that does not match ':authority'" in {
       val info = parseExpectError(
         keyValuePairs = Vector(
