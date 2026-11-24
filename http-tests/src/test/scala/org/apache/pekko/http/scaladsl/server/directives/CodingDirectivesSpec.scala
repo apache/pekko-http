@@ -559,6 +559,37 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
         rejection shouldEqual UnacceptedResponseEncodingRejection(deflate)
       }
     }
+    "reject like ordinary negotiation if there is no usable dictionary and no acceptable fallback" in {
+      val onlyDcz = `Accept-Encoding`(dcz, identity.withQValue(0f))
+      val expected = UnacceptedResponseEncodingRejection(Set[HttpEncoding](identity, gzip, deflate))
+      var innerRouteRuns = 0
+      def corsRoute(allowed: Option[`Access-Control-Allow-Origin`]) =
+        encodeResponseWithDictionary(_ => Some(coder)) { ctx =>
+          innerRouteRuns += 1
+          val inner: Route = allowed.fold[Route](yeah)(respondWithHeader(_) { yeah })
+          inner(ctx)
+        }
+
+      // the dictionary is used if it can be, as the client accepts 'dcz'
+      Get() ~> onlyDcz ~> available ~> route ~> check { shouldBeDcz() }
+
+      // an unknown dictionary
+      Get() ~> onlyDcz ~> otherHash ~> route ~> check { rejection shouldEqual expected }
+      // no Available-Dictionary header
+      Get() ~> onlyDcz ~> route ~> check { rejection shouldEqual expected }
+      // a cross-origin request that must not use the dictionary, which is known without the response
+      Get()           ~> onlyDcz ~> available ~> site ~> RawHeader("Sec-Fetch-Mode", "no-cors") ~>
+      corsRoute(None) ~> check { rejection shouldEqual expected }
+      innerRouteRuns shouldEqual 0
+
+      // for a CORS request it depends on the response
+      def cors = Get() ~> onlyDcz                                                                         ~> available ~> site ~> RawHeader("Sec-Fetch-Mode", "cors") ~> origin
+      cors             ~> corsRoute(Some(`Access-Control-Allow-Origin`.`*`))                              ~> check { shouldBeDcz() }
+      cors             ~> corsRoute(None)                                                                 ~> check { rejection shouldEqual expected }
+      cors             ~> corsRoute(Some(`Access-Control-Allow-Origin`(HttpOrigin("https://other.org")))) ~> check {
+        rejection shouldEqual expected
+      }
+    }
     "not encode a response that the message filter excludes" in {
       val binary = encodeResponseWithDictionary(_ => Some(coder)) {
         complete(HttpEntity(ContentType(`image/png`), ByteString("png")))

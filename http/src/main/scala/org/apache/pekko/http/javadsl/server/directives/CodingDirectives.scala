@@ -89,10 +89,10 @@ abstract class CodingDirectives extends CacheConditionDirectives {
    *
    * @param lookup finds the coder of the dictionary with the given SHA-256 hash. It should not create the coder on
    *               every call, as that hashes the dictionary
-   * @since 2.0.0
+   * @since 2.1.0
    */
   def encodeResponseWithDictionary(
-      lookup: JFunction[ByteString, Optional[DictionaryCoder]], inner: Supplier[Route]): Route = RouteAdapter {
+      lookup: JFunction[? >: ByteString, Optional[DictionaryCoder]], inner: Supplier[Route]): Route = RouteAdapter {
     D.encodeResponseWithDictionary(scalaLookup(lookup)) {
       inner.get.delegate
     }
@@ -100,14 +100,13 @@ abstract class CodingDirectives extends CacheConditionDirectives {
 
   /**
    * Encodes the response with the 'dcz' encoding of RFC 9842 if possible, see the overload without `coders`. Otherwise
-   * the response is encoded like in [[encodeResponseWith]], except that a response that could not be encoded is not
-   * rejected if a dictionary was found. If `coders` is empty, the default coders are used.
+   * the response is encoded like in [[encodeResponseWith]]. If `coders` is empty, the default coders are used.
    *
-   * @since 2.0.0
+   * @since 2.1.0
    */
   def encodeResponseWithDictionary(
-      lookup: JFunction[ByteString, Optional[DictionaryCoder]],
-      coders: java.lang.Iterable[Coder],
+      lookup: JFunction[? >: ByteString, Optional[DictionaryCoder]],
+      coders: java.lang.Iterable[? <: Coder],
       inner: Supplier[Route]): Route = RouteAdapter {
     coders.asScala.toList match {
       case head :: tail =>
@@ -122,7 +121,7 @@ abstract class CodingDirectives extends CacheConditionDirectives {
     }
   }
 
-  private def scalaLookup(lookup: JFunction[ByteString, Optional[DictionaryCoder]]) =
+  private def scalaLookup(lookup: JFunction[? >: ByteString, Optional[DictionaryCoder]]) =
     (hash: ByteString) => lookup.apply(hash).toScala.map(_._underlyingScalaCoder)
 
   /**

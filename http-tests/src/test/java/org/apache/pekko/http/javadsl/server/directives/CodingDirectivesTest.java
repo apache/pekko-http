@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.http.javadsl.coding.Coder;
@@ -320,5 +321,25 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
     route
         .run(HttpRequest.create().addHeader(AcceptEncoding.create(HttpEncodings.GZIP)))
         .assertHeaderExists(ContentEncoding.create(HttpEncodings.GZIP));
+  }
+
+  @Test
+  public void testEncodeResponseWithDictionaryAcceptsPretypedArguments() {
+    DictionaryCoder coder = DictionaryCoder.create(ByteString.fromString("a dictionary"));
+    // a lookup that takes a supertype of ByteString
+    Function<Object, Optional<DictionaryCoder>> lookup =
+        hash -> hash.equals(coder.getDictionaryHash()) ? Optional.of(coder) : Optional.empty();
+    List<Coder> coders = List.of(Coder.Gzip);
+    HttpRequest request =
+        HttpRequest.create()
+            .addHeader(AcceptEncoding.create(HttpEncodings.DCZ))
+            .addHeader(AvailableDictionary.create(coder.getDictionaryHash()));
+
+    testRoute(encodeResponseWithDictionary(lookup, () -> complete("tester")))
+        .run(request)
+        .assertHeaderExists(ContentEncoding.create(HttpEncodings.DCZ));
+    testRoute(encodeResponseWithDictionary(lookup, coders, () -> complete("tester")))
+        .run(request)
+        .assertHeaderExists(ContentEncoding.create(HttpEncodings.DCZ));
   }
 }

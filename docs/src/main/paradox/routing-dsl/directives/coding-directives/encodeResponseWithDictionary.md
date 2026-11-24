@@ -13,7 +13,7 @@
 Encodes the response with the `dcz` encoding of [RFC 9842](https://www.rfc-editor.org/rfc/rfc9842) if the `Accept-Encoding` header lists `dcz` and the given lookup finds the dictionary with the hash in the `Available-Dictionary` header.
 The application decides how dictionaries are stored, see @ref[Compression dictionaries](../../../common/encoding.md#compression-dictionaries).
 
-Otherwise the response is encoded like in @ref[encodeResponse](encodeResponse.md), or like in @ref[encodeResponseWith](encodeResponseWith.md) if encoders are given. If a dictionary was found but cannot be used for the response, and the client accepts none of the encoders, the response is not encoded instead of the request being rejected.
+Otherwise the response is encoded like in @ref[encodeResponse](encodeResponse.md), or like in @ref[encodeResponseWith](encodeResponseWith.md) if encoders are given. If the dictionary cannot be used and the client accepts none of the encoders, the request is rejected with an `UnacceptedResponseEncodingRejection`, as it is by those directives. Whether a dictionary can be used for a cross-origin request in the `cors` mode is only known once there is a response, so in that case the response is dropped and the request is rejected after the inner route has run.
 
 All responses get a `Vary: Accept-Encoding, Available-Dictionary` header, so that caches do not reuse a response for another dictionary.
 
