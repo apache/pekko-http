@@ -117,6 +117,34 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "Decoder" should {
+    "empty its dynamic table across consecutive size updates before fresh entries are added" in {
+      val encoder = new Encoder(4096)
+      val decoder = new Decoder(8192, 4096)
+      val out = new ByteStringOutputStream(64)
+
+      def decodeBlock(): Seq[(String, String)] =
+        decodeHeaders(decoder, out.takeByteString().toArray)
+
+      encoder.encodeHeader(out, "x-stale", "first", false)
+      encoder.encodeHeader(out, "x-stale", "second", false)
+      decodeBlock() shouldEqual Seq("x-stale" -> "first", "x-stale" -> "second")
+      decoder.length() shouldBe 2
+
+      encoder.setMaxHeaderTableSize(out, 0)
+      encoder.setMaxHeaderTableSize(out, 4096)
+      encoder.encodeHeader(out, ":status", "200", false)
+      decodeBlock() shouldEqual Seq(":status" -> "200")
+      decoder.length() shouldBe 0
+      decoder.size() shouldBe 0
+
+      encoder.encodeHeader(out, "x-example", "fresh", false)
+      decodeBlock() shouldEqual Seq("x-example" -> "fresh")
+      decoder.length() shouldBe 1
+      decoder.size() shouldBe 46
+    }
+  }
+
   "Encoder" should {
     "preserve same-name entries across eviction and table resizing" in {
       val encoder = new Encoder(4096, true, false, true)
