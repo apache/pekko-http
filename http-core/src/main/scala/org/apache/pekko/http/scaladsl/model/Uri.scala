@@ -707,9 +707,28 @@ object Uri {
      * }}}
      */
     def toMultiMap: Map[String, List[String]] = {
-      @tailrec def append(map: Map[String, List[String]], q: Query): Map[String, List[String]] =
-        if (q.isEmpty) map else append(map.updated(q.key, map.getOrElse(q.key, Nil) :+ q.value), q.tail)
-      append(Map.empty, this)
+      @tailrec def collect(map: Map[String, List[String]], q: Query, promoted: Boolean): Map[String, List[String]] =
+        if (q.isEmpty) {
+          if (promoted)
+            map.transform { (_, values) =>
+              values match {
+                case _ :: _ :: _ :: _ => values.reverse
+                case _                => values
+              }
+            }
+          else map
+        } else {
+          val key = q.key
+          val value = q.value
+          map.getOrElse(key, Nil) match {
+            case Nil          => collect(map.updated(key, value :: Nil), q.tail, promoted)
+            case first :: Nil => collect(map.updated(key, first :: value :: Nil), q.tail, promoted)
+            // A key stores its first pair in input order. Only that key switches to prepend order on its third value.
+            case first :: second :: Nil => collect(map.updated(key, value :: second :: first :: Nil), q.tail, true)
+            case previous               => collect(map.updated(key, value :: previous), q.tail, promoted)
+          }
+        }
+      collect(Map.empty, this, promoted = false)
     }
     override def toString = UriRendering.QueryRenderer.render(new StringRendering, this).get
   }
