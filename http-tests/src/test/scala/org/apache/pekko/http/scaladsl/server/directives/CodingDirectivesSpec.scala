@@ -24,10 +24,10 @@ import pekko.http.scaladsl.coding.Encoder
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.ContentTypes.`application/octet-stream`
 import pekko.http.scaladsl.model.HttpCharsets._
-import pekko.http.scaladsl.model.HttpEntity.{ Chunk, ChunkStreamPart }
+import pekko.http.scaladsl.model.HttpEntity.{ Chunk, ChunkStreamPart, LastChunk }
 import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model.StatusCodes._
-import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.model.headers.{ Trailer => TrailerHeader, _ }
 import pekko.http.scaladsl.model.headers.HttpEncodings._
 import pekko.http.scaladsl.testkit.RouteTestTimeout
 import pekko.stream.scaladsl.{ Sink, Source }
@@ -124,6 +124,30 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
       Post("/", helloGzipped) ~> `Content-Encoding`(gzip) ~> {
         decodeRequestWith(Gzip) { echoRequestContent }
       } ~> check { responseAs[String] shouldEqual "Hello" }
+    }
+    "preserve request trailers after decoding a chunked gzip entity" in {
+      val trailer = LastChunk(trailer = List(RawHeader("x-test-trailer", "complete")))
+      val (first, second) = helloGzipped.splitAt(helloGzipped.size / 2)
+      val entity =
+        HttpEntity.Chunked(ContentTypes.`text/plain(UTF-8)`, Source(List(Chunk(first), Chunk(second), trailer)))
+
+      Post("/", entity) ~> `Content-Encoding`(gzip) ~> TrailerHeader(Seq("x-test-trailer")) ~> {
+        decodeRequestWith(Gzip) {
+          extractRequest { request =>
+            inside(request.entity) {
+              case decoded: HttpEntity.Chunked => complete(decoded)
+            }
+          }
+        }
+      } ~> check {
+        inside(responseEntity) {
+          case decoded: HttpEntity.Chunked =>
+            val chunks = decoded.chunks.runWith(Sink.seq).awaitResult(1.second.dilated)
+            chunks.last shouldEqual trailer
+            chunks.collect { case part: LastChunk => part } shouldEqual Seq(trailer)
+            chunks.init.map(_.data).foldLeft(ByteString.empty)(_ ++ _) shouldEqual ByteString("Hello")
+        }
+      }
     }
     "decode the request content if a raw Content-Encoding header says 'gzip'" in {
       Post("/", helloGzipped) ~> RawHeader("Content-Encoding", "gzip") ~> {
