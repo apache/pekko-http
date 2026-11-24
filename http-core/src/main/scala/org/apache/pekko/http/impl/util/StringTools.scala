@@ -15,7 +15,6 @@ package org.apache.pekko.http.impl.util
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.util.{ JavaVersion, Unsafe }
 
 import scala.annotation.nowarn
 
@@ -24,23 +23,14 @@ import scala.annotation.nowarn
  */
 @InternalApi
 private[http] object StringTools {
-  private val avoidUnsafe = JavaVersion.majorVersion >= 17
-
   @nowarn("msg=deprecated")
   def asciiStringFromBytes(bytes: Array[Byte]): String =
     // Deprecated constructor but also (unfortunately) the fastest way to convert a ASCII encoded byte array
     // into a String without extra copying.
     new String(bytes, 0)
 
-  def asciiStringBytes(string: String): Array[Byte] = {
-    if (avoidUnsafe) {
-      // this is as fast as Unsafe.copyUSAsciiStrToBytes for recent JDK versions
-      // and avoids the use of deprecated Unsafe methods
-      string.getBytes(java.nio.charset.StandardCharsets.US_ASCII)
-    } else {
-      val bytes = new Array[Byte](string.length)
-      Unsafe.copyUSAsciiStrToBytes(string, bytes)
-      bytes
-    }
-  }
+  def asciiStringBytes(string: String): Array[Byte] =
+    // ISO-8859-1 makes this the inverse of asciiStringFromBytes: HPACK string literals are opaque octets, and a char in
+    // 0x80-0xFF has to come out as that octet. US-ASCII, as used before on JDK 17+, wrote '?' for it instead.
+    string.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)
 }

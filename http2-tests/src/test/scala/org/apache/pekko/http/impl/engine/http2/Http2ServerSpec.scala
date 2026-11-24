@@ -352,6 +352,35 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         trailingResponseHeaders.size should be(1)
         trailingResponseHeaders.head should be(("Status", "grpc-status 10"))
       })
+      "send an ISO-8859-1 response header value as its octets".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          // HPACK string literals are opaque octets: a char in 0x80-0xFF goes out as that octet. On JDK 17+ the
+          // non-Huffman literal path used to write '?' instead, and these values are too short for Huffman coding.
+          val streamId = 1
+          network.sendHEADERS(streamId, endStream = true, network.headersForRequest(Get("/")))
+          user.expectRequest()
+          user.emitResponse(streamId,
+            HttpResponse(StatusCodes.OK,
+              headers = RawHeader("x-a", "caf\u00e9") :: RawHeader("x-b", "\u00b0\u00ff") :: Nil))
+
+          val responseHeaders = network.expectDecodedResponseHEADERSPairs(streamId)
+          (responseHeaders should contain).allOf("x-a" -> "caf\u00e9", "x-b" -> "\u00b0\u00ff")
+        })
+      "send a response header value with a char outside the BMP as one '?' with a matching length".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          // ISO-8859-1 encoding writes a single '?' for a surrogate pair, so the literal is one octet shorter than
+          // the String. The length prefix has to count the octets written: with the char count the decoder would
+          // read the start of the next header as part of this value. The value is too short for Huffman coding.
+          val streamId = 1
+          network.sendHEADERS(streamId, endStream = true, network.headersForRequest(Get("/")))
+          user.expectRequest()
+          user.emitResponse(streamId,
+            HttpResponse(StatusCodes.OK,
+              headers = RawHeader("x-a", "\uD83D\uDE00") :: RawHeader("x-b", "next") :: Nil))
+
+          val responseHeaders = network.expectDecodedResponseHEADERSPairs(streamId)
+          (responseHeaders should contain).allOf("x-a" -> "?", "x-b" -> "next")
+        })
       "drop a response header whose value contains CRLF".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           val streamId = 1
