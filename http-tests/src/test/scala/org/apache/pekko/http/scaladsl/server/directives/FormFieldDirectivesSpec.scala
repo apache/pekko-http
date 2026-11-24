@@ -225,6 +225,16 @@ class FormFieldDirectivesSpec extends RoutingSpec {
         formField("hobby".repeated) { echoComplete }
       } ~> check { responseAs[String] shouldEqual "Vector(cooking, reading)" }
     }
+    "extract repeated multipart text fields in submission order" in {
+      val form = Multipart.FormData(
+        Multipart.FormData.BodyPart.Strict("hobby", HttpEntity("reading")),
+        Multipart.FormData.BodyPart.Strict("age", HttpEntity("42")),
+        Multipart.FormData.BodyPart.Strict("hobby", HttpEntity("cooking")))
+
+      Post("/", form) ~> {
+        formField("hobby".repeated) { values => complete(values.mkString(", ")) }
+      } ~> check { responseAs[String] shouldEqual "reading, cooking" }
+    }
     "extract as Iterable[Int]" in {
       Post("/", FormData("age" -> "42", "number" -> "3", "number" -> "5")) ~> {
         formField("number".as[Int].repeated) { echoComplete }
