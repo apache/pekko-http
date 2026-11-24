@@ -83,6 +83,36 @@ class HttpServerSpec extends PekkoSpec(
       shutdownBlueprint()
     })
 
+    "deliver a normal request when its optional protocol upgrade is unsupported" in assertAllStagesStopped(
+      new TestSetup {
+        send("""GET /hello HTTP/1.1
+               |Host: example.com
+               |Connection: Upgrade
+               |Upgrade: example-protocol
+               |
+               |""")
+
+        val request = expectRequest()
+        request.method shouldBe GET
+        request.uri shouldBe Uri("http://example.com/hello")
+        request.header[Connection].exists(_.hasUpgrade) shouldBe true
+        request.header[Upgrade].map(_.protocols) shouldBe Some(Seq(UpgradeProtocol("example-protocol")))
+        request.attribute(AttributeKeys.webSocketUpgrade) shouldBe None
+        request.entity.isKnownEmpty shouldBe true
+
+        responses.sendNext(HttpResponse(entity = "ordinary"))
+        expectResponseWithWipedDate(
+          """HTTP/1.1 200 OK
+            |Server: pekko-http/test
+            |Date: XXXX
+            |Content-Type: text/plain; charset=UTF-8
+            |Content-Length: 8
+            |
+            |ordinary""")
+
+        shutdownBlueprint()
+      })
+
     "deliver a request as soon as all headers are received" in assertAllStagesStopped(new TestSetup {
       send("""POST / HTTP/1.1
              |Host: example.com
