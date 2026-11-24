@@ -73,4 +73,8 @@ abstract class WebSocketSettings extends pekko.http.javadsl.settings.WebSocketSe
 
   def logFrames: Boolean
   override def withLogFrames(shouldLog: Boolean): WebSocketSettings = copy(logFrames = shouldLog)
+
+  /** Client-only opening upgrade response timeout; use `Duration.Inf` to disable it. */
+  override def withOpeningTimeout(newValue: Duration): WebSocketSettings = copy(openingTimeout = newValue)
+
 }

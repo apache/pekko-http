@@ -39,6 +39,19 @@ Make sure to read and understand the section about [Half-Closed WebSockets](#hal
 when using WebSockets for one-way communication may not be what you would expect.
 @@@
 
+## Opening handshake timeout
+
+Set `pekko.http.client.websocket.opening-timeout` to bound how long the client waits for a complete upgrade
+response after the WebSocket layer hands the opening request downstream, not after the request is written to
+the socket. It must be a positive duration of at most one hour,
+or `infinite` (the default) to leave the wait unbounded. If the deadline is exceeded, the upgrade result and
+the WebSocket stream fail with a `java.util.concurrent.TimeoutException`. A received non-upgrade HTTP response
+is still available through `InvalidUpgradeResponse`.
+
+The deadline may overlap transport setup, but does not replace the TCP connection or TLS timeouts. It stops
+on a successful upgrade and is independent of idle timeouts and the WebSocket close handshake. It can also be
+configured through `ClientConnectionSettings` and `WebSocketSettings.withOpeningTimeout`.
+
 ## Message
 
 Messages sent and received over a WebSocket can be either @apidoc[TextMessage] s or @apidoc[BinaryMessage] s and each

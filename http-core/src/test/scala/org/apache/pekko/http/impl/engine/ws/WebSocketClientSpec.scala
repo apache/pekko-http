@@ -14,6 +14,7 @@
 package org.apache.pekko.http.impl.engine.ws
 
 import java.util.Random
+import java.util.concurrent.TimeoutException
 
 import org.apache.pekko
 import pekko.NotUsed
@@ -131,6 +132,115 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
             messagesOut.sendComplete()
             messagesIn.cancel()
             netOut.cancel()
+          }
+        }
+      }
+    }
+
+    "time out the opening handshake only after dispatching its request" in {
+      Utils.assertAllStagesStopped {
+        new TestSetup with ClientProbes {
+          def openingTimeout = 500.millis.dilated
+          override def settings = {
+            val defaults = super.settings
+            defaults.withWebsocketSettings(defaults.websocketSettings.withOpeningTimeout(openingTimeout))
+          }
+          try {
+            messagesIn.request(1)
+            netOut.ensureSubscription()
+            // Without network demand no request has been dispatched, so the timer is not running yet.
+            intercept[TimeoutException](response.awaitResult(openingTimeout * 2))
+            response.isCompleted shouldBe false
+
+            expectWireData(UpgradeRequestBytes)
+            val failure = response.failed.awaitResult(3.seconds.dilated)
+            failure shouldBe a[TimeoutException]
+            failure.getMessage should include("opening handshake")
+            messagesIn.expectError() shouldBe failure
+            netOut.expectError() shouldBe failure
+            netIn.expectCancellation()
+          } finally {
+            messagesOut.sendComplete()
+            messagesIn.cancel()
+            netOut.cancel()
+          }
+        }
+      }
+    }
+
+    "complete the opening handshake result when cancelled before dispatch" in {
+      Utils.assertAllStagesStopped {
+        val defaults = ClientConnectionSettings(system)
+        val settings = defaults.withWebsocketSettings(defaults.websocketSettings.withOpeningTimeout(1.minute))
+        val handshake =
+          WebSocketClientBlueprint.handshake(WebSocketRequest("ws://example.org/ws"), settings, system.log)
+        val incoming = TestPublisher.probe[ByteString]()
+        val application = TestSubscriber.probe[ByteString]()
+        val network = TestSubscriber.probe[ByteString]()
+        val result = RunnableGraph.fromGraph(GraphDSL.createGraph(handshake) { implicit b => stage =>
+          import GraphDSL.Implicits._
+          Source.fromPublisher(incoming) ~> stage.in1
+          stage.out1                     ~> Sink.fromSubscriber(application)
+          Source.maybe[ByteString]       ~> stage.in2
+          stage.out2                     ~> Sink.fromSubscriber(network)
+          ClosedShape
+        }).run()
+
+        network.ensureSubscription()
+        try {
+          // The network has not requested an opening handshake, so the deadline cannot fire.
+          application.cancel()
+          result.failed.awaitResult(3.seconds.dilated).getMessage should include("cancelled before completion")
+          incoming.expectCancellation()
+        } finally network.cancel()
+      }
+    }
+
+    "retain the HTTP rejection with a configured opening handshake timeout" in {
+      Utils.assertAllStagesStopped {
+        new TestSetup with ClientProbes {
+          override def settings = {
+            val defaults = super.settings
+            defaults.withWebsocketSettings(defaults.websocketSettings.withOpeningTimeout(2.seconds.dilated))
+          }
+          try {
+            expectWireData(UpgradeRequestBytes)
+            messagesIn.request(1)
+            sendWireData(ByteString("HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n"))
+            val rejection = response.awaitResult(1.second.dilated).asInstanceOf[InvalidUpgradeResponse]
+            rejection.response.status shouldBe pekko.http.scaladsl.model.StatusCodes.Forbidden
+            expectNetworkAbort()
+          } finally {
+            messagesOut.sendComplete()
+            messagesIn.cancel()
+            netOut.cancel()
+            netIn.sendComplete()
+          }
+        }
+      }
+    }
+
+    "stop the opening handshake timeout once a successful response arrives" in {
+      Utils.assertAllStagesStopped {
+        new TestSetup with ClientProbes {
+          def openingTimeout = 1.second.dilated
+          override def settings = {
+            val defaults = super.settings
+            defaults.withWebsocketSettings(defaults.websocketSettings.withOpeningTimeout(openingTimeout))
+          }
+          try {
+            expectWireData(UpgradeRequestBytes)
+            messagesIn.request(1)
+            sendWireData(UpgradeResponseBytes)
+            response.awaitResult(3.seconds.dilated) shouldBe a[ValidUpgrade]
+            netOut.expectNoBytes(openingTimeout + 250.millis.dilated)
+            sendWSFrame(Protocol.Opcode.Text, ByteString("still connected"), fin = true)
+            messagesIn.expectNext(TextMessage("still connected"))
+          } finally {
+            messagesOut.sendComplete()
+            messagesIn.cancel()
+            netOut.cancel()
+            netIn.sendComplete()
           }
         }
       }

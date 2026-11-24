@@ -37,7 +37,8 @@ private[pekko] final case class WebSocketSettingsImpl(
     compression: WebSocketCompressionSettingsImpl,
     receiveIdleTimeout: Duration,
     sendIdleTimeout: Duration,
-    override val closeTimeout: FiniteDuration)
+    override val closeTimeout: FiniteDuration,
+    override val openingTimeout: Duration)
     extends pekko.http.scaladsl.settings.WebSocketSettings {
 
   // Preserve the existing internal constructor and copy descriptors for compiled callers.
@@ -51,7 +52,20 @@ private[pekko] final case class WebSocketSettingsImpl(
       receiveIdleTimeout: Duration,
       sendIdleTimeout: Duration) =
     this(randomFactory, periodicKeepAliveMode, periodicKeepAliveMaxIdle, periodicKeepAliveData, logFrames,
-      compression, receiveIdleTimeout, sendIdleTimeout, WebSocketSettingsImpl.DefaultCloseTimeout)
+      compression, receiveIdleTimeout, sendIdleTimeout, WebSocketSettingsImpl.DefaultCloseTimeout, Duration.Inf)
+
+  def this(
+      randomFactory: () => Random,
+      periodicKeepAliveMode: String,
+      periodicKeepAliveMaxIdle: Duration,
+      periodicKeepAliveData: () => ByteString,
+      logFrames: Boolean,
+      compression: WebSocketCompressionSettingsImpl,
+      receiveIdleTimeout: Duration,
+      sendIdleTimeout: Duration,
+      closeTimeout: FiniteDuration) =
+    this(randomFactory, periodicKeepAliveMode, periodicKeepAliveMaxIdle, periodicKeepAliveData, logFrames,
+      compression, receiveIdleTimeout, sendIdleTimeout, closeTimeout, Duration.Inf)
 
   def copy(
       randomFactory: () => Random,
@@ -64,7 +78,21 @@ private[pekko] final case class WebSocketSettingsImpl(
       sendIdleTimeout: Duration): WebSocketSettingsImpl =
     new WebSocketSettingsImpl(randomFactory, periodicKeepAliveMode, periodicKeepAliveMaxIdle, periodicKeepAliveData,
       logFrames,
-      compression, receiveIdleTimeout, sendIdleTimeout, closeTimeout)
+      compression, receiveIdleTimeout, sendIdleTimeout, closeTimeout, openingTimeout)
+
+  def copy(
+      randomFactory: () => Random,
+      periodicKeepAliveMode: String,
+      periodicKeepAliveMaxIdle: Duration,
+      periodicKeepAliveData: () => ByteString,
+      logFrames: Boolean,
+      compression: WebSocketCompressionSettingsImpl,
+      receiveIdleTimeout: Duration,
+      sendIdleTimeout: Duration,
+      closeTimeout: FiniteDuration): WebSocketSettingsImpl =
+    new WebSocketSettingsImpl(randomFactory, periodicKeepAliveMode, periodicKeepAliveMaxIdle, periodicKeepAliveData,
+      logFrames,
+      compression, receiveIdleTimeout, sendIdleTimeout, closeTimeout, openingTimeout)
 
   def copy(
       randomFactory: () => Random = this.randomFactory,
@@ -75,10 +103,13 @@ private[pekko] final case class WebSocketSettingsImpl(
       compression: WebSocketCompressionSettingsImpl = this.compression,
       receiveIdleTimeout: Duration = this.receiveIdleTimeout,
       sendIdleTimeout: Duration = this.sendIdleTimeout,
-      closeTimeout: FiniteDuration = this.closeTimeout): WebSocketSettingsImpl =
+      closeTimeout: FiniteDuration = this.closeTimeout,
+      openingTimeout: Duration = this.openingTimeout): WebSocketSettingsImpl =
     new WebSocketSettingsImpl(randomFactory, periodicKeepAliveMode, periodicKeepAliveMaxIdle, periodicKeepAliveData,
       logFrames,
-      compression, receiveIdleTimeout, sendIdleTimeout, closeTimeout)
+      compression, receiveIdleTimeout, sendIdleTimeout, closeTimeout, openingTimeout)
+
+  require(WebSocketSettingsImpl.isValidOpeningTimeout(openingTimeout), WebSocketSettingsImpl.OpeningTimeoutValidation)
 
   require(WebSocketSettingsImpl.isValidCloseTimeout(closeTimeout),
     "websocket close-timeout must be > 0 and at most 1 hour")
@@ -120,6 +151,25 @@ private[pekko] object WebSocketSettingsImpl { // on purpose not extending Settin
       logFrames,
       compression, receiveIdleTimeout, sendIdleTimeout, WebSocketSettingsImpl.DefaultCloseTimeout)
 
+  // Preserve the factory descriptor introduced with closeTimeout.
+  def apply(
+      randomFactory: () => Random,
+      periodicKeepAliveMode: String,
+      periodicKeepAliveMaxIdle: Duration,
+      periodicKeepAliveData: () => ByteString,
+      logFrames: Boolean,
+      compression: WebSocketCompressionSettingsImpl,
+      receiveIdleTimeout: Duration,
+      sendIdleTimeout: Duration,
+      closeTimeout: FiniteDuration): WebSocketSettingsImpl =
+    new WebSocketSettingsImpl(randomFactory, periodicKeepAliveMode, periodicKeepAliveMaxIdle, periodicKeepAliveData,
+      logFrames, compression, receiveIdleTimeout, sendIdleTimeout, closeTimeout)
+
+  private val OpeningTimeoutValidation = "websocket opening-timeout must be infinite or > 0 and at most 1 hour"
+
+  private def isValidOpeningTimeout(timeout: Duration): Boolean =
+    timeout == Duration.Inf || (timeout.isFinite && timeout > Duration.Zero && timeout <= 1.hour)
+
   private val KeepAliveModes = Seq("ping", "pong")
 
   // constant value used to identity check and avoid invoking the generation function if no data payload needed
@@ -135,9 +185,12 @@ private[pekko] object WebSocketSettingsImpl { // on purpose not extending Settin
   def clientFromRoot(root: Config): WebSocketSettingsImpl =
     client(root.getConfig("pekko.http.client.websocket"))
   def client(config: Config): WebSocketSettingsImpl =
-    fromConfig(config, WebSocketCompressionSettingsImpl.Disabled)
+    fromConfig(config, WebSocketCompressionSettingsImpl.Disabled, readOpeningTimeout(config))
 
-  private def fromConfig(inner: Config, compression: WebSocketCompressionSettingsImpl): WebSocketSettingsImpl = {
+  private def fromConfig(
+      inner: Config,
+      compression: WebSocketCompressionSettingsImpl,
+      openingTimeout: Duration = Duration.Inf): WebSocketSettingsImpl = {
     val c = inner
     WebSocketSettingsImpl(
       Randoms.SecureRandomInstances,
@@ -148,7 +201,16 @@ private[pekko] object WebSocketSettingsImpl { // on purpose not extending Settin
       compression,
       c.getPotentiallyInfiniteDuration("receive-idle-timeout"),
       c.getPotentiallyInfiniteDuration("send-idle-timeout"),
-      readCloseTimeout(c))
+      readCloseTimeout(c),
+      openingTimeout)
+  }
+
+  private def readOpeningTimeout(config: Config): Duration = {
+    val timeout =
+      if (config.hasPath("opening-timeout")) config.getPotentiallyInfiniteDuration("opening-timeout")
+      else Duration.Inf
+    if (!isValidOpeningTimeout(timeout)) throw new ConfigurationException(OpeningTimeoutValidation)
+    timeout
   }
 
   private def readCloseTimeout(config: Config): FiniteDuration =
