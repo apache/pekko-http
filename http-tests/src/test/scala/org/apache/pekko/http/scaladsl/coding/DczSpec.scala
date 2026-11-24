@@ -17,13 +17,13 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
-import java.io.{ InputStream, OutputStream }
+import java.io.{ ByteArrayInputStream, InputStream, OutputStream }
 import java.security.MessageDigest
 import java.util.zip.DataFormatException
 
 import scala.concurrent.duration._
 
-import com.github.luben.zstd.{ ZstdInputStream, ZstdOutputStream }
+import com.github.luben.zstd.{ ZstdDictContentType, ZstdDictDecompress, ZstdInputStream, ZstdOutputStream }
 
 import org.apache.pekko
 import pekko.http.impl.util._
@@ -129,8 +129,20 @@ class DczSpec extends CoderSpec {
       val encoded = ourEncode(smallTextBytes)
       decodeChunks(Source(encoded.grouped(1).toVector)) should readAs(smallText)
     }
-    "reject a dictionary that cannot be loaded as raw content" in {
-      an[IllegalArgumentException] should be thrownBy Coders.Dcz(ByteString(0x37, 0xA4, 0x30, 0xEC, 1, 2, 3, 4, 5))
+    "use a dictionary that starts with the zstd dictionary magic number as raw content" in {
+      // libzstd would parse this as a formatted dictionary, and fail as it is not one, unless raw content is forced
+      val magicDictionary = ByteString(0x37, 0xA4, 0x30, 0xEC) ++ dictionary
+      val coder = Coders.Dcz(magicDictionary)
+      val encoded = coder.encodeAsync(largeTextBytes).awaitResult(3.seconds.dilated)
+      coder.decode(encoded).awaitResult(3.seconds.dilated) should readAs(largeText)
+
+      // the same as what zstd-jni reads with the dictionary as raw content
+      val rawDictionary = new ZstdDictDecompress(magicDictionary.toArray, ZstdDictContentType.RAW_CONTENT)
+      try {
+        val in = new ZstdInputStream(new ByteArrayInputStream(encoded.drop(40).toArray)).setDict(rawDictionary)
+        try ByteString(in.readAllBytes()) should readAs(largeText)
+        finally in.close()
+      } finally rawDictionary.close()
     }
     "reject an empty dictionary" in {
       an[IllegalArgumentException] should be thrownBy Coders.Dcz(ByteString.empty)

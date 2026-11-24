@@ -23,7 +23,7 @@ import org.apache.pekko.util.ByteString;
  * Model for the `Available-Dictionary` header. Specification:
  * https://www.rfc-editor.org/rfc/rfc9842#section-2.2
  *
- * @since 2.0.0
+ * @since 2.1.0
  */
 public abstract class AvailableDictionary extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   /** The SHA-256 hash of the dictionary */

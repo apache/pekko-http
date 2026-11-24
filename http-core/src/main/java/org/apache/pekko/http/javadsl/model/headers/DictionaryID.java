@@ -21,7 +21,7 @@ package org.apache.pekko.http.javadsl.model.headers;
  * Model for the `Dictionary-ID` header. Specification:
  * https://www.rfc-editor.org/rfc/rfc9842#section-2.3
  *
- * @since 2.0.0
+ * @since 2.1.0
  */
 public abstract class DictionaryID extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract String getId();

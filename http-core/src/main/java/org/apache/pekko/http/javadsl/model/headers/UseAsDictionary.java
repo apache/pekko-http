@@ -24,7 +24,7 @@ import scala.jdk.javaapi.CollectionConverters;
  * Model for the `Use-As-Dictionary` header. Specification:
  * https://www.rfc-editor.org/rfc/rfc9842#section-2.1
  *
- * @since 2.0.0
+ * @since 2.1.0
  */
 public abstract class UseAsDictionary extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   /** The URL pattern of the requests that the dictionary can be used for */

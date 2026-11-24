@@ -34,11 +34,11 @@ import scala.jdk.javaapi.FutureConverters;
 /**
  * A coder for the 'dcz' encoding of RFC 9842, which compresses with a dictionary that both sides
  * have. It needs the optional {@code com.github.luben:zstd-jni} dependency on the classpath,
- * version 1.5.7-25 or later.
+ * version 1.5.7-26 or later.
  *
  * <p>Creating one hashes the dictionary, so create one per dictionary and reuse it.
  *
- * @since 2.0.0
+ * @since 2.1.0
  */
 public final class DictionaryCoder {
   private final org.apache.pekko.http.scaladsl.coding.DictionaryCoder underlying;
@@ -50,9 +50,7 @@ public final class DictionaryCoder {
   /**
    * Creates a coder with the default compression level.
    *
-   * @param dictionary the dictionary, which is used as raw content. It must not be empty, and must
-   *     not start with the zstd dictionary magic number, as such a dictionary cannot be loaded as
-   *     raw content
+   * @param dictionary the dictionary, which is always used as raw content. It must not be empty
    */
   public static DictionaryCoder create(ByteString dictionary) {
     return create(dictionary, Zstd$.MODULE$.DefaultCompressionLevel());

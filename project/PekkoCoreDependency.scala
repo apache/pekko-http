@@ -21,5 +21,5 @@ object PekkoCoreDependency extends PekkoDependency {
   override val checkProject: String = "pekko-cluster-sharding-typed"
   override val module: Option[String] = None
   override val minVersion: String = "2.0.0"
-  override val currentVersion: String = "2.0.0"
+  override val currentVersion: String = "2.1.0-M0+31-4f404c0c-SNAPSHOT"
 }

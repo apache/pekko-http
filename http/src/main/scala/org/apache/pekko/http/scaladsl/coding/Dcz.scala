@@ -27,7 +27,7 @@ import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ HttpEncoding, HttpEncodings }
-import pekko.stream.{ Attributes, ZstdDecompressionSettings }
+import pekko.stream.{ Attributes, ZstdDecompressionSettings, ZstdDictionaryContentType }
 import pekko.stream.impl.fusing.GraphStages.SimpleLinearGraphStage
 import pekko.stream.impl.io.compression.ZstdDictionaryImpl
 import pekko.stream.scaladsl.{ Compression, Flow }
@@ -40,7 +40,7 @@ import pekko.util.ByteString
  *
  * Creating one hashes the dictionary, so create one per dictionary and reuse it.
  *
- * @since 2.0.0
+ * @since 2.1.0
  */
 sealed trait DictionaryCoder extends Coder {
 
@@ -94,9 +94,6 @@ private[http] object Dcz {
 
   private[coding] val HeaderLength = HeaderPrefix.length + HashLength
 
-  // the little-endian magic number of a dictionary in the zstd dictionary format
-  private[coding] val ZstdDictionaryMagic = ByteString(0x37, 0xA4, 0x30, 0xEC)
-
   private val MinWindow = 8L * 1024 * 1024
   private val MaxWindow = 128L * 1024 * 1024
 
@@ -136,13 +133,11 @@ private[http] object Dcz {
 @InternalApi
 private[coding] final class DczDictionary(bytes: ByteString) {
   require(bytes.nonEmpty, "The dictionary must not be empty")
-  // zstd-jni cannot force libzstd to load a dictionary as raw content, which RFC 9842 requires, and libzstd would
-  // parse this as a formatted dictionary, so the output would not be decodable by other implementations
-  require(
-    bytes.take(Dcz.ZstdDictionaryMagic.length) != Dcz.ZstdDictionaryMagic,
-    "A dictionary that starts with the zstd dictionary magic number is not supported")
 
-  val zstdDictionary: ZstdDictionary = ZstdDictionary(bytes)
+  // RFC 9842 requires raw content, also for a dictionary that starts with the zstd dictionary magic number, which
+  // libzstd would otherwise parse as a formatted dictionary
+  val zstdDictionary: ZstdDictionary =
+    ZstdDictionary(bytes).withContentType(ZstdDictionaryContentType.RAW_CONTENT)
   val zstdDictionaryImpl: ZstdDictionaryImpl = zstdDictionary.toImpl
 
   val hash: ByteString = {

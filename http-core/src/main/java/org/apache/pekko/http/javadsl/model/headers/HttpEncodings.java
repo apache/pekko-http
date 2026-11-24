@@ -32,7 +32,7 @@ public final class HttpEncodings {
       org.apache.pekko.http.scaladsl.model.headers.HttpEncodings.x$minuszip();
 
   /**
-   * @since 2.0.0
+   * @since 2.1.0
    */
   public static final HttpEncoding DCZ =
       org.apache.pekko.http.scaladsl.model.headers.HttpEncodings.dcz();
