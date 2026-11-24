@@ -79,6 +79,68 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Identify root documentation-only pull requests
+        id: pr_scope
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if python3 -I - <<'PY'
+          import os
+          import re
+          import subprocess
+
+          def git(*args):
+              return subprocess.check_output(["git", *args])
+
+          def allowed_diff(before, after):
+              # Treat both sides of a rename independently; allow only modified regular files.
+              changes = git(
+                  "diff", "--raw", "-z", "--no-renames", "--no-abbrev",
+                  "--ignore-submodules=none", "--no-ext-diff", before, after
+              ).split(b"\0")
+              docs = {b"README.md", b"CONTRIBUTING.md"}
+              return (
+                  len(changes) >= 3
+                  and len(changes) % 2 == 1
+                  and changes[-1] == b""
+                  and all(
+                      re.fullmatch(rb":100644 100644 [0-9a-f]{40} [0-9a-f]{40} M", change)
+                      and path in docs
+                      for change, path in zip(changes[0:-1:2], changes[1:-1:2])
+                  )
+              )
+
+          def docs_only():
+              base = os.environ.get("BASE_SHA", "")
+              head = os.environ.get("HEAD_SHA", "")
+              merge = os.environ.get("GITHUB_SHA", "")
+              if not all(re.fullmatch("[0-9a-f]{40}", sha) for sha in (base, head, merge)):
+                  return False
+              if git("rev-list", "--parents", "-n", "1", "HEAD").split() != [
+                  sha.encode() for sha in (merge, base, head)
+              ]:
+                  return False
+              if git("rev-parse", "--is-shallow-repository").strip() != b"false":
+                  return False
+              merge_bases = git("merge-base", "--all", base, head).split()
+              if len(merge_bases) != 1 or not re.fullmatch(rb"[0-9a-f]{40}", merge_bases[0]):
+                  return False
+
+              # Require both the authored PR diff and the actual test tree delta to be docs-only.
+              return allowed_diff(merge_bases[0].decode("ascii"), head) and allowed_diff(base, merge)
+
+          try:
+              raise SystemExit(0 if docs_only() else 1)
+          except (OSError, subprocess.SubprocessError):
+              raise SystemExit(1)
+          PY
+          then
+            echo "skip_compile_all=true" >> "$GITHUB_OUTPUT"
+            echo "Only root documentation was modified; skipping the unconditional Test/compile. PR validation still runs."
+          fi
+
       - name: Set up JDK ${{ matrix.JDK }}
         uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
@@ -101,6 +163,7 @@ jobs:
         run: cp .jvmopts-ci .jvmopts
 
       - name: Compile everything
+        if: steps.pr_scope.outputs.skip_compile_all != 'true'
         run: |-
           scala_version="$(bash .github/scripts/resolve-scala-version.sh "${{ matrix.SCALA_VERSION }}")"
           sbt "++${scala_version}!" Test/compile
