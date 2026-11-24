@@ -839,6 +839,33 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
     }
 
+    "reject a second 'host' header that does not match ':authority'" in {
+      val info = parseExpectError(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "example.org",
+          ":path" -> "/",
+          "host" -> "example.org",
+          "accept" -> "*/*",
+          "host" -> "other.example"))
+      info.summary should ===("Malformed request: 'host' header does not match the ':authority' pseudo-header")
+    }
+
+    "keep a 'host' header among the other headers, in the order received" in {
+      val request: HttpRequest = parseExpectOk(
+        keyValuePairs = Vector(
+          ":method" -> "GET",
+          ":scheme" -> "https",
+          ":authority" -> "example.org",
+          ":path" -> "/",
+          "user-agent" -> "test",
+          "host" -> "example.org",
+          "accept" -> "*/*"))
+
+      request.headers.map(_.lowercaseName) should ===(Seq("user-agent", "host", "accept"))
+    }
+
     "reject requests with multiple content length headers" in {
       val info = parseExpectError(
         keyValuePairs = Vector(
