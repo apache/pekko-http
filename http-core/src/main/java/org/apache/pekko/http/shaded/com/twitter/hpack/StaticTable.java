@@ -138,10 +138,13 @@ final class StaticTable {
       return -1;
     }
 
-    // Note this assumes all entries for a given header field are sequential.
+    // RFC 7541 Appendix A groups all entries for a name together.
     while (index <= length) {
       HeaderField entry = getEntry(index);
-      if (name.equals(entry.name) && value.equals(entry.value)) {
+      if (!name.equals(entry.name)) {
+        return -1;
+      }
+      if (value.equals(entry.value)) {
         return index;
       }
       index++;

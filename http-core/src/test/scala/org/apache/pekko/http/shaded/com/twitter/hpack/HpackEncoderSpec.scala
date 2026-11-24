@@ -290,6 +290,16 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
       StaticTable.getIndex("content-language", "") shouldEqual 27
     }
 
+    "keep each static header name in a contiguous group and match values case-sensitively" in {
+      val names = (1 to StaticTable.length).map(index => StaticTable.getEntry(index).name)
+      val groupStarts = names.zipWithIndex.collect {
+        case (name, index) if index == 0 || names(index - 1) != name => name
+      }
+      groupStarts.distinct shouldEqual groupStarts
+      StaticTable.getIndex(":method", "get") shouldEqual -1
+      StaticTable.getIndex(":METHOD", "GET") shouldEqual -1
+    }
+
     "match the static table values listed in RFC 7541 Appendix A" in {
       StaticTable.length shouldEqual 61
       Seq(
