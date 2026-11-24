@@ -158,6 +158,14 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       Map(":method" -> "GET", ":scheme" -> "http", ":authority" -> "example.com:8080", ":path" -> "/foo")
     }
 
+    "render a root path before the query of a relative URI with an empty path" in {
+      val uri = Uri("?next=/docs/start")
+      uri.path shouldBe Uri.Path.Empty
+
+      val headers = pseudoHeaders(HttpRequest(uri = uri), "https", Uri.Authority(Uri.Host("example.com")))
+      headers(":path") shouldBe "/?next=/docs/start"
+    }
+
     "take ':authority' of a relative URI from a Host header before the connection" in {
       val request = HttpRequest(uri = "/foo", headers = List(Host("other.example.com", 8443)))
       pseudoHeaders(request, "https", Uri.Authority(Uri.Host("example.com"))) should contain(
