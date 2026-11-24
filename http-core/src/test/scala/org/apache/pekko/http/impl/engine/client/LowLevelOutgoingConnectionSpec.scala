@@ -1142,6 +1142,51 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
         responses.expectError().getMessage should include("longer than the maximum of 5")
       }
 
+      "fails the connection if an already strict response entity exceeds strict-response-entity-max-bytes" in
+      new TestSetup(
+        config = strictConfig + "\npekko.http.client.strict-response-entity-max-bytes = 5") {
+        sendStandardRequest()
+        // the whole response arrives in one read, so the parser creates a strict entity
+        sendWireData(
+          """HTTP/1.1 200 OK
+            |Content-Type: text/plain; charset=UTF-8
+            |Content-Length: 7
+            |
+            |ABCDEFG""")
+
+        responsesSub.request(1)
+        responses.expectError().getMessage should include("longer than the maximum of 5")
+      }
+
+      "fails the connection if a default response entity exceeds strict-response-entity-max-bytes" in new TestSetup(
+        config = strictConfig + "\npekko.http.client.strict-response-entity-max-bytes = 5") {
+        sendStandardRequest()
+        // the same response as above, read in two parts, so the parser creates a default entity
+        sendWireData(
+          """HTTP/1.1 200 OK
+            |Content-Type: text/plain; charset=UTF-8
+            |Content-Length: 7
+            |
+            |ABC""")
+
+        responsesSub.request(1)
+        responses.expectError().getMessage should include("longer than the maximum of 5")
+      }
+
+      "passes through an already strict response entity of exactly strict-response-entity-max-bytes" in new TestSetup(
+        config = strictConfig + "\npekko.http.client.strict-response-entity-max-bytes = 7") {
+        sendStandardRequest()
+        sendWireData(
+          """HTTP/1.1 200 OK
+            |Content-Type: text/plain; charset=UTF-8
+            |Content-Length: 7
+            |
+            |ABCDEFG""")
+
+        expectResponse().entity shouldEqual
+        HttpEntity.Strict(ContentTypes.`text/plain(UTF-8)`, ByteString("ABCDEFG"))
+      }
+
       "leaves response entities streamed by default" in new TestSetup {
         sendStandardRequest()
         sendWireData(

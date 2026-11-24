@@ -43,7 +43,9 @@ pekko.http.client.strict-response-entity-timeout = 10s
 Keep in mind that this buffers each complete response body in memory. A response that is not fully received within the
 configured duration fails with a `TimeoutException`, and one that exceeds
 `pekko.http.client.strict-response-entity-max-bytes` (8 MB by default) fails with an `EntityStreamException`; in both
-cases the connection is failed. Trailing headers of chunked responses are dropped, as they are with
+cases the connection is failed. The limit applies to every response entity, however it was read: an entity that
+declares a bigger length up front is failed without being collected, and so is one that arrived complete with the
+response headers and is therefore strict already. Trailing headers of chunked responses are dropped, as they are with
 `HttpEntity.toStrict`.
 
 This applies to the HTTP/1.1 client, which includes the connection pool backing the
