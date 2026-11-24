@@ -21,6 +21,7 @@
 
 @@@ index
 
+* [2.1 Releases](releases-2.1.md)
 * [2.0 Releases](releases-2.0.md)
 * [1.4 Releases](releases-1.4.md)
 * [1.3 Releases](releases-1.3.md)

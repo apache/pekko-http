@@ -319,7 +319,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
 
   def `cookie-av` = rule {
     `expires-av` | `max-age-av` | `domain-av` | `path-av` | `same-site-av` | `secure-av` | `httponly-av` |
-    `extension-av`
+    `partitioned-av` | `extension-av`
   }
 
   def `expires-av` = rule {
@@ -392,6 +392,10 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
 
   def `httponly-av` = rule {
     ignoreCase("httponly") ~ OWS ~> { (cookie: HttpCookie) => cookie.withHttpOnly(true) }
+  }
+
+  def `partitioned-av` = rule {
+    ignoreCase("partitioned") ~ OWS ~ &(anyOf(";") | EOI) ~> { (cookie: HttpCookie) => cookie.withPartitioned(true) }
   }
 
   // http://www.rfc-editor.org/errata_search.php?rfc=6265

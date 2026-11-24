@@ -69,7 +69,7 @@ object HttpCookiePair {
  * for a full definition of the http cookie header fields, see
  * http://tools.ietf.org/html/rfc6265
  */
-final class HttpCookie private[http] (
+final class HttpCookie private (
     val name: String,
     val value: String,
     val expires: Option[DateTime],
@@ -79,8 +79,23 @@ final class HttpCookie private[http] (
     val secure: Boolean,
     val httpOnly: Boolean,
     val extension: Option[String],
-    val sameSite: Option[SameSite]) extends jm.headers.HttpCookie with ToStringRenderable with Product with Serializable
+    val sameSite: Option[SameSite],
+    override val partitioned: Boolean) extends jm.headers.HttpCookie with ToStringRenderable with Product
+    with Serializable
     with Equals {
+
+  private[http] def this(
+      name: String,
+      value: String,
+      expires: Option[DateTime],
+      maxAge: Option[Long],
+      domain: Option[String],
+      path: Option[String],
+      secure: Boolean,
+      httpOnly: Boolean,
+      extension: Option[String],
+      sameSite: Option[SameSite]) =
+    this(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, sameSite, false)
 
   private[headers] def copy(
       name: String = this.name,
@@ -93,7 +108,7 @@ final class HttpCookie private[http] (
       httpOnly: Boolean = this.httpOnly,
       extension: Option[String] = this.extension,
       sameSite: Option[SameSite] = this.sameSite): HttpCookie =
-    new HttpCookie(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, sameSite)
+    new HttpCookie(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, sameSite, partitioned)
 
   override def productArity: Int = 9
 
@@ -123,7 +138,8 @@ final class HttpCookie private[http] (
       this.secure == that.secure &&
       this.httpOnly == that.httpOnly &&
       this.extension == that.extension &&
-      this.sameSite == that.sameSite
+      this.sameSite == that.sameSite &&
+      this.partitioned == that.partitioned
     case _ => false
   }
 
@@ -152,6 +168,7 @@ final class HttpCookie private[http] (
     if (httpOnly) r ~~ "; HttpOnly"
     if (extension.isDefined) r ~~ ';' ~~ ' ' ~~ extension.get
     if (sameSite.isDefined) r ~~ "; SameSite=" ~~ sameSite.get
+    if (partitioned && !extension.exists("Partitioned".equalsIgnoreCase)) r ~~ "; Partitioned"
     r
   }
 
@@ -187,6 +204,13 @@ final class HttpCookie private[http] (
   def withMaxAge(maxAge: Long): HttpCookie = copy(maxAge = Some(maxAge))
   def withSecure(secure: Boolean): HttpCookie = copy(secure = secure)
   def withHttpOnly(httpOnly: Boolean): HttpCookie = copy(httpOnly = httpOnly)
+
+  /**
+   * Returns a copy with the typed Partitioned attribute enabled or disabled.
+   * Browsers require Secure for partitioned cookies; this method does not change Secure or the raw extension.
+   */
+  override def withPartitioned(partitioned: Boolean): HttpCookie =
+    new HttpCookie(name, value, expires, maxAge, domain, path, secure, httpOnly, extension, sameSite, partitioned)
 
   /** Scala API */
   def withSameSite(sameSite: SameSite) = copy(sameSite = Some(sameSite))

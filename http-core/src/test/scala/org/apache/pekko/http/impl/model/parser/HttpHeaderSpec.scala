@@ -67,6 +67,44 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     HeaderParser.Success(`Set-Cookie`(HttpCookie("sid", "value", expires = Some(DateTime(1976, 11, 23, 12)))))
   }
 
+  "Partitioned Set-Cookie" - {
+    "recognizes the bare attribute without consuming other extensions" in {
+      val cookie = HttpCookie("theme", "light").withSecure(true).withExtension("Priority=High").withPartitioned(true)
+      val expected = `Set-Cookie`(cookie).renderedTo("theme=light; Secure; Priority=High; Partitioned")
+      "Set-Cookie: theme=light; Secure; pArTiTiOnEd; Priority=High" =!= expected
+      "Set-Cookie: theme=light; Secure; Priority=High; Partitioned" =!= expected
+      "Set-Cookie: theme=light; Partitioned; First; Last" =!=
+        `Set-Cookie`(HttpCookie("theme", "light").withPartitioned(true).withExtension("Last"))
+          .renderedTo("theme=light; Last; Partitioned")
+    }
+
+    "keeps valued extensions and longer names generic" in {
+      "Set-Cookie: theme=light; Partitioned=preview" =!=
+        `Set-Cookie`(HttpCookie("theme", "light").withExtension("Partitioned=preview"))
+      "Set-Cookie: theme=light; PartitionedPreview" =!=
+        `Set-Cookie`(HttpCookie("theme", "light").withExtension("PartitionedPreview"))
+    }
+
+    "keeps typed and raw settings independently while rendering a shared bare marker once" in {
+      val base = HttpCookie("theme", "light")
+      val typed = base.withPartitioned(true)
+      base.partitioned shouldBe false
+      typed.secure shouldBe false
+      (typed should not).equal(base)
+      typed.withPath("/").partitioned shouldBe true
+      typed.withPartitioned(false) shouldBe base
+
+      val raw = base.withExtension("pArTiTiOnEd")
+      val both = raw.withPartitioned(true)
+      raw.partitioned shouldBe false
+      both.extension shouldBe raw.extension
+      val expected = "theme=light; pArTiTiOnEd"
+      raw.toString shouldBe expected
+      both.toString shouldBe expected
+      both.withPartitioned(false) shouldBe raw
+    }
+  }
+
   for (date <- Seq(
       "Sun, 06 Nov 1994 08:09:07 -0000",
       "Sunday, 06-Nov-94 08:09:07 -0000",

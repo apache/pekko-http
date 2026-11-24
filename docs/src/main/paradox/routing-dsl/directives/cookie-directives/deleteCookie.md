@@ -21,6 +21,16 @@
 
 Adds a header to the response to request the removal of the cookie with the given name on the client.
 
+To expire a partitioned cookie, use the overload that accepts an `HttpCookie`. Pass the cookie
+with the same name, domain and path as when it was set, and enable both `Secure` and `Partitioned`.
+The name/domain/path overload cannot emit those attributes.
+
+Scala
+: `deleteCookie(HttpCookie("theme", "").withSecure(true).withPartitioned(true)) { inner }`
+
+Java
+: `deleteCookie(HttpCookie.create("theme", "").withSecure(true).withPartitioned(true), () -> inner)`
+
 Use the @ref[setCookie](setCookie.md) directive to update a cookie.
 
 ## Example
