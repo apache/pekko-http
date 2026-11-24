@@ -158,7 +158,7 @@ class SlotStateSpec extends PekkoSpec {
     }
 
     "close the connection right away after an early error response" in {
-      earlyResponseCompleted(new MockSlotContext(system.log), HttpResponse(StatusCodes.PayloadTooLarge)) should
+      earlyResponseCompleted(new MockSlotContext(system.log), HttpResponse(StatusCodes.ContentTooLarge)) should
       be(ToBeClosed)
     }
 
