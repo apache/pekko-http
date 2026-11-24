@@ -14,6 +14,7 @@
 package org.apache.pekko.http.impl.model.parser
 
 import java.net.InetAddress
+import java.time.Instant
 
 import org.apache.pekko
 import pekko.http.scaladsl.settings.ParserSettings.CookieParsingMode
@@ -37,6 +38,34 @@ import org.scalatest.matchers.should.Matchers
 class HttpHeaderSpec extends AnyFreeSpec with Matchers {
   val `application/vnd.spray` = MediaType.applicationBinary("vnd.spray", MediaType.Compressible)
   val PROPFIND = HttpMethod.custom("PROPFIND")
+
+  "RFC 850 uses a rolling UTC timestamp cutoff without changing cookie expiry" in {
+    def parseAt(now: String, name: String, value: String): HeaderParser.Result =
+      HeaderParser.dispatch(new HeaderParser(value + org.parboiled2.EOI) {
+          override protected def rfc850Now: Instant = Instant.parse(now)
+        }, name)
+
+    val now = "2026-11-23T12:00:00Z"
+    parseAt(now, "date", "Monday, 23-Nov-76 11:59:59 GMT") shouldBe
+    HeaderParser.Success(Date(DateTime(2076, 11, 23, 11, 59, 59)))
+    parseAt(now, "date", "Monday, 23-Nov-76 12:00:00 GMT") shouldBe
+    HeaderParser.Success(Date(DateTime(2076, 11, 23, 12)))
+    parseAt(now, "date", "Tuesday, 23-Nov-76 12:00:01 GMT") shouldBe
+    HeaderParser.Success(Date(DateTime(1976, 11, 23, 12, 0, 1)))
+    parseAt("2026-11-23T12:00:00.999Z", "date", "Tuesday, 23-Nov-76 12:00:01 GMT") shouldBe
+    HeaderParser.Success(Date(DateTime(1976, 11, 23, 12, 0, 1)))
+    parseAt("2026-11-23T12:00:01.001Z", "date", "Monday, 23-Nov-76 12:00:01 GMT") shouldBe
+    HeaderParser.Success(Date(DateTime(2076, 11, 23, 12, 0, 1)))
+    parseAt("2090-01-01T00:00:00Z", "date", "Sunday, 01-Jan-30 00:00:00 GMT") shouldBe
+    HeaderParser.Success(Date(DateTime(2130, 1, 1)))
+    val leapDay = "2024-02-29T12:00:00Z"
+    parseAt(leapDay, "date", "Wednesday, 28-Feb-74 12:00:00 GMT") shouldBe
+    HeaderParser.Success(Date(DateTime(2074, 2, 28, 12)))
+    parseAt(leapDay, "date", "Thursday, 28-Feb-74 12:00:01 GMT") shouldBe
+    HeaderParser.Success(Date(DateTime(1974, 2, 28, 12, 0, 1)))
+    parseAt(now, "set-cookie", "sid=value; Expires=Tuesday, 23-Nov-76 12:00:00 GMT") shouldBe
+    HeaderParser.Success(`Set-Cookie`(HttpCookie("sid", "value", expires = Some(DateTime(1976, 11, 23, 12)))))
+  }
 
   for (date <- Seq(
       "Sun, 06 Nov 1994 08:09:07 -0000",

@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.impl.model.parser
 
+import java.time.{ Instant, LocalDateTime, ZoneOffset }
+
 import scala.collection.immutable.TreeMap
 
 import org.parboiled2._
@@ -24,6 +26,8 @@ import pekko.http.scaladsl.model.headers._
 
 private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   protected def maxCommentParsingDepth: Int
+  protected def markTimeDependentDate(): Unit = ()
+  protected def rfc850Now: Instant = Instant.now()
 
   import CharacterClasses._
 
@@ -90,12 +94,16 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   }
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7231#section-7.1.1.1
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.7
   // but more lenient where we have already seen differing implementations in the field
   // ******************************************************************************************
 
   def `HTTP-date`: Rule1[DateTime] = rule {
-    (`IMF-fixdate` | `asctime-date` | '0' ~ push(DateTime.MinValue)) ~ OWS
+    (`rfc850-date` | `legacy-HTTP-date`) ~ OWS
+  }
+
+  private def `legacy-HTTP-date`: Rule1[DateTime] = rule {
+    `IMF-fixdate` | `asctime-date` | '0' ~ push(DateTime.MinValue)
   }
 
   // `cookie-IMF-fixdate` below is a copy of this rule for cookie Expires dates: keep the two in sync when
@@ -130,9 +138,21 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   def minute = rule { digit2 }
   def second = rule { digit2 }
 
-  // def `obs-date` = rule { `rfc850-date` | `asctime-date` }
-
-  // def `rfc850-date` = rule { `day-name-l` ~ ", " ~ date2 ~ ' ' ~ `time-of-day` ~ " GMT" }
+  private def `rfc850-date` = rule {
+    `day-name-l` ~ ", " ~ digit2 ~ '-' ~ month ~ '-' ~ digit2 ~ ' ' ~ `time-of-day` ~ " GMT" ~> {
+      (wkday, day, month, twoDigitYear, hour, min, sec) =>
+        markTimeDependentDate()
+        val cutoff = LocalDateTime.ofInstant(rfc850Now, ZoneOffset.UTC).plusYears(50)
+        val recentYear = cutoff.getYear - Math.floorMod(cutoff.getYear - twoDigitYear, 100)
+        // Compare the month/day/hour/minute/second without constructing a date in the wrong century first.
+        def withinYear(m: Int, d: Int, h: Int, mm: Int, ss: Int): Int = ((((m * 32) + d) * 24 + h) * 60 + mm) * 60 + ss
+        val beyondCutoff = recentYear == cutoff.getYear &&
+          withinYear(month, day, hour, min, sec) > withinYear(
+            cutoff.getMonthValue, cutoff.getDayOfMonth, cutoff.getHour, cutoff.getMinute, cutoff.getSecond)
+        val year = if (beyondCutoff) recentYear - 100 else recentYear
+        createDateTime(year, month, day, hour, min, sec, wkday)
+    }
+  }
 
   // per #17714, parse two digit year to https://tools.ietf.org/html/rfc6265#section-5.1.1
   def date2 = rule { day ~ '-' ~ month ~ '-' ~ (digit2 ~> (y => if (y <= 69) y + 2000 else y + 1900)) }
@@ -309,7 +329,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   // Cookie receivers accept one or two digits per time component and interpret dates as UTC (RFC 6265, section 5.1.1).
   // Keep this separate from HTTP-date: this only extends the existing date shapes, not the full token algorithm.
   def `cookie-expires-date`: Rule1[DateTime] = rule {
-    (`cookie-IMF-fixdate` | `cookie-asctime-date` | `HTTP-date` |
+    (`cookie-IMF-fixdate` | `cookie-asctime-date` | `legacy-HTTP-date` |
     zeroOrMore(ANY) ~ push(DateTime.MinValue)) ~ OWS
   }
 

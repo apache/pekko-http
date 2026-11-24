@@ -100,6 +100,10 @@ private[engine] final class HttpHeaderParser private (
    * Contains the parsed header instance after a call to `parseHeaderLine`.
    */
   var resultHeader: HttpHeader = EmptyHeader
+  private var resultTimeDependent = false
+  private val markTimeDependent: () => Unit = () => resultTimeDependent = true
+
+  private[engine] def resultCanBeCached: Boolean = !resultTimeDependent
 
   def isEmpty = nodeCount == 0
 
@@ -119,11 +123,16 @@ private[engine] final class HttpHeaderParser private (
    * line ending from a line fold.
    * If the header is invalid a respective `ParsingException` is thrown.
    */
-  @tailrec
   def parseHeaderLine(input: ByteString, lineStart: Int = 0)(cursor: Int = lineStart, nodeIx: Int = 0): Int = {
+    resultTimeDependent = false
+    parseHeaderLineAt(input, lineStart, cursor, nodeIx)
+  }
+
+  @tailrec
+  private def parseHeaderLineAt(input: ByteString, lineStart: Int, cursor: Int, nodeIx: Int): Int = {
     def startValueBranch(rootValueIx: Int, valueParser: HeaderValueParser) = {
       val (header, endIx) = valueParser(this, input, cursor, onIllegalHeader)
-      if (valueParser.cachingEnabled)
+      if (valueParser.cachingEnabled && resultCanBeCached)
         try {
           val valueIx = newValueIndex // compute early in order to trigger OutOfTrieSpaceExceptions before any change
           unshareIfRequired()
@@ -148,7 +157,7 @@ private[engine] final class HttpHeaderParser private (
       case nodeChar =>
         val char = toLowerCase(byteChar(input, cursor))
         if (char == node) // fast match, advance and descend
-          parseHeaderLine(input, lineStart)(cursor + 1, nodeIx + 1)
+          parseHeaderLineAt(input, lineStart, cursor + 1, nodeIx + 1)
         else node >>> 8 match {
           case 0 => // header doesn't exist yet and has no model (since we have not yet seen a colon)
             parseRawHeader(input, lineStart, cursor, nodeIx)
@@ -158,7 +167,7 @@ private[engine] final class HttpHeaderParser private (
               case 0 => // header doesn't exist yet and has no model (otherwise we'd arrive at a value)
                 parseRawHeader(input, lineStart, cursor, nodeIx)
               case subNodeIx => // descend into branch and advance on char matches (otherwise descend but don't advance)
-                parseHeaderLine(input, lineStart)(cursor + 1 - math.abs(signum), subNodeIx)
+                parseHeaderLineAt(input, lineStart, cursor + 1 - math.abs(signum), subNodeIx)
             }
         }
     }
@@ -171,7 +180,7 @@ private[engine] final class HttpHeaderParser private (
       val valueParser = new RawHeaderValueParser(headerName, maxHeaderValueLength,
         headerValueCacheLimit(headerName), log, illegalResponseHeaderValueProcessingMode)
       insert(input, valueParser)(cursor, colonIx + 1, nodeIx, colonIx)
-      parseHeaderLine(input, lineStart)(cursor, nodeIx)
+      parseHeaderLineAt(input, lineStart, cursor, nodeIx)
     } catch {
       case OutOfTrieSpaceException => // if we cannot insert we drop back to simply creating new header instances
         val (headerValue, endIx) = scanHeaderValue(this, input, colonIx + 1, colonIx + maxHeaderValueLength + 3,
@@ -202,7 +211,7 @@ private[engine] final class HttpHeaderParser private (
       nodeIx: Int = branch.branchRootNodeIx): Int = {
     def parseAndInsertHeader() = {
       val (header, endIx) = branch.parser(this, input, valueStart, onIllegalHeader)
-      if (branch.spaceLeft)
+      if (branch.spaceLeft && resultCanBeCached)
         try {
           insert(input, header)(cursor, endIx, nodeIx, colonIx = 0)
           values(branch.valueIx) = branch.withValueCountIncreased
@@ -570,7 +579,7 @@ private[http] object HttpHeaderParser {
   private[parsing] class ModeledHeaderValueParser(headerName: String, maxHeaderValueLength: Int, maxValueCount: Int,
       log: LoggingAdapter, settings: HeaderParser.Settings)
       extends HeaderValueParser(headerName, maxValueCount) {
-    val parser = HeaderParser.lookupParser(headerName, settings).getOrElse(
+    val parser = HeaderParser.lookupParserWithTimeDependence(headerName, settings).getOrElse(
       throw new IllegalStateException(s"Missing parser for modeled [$headerName]."))
 
     def apply(hhp: HttpHeaderParser, input: ByteString, valueStart: Int, onIllegalHeader: ErrorInfo => Unit)
@@ -579,7 +588,7 @@ private[http] object HttpHeaderParser {
       val (headerValue, endIx) = scanHeaderValue(hhp, input, valueStart, valueStart + maxHeaderValueLength + 2, log,
         settings.illegalResponseHeaderValueProcessingMode)()
       val trimmedHeaderValue = headerValue.trim
-      val header = parser(trimmedHeaderValue) match {
+      val header = parser(trimmedHeaderValue, hhp.markTimeDependent) match {
         case HeaderParser.Success(h)     => h
         case HeaderParser.Failure(error) =>
           onIllegalHeader(error.withSummaryPrepended(s"Illegal '$headerName' header").withErrorHeaderName(headerName))
