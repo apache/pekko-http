@@ -45,6 +45,7 @@ import pekko.http.scaladsl.model.headers.{
   `Cache-Control`,
   `Content-Length`,
   `Content-Type`,
+  Expect,
   `Raw-Request-URI`,
   RawHeader
 }
@@ -108,6 +109,29 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           setup.network.fromNet.sendError(new RuntimeException("test cleanup"))
           setup.network.toNet.cancel()
         }
+      }
+    }
+
+    "retain the final response after 100 Continue for a POST with Expect" in
+    StreamTestKit.assertAllStagesStopped {
+      val setup = new TestSetup with NetProbes
+      try {
+        val requestBody = ByteString("request body")
+        val request = Post("https://www.example.com/", HttpEntity(ContentTypes.`application/octet-stream`, requestBody))
+          .withHeaders(Expect.`100-continue`)
+        setup.user.emitRequest(request)
+        setup.network.expectDecodedResponseHEADERSPairs(1, endStream = false) should contain("expect" -> "100-continue")
+        setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "100")))
+        setup.network.expectDATA(1, endStream = true, requestBody)
+        val finalBody = ByteString("final response")
+        setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+        setup.network.sendDATA(1, endStream = true, finalBody)
+        val response = setup.user.expectResponse()
+        response.status shouldBe StatusCodes.OK
+        response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe finalBody
+      } finally {
+        setup.network.fromNet.sendError(new RuntimeException("test cleanup"))
+        setup.network.toNet.cancel()
       }
     }
 
