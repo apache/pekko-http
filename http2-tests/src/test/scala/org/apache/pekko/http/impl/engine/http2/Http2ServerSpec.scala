@@ -653,6 +653,26 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
       })
     }
 
+    "deliver a request whose HEADERS and final DATA arrive in one chunk".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        val streamId = 1
+        val request = HttpRequest(method = HttpMethods.POST, uri = "https://example.com/upload")
+        val body = ByteString("request body")
+        val headerBlock = network.encodeHeaderPairs(Seq(
+          ":method" -> "POST",
+          ":scheme" -> "https",
+          ":authority" -> "example.com",
+          ":path" -> "/upload"))
+        network.sendBytes(
+          FrameRenderer.render(HeadersFrame(streamId, endStream = false, endHeaders = true, headerBlock, None)) ++
+          FrameRenderer.renderFrame(FrameType.DATA, Flags.END_STREAM, streamId, body))
+
+        val received = user.expectRequest()
+        received.method shouldBe request.method
+        received.uri shouldBe request.uri
+        Await.result(received.entity.dataBytes.runFold(ByteString.empty)(_ ++ _), 3.seconds.dilated) shouldBe body
+      })
+
     def requestTests(minCollectStrictEntityBytes: Int) = {
       abstract class RequestEntityTestSetup extends TestSetup with RequestResponseProbes {
         override def settings: ServerSettings =
