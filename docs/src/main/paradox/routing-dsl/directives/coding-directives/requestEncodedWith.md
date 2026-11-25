@@ -19,6 +19,7 @@
 
 ## Description
 
-Passes the request to the inner route if the request is encoded with the argument encoding. Otherwise, rejects the request with an `UnacceptedRequestEncodingRejection(encoding)`.
+Passes the request to the inner route if the content coding matches the given encoding, ignoring case.
+Otherwise, rejects the request with an `UnsupportedRequestEncodingRejection(encoding)`.
 
 This directive is the building block for @ref:[decodeRequest](decodeRequest.md) to reject unsupported encodings.

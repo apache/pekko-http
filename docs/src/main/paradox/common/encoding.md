@@ -38,7 +38,7 @@ a hint whether content of a given media type would benefit from compression.
 Responses are not decoded automatically on the client-side.
 
 @scala[`Coders.decodeMessage`]@java[`Coder.decodeResponse`] decodes a response with the coder that matches its `Content-Encoding`
-header. A response whose encoding is not supported by any of the given coders is returned unchanged, with its
+header. Coding names are matched case-insensitively. A response whose encoding is not supported by any of the given coders is returned unchanged, with its
 `Content-Encoding` header kept:
 
 Scala
