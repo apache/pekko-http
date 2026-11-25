@@ -601,6 +601,28 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
       }
     }
 
+    "preserve token-valued chunk extensions through an HTTP/1.1 response" in Utils.assertAllStagesStopped {
+      val parts = List(Chunk(ByteString("spring menu"), "label=spring;part=first"), LastChunk)
+      val entity = Chunked(ContentTypes.`application/octet-stream`, Source(parts))
+      val host = "127.0.0.1"
+      val timeout = 3.seconds.dilated
+      val binding = Http().newServerAt(host, 0).bindSync(_ => HttpResponse(entity = entity)).awaitResult(timeout)
+      try {
+        val received = Source.single(HttpRequest(uri = "/menu"))
+          .via(Http().connectionTo(host).toPort(binding.localAddress.getPort).http())
+          .mapAsync(1) { response =>
+            response.status shouldBe StatusCodes.OK
+            response.protocol shouldBe HttpProtocols.`HTTP/1.1`
+            response.entity match {
+              case chunked: Chunked => chunked.chunks.runWith(Sink.seq)
+              case other            => fail(s"Expected a chunked response entity, got $other")
+            }
+          }
+          .runWith(Sink.head)
+        received.awaitResult(timeout) shouldEqual parts
+      } finally binding.terminate(1.second.dilated).awaitResult(timeout)
+    }
+
     "complete a request/response when request has `Connection: close` set" in Utils.assertAllStagesStopped {
       // FIXME: There seems to be a potential connection leak here in the ProtocolSwitch stage?
       // https://github.com/akka/akka-http/issues/3963
