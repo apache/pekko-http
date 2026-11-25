@@ -59,6 +59,30 @@ class DynamicTableSpec extends AnyWordSpec with Matchers {
       table.size() shouldEqual 0
     }
 
+    "clear retained entries when a new field is larger than the table capacity" in {
+      val capacity = 96
+      val table = new DynamicTable(capacity)
+      val first = new HeaderField("x-first", "one")
+      val second = new HeaderField("x-second", "two")
+      table.add(first)
+      table.add(second)
+      table.length() shouldEqual 2
+      table.size() shouldEqual first.size() + second.size()
+
+      val largerThanTable = new HeaderField("x-large", "v" * 64)
+      largerThanTable.size() should be > capacity
+      table.add(largerThanTable)
+      table.length() shouldEqual 0
+      table.size() shouldEqual 0
+      table.capacity() shouldEqual capacity
+
+      val next = new HeaderField("x-next", "three")
+      table.add(next)
+      table.length() shouldEqual 1
+      table.size() shouldEqual next.size()
+      (table.getEntry(1) should be).theSameInstanceAs(next)
+    }
+
     "evict entries when shrinking and support zero capacity" in {
       val table = new DynamicTable(64)
       val older = new HeaderField("", "")
