@@ -17,14 +17,21 @@
 
 package org.apache.pekko.http.cors
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.cors.scaladsl.CorsRejection
 import pekko.http.cors.scaladsl.model.{ HttpHeaderRange, HttpOriginMatcher }
 import pekko.http.cors.scaladsl.settings.CorsSettings
+import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.server.{ Directives, Route }
 import pekko.http.scaladsl.testkit.ScalatestRouteTest
+import pekko.stream.scaladsl.Keep
+import pekko.stream.testkit.scaladsl.{ TestSink, TestSource }
+import pekko.testkit.TestDuration
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -291,6 +298,48 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
           `Access-Control-Allow-Methods`(settings.allowedMethods),
           `Access-Control-Max-Age`(1800),
           `Access-Control-Allow-Credentials`(true))
+      }
+    }
+
+    for (connection <- Seq(None, Some(Connection("keep-alive")))) {
+      val connectionDescription = connection.fold("no Connection header")(_ => "Connection: keep-alive")
+
+      s"keep an HTTP/1.1 connection usable after a pre-flight request with $connectionDescription" in {
+        val timeout = 3.seconds.dilated
+        val host = "127.0.0.1"
+        val settings = referenceSettings.withAllowedOrigins(HttpOriginMatcher(exampleOrigin))
+        val binding = Await.result(Http().newServerAt(host, 0).bind(cors(settings) {
+            get { complete(actual) }
+          }), timeout)
+
+        try {
+          val (requests, responses) = TestSource[HttpRequest]()
+            .via(Http().connectionTo(host).toPort(binding.localAddress.getPort).http())
+            .toMat(TestSink[HttpResponse]())(Keep.both)
+            .run()
+
+          try {
+            responses.request(1)
+            requests.sendNext(HttpRequest(OPTIONS,
+              headers = Seq(Origin(exampleOrigin), `Access-Control-Request-Method`(GET)) ++ connection))
+
+            val preflight = responses.expectNext()
+            preflight.status shouldBe StatusCodes.OK
+            preflight.entity.isKnownEmpty shouldBe true
+            preflight.header[`Access-Control-Allow-Origin`] shouldBe Some(`Access-Control-Allow-Origin`(exampleOrigin))
+
+            responses.request(1)
+            requests.sendNext(HttpRequest(GET, headers = Seq(Origin(exampleOrigin))))
+
+            val response = responses.expectNext()
+            response.status shouldBe StatusCodes.OK
+            response.header[`Access-Control-Allow-Origin`] shouldBe Some(`Access-Control-Allow-Origin`(exampleOrigin))
+            Await.result(response.entity.toStrict(timeout), timeout).data.utf8String shouldBe actual
+
+            requests.sendComplete()
+            responses.expectComplete()
+          } finally responses.cancel()
+        } finally Await.result(binding.unbind(), timeout)
       }
     }
 
