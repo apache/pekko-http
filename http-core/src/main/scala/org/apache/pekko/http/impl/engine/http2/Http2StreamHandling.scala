@@ -52,7 +52,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
   def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart]
 
-  def flowController: IncomingFlowController = IncomingFlowController.default(settings)
+  private lazy val configuredFlowController: IncomingFlowController = IncomingFlowController(settings)
+  def flowController: IncomingFlowController = configuredFlowController
 
   private def isHeadRequest(frame: ParsedHeadersFrame): Boolean =
     frame.keyValuePairs.exists { case (name, value) => name == ":method" && (value eq HttpMethods.HEAD) }

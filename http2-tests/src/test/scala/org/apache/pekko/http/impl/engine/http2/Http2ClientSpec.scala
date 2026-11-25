@@ -823,6 +823,45 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
       }
     }
 
+    "isolate connection receive credit from a paused response body".inAssertAllStagesStopped(
+      new TestSetup {
+        override def settings: ClientConnectionSettings = ClientConnectionSettings("""
+          pekko.http.client.http2 {
+            incoming-connection-level-buffer-size = 131070
+            incoming-stream-level-buffer-size = 131070
+            incoming-flow-control-isolated-streams = 1
+          }
+          """)
+
+        user.emitRequest(Get("/stream"))
+        val first = network.expect[HeadersFrame]().streamId
+        network.sendHEADERS(first, endStream = false, Seq(RawHeader(":status", "200")))
+        val paused = user.expectResponse()
+        val chunk = ByteString("record " * 2048)
+        network.sendDATA(first, endStream = false, chunk)
+        network.expectWindowUpdate()
+        network.remainingWindowForIncomingDataOnConnection shouldBe (131070 - chunk.length)
+        network.remainingWindowForIncomingData(first) shouldBe (65535 - chunk.length)
+        network.sendDATA(first, endStream = false, chunk)
+        network.sendDATA(first, endStream = false, chunk)
+
+        user.emitRequest(Get("/independent"))
+        val second = network.expect[HeadersFrame]().streamId
+        network.sendHEADERS(second, endStream = false, Seq(RawHeader(":status", "200")))
+        val independent = ByteStringSinkProbe(user.expectResponse().entity.dataBytes)
+        network.sendDATA(second, endStream = true, ByteString("independent"))
+        independent.expectUtf8EncodedString("independent")
+        independent.expectComplete()
+
+        val resumed = ByteStringSinkProbe(paused.entity.dataBytes)
+        resumed.expectBytes(chunk ++ chunk ++ chunk)
+        network.expectWindowUpdate()
+        network.remainingWindowForIncomingData(first) shouldBe 65535
+        network.sendDATA(first, endStream = true, ByteString("done"))
+        resumed.expectUtf8EncodedString("done")
+        resumed.expectComplete()
+      })
+
     "respect flow-control" should {
       "accept window updates when done sending the request".inAssertAllStagesStopped(new TestSetup {
         user.emitRequest(Get("/"))

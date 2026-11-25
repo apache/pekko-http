@@ -1769,6 +1769,46 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         }))
     }
 
+    "isolate connection receive credit from a paused request body".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        override def settings: ServerSettings = ServerSettings("""
+          pekko.http.server.http2 {
+            incoming-connection-level-buffer-size = 131070
+            incoming-stream-level-buffer-size = 131070
+            incoming-flow-control-isolated-streams = 1
+          }
+          """).withServerHeader(None)
+
+        val upload = HttpRequest(HttpMethods.POST, "https://example.org/upload")
+        network.sendRequestHEADERS(1, upload, endStream = false)
+        val paused = user.expectRequest()
+        val chunk = ByteString("record " * 2048)
+        network.sendDATA(1, endStream = false, chunk)
+        network.expectWindowUpdate()
+        network.remainingWindowForIncomingDataOnConnection shouldBe (131070 - chunk.length)
+        network.remainingWindowForIncomingData(1) shouldBe (65535 - chunk.length)
+        network.sendDATA(1, endStream = false, chunk)
+        network.sendDATA(1, endStream = false, chunk)
+
+        network.sendRequestHEADERS(3, upload.withUri("https://example.org/independent"), endStream = false)
+        val independent = ByteStringSinkProbe(user.expectRequest().entity.dataBytes)
+        network.sendDATA(3, endStream = true, ByteString("independent"))
+        independent.expectUtf8EncodedString("independent")
+        independent.expectComplete()
+        user.emitResponse(3, HttpResponse())
+        network.expectDecodedHEADERS(3).status shouldBe StatusCodes.OK
+
+        val resumed = ByteStringSinkProbe(paused.entity.dataBytes)
+        resumed.expectBytes(chunk ++ chunk ++ chunk)
+        network.expectWindowUpdate()
+        network.remainingWindowForIncomingData(1) shouldBe 65535
+        network.sendDATA(1, endStream = true, ByteString("done"))
+        resumed.expectUtf8EncodedString("done")
+        resumed.expectComplete()
+        user.emitResponse(1, HttpResponse())
+        network.expectDecodedHEADERS(1).status shouldBe StatusCodes.OK
+      })
+
     "respect flow-control" should {
       "not exceed connection-level window while sending" in pending
       "not exceed stream-level window while sending" in pending

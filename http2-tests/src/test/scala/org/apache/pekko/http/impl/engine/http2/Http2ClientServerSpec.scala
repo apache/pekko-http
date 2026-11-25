@@ -118,6 +118,52 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       secondResponse.status shouldBe StatusCodes.OK
       Unmarshal(secondResponse.entity).to[String].futureValue shouldBe "next response"
     }
+    "carry independent HTTP/2 calls through isolated receive windows" in new TestSetup {
+      override def serverSettings: ServerSettings =
+        ServerSettings("pekko.http.server.http2.incoming-flow-control-isolated-streams = 1")
+      override def clientSettings: ClientConnectionSettings =
+        ClientConnectionSettings("pekko.http.client.http2.incoming-flow-control-isolated-streams = 1")
+
+      try {
+        val upload = sendClientRequestWithEntityStream("paused", uri = "/paused")
+        val first = expectServerRequest()
+        val download = first.sendResponseWithEntityStream()
+        val firstResponse = expectClientResponse()
+        firstResponse.attribute(requestIdAttr) shouldBe Some(RequestId("paused"))
+
+        // Neither end reads the first exchange until the independent one finishes.
+        val requestBytes = ByteString("upload record")
+        val responseBytes = ByteString("download record")
+        upload.sendNext(requestBytes)
+        download.sendNext(responseBytes)
+
+        val independent = sendClientRequestWithEntityStream("independent", uri = "/independent")
+        val second = expectServerRequest()
+        val secondRequestData = second.expectRequestEntityStream()
+        independent.sendNext(ByteString("ready?"))
+        independent.sendComplete()
+        secondRequestData.expectUtf8EncodedString("ready?")
+        secondRequestData.expectComplete()
+        second.sendResponse(HttpResponse(entity = "ready"))
+        val secondResponse = expectClientResponse()
+        secondResponse.attribute(requestIdAttr) shouldBe Some(RequestId("independent"))
+        Unmarshal(secondResponse.entity).to[String].futureValue shouldBe "ready"
+
+        val firstRequestData = first.expectRequestEntityStream()
+        val firstResponseData = ByteStringSinkProbe(firstResponse.entity.dataBytes)
+        firstRequestData.expectBytes(requestBytes)
+        firstResponseData.expectBytes(responseBytes)
+        upload.sendComplete()
+        download.sendComplete()
+        firstRequestData.expectComplete()
+        firstResponseData.expectComplete()
+      } finally {
+        clientRequestsOut.sendComplete()
+        clientResponsesIn.cancel()
+        binding.unbind().futureValue
+      }
+    }
+
     "support multiple interleaved concurrent streams" in new TestSetup {
       val reqPub1 = sendClientRequestWithEntityStream("request-1")
 

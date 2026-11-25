@@ -37,6 +37,35 @@ private[http2] object IncomingFlowController {
     val NoIncrements = WindowIncrements(0, 0)
   }
 
+  def apply(settings: Http2CommonSettings): IncomingFlowController =
+    if (settings.incomingFlowControlIsolatedStreams == 0)
+      default(settings)
+    else
+      isolated(settings.incomingConnectionLevelBufferSize, Http2CommonSettings.isolatedReceiveStreamBudget(settings))
+
+  /** Refill a share of free connection space, without turning retained bytes into new peer credit. */
+  def isolated(connectionBudget: Int, streamBudget: Int): IncomingFlowController =
+    new IncomingFlowController {
+      def onConnectionDataReceived(outstandingConnectionLevelWindow: Int, totalBufferedData: Int): Int =
+        refillFreeSpace(connectionBudget, outstandingConnectionLevelWindow, totalBufferedData)
+
+      def onStreamDataDispatched(outstandingConnectionLevelWindow: Int, totalBufferedData: Int,
+          outstandingStreamLevelWindow: Int, streamBufferedData: Int): WindowIncrements =
+        WindowIncrements(
+          onConnectionDataReceived(outstandingConnectionLevelWindow, totalBufferedData),
+          refillFreeSpace(streamBudget, outstandingStreamLevelWindow, streamBufferedData))
+
+      private def refillFreeSpace(budget: Int, outstanding: Int, buffered: Int): Int = {
+        val free = budget.toLong - buffered
+        // Do not issue credit for space already advertised to the peer. <= also permits progress
+        // when only one byte is free and the remaining window has reached zero. The subtractions
+        // use Long; nonnegative inputs ensure that the increment is at most the configured Int budget.
+        if (outstanding >= 0 && buffered >= 0 && outstanding < free && outstanding <= free / 2)
+          (free - outstanding).toInt
+        else 0
+      }
+    }
+
   def default(settings: Http2CommonSettings): IncomingFlowController =
     default(settings.incomingConnectionLevelBufferSize, settings.incomingStreamLevelBufferSize)
 

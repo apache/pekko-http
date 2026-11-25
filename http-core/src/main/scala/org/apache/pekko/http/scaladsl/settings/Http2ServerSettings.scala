@@ -38,6 +38,7 @@ private[http] trait Http2CommonSettings {
   def requestEntityChunkSize: Int
   def incomingConnectionLevelBufferSize: Int
   def incomingStreamLevelBufferSize: Int
+  private[http] def incomingFlowControlIsolatedStreams: Int = 0
 
   def minCollectStrictEntitySize: Int
 
@@ -63,6 +64,20 @@ private[http] object Http2CommonSettings {
         pingTimeout <= pingInterval && pingInterval.toMillis % pingTimeout.toMillis == 0,
         s"ping-timeout must be less than and evenly divisible by the ping-interval ($pingInterval)")
     }
+    if (incomingFlowControlIsolatedStreams > 0) {
+      require(
+        isolatedReceiveStreamBudget(settings) >= Http2Protocol.InitialWindowSize,
+        "incoming-flow-control-isolated-streams requires enough connection and stream buffer space for " +
+        "the protocol's initial 65535-byte stream window")
+      require(minCollectStrictEntitySize <= Http2Protocol.InitialWindowSize,
+        "incoming-flow-control-isolated-streams requires min-collect-strict-entity-size <= 65535")
+    }
+  }
+
+  /** Retain a share for one more stream in addition to the configured number of paused streams. */
+  def isolatedReceiveStreamBudget(settings: Http2CommonSettings): Int = {
+    val shares = settings.incomingFlowControlIsolatedStreams.toLong + 1
+    math.min(settings.incomingStreamLevelBufferSize.toLong, settings.incomingConnectionLevelBufferSize / shares).toInt
   }
 }
 
@@ -196,6 +211,13 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def withFrameTypeThrottleInterval(interval: FiniteDuration) = copy(frameTypeThrottleInterval = interval)
 
   @InternalApi
+  private[http] override def incomingFlowControlIsolatedStreams: Int =
+    (self: Http2ServerSettings).internalSettings match {
+      case Some(policy: Http2ReceiveWindowIsolation) => policy.pausedStreams
+      case _                                         => 0
+    }
+
+  @InternalApi
   private[http] def internalSettings: Option[Http2InternalServerSettings]
   @InternalApi
   private[http] def withInternalSettings(newValue: Http2InternalServerSettings): Http2ServerSettings =
@@ -274,7 +296,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),
       frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),
       frameTypeThrottleInterval = c.getFiniteDuration("frame-type-throttle.interval"),
-      None // no possibility to configure internal settings with config
+      internalSettings = Http2ReceiveWindowIsolation.fromConfig(c)
     )
   }
 }
@@ -285,6 +307,25 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
 @InternalApi
 @DoNotInherit
 private[http] trait Http2InternalClientSettings
+
+/** Keep the optional policy in an existing settings slot, without changing either settings product. */
+@InternalApi
+private[http] final case class Http2ReceiveWindowIsolation(pausedStreams: Int)
+    extends Http2InternalServerSettings
+    with Http2InternalClientSettings {
+  require(pausedStreams > 0, "isolated stream count must be positive")
+}
+
+@InternalApi
+private[http] object Http2ReceiveWindowIsolation {
+  private val ConfigPath = "incoming-flow-control-isolated-streams"
+
+  def fromConfig(config: Config): Option[Http2ReceiveWindowIsolation] = {
+    val count = if (config.hasPath(ConfigPath)) config.getInt(ConfigPath) else 0
+    require(count >= 0, s"$ConfigPath must be >= 0")
+    if (count == 0) None else Some(Http2ReceiveWindowIsolation(count))
+  }
+}
 
 @ApiMayChange
 @DoNotInherit
@@ -438,6 +479,13 @@ trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http
     copy(frameTypeThrottleInterval = interval)
 
   @InternalApi
+  private[http] override def incomingFlowControlIsolatedStreams: Int =
+    (self: Http2ClientSettings).internalSettings match {
+      case Some(policy: Http2ReceiveWindowIsolation) => policy.pausedStreams
+      case _                                         => 0
+    }
+
+  @InternalApi
   private[http] def internalSettings: Option[Http2InternalClientSettings]
   @InternalApi
   private[http] def withInternalSettings(newValue: Http2InternalClientSettings): Http2ClientSettings =
@@ -518,7 +566,7 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),
       frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),
       frameTypeThrottleInterval = c.getFiniteDuration("frame-type-throttle.interval"),
-      internalSettings = None // no possibility to configure internal settings with config
+      internalSettings = Http2ReceiveWindowIsolation.fromConfig(c)
     )
   }
 }

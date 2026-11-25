@@ -29,6 +29,27 @@ class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
     pekko.http.server.http2.log-frames = on
     pekko.stream.materializer.debug.fuzzing-mode = on
   """) {
+  "Isolated incoming flow control" should {
+    "never advertise credit for bytes already buffered or credited" in {
+      val budget = Int.MaxValue
+      val controller = IncomingFlowController.isolated(budget, budget / 2)
+      val freeSpace = Vector(0, 1, 32767, 65535, budget)
+      for {
+        free <- freeSpace
+        outstanding <- Vector(0, free / 2, free).distinct
+      } {
+        val buffered = budget - free
+        val increment = controller.onConnectionDataReceived(outstanding, buffered)
+        increment should be >= 0
+        (increment.toLong + outstanding + buffered) should be <= budget.toLong
+      }
+      controller.onConnectionDataReceived(0, budget) shouldBe 0
+      controller.onConnectionDataReceived(0, budget - 1) shouldBe 1
+      controller.onStreamDataDispatched(0, budget - 1, 0, budget / 2 - 1) shouldBe
+      IncomingFlowController.WindowIncrements(1, 1)
+    }
+  }
+
   "Http2ServerDemux" should {
     "not pull twice when started with initial RemoteSettings from HTTP/1.1 Upgrade" in {
       val settings = Http2ServerSettings("")

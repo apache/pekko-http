@@ -92,6 +92,31 @@ connection with `FLOW_CONTROL_ERROR`, as required by [RFC 9113 section 6.9.2](ht
 An overflow caused by a stream-specific `WINDOW_UPDATE` still affects only that stream. These rules also
 apply to the HTTP/2 client and do not change HTTP/1.1 fallback behavior.
 
+## Receive credit for independent streams
+
+An application may pause reading one request body while it handles another on the same HTTP/2 connection.
+To leave enough receive space for the other stream in that situation, set the number of paused streams to
+account for. The default is `0`, which keeps the existing flow-control policy.
+
+```hocon
+pekko.http.server.http2.incoming-flow-control-isolated-streams = 1
+```
+
+With a positive value `N`, Pekko HTTP divides `incoming-connection-level-buffer-size` into `N + 1` shares.
+The effective stream budget is the smaller of one share (rounded down) and
+`incoming-stream-level-buffer-size`. A paused stream's received bytes and outstanding stream credit together
+cannot use more than this effective stream budget. Connection credit is replenished from free space in the
+shared connection budget, not from bytes still buffered there. Each effective stream budget must cover the
+initial 65,535 bytes required by HTTP/2. On a server, `min-collect-strict-entity-size` must also be no greater
+than 65,535 with this policy, so a request can reach the application using its initial credit.
+
+This bounds the receive buffers tracked by HTTP/2 flow control plus credit already advertised to the peer.
+It does not bound entity data after dispatch, including complete strict entities still queued for delivery,
+or framing buffers, TLS buffers, and other connection memory. A smaller effective stream
+budget may reduce per-stream throughput. HTTP/2 connection credit is shared: this option does not guarantee
+progress if more streams are paused, if application logic has a dependency cycle, or if the peer does not
+schedule the independent stream. It also does not change HTTP/1.1 behavior.
+
 ## Limiting the lifetime of connections
 
 Long-lived HTTP/2 connections, for example those used by gRPC, can lead to an uneven load distribution across
