@@ -17,6 +17,7 @@ import scala.concurrent.{ Future, Promise }
 import scala.concurrent.duration._
 
 import org.apache.pekko
+import pekko.Done
 import pekko.http.impl.engine.HttpIdleTimeoutException
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
@@ -41,7 +42,7 @@ import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.http.scaladsl.unmarshalling.Unmarshal
 import pekko.stream.StreamTcpException
-import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.stream.scaladsl.{ Flow, Sink, Source }
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.stream.testkit.Utils.TE
 import pekko.testkit.EventFilter
@@ -81,6 +82,41 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       val response = expectClientResponse()
       Unmarshal(response.entity).to[String].futureValue shouldBe "pong"
       response.attribute(requestIdAttr).get.id shouldBe "request-1"
+    }
+    "wait for the streamed response to finish when discarding and then serve another request" in new TestSetup {
+      sendClientRequest(HttpRequest(uri = "/discard"))
+      val firstRequest = expectServerRequest()
+      firstRequest.request.uri.path.toString shouldBe "/discard"
+      firstRequest.request.attribute(Http2.streamId) shouldBe Some(1)
+      val responseBytes = firstRequest.sendResponseWithEntityStream()
+
+      val firstResponse = expectClientResponse()
+      firstResponse.status shouldBe StatusCodes.OK
+      val consumed = ByteStringSinkProbe()
+      val observedEntity = firstResponse.entity.transformDataBytes(Flow[ByteString].alsoTo(consumed.sink))
+      val completion = TestProbe()
+      firstResponse.withEntity(observedEntity).discardEntityBytes().future
+        .foreach(result => completion.ref ! result)(system.dispatcher)
+
+      responseBytes.sendNext(ByteString("not "))
+      responseBytes.sendNext(ByteString("needed"))
+      consumed.expectUtf8EncodedString("not needed")
+      // The producer stays open until the test sends EOF, so eager completion is not a successful drain.
+      completion.expectNoMessage(100.millis)
+      responseBytes.sendComplete()
+      completion.expectMsg(Done)
+      consumed.expectComplete()
+
+      // Independently verify reuse of this direct connection; the small body does not block another stream.
+      sendClientRequest(HttpRequest(uri = "/next"))
+      val secondRequest = expectServerRequest()
+      secondRequest.request.uri.path.toString shouldBe "/next"
+      secondRequest.request.attribute(Http2.streamId) shouldBe Some(3)
+      secondRequest.sendResponse(HttpResponse(entity = "next response"))
+
+      val secondResponse = expectClientResponse()
+      secondResponse.status shouldBe StatusCodes.OK
+      Unmarshal(secondResponse.entity).to[String].futureValue shouldBe "next response"
     }
     "support multiple interleaved concurrent streams" in new TestSetup {
       val reqPub1 = sendClientRequestWithEntityStream("request-1")
