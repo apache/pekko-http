@@ -20,7 +20,7 @@ import scala.jdk.CollectionConverters._
 
 import org.apache.pekko
 import pekko.http.impl.util.JavaMapping.Implicits._
-import pekko.http.javadsl.coding.Coder
+import pekko.http.javadsl.coding.{ Coder, FlowCoder }
 import pekko.http.javadsl.model.headers.HttpEncoding
 import pekko.http.scaladsl.server.{ Directives => D }
 
@@ -80,6 +80,30 @@ abstract class CodingDirectives extends CacheConditionDirectives {
    */
   def decodeRequestWith(coder: Coder, inner: Supplier[Route]): Route = RouteAdapter {
     D.decodeRequestWith(coder._underlyingScalaCoder) {
+      inner.get.delegate
+    }
+  }
+
+  /**
+   * Selects this custom coder for this route only, subject to Accept-Encoding negotiation.
+   *
+   * @since 2.1.0
+   */
+  @CorrespondsTo("encodeResponseWith")
+  def encodeResponseWithFlowCoder(coder: FlowCoder, inner: Supplier[Route]): Route = RouteAdapter {
+    D.encodeResponseWith(coder.delegate) {
+      inner.get.delegate
+    }
+  }
+
+  /**
+   * Decodes requests with this route's custom coder, subject to the routing decode size limit.
+   *
+   * @since 2.1.0
+   */
+  @CorrespondsTo("decodeRequestWith")
+  def decodeRequestWithFlowCoder(coder: FlowCoder, inner: Supplier[Route]): Route = RouteAdapter {
+    D.decodeRequestWith(coder.delegate) {
       inner.get.delegate
     }
   }

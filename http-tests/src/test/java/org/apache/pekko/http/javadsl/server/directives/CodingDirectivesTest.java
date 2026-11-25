@@ -18,9 +18,11 @@ import static org.apache.pekko.http.javadsl.server.Directives.*;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.http.javadsl.coding.Coder;
+import org.apache.pekko.http.javadsl.coding.FlowCoder;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
@@ -118,6 +120,53 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
         .run(deflateRequest)
         .assertStatusCode(400)
         .assertEntity("The request's Content-Encoding is not supported. Expected:\ngzip");
+  }
+
+  @Test
+  public void testFlowCoderIsRouteLocalAndCreatesOneDecoderPerRun() throws Exception {
+    AtomicInteger decoderAllocations = new AtomicInteger();
+    FlowCoder coder =
+        FlowCoder.create(
+            "x-test-gzip",
+            Compression.gzip(),
+            chunkSize -> {
+              decoderAllocations.incrementAndGet();
+              return Compression.gzipDecompress(chunkSize);
+            });
+    TestRoute decoder =
+        testRoute(
+            decodeRequestWithFlowCoder(coder, () -> extractEntity(entity -> complete(entity))));
+    ByteString compressed = compress("flow fixture", Compression.gzip());
+    HttpRequest post =
+        HttpRequest.POST("/")
+            .addHeader(ContentEncoding.create(coder.encoding()))
+            .withEntity(compressed);
+    Assertions.assertEquals(0, decoderAllocations.get());
+    decoder.run(post).assertStatusCode(200).assertEntity("flow fixture");
+    decoder.run(post).assertStatusCode(200).assertEntity("flow fixture");
+    Assertions.assertEquals(2, decoderAllocations.get());
+
+    HttpRequest get = HttpRequest.create().addHeader(AcceptEncoding.create(coder.encoding()));
+    TestRoute encoder =
+        testRoute(encodeResponseWithFlowCoder(coder, () -> complete("flow fixture")));
+    TestRouteResult encoded =
+        encoder
+            .run(get)
+            .assertStatusCode(200)
+            .assertHeaderExists(ContentEncoding.create(coder.encoding()));
+    ByteString decoded =
+        Coder.Gzip.decode(encoded.entityBytes(), materializer())
+            .toCompletableFuture()
+            .get(3, TimeUnit.SECONDS);
+    Assertions.assertEquals("flow fixture", decoded.utf8String());
+    testRoute(encodeResponse(() -> complete("flow fixture"))).run(get).assertEntity("flow fixture");
+    Predicate<Object> skipEncoding = ignored -> false;
+    FlowCoder filtered =
+        FlowCoder.create(
+            "x-test-gzip", Compression.gzip(), Compression::gzipDecompress, skipEncoding);
+    testRoute(encodeResponseWithFlowCoder(filtered, () -> complete("flow fixture")))
+        .run(get)
+        .assertEntity("flow fixture");
   }
 
   private ByteString compress(String input, Flow<ByteString, ByteString, NotUsed> compressionFlow)

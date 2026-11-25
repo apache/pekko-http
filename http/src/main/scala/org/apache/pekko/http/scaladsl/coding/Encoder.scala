@@ -21,7 +21,7 @@ import pekko.annotation.InternalApi
 import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
-import pekko.stream.{ FlowShape, Materializer }
+import pekko.stream.{ FlowShape, Graph, Materializer }
 import pekko.stream.scaladsl.{ Flow, Sink, Source }
 import pekko.stream.stage.GraphStage
 import pekko.util.ByteString
@@ -35,10 +35,7 @@ trait Encoder {
    * Encodes a message unless it already declares a Content-Encoding, including an application-provided raw header.
    */
   def encodeMessage(message: HttpMessage): message.Self =
-    if (messageFilter(message) && !message.headers.exists(Encoder.isContentEncodingHeader))
-      message.transformEntityDataBytes(singleUseEncoderFlow()).withHeaders(
-        `Content-Encoding`(encoding) +: message.headers)
-    else message.self
+    Encoder.encodeMessageWithFlow(message, encoding, messageFilter)(singleUseEncoderFlow())
 
   def encodeData[T](t: T)(implicit mapper: DataMapper[T]): T =
     mapper.transformDataBytes(t, Flow.fromGraph(singleUseEncoderFlow()))
@@ -64,6 +61,16 @@ trait Encoder {
 }
 
 object Encoder {
+  private[coding] def encodeMessageWithFlow(
+      message: HttpMessage,
+      encoding: => HttpEncoding,
+      messageFilter: HttpMessage => Boolean)(
+      flow: => Graph[FlowShape[ByteString, ByteString], ?]): message.Self =
+    if (messageFilter(message) && !message.headers.exists(isContentEncodingHeader))
+      message.transformEntityDataBytes(Flow.fromGraph(flow)).withHeaders(
+        `Content-Encoding`(encoding) +: message.headers)
+    else message.self
+
   val DefaultFilter: HttpMessage => Boolean = {
     case req: HttpRequest                    => isCompressible(req)
     case res @ HttpResponse(status, _, _, _) => isCompressible(res) && status.allowsEntity

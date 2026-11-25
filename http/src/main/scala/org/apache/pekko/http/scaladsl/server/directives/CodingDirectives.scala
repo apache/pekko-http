@@ -101,8 +101,17 @@ trait CodingDirectives {
           } & withSizeLimit(settings.decodeMaxSize)
         }
 
+    def acceptedEncoding: Directive0 = decoder match {
+      case flow: FlowCoder =>
+        extractRequest.flatMap { request =>
+          if (flow.matchesSingleContentEncoding(request)) pass
+          else reject(UnsupportedRequestEncodingRejection(flow.encoding))
+        }
+      case _ => requestEncodedWith(decoder.encoding)
+    }
+
     requestEntityEmpty | (
-      requestEncodedWith(decoder.encoding) &
+      acceptedEncoding &
       applyDecoder &
       cancelRejections(classOf[UnsupportedRequestEncodingRejection]))
   }
