@@ -228,7 +228,7 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       frameTypeThrottleInterval: FiniteDuration,
       internalSettings: Option[Http2InternalServerSettings])
       extends Http2ServerSettings {
-    require(maxConcurrentStreams >= 0, "max-concurrent-streams must be >= 0")
+    require(maxConcurrentStreams > 0, "max-concurrent-streams must be > 0")
     require(maxHeaderListSize > 0, "max-header-list-size must be > 0")
     // RFC 9113, section 4.2: SETTINGS_MAX_FRAME_SIZE must be within these bounds
     require(maxFrameSize >= Http2Protocol.MinFrameSize && maxFrameSize <= Http2Protocol.MaxFrameSize,
