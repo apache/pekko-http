@@ -32,6 +32,31 @@ import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.util.ByteString
 
 class Http2FirstSettingsSpec extends PekkoSpecWithMaterializer("") {
+  "Server completes when the peer closes before sending any HTTP/2 bytes" in {
+    StreamTestKit.assertAllStagesStopped {
+      val requests = TestSubscriber.probe[HttpRequest]()
+      val responses = TestPublisher.probe[HttpResponse]()
+      val connection = Http2Blueprint.serverStack(ServerSettings(system), system.log, telemetry = NoOpTelemetry,
+        dateHeaderRendering = Http().dateHeaderRendering).reversed
+        .join(Flow.fromSinkAndSource(Sink.fromSubscriber(requests), Source.fromPublisher(responses)))
+
+      val input = TestPublisher.probe[ByteString]()
+      val output = TestSubscriber.probe[FrameEvent]()
+      Source.fromPublisher(input).via(connection)
+        .via(new Http2FrameParsing(false, system.log))
+        .runWith(Sink.fromSubscriber(output))
+
+      requests.request(1)
+      // The server can send its preface without waiting for the client's preface.
+      output.requestNext() shouldBe a[SettingsFrame]
+      input.sendComplete()
+
+      output.request(1).expectComplete()
+      requests.expectComplete()
+      responses.expectCancellation()
+    }
+  }
+
   for {
     server <- Seq(true, false)
     scenario <- Seq("empty", "nonempty", "fragmented", "ACK", "early request")
