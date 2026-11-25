@@ -142,6 +142,24 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectDecodedHEADERS(3).status shouldBe StatusCodes.OK
         })
 
+      "deliver a request after an advisory PRIORITY frame on its idle stream".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          val streamId = 1
+          network.sendFrame(PriorityFrame(streamId, exclusiveFlag = false, streamDependency = 0, weight = 16))
+          val requestHeaders = network.encodeHeaderPairs(Seq(
+            ":method" -> "GET",
+            ":scheme" -> "https",
+            ":authority" -> "example.com",
+            ":path" -> "/after-priority"))
+          network.sendHEADERS(streamId, endStream = true, endHeaders = true, requestHeaders)
+
+          val request = user.expectRequest()
+          request.method shouldBe HttpMethods.GET
+          request.uri shouldBe Uri("https://example.com/after-priority")
+          user.emitResponse(streamId, HttpResponse())
+          network.expectDecodedHEADERS(streamId).status shouldBe StatusCodes.OK
+        })
+
       "GET request in one HEADERS frame".inAssertAllStagesStopped(new SimpleRequestResponseRoundtripSetup {
         requestResponseRoundtrip(
           streamId = 1,
