@@ -22,6 +22,9 @@
 Streams the contents of a file uploaded as a multipart form into a file on disk and provides the file and
 metadata about the upload.
 
+The application chooses the destination. Treat the uploaded filename in `FileInfo` as untrusted metadata, not as
+a filesystem path. For temporary storage, use an application-controlled filename prefix.
+
 If there is an error writing to disk the request will be failed with the thrown exception. If there is no field
 with the given name the request will be rejected. If there are multiple file parts with the same name, the first
 one will be used and the subsequent ones ignored.

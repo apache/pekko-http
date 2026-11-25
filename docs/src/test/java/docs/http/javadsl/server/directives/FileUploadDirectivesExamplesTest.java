@@ -70,9 +70,9 @@ public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
   public void testStoreUploadedFile() {
     // #storeUploadedFile
     final Function<FileInfo, File> temporaryDestination =
-        (info) -> {
+        ignored -> {
           try {
-            return Files.createTempFile(info.getFileName(), ".tmp").toFile();
+            return Files.createTempFile("pekko-http-upload-", ".tmp").toFile();
           } catch (Exception e) {
             return null;
           }
@@ -111,9 +111,9 @@ public class FileUploadDirectivesExamplesTest extends JUnitJupiterRouteTest {
   public void testStoreUploadedFiles() {
     // #storeUploadedFiles
     final Function<FileInfo, File> temporaryDestination =
-        info -> {
+        ignored -> {
           try {
-            return Files.createTempFile(info.getFileName(), ".tmp").toFile();
+            return Files.createTempFile("pekko-http-upload-", ".tmp").toFile();
           } catch (Exception e) {
             return null;
           }
