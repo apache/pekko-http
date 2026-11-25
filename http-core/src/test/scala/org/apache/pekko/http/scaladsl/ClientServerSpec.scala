@@ -654,6 +654,40 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
       Http().shutdownAllConnectionPools().futureValue
     }
 
+    "deliver a declared HTTP/1.1 request trailer after the body" in Utils.assertAllStagesStopped {
+      // Both peers agree that this application field can be sent as a trailer.
+      val trailer = headers.RawHeader("upload-result", "complete")
+      val expectedChunks: List[ChunkStreamPart] =
+        List(Chunk("first"), Chunk("second"), LastChunk(trailer = List(trailer)))
+      val received = Promise[(HttpRequest, Seq[ChunkStreamPart])]()
+
+      val hostname = "127.0.0.1"
+      val binding = Http().newServerAt(hostname, 0).bind { request =>
+        request.entity match {
+          case entity: Chunked =>
+            entity.chunks.runWith(Sink.seq).map { chunks =>
+              received.success((request, chunks))
+              HttpResponse()
+            }
+          case _ => Future.failed(new IllegalStateException("Expected a chunked request"))
+        }
+      }.futureValue
+
+      try {
+        val request = HttpRequest(POST, "/upload", List(headers.Trailer(Seq(trailer.name))),
+          Chunked(ContentTypes.`application/octet-stream`, Source(expectedChunks)))
+        val response = Source.single(request)
+          .via(Http().outgoingConnection(hostname, binding.localAddress.getPort))
+          .runWith(Sink.head).futureValue
+
+        response.status shouldBe StatusCodes.OK
+        val (incoming, chunks) = received.future.futureValue
+        incoming.protocol shouldBe HttpProtocols.`HTTP/1.1`
+        incoming.header[headers.Trailer].map(_.values) shouldBe Some(Seq(trailer.name))
+        chunks shouldBe expectedChunks
+      } finally binding.terminate(3.seconds.dilated).futureValue
+    }
+
     "complete a request/response when the request side immediately closes the connection after sending the request" in
     Utils.assertAllStagesStopped {
       // FIXME: with HTTP/2 enabled the connection is closed directly after receiving closing from client (i.e. half-closed
