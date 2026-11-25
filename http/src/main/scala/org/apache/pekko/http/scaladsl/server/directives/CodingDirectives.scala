@@ -108,14 +108,14 @@ trait CodingDirectives {
   }
 
   /**
-   * Rejects the request with an UnsupportedRequestEncodingRejection if its encoding doesn't match the given one.
+   * Matches the request content coding case-insensitively, or rejects it with an UnsupportedRequestEncodingRejection.
    *
    * @group coding
    */
   def requestEncodedWith(encoding: HttpEncoding): Directive0 =
-    extract(_.request.encoding).flatMap {
-      case `encoding` => pass
-      case _          => reject(UnsupportedRequestEncodingRejection(encoding))
+    extract(_.request.encoding).flatMap { requestEncoding =>
+      if (requestEncoding.value.equalsIgnoreCase(encoding.value)) pass
+      else reject(UnsupportedRequestEncodingRejection(encoding))
     }
 
   /**

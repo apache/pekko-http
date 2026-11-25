@@ -83,6 +83,18 @@ class CodersSpec extends AnyWordSpec with CodecSpecSupport {
         body(decoded) shouldEqual smallText
       }
     }
+    "decode a response when a custom coding differs only in case" in {
+      class ExampleDecoder(val maxBytesPerChunk: Int = Decoder.MaxBytesPerChunkDefault) extends Decoder {
+        override val encoding = HttpEncoding.custom("example-codec")
+        override def withMaxBytesPerChunk(n: Int): Decoder = new ExampleDecoder(n)
+        override def decoderFlow = Coders.Gzip.withMaxBytesPerChunk(maxBytesPerChunk).decoderFlow
+      }
+      val response = encoded(Coders.Gzip).withHeaders(`Content-Encoding`(HttpEncoding.custom("Example-Codec")))
+
+      val decoded = Coders.decodeMessage(response, Seq(new ExampleDecoder))
+      decoded.header[`Content-Encoding`] shouldEqual None
+      body(decoded) shouldEqual smallText
+    }
     "decode a gzip close-delimited response and preserve its entity type and content type" in {
       val original = ByteString(smallText)
       val compressed = Coders.Gzip.encodeAsync(original).awaitResult(3.seconds.dilated)

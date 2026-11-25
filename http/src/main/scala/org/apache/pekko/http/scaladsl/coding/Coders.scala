@@ -80,7 +80,7 @@ object Coders {
   def decodeMessage(message: HttpMessage, decoders: Seq[Decoder] = DefaultCoders): message.Self =
     message.header[`Content-Encoding`] match {
       case Some(`Content-Encoding`(Seq(encoding))) =>
-        decoders.find(_.encoding == encoding) match {
+        decoders.find(_.encoding.value.equalsIgnoreCase(encoding.value)) match {
           case Some(decoder) => decoder.decodeMessage(message)
           case None          => message.self
         }

@@ -54,6 +54,20 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
   lazy val nopeGzipped = compress("Nope!", Gzip)
   lazy val nopeDeflated = compress("Nope!", Deflate)
 
+  "the requestEncodedWith directive" should {
+    "match differently cased spellings of the same content coding" in {
+      val coding = HttpEncoding.custom("example-codec")
+      Post("/")                           ~> `Content-Encoding`(HttpEncoding.custom("Example-Codec")) ~>
+      requestEncodedWith(coding) { yeah } ~> check { responseAs[String] shouldEqual "Yeah!" }
+    }
+
+    "reject a different content coding" in {
+      val coding = HttpEncoding.custom("example-codec")
+      Post("/")                           ~> `Content-Encoding`(HttpEncoding.custom("other-codec")) ~>
+      requestEncodedWith(coding) { yeah } ~> check { rejection shouldEqual UnsupportedRequestEncodingRejection(coding) }
+    }
+  }
+
   "the NoEncoding decoder" should {
     "decode the request content if it has encoding 'identity'" in {
       Post("/", "yes") ~> `Content-Encoding`(identity) ~> {
