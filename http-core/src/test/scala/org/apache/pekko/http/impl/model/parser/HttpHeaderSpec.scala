@@ -783,6 +783,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
 
     "Transfer-Encoding" in {
       "Transfer-Encoding: chunked" =!= `Transfer-Encoding`(TransferEncodings.chunked)
+      "Transfer-Encoding: cHuNkEd" =!= `Transfer-Encoding`(TransferEncodings.chunked).renderedTo("chunked")
       "Transfer-Encoding: gzip" =!= `Transfer-Encoding`(TransferEncodings.gzip)
       "Transfer-Encoding: trailers" =!= `Transfer-Encoding`(TransferEncodings.trailers)
       "Transfer-Encoding: someextension" =!= `Transfer-Encoding`(TransferEncodings.Extension("someextension"))
