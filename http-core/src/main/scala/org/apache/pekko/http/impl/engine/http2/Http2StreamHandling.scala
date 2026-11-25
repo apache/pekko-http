@@ -257,6 +257,12 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   /** Called to cleanup any state when the connection is torn down */
   def shutdownStreamHandling(): Unit = updateAllStates({ id => id.shutdown(); Closed }, "shutdownStreamHandling")
 
+  /** Fail open incoming entity outlets on client read EOF, without changing upload lifecycle. */
+  def failOpenIncomingEntities(): Unit = streamStates.valuesIterator.foreach {
+    case receiving: ReceivingDataWithBuffer => receiving.failOpenIncomingEntity()
+    case _                                  => ()
+  }
+
   def resetStream(streamId: Int, errorCode: ErrorCode): Unit = {
     updateState(streamId, _ => Closed, "resetStream") // force stream to be closed
     multiplexer.pushControlFrame(RstStreamFrame(streamId, errorCode))
@@ -621,6 +627,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   sealed abstract class ReceivingDataWithBuffer(afterEndStreamReceived: StreamState) extends ReceivingData {
     self: Product =>
     protected def buffer: IncomingStreamBuffer
+
+    final def failOpenIncomingEntity(): Unit = if (!buffer.isDone) buffer.shutdown()
 
     override protected def onDataFrame(dataFrame: DataFrame): StreamState = {
       buffer.onDataFrame(dataFrame)
