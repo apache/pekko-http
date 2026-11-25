@@ -178,6 +178,23 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       Map(":method" -> "GET", ":scheme" -> "http", ":authority" -> "other.example.com:8080", ":path" -> "/foo")
     }
 
+    "preserve query presence on absolute URIs with no path" in {
+      val cases = Seq(
+        "" -> "/",
+        "?" -> "/?",
+        "?mode=full" -> "/?mode=full")
+
+      for ((querySuffix, expectedPath) <- cases) {
+        val target = s"https://example.test:8443$querySuffix"
+        val uri = Uri(target)
+        withClue(s"$target: ") {
+          uri.path shouldBe Uri.Path.Empty
+          pseudoHeaders(HttpRequest(uri = uri), "https", Uri.Authority(Uri.Host("fallback.test"))) shouldEqual
+          Map(":method" -> "GET", ":scheme" -> "https", ":authority" -> "example.test:8443", ":path" -> expectedPath)
+        }
+      }
+    }
+
     "handle empty trailer" in {
       val config = ConfigFactory.load("reference.conf")
       Try {
