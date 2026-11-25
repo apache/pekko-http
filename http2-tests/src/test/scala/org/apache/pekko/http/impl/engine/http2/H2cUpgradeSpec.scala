@@ -14,16 +14,19 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import scala.annotation.tailrec
-import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.concurrent.{ Future, Promise }
 
 import org.apache.pekko
+import pekko.http.impl.engine.http2.FrameEvent.{ Setting, SettingsAckFrame, SettingsFrame }
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier._
+import pekko.http.impl.engine.http2.framing.FrameRenderer
 import pekko.http.impl.util._
 import pekko.http.scaladsl.HttpConnectionContext
-import pekko.http.scaladsl.model.{ HttpResponse, StatusCodes }
+import pekko.http.scaladsl.model.{ HttpMethods, HttpRequest, HttpResponse, StatusCodes }
 import pekko.stream.scaladsl.{ Source, Tcp }
+import pekko.stream.testkit.TestPublisher
 import pekko.util.ByteString
 
 class H2cUpgradeSpec extends PekkoSpecWithMaterializer("""
@@ -58,6 +61,55 @@ class H2cUpgradeSpec extends PekkoSpecWithMaterializer("""
       testWith(settings)
     }
 
+    for ((name, connectionFields) <- Seq(
+        "a combined field" -> Seq("Connection: Upgrade, HTTP2-Settings"),
+        "separate fields" -> Seq("Connection: Upgrade", "Connection: HTTP2-Settings"))) {
+      s"accept h2c upgrade with required Connection options in $name" in {
+        val settings = encode(Seq(SETTINGS_ENABLE_PUSH -> 0))
+        val receivedRequest = Promise[HttpRequest]()
+        val applicationResponse = Promise[HttpResponse]()
+        val binding = Http2().bindAndHandleAsync(
+          request => {
+            val _ = receivedRequest.trySuccess(request)
+            applicationResponse.future
+          },
+          "127.0.0.1",
+          port = 0,
+          HttpConnectionContext()).awaitResult(5.seconds)
+
+        val outgoing = TestPublisher.probe[ByteString]()
+        val network = new Http2FrameHpackSupport {
+          override val frameProbeDelegate: Http2FrameProbe = Http2FrameProbe()
+          override def sendBytes(bytes: ByteString): Unit = outgoing.sendNext(bytes)
+        }
+        try {
+          Source.fromPublisher(outgoing)
+            .via(Tcp(system).outgoingConnection(binding.localAddress.getHostString, binding.localAddress.getPort))
+            .runWith(network.sink)
+
+          try {
+            val host = s"${binding.localAddress.getHostString}:${binding.localAddress.getPort}"
+            val request = Seq("GET /upgrade HTTP/1.1", s"Host: $host", "Upgrade: h2c",
+              s"HTTP2-Settings: $settings") ++ connectionFields ++ Seq("", "")
+            network.sendBytes(ByteString(request.mkString("\r\n")))
+            expectSwitchingProtocols(network)
+
+            network.sendBytes(Http2Protocol.ClientConnectionPreface ++
+              FrameRenderer.render(SettingsFrame(Seq(Setting(SETTINGS_ENABLE_PUSH, 0)))))
+            network.expectSETTINGS()
+            network.sendFrame(SettingsAckFrame(Nil))
+            network.expectSettingsAck()
+
+            val handled = receivedRequest.future.awaitResult(5.seconds)
+            handled.method shouldBe HttpMethods.GET
+            handled.uri.path.toString shouldBe "/upgrade"
+            applicationResponse.success(HttpResponse())
+            network.expectDecodedResponseHEADERSPairs(streamId = 1) should contain(":status" -> "200")
+          } finally network.plainDataProbe.cancel()
+        } finally binding.terminate(1.second).awaitResult(5.seconds)
+      }
+    }
+
     def testWith(settings: String) = {
       val upgradeRequest =
         s"""GET / HTTP/1.1
@@ -72,6 +124,12 @@ HTTP2-Settings: $settings
         .via(Tcp(system).outgoingConnection(binding.localAddress.getHostName, binding.localAddress.getPort))
         .runWith(frameProbe.sink)
 
+      expectSwitchingProtocols(frameProbe)
+      frameProbe.expectFrameFlagsStreamIdAndPayload(Http2Protocol.FrameType.SETTINGS)
+      frameProbe.expectHeaderBlock(1, true)
+    }
+
+    def expectSwitchingProtocols(frameProbe: Http2FrameProbe): Unit = {
       @tailrec def readToEndOfHeader(currentlyRead: String = ""): String =
         if (currentlyRead.endsWith("\r\n\r\n")) currentlyRead
         else readToEndOfHeader(currentlyRead + frameProbe.plainDataProbe.expectBytes(1).utf8String)
@@ -81,9 +139,6 @@ HTTP2-Settings: $settings
       headers should include("HTTP/1.1 101 Switching Protocols")
       headers should include("Upgrade: h2c")
       headers should include("Connection: upgrade")
-
-      frameProbe.expectFrameFlagsStreamIdAndPayload(Http2Protocol.FrameType.SETTINGS)
-      frameProbe.expectHeaderBlock(1, true)
     }
   }
 
