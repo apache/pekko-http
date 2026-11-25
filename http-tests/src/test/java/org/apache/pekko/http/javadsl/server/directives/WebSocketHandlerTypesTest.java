@@ -18,6 +18,7 @@
 package org.apache.pekko.http.javadsl.server.directives;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Locale;
@@ -34,6 +35,7 @@ import org.apache.pekko.http.javadsl.model.ws.Message;
 import org.apache.pekko.http.javadsl.model.ws.TextMessage;
 import org.apache.pekko.http.javadsl.model.ws.WebSocket;
 import org.apache.pekko.http.javadsl.model.ws.WebSocketRequest;
+import org.apache.pekko.http.javadsl.model.ws.WebSocketUpgradeResponse;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.http.javadsl.testkit.WSProbe;
@@ -148,7 +150,8 @@ public class WebSocketHandlerTypesTest extends JUnitJupiterRouteTest {
   }
 
   @Test
-  public void singleWebSocketRequestAcceptsMessageSubtype() throws Exception {
+  public void singleWebSocketRequestAcceptsMessageSubtypeAndExposesSelectedSubprotocol()
+      throws Exception {
     Http http = Http.get(system());
     ServerBinding binding =
         http.newServerAt("127.0.0.1", 0).bind(route).toCompletableFuture().get(3, TimeUnit.SECONDS);
@@ -161,13 +164,19 @@ public class WebSocketHandlerTypesTest extends JUnitJupiterRouteTest {
       Flow<Message, TextMessage, CompletionStage<String>> client =
           Flow.fromSinkAndSourceMat(firstText, clientSource("hi"), Keep.left());
 
-      Pair<?, CompletionStage<String>> result =
+      Pair<CompletionStage<WebSocketUpgradeResponse>, CompletionStage<String>> result =
           http.singleWebSocketRequest(
               WebSocketRequest.create(
-                  "ws://127.0.0.1:" + binding.localAddress().getPort() + "/directive"),
+                      "ws://127.0.0.1:" + binding.localAddress().getPort() + "/protocol")
+                  .requestSubprotocol("unused, echo"),
               client,
               materializer());
 
+      WebSocketUpgradeResponse upgrade =
+          result.first().toCompletableFuture().get(3, TimeUnit.SECONDS);
+      assertTrue(upgrade.isValid());
+      assertEquals(StatusCodes.SWITCHING_PROTOCOLS, upgrade.response().status());
+      assertEquals(Optional.of("echo"), upgrade.chosenSubprotocol());
       assertEquals("HI", result.second().toCompletableFuture().get(3, TimeUnit.SECONDS));
     } finally {
       binding.unbind().toCompletableFuture().get(3, TimeUnit.SECONDS);
