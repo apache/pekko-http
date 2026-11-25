@@ -543,6 +543,19 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
         response should haveNoContentEncoding
       }
     }
+    "prefer an explicitly allowed identity coding over an excluded wildcard" in {
+      val excludedWildcard = HttpEncodingRange.`*`(0f)
+      val route = encodeResponseWith(Gzip, NoCoding) { yeah }
+
+      Get("/") ~> `Accept-Encoding`(excludedWildcard, identity) ~> route ~> check {
+        responseAs[String] shouldEqual "Yeah!"
+        response should haveNoContentEncoding
+      }
+
+      Get("/") ~> `Accept-Encoding`(excludedWildcard) ~> route ~> check {
+        rejection shouldEqual UnacceptedResponseEncodingRejection(Set(gzip, identity))
+      }
+    }
     "reject an empty Accept-Encoding header when no identity encoder is offered" in {
       Get("/") ~> `Accept-Encoding`() ~> {
         encodeResponseWith(Gzip, Deflate) { yeah }
