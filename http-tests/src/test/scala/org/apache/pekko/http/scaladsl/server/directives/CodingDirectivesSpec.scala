@@ -606,6 +606,17 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
         strictify(responseEntity) shouldEqual HttpEntity(ContentType(`text/plain`, `UTF-8`), yeahGzipped)
       }
     }
+    "select an available response encoding when an unsupported extension has higher quality" in {
+      val unavailable = HttpEncoding.custom("example-coding")
+      Get("/") ~> `Accept-Encoding`(unavailable, gzip.withQValue(0.4f)) ~> {
+        encodeResponseWith(Gzip) { yeah }
+      } ~> check {
+        status shouldBe OK
+        response should haveContentEncoding(gzip)
+        val compressed = strictify(responseEntity).data
+        Gzip.decode(compressed).awaitResult(1.second.dilated) should readAs("Yeah!")
+      }
+    }
     "reject the request if it has an Accept-Encoding header with an encoding that doesn't match" in {
       Get("/") ~> `Accept-Encoding`(deflate) ~> {
         encodeResponseWith(Gzip) { yeah }
