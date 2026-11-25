@@ -82,6 +82,8 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
 
   "The HPACK decoder" should {
     val headers = Seq("x-custom-header" -> "some-fairly-long-header-value", "another-header" -> "value")
+    // Ties the rejection tests to the RFC 7541 section 4.2 ordering rule rather than to any decoding failure.
+    val lateTableSizeUpdateMessage = "dynamic table size update after a header field"
 
     "accept dynamic table size updates before header fields" in {
       // Set the capacity to zero, restore it to 4096, then emit indexed :method: GET.
@@ -97,7 +99,8 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
         Array[Byte](0x10, 1, 'x'.toByte, 1, 'a'.toByte)) // never indexed
       val updates = Seq(Array[Byte](0x20), Array[Byte](0x3F, 0xE1.toByte, 0x1F))
       for (header <- representations; update <- updates) {
-        a[IOException] should be thrownBy decode(chunkedStream(header ++ update, chunkSize = 1))
+        val error = the[IOException] thrownBy decode(chunkedStream(header ++ update, chunkSize = 1))
+        error.getMessage shouldEqual lateTableSizeUpdateMessage
       }
     }
 
@@ -111,7 +114,9 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
 
     "reject a late table size update even when the header list limit has been exceeded" in {
       val decoder = new Decoder(0, maxHeaderTableSize)
-      a[IOException] should be thrownBy decode(decoder, new ByteArrayInputStream(Array[Byte](0x82.toByte, 0x20)))
+      val error =
+        the[IOException] thrownBy decode(decoder, new ByteArrayInputStream(Array[Byte](0x82.toByte, 0x20)))
+      error.getMessage shouldEqual lateTableSizeUpdateMessage
     }
 
     "decode a header block from a stream that returns everything at once" in {
