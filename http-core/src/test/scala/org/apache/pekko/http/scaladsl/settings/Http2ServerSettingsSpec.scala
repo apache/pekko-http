@@ -27,6 +27,26 @@ import scala.concurrent.duration._
 
 class Http2ServerSettingsSpec extends PekkoSpec {
 
+  "Http2ServerSettings max-concurrent-streams" should {
+    "reject zero with a configuration error" in {
+      val fromSetter = intercept[IllegalArgumentException] {
+        Http2ServerSettings(system).withMaxConcurrentStreams(0)
+      }
+      fromSetter.getMessage should include("max-concurrent-streams must be > 0")
+
+      val fromConfig = intercept[IllegalArgumentException] {
+        Http2ServerSettings("pekko.http.server.http2.max-concurrent-streams = 0")
+      }
+      fromConfig.getMessage should include("max-concurrent-streams must be > 0")
+    }
+
+    "accept one and retain the configured value" in {
+      val settings = Http2ServerSettings(system).withMaxConcurrentStreams(1)
+      settings.maxConcurrentStreams shouldBe 1
+      settings.getMaxConcurrentStreams shouldBe 1
+    }
+  }
+
   "Http2ServerSettings max-connection-age" should {
 
     "be disabled by default" in {
