@@ -30,6 +30,7 @@ import pekko.http.scaladsl.model.{
   HttpHeader,
   HttpMethod,
   HttpMethods,
+  HttpProtocols,
   HttpRequest,
   HttpResponse,
   RequestResponseAssociation,
@@ -118,6 +119,73 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       secondResponse.status shouldBe StatusCodes.OK
       Unmarshal(secondResponse.entity).to[String].futureValue shouldBe "next response"
     }
+    "relay a streamed entity across HTTP/2 connections before the source completes" in {
+      val http = Http()
+      val prefix = ByteString("first part ")
+      val suffix = ByteString("last part")
+      val tail = Promise[ByteString]()
+      val allowRead = Promise[Unit]()
+      val downstreamRequest = Promise[HttpRequest]()
+      val received = ByteStringSinkProbe()
+
+      def bind(handler: HttpRequest => Future[HttpResponse]) =
+        http.newServerAt("127.0.0.1", 0).bind(handler)
+
+      def responses(binding: Http.ServerBinding, request: HttpRequest) =
+        Source.single(request)
+          .via(http.connectionTo("127.0.0.1").toPort(binding.localAddress.getPort).http2WithPriorKnowledge())
+          .runWith(Sink.queue[HttpResponse]())
+
+      val origin = bind { _ =>
+        val entity = HttpEntity(ContentTypes.`application/octet-stream`,
+          Source.single(prefix).concat(Source.future(tail.future)))
+        Future.successful(HttpResponse(entity = entity))
+      }
+      val destination = bind { request =>
+        downstreamRequest.success(request)
+        allowRead.future.flatMap { _ =>
+          request.entity.dataBytes
+            .alsoTo(received.sink)
+            .runFold(ByteString.empty)(_ ++ _)
+            .map(bytes => HttpResponse(entity = HttpEntity(bytes)))(system.dispatcher)
+        }(system.dispatcher)
+      }
+
+      try {
+        val sourceResponses = responses(origin.futureValue, HttpRequest(uri = "/source"))
+        try {
+          val sourceResponse = sourceResponses.pull().futureValue.get
+          sourceResponse.status shouldBe StatusCodes.OK
+          sourceResponse.protocol shouldBe HttpProtocols.`HTTP/2.0`
+
+          val forwardedEntity =
+            HttpEntity(sourceResponse.entity.contentType, sourceResponse.entity.dataBytes)
+          val request = HttpRequest(HttpMethods.POST, "/destination", entity = forwardedEntity)
+          val destinationResponses = responses(destination.futureValue, request)
+          try {
+            downstreamRequest.future.futureValue.protocol shouldBe HttpProtocols.`HTTP/2.0`
+            allowRead.success(())
+            received.expectBytes(prefix)
+            tail.success(suffix)
+            received.expectBytes(suffix)
+            received.expectComplete()
+
+            val response = destinationResponses.pull().futureValue.get
+            response.status shouldBe StatusCodes.OK
+            response.entity.toStrict(3.seconds).futureValue.data shouldBe (prefix ++ suffix)
+            destinationResponses.pull().futureValue shouldBe None
+            sourceResponses.pull().futureValue shouldBe None
+          } finally destinationResponses.cancel()
+        } finally sourceResponses.cancel()
+      } finally {
+        allowRead.trySuccess(())
+        tail.trySuccess(ByteString.empty)
+        val terminated = Seq(origin, destination).map(_.flatMap(_.terminate(1.second))(system.dispatcher))
+        try terminated.head.futureValue
+        finally terminated.last.futureValue
+      }
+    }
+
     "support multiple interleaved concurrent streams" in new TestSetup {
       val reqPub1 = sendClientRequestWithEntityStream("request-1")
 
