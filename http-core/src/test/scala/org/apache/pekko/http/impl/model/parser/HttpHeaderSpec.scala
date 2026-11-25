@@ -582,6 +582,19 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         "Fri, 23 Mar 1804 12:11:10 GMT")
     }
 
+    "parse valid IMF-fixdate month ends" in {
+      val dates = Seq(
+        "Thu, 29 Feb 2024 06:07:08 GMT" -> "2024-02-29T06:07:08Z",
+        "Tue, 29 Feb 2000 11:12:13 GMT" -> "2000-02-29T11:12:13Z",
+        "Sun, 31 Dec 2023 23:59:59 GMT" -> "2023-12-31T23:59:59Z")
+      dates.foreach { case (value, expected) =>
+        HttpHeader.parse("Date", value) match {
+          case HttpHeader.ParsingResult.Ok(Date(date), Nil) => date.clicks shouldBe Instant.parse(expected).toEpochMilli
+          case other                                        => fail(s"Expected a modeled Date without errors for $value, got $other")
+        }
+      }
+    }
+
     "ETag" in {
       """ETag: "938fz3f83z3z38z"""" =!= ETag("938fz3f83z3z38z", weak = false)
       """ETag: W/"938fz3f83z3z38z"""" =!= ETag("938fz3f83z3z38z", weak = true)
