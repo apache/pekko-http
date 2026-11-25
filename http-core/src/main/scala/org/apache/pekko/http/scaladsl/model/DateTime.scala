@@ -156,6 +156,7 @@ object DateTime {
 
   /**
    * Creates a new `DateTime` with the given properties.
+   * Throws `IllegalArgumentException` if the components do not make up a supported calendar date and time.
    * Note that this implementation discards milliseconds (i.e. rounds down to full seconds).
    */
   def apply(year: Int, month: Int, day: Int, hour: Int = 0, minute: Int = 0, second: Int = 0): DateTime = {
@@ -166,11 +167,20 @@ object DateTime {
     require(0 <= minute && minute <= 59, "minute_ must be >= 0 and <= 59")
     require(0 <= second && second <= 59, "second must be >= 0 and <= 59")
 
+    val isLeap = isLeapYear(year)
+    if (day > 28) {
+      val monthLength = month match {
+        case 2              => if (isLeap) 29 else 28
+        case 4 | 6 | 9 | 11 => 30
+        case _              => 31
+      }
+      require(day <= monthLength, "day must exist in the specified month and year")
+    }
+
     // compute yearday from month/monthday
     val m = month - 1
     val m7 = m % 7
     var d = m7 * 30 + ((m7 + 1) >> 1) + day
-    val isLeap = isLeapYear(year)
     if (m >= 7) d += 214
     if (d >= 61) d -= 1 // skip non-existent Feb 30
     if (!isLeap && (d >= 60)) d -= 1 // skip non-existent Feb 29
