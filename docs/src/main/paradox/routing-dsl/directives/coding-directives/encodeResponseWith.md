@@ -27,6 +27,11 @@ If the `Accept-Encoding` header is missing then the response is encoded using th
 
 An explicitly empty `Accept-Encoding` header accepts no content coding. Include `NoCoding` among the offered encoders to return an unencoded response. If `NoCoding` is not offered, the directive rejects with `UnacceptedResponseEncodingRejection`; the default rejection handler returns `406 Not Acceptable`. This does not affect `encodeResponse`, which includes `NoCoding` by default.
 
+To opt a route into a custom content coding, create a Scala coder with `Coders.fromFlows` and pass it
+to `encodeResponseWith`. In Java, create a `FlowCoder` with `FlowCoder.create` and use
+`encodeResponseWithFlowCoder`. This does not change the default coders. The encoder flow is materialized once per
+encoded response and must not share codec state between materializations.
+
 ## Example
 
 Scala

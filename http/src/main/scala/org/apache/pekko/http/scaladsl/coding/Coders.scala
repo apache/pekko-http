@@ -16,8 +16,11 @@ package org.apache.pekko.http.scaladsl.coding
 import scala.annotation.nowarn
 
 import org.apache.pekko
-import pekko.http.scaladsl.model.HttpMessage
-import pekko.http.scaladsl.model.headers.`Content-Encoding`
+import pekko.http.impl.model.parser.CharacterClasses
+import pekko.http.scaladsl.model.{ HttpHeader, HttpMessage }
+import pekko.http.scaladsl.model.headers.{ `Content-Encoding`, HttpEncoding }
+import pekko.stream.scaladsl.Flow
+import pekko.util.ByteString
 
 @nowarn("msg=in package coding is deprecated")
 object Coders {
@@ -64,26 +67,67 @@ object Coders {
       windowLogMax: Int = pekko.http.scaladsl.coding.Zstd.DefaultWindowLogMax): Coder =
     new Zstd(compressionLevel, messageFilter, Decoder.MaxBytesPerChunkDefault, windowLogMax)
 
+  /**
+   * Creates an explicitly selected coder from reusable stream flows. Every materialization of the supplied graphs
+   * must own independent codec state; their materialized values are discarded.
+   * The encoding must be an HTTP token other than the reserved names `identity` and `*`. The decoder
+   * decodes messages with exactly one matching Content-Encoding value, matching case-insensitively.
+   * It leaves messages with other, repeated, or stacked encodings unchanged.
+   *
+   * @param decoderFlowForMaxBytesPerChunk creates a decoding flow on each materialization for the requested maximum
+   *                                      output chunk size.
+   *                                      The decoder implementation is responsible for respecting that size.
+   *                                      This does not limit decoder allocations or total bytes. The server
+   *                                      `decodeRequestWith` directive separately applies the routing setting
+   *                                      `pekko.http.routing.decode-max-size` to the full decoded entity.
+   * @param messageFilter                 whether to encode a message; messages with a Content-Encoding header
+   *                                      are never encoded again.
+   * @since 2.1.0
+   */
+  def fromFlows(
+      encoding: HttpEncoding,
+      encoderFlow: Flow[ByteString, ByteString, ?],
+      decoderFlowForMaxBytesPerChunk: Int => Flow[ByteString, ByteString, ?],
+      messageFilter: HttpMessage => Boolean = Encoder.DefaultFilter): Coder = {
+    require(encoding.value.nonEmpty && encoding.value.forall(c => CharacterClasses.tchar(c)),
+      "A flow-based coder requires a valid content-coding token")
+    require(encoding.value != "*" && !encoding.value.equalsIgnoreCase("identity"),
+      "A flow-based coder cannot use a reserved content-coding name")
+    new FlowCoder(encoding, messageFilter, encoderFlow, decoderFlowForMaxBytesPerChunk, Decoder.MaxBytesPerChunkDefault)
+  }
+
   val DefaultCoders: Seq[Coder] = Seq(Gzip, Deflate, NoCoding)
 
   /**
-   * Decodes the message with the one of `decoders` whose encoding matches the message's `Content-Encoding`
+   * Decodes the message with the first of `decoders` whose encoding matches the message's `Content-Encoding`
    * header, for example to decode a response on the client side without checking its encoding first.
    *
    * The message is returned unchanged if it has no `Content-Encoding` header, if none of `decoders` matches its
-   * encoding, or if the header lists more than one encoding. In the last two cases the `Content-Encoding` header
-   * is kept, so `message.encoding` shows that the entity is still encoded.
+   * encoding, or if more than one field or coding is present. In those cases the headers and entity are preserved.
+   * Only flow-based coders also recognize a single application-supplied raw `Content-Encoding` header.
    *
    * @param decoders the decoders to choose from, [[Zstd]] is not one of the [[DefaultCoders]]
    * @since 2.0.0
    */
   def decodeMessage(message: HttpMessage, decoders: Seq[Decoder] = DefaultCoders): message.Self =
-    message.header[`Content-Encoding`] match {
+    singleContentEncodingHeader(message) match {
       case Some(`Content-Encoding`(Seq(encoding))) =>
         decoders.find(_.encoding.value.equalsIgnoreCase(encoding.value)) match {
           case Some(decoder) => decoder.decodeMessage(message)
           case None          => message.self
         }
-      case _ => message.self
+      case Some(_: `Content-Encoding`) => message.self
+      case Some(_)                     =>
+        decoders.collectFirst {
+          case flow: FlowCoder if flow.matchesSingleContentEncoding(message) => flow.decodeMessage(message)
+        }.getOrElse(message.self)
+      case None => message.self
     }
+
+  private[coding] def singleContentEncodingHeader(message: HttpMessage): Option[HttpHeader] = {
+    val headers = message.headers.iterator
+    val first = headers.find(Encoder.isContentEncodingHeader)
+    if (first.isDefined && headers.exists(Encoder.isContentEncodingHeader)) None else first
+  }
+
 }

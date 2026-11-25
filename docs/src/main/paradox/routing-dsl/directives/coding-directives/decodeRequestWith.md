@@ -25,6 +25,12 @@ If the request entity after decoding exceeds `pekko.http.routing.decode-max-size
 @scala[@scaladoc[EntityStreamSizeException](org.apache.pekko.http.scaladsl.model.EntityStreamSizeException)]@java[@javadoc[EntityStreamSizeException](org.apache.pekko.http.scaladsl.model.EntityStreamSizeException)].
 
 
+To opt a route into a custom content coding, create a Scala coder with `Coders.fromFlows` and pass it
+to `decodeRequestWith`. In Java, create a `FlowCoder` with `FlowCoder.create` and use
+`decodeRequestWithFlowCoder`. Neither extends the built-in default coders. The decoder factory is
+called for each stream materialization and must honor the requested maximum output chunk size. A custom
+coder decodes a single request content coding, not a stack of codings.
+
 ## Example
 
 Scala
