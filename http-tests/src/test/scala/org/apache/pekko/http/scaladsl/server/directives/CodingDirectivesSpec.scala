@@ -332,6 +332,23 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
         Gzip.decode(bytes).awaitResult(1.second.dilated) should readAs(text)
       }
     }
+    "preserve gzip response bytes across an empty stream element" in {
+      val first = ByteString("before ")
+      val last = ByteString("after")
+      // Include an empty element in the application source and check that the decoded surrounding bytes survive.
+      val entity = HttpEntity.Default(ContentTypes.`text/plain(UTF-8)`, first.size + last.size,
+        Source(List(first, ByteString.empty, last)))
+
+      Post() ~> `Accept-Encoding`(gzip) ~> {
+        encodeResponseWith(Gzip) {
+          complete(entity)
+        }
+      } ~> check {
+        response should haveContentEncoding(gzip)
+        val compressed = chunks.foldLeft(ByteString.empty)(_ ++ _.data)
+        Gzip.decode(compressed).awaitResult(1.second.dilated) shouldEqual (first ++ last)
+      }
+    }
     "correctly encode the chunk stream produced by an empty chunked response" in {
       val emptyChunkedEntity = HttpEntity.Chunked(ContentTypes.`text/plain(UTF-8)`, Source.empty)
 
