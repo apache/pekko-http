@@ -653,6 +653,23 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
       })
     }
 
+    "complete an empty request entity after consecutive empty DATA frames".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        val streamId = 1
+        val request = HttpRequest(
+          method = HttpMethods.POST,
+          uri = "https://example.com/upload",
+          protocol = HttpProtocols.`HTTP/2.0`)
+        network.sendRequestHEADERS(streamId, request, endStream = false)
+        val body = user.expectRequest().entity.dataBytes.runFold(ByteString.empty)(_ ++ _)
+
+        network.sendDATA(streamId, endStream = false, ByteString.empty)
+        network.sendDATA(streamId, endStream = false, ByteString.empty)
+        network.sendDATA(streamId, endStream = true, ByteString.empty)
+
+        Await.result(body, 3.seconds.dilated) shouldBe ByteString.empty
+      })
+
     "deliver a request whose HEADERS and final DATA arrive in one chunk".inAssertAllStagesStopped(
       new TestSetup with RequestResponseProbes {
         val streamId = 1
