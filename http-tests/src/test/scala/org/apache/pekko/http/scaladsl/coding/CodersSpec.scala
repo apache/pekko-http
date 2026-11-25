@@ -23,6 +23,7 @@ import org.apache.pekko
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
+import pekko.stream.scaladsl.Source
 import pekko.testkit._
 import pekko.util.ByteString
 
@@ -81,6 +82,20 @@ class CodersSpec extends AnyWordSpec with CodecSpecSupport {
         decoded.header[`Content-Encoding`] shouldEqual None
         body(decoded) shouldEqual smallText
       }
+    }
+    "decode a gzip close-delimited response and preserve its entity type and content type" in {
+      val original = ByteString(smallText)
+      val compressed = Coders.Gzip.encodeAsync(original).awaitResult(3.seconds.dilated)
+      val contentType = ContentTypes.`text/plain(UTF-8)`
+      val response = HttpResponse(
+        entity = HttpEntity.CloseDelimited(contentType, Source.single(compressed)),
+        headers = List(`Content-Encoding`(HttpEncodings.gzip)))
+
+      val decoded = Coders.decodeMessage(response)
+      decoded.header[`Content-Encoding`] shouldEqual None
+      decoded.entity shouldBe a[HttpEntity.CloseDelimited]
+      decoded.entity.contentType shouldEqual contentType
+      decoded.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated).data shouldEqual original
     }
     "decode with the default coders if none are given" in {
       body(Coders.decodeMessage(encoded(Coders.Gzip))) shouldEqual smallText
