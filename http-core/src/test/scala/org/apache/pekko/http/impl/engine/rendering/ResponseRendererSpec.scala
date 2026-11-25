@@ -115,6 +115,21 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         }
       }
 
+      "render multiple Set-Cookie fields on separate lines in response order" in new TestSetup() {
+        val first = `Set-Cookie`(HttpCookie("theme", "light", expires = Some(DateTime(2030, 1, 1, 12))))
+        val second = `Set-Cookie`(HttpCookie("language", "en"))
+        HttpResponse(200, List(first, second)) should renderTo {
+          """HTTP/1.1 200 OK
+            |Set-Cookie: theme=light; Expires=Tue, 01 Jan 2030 12:00:00 GMT
+            |Set-Cookie: language=en
+            |Server: pekko-http/1.0.0
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |Content-Length: 0
+            |
+            |"""
+        }
+      }
+
       "a custom Date header" in new TestSetup() {
         HttpResponse(200, List(Date(DateTime(2011, 8, 26, 10, 11, 59)))) should renderTo {
           """HTTP/1.1 200 OK
