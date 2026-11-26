@@ -18,7 +18,8 @@ import org.apache.pekko.http.scaladsl.model.{ HttpHeader, Uri }
 /**
  * Represents a WebSocket request.
  * @param uri The target URI to connect to.
- * @param extraHeaders Extra headers to add to the WebSocket request.
+ * @param extraHeaders Extra headers to add to the WebSocket request. The opening handshake generates
+ *                     `Sec-WebSocket-Key` and `Sec-WebSocket-Version` itself, so extra headers with these names are not sent.
  * @param subprotocol WebSocket subprotocols (comma separated) if required.
  */
 final case class WebSocketRequest(

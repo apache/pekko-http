@@ -44,6 +44,12 @@ Make sure to read and understand the section about [Half-Closed WebSockets](#hal
 when using WebSockets for one-way communication may not be what you would expect.
 @@@
 
+## Opening handshake headers
+
+Use @scala[`WebSocketRequest.extraHeaders`]@java[`WebSocketRequest.addHeader`] to add application headers such as
+`Authorization` or `Origin`. Pekko HTTP generates `Sec-WebSocket-Key` and `Sec-WebSocket-Version` for the opening
+handshake; caller-supplied headers with either of these names are not sent, regardless of name casing.
+
 ## Opening handshake timeout
 
 Set `pekko.http.client.websocket.opening-timeout` to bound how long the client waits for a complete upgrade

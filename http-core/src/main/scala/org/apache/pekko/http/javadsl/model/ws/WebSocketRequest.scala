@@ -26,6 +26,8 @@ abstract class WebSocketRequest {
 
   /**
    * Return a copy of this request that contains the given additional header.
+   * The opening handshake generates `Sec-WebSocket-Key` and `Sec-WebSocket-Version` itself,
+   * so additional headers with these names are not sent.
    */
   def addHeader(header: HttpHeader): WebSocketRequest
 

@@ -274,13 +274,18 @@ private[http] object Handshake {
       val protocol =
         if (subprotocols.nonEmpty) `Sec-WebSocket-Protocol`(subprotocols) :: Nil
         else Nil
-      // version, protocol, extensions, origin
+
+      // These singleton fields are generated for the handshake (RFC 6455 sections 11.3.1 and 11.3.5).
+      val additionalHeaders = extraHeaders.filterNot { header =>
+        val name = header.lowercaseName
+        name == `Sec-WebSocket-Key`.lowercaseName || name == `Sec-WebSocket-Version`.lowercaseName
+      }
 
       val headers = Seq(
         UpgradeHeader,
         ConnectionUpgradeHeader,
         key,
-        SecWebSocketVersionHeader) ++ protocol ++ extraHeaders
+        SecWebSocketVersionHeader) ++ protocol ++ additionalHeaders
 
       (HttpRequest(HttpMethods.GET, uri.toRelative, headers), key)
     }
