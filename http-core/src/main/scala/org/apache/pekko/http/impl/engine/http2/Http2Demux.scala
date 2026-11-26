@@ -430,6 +430,12 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       setHandler(frameIn,
         new InHandler {
 
+          override def onUpstreamFinish(): Unit = {
+            // Default stage completion completes open sub-sources before postStop can fail them.
+            if (!isServer) failOpenIncomingEntities()
+            super.onUpstreamFinish()
+          }
+
           def onPush(): Unit = {
             val frame = grab(frameIn)
             frame match {

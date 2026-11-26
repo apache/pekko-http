@@ -66,6 +66,13 @@ Java
 
 The Apache Pekko HTTP client doesn't support HTTP/1 to HTTP/2 negotiation over plaintext using the `Upgrade` mechanism.
 
+If the HTTP/2 connection reaches end-of-input normally while a delivered response entity is still open, consuming
+that entity fails with a connection-aborted `IllegalStateException`. Receiving response headers does not guarantee
+that the full response body is available to the application. This also applies when the peer has already ended the
+response stream but some of its data is still buffered and has not reached the application when the connection closes.
+
+This behavior applies only to HTTP/2 client response entities, not to HTTP/2 server request entities.
+
 ## Limiting managed persistent connection lifetime
 
 Managed persistent HTTP/2 clients can periodically retire long-lived connections so that later requests establish
