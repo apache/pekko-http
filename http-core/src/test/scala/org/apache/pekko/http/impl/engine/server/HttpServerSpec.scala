@@ -113,6 +113,45 @@ class HttpServerSpec extends PekkoSpec(
         shutdownBlueprint()
       })
 
+    "write the entire chunked response before closing when the application asks to close" in
+    assertAllStagesStopped(new TestSetup {
+      send("""GET /stream HTTP/1.1
+             |Host: example.com
+             |
+             |""")
+
+      val request = expectRequest()
+      request.method shouldBe GET
+      request.uri shouldBe Uri("http://example.com/stream")
+      request.header[Connection] shouldBe None
+
+      val body = TestPublisher.probe[ChunkStreamPart]()
+      responses.sendNext(HttpResponse(
+        headers = List(Connection("close")),
+        entity = Chunked(ContentTypes.`text/plain(UTF-8)`, Source.fromPublisher(body))))
+      expectResponseWithWipedDate(
+        """HTTP/1.1 200 OK
+          |Server: pekko-http/test
+          |Date: XXXX
+          |Connection: close
+          |Transfer-Encoding: chunked
+          |Content-Type: text/plain; charset=UTF-8
+          |
+          |""")
+
+      body.sendNext(Chunk("hello"))
+      netOut.expectUtf8EncodedString("5\r\nhello\r\n")
+      body.sendNext(Chunk("world"))
+      netOut.expectUtf8EncodedString("5\r\nworld\r\n")
+      body.sendComplete()
+      netOut.expectUtf8EncodedString("0\r\n\r\n")
+      netOut.expectComplete()
+
+      netIn.sendComplete()
+      requests.expectComplete()
+      responses.sendComplete()
+    })
+
     "deliver a request as soon as all headers are received" in assertAllStagesStopped(new TestSetup {
       send("""POST / HTTP/1.1
              |Host: example.com
