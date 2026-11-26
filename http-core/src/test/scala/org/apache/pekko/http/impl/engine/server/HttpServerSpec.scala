@@ -589,6 +589,47 @@ class HttpServerSpec extends PekkoSpec(
       shutdownBlueprint()
     })
 
+    "associate responses with outstanding GET, HEAD and GET requests in order" in assertAllStagesStopped(
+      new TestSetup {
+        override def settings = super.settings.withPipeliningLimit(3).withTransparentHeadRequests(false)
+
+        val exchanges = List(
+          (GET, "/first", "first", "first GET body"),
+          (HEAD, "/metadata", "metadata", "HEAD representation"),
+          (GET, "/last", "last", "last GET body"))
+        val input = exchanges.map { case (method, path, _, _) =>
+          s"${method.value} $path HTTP/1.1\nHost: example.com\n\n"
+        }.mkString
+
+        try {
+          requests.request(exchanges.size)
+          send(input)
+          // All three method contexts are outstanding before the application emits its first response.
+          requests.expectNextN(exchanges.size).map(req => req.method -> req.uri.path.toString) shouldEqual
+          exchanges.map { case (method, path, _, _) => method -> path }
+
+          for ((method, _, tag, body) <- exchanges) {
+            val entity = HttpEntity(body)
+            responses.sendNext(HttpResponse(headers = List(ETag(tag)), entity = entity))
+            val content = if (method == HEAD) "" else body
+            expectResponseWithWipedDate(
+              s"""HTTP/1.1 200 OK
+                 |ETag: "$tag"
+                 |Server: pekko-http/test
+                 |Date: XXXX
+                 |Content-Type: text/plain; charset=UTF-8
+                 |Content-Length: ${entity.data.length}
+                 |
+                 |$content""")
+          }
+        } finally {
+          netIn.sendComplete()
+          requests.cancel()
+          responses.sendComplete()
+          netOut.cancel()
+        }
+      })
+
     "not emit entities when responding to HEAD requests if transparent-head-requests is enabled (with Strict)" in
     assertAllStagesStopped(
       new TestSetup {
