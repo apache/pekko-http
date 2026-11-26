@@ -132,6 +132,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
 
   def isClientReadClosed: Boolean
+  def isPeerRetiring: Boolean
 
   /** Called when all streams in StreamHandling buffers are closed and the stage is completing. */
   def onAllStreamsClosed(): Unit
@@ -291,6 +292,33 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
     ret
   }
+
+  /** Remove only requests beyond the accepted boundary. Never replay their application sources. */
+  def rejectClientRequestsAfter(lastStreamId: Int): Boolean = {
+    var unanswered = false
+    streamStates.keysIterator.filter(_ > lastStreamId).toVector.foreach { id =>
+      updateState(id.toInt,
+        state => {
+          state match {
+            case _: OpenSendingData | _: HalfClosedLocalWaitingForPeerStream | _: CollectingIncomingData =>
+              unanswered = true
+            case _ =>
+          }
+          state.shutdown()
+          Closed
+        }, "rejectClientRequest")
+    }
+    unanswered
+  }
+
+  /** Whether every accepted response is finished on the wire, independently of application entity consumption. */
+  def clientResponsesFinished: Boolean = streamStates.valuesIterator.forall {
+    case receiving: ReceivingDataWithBuffer => receiving.canDrainAfterClientReadClosed
+    case _: HalfClosedRemoteSendingData     => true
+    case _                                  => false
+  }
+
+  def clientUploadsFinished: Boolean = !streamStates.valuesIterator.exists(_.isInstanceOf[Sending])
 
   /** Retain only complete incoming client entities and report whether a request had no final response. */
   def retainCompletedClientEntities(): Boolean = {
@@ -855,6 +883,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       debug(s"Incoming side of stream [$streamId]: cancelling because downstream finished")
       // For a client that is draining after read EOF, the writer has already been retired.
       if (!isClientReadClosed) multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
+      if (isPeerRetiring) streamStates.getOrNull(streamId) match {
+        case sending: Sending => sending.cancelSending()
+        case _                =>
+      }
       wasClosed = true
       discardBuffer()
       trailingHeaders = None

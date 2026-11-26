@@ -95,6 +95,19 @@ The default maximum age is `infinite`, which disables age-based retirement. The 
 programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
 `Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
 
+## Peer-initiated connection retirement
+
+When the server sends a graceful `GOAWAY`, the HTTP/2 client stops opening streams on that connection.
+Requests already accepted by the server can finish their uploads and receive their responses. A later
+`GOAWAY` can reduce the set of accepted streams. See [RFC 9113, section 6.8](https://www.rfc-editor.org/rfc/rfc9113.html#section-6.8).
+
+Once the accepted responses have finished on the wire, the managed client can send new requests on a replacement
+connection, even while a previously accepted upload finishes on the old connection. It does not replay requests
+already dispatched on the old one: a request left without a response receives the usual
+`502 Bad Gateway`. You can still consume a fully received response body after the old connection closes.
+The client's `completion-timeout` bounds draining from the first graceful `GOAWAY`, unless an earlier
+connection completion deadline applies.
+
 ## Consuming responses after the peer closes
 
 When the client observes clean transport read EOF after a complete HTTP/2 response has arrived, it can still

@@ -235,7 +235,7 @@ private[http2] object PersistentConnection {
               else if (!hasBeenPulled(requestIn)) pull(requestIn)
 
             override def onDownstreamFinish(cause: Throwable): Unit =
-              if (cause eq Http2Demux.IncomingReadComplete) {
+              if (cause eq Http2Demux.RequestAdmissionClosed) {
                 if (!disconnected) stopAcceptingRequests()
               } else onDisconnected()
           })
