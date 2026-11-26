@@ -192,6 +192,11 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
         s"Connection: foo,${newLine} bar${newLine}x") shouldEqual Connection("foo", "bar")
     }
 
+    "trim surrounding optional whitespace without collapsing spaces inside a raw field value" in new TestSetup() {
+      val fieldLine = s"X-Label: \t spring  menu \t $newLine"
+      parseLine(fieldLine + newLine) shouldEqual (fieldLine.length -> RawHeader("X-Label", "spring  menu"))
+    }
+
     "parse and cache a header with a tab char in the value" in new TestSetup() {
       parseAndCache(s"Fancy: foo\tbar${newLine}x")() shouldEqual RawHeader("Fancy", "foo bar")
     }
