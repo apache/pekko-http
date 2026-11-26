@@ -85,6 +85,12 @@ testing of the WebSocket handler's behavior if the request was accepted.
 
 See the @github[full routing example](/docs/src/test/java/docs/http/javadsl/server/WebSocketCoreExample.java).
 
+For browser-facing endpoints, your application decides which origins to allow. Wrap `handleWebSocketMessages` with
+@ref[checkSameOrigin](../routing-dsl/directives/header-directives/checkSameOrigin.md#example) and an explicit allowlist
+to check the origin before accepting the upgrade. The linked examples cover Scala and Java.
+`checkSameOrigin` rejects requests without an `Origin` header, including requests from non-browser clients that omit it.
+Origin checks do not replace authentication or authorization.
+
 ## WebSocketUpgrade
 
 To handle websocket requests, you can either use the @apidoc[WebSocketUpgrade] attribute directly, or
@@ -92,6 +98,9 @@ use the more high-level @ref[Routing Support](#routing-support) described above.
 
 The entrypoint for the WebSocket API is the @apidoc[WebSocketUpgrade] attribute which is added to a request
 if Apache Pekko HTTP encounters a WebSocket upgrade request.
+
+The attribute does not check the request's `Origin` against your application's policy.
+If you use the attribute directly, enforce that policy yourself before accepting the upgrade.
 
 The WebSocket specification mandates that details of the WebSocket connection are negotiated by placing special-purpose
 HTTP headers into request and response of the HTTP upgrade. In Apache Pekko HTTP these HTTP-level details of the WebSocket
