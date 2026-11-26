@@ -19,6 +19,10 @@ import org.apache.pekko
 import pekko.annotation.ApiMayChange
 import pekko.http.javadsl.{ model => jm }
 
+/**
+ * Trailing header fields for outgoing HTTP/2 requests and responses.
+ * Attach them to the message with the `AttributeKeys.trailer` attribute.
+ */
 class Trailer(@ApiMayChange val headers: Seq[(String, String)]) extends jm.Trailer {
 
   /**

@@ -17,7 +17,10 @@ import scala.jdk.CollectionConverters._
 
 import org.apache.pekko.http.scaladsl.{ model => sm }
 
-/** Trailing headers for HTTP/2 responses */
+/**
+ * Trailing header fields for outgoing HTTP/2 requests and responses.
+ * Attach them to the message with the `AttributeKeys.trailer` attribute.
+ */
 trait Trailer {
 
   /**
