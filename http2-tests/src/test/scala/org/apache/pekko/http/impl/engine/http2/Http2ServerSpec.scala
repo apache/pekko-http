@@ -2338,6 +2338,38 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
 
     }
     "support graceful shutdown" should {
+      "acknowledge a client GOAWAY and close an idle connection".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          user.requestIn.ensureSubscription()
+
+          network.sendFrame(GoAwayFrame(0, ErrorCode.NO_ERROR, ByteString.empty))
+          network.expectGOAWAY(0)._2 shouldBe ErrorCode.NO_ERROR
+          expectGracefulCompletion()
+        })
+      "drain a client request after its GOAWAY and flush the response trailers".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          network.sendRequestHEADERS(1, HttpRequest(method = HttpMethods.POST), endStream = false)
+          val request = user.expectRequest()
+          val body = ByteStringSinkProbe(request.entity.dataBytes)
+
+          // The client has not accepted any server-initiated streams; that does not exclude request 1.
+          network.sendFrame(GoAwayFrame(0, ErrorCode.NO_ERROR, ByteString.empty))
+          network.expectGOAWAY(1)._2 shouldBe ErrorCode.NO_ERROR
+          network.sendDATA(1, endStream = true, ByteString("request"))
+          body.expectUtf8EncodedString("request")
+          body.expectComplete()
+          val credit = network.expect[WindowUpdateFrame]()
+          credit.streamId shouldBe 0
+
+          val response = HttpEntity.Chunked(
+            ContentTypes.`application/octet-stream`,
+            Source(List(HttpEntity.Chunk("response"), HttpEntity.LastChunk(trailer = Seq(RawHeader("x-end", "done"))))))
+          user.emitResponse(1, HttpResponse(entity = response))
+          network.expectDecodedHEADERS(1, endStream = false)
+          network.expectDATA(1, endStream = false, ByteString("response"))
+          network.expectDecodedHEADERS(1).headers shouldBe Seq(RawHeader("x-end", "done"))
+          expectGracefulCompletion()
+        })
       "close when the last request entity is cancelled during graceful shutdown".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           network.sendRequestHEADERS(1, HttpRequest(), endStream = false)

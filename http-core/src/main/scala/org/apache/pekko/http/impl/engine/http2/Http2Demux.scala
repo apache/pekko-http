@@ -482,6 +482,11 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
               // are enforced from the start of the connection so there's no need to invoke
               // `enforceSettings(initialLocalSettings)`
 
+              case GoAwayFrame(_, ErrorCode.NO_ERROR, _) if isServer =>
+                // The client's last stream ID covers server-initiated streams (push is not supported).
+                // Use our own last accepted client stream ID to drain requests and close the connection.
+                if (!terminating) triggerTermination(maxConnectionAgeGrace)
+
               case GoAwayFrame(lastStreamId, errorCode, _) if !isServer =>
                 if (errorCode == ErrorCode.NO_ERROR) {
                   val firstGoAway = !isPeerRetiring
