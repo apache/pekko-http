@@ -1441,8 +1441,8 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           // now increase SETTINGS_INITIAL_WINDOW_SIZE so that all data fits into WINDOW
           network.sendSETTING(Http2Protocol.SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, bytesToSend)
           network.updateFromServerWindows(TheStreamId, _ + missingWindow) // test probe doesn't automatically update window
+          network.expectSettingsAck()
           network.expectDATA(TheStreamId, false, missingWindow)
-          network.expectSettingsAck() // FIXME: bug: we must send ACK before making use of the new setting, see https://github.com/akka/akka-http/issues/3553
 
           entityDataOut.sendComplete()
           network.expectDATA(TheStreamId, true, 0)
