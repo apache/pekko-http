@@ -18,6 +18,7 @@ import javax.net.ssl.SSLContext
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.concurrent.Promise
 import scala.concurrent.duration._
 
 import org.apache.pekko
@@ -53,6 +54,7 @@ import pekko.http.scaladsl.model.headers.CacheDirectives._
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.stream.Attributes
 import pekko.stream.Attributes.LogLevels
+import pekko.stream.OverflowStrategy
 import pekko.stream.scaladsl.BidiFlow
 import pekko.stream.scaladsl.Flow
 import pekko.stream.scaladsl.Sink
@@ -851,6 +853,67 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
     }
 
     "respect settings" should {
+      "continue an active upload while another request waits for its stream slot" in
+      StreamTestKit.assertAllStagesStopped {
+        val waitingRequest = Get("https://www.example.com/waiting")
+        val waitingAtClientInput = Promise[Unit]()
+        val pulledByClient = Promise[Unit]()
+        def observeWaitingRequest(observed: Promise[Unit]): Flow[HttpRequest, HttpRequest, NotUsed] =
+          Flow[HttpRequest].map { request =>
+            if (request eq waitingRequest) observed.success(())
+            request
+          }
+
+        val setup = new TestSetup(Setting(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, 1)) with NetProbes {
+          override def modifyClient(client: BidiFlow[HttpRequest, ByteString, ByteString, HttpResponse, NotUsed]) =
+            BidiFlow.fromFlows(
+              observeWaitingRequest(waitingAtClientInput)
+                .buffer(1, OverflowStrategy.backpressure)
+                .via(observeWaitingRequest(pulledByClient)),
+              Flow[HttpResponse]).atop(client)
+        }
+        import setup._
+
+        val upload = TestPublisher.probe[ByteString]()
+        try {
+          user.emitRequest(Post("https://www.example.com/upload",
+            HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(upload))))
+          val postHeaders = network.expectDecodedResponseHEADERSPairs(1, endStream = false).toMap
+          (postHeaders should contain).allOf(":method" -> "POST", ":path" -> "/upload")
+          val firstPart = ByteString("first part")
+          upload.sendNext(firstPart)
+          network.expectDATA(1, endStream = false, firstPart)
+
+          user.emitRequest(waitingRequest)
+          waitingAtClientInput.future.futureValue
+          val lastPart = ByteString("last part")
+          upload.sendNext(lastPart)
+          network.expectDATA(1, endStream = false, lastPart)
+          upload.sendComplete()
+          network.expectDATA(1, endStream = true, ByteString.empty)
+
+          // The GET has reached the client input buffer, not the demux, which only pulls when it has capacity.
+          // Use the ACK as a checkpoint without changing the limit: even now that the upload is half-closed,
+          // the client must still not have pulled the GET or opened its stream.
+          network.sendFrame(SettingsFrame(Nil))
+          network.expectSettingsAck()
+          pulledByClient.isCompleted shouldBe false
+          network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "201")))
+          user.expectResponse().status shouldBe StatusCodes.Created
+
+          val getHeaders = network.expectDecodedResponseHEADERSPairs(3, endStream = true).toMap
+          (getHeaders should contain).allOf(":method" -> "GET", ":path" -> "/waiting")
+          network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "200")))
+          user.expectResponse().status shouldBe StatusCodes.OK
+
+          user.requestOut.sendComplete()
+          setup.expectGracefulCompletion()
+        } finally {
+          network.fromNet.sendComplete()
+          network.toNet.cancel()
+        }
+      }
+
       "received SETTINGS_MAX_CONCURRENT_STREAMS should limit the number of outgoing streams".inAssertAllStagesStopped(
         new TestSetup(
           Setting(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, 3)) with NetProbes {
