@@ -36,7 +36,10 @@ class FormDataSpec extends PekkoSpec {
         "&&" -> List.empty[(String, String)],
         "=" -> List("" -> ""),
         "=x" -> List("" -> "x"),
-        "a=1&=&=x" -> List("a" -> "1", "" -> "", "" -> "x"))
+        "a=1&=&=x" -> List("a" -> "1", "" -> "", "" -> "x"),
+        // The two-byte source chunks split both percent escapes in the UTF-8 value.
+        "item=tea&kind=drink&item=caf%C3%A9&item=milk" ->
+        List("item" -> "tea", "kind" -> "drink", "item" -> "café", "item" -> "milk"))
       streamed <- Seq(false, true)
     } {
       s"interpret ordinary form components '$encoded' (streamed = $streamed)" in {
