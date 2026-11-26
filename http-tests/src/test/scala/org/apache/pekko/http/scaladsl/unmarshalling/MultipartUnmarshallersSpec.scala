@@ -495,6 +495,27 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
         }
       }
 
+      if (lineFeed == "\r\n") {
+        for ((entityName, buildEntity) <- entityBuilders) {
+          s"preserve carriage returns at the end of a form-data part ($entityName)" in {
+            val boundary = "trailing-cr"
+            val header = ByteString(
+              s"--$boundary$lineFeed" +
+              s"""Content-Disposition: form-data; name="note"$lineFeed""" +
+              s"Content-Type: application/octet-stream$lineFeed$lineFeed")
+            val end = ByteString(s"$lineFeed--$boundary--$lineFeed")
+
+            for (count <- 0 to 3) {
+              // The delimiter's CRLF is not part of the body; the preceding carriage returns are.
+              val data = ByteString("note" + "\r" * count)
+              val entity = buildEntity(`multipart/form-data`.withBoundary(boundary), header ++ data ++ end)
+              Unmarshal(entity).to[Multipart.FormData] should haveParts(
+                Multipart.FormData.BodyPart.Strict("note", HttpEntity(`application/octet-stream`, data)))
+            }
+          }
+        }
+      }
+
       "with a percent-encoded filename, exposed raw and decoded on request" in {
         val parts = Unmarshal(HttpEntity(
           `multipart/form-data`.withBoundary("XYZABC"),
