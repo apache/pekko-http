@@ -16,7 +16,14 @@ package org.apache.pekko.http.impl.engine.http2
 import scala.concurrent.duration._
 
 import org.apache.pekko
-import pekko.http.impl.engine.http2.FrameEvent.{ ParsedHeadersFrame, Setting, SettingsAckFrame, SettingsFrame }
+import pekko.http.impl.engine.http2.FrameEvent.{
+  DataFrame,
+  ParsedHeadersFrame,
+  Setting,
+  SettingsAckFrame,
+  SettingsFrame,
+  WindowUpdateFrame
+}
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.rendering.DateHeaderRendering
@@ -164,6 +171,61 @@ class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
       } finally {
         frameConsumer.cancel()
         requestConsumer.cancel()
+      }
+    }
+
+    "release only the response on the stream granted more send credit" in {
+      val bidi = BidiFlow.fromGraph(new Http2ServerDemux(Http2ServerSettings(""), Nil, upgraded = false))
+      val ((responses, (outgoingFrames, incomingFrames)), requests) = TestSource[Http2SubStream]()
+        .viaMat(bidi.joinMat(Flow.fromSinkAndSourceMat(TestSink[FrameEvent](), TestSource[FrameEvent]())(
+          Keep.both))(Keep.right))(Keep.both)
+        .toMat(TestSink[Http2SubStream]())(Keep.both)
+        .run()
+
+      try {
+        outgoingFrames.request(8)
+        requests.request(2)
+        outgoingFrames.expectNext() shouldBe a[SettingsFrame]
+        val initialCredit = 2
+        val remoteSettings = Seq(Setting(SettingIdentifier.SETTINGS_INITIAL_WINDOW_SIZE, initialCredit))
+        incomingFrames.sendNext(SettingsFrame(remoteSettings))
+        outgoingFrames.expectNext() shouldBe SettingsAckFrame(remoteSettings)
+        incomingFrames.sendNext(SettingsAckFrame(Nil))
+
+        def startResponse(streamId: Int, data: ByteString): Unit = {
+          val uri = Uri(s"https://example.test/response-$streamId")
+          val request = ParsedHeadersFrame(streamId, endStream = true,
+            Seq(
+              ":method" -> HttpMethods.GET,
+              ":scheme" -> uri.scheme,
+              ":authority" -> uri.authority,
+              ":path" -> (uri.path, uri.rawQueryString)), None, None)
+          incomingFrames.sendNext(request)
+          requests.expectNext().initialHeaders shouldBe request
+
+          val response = ParsedHeadersFrame(streamId, endStream = false, Seq(":status" -> "200"), None, None)
+          responses.sendNext(Http2SubStream(response, OptionVal.None, Left(data), Map.empty))
+          outgoingFrames.expectNext() shouldBe response
+          outgoingFrames.expectNext() shouldBe DataFrame(streamId, endStream = false, data.take(initialCredit))
+        }
+
+        val firstData = ByteString("alpha")
+        val secondData = ByteString("orange")
+        startResponse(1, firstData)
+        startResponse(3, secondData)
+
+        val firstRemainder = firstData.drop(initialCredit)
+        incomingFrames.sendNext(WindowUpdateFrame(1, firstRemainder.length))
+        outgoingFrames.expectNext() shouldBe DataFrame(1, endStream = true, firstRemainder)
+        // Demand is still pending on the connection; response 3 needs a grant of its own.
+        outgoingFrames.expectNoMessage(100.millis)
+
+        val secondRemainder = secondData.drop(initialCredit)
+        incomingFrames.sendNext(WindowUpdateFrame(3, secondRemainder.length))
+        outgoingFrames.expectNext() shouldBe DataFrame(3, endStream = true, secondRemainder)
+      } finally {
+        outgoingFrames.cancel()
+        requests.cancel()
       }
     }
   }
