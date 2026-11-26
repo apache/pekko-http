@@ -758,6 +758,35 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         s"Malformed request: HTTP message must not contain more than one content-length header")
     }
 
+    // RFC 9110 section 8.6: Content-Length = 1*DIGIT. The stream handling accounts DATA against the same values.
+    "accept a content-length of up to Long.MaxValue, also with leading zeros" in {
+      Seq(Long.MaxValue.toString, "0000000000000000000000123").foreach { value =>
+        parseExpectOk(
+          keyValuePairs = Vector(
+            ":method" -> "POST",
+            ":scheme" -> "https",
+            ":authority" -> "localhost:8000",
+            ":path" -> "/",
+            "content-length" -> value))
+      }
+    }
+
+    "reject a content-length that is not plain digits or exceeds Long.MaxValue" in {
+      Seq("9223372036854775808", "99999999999999999999", "+5", "-5", "-0", "5a", "0x5", "abc", "").foreach { value =>
+        withClue(s"content-length '$value': ") {
+          val info = parseExpectError(
+            keyValuePairs = Vector(
+              ":method" -> "POST",
+              ":scheme" -> "https",
+              ":authority" -> "localhost:8000",
+              ":path" -> "/",
+              "content-length" -> value))
+          info.summary should ===(
+            "Malformed request: content-length must be a non-negative number of at most 9223372036854775807")
+        }
+      }
+    }
+
     "reject requests with multiple content type headers" in {
       val info = parseExpectError(
         keyValuePairs = Vector(
