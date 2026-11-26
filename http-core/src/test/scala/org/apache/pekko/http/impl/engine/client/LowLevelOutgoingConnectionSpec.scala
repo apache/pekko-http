@@ -634,17 +634,20 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
         netInSub.expectCancellation()
       }
 
-      "catch a response start truncation" in new TestSetup {
-        sendStandardRequest()
-        sendWireData("HTTP/1.1 200 OK")
-        netInSub.sendComplete()
+      for ((phase, lineEnding) <- List(
+          "before the status line ends" -> "",
+          "after the status line but before the headers end" -> "\r\n"))
+        s"catch a response start truncation $phase" in new TestSetup {
+          sendStandardRequest()
+          sendWireData(s"HTTP/1.1 200 OK$lineEnding")
+          netInSub.sendComplete()
 
-        responsesSub.request(1)
-        val error @ IllegalResponseException(info) = responses.expectError()
-        info.summary shouldEqual "Illegal HTTP message start"
-        netOut.expectError(error)
-        requestsSub.expectCancellation()
-      }
+          responsesSub.request(1)
+          val error @ IllegalResponseException(info) = responses.expectError()
+          info.summary shouldEqual "Illegal HTTP message start"
+          netOut.expectError(error)
+          requestsSub.expectCancellation()
+        }
     }
 
     def isDefinedVia = afterWord("is defined via")
