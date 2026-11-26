@@ -341,6 +341,40 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           val headerPayload = network.expectHeaderBlock(1)
           headerPayload shouldBe HPackSpecExamples.C61FirstResponseWithHuffman
         })
+
+      "assemble a GET request from a padded HEADERS frame and its CONTINUATION".inAssertAllStagesStopped(
+        new TestSetup with RequestResponseProbes {
+          val streamId = 1
+          val uri = Uri("https://www.example.com/padded")
+          val note = RawHeader("x-note", "continued")
+          val headerBlock = network.encodeHeaderPairs(Seq(
+            ":method" -> "GET",
+            ":scheme" -> uri.scheme,
+            ":authority" -> uri.authority.toString,
+            ":path" -> uri.path.toString,
+            note.name -> note.value))
+          val (first, rest) = headerBlock.splitAt(headerBlock.length / 2)
+          val padding = ByteString(0, 0, 0)
+          val paddedFirst = ByteString(padding.length.toByte) ++ first ++ padding
+
+          // Keep demand open so a request emitted before END_HEADERS, or emitted twice, is observable.
+          user.requestIn.request(2)
+          network.sendFrame(FrameType.HEADERS, Flags.END_STREAM | Flags.PADDED, streamId, paddedFirst)
+          user.requestIn.expectNoMessage(100.millis)
+          network.sendCONTINUATION(streamId, endHeaders = true, rest)
+
+          val request = user.requestIn.expectNext()
+          request.method shouldBe HttpMethods.GET
+          request.uri shouldBe uri
+          request.headers should contain(note)
+          request.entity.isKnownEmpty shouldBe true
+          request.attribute(Http2.streamId) shouldBe Some(streamId)
+
+          user.emitResponse(streamId, HttpResponse())
+          network.expectDecodedResponseHEADERSPairs(streamId).toMap should contain(":status" -> "200")
+          user.requestIn.expectNoMessage(100.millis)
+        })
+
       "GET request in one HEADERS and two CONTINUATION frames".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
           val headerBlock = HPackSpecExamples.C41FirstRequestWithHuffman
