@@ -17,6 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.pekko.http.scaladsl.model.IllegalUriException;
 import org.apache.pekko.japi.Pair;
@@ -96,6 +98,14 @@ public class UriTest {
     Uri uri = Uri.create("http://foo.com").query(Query.create(Pair.create("foo", "bar")));
     // #create-uri-with-query
     assertEquals(Optional.of("foo=bar"), uri.rawQueryString());
+  }
+
+  @Test
+  public void testQueryToMultiMapPreservesRepeatedParameterOrder() {
+    Query query = Uri.create("/search?tag=red&language=en&tag=green&tag=blue").query();
+    assertEquals(
+        Map.of("tag", List.of("red", "green", "blue"), "language", List.of("en")),
+        query.toMultiMap());
   }
 
   @Test
