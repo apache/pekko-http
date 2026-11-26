@@ -64,6 +64,13 @@ Java
 
 The Apache Pekko HTTP client doesn't support HTTP/1 to HTTP/2 negotiation over plaintext using the `Upgrade` mechanism.
 
+## Receive credit for independent streams
+
+Use `pekko.http.client.http2.incoming-flow-control-isolated-streams` to limit how much receive space paused
+response bodies can occupy on one Pekko HTTP client connection. It is off by default and follows the same
+@ref:[budget rules as on the server](../server-side/http2.md#receive-credit-for-independent-streams).
+In Pekko gRPC this setting applies only when the client uses the Pekko HTTP backend, not the Netty backend.
+
 ## Limiting managed persistent connection lifetime
 
 Managed persistent HTTP/2 clients can periodically retire long-lived connections so that later requests establish
