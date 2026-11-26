@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
+import scala.concurrent.Promise
 import scala.concurrent.duration._
 
 import org.apache.pekko
@@ -32,6 +33,7 @@ import pekko.http.scaladsl.model.{
   ContentTypes,
   HttpEntity,
   HttpMethods,
+  HttpProtocol,
   HttpRequest,
   HttpResponse,
   ResponseEntity,
@@ -201,6 +203,46 @@ class FlowCoderSpec extends PekkoSpecWithMaterializer("") with Directives {
         decoded.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated).data shouldBe bytes
       }
       allocations.get() shouldBe 2
+    }
+
+    "decode an HTTP/2 streamed request with a route-local flow coder" in {
+      val timeout = 3.seconds.dilated
+      val http = pekko.http.scaladsl.Http()
+      val http2 = pekko.http.scaladsl.model.HttpProtocols.`HTTP/2.0`
+      val coder = Coders.fromFlows(token, Compression.gzip, n => Compression.gzipDecompress(n))
+      val contentType = ContentTypes.`application/octet-stream`
+      val requestShape = Promise[(HttpProtocol, Boolean)]()
+      val route = post {
+        extractRequest { request =>
+          requestShape.trySuccess((request.protocol, request.entity.isStrict))
+          decodeRequestWith(coder) {
+            entity(as[ByteString]) { decoded => complete(HttpEntity(contentType, decoded)) }
+          }
+        }
+      }
+      val settings = pekko.http.scaladsl.settings.ServerSettings(system).withEnableHttp2(true)
+      val binding = http.newServerAt("127.0.0.1", 0).withSettings(settings)
+        .bind(Route.toFunction(route)).awaitResult(timeout)
+      try {
+        val encoded = independentGzip(bytes)
+        val (first, second) = encoded.splitAt(encoded.length / 2)
+        val request = HttpRequest(
+          method = HttpMethods.POST,
+          headers = List(`Content-Encoding`(token)),
+          entity = HttpEntity(contentType, Source(List(first, second))))
+        val connection = http.connectionTo("127.0.0.1").toPort(binding.localAddress.getPort)
+          .http2WithPriorKnowledge()
+        val response = Source.single(request).via(connection)
+          .mapAsync(1)(_.toStrict(timeout)(system.dispatcher, materializer))
+          .runWith(Sink.head).awaitResult(timeout)
+
+        val (incomingProtocol, incomingStrict) = requestShape.future.awaitResult(timeout)
+        incomingProtocol shouldBe http2
+        incomingStrict shouldBe false
+        response.protocol shouldBe http2
+        response.status shouldBe StatusCodes.OK
+        response.entity shouldBe HttpEntity(contentType, bytes)
+      } finally binding.terminate(1.second.dilated).awaitResult(timeout)
     }
 
     "retain per-route selection and supply the configured decoding output chunk size" in {
