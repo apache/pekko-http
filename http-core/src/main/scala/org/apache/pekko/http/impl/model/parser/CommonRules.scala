@@ -335,18 +335,45 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
 
   def `cookie-time-of-day` = rule { (digit2 | digit) ~ ':' ~ (digit2 | digit) ~ ':' ~ (digit2 | digit) }
 
-  // Copy of `IMF-fixdate` with `cookie-time-of-day` and the `-0000` zone: keep the two in sync.
+  // Accept complete English names as well as abbreviations in cookie month tokens (RFC 6265, section 5.1.1).
+  // This is a compatibility extension of the supported date shapes, not the full cookie-date token algorithm.
+  private def `cookie-month`: Rule1[Int] = rule {
+    ignoreCase("jan") ~ optional(ignoreCase("uary")) ~ push(1) |
+    ignoreCase("feb") ~ optional(ignoreCase("ruary")) ~ push(2) |
+    ignoreCase("mar") ~ optional(ignoreCase("ch")) ~ push(3) |
+    ignoreCase("apr") ~ optional(ignoreCase("il")) ~ push(4) |
+    ignoreCase("may") ~ push(5) |
+    ignoreCase("jun") ~ optional(ignoreCase("e")) ~ push(6) |
+    ignoreCase("jul") ~ optional(ignoreCase("y")) ~ push(7) |
+    ignoreCase("aug") ~ optional(ignoreCase("ust")) ~ push(8) |
+    ignoreCase("sep") ~ optional(ignoreCase("tember")) ~ push(9) |
+    ignoreCase("oct") ~ optional(ignoreCase("ober")) ~ push(10) |
+    ignoreCase("nov") ~ optional(ignoreCase("ember")) ~ push(11) |
+    ignoreCase("dec") ~ optional(ignoreCase("ember")) ~ push(12)
+  }
+
+  // Keep cookie-date1/2/3 in sync with date1/2/3 above, including the two-digit year mapping.
+  // Only the month rule differs.
+  private def `cookie-date1` = rule { day ~ `date-sep` ~ `cookie-month` ~ `date-sep` ~ year }
+
+  private def `cookie-date2` = rule {
+    day ~ '-' ~ `cookie-month` ~ '-' ~ (digit2 ~> (y => if (y <= 69) y + 2000 else y + 1900))
+  }
+
+  private def `cookie-date3` = rule { `cookie-month` ~ ' ' ~ (digit2 | ' ' ~ digit) }
+
+  // Copy of `IMF-fixdate` with cookie-specific month names, time width and the `-0000` zone.
   def `cookie-IMF-fixdate` = rule {
     (`day-name-l` | `day-name`) ~ ", " ~
-    (date1 | date2) ~ ' ' ~ `cookie-time-of-day` ~ ' ' ~
+    (`cookie-date1` | `cookie-date2`) ~ ' ' ~ `cookie-time-of-day` ~ ' ' ~
     ("GMT" | "UTC" | "-0000") ~> {
       (wkday, day, month, year, hour, min, sec) => createDateTime(year, month, day, hour, min, sec, wkday)
     }
   }
 
-  // Copy of `asctime-date` with `cookie-time-of-day` and an optional ` -0000` zone: keep the two in sync.
+  // Copy of `asctime-date` with cookie-specific month names, time width and an optional ` -0000` zone.
   def `cookie-asctime-date` = rule {
-    `day-name` ~ ' ' ~ date3 ~ ' ' ~ `cookie-time-of-day` ~ ' ' ~ year ~ optional(" -0000") ~> {
+    `day-name` ~ ' ' ~ `cookie-date3` ~ ' ' ~ `cookie-time-of-day` ~ ' ' ~ year ~ optional(" -0000") ~> {
       (wkday, month, day, hour, min, sec, year) => createDateTime(year, month, day, hour, min, sec, wkday)
     }
   }

@@ -335,7 +335,8 @@ warning message is logged depending on the value of the `illegal-header-warnings
 When parsing an obsolete RFC 850 HTTP date, Pekko HTTP interprets its two-digit year against the current UTC
 time: if the resolved time would be more than 50 years ahead, it uses the preceding century, as specified in
 [RFC 9110, Section 5.6.7](https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.7). This does not change
-the two-digit year rule for `Set-Cookie` expiry dates.
+the two-digit year rule for `Set-Cookie` expiry dates. In its supported `Set-Cookie` expiry date formats, Apache Pekko
+HTTP accepts full English month names and abbreviations case-insensitively. This does not change other HTTP date parsing.
 
 Some headers have special status in HTTP and are therefore treated differently from "regular" headers:
 
