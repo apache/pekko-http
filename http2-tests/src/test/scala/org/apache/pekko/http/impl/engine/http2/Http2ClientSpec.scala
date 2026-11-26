@@ -14,6 +14,8 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import java.io.IOException
+import java.net.InetSocketAddress
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.SSLContext
 
 import scala.concurrent.ExecutionContext
@@ -22,17 +24,21 @@ import scala.concurrent.Promise
 import scala.concurrent.duration._
 
 import org.apache.pekko
+import pekko.Done
 import pekko.NotUsed
 import pekko.event.Logging
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
+import pekko.http.impl.engine.http2.client.PersistentConnection
 import pekko.http.impl.engine.http2.framing.FrameRenderer
+import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.LogByteStringTools
 import pekko.http.impl.util.PekkoSpecWithMaterializer
+import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.client.RequestBuilding.Post
 import pekko.http.scaladsl.model._
@@ -51,12 +57,15 @@ import pekko.http.scaladsl.model.headers.{
   RawHeader
 }
 import pekko.http.scaladsl.model.headers.CacheDirectives._
+import pekko.http.scaladsl.model.http2.StreamIdExhaustedException
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.stream.Attributes
 import pekko.stream.Attributes.LogLevels
 import pekko.stream.OverflowStrategy
+import pekko.stream.QueueOfferResult
 import pekko.stream.scaladsl.BidiFlow
 import pekko.stream.scaladsl.Flow
+import pekko.stream.scaladsl.Keep
 import pekko.stream.scaladsl.Sink
 import pekko.stream.scaladsl.Source
 import pekko.stream.testkit.TestPublisher
@@ -65,6 +74,7 @@ import pekko.stream.testkit.scaladsl.StreamTestKit
 import pekko.stream.testkit.scaladsl.TestSink
 import pekko.testkit.EventFilter
 import pekko.testkit.TestDuration
+import pekko.testkit.TestProbe
 import pekko.util.ByteString
 
 import org.scalatest.concurrent.Eventually
@@ -87,6 +97,204 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
 
   override implicit val patience: PatienceConfig = PatienceConfig(5.seconds, 5.seconds)
   override def failOnSevereMessages: Boolean = true
+
+  "HTTP/2 client stream ID exhaustion" should {
+    val lastId = ClientStreamIds.Last
+    val penultimateId = lastId - 2
+
+    "allocate the final positive client ID once and keep exhaustion sticky" in {
+      val ids = new ClientStreamIds.Allocator(penultimateId)
+      ClientStreamIds.remainingFrom(ClientStreamIds.First) shouldBe 1073741824
+      ClientStreamIds.remainingFrom(penultimateId) shouldBe 2
+      ids.next() shouldBe penultimateId
+      ids.next() shouldBe Int.MaxValue
+      intercept[IllegalStateException](ids.next())
+      intercept[IllegalStateException](ids.next())
+      new ClientStreamIds.Allocator(ClientStreamIds.First).next() shouldBe 1
+    }
+
+    "close the direct request queue and drain both assigned responses, including a streaming entity" in
+    StreamTestKit.assertAllStagesStopped {
+      val peer = new StreamIdTestPeer(penultimateId)
+      val output = TestSubscriber.probe[HttpResponse]()
+      val (queue, source) = Source.queue[HttpRequest](4, OverflowStrategy.backpressure).preMaterialize()
+      queue.offer(HttpRequest(uri = "/older")).futureValue shouldBe QueueOfferResult.Enqueued
+      queue.offer(HttpRequest(uri = "/last")).futureValue shouldBe QueueOfferResult.Enqueued
+      // The queue accepted this locally before the connection even subscribed. That isn't protocol admission.
+      queue.offer(HttpRequest(uri = "/not-assigned")).futureValue shouldBe QueueOfferResult.Enqueued
+      val requestTermination = source.watchTermination(Keep.right)
+        .via(peer.flow).to(Sink.fromSubscriber(output)).run()
+      output.request(1)
+
+      peer.expectSettings()
+      peer.expectRequest(penultimateId, "/older")
+      peer.expectRequest(lastId, "/last")
+      requestTermination.failed.futureValue shouldBe a[StreamIdExhaustedException]
+      queue.watchCompletion().futureValue shouldBe Done
+      peer.acceptSettings()
+      peer.respond(lastId, "201", endStream = false)
+      val response = output.expectNext()
+      response.status shouldBe StatusCodes.Created
+      val payload = response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _)
+      peer.fromPeer.sendNext(DataFrame(lastId, endStream = true, ByteString("last response")))
+      payload.futureValue shouldBe ByteString("last response")
+      peer.respond(penultimateId, "200", endStream = true)
+      // Even after the transport closes, deliver the response buffered for downstream demand.
+      // No response is invented for the upstream-only queue item.
+      peer.toPeer.expectComplete()
+      peer.fromPeer.expectCancellation()
+      output.requestNext().status shouldBe StatusCodes.OK
+      output.expectComplete()
+    }
+
+    "bound a direct exhaustion drain by the existing completion timeout" in
+    StreamTestKit.assertAllStagesStopped {
+      val peer = new StreamIdTestPeer(lastId, 500.millis)
+      val input = TestPublisher.probe[HttpRequest]()
+      val output = TestSubscriber.probe[HttpResponse]()
+      val requestTermination = Source.fromPublisher(input).watchTermination(Keep.right)
+        .via(peer.flow).to(Sink.fromSubscriber(output)).run()
+      output.request(1)
+      peer.expectSettings()
+      input.sendNext(HttpRequest(uri = "/last"))
+      peer.expectRequest(lastId, "/last")
+      requestTermination.failed.futureValue shouldBe a[StreamIdExhaustedException]
+      input.expectCancellation()
+      // The peer leaves the last assigned request open, so only the existing timeout can end the drain.
+      output.expectComplete()
+      peer.toPeer.expectComplete()
+      peer.fromPeer.expectCancellation()
+    }
+
+    "preserve an ordinary transport failure during a direct exhaustion drain" in
+    StreamTestKit.assertAllStagesStopped {
+      val peer = new StreamIdTestPeer(lastId)
+      val input = TestPublisher.probe[HttpRequest]()
+      val output = TestSubscriber.probe[HttpResponse]()
+      val requestTermination = Source.fromPublisher(input).watchTermination(Keep.right)
+        .via(peer.flow).to(Sink.fromSubscriber(output)).run()
+      output.request(1)
+      peer.expectSettings()
+      input.sendNext(HttpRequest(uri = "/last"))
+      peer.expectRequest(lastId, "/last")
+      requestTermination.failed.futureValue shouldBe a[StreamIdExhaustedException]
+      input.expectCancellation()
+      val cause = new IOException("Transport stopped")
+      peer.fromPeer.sendError(cause)
+      output.expectError() shouldBe cause
+      peer.toPeer.expectError() shouldBe cause
+    }
+
+    "leave ordinary direct request-source completion unchanged before exhaustion" in
+    StreamTestKit.assertAllStagesStopped {
+      val firstId = ClientStreamIds.First
+      val peer = new StreamIdTestPeer(firstId)
+      val input = TestPublisher.probe[HttpRequest]()
+      val output = TestSubscriber.probe[HttpResponse]()
+      val requestTermination = Source.fromPublisher(input).watchTermination(Keep.right)
+        .via(peer.flow).to(Sink.fromSubscriber(output)).run()
+      output.request(1)
+      peer.expectSettings()
+      input.sendNext(HttpRequest(uri = "/ordinary"))
+      peer.expectRequest(firstId, "/ordinary")
+      input.sendComplete()
+      requestTermination.futureValue shouldBe Done
+      peer.acceptSettings()
+      peer.respond(firstId, "200", endStream = true)
+      output.expectNext().status shouldBe StatusCodes.OK
+      output.expectComplete()
+      peer.toPeer.expectComplete()
+      peer.fromPeer.expectCancellation()
+    }
+
+    "hand the managed connection's queued request to a replacement without replaying assigned requests" in
+    StreamTestKit.assertAllStagesStopped {
+      val connections = TestProbe()
+      val firstConnection = new AtomicBoolean(true)
+      val address = new InetSocketAddress("localhost", 12345)
+      val connected = Http.OutgoingConnection(address, address)
+      val replacementConnected = Promise[Http.OutgoingConnection]()
+      val connectionFlow = Flow.fromMaterializer { (_, _) =>
+        val first = firstConnection.getAndSet(false)
+        val firstId = if (first) penultimateId else ClientStreamIds.First
+        val peer = new StreamIdTestPeer(firstId)
+        connections.ref ! peer
+        peer.flow.mapMaterializedValue(_ => if (first) Future.successful(connected) else replacementConnected.future)
+      }.mapMaterializedValue(_.flatten)
+
+      val settings = ClientConnectionSettings(system)
+      val output = TestSubscriber.probe[HttpResponse]()
+      val queue = Source.queue[HttpRequest](4, OverflowStrategy.backpressure)
+        .via(PersistentConnection.managedConnection(connectionFlow, settings.http2Settings, penultimateId))
+        .to(Sink.fromSubscriber(output)).run()
+
+      output.request(3)
+      queue.offer(HttpRequest(method = HttpMethods.POST, uri = "/older")).futureValue shouldBe QueueOfferResult.Enqueued
+      queue.offer(HttpRequest(uri = "/last")).futureValue shouldBe QueueOfferResult.Enqueued
+      queue.offer(HttpRequest(uri = "/next")).futureValue shouldBe QueueOfferResult.Enqueued
+      queue.complete()
+
+      val previous = connections.expectMsgType[StreamIdTestPeer]
+      previous.expectSettings()
+      previous.expectRequest(penultimateId, "/older")
+      previous.expectRequest(lastId, "/last")
+      previous.acceptSettings()
+      connections.expectNoMessage(100.millis)
+      previous.respond(lastId, "201", endStream = true)
+      previous.respond(penultimateId, "200", endStream = true)
+      output.expectNext().status shouldBe StatusCodes.Created
+      output.expectNext().status shouldBe StatusCodes.OK
+      previous.toPeer.expectComplete()
+      previous.fromPeer.expectCancellation()
+
+      val replacement = connections.expectMsgType[StreamIdTestPeer]
+      replacement.expectSettings()
+      replacement.acceptSettings()
+      // The outer queue finishes while the replacement is still connecting. Its last element belongs to that
+      // pending connection attempt, not the retired connection and not a third connection.
+      queue.watchCompletion().futureValue shouldBe Done
+      output.expectNoMessage(100.millis)
+      replacementConnected.success(connected)
+      replacement.expectRequest(ClientStreamIds.First, "/next")
+      replacement.respond(ClientStreamIds.First, "204", endStream = true)
+      output.expectNext().status shouldBe StatusCodes.NoContent
+      output.expectComplete()
+      replacement.toPeer.expectComplete()
+      replacement.fromPeer.expectCancellation()
+    }
+  }
+
+  private final class StreamIdTestPeer(firstStreamId: Int, completionTimeout: FiniteDuration = 5.seconds) {
+    private val settings = ClientConnectionSettings(system)
+    private val parser = HttpHeaderParser(settings.parserSettings, system.log)
+    private val http2Settings = settings.http2Settings.withCompletionTimeout(completionTimeout)
+      .withIncomingConnectionLevelBufferSize(Http2Protocol.InitialWindowSize)
+      .withIncomingStreamLevelBufferSize(Http2Protocol.InitialWindowSize)
+    val fromPeer = TestPublisher.probe[FrameEvent]()
+    val toPeer = TestSubscriber.probe[FrameEvent]()
+    private val transport = Flow.fromSinkAndSource(Sink.fromSubscriber(toPeer), Source.fromPublisher(fromPeer))
+    val flow: Flow[HttpRequest, HttpResponse, NotUsed] =
+      Http2Blueprint.httpLayerClient(parser, settings, system.log, "https", Uri.Authority.Empty, firstStreamId)
+        .atop(Http2Blueprint.clientDemux(http2Settings, parser))
+        .join(transport)
+        .addAttributes(Http.cancellationStrategyAttributeForDelay(settings.streamCancellationDelay))
+
+    def expectSettings(): Unit = toPeer.requestNext() shouldBe a[SettingsFrame]
+
+    def acceptSettings(): Unit = {
+      fromPeer.sendNext(SettingsFrame(Nil))
+      toPeer.requestNext() shouldBe SettingsAckFrame(Nil)
+    }
+
+    def expectRequest(id: Int, path: String): Unit = {
+      val headers = toPeer.requestNext().asInstanceOf[ParsedHeadersFrame]
+      headers.streamId shouldBe id
+      headers.keyValuePairs should contain(":path" -> path)
+    }
+
+    def respond(id: Int, status: String, endStream: Boolean): Unit =
+      fromPeer.sendNext(ParsedHeadersFrame(id, endStream, Vector(":status" -> status), None, None))
+  }
 
   "The Http/2 client implementation" should {
     for {

@@ -199,10 +199,17 @@ private[http] object Http2Blueprint {
   def httpLayerClient(masterHttpHeaderParser: HttpHeaderParser, settings: ClientConnectionSettings, log: LoggingAdapter,
       connectionScheme: String, connectionAuthority: Uri.Authority)
       : BidiFlow[HttpRequest, Http2SubStream, Http2SubStream, HttpResponse, NotUsed] =
+    httpLayerClient(masterHttpHeaderParser, settings, log, connectionScheme, connectionAuthority, ClientStreamIds.First)
+
+  private[http2] def httpLayerClient(
+      masterHttpHeaderParser: HttpHeaderParser,
+      settings: ClientConnectionSettings,
+      log: LoggingAdapter,
+      connectionScheme: String,
+      connectionAuthority: Uri.Authority,
+      firstStreamId: Int): BidiFlow[HttpRequest, Http2SubStream, Http2SubStream, HttpResponse, NotUsed] =
     BidiFlow.fromFlows(
-      Flow[HttpRequest].statefulMap(() =>
-        new RequestRendering(settings, log, connectionScheme, connectionAuthority))((renderer, request) =>
-          (renderer, renderer(request)), _ => None),
+      Flow.fromGraph(new ClientRequestRendering(settings, log, connectionScheme, connectionAuthority, firstStreamId)),
       StreamUtils.statefulAttrsMap[Http2SubStream, HttpResponse] { attrs =>
         val headerParser = masterHttpHeaderParser.createShallowCopy()
         stream => ResponseParsing.parseResponse(headerParser, settings.parserSettings, attrs)(stream)

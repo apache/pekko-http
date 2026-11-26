@@ -35,3 +35,14 @@ class PeerClosedStreamException(val streamId: Int, val errorCode: String, val nu
     with NoStackTrace {
   private[http] def this(streamId: Int, errorCode: ErrorCode) = this(streamId, errorCode.toString, errorCode.id)
 }
+
+/**
+ * A direct HTTP/2 client connection has used all of its locally available stream identifiers. Create a new
+ * connection for subsequent requests. A request that was only buffered upstream may not have been assigned.
+ *
+ * @since 2.1.0
+ */
+@ApiMayChange
+final class StreamIdExhaustedException
+    extends Http2Exception("No HTTP/2 client stream identifiers remain; create a new connection")
+    with NoStackTrace

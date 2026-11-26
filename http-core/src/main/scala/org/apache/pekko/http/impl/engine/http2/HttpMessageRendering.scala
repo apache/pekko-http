@@ -13,8 +13,6 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import scala.collection.immutable.VectorBuilder
 
 import org.apache.pekko
@@ -24,8 +22,11 @@ import pekko.http.impl.engine.http2.FrameEvent.ParsedHeadersFrame
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ Host, `Raw-Request-URI` }
+import pekko.http.scaladsl.model.http2.StreamIdExhaustedException
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.ServerSettings
+import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
+import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.util.OptionVal
 
 /** INTERNAL API */
@@ -61,15 +62,73 @@ private[http2] class ResponseRendering(settings: ServerSettings, val log: Loggin
 
 }
 
+private[http2] object ClientStreamIds {
+  // RFC 9113 §5.1.1: client-initiated stream IDs are positive, odd, and never reused on a connection.
+  final val First = 1
+  final val Last = Int.MaxValue
+
+  def remainingFrom(firstStreamId: Int): Int = {
+    require(firstStreamId > 0 && (firstStreamId & 1) == 1)
+    (Last - firstStreamId) / 2 + 1
+  }
+
+  final class Allocator(firstStreamId: Int) {
+    require(firstStreamId > 0 && (firstStreamId & 1) == 1)
+    // Keep the exhausted state outside the Int range, without wrapping or resetting the connection's allocation.
+    private var nextId: Long = firstStreamId.toLong
+
+    def next(): Int = {
+      if (nextId > Last) throw new IllegalStateException("No HTTP/2 client stream IDs remain on this connection")
+      val allocated = nextId.toInt
+      nextId += 2
+      allocated
+    }
+  }
+}
+
+private[http2] final class ClientRequestRendering(
+    settings: ClientConnectionSettings, log: LoggingAdapter,
+    connectionScheme: String, connectionAuthority: Uri.Authority, firstStreamId: Int)
+    extends GraphStage[FlowShape[HttpRequest, Http2SubStream]] {
+
+  private val in = Inlet[HttpRequest]("Http2ClientRequestRendering.in")
+  private val out = Outlet[Http2SubStream]("Http2ClientRequestRendering.out")
+  override val shape: FlowShape[HttpRequest, Http2SubStream] = FlowShape(in, out)
+
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+    new GraphStageLogic(shape) with InHandler with OutHandler {
+      // The renderer and its allocator belong to this physical connection, not to a restartable map operator.
+      private val render = new RequestRendering(settings, log, connectionScheme, connectionAuthority, firstStreamId)
+      setHandlers(in, out, this)
+
+      override def onPull(): Unit = pull(in)
+
+      override def onPush(): Unit = {
+        val substream = render(grab(in))
+        push(out, substream)
+        if (substream.streamId == ClientStreamIds.Last) {
+          // Report retirement to the request producer without failing the response stream. A failure on the
+          // response side could discard already delivered responses still in downstream buffers.
+          cancel(in, new StreamIdExhaustedException)
+          complete(out)
+        }
+      }
+    }
+}
+
 /** INTERNAL API */
 @InternalApi
 private[http2] class RequestRendering(
     settings: ClientConnectionSettings, val log: LoggingAdapter,
-    connectionScheme: String = "", connectionAuthority: Uri.Authority = Uri.Authority.Empty)
+    connectionScheme: String, connectionAuthority: Uri.Authority, firstStreamId: Int)
     extends MessageRendering[HttpRequest] {
 
-  private val streamId = new AtomicInteger(1)
-  protected override def nextStreamId(r: HttpRequest): Int = streamId.getAndAdd(2)
+  def this(settings: ClientConnectionSettings, log: LoggingAdapter,
+      connectionScheme: String = "", connectionAuthority: Uri.Authority = Uri.Authority.Empty) =
+    this(settings, log, connectionScheme, connectionAuthority, ClientStreamIds.First)
+
+  private val streamIds = new ClientStreamIds.Allocator(firstStreamId)
+  protected override def nextStreamId(r: HttpRequest): Int = streamIds.next()
 
   protected override def initialHeaderPairs(request: HttpRequest): VectorBuilder[(String, String)] = {
     val headerPairs = new VectorBuilder[(String, String)]()
