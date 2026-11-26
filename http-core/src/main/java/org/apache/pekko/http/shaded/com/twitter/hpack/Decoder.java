@@ -444,6 +444,8 @@ public final class Decoder {
     } else {
       throw ILLEGAL_INDEX_VALUE;
     }
+    // Indexed names have no literal length prefix to update the current name length.
+    nameLength = name.length();
   }
 
   private void indexHeader(int index, HeaderListener headerListener) throws IOException {
