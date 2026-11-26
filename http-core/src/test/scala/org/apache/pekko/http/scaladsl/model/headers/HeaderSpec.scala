@@ -22,6 +22,20 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 class HeaderSpec extends AnyFreeSpec with Matchers {
+  "Cookie factories should" - {
+    import pekko.http.javadsl.model.headers.{ Cookie => JavaCookie }
+
+    "accept a plain cookie value" in {
+      Cookie("theme", "dark").cookies.head.value shouldEqual "dark"
+      JavaCookie.create("theme", "dark").getCookies.iterator().next().value() shouldEqual "dark"
+    }
+
+    "reject a semicolon in a cookie value" in {
+      an[IllegalArgumentException] should be thrownBy Cookie("theme", ";")
+      an[IllegalArgumentException] should be thrownBy JavaCookie.create("theme", ";")
+    }
+  }
+
   "Sec-WebSocket-Accept should" - {
     "produce the RFC 6455 handshake example" in {
       `Sec-WebSocket-Accept`.forKey(`Sec-WebSocket-Key`("dGhlIHNhbXBsZSBub25jZQ==")).key shouldEqual
