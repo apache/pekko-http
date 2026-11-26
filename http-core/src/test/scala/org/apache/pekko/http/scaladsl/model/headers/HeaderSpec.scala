@@ -328,6 +328,23 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
       }
     }
   }
+  "HttpCookie factories should" - {
+    "retain an ordinary name and value" in {
+      val cookie = HttpCookie("theme", "dark")
+      cookie.name shouldEqual "theme"
+      cookie.value shouldEqual "dark"
+    }
+
+    "reject a non-token cookie name" in {
+      val error = the[IllegalArgumentException] thrownBy HttpCookie(" ", "dark")
+      error.getMessage should include("not allowed in cookie name")
+    }
+
+    "reject a semicolon in a cookie value" in {
+      val error = the[IllegalArgumentException] thrownBy HttpCookie("theme", ";")
+      error.getMessage should include("not allowed in cookie content")
+    }
+  }
   "RawHeader should" - {
     "check for valid arguments" - {
       "successful parse run" in {
