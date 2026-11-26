@@ -49,6 +49,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def dispatchSubstream(initialHeaders: ParsedHeadersFrame, data: Either[ByteString, Source[Any, Any]],
       correlationAttributes: Map[AttributeKey[?], ?]): Unit
   def isUpgraded: Boolean
+  def shouldSendContinue: ParsedHeadersFrame => Boolean
 
   def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart]
 
@@ -376,6 +377,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
         case frame @ ParsedHeadersFrame(streamId, endStream, _, _, _) =>
           if (isServer && isHeadRequest(frame)) headRequestStreamIds += streamId
+          // Resolve the expectation before collecting or exposing any entity data. It is an
+          // informational field block, not the start of the final response substream.
+          if (isServer && !endStream && shouldSendContinue(frame))
+            multiplexer.pushControlFrame(
+              ParsedHeadersFrame(streamId, endStream = false, Seq(":status" -> "100"), None, None))
           if (endStream) {
             dispatchSubstream(frame, Left(ByteString.empty), correlationAttributes)
             nextStateEmpty

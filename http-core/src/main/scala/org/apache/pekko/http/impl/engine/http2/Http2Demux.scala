@@ -30,13 +30,15 @@ import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode.FLOW_CONTROL_ERROR
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.http2.RequestParsing.parseHeaderPair
+import pekko.http.impl.engine.http2.hpack.Http2HeaderParsing.ContentLength
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.server.ServerTerminator
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.model.HttpEntity.LastChunk
-import pekko.http.scaladsl.model.{ AttributeKey, HttpEntity, HttpHeader }
-import pekko.http.scaladsl.settings.{ Http2ClientSettings, Http2CommonSettings, Http2ServerSettings }
+import pekko.http.scaladsl.model.headers.Expect
+import pekko.http.scaladsl.model.{ AttributeKey, HttpEntity, HttpHeader, HttpMethod }
+import pekko.http.scaladsl.settings.{ Http2ClientSettings, Http2CommonSettings, Http2ServerSettings, ServerSettings }
 import pekko.macros.LogHelper
 import pekko.stream.Attributes
 import pekko.stream.BidiShape
@@ -83,11 +85,40 @@ private[http2] class Http2ClientDemux(http2Settings: Http2ClientSettings, master
  * INTERNAL API
  */
 @InternalApi
-private[http2] class Http2ServerDemux(http2Settings: Http2ServerSettings, initialRemoteSettings: Seq[Setting],
-    upgraded: Boolean)
+private[http2] class Http2ServerDemux(
+    http2Settings: Http2ServerSettings,
+    initialRemoteSettings: Seq[Setting],
+    upgraded: Boolean,
+    requestParser: Option[(ServerSettings, HttpHeaderParser)] = None)
     extends Http2Demux(http2Settings, initialRemoteSettings, upgraded, isServer = true) {
   // We don't provide access to incoming trailing request headers on the server side
   def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[ChunkStreamPart] = None
+
+  override def createContinuePredicate(attributes: Attributes): ParsedHeadersFrame => Boolean = requestParser match {
+    case Some((settings, masterParser)) =>
+      lazy val parse = RequestParsing.parseRequest(masterParser.createShallowCopy(), settings, attributes)
+      frame =>
+        frame.headerParseErrorDetails.isEmpty &&
+        frame.keyValuePairs.exists { case (name, value) => name == "expect" && (value eq Expect.`100-continue`) } &&
+        frame.keyValuePairs.exists {
+          // Use the method actually on the wire (transparent HEAD may turn it into GET for routing).
+          case (":method", method: HttpMethod) => method.isEntityAccepted
+          case _                               => false
+        } &&
+        !frame.keyValuePairs.exists { case (name, value) =>
+          name == "content-length" && ContentLength.get(value).toLongOption.contains(0L)
+        } && {
+          // A placeholder with unknown length also exercises the request model's entity checks.
+          // It is never materialized; the normal parser still constructs the real entity.
+          val head = Http2SubStream(frame, OptionVal.None, Right(Source.maybe[Any]), Map.empty)
+          try parse(head).isInstanceOf[RequestParsing.OkRequest]
+          catch {
+            // Preserve the normal request parser's existing error path.
+            case NonFatal(_) => false
+          }
+        }
+    case None => _ => false
+  }
 
   def completionTimeout: FiniteDuration =
     throw new IllegalArgumentException("Completion timeout not supported for servers")
@@ -250,6 +281,8 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
   def maxConnectionAgeGrace: Duration
   def maxConnectionAgeJitter: Double
 
+  def createContinuePredicate(attributes: Attributes): ParsedHeadersFrame => Boolean = _ => false
+
   override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, ServerTerminator) = {
     object Logic extends TimerGraphStageLogic(shape) with Http2MultiplexerSupport with Http2StreamHandling
         with GenericOutletSupport with StageLogging with LogHelper with ServerTerminator {
@@ -261,6 +294,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         stage.wrapTrailingHeaders(headers)
 
       override def isServer: Boolean = stage.isServer
+
+      override lazy val shouldSendContinue: ParsedHeadersFrame => Boolean =
+        stage.createContinuePredicate(inheritedAttributes)
 
       override def settings: Http2CommonSettings = http2Settings
 

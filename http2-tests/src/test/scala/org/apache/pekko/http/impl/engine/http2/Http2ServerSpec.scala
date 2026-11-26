@@ -95,6 +95,96 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
       })
     }
 
+    "send 100 Continue before waiting for an HTTP/2 request body" should {
+      for (strictSize <- Seq(0, 16)) {
+        s"allow a waiting client to upload with a strict collection limit of $strictSize"
+          .inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
+            override def settings: ServerSettings =
+              super.settings.mapHttp2Settings(
+                _.withMinCollectStrictEntitySize(strictSize)
+                  .withIncomingConnectionLevelBufferSize(Http2Protocol.InitialWindowSize))
+
+            private val upload = Seq(
+              ":method" -> "POST",
+              ":scheme" -> "https",
+              ":authority" -> "www.example.com",
+              ":path" -> "/upload",
+              "content-length" -> "5",
+              "expect" -> "100-continue")
+            network.sendHEADERS(1, endStream = false, endHeaders = true, network.encodeHeaderPairs(upload))
+            val interim = network.expectDecodedResponseHEADERSPairs(1, endStream = false).toMap
+            interim shouldBe Map(":status" -> "100")
+
+            network.sendDATA(1, endStream = true, ByteString("hello"))
+            val request = user.expectRequest()
+            request.entity.isStrict shouldBe (strictSize > 0)
+            Await.result(request.entity.toStrict(3.seconds), 3.seconds).data shouldBe ByteString("hello")
+            user.emitResponse(1, HttpResponse())
+            network.expectDecodedResponseHEADERSPairs(1, endStream = true).toMap should contain(":status" -> "200")
+
+            network.sendRequest(3,
+              HttpRequest(HttpMethods.GET, "https://www.example.com/", protocol = HttpProtocols.`HTTP/2.0`))
+            user.expectRequest()
+            user.emitResponse(3, HttpResponse())
+            network.expectDecodedResponseHEADERSPairs(3, endStream = true).toMap should contain(":status" -> "200")
+
+            network.sendHEADERS(
+              5,
+              endStream = false,
+              endHeaders = true,
+              network.encodeHeaderPairs(upload.filterNot(_._1 == "expect")))
+            network.sendDATA(5, endStream = true, ByteString("hello"))
+            val ordinary = user.expectRequest()
+            Await.result(ordinary.entity.toStrict(3.seconds), 3.seconds).data shouldBe ByteString("hello")
+            user.emitResponse(5, HttpResponse())
+            network.expectDecodedResponseHEADERSPairs(5, endStream = true).toMap should contain(":status" -> "200")
+          })
+      }
+
+      for (endOnHeaders <- Seq(true, false)) {
+        s"send only the final response for an empty request (END_STREAM on headers: $endOnHeaders)"
+          .inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
+            override def settings: ServerSettings =
+              super.settings.mapHttp2Settings(
+                _.withIncomingConnectionLevelBufferSize(Http2Protocol.InitialWindowSize))
+
+            val headers = Seq(
+              ":method" -> "POST",
+              ":scheme" -> "https",
+              ":authority" -> "www.example.com",
+              ":path" -> "/upload",
+              "expect" -> "100-continue")
+            val requestHeaders = if (endOnHeaders) headers else headers :+ ("content-length" -> "0")
+            network.sendHEADERS(1,
+              endStream = endOnHeaders,
+              endHeaders = true,
+              network.encodeHeaderPairs(requestHeaders))
+            if (!endOnHeaders) network.sendDATA(1, endStream = true, ByteString.empty)
+
+            user.expectRequest().entity.isKnownEmpty shouldBe true
+            user.emitResponse(1, HttpResponse())
+            network.expectDecodedResponseHEADERSPairs(1, endStream = true).toMap should contain(":status" -> "200")
+          })
+      }
+
+      "send the interim response before an application response that does not consume the body"
+        .inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
+          val upload = Seq(
+            ":method" -> "POST",
+            ":scheme" -> "https",
+            ":authority" -> "www.example.com",
+            ":path" -> "/upload",
+            "content-length" -> "5",
+            "expect" -> "100-continue")
+          network.sendHEADERS(1, endStream = false, endHeaders = true, network.encodeHeaderPairs(upload))
+          user.expectRequest()
+          user.emitResponse(1, HttpResponse(StatusCodes.Forbidden))
+
+          network.expectDecodedResponseHEADERSPairs(1, endStream = false).toMap shouldBe Map(":status" -> "100")
+          network.expectDecodedResponseHEADERSPairs(1, endStream = true).toMap should contain(":status" -> "403")
+        })
+    }
+
     "support simple round-trips" should {
       abstract class SimpleRequestResponseRoundtripSetup extends TestSetup with RequestResponseProbes {
         def requestResponseRoundtrip(
