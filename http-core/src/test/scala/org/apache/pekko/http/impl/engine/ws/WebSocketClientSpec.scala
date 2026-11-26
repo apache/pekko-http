@@ -44,6 +44,13 @@ import pekko.http.impl.util._
 
 class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.websocket.log-frames = on") {
   "The client-side WebSocket implementation should" should {
+    "reject a relative WebSocket dialing URI before materialization" in {
+      val failure = intercept[IllegalArgumentException] {
+        Http(system).webSocketClientFlow(WebSocketRequest(Uri("/chat")))
+      }
+      failure.getMessage should include("WebSocket request URI must be absolute")
+    }
+
     "establish a websocket connection when the user requests it" in new EstablishedConnectionSetup with ClientEchoes
 
     "send the caller's Origin header when establishing a WebSocket connection" in new TestSetup with ClientEchoes {
