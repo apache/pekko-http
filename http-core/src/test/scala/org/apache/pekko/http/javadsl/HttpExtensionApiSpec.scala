@@ -420,6 +420,13 @@ class HttpExtensionApiSpec extends PekkoSpecWithMaterializer(
       waitFor(binding.unbind())
     }
 
+    "reject a relative WebSocket dialing URI before materialization" in {
+      val failure = intercept[IllegalArgumentException] {
+        http.webSocketClientFlow(WebSocketRequest.create(Uri.create("/chat")))
+      }
+      failure.getMessage should include("WebSocket request URI must be absolute")
+    }
+
     "interact with a websocket through a flow (with with one parameter)" in {
       val (host, port, binding) = runWebsocketServer()
       val flow = http.webSocketClientFlow(WebSocketRequest.create(s"ws://$host:$port"))
