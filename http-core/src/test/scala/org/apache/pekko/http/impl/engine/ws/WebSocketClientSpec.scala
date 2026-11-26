@@ -16,10 +16,13 @@ package org.apache.pekko.http.impl.engine.ws
 import java.util.Random
 import java.util.concurrent.TimeoutException
 
+import com.typesafe.config.ConfigFactory
+
 import org.apache.pekko
 import pekko.NotUsed
+import pekko.actor.ActorSystem
 import pekko.http.scaladsl.model.ws.{ InvalidUpgradeResponse, WebSocketUpgradeResponse }
-import pekko.stream.ClosedShape
+import pekko.stream.{ ClosedShape, SystemMaterializer }
 import pekko.stream.TLSProtocol._
 
 import scala.concurrent.duration._
@@ -254,33 +257,53 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
     }
 
     "use the configured close wait when the peer delays its close response" in {
-      Utils.assertAllStagesStopped {
-        new TestSetup with ClientProbes {
-          override def settings = {
-            val defaults = super.settings
-            defaults.withWebsocketSettings(defaults.websocketSettings.withCloseTimeout(100.millis))
-          }
-          try {
-            expectWireData(UpgradeRequestBytes)
-            messagesIn.request(1)
-            sendWireData(UpgradeResponseBytes)
-            response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
-            // An idle healthy connection must not start its close wait at materialization.
-            netOut.expectNoBytes(200.millis)
-            messagesOut.sendComplete()
-            expectMaskedFrameOnNetwork(Protocol.Opcode.Close, ByteString(3, 232), fin = true)
-            // This comfortably allows the configured wait, but not the historical three seconds.
-            netOut.within(1.second) {
-              expectNetworkClose()
+      val closeWaitConfig = ConfigFactory.parseString(s"""
+        pekko.scheduler.implementation = "${classOf[ExplicitlyTriggeredScheduler].getName}"
+        pekko.stream.materializer.dispatcher = "${CallingThreadDispatcher.Id}"
+        """).withFallback(system.settings.config)
+      val closeWaitSystem = ActorSystem("websocket-client-close-wait", closeWaitConfig)
+      val scheduler = closeWaitSystem.scheduler.asInstanceOf[ExplicitlyTriggeredScheduler]
+      try {
+        Utils.assertAllStagesStopped {
+          val closeTimeout = 100.millis
+          new TestSetup with ClientProbes {
+            override protected def testSystem: ActorSystem = closeWaitSystem
+
+            override def settings = {
+              val defaults = super.settings
+              defaults.withWebsocketSettings(defaults.websocketSettings.withCloseTimeout(closeTimeout))
             }
-          } finally {
-            messagesOut.sendComplete()
-            messagesIn.cancel()
-            netIn.sendComplete()
-            netOut.cancel()
+            try {
+              expectWireData(UpgradeRequestBytes)
+              messagesIn.request(1)
+              sendWireData(UpgradeResponseBytes)
+              response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+
+              // An idle healthy connection must not start its close wait at materialization.
+              scheduler.timePasses(closeTimeout)
+              netOut.expectNoBytes(Duration.Zero)
+
+              messagesOut.sendComplete()
+              // The outgoing Close is emitted after the timeout is registered.
+              expectMaskedCloseFrame(Protocol.CloseCodes.Regular)
+
+              // The calling-thread dispatcher delivers this timer effect to the probe
+              // before timePasses returns. In a control run, shortening the configured
+              // close wait by 1 ms made the zero-duration check below observe completion.
+              scheduler.timePasses(closeTimeout - 1.millis)
+              netOut.expectNoBytes(Duration.Zero)
+
+              scheduler.timePasses(1.millis)
+              expectNetworkClose()
+            } finally {
+              messagesOut.sendComplete()
+              messagesIn.cancel()
+              netIn.sendComplete()
+              netOut.cancel()
+            }
           }
-        }
-      }
+        }(SystemMaterializer(closeWaitSystem).materializer)
+      } finally TestKit.shutdownActorSystem(closeWaitSystem, verifySystemShutdown = true)
     }
 
     "share the close wait between the peer close frame and transport closure" in {
@@ -760,25 +783,26 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
   }
 
   abstract class TestSetup extends WSTestSetupBase {
+    protected def testSystem: ActorSystem = system
     protected def noMsgTimeout: FiniteDuration = 100.millis.dilated
     protected def clientImplementation: Flow[Message, Message, NotUsed]
     protected def requestedSubProtocol: Option[String] = None
 
     val random = new Random(0)
-    def settings = ClientConnectionSettings(system)
+    def settings = ClientConnectionSettings(testSystem)
       .withUserAgentHeader(Some(`User-Agent`(List(ProductVersion("pekko-http", "test")))))
       .withWebsocketRandomFactory(() => random)
 
     def targetUri: Uri = "ws://example.org/ws"
 
     def clientLayer: Http.WebSocketClientLayer =
-      Http(system).webSocketClientLayer(
+      Http(testSystem).webSocketClientLayer(
         WebSocketRequest(targetUri, subprotocol = requestedSubProtocol),
         settings = settings)
 
     val (netOut, netIn, response) = {
-      val netOut = ByteStringSinkProbe()
-      val netIn = TestPublisher.probe[ByteString]()
+      val netOut = ByteStringSinkProbe()(testSystem)
+      val netIn = TestPublisher.probe[ByteString]()(testSystem)
 
       val graph =
         RunnableGraph.fromGraph(GraphDSL.createGraph(clientLayer) { implicit b => client =>
@@ -789,7 +813,7 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
           ClosedShape
         })
 
-      val response = graph.run()
+      val response = graph.run()(SystemMaterializer(testSystem).materializer)
 
       (netOut, netIn, response)
     }
@@ -834,8 +858,8 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
     def echoServer: Flow[Message, Message, NotUsed] = Flow[Message]
   }
   trait ClientProbes extends TestSetup {
-    lazy val messagesOut = TestPublisher.probe[Message]()
-    lazy val messagesIn = TestSubscriber.probe[Message]()
+    lazy val messagesOut = TestPublisher.probe[Message]()(testSystem)
+    lazy val messagesIn = TestSubscriber.probe[Message]()(testSystem)
 
     override def clientImplementation: Flow[Message, Message, NotUsed] =
       Flow.fromSinkAndSourceMat(Sink.fromSubscriber(messagesIn), Source.fromPublisher(messagesOut))(Keep.none)
