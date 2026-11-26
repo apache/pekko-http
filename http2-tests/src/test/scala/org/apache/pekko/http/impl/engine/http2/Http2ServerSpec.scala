@@ -2493,25 +2493,33 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           p.expectError()
           terminated.futureValue
         })
-      "finally close after deadline (while cancelling response stream)".inAssertAllStagesStopped(new TestSetup
-        with RequestResponseProbes {
-        network.sendRequest(1, HttpRequest())
-        user.expectRequest()
+      for (streamCount <- List(1, 2)) {
+        s"cancel all active response streams when the shutdown deadline expires (streams=$streamCount)"
+          .inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
+            val responses = List(1 -> ByteString("abc"), 3 -> ByteString("def")).take(streamCount)
+            val producers = responses.map { case (streamId, firstChunk) =>
+              network.sendRequest(streamId, Get("https://example.test/status"))
+              user.expectRequest()
 
-        val dataStream = TestPublisher.probe[ByteString]()
-        user.emitResponse(1,
-          HttpResponse(entity = HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(dataStream))))
-        network.expectDecodedHEADERS(1, endStream = false)
-        dataStream.sendNext(ByteString("abc"))
-        network.expectDATA(1, endStream = false, ByteString("abc"))
+              val producer = TestPublisher.probe[ByteString]()
+              user.emitResponse(streamId,
+                HttpResponse(
+                  entity = HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(producer))))
+              network.expectDecodedHEADERS(streamId, endStream = false)
+              producer.sendNext(firstChunk)
+              network.expectDATA(streamId, endStream = false, firstChunk)
+              producer
+            }
 
-        val terminated = serverTerminator.terminate(10.millis)
-        network.expectGOAWAY(1)
-
-        network.expectComplete()
-        dataStream.expectCancellation()
-        terminated.futureValue
-      })
+            // Request GOAWAY before starting the short deadline so it can be sent even if this test thread is delayed.
+            network.toNet.request(1)
+            val terminated = serverTerminator.terminate(10.millis)
+            network.expectGOAWAY(responses.last._1)._2 shouldBe ErrorCode.NO_ERROR
+            network.expectComplete()
+            producers.foreach(_.expectCancellation())
+            terminated.futureValue
+          })
+      }
     }
     "support max-connection-age" should {
       "send GOAWAY and close the connection when the age expires and no requests are in flight".inAssertAllStagesStopped(
