@@ -154,6 +154,10 @@ Scala
 Java
 :   @@snip[Http2Test.java](/docs/src/test/java/docs/http/javadsl/Http2Test.java) { #trailingHeaders }
 
+For a response that permits content, the attribute also works with an empty entity: the server sends the
+trailers directly after the initial headers, without a DATA frame. Responses to HEAD requests still end
+with their initial headers.
+
 Pekko HTTP renders outgoing HTTP/2 trailer field names in lowercase, as required by
 [RFC 9113, Section 8.2](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.2). Field values are unchanged.
 

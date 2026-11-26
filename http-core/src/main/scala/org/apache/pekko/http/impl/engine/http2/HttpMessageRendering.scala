@@ -50,6 +50,9 @@ private[http2] class ResponseRendering(settings: ServerSettings, val log: Loggin
     headerPairs += ":status" -> response.status.intValue.toString
   }
 
+  override protected def endStreamOnEmptyEntity(response: HttpResponse, hasTrailers: Boolean): Boolean =
+    !response.status.allowsEntity || !hasTrailers
+
   override lazy val peerIdHeader: Option[(String, String)] = settings.serverHeader.map(h => h.lowercaseName -> h.value)
 
   // Mirrors the status based part of the rules the HTTP/1.1 renderer applies through
@@ -125,6 +128,8 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
    */
   protected def contentLengthAllowed(r: R): Boolean = true
 
+  protected def endStreamOnEmptyEntity(r: R, hasTrailers: Boolean): Boolean = true
+
   def apply(r: R): Http2SubStream = {
     val headerPairs = initialHeaderPairs(r)
 
@@ -134,7 +139,6 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
       shouldRenderAutoHeaders = true, isTrailer = false, dateHeaderRendering)
 
     val streamId = nextStreamId(r)
-    val headersFrame = ParsedHeadersFrame(streamId, endStream = r.entity.isKnownEmpty, headerPairs.result(), None, None)
     val trailingHeadersFrame =
       r.attribute(AttributeKeys.trailer) match {
         case Some(trailer) if trailer.headers.nonEmpty =>
@@ -148,6 +152,9 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
         case _ => OptionVal.None
       }
 
+    val endStream = r.entity.isKnownEmpty && endStreamOnEmptyEntity(r,
+      trailingHeadersFrame.isDefined && trailingHeadersFrame.get.keyValuePairs.nonEmpty)
+    val headersFrame = ParsedHeadersFrame(streamId, endStream, headerPairs.result(), None, None)
     Http2SubStream(r.entity, headersFrame, trailingHeadersFrame,
       r.attributes.filter(_._2.isInstanceOf[RequestResponseAssociation]))
   }
