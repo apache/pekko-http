@@ -13,9 +13,12 @@
 
 package org.apache.pekko.http.impl.util
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import org.apache.pekko
 import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.stream.testkit.Utils
 import pekko.stream.testkit.scaladsl.TestSink
 import pekko.util.ByteString
 import pekko.testkit._
@@ -39,6 +42,26 @@ class StreamUtilsSpec extends PekkoSpec with ScalaFutures {
 
       Await.result(result, 3.seconds.dilated) shouldBe Seq(transformed, trailer)
       events.expectMsg("cleanup")
+    }
+
+    "clean up once when a transformation fails" in {
+      val cleanupCalls = new AtomicInteger
+      val failure = new IllegalStateException("transformation failed")
+      val first = ByteString("first")
+
+      Utils.assertAllStagesStopped {
+        val downstream =
+          Source(List(first, ByteString("second")))
+            .via(StreamUtils.byteStringTransformer(
+              bytes => if (bytes == first) bytes else throw failure,
+              () => ByteString.empty,
+              () => { cleanupCalls.incrementAndGet(); () }))
+            .runWith(TestSink[ByteString]())
+
+        downstream.request(2).expectNext(first).expectError() shouldBe theSameInstanceAs(failure)
+      }
+
+      cleanupCalls.get() shouldBe 1
     }
 
     "clean up if downstream cancels before the final emission" in {
