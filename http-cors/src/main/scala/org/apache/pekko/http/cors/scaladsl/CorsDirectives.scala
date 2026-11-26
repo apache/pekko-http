@@ -31,7 +31,7 @@ import pekko.http.scaladsl.server.directives._
  * Provides directives that implement the CORS mechanism, enabling cross origin requests.
  *
  * @see
- *   [[https://www.w3.org/TR/cors/ CORS W3C Recommendation]]
+ *   [[https://fetch.spec.whatwg.org/#http-cors-protocol Fetch Standard: CORS protocol]]
  * @see
  *   [[https://www.ietf.org/rfc/rfc6454.txt RFC 6454]]
  */
@@ -42,8 +42,7 @@ trait CorsDirectives {
   /**
    * Wraps its inner route with support for the CORS mechanism, enabling cross origin requests.
    *
-   * In particular the recommendation written by the W3C in https://www.w3.org/TR/cors/ is implemented by this
-   * directive.
+   * See the [[https://fetch.spec.whatwg.org/#http-cors-protocol CORS protocol in the Fetch Standard]].
    *
    * The settings are loaded from the Actor System configuration.
    */
@@ -56,8 +55,7 @@ trait CorsDirectives {
   /**
    * Wraps its inner route with support for the CORS mechanism, enabling cross origin requests.
    *
-   * In particular the recommendation written by the W3C in https://www.w3.org/TR/cors/ is implemented by this
-   * directive.
+   * See the [[https://fetch.spec.whatwg.org/#http-cors-protocol CORS protocol in the Fetch Standard]].
    *
    * @param settings
    *   the settings used by the CORS filter

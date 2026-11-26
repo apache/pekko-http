@@ -62,7 +62,7 @@ abstract class CorsSettings private[pekko] () extends javadsl.settings.CorsSetti
    * Default: `true`
    *
    * @see
-   *   [[https://www.w3.org/TR/cors/#access-control-allow-credentials-response-header Access-Control-Allow-Credentials]]
+   *   [[https://fetch.spec.whatwg.org/#http-access-control-allow-credentials Access-Control-Allow-Credentials]]
    */
   def allowCredentials: Boolean
 
@@ -79,7 +79,7 @@ abstract class CorsSettings private[pekko] () extends javadsl.settings.CorsSetti
    * Default: `HttpOriginMatcher.*`
    *
    * @see
-   *   [[https://www.w3.org/TR/cors/#access-control-allow-origin-response-header Access-Control-Allow-Origin]]
+   *   [[https://fetch.spec.whatwg.org/#http-access-control-allow-origin Access-Control-Allow-Origin]]
    */
   def allowedOrigins: HttpOriginMatcher
 
@@ -91,7 +91,7 @@ abstract class CorsSettings private[pekko] () extends javadsl.settings.CorsSetti
    * Default: `HttpHeaderRange.*`
    *
    * @see
-   *   [[https://www.w3.org/TR/cors/#access-control-allow-headers-response-header Access-Control-Allow-Headers]]
+   *   [[https://fetch.spec.whatwg.org/#http-access-control-allow-headers Access-Control-Allow-Headers]]
    */
   def allowedHeaders: HttpHeaderRange
 
@@ -105,20 +105,20 @@ abstract class CorsSettings private[pekko] () extends javadsl.settings.CorsSetti
    * Default: `Seq(GET, POST, HEAD, OPTIONS)`
    *
    * @see
-   *   [[https://www.w3.org/TR/cors/#access-control-allow-methods-response-header Access-Control-Allow-Methods]]
+   *   [[https://fetch.spec.whatwg.org/#http-access-control-allow-methods Access-Control-Allow-Methods]]
    */
   def allowedMethods: Seq[HttpMethod]
 
   /**
-   * List of headers (other than simple response headers) that browsers are allowed to access. If not empty, this list
-   * is returned as part of the `Access-Control-Expose-Headers` header in the actual response.
+   * List of headers (other than CORS-safelisted response headers) that browsers are allowed to access. If not empty,
+   * this list is returned as part of the `Access-Control-Expose-Headers` header in the actual response.
    *
    * Default: `Seq.empty`
    *
    * @see
-   *   [[https://www.w3.org/TR/cors/#simple-response-header Simple response headers]]
+   *   [[https://fetch.spec.whatwg.org/#cors-safelisted-response-header-name CORS-safelisted response-header names]]
    * @see
-   *   [[https://www.w3.org/TR/cors/#access-control-expose-headers-response-header Access-Control-Expose-Headers]]
+   *   [[https://fetch.spec.whatwg.org/#http-access-control-expose-headers Access-Control-Expose-Headers]]
    */
   def exposedHeaders: Seq[String]
 
@@ -130,7 +130,7 @@ abstract class CorsSettings private[pekko] () extends javadsl.settings.CorsSetti
    * Default: `Some(30 * 60)`
    *
    * @see
-   *   [[https://www.w3.org/TR/cors/#access-control-max-age-response-header Access-Control-Max-Age]]
+   *   [[https://fetch.spec.whatwg.org/#http-access-control-max-age Access-Control-Max-Age]]
    */
   def maxAge: Option[Long]
 
