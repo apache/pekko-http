@@ -178,6 +178,26 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
       }
     }
 
+    val displayPreference = "x-service-route-display-preference" -> "full"
+    for ((source, fields) <- Seq(
+        "static" -> Seq(displayPreference, "accept" -> "text/html"),
+        "dynamic" -> Seq("x-route" -> "primary", displayPreference, "x-route" -> "secondary"))) {
+      s"decode an ordinary block at its exact header budget with a $source indexed name" in {
+        val budget = fields.map { case (name, value) => name.length + value.length }.sum
+        val decoder = new Decoder(budget, maxHeaderTableSize)
+        val decoded = ListBuffer.empty[(String, String)]
+        decoder.decode(new ByteArrayInputStream(encode(fields: _*)),
+          new HeaderListener {
+            override def addHeader(name: String, value: String, parsed: AnyRef, sensitive: Boolean): AnyRef = {
+              decoded += (name -> value)
+              null
+            }
+          })
+        decoder.endHeaderBlock() shouldBe false
+        decoded.toList shouldEqual fields
+      }
+    }
+
     "decode a raw string literal carrying opaque octets above 0x7F to the chars of the same value" in {
       // literal header field without indexing (0x00), new name: raw name "x-opaque", raw 128-octet value
       val name = "x-opaque".getBytes("US-ASCII")
