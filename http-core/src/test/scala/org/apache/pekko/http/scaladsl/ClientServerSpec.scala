@@ -55,6 +55,43 @@ class ClientServerSpec extends ClientServerSpecBase(http2 = false) {
   import system.dispatcher
 
   "The HTTP/1.1 connection" should {
+    "preserve the order of repeated list-valued fields in an HTTP/1.1 POST" in Utils.assertAllStagesStopped {
+      // X-Menu-Selection is an application list field (#token); its values are processed in order.
+      val body = ByteString("spring menu")
+      val request = HttpRequest(
+        POST,
+        "/menu",
+        List(
+          headers.RawHeader("X-Menu-Selection", "starter"),
+          headers.RawHeader("X-Menu-Note", "seasonal"),
+          headers.RawHeader("X-Menu-Selection", "dessert")),
+        entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, body))
+      val received = Promise[(HttpProtocol, Seq[String], Option[Long], ByteString)]()
+      val host = "127.0.0.1"
+      val timeout = 3.seconds.dilated
+      val binding = Http().newServerAt(host, 0).bind { incoming =>
+        val selections = incoming.headers.iterator
+          .filter(_.is("x-menu-selection"))
+          .flatMap(_.value.split(",").iterator.map(_.trim))
+          .toList
+        incoming.entity.toStrict(timeout).map { entity =>
+          received.success((incoming.protocol, selections, incoming.entity.contentLengthOption, entity.data))
+          HttpResponse()
+        }
+      }.awaitResult(timeout)
+      try {
+        val response = Source.single(request)
+          .via(Http().connectionTo(host).toPort(binding.localAddress.getPort).http())
+          .runWith(Sink.head)
+        response.awaitResult(timeout).status shouldBe StatusCodes.OK
+        val (protocol, selections, length, data) = received.future.awaitResult(timeout)
+        protocol shouldBe HttpProtocols.`HTTP/1.1`
+        selections shouldBe List("starter", "dessert")
+        length shouldBe Some(body.size.toLong)
+        data shouldBe body
+      } finally binding.terminate(1.second.dilated).awaitResult(timeout)
+    }
+
     "preserve GET response bodies on a connection reused for HEAD" in Utils.assertAllStagesStopped {
       val host = "127.0.0.1"
       val timeout = 3.seconds.dilated
