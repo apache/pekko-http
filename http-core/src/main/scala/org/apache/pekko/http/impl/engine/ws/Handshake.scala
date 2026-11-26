@@ -117,11 +117,10 @@ private[http] object Handshake {
       if (hasAllRequiredWebsocketUpgradeHeaders) {
         val key = HttpHeader.fastFind(classOf[`Sec-WebSocket-Key`], headers)
         if (key.isDefined && key.get.isValid) {
-          val protocol = HttpHeader.fastFind(classOf[`Sec-WebSocket-Protocol`], headers)
-
-          val clientSupportedSubprotocols = protocol match {
-            case OptionVal.Some(p) => p.protocols
-            case _                 => Nil
+          // Request offers can span multiple field lines (RFC 6455 section 11.3.4).
+          val clientSupportedSubprotocols = headers.flatMap {
+            case protocol: `Sec-WebSocket-Protocol` => protocol.protocols
+            case _                                  => Nil
           }
           val clientRequestedExtensions = headers.flatMap {
             case extensions: `Sec-WebSocket-Extensions` => extensions.extensions

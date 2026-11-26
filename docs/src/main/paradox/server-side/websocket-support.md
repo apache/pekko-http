@@ -113,6 +113,8 @@ start a WebSocket connection by responding to that request with an @apidoc[HttpR
 first, a handler @scala[@apidoc[Flow[Message, Message, Any]]]@java[@apidoc[Flow[Message, Message, ?]]] that will be used to handle WebSocket messages on this connection.
 Second, the application can optionally choose one of the proposed application-level sub-protocols by inspecting the
 values of @scala[`WebSocketUpgrade.requestedProtocols`]@java[`WebSocketUpgrade.getRequestedProtocols`] and pass the chosen protocol value to @scala[`handleMessages`]@java[`handleMessagesWith`].
+These values are presented in client preference order, whether the client uses one or several
+`Sec-WebSocket-Protocol` request header lines.
 
 ### Handling Messages
 
