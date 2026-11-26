@@ -20,6 +20,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.concurrent.duration._
+import scala.util.control.NonFatal
 
 import org.apache.pekko
 import pekko.NotUsed
@@ -68,7 +69,7 @@ import pekko.testkit.TestDuration
 import pekko.util.ByteString
 
 import org.scalatest.concurrent.Eventually
-import org.scalatest.concurrent.PatienceConfiguration.Timeout
+import org.scalatest.concurrent.PatienceConfiguration.{ Interval, Timeout }
 
 /**
  * This tests the http2 client protocol logic.
@@ -996,6 +997,67 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           // ... should let frame 5 pass
           network.expect[HeadersFrame]().streamId shouldBe 5
         })
+      "admit one queued request per successive increase of the peer stream limit" in
+      StreamTestKit.assertAllStagesStopped {
+        val requests = List(
+          (1, 1, Get("https://www.example.com/request-1")),
+          (2, 3, Get("https://www.example.com/request-2")),
+          (3, 5, Get("https://www.example.com/request-3")))
+        val allOffered = Promise[Unit]()
+        val admitted = requests.map { case (_, _, request) => request -> Promise[Unit]() }.toMap
+        val maxConcurrentStreams = SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS
+        val setup = new TestSetup(Setting(maxConcurrentStreams, 1)) {
+          override def modifyClient(client: BidiFlow[HttpRequest, ByteString, ByteString, HttpResponse, NotUsed]) =
+            BidiFlow.fromFlows(
+              Flow[HttpRequest]
+                .map { request =>
+                  if (request == requests.last._3) allOffered.success(())
+                  request
+                }
+                .buffer(requests.size, OverflowStrategy.backpressure)
+                .map { request =>
+                  admitted(request).success(())
+                  request
+                },
+              Flow[HttpResponse]).atop(client)
+        }
+        import setup.{ network, user }
+
+        try {
+          network.sendFrame(SettingsAckFrame(Nil))
+          requests.foreach { case (_, _, request) => user.emitRequest(request) }
+          allOffered.future.futureValue(Timeout(remainingOrDefault), Interval(10.millis))
+
+          for ((limit, streamId, _) <- requests) {
+            if (limit > 1) {
+              network.sendSETTING(maxConcurrentStreams, limit)
+              network.expectSettingsAck()
+            }
+            val headers = network.expectDecodedResponseHEADERSPairs(streamId)
+            headers should contain(":method" -> "GET")
+            headers should contain(":path" -> s"/request-$limit")
+
+            // In this fused fixture, any further immediate request pull is processed before the
+            // reply to this later SETTINGS. The empty update leaves the peer's limit unchanged.
+            network.sendFrame(SettingsFrame(Nil))
+            network.expectSettingsAck()
+            admitted.valuesIterator.count(_.isCompleted) shouldBe limit
+          }
+
+          // Leave all earlier streams open until both SETTINGS updates have taken effect.
+          for ((_, streamId, _) <- requests.reverse) {
+            network.sendHEADERS(streamId, endStream = true, Seq(RawHeader(":status", "200")))
+            user.expectResponse().status shouldBe StatusCodes.OK
+          }
+          user.requestOut.sendComplete()
+          setup.expectGracefulCompletion()
+        } catch {
+          case NonFatal(cause) =>
+            // Completion is asserted above; force teardown only when a check fails.
+            network.toNet.cancel()
+            throw cause
+        }
+      }
       "decreasing SETTINGS_MAX_CONCURRENT_STREAMS should keep backpressure outgoing streams until limit is respected".inAssertAllStagesStopped(
         new TestSetup(
           Setting(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, 3)) with NetProbes {
