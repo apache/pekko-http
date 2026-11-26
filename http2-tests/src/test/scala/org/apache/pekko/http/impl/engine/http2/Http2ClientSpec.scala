@@ -14,6 +14,7 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import java.io.IOException
+import java.net.InetSocketAddress
 import javax.net.ssl.SSLContext
 
 import scala.concurrent.ExecutionContext
@@ -24,6 +25,7 @@ import scala.util.control.NonFatal
 
 import org.apache.pekko
 import pekko.NotUsed
+import pekko.actor.ActorSystem
 import pekko.event.Logging
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
@@ -34,6 +36,8 @@ import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.LogByteStringTools
 import pekko.http.impl.util.PekkoSpecWithMaterializer
+import pekko.http.scaladsl.ClientTransport
+import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.client.RequestBuilding.Post
 import pekko.http.scaladsl.model._
@@ -957,6 +961,81 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           network.expect[HeadersFrame]().streamId shouldBe 11
           network.expect[HeadersFrame]().streamId shouldBe 13
         })
+      def withPendingRequestAtZero(request: HttpRequest)(
+          verify: (NetworkSide, TestSubscriber.Probe[HttpResponse]) => Unit): Unit = {
+        val frames = Http2FrameProbe()
+        val fromPeer = TestPublisher.probe[ByteString]()
+        val network = new NetworkSide(fromPeer, frames.plainDataProbe, frames)
+        val transport = new ClientTransport {
+          override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+              implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] = {
+            val local = new InetSocketAddress(0)
+            val remote = InetSocketAddress.createUnresolved(host, port)
+            Flow.fromSinkAndSource(network.toNet.sink, Source.fromPublisher(fromPeer))
+              .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(local, remote)))
+          }
+        }
+        val requestSeen = Promise[Unit]()
+        val requests = TestPublisher.probe[HttpRequest]()
+        val responses = TestSubscriber.probe[HttpResponse]()
+        val settings = ClientConnectionSettings(system)
+          .mapHttp2Settings(_.withCompletionTimeout(5.seconds))
+          .withTransport(transport)
+        val client =
+          Http().connectionTo("www.example.com").withClientConnectionSettings(settings).http2WithPriorKnowledge()
+        Source.fromPublisher(requests).map { request =>
+          requestSeen.success(())
+          request
+        }.via(client).runWith(Sink.fromSubscriber(responses))
+
+        try {
+          val limit = SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS
+          network.toNet.expectBytes(Http2Protocol.ClientConnectionPreface)
+          network.expectSETTINGS()
+          network.sendSETTING(limit, 0)
+          network.expectSettingsAck()
+
+          requests.sendNext(request)
+          requestSeen.future.futureValue(Timeout(remainingOrDefault), Interval(10.millis))
+          requests.sendComplete()
+
+          // The request reached the client flow, but only SETTINGS may be acknowledged at zero capacity.
+          network.sendFrame(SettingsFrame(Nil))
+          network.expectSettingsAck()
+          verify(network, responses)
+        } finally network.toNet.cancel()
+      }
+
+      "keep a request pending while the peer allows zero streams and send it when capacity returns" in
+      StreamTestKit.assertAllStagesStopped {
+        withPendingRequestAtZero(Get("http://www.example.com/pending")) { (network, responses) =>
+          network.sendSETTING(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, 1)
+          network.expectSettingsAck()
+
+          val headers = network.expectDecodedResponseHEADERSPairs(1)
+          headers should contain(":method" -> "GET")
+          headers should contain(":path" -> "/pending")
+          network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+          responses.requestNext().status shouldBe StatusCodes.OK
+          responses.expectComplete()
+          network.toNet.expectComplete()
+        }
+      }
+
+      "cancel the held request entity if the peer closes normally before capacity returns" in
+      StreamTestKit.assertAllStagesStopped {
+        val body = TestPublisher.probe[ByteString]()
+        val request = Post("http://www.example.com/pending-upload",
+          HttpEntity(ContentTypes.`application/octet-stream`, Source.fromPublisher(body)))
+        withPendingRequestAtZero(request) { (network, responses) =>
+          responses.request(1)
+          network.fromNet.sendComplete()
+          responses.expectComplete()
+          network.toNet.expectComplete()
+          body.expectCancellation()
+        }
+      }
+
       "pull the next request when a cancelled response entity frees a stream slot".inAssertAllStagesStopped(
         new TestSetup(Setting(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, 1)) with NetProbes {
           val request = HttpRequest(uri = "https://www.example.com/")

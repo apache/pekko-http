@@ -34,8 +34,11 @@ import pekko.stream.stage.StageLogging
 private[http2] trait Http2Multiplexer {
   def pushControlFrame(frame: FrameEvent): Unit
 
-  /** Applies received SETTINGS in order, acknowledging only a successful application before sending pending DATA. */
-  def applyAndAcknowledgeSettings(settings: Seq[Setting])(applySettings: => Boolean): Unit
+  /**
+   * Applies received SETTINGS in order, acknowledging only a successful application before sending pending DATA.
+   * Returns true if the settings were acknowledged.
+   */
+  def applyAndAcknowledgeSettings(settings: Seq[Setting])(applySettings: => Boolean): Boolean
   def updateConnectionLevelWindow(increment: Int): Boolean
   def updateMaxFrameSize(newMaxFrameSize: Int): Unit
   def updateDefaultWindow(newDefaultWindow: Int): Unit
@@ -120,7 +123,7 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
 
       private var applyingPeerSettings = false
 
-      override def applyAndAcknowledgeSettings(settings: Seq[Setting])(applySettings: => Boolean): Unit = {
+      override def applyAndAcknowledgeSettings(settings: Seq[Setting])(applySettings: => Boolean): Boolean = {
         applyingPeerSettings = true
         val applied = try applySettings
         finally applyingPeerSettings = false
@@ -128,6 +131,7 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
         // A window change can make pending DATA eligible. The ACK consumes existing demand via the
         // normal control-frame path before any DATA made eligible by these settings.
         if (applied) pushControlFrame(SettingsAckFrame(settings))
+        applied
       }
 
       def updateConnectionLevelWindow(increment: Int): Boolean = {
