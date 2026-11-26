@@ -65,5 +65,56 @@ class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
 
       frameConsumer.expectNext() shouldBe response
     }
+
+    "drain a completed request entity in order when consumption starts after the final DATA" in {
+      val settings = Http2ServerSettings("").withMinCollectStrictEntitySize(0).withRequestEntityChunkSize(3)
+      val bidi = BidiFlow.fromGraph(new Http2ServerDemux(settings, Nil, upgraded = false))
+
+      val ((responseProducer, (frameConsumer, frameProducer)), requestConsumer) = TestSource[Http2SubStream]()
+        .viaMat(bidi.joinMat(Flow.fromSinkAndSourceMat(TestSink[FrameEvent](), TestSource[FrameEvent]())(
+          Keep.both))(Keep.right))(Keep.both)
+        .toMat(TestSink[Http2SubStream]())(Keep.both)
+        .run()
+
+      try {
+        frameConsumer.request(8)
+        val serverSettings = frameConsumer.expectNext().asInstanceOf[SettingsFrame]
+        frameProducer.sendNext(SettingsFrame(Nil))
+        frameProducer.sendNext(FrameEvent.SettingsAckFrame(serverSettings.settings))
+        frameConsumer.expectNext() shouldBe FrameEvent.SettingsAckFrame(Nil)
+
+        val requestHeaders = ParsedHeadersFrame(1, endStream = false,
+          Seq(":method" -> "POST", ":scheme" -> "https", ":authority" -> "example.test", ":path" -> "/first"),
+          None, None)
+        frameProducer.sendNext(requestHeaders)
+        val request = requestConsumer.requestNext()
+        request.initialHeaders shouldBe requestHeaders
+
+        val response = ParsedHeadersFrame(1, endStream = true, Seq(":status" -> "200"), None, None)
+        responseProducer.sendNext(Http2SubStream(response, OptionVal.None, Left(ByteString.empty), Map.empty))
+        frameConsumer.expectNext() shouldBe response
+
+        frameProducer.sendNext(FrameEvent.DataFrame(1, endStream = false, ByteString("ab")))
+        frameProducer.sendNext(FrameEvent.DataFrame(1, endStream = false, ByteString("cde")))
+        frameProducer.sendNext(FrameEvent.DataFrame(1, endStream = true, ByteString("fghi")))
+
+        // Observing the later request proves the final DATA was handled before we start consuming the first entity.
+        val siblingHeaders = ParsedHeadersFrame(3, endStream = true,
+          Seq(":method" -> "GET", ":scheme" -> "https", ":authority" -> "example.test", ":path" -> "/second"),
+          None, None)
+        frameProducer.sendNext(siblingHeaders)
+        requestConsumer.requestNext().initialHeaders shouldBe siblingHeaders
+
+        val body = request.createEntity(-1L, OptionVal.None).dataBytes
+          .fold(ByteString.empty)(_ ++ _)
+          .runWith(TestSink[ByteString]())
+        body.request(1)
+        body.expectNext(ByteString("abcdefghi"))
+        body.expectComplete()
+      } finally {
+        frameConsumer.cancel()
+        requestConsumer.cancel()
+      }
+    }
   }
 }
