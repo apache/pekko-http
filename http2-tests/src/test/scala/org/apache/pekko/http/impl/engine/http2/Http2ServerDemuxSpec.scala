@@ -228,5 +228,110 @@ class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
         requests.cancel()
       }
     }
+
+    "share connection send credit between two response bodies" in {
+      val demux = BidiFlow.fromGraph(new Http2ServerDemux(Http2ServerSettings(""), Nil, upgraded = false))
+      val ((responses, (outgoingFrames, incomingFrames)), requests) = TestSource[Http2SubStream]()
+        .viaMat(demux.joinMat(Flow.fromSinkAndSourceMat(TestSink[FrameEvent](), TestSource[FrameEvent]())(
+          Keep.both))(Keep.right))(Keep.both)
+        .toMat(TestSink[Http2SubStream]())(Keep.both)
+        .run()
+
+      try {
+        requests.request(3)
+        val serverSettings = outgoingFrames.requestNext() match {
+          case frame: SettingsFrame => frame.settings
+          case other                => fail(s"Expected server SETTINGS, got $other")
+        }
+        incomingFrames.sendNext(SettingsFrame(Nil))
+        outgoingFrames.requestNext() shouldBe SettingsAckFrame(Nil)
+        incomingFrames.sendNext(SettingsAckFrame(serverSettings))
+
+        def submitResponse(streamId: Int, body: ByteString): ParsedHeadersFrame = {
+          val uri = Uri(s"https://example.test/report-$streamId")
+          val request = ParsedHeadersFrame(streamId, endStream = true,
+            Seq(
+              ":method" -> HttpMethods.GET,
+              ":scheme" -> uri.scheme,
+              ":authority" -> uri.authority,
+              ":path" -> (uri.path, uri.rawQueryString)), None, None)
+          incomingFrames.sendNext(request)
+          requests.expectNext().initialHeaders shouldBe request
+
+          val response = ParsedHeadersFrame(streamId, endStream = false, Seq(":status" -> "200"), None, None)
+          responses.sendNext(Http2SubStream(response, OptionVal.None, Left(body), Map.empty))
+          response
+        }
+
+        def dataFrame(event: FrameEvent): DataFrame = event match {
+          case frame: DataFrame => frame
+          case other            => fail(s"Expected a DATA frame, got $other")
+        }
+
+        // Only sending DATA can reduce the fixed initial connection window (RFC 9113 section 6.9.1).
+        val sharedCredit = 8
+        val earlierBody = ByteString(Array.fill[Byte](Http2Protocol.InitialWindowSize - sharedCredit)('a'.toByte))
+        val earlierHeaders = submitResponse(1, earlierBody)
+        outgoingFrames.requestNext() shouldBe earlierHeaders
+        within(3.seconds) {
+          var offset = 0
+          var ended = false
+          while (!ended) {
+            val frame = dataFrame(outgoingFrames.requestNext())
+            frame.streamId shouldBe 1
+            val nextOffset = offset + frame.payload.length
+            frame.payload shouldBe earlierBody.slice(offset, nextOffset)
+            offset = nextOffset
+            ended = frame.endStream
+          }
+          offset shouldBe earlierBody.size
+        }
+
+        val bodies = Map(3 -> ByteString("violet"), 5 -> ByteString("orange"))
+        val expectedHeaders = Map(3 -> submitResponse(3, bodies(3)), 5 -> submitResponse(5, bodies(5)))
+        var received = Map(3 -> ByteString.empty, 5 -> ByteString.empty)
+        var receivedHeaders = Set.empty[Int]
+        var ended = Set.empty[Int]
+        def receiveFrame(): Unit = outgoingFrames.expectNext() match {
+          case frame: ParsedHeadersFrame =>
+            frame shouldBe expectedHeaders(frame.streamId)
+            receivedHeaders should not contain (frame.streamId)
+            receivedHeaders += frame.streamId
+          case frame: DataFrame =>
+            val expected = bodies(frame.streamId)
+            receivedHeaders should contain(frame.streamId)
+            ended should not contain (frame.streamId)
+            val data = received(frame.streamId) ++ frame.payload
+            data shouldBe expected.take(data.length)
+            received += frame.streamId -> data
+            if (frame.endStream) {
+              data shouldBe expected
+              ended += frame.streamId
+            }
+          case other => fail(s"Expected response HEADERS or DATA, got $other")
+        }
+
+        // Either response can use the shared allowance first. Leave downstream demand pending.
+        outgoingFrames.request(16)
+        def bytesReceived: Int = received.valuesIterator.map(_.length).sum
+        within(3.seconds) {
+          while (bytesReceived < sharedCredit) receiveFrame()
+          bytesReceived shouldBe sharedCredit
+          receivedHeaders shouldBe bodies.keySet
+          outgoingFrames.expectNoMessage(100.millis)
+        }
+
+        // Replenish exactly the bytes still queued, at connection scope only.
+        val queuedBytes = bodies.valuesIterator.map(_.size).sum - sharedCredit
+        incomingFrames.sendNext(WindowUpdateFrame(Http2Protocol.NoStreamId, queuedBytes))
+        within(3.seconds) {
+          while (ended.size < bodies.size) receiveFrame()
+        }
+        received shouldBe bodies
+      } finally {
+        outgoingFrames.cancel()
+        requests.cancel()
+      }
+    }
   }
 }
