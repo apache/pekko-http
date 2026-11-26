@@ -215,33 +215,45 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       }
     }
 
-    "complete the opening handshake result when cancelled before dispatch" in {
-      Utils.assertAllStagesStopped {
-        val defaults = ClientConnectionSettings(system)
-        val settings = defaults.withWebsocketSettings(defaults.websocketSettings.withOpeningTimeout(1.minute))
-        val handshake =
-          WebSocketClientBlueprint.handshake(WebSocketRequest("ws://example.org/ws"), settings, system.log)
-        val incoming = TestPublisher.probe[ByteString]()
-        val application = TestSubscriber.probe[ByteString]()
-        val network = TestSubscriber.probe[ByteString]()
-        val result = RunnableGraph.fromGraph(GraphDSL.createGraph(handshake) { implicit b => stage =>
-          import GraphDSL.Implicits._
-          Source.fromPublisher(incoming) ~> stage.in1
-          stage.out1                     ~> Sink.fromSubscriber(application)
-          Source.maybe[ByteString]       ~> stage.in2
-          stage.out2                     ~> Sink.fromSubscriber(network)
-          ClosedShape
-        }).run()
+    Seq(
+      "complete the opening handshake result when cancelled before dispatch" -> false,
+      "complete the opening handshake result when cancelled after dispatch without an opening timeout" -> true)
+      .foreach { case (description, afterDispatch) =>
+        description in {
+          Utils.assertAllStagesStopped {
+            val defaults = ClientConnectionSettings(system)
+            val settings =
+              if (afterDispatch) defaults
+              else defaults.withWebsocketSettings(defaults.websocketSettings.withOpeningTimeout(1.minute))
+            val handshake =
+              WebSocketClientBlueprint.handshake(WebSocketRequest("ws://example.org/ws"), settings, system.log)
+            val incoming = TestPublisher.probe[ByteString]()
+            val application = TestSubscriber.probe[ByteString]()
+            val network = TestSubscriber.probe[ByteString]()
+            val result = RunnableGraph.fromGraph(GraphDSL.createGraph(handshake) { implicit b => stage =>
+              import GraphDSL.Implicits._
+              Source.fromPublisher(incoming) ~> stage.in1
+              stage.out1                     ~> Sink.fromSubscriber(application)
+              Source.maybe[ByteString]       ~> stage.in2
+              stage.out2                     ~> Sink.fromSubscriber(network)
+              ClosedShape
+            }).run()
 
-        network.ensureSubscription()
-        try {
-          // The network has not requested an opening handshake, so the deadline cannot fire.
-          application.cancel()
-          result.failed.awaitResult(3.seconds.dilated).getMessage should include("cancelled before completion")
-          incoming.expectCancellation()
-        } finally network.cancel()
+            network.ensureSubscription()
+            try {
+              if (afterDispatch) {
+                settings.websocketSettings.openingTimeout shouldBe Duration.Inf
+                network.requestNext().utf8String should startWith("GET /ws HTTP/1.1\r\n")
+              }
+              // Do not respond or close the input: the handshake is ended by downstream cancellation alone.
+              result.isCompleted shouldBe false
+              application.cancel()
+              incoming.expectCancellation()
+              result.failed.awaitResult(3.seconds.dilated).getMessage should include("cancelled before completion")
+            } finally network.cancel()
+          }
+        }
       }
-    }
 
     "retain the HTTP rejection with a configured opening handshake timeout" in {
       Utils.assertAllStagesStopped {

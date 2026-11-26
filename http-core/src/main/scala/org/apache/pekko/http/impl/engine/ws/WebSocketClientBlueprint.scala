@@ -174,7 +174,7 @@ private[http] object WebSocketClientBlueprint {
           setHandlers(in, out, this)
 
           override def onDownstreamFinish(cause: Throwable): Unit = {
-            if (openingDeadline.isDefined && !result.isCompleted)
+            if (!result.isCompleted)
               result.tryFailure(new RuntimeException("WebSocket opening handshake was cancelled before completion.",
                 cause))
             super.onDownstreamFinish(cause)
