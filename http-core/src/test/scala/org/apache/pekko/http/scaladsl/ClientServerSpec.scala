@@ -153,6 +153,38 @@ abstract class ClientServerSpecBase(http2: Boolean) extends PekkoSpecWithMateria
       Await.result(b1.unbind(), 1.second.dilated)
     }
 
+    "reuse an HTTP/1.1 connection after a 204 response" in Utils.assertAllStagesStopped {
+      val host = "127.0.0.1"
+      val timeout = 3.seconds.dilated
+      val body = "next response"
+      val binding = Http().newServerAt(host, 0).bindSync { request =>
+        request.uri.path.toString match {
+          case "/empty" => HttpResponse(StatusCodes.NoContent)
+          case "/next"  => HttpResponse(entity = body)
+          case _        => HttpResponse(StatusCodes.NotFound)
+        }
+      }.awaitResult(timeout)
+      try {
+        val nextRequest = Promise[HttpRequest]()
+        val responses = Source.single(HttpRequest(GET, "/empty"))
+          .concat(Source.future(nextRequest.future))
+          .via(Http().connectionTo(host).toPort(binding.localAddress.getPort).http())
+          .zipWithIndex
+          .mapAsync(1) {
+            case (response, index) =>
+              response.entity.toStrict(timeout).map { entity =>
+                if (index == 0L) nextRequest.success(HttpRequest(GET, "/next"))
+                (response.protocol, response.status, entity.data)
+              }
+          }
+          .runWith(Sink.seq)
+
+        responses.awaitResult(timeout) shouldEqual Seq(
+          (HttpProtocols.`HTTP/1.1`, StatusCodes.NoContent, ByteString.empty),
+          (HttpProtocols.`HTTP/1.1`, StatusCodes.OK, ByteString(body)))
+      } finally binding.terminate(1.second.dilated).awaitResult(timeout)
+    }
+
     "prevent more than the configured number of max-connections with bind" in {
       val settings = ServerSettings(system).withMaxConnections(1)
 
