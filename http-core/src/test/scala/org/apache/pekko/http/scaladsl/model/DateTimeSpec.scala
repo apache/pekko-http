@@ -13,6 +13,7 @@
 
 package org.apache.pekko.http.scaladsl.model
 
+import java.time.{ YearMonth, ZoneOffset }
 import java.util.TimeZone
 import scala.util.Random
 import org.scalatest.matchers.{ MatchResult, Matcher }
@@ -28,6 +29,37 @@ class DateTimeSpec extends AnyWordSpec with Matchers {
   val random = new Random()
   val httpDateTimes = LazyList.continually {
     DateTime(startClicks + math.abs(random.nextLong()) % maxClickDelta)
+  }
+
+  "DateTime calendar components" should {
+    val months = for {
+      year <- Seq(1900, 2000, 2023, 2024, 2100)
+      month <- 1 to 12
+    } yield YearMonth.of(year, month)
+
+    "reject a day beyond the end of a short month" in {
+      months.filter(_.lengthOfMonth() < 31).foreach { month =>
+        withClue(s"$month: ") {
+          an[IllegalArgumentException] should be thrownBy
+          DateTime(month.getYear, month.getMonthValue, month.lengthOfMonth() + 1)
+        }
+      }
+    }
+
+    "preserve each real month end and its UTC instant" in {
+      months.foreach { month =>
+        val lastDay = month.atEndOfMonth()
+        val date = DateTime(lastDay.getYear, lastDay.getMonthValue, lastDay.getDayOfMonth)
+        val expected = lastDay.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli
+        withClue(s"$month: ") {
+          date.clicks shouldEqual expected
+          val roundTrip = DateTime(date.clicks)
+          (roundTrip.year, roundTrip.month, roundTrip.day) shouldEqual
+          ((lastDay.getYear, lastDay.getMonthValue, lastDay.getDayOfMonth))
+          date.weekday shouldEqual (lastDay.getDayOfWeek.getValue % 7)
+        }
+      }
+    }
   }
 
   "DateTime.toRfc1123DateTimeString" should {
