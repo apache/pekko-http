@@ -31,6 +31,9 @@ import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.headers.{
   Connection,
   `Sec-WebSocket-Extensions`,
+  `Sec-WebSocket-Key`,
+  `Sec-WebSocket-Protocol`,
+  `Sec-WebSocket-Version`,
   `User-Agent`,
   HttpOrigin,
   Origin,
@@ -39,7 +42,7 @@ import pekko.http.scaladsl.model.headers.{
   WebSocketExtension
 }
 import pekko.http.scaladsl.model.ws._
-import pekko.http.scaladsl.model.Uri
+import pekko.http.scaladsl.model.{ HttpHeader, Uri }
 import pekko.stream.scaladsl._
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber, Utils }
 import pekko.util.ByteString
@@ -56,6 +59,38 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
     }
 
     "establish a websocket connection when the user requests it" in new EstablishedConnectionSetup with ClientEchoes
+
+    val target = Uri("ws://example.org/ws")
+    val callerKey = `Sec-WebSocket-Key`(new Array[Byte](16))
+    val extraSingletons: Seq[(String, Seq[HttpHeader])] = Seq(
+      "modeled Scala" -> Seq(callerKey, `Sec-WebSocket-Version`(Seq(13))),
+      "mixed-case raw Java" ->
+      pekko.http.javadsl.model.ws.WebSocketRequest.create(target.toString)
+        .addHeader(
+          pekko.http.javadsl.model.headers.RawHeader.create("sEc-WeBsOcKeT-kEy", callerKey.value))
+        .addHeader(pekko.http.javadsl.model.headers.RawHeader.create("SeC-WeBsOcKeT-vErSiOn", "13"))
+        .asScala.extraHeaders)
+    extraSingletons.foreach { case (label, conflictingHeaders) =>
+      s"build one generated handshake key and version with $label extra headers" in {
+        val callerHeaders: Seq[HttpHeader] = Seq(
+          Connection(List("x-metadata")),
+          RawHeader("X-Metadata", "trace"),
+          Origin(HttpOrigin("https://app.example.com")),
+          `Sec-WebSocket-Extensions`(Seq(WebSocketExtension("x-custom"))),
+          `Sec-WebSocket-Protocol`(Seq("additional")))
+        val (request, key) =
+          Handshake.Client.buildRequest(target, conflictingHeaders ++ callerHeaders, Seq("echo"), new Random(0))
+
+        request.headers.filter(_.is("sec-websocket-key")) shouldEqual Seq(key)
+        key.value should not be callerKey.value
+        request.headers.filter(_.is("sec-websocket-version")) shouldEqual Seq(Handshake.SecWebSocketVersionHeader)
+        request.headers.filter(_.is("sec-websocket-protocol")) shouldEqual Seq(
+          `Sec-WebSocket-Protocol`(Seq("echo")), callerHeaders.last)
+        request.headers.filter(_.is("connection")) shouldEqual Seq(
+          Handshake.ConnectionUpgradeHeader, callerHeaders.head)
+        request.headers.takeRight(callerHeaders.size) shouldEqual callerHeaders
+      }
+    }
 
     "send the caller's Origin header when establishing a WebSocket connection" in new TestSetup with ClientEchoes {
       override def clientLayer: Http.WebSocketClientLayer =
