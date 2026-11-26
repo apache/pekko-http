@@ -29,7 +29,8 @@ trait WebSocketUpgradeResponse {
   def isValid: Boolean
 
   /**
-   * Returns the response object as received from the server for further inspection.
+   * Returns the HTTP response for inspection of its status and parsed headers.
+   * For responses returned by the WebSocket client, the entity is empty even if the server sent a body.
    */
   def response: HttpResponse
 

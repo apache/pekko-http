@@ -30,9 +30,14 @@ A WebSocket request starts with a regular HTTP request which contains an `Upgrad
 other regular HTTP request properties), so in addition to the flow of messages there also is an initial response
 from the server, this is modelled with @apidoc[WebSocketUpgradeResponse].
 
-The methods of the WebSocket client API handle the upgrade to WebSocket on connection success and materializes
-the connected WebSocket stream. If the connection fails, for example with a `404 NotFound` error, this regular
-HTTP result can be found in `WebSocketUpgradeResponse.response`.
+The client API performs the opening handshake when the WebSocket stream is materialized and connects
+the message stream once the upgrade succeeds.
+
+If the client receives an HTTP response that does not establish a valid WebSocket upgrade, the result is
+@scala[@scaladoc[InvalidUpgradeResponse](org.apache.pekko.http.scaladsl.model.ws.InvalidUpgradeResponse)]@java[a @javadoc[WebSocketUpgradeResponse](org.apache.pekko.http.javadsl.model.ws.WebSocketUpgradeResponse) whose `isValid()` returns `false`].
+This includes both a `404 Not Found` response and a `101 Switching Protocols` response that fails handshake validation.
+Use @scala[`WebSocketUpgradeResponse.response`]@java[`WebSocketUpgradeResponse.response()`] to inspect the status and
+parsed headers. The response entity is empty even if the server sent a body.
 
 @@@ note
 Make sure to read and understand the section about [Half-Closed WebSockets](#half-closed-client-websockets) as the behavior
@@ -45,8 +50,9 @@ Set `pekko.http.client.websocket.opening-timeout` to bound how long the client w
 response after the WebSocket layer hands the opening request downstream, not after the request is written to
 the socket. It must be a positive duration of at most one hour,
 or `infinite` (the default) to leave the wait unbounded. If the deadline is exceeded, the upgrade result and
-the WebSocket stream fail with a `java.util.concurrent.TimeoutException`. A received non-upgrade HTTP response
-is still available through `InvalidUpgradeResponse`.
+the WebSocket stream fail with a `java.util.concurrent.TimeoutException`. If the client parses a response before the
+deadline but cannot accept it as a WebSocket upgrade, the status and parsed headers are still available through the
+upgrade result's @scala[`response`]@java[`response()`].
 
 The deadline may overlap transport setup, but does not replace the TCP connection or TLS timeouts. It stops
 on a successful upgrade and is independent of idle timeouts and the WebSocket close handshake. It can also be

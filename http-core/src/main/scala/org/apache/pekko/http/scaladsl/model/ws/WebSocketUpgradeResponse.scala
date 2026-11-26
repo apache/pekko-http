@@ -19,6 +19,11 @@ import org.apache.pekko.http.scaladsl.model.HttpResponse
  * Represents the response to a websocket upgrade request. Can either be [[ValidUpgrade]] or [[InvalidUpgradeResponse]].
  */
 sealed trait WebSocketUpgradeResponse {
+
+  /**
+   * Returns the HTTP response for inspection of its status and parsed headers.
+   * For responses returned by the WebSocket client, the entity is empty even if the server sent a body.
+   */
   def response: HttpResponse
 }
 final case class ValidUpgrade(response: HttpResponse, chosenSubprotocol: Option[String])
