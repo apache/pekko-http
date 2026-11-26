@@ -51,15 +51,22 @@ object HttpCookiePair {
     new HttpCookiePair(name, value) {}
   }
 
+  // cookie-name is a token (RFC 6265 section 4.1.1), so it needs at least one character
+  private def validateName(name: String): Unit = {
+    import HttpCookie._
+    require(name.nonEmpty, "cookie name must not be empty")
+    require(nameChars.matchesAll(name), s"'${nameChars.firstMismatch(name).get}' not allowed in cookie name ('$name')")
+  }
+
   private[http] def validate(name: String, value: String): Unit = {
     import HttpCookie._
-    require(nameChars.matchesAll(name), s"'${nameChars.firstMismatch(name).get}' not allowed in cookie name ('$name')")
+    validateName(name)
     require(valueChars.matchesAll(value),
       s"'${valueChars.firstMismatch(value).get}' not allowed in cookie content ('$value')")
   }
   private[http] def validateRaw(name: String, value: String): Unit = {
     import HttpCookie._
-    require(nameChars.matchesAll(name), s"'${nameChars.firstMismatch(name).get}' not allowed in cookie name ('$name')")
+    validateName(name)
     require(rawValueChars.matchesAll(value),
       s"'${rawValueChars.firstMismatch(value).get}' not allowed in cookie content ('$value')")
   }
