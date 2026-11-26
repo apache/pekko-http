@@ -29,6 +29,7 @@ import scala.concurrent.duration._
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.headers.{
+  Connection,
   `Sec-WebSocket-Extensions`,
   `User-Agent`,
   HttpOrigin,
@@ -79,6 +80,42 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       expectMaskedCloseFrame(Protocol.CloseCodes.Regular)
       closeNetworkInput()
       expectNetworkClose()
+    }
+
+    "send the caller's Connection option when establishing a WebSocket connection" in {
+      Utils.assertAllStagesStopped {
+        val callerOption = "example-local-option"
+        new TestSetup with ClientProbes {
+          override def clientLayer: Http.WebSocketClientLayer =
+            Http(testSystem).webSocketClientLayer(
+              WebSocketRequest(targetUri, extraHeaders = List(Connection(callerOption))),
+              settings = settings)
+
+          try {
+            val endOfHeaders = "\r\n\r\n"
+            val request = new StringBuilder
+            while (request.length < 4096 && !request.endsWith(endOfHeaders))
+              request.append(netOut.expectByte().toChar)
+            request.result() should endWith(endOfHeaders)
+
+            val field = "Connection:"
+            val options = request.result().split("\r\n").toList
+              .filter(_.regionMatches(true, 0, field, 0, field.length))
+              .flatMap(_.drop(field.length).split(','))
+              .map(_.trim.toRootLowerCase)
+            (options should contain).allOf("upgrade", callerOption)
+
+            messagesIn.request(1)
+            sendWireData(UpgradeResponseBytes)
+            response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+          } finally {
+            messagesOut.sendComplete()
+            messagesIn.cancel()
+            netOut.cancel()
+            netIn.sendComplete()
+          }
+        }
+      }
     }
 
     Seq(
