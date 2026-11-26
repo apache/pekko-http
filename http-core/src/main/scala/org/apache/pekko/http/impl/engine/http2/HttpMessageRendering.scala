@@ -138,9 +138,11 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
     val trailingHeadersFrame =
       r.attribute(AttributeKeys.trailer) match {
         case Some(trailer) if trailer.headers.nonEmpty =>
-          val pairs = trailer.headers.filter { case (name, value) =>
+          val pairs = trailer.headers.flatMap { case (name, value) =>
             val header = pekko.http.scaladsl.model.headers.RawHeader(name, value)
-            HttpMessageRendering.allowsHeader(header, r.isResponse, isTrailer = true, log)
+            if (HttpMessageRendering.allowsHeader(header, r.isResponse, isTrailer = true, log))
+              Some(header.lowercaseName -> value)
+            else None
           }
           OptionVal.Some(ParsedHeadersFrame(streamId, endStream = true, pairs, None, None))
         case _ => OptionVal.None

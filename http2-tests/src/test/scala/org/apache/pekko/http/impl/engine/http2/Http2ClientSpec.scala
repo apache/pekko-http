@@ -1421,7 +1421,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
             val request = HttpRequest(method = HttpMethods.POST, uri = "https://www.example.com/",
               entity = HttpEntity(ContentTypes.`application/octet-stream`, body))
             user.emitRequest(
-              if (withTrailer) request.addAttribute(AttributeKeys.trailer, Trailer(RawHeader("x-result", "complete")))
+              if (withTrailer) request.addAttribute(AttributeKeys.trailer, Trailer(RawHeader("X-Result", "complete")))
               else request)
             network.expectDecodedResponseHEADERSPairs(1, endStream = false)
             val first = network.expectDATA(1, endStream = false, numBytes = 8)

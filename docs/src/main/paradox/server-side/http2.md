@@ -154,6 +154,9 @@ Scala
 Java
 :   @@snip[Http2Test.java](/docs/src/test/java/docs/http/javadsl/Http2Test.java) { #trailingHeaders }
 
+Pekko HTTP renders outgoing HTTP/2 trailer field names in lowercase, as required by
+[RFC 9113, Section 8.2](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.2). Field values are unchanged.
+
 Having both a `trailingHeaders` attribute and a `LastChunk` element is not supported.
 
 ## Testing with cURL
