@@ -143,6 +143,28 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     }
   }
 
+  "cookie expiry full month names work in the supported date shapes" in {
+    val expected = DateTime(2024, 3, 12, 10, 20, 30)
+    for (date <- Seq(
+        "Tue, 12 March 2024 10:20:30 GMT",
+        "Tue, 12 mArCh 2024 10:20:30 GMT",
+        "Tue, 12 mAR 2024 10:20:30 GMT",
+        "Tuesday, 12-March-24 10:20:30 GMT",
+        "Tue March 12 10:20:30 2024")) {
+      s"Set-Cookie: sid=value; Expires=$date; Path=/" =!=
+        `Set-Cookie`(HttpCookie("sid", "value", expires = Some(expected), path = Some("/")))
+          .renderedTo("sid=value; Expires=Tue, 12 Mar 2024 10:20:30 GMT; Path=/")
+    }
+  }
+
+  "cookie expiry full month names do not extend shared HTTP dates" in {
+    HttpHeader.parse("Date", "Tue, 12 March 2024 10:20:30 GMT") match {
+      case HttpHeader.ParsingResult.Ok(_: RawHeader, errors) => errors should not be empty
+      case other                                             => fail(s"Expected an unmodeled Date with errors, got $other")
+    }
+    "Date: Tue, 12 Mar 2024 10:20:30 GMT" =!= Date(DateTime(2024, 3, 12, 10, 20, 30))
+  }
+
   "cookie expiry time-width does not extend shared HTTP dates" in {
     HttpHeader.parse("Date", "Sun, 06 Nov 1994 8:9:7 GMT") match {
       case HttpHeader.ParsingResult.Ok(_: RawHeader, errors) => errors should not be empty
