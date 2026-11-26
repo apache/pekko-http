@@ -84,6 +84,28 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       Unmarshal(response.entity).to[String].futureValue shouldBe "pong"
       response.attribute(requestIdAttr).get.id shouldBe "request-1"
     }
+    "preserve repeated Set-Cookie field order across an HTTP/2 response" in new TestSetup {
+      try {
+        val theme = headers.`Set-Cookie`(headers.HttpCookie("theme", "dark"))
+        val language = headers.`Set-Cookie`(headers.HttpCookie("language", "en"))
+        val marker = headers.RawHeader("x-example-marker", "kept")
+        val http2 = pekko.http.scaladsl.model.HttpProtocols.`HTTP/2.0`
+
+        sendClientRequest(HttpRequest(uri = "/preferences"))
+        val serverRequest = expectServerRequest()
+        serverRequest.request.protocol shouldBe http2
+        serverRequest.sendResponse(HttpResponse(headers = List(theme, marker, language)))
+
+        val response = expectClientResponse()
+        response.protocol shouldBe http2
+        response.status shouldBe StatusCodes.OK
+        response.headers.filter(_.is("set-cookie")) shouldEqual Seq(theme, language)
+        response.header(marker.name) shouldBe Some(marker)
+      } finally {
+        clientRequestsOut.sendComplete()
+        binding.terminate(1.second).futureValue(timeout(3.seconds))
+      }
+    }
     "wait for the streamed response to finish when discarding and then serve another request" in new TestSetup {
       sendClientRequest(HttpRequest(uri = "/discard"))
       val firstRequest = expectServerRequest()
