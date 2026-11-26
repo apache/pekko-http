@@ -1085,7 +1085,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           user.requestOut.expectCancellation()
         })
 
-      "fail a response entity whose final data is still buffered when the peer closes its sending side".inAssertAllStagesStopped(
+      "deliver a response entity whose final data is still buffered when the peer closes its sending side".inAssertAllStagesStopped(
         new ReceivingResponseEntity {
           // Use up the demand of 2 signalled by the fixture.
           receiveEntityData()
@@ -1093,18 +1093,19 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           network.expectWindowUpdate()
           network.expectWindowUpdate()
 
-          // The consumer has no demand left. One more chunk is still pulled out of the stream buffer by the entity
-          // stream, so the chunk carrying END_STREAM after it stays buffered and the entity outlet stays open.
           network.sendDATA(1, endStream = false, ByteString("more"))
           network.sendDATA(1, endStream = true, ByteString("tail"))
-          entity.expectNoMessage(100.millis)
-
           network.fromNet.sendComplete()
-
-          // The entity must not complete normally without its tail.
-          entity.expectError() shouldBe theSameInstanceAs(Http2StreamHandling.ConnectionWasAbortedException)
           expectGracefulCompletion()
           user.requestOut.expectCancellation()
+
+          // Only ask for the retained bytes once the connection has completed, without assuming chunk boundaries.
+          val expected = ByteString("moretail")
+          entity.request(2)
+          val first = entity.expectNext()
+          val actual = if (first.length < expected.length) first ++ entity.expectNext() else first
+          actual shouldBe expected
+          entity.expectComplete()
         })
 
       "preserve the connection failure in the delivered entity".inAssertAllStagesStopped(

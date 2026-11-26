@@ -288,7 +288,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         with GenericOutletSupport with StageLogging with LogHelper with ServerTerminator {
       logic =>
 
-      import Http2Demux.{ CompletionTimeout, MaxConnectionAge }
+      import Http2Demux.{ CompletionTimeout, MaxConnectionAge, ReadCompletionTimeout }
 
       def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart] =
         stage.wrapTrailingHeaders(headers)
@@ -310,6 +310,11 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
       private val terminationPromise = Promise[Http.HttpTerminated]()
       private var terminating: Boolean = false
+      private var clientReadClosed = false
+      private var closingClientStreams = false
+      private var unansweredAtReadCompletion = false
+      private var clientResponseAwaitingPull = false
+      override def isClientReadClosed: Boolean = clientReadClosed
       private var lastIdBeforeTermination: Int = 0
       // when the forced close of a terminating connection is due, unset while no forced close is scheduled
       private var forcedCloseDeadline: OptionVal[Deadline] = OptionVal.None
@@ -344,7 +349,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         case _ => // no deadline, wait for open requests to complete
       }
 
-      def frameOutFinished(): Unit = {
+      def frameOutFinished(): Unit = if (!clientReadClosed) {
         // Fail the client response outlet before cleanup: closing the last stream can otherwise
         // complete it normally when the request input has already completed.
         if (!isServer && !isClosed(substreamOut))
@@ -410,7 +415,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         if (allow != allowReadingIncomingFrames)
           if (allow) {
             debug("Resume reading incoming frames")
-            if (!hasBeenPulled(frameIn)) pull(frameIn)
+            if (!isClosed(frameIn) && !hasBeenPulled(frameIn)) pull(frameIn)
           } else debug("Suspended reading incoming frames") // can't retract pending pull but that's ok
 
         allowReadingIncomingFrames = allow
@@ -419,7 +424,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         if (allowReadingIncomingFrames && !hasBeenPulled(frameIn) && !isClosed(frameIn)) pull(frameIn)
 
       def tryPullSubStreams(): Unit = {
-        if (!hasBeenPulled(substreamIn) && !isClosed(substreamIn)) {
+        if (!clientReadClosed && !hasBeenPulled(substreamIn) && !isClosed(substreamIn)) {
           // While we don't support PUSH_PROMISE there's only capacity control on the client
           if (isServer) pull(substreamIn)
           else if (hasCapacityToCreateStreams) pull(substreamIn)
@@ -430,11 +435,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       setHandler(frameIn,
         new InHandler {
 
-          override def onUpstreamFinish(): Unit = {
-            // Default stage completion completes open sub-sources before postStop can fail them.
-            if (!isServer) failOpenIncomingEntities()
-            super.onUpstreamFinish()
-          }
+          override def onUpstreamFinish(): Unit =
+            if (isServer) super.onUpstreamFinish()
+            else finishClientRead()
 
           def onPush(): Unit = {
             val frame = grab(frameIn)
@@ -515,7 +518,25 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       // -----------------------------------------------------------------
       // FIXME: What if user handler doesn't pull in new substreams? Should we reject them
       //        after a while or buffer only a limited amount?
-      val bufferedSubStreamOutput = new BufferedOutlet[Http2SubStream](fromOutlet(substreamOut))
+      val bufferedSubStreamOutput = new BufferedOutlet[Http2SubStream](fromOutlet(substreamOut)) {
+        override protected def doPush(subStream: Http2SubStream): Unit = {
+          if (!isServer) clientResponseAwaitingPull = true
+          super.doPush(subStream)
+        }
+
+        override def onPull(): Unit = {
+          clientResponseAwaitingPull = false
+          super.onPull()
+          if (clientReadClosed) completeIfDone()
+        }
+
+        override def onDownstreamFinish(cause: Throwable): Unit =
+          if (!clientReadClosed) super.onDownstreamFinish(cause)
+          else {
+            buffer.clear()
+            completeIfDone()
+          }
+      }
       override def dispatchSubstream(initialHeaders: ParsedHeadersFrame, data: Either[ByteString, Source[Any, Any]],
           correlationAttributes: Map[AttributeKey[?], ?]): Unit =
         bufferedSubStreamOutput.push(Http2SubStream(initialHeaders, OptionVal.None, data, correlationAttributes))
@@ -524,7 +545,42 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       override def onAllStreamsClosed(): Unit = completeIfDone()
       override def onAllDataFlushed(): Unit = completeIfDone()
 
+      private def finishClientRead(): Unit = {
+        clientReadClosed = true
+        closingClientStreams = true
+        // The response stream and transport may end before a delivered entity has been consumed.
+        setKeepGoing(true)
+        cancelTimer(ConfigurablePing.Tick)
+        if (!isClosed(substreamIn)) cancel(substreamIn, Http2Demux.IncomingReadComplete)
+        // Retire the writer at the same time; retained response buffers no longer need to send frames.
+        if (!isClosed(frameOut)) complete(frameOut)
+        unansweredAtReadCompletion = retainCompletedClientEntities()
+        closingClientStreams = false
+        scheduleOnce(ReadCompletionTimeout, completionTimeout)
+        completeIfDone()
+      }
+
+      private def abortClientReadDrain(): Unit = {
+        if (!isClosed(substreamOut))
+          bufferedSubStreamOutput.fail(Http2StreamHandling.ConnectionWasAbortedException)
+        shutdownStreamHandling()
+        completeStage()
+      }
+
       private def completeIfDone(): Unit = {
+        if (clientReadClosed) {
+          if (!closingClientStreams) {
+            if (bufferedSubStreamOutput.buffer.isEmpty && !isClosed(substreamOut)) {
+              if (!unansweredAtReadCompletion) complete(substreamOut)
+              // Failing a graph outlet can overtake an element just pushed to it. Let the response advance
+              // before failing on more demand; the drain deadline also applies if no further demand arrives.
+              else if (!clientResponseAwaitingPull)
+                fail(substreamOut, Http2StreamHandling.ConnectionWasAbortedException)
+            }
+            if (activeStreamCount() == 0 && isClosed(substreamOut)) completeStage()
+          }
+          return
+        }
         val noMoreOutgoingStreams = (terminating || isClosed(substreamIn)) && activeStreamCount() == 0
         def allOutgoingDataFlushed = isClosed(frameOut) || multiplexer.hasFlushedAllData
         if (noMoreOutgoingStreams && allOutgoingDataFlushed) {
@@ -632,6 +688,10 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
             debug("Connection reached the configured max-connection-age, closing it gracefully")
             triggerTermination(maxConnectionAgeGrace)
           }
+        case ReadCompletionTimeout =>
+          abortClientReadDrain()
+        case CompletionTimeout if clientReadClosed =>
+          abortClientReadDrain()
         case CompletionTimeout =>
           if (isServer)
             info(
@@ -658,6 +718,10 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
  */
 @InternalApi
 private[pekko] object Http2Demux {
+  case object IncomingReadComplete
+      extends RuntimeException("HTTP/2 peer completed its input") with scala.util.control.NoStackTrace
+
   case object CompletionTimeout
+  case object ReadCompletionTimeout
   case object MaxConnectionAge
 }

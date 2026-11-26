@@ -131,6 +131,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     activeStreamCount() < maxConcurrentStreams
   }
 
+  def isClientReadClosed: Boolean
+
   /** Called when all streams in StreamHandling buffers are closed and the stage is completing. */
   def onAllStreamsClosed(): Unit
 
@@ -290,14 +292,28 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     ret
   }
 
+  /** Retain only complete incoming client entities and report whether a request had no final response. */
+  def retainCompletedClientEntities(): Boolean = {
+    var unanswered = false
+    streamStates.keys.toVector.foreach { id =>
+      updateState(id.toInt,
+        {
+          case receiving: ReceivingDataWithBuffer if receiving.canDrainAfterClientReadClosed =>
+            receiving.finishSendingForClientReadClosed()
+          case state =>
+            state match {
+              case _: OpenSendingData | _: HalfClosedLocalWaitingForPeerStream => unanswered = true
+              case _                                                           =>
+            }
+            state.shutdown()
+            Closed
+        }, "retainCompletedClientEntities")
+    }
+    unanswered
+  }
+
   /** Called to cleanup any state when the connection is torn down */
   def shutdownStreamHandling(): Unit = updateAllStates({ id => id.shutdown(); Closed }, "shutdownStreamHandling")
-
-  /** Fail open incoming entity outlets on client read EOF, without changing upload lifecycle. */
-  def failOpenIncomingEntities(): Unit = streamStates.valuesIterator.foreach {
-    case receiving: ReceivingDataWithBuffer => receiving.failOpenIncomingEntity()
-    case _                                  => ()
-  }
 
   def resetStream(streamId: Int, errorCode: ErrorCode): Unit = {
     // Hand the RST_STREAM to the multiplexer first: closing the last stream can complete the connection once all
@@ -535,6 +551,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   trait Sending extends StreamState { self: Product =>
     protected def outStream: OutStream
 
+    final def cancelSending(): Unit = outStream.cancelStream()
+
     override def pullNextFrame(maxSize: Int): (StreamState, PullFrameResult) = {
       val frame = outStream.nextFrame(maxSize)
 
@@ -706,7 +724,15 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     self: Product =>
     protected def buffer: IncomingStreamBuffer
 
-    final def failOpenIncomingEntity(): Unit = if (!buffer.isDone) buffer.shutdown()
+    final def canDrainAfterClientReadClosed: Boolean = buffer.receivedEndStream && !buffer.isDone
+
+    final def finishSendingForClientReadClosed(): StreamState = {
+      this match {
+        case sending: Sending => sending.cancelSending()
+        case _                =>
+      }
+      HalfClosedLocal(buffer)
+    }
 
     override protected def onDataFrame(dataFrame: DataFrame): StreamState = {
       buffer.onDataFrame(dataFrame)
@@ -827,7 +853,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     def onPull(): Unit = incomingStreamPulled(streamId)
     override def onDownstreamFinish(cause: Throwable): Unit = {
       debug(s"Incoming side of stream [$streamId]: cancelling because downstream finished")
-      multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
+      // For a client that is draining after read EOF, the writer has already been retired.
+      if (!isClientReadClosed) multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
       wasClosed = true
       discardBuffer()
       trailingHeaders = None
@@ -846,6 +873,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
 
     def isDone: Boolean = outlet.isClosed
+    def receivedEndStream: Boolean = wasClosed
 
     def onDataFrame(data: DataFrame): Unit =
       if (wasClosed) {
@@ -894,7 +922,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
         debug(
           s"Dispatched chunk of $dataSize for stream [$streamId], remaining window space now $outstandingStreamWindow, buffered: ${buffer.length}")
-        updateWindows()
+        if (!isClientReadClosed) updateWindows()
       }
       if (buffer.isEmpty && wasClosed) {
         trailingHeaders match {
