@@ -34,6 +34,9 @@ Depending on your needs you can either use the low-level API directly or rely on
 easier. You can also interact with different API levels at the same time and, independently of which API level you choose
 Apache Pekko HTTP will happily serve many thousand concurrent connections to a single or many clients.
 
+For HTTP/1.0 requests the server ignores `Expect: 100-continue` and does not automatically send `100 Continue`.
+HTTP/1.1 requests can still use the expectation.
+
 @@@ note
 It is recommended to read the @ref[Implications of the streaming nature of Request/Response Entities](../implications-of-streaming-http-entity.md) section,
 as it explains the underlying full-stack streaming concepts, which may be unexpected when coming from a background with non-"streaming first" HTTP Servers.
