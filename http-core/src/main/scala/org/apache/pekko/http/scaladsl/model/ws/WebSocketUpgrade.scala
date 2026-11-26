@@ -18,6 +18,7 @@ import java.util.function.{ Predicate => JPredicate }
 
 import org.apache.pekko
 import pekko.NotUsed
+import pekko.http.impl.engine.ws.FrameOutHandler
 import pekko.http.impl.util.JavaMapping
 import pekko.http.javadsl.{ model => jm }
 import pekko.http.scaladsl.model.HttpResponse
@@ -326,4 +327,20 @@ trait WebSocketUpgrade extends jm.ws.WebSocketUpgrade {
     JavaMapping.toScala(scaladsl.Flow.fromSinkAndSourceMat(inSink.asInstanceOf[Graph[SinkShape[jm.ws.Message], Any]],
       outSource.asInstanceOf[Graph[SourceShape[jm.ws.Message], Any]])(scaladsl.Keep.none): Graph[FlowShape[
         jm.ws.Message, jm.ws.Message], NotUsed])
+}
+
+object WebSocketUpgrade {
+
+  /**
+   * Sets the Close status and reason sent by a server WebSocket message handler when its outgoing stream
+   * completes normally before the peer initiates closing. Apply this to the response returned by any message
+   * handler overload; it does not change the negotiated subprotocol, compression, peer-initiated closes or failures.
+   * Other responses are rendered normally. The status must be permitted for servers by RFC 6455, and the reason
+   * must encode to at most 123 UTF-8 bytes.
+   *
+   * @since 2.1.0
+   */
+  def withCompletionClose(response: HttpResponse, closeCode: Int, closeReason: String): HttpResponse =
+    response.addAttribute(FrameOutHandler.completionCloseKey,
+      FrameOutHandler.completionClose(closeCode, closeReason))
 }

@@ -245,7 +245,7 @@ private[http] class HttpResponseRendererFactory(
             else if (connHeader != null && connHeader.hasUpgrade) {
               r ~~ connHeader
               HttpHeader.fastFind(classOf[UpgradeToOtherProtocolResponseHeader], headers) match {
-                case OptionVal.Some(header) => closeMode = SwitchToOtherProtocol(header.handler)
+                case OptionVal.Some(header) => closeMode = SwitchToOtherProtocol(header.handlerFor(ctx.response))
                 case _                      => // nothing to do here...
               }
             }

@@ -13,6 +13,9 @@
 
 package org.apache.pekko.http.impl.engine.ws
 
+import java.nio.CharBuffer
+import java.nio.charset.{ CharacterCodingException, StandardCharsets }
+
 import scala.annotation.tailrec
 import scala.concurrent.duration.FiniteDuration
 
@@ -21,6 +24,7 @@ import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.ws.FrameHandler.{ UserHandlerErredOut, _ }
+import pekko.http.scaladsl.model.AttributeKey
 import pekko.stream.scaladsl.Flow
 import pekko.stream.stage._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
@@ -87,7 +91,8 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
             push(out, closeFrame)
           case UserHandlerCompleted =>
             setHandler(in, new WaitingForPeerCloseFrame)
-            push(out, FrameEvent.closeFrame(Protocol.CloseCodes.Regular))
+            val frame = if (serverSide) inheritedAttributes.get[FrameOutHandler.CompletionClose].map(_.frame) else None
+            push(out, frame.getOrElse(FrameEvent.closeFrame(Protocol.CloseCodes.Regular)))
           case UserHandlerErredOut(e) =>
             log.error(e, "Websocket handler failed with {}", e.getMessage)
             setHandler(in, new WaitingForPeerCloseFrame)
@@ -206,6 +211,24 @@ private[http] class FrameOutHandler(serverSide: Boolean, _closeTimeout: FiniteDu
 
 private[http] object FrameOutHandler {
   type Input = AnyRef
+
+  final class CompletionClose(val frame: FrameStart) extends Attributes.Attribute
+  val completionCloseKey = AttributeKey[CompletionClose]("pekko.http.websocket.completion-close")
+
+  def completionClose(code: Int, reason: String): CompletionClose = {
+    import Protocol.CloseCodes
+    require(CloseCodes.isValid(code) && code != CloseCodes.ClientRejectsExtension,
+      s"Invalid server WebSocket close status: $code")
+    require(reason != null && reason.length <= 123, "WebSocket Close reason must be at most 123 UTF-8 bytes")
+    val encodedLength =
+      try StandardCharsets.UTF_8.newEncoder().encode(CharBuffer.wrap(reason)).remaining()
+      catch {
+        case _: CharacterCodingException =>
+          throw new IllegalArgumentException("WebSocket Close reason must be valid UTF-8")
+      }
+    require(encodedLength <= 123, "WebSocket Close reason must be at most 123 UTF-8 bytes")
+    new CompletionClose(FrameEvent.closeFrame(code, reason))
+  }
 
   def create(serverSide: Boolean, closeTimeout: FiniteDuration, log: LoggingAdapter): Flow[Input, FrameStart, NotUsed] =
     Flow[Input].via(new FrameOutHandler(serverSide, closeTimeout, log)).named("frameOutHandler")
