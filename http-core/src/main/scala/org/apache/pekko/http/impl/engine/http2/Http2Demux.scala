@@ -461,10 +461,7 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
               case SettingsFrame(settings) =>
                 if (settings.nonEmpty) debug(s"Got ${settings.length} settings!")
 
-                val settingsAppliedOk = applyRemoteSettings(settings)
-                if (settingsAppliedOk) {
-                  multiplexer.pushControlFrame(SettingsAckFrame(settings))
-                }
+                multiplexer.applyAndAcknowledgeSettings(settings)(applyRemoteSettings(settings))
 
               case SettingsAckFrame(_) =>
               // Currently, we only expect an ack for the initial settings frame, sent

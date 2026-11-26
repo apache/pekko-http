@@ -33,6 +33,9 @@ import pekko.stream.stage.StageLogging
 @InternalApi
 private[http2] trait Http2Multiplexer {
   def pushControlFrame(frame: FrameEvent): Unit
+
+  /** Applies received SETTINGS in order, acknowledging only a successful application before sending pending DATA. */
+  def applyAndAcknowledgeSettings(settings: Seq[Setting])(applySettings: => Boolean): Unit
   def updateConnectionLevelWindow(increment: Int): Boolean
   def updateMaxFrameSize(newMaxFrameSize: Int): Unit
   def updateDefaultWindow(newDefaultWindow: Int): Unit
@@ -114,6 +117,18 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
       private var connectionWindowLeft: Int = Http2Protocol.InitialWindowSize
 
       override def pushControlFrame(frame: FrameEvent): Unit = updateState(_.pushControlFrame(frame))
+
+      private var applyingPeerSettings = false
+
+      override def applyAndAcknowledgeSettings(settings: Seq[Setting])(applySettings: => Boolean): Unit = {
+        applyingPeerSettings = true
+        val applied = try applySettings
+        finally applyingPeerSettings = false
+
+        // A window change can make pending DATA eligible. The ACK consumes existing demand via the
+        // normal control-frame path before any DATA made eligible by these settings.
+        if (applied) pushControlFrame(SettingsAckFrame(settings))
+      }
 
       def updateConnectionLevelWindow(increment: Int): Boolean = {
         val newWindow = connectionWindowLeft.toLong + increment
@@ -220,7 +235,7 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
       // WaitingForData: Got demand from the network but no data to send
       // WaitingForNetworkToSendControlFrames: Control frames (and maybe data frames) are queued but there is no network demand
       // WaitingForNetworkToSendData: Data frames queued but no network demand
-      // WaitingForConnectionWindow: Data frames queued, demand from the network, but no connection-level window available
+      // WaitingForConnectionWindow: Pending DATA and network demand, waiting for connection credit or a SETTINGS ACK
 
       case object Idle extends MultiplexerState {
         def onPull(): MultiplexerState = WaitingForData
@@ -244,7 +259,8 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
         }
         def connectionWindowAvailable(): MultiplexerState = this // nothing to do, as there is no data to send
         def enqueueOutStream(streamId: Int): MultiplexerState =
-          if (connectionWindowLeft == 0) {
+          if (connectionWindowLeft == 0 || applyingPeerSettings) {
+            // Keep demand for the control-frame ACK while all peer settings are being applied.
             enqueueStream(streamId)
             WaitingForConnectionWindow
           } else sendDataFrame(streamId)
@@ -318,7 +334,7 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
         override def pulled = false
       }
 
-      /** Pulled and data is pending but no connection-level window available */
+      /** Pulled with pending DATA, waiting for connection credit or a SETTINGS ACK. */
       case object WaitingForConnectionWindow extends WithSendableOutStreams {
         def onPull(): MultiplexerState =
           throw new IllegalStateException(s"pull unexpected while waiting for connection window")
