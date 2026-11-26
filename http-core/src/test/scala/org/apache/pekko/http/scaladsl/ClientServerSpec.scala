@@ -51,7 +51,43 @@ import com.typesafe.config.{ Config, ConfigFactory }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.concurrent.Eventually.eventually
 
-class ClientServerSpec extends ClientServerSpecBase(http2 = false)
+class ClientServerSpec extends ClientServerSpecBase(http2 = false) {
+  import system.dispatcher
+
+  "The HTTP/1.1 connection" should {
+    "preserve GET response bodies on a connection reused for HEAD" in Utils.assertAllStagesStopped {
+      val host = "127.0.0.1"
+      val timeout = 3.seconds.dilated
+      val settings = ServerSettings(system).withTransparentHeadRequests(true)
+      val before = "welcome"
+      val pending = "queued"
+      val after = "new result"
+      val representations = Map(
+        "/before" -> HttpResponse(entity = before),
+        "/progress" -> HttpResponse(StatusCodes.Accepted, entity = pending),
+        "/after" -> HttpResponse(entity = after))
+      val binding = Http().newServerAt(host, 0).withSettings(settings)
+        .bindSync(request => representations(request.uri.path.toString)).awaitResult(timeout)
+      try {
+        val requests = List(HttpRequest(GET, "/before"), HttpRequest(HEAD, "/progress"), HttpRequest(GET, "/after"))
+        val received = Source(requests)
+          .via(Http().connectionTo(host).toPort(binding.localAddress.getPort).http())
+          .mapAsync(1) { response =>
+            response.protocol shouldBe HttpProtocols.`HTTP/1.1`
+            response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).map { body =>
+              (response.status, response.entity.contentLengthOption, body.utf8String)
+            }
+          }
+          .runWith(Sink.seq)
+
+        received.awaitResult(timeout) shouldEqual Seq(
+          (StatusCodes.OK, Some(before.length.toLong), before),
+          (StatusCodes.Accepted, Some(pending.length.toLong), ""),
+          (StatusCodes.OK, Some(after.length.toLong), after))
+      } finally binding.terminate(1.second.dilated).awaitResult(timeout)
+    }
+  }
+}
 // Runs the same tests but with http2 enabled which makes sure the alternative server pipeline from Http2.scala
 // is tested as well.
 class ClientServerHttp2EnabledSpec extends ClientServerSpecBase(http2 = true)
