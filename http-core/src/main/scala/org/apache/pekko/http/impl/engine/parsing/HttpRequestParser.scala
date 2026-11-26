@@ -208,6 +208,9 @@ private[http] final class HttpRequestParser(
           expect100continue: Boolean, hostHeaderPresent: Boolean, closeAfterResponseCompletion: Boolean,
           sslSession: SSLSession): StateResult =
         if (hostHeaderPresent || protocol == HttpProtocols.`HTTP/1.0`) {
+          // RFC 9110 section 10.1.1: ignore the expectation on HTTP/1.0, without dropping the parsed header.
+          val continueExpectationActive = expect100continue && protocol == HttpProtocols.`HTTP/1.1`
+
           def emitRequestStart(
               createEntity: EntityCreator[RequestOutput, RequestEntity],
               headers: List[HttpHeader] = headers) = {
@@ -226,13 +229,13 @@ private[http] final class HttpRequestParser(
                   headerParser.log) match {
                   case OptionVal.Some(upgrade) =>
                     RequestStart(method, uri, protocol, attributes.updated(AttributeKeys.webSocketUpgrade, upgrade),
-                      upgrade :: allHeaders0, createEntity, expect100continue, closeAfterResponseCompletion)
+                      upgrade :: allHeaders0, createEntity, continueExpectationActive, closeAfterResponseCompletion)
                   case OptionVal.None =>
-                    RequestStart(method, uri, protocol, attributes, allHeaders0, createEntity, expect100continue,
-                      closeAfterResponseCompletion)
+                    RequestStart(method, uri, protocol, attributes, allHeaders0, createEntity,
+                      continueExpectationActive, closeAfterResponseCompletion)
                 }
-              } else RequestStart(method, uri, protocol, attributes, allHeaders0, createEntity, expect100continue,
-                closeAfterResponseCompletion)
+              } else RequestStart(method, uri, protocol, attributes, allHeaders0, createEntity,
+                continueExpectationActive, closeAfterResponseCompletion)
 
             emit(requestStart)
           }

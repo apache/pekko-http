@@ -112,6 +112,22 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      for ((protocol, active) <- Seq(`HTTP/1.0` -> false, `HTTP/1.1` -> true)) {
+        s"apply the 100-continue expectation policy to a ${protocol.value} POST" in new Test {
+          val expectation = Expect.`100-continue`
+          s"""POST /expect ${protocol.value}
+             |Host: example.com
+             |$expectation
+             |Content-Type: application/octet-stream
+             |Content-Length: 4
+             |
+             |body""" should parseTo(
+            HttpRequest(POST, "/expect", List(Host("example.com"), expectation),
+              HttpEntity(ContentTypes.`application/octet-stream`, ByteString("body")), protocol))
+          continueExpectations shouldBe Seq(active)
+        }
+      }
+
       "with a QUERY method and a body" in new Test {
         """QUERY /search HTTP/1.1
           |Host: example.com
@@ -1051,6 +1067,7 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
   private class Test {
     def awaitAtMost: FiniteDuration = 3.seconds.dilated
     var closeAfterResponseCompletion = Seq.empty[Boolean]
+    var continueExpectations = Seq.empty[Boolean]
 
     class StrictEqualHttpRequest(val req: HttpRequest) {
       override def equals(other: scala.Any): Boolean = other match {
@@ -1128,8 +1145,10 @@ abstract class RequestParserSpec(mode: String, newLine: String) extends AnyFreeS
         .splitWhen(x => x.isInstanceOf[MessageStart] || x.isInstanceOf[EntityStreamError])
         .prefixAndTail(1)
         .collect {
-          case (Seq(RequestStart(method, uri, protocol, attrs, headers, createEntity, _, close)), entityParts) =>
+          case (Seq(RequestStart(method, uri, protocol, attrs, headers, createEntity, expectContinue, close)),
+                entityParts) =>
             closeAfterResponseCompletion :+= close
+            continueExpectations :+= expectContinue
             Right(HttpRequest(method, uri, headers, createEntity(entityParts), protocol))
           case (Seq(x @ (MessageStartError(_, _, _) | EntityStreamError(_))), rest) =>
             rest.runWith(Sink.cancelled)
