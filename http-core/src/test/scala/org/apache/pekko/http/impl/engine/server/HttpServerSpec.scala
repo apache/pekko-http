@@ -83,6 +83,33 @@ class HttpServerSpec extends PekkoSpec(
       shutdownBlueprint()
     })
 
+    "deliver one pending request per response when the HTTP/1 pipelining limit is reached" in
+    assertAllStagesStopped(new TestSetup {
+      override def settings = super.settings.withPipeliningLimit(2)
+
+      val paths = List("/first", "/second", "/third", "/fourth")
+      val input = paths.map(path => s"GET $path HTTP/1.1\nHost: example.com\n\n").mkString
+
+      try {
+        // Demand for all four requests is already present; only the HTTP pipeline should bound delivery.
+        requests.request(paths.size.toLong)
+        send(input)
+        requests.expectNextN(2).map(_.uri.path.toString) shouldEqual paths.take(2)
+        paths.drop(2).foreach { path =>
+          expectNoRequest(100.millis.dilated)
+          simpleResponse()
+          requests.expectNext().uri.path.toString shouldEqual path
+        }
+        simpleResponse()
+        simpleResponse()
+      } finally {
+        closeNetworkInput()
+        requests.cancel()
+        responses.sendComplete()
+        netOut.cancel()
+      }
+    })
+
     "deliver a normal request when its optional protocol upgrade is unsupported" in assertAllStagesStopped(
       new TestSetup {
         send("""GET /hello HTTP/1.1
