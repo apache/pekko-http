@@ -37,6 +37,21 @@ private[http2] object IncomingFlowController {
     val NoIncrements = WindowIncrements(0, 0)
   }
 
+  final case class DiscardedDataReceipt(remainingConnectionWindow: Int, connectionWindowIncrement: Int)
+
+  /** Accounts for discarded DATA without reserving body bytes or changing any stream-level window. */
+  def onDiscardedData(
+      data: FrameEvent.DataFrameEvent,
+      outstandingConnectionLevelWindow: Int,
+      totalBufferedData: Int,
+      flowController: IncomingFlowController): DiscardedDataReceipt = {
+    val remainingWindow = outstandingConnectionLevelWindow - data.sizeInWindow
+    val increment =
+      if (remainingWindow < 0) 0
+      else flowController.onConnectionDataReceived(remainingWindow, totalBufferedData)
+    DiscardedDataReceipt(remainingWindow, increment)
+  }
+
   def default(settings: Http2CommonSettings): IncomingFlowController =
     default(settings.incomingConnectionLevelBufferSize, settings.incomingStreamLevelBufferSize)
 

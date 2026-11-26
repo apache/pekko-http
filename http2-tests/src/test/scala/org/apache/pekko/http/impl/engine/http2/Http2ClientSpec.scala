@@ -660,7 +660,13 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           entityDataIn.cancel()
           network.expectRST_STREAM(TheStreamId)
 
-          network.sendDATA(TheStreamId, endStream = false, ByteString("test"))
+          val data = ByteString("test")
+          network.sendDATA(TheStreamId, endStream = false, data)
+
+          // DATA already in flight does not reopen the stream, but still consumes connection credit.
+          val returnedCredit =
+            settings.http2Settings.incomingConnectionLevelBufferSize - Http2Protocol.InitialWindowSize + data.length
+          network.expect[WindowUpdateFrame]() shouldBe WindowUpdateFrame(Http2Protocol.NoStreamId, returnedCredit)
 
           connectionShouldStillBeUsable()
         })

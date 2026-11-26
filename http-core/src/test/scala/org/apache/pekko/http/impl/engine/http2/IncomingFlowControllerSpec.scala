@@ -60,6 +60,33 @@ class IncomingFlowControllerSpec extends AnyWordSpec with Matchers {
       }
     }
 
+    "account for discarded DATA at connection level without reserving its entity bytes" in {
+      val controller = IncomingFlowController.default(32, 32)
+      val data = FrameEvent.PaddedDataFrame(1, endStream = false, ByteString("data"), paddingSize = 3)
+
+      // Other streams' buffered bytes are still reserved. Neither the discarded body nor padding is added to them.
+      val receipt = IncomingFlowController.onDiscardedData(data, 18, totalBufferedData = 3, controller)
+      receipt shouldBe IncomingFlowController.DiscardedDataReceipt(11, 18)
+      controller.onConnectionDataReceived(
+        receipt.remainingConnectionWindow + receipt.connectionWindowIncrement, totalBufferedData = 3) shouldBe 0
+    }
+
+    "debit discarded unpadded DATA even when available capacity does not trigger a window update" in {
+      val controller = IncomingFlowController.default(32, 32)
+      val data = FrameEvent.DataFrame(1, endStream = true, ByteString("data"))
+
+      IncomingFlowController.onDiscardedData(data, 20, totalBufferedData = 0, controller) shouldBe
+      IncomingFlowController.DiscardedDataReceipt(16, 0)
+    }
+
+    "not grant credit when a discarded DATA receipt exceeds the available connection window" in {
+      val controller = IncomingFlowController.default(32, 32)
+      val data = FrameEvent.DataFrame(1, endStream = true, ByteString("data"))
+
+      IncomingFlowController.onDiscardedData(data, 3, totalBufferedData = 0, controller) shouldBe
+      IncomingFlowController.DiscardedDataReceipt(-1, 0)
+    }
+
     "restore shared receive credit after two streams consume data without restoring either stream window" in {
       val windowSize = Http2Protocol.InitialWindowSize
       val controller = IncomingFlowController.default(windowSize, windowSize)

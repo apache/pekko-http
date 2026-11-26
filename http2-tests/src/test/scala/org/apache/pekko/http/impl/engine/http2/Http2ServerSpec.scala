@@ -1064,14 +1064,17 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
             val data1 = ByteString("abcdef")
             network.sendDATA(TheStreamId, endStream = false, data1)
             entityDataIn.expectBytes(data1)
-            network.pollForWindowUpdates(10.millis)
+            // Consume the initial connection and stream credit before checking the cancellation frames.
+            network.expectWindowUpdate()
+            network.expectWindowUpdate()
+            network.remainingWindowForIncomingData(TheStreamId) should be > Http2Protocol.InitialWindowSize
 
             // cancel stream
             entityDataIn.cancel()
             network.expectRST_STREAM(TheStreamId)
 
             network.sendDATA(TheStreamId, endStream = false, ByteString("test"))
-            // should just be ignored, especially no GOAWAY frame should be sent in response
+            // The earlier window update left enough connection credit, so no control frame is needed here.
             network.expectNoBytes(100.millis)
           })
         "send RST_STREAM if entity stream is canceled".inAssertAllStagesStopped(new WaitingForRequestData {

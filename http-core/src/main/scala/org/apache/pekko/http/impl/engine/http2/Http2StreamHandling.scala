@@ -111,6 +111,12 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   private var outstandingConnectionLevelWindow = Http2Protocol.InitialWindowSize
   private var totalBufferedData = 0
 
+  private def advertiseConnectionReceiveCredit(increment: Int): Unit =
+    if (increment > 0) {
+      multiplexer.pushControlFrame(WindowUpdateFrame(Http2Protocol.NoStreamId, increment))
+      outstandingConnectionLevelWindow += increment
+    }
+
   /**
    * The "last peer-initiated stream that was or might be processed on the sending endpoint in this connection"
    *
@@ -266,28 +272,30 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     require(!stateMachineRunning, "State machine already running")
     stateMachineRunning = true
 
-    val oldState = streamFor(streamId)
+    val result = try {
+      val oldState = streamFor(streamId)
 
-    val (newState, ret) = handle(oldState)
-    newState match {
-      case Closed   => streamClosed(streamId)
-      case newState => streamStates.put(streamId, newState)
-    }
+      val (newState, ret) = handle(oldState)
+      newState match {
+        case Closed   => streamClosed(streamId)
+        case newState => streamStates.put(streamId, newState)
+      }
 
-    debug(
-      s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne
-          null)
-          s"($eventArg)"
-        else ""}]")
+      debug(
+        s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne
+            null)
+            s"($eventArg)"
+          else ""}]")
+      ret
+    } finally stateMachineRunning = false
 
-    stateMachineRunning = false
     if (deferredStreamToEnqueue != -1) {
       val streamId = deferredStreamToEnqueue
       deferredStreamToEnqueue = -1
       if (streamStates.contains(streamId))
         multiplexer.enqueueOutStream(streamId)
     }
-    ret
+    result
   }
 
   /** Called to cleanup any state when the connection is torn down */
@@ -690,12 +698,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
               rejectContentLength(d.streamId)
             } else onDataFrame(d)
 
-          val windowSizeIncrement =
-            flowController.onConnectionDataReceived(outstandingConnectionLevelWindow, totalBufferedData)
-          if (windowSizeIncrement > 0) {
-            multiplexer.pushControlFrame(WindowUpdateFrame(Http2Protocol.NoStreamId, windowSizeIncrement))
-            outstandingConnectionLevelWindow += windowSizeIncrement
-          }
+          advertiseConnectionReceiveCredit(
+            flowController.onConnectionDataReceived(outstandingConnectionLevelWindow, totalBufferedData))
           nextState
         }
       case r: RstStreamFrame =>
@@ -854,15 +858,21 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     override def handleOutgoingFailed(cause: Throwable): StreamState = this
 
     def handle(event: StreamFrameEvent): StreamState = event match {
-      // https://http2.github.io/http2-spec/#StreamStates
-      // Endpoints MUST ignore WINDOW_UPDATE or RST_STREAM frames received in this state,
-      case _: RstStreamFrame | _: WindowUpdateFrame | _: DataFrameEvent =>
-        // FIXME: do we need to adjust connection level window here as described in https://httpwg.org/specs/rfc7540.html#StreamStates:
-        // > Flow-controlled frames (i.e., DATA) received after sending RST_STREAM are counted toward the connection
-        // > flow-control window. Even though these frames might be ignored, because they are sent before the sender
-        // > receives the RST_STREAM, the sender will consider the frames to count against the flow-control window.
-        //
-        // or should connection window adjustments be done in Http2ServerDemux directly?
+      case data: DataFrameEvent =>
+        // RFC 9113 sections 5.1 and 6.9: discarded DATA still consumes connection credit.
+        val receipt = IncomingFlowController.onDiscardedData(
+          data, outstandingConnectionLevelWindow, totalBufferedData, flowController)
+        if (receipt.remainingConnectionWindow < 0)
+          throw new Http2Compliance.Http2ProtocolException(ErrorCode.FLOW_CONTROL_ERROR,
+            "Received more data than connection-level window would allow",
+            if (isServer) lastStreamId() else Http2Protocol.NoStreamId)
+        else {
+          outstandingConnectionLevelWindow = receipt.remainingConnectionWindow
+          advertiseConnectionReceiveCredit(receipt.connectionWindowIncrement)
+        }
+        this
+      // Ignore these frames in the closed state (RFC 9113 section 5.1).
+      case _: RstStreamFrame | _: WindowUpdateFrame =>
         this
       case _ =>
         receivedUnexpectedFrame(event)
@@ -978,10 +988,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         outstandingConnectionLevelWindow, totalBufferedData,
         outstandingStreamWindow, buffer.length)
 
-      if (connectionLevel > 0) {
-        multiplexer.pushControlFrame(WindowUpdateFrame(Http2Protocol.NoStreamId, connectionLevel))
-        outstandingConnectionLevelWindow += connectionLevel
-      }
+      advertiseConnectionReceiveCredit(connectionLevel)
       if (streamLevel > 0 && !wasClosed /* No reason to update window on closed streams */ ) {
         multiplexer.pushControlFrame(WindowUpdateFrame(streamId, streamLevel))
         outstandingStreamWindow += streamLevel
