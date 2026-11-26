@@ -749,6 +749,38 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
         expectResponse().expectSizeErrorInEntityOfType[Chunked](limit = 10)
       }
 
+      "a header value limit smaller than a valid response chunk" in new TestSetup(maxResponseContentLength = 128) {
+        override def settings: ClientConnectionSettings = {
+          val base = super.settings
+          base.withParserSettings(base.parserSettings.withMaxHeaderValueLength(16).withMaxChunkSize(64))
+        }
+
+        val body = ByteString("the payload is not a header value")
+        body.length should be > settings.parserSettings.maxHeaderValueLength
+        sendStandardRequest()
+        sendWireData(
+          s"""HTTP/1.1 200 OK
+             |Transfer-Encoding: chunked
+             |
+             |${Integer.toHexString(body.length)}
+             |${body.utf8String}
+             |0
+             |
+             |""")
+
+        val response = expectResponse()
+        response.status shouldBe StatusCodes.OK
+        inside(response.entity) {
+          case Chunked(_, chunks) =>
+            chunks.runWith(Sink.seq).awaitResult(1.second.dilated) shouldEqual Seq(Chunk(body), LastChunk)
+        }
+
+        requestsSub.sendComplete()
+        netOut.expectComplete()
+        netInSub.sendComplete()
+        responses.expectComplete()
+      }
+
       "the config setting (close-delimited entity)" in {
         new LengthVerificationTest(maxContentLength = 10) {
           sendStandardRequest()
