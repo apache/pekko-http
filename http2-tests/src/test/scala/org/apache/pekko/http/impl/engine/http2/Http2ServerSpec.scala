@@ -798,6 +798,47 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         Await.result(received.entity.dataBytes.runFold(ByteString.empty)(_ ++ _), 3.seconds.dilated) shouldBe body
       })
 
+    "deliver a streamed request body in order after sending a complete response".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        // Keep the small upload within the initial window without issuing connection credit.
+        override def settings: ServerSettings =
+          super.settings.mapHttp2Settings(_.withIncomingConnectionLevelBufferSize(Http2Protocol.InitialWindowSize))
+
+        def requestHeaders(method: String, path: String, headers: (String, String)*): ByteString =
+          network.encodeHeaderPairs(Seq(
+            ":method" -> method, ":scheme" -> "https", ":authority" -> "example.com", ":path" -> path) ++ headers)
+
+        val streamId = 1
+        val first = ByteString("first-")
+        val second = ByteString("second-")
+        val last = ByteString("last")
+        val expectedBody = first ++ second ++ last
+        val postHeaders = requestHeaders("POST", "/upload",
+          "content-type" -> "application/octet-stream", "content-length" -> expectedBody.length.toString)
+        network.sendHEADERS(streamId, endStream = false, endHeaders = true, postHeaders)
+        val received = user.expectRequest()
+        received.method shouldBe HttpMethods.POST
+        received.uri shouldBe Uri("https://example.com/upload")
+        received.entity.isStrict shouldBe false
+
+        user.emitResponse(streamId, HttpResponse())
+        network.expectDecodedResponseHEADERSPairs(streamId, endStream = true) should contain(":status" -> "200")
+
+        network.sendDATA(streamId, endStream = false, first)
+        network.sendDATA(streamId, endStream = false, second)
+        network.sendDATA(streamId, endStream = true, last)
+
+        // A later stream must reach the server before the app subscribes to the POST body.
+        // This ensures all DATA above has arrived without relying on a scheduling delay.
+        network.sendHEADERS(3, endStream = true, endHeaders = true, requestHeaders("GET", "/next"))
+        user.expectRequest().uri shouldBe Uri("https://example.com/next")
+        user.emitResponse(3, HttpResponse())
+        network.expectDecodedResponseHEADERSPairs(3, endStream = true) should contain(":status" -> "200")
+
+        val body = received.entity.dataBytes.runFold(ByteString.empty)(_ ++ _)
+        Await.result(body, 3.seconds.dilated) shouldBe expectedBody
+      })
+
     def requestTests(minCollectStrictEntityBytes: Int) = {
       abstract class RequestEntityTestSetup extends TestSetup with RequestResponseProbes {
         override def settings: ServerSettings =
