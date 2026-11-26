@@ -301,10 +301,12 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
       }
     }
 
-    for (connection <- Seq(None, Some(Connection("keep-alive")))) {
-      val connectionDescription = connection.fold("no Connection header")(_ => "Connection: keep-alive")
+    for (connection <- Seq(None, Some(Connection("keep-alive")), Some(Connection("close")))) {
+      val close = connection.exists(_.hasClose)
+      val connectionDescription = connection.fold("no Connection header")(header => s"Connection: ${header.value}")
+      val expectation = if (close) "close an HTTP/1.1 connection" else "keep an HTTP/1.1 connection usable"
 
-      s"keep an HTTP/1.1 connection usable after a pre-flight request with $connectionDescription" in {
+      s"$expectation after a pre-flight request with $connectionDescription" in {
         val timeout = 3.seconds.dilated
         val host = "127.0.0.1"
         val settings = referenceSettings.withAllowedOrigins(HttpOriginMatcher(exampleOrigin))
@@ -324,20 +326,28 @@ class CorsDirectivesSpec extends AnyWordSpec with Matchers with Directives with 
               headers = Seq(Origin(exampleOrigin), `Access-Control-Request-Method`(GET)) ++ connection))
 
             val preflight = responses.expectNext()
+            preflight.protocol shouldBe HttpProtocols.`HTTP/1.1`
             preflight.status shouldBe StatusCodes.OK
             preflight.entity.isKnownEmpty shouldBe true
             preflight.header[`Access-Control-Allow-Origin`] shouldBe Some(`Access-Control-Allow-Origin`(exampleOrigin))
 
-            responses.request(1)
-            requests.sendNext(HttpRequest(GET, headers = Seq(Origin(exampleOrigin))))
+            if (close) {
+              preflight.header[Connection] shouldBe connection
+              // Keep the request source open so completion must come from the connection.
+              responses.expectComplete()
+              requests.expectCancellation()
+            } else {
+              responses.request(1)
+              requests.sendNext(HttpRequest(GET, headers = Seq(Origin(exampleOrigin))))
 
-            val response = responses.expectNext()
-            response.status shouldBe StatusCodes.OK
-            response.header[`Access-Control-Allow-Origin`] shouldBe Some(`Access-Control-Allow-Origin`(exampleOrigin))
-            Await.result(response.entity.toStrict(timeout), timeout).data.utf8String shouldBe actual
+              val response = responses.expectNext()
+              response.status shouldBe StatusCodes.OK
+              response.header[`Access-Control-Allow-Origin`] shouldBe Some(`Access-Control-Allow-Origin`(exampleOrigin))
+              Await.result(response.entity.toStrict(timeout), timeout).data.utf8String shouldBe actual
 
-            requests.sendComplete()
-            responses.expectComplete()
+              requests.sendComplete()
+              responses.expectComplete()
+            }
           } finally responses.cancel()
         } finally Await.result(binding.unbind(), timeout)
       }
