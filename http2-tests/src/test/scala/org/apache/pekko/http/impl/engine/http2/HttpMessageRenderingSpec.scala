@@ -173,9 +173,16 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
     }
 
     "keep ':scheme' and ':authority' of an absolute URI" in {
-      pseudoHeaders(HttpRequest(uri = "http://other.example.com:8080/foo"), "https",
-        Uri.Authority(Uri.Host("example.com"))) shouldEqual
-      Map(":method" -> "GET", ":scheme" -> "http", ":authority" -> "other.example.com:8080", ":path" -> "/foo")
+      val cases = Seq(
+        ("http://other.example.com:8080/foo", "http", "other.example.com:8080", "/foo"),
+        ("https://[2001:db8::7]:8443/catalog?view=summary", "https", "[2001:db8::7]:8443", "/catalog?view=summary"))
+
+      for ((target, scheme, authority, path) <- cases) {
+        withClue(s"$target: ") {
+          pseudoHeaders(HttpRequest(uri = target), "https", Uri.Authority(Uri.Host("example.com"))) shouldEqual
+          Map(":method" -> "GET", ":scheme" -> scheme, ":authority" -> authority, ":path" -> path)
+        }
+      }
     }
 
     "preserve query presence on absolute URIs with no path" in {
