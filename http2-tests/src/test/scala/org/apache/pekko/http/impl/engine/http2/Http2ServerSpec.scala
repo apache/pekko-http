@@ -27,7 +27,7 @@ import pekko.http.impl.engine.server.{ HttpAttributes, ServerTerminator }
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.{ CacheDirectives, RawHeader }
+import pekko.http.scaladsl.model.headers.{ CacheDirectives, ETag, RawHeader }
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.OverflowStrategy
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Source, SourceQueueWithComplete }
@@ -490,19 +490,19 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
 
       "allow trailing headers on strict responses".inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
         val streamId = 1
+        val etag = ETag("saved")
         network.sendHEADERS(streamId, endStream = true, network.headersForRequest(Get("/")))
         user.expectRequest()
         val response =
           HttpResponse(StatusCodes.OK,
             entity = HttpEntity.Strict(ContentTypes.`application/octet-stream`, ByteString("Hello")))
-            .addAttribute(AttributeKeys.trailer, Trailer(RawHeader("Status", "grpc-status 10")))
+            .addAttribute(AttributeKeys.trailer, Trailer(Seq(etag, RawHeader("X-Result", "Complete"))))
         user.emitResponse(streamId, response)
 
         network.expectHeaderBlock(streamId, endStream = false)
         network.expectDATA(streamId, endStream = false, ByteString("Hello"))
         val trailingResponseHeaders = network.expectDecodedResponseHEADERSPairs(streamId)
-        trailingResponseHeaders.size should be(1)
-        trailingResponseHeaders.head should be(("Status", "grpc-status 10"))
+        trailingResponseHeaders shouldEqual Seq("etag" -> etag.value, "x-result" -> "Complete")
       })
       "ignore the reserved bit of a stream identifier".inAssertAllStagesStopped(
         new TestSetup with RequestResponseProbes {
@@ -596,7 +596,7 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectDATA(streamId, endStream = false, ByteString("a" * 1000))
           val trailingResponseHeaders = network.expectDecodedResponseHEADERSPairs(streamId)
           trailingResponseHeaders.size should be(1)
-          trailingResponseHeaders.head should be(("Status", "grpc-status 10"))
+          trailingResponseHeaders.head should be(("status", "grpc-status 10"))
 
           network.sendRequest(5, HttpRequest())
           user.expectRequest()
