@@ -86,6 +86,31 @@ class ClientServerSpec extends ClientServerSpecBase(http2 = false) {
           (StatusCodes.OK, Some(after.length.toLong), after))
       } finally binding.terminate(1.second.dilated).awaitResult(timeout)
     }
+
+    "preserve a declared trailer in an HTTP/1.1 response without body data" in Utils.assertAllStagesStopped {
+      // This application test field permits a report result in the trailer section.
+      val terminal = LastChunk(trailer = List(headers.RawHeader("X-Report-Result", "ready")))
+      val response = HttpResponse(
+        headers = List(headers.Trailer(Seq("X-Report-Result"))),
+        entity = Chunked(ContentTypes.`application/octet-stream`, Source.single(terminal)))
+      val host = "127.0.0.1"
+      val timeout = 3.seconds.dilated
+      val binding = Http().newServerAt(host, 0).bindSync(_ => response).awaitResult(timeout)
+      try {
+        val received = Source.single(HttpRequest(uri = "/report"))
+          .via(Http().connectionTo(host).toPort(binding.localAddress.getPort).http())
+          .mapAsync(1) { result =>
+            result.status shouldBe StatusCodes.OK
+            result.protocol shouldBe HttpProtocols.`HTTP/1.1`
+            result.entity match {
+              case chunked: Chunked => chunked.chunks.runWith(Sink.seq)
+              case other            => fail(s"Expected a chunked response entity, got $other")
+            }
+          }
+          .runWith(Sink.head)
+        received.awaitResult(timeout) shouldEqual Seq(terminal)
+      } finally binding.terminate(1.second.dilated).awaitResult(timeout)
+    }
   }
 }
 // Runs the same tests but with http2 enabled which makes sure the alternative server pipeline from Http2.scala
