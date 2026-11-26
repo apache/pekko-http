@@ -1240,6 +1240,38 @@ class HttpServerSpec extends PekkoSpec(
       shutdownBlueprint()
     })
 
+    "reuse a direct HTTP/1.0 connection after a complete keep-alive response" in assertAllStagesStopped(
+      new TestSetup {
+        val protocol = HttpProtocols.`HTTP/1.0`
+
+        for ((path, body) <- List("/first" -> "first response", "/second" -> "second response")) {
+          send(s"""GET $path HTTP/1.0
+                 |Host: example.com
+                 |Connection: keep-alive
+                 |
+                 |""")
+
+          val received = expectRequest()
+          received.method shouldBe GET
+          received.protocol shouldBe protocol
+          received.uri.path.toString shouldBe path
+
+          val entity = HttpEntity(body)
+          responses.sendNext(HttpResponse(entity = entity, protocol = protocol))
+          expectResponseWithWipedDate(
+            s"""HTTP/1.0 200 OK
+               |Server: pekko-http/test
+               |Date: XXXX
+               |Connection: Keep-Alive
+               |Content-Type: text/plain; charset=UTF-8
+               |Content-Length: ${entity.data.length}
+               |
+               |$body""")
+        }
+
+        shutdownBlueprint()
+      })
+
     "fail an HTTP/1.0 request with 400 if no default-host-header is set" in assertAllStagesStopped(new TestSetup {
       send("""GET /abc HTTP/1.0
              |
