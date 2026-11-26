@@ -21,6 +21,8 @@ concepts, tuning the client settings and HTTPS context and how to handle the Req
 unexpected when coming from a background with non-"streaming first" HTTP Clients.
 @@@
 
+Apache Pekko HTTP's HTTP/2 client disables [server push](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.4) on each connection (`SETTINGS_ENABLE_PUSH = 0`).
+
 ## Create the client 
 
 There are three mechanisms for a client to establish an HTTP/2 connection. Apache Pekko HTTP supports:

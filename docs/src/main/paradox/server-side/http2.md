@@ -34,6 +34,7 @@ Java
 
 Note that currently only `newServerAt(...).bind` and `newServerAt(...).bindSync`
 support HTTP/2 but not `bindFlow` or `connectionSource(): Source`.
+The server-side APIs do not expose a way for applications to initiate HTTP/2 server push.
 
 HTTP/2 over TLS uses [Application-Layer Protocol Negotiation (ALPN)](https://www.rfc-editor.org/rfc/rfc7301.html)
 to negotiate whether both client and server support HTTP/2. ALPN support is included in the Java versions supported by
