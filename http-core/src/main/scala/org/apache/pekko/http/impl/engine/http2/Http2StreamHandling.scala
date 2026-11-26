@@ -440,7 +440,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
           } else if (settings.minCollectStrictEntitySize > 0)
             CollectingIncomingData(frame, correlationAttributes, ByteString.empty, extraInitialWindow = 0)
           else
-            dispatchStream(streamId, frame, ByteString.empty, correlationAttributes, nextStateStream)
+            dispatchStream(streamId, frame, correlationAttributes, nextStateStream)
 
         case x => receivedUnexpectedFrame(x)
       }
@@ -448,12 +448,23 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     protected def dispatchStream(
         streamId: Int,
         headers: ParsedHeadersFrame,
+        correlationAttributes: Map[AttributeKey[?], ?],
+        nextStateStream: IncomingStreamBuffer => StreamState): StreamState =
+      dispatchCollectedStream(streamId, headers, ByteString.empty, Http2Protocol.InitialWindowSize,
+        correlationAttributes,
+        nextStateStream)
+
+    protected def dispatchCollectedStream(
+        streamId: Int,
+        headers: ParsedHeadersFrame,
         initialData: ByteString,
+        initialStreamWindow: Int,
         correlationAttributes: Map[AttributeKey[?], ?],
         nextStateStream: IncomingStreamBuffer => StreamState): StreamState = {
       val subSource = new SubSourceOutlet[Any](s"substream-out-$streamId")
       val buffer = new IncomingStreamBuffer(streamId, subSource)
-      if (initialData.nonEmpty) buffer.onDataFrame(DataFrame(streamId, endStream = false, initialData)) // fabricate frame
+      if (initialData.nonEmpty || initialStreamWindow != Http2Protocol.InitialWindowSize)
+        buffer.initWithCollectedData(initialData, initialStreamWindow)
       dispatchSubstream(headers, Right(Source.fromGraph(subSource.source)), correlationAttributes)
       nextStateStream(buffer)
     }
@@ -489,20 +500,29 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       headers: ParsedHeadersFrame,
       correlationAttributes: Map[AttributeKey[?], ?],
       collectedData: ByteString,
-      extraInitialWindow: Int) extends ReceivingData {
+      extraInitialWindow: Int,
+      outstandingStreamWindow: Int = Http2Protocol.InitialWindowSize) extends ReceivingData {
 
-    override protected def onDataFrame(dataFrame: DataFrame): StreamState = {
-      val newData = collectedData ++ dataFrame.payload
-
-      if (dataFrame.endStream) {
-        totalBufferedData -= newData.length
-        dispatchSubstream(headers, Left(newData), correlationAttributes)
-        HalfClosedRemoteWaitingForOutgoingStream(extraInitialWindow)
-      } else if (newData.length >= settings.minCollectStrictEntitySize)
-        dispatchStream(dataFrame.streamId, headers, newData, correlationAttributes,
-          OpenReceivingDataFirst(_, extraInitialWindow))
-      else
-        copy(collectedData = newData)
+    override protected def onDataFrame(dataFrame: DataFrameEvent): StreamState = {
+      val remainingWindow = outstandingStreamWindow - dataFrame.sizeInWindow
+      if (remainingWindow < 0) {
+        totalBufferedData -= collectedData.length + dataFrame.payload.length
+        rejectStreamWindow(dataFrame.streamId)
+      } else {
+        val newData = collectedData ++ dataFrame.payload
+        if (dataFrame.endStream) {
+          totalBufferedData -= newData.length
+          dispatchSubstream(headers, Left(newData), correlationAttributes)
+          HalfClosedRemoteWaitingForOutgoingStream(extraInitialWindow)
+        } else {
+          val nextWindow = replenishDiscardedPadding(dataFrame, remainingWindow, newData.length)
+          if (newData.length >= settings.minCollectStrictEntitySize)
+            dispatchCollectedStream(dataFrame.streamId, headers, newData, nextWindow, correlationAttributes,
+              OpenReceivingDataFirst(_, extraInitialWindow))
+          else
+            copy(collectedData = newData, outstandingStreamWindow = nextWindow)
+        }
+      }
     }
 
     override protected def onTrailer(parsedHeadersFrame: ParsedHeadersFrame): StreamState = this // trailing headers not supported for requests right now
@@ -607,6 +627,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   sealed abstract class ReceivingNoContent extends ReceivingData { self: Product =>
     protected def streamId: Int
     protected def afterRemoteEnd: StreamState
+    protected def outstandingStreamWindow: Int
+    protected def withStreamWindow(window: Int): StreamState
 
     private def rejectContent(): StreamState = {
       shutdown()
@@ -614,35 +636,47 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       Closed
     }
 
-    override protected def onDataFrame(frame: DataFrame): StreamState = {
+    override protected def onDataFrame(frame: DataFrameEvent): StreamState = {
       // ReceivingData accounted for these bytes; this state does not retain a body buffer.
       totalBufferedData -= frame.payload.length
       if (frame.payload.nonEmpty) rejectContent()
-      else if (frame.endStream) afterRemoteEnd
-      else this
+      else {
+        val remainingWindow = outstandingStreamWindow - frame.sizeInWindow
+        if (remainingWindow < 0) rejectStreamWindow(frame.streamId)
+        else if (frame.endStream) afterRemoteEnd
+        else if (frame.paddingSize == 0) this
+        else withStreamWindow(replenishDiscardedPadding(frame, remainingWindow, bufferedData = 0))
+      }
     }
 
     override protected def onTrailer(frame: ParsedHeadersFrame): StreamState = rejectContent()
     override protected def onRstStreamFrame(frame: RstStreamFrame): Unit = shutdown()
   }
 
-  case class HalfClosedLocalReceivingNoContent(streamId: Int) extends ReceivingNoContent {
+  case class HalfClosedLocalReceivingNoContent(
+      streamId: Int,
+      outstandingStreamWindow: Int = Http2Protocol.InitialWindowSize) extends ReceivingNoContent {
     override protected def afterRemoteEnd: StreamState = Closed
+    override protected def withStreamWindow(window: Int): StreamState = copy(outstandingStreamWindow = window)
     override protected def incrementWindow(delta: Int): StreamState = this
   }
 
-  case class OpenReceivingNoContent(outStream: OutStream) extends ReceivingNoContent with Sending {
+  case class OpenReceivingNoContent(
+      outStream: OutStream,
+      outstandingStreamWindow: Int = Http2Protocol.InitialWindowSize) extends ReceivingNoContent with Sending {
     override protected def streamId: Int = outStream.streamId
     override protected def afterRemoteEnd: StreamState = HalfClosedRemoteSendingData(outStream)
+    override protected def withStreamWindow(window: Int): StreamState = copy(outstandingStreamWindow = window)
     override protected def incrementWindow(delta: Int): StreamState = increaseWindow(delta)
-    override def handleOutgoingEnded(): StreamState = HalfClosedLocalReceivingNoContent(streamId)
+    override def handleOutgoingEnded(): StreamState =
+      HalfClosedLocalReceivingNoContent(streamId, outstandingStreamWindow)
   }
 
   sealed abstract class ReceivingData extends StreamState { self: Product =>
     def handle(event: StreamFrameEvent): StreamState = event match {
-      case d: DataFrame =>
+      case d: DataFrameEvent =>
         outstandingConnectionLevelWindow -= d.sizeInWindow
-        totalBufferedData += d.payload.length // padding can be seen as instantly discarded
+        totalBufferedData += d.payload.length // padding is not retained in the entity buffer
 
         if (outstandingConnectionLevelWindow < 0) {
           shutdown()
@@ -694,10 +728,28 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       Closed
     }
 
+    /** Replenishes receive credit for discarded padding without waiting for application demand. */
+    protected final def replenishDiscardedPadding(frame: DataFrameEvent, window: Int, bufferedData: Int): Int =
+      if (frame.paddingSize == 0) window
+      else {
+        // The connection part is updated after handling DATA, whether or not an entity has been dispatched.
+        val increment = flowController.onStreamDataDispatched(
+          outstandingConnectionLevelWindow, totalBufferedData, window, bufferedData).streamLevel
+        if (increment > 0) multiplexer.pushControlFrame(WindowUpdateFrame(frame.streamId, increment))
+        window + increment
+      }
+
+    protected final def rejectStreamWindow(streamId: Int): StreamState = {
+      shutdown()
+      multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.FLOW_CONTROL_ERROR))
+      multiplexer.dequeueOutStream(streamId)
+      Closed
+    }
+
     /** Fails what the application sees of the incoming data with `cause`, and releases what is buffered of it */
     protected def failIncoming(cause: Throwable): Unit = ()
 
-    protected def onDataFrame(dataFrame: DataFrame): StreamState
+    protected def onDataFrame(dataFrame: DataFrameEvent): StreamState
     protected def onTrailer(parsedHeadersFrame: ParsedHeadersFrame): StreamState
     protected def incrementWindow(delta: Int): StreamState
     protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit
@@ -708,7 +760,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
     final def failOpenIncomingEntity(): Unit = if (!buffer.isDone) buffer.shutdown()
 
-    override protected def onDataFrame(dataFrame: DataFrame): StreamState = {
+    override protected def onDataFrame(dataFrame: DataFrameEvent): StreamState = {
       buffer.onDataFrame(dataFrame)
       afterBufferEvent
     }
@@ -804,7 +856,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     def handle(event: StreamFrameEvent): StreamState = event match {
       // https://http2.github.io/http2-spec/#StreamStates
       // Endpoints MUST ignore WINDOW_UPDATE or RST_STREAM frames received in this state,
-      case _: RstStreamFrame | _: WindowUpdateFrame | _: DataFrame =>
+      case _: RstStreamFrame | _: WindowUpdateFrame | _: DataFrameEvent =>
         // FIXME: do we need to adjust connection level window here as described in https://httpwg.org/specs/rfc7540.html#StreamStates:
         // > Flow-controlled frames (i.e., DATA) received after sending RST_STREAM are counted toward the connection
         // > flow-control window. Even though these frames might be ignored, because they are sent before the sender
@@ -847,7 +899,13 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
     def isDone: Boolean = outlet.isClosed
 
-    def onDataFrame(data: DataFrame): Unit =
+    /** Transfer collected entity bytes and their already-accounted receive window without a second debit. */
+    def initWithCollectedData(data: ByteString, window: Int): Unit = {
+      buffer = data
+      outstandingStreamWindow = window
+    }
+
+    def onDataFrame(data: DataFrameEvent): Unit =
       if (wasClosed) {
         shutdown()
         pushGOAWAY(ErrorCode.PROTOCOL_ERROR, s"Received unexpected DATA frame after stream was already (half-)closed")
@@ -866,7 +924,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
           buffer ++= data.payload
           debug(
             s"Received DATA ${data.sizeInWindow} for stream [$streamId], remaining window space now $outstandingStreamWindow, buffered: ${buffer.length}")
-          dispatchNextChunk()
+          dispatchNextChunk(replenishPadding = data.paddingSize != 0)
         }
       }
     def onTrailingHeaders(headers: ParsedHeadersFrame): Unit = {
@@ -884,7 +942,9 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       wasClosed = true
     }
 
-    def dispatchNextChunk(): Unit = {
+    def dispatchNextChunk(): Unit = dispatchNextChunk(replenishPadding = false)
+
+    private def dispatchNextChunk(replenishPadding: Boolean): Unit = {
       if (buffer.nonEmpty && outlet.isAvailable) {
         val dataSize = buffer.length min settings.requestEntityChunkSize
         outlet.push(buffer.take(dataSize))
@@ -894,6 +954,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
         debug(
           s"Dispatched chunk of $dataSize for stream [$streamId], remaining window space now $outstandingStreamWindow, buffered: ${buffer.length}")
+        updateWindows()
+      } else if (replenishPadding && !wasClosed) {
         updateWindows()
       }
       if (buffer.isEmpty && wasClosed) {

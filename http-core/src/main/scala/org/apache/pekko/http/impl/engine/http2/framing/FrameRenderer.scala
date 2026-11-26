@@ -43,14 +43,14 @@ private[http2] object FrameRenderer {
           .put(debug)
           .build()
 
-      case DataFrame(streamId, endStream, payload) =>
-        // TODO: should padding be emitted? In which cases?
+      case data: DataFrameEvent =>
+        // Outbound DATA is unpadded; the received padding size is only accounting metadata.
         Frame(
-          payload.length,
+          data.payload.length,
           Http2Protocol.FrameType.DATA,
-          Http2Protocol.Flags.END_STREAM.ifSet(endStream),
-          streamId)
-          .put(payload)
+          Http2Protocol.Flags.END_STREAM.ifSet(data.endStream),
+          data.streamId)
+          .put(data.payload)
           .build()
       case HeadersFrame(streamId, endStream, endHeaders, headerBlockFragment, prioInfo) =>
         Frame(

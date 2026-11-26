@@ -26,6 +26,7 @@ import pekko.NotUsed
 import pekko.event.Logging
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
+import pekko.http.impl.engine.http2.Http2Protocol.Flags
 import pekko.http.impl.engine.http2.Http2Protocol.FrameType
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.http2.framing.FrameRenderer
@@ -164,6 +165,39 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         setup.network.fromNet.sendError(new RuntimeException("test cleanup"))
         setup.network.toNet.cancel()
       }
+    }
+
+    for (endStream <- Seq(false, true)) {
+      s"account for padding-only DATA on a zero-length 200 response (END_STREAM = $endStream)".inAssertAllStagesStopped(
+        new TestSetup(Setting(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, 1)) with NetProbes {
+          private def initialWindow = Http2Protocol.InitialWindowSize
+          private def targetWindow = 2 * initialWindow + 32
+          override def settings: ClientConnectionSettings =
+            super.settings.mapHttp2Settings(_.withIncomingConnectionLevelBufferSize(targetWindow)
+              .withIncomingStreamLevelBufferSize(targetWindow))
+
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expect[HeadersFrame]().streamId shouldBe 1
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200"), RawHeader("content-length", "0")))
+          val response = user.expectResponse()
+          response.status shouldBe StatusCodes.OK
+          response.entity shouldBe HttpEntity.Empty
+
+          network.sendFrame(FrameType.DATA, Flags.PADDED | Flags.END_STREAM.ifSet(endStream), 1, ByteString(2, 0, 0))
+          val returnedCredit = targetWindow - initialWindow + 3
+          if (endStream) network.expect[WindowUpdateFrame]() shouldBe WindowUpdateFrame(0, returnedCredit)
+          else {
+            val updates = Seq(network.expect[WindowUpdateFrame](), network.expect[WindowUpdateFrame]())
+            updates should contain theSameElementsAs Seq(WindowUpdateFrame(0, returnedCredit),
+              WindowUpdateFrame(1, returnedCredit))
+            network.sendDATA(1, endStream = true, ByteString.empty)
+          }
+
+          user.emitRequest(Get("https://www.example.com/next"))
+          network.expect[HeadersFrame]().streamId shouldBe 3
+          network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "200")))
+          user.expectResponse().status shouldBe StatusCodes.OK
+        })
     }
 
     "accept content-free status responses" should {
