@@ -17,7 +17,7 @@
 
 # Cors
 
-Apache Pekko HTTP's cors module provides support for the [W3C cors standard](https://www.w3.org/TR/cors/)
+Apache Pekko HTTP's cors module supports the [CORS protocol defined by the Fetch Standard](https://fetch.spec.whatwg.org/#http-cors-protocol).
 
 ## Dependency
 
@@ -126,7 +126,7 @@ List of methods that can be used when making an actual request. The list is retu
 The preflight request will be rejected if the `Access-Control-Request-Method` header's method is not part of the list.
 
 #### exposedHeaders / getExposedHeaders
-List of headers (other than [simple response headers](https://www.w3.org/TR/cors/#simple-response-header)) that browsers are allowed to access. If not empty, this list is returned as part of the `Access-Control-Expose-Headers` header in the actual response.
+List of headers (other than [CORS-safelisted response headers](https://fetch.spec.whatwg.org/#cors-safelisted-response-header-name)) that browsers are allowed to access. If not empty, this list is returned as part of the `Access-Control-Expose-Headers` header in the actual response.
 
 #### maxAge / getMaxAge
 When set, the amount of seconds the browser is allowed to cache the results of a preflight request. This value is returned as part of the `Access-Control-Max-Age` preflight response header. If @scala[`None`]@java[`OptionalLong.empty()`], the header is not added to the preflight response.
