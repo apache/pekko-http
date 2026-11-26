@@ -63,9 +63,11 @@ private[http2] object PriorityTree {
   private class PriorityTreeImpl(nodes: TreeMap[Int, PriorityInfo]) extends PriorityTree {
     def rootNode: PriorityNode = node(0)
 
-    def insertOrUpdate(streamId: Int, streamDependency: Int, weight: Int, exclusive: Boolean): PriorityTree =
+    def insertOrUpdate(streamId: Int, streamDependency: Int, weight: Int, exclusive: Boolean): PriorityTree = {
+      require(streamId != 0, "Cannot update root node")
       if (nodes.isDefinedAt(streamId)) update(streamId, streamDependency, weight, exclusive)
       else insert(streamId, streamDependency, weight, exclusive)
+    }
 
     private def insert(streamId: Int, streamDependency: Int, weight: Int, exclusive: Boolean): PriorityTreeImpl = {
       require(!nodes.isDefinedAt(streamId), s"Cannot insert node twice: $streamId")

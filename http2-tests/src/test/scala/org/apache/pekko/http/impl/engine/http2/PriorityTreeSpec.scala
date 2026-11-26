@@ -212,8 +212,25 @@ class PriorityTreeSpec extends AnyWordSpec with Matchers {
 
     "prune nodes" in pending
 
-    "fail when updating the root node" in pending
-    "fail when introducing a dependency on itself" in pending
+    "fail when updating the root node" in {
+      val tree = PriorityTree().insertOrUpdate(1, 0, 16, exclusive = false)
+
+      intercept[IllegalArgumentException] {
+        tree.insertOrUpdate(0, 1, 16, exclusive = true)
+      }
+    }
+
+    "fail when introducing a dependency on itself" in {
+      val empty = PriorityTree()
+      intercept[IllegalArgumentException] {
+        empty.insertOrUpdate(1, 1, 16, exclusive = false)
+      }
+
+      val tree = empty.insertOrUpdate(1, 0, 16, exclusive = false)
+      intercept[IllegalArgumentException] {
+        tree.insertOrUpdate(1, 1, 16, exclusive = false)
+      }
+    }
   }
 
   def printLike(resultingTree: String): Matcher[PriorityTree] =
