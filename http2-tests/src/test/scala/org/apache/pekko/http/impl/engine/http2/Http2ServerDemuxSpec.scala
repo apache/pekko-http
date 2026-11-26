@@ -13,11 +13,17 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import scala.concurrent.duration._
+
 import org.apache.pekko
-import pekko.http.impl.engine.http2.FrameEvent.{ ParsedHeadersFrame, Setting, SettingsFrame }
+import pekko.http.impl.engine.http2.FrameEvent.{ ParsedHeadersFrame, Setting, SettingsAckFrame, SettingsFrame }
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
+import pekko.http.impl.engine.parsing.HttpHeaderParser
+import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.impl.util.PekkoSpecWithMaterializer
-import pekko.http.scaladsl.settings.Http2ServerSettings
+import pekko.http.scaladsl.model.{ ErrorInfo, HttpMethods, HttpRequest, HttpResponse, Uri }
+import pekko.http.scaladsl.model.headers.Expect
+import pekko.http.scaladsl.settings.{ Http2ServerSettings, ServerSettings }
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep }
 import pekko.stream.testkit.scaladsl.{ TestSink, TestSource }
 import pekko.util.{ ByteString, OptionVal }
@@ -30,6 +36,50 @@ class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
     pekko.stream.materializer.debug.fuzzing-mode = on
   """) {
   "Http2ServerDemux" should {
+    "send the final response first when the request head is already rejected" in {
+      val settings = ServerSettings(system).mapHttp2Settings(_.withMinCollectStrictEntitySize(0))
+      val headerParser = HttpHeaderParser(settings.parserSettings, system.log)
+      val server = Http2Blueprint.httpLayer(settings, system.log, DateHeaderRendering()).atop(
+        Http2Blueprint.serverDemux(settings.http2Settings, Nil, upgraded = false, Some(settings -> headerParser)))
+      val ((responseProducer, (frameConsumer, frameProducer)), requestConsumer) = TestSource[HttpResponse]()
+        .viaMat(server.joinMat(Flow.fromSinkAndSourceMat(TestSink[FrameEvent](), TestSource[FrameEvent]())(
+          Keep.both))(Keep.right))(Keep.both)
+        .toMat(TestSink[HttpRequest]())(Keep.both)
+        .run()
+
+      try {
+        frameConsumer.request(10)
+        requestConsumer.request(1)
+        responseProducer.ensureSubscription()
+        frameProducer.ensureSubscription()
+        frameConsumer.expectNext() shouldBe a[SettingsFrame]
+        frameProducer.sendNext(SettingsFrame(Nil))
+        frameConsumer.expectNext() shouldBe SettingsAckFrame(Nil)
+
+        // Start after header decoding with its typed error result, not an invalid wire fixture.
+        val fields = Seq[(String, AnyRef)](
+          ":method" -> HttpMethods.POST,
+          ":scheme" -> "https",
+          ":authority" -> Uri.Authority(Uri.Host("example.com")),
+          ":path" -> (Uri.Path("/upload"), None),
+          "expect" -> Expect.`100-continue`)
+        frameProducer.sendNext(
+          ParsedHeadersFrame(1, endStream = false, fields, None, Some(ErrorInfo("Rejected request head"))))
+
+        // Do not filter informational HEADERS out: they must not precede the final response.
+        frameConsumer.expectNext() match {
+          case firstResponse: ParsedHeadersFrame =>
+            firstResponse.streamId shouldBe 1
+            firstResponse.keyValuePairs.toMap.get(":status") shouldBe Some("400")
+          case other => fail(s"Expected final response HEADERS, got $other")
+        }
+        requestConsumer.expectNoMessage(100.millis)
+      } finally {
+        requestConsumer.cancel()
+        frameConsumer.cancel()
+      }
+    }
+
     "not pull twice when started with initial RemoteSettings from HTTP/1.1 Upgrade" in {
       val settings = Http2ServerSettings("")
       val initialRemoteSettings = Seq[Setting](

@@ -19,6 +19,14 @@ pekko.http.server.enable-http2 = on
 
 Since Pekko HTTP 2.0.0, this defaults to `on`.
 
+## Requests using `Expect: 100-continue`
+
+For an HTTP/2 request with a body and `Expect: 100-continue`, the server can send an interim
+`100 Continue` after accepting the request headers, before the application pulls the request entity.
+This lets a client start sending the body even when the server is configured to collect a small
+entity before dispatching the request. Unlike HTTP/1.1, the application can send its final response
+without reading the entity and the client may already have received the interim response.
+
 ## Use `newServerAt(...).bind()` and HTTPS
 
 HTTP/2 is primarily used over a secure HTTPS connection which takes care of protocol negotiation and falling back to HTTP/1.1 over TLS when the client does not support HTTP/2.
