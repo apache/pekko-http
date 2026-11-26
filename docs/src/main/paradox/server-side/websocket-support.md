@@ -119,6 +119,45 @@ which allows to pass an output-generating @apidoc[Source[Message, \_]] and an in
 Note that a handler is required to consume the data stream of each message to make place for new messages. Otherwise,
 subsequent messages may be stuck and message traffic in this direction will stall.
 
+### Closing after the last outgoing message
+
+When the server's outgoing stream finishes normally, Pekko HTTP sends a Close frame with code `1000` and an empty
+reason. To tell the peer why a finite stream finished, set the code and reason on the upgrade **response**:
+
+Scala
+:   ```scala
+    val response = upgrade.handleMessages(handler)
+    WebSocketUpgrade.withCompletionClose(response, 1001, "Server shutting down")
+    ```
+
+Java
+:   ```java
+    HttpResponse response = upgrade.handleMessagesWith(handler);
+    return WebSocket.withCompletionClose(response, 1001, "Server shutting down");
+    ```
+
+Use a status code permitted for servers and a reason of at most 123 UTF-8 bytes. Because the handler is chosen first,
+this works with any subprotocol or compression policy. It does not override a peer-initiated close or a handler failure.
+
+When using @ref[handleWebSocketMessages](../routing-dsl/directives/websocket-directives/handleWebSocketMessages.md),
+wrap the directive with @ref[mapResponse](../routing-dsl/directives/basic-directives/mapResponse.md) to set the same policy:
+
+Scala
+:   ```scala
+    val route =
+      mapResponse(response => WebSocketUpgrade.withCompletionClose(response, 1001, "Server shutting down")) {
+        handleWebSocketMessages(handler)
+      }
+    ```
+
+Java
+:   ```java
+    Route route =
+        mapResponse(
+            response -> WebSocket.withCompletionClose(response, 1001, "Server shutting down"),
+            () -> handleWebSocketMessages(handler));
+    ```
+
 ### Example
 
 Let's look at an @scala[@github[example](/docs/src/test/scala/docs/http/scaladsl/server/WebSocketExampleSpec.scala)]@java[@github[example](/docs/src/test/java/docs/http/javadsl/server/WebSocketCoreExample.java)].

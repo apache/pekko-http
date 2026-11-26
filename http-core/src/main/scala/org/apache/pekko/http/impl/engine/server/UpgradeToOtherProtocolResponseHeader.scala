@@ -15,7 +15,10 @@ package org.apache.pekko.http.impl.engine.server
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.engine.ws.FrameOutHandler
+import pekko.http.scaladsl.model.HttpResponse
 import pekko.http.scaladsl.model.headers.CustomHeader
+import pekko.stream.Attributes
 import pekko.stream.scaladsl.Flow
 import pekko.util.ByteString
 
@@ -24,7 +27,11 @@ import pekko.util.ByteString
  */
 @InternalApi
 private[http] final case class UpgradeToOtherProtocolResponseHeader(handler: Flow[ByteString, ByteString, Any])
-    extends InternalCustomHeader("UpgradeToOtherProtocolResponseHeader")
+    extends InternalCustomHeader("UpgradeToOtherProtocolResponseHeader") {
+  def handlerFor(response: HttpResponse): Flow[ByteString, ByteString, Any] =
+    response.attribute(FrameOutHandler.completionCloseKey).fold(handler)(close =>
+      handler.addAttributes(Attributes(close)))
+}
 
 /**
  * Internal API
