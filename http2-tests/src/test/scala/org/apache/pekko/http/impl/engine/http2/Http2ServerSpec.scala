@@ -95,6 +95,40 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
       })
     }
 
+    "reset a malformed request stream with PROTOCOL_ERROR after the 400 if the request is still open" should {
+      // RFC 9113 section 8.1.1: a malformed request is a stream error of type PROTOCOL_ERROR, and a server may send
+      // a response before resetting the stream
+      abstract class OpenMalformedRequestSetup extends TestSetup with RequestResponseProbes {
+        def request(extra: (String, String)*): Seq[(String, String)] =
+          Seq(":method" -> "POST", ":scheme" -> "https", ":path" -> "/", ":authority" -> "www.example.com") ++ extra
+
+        def badRequestThenResetThenStillUsable(headerPairs: Seq[(String, String)]): Unit = {
+          user.requestIn.request(1)
+          // the request has a body that the peer has not sent yet
+          network.sendHEADERS(1, endStream = false, endHeaders = true, network.encodeHeaderPairs(headerPairs))
+          network.expectDecodedResponseHEADERSPairs(1, endStream = false).toMap should contain(":status" -> "400")
+          network.expectDATAFrame(1)._1 shouldBe true
+          network.expectRST_STREAM(1, ErrorCode.PROTOCOL_ERROR)
+
+          // DATA the peer sent before it saw the RST_STREAM is ignored, and the connection keeps serving
+          network.sendDATA(1, endStream = true, ByteString("late"))
+          network.sendRequest(3,
+            HttpRequest(HttpMethods.GET, "https://www.example.com/", protocol = HttpProtocols.`HTTP/2.0`))
+          user.expectRequest()
+          user.emitResponse(3, HttpResponse())
+          network.expectDecodedResponseHEADERSPairs(3).toMap should contain(":status" -> "200")
+        }
+      }
+
+      "for a header field found malformed while decoding the header block".inAssertAllStagesStopped(
+        new OpenMalformedRequestSetup {
+          badRequestThenResetThenStillUsable(request("x-a" -> "foo\u0000bar"))
+        })
+      "for a request found malformed while parsing it".inAssertAllStagesStopped(new OpenMalformedRequestSetup {
+        badRequestThenResetThenStillUsable(request("content-length" -> "4", "content-length" -> "4"))
+      })
+    }
+
     "send 100 Continue before waiting for an HTTP/2 request body" should {
       for (strictSize <- Seq(0, 16)) {
         s"allow a waiting client to upload with a strict collection limit of $strictSize"

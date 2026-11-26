@@ -92,6 +92,15 @@ server supports HTTP/2.
 For this reason the approach is known as HTTP/2 with
 [Prior Knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3).
 
+## Malformed requests
+
+A request that is malformed, for example because a header field value contains a character that is not allowed or
+because it has more than one `content-length` header, is answered with a `400 Bad Request` response on its stream.
+The connection and its other streams are not affected. If the client has not finished sending the request by the time
+that response has been sent, the server then resets the stream with an `RST_STREAM` frame of type `PROTOCOL_ERROR`, as
+described in [RFC 9113 section 8.1.1](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.1.1), so that the client
+stops sending the rest of the request.
+
 ## Flow-control window updates
 
 Changes to a peer's `SETTINGS_INITIAL_WINDOW_SIZE` apply to existing HTTP/2 streams, including decreases.
