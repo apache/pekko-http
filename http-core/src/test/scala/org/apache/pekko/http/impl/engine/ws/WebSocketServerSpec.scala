@@ -25,7 +25,7 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.javadsl.model.ws.{ Message => JavaMessage, TextMessage => JavaTextMessage }
 import pekko.http.scaladsl.model.HttpHeader
-import pekko.http.scaladsl.model.headers.`Sec-WebSocket-Extensions`
+import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Extensions`, `Sec-WebSocket-Protocol` }
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.stream.Materializer
@@ -181,6 +181,57 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
 
           closeNetworkInput()
           expectNetworkClose()
+        }
+      }
+    }
+    "collect application subprotocol offers" should {
+      for {
+        useJavaApi <- Seq(false, true)
+        split <- Seq(false, true)
+      } {
+        val dsl = if (useJavaApi) "Java" else "Scala"
+        val fields = if (split) "split fields" else "one field"
+        s"choose a protocol from $fields through the $dsl API" in Utils.assertAllStagesStopped {
+          import scala.jdk.CollectionConverters._
+
+          new TestSetup {
+            val protocols = Seq("preferred", "alternate", "echo")
+            val offered = if (split) Seq(protocols.init, protocols.takeRight(1)) else Seq(protocols)
+            val headers = offered.map(`Sec-WebSocket-Protocol`(_))
+            try {
+              sendWebSocketRequest(headers.iterator.map(header => s"$header\r\n").mkString)
+              val upgrade = expectRequest().attribute(webSocketUpgrade).get
+              val requested =
+                if (useJavaApi) upgrade.getRequestedProtocols().asScala.toList else upgrade.requestedProtocols
+              requested shouldEqual protocols
+
+              def choose(protocol: String) =
+                if (useJavaApi) upgrade.handleMessagesWith(Flow[JavaMessage], protocol)
+                else upgrade.handleMessages(Flow[Message], Some(protocol))
+
+              intercept[IllegalArgumentException](choose("Echo"))
+              responses.sendNext(choose("echo"))
+              expectResponseWithWipedDate(
+                """HTTP/1.1 101 Switching Protocols
+                  |Sec-WebSocket-Protocol: echo
+                  |Upgrade: websocket
+                  |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+                  |Server: pekko-http/test
+                  |Date: XXXX
+                  |Connection: upgrade
+                  |
+                  |""")
+
+              sendWSFrame(Protocol.Opcode.Text, ByteString("hello"), fin = true, mask = true)
+              expectWSFrame(Protocol.Opcode.Text, ByteString("hello"), fin = true)
+              sendWSCloseFrame(Protocol.CloseCodes.Regular, mask = true)
+              expectWSCloseFrame(Protocol.CloseCodes.Regular)
+            } finally {
+              closeNetworkInput()
+              responses.sendComplete()
+              netOut.cancel()
+            }
+          }
         }
       }
     }
