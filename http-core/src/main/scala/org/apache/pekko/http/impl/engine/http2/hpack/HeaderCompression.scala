@@ -52,7 +52,7 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
   private def isWhitespace(c: Char): Boolean = c == ' ' || c == '\t'
 
   def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
-    new GraphStageLogic(shape) with StageLogging with InHandler with OutHandler { logic =>
+    new GraphStageLogic(shape) with StageLogging with InHandler with OutHandler {
       setHandlers(eventsIn, eventsOut, this)
       private val currentMaxFrameSize = Http2Protocol.InitialMaxFrameSize
 
@@ -61,7 +61,17 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
       private var smallestPendingTableSize = Int.MaxValue
       private var pendingTableSize = -1
 
-      def onPull(): Unit = pull(eventsIn)
+      private var remainingHeaderBlock = ByteString.empty
+      private var continuationStreamId = 0
+
+      def onPull(): Unit =
+        if (remainingHeaderBlock.isEmpty) pull(eventsIn)
+        else {
+          val fragment = remainingHeaderBlock.take(currentMaxFrameSize)
+          remainingHeaderBlock = remainingHeaderBlock.drop(currentMaxFrameSize)
+          push(eventsOut, ContinuationFrame(continuationStreamId, endHeaders = remainingHeaderBlock.isEmpty, fragment))
+        }
+
       def onPush(): Unit = grab(eventsIn) match {
         case ack @ SettingsAckFrame(s) =>
           recordSettings(s)
@@ -95,20 +105,8 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
                 HeadersFrame(streamId, endStream, endHeaders = false, result.take(currentMaxFrameSize), prioInfo)
 
               push(eventsOut, first)
-              setHandler(eventsOut,
-                new OutHandler {
-                  private var remainingData = result.drop(currentMaxFrameSize)
-
-                  def onPull(): Unit = {
-                    val thisFragment = remainingData.take(currentMaxFrameSize)
-                    val rest = remainingData.drop(currentMaxFrameSize)
-                    val last = rest.isEmpty
-
-                    push(eventsOut, ContinuationFrame(streamId, endHeaders = last, thisFragment))
-                    if (last) setHandler(eventsOut, logic)
-                    else remainingData = rest
-                  }
-                })
+              remainingHeaderBlock = result.drop(currentMaxFrameSize)
+              continuationStreamId = streamId
             }
           }
         case x => push(eventsOut, x)

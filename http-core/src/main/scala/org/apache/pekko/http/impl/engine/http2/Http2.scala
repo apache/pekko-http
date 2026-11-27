@@ -156,16 +156,17 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       }.to(Sink.ignore).run()
   }
 
-  private def withErrorHandling(
+  private[http2] def withErrorHandling(
       log: LoggingAdapter,
-      handler: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] = { request =>
-    try {
-      handler(request).recover {
-        case NonFatal(ex) => handleHandlerError(log, ex)
-      }(ExecutionContext.parasitic)
-    } catch {
-      case NonFatal(ex) => Future.successful(handleHandlerError(log, ex))
+      handler: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] = {
+    val recoverResponse: PartialFunction[Throwable, HttpResponse] = {
+      case NonFatal(ex) => handleHandlerError(log, ex)
     }
+    request =>
+      try handler(request).recover(recoverResponse)(ExecutionContext.parasitic)
+      catch {
+        case NonFatal(ex) => Future.successful(handleHandlerError(log, ex))
+      }
   }
 
   private def handleHandlerError(log: LoggingAdapter, ex: Throwable): HttpResponse = {

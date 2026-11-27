@@ -15,6 +15,7 @@ package org.apache.pekko.http.impl.engine.http2
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.Success
 import scala.util.control.NonFatal
 
 import org.apache.pekko
@@ -392,8 +393,14 @@ private[http] object Http2Blueprint {
           val response = handler(req)
 
           req.attribute(Http2.streamId) match {
-            case Some(streamIdHeader) => response.map(_.addAttribute(Http2.streamId, streamIdHeader)) // add stream id attribute when request had it
-            case None                 => response
+            case Some(streamIdHeader) =>
+              // Already on the handler dispatcher. Avoid queuing another callback for an immediately
+              // successful response; a pending response still attaches its stream ID on this dispatcher.
+              response.value match {
+                case Some(Success(reply)) => Future.successful(reply.addAttribute(Http2.streamId, streamIdHeader))
+                case _                    => response.map(_.addAttribute(Http2.streamId, streamIdHeader))
+              }
+            case None => response
           }
         }.flatten
       }
