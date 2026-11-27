@@ -25,7 +25,7 @@ import org.apache.pekko
 import pekko.actor.ActorSystem
 import pekko.http.javadsl.model.ws.{ Message => JavaMessage, TextMessage => JavaTextMessage }
 import pekko.http.scaladsl.model.HttpHeader
-import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Extensions`, `Sec-WebSocket-Protocol` }
+import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Extensions`, `Sec-WebSocket-Protocol`, WebSocketExtension }
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.stream.Materializer
@@ -288,6 +288,29 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
     }
     "prevent the selection of an unavailable subprotocol" in pending
     "support permessage-deflate compression" should {
+      "accept canonical client window sizes and use the configured size for a valueless offer" in {
+        val settings = WebSocketCompressionSettingsImpl.Disabled.copy(enabled = true, preferredClientWindowSize = 11)
+        val parameter = "client_max_window_bits"
+        val bareOffer = WebSocketExtension("permessage-deflate")
+        PerMessageDeflate.negotiate(List(bareOffer), settings).map(_.responseExtension) shouldBe Some(bareOffer)
+        for ((value, expected) <- (8 to 15).map(n => n.toString -> n.toString) :+ ("" -> "11")) {
+          val offer = WebSocketExtension("permessage-deflate", Map(parameter -> value))
+          PerMessageDeflate.negotiate(List(offer), settings).map(_.responseExtension.params) shouldBe
+          Some(Map(parameter -> expected))
+        }
+      }
+
+      "decline a non-canonical client window size and allow the next offer" in {
+        val settings = WebSocketCompressionSettingsImpl.Disabled.copy(enabled = true)
+        val parameter = "client_max_window_bits"
+        val fallback = WebSocketExtension("permessage-deflate", Map(parameter -> "12"))
+        for (value <- List("08", "09")) {
+          val offer = WebSocketExtension("permessage-deflate", Map(parameter -> value))
+          PerMessageDeflate.negotiate(List(offer), settings) shouldBe None
+          PerMessageDeflate.negotiate(List(offer, fallback), settings).map(_.responseExtension) shouldBe Some(fallback)
+        }
+      }
+
       "negotiate permessage-deflate when requested by the client" in Utils.assertAllStagesStopped {
         new TestSetup {
           sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")

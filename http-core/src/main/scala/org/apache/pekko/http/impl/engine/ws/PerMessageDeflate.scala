@@ -181,10 +181,9 @@ private[http] object PerMessageDeflate {
   }
 
   private def validWindowBits(value: String): Boolean =
-    value.nonEmpty && value.length <= 2 && value.forall(_.isDigit) && {
-      val parsed = value.toInt
-      parsed >= 8 && parsed <= 15
-    }
+    // RFC 7692 section 7.1.2.2 requires a decimal integer between 8 and 15 without leading zeroes.
+    value == "8" || value == "9" ||
+    (value.length == 2 && value.charAt(0) == '1' && value.charAt(1) >= '0' && value.charAt(1) <= '5')
 
   private final class InflaterFlow(
       noContextTakeover: Boolean,
