@@ -133,7 +133,7 @@ private[parser] trait SimpleHeaders {
 
   // http://tools.ietf.org/html/rfc7231#section-7.1.1.2
   def `date` = rule {
-    `HTTP-date` ~ EOI ~> (Date(_))
+    dateHeaderValue ~ EOI ~> (Date(_))
   }
 
   // http://tools.ietf.org/html/rfc7232#section-2.3
