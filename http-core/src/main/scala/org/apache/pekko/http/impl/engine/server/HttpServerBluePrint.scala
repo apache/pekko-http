@@ -172,7 +172,10 @@ private[http] object HttpServerBluePrint {
 
             val entity = createEntity(entityCreator).withSizeLimit(settings.parserSettings.maxContentLength)
             val httpRequest = HttpRequest(effectiveMethod, uri, hdrs, entity, protocol)
-              .withAttributes(attrs)
+              .withAttributes(
+                if (protocol == HttpProtocols.`HTTP/1.0` && attrs.contains(ExplicitHttp10Close)) attrs -
+                ExplicitHttp10Close
+                else attrs)
 
             val effectiveHttpRequest = if (settings.remoteAddressAttribute) {
               remoteAddressOpt.fold(httpRequest) { remoteAddress =>
@@ -542,8 +545,12 @@ private[http] object HttpServerBluePrint {
                 (isClosed(requestParsingIn) && openRequests.isEmpty) ||
                 isEarlyResponse
 
+              val explicitClose = requestStart.closeRequested &&
+                (requestStart.protocol == HttpProtocols.`HTTP/1.1` ||
+                requestStart.attributes.contains(ExplicitHttp10Close))
               val close =
-                if (forceClose) CloseRequested.ForceClose
+                if (explicitClose) CloseRequested.RequestExplicitlyAskedForClosing
+                else if (forceClose) CloseRequested.ForceClose
                 else if (requestStart.closeRequested) CloseRequested.RequestAskedForClosing
                 else CloseRequested.Unspecified
 

@@ -28,3 +28,7 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
   `HttpCookie.partitioned` field instead of the generic `extension` field. If your code detects
   partitioned cookies by inspecting `extension` (`getExtension()` in Java), use `partitioned`
   (`partitioned()` in Java) instead ([PR1562](https://github.com/apache/pekko-http/pull/1562)).
+* An HTTP/1.x request with explicit `Connection: close` now closes the connection after the final response,
+  even if the application sets `Connection: keep-alive` on that response. If an HTTP/1.0 request lists both
+  `close` and `keep-alive`, `close` takes precedence. An implicit HTTP/1.0 close without the `close` option can
+  still be overridden as before ([PR1601](https://github.com/apache/pekko-http/pull/1601)).

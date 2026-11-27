@@ -82,6 +82,9 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
       Some(MessageStartError(StatusCodes.BadRequest, ErrorInfo("Illegal HTTP message start"),
         illegalRequestContext))
 
+  // An HTTP/1.0 request can ask for closure explicitly or simply default to it.
+  protected def onExplicitHttp10Close(): Unit = ()
+
   protected def parseMessage(input: ByteString, offset: Int): HttpMessageParser.StateResult
   protected def parseEntity(headers: List[HttpHeader], protocol: HttpProtocol, input: ByteString, bodyStart: Int,
       clh: Option[`Content-Length`], cth: Option[`Content-Type`], isChunked: Boolean,
@@ -179,7 +182,9 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
           continue(input, lineStart)(parseHeaderLinesAux(headers, headerCount, ch, clh, cth, isChunked, e100c, hh))
 
         case EmptyHeader =>
-          val close = HttpMessage.connectionCloseExpected(protocol, ch)
+          val explicitHttp10Close = protocol == `HTTP/1.0` && !isResponseParser && ch.exists(_.hasClose)
+          if (explicitHttp10Close) onExplicitHttp10Close()
+          val close = explicitHttp10Close || HttpMessage.connectionCloseExpected(protocol, ch)
           setCompletionHandling(CompletionIsEntityStreamError)
           parseEntity(headers.toList, protocol, input, lineEnd, clh, cth, isChunked, e100c, hh, close, lastSession)
 
