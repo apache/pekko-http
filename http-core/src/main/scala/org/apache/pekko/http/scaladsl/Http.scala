@@ -857,6 +857,13 @@ object Http extends ExtensionId[HttpExt] with ExtensionIdProvider {
      * This can be used to signal parts of the application that the http server is shutting down and they should clean up as well.
      * Note also that for more advanced shut down scenarios you may want to use the Coordinated Shutdown capabilities of Akka.
      *
+     * For HTTP/2 the server sends GOAWAY and drains accepted streams instead of sending
+     * a termination response. With `pekko.http.server.http2.graceful-shutdown-advisory-timeout`
+     * enabled, it can accept requests already in flight during a bounded advisory round trip,
+     * even on a connection with no currently active streams. This does not extend `hardDeadline`.
+     *
+     * The following request and response details describe HTTP/1.x.
+     *
      * 2) if a connection has no "in-flight" request, it is terminated immediately
      *
      * 3) Handle in-flight request:

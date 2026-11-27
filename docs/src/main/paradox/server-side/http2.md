@@ -114,9 +114,8 @@ pekko.http.server.http2.max-connection-age = 120s
 ```
 
 When the age of a connection exceeds the configured value, the server sends a GOAWAY frame, lets requests that
-are already in flight complete, and then closes the connection. Streams that the peer opens after the GOAWAY
-frame was sent are refused, upon which well-behaved clients (for example, grpc-java) transparently retry them on
-a new connection.
+are already in flight complete, and then closes the connection. By default, streams above the announced GOAWAY
+boundary are refused, allowing clients such as grpc-java to retry those requests on a new connection.
 
 The setting applies to HTTP/2 connections only: HTTP/1.1 connections accepted on the same port are not
 age-limited.
@@ -138,6 +137,33 @@ however long they take.
 A jitter is applied to the configured value for each connection (by default +/- 10%, configurable via
 `pekko.http.server.http2.max-connection-age-jitter`), so that connections that were opened together are not
 all closed at the same time.
+
+### Giving in-flight requests time to arrive
+
+By default, the first GOAWAY sets the final stream boundary. During a rolling shutdown, this can make a
+client retry a request it sent before seeing the GOAWAY if the server hasn't received the request yet.
+To give in-flight requests a chance to reach the server before it sets the boundary, enable two-phase
+graceful shutdown for binding termination and maximum connection age:
+
+```
+pekko.http.server.http2.graceful-shutdown-advisory-timeout = 1s
+```
+
+The timeout can also be set programmatically on the HTTP/2 server settings:
+
+@scala[`settings.withHttp2Settings(settings.http2Settings.withGracefulShutdownAdvisoryTimeout(1.second))`]
+@java[`settings.withHttp2Settings(settings.getHttp2Settings().withGracefulShutdownAdvisoryTimeout(Duration.ofSeconds(1)))`]
+
+The server sends an advisory GOAWAY with the maximum stream ID and `NO_ERROR`, followed by a PING.
+Once the acknowledgment arrives, the server sends the final GOAWAY with the last stream ID it may have
+processed, as described in [RFC 9113 §6.8](https://www.rfc-editor.org/rfc/rfc9113.html#section-6.8).
+It continues draining accepted streams but refuses streams above that final boundary.
+
+The timeout covers sending the PING and waiting for its acknowledgment together. If it expires, the server
+fixes the boundary without waiting for an acknowledgment. If the hard termination deadline would expire
+before or at the end of the advisory, the server fixes the boundary immediately so it can drain within the
+remaining time. Set the timeout to `0s` (the default) to keep single-phase shutdown. This setting applies
+only to HTTP/2.
 
 ## Trailing headers
 

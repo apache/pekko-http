@@ -195,6 +195,23 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def frameTypeThrottleInterval: FiniteDuration
   def withFrameTypeThrottleInterval(interval: FiniteDuration) = copy(frameTypeThrottleInterval = interval)
 
+  /**
+   * The total time allowed to send the graceful shutdown advisory PING and receive its acknowledgment.
+   * Zero disables the advisory. The setting does not extend any hard termination deadline.
+   *
+   * @since 2.1.0
+   */
+  def gracefulShutdownAdvisoryTimeout: FiniteDuration = self.advisoryTimeout
+
+  /**
+   * Configure the shutdown advisory timeout. Use zero for single-phase graceful shutdown.
+   *
+   * @since 2.1.0
+   */
+  def withGracefulShutdownAdvisoryTimeout(timeout: FiniteDuration): Http2ServerSettings =
+    if (timeout == gracefulShutdownAdvisoryTimeout) this
+    else copy(advisoryTimeout = timeout)
+
   @InternalApi
   private[http] def internalSettings: Option[Http2InternalServerSettings]
   @InternalApi
@@ -226,7 +243,8 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       frameTypeThrottleCost: Int,
       frameTypeThrottleBurst: Int,
       frameTypeThrottleInterval: FiniteDuration,
-      internalSettings: Option[Http2InternalServerSettings])
+      internalSettings: Option[Http2InternalServerSettings],
+      advisoryTimeout: FiniteDuration)
       extends Http2ServerSettings {
     require(maxConcurrentStreams > 0, "max-concurrent-streams must be > 0")
     require(maxHeaderListSize > 0, "max-header-list-size must be > 0")
@@ -250,7 +268,94 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
     require(maxConnectionAgeGrace >= Duration.Zero, "max-connection-age-grace must be >= 0 or 'infinite'")
     require(maxConnectionAgeJitter >= 0 && maxConnectionAgeJitter < 1,
       "max-connection-age-jitter must be >= 0 and < 1")
+    require(advisoryTimeout >= Duration.Zero, "graceful-shutdown-advisory-timeout must be >= 0")
     Http2CommonSettings.validate(this)
+
+    // Some public Scala withers infer this implementation as their result. Keep the published constructor
+    // and copy descriptors; a copy compiled before the new setting must preserve the current setting.
+    def this(
+        maxConcurrentStreams: Int,
+        maxHeaderListSize: Int,
+        maxFrameSize: Int,
+        requestEntityChunkSize: Int,
+        incomingConnectionLevelBufferSize: Int,
+        incomingStreamLevelBufferSize: Int,
+        minCollectStrictEntitySize: Int,
+        outgoingControlFrameBufferSize: Int,
+        logFrames: Boolean,
+        pingInterval: FiniteDuration,
+        pingTimeout: FiniteDuration,
+        maxConnectionAge: Duration,
+        maxConnectionAgeGrace: Duration,
+        maxConnectionAgeJitter: Double,
+        frameTypeThrottleFrameTypes: Set[String],
+        frameTypeThrottleCost: Int,
+        frameTypeThrottleBurst: Int,
+        frameTypeThrottleInterval: FiniteDuration,
+        internalSettings: Option[Http2InternalServerSettings]) =
+      this(
+        maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, minCollectStrictEntitySize,
+        outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout, maxConnectionAge,
+        maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes, frameTypeThrottleCost,
+        frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings, Duration.Zero)
+
+    def copy(
+        maxConcurrentStreams: Int,
+        maxHeaderListSize: Int,
+        maxFrameSize: Int,
+        requestEntityChunkSize: Int,
+        incomingConnectionLevelBufferSize: Int,
+        incomingStreamLevelBufferSize: Int,
+        minCollectStrictEntitySize: Int,
+        outgoingControlFrameBufferSize: Int,
+        logFrames: Boolean,
+        pingInterval: FiniteDuration,
+        pingTimeout: FiniteDuration,
+        maxConnectionAge: Duration,
+        maxConnectionAgeGrace: Duration,
+        maxConnectionAgeJitter: Double,
+        frameTypeThrottleFrameTypes: Set[String],
+        frameTypeThrottleCost: Int,
+        frameTypeThrottleBurst: Int,
+        frameTypeThrottleInterval: FiniteDuration,
+        internalSettings: Option[Http2InternalServerSettings]): Http2ServerSettingsImpl =
+      copy(
+        maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, minCollectStrictEntitySize,
+        outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout, maxConnectionAge,
+        maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes, frameTypeThrottleCost,
+        frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings,
+        advisoryTimeout =
+          this.advisoryTimeout)
+
+    def copy(
+        maxConcurrentStreams: Int = this.maxConcurrentStreams,
+        maxHeaderListSize: Int = this.maxHeaderListSize,
+        maxFrameSize: Int = this.maxFrameSize,
+        requestEntityChunkSize: Int = this.requestEntityChunkSize,
+        incomingConnectionLevelBufferSize: Int = this.incomingConnectionLevelBufferSize,
+        incomingStreamLevelBufferSize: Int = this.incomingStreamLevelBufferSize,
+        minCollectStrictEntitySize: Int = this.minCollectStrictEntitySize,
+        outgoingControlFrameBufferSize: Int = this.outgoingControlFrameBufferSize,
+        logFrames: Boolean = this.logFrames,
+        pingInterval: FiniteDuration = this.pingInterval,
+        pingTimeout: FiniteDuration = this.pingTimeout,
+        maxConnectionAge: Duration = this.maxConnectionAge,
+        maxConnectionAgeGrace: Duration = this.maxConnectionAgeGrace,
+        maxConnectionAgeJitter: Double = this.maxConnectionAgeJitter,
+        frameTypeThrottleFrameTypes: Set[String] = this.frameTypeThrottleFrameTypes,
+        frameTypeThrottleCost: Int = this.frameTypeThrottleCost,
+        frameTypeThrottleBurst: Int = this.frameTypeThrottleBurst,
+        frameTypeThrottleInterval: FiniteDuration = this.frameTypeThrottleInterval,
+        internalSettings: Option[Http2InternalServerSettings] = this.internalSettings,
+        advisoryTimeout: FiniteDuration = this.advisoryTimeout): Http2ServerSettingsImpl =
+      new Http2ServerSettingsImpl(
+        maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, minCollectStrictEntitySize,
+        outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout, maxConnectionAge,
+        maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes, frameTypeThrottleCost,
+        frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings, advisoryTimeout)
   }
 
   private[http] object Http2ServerSettingsImpl
@@ -274,7 +379,11 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),
       frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),
       frameTypeThrottleInterval = c.getFiniteDuration("frame-type-throttle.interval"),
-      None // no possibility to configure internal settings with config
+      internalSettings = None,
+      advisoryTimeout =
+        if (c.hasPathOrNull("graceful-shutdown-advisory-timeout"))
+          c.getFiniteDuration("graceful-shutdown-advisory-timeout")
+        else Duration.Zero
     )
   }
 }

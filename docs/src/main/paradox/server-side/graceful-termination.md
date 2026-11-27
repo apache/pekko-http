@@ -67,7 +67,13 @@ is completed.
 This can be used to signal parts of the application that the HTTP server is shutting down and they should clean up as well.
 Note also that for more advanced shut down scenarios you may want to use the @extref[Coordinated Shutdown](pekko-docs:/actors.html#coordinated-shutdown) capabilities of Apache Pekko.
 
-Next, all in flight requests will be handled. If a request is "in-flight" (being handled by user code), it is given `hardDeadline` time to complete.
+On HTTP/2 connections, the server sends GOAWAY and drains accepted streams rather than returning an
+HTTP/1.x termination response. If you opt into
+@ref[two-phase graceful shutdown](http2.md#giving-in-flight-requests-time-to-arrive), HTTP/2 connections
+can still receive in-flight requests during a bounded advisory round trip. This does not extend
+`hardDeadline`.
+
+The following request and response details describe HTTP/1.x. Next, all in flight requests will be handled. If a request is "in-flight" (being handled by user code), it is given `hardDeadline` time to complete.
 If the request stream completes while a response is pending, the server continues waiting for that response until the deadline.
 
 - if a connection has no "in-flight" request, it is terminated immediately  
