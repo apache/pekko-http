@@ -106,9 +106,8 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
         case code => StatusCodes.getForKey(code) match {
             case Some(x) => x
             case None    => customStatusCodes(code).getOrElse {
-                // A client must understand the class of any status code, as indicated by the first digit, and
-                // treat an unrecognized status code as being equivalent to the x00 status code of that class
-                // https://tools.ietf.org/html/rfc7231#section-6
+                // RFC 9110 section 15: give an unrecognized status code the default behavior of its class,
+                // while preserving the numeric code. See RFC 9112 section 4 for the status line syntax.
                 try {
                   // RFC 9112 section 4: a client SHOULD ignore the reason-phrase content. Drop characters that a
                   // status model can't carry (controls other than HTAB, and DEL) instead of failing the response.
@@ -154,7 +153,7 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
 
   def handleInformationalResponses: Boolean = true
 
-  // http://tools.ietf.org/html/rfc7230#section-3.3
+  // HTTP/1 response body framing: https://www.rfc-editor.org/rfc/rfc9112.html#section-6.3
   protected final def parseEntity(headers: List[HttpHeader], protocol: HttpProtocol, input: ByteString, bodyStart: Int,
       clh: Option[`Content-Length`], cth: Option[`Content-Type`], isChunked: Boolean,
       expect100continue: Boolean, hostHeaderPresent: Boolean, closeAfterResponseCompletion: Boolean,
@@ -190,10 +189,8 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
           if (statusCode == StatusCodes.Continue)
             contextForCurrentResponse.get.oneHundredContinueTrigger.foreach(_.trySuccess(()))
 
-          // http://tools.ietf.org/html/rfc7231#section-6.2 says:
-          // "A client MUST be able to parse one or more 1xx responses received prior to a final response,
-          // even if the client does not expect one."
-          // so we simply drop this interim response and start parsing the next one
+          // RFC 9110 sections 15.2 and 15.2.1: the client must parse interim responses before the final response.
+          // In this mode, the parser consumes the interim response and proceeds with the current request.
           startNewMessage(input, bodyStart)
         case _ =>
           emitResponseStart(emptyEntity(cth))

@@ -106,8 +106,8 @@ object StatusCodes extends ObjectRegistry[Int, StatusCode] {
 
   /**
    * Create a custom status code and allow full customization of behavior. The value of `allowsEntity`
-   * changes the parser behavior: If it is set to true, a response with this status code is required to include a
-   * `Content-Length` header to be parsed correctly when keep-alive is enabled (which is the default in HTTP/1.1).
+   * controls whether the HTTP/1 parser can expect response content. When it expects content, it uses the normal
+   * message framing rules (RFC 9112 section 6.3); a chunked response does not require `Content-Length`.
    * If `allowsEntity` is false, an entity is never expected.
    * The reason must contain only HTAB, printable ASCII or ISO-8859-1 characters above DEL; it may be empty.
    * Invalid reasons are rejected with an `IllegalArgumentException`.
@@ -186,7 +186,7 @@ object StatusCodes extends ObjectRegistry[Int, StatusCode] {
   val ExpectationFailed            = reg(c(417)("Expectation Failed", "The server cannot meet the requirements of the Expect request-header field."))
   val ImATeapot                    = reg(c(418)("I'm a teapot", "The resulting entity body MAY be short and stout."))
   val EnhanceYourCalm              = reg(c(420)("Enhance Your Calm", "You are being rate-limited.")) // Twitter only
-  val MisdirectedRequest           = reg(c(421)("Misdirected Request", "The request was directed at a server that is not able to produce a response.")) // HTTP/2 only. https://tools.ietf.org/html/rfc7540#section-9.1.2
+  val MisdirectedRequest           = reg(c(421)("Misdirected Request", "The request was directed at a server that is not able to produce a response.")) // RFC 9110 section 15.5.20
   val UnprocessableContent         = reg(c(422)("Unprocessable Content", "The request was well-formed but was unable to be followed due to semantic errors."))
   @deprecated("deprecated in favor of UnprocessableContent", "1.1.0")
   val UnprocessableEntity          = UnprocessableContent
