@@ -39,6 +39,23 @@ class CodersSpec extends AnyWordSpec with CodecSpecSupport {
   private def body(response: HttpResponse): String =
     response.entity.toStrict(3.seconds.dilated).awaitResult(3.seconds.dilated).data.utf8String
 
+  private def gzipAliasFixture: (`Content-Encoding`, HttpEntity.Strict) = {
+    val compressed = new java.io.ByteArrayOutputStream()
+    val gzip = new java.util.zip.GZIPOutputStream(compressed)
+    try gzip.write(ByteString(smallText).toArray)
+    finally gzip.close()
+    HttpHeader.parse("Content-Encoding", "X-GZip") match {
+      case HttpHeader.ParsingResult.Ok(header: `Content-Encoding`, Nil) =>
+        (header, HttpEntity(ByteString.fromArray(compressed.toByteArray)))
+      case other => fail(s"Expected a modeled Content-Encoding header, got $other")
+    }
+  }
+
+  private def gzipAliasResponse: HttpResponse = {
+    val (header, entity) = gzipAliasFixture
+    HttpResponse(headers = List(header), entity = entity)
+  }
+
   "Encoder.encodeMessage" should {
     for (coder <- Seq(Coders.Gzip, Coders.Deflate)) {
       s"preserve a pre-encoded request with a raw ${coder.encoding} Content-Encoding header" in {
@@ -122,6 +139,71 @@ class CodersSpec extends AnyWordSpec with CodecSpecSupport {
       decoded shouldEqual response
       decoded.encoding shouldEqual HttpEncodings.zstd
     }
+    "decode a response with the gzip alias using the default or a configured gzip decoder" in {
+      val other = RawHeader("X-Other", "kept")
+      val response = gzipAliasResponse.addHeader(other)
+      val selected = Coders.Gzip.withMaxBytesPerChunk(16)
+      for (decoded <- List(Coders.decodeMessage(response), Coders.decodeMessage(response, Seq(selected)))) {
+        decoded.headers shouldEqual List(other)
+        body(decoded) shouldEqual smallText
+      }
+    }
+
+    "prefer a decoder explicitly supplied for the gzip alias" in {
+      val response = gzipAliasResponse
+      var selected = false
+      val alias = new Decoder {
+        override val encoding = HttpEncoding.custom("x-gzip")
+        override def maxBytesPerChunk = Decoder.MaxBytesPerChunkDefault
+        override def withMaxBytesPerChunk(size: Int): Decoder = this
+        override def decoderFlow = Coders.Gzip.decoderFlow
+        override def decodeMessage(message: HttpMessage): message.Self = {
+          message.encoding.value shouldEqual "X-GZip"
+          selected = true
+          super.decodeMessage(message)
+        }
+      }
+
+      val decoded = Coders.decodeMessage(response, Seq(Coders.Gzip, alias))
+
+      selected shouldBe true
+      decoded.headers shouldEqual Nil
+      body(decoded) shouldEqual smallText
+    }
+
+    "use the gzip alias with a supplied flow-based gzip decoder" in {
+      val response = gzipAliasResponse
+      val gzip = Coders.Gzip
+      val flowBasedGzip = Coders.fromFlows(HttpEncodings.gzip, gzip.encoderFlow, _ => gzip.decoderFlow)
+      val decoded = Coders.decodeMessage(response, Seq(flowBasedGzip))
+
+      decoded.headers shouldEqual Nil
+      body(decoded) shouldEqual smallText
+    }
+
+    "preserve the original gzip alias if the fallback decoder leaves the response untouched" in {
+      val response = gzipAliasResponse
+      val selectiveGzip = new Decoder {
+        override val encoding = HttpEncodings.gzip
+        override def maxBytesPerChunk = Decoder.MaxBytesPerChunkDefault
+        override def withMaxBytesPerChunk(size: Int): Decoder = this
+        override def decoderFlow = Coders.Gzip.decoderFlow
+        override def decodeMessage(message: HttpMessage): message.Self = message.self
+      }
+
+      (Coders.decodeMessage(response, Seq(selectiveGzip)) should be).theSameInstanceAs(response)
+    }
+
+    "leave the gzip alias unchanged without a selected gzip decoder and on requests" in {
+      val (header, entity) = gzipAliasFixture
+      val response = HttpResponse(headers = List(header), entity = entity)
+      (Coders.decodeMessage(response, Nil) should be).theSameInstanceAs(response)
+      (Coders.decodeMessage(response, Seq(Coders.Deflate)) should be).theSameInstanceAs(response)
+
+      val request = HttpRequest(method = HttpMethods.POST, headers = List(header), entity = entity)
+      (Coders.decodeMessage(request) should be).theSameInstanceAs(request)
+    }
+
     "leave a message with more than one encoding unchanged" in {
       val response = HttpResponse(
         entity = HttpEntity(ByteString("abc")),

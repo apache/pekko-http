@@ -15,14 +15,18 @@ package org.apache.pekko.http.javadsl.server.directives;
 
 import static org.apache.pekko.http.javadsl.server.Directives.*;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.zip.GZIPOutputStream;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.coding.FlowCoder;
+import org.apache.pekko.http.javadsl.model.HttpHeader;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
@@ -176,6 +180,34 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
         .runFold(ByteString.emptyByteString(), ByteString::concat, materializer())
         .toCompletableFuture()
         .get(); // Wait for result
+  }
+
+  @Test
+  public void testDecodeResponseWithGzipAlias() throws Exception {
+    String content = "gzip representation";
+    ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+    try (GZIPOutputStream gzip = new GZIPOutputStream(compressed)) {
+      gzip.write(content.getBytes(StandardCharsets.UTF_8));
+    }
+    HttpHeader alias = HttpHeader.parse("Content-Encoding", "X-GZip");
+    Assertions.assertInstanceOf(ContentEncoding.class, alias);
+    HttpResponse response =
+        HttpResponse.create()
+            .addHeader(alias)
+            .withEntity(ByteString.fromArray(compressed.toByteArray()));
+
+    Assertions.assertSame(response, Coder.decodeResponse(response, Coder.Deflate));
+    HttpResponse decoded = Coder.decodeResponse(response);
+    Assertions.assertTrue(decoded.getHeader(ContentEncoding.class).isEmpty());
+    Assertions.assertEquals(
+        content,
+        decoded
+            .entity()
+            .toStrict(3000, materializer())
+            .toCompletableFuture()
+            .get(3, TimeUnit.SECONDS)
+            .getData()
+            .utf8String());
   }
 
   @Test
