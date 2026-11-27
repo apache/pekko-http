@@ -37,13 +37,21 @@ public abstract class DateTime {
   /** Returns the minute of this instant in GMT. */
   public abstract int minute();
 
-  /** Returns the second of this instant in GMT. */
+  /**
+   * Returns the second of this instant in GMT, including 60 for a positive UTC leap second parsed
+   * from an HTTP {@code Date}, {@code Last-Modified}, or {@code Expires} header.
+   */
   public abstract int second();
 
   /** Returns the weekday of this instant in GMT. Sunday is 0, Monday is 1, etc. */
   public abstract int weekday();
 
-  /** Returns this instant as "clicks", i.e. as milliseconds since January 1, 1970, 00:00:00 GMT */
+  /**
+   * Returns this instant as "clicks", i.e. as milliseconds since January 1, 1970, 00:00:00 GMT. A
+   * parsed UTC leap second has the same clicks as the preceding second. Use {@link #second()} to
+   * distinguish them. Within the supported epoch range, {@link #create(long)} reconstructs the
+   * ordinary second.
+   */
   public abstract long clicks();
 
   /** Returns if this instant interpreted as a Date in GMT belongs to a leap year. */
@@ -86,7 +94,8 @@ public abstract class DateTime {
 
   /**
    * Returns a new DateTime instance parsed from IsoDateTimeString as Some(dateTime). Returns None
-   * if parsing has failed.
+   * if parsing has failed. Use an HTTP {@code Date}, {@code Last-Modified}, or {@code Expires}
+   * representation, not this method, to round-trip a leap second.
    */
   public static Optional<DateTime> fromIsoDateTimeString(String isoDateTimeString) {
     return OptionalUtil.<DateTime, org.apache.pekko.http.scaladsl.model.DateTime>convertOption(
