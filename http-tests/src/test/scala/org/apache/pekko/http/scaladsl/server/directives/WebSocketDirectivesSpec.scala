@@ -19,7 +19,14 @@ import org.apache.pekko
 import pekko.http.impl.engine.server.InternalCustomHeader
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse, StatusCodes }
-import pekko.http.scaladsl.model.headers.{ `Sec-WebSocket-Protocol`, Upgrade, UpgradeProtocol }
+import pekko.http.scaladsl.model.headers.{
+  HttpOrigin,
+  HttpOriginRange,
+  Origin,
+  `Sec-WebSocket-Protocol`,
+  Upgrade,
+  UpgradeProtocol
+}
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.server.{
   ExpectedWebSocketRequestRejection,
@@ -53,6 +60,23 @@ class WebSocketDirectivesSpec extends RoutingSpec {
         wsClient.expectCompletion()
       }
     }
+    "allow a configured same-origin WebSocket upgrade" in {
+      val origin = HttpOrigin("https://example.com")
+      val wsClient = WSProbe()
+      val route = checkSameOrigin(HttpOriginRange(origin)) {
+        handleWebSocketMessages(echo)
+      }
+
+      WS("https://example.com/echo", wsClient.flow).addHeader(Origin(origin)) ~> route ~> check {
+        status shouldEqual StatusCodes.SwitchingProtocols
+        isWebSocketUpgrade shouldEqual true
+        wsClient.sendMessage("hello")
+        wsClient.expectMessage("hello")
+        wsClient.sendCompletion()
+        wsClient.expectCompletion()
+      }
+    }
+
     "pass the outbound compression selector to the WebSocket upgrade" in {
       var selectedSubprotocol = Option.empty[Option[String]]
       var compressionDecision = Option.empty[Boolean]
