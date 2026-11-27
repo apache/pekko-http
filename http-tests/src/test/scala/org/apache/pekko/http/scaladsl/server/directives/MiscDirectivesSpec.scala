@@ -93,6 +93,11 @@ class MiscDirectivesSpec extends RoutingSpec {
       selectFrom("hu", "es") shouldEqual "hu"
       selectFrom("es", "hu") shouldEqual "es"
     }
+    "Accept-Language: dE-dE;q=0.9, fr;q=0.7, de;q=0.5".test { selectFrom =>
+      // Basic Filtering matches a subtag prefix; it does not skip the script subtag.
+      selectFrom("fr", "de-DE-1996") shouldEqual "de-DE-1996"
+      selectFrom("de-Latn-DE", "fr") shouldEqual "fr"
+    }
     "Accept-Language: en, *;q=.5, de;q=0".test { selectFrom =>
       selectFrom("es", "de") shouldEqual "es"
       selectFrom("de", "es") shouldEqual "es"
