@@ -15,6 +15,7 @@ package org.apache.pekko.http.impl.engine.http2
 
 import java.io.ByteArrayInputStream
 import java.util.zip.InflaterInputStream
+import javax.net.ssl.SSLEngine
 
 import scala.concurrent.{ Future, Promise }
 import scala.concurrent.duration._
@@ -25,7 +26,7 @@ import pekko.Done
 import pekko.http.impl.engine.HttpIdleTimeoutException
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
-import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.{ ConnectionContext, Http }
 import pekko.http.scaladsl.coding.Coders
 import pekko.http.scaladsl.model.{
   headers,
@@ -72,6 +73,51 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
   val requestIdAttr = AttributeKey[RequestId]("requestId")
 
   "HTTP 2 implementation" should {
+    "serve both explicitly negotiated ALPN protocols on the same HTTPS binding" in {
+      import system.dispatcher
+
+      val http = Http()
+      val binding = http.newServerAt("localhost", 0)
+        .enableHttps(ExampleHttpContexts.exampleServerContext)
+        .withSettings(ServerSettings(system).withEnableHttp2(true))
+        .bindSync(request => HttpResponse(entity = request.protocol.value))
+        .futureValue
+
+      val settings = ClientConnectionSettings(system)
+        .withTransport(ExampleHttpContexts.proxyTransport(binding.localAddress))
+      try {
+        for ((protocol, alpn) <- Seq(HttpProtocols.`HTTP/2.0` -> "h2", HttpProtocols.`HTTP/1.1` -> "http/1.1")) {
+          val clientEngine = Promise[SSLEngine]()
+          val context = ConnectionContext.httpsClient { (host, port) =>
+            val engine = ExampleHttpContexts.exampleClientContext.engineCreator(Some((host, port)))
+            if (protocol == HttpProtocols.`HTTP/1.1`) {
+              val parameters = engine.getSSLParameters
+              parameters.setApplicationProtocols(Array(alpn))
+              engine.setSSLParameters(parameters)
+            }
+            clientEngine.success(engine)
+            engine
+          }
+          val builder = http.connectionTo("pekko.example.org")
+            .toPort(binding.localAddress.getPort)
+            .withCustomHttpsConnectionContext(context)
+            .withClientConnectionSettings(settings)
+          val connection = if (protocol == HttpProtocols.`HTTP/2.0`) builder.http2() else builder.https()
+
+          val result = Source.single(HttpRequest(uri = "/"))
+            .via(connection)
+            .mapAsync(1) { response =>
+              Unmarshal(response.entity).to[String].map(body => (response.protocol, response.status, body))
+            }
+            .runWith(Sink.head)
+            .futureValue
+
+          clientEngine.future.futureValue.getApplicationProtocol shouldBe alpn
+          result shouldBe ((protocol, StatusCodes.OK, protocol.value))
+        }
+      } finally binding.terminate(1.second).futureValue
+    }
+
     "support simple round-trips" in new TestSetup {
       sendClientRequest(
         HttpRequest(
