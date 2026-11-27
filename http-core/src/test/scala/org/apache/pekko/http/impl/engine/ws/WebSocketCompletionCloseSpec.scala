@@ -19,9 +19,11 @@ package org.apache.pekko.http.impl.engine.ws
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import scala.concurrent.Promise
 import scala.concurrent.duration._
 
 import org.apache.pekko
+import pekko.NotUsed
 import pekko.event.NoLogging
 import pekko.http.impl.engine.rendering.{
   DateHeaderRendering,
@@ -40,14 +42,16 @@ import pekko.http.scaladsl.model.headers.{
 }
 import pekko.http.scaladsl.model.ws.{ Message, TextMessage, WebSocketUpgrade }
 import pekko.http.scaladsl.model.{ DateTime, HttpResponse, StatusCodes }
-import pekko.http.scaladsl.settings.ServerSettings
+import pekko.http.scaladsl.settings.{ ServerSettings, WebSocketSettings }
 import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import pekko.stream.testkit.scaladsl.{ TestSink, TestSource }
 import pekko.testkit._
 
 class WebSocketCompletionCloseSpec extends PekkoSpecWithMaterializer {
-  private def upgrade(offerCompression: Boolean = false): WebSocketUpgrade =
+  private def upgrade(
+      offerCompression: Boolean = false,
+      settings: WebSocketSettings = ServerSettings(system).websocketSettings): WebSocketUpgrade =
     Handshake.Server.websocketUpgrade(
       List(
         Handshake.UpgradeHeader,
@@ -57,7 +61,7 @@ class WebSocketCompletionCloseSpec extends PekkoSpecWithMaterializer {
         `Sec-WebSocket-Protocol`(Seq("chat"))) ++
       (if (offerCompression) List(`Sec-WebSocket-Extensions`(Seq(WebSocketExtension("permessage-deflate")))) else Nil),
       hostHeaderPresent = true,
-      ServerSettings(system).websocketSettings,
+      settings,
       NoLogging).get
 
   private def handler =
@@ -69,13 +73,17 @@ class WebSocketCompletionCloseSpec extends PekkoSpecWithMaterializer {
       .runWith(Sink.head)
       .awaitResult(3.seconds.dilated)
 
-  private def assertClose(response: HttpResponse, code: Int, reason: String): Unit = {
+  private def frameExchange(response: HttpResponse): Flow[FrameEvent, FrameEvent, NotUsed] = {
     response.status shouldEqual StatusCodes.SwitchingProtocols
     val nativeHandler = render(response) match {
       case ResponseRenderingOutput.SwitchToOtherProtocol(_, upgraded) => upgraded
       case _                                                          => fail("Expected a WebSocket upgrade")
     }
-    val frames = Source.maybe[FrameEvent].via(WebSocket.framing.reversed.join(nativeHandler))
+    WebSocket.framing.reversed.join(nativeHandler)
+  }
+
+  private def assertClose(response: HttpResponse, code: Int, reason: String): Unit = {
+    val frames = Source.maybe[FrameEvent].via(frameExchange(response))
       .map {
         case frame: FrameStart => frame
         case _                 => fail("Expected a complete frame")
@@ -101,6 +109,45 @@ class WebSocketCompletionCloseSpec extends PekkoSpecWithMaterializer {
           upgrade().handleMessages(handler), Protocol.CloseCodes.ServiceRestart, reason),
         Protocol.CloseCodes.ServiceRestart,
         reason)
+    }
+
+    "complete the customized normal close after the peer acknowledges it" in {
+      val code = Protocol.CloseCodes.Regular
+      val reason = "Termin\u00e9"
+      // Complete well before the fallback deadline; only a peer reply can finish this test.
+      val settings = ServerSettings(system).websocketSettings.withCloseTimeout(1.hour)
+      val response = WebSocketUpgrade.withCompletionClose(
+        upgrade(settings = settings).handleMessages(handler), code, reason)
+      val replyRead = Promise[Unit]()
+      val (peerIn, peerOut) = TestSource[FrameEvent]()
+        .map { frame =>
+          replyRead.success(())
+          frame
+        }
+        .via(frameExchange(response))
+        .toMat(TestSink[FrameEvent]())(Keep.both)
+        .run()
+
+      def nextFrame(): FrameStart = peerOut.expectNext() match {
+        case frame: FrameStart => frame
+        case _                 => fail("Expected a complete frame")
+      }
+
+      try {
+        peerOut.request(3)
+        val text = nextFrame()
+        text.header.opcode shouldEqual Protocol.Opcode.Text
+        text.data.utf8String shouldEqual "ready"
+        val close = nextFrame()
+        close.header.opcode shouldEqual Protocol.Opcode.Close
+        FrameEventParser.parseCloseCode(close.data) shouldEqual Some((code, reason))
+
+        // Keep the peer input open: the Close reply, not transport EOF, completes the server.
+        peerIn.sendNext(FrameEvent.closeFrame(code, mask = Some(0x12345678)))
+        peerOut.expectComplete()
+        replyRead.future.isCompleted shouldBe true
+        peerIn.expectCancellation()
+      } finally peerOut.cancel()
     }
 
     "preserve an explicit compression opt-out" in {
