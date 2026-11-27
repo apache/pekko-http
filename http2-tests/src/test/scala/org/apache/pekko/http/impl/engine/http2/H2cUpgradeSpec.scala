@@ -42,7 +42,7 @@ class H2cUpgradeSpec extends PekkoSpecWithMaterializer("""
       port = 0,
       HttpConnectionContext()).futureValue
 
-    // https://tools.ietf.org/html/rfc7540#section-3.2
+    // Legacy h2c Upgrade from RFC 7540 section 3.2. RFC 9113 sections 11.1 and 11.2 mark it obsolete.
     "respond with HTTP 101 and no initial settings" in {
       val settings = encode(Nil)
       // Settings are placed directly in the HTTP header, without any framing,

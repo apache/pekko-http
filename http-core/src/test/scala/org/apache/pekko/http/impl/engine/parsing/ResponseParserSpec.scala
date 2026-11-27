@@ -85,7 +85,7 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         }
       }
 
-      // http://tools.ietf.org/html/rfc7230#section-3.3.3
+      // https://www.rfc-editor.org/rfc/rfc9112.html#section-6.3
       "a 200 response to a HEAD request" in new Test {
         """HTTP/1.1 200 OK
           |
@@ -93,7 +93,7 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
-      // http://tools.ietf.org/html/rfc7230#section-3.3.3
+      // https://www.rfc-editor.org/rfc/rfc9112.html#section-6.3
       "a 204 response" in new Test {
         """HTTP/1.1 204 OK
           |
@@ -153,9 +153,8 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
       }
 
       "a response with an unrecognized status code" in new Test {
-        // A client must understand the class of any status code, as indicated by the first digit, and
-        // treat an unrecognized status code as being equivalent to the x00 status code of that class
-        // https://tools.ietf.org/html/rfc7231#section-6
+        // RFC 9110 section 15: apply the default behavior of an unrecognized status code's class.
+        // The parser preserves the original numeric status code.
         """HTTP/1.1 456 Totally unrecognized
           |Content-Length: 0
           |

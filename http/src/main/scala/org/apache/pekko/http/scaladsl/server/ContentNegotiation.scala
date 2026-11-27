@@ -72,7 +72,7 @@ final class CharsetNegotiator(requestHeaders: Seq[HttpHeader]) {
 
   /**
    * Returns the q-value that the client (implicitly or explicitly) attaches to the given charset.
-   * See http://tools.ietf.org/html/rfc7231#section-5.3.1 for details.
+   * See RFC 9110 sections 12.4.2 and 12.5.2.
    */
   def qValueFor(charset: HttpCharset): Float =
     acceptedCharsetRanges match {
@@ -90,7 +90,7 @@ final class CharsetNegotiator(requestHeaders: Seq[HttpHeader]) {
    * i.e. if the client accepts all charsets with equal preference then UTF-8 is picked.
    * If the client doesn't accept any charsets the method returns `None`.
    *
-   * See also: http://tools.ietf.org/html/rfc7231#section-5.3.3
+   * See https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.2.
    */
   def pickBest: Option[HttpCharset] =
     acceptedCharsetRanges match {
@@ -117,7 +117,7 @@ final class ContentNegotiator(requestHeaders: Seq[HttpHeader]) {
   /**
    * Picks the best of the given content alternatives given the preferences
    * the client indicated in the request's `Accept` and `Accept-Charset` headers.
-   * See http://tools.ietf.org/html/rfc7231#section-5.3.2 ff for details on the negotiation logic.
+   * See RFC 9110 sections 12.5.1 and 12.5.2 for the request header semantics.
    *
    * If there are several best alternatives that the client has equal preference for
    * the order of the given alternatives is used as a tie breaker (first one wins).
@@ -182,7 +182,7 @@ final class EncodingNegotiator(requestHeaders: Seq[HttpHeader]) {
 
   /**
    * Returns the q-value that the client (implicitly or explicitly) attaches to the given encoding.
-   * See http://tools.ietf.org/html/rfc7231#section-5.3.1 for details.
+   * See RFC 9110 sections 12.4.2 and 12.5.3.
    */
   def qValueFor(encoding: HttpEncoding): Float =
     acceptedEncodingRanges match {
@@ -206,7 +206,7 @@ final class EncodingNegotiator(requestHeaders: Seq[HttpHeader]) {
   /**
    * Picks the best of the given encoding alternatives given the preferences
    * the client indicated in the request's `Accept-Encoding` headers.
-   * See http://tools.ietf.org/html/rfc7231#section-5.3.4 for details on the negotiation logic.
+   * See https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.3.
    *
    * If there are several best encoding alternatives that the client has equal preference for
    * the order of the given alternatives is used as a tie breaker (first one wins).
@@ -243,7 +243,7 @@ final class LanguageNegotiator(requestHeaders: Seq[HttpHeader]) {
 
   /**
    * Returns the q-value that the client (implicitly or explicitly) attaches to the given language.
-   * See http://tools.ietf.org/html/rfc7231#section-5.3.1 for details.
+   * See RFC 9110 sections 12.4.2 and 12.5.4.
    */
   def qValueFor(language: Language): Float =
     acceptedLanguageRanges match {
@@ -259,7 +259,7 @@ final class LanguageNegotiator(requestHeaders: Seq[HttpHeader]) {
   /**
    * Picks the best of the given language alternatives given the preferences
    * the client indicated in the request's `Accept-Language` headers.
-   * See http://tools.ietf.org/html/rfc7231#section-5.3.5 for details on the negotiation logic.
+   * See https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.4.
    *
    * If there are several best language alternatives that the client has equal preference for
    * the order of the given alternatives is used as a tie breaker (first one wins).

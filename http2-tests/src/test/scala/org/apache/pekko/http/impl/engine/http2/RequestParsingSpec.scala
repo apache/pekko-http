@@ -597,10 +597,8 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         }
       }
 
-      // The exception to this rule is an
-      // OPTIONS request for an "http" or "https" URI that does not include
-      // a path component; these MUST include a ":path" pseudo-header field
-      // with a value of '*' (see [RFC7230], Section 5.3.4).
+      // An asterisk-form OPTIONS has a :path of '*' (RFC 9113 section 8.3.1).
+      // See RFC 9112 section 3.2.4 for the asterisk-form request target.
 
       // [already tested above]
 

@@ -585,7 +585,7 @@ class UriSpec extends AnyWordSpec with Matchers {
 
   "URIs" should {
 
-    // http://tools.ietf.org/html/rfc3986#section-1.1.2
+    // https://www.rfc-editor.org/rfc/rfc3986.html#section-1.1.2
     "be correctly parsed from and rendered to simple test examples" in {
 
       // #valid-uri-examples
@@ -664,7 +664,7 @@ class UriSpec extends AnyWordSpec with Matchers {
 
     "properly complete a normalization cycle" in {
 
-      // http://tools.ietf.org/html/rfc3986#section-6.2.2
+      // https://www.rfc-editor.org/rfc/rfc3986.html#section-6.2.2
       normalize("eXAMPLE://a/./b/../b/%63/%7bfoo%7d") shouldEqual "example://a/b/c/%7Bfoo%7D"
 
       // more examples
@@ -820,7 +820,7 @@ class UriSpec extends AnyWordSpec with Matchers {
       // #illegal-cases-immediate-exception
     }
 
-    // http://tools.ietf.org/html/rfc3986#section-5.4
+    // https://www.rfc-editor.org/rfc/rfc3986.html#section-5.4
     "pass the RFC 3986 reference resolution examples" when {
       val base = parseAbsolute("http://a/b/c/d;p?q")
       def resolve(uri: String) = parseAndResolve(uri, base).toString

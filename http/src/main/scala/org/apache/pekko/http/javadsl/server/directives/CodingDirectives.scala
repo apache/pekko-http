@@ -39,7 +39,7 @@ abstract class CodingDirectives extends CacheConditionDirectives {
   /**
    * Encodes the response with the encoding that is requested by the client via the `Accept-
    * Encoding` header. The response encoding is determined by the rules specified in
-   * http://tools.ietf.org/html/rfc7231#section-5.3.4.
+   * https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.3.
    *
    * If the `Accept-Encoding` header is missing or empty or specifies an encoding other than
    * identity, gzip or deflate then no encoding is used.
@@ -53,7 +53,7 @@ abstract class CodingDirectives extends CacheConditionDirectives {
   /**
    * Encodes the response with the encoding that is requested by the client via the `Accept-
    * Encoding` header. The response encoding is determined by the rules specified in
-   * http://tools.ietf.org/html/rfc7231#section-5.3.4.
+   * https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.3.
    *
    * If the `Accept-Encoding` header is missing then the response is encoded using the `first`
    * encoder.

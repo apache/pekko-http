@@ -28,10 +28,10 @@ import pekko.http.scaladsl.util.FastFuture._
 /**
  * Provides directives for securing an inner route using the standard Http authentication headers `WWW-Authenticate`
  * and `Authorization`. Most prominently, HTTP Basic authentication and OAuth 2.0 Authorization Framework
- * as defined in RFC 2617 and RFC 6750 respectively.
+ * as defined in RFC 7617 and RFC 6750, respectively.
  *
- * See: <a href="https://www.ietf.org/rfc/rfc2617.txt">RFC 2617</a>.
- * See: <a href="https://www.ietf.org/rfc/rfc6750.txt">RFC 6750</a>.
+ * See: <a href="https://www.rfc-editor.org/rfc/rfc7617.html">RFC 7617</a>.
+ * See: <a href="https://www.rfc-editor.org/rfc/rfc6750.html">RFC 6750</a>.
  *
  * @groupname security Security directives
  * @groupprio security 220
