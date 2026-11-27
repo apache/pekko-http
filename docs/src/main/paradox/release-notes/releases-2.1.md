@@ -28,3 +28,8 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
   `HttpCookie.partitioned` field instead of the generic `extension` field. If your code detects
   partitioned cookies by inspecting `extension` (`getExtension()` in Java), use `partitioned`
   (`partitioned()` in Java) instead ([PR1562](https://github.com/apache/pekko-http/pull/1562)).
+* The default rejection handler now returns `415 Unsupported Media Type` instead of `400 Bad Request`
+  for an unsupported request content coding. When the route reports supported concrete codings, they
+  are listed in the `Accept-Encoding` response field. A `415` for an unsupported content type does
+  not add this field. Update clients or tests that expect `400` for an unsupported request content
+  coding. Custom rejection handlers still control their own responses.

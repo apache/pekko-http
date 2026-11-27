@@ -292,9 +292,15 @@ object RejectionHandler {
           s"The request's Content-Type$unsupported is not supported.$expected"))
       }
       .handleAll[UnsupportedRequestEncodingRejection] { rejections =>
-        val supported = rejections.map(_.supported.value).mkString(" or ")
-        rejectRequestEntityAndComplete((BadRequest,
-          "The request's Content-Encoding is not supported. Expected:\n" + supported))
+        val supported = rejections.map(_.supported)
+        // RFC 9110, Section 12.5.3: advertise only the codings reported by the surviving rejections.
+        // A literal "*" is not representable here: in Accept-Encoding it means any other coding.
+        val advertised = supported.filterNot(_.value == "*").distinctBy(_.value.map { c =>
+          if (c >= 'A' && c <= 'Z') (c + ('a' - 'A')).toChar else c
+        }).map(encoding => HttpEncodingRange(encoding))
+        val headers = if (advertised.nonEmpty) List(`Accept-Encoding`(advertised)) else Nil
+        rejectRequestEntityAndComplete((UnsupportedMediaType, headers,
+          "The request's Content-Encoding is not supported. Expected:\n" + supported.map(_.value).mkString(" or ")))
       }
       .handle { case ExpectedWebSocketRequestRejection =>
         rejectRequestEntityAndComplete((BadRequest, "Expected WebSocket Upgrade request"))

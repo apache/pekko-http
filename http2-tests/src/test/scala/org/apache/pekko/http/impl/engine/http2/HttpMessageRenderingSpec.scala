@@ -57,6 +57,13 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       out.exists(_._1 == "custom-header") shouldBe true
     }
 
+    "render a typed Accept-Encoding header in a response" in {
+      val builder = new VectorBuilder[(String, String)]
+      val encodings = `Accept-Encoding`(HttpEncodingRange(HttpEncodings.gzip), HttpEncodingRange(HttpEncodings.deflate))
+      renderServerHeaders(Seq(encodings), builder)
+      builder.result().collect { case ("accept-encoding", value) => value } shouldBe Seq("gzip, deflate")
+    }
+
     "add a date header when none is present" in {
       val builder = new VectorBuilder[(String, String)]
       renderServerHeaders(Seq.empty, builder)

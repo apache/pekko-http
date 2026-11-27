@@ -191,7 +191,10 @@ class FlowCoderSpec extends PekkoSpecWithMaterializer("") with Directives {
         val stacked = request.withHeaders(headers)
         coder.decodeMessage(stacked) shouldBe stacked
         Coders.decodeMessage(stacked, Seq(coder)) shouldBe stacked
-        route(stacked).awaitResult(3.seconds.dilated).status shouldBe StatusCodes.BadRequest
+        val response = route(stacked).awaitResult(3.seconds.dilated)
+        // The coding stack is unsupported, not malformed, so the sealed route returns 415.
+        response.status shouldBe StatusCodes.UnsupportedMediaType
+        response.header[`Accept-Encoding`].map(_.value) shouldBe Some(token.value)
       }
       allocations.get() shouldBe 0
 

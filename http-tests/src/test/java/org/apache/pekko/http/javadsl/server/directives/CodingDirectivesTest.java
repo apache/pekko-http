@@ -118,7 +118,8 @@ public class CodingDirectivesTest extends JUnitJupiterRouteTest {
             .withEntity(compressedDeflate);
     route
         .run(deflateRequest)
-        .assertStatusCode(400)
+        .assertStatusCode(415)
+        .assertHeaderExists(AcceptEncoding.create(HttpEncodings.GZIP))
         .assertEntity("The request's Content-Encoding is not supported. Expected:\ngzip");
   }
 
