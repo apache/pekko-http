@@ -32,15 +32,15 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   import CharacterClasses._
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7230#section-1.2 referencing
-  // http://tools.ietf.org/html/rfc5234#appendix-B.1
+  // ABNF core rules: https://www.rfc-editor.org/rfc/rfc5234.html#appendix-B.1
   // ******************************************************************************************
   def CRLF = rule { CR ~ LF }
 
   def OCTET = rule { ANY }
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7230#section-3.2.3
+  // Whitespace: https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.3
+  // See https://www.rfc-editor.org/rfc/rfc9112.html#section-5.2 for obsolete HTTP/1 line folding.
   // ******************************************************************************************
 
   def OWS = rule { zeroOrMore(optional(CRLF) ~ oneOrMore(WSP)) } // extended with `obs-fold`
@@ -48,7 +48,8 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   def RWS = rule { oneOrMore(optional(CRLF) ~ oneOrMore(WSP)) } // extended with `obs-fold`
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7230#section-3.2.6
+  // RFC 9110 sections 5.6.2, 5.6.4, and 5.6.5: tokens, quoted strings, and comments.
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.2
   // ******************************************************************************************
   def word = rule { token | `quoted-string` }
 
@@ -86,7 +87,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   def `quoted-cpair` = `quoted-pair`
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7234#section-5.3
+  // https://www.rfc-editor.org/rfc/rfc9111.html#section-5.3
   // ******************************************************************************************
 
   def `expires-date`: Rule1[DateTime] = rule {
@@ -184,7 +185,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   }
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7231#section-3.1.1.1
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-8.3.1
   // ******************************************************************************************
 
   // RFC 9110 sections 5.6.6 and 8.3.1: parameter slots may be empty. Shared by `Content-Type` and the `type`
@@ -245,13 +246,13 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   }
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7234#section-1.2.1
+  // https://www.rfc-editor.org/rfc/rfc9111.html#section-1.2.2
   // ******************************************************************************************
 
   def `delta-seconds` = rule { longNumberCappedAtIntMaxValue }
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7232#section-2.3
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8.3
   // ******************************************************************************************
 
   def `entity-tag` = rule {
@@ -261,7 +262,8 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   def `opaque-tag` = rule { '"' ~ capture(zeroOrMore(`etagc-base` | `obs-text`)) ~ '"' }
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7235#section-2.1
+  // RFC 9110 sections 11.2 through 11.4: authentication parameters, challenges, and credentials.
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-11.2
   // ******************************************************************************************
   def credentials = rule {
     `basic-credential-def` | `oauth2-bearer-token` | `generic-credentials`
@@ -449,7 +451,8 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   }
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7233#appendix-D
+  // Byte ranges: https://www.rfc-editor.org/rfc/rfc9110.html#section-14.1.2
+  // Content-Range: https://www.rfc-editor.org/rfc/rfc9110.html#section-14.4
   // ******************************************************************************************
 
   def `byte-content-range` = rule { `bytes-unit` ~ (`byte-range-resp` | `unsatisfied-range`) }
@@ -499,7 +502,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   def `unsatisfied-range` = rule { '*' ~ '/' ~ `complete-length` ~> (ContentRange.Unsatisfiable(_)) }
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7231#section-5.5.3
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.5
   // ******************************************************************************************
 
   def product = rule { token ~ (ws('/') ~ `product-version` | push("")) }
@@ -516,7 +519,8 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   }
 
   // ******************************************************************************************
-  // http://tools.ietf.org/html/rfc7230#section-4
+  // HTTP/1 transfer codings: https://www.rfc-editor.org/rfc/rfc9112.html#section-7
+  // TE also recognizes the separate trailers token: https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.4
   // ******************************************************************************************
 
   def `transfer-coding` = rule(

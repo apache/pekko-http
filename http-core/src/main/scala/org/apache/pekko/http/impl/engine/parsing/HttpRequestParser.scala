@@ -202,7 +202,7 @@ private[http] final class HttpRequestParser(
 
       override def onBadProtocol(input: ByteString): Nothing = throw new ParsingException(HttpVersionNotSupported, "")
 
-      // http://tools.ietf.org/html/rfc7230#section-3.3
+      // https://www.rfc-editor.org/rfc/rfc9112.html#section-6.3
       override def parseEntity(headers: List[HttpHeader], protocol: HttpProtocol, input: ByteString, bodyStart: Int,
           clh: Option[`Content-Length`], cth: Option[`Content-Type`], isChunked: Boolean,
           expect100continue: Boolean, hostHeaderPresent: Boolean, closeAfterResponseCompletion: Boolean,

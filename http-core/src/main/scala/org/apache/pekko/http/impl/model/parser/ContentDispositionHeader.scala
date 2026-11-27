@@ -61,7 +61,7 @@ private[parser] trait ContentDispositionHeader { this: Parser with CommonRules w
     token ~> (s => test(s.endsWith('*')) ~ push(s))
   }
 
-  // https://tools.ietf.org/html/rfc5987#section-3.2.1
+  // https://www.rfc-editor.org/rfc/rfc8187.html#section-3.2.1
   def `ext-value` = rule {
     (charset ~ '\'' ~ optional(language) ~ '\'' ~ capture(`value-chars`)) ~> (decodeExtValue(_, _, _))
   }

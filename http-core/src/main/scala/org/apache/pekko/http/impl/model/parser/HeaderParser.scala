@@ -61,7 +61,8 @@ private[http] class HeaderParser(
   override def customMediaTypes = settings.customMediaTypes
   protected def maxCommentParsingDepth: Int = settings.maxCommentParsingDepth
 
-  // http://www.rfc-editor.org/errata_search.php?rfc=7230 errata id 4189
+  // Field values: https://www.rfc-editor.org/rfc/rfc9110.html#section-5.5
+  // Historical reference for this rule: RFC 7230 erratum 4189.
   def `header-field-value`: Rule1[String] = rule {
     FWS ~ clearSB() ~ `field-value` ~ FWS ~ EOI ~ push(sb.toString)
   }

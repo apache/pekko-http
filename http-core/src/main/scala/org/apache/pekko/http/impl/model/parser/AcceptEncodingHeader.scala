@@ -20,7 +20,7 @@ import pekko.http.scaladsl.model.headers._
 
 private[parser] trait AcceptEncodingHeader { this: Parser with CommonRules with CommonActions =>
 
-  // http://tools.ietf.org/html/rfc7231#section-5.3.4
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.3
   def `accept-encoding` = rule {
     listStart ~ zeroOrMore(`encoding-range-decl`).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Accept-Encoding`(_))
   }
