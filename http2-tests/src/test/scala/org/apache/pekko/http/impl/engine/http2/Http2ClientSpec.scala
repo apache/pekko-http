@@ -1081,11 +1081,13 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
 
           network.sendFrame(HeadersFrame(streamId = 1, endStream = true, endHeaders = true,
             HPackSpecExamples.C61FirstResponseWithHuffman, None))
+          user.expectResponse().status shouldBe HPackSpecExamples.FirstResponse.status
           network.expectNoBytes(100.millis)
 
           // Once 1 and 3 are closed, there'll be capacity for 7 to go through
           network.sendFrame(HeadersFrame(streamId = 3, endStream = true, endHeaders = true,
             HPackSpecExamples.C61FirstResponseWithHuffman, None))
+          user.expectResponse().status shouldBe HPackSpecExamples.FirstResponse.status
           network.expect[HeadersFrame]().streamId shouldBe 7
           // .. but not enough capacity for 9
           user.emitRequest(request)
