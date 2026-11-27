@@ -20,4 +20,11 @@ object AttributeKeys {
   val webSocketUpgrade = AttributeKey[WebSocketUpgrade](name = "upgrade-to-websocket")
   val sslSession = AttributeKey[SslSessionInfo](name = "ssl-session")
   val trailer = AttributeKey[Trailer](name = "trailer")
+
+  /**
+   * The length advertised by the peer in a 200 response to an HTTP/2 HEAD request, if present.
+   * This is the size of the corresponding GET representation, not the length of this response's entity.
+   */
+  val representationContentLength: AttributeKey[java.lang.Long] =
+    AttributeKey[java.lang.Long](name = "representation-content-length")
 }

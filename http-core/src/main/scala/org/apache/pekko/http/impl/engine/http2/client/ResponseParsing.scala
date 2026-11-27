@@ -95,6 +95,13 @@ private[http2] object ResponseParsing {
         val isHeadResponse = comesFromHeadRequest(correlationAttributes)
         val entity = subStream.createResponseEntity(contentLength, contentType,
           mayHaveTrailers = status.allowsEntity && !isHeadResponse)
+        val responseAttributes: Map[AttributeKey[?], Any] =
+          if (isHeadResponse) {
+            val publicAttributes = correlationAttributes - headRequestKey
+            if (status == StatusCodes.OK && contentLength >= 0)
+              publicAttributes.updated(AttributeKeys.representationContentLength, Long.box(contentLength))
+            else publicAttributes
+          } else correlationAttributes
 
         // user access to tls session info
         if (tlsSessionInfoHeader.isDefined) headers += tlsSessionInfoHeader.get
@@ -103,8 +110,7 @@ private[http2] object ResponseParsing {
           status = status,
           headers = headers.result(),
           entity = entity,
-          HttpProtocols.`HTTP/2.0`).withAttributes(
-          if (isHeadResponse) correlationAttributes - headRequestKey else correlationAttributes)
+          HttpProtocols.`HTTP/2.0`).withAttributes(responseAttributes)
         sslSessionAttribute match {
           case Some(sslSession) => response.addAttribute(AttributeKeys.sslSession, SslSessionInfo(sslSession))
           case None             => response
