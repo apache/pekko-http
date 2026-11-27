@@ -376,15 +376,10 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         import offerCase._
         s"negotiate independent permessage-deflate offers: $scenario" in Utils.assertAllStagesStopped {
           new TestSetup {
-            override def settings = {
-              val defaults = super.settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
+            override def settings =
               if (allowNoContext)
-                super.settings.withWebsocketSettings(
-                  defaults.copy(compression = defaults.compression.copy(
-                    allowServerNoContext = true,
-                    preferredClientNoContext = true)))
+                withCompression(_.copy(allowServerNoContext = true, preferredClientNoContext = true))
               else super.settings
-            }
 
             // The response header does not show the no-context flags that configure the compression stages, so check
             // that a rejected offer's flags do not leak into the selected one.
@@ -1288,11 +1283,8 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
 
       "not negotiate permessage-deflate when websocket compression is disabled" in Utils.assertAllStagesStopped {
         new TestSetup {
-          override def settings = {
-            val defaults = super.settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
-            super.settings.withWebsocketSettings(
-              defaults.copy(compression = defaults.compression.copy(enabled = false)))
-          }
+          override def settings =
+            withCompression(_.copy(enabled = false))
 
           sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
 
@@ -1353,14 +1345,11 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
 
       "negotiate configured permessage-deflate parameters" in Utils.assertAllStagesStopped {
         new TestSetup {
-          override def settings = {
-            val defaults = super.settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
-            super.settings.withWebsocketSettings(
-              defaults.copy(compression = defaults.compression.copy(
-                preferredClientWindowSize = 11,
-                allowServerNoContext = true,
-                preferredClientNoContext = true)))
-          }
+          override def settings =
+            withCompression(_.copy(
+              preferredClientWindowSize = 11,
+              allowServerNoContext = true,
+              preferredClientNoContext = true))
 
           sendWebSocketRequest(
             "Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits; server_max_window_bits=15; " +
@@ -1448,11 +1437,8 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
       "not negotiate client_no_context_takeover when it was not requested by the client" in
       Utils.assertAllStagesStopped {
         new TestSetup {
-          override def settings = {
-            val defaults = super.settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
-            super.settings.withWebsocketSettings(
-              defaults.copy(compression = defaults.compression.copy(preferredClientNoContext = true)))
-          }
+          override def settings =
+            withCompression(_.copy(preferredClientNoContext = true))
 
           sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
 
@@ -1509,7 +1495,10 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
       }
 
       "reset the server compressor when server_no_context_takeover is negotiated" in Utils.assertAllStagesStopped {
-        new CompressionTestSetup(allowServerNoContext = true) {
+        new TestSetup {
+          override def settings =
+            withCompression(_.copy(allowServerNoContext = true))
+
           sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate; server_no_context_takeover\r\n")
 
           val request = expectRequest()
@@ -1548,11 +1537,8 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
 
       "reset the server decompressor when client_no_context_takeover is negotiated" in Utils.assertAllStagesStopped {
         new TestSetup {
-          override def settings = {
-            val defaults = super.settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
-            super.settings.withWebsocketSettings(
-              defaults.copy(compression = defaults.compression.copy(preferredClientNoContext = true)))
-          }
+          override def settings =
+            withCompression(_.copy(preferredClientNoContext = true))
 
           sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate; client_no_context_takeover\r\n")
 
@@ -1721,11 +1707,8 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
 
       "fail compressed messages exceeding max-allocation" in Utils.assertAllStagesStopped {
         new TestSetup {
-          override def settings = {
-            val defaults = super.settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
-            super.settings.withWebsocketSettings(
-              defaults.copy(compression = defaults.compression.copy(maxAllocation = 4)))
-          }
+          override def settings =
+            withCompression(_.copy(maxAllocation = 4))
 
           sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
 
@@ -1756,11 +1739,8 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
 
       "fail fragmented compressed messages exceeding max-allocation cumulatively" in Utils.assertAllStagesStopped {
         new TestSetup {
-          override def settings = {
-            val defaults = super.settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
-            super.settings.withWebsocketSettings(
-              defaults.copy(compression = defaults.compression.copy(maxAllocation = 4)))
-          }
+          override def settings =
+            withCompression(_.copy(maxAllocation = 4))
 
           sendWebSocketRequest("Sec-WebSocket-Extensions: permessage-deflate\r\n")
 
@@ -1794,7 +1774,11 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
       for (noContextTakeover <- List(false, true); emptyFirst <- List(false, true)) {
         s"support low-level server compression with empty non-final fragments (emptyFirst=$emptyFirst, noContextTakeover=$noContextTakeover)" in
         Utils.assertAllStagesStopped {
-          new CompressionTestSetup(allowServerNoContext = noContextTakeover) {
+          new TestSetup {
+            override def settings =
+              if (noContextTakeover) withCompression(_.copy(allowServerNoContext = true))
+              else super.settings
+
             val extension =
               if (noContextTakeover) "permessage-deflate; server_no_context_takeover" else "permessage-deflate"
             sendWebSocketRequest(s"Sec-WebSocket-Extensions: $extension\r\n")
@@ -2091,6 +2075,13 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
     implicit def system: ActorSystem = spec.system
     implicit def materializer: Materializer = spec.materializer
 
+    protected def withCompression(
+        f: WebSocketCompressionSettingsImpl => WebSocketCompressionSettingsImpl) = {
+      val defaults = super.settings
+      val websocketSettings = defaults.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
+      defaults.withWebsocketSettings(websocketSettings.copy(compression = f(websocketSettings.compression)))
+    }
+
     def expectBytes(length: Int): ByteString = netOut.expectBytes(length)
     def expectBytes(bytes: ByteString): Unit = netOut.expectBytes(bytes)
 
@@ -2199,18 +2190,6 @@ class WebSocketServerSpec extends PekkoSpecWithMaterializer("pekko.http.server.w
         fin = (header(0) & Protocol.FIN_MASK) != 0,
         rsv1 = (header(0) & Protocol.RSV1_MASK) != 0,
         payload = expectBytes(header(1) & 0x7F))
-    }
-  }
-
-  /** A [[TestSetup]] whose server optionally accepts `server_no_context_takeover`. */
-  class CompressionTestSetup(allowServerNoContext: Boolean) extends TestSetup {
-    override def settings = {
-      val defaults = super.settings
-      if (allowServerNoContext) {
-        val websocketSettings = defaults.websocketSettings.asInstanceOf[WebSocketSettingsImpl]
-        defaults.withWebsocketSettings(websocketSettings.copy(
-          compression = websocketSettings.compression.copy(allowServerNoContext = true)))
-      } else defaults
     }
   }
 
