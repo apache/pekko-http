@@ -14,6 +14,8 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import java.util.concurrent.atomic.AtomicReference
+
 import scala.xml.NodeSeq
 
 import org.apache.pekko
@@ -26,6 +28,7 @@ import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import pekko.http.scaladsl.unmarshalling.Unmarshaller.HexInt
 import pekko.stream.scaladsl.Source
+import pekko.util.ByteString
 
 class FormFieldDirectivesSpec extends RoutingSpec {
   implicit val nodeSeqUnmarshaller: FromEntityUnmarshaller[NodeSeq] =
@@ -83,6 +86,31 @@ class FormFieldDirectivesSpec extends RoutingSpec {
         }
       } ~> check { responseAs[String] shouldEqual "type text/xml length 13 filename age.xml" }
     }
+    for (streamed <- Seq(false, true)) {
+      s"decode a multipart text field with its own charset without changing file bytes (streamed = $streamed)" in {
+        val description = "caf\u00e9"
+        val fileEntity = HttpEntity(ContentTypes.`application/octet-stream`, ByteString(0x00, 0x41, 0x80, 0xFF))
+        val extractedFile = new AtomicReference[HttpEntity.Strict]()
+        val form = Multipart.FormData(
+          Multipart.FormData.BodyPart.Strict(
+            "description",
+            HttpEntity(ContentType(`text/plain`, HttpCharsets.`ISO-8859-1`), description)),
+          Multipart.FormData.BodyPart.Strict("file", fileEntity, Map("filename" -> "data.bin")))
+        val request = Post("/", form)
+        val input = if (streamed) request.transformEntityDataBytes(AllowMaterializationOnlyOnce()) else request
+
+        input ~> {
+          formFields("description", "file".as[StrictForm.FileData]) { (value, file) =>
+            extractedFile.set(file.entity)
+            complete(value)
+          }
+        } ~> check {
+          responseAs[String] shouldEqual description
+          extractedFile.get() shouldEqual fileEntity
+        }
+      }
+    }
+
     "reject the request with a MissingFormFieldRejection if a required form field is missing" in {
       Post("/", urlEncodedForm) ~> {
         formFields("firstName", "age", "sex", "VIP".withDefault(false)) { (firstName, age, sex, vip) =>
