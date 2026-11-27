@@ -93,6 +93,13 @@ public class UriTest {
   }
 
   @Test
+  public void testRawQueryStringDistinguishesAbsentAndEmptyQuery() {
+    String uri = "https://example.com/catalog";
+    assertEquals(Optional.empty(), Uri.create(uri).rawQueryString());
+    assertEquals(Optional.of(""), Uri.create(uri + "?").rawQueryString());
+  }
+
+  @Test
   public void testAddingQueryParams() {
     // #create-uri-with-query
     Uri uri = Uri.create("http://foo.com").query(Query.create(Pair.create("foo", "bar")));
