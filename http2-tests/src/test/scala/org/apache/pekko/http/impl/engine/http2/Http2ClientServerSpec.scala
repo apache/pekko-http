@@ -16,7 +16,7 @@ package org.apache.pekko.http.impl.engine.http2
 import java.io.ByteArrayInputStream
 import java.util.zip.InflaterInputStream
 
-import scala.concurrent.{ Future, Promise }
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.concurrent.duration._
 import scala.util.Using
 
@@ -90,6 +90,45 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       val response = expectClientResponse()
       Unmarshal(response.entity).to[String].futureValue shouldBe "pong"
       response.attribute(requestIdAttr).get.id shouldBe "request-1"
+    }
+    "complete an HTTP/2 upload with request trailers before sending the response" in new TestSetup {
+      val body = ByteString("monthly summary")
+      val trailer = headers.RawHeader("x-upload-result", "complete")
+      val last = HttpEntity.LastChunk(trailer = Seq(trailer))
+      val terminal = Promise[HttpEntity.ChunkStreamPart]()
+      val entity = HttpEntity.Chunked(ContentTypes.`application/octet-stream`,
+        Source.single[HttpEntity.ChunkStreamPart](HttpEntity.Chunk(body)).concat(Source.future(terminal.future)))
+
+      try {
+        sendClientRequest(HttpRequest(HttpMethods.POST, "/upload", headers.Trailer(Seq(trailer.name)) :: Nil, entity))
+        val serverRequest = expectServerRequest()
+        serverRequest.request.protocol shouldBe HttpProtocols.`HTTP/2.0`
+        serverRequest.request.method shouldBe HttpMethods.POST
+        val firstData = Promise[Done]()
+        val received = serverRequest.request.entity.dataBytes.runFold(ByteString.empty) { (all, bytes) =>
+          firstData.trySuccess(Done)
+          all ++ bytes
+        }
+
+        val bodyCompletion = TestProbe()
+        received.onComplete(_ => bodyCompletion.ref ! Done)(ExecutionContext.parasitic)
+        firstData.future.futureValue
+        // Having received data does not by itself complete the request stream.
+        bodyCompletion.expectNoMessage(100.millis)
+        received.isCompleted shouldBe false
+        terminal.success(last)
+        received.futureValue shouldBe body
+
+        serverRequest.sendResponse(HttpResponse(entity = "received"))
+        val response = expectClientResponse()
+        response.protocol shouldBe HttpProtocols.`HTTP/2.0`
+        response.status shouldBe StatusCodes.OK
+        Unmarshal(response.entity).to[String].futureValue shouldBe "received"
+      } finally {
+        terminal.trySuccess(last)
+        try clientRequestsOut.sendComplete()
+        finally binding.terminate(1.second).futureValue(timeout(3.seconds))
+      }
     }
     "preserve repeated Set-Cookie field order across an HTTP/2 response" in new TestSetup {
       try {
