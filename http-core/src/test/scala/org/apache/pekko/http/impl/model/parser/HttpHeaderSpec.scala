@@ -395,6 +395,43 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         `Cache-Control`(`private`(), immutableDirective)
     }
 
+    "Cache-Control freshness lifetime directive names are case-insensitive" in {
+      "Cache-Control: Max-Age=60, S-MaxAge=120, Max-Age-Policy=stable" =!=
+        `Cache-Control`(`max-age`(60), `s-maxage`(120), CacheDirective.custom("Max-Age-Policy", Some("stable")))
+          .renderedTo("max-age=60, s-maxage=120, Max-Age-Policy=stable")
+      "Cache-Control: max-age=60, s-maxage=120" =!= `Cache-Control`(`max-age`(60), `s-maxage`(120))
+    }
+
+    "Cache-Control modeled name casing" - {
+      for ((value, expected, rendered) <- Seq(
+          ("No-StOrE", `no-store`, "no-store"),
+          ("No-TrAnSfOrM", `no-transform`, "no-transform"),
+          ("MaX-StAlE", `max-stale`(None), "max-stale"),
+          ("MaX-StAlE=15", `max-stale`(Some(15)), "max-stale=15"),
+          ("MiN-FrEsH=25", `min-fresh`(25), "min-fresh=25"),
+          ("OnLy-If-CaChEd", `only-if-cached`, "only-if-cached"),
+          ("PuBlIc", `public`, "public"),
+          ("PrIvAtE", `private`(), "private"),
+          ("""PrIvAtE="X-Color,X-Theme"""", `private`("X-Color", "X-Theme"), """private="X-Color,X-Theme""""),
+          ("No-CaChE", `no-cache`, "no-cache"),
+          ("""No-CaChE="X-Title"""", `no-cache`("X-Title"), """no-cache="X-Title""""),
+          ("MuSt-ReVaLiDaTe", `must-revalidate`, "must-revalidate"),
+          ("PrOxY-ReVaLiDaTe", `proxy-revalidate`, "proxy-revalidate"),
+          ("ImMuTaBlE", immutableDirective, "immutable"))) {
+        s"recognizes $value" in {
+          s"Cache-Control: $value" =!= `Cache-Control`(expected).renderedTo(rendered)
+        }
+      }
+
+      "preserves extension names sharing a modeled prefix" in {
+        "Cache-Control: No-StOrE-Policy=Custom, PrIvAtE-Fields=Theme, MaX-StAlE-Policy=Long" =!=
+          `Cache-Control`(
+            CacheDirective.custom("No-StOrE-Policy", Some("Custom")),
+            CacheDirective.custom("PrIvAtE-Fields", Some("Theme")),
+            CacheDirective.custom("MaX-StAlE-Policy", Some("Long")))
+      }
+    }
+
     "Cache-Control with whitespace before the list separator" in {
       "Cache-Control: no-store , public" =!=> "no-store, public"
       "Cache-Control: no-transform , public" =!=> "no-transform, public"

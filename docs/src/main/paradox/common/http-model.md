@@ -338,6 +338,10 @@ time: if the resolved time would be more than 50 years ahead, it uses the preced
 the two-digit year rule for `Set-Cookie` expiry dates. In its supported `Set-Cookie` expiry date formats, Apache Pekko
 HTTP accepts full English month names and abbreviations case-insensitively. This does not change other HTTP date parsing.
 
+Pekko HTTP matches modeled `Cache-Control` directive names case-insensitively, as specified in
+[RFC 9111, Section 5.2](https://www.rfc-editor.org/rfc/rfc9111.html#section-5.2).
+It renders modeled names in lowercase and preserves the spelling of unmodeled directive names.
+
 Some headers have special status in HTTP and are therefore treated differently from "regular" headers:
 
 Content-Type
