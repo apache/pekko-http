@@ -45,6 +45,7 @@ import pekko.http.scaladsl.model.{
   Uri
 }
 import pekko.http.scaladsl.model.headers.HttpEncodings
+import pekko.http.scaladsl.server.{ Directives, Route }
 import pekko.http.scaladsl.settings.ClientConnectionSettings
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.http.scaladsl.unmarshalling.Unmarshal
@@ -356,6 +357,44 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       val nextServerRequest = expectServerRequest()
       nextServerRequest.sendResponse(HttpResponse())
       expectClientResponse().status should be(StatusCodes.OK)
+    }
+
+    "complete a concurrent request when another route fails" in new TestSetup {
+      override def handler: HttpRequest => Future[HttpResponse] = {
+        import Directives._
+        val applicationHandler = super.handler
+        Route.toFunction(extractRequest(request => complete(applicationHandler(request))))
+      }
+
+      def sendAndObserve(path: String): ServerRequest = {
+        sendClientRequest(HttpRequest(uri = path).addAttribute(requestIdAttr, RequestId(path)))
+        val observed = expectServerRequest()
+        observed.request.uri.path.toString shouldBe path
+        observed
+      }
+
+      try {
+        val failing = sendAndObserve("/failing")
+        val healthy = sendAndObserve("/healthy")
+
+        // Both requests reached the application before either response was released.
+        EventFilter[TE](occurrences = 1).intercept {
+          failing.promise.failure(TE("application failure"))
+          val response = expectClientResponse()
+          response.attribute(requestIdAttr) shouldBe Some(RequestId("/failing"))
+          response.status shouldBe StatusCodes.InternalServerError
+          response.discardEntityBytes().future.futureValue
+        }
+
+        healthy.sendResponse(HttpResponse(entity = "healthy response"))
+        val response = expectClientResponse()
+        response.attribute(requestIdAttr) shouldBe Some(RequestId("/healthy"))
+        response.status shouldBe StatusCodes.OK
+        Unmarshal(response.entity).to[String].futureValue shouldBe "healthy response"
+      } finally {
+        try clientRequestsOut.sendComplete()
+        finally binding.terminate(1.second).futureValue(timeout(3.seconds))
+      }
     }
 
     "return internal server error when handler throws synchronously" in new TestSetup {
