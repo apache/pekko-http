@@ -18,7 +18,7 @@ import java.util.Random
 import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
-import pekko.http.impl.engine.server.UpgradeToOtherProtocolResponseHeader
+import pekko.http.impl.engine.server.WebSocketUpgradeResponseHeader
 import pekko.http.impl.settings.WebSocketSettingsImpl
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
@@ -249,12 +249,13 @@ private[http] object Handshake {
             .join(messageHandler)
       }
 
+      val accept = `Sec-WebSocket-Accept`.forKey(key)
       val extensionHeaders = perMessageDeflate.map(p => `Sec-WebSocket-Extensions`(Seq(p.responseExtension))).toList
       val responseHeaders =
         subprotocol.map(p => `Sec-WebSocket-Protocol`(Seq(p))).toList :::
-        List(UpgradeHeader, ConnectionUpgradeHeader, `Sec-WebSocket-Accept`.forKey(key)) :::
+        List(UpgradeHeader, ConnectionUpgradeHeader, accept) :::
         extensionHeaders :::
-        List(UpgradeToOtherProtocolResponseHeader(WebSocket.framing.join(frameHandler)))
+        List(new WebSocketUpgradeResponseHeader(WebSocket.framing.join(frameHandler), accept))
 
       HttpResponse(StatusCodes.SwitchingProtocols, responseHeaders)
     }

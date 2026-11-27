@@ -25,10 +25,14 @@ import pekko.event.NoLogging
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpEntity._
 import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.model.ws.Message
+import pekko.http.scaladsl.settings.ServerSettings
 import pekko.http.impl.util._
 import pekko.util.ByteString
 import pekko.stream.scaladsl._
 import pekko.http.impl.engine.rendering.ResponseRenderingContext.CloseRequested
+import pekko.http.impl.engine.server.UpgradeToOtherProtocolResponseHeader
+import pekko.http.impl.engine.ws.Handshake
 import pekko.http.impl.util.Rendering.CrLf
 import pekko.testkit._
 import org.scalatest.freespec.AnyFreeSpec
@@ -102,6 +106,70 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
                |"""
           }
         }
+      }
+
+      "preserve an application-selected WebSocket subprotocol on upgrade" in new TestSetup() {
+        val response = webSocketResponse.addHeader(`Sec-WebSocket-Protocol`(Seq("chat")))
+        renderUpgrade(response) shouldEqual
+        """HTTP/1.1 101 Switching Protocols
+          |Sec-WebSocket-Protocol: chat
+          |Upgrade: websocket
+          |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+          |Server: pekko-http/1.0.0
+          |Date: Thu, 25 Aug 2011 09:10:29 GMT
+          |Connection: upgrade
+          |
+          |""".stripMarginWithNewline("\r\n")
+      }
+
+      "preserve an ordinary application response header on WebSocket upgrade" in new TestSetup() {
+        val name = "X-Application-Label"
+        val value = "route-owned"
+        val rendered = renderUpgrade(webSocketResponse.addHeader(RawHeader(name, value)))
+        rendered should startWith("HTTP/1.1 101 Switching Protocols\r\n")
+
+        val applicationValues = rendered.linesIterator
+          .drop(1)
+          .filter(_.takeWhile(_ != ':').equalsIgnoreCase(name))
+          .map(_.drop(name.length + 1).trim)
+          .toList
+        applicationValues shouldEqual List(value)
+      }
+
+      "render the generated WebSocket acceptance after response decoration" in new TestSetup() {
+        val response = webSocketResponse
+          .removeHeader("Sec-WebSocket-Accept")
+          .addHeader(`Sec-WebSocket-Protocol`(Seq("chat")))
+        renderUpgrade(response) shouldEqual
+        """HTTP/1.1 101 Switching Protocols
+          |Sec-WebSocket-Protocol: chat
+          |Upgrade: websocket
+          |Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+          |Server: pekko-http/1.0.0
+          |Date: Thu, 25 Aug 2011 09:10:29 GMT
+          |Connection: upgrade
+          |
+          |""".stripMarginWithNewline("\r\n")
+      }
+
+      "render the generated WebSocket acceptance once when the application adds it again" in new TestSetup() {
+        val generatedResponse = webSocketResponse
+        val accept = generatedResponse.header[`Sec-WebSocket-Accept`].get
+        val decorated = generatedResponse.withHeaders(generatedResponse.headers :+ accept)
+        decorated.headers.count(_ == accept) shouldEqual 2
+        renderUpgrade(decorated) shouldEqual renderUpgrade(generatedResponse)
+      }
+
+      "switch a non-WebSocket upgrade without adding WebSocket acceptance" in new TestSetup() {
+        val response = HttpResponse(StatusCodes.SwitchingProtocols,
+          headers = List(
+            Connection("upgrade"),
+            Upgrade(Seq(UpgradeProtocol("h2c"))),
+            UpgradeToOtherProtocolResponseHeader(Flow[ByteString])))
+        val rendered = renderUpgrade(response)
+        rendered should include("Upgrade: h2c\r\n")
+        rendered should include("Connection: upgrade\r\n")
+        (rendered should not).include("Sec-WebSocket-Accept")
       }
 
       "status 200 and no headers" in new TestSetup() {
@@ -889,6 +957,29 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
       })
 
     def awaitAtMost: FiniteDuration = 3.seconds.dilated
+
+    def webSocketResponse: HttpResponse = {
+      val requestHeaders = List(
+        Upgrade(Seq(UpgradeProtocol("websocket"))),
+        Connection("upgrade"),
+        `Sec-WebSocket-Key`("dGhlIHNhbXBsZSBub25jZQ=="),
+        Handshake.SecWebSocketVersionHeader,
+        `Sec-WebSocket-Protocol`(Seq("chat")))
+      val upgrade = Handshake.Server.websocketUpgrade(requestHeaders, hostHeaderPresent = true,
+        ServerSettings(system).websocketSettings, NoLogging)
+      upgrade.isDefined shouldBe true
+      upgrade.get.handleMessages(Flow[Message])
+    }
+
+    def renderUpgrade(response: HttpResponse): String = {
+      val output = Source.single(ResponseRenderingContext(response))
+        .via(rendererFactory.renderer)
+        .runWith(Sink.head)
+      Await.result(output, awaitAtMost) match {
+        case ResponseRenderingOutput.SwitchToOtherProtocol(bytes, _) => bytes.utf8String
+        case _                                                       => fail("Expected a protocol switch response")
+      }
+    }
 
     def renderTo(expected: String): Matcher[HttpResponse] =
       renderToImpl(expected, checkClose = None).compose(ResponseRenderingContext(_))
