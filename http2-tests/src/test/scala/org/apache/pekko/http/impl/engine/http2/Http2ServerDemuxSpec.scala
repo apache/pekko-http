@@ -19,12 +19,14 @@ import org.apache.pekko
 import pekko.http.impl.engine.http2.FrameEvent.{
   DataFrame,
   ParsedHeadersFrame,
+  PingFrame,
+  RstStreamFrame,
   Setting,
   SettingsAckFrame,
   SettingsFrame,
   WindowUpdateFrame
 }
-import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
+import pekko.http.impl.engine.http2.Http2Protocol.{ ErrorCode, SettingIdentifier }
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.impl.util.PekkoSpecWithMaterializer
@@ -171,6 +173,58 @@ class Http2ServerDemuxSpec extends PekkoSpecWithMaterializer("""
       } finally {
         frameConsumer.cancel()
         requestConsumer.cancel()
+      }
+    }
+
+    "return only connection receive credit when the application cancels a buffered request entity" in {
+      val windowSize = Http2Protocol.InitialWindowSize
+      val settings = Http2ServerSettings("")
+        .withIncomingConnectionLevelBufferSize(windowSize)
+        .withMinCollectStrictEntitySize(0)
+      val bidi = BidiFlow.fromGraph(new Http2ServerDemux(settings, Nil, upgraded = false))
+
+      val ((_, (outgoingFrames, incomingFrames)), requests) = TestSource[Http2SubStream]()
+        .viaMat(bidi.joinMat(Flow.fromSinkAndSourceMat(TestSink[FrameEvent](), TestSource[FrameEvent]())(
+          Keep.both))(Keep.right))(Keep.both)
+        .toMat(TestSink[Http2SubStream]())(Keep.both)
+        .run()
+
+      try {
+        outgoingFrames.request(8)
+        val serverSettings = outgoingFrames.expectNext().asInstanceOf[SettingsFrame]
+        incomingFrames.sendNext(SettingsFrame(Nil))
+        incomingFrames.sendNext(SettingsAckFrame(serverSettings.settings))
+        outgoingFrames.expectNext() shouldBe SettingsAckFrame(Nil)
+
+        val streamId = 1
+        val requestHeaders = ParsedHeadersFrame(streamId, endStream = false,
+          Seq(":method" -> "POST", ":scheme" -> "https", ":authority" -> "example.test", ":path" -> "/upload"),
+          None, None)
+        incomingFrames.sendNext(requestHeaders)
+        val request = requests.requestNext()
+
+        // Once released, the outstanding credit will be strictly below the existing half-window threshold.
+        val body = ByteString(new Array[Byte](windowSize - windowSize / 2 + 1))
+        body.grouped(Http2Protocol.InitialMaxFrameSize).foreach { chunk =>
+          incomingFrames.sendNext(DataFrame(streamId, endStream = false, chunk))
+        }
+
+        // Ordered markers check for unexpected updates without sleeps or demand for the request body.
+        val beforeCancel = ByteString("before!!")
+        incomingFrames.sendNext(PingFrame(ack = false, beforeCancel))
+        outgoingFrames.expectNext() shouldBe PingFrame(ack = true, beforeCancel)
+
+        val entity = request.data.toOption.getOrElse(fail("Expected a streamed request entity"))
+        entity.runWith(TestSink[Any]()).cancel()
+        outgoingFrames.expectNext() shouldBe RstStreamFrame(streamId, ErrorCode.CANCEL)
+        outgoingFrames.expectNext() shouldBe WindowUpdateFrame(Http2Protocol.NoStreamId, body.size)
+
+        val afterCancel = ByteString("after!!!")
+        incomingFrames.sendNext(PingFrame(ack = false, afterCancel))
+        outgoingFrames.expectNext() shouldBe PingFrame(ack = true, afterCancel)
+      } finally {
+        outgoingFrames.cancel()
+        requests.cancel()
       }
     }
 

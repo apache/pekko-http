@@ -111,6 +111,16 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   private var outstandingConnectionLevelWindow = Http2Protocol.InitialWindowSize
   private var totalBufferedData = 0
 
+  private def advertiseConnectionReceiveCredit(increment: Int): Unit =
+    if (increment > 0) {
+      multiplexer.pushControlFrame(WindowUpdateFrame(Http2Protocol.NoStreamId, increment))
+      outstandingConnectionLevelWindow += increment
+    }
+
+  private def reconcileConnectionReceiveCredit(): Unit =
+    advertiseConnectionReceiveCredit(
+      flowController.onConnectionDataReceived(outstandingConnectionLevelWindow, totalBufferedData))
+
   /**
    * The "last peer-initiated stream that was or might be processed on the sending endpoint in this connection"
    *
@@ -656,12 +666,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
               rejectContentLength(d.streamId)
             } else onDataFrame(d)
 
-          val windowSizeIncrement =
-            flowController.onConnectionDataReceived(outstandingConnectionLevelWindow, totalBufferedData)
-          if (windowSizeIncrement > 0) {
-            multiplexer.pushControlFrame(WindowUpdateFrame(Http2Protocol.NoStreamId, windowSizeIncrement))
-            outstandingConnectionLevelWindow += windowSizeIncrement
-          }
+          reconcileConnectionReceiveCredit()
           nextState
         }
       case r: RstStreamFrame =>
@@ -669,7 +674,10 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         Closed
 
       case h: ParsedHeadersFrame if h.endStream && violatesContentLength(h.streamId, 0, endStream = true) =>
-        rejectContentLength(h.streamId)
+        val nextState = rejectContentLength(h.streamId)
+        // Reconcile shared credit after local cleanup, before the stream is removed.
+        reconcileConnectionReceiveCredit()
+        nextState
 
       case h: ParsedHeadersFrame =>
         onTrailer(h)
@@ -829,8 +837,11 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       debug(s"Incoming side of stream [$streamId]: cancelling because downstream finished")
       multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.CANCEL))
       wasClosed = true
+      val hadBufferedData = buffer.nonEmpty
       discardBuffer()
       trailingHeaders = None
+      // Reconcile before removing the stream, which can finish a draining connection.
+      if (hadBufferedData) reconcileConnectionReceiveCredit()
       // FIXME: go through state machine and don't manipulate vars directly here
       streamClosed(streamId)
     }
@@ -916,10 +927,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         outstandingConnectionLevelWindow, totalBufferedData,
         outstandingStreamWindow, buffer.length)
 
-      if (connectionLevel > 0) {
-        multiplexer.pushControlFrame(WindowUpdateFrame(Http2Protocol.NoStreamId, connectionLevel))
-        outstandingConnectionLevelWindow += connectionLevel
-      }
+      advertiseConnectionReceiveCredit(connectionLevel)
       if (streamLevel > 0 && !wasClosed /* No reason to update window on closed streams */ ) {
         multiplexer.pushControlFrame(WindowUpdateFrame(streamId, streamLevel))
         outstandingStreamWindow += streamLevel
