@@ -299,12 +299,14 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
 
       }
 
-      "accept TE with 'trailers' as value" in {
-        parseExpectOk(Vector(
+      "accept and model TE with 'trailers' as value" in {
+        val request = parseExpectOk(Vector(
           ":method" -> "GET",
           ":scheme" -> "https",
+          ":authority" -> "example.com",
           ":path" -> "/",
           "te" -> "trailers"))
+        request.header[headers.TE] shouldBe Some(headers.TE(TransferEncodings.trailers))
       }
 
       // 8.1.2.3.  Request Pseudo-Header Fields
