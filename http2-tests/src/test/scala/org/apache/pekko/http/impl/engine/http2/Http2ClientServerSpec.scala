@@ -13,8 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.http2
 
+import java.io.ByteArrayInputStream
+import java.util.zip.InflaterInputStream
+
 import scala.concurrent.{ Future, Promise }
 import scala.concurrent.duration._
+import scala.util.Using
 
 import org.apache.pekko
 import pekko.Done
@@ -22,6 +26,7 @@ import pekko.http.impl.engine.HttpIdleTimeoutException
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
 import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.coding.Coders
 import pekko.http.scaladsl.model.{
   headers,
   AttributeKey,
@@ -30,6 +35,7 @@ import pekko.http.scaladsl.model.{
   HttpHeader,
   HttpMethod,
   HttpMethods,
+  HttpProtocol,
   HttpProtocols,
   HttpRequest,
   HttpResponse,
@@ -205,6 +211,55 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
         val terminated = Seq(origin, destination).map(_.flatMap(_.terminate(1.second))(system.dispatcher))
         try terminated.head.futureValue
         finally terminated.last.futureValue
+      }
+    }
+
+    "stream a built-in deflate-coded request over HTTP/2" in {
+      val http = Http()
+      val first = ByteString("Summary for the first month\n" * 72)
+      val last = ByteString("Summary for the second month\n" * 72)
+      val tail = Promise[ByteString]()
+      val firstData = Promise[Done]()
+      val received = Promise[(HttpProtocol, Option[headers.`Content-Encoding`], ByteString)]()
+
+      val binding = http.newServerAt("127.0.0.1", 0).bind { request =>
+        request.entity.dataBytes
+          .map { bytes =>
+            firstData.trySuccess(Done)
+            bytes
+          }
+          .runFold(ByteString.empty)(_ ++ _)
+          .map { encoded =>
+            received.success((request.protocol, request.header[headers.`Content-Encoding`], encoded))
+            HttpResponse()
+          }(system.dispatcher)
+      }.futureValue
+
+      try {
+        val entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`,
+          Source.single(first).concat(Source.future(tail.future)))
+        val request = HttpRequest(HttpMethods.POST, "/summary", entity = entity)
+        val responses = Source.single(Coders.Deflate.encodeMessage(request))
+          .via(http.connectionTo("127.0.0.1").toPort(binding.localAddress.getPort).http2WithPriorKnowledge())
+          .runWith(Sink.seq)
+
+        // The compressor must deliver bytes before the application completes the request body.
+        firstData.future.futureValue
+        tail.success(last)
+
+        val (protocol, encoding, encoded) = received.future.futureValue
+        protocol shouldBe HttpProtocols.`HTTP/2.0`
+        encoding shouldBe Some(headers.`Content-Encoding`(HttpEncodings.deflate))
+        // Use an independent inflater to check the zlib wrapper as well as the full payload.
+        val decoded = Using.resource(new InflaterInputStream(new ByteArrayInputStream(encoded.toArray))) { input =>
+          ByteString(input.readAllBytes())
+        }
+        decoded shouldBe (first ++ last)
+        responses.futureValue.map(response => response.protocol -> response.status) shouldBe
+        Seq(HttpProtocols.`HTTP/2.0` -> StatusCodes.OK)
+      } finally {
+        tail.trySuccess(ByteString.empty)
+        binding.terminate(1.second).futureValue
       }
     }
 
