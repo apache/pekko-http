@@ -111,6 +111,7 @@ private[http] object WebSocketClientBlueprint {
             new HttpResponseParser(settings.parserSettings, HttpHeaderParser(settings.parserSettings, log)) {
               var first = true
               override def handleInformationalResponses = false
+              override protected def mergeSwitchingProtocolsConnectionHeaders: Boolean = true
               override protected def parseMessage(input: ByteString, offset: Int): StateResult = {
                 if (first) {
                   try {

@@ -154,6 +154,12 @@ private[http] class HttpResponseParser(protected val settings: ParserSettings,
 
   def handleInformationalResponses: Boolean = true
 
+  // Some upgrade consumers inspect the published Connection options (RFC 9110 sections 5.2 and 7.6.1).
+  protected def mergeSwitchingProtocolsConnectionHeaders: Boolean = false
+
+  override protected final def publishMergedConnectionHeader: Boolean =
+    mergeSwitchingProtocolsConnectionHeaders && statusCode == StatusCodes.SwitchingProtocols
+
   // http://tools.ietf.org/html/rfc7230#section-3.3
   protected final def parseEntity(headers: List[HttpHeader], protocol: HttpProtocol, input: ByteString, bodyStart: Int,
       clh: Option[`Content-Length`], cth: Option[`Content-Type`], isChunked: Boolean,
