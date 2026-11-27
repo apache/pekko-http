@@ -414,6 +414,44 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       }
     }
 
+    "acknowledge a normal server close with its UTF-8 reason" in {
+      Utils.assertAllStagesStopped {
+        new TestSetup with ClientProbes {
+          override def settings = {
+            val defaults = super.settings
+            // The test should finish from the server's transport closure, not the fallback deadline.
+            defaults.withWebsocketSettings(defaults.websocketSettings.withCloseTimeout(1.hour))
+          }
+
+          try {
+            expectWireData(UpgradeRequestBytes)
+            messagesIn.request(1)
+            sendWireData(UpgradeResponseBytes)
+            response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+
+            val code = Protocol.CloseCodes.Regular
+            val reason = "Ferm\u00e9"
+            sendWireData(WSTestUtils.closeFrame(code, mask = false, msg = reason))
+            messagesIn.expectComplete()
+            messagesOut.sendComplete()
+
+            // RFC 6455 requires a Close reply; preserving the reason is existing Pekko HTTP behavior.
+            val reply = WSTestUtils.closeFrameData(code, ByteString(reason, "UTF-8"))
+            expectMaskedFrameOnNetwork(Protocol.Opcode.Close, reply, fin = true)
+            expectNoWireData()
+
+            closeNetworkInput()
+            expectNetworkClose()
+          } finally {
+            messagesOut.sendComplete()
+            messagesIn.cancel()
+            netIn.sendComplete()
+            netOut.cancel()
+          }
+        }
+      }
+    }
+
     "exchange text with a configured graceful-close wait" in new EstablishedConnectionSetup with ClientEchoes {
       override def settings: ClientConnectionSettings = {
         val defaults = super.settings
