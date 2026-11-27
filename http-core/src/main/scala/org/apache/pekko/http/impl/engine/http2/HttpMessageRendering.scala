@@ -148,8 +148,15 @@ private[http2] sealed abstract class MessageRendering[R <: HttpMessage] extends 
         case _ => OptionVal.None
       }
 
-    Http2SubStream(r.entity, headersFrame, trailingHeadersFrame,
-      r.attributes.filter(_._2.isInstanceOf[RequestResponseAssociation]))
+    val correlationAttributes =
+      if (r.isResponse) r.attributes.filter(_._2.isInstanceOf[RequestResponseAssociation])
+      else
+        r.attributes.filter { case (key, value) =>
+          if (key == EarlyHintsObserver.attributeKey) EarlyHintsObserver.materializedObserverOrNull(value) ne null
+          else value.isInstanceOf[RequestResponseAssociation]
+        }
+
+    Http2SubStream(r.entity, headersFrame, trailingHeadersFrame, correlationAttributes)
   }
 }
 

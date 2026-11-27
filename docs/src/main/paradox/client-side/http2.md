@@ -73,6 +73,50 @@ response stream but some of its data is still buffered and has not reached the a
 
 This behavior applies only to HTTP/2 client response entities, not to HTTP/2 server request entities.
 
+## Observing 103 Early Hints
+
+The HTTP/2 client normally emits only the final response. To also observe [103 Early Hints](https://www.rfc-editor.org/rfc/rfc8297.html#section-2),
+materialize a bounded `EarlyHintsObserver` source and attach the observer to the request as a local attribute:
+
+@@@ div { .group-scala }
+```scala
+import org.apache.pekko.http.scaladsl.model.{ EarlyHintsObserver, HttpRequest }
+import org.apache.pekko.stream.scaladsl.Sink
+
+val observer = EarlyHintsObserver.source(8).to(Sink.foreach(hint => println(hint.headers))).run()
+val request = HttpRequest(uri = "/").addAttribute(EarlyHintsObserver.attributeKey, observer)
+// sendOnHttp2 sends the request and returns a Future[HttpResponse].
+val response = sendOnHttp2(request).andThen { case _ => observer.complete() }
+```
+@@@
+
+@@@ div { .group-java }
+```java
+import org.apache.pekko.http.javadsl.model.EarlyHintsObserver;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.stream.javadsl.Sink;
+
+EarlyHintsObserver observer = EarlyHintsObserver.createSource(8)
+    .to(Sink.foreach(hint -> System.out.println(hint.getHeaders()))).run(system);
+HttpRequest request = HttpRequest.GET("/").addAttribute(EarlyHintsObserver.getAttributeKey(), observer);
+// sendOnHttp2 sends the request and returns a CompletionStage<HttpResponse>.
+var response = sendOnHttp2.apply(request).whenComplete((ignored, error) -> observer.complete());
+```
+@@@
+
+Each notification preserves the received field order, including repeated fields. The client offers a separate
+notification for each 103, even if successive responses contain the same fields. Use one observer per request
+to keep the notifications associated with that request.
+
+Notifications are offered before the final response on a best-effort basis. A full or closed observer drops
+new hints. The observer processes them independently, so it may still be draining when the final response
+arrives. The buffer size counts notifications; HTTP/2 header parsing applies its normal size limits. The
+application must still consume the normal response stream.
+
+The application owns the observer's lifetime: calling `complete()` drains already queued hints, and cancelling
+the observer source discards them. Calling `complete()` again is safe. Neither action ends the request.
+The client does not fetch the links or merge hints into the final response.
+
 ## Limiting managed persistent connection lifetime
 
 Managed persistent HTTP/2 clients can periodically retire long-lived connections so that later requests establish

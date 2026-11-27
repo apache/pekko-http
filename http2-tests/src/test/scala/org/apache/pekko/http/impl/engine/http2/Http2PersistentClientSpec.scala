@@ -29,6 +29,8 @@ import pekko.http.scaladsl.model.{
   AttributeKey,
   AttributeKeys,
   ContentTypes,
+  EarlyHints,
+  EarlyHintsObserver,
   HttpEntity,
   HttpHeader,
   HttpMethod,
@@ -551,56 +553,100 @@ class Http2PersistentInterimSpec extends PekkoSpecWithMaterializer with ScalaFut
   implicit val executionContext: scala.concurrent.ExecutionContext = system.dispatcher
 
   "A managed HTTP/2 connection" should {
-    "retain request associations across ordinary interim statuses" in StreamTestKit.assertAllStagesStopped {
-      class Network extends Http2FrameHpackSupport {
-        val fromNet = TestPublisher.probe[ByteString]()
-        val frameProbeDelegate = Http2FrameProbe()
-        def sendBytes(bytes: ByteString): Unit = fromNet.sendNext(bytes)
-      }
-      val settings = ClientConnectionSettings(system)
-      val address = new InetSocketAddress("localhost", 12345)
-      val connections = TestProbe()
-      val connectionFlow = Flow.fromMaterializer { (_, _) =>
-        val network = new Network
-        connections.ref ! network
-        val transport = Flow.fromSinkAndSource(network.sink, Source.fromPublisher(network.fromNet))
-        Http2Blueprint.clientStack(settings, system.log, NoOpTelemetry).join(transport)
-          .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(address, address)))
-      }.mapMaterializedValue(_.flatten)
-      val input = TestPublisher.probe[HttpRequest]()
-      val output = TestSubscriber.probe[HttpResponse]()
-      Source.fromPublisher(input)
-        .via(PersistentConnection.managedConnection(connectionFlow, settings.http2Settings))
-        .runWith(Sink.fromSubscriber(output))
-      output.request(3)
-      input.sendNext(HttpRequest(uri = "https://example.com/one").addAttribute(requestId, RequestId(1)))
-      val network = connections.expectMsgType[Network]
+    "retain request associations across ordinary interim statuses" in checkInterimResponses(observeHints = false)
+    "notify the opted-in request before final HTTP/2 responses" in checkInterimResponses(observeHints = true)
+    "preserve request association but not an observer in a synthetic unavailable response" in
+    StreamTestKit.assertAllStagesStopped {
+      val hints = TestSubscriber.probe[EarlyHints]()
+      val observer = EarlyHintsObserver.source(2).toMat(Sink.fromSubscriber(hints))(Keep.left).run()
+      val failingConnection = Flow.fromSinkAndSource(Sink.ignore, Source.maybe[HttpResponse])
+        .mapMaterializedValue(_ => Future.failed[Http.OutgoingConnection](new IllegalStateException("no connection")))
+      val settings = ClientConnectionSettings(system).http2Settings.withMaxPersistentAttempts(1)
+      val request = HttpRequest(uri = "https://example.com/unavailable").addAttribute(requestId, RequestId(1))
+        .addAttribute(EarlyHintsObserver.attributeKey, observer)
+      val requests = TestPublisher.probe[HttpRequest]()
+      val responses = TestSubscriber.probe[HttpResponse]()
+      Source.fromPublisher(requests).via(PersistentConnection.managedConnection(failingConnection, settings))
+        .runWith(Sink.fromSubscriber(responses))
       try {
-        network.expectBytes(Http2Protocol.ClientConnectionPreface)
-        network.expectSETTINGS()
-        network.expectDecodedResponseHEADERSPairs(1)
-        network.sendFrame(FrameEvent.SettingsFrame(Nil))
-        network.expectSettingsAck()
-        input.sendNext(HttpRequest(uri = "https://example.com/two").addAttribute(requestId, RequestId(2)))
-        network.expectDecodedResponseHEADERSPairs(3)
-        network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "103")))
-        network.sendHEADERS(3, endStream = false, Seq(RawHeader(":status", "102")))
-        network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "103")))
-        network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "201")))
-        network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
-        val second = output.expectNext()
-        second.status shouldBe StatusCodes.Created
-        second.attribute(requestId) shouldBe Some(RequestId(2))
-        val first = output.expectNext()
-        first.status shouldBe StatusCodes.OK
-        first.attribute(requestId) shouldBe Some(RequestId(1))
-        input.sendComplete()
-        output.expectComplete()
+        responses.request(1)
+        requests.sendNext(request)
+        val response = responses.expectNext()
+        response.status shouldBe StatusCodes.ServiceUnavailable
+        response.attribute(requestId) shouldBe Some(RequestId(1))
+        response.attribute(EarlyHintsObserver.attributeKey) shouldBe None
+        responses.expectError()
+        requests.expectCancellation()
       } finally {
-        output.cancel()
-        network.fromNet.sendComplete()
-        network.frameProbeDelegate.plainDataProbe.cancel()
+        hints.cancel()
+        responses.cancel()
       }
+    }
+  }
+
+  private def checkInterimResponses(observeHints: Boolean): Unit = StreamTestKit.assertAllStagesStopped {
+    class Network extends Http2FrameHpackSupport {
+      val fromNet = TestPublisher.probe[ByteString]()
+      val frameProbeDelegate = Http2FrameProbe()
+      def sendBytes(bytes: ByteString): Unit = fromNet.sendNext(bytes)
+    }
+    val settings = ClientConnectionSettings(system)
+    val address = new InetSocketAddress("localhost", 12345)
+    val connections = TestProbe()
+    val connectionFlow = Flow.fromMaterializer { (_, _) =>
+      val network = new Network
+      connections.ref ! network
+      val transport = Flow.fromSinkAndSource(network.sink, Source.fromPublisher(network.fromNet))
+      Http2Blueprint.clientStack(settings, system.log, NoOpTelemetry).join(transport)
+        .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(address, address)))
+    }.mapMaterializedValue(_.flatten)
+    val input = TestPublisher.probe[HttpRequest]()
+    val output = TestSubscriber.probe[HttpResponse]()
+    val hints = TestSubscriber.probe[EarlyHints]()
+    val observer = if (observeHints)
+      Some(EarlyHintsObserver.source(2).toMat(Sink.fromSubscriber(hints))(Keep.left).run())
+    else None
+    Source.fromPublisher(input)
+      .via(PersistentConnection.managedConnection(connectionFlow, settings.http2Settings))
+      .runWith(Sink.fromSubscriber(output))
+    output.request(3)
+    val request = HttpRequest(uri = "https://example.com/one").addAttribute(requestId, RequestId(1))
+    input.sendNext(observer.fold(request)(request.addAttribute(EarlyHintsObserver.attributeKey, _)))
+    val network = connections.expectMsgType[Network]
+    try {
+      network.expectBytes(Http2Protocol.ClientConnectionPreface)
+      network.expectSETTINGS()
+      network.expectDecodedResponseHEADERSPairs(1)
+      network.sendFrame(FrameEvent.SettingsFrame(Nil))
+      network.expectSettingsAck()
+      input.sendNext(HttpRequest(uri = "https://example.com/two").addAttribute(requestId, RequestId(2)))
+      network.expectDecodedResponseHEADERSPairs(3)
+      network.sendHEADERS(1, endStream = false,
+        Seq(RawHeader(":status", "103"), RawHeader("link", "</first.css>; rel=preload")))
+      network.sendHEADERS(3, endStream = false, Seq(RawHeader(":status", "102")))
+      network.sendHEADERS(1, endStream = false,
+        Seq(RawHeader(":status", "103"), RawHeader("link", "</second.css>; rel=preload")))
+      if (observeHints) {
+        hints.request(2)
+        hints.expectNext().headers.map(_.value) shouldBe Seq("</first.css>; rel=preload")
+        hints.expectNext().headers.map(_.value) shouldBe Seq("</second.css>; rel=preload")
+      }
+      network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "201")))
+      network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+      val second = output.expectNext()
+      second.status shouldBe StatusCodes.Created
+      second.attribute(requestId) shouldBe Some(RequestId(2))
+      val first = output.expectNext()
+      first.status shouldBe StatusCodes.OK
+      first.attribute(requestId) shouldBe Some(RequestId(1))
+      first.attribute(EarlyHintsObserver.attributeKey) shouldBe None
+      input.sendComplete()
+      output.expectComplete()
+    } finally {
+      if (observeHints) hints.cancel()
+      output.cancel()
+      network.fromNet.sendComplete()
+      network.frameProbeDelegate.plainDataProbe.cancel()
     }
   }
 }

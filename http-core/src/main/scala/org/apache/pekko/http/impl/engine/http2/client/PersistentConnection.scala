@@ -23,7 +23,14 @@ import org.apache.pekko
 import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.scaladsl.Http.OutgoingConnection
-import pekko.http.scaladsl.model.{ AttributeKey, HttpRequest, HttpResponse, RequestResponseAssociation, StatusCodes }
+import pekko.http.scaladsl.model.{
+  AttributeKey,
+  EarlyHintsObserver,
+  HttpRequest,
+  HttpResponse,
+  RequestResponseAssociation,
+  StatusCodes
+}
 import pekko.http.scaladsl.settings.Http2ClientSettings
 import pekko.stream.scaladsl.{ Flow, Keep, Source }
 import pekko.stream.stage.TimerGraphStageLogic
@@ -165,7 +172,7 @@ private[http2] object PersistentConnection {
                 val response = HttpResponse(
                   StatusCodes.ServiceUnavailable,
                   entity = s"Connection failed after $maxAttempts attempts")
-                  .withAttributes(request.attributes)
+                  .withAttributes(request.attributes - EarlyHintsObserver.attributeKey)
                 emit(responseOut, response,
                   () => failStage(new RuntimeException(s"Connection failed after $maxAttempts attempts", cause)))
               } else {
@@ -292,7 +299,7 @@ private[http2] object PersistentConnection {
             // Explicit type ascription is needed to make both 2.12 and 2.13 compile.
             ongoingRequests = ongoingRequests.updated(tag,
               req.attributes.collect({
-                case (key, value: RequestResponseAssociation) => key -> value
+                case (key, value: RequestResponseAssociation) if key != EarlyHintsObserver.attributeKey => key -> value
               }: PartialFunction[(AttributeKey[?], Any), (AttributeKey[?], RequestResponseAssociation)]))
             requestOut.push(req.addAttribute(associationTagKey, tag))
           }

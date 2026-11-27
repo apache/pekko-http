@@ -58,6 +58,7 @@ import pekko.stream.Attributes.LogLevels
 import pekko.stream.OverflowStrategy
 import pekko.stream.scaladsl.BidiFlow
 import pekko.stream.scaladsl.Flow
+import pekko.stream.scaladsl.Keep
 import pekko.stream.scaladsl.Sink
 import pekko.stream.scaladsl.Source
 import pekko.stream.testkit.TestPublisher
@@ -115,26 +116,39 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
       }
     }
 
-    "retain the final response after 100 Continue for a POST with Expect" in
-    StreamTestKit.assertAllStagesStopped {
-      val setup = new TestSetup with NetProbes
-      try {
-        val requestBody = ByteString("request body")
-        val request = Post("https://www.example.com/", HttpEntity(ContentTypes.`application/octet-stream`, requestBody))
-          .withHeaders(Expect.`100-continue`)
-        setup.user.emitRequest(request)
-        setup.network.expectDecodedResponseHEADERSPairs(1, endStream = false) should contain("expect" -> "100-continue")
-        setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "100")))
-        setup.network.expectDATA(1, endStream = true, requestBody)
-        val finalBody = ByteString("final response")
-        setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
-        setup.network.sendDATA(1, endStream = true, finalBody)
-        val response = setup.user.expectResponse()
-        response.status shouldBe StatusCodes.OK
-        response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe finalBody
-      } finally {
-        setup.network.fromNet.sendError(new RuntimeException("test cleanup"))
-        setup.network.toNet.cancel()
+    for (observeHints <- Seq(false, true)) {
+      val mode = if (observeHints) " with an Early Hints observer" else ""
+      s"retain the final response after 100 Continue for a POST with Expect${mode}" in
+      StreamTestKit.assertAllStagesStopped {
+        val setup = new TestSetup with NetProbes
+        val hints = Option.when(observeHints)(TestSubscriber.probe[EarlyHints]())
+        val observer = hints.map(probe =>
+          EarlyHintsObserver.source(2)
+            .toMat(Sink.fromSubscriber(probe))(Keep.left).run())
+        try {
+          val requestBody = ByteString("request body")
+          val request =
+            Post("https://www.example.com/", HttpEntity(ContentTypes.`application/octet-stream`, requestBody))
+              .withHeaders(Expect.`100-continue`)
+          val observedRequest = observer.fold(request)(request.addAttribute(EarlyHintsObserver.attributeKey, _))
+          setup.user.emitRequest(observedRequest)
+          setup.network.expectDecodedResponseHEADERSPairs(1, endStream = false) should
+          contain("expect" -> "100-continue")
+          setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "100")))
+          setup.network.expectDATA(1, endStream = true, requestBody)
+          val finalBody = ByteString("final response")
+          setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          setup.network.sendDATA(1, endStream = true, finalBody)
+          val response = setup.user.expectResponse()
+          response.status shouldBe StatusCodes.OK
+          response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe finalBody
+          observer.foreach(_.complete())
+          hints.foreach(_.request(1).expectComplete())
+        } finally {
+          hints.foreach(_.cancel())
+          setup.network.fromNet.sendError(new RuntimeException("test cleanup"))
+          setup.network.toNet.cancel()
+        }
       }
     }
 
@@ -162,6 +176,121 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         response.status shouldBe StatusCodes.OK
         response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe ByteString("final body")
       } finally {
+        setup.network.fromNet.sendError(new RuntimeException("test cleanup"))
+        setup.network.toNet.cancel()
+      }
+    }
+
+    "notify Scala and Java observers before final responses without mixing request streams" in
+    StreamTestKit.assertAllStagesStopped {
+      val setup = new TestSetup with NetProbes
+      val firstHints = TestSubscriber.probe[EarlyHints]()
+      val secondHints = TestSubscriber.probe[pekko.http.javadsl.model.EarlyHints]()
+      val firstObserver = EarlyHintsObserver.source(4).toMat(Sink.fromSubscriber(firstHints))(Keep.left).run()
+      val secondObserver = pekko.http.javadsl.model.EarlyHintsObserver.createSource(4).asScala
+        .toMat(Sink.fromSubscriber(secondHints))(Keep.left).run()
+      val key = EarlyHintsObserver.attributeKey
+      val requestId = AttributeKey[SimpleRequestResponseAttribute[Int]]("early-hints-request-id")
+      val firstLink = "</one.css>; rel=preload"
+      val secondLink = "</two.js>; rel=preload"
+      val thirdLink = "</three.css>; rel=preload"
+      val relatedLink = "</related.js>; rel=preload"
+      val finalLink = "</final.css>; rel=preload"
+      def sendHint(streamId: Int, link: String): Unit =
+        setup.network.sendHEADERS(streamId, endStream = false,
+          Seq(RawHeader(":status", "103"), RawHeader("link", link)))
+
+      try {
+        setup.user.responseIn.request(2)
+        setup.user.emitRequest(Get("https://www.example.com/one")
+          .addAttribute(requestId, SimpleRequestResponseAttribute(1)).addAttribute(key, firstObserver))
+        setup.network.expectDecodedResponseHEADERSPairs(1)
+        setup.user.emitRequest(Get("https://www.example.com/two")
+          .addAttribute(requestId, SimpleRequestResponseAttribute(2))
+          .addAttribute(pekko.http.javadsl.model.EarlyHintsObserver.getAttributeKey, secondObserver))
+        setup.network.expectDecodedResponseHEADERSPairs(3)
+
+        setup.network.sendHEADERS(1, endStream = false,
+          Seq(RawHeader(":status", "103"),
+            RawHeader("link", firstLink), `Content-Type`(ContentTypes.`text/plain(UTF-8)`),
+            RawHeader("link", relatedLink)))
+        sendHint(3, secondLink)
+        sendHint(1, thirdLink)
+        sendHint(1, thirdLink)
+        firstHints.request(3)
+        val firstHint = firstHints.expectNext().headers
+        firstHint.map(_.lowercaseName) shouldBe Seq("link", "content-type", "link")
+        firstHint.head.value shouldBe firstLink
+        firstHint(1) shouldBe `Content-Type`(ContentTypes.`text/plain(UTF-8)`)
+        firstHint(2).value shouldBe relatedLink
+        firstHints.expectNext().headers.map(_.value) shouldBe Seq(thirdLink)
+        firstHints.expectNext().headers.map(_.value) shouldBe Seq(thirdLink)
+        secondHints.request(1)
+        val javaHeaders = secondHints.expectNext().getHeaders
+        javaHeaders.size shouldBe 1
+        javaHeaders.get(0).value() shouldBe secondLink
+
+        val body = ByteString("final response")
+        setup.network.sendHEADERS(3, endStream = true, Seq(RawHeader(":status", "201")))
+        setup.network.sendHEADERS(1, endStream = false,
+          Seq(RawHeader(":status", "200"),
+            `Content-Type`(ContentTypes.`application/octet-stream`), RawHeader("link", finalLink)))
+        setup.network.sendDATA(1, endStream = true, body)
+        val second = setup.user.responseIn.expectNext()
+        second.status shouldBe StatusCodes.Created
+        second.attribute(requestId) shouldBe Some(SimpleRequestResponseAttribute(2))
+        second.attribute(key) shouldBe None
+        val first = setup.user.responseIn.expectNext()
+        first.status shouldBe StatusCodes.OK
+        first.attribute(requestId) shouldBe Some(SimpleRequestResponseAttribute(1))
+        first.attribute(key) shouldBe None
+        first.headers.filter(_.is("link")).map(_.value) shouldBe Seq(finalLink)
+        first.entity.contentType shouldBe ContentTypes.`application/octet-stream`
+        first.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe body
+      } finally {
+        firstHints.cancel()
+        secondHints.cancel()
+        setup.network.fromNet.sendError(new RuntimeException("test cleanup"))
+        setup.network.toNet.cancel()
+      }
+    }
+
+    "complete a final response without observer demand and drop excess hints" in
+    StreamTestKit.assertAllStagesStopped {
+      val setup = new TestSetup with NetProbes
+      val hints = TestSubscriber.probe[EarlyHints]()
+      val observer = EarlyHintsObserver.source(1).toMat(Sink.fromSubscriber(hints))(Keep.left).run()
+      val firstLink = "</first.css>; rel=preload"
+      val otherLink = "</other.css>; rel=preload"
+      try {
+        setup.user.emitRequest(Get("https://www.example.com/slow")
+          .addAttribute(EarlyHintsObserver.attributeKey, observer))
+        setup.network.expectDecodedResponseHEADERSPairs(1)
+        setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "102")))
+        setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "103"), RawHeader("link", firstLink)))
+        setup.network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "103"), RawHeader("link", otherLink)))
+        setup.network.sendHEADERS(1, endStream = true, Seq(RawHeader(":status", "200")))
+        setup.user.expectResponse().status shouldBe StatusCodes.OK
+
+        observer.complete()
+        hints.request(2)
+        hints.expectNext().headers.map(_.value) shouldBe Seq(firstLink)
+        hints.expectComplete()
+        observer.complete()
+
+        // Reusing a closed observer remains a nonblocking no-op.
+        setup.user.emitRequest(Get("https://www.example.com/closed")
+          .addAttribute(EarlyHintsObserver.attributeKey, observer))
+        setup.network.expectDecodedResponseHEADERSPairs(3)
+        setup.network.sendHEADERS(3, endStream = false, Seq(RawHeader(":status", "103"), RawHeader("link", otherLink)))
+        val body = ByteString("not backpressured")
+        setup.network.sendHEADERS(3, endStream = false, Seq(RawHeader(":status", "200")))
+        setup.network.sendDATA(3, endStream = true, body)
+        val response = setup.user.expectResponse()
+        response.status shouldBe StatusCodes.OK
+        response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe body
+      } finally {
+        hints.cancel()
         setup.network.fromNet.sendError(new RuntimeException("test cleanup"))
         setup.network.toNet.cancel()
       }

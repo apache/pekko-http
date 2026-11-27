@@ -29,7 +29,7 @@ import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.`Tls-Session-Info`
+import pekko.http.scaladsl.model.headers.{ `Content-Type`, `Tls-Session-Info` }
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.stream.Attributes
 import pekko.util.OptionVal
@@ -50,6 +50,12 @@ private[http2] object ResponseParsing {
       else
         None
 
+    // Only library-materialized observers are offered hints. Never invoke a user implementation on the connection.
+    val observer = subStream.correlationAttributes.get(EarlyHintsObserver.attributeKey) match {
+      case Some(value) => EarlyHintsObserver.materializedObserverOrNull(value)
+      case None        => null
+    }
+
     @tailrec
     def rec(
         remainingHeaders: Seq[(String, AnyRef)],
@@ -69,14 +75,25 @@ private[http2] object ResponseParsing {
 
         val entity = subStream.createEntity(contentLength, contentType)
 
-        // user access to tls session info
-        if (tlsSessionInfoHeader.isDefined) headers += tlsSessionInfoHeader.get
+        val responseHeaders =
+          if ((observer ne null) && status == StatusCodes.EarlyHints) {
+            val receivedHeaders = headers.result()
+            observer.publish(receivedHeaders)
+            // TLS session metadata is local, not a field from the 103 response.
+            if (tlsSessionInfoHeader.isDefined) receivedHeaders :+ tlsSessionInfoHeader.get
+            else receivedHeaders
+          } else {
+            if (tlsSessionInfoHeader.isDefined) headers += tlsSessionInfoHeader.get
+            headers.result()
+          }
+        val responseAttributes = if (observer eq null) subStream.correlationAttributes
+        else subStream.correlationAttributes - EarlyHintsObserver.attributeKey
 
         val response = HttpResponse(
           status = status,
-          headers = headers.result(),
+          headers = responseHeaders,
           entity = entity,
-          HttpProtocols.`HTTP/2.0`).withAttributes(subStream.correlationAttributes)
+          HttpProtocols.`HTTP/2.0`).withAttributes(responseAttributes)
         sslSessionAttribute match {
           case Some(sslSession) => response.addAttribute(AttributeKeys.sslSession, SslSessionInfo(sslSession))
           case None             => response
@@ -89,16 +106,18 @@ private[http2] object ResponseParsing {
           rec(remainingHeaders.tail, statusCodeValue.toInt, contentType, contentLength, seenRegularHeader, headers)
 
         case ("content-type", contentTypeValue: ContentType) =>
-          if (contentType.isEmpty)
+          if (contentType.isEmpty) {
+            if ((observer ne null) && status == StatusCodes.EarlyHints) headers += `Content-Type`(contentTypeValue)
             rec(remainingHeaders.tail, status, OptionVal.Some(contentTypeValue), contentLength, seenRegularHeader,
               headers)
-          else
+          } else
             malformedResponse("HTTP message must not contain more than one content-type header")
 
         case ("content-type", ct: String) =>
           if (contentType.isEmpty) {
             val contentTypeValue =
               ContentType.parse(ct).getOrElse(malformedResponse(s"Invalid content-type: '$ct'"))
+            if ((observer ne null) && status == StatusCodes.EarlyHints) headers += `Content-Type`(contentTypeValue)
             rec(remainingHeaders.tail, status, OptionVal.Some(contentTypeValue), contentLength, seenRegularHeader,
               headers)
           } else malformedResponse("HTTP message must not contain more than one content-type header")
