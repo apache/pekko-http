@@ -117,6 +117,31 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       expectNetworkClose()
     }
 
+    Seq(
+      "ws://example.org:80/ws" -> "example.org",
+      "ws://example.org:443/ws" -> "example.org:443",
+      "wss://example.org:443/ws" -> "example.org",
+      "wss://example.org:80/ws" -> "example.org:80").foreach { case (uri, host) =>
+      s"render the generated Host for $uri" in {
+        Utils.assertAllStagesStopped {
+          new TestSetup with ClientProbes {
+            override def targetUri: Uri = Uri(uri)
+            try {
+              val expected = UpgradeRequestBytes.utf8String.replace("Host: example.org", s"Host: $host")
+              expectWireData(ByteString(expected))
+              sendWireData(UpgradeResponseBytes)
+              response.awaitResult(1.second.dilated) shouldBe a[ValidUpgrade]
+            } finally {
+              messagesOut.sendComplete()
+              messagesIn.cancel()
+              netOut.cancel()
+              netIn.sendComplete()
+            }
+          }
+        }
+      }
+    }
+
     "send the caller's Connection option when establishing a WebSocket connection" in {
       Utils.assertAllStagesStopped {
         val callerOption = "example-local-option"
