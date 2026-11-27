@@ -342,6 +342,23 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Allow: GET, PROPFIND, PUT" =!= Allow(GET, PROPFIND, PUT)
     }
 
+    "Allow keeps method names distinct by case" in {
+      import scala.jdk.CollectionConverters._
+
+      val value = "GET, Get"
+      val scalaAllow =
+        Allow.parseFromValueString(value).fold(errors => fail(errors.mkString(", ")), parsed => parsed)
+      scalaAllow.methods shouldBe Seq(GET, HttpMethod.custom("Get"))
+      (scalaAllow.methods.head should be).theSameInstanceAs(GET)
+      scalaAllow.value shouldBe value
+
+      val javaAllow = pekko.http.javadsl.model.HttpHeader.parse("Allow", value) match {
+        case header: pekko.http.javadsl.model.headers.Allow => header
+        case other                                          => fail(s"Expected a modeled Allow header, got $other")
+      }
+      javaAllow.getMethods().asScala.iterator.map(_.name()).toVector shouldBe Vector("GET", "Get")
+    }
+
     "Authorization" in {
       BasicHttpCredentials("Aladdin", "open sesame").token shouldEqual "QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
       "Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" =!=
