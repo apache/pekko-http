@@ -516,6 +516,19 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
         }
       }
 
+      "round-trip a filename with consecutive ASCII spaces in strict and streamed form data" in {
+        val filename = "sample  report.txt"
+        val part = Multipart.FormData.BodyPart.Strict("upload",
+          HttpEntity(`application/octet-stream`, ByteString("data")), Map("filename" -> filename))
+        val boundary = "filename-spaces"
+        val strict = Multipart.FormData.Strict(Seq(part)).toEntity(boundary)
+        val streamed = Multipart.FormData(Source.single(part)).toEntity(boundary)
+
+        strict.data.utf8String should include(s"""filename="$filename"""")
+        Unmarshal(strict).to[Multipart.FormData] should haveParts(part)
+        Unmarshal(streamed).to[Multipart.FormData] should haveParts(part)
+      }
+
       "with a percent-encoded filename, exposed raw and decoded on request" in {
         val parts = Unmarshal(HttpEntity(
           `multipart/form-data`.withBoundary("XYZABC"),
