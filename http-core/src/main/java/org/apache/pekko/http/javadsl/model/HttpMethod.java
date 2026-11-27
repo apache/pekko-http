@@ -30,14 +30,14 @@ public abstract class HttpMethod {
   public abstract String value();
 
   /**
-   * Returns if this method is "safe" as defined in
-   * http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-26#section-4.2.1
+   * Returns if this method is "safe" as defined in <a
+   * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.1">RFC 9110, Section 9.2.1</a>.
    */
   public abstract boolean isSafe();
 
   /**
-   * Returns if this method is "idempotent" as defined in
-   * http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-26#section-4.2.2
+   * Returns if this method is "idempotent" as defined in <a
+   * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2">RFC 9110, Section 9.2.2</a>.
    */
   public abstract boolean isIdempotent();
 

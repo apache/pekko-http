@@ -14,8 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * Model for the `Server` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-26#section-7.4.2
+ * Model for the `Server` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.4">RFC 9110, Section 10.2.4</a>.
  */
 public abstract class Server extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<ProductVersion> getProducts();

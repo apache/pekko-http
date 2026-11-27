@@ -16,8 +16,8 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.javadsl.model.Uri;
 
 /**
- * Model for the `Location` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-26#section-7.1.2
+ * Model for the `Location` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.2">RFC 9110, Section 10.2.2</a>.
  */
 public abstract class Location extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Uri getUri();

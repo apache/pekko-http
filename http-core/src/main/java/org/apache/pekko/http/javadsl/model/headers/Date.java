@@ -16,8 +16,8 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.javadsl.model.DateTime;
 
 /**
- * Model for the `Date` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-26#section-7.1.1.2
+ * Model for the `Date` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-6.6.1">RFC 9110, Section 6.6.1</a>.
  */
 public abstract class Date extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract DateTime date();

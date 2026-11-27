@@ -14,8 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * Model for the `User-Agent` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-26#section-5.5.3
+ * Model for the `User-Agent` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.5">RFC 9110, Section 10.1.5</a>.
  */
 public abstract class UserAgent extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<ProductVersion> getProducts();

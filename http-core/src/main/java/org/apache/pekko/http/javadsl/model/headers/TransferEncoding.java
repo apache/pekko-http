@@ -14,8 +14,8 @@
 package org.apache.pekko.http.javadsl.model.headers;
 
 /**
- * Model for the `Transfer-Encoding` header. Specification:
- * http://tools.ietf.org/html/draft-ietf-httpbis-p1-messaging-26#section-3.3.1
+ * Model for the `Transfer-Encoding` header. Specification: <a
+ * href="https://www.rfc-editor.org/rfc/rfc9112.html#section-6.1">RFC 9112, Section 6.1</a>.
  */
 public abstract class TransferEncoding extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<org.apache.pekko.http.javadsl.model.TransferEncoding> getEncodings();
