@@ -186,7 +186,7 @@ The distinction of @scala[`Strict`]@java[`HttpEntityStrict`] and @scala[`Default
 both kinds of entities look the same.
 
 @scala[HttpEntity.Chunked]@java[HttpEntityChunked]
-: The model for HTTP/1.1 [chunked content](https://tools.ietf.org/html/rfc7230#section-4.1) (i.e. sent with `Transfer-Encoding: chunked`).
+: The model for HTTP/1.1 [chunked transfer coding](https://www.rfc-editor.org/rfc/rfc9112.html#section-7.1) (i.e. sent with `Transfer-Encoding: chunked`).
 The content length is unknown and the individual chunks are presented as a @scala[`Source[HttpEntity.ChunkStreamPart]`]@java[@apidoc[Source[ChunkStreamPart, ?]]].
 A `ChunkStreamPart` is either a non-empty @scala[`Chunk`]@java[chunk] or @scala[a `LastChunk`]@java[the empty last chunk] containing optional trailer headers.
 The stream consists of zero or more @scala[`Chunked`]@java[non-empty chunks] parts and can be terminated by an optional @scala[`LastChunk` part]@java[last chunk].
@@ -280,24 +280,17 @@ Generally this behavior should be in line with your expectations.
 
 ### Special processing for HEAD requests
 
-[RFC 7230](https://tools.ietf.org/html/rfc7230#section-3.3.3) defines very clear rules for the entity length of HTTP messages.
+Under the [HTTP/1.1 framing rules](https://www.rfc-editor.org/rfc/rfc9112.html#section-6.3), a response to
+`HEAD` or a response with status `1xx`, `204`, or `304` ends after the header section. It has no message body or
+trailers.
 
-Especially this rule requires special treatment in Apache Pekko HTTP:
+A HEAD response can still carry [`Content-Length`](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6) or
+[`Transfer-Encoding`](https://www.rfc-editor.org/rfc/rfc9112.html#section-6.1) metadata about the corresponding GET
+response. In Pekko HTTP, @scala[*HttpEntity.Default*]@java[*HttpEntityDefault*] and
+@scala[*HttpEntity.Chunked*]@java[*HttpEntityChunked*] can represent these headers without sending a body.
 
->
-Any response to a HEAD request and any response with a 1xx
-(Informational), 204 (No Content), or 304 (Not Modified) status
-code is always terminated by the first empty line after the
-header fields, regardless of the header fields present in the
-message, and thus cannot contain a message body.
-
-Responses to HEAD requests introduce the complexity that *Content-Length* or *Transfer-Encoding* headers
-can be present but the entity is empty. This is modeled by allowing @scala[*HttpEntity.Default*]@java[*HttpEntityDefault*] and @scala[*HttpEntity.Chunked*]@java[*HttpEntityChunked*]
-to be used for HEAD responses with an empty data stream.
-
-Also, when a HEAD response has an @scala[*HttpEntity.CloseDelimited*]@java[*HttpEntityCloseDelimited*] entity the Apache Pekko HTTP implementation will *not* close the
-connection after the response has been sent. This allows the sending of HEAD responses without *Content-Length*
-header across persistent HTTP connections.
+An @scala[*HttpEntity.CloseDelimited*]@java[*HttpEntityCloseDelimited*] entity does not, by itself, cause the connection
+to close after a HEAD response. This allows a HEAD response without `Content-Length` on a persistent HTTP/1.1 connection.
 
 ### Multipart form-data filenames
 

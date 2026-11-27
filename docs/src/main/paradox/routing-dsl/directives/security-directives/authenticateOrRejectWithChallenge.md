@@ -24,7 +24,9 @@ Lifts an authenticator function into a directive.
 
 This directive allows implementing the low level challenge-response type of authentication that some services may require.
 
-More details about challenge-response authentication are available in the [RFC 2617](https://tools.ietf.org/html/rfc2617), [RFC 7616](https://tools.ietf.org/html/rfc7616) and [RFC 7617](https://tools.ietf.org/html/rfc7617).
+[RFC 9110, Section 11.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-11.3) describes the general
+challenge-response mechanism. [RFC 7616](https://www.rfc-editor.org/rfc/rfc7616.html) and
+[RFC 7617](https://www.rfc-editor.org/rfc/rfc7617.html) describe Digest and Basic authentication respectively.
 
 ## Example
 

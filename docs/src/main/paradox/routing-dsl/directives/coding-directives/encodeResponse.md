@@ -19,11 +19,12 @@
 
 ## Description
 
-Encodes the response with the encoding that is requested by the client via the `Accept-Encoding` header or rejects the request with an `UnacceptedResponseEncodingRejection(supportedEncodings)`.
+Uses the request's [`Accept-Encoding` header](https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.3) to choose
+from `identity` (no coding), `gzip`, and `deflate`.
 
-The response encoding is determined by the rules specified in [RFC7231](https://tools.ietf.org/html/rfc7231#section-5.3.4).
-
-If the `Accept-Encoding` header is missing or empty or specifies an encoding other than identity, gzip or deflate then no encoding is used.
+If the header is absent or empty, the directive leaves the response unchanged. It also does so if no supported content
+coding is acceptable, unless the request excludes `identity`. If no available option is acceptable, it rejects the
+request with an `UnacceptedResponseEncodingRejection(supportedEncodings)`.
 
 ## Example
 
