@@ -102,6 +102,23 @@ The default maximum age is `infinite`, which disables age-based retirement. The 
 programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
 `Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
 
+## Graceful close on a direct connection
+
+A connection created by `http2()` or `http2WithPriorKnowledge()` can notify the server when the application
+has finished sending requests. This is off by default. Enable it with
+`pekko.http.client.http2.send-goaway-on-graceful-close = on` in your configuration.
+For per-connection settings, use `ClientConnectionSettings.mapHttp2Settings` with
+`_.withSendGoAwayOnGracefulClose(true)` in Scala, or pass the same configuration override to
+`ClientConnectionSettings.create(String)` in Java. Pass those settings to the builder with
+`withClientConnectionSettings`.
+
+Complete the request source normally when it has no more requests, for example by completing its materialized
+`SourceQueue`. The client sends one graceful HTTP/2 GOAWAY and lets requests already in flight finish. Continue consuming
+the response stream and entities until they complete. The existing `completion-timeout` bounds this wait.
+Cancelling the response stream or failing the request source does not trigger a graceful `GOAWAY(NO_ERROR)`.
+Existing failure handling, which can send an error GOAWAY, is unchanged. This setting does not apply to
+the managed persistent connection builders or configure how the client handles a peer's GOAWAY.
+
 ## Request-response ordering
 
 For HTTP/2 connections the responses are not guaranteed to arrive in the same order that the requests were emitted to

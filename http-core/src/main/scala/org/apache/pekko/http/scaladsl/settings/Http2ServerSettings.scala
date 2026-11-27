@@ -386,6 +386,19 @@ trait Http2ClientSettings extends javadsl.settings.Http2ClientSettings with Http
   def completionTimeout: FiniteDuration
   def withCompletionTimeout(timeout: FiniteDuration): Http2ClientSettings = copy(completionTimeout = timeout)
 
+  /**
+   * Whether to send GOAWAY on normal request source completion for a direct HTTP/2 connection.
+   * In-flight requests can still complete within [[completionTimeout]]. Disabled by default.
+   *
+   * @since 2.1.0
+   */
+  def sendGoAwayOnGracefulClose: Boolean = self.gracefulGoAwayEnabled
+
+  /** @since 2.1.0 */
+  override def withSendGoAwayOnGracefulClose(enabled: Boolean): Http2ClientSettings =
+    if (enabled == sendGoAwayOnGracefulClose) this
+    else copy(gracefulGoAwayEnabled = enabled)
+
   def baseConnectionBackoff: FiniteDuration
   def withBaseConnectionBackoff(backoff: FiniteDuration): Http2ClientSettings = copy(baseConnectionBackoff = backoff)
 
@@ -470,7 +483,8 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       frameTypeThrottleCost: Int,
       frameTypeThrottleBurst: Int,
       frameTypeThrottleInterval: FiniteDuration,
-      internalSettings: Option[Http2InternalClientSettings])
+      internalSettings: Option[Http2InternalClientSettings],
+      gracefulGoAwayEnabled: Boolean)
       extends Http2ClientSettings with javadsl.settings.Http2ClientSettings {
     require(maxConcurrentStreams >= 0, "max-concurrent-streams must be >= 0")
     require(maxHeaderListSize > 0, "max-header-list-size must be > 0")
@@ -493,10 +507,130 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       "frame-type-throttle.burst must be >= 0")
     require(frameTypeThrottleInterval.toMillis > 0, "frame-type-throttle.interval must be a positive duration")
     Http2CommonSettings.validate(this)
+
+    // Keep the JVM shape used by copies compiled through the public settings withers.
+    // A legacy copy must preserve this field even when replacing the internal settings.
+    def this(
+        maxConcurrentStreams: Int,
+        maxHeaderListSize: Int,
+        maxFrameSize: Int,
+        requestEntityChunkSize: Int,
+        incomingConnectionLevelBufferSize: Int,
+        incomingStreamLevelBufferSize: Int,
+        outgoingControlFrameBufferSize: Int,
+        logFrames: Boolean,
+        pingInterval: FiniteDuration,
+        pingTimeout: FiniteDuration,
+        maxPersistentAttempts: Int,
+        persistentConnectionMaxAge: Duration,
+        persistentConnectionMaxAgeJitter: Double,
+        completionTimeout: FiniteDuration,
+        baseConnectionBackoff: FiniteDuration,
+        maxConnectionBackoff: FiniteDuration,
+        frameTypeThrottleFrameTypes: Set[String],
+        frameTypeThrottleCost: Int,
+        frameTypeThrottleBurst: Int,
+        frameTypeThrottleInterval: FiniteDuration,
+        internalSettings: Option[Http2InternalClientSettings]) =
+      this(maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, outgoingControlFrameBufferSize, logFrames,
+        pingInterval, pingTimeout, maxPersistentAttempts, persistentConnectionMaxAge,
+        persistentConnectionMaxAgeJitter, completionTimeout, baseConnectionBackoff, maxConnectionBackoff,
+        frameTypeThrottleFrameTypes, frameTypeThrottleCost, frameTypeThrottleBurst, frameTypeThrottleInterval,
+        internalSettings, false)
+
+    def copy(
+        maxConcurrentStreams: Int,
+        maxHeaderListSize: Int,
+        maxFrameSize: Int,
+        requestEntityChunkSize: Int,
+        incomingConnectionLevelBufferSize: Int,
+        incomingStreamLevelBufferSize: Int,
+        outgoingControlFrameBufferSize: Int,
+        logFrames: Boolean,
+        pingInterval: FiniteDuration,
+        pingTimeout: FiniteDuration,
+        maxPersistentAttempts: Int,
+        persistentConnectionMaxAge: Duration,
+        persistentConnectionMaxAgeJitter: Double,
+        completionTimeout: FiniteDuration,
+        baseConnectionBackoff: FiniteDuration,
+        maxConnectionBackoff: FiniteDuration,
+        frameTypeThrottleFrameTypes: Set[String],
+        frameTypeThrottleCost: Int,
+        frameTypeThrottleBurst: Int,
+        frameTypeThrottleInterval: FiniteDuration,
+        internalSettings: Option[Http2InternalClientSettings]): Http2ClientSettingsImpl =
+      copy(maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, outgoingControlFrameBufferSize, logFrames,
+        pingInterval, pingTimeout, maxPersistentAttempts, persistentConnectionMaxAge,
+        persistentConnectionMaxAgeJitter, completionTimeout, baseConnectionBackoff, maxConnectionBackoff,
+        frameTypeThrottleFrameTypes, frameTypeThrottleCost, frameTypeThrottleBurst, frameTypeThrottleInterval,
+        internalSettings, gracefulGoAwayEnabled = this.gracefulGoAwayEnabled)
+
+    def copy(
+        maxConcurrentStreams: Int = this.maxConcurrentStreams,
+        maxHeaderListSize: Int = this.maxHeaderListSize,
+        maxFrameSize: Int = this.maxFrameSize,
+        requestEntityChunkSize: Int = this.requestEntityChunkSize,
+        incomingConnectionLevelBufferSize: Int = this.incomingConnectionLevelBufferSize,
+        incomingStreamLevelBufferSize: Int = this.incomingStreamLevelBufferSize,
+        outgoingControlFrameBufferSize: Int = this.outgoingControlFrameBufferSize,
+        logFrames: Boolean = this.logFrames,
+        pingInterval: FiniteDuration = this.pingInterval,
+        pingTimeout: FiniteDuration = this.pingTimeout,
+        maxPersistentAttempts: Int = this.maxPersistentAttempts,
+        persistentConnectionMaxAge: Duration = this.persistentConnectionMaxAge,
+        persistentConnectionMaxAgeJitter: Double = this.persistentConnectionMaxAgeJitter,
+        completionTimeout: FiniteDuration = this.completionTimeout,
+        baseConnectionBackoff: FiniteDuration = this.baseConnectionBackoff,
+        maxConnectionBackoff: FiniteDuration = this.maxConnectionBackoff,
+        frameTypeThrottleFrameTypes: Set[String] = this.frameTypeThrottleFrameTypes,
+        frameTypeThrottleCost: Int = this.frameTypeThrottleCost,
+        frameTypeThrottleBurst: Int = this.frameTypeThrottleBurst,
+        frameTypeThrottleInterval: FiniteDuration = this.frameTypeThrottleInterval,
+        internalSettings: Option[Http2InternalClientSettings] = this.internalSettings,
+        gracefulGoAwayEnabled: Boolean = this.gracefulGoAwayEnabled): Http2ClientSettingsImpl =
+      new Http2ClientSettingsImpl(maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, outgoingControlFrameBufferSize, logFrames,
+        pingInterval, pingTimeout, maxPersistentAttempts, persistentConnectionMaxAge,
+        persistentConnectionMaxAgeJitter, completionTimeout, baseConnectionBackoff, maxConnectionBackoff,
+        frameTypeThrottleFrameTypes, frameTypeThrottleCost, frameTypeThrottleBurst, frameTypeThrottleInterval,
+        internalSettings, gracefulGoAwayEnabled)
   }
 
   private[http] object Http2ClientSettingsImpl
       extends pekko.http.impl.util.SettingsCompanionImpl[Http2ClientSettingsImpl]("pekko.http.client.http2") {
+    // Preserve the released case-class factory descriptor as well.
+    def apply(
+        maxConcurrentStreams: Int,
+        maxHeaderListSize: Int,
+        maxFrameSize: Int,
+        requestEntityChunkSize: Int,
+        incomingConnectionLevelBufferSize: Int,
+        incomingStreamLevelBufferSize: Int,
+        outgoingControlFrameBufferSize: Int,
+        logFrames: Boolean,
+        pingInterval: FiniteDuration,
+        pingTimeout: FiniteDuration,
+        maxPersistentAttempts: Int,
+        persistentConnectionMaxAge: Duration,
+        persistentConnectionMaxAgeJitter: Double,
+        completionTimeout: FiniteDuration,
+        baseConnectionBackoff: FiniteDuration,
+        maxConnectionBackoff: FiniteDuration,
+        frameTypeThrottleFrameTypes: Set[String],
+        frameTypeThrottleCost: Int,
+        frameTypeThrottleBurst: Int,
+        frameTypeThrottleInterval: FiniteDuration,
+        internalSettings: Option[Http2InternalClientSettings]): Http2ClientSettingsImpl =
+      new Http2ClientSettingsImpl(maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, outgoingControlFrameBufferSize, logFrames,
+        pingInterval, pingTimeout, maxPersistentAttempts, persistentConnectionMaxAge,
+        persistentConnectionMaxAgeJitter, completionTimeout, baseConnectionBackoff, maxConnectionBackoff,
+        frameTypeThrottleFrameTypes, frameTypeThrottleCost, frameTypeThrottleBurst, frameTypeThrottleInterval,
+        internalSettings)
+
     def fromSubConfig(root: Config, c: Config): Http2ClientSettingsImpl = Http2ClientSettingsImpl(
       maxConcurrentStreams = c.getInt("max-concurrent-streams"),
       maxHeaderListSize = c.getIntBytes("max-header-list-size"),
@@ -518,7 +652,8 @@ object Http2ClientSettings extends SettingsCompanion[Http2ClientSettings] {
       frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),
       frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),
       frameTypeThrottleInterval = c.getFiniteDuration("frame-type-throttle.interval"),
-      internalSettings = None // no possibility to configure internal settings with config
+      internalSettings = None,
+      gracefulGoAwayEnabled = c.getBoolean("send-goaway-on-graceful-close")
     )
   }
 }

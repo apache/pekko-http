@@ -1355,6 +1355,99 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
         })
     }
 
+    "send client GOAWAY on graceful close" should {
+      abstract class Enabled extends TestSetup with NetProbes {
+        override def settings = super.settings.mapHttp2Settings(
+          _.withSendGoAwayOnGracefulClose(true).withCompletionTimeout(30.seconds))
+      }
+
+      "be disabled by default".inAssertAllStagesStopped(new TestSetup with NetProbes {
+        user.responseIn.ensureSubscription()
+        user.requestOut.sendComplete()
+        expectGracefulCompletion()
+      })
+
+      "flush exactly one GOAWAY before completing an idle connection".inAssertAllStagesStopped(new Enabled {
+        user.responseIn.ensureSubscription()
+        user.requestOut.sendComplete()
+        network.expect[GoAwayFrame]() shouldBe GoAwayFrame(0, ErrorCode.NO_ERROR)
+        expectGracefulCompletion()
+      })
+
+      "send accepted request HEADERS before GOAWAY and drain the streaming response".inAssertAllStagesStopped(
+        new Enabled {
+          user.emitRequest(Get("https://www.example.com/"))
+          user.requestOut.sendComplete()
+          network.expectDecodedResponseHEADERSPairs(1)
+          network.expect[GoAwayFrame]() shouldBe GoAwayFrame(0, ErrorCode.NO_ERROR)
+
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200")))
+          val response = user.expectResponse()
+          response.status shouldBe StatusCodes.OK
+          val entity = ByteStringSinkProbe(response.entity.dataBytes)
+          val body = ByteString("remaining response")
+          network.sendDATA(1, endStream = true, body)
+          entity.expectBytes(body)
+          entity.expectComplete()
+          user.responseIn.expectComplete()
+        })
+
+      "honor the existing completion timeout while an accepted request is pending".inAssertAllStagesStopped(
+        new Enabled {
+          override def settings = super.settings.mapHttp2Settings(_.withCompletionTimeout(1.second))
+
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+          user.requestOut.sendComplete()
+          network.expect[GoAwayFrame]() shouldBe GoAwayFrame(0, ErrorCode.NO_ERROR)
+          user.responseIn.ensureSubscription()
+          user.responseIn.expectNoMessage(100.millis)
+          expectGracefulCompletion()
+        })
+
+      "not raise the GOAWAY boundary if keepalive later times out".inAssertAllStagesStopped(new Enabled {
+        override def settings = super.settings.mapHttp2Settings(
+          _.withPingInterval(800.millis).withPingTimeout(400.millis))
+
+        user.emitRequest(Get("https://www.example.com/"))
+        network.expectDecodedResponseHEADERSPairs(1)
+        user.requestOut.sendComplete()
+        network.expect[GoAwayFrame]() shouldBe GoAwayFrame(0, ErrorCode.NO_ERROR)
+
+        network.expectFrame(FrameType.PING, ByteFlag.Zero, 0, ConfigurablePing.Ping.data)
+        val timedOut = network.expect[GoAwayFrame]()
+        timedOut.lastStreamId shouldBe 0
+        timedOut.errorCode shouldBe ErrorCode.PROTOCOL_ERROR
+      })
+
+      "preserve the existing error shutdown when the application request source fails".inAssertAllStagesStopped(
+        new Enabled {
+          val cause = new IllegalStateException("application request source failed")
+          EventFilter.error(message =
+              "HTTP2 connection failed with error [application request source failed]. Sending INTERNAL_ERROR and closing connection.",
+            occurrences = 1).intercept {
+            user.responseIn.ensureSubscription()
+            user.requestOut.sendError(cause)
+            user.responseIn.expectError() shouldBe theSameInstanceAs(cause)
+            network.expect[GoAwayFrame]() shouldBe GoAwayFrame(0, ErrorCode.INTERNAL_ERROR)
+            network.toNet.expectComplete()
+          }
+        })
+
+      "not send a graceful GOAWAY when the response stream is cancelled".inAssertAllStagesStopped(new Enabled {
+        user.responseIn.cancel()
+        user.requestOut.expectCancellation()
+        network.toNet.expectComplete()
+      })
+
+      "not send GOAWAY on transport EOF".inAssertAllStagesStopped(new Enabled {
+        user.responseIn.ensureSubscription()
+        network.fromNet.sendComplete()
+        expectGracefulCompletion()
+        user.requestOut.expectCancellation()
+      })
+    }
+
     "delay stage completion" should {
 
       "complete when the last response entity is cancelled after request input completion".inAssertAllStagesStopped(

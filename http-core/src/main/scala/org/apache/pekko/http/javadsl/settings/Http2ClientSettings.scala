@@ -119,6 +119,18 @@ trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2Cli
   def getCompletionTimeout: Duration = Duration.ofMillis(completionTimeout.toMillis)
   def withCompletionTimeout(timeout: Duration): Http2ClientSettings = copy(completionTimeout = timeout.toMillis.millis)
 
+  /**
+   * Whether to send GOAWAY on normal request source completion for a direct HTTP/2 connection.
+   * In-flight requests can still complete within [[getCompletionTimeout]]. Disabled by default.
+   *
+   * @since 2.1.0
+   */
+  def getSendGoAwayOnGracefulClose: Boolean = self.sendGoAwayOnGracefulClose
+
+  /** @since 2.1.0 */
+  def withSendGoAwayOnGracefulClose(enabled: Boolean): Http2ClientSettings =
+    self.withSendGoAwayOnGracefulClose(enabled)
+
   def getBaseConnectionBackoff: Duration = Duration.ofMillis(baseConnectionBackoff.toMillis)
   def withBaseConnectionBackoff(backoff: Duration): Http2ClientSettings =
     copy(baseConnectionBackoff = backoff.toMillis.millis)
