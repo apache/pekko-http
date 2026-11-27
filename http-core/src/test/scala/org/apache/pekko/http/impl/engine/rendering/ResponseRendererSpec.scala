@@ -130,6 +130,19 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         }
       }
 
+      "a typed Accept-Encoding header in a successful response" in new TestSetup() {
+        val acceptEncoding = pekko.http.javadsl.model.headers.AcceptEncoding.create(HttpEncodings.gzip)
+        HttpResponse(200, List(acceptEncoding)) should renderTo {
+          """HTTP/1.1 200 OK
+            |Accept-Encoding: gzip
+            |Server: pekko-http/1.0.0
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |Content-Length: 0
+            |
+            |"""
+        }
+      }
+
       "a custom Date header" in new TestSetup() {
         HttpResponse(200, List(Date(DateTime(2011, 8, 26, 10, 11, 59)))) should renderTo {
           """HTTP/1.1 200 OK
