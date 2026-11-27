@@ -42,7 +42,11 @@ settings from the `pekko.http.routing` configuration.
 
 This directive is transparent to non-`GET` requests.
 
-See also: [RFC 7233](https://tools.ietf.org/html/rfc7233)
+Pekko HTTP recognizes the `bytes` range unit case-insensitively in `Range`, `Accept-Ranges`, and
+`Content-Range`. It also recognizes the reserved `none` value in `Accept-Ranges` case-insensitively.
+Modeled values render the recognized names in lowercase.
+
+See also: [RFC 9110, Section 14](https://www.rfc-editor.org/rfc/rfc9110.html#section-14).
 
 ## Example
 

@@ -29,11 +29,11 @@ import pekko.http.scaladsl.model.headers._
 private[parser] trait SimpleHeaders {
   this: Parser with CommonRules with CommonActions with IpAddressParsing =>
 
-  // http://tools.ietf.org/html/rfc7233#section-2.3
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-14.3
   def `accept-ranges` = rule {
-    ("none" ~ push(Nil) | listStart ~ oneOrMore(`range-unit`).separatedBy(listSep) ~ listEnd) ~ EOI ~>
-    (`Accept-Ranges`(
-      _))
+    (("none" | ignoreCase("none")) ~ !CharacterClasses.tchar ~ push(Nil)
+    | listStart ~ oneOrMore(`range-unit`).separatedBy(listSep) ~ listEnd) ~ EOI ~>
+    (`Accept-Ranges`(_))
   }
 
   // https://www.w3.org/TR/cors/#access-control-allow-credentials-response-header
