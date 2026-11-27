@@ -91,7 +91,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
 
   "The Http/2 client implementation" should {
     for {
-      interimStatuses <- Seq(Seq.empty[Int], Seq(103), Seq(102, 103), Seq(103, 103))
+      interimStatuses <- Seq(Seq.empty[Int], Seq(103), Seq(102, 103), Seq(103, 103), Seq(103, 199))
       finalBody <- Seq(ByteString.empty, ByteString("final response"))
     } {
       s"retain the final response after ordinary interim statuses ${interimStatuses.mkString(",")} with ${finalBody.length} bytes" in
@@ -170,6 +170,23 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
     "accept content-free status responses" should {
       def conditionalGet(uri: String): HttpRequest =
         Get(uri).withHeaders(RawHeader("if-none-match", "\"cached\""))
+
+      "use the registered status and its content-free semantics before stream end".inAssertAllStagesStopped {
+        val custom = StatusCodes.custom(299, "Custom final status", "", isSuccess = false, allowsEntity = false)
+        new TestSetup with NetProbes {
+          override def settings: ClientConnectionSettings = {
+            val base = super.settings
+            base.withParserSettings(base.parserSettings.withCustomStatusCodes(custom))
+          }
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expect[HeadersFrame]().streamId shouldBe 1
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "299")))
+          val response = user.expectResponse()
+          response.status shouldBe theSameInstanceAs(custom)
+          response.entity shouldBe HttpEntity.Empty
+          network.sendDATA(1, endStream = true, ByteString.empty)
+        }
+      }
 
       for (status <- Seq(StatusCodes.NoContent, StatusCodes.ResetContent, StatusCodes.NotModified);
         endInHeaders <- Seq(true, false)) {

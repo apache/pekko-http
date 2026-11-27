@@ -38,7 +38,13 @@ import pekko.http.scaladsl.model.HttpEntity.ChunkStreamPart
 import pekko.http.scaladsl.model.HttpEntity.LastChunk
 import pekko.http.scaladsl.model.headers.Expect
 import pekko.http.scaladsl.model.{ AttributeKey, HttpEntity, HttpHeader, HttpMethod }
-import pekko.http.scaladsl.settings.{ Http2ClientSettings, Http2CommonSettings, Http2ServerSettings, ServerSettings }
+import pekko.http.scaladsl.settings.{
+  Http2ClientSettings,
+  Http2CommonSettings,
+  Http2ServerSettings,
+  ParserSettings,
+  ServerSettings
+}
 import pekko.macros.LogHelper
 import pekko.stream.Attributes
 import pekko.stream.BidiShape
@@ -60,7 +66,10 @@ import pekko.util.OptionVal
  * INTERNAL API
  */
 @InternalApi
-private[http2] class Http2ClientDemux(http2Settings: Http2ClientSettings, masterHttpHeaderParser: HttpHeaderParser)
+private[http2] class Http2ClientDemux(
+    http2Settings: Http2ClientSettings,
+    masterHttpHeaderParser: HttpHeaderParser,
+    parserSettings: ParserSettings)
     extends Http2Demux(http2Settings, initialRemoteSettings = Nil, upgraded = false, isServer = false) {
 
   def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[ChunkStreamPart] = {
@@ -71,6 +80,9 @@ private[http2] class Http2ClientDemux(http2Settings: Http2ClientSettings, master
         case (name, value)             => parseHeaderPair(headerParser, name, value.asInstanceOf[String])
       }.toList))
   }
+
+  override def isContentFreeFinalStatus(status: String): Boolean =
+    Http2ResponseStatus.isContentFreeFinal(status, parserSettings.customStatusCodes)
 
   override def completionTimeout: FiniteDuration = http2Settings.completionTimeout
 
@@ -281,6 +293,9 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
   def maxConnectionAgeGrace: Duration
   def maxConnectionAgeJitter: Double
 
+  // Only clients interpret response status codes.
+  def isContentFreeFinalStatus(status: String): Boolean = false
+
   def createContinuePredicate(attributes: Attributes): ParsedHeadersFrame => Boolean = _ => false
 
   override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, ServerTerminator) = {
@@ -292,6 +307,8 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
       def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart] =
         stage.wrapTrailingHeaders(headers)
+
+      override def isContentFreeFinalStatus(status: String): Boolean = stage.isContentFreeFinalStatus(status)
 
       override def isServer: Boolean = stage.isServer
 

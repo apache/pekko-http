@@ -506,10 +506,13 @@ well-known status codes, however sometimes you may need to use a custom one (or 
 Custom status reasons may be empty and may contain horizontal tabs, printable ASCII and ISO-8859-1
 characters above DEL, as specified by RFC 9112 section 4. Other control characters, DEL and characters
 outside the ISO-8859-1 range are rejected with `IllegalArgumentException` at construction, including
-when copying a status code. When parsing a response with an unregistered status code, invalid characters are
-dropped from the received reason; for registered status codes the parser uses the registered reason instead.
+when copying a status code. For an unregistered status code, HTTP/1.1 drops invalid characters from the
+received reason; HTTP/2 has no reason phrase and uses an empty string. Both clients preserve an unknown
+three-digit code in the 100–599 range and interpret it according to its class (RFC 9110 section 15).
+If a code is not predefined, both use the configured reason and entity semantics when a custom status is registered.
+HTTP/2 applies custom registrations only within 100–599; a registration outside that range does not make it a valid HTTP/2 status.
 
-Similarly to the media types registration, you can register custom status codes by configuring @apidoc[ParserSettings] like this:
+You can register custom status codes by configuring @apidoc[ParserSettings] like this:
 
 Scala
 :   @@snip [CustomStatusCodesSpec.scala](/http-tests/src/test/scala/org/apache/pekko/http/scaladsl/CustomStatusCodesSpec.scala) { #application-custom }
