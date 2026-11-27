@@ -34,6 +34,19 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
       an[IllegalArgumentException] should be thrownBy Cookie("theme", ";")
       an[IllegalArgumentException] should be thrownBy JavaCookie.create("theme", ";")
     }
+
+    "reject an empty cookie name" in {
+      def rejected(create: => Any) = (the[IllegalArgumentException] thrownBy create).getMessage should
+        include("cookie name must not be empty")
+
+      rejected(Cookie("", "dark"))
+      rejected(JavaCookie.create("", "dark"))
+      rejected(HttpCookiePair("", "dark"))
+      rejected(HttpCookiePair.raw("", "dark"))
+      rejected(HttpCookie("", "dark"))
+      // `copy` goes through the constructor too
+      rejected(HttpCookie("theme", "dark").withName(""))
+    }
   }
 
   "Sec-WebSocket-Accept should" - {

@@ -29,6 +29,12 @@ class HttpCookieSpec extends AnyFreeSpec with Matchers {
         cookie.name() must be("cookieName")
         cookie.value() must be("cookieValue")
       }
+      "a non-empty name only" in {
+        val e = the[IllegalArgumentException] thrownBy HttpCookie.create("", "cookieValue")
+        e.getMessage must include("cookie name must not be empty")
+        an[IllegalArgumentException] must be thrownBy HttpCookiePair.create("", "cookieValue")
+        an[IllegalArgumentException] must be thrownBy HttpCookiePair.createRaw("", "cookieValue")
+      }
       "SameSite None by default" in {
         HttpCookie.create("cookieName", "cookieValue").getSameSite must be(Optional.empty)
       }
