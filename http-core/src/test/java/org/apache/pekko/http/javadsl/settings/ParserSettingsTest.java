@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.javadsl.settings;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.testkit.javadsl.TestKit;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,13 @@ public class ParserSettingsTest {
     ActorSystem sys = ActorSystem.create("test");
     try {
       ParserSettings settings = ParserSettings.forServer(sys);
+      assertEquals(Long.MAX_VALUE, settings.getMaxHttp1FieldSectionSize());
+      ParserSettings updated = settings.withMaxHttp1FieldSectionSize(24L).withMaxHeaderCount(8);
+      assertEquals(24L, updated.getMaxHttp1FieldSectionSize());
+      assertEquals(
+          Long.MAX_VALUE,
+          updated.withMaxHttp1FieldSectionSize(Long.MAX_VALUE).getMaxHttp1FieldSectionSize());
+      assertEquals(Long.MAX_VALUE, ParserSettings.forClient(sys).getMaxHttp1FieldSectionSize());
     } finally {
       TestKit.shutdownActorSystem(sys);
     }

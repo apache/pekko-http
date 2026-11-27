@@ -39,6 +39,14 @@ abstract class ParserSettings private[pekko] () extends pekko.http.javadsl.setti
   def maxHeaderNameLength: Int
   def maxHeaderValueLength: Int
   def maxHeaderCount: Int
+
+  /**
+   * The size limit, in bytes, for each incoming HTTP/1 field section. Long.MaxValue disables this limit.
+   *
+   * @since 2.1.0
+   */
+  def maxHttp1FieldSectionSize: Long = getMaxHttp1FieldSectionSize
+
   def maxContentLength: Long
   def maxToStrictBytes: Long
   def maxChunkExtLength: Int
@@ -115,6 +123,14 @@ abstract class ParserSettings private[pekko] () extends pekko.http.javadsl.setti
   override def withMaxHeaderNameLength(newValue: Int): ParserSettings = self.copy(maxHeaderNameLength = newValue)
   override def withMaxHeaderValueLength(newValue: Int): ParserSettings = self.copy(maxHeaderValueLength = newValue)
   override def withMaxHeaderCount(newValue: Int): ParserSettings = self.copy(maxHeaderCount = newValue)
+
+  /**
+   * Returns settings with the given incoming HTTP/1 field-section limit, in bytes. Use Long.MaxValue to disable it.
+   *
+   * @since 2.1.0
+   */
+  override def withMaxHttp1FieldSectionSize(newValue: Long): ParserSettings =
+    self.copy(http1FieldSectionSize = newValue)
   override def withMaxContentLength(newValue: Long): ParserSettings =
     self.copy(maxContentLengthSetting = Some(newValue))
   def withMaxContentLength(newValue: Option[Long]): ParserSettings = self.copy(maxContentLengthSetting = newValue)
