@@ -305,6 +305,23 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
     }
 
     "a response with a Strict body," - {
+      "status 201 with Location and Content-Location for the created representation" in new TestSetup(None) {
+        val resource = Uri("/reports/42")
+        val response = HttpResponse(
+          StatusCodes.Created,
+          headers = List(Location(resource), `Content-Location`(resource)),
+          entity = "Report ready")
+        ResponseRenderingContext(response, requestMethod = HttpMethods.POST) should renderTo(
+          """HTTP/1.1 201 Created
+            |Location: /reports/42
+            |Content-Location: /reports/42
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |Content-Type: text/plain; charset=UTF-8
+            |Content-Length: 12
+            |
+            |Report ready""", close = false)
+      }
+
       "status 400 and a few headers" in new TestSetup() {
         HttpResponse(400, List(Age(30), Connection("Keep-Alive")), "Small f*ck up overhere!") should renderTo {
           """HTTP/1.1 400 Bad Request
