@@ -276,3 +276,26 @@ anyway, which is a reasonable default for such problems.
 In order to learn more about handling exceptions in the actual routing layer, which is where your application code
 comes into the picture, refer to @ref[Exception Handling](../routing-dsl/exception-handling.md) which focuses explicitly on explaining how exceptions
 thrown in routes can be handled and transformed into @apidoc[HttpResponse] s with appropriate error codes and human-readable failure descriptions.
+
+
+## Opt in to a custom HTTP/1.1 protocol
+
+By default a custom `Upgrade` offer remains an ordinary HTTP request. A server can opt in to one custom, unversioned
+protocol name for an individual binding, for example `Http().newServerAt("localhost", 8080, "example-probe")` in Scala
+or `Http.get(system).newServerAt("localhost", 8080, "example-probe")` in Java.
+
+On that binding, `Http1ProtocolUpgrade.fromRequest(request)` in the Scala or Java model can return an offer for a
+complete, bodyless HTTP/1.1 `OPTIONS` request that includes the registered protocol and the `Connection: Upgrade`
+option. The request is still delivered to the usual handler; use normal routing and authorization before deciding
+whether to accept it. Return an ordinary HTTP response to decline.
+
+To accept, return `offer.accept(handler)` from the request handler. Its handler receives the original completed
+HTTP request and creates the selected protocol's `Flow[ByteString, ByteString, _]` (a `Flow<ByteString, ByteString, ?>`
+in Java). Pekko HTTP sends the negotiated `101 Switching Protocols` before handing the connection to that flow.
+The flow must answer the original `OPTIONS` in the new protocol, without requiring the client to repeat the request.
+An application may append ordinary response headers to the acceptance. Pekko HTTP owns the `Connection`, `Upgrade`
+and body framing; do not set those fields yourself. Returning a different response status declines the offer.
+
+The custom interface is limited to bodyless HTTP/1.1 `OPTIONS`. This does not add automatic
+client support, affect WebSocket or h2c upgrades, or change the existing HTTP/2 selection for that binding. See
+[RFC 9110 §7.8](https://www.rfc-editor.org/rfc/rfc9110.html#section-7.8).

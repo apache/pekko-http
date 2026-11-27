@@ -19,12 +19,14 @@ import pekko.event.LoggingAdapter
 import pekko.http.{ IllegalRequestContext, ParsingErrorHandler }
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
 import pekko.http.impl.util._
+import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.Http.ServerLayer
 import pekko.http.scaladsl.model.HttpEntity._
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
+import pekko.http.scaladsl.model.ws.{ Message, TextMessage, WebSocketRequest }
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.scaladsl._
 import pekko.stream.testkit.Utils.assertAllStagesStopped
@@ -36,11 +38,16 @@ import pekko.testkit._
 import pekko.util.ByteString
 import org.scalatest.Inside
 
-import java.net.{ InetAddress, InetSocketAddress }
+import java.io.{ BufferedReader, InputStreamReader }
+import java.net.{ InetAddress, InetSocketAddress, Socket }
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
+import scala.concurrent.Promise
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
-import scala.util.Random
+import scala.util.{ Random, Using }
 
 object TestParsingErrorHandler extends ParsingErrorHandler {
   override def handle(
@@ -69,6 +76,8 @@ class HttpServerSpec extends PekkoSpec(
      pekko.http.server.request-timeout = infinite
   """) with Inside with WithLogCapturing { spec =>
   implicit val materializer: Materializer = Materializer(system)
+
+  private val exampleProtocol = UpgradeProtocol("example-probe")
 
   "The server implementation" should {
     "deliver an empty request as soon as all headers are received" in assertAllStagesStopped(new TestSetup {
@@ -139,6 +148,203 @@ class HttpServerSpec extends PekkoSpec(
 
         shutdownBlueprint()
       })
+
+    "accept a registered HTTP/1.1 OPTIONS upgrade at the request boundary" in
+    assertAllStagesStopped(new CustomUpgradeTestSetup {
+      val materializations = new AtomicInteger
+      try {
+        val offer = optionsOffer
+        val split = offer.indexOfSlice(ByteString("Connection:"))
+        send(offer.take(split))
+        send(offer.drop(split))
+        val request = expectRequest()
+        val response = Http1Upgrade.accept(request) { original =>
+          original.method shouldBe OPTIONS
+          original.protocol shouldBe HttpProtocols.`HTTP/1.1`
+          original.uri shouldBe Uri("http://example.com/capabilities")
+          original.header[Connection].exists(_.hasUpgrade) shouldBe true
+          original.header[Upgrade].map(_.protocols) shouldBe Some(Seq(UpgradeProtocol("EXAMPLE-PROBE")))
+          original.entity.isKnownEmpty shouldBe true
+
+          // Answer the original OPTIONS before waiting for any new protocol message.
+          Flow[ByteString]
+            .take(1)
+            .map(bytes => ByteString("echo: ") ++ bytes)
+            .prepend(Source.single(ByteString(s"features for ${original.uri.path}: echo")))
+            .mapMaterializedValue { value =>
+              materializations.incrementAndGet()
+              value
+            }
+        }
+        response should not be empty
+        responses.sendNext(response.get.addHeader(RawHeader("X-Upgrade-Feature", "echo")))
+        expectResponseWithWipedDate(
+          """HTTP/1.1 101 Switching Protocols
+            |Upgrade: example-probe
+            |X-Upgrade-Feature: echo
+            |Server: pekko-http/test
+            |Date: XXXX
+            |Connection: Upgrade
+            |
+            |""")
+        requests.expectComplete()
+        netOut.expectUtf8EncodedString("features for /capabilities: echo")
+        send(ByteString("status"))
+        netOut.expectUtf8EncodedString("echo: status")
+        netOut.expectComplete()
+        materializations.get() shouldBe 1
+      } finally {
+        try closeNetworkInput()
+        finally {
+          try netOut.cancel()
+          finally requests.cancel()
+        }
+      }
+    })
+
+    "resume ordinary HTTP on the same connection after declining a registered OPTIONS upgrade" in
+    assertAllStagesStopped(new CustomUpgradeTestSetup {
+      offerProtocol()
+      val request = expectRequest()
+      request.method shouldBe OPTIONS
+      val proposed = Http1Upgrade.accept(request)(_ => fail("a declined handler must not be created")).get
+      responses.sendNext(proposed.withStatus(StatusCodes.OK))
+      expectResponseWithWipedDate(
+        """HTTP/1.1 200 OK
+          |Server: pekko-http/test
+          |Date: XXXX
+          |Content-Length: 0
+          |
+          |""")
+
+      send("""GET /next HTTP/1.1
+             |Host: example.com
+             |
+             |""")
+      val next = expectRequest()
+      next.uri shouldBe Uri("http://example.com/next")
+      Http1Upgrade.accept(next)(_ => Flow[ByteString]) shouldBe None
+      simpleResponse()
+      shutdownBlueprint()
+    })
+
+    "keep a custom HTTP/1.1 OPTIONS offer in HTTP when the connection has not opted in" in
+    assertAllStagesStopped(new TestSetup {
+      sendOptionsOffer(this)
+      val request = expectRequest()
+      request.method shouldBe OPTIONS
+      request.header[Upgrade].map(_.protocols) shouldBe Some(Seq(UpgradeProtocol("EXAMPLE-PROBE")))
+      Http1Upgrade.accept(request)(_ => Flow[ByteString]) shouldBe None
+      simpleResponse()
+      shutdownBlueprint()
+    })
+
+    "return retained input to the HTTP owner only once when declining an upgrade" in {
+      val originalInput = ByteString("uninterpreted retained data")
+      val decisions = ListBuffer.empty[Http1Upgrade.ParserDecision]
+      val boundary = new Http1Upgrade.Boundary(exampleProtocol, originalInput,
+        decision => {
+          decisions += decision
+          ()
+        })
+
+      val normalResponse = HttpResponse()
+      Http1Upgrade.decide(Some(boundary), normalResponse, canSwitch = true) shouldBe normalResponse
+      boundary.decline()
+      decisions.toList shouldBe List(Http1Upgrade.ContinueHttp(originalInput))
+    }
+
+    "deliver retained input before live input only to the committed protocol owner" in assertAllStagesStopped {
+      val first = ByteString("initial protocol capabilities")
+      val next = ByteString("subsequent protocol message")
+      val decision = Promise[Http1Upgrade.ParserDecision]()
+      val boundary = new Http1Upgrade.Boundary(exampleProtocol, first,
+        result => {
+          val _ = decision.trySuccess(result)
+        })
+      val request = Http1Upgrade.attachOffer(HttpRequest(OPTIONS, "/capabilities")
+        .addAttribute(Http1Upgrade.boundaryKey, boundary))
+      val intent = Http1Upgrade.accept(request)(_ => Flow[ByteString]).get
+      val accepted = Http1Upgrade.decide(Some(boundary), intent, canSwitch = true)
+      accepted.status shouldBe StatusCodes.SwitchingProtocols
+      decision.isCompleted shouldBe false
+      boundary.decline()
+      decision.isCompleted shouldBe false
+
+      val selected = accepted.header[UpgradeToOtherProtocolResponseHeader].get
+      Source.single(next).via(selected.handler).runWith(Sink.seq).futureValue shouldBe Seq(first, next)
+      decision.future.futureValue shouldBe Http1Upgrade.SwitchCommitted
+    }
+
+    "enable a custom HTTP/1.1 protocol on a public server binding alongside WebSocket and HTTP/2" in {
+      val binding = Http().newServerAt("127.0.0.1", 0, "example-probe")
+        .adaptSettings(_.withEnableHttp2(true))
+        .bindSync { request =>
+          request.uri.path.toString match {
+            case "/capabilities" =>
+              Http1ProtocolUpgrade.fromRequest(request).get.accept { original =>
+                Flow[ByteString]
+                  .via(Framing.delimiter(ByteString("\n"), maximumFrameLength = 64))
+                  .take(1)
+                  .map(line => ByteString("echo: ") ++ line ++ ByteString("\n"))
+                  .prepend(Source.single(ByteString(s"features for ${original.uri.path}: echo\n")))
+              }.addHeader(RawHeader("X-Upgrade-Feature", "echo"))
+            case "/websocket" =>
+              request.attribute(AttributeKeys.webSocketUpgrade).get.handleMessages(Flow[Message].take(1))
+            case _ => HttpResponse()
+          }
+        }.awaitResult(8.seconds)
+      try {
+        Using.resource(new Socket()) { socket =>
+          socket.connect(binding.localAddress, 5000)
+          socket.setSoTimeout(5000)
+          val input = new BufferedReader(new InputStreamReader(socket.getInputStream, UTF_8))
+          def send(bytes: ByteString): Unit = {
+            socket.getOutputStream.write(bytes.toArray)
+            socket.getOutputStream.flush()
+          }
+          val host = s"127.0.0.1:${binding.localAddress.getPort}"
+          val offer = optionsOffer.utf8String.replace("example.com", host)
+          send(ByteString(offer))
+          input.readLine() shouldBe "HTTP/1.1 101 Switching Protocols"
+          val headers = Iterator.continually(input.readLine()).takeWhile(line => line != null && line.nonEmpty).toList
+          headers should contain("Upgrade: example-probe")
+          headers should contain("Connection: Upgrade")
+          headers should contain("X-Upgrade-Feature: echo")
+          input.readLine() shouldBe "features for /capabilities: echo"
+          send(ByteString("status\n"))
+          input.readLine() shouldBe "echo: status"
+        }
+        Using.resource(new Socket()) { socket =>
+          socket.connect(binding.localAddress, 5000)
+          socket.setSoTimeout(5000)
+          val input = new BufferedReader(new InputStreamReader(socket.getInputStream, UTF_8))
+          val host = s"127.0.0.1:${binding.localAddress.getPort}"
+          def request(message: String): Unit = {
+            socket.getOutputStream.write(message.getBytes(UTF_8))
+            socket.getOutputStream.flush()
+            input.readLine() shouldBe "HTTP/1.1 200 OK"
+            Iterator.continually(input.readLine()).takeWhile(line => line != null && line.nonEmpty).size should be > 0
+          }
+          request(optionsOffer.utf8String.replace("example.com", host).replace("/capabilities", "/ordinary"))
+          request(s"GET /again HTTP/1.1\r\nHost: $host\r\n\r\n")
+        }
+        val message = TextMessage.Strict("hello")
+        val wsUri = s"ws://127.0.0.1:${binding.localAddress.getPort}/websocket"
+        val (upgrade, received) = Http().singleWebSocketRequest(WebSocketRequest(wsUri),
+          Flow.fromSinkAndSourceMat(Sink.head[Message], Source.single(message))(Keep.left))
+        upgrade.awaitResult(8.seconds).response.status shouldBe StatusCodes.SwitchingProtocols
+        received.awaitResult(8.seconds) shouldBe message
+
+        val response = Source.single(HttpRequest(uri = "/http2"))
+          .via(Http().connectionTo("127.0.0.1").toPort(binding.localAddress.getPort).http2WithPriorKnowledge())
+          .runWith(Sink.head)
+          .awaitResult(8.seconds)
+        response.status shouldBe StatusCodes.OK
+        response.protocol shouldBe HttpProtocols.`HTTP/2.0`
+        response.discardEntityBytes()
+      } finally binding.terminate(1.second).awaitResult(8.seconds)
+    }
 
     "write the entire chunked response before closing when the application asks to close" in
     assertAllStagesStopped(new TestSetup {
@@ -1852,6 +2058,24 @@ class HttpServerSpec extends PekkoSpec(
       netOut.expectComplete()
     })
   }
+  private val optionsOffer: ByteString =
+    ByteString(
+      """OPTIONS /capabilities HTTP/1.1
+        |Host: example.com
+        |Connection: Upgrade
+        |Upgrade: EXAMPLE-PROBE
+        |
+        |""".stripMarginWithNewline("\r\n"))
+
+  private def sendOptionsOffer(setup: TestSetup): Unit = setup.send(optionsOffer)
+
+  private class CustomUpgradeTestSetup extends TestSetup {
+    override def modifyServer(server: ServerLayer): ServerLayer =
+      server.addAttributes(Attributes(new Http1Upgrade.Registration(exampleProtocol)))
+
+    def offerProtocol(): Unit = sendOptionsOffer(this)
+  }
+
   class TestSetup(maxContentLength: Int = -1) extends HttpServerTestSetupBase {
     implicit def system: ActorSystem = spec.system
     implicit def materializer: Materializer = spec.materializer

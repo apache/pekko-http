@@ -21,6 +21,7 @@ import scala.jdk.FutureConverters._
 import org.apache.pekko
 import pekko.actor.ClassicActorSystemProvider
 import pekko.event.LoggingAdapter
+import pekko.http.impl.engine.server.Http1Upgrade
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.model.{ HttpRequest, HttpResponse }
 import pekko.http.javadsl.settings.ServerSettings
@@ -144,13 +145,21 @@ trait HandlerProvider {
 
 object ServerBuilder {
   private[http] def apply(interface: String, port: Int, system: ClassicActorSystemProvider): ServerBuilder =
+    apply(interface, port, system, None)
+
+  private[http] def apply(
+      interface: String,
+      port: Int,
+      system: ClassicActorSystemProvider,
+      upgrade: Option[Http1Upgrade.Registration]): ServerBuilder =
     Impl(
       interface, port,
       scaladsl.HttpConnectionContext,
       system.classicSystem.log,
       ServerSettings.create(system.classicSystem),
       system,
-      SystemMaterializer(system).materializer)
+      SystemMaterializer(system).materializer,
+      upgrade)
 
   private case class Impl(
       interface: String,
@@ -159,7 +168,8 @@ object ServerBuilder {
       log: LoggingAdapter,
       settings: ServerSettings,
       system: ClassicActorSystemProvider,
-      materializer: Materializer) extends ServerBuilder {
+      materializer: Materializer,
+      upgrade: Option[Http1Upgrade.Registration]) extends ServerBuilder {
     private implicit def executionContext: ExecutionContext = system.classicSystem.dispatcher
     private def http: scaladsl.HttpExt = scaladsl.Http(system.classicSystem)
 
@@ -174,7 +184,7 @@ object ServerBuilder {
     def bind(handler: Function[HttpRequest, CompletionStage[HttpResponse]]): CompletionStage[ServerBinding] =
       http.bindAndHandleAsyncImpl(
         handler.apply(_).asScala.map(_.asScala),
-        interface, port, context.asScala, settings.asScala, parallelism = 0, log = log)(materializer)
+        interface, port, context.asScala, settings.asScala, parallelism = 0, log = log, upgrade = upgrade)(materializer)
         .map(new ServerBinding(_)).asJava
 
     def bind(handlerProvider: HandlerProvider): CompletionStage[ServerBinding] = bind(handlerProvider.handler(system))
@@ -182,17 +192,17 @@ object ServerBuilder {
     def bindSync(handler: Function[HttpRequest, HttpResponse]): CompletionStage[ServerBinding] =
       http.bindAndHandleAsyncImpl(
         req => FastFuture.successful(handler(req).asScala),
-        interface, port, context.asScala, settings.asScala, parallelism = 0, log)(materializer)
+        interface, port, context.asScala, settings.asScala, parallelism = 0, log, upgrade)(materializer)
         .map(new ServerBinding(_)).asJava
 
     def bindFlow(handlerFlow: Flow[HttpRequest, HttpResponse, ?]): CompletionStage[ServerBinding] =
       http.bindAndHandleImpl(
         handlerFlow.asInstanceOf[Flow[sm.HttpRequest, sm.HttpResponse, ?]].asScala,
-        interface, port, context.asScala, settings.asScala, log)(materializer)
+        interface, port, context.asScala, settings.asScala, log, upgrade)(materializer)
         .map(new ServerBinding(_)).asJava
 
     def connectionSource(): Source[IncomingConnection, CompletionStage[ServerBinding]] =
-      http.bindImpl(interface, port, context.asScala, settings.asScala, log)
+      http.bindImpl(interface, port, context.asScala, settings.asScala, log, upgrade)
         .map(new IncomingConnection(_))
         .mapMaterializedValue(_.map(new ServerBinding(_))(ExecutionContext.parasitic).asJava).asJava
   }

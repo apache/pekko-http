@@ -135,6 +135,7 @@ private[http] object HttpServerBluePrint {
     override def createLogic(inheritedAttributes: Attributes) =
       new GraphStageLogic(shape) with InHandler with OutHandler {
         val remoteAddressOpt = inheritedAttributes.get[HttpAttributes.RemoteAddress].map(_.address)
+        val genericUpgradeEnabled = inheritedAttributes.get[Http1Upgrade.Registration].isDefined
 
         var downstreamPullWaiting = false
         var completionDeferred = false
@@ -180,7 +181,9 @@ private[http] object HttpServerBluePrint {
               }
             } else httpRequest
 
-            push(out, effectiveHttpRequest)
+            val request = if (genericUpgradeEnabled) Http1Upgrade.attachOffer(effectiveHttpRequest)
+            else effectiveHttpRequest
+            push(out, request)
           case other =>
             throw new IllegalStateException(s"unexpected element of type ${other.getClass}")
         }
@@ -458,6 +461,7 @@ private[http] object HttpServerBluePrint {
         val parsingErrorHandler: ParsingErrorHandler =
           settings.parsingErrorHandlerInstance(outerMaterializer.system)
         val pullHttpResponseIn = () => tryPull(httpResponseIn)
+        val genericUpgradeEnabled = inheritedAttributes.get[Http1Upgrade.Registration].isDefined
         var openRequests = immutable.Queue[RequestStart]()
         var oneHundredContinueResponsePending = false
         var pullSuppressed = false
@@ -547,8 +551,18 @@ private[http] object HttpServerBluePrint {
                 else if (requestStart.closeRequested) CloseRequested.RequestAskedForClosing
                 else CloseRequested.Unspecified
 
+              val decidedResponse =
+                if (genericUpgradeEnabled) {
+                  val boundary = requestStart.attributes.get(Http1Upgrade.boundaryKey).collect {
+                    case value: Http1Upgrade.Boundary => value
+                  }
+                  Http1Upgrade.decide(boundary, response, !close.shouldClose && openRequests.isEmpty)
+                } else if (response.status == StatusCodes.SwitchingProtocols)
+                  Http1Upgrade.decide(None, response, canSwitch = false)
+                else response
+
               emit(responseCtxOut,
-                ResponseRenderingContext(response, requestStart.method, requestStart.protocol, close),
+                ResponseRenderingContext(decidedResponse, requestStart.method, requestStart.protocol, close),
                 pullHttpResponseIn)
               if (!isClosed(requestParsingIn) && close.shouldClose && requestStart.expect100Continue)
                 maybePullRequestParsingIn()

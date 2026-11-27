@@ -19,6 +19,7 @@ import org.apache.pekko
 import pekko.actor.ClassicActorSystemProvider
 import pekko.annotation.InternalApi
 import pekko.event.LoggingAdapter
+import pekko.http.impl.engine.server.Http1Upgrade
 import pekko.http.scaladsl
 import pekko.http.scaladsl.Http.ServerBinding
 import pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
@@ -123,6 +124,13 @@ trait ServerBuilder {
 @InternalApi
 private[http] object ServerBuilder {
   def apply(interface: String, port: Int, system: ClassicActorSystemProvider): ServerBuilder =
+    apply(interface, port, system, None)
+
+  private[http] def apply(
+      interface: String,
+      port: Int,
+      system: ClassicActorSystemProvider,
+      upgrade: Option[Http1Upgrade.Registration]): ServerBuilder =
     Impl(
       interface,
       port,
@@ -130,7 +138,8 @@ private[http] object ServerBuilder {
       system.classicSystem.log,
       ServerSettings(system.classicSystem),
       system,
-      SystemMaterializer(system).materializer)
+      SystemMaterializer(system).materializer,
+      upgrade)
 
   private case class Impl(
       interface: String,
@@ -139,7 +148,8 @@ private[http] object ServerBuilder {
       log: LoggingAdapter,
       settings: ServerSettings,
       system: ClassicActorSystemProvider,
-      materializer: Materializer) extends ServerBuilder {
+      materializer: Materializer,
+      upgrade: Option[Http1Upgrade.Registration]) extends ServerBuilder {
     private val http: scaladsl.HttpExt = scaladsl.Http(system.classicSystem)
 
     def onInterface(newInterface: String): ServerBuilder = copy(interface = newInterface)
@@ -151,13 +161,14 @@ private[http] object ServerBuilder {
     def withMaterializer(newMaterializer: Materializer): ServerBuilder = copy(materializer = newMaterializer)
 
     def connectionSource(): Source[Http.IncomingConnection, Future[ServerBinding]] =
-      http.bindImpl(interface, port, context, settings, log)
+      http.bindImpl(interface, port, context, settings, log, upgrade)
 
     def bindFlow(handlerFlow: Flow[HttpRequest, HttpResponse, ?]): Future[ServerBinding] =
-      http.bindAndHandleImpl(handlerFlow, interface, port, context, settings, log)(materializer)
+      http.bindAndHandleImpl(handlerFlow, interface, port, context, settings, log, upgrade)(materializer)
 
     def bind(handler: HttpRequest => Future[HttpResponse]): Future[ServerBinding] =
-      http.bindAndHandleAsyncImpl(handler, interface, port, context, settings, parallelism = 0, log)(materializer)
+      http.bindAndHandleAsyncImpl(handler, interface, port, context, settings, parallelism = 0, log, upgrade)(
+        materializer)
 
     def bindSync(handler: HttpRequest => HttpResponse): Future[ServerBinding] =
       bind(req => FastFuture.successful(handler(req)))

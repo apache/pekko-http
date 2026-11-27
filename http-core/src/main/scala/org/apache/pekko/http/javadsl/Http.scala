@@ -25,6 +25,7 @@ import org.apache.pekko
 import pekko.actor.{ ActorSystem, ClassicActorSystemProvider, ExtendedActorSystem, ExtensionId, ExtensionIdProvider }
 import pekko.event.LoggingAdapter
 import pekko.http._
+import pekko.http.impl.engine.server.Http1Upgrade
 import pekko.http.impl.util.JavaMapping
 import pekko.http.impl.util.JavaMapping.HttpsConnectionContext
 import pekko.http.impl.util.JavaMapping.Implicits._
@@ -96,6 +97,17 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
    * @param port The port to bind to or `0` if the port should be automatically assigned.
    */
   def newServerAt(interface: String, port: Int): ServerBuilder = ServerBuilder(interface, port, system)
+
+  /**
+   * Creates a builder permitting a completed bodyless HTTP/1.1 OPTIONS offer to upgrade to the named
+   * custom protocol when the application explicitly accepts it with [[Http1ProtocolUpgrade.fromRequest]].
+   * Other requests, including the built-in upgrades, use their usual paths.
+   *
+   * @since 2.1.0
+   */
+  def newServerAt(interface: String, port: Int, http1UpgradeProtocol: String): ServerBuilder =
+    ServerBuilder(interface, port, system,
+      Some(new Http1Upgrade.Registration(sm.headers.UpgradeProtocol(http1UpgradeProtocol))))
 
   /**
    * Constructs a client layer stage using the configured default [[pekko.http.javadsl.settings.ClientConnectionSettings]].
