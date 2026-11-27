@@ -32,6 +32,7 @@ import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.impl.util.JavaMapping.Implicits._
 import pekko.http.javadsl.ClientTransport
 import pekko.http.javadsl.model.headers.UserAgent
+import pekko.http.scaladsl
 import pekko.io.Inet.SocketOption
 
 import com.typesafe.config.Config
@@ -41,6 +42,17 @@ import com.typesafe.config.Config
  */
 @DoNotInherit
 abstract class ClientConnectionSettings private[pekko] () { self: ClientConnectionSettingsImpl =>
+
+  /**
+   * @since 2.1.0
+   */
+  final def getHttp2Settings: Http2ClientSettings = self.http2Settings
+
+  /**
+   * @since 2.1.0
+   */
+  final def withHttp2Settings(settings: Http2ClientSettings): ClientConnectionSettings =
+    self.copy(http2Settings = settings.asInstanceOf[scaladsl.settings.Http2ClientSettings])
 
   /* JAVA APIs */
   /**

@@ -92,6 +92,9 @@ server supports HTTP/2.
 For this reason the approach is known as HTTP/2 with
 [Prior Knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3).
 
+For the optional response compression policy, see
+@ref[HPACK dynamic table insertion](../client-side/http2.md#hpack-dynamic-table-insertion).
+
 ## Flow-control window updates
 
 Changes to a peer's `SETTINGS_INITIAL_WINDOW_SIZE` apply to existing HTTP/2 streams, including decreases.

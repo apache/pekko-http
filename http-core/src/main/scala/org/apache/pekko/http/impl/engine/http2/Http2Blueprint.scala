@@ -32,6 +32,7 @@ import pekko.http.impl.engine.{ HttpConnectionIdleTimeoutBidi, HttpIdleTimeoutEx
 import pekko.http.impl.util.LogByteStringTools.logTLSBidiBySetting
 import pekko.http.impl.util.StreamUtils
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.settings.Http2CommonSettings.HpackPolicyOptions
 import pekko.http.scaladsl.settings.{
   ClientConnectionSettings,
   Http2ClientSettings,
@@ -140,7 +141,8 @@ private[http] object Http2Blueprint {
       .atopKeepRight(serverDemux(settings.http2Settings, initialDemuxerSettings, upgraded,
         Some((settings, masterHttpHeaderParser)))) atop
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames) atop // enable for debugging
-      hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize)
+      hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize,
+        settings.http2Settings.hpackPolicyOptions)
 
     val http2Settings = settings.http2Settings
     val frameTypesForThrottle = getFrameTypesForThrottle(http2Settings.frameTypeThrottleFrameTypes)
@@ -185,7 +187,8 @@ private[http] object Http2Blueprint {
       httpLayerClient(masterHttpHeaderParser, settings, log, connectionScheme, connectionAuthority)).atop(
       clientDemux(http2Settings, masterHttpHeaderParser)).atop(
       FrameLogger.logFramesIfEnabled(http2Settings.logFrames)).atop( // enable for debugging
-      hpackCoding(masterHttpHeaderParser, settings.parserSettings, http2Settings.maxHeaderListSize)).atop(
+      hpackCoding(masterHttpHeaderParser, settings.parserSettings, http2Settings.maxHeaderListSize,
+        http2Settings.hpackPolicyOptions)).atop(
       possibleThrottle).atop(
       framingClient(log, http2Settings.maxFrameSize)).atop(
       errorHandling(log)).atop(
@@ -327,8 +330,15 @@ private[http] object Http2Blueprint {
    */
   def hpackCoding(masterHttpHeaderParser: HttpHeaderParser, parserSettings: ParserSettings, maxHeaderListSize: Int)
       : BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
+    hpackCoding(masterHttpHeaderParser, parserSettings, maxHeaderListSize, None)
+
+  private def hpackCoding(
+      masterHttpHeaderParser: HttpHeaderParser,
+      parserSettings: ParserSettings,
+      maxHeaderListSize: Int,
+      policy: Option[HpackPolicyOptions]): BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
     BidiFlow.fromFlows(
-      Flow[FrameEvent].via(HeaderCompression),
+      Flow[FrameEvent].via(HeaderCompression.withPolicy(policy)),
       Flow[FrameEvent].via(new HeaderDecompression(masterHttpHeaderParser, parserSettings, maxHeaderListSize)))
 
   /**
