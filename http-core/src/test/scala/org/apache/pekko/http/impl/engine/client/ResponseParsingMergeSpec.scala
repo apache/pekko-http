@@ -13,10 +13,12 @@
 
 package org.apache.pekko.http.impl.engine.client
 
+import scala.concurrent.duration._
+
 import org.apache.pekko
 import pekko.http.impl.engine.client.OutgoingConnectionBlueprint.ResponseParsingMerge
 import pekko.http.impl.engine.parsing.HttpResponseParser.ResponseContext
-import pekko.http.impl.engine.parsing.ParserOutput.EntityStreamError
+import pekko.http.impl.engine.parsing.ParserOutput.{ EntityStreamError, MessageEnd, ResponseStart, StrictEntityCreator }
 import pekko.http.impl.engine.parsing.{ HttpHeaderParser, HttpResponseParser, ParserOutput }
 import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
@@ -24,8 +26,8 @@ import pekko.http.scaladsl.settings.ParserSettings
 import pekko.stream.TLSProtocol.SessionBytes
 import pekko.stream.scaladsl.{ GraphDSL, RunnableGraph, Sink, Source }
 import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
-import pekko.stream.{ Attributes, ClosedShape }
-import pekko.testkit.PekkoSpec
+import pekko.stream.{ Attributes, ClosedShape, SourceShape }
+import pekko.testkit._
 import pekko.util.ByteString
 
 class ResponseParsingMergeSpec extends PekkoSpec {
@@ -33,6 +35,42 @@ class ResponseParsingMergeSpec extends PekkoSpec {
   val parserSettings = ParserSettings(system)
 
   "The ResponseParsingMerge stage" should {
+
+    for (firstMethod <- List(HttpMethods.GET, HttpMethods.HEAD))
+      s"keep a 204 and the following 200 separate in one input element (${firstMethod.value}, GET)" in {
+        val body = ByteString("next response")
+        val date = "Date: Mon, 01 Jan 2024 00:00:00 GMT"
+        val firstHeaders = s"HTTP/1.1 204 No Content\r\n$date\r\n\r\n"
+        val secondHeaders = s"HTTP/1.1 200 OK\r\n$date\r\nContent-Length: ${body.length}\r\n\r\n"
+        val bytes = ByteString(firstHeaders + secondHeaders) ++ body
+        val contexts = Source(List(ResponseContext(firstMethod, None), ResponseContext(HttpMethods.GET, None)))
+        // Keep the input open: the second response must come from buffered bytes, not from a new element or EOF.
+        val network = Source.single(SessionBytes(null, bytes)).concat(Source.maybe[SessionBytes])
+        val parser = new HttpResponseParser(parserSettings, HttpHeaderParser(parserSettings, log))
+
+        val outputs = Source.fromGraph(GraphDSL.create() { implicit b =>
+          import GraphDSL.Implicits._
+          val parsingMerge = b.add(new ResponseParsingMerge(parser))
+          contexts ~> parsingMerge.in1
+          network  ~> parsingMerge.in0
+          SourceShape(parsingMerge.out)
+        }).completionTimeout(3.seconds.dilated).runWith(Sink.seq).awaitResult(5.seconds.dilated)
+
+        outputs.flatten.toList match {
+          case (first: ResponseStart) :: MessageEnd :: (second: ResponseStart) :: MessageEnd :: Nil =>
+            first.statusCode shouldBe StatusCodes.NoContent
+            first.protocol shouldBe HttpProtocols.`HTTP/1.1`
+            first.createEntity shouldBe StrictEntityCreator(HttpEntity.Empty)
+            first.closeRequested shouldBe false
+
+            second.statusCode shouldBe StatusCodes.OK
+            second.protocol shouldBe HttpProtocols.`HTTP/1.1`
+            val expectedEntity = HttpEntity.Strict(ContentTypes.`application/octet-stream`, body)
+            second.createEntity shouldBe StrictEntityCreator(expectedEntity)
+            second.closeRequested shouldBe false
+          case unexpected => fail(s"Expected two separate final responses, got $unexpected")
+        }
+      }
 
     "not lose entity truncation errors on upstream finish" in {
       val inBypassProbe = TestPublisher.manualProbe[OutgoingConnectionBlueprint.BypassData]()
