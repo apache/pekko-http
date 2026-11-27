@@ -20,16 +20,21 @@ import scala.concurrent.duration._
 
 import org.apache.pekko
 import pekko.NotUsed
+import pekko.event.Logging
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.{ ErrorCode, Flags, FrameType, SettingIdentifier }
 import pekko.http.impl.engine.http2.framing.FrameRenderer
 import pekko.http.impl.engine.server.{ HttpAttributes, ServerTerminator }
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
+import pekko.http.impl.util.JavaMapping.Implicits._
+import pekko.http.javadsl.{ model => jm, settings => js }
+import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.client.RequestBuilding.Get
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ CacheDirectives, ETag, RawHeader }
 import pekko.http.scaladsl.settings.{ Http2ServerSettings, ServerSettings }
 import pekko.stream.OverflowStrategy
+import pekko.stream.TLSProtocol.{ SendBytes, SessionBytes, SslTlsInbound, SslTlsOutbound }
 import pekko.stream.scaladsl.{ BidiFlow, Flow, Source, SourceQueueWithComplete }
 import pekko.stream.testkit.TestPublisher
 import pekko.stream.testkit.TestPublisher.ManualProbe
@@ -54,6 +59,42 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
   """)
     with Eventually {
   override def failOnSevereMessages: Boolean = true
+
+  private def awaitServerPushDemand(outgoing: ByteStringSinkProbe): Unit = {
+    // The fixture has consumed the initial server ACK and admitted the request before observing future demand.
+    // Wait for the actual state transition rather than racing a downstream request with the app response.
+    val demand = TestProbe()
+    system.eventStream.subscribe(demand.ref, classOf[Logging.Debug])
+    try {
+      outgoing.request(1)
+      demand.fishForMessage(3.seconds.dilated) {
+        case event: Logging.Debug => event.message == "Changing state from Idle to WaitingForData"
+        case _                    => false
+      }
+      ()
+    } finally system.eventStream.unsubscribe(demand.ref)
+  }
+
+  private def expectServerPush(
+      network: Http2FrameHpackSupport, parentId: Int, childId: Int, target: Uri,
+      primaryBody: String, pushedBody: String): Unit = {
+    val promise = network.expect[PushPromiseFrame]()
+    promise.streamId shouldBe parentId
+    promise.promisedStreamId shouldBe childId
+    promise.endHeaders shouldBe true
+    network.decodeHeaders(promise.headerBlockFragment).toMap shouldBe Map(
+      ":method" -> "GET",
+      ":scheme" -> "https",
+      ":authority" -> "example.org",
+      ":path" -> target.toString)
+
+    network.expectDecodedResponseHEADERSPairs(childId, endStream = false) should contain(":status" -> "200")
+    network.expectDecodedResponseHEADERSPairs(parentId, endStream = false) should contain(":status" -> "200")
+    val bodies = List(network.expect[DataFrame](), network.expect[DataFrame]())
+    bodies.map(frame => frame.streamId -> (frame.payload, frame.endStream)).toMap shouldBe Map(
+      parentId -> ((ByteString(primaryBody), true)),
+      childId -> ((ByteString(pushedBody), true)))
+  }
 
   "The Http/2 server implementation" should {
     "answer a malformed header field with a 400 on its stream and keep the connection" should {
@@ -183,6 +224,127 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectDecodedResponseHEADERSPairs(1, endStream = false).toMap shouldBe Map(":status" -> "100")
           network.expectDecodedResponseHEADERSPairs(1, endStream = true).toMap should contain(":status" -> "403")
         })
+    }
+
+    "offer optional server push" should {
+      val ordinaryCases = List(
+        ("leave the stock server off even when the peer opts in", false, 1),
+        ("keep the primary response when an enabled server's peer opts out", true, 0),
+        ("deliver a single same-origin promise and both independent response bodies when opted in", true, 1))
+
+      for ((name, serverEnabled, peerPreference) <- ordinaryCases)
+        name.inAssertAllStagesStopped(
+          new TestSetup(Setting(SettingIdentifier.SETTINGS_ENABLE_PUSH, peerPreference)) with RequestResponseProbes {
+            override def modifyServer(
+                server: BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator])
+                : BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] =
+              if (serverEnabled)
+                Http2Blueprint.serverStackWithPush(settings, system.log, NoOpTelemetry, Http().dateHeaderRendering)
+              else server
+
+            val parentId = 1
+            val target = Uri("/assets/site.css")
+            val primaryBody = "document"
+            val pushedBody = "stylesheet"
+            val requestFields = Seq(
+              ":method" -> "GET",
+              ":scheme" -> "https",
+              ":authority" -> "example.org",
+              ":path" -> "/home")
+            network.sendHEADERS(parentId, endStream = true, endHeaders = true, network.encodeHeaderPairs(requestFields))
+            val request = user.expectRequestRaw()
+            request.uri shouldBe Uri("https://example.org/home")
+            request.protocol shouldBe HttpProtocols.`HTTP/2.0`
+            val (offered, decision) =
+              Http2ServerPush.offerWithOutcome(request, target,
+                HttpResponse(status = StatusCodes.OK, entity = pushedBody),
+                HttpResponse(status = StatusCodes.OK, entity = primaryBody))
+
+            awaitServerPushDemand(network.toNet)
+            user.emitResponse(parentId, offered)
+            val admission = Await.result(decision, 3.seconds.dilated)
+            if (serverEnabled && peerPreference == 1) {
+              val childId = admission match {
+                case started: Http2ServerPush.HandedOff => started.streamId
+                case other                              => fail(s"Expected the ordinary push handoff, got $other")
+              }
+              childId shouldBe 2
+              expectServerPush(network, parentId, childId, target, primaryBody, pushedBody)
+            } else {
+              admission shouldBe (if (serverEnabled) Http2ServerPush.NotStarted else Http2ServerPush.NotOffered)
+              network.expectDecodedResponseHEADERSPairs(parentId, endStream = false) should contain(":status" -> "200")
+              network.expectDATA(parentId, endStream = true, ByteString(primaryBody))
+            }
+          })
+    }
+
+    "admit public push plans on the native server stack" should {
+      val cases = List(
+        ("leave public push plans off on the native server by default", false, false),
+        ("deliver public Scala push plans on the opted-in native server", true, false),
+        ("deliver public Java push plans on the opted-in native server", true, true))
+
+      for ((name, enabled, javaApi) <- cases)
+        name.inAssertAllStagesStopped(
+          new TestSetup(Setting(SettingIdentifier.SETTINGS_ENABLE_PUSH, 1)) with RequestResponseProbes {
+            override def settings: ServerSettings = {
+              val defaults = super.settings
+              if (!enabled) defaults
+              else if (javaApi) {
+                val javaSettings: js.ServerSettings = defaults
+                val javaHttp2 = javaSettings.getHttp2Settings.withServerPushEnabled(true)
+                javaSettings.withHttp2Settings(javaHttp2).asScala
+              } else defaults.mapHttp2Settings(_.withServerPushEnabled(true))
+            }
+
+            override def modifyServer(
+                server: BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator])
+                : BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] = {
+              // Use only the typed native TLS boundary; an SSLSession is local metadata here, not a connected engine.
+              val session = SSLContext.getDefault.createSSLEngine.getSession
+              val inMemoryTransport = BidiFlow.fromFlows(
+                Flow[SslTlsOutbound].collect { case SendBytes(bytes) => bytes },
+                Flow[ByteString].map[SslTlsInbound](bytes => SessionBytes(session, bytes)))
+              Http2Blueprint.serverStackTls(settings, system.log, NoOpTelemetry, Http().dateHeaderRendering)
+                .atop(inMemoryTransport)
+            }
+
+            val parentId = 1
+            val target = Uri("/assets/site.css")
+            val primaryBody = "document"
+            val pushedBody = "stylesheet"
+            network.sendFrame(SettingsAckFrame(Nil))
+            val requestFields = Seq(
+              ":method" -> "GET",
+              ":scheme" -> "https",
+              ":authority" -> "example.org",
+              ":path" -> "/home")
+            network.sendHEADERS(parentId, endStream = true, endHeaders = true, network.encodeHeaderPairs(requestFields))
+            val request = user.expectRequestRaw()
+            request.uri shouldBe Uri("https://example.org/home")
+            request.protocol shouldBe HttpProtocols.`HTTP/2.0`
+
+            val primary = HttpResponse(entity = primaryBody)
+            val offered =
+              if (javaApi) {
+                val javaPrimary: jm.HttpResponse = primary
+                val plan = jm.HttpResponse.Http2ServerPushPlan.create(
+                  jm.Uri.create(target.toString), jm.HttpResponse.create().withEntity(pushedBody))
+                javaPrimary.withHttp2ServerPush(request, plan).asScala
+              } else {
+                val plan = Http2ServerPushPlan(target, HttpResponse(entity = pushedBody))
+                primary.withHttp2ServerPush(request, plan)
+              }
+            if (!enabled) (offered eq primary) shouldBe true
+
+            awaitServerPushDemand(network.toNet)
+            user.emitResponse(parentId, offered)
+            if (enabled) expectServerPush(network, parentId, 2, target, primaryBody, pushedBody)
+            else {
+              network.expectDecodedResponseHEADERSPairs(parentId, endStream = false) should contain(":status" -> "200")
+              network.expectDATA(parentId, endStream = true, ByteString(primaryBody))
+            }
+          })
     }
 
     "support simple round-trips" should {

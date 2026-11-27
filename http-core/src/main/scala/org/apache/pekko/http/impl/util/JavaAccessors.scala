@@ -40,6 +40,15 @@ private[http] object JavaAccessors {
   def HttpResponse(): HttpResponse = model.HttpResponse()
 
   /** INTERNAL API */
+  def Http2ServerPushPlan(target: Uri, response: HttpResponse): model.Http2ServerPushPlan =
+    model.Http2ServerPushPlan(target.asScala, response.asScala)
+
+  /** INTERNAL API */
+  def withHttp2ServerPush(
+      primary: HttpResponse, parent: HttpRequest, plan: model.Http2ServerPushPlan): HttpResponse =
+    primary.asScala.withHttp2ServerPush(parent.asScala, plan)
+
+  /** INTERNAL API */
   def HttpEntity(contentType: ContentType, file: File): UniversalEntity =
     model.HttpEntity.fromPath(contentType.asScala, file.toPath)
 

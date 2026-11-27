@@ -121,10 +121,19 @@ private[http] object Http2Blueprint {
 
   def serverStackTls(settings: ServerSettings, log: LoggingAdapter, telemetry: TelemetrySpi,
       dateHeaderRendering: DateHeaderRendering)
-      : BidiFlow[HttpResponse, SslTlsOutbound, SslTlsInbound, HttpRequest, ServerTerminator] =
-    serverStack(settings, log, telemetry = telemetry, dateHeaderRendering = dateHeaderRendering).atop(
-      unwrapTls).atop(
+      : BidiFlow[HttpResponse, SslTlsOutbound, SslTlsInbound, HttpRequest, ServerTerminator] = {
+    val stack =
+      if (settings.http2Settings.serverPushEnabled)
+        serverStackWithPush(settings, log, telemetry, dateHeaderRendering)
+      else
+        serverStack(settings, log, telemetry = telemetry, dateHeaderRendering = dateHeaderRendering)
+    stack.atop(unwrapTls).atop(
       logTLSBidiBySetting("server-plain-text", settings.logUnencryptedNetworkBytes))
+  }
+
+  private[http] def offerServerPush(
+      parent: HttpRequest, plan: Http2ServerPushPlan, primary: HttpResponse): HttpResponse =
+    Http2ServerPush.offer(parent, plan.target, plan.response, primary)
 
   // format: OFF
   def serverStack(
@@ -133,13 +142,36 @@ private[http] object Http2Blueprint {
       initialDemuxerSettings: Seq[Setting] = Nil,
       upgraded: Boolean = false,
       telemetry: TelemetrySpi,
-    dateHeaderRendering: DateHeaderRendering): BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] = {
+    dateHeaderRendering: DateHeaderRendering): BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] =
+    serverStackImpl(settings, log, initialDemuxerSettings, upgraded, telemetry, dateHeaderRendering, None)
+
+  private[http2] def serverStackWithPush(
+      settings: ServerSettings,
+      log: LoggingAdapter,
+      telemetry: TelemetrySpi,
+      dateHeaderRendering: DateHeaderRendering)
+      : BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] =
+    serverStackImpl(settings, log, Nil, false, telemetry, dateHeaderRendering,
+      Some(new ResponseRendering(settings, log, dateHeaderRendering)))
+
+  private def serverStackImpl(
+      settings: ServerSettings,
+      log: LoggingAdapter,
+      initialDemuxerSettings: Seq[Setting],
+      upgraded: Boolean,
+      telemetry: TelemetrySpi,
+      dateHeaderRendering: DateHeaderRendering,
+      pushRenderer: Option[ResponseRendering])
+      : BidiFlow[HttpResponse, ByteString, ByteString, HttpRequest, ServerTerminator] = {
     val masterHttpHeaderParser = HttpHeaderParser(settings.parserSettings, log) // FIXME: reuse for framing
-    
+    val demux = serverDemux(settings.http2Settings, initialDemuxerSettings, upgraded,
+      Some((settings, masterHttpHeaderParser)))
+    val configuredDemux = pushRenderer.fold(demux)(renderer =>
+      demux.addAttributes(pekko.stream.Attributes(new Http2ServerPush.Enabled(renderer))))
+
     val initialFlow = (telemetry.serverConnection atop
-      httpLayer(settings, log, dateHeaderRendering))
-      .atopKeepRight(serverDemux(settings.http2Settings, initialDemuxerSettings, upgraded,
-        Some((settings, masterHttpHeaderParser)))) atop
+      httpLayerImpl(settings, log, dateHeaderRendering, pushRenderer))
+      .atopKeepRight(configuredDemux) atop
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames) atop // enable for debugging
       hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize,
         settings.http2Settings.hpackPolicyOptions)
@@ -370,18 +402,31 @@ private[http] object Http2Blueprint {
    * `bindFlow` the user needs to take of this manually.
    */
   def httpLayer(settings: ServerSettings, log: LoggingAdapter, dateHeaderRendering: DateHeaderRendering)
+      : BidiFlow[HttpResponse, Http2SubStream, Http2SubStream, HttpRequest, NotUsed] =
+    httpLayerImpl(settings, log, dateHeaderRendering, None)
+
+  private def httpLayerImpl(
+      settings: ServerSettings, log: LoggingAdapter, dateHeaderRendering: DateHeaderRendering,
+      pushRenderer: Option[ResponseRendering])
       : BidiFlow[HttpResponse, Http2SubStream, Http2SubStream, HttpRequest, NotUsed] = {
     val parserSettings = settings.parserSettings
     // This is master header parser, every other usage should do .createShallowCopy()
     // HttpHeaderParser is not thread safe and should not be called concurrently,
     // the internal trie, however, has built-in protection and will do copy-on-write
     val masterHttpHeaderParser = HttpHeaderParser(parserSettings, log)
+    val outgoing = pushRenderer match {
+      case Some(renderer) => Flow[HttpResponse].map(response => Http2ServerPush.renderPrimary(renderer, response))
+      case None           => Flow[HttpResponse].map(new ResponseRendering(settings, log, dateHeaderRendering))
+    }
     RequestErrorFlow().atop(
       BidiFlow.fromFlows(
-        Flow[HttpResponse].map(new ResponseRendering(settings, log, dateHeaderRendering)),
+        outgoing,
         Flow[Http2SubStream].via(StreamUtils.statefulAttrsMap { attrs =>
           val headerParser = masterHttpHeaderParser.createShallowCopy()
-          RequestParsing.parseRequest(headerParser, settings, attrs)
+          val parse = RequestParsing.parseRequest(headerParser, settings, attrs)
+          if (pushRenderer.isDefined)
+            (substream: Http2SubStream) => Http2ServerPush.markParsed(substream, parse(substream))
+          else parse
         }))
     )
   }

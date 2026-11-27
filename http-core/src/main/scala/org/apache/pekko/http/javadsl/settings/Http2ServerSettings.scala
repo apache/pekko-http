@@ -38,6 +38,19 @@ trait Http2ServerSettings {
   def withHpackIndexingPolicy(policy: HpackIndexingPolicy): Http2ServerSettings =
     (self: scaladsl.settings.Http2ServerSettings).withHpackIndexingPolicy(policy)
 
+  /**
+   * Whether native HTTP/2 connections admit explicit best-effort server push plans. Off by default.
+   *
+   * @since 2.1.0
+   */
+  def isServerPushEnabled: Boolean = serverPushEnabled
+
+  /**
+   * @since 2.1.0
+   */
+  def withServerPushEnabled(enabled: Boolean): Http2ServerSettings =
+    (self: scaladsl.settings.Http2ServerSettings).withServerPushEnabled(enabled)
+
   def getRequestEntityChunkSize: Int = requestEntityChunkSize
   def withRequestEntityChunkSize(newRequestEntityChunkSize: Int): Http2ServerSettings
 

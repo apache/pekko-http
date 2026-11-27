@@ -227,6 +227,19 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def frameTypeThrottleInterval: FiniteDuration
   def withFrameTypeThrottleInterval(interval: FiniteDuration) = copy(frameTypeThrottleInterval = interval)
 
+  /**
+   * Whether to admit explicit best-effort server push plans on native HTTP/2 connections. Off by default.
+   *
+   * @since 2.1.0
+   */
+  def serverPushEnabled: Boolean = false
+
+  /**
+   * @since 2.1.0
+   */
+  override def withServerPushEnabled(enabled: Boolean): Http2ServerSettings =
+    copy(serverPushEnabled = enabled)
+
   @InternalApi
   private[http] def internalSettings: Option[Http2InternalServerSettings]
 
@@ -272,7 +285,8 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       frameTypeThrottleBurst: Int,
       frameTypeThrottleInterval: FiniteDuration,
       internalSettings: Option[Http2InternalServerSettings],
-      outboundHpackPolicy: Option[Http2CommonSettings.HpackPolicyOptions])
+      outboundHpackPolicy: Option[Http2CommonSettings.HpackPolicyOptions],
+      override val serverPushEnabled: Boolean)
       extends Http2ServerSettings {
     require(maxConcurrentStreams > 0, "max-concurrent-streams must be > 0")
     require(maxHeaderListSize > 0, "max-header-list-size must be > 0")
@@ -324,7 +338,34 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
         incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, minCollectStrictEntitySize,
         outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout, maxConnectionAge,
         maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes, frameTypeThrottleCost,
-        frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings, None)
+        frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings, None, false)
+
+    def this(
+        maxConcurrentStreams: Int,
+        maxHeaderListSize: Int,
+        maxFrameSize: Int,
+        requestEntityChunkSize: Int,
+        incomingConnectionLevelBufferSize: Int,
+        incomingStreamLevelBufferSize: Int,
+        minCollectStrictEntitySize: Int,
+        outgoingControlFrameBufferSize: Int,
+        logFrames: Boolean,
+        pingInterval: FiniteDuration,
+        pingTimeout: FiniteDuration,
+        maxConnectionAge: Duration,
+        maxConnectionAgeGrace: Duration,
+        maxConnectionAgeJitter: Double,
+        frameTypeThrottleFrameTypes: Set[String],
+        frameTypeThrottleCost: Int,
+        frameTypeThrottleBurst: Int,
+        frameTypeThrottleInterval: FiniteDuration,
+        internalSettings: Option[Http2InternalServerSettings],
+        outboundHpackPolicy: Option[Http2CommonSettings.HpackPolicyOptions]) =
+      this(maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, minCollectStrictEntitySize,
+        outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout, maxConnectionAge,
+        maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes, frameTypeThrottleCost,
+        frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings, outboundHpackPolicy, false)
 
     def copy(
         maxConcurrentStreams: Int,
@@ -351,7 +392,36 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
         outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout, maxConnectionAge,
         maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes, frameTypeThrottleCost,
         frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings,
-        outboundHpackPolicy = this.outboundHpackPolicy)
+        outboundHpackPolicy = this.outboundHpackPolicy,
+        serverPushEnabled = this.serverPushEnabled)
+
+    def copy(
+        maxConcurrentStreams: Int,
+        maxHeaderListSize: Int,
+        maxFrameSize: Int,
+        requestEntityChunkSize: Int,
+        incomingConnectionLevelBufferSize: Int,
+        incomingStreamLevelBufferSize: Int,
+        minCollectStrictEntitySize: Int,
+        outgoingControlFrameBufferSize: Int,
+        logFrames: Boolean,
+        pingInterval: FiniteDuration,
+        pingTimeout: FiniteDuration,
+        maxConnectionAge: Duration,
+        maxConnectionAgeGrace: Duration,
+        maxConnectionAgeJitter: Double,
+        frameTypeThrottleFrameTypes: Set[String],
+        frameTypeThrottleCost: Int,
+        frameTypeThrottleBurst: Int,
+        frameTypeThrottleInterval: FiniteDuration,
+        internalSettings: Option[Http2InternalServerSettings],
+        outboundHpackPolicy: Option[Http2CommonSettings.HpackPolicyOptions]): Http2ServerSettingsImpl =
+      copy(maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, minCollectStrictEntitySize,
+        outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout, maxConnectionAge,
+        maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes, frameTypeThrottleCost,
+        frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings,
+        outboundHpackPolicy, serverPushEnabled = this.serverPushEnabled)
 
     def copy(
         maxConcurrentStreams: Int = this.maxConcurrentStreams,
@@ -373,14 +443,14 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
         frameTypeThrottleBurst: Int = this.frameTypeThrottleBurst,
         frameTypeThrottleInterval: FiniteDuration = this.frameTypeThrottleInterval,
         internalSettings: Option[Http2InternalServerSettings] = this.internalSettings,
-        outboundHpackPolicy: Option[Http2CommonSettings.HpackPolicyOptions] =
-          this.outboundHpackPolicy): Http2ServerSettingsImpl =
+        outboundHpackPolicy: Option[Http2CommonSettings.HpackPolicyOptions] = this.outboundHpackPolicy,
+        serverPushEnabled: Boolean = this.serverPushEnabled): Http2ServerSettingsImpl =
       new Http2ServerSettingsImpl(maxConcurrentStreams, maxHeaderListSize, maxFrameSize,
         requestEntityChunkSize, incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize,
         minCollectStrictEntitySize, outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout,
         maxConnectionAge, maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes,
         frameTypeThrottleCost, frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings,
-        outboundHpackPolicy)
+        outboundHpackPolicy, serverPushEnabled)
   }
 
   private[http] object Http2ServerSettingsImpl
@@ -405,7 +475,8 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),
       frameTypeThrottleInterval = c.getFiniteDuration("frame-type-throttle.interval"),
       internalSettings = None, // no possibility to configure internal settings with config
-      outboundHpackPolicy = Http2CommonSettings.readHpackPolicyOptions(c)
+      outboundHpackPolicy = Http2CommonSettings.readHpackPolicyOptions(c),
+      serverPushEnabled = c.hasPath("server-push-enabled") && c.getBoolean("server-push-enabled")
     )
   }
 }

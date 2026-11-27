@@ -25,6 +25,7 @@ import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers.{ Trailer => _, _ }
 import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
+import pekko.util.ByteString
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -200,6 +201,23 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
           Map(":method" -> "GET", ":scheme" -> "https", ":authority" -> "example.test:8443", ":path" -> expectedPath)
         }
       }
+    }
+
+    "keep a response and its trailers on the assigned stream" in {
+      val rendering = new ResponseRendering(ServerSettings(ConfigFactory.load("reference.conf")), NoLogging,
+        dateHeaderRendering)
+      val response = HttpResponse(entity = "asset")
+        .addAttribute(Http2.streamId, 3)
+        .addAttribute(AttributeKeys.trailer, Trailer(RawHeader("x-asset-status", "ready")))
+
+      val substream = rendering(response)
+      substream.initialHeaders.streamId shouldBe 3
+      substream.initialHeaders.endStream shouldBe false
+      substream.data shouldBe Left(ByteString("asset"))
+      val trailing = substream.trailingHeaders.get
+      trailing.streamId shouldBe 3
+      trailing.endStream shouldBe true
+      trailing.keyValuePairs shouldBe Seq("x-asset-status" -> "ready")
     }
 
     "handle empty trailer" in {

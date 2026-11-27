@@ -295,6 +295,11 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
       override def isServer: Boolean = stage.isServer
 
+      private val pushOptions =
+        if (isServer) inheritedAttributes.get[Http2ServerPush.Enabled] else None
+      override protected val localPushOwner: Http2ServerPush.Owner =
+        if (pushOptions.isDefined) new Http2ServerPush.Owner else null
+
       override lazy val shouldSendContinue: ParsedHeadersFrame => Boolean =
         stage.createContinuePredicate(inheritedAttributes)
 
@@ -514,15 +519,20 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       //        after a while or buffer only a limited amount?
       val bufferedSubStreamOutput = new BufferedOutlet[Http2SubStream](fromOutlet(substreamOut))
       override def dispatchSubstream(initialHeaders: ParsedHeadersFrame, data: Either[ByteString, Source[Any, Any]],
-          correlationAttributes: Map[AttributeKey[?], ?]): Unit =
-        bufferedSubStreamOutput.push(Http2SubStream(initialHeaders, OptionVal.None, data, correlationAttributes))
+          correlationAttributes: Map[AttributeKey[?], ?]): Unit = {
+        val substream = Http2SubStream(initialHeaders, OptionVal.None, data, correlationAttributes)
+        if (localPushOwner ne null)
+          bufferedSubStreamOutput.push(Http2ServerPush.markParent(localPushOwner, substream))
+        else bufferedSubStreamOutput.push(substream)
+      }
 
       // -----------------------------------------------------------------
       override def onAllStreamsClosed(): Unit = completeIfDone()
       override def onAllDataFlushed(): Unit = completeIfDone()
 
       private def completeIfDone(): Unit = {
-        val noMoreOutgoingStreams = (terminating || isClosed(substreamIn)) && activeStreamCount() == 0
+        val noMoreOutgoingStreams =
+          (terminating || isClosed(substreamIn)) && activeStreamCount() == 0 && !hasLiveOrReservedPush
         def allOutgoingDataFlushed = isClosed(frameOut) || multiplexer.hasFlushedAllData
         if (noMoreOutgoingStreams && allOutgoingDataFlushed) {
           log.debug("Closing connection after all streams are done and all data has been flushed.")
@@ -545,12 +555,34 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         }
       }
 
+      private def handleOutgoingWithPush(primary: Http2SubStream, renderer: ResponseRendering): Unit = {
+        var prepared: Http2ServerPush.Prepared = null
+        val handedOff =
+          !terminating && awaitsOrdinaryResponse(primary.streamId) && multiplexer.tryPushOptionalControlFrame {
+            localPushOwner.prepare(primary, renderer).map { reserved =>
+              prepared = reserved
+              OutboundPushStart(reserved.promise, reserved.response.initialHeaders)
+            }
+          }
+
+        handleOutgoingCreated(Http2ServerPush.withoutPlan(primary))
+        if (handedOff) {
+          // A transport-owned ID cannot be scheduled before the initial control item or from inside a nested
+          // multiplexer transition. The ordinary primary still follows the existing response path above.
+          activateLocalPush(prepared)
+          Http2ServerPush.completeAdmission(primary, new Http2ServerPush.HandedOff(prepared.owned.streamId))
+        } else
+          Http2ServerPush.completeAdmission(primary, Http2ServerPush.NotStarted)
+      }
+
       // -----------------------------------------------------------------
       setHandler(substreamIn,
         new InHandler {
           def onPush(): Unit = {
             val sub = grab(substreamIn)
-            handleOutgoingCreated(sub)
+            if ((localPushOwner ne null) && Http2ServerPush.hasPlan(sub))
+              handleOutgoingWithPush(sub, pushOptions.get.renderer)
+            else handleOutgoingCreated(sub)
             // Once the incoming stream is handled, we decide if we need to pull more.
             tryPullSubStreams()
           }
@@ -602,6 +634,8 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
           case Setting(id, value) =>
             debug(s"Ignoring setting $id -> $value (in Demux)")
         }
+        if (settingsAppliedOk && (localPushOwner ne null))
+          localPushOwner.onPeerSettings(settings)
         settingsAppliedOk
       }
 
