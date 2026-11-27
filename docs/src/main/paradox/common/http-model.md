@@ -338,6 +338,12 @@ time: if the resolved time would be more than 50 years ahead, it uses the preced
 the two-digit year rule for `Set-Cookie` expiry dates. In its supported `Set-Cookie` expiry date formats, Apache Pekko
 HTTP accepts full English month names and abbreviations case-insensitively. This does not change other HTTP date parsing.
 
+[Content-Language](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.5) describes the intended audience
+of a representation. With modeled header parsing enabled, read its ordered language tags through
+@scala[`message.headers[T]`, with the modeled `Content-Language` as the type]@java[`message.getHeaders(ContentLanguage.class)`].
+Each field line remains a separate header; an empty field has an empty tag list, and an absent field is not synthesized.
+The original spelling of each tag is retained. It is not a language preference list like `Accept-Language`.
+
 Some headers have special status in HTTP and are therefore treated differently from "regular" headers:
 
 Content-Type

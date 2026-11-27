@@ -24,6 +24,10 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
 
 ### Behavior Changes
 
+* Valid `Content-Language` fields are now modeled as Scala `Content-Language` and Java `ContentLanguage` headers when
+  modeled header parsing is enabled. Code that previously matched a `RawHeader` can instead match the new type or read
+  the header by name. With modeled header parsing disabled, received fields still use `RawHeader`.
+
 * A bare `Partitioned` attribute in a parsed `Set-Cookie` header is now stored in the typed
   `HttpCookie.partitioned` field instead of the generic `extension` field. If your code detects
   partitioned cookies by inspecting `extension` (`getExtension()` in Java), use `partitioned`

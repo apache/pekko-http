@@ -13,10 +13,11 @@
 
 package org.apache.pekko.http.impl.model.parser
 
-import org.parboiled2.Parser
+import org.parboiled2.{ Parser, Rule1 }
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.model.parser.CharacterClasses.{ ALPHA, ALPHANUM }
 import pekko.http.scaladsl.model.RemoteAddress
 import pekko.http.scaladsl.model.headers._
 
@@ -98,6 +99,16 @@ private[parser] trait SimpleHeaders {
   def `content-encoding` = rule {
     listStart ~ oneOrMore(token ~> (x => HttpEncodings.getForKeyCaseInsensitive(x).getOrElse(HttpEncoding.custom(x))))
       .separatedBy(listSep) ~ listEnd ~ EOI ~> (`Content-Encoding`(_))
+  }
+
+  // RFC 9110 sections 8.5 and 8.5.1: list of language tags, not language ranges.
+  def `content-language` = rule {
+    listStart ~ zeroOrMore(`content-language-tag`).separatedBy(listSep) ~ listEnd ~ EOI ~> (`Content-Language`(_))
+  }
+
+  private def `content-language-tag`: Rule1[Language] = rule {
+    capture(oneOrMore(ALPHA)) ~ zeroOrMore('-' ~ capture(oneOrMore(ALPHANUM))) ~>
+    ((primary: String, subTags: Seq[String]) => Language(primary, subTags))
   }
 
   // http://tools.ietf.org/html/rfc7230#section-3.3.2

@@ -15,6 +15,7 @@ package org.apache.pekko.http.javadsl.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayDeque;
@@ -27,11 +28,37 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import org.apache.pekko.http.javadsl.model.headers.ContentLanguage;
+import org.apache.pekko.http.javadsl.model.headers.Language;
 import org.apache.pekko.http.javadsl.model.headers.Location;
 import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.junit.jupiter.api.Test;
 
 public class HttpMessageTest {
+  @Test
+  public void testContentLanguageOffersTypedAndByNameAccess() {
+    final ContentLanguage first =
+        (ContentLanguage) HttpHeader.parse("Content-Language", "zh-Hant-TW, en-US-u-ca-gregory");
+    final ContentLanguage second =
+        ContentLanguage.create(Language.create("X", "pekko"), Language.create("i", "default"));
+    assertIterableEquals(
+        List.of(
+            Language.create("zh", "Hant", "TW"), Language.create("en", "US", "u", "ca", "gregory")),
+        first.getLanguages());
+    assertEquals("X-pekko, i-default", second.value());
+
+    final HttpResponse response = HttpResponse.create().withHeaders(List.of(first, second));
+    assertEquals(first, response.getHeader("content-language").get());
+    assertEquals(first, response.getHeader(ContentLanguage.class).get());
+    assertIterableEquals(List.of(first, second), response.getHeaders(ContentLanguage.class));
+    assertFalse(HttpResponse.create().getHeader(ContentLanguage.class).isPresent());
+
+    final ContentLanguage empty = ContentLanguage.create();
+    assertEquals(empty, HttpHeader.parse("Content-Language", ""));
+    assertIterableEquals(List.of(), empty.getLanguages());
+    assertEquals("", empty.value());
+  }
+
   @Test
   public void testJavaScriptMediaType() {
     MediaType.WithOpenCharset javascript = MediaTypes.TEXT_JAVASCRIPT;
