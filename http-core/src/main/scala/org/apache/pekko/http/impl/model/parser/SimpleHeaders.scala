@@ -13,11 +13,12 @@
 
 package org.apache.pekko.http.impl.model.parser
 
+import org.parboiled2.CharPredicate.Digit
 import org.parboiled2.Parser
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.http.scaladsl.model.RemoteAddress
+import pekko.http.scaladsl.model.{ RemoteAddress, TransferEncoding, TransferEncodings }
 import pekko.http.scaladsl.model.headers._
 
 /**
@@ -234,8 +235,23 @@ private[parser] trait SimpleHeaders {
     }
   }
 
-  def te = rule {
-    listStart ~ oneOrMore(`transfer-coding`).separatedBy(listSep) ~ listEnd ~ EOI ~> (TE(_))
+  // RFC 9110 sections 10.1.4 and 12.4.2: TE can attach a weight to a transfer coding.
+  def te = {
+    def weightedCompressionCoding = rule {
+      (ignoreCase("gzip") ~ push("gzip")
+      | ignoreCase("deflate") ~ push("deflate")
+      | ignoreCase("compress") ~ push("compress")) ~
+      OWS ~ ws(';') ~ ignoreCase("q=") ~
+      capture('0' ~ optional('.' ~ optional((1 to 3).times(Digit)))
+        | '1' ~ optional('.' ~ optional((1 to 3).times('0')))) ~ OWS ~>
+      ((name: String, weight: String) => TransferEncodings.Extension(name, Map("q" -> weight)): TransferEncoding)
+    }
+
+    rule {
+      // Keep the existing unweighted path. Only TE interprets a following weight on a built-in coding.
+      listStart ~ oneOrMore(`transfer-coding` ~ !';' | weightedCompressionCoding).separatedBy(listSep) ~
+      listEnd ~ EOI ~> (TE(_))
+    }
   }
 
   // http://tools.ietf.org/html/rfc7230#section-3.3.1
