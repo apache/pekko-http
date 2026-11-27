@@ -20,7 +20,7 @@ package org.apache.pekko.http.impl.engine.http2
 import org.apache.pekko
 import pekko.NotUsed
 import pekko.http.impl.engine.http2.FrameEvent._
-import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
+import pekko.http.impl.engine.http2.Http2Protocol.{ ErrorCode, SettingIdentifier }
 import pekko.http.impl.engine.http2.framing.{ FrameRenderer, Http2FrameParsing }
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.Http
@@ -64,6 +64,7 @@ class Http2FirstSettingsSpec extends PekkoSpecWithMaterializer("") {
   } {
     s"${if (server) "Server" else "Client"} first peer SETTINGS $scenario" in {
       val firstIsAck = scenario == "ACK"
+      val configuredMaxConcurrentStreams = Option.when(scenario == "nonempty")(if (server) 128 else 192)
       StreamTestKit.assertAllStagesStopped {
         var finishApp: () => Unit = () => ()
         val connection: Flow[ByteString, ByteString, Any] = if (server) {
@@ -71,7 +72,11 @@ class Http2FirstSettingsSpec extends PekkoSpecWithMaterializer("") {
             finishApp = () => { p.trySuccess(None); () }
             NotUsed
           }
-          Http2Blueprint.serverStack(ServerSettings(system), system.log, telemetry = NoOpTelemetry,
+          val defaults = ServerSettings(system)
+          val settings = configuredMaxConcurrentStreams.fold(defaults) { limit =>
+            defaults.mapHttp2Settings(_.withMaxConcurrentStreams(limit))
+          }
+          Http2Blueprint.serverStack(settings, system.log, telemetry = NoOpTelemetry,
             dateHeaderRendering = Http().dateHeaderRendering).reversed
             .join(Flow.fromSinkAndSource(Sink.ignore, responses))
         } else {
@@ -82,7 +87,11 @@ class Http2FirstSettingsSpec extends PekkoSpecWithMaterializer("") {
           val appRequests = if (scenario == "early request")
             Source.single(HttpRequest(uri = "https://example.test/")).concat(requests)
           else requests
-          Http2Blueprint.clientStack(ClientConnectionSettings(system), system.log, NoOpTelemetry).reversed
+          val defaults = ClientConnectionSettings(system)
+          val settings = configuredMaxConcurrentStreams.fold(defaults) { limit =>
+            defaults.mapHttp2Settings(_.withMaxConcurrentStreams(limit))
+          }
+          Http2Blueprint.clientStack(settings, system.log, NoOpTelemetry).reversed
             .join(Flow.fromSinkAndSource(Sink.ignore, appRequests))
         }
         val input = TestPublisher.probe[ByteString]()
@@ -91,11 +100,20 @@ class Http2FirstSettingsSpec extends PekkoSpecWithMaterializer("") {
           .via(new Http2FrameParsing(!server, system.log))
           .runWith(Sink.fromSubscriber(output))
         try {
-          output.requestNext() shouldBe a[SettingsFrame]
+          output.requestNext() match {
+            case SettingsFrame(settings) =>
+              configuredMaxConcurrentStreams.foreach { limit =>
+                val advertised = settings.collect {
+                  case Setting(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, value) => value
+                }
+                advertised shouldBe Seq(limit)
+              }
+            case other => fail(s"Expected initial SETTINGS, got $other")
+          }
           if (scenario == "early request") output.requestNext() shouldBe a[HeadersFrame]
           val pingData = ByteString("12345678")
           val settings = if (scenario == "nonempty" || scenario == "fragmented")
-            Seq(Setting(Http2Protocol.SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, 2))
+            Seq(Setting(SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, 2))
           else Nil
           val first: FrameEvent = if (firstIsAck) SettingsAckFrame(Nil) else SettingsFrame(settings)
           val prefix = if (server) Http2Protocol.ClientConnectionPreface else ByteString.empty
