@@ -34,6 +34,12 @@ import pekko.stream.stage.StageLogging
 private[http2] trait Http2Multiplexer {
   def pushControlFrame(frame: FrameEvent): Unit
 
+  /** Unlike protocol control traffic, application hints must not grow a full output queue. */
+  def tryPushEarlyHints(frame: FrameEvent): Boolean
+
+  /** Discards a specific queued hint only if it has not yet been handed downstream. */
+  def discardEarlyHints(frame: FrameEvent): Unit
+
   /** Applies received SETTINGS in order, acknowledging only a successful application before sending pending DATA. */
   def applyAndAcknowledgeSettings(settings: Seq[Setting])(applySettings: => Boolean): Unit
   def updateConnectionLevelWindow(increment: Int): Boolean
@@ -117,6 +123,21 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
       private var connectionWindowLeft: Int = Http2Protocol.InitialWindowSize
 
       override def pushControlFrame(frame: FrameEvent): Unit = updateState(_.pushControlFrame(frame))
+
+      override def tryPushEarlyHints(frame: FrameEvent): Boolean =
+        if (controlFrameBuffer.size >= settings.outgoingControlFrameBufferSize) false
+        else {
+          pushControlFrame(frame)
+          true
+        }
+
+      override def discardEarlyHints(frame: FrameEvent): Unit =
+        if (controlFrameBuffer.dequeueFirst(_ eq frame).isDefined)
+          updateState {
+            case WaitingForNetworkToSendControlFrames if controlFrameBuffer.isEmpty =>
+              if (sendableOutstreams.isEmpty) Idle else WaitingForNetworkToSendData
+            case state => state
+          }
 
       private var applyingPeerSettings = false
 

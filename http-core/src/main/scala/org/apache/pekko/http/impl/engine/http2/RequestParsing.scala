@@ -26,6 +26,7 @@ import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.scaladsl.model
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.EarlyHintsSender
 import pekko.http.scaladsl.model.headers.`Tls-Session-Info`
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
@@ -107,7 +108,13 @@ private[http2] object RequestParsing {
         val (path, rawQueryString) = pathAndRawQuery
         val authorityOrDefault: Uri.Authority = if (authority == null) Uri.Authority.Empty else authority
         val uri = Uri(scheme, authorityOrDefault, path, rawQueryString)
-        val attributes = baseAttributes.updated(Http2.streamId, subStream.streamId)
+        val withStreamId = baseAttributes.updated(Http2.streamId, subStream.streamId)
+        val attributes =
+          if (subStream.correlationAttributes.isEmpty) withStreamId
+          else subStream.correlationAttributes.get(EarlyHintsSender.key) match {
+            case Some(sender: EarlyHintsSender) => withStreamId.updated(EarlyHintsSender.key, sender)
+            case _                              => withStreamId
+          }
 
         new HttpRequest(effectiveMethod, uri, headers.result(), attributes, entity, HttpProtocols.`HTTP/2.0`)
       }
