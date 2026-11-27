@@ -141,10 +141,13 @@ all closed at the same time.
 
 ## Trailing headers
 
-Like in the [HTTP/1.1 'Chunked' transfer encoding](https://datatracker.ietf.org/doc/html/rfc7230#section-4.1.2),
-HTTP/2 supports a [trailer part](https://httpwg.org/specs/rfc7540.html#rfc.section.8.1) containing headers
-after the body. Apache Pekko HTTP currently doesn't expose the trailing headers of the request. For the response, you
-can either model the trailing headers as the @scala[@scaladoc[HttpEntity.LastChunk](org.apache.pekko.http.scaladsl.model.HttpEntity.LastChunk)]@java[last chunk]
+Like [HTTP/1.1 chunked trailers](https://www.rfc-editor.org/rfc/rfc9112.html#section-7.1.2),
+[HTTP/2 trailers](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.1) follow the message body.
+For an incoming request represented by a chunked entity, read its @scala[`chunks`]@java[`getChunks()`] stream.
+If trailer fields are present, read them from @scala[`LastChunk.trailer`]@java[`ChunkStreamPart.getTrailerHeaders()` on the part where `isLastChunk()` returns `true`].
+The byte-only entity stream does not include trailers.
+
+For responses, model the trailing headers as the @scala[@scaladoc[HttpEntity.LastChunk](org.apache.pekko.http.scaladsl.model.HttpEntity.LastChunk)]@java[last chunk]
 of a @scala[@scaladoc[HttpEntity.Chunked](org.apache.pekko.http.scaladsl.model.HttpEntity.Chunked)]@java[chunked] response entity, or use the
 @apidoc[trailer](AttributeKeys$) attribute:
 

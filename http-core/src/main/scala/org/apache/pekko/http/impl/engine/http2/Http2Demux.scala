@@ -91,8 +91,12 @@ private[http2] class Http2ServerDemux(
     upgraded: Boolean,
     requestParser: Option[(ServerSettings, HttpHeaderParser)] = None)
     extends Http2Demux(http2Settings, initialRemoteSettings, upgraded, isServer = true) {
-  // We don't provide access to incoming trailing request headers on the server side
-  def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[ChunkStreamPart] = None
+  def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[ChunkStreamPart] =
+    if (headers.endStream) {
+      // The server's header decoder already modeled the ordinary fields.
+      val trailer = headers.keyValuePairs.collect { case (_, header: HttpHeader) => header }
+      Option.when(trailer.nonEmpty)(LastChunk(trailer = trailer))
+    } else None
 
   override def createContinuePredicate(attributes: Attributes): ParsedHeadersFrame => Boolean = requestParser match {
     case Some((settings, masterParser)) =>
