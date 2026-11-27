@@ -51,6 +51,23 @@ class MultipartSpec extends PekkoSpecWithMaterializer {
   }
 
   "Multipart.FormData" should {
+    "match the name parameter of Content-Disposition without changing its value" in {
+      val entity = HttpEntity("hello")
+      val extraHeader = RawHeader("X-Note", "unchanged")
+
+      for (parameter <- Seq("name", "Name")) {
+        val disposition =
+          HttpHeader.parse("Content-Disposition", s"""form-data; $parameter="FieldName"; x-meta="kept"""") match {
+            case HttpHeader.ParsingResult.Ok(header: `Content-Disposition`, Nil) => header
+            case other                                                           => fail(s"Expected a modeled Content-Disposition: $other")
+          }
+        val part = Multipart.General.BodyPart.Strict(entity, List(disposition, extraHeader))
+
+        part.toFormDataBodyPart.get shouldEqual
+        Multipart.FormData.BodyPart.Strict("FieldName", entity, Map("x-meta" -> "kept"), List(extraHeader))
+      }
+    }
+
     "render explicit filename strategies identically for strict and streamed parts" in {
       import Multipart.FormData.FilenameEncoding.{
         Ascii => AsciiFilename,

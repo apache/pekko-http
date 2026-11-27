@@ -299,6 +299,11 @@ Also, when a HEAD response has an @scala[*HttpEntity.CloseDelimited*]@java[*Http
 connection after the response has been sent. This allows the sending of HEAD responses without *Content-Length*
 header across persistent HTTP connections.
 
+### Multipart form-data field names
+
+When reading a form-data body part, Pekko HTTP matches the `name` parameter of `Content-Disposition`
+case-insensitively. The parameter value is the form field name and retains its original case.
+
 ### Multipart form-data filenames
 
 The @scala[`filename`]@java[`getFilename`] accessor of a form-data body part returns the `filename` parameter as received.

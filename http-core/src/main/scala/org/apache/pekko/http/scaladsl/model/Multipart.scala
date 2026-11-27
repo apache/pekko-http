@@ -293,10 +293,16 @@ object Multipart {
       private[BodyPart] def tryCreateFormDataBodyPart[T](
           f: (String, Map[String, String], Seq[HttpHeader]) => T): Try[T] = {
         val params = dispositionParams
+        def create(nameKey: String, name: String): Try[T] =
+          Success(f(name, params - nameKey, headers.filterNot(_.is("content-disposition"))))
+
         params.get("name") match {
-          case Some(name) => Success(f(name, params - "name", headers.filterNot(_.is("content-disposition"))))
-          case None       => Failure(IllegalHeaderException(
-              "multipart/form-data part must contain `Content-Disposition` header with `name` parameter"))
+          case Some(name) => create("name", name)
+          case None       =>
+            params.iterator.collectFirst {
+              case (key, name) if "name".equalsIgnoreCase(key) && key.forall(_ <= 0x7F) => create(key, name)
+            }.getOrElse(Failure(IllegalHeaderException(
+              "multipart/form-data part must contain `Content-Disposition` header with `name` parameter")))
         }
       }
       private[BodyPart] def tryCreateByteRangesBodyPart[T](
