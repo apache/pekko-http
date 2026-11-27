@@ -123,6 +123,11 @@ private[http] object HeaderParser {
 
   object EmptyCookieException extends SingletonException("Cookie header contained no parsable cookie values.")
 
+  // RFC 9111 §5.2 allows zero Cache-Control directives. Keep the previous RawHeader representation so
+  // an empty field does not shadow a subsequent modeled field in applications using typed header lookup.
+  private[http] def isEmptyCacheControl(name: String, value: String): Boolean =
+    value.isEmpty && name.equalsIgnoreCase("cache-control")
+
   def lookupParser(headerName: String, settings: Settings = DefaultSettings): Option[String => HeaderParser.Result] =
     lookupParserWithTimeDependence(headerName, settings).map { parse => (value: String) => parse(value, () => ()) }
 

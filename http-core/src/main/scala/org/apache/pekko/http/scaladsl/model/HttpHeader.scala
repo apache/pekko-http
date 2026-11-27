@@ -83,13 +83,27 @@ object HttpHeader {
    *
    * 3. The header name or value are illegal according to the basic requirements for HTTP headers
    *    (http://tools.ietf.org/html/rfc7230#section-3.2). In this case the method returns a `ParsingResult.Error`.
+   *
+   * A valid empty `Cache-Control` field is retained as a raw header with no errors, rather than as a modeled value.
    */
   def parse(
       name: String, value: String, settings: HeaderParser.Settings = HeaderParser.DefaultSettings): ParsingResult =
+    parseImpl(name, value, settings, allowEmptyCacheControlAsRaw = true)
+
+  @InternalApi
+  private[http] def parseForModeledCompanion(name: String, value: String): ParsingResult =
+    parseImpl(name, value, HeaderParser.DefaultSettings, allowEmptyCacheControlAsRaw = false)
+
+  private def parseImpl(
+      name: String, value: String, settings: HeaderParser.Settings, allowEmptyCacheControlAsRaw: Boolean)
+      : ParsingResult =
     if (name.forall(c => CharacterClasses.tchar(c))) {
       import org.parboiled2.Parser.DeliveryScheme.Try
       val parser = new HeaderParser(value, settings)
       parser.`header-field-value`.run() match {
+        case Success(preProcessedValue)
+            if allowEmptyCacheControlAsRaw && HeaderParser.isEmptyCacheControl(name, preProcessedValue) =>
+          ParsingResult.Ok(RawHeader(name, preProcessedValue), Nil)
         case Success(preProcessedValue) =>
           HeaderParser.parseFull(toRootLowerCase(name), preProcessedValue, settings) match {
             case HeaderParser.Success(header) => ParsingResult.Ok(header, Nil)

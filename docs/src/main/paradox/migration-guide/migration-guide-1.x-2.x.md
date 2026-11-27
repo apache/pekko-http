@@ -84,8 +84,8 @@ dropped from Pekko HTTP 2.0.0 ([PR1344](https://github.com/apache/pekko-http/pul
 ([PR1365](https://github.com/apache/pekko-http/pull/1365))
 * Comma-separated list headers, such as `Cache-Control`, `Connection`, `Accept` or `If-None-Match`, accept and ignore
 empty list elements (`no-store,, public`, `, no-store` or `no-store,`) as RFC 9110 section 5.6.1 requires, instead of
-staying a `RawHeader`. A list that must have at least one element and contains only empty elements, such as
-`Cache-Control: ,`, is still not parsed. ([#1396](https://github.com/apache/pekko-http/issues/1396))
+staying a `RawHeader`. The delimiter-only value in `Cache-Control: ,` is still returned as a `RawHeader` with a parse
+diagnostic, not as a modeled field. ([#1396](https://github.com/apache/pekko-http/issues/1396))
 Whitespace before a list separator (`no-store , public`) is also accepted.
 ([PR1395](https://github.com/apache/pekko-http/pull/1395))
 * Parse error details logged with `pekko.http.parsing.error-logging-verbosity = full` (the default), and the

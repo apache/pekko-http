@@ -588,14 +588,18 @@ private[http] object HttpHeaderParser {
       val (headerValue, endIx) = scanHeaderValue(hhp, input, valueStart, valueStart + maxHeaderValueLength + 2, log,
         settings.illegalResponseHeaderValueProcessingMode)()
       val trimmedHeaderValue = headerValue.trim
-      val header = parser(trimmedHeaderValue, hhp.markTimeDependent) match {
-        case HeaderParser.Success(h)     => h
-        case HeaderParser.Failure(error) =>
-          onIllegalHeader(error.withSummaryPrepended(s"Illegal '$headerName' header").withErrorHeaderName(headerName))
-          RawHeader(headerName, trimmedHeaderValue)
-        case HeaderParser.RuleNotFound =>
-          throw new IllegalStateException(s"Unexpected RuleNotFound exception for modeled header [$headerName]")
-      }
+      val header =
+        if (HeaderParser.isEmptyCacheControl(headerName, trimmedHeaderValue)) RawHeader(headerName, trimmedHeaderValue)
+        else
+          parser(trimmedHeaderValue, hhp.markTimeDependent) match {
+            case HeaderParser.Success(h)     => h
+            case HeaderParser.Failure(error) =>
+              onIllegalHeader(
+                error.withSummaryPrepended(s"Illegal '$headerName' header").withErrorHeaderName(headerName))
+              RawHeader(headerName, trimmedHeaderValue)
+            case HeaderParser.RuleNotFound =>
+              throw new IllegalStateException(s"Unexpected RuleNotFound exception for modeled header [$headerName]")
+          }
       header -> endIx
     }
   }
