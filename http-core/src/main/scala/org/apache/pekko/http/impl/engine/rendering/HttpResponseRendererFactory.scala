@@ -149,6 +149,12 @@ private[http] class HttpResponseRendererFactory(
           import ctx.response._
           val noEntity = entity.isKnownEmpty || ctx.requestMethod == HttpMethods.HEAD
 
+          // RFC 9112 section 6.1 prohibits transfer coding on 204 responses, even for HEAD.
+          // Keep this change to bodyless 204s. Simply removing the header from a custom status
+          // that allows content would leave its body framing inconsistent. Other statuses,
+          // including informational responses, are not changed by this check.
+          val omitTransferEncoding = noEntity && status.intValue == StatusCodes.NoContent.intValue
+
           def renderStatusLine(): Unit =
             protocol match {
               case `HTTP/1.1` => if (status eq StatusCodes.OK) r ~~ DefaultStatusLineBytes
@@ -160,7 +166,8 @@ private[http] class HttpResponseRendererFactory(
           def render(h: HttpHeader) = r ~~ h
 
           def mustRenderTransferEncodingChunkedHeader =
-            entity.isChunked && (!entity.isKnownEmpty || ctx.requestMethod == HttpMethods.HEAD) &&
+            !omitTransferEncoding && entity.isChunked &&
+            (!entity.isKnownEmpty || ctx.requestMethod == HttpMethods.HEAD) &&
             (ctx.requestProtocol == `HTTP/1.1`)
 
           def renderHeaders(headers: Seq[HttpHeader], alwaysClose: Boolean = false): Unit = {
@@ -187,6 +194,9 @@ private[http] class HttpResponseRendererFactory(
                 case x: `Content-Type` =>
                   suppressionWarning(log, x,
                     "explicit `Content-Type` header is not allowed. Set `HttpResponse.entity.contentType` instead.")
+
+                case x: `Transfer-Encoding` if omitTransferEncoding =>
+                  suppressionWarning(log, x, "`Transfer-Encoding` is not allowed on a 204 response.")
 
                 case x: `Transfer-Encoding` =>
                   x.withChunkedPeeled match {
