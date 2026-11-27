@@ -47,6 +47,59 @@ class Http2ServerSettingsSpec extends PekkoSpec {
     }
   }
 
+  "Http2ServerSettings accept-connect-requests" should {
+    "default off and support explicit config and JVM APIs" in {
+      val defaults = Http2ServerSettings(system)
+      defaults.acceptConnectRequests shouldBe false
+
+      val configured = Http2ServerSettings("pekko.http.server.http2.accept-connect-requests = true")
+      configured.acceptConnectRequests shouldBe true
+
+      val javaSettings: javadsl.settings.Http2ServerSettings = defaults
+      javaSettings.getAcceptConnectRequests shouldBe false
+      javaSettings.withAcceptConnectRequests(true).getAcceptConnectRequests shouldBe true
+      configured.withAcceptConnectRequests(false).getAcceptConnectRequests shouldBe false
+    }
+
+    "preserve independent settings when applying Scala or Java withers in either order" in {
+      val defaults = Http2ServerSettings(system)
+      val enabled = defaults.withAcceptConnectRequests(true)
+      val updated = enabled.withRequestEntityChunkSize(8192)
+      updated shouldBe defaults.withRequestEntityChunkSize(8192).withAcceptConnectRequests(true)
+      updated.acceptConnectRequests shouldBe true
+      updated.requestEntityChunkSize shouldBe 8192
+
+      val javaSettings: javadsl.settings.Http2ServerSettings = defaults
+      val javaUpdated = javaSettings.withAcceptConnectRequests(true).withRequestEntityChunkSize(8192)
+      javaUpdated shouldBe javaSettings.withRequestEntityChunkSize(8192).withAcceptConnectRequests(true)
+      javaUpdated.getAcceptConnectRequests shouldBe true
+      javaUpdated.getRequestEntityChunkSize shouldBe 8192
+    }
+
+    "keep the flag independent of internal settings" in {
+      val extra = new Http2InternalServerSettings {}
+      val defaults = Http2ServerSettings(system)
+      val configured = defaults.withAcceptConnectRequests(true)
+      val withExtra = configured.withInternalSettings(extra)
+      withExtra shouldBe defaults.withInternalSettings(extra).withAcceptConnectRequests(true)
+      withExtra.acceptConnectRequests shouldBe true
+      withExtra.internalSettings shouldBe Some(extra)
+      withExtra.withAcceptConnectRequests(false).internalSettings shouldBe Some(extra)
+      configured.internalSettings shouldBe None
+    }
+
+    "keep enabled and disabled settings in the same implementation and preserve the flag in a copy" in {
+      val defaults = Http2ServerSettings(system)
+      val enabled = defaults.withAcceptConnectRequests(true)
+      enabled.getClass shouldBe defaults.getClass
+      enabled should not be defaults
+      defaults should not be enabled
+      enabled shouldBe enabled.withRequestEntityChunkSize(enabled.requestEntityChunkSize)
+      enabled.withAcceptConnectRequests(false) shouldBe defaults
+      enabled.withFrameTypeThrottleFrameTypes(Set.empty[String]).copy().acceptConnectRequests shouldBe true
+    }
+  }
+
   "Http2ServerSettings max-connection-age" should {
 
     "be disabled by default" in {

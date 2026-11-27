@@ -13,6 +13,7 @@
 
 package org.apache.pekko.http.javadsl.model;
 
+import org.apache.pekko.annotation.ApiMayChange;
 import org.apache.pekko.http.javadsl.model.ws.WebSocketUpgrade;
 
 @SuppressWarnings("unchecked")
@@ -26,6 +27,17 @@ public final class AttributeKeys {
   public static final AttributeKey<SslSessionInfo> sslSession =
       (AttributeKey<SslSessionInfo>)
           (Object) org.apache.pekko.http.scaladsl.model.AttributeKeys.sslSession();
+
+  /**
+   * The single-use incoming side of a regular HTTP/2 CONNECT stream.
+   *
+   * @since 2.1.0
+   */
+  @ApiMayChange
+  public static final AttributeKey<Http2ConnectData> http2ConnectData =
+      (AttributeKey<Http2ConnectData>)
+          (Object) org.apache.pekko.http.scaladsl.model.AttributeKeys.http2ConnectData();
+
   public static final AttributeKey<Trailer> trailer =
       (AttributeKey<Trailer>) (Object) org.apache.pekko.http.scaladsl.model.AttributeKeys.trailer();
 }

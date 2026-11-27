@@ -297,6 +297,10 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
 
       override lazy val shouldSendContinue: ParsedHeadersFrame => Boolean =
         stage.createContinuePredicate(inheritedAttributes)
+      override def acceptConnectRequests: Boolean = http2Settings match {
+        case server: Http2ServerSettings => server.acceptConnectRequests
+        case _                           => false
+      }
 
       override def settings: Http2CommonSettings = http2Settings
 

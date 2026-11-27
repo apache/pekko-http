@@ -22,7 +22,14 @@ import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.ErrorCode
 import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.scaladsl.model.http2.PeerClosedStreamException
-import pekko.http.scaladsl.model.{ AttributeKey, EntityStreamException, ErrorInfo, HttpEntity, HttpMethods }
+import pekko.http.scaladsl.model.{
+  AttributeKey,
+  EntityStreamException,
+  ErrorInfo,
+  Http2ConnectData,
+  HttpEntity,
+  HttpMethods
+}
 import pekko.http.scaladsl.settings.Http2CommonSettings
 import pekko.macros.LogHelper
 import pekko.stream.scaladsl.{ Sink, Source }
@@ -50,6 +57,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       correlationAttributes: Map[AttributeKey[?], ?]): Unit
   def isUpgraded: Boolean
   def shouldSendContinue: ParsedHeadersFrame => Boolean
+  def acceptConnectRequests: Boolean = false
 
   def wrapTrailingHeaders(headers: ParsedHeadersFrame): Option[HttpEntity.ChunkStreamPart]
 
@@ -107,6 +115,18 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         }
       case None => false
     }
+  private val connectRequests = mutable.Map.empty[Int, Http2ConnectData.Acceptance]
+  private var unacceptedConnectSuccessWarned = false
+  private val rejectedConnects = mutable.Set.empty[Int]
+  private lazy val finishRejectedConnect = getAsyncCallback[Int] { streamId =>
+    streamStates.get(streamId.toLong) match {
+      case Some(s: HalfClosedLocal) if rejectedConnects(streamId) =>
+        s.shutdown()
+        multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.NO_ERROR))
+        streamClosed(streamId)
+      case _ =>
+    }
+  }
   private var largestIncomingStreamId = 0
   private var outstandingConnectionLevelWindow = Http2Protocol.InitialWindowSize
   private var totalBufferedData = 0
@@ -163,10 +183,43 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def handleOutgoingCreated(outgoing: Http2SubStream): Unit = {
     // a response to a HEAD request must not carry content (RFC 9110 section 9.3.2); the headers are sent unchanged
     // so that the peer still learns the `content-length` it would have received for a GET
+    val status = if (connectRequests.contains(outgoing.streamId))
+      outgoing.initialHeaders.keyValuePairs.collectFirst { case (":status", value: String) => value }
+    else None
+    val connect =
+      if (status.exists(Http2ResponseStatus.isInformational)) None else connectRequests.remove(outgoing.streamId)
+    val successfulConnect = connect.nonEmpty && status.exists(_.startsWith("2"))
+    val accepted =
+      connect.exists(token => outgoing.correlationAttributes.get(Http2ConnectData.acceptance).contains(token))
+    if (connect.nonEmpty && !(successfulConnect && accepted)) rejectedConnects += outgoing.streamId
+
     val stream =
       if (headRequestStreamIds.remove(outgoing.streamId) && outgoing.hasEntity) {
         outgoing.data.foreach(_.runWith(Sink.cancelled)(subFusingMaterializer))
         outgoing.withoutData
+      } else if (successfulConnect && accepted) {
+        // After success DATA bytes belong to the tunnel; they are not HTTP response content.
+        outgoing.copy(
+          initialHeaders = outgoing.initialHeaders.copy(
+            endStream = false,
+            keyValuePairs = outgoing.initialHeaders.keyValuePairs.filterNot { case (name, _) =>
+              name == "content-length" || name == "content-type"
+            }),
+          trailingHeaders = OptionVal.None,
+          data = outgoing.data match {
+            case Left(bytes) if bytes.isEmpty => Right(Source.empty)
+            case data                         => data.map(_.filterNot(_.isInstanceOf[HttpEntity.LastChunk]))
+          })
+      } else if (successfulConnect) {
+        // A generic application success is not permission to establish a tunnel. Warn once per
+        // connection: this is a handler configuration error, not a deliberate client rejection.
+        if (!unacceptedConnectSuccessWarned && streamFor(outgoing.streamId) != Closed) {
+          unacceptedConnectSuccessWarned = true
+          warning("HTTP/2 CONNECT handler returned success without explicitly accepting the tunnel")
+        }
+        outgoing.data.foreach(_.runWith(Sink.cancelled)(subFusingMaterializer))
+        outgoing.withoutData.copy(initialHeaders =
+          outgoing.initialHeaders.copy(endStream = true, keyValuePairs = Vector(":status" -> "500")))
       } else outgoing
 
     stream.initialHeaders.priorityInfo.foreach(multiplexer.updatePriority)
@@ -256,6 +309,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     streamStates.remove(streamId)
     headRequestStreamIds -= streamId
     remainingContentLength -= streamId
+    connectRequests -= streamId
+    rejectedConnects -= streamId
     if (streamStates.isEmpty) onAllStreamsClosed()
     tryPullSubStreams()
   }
@@ -273,6 +328,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       case Closed   => streamClosed(streamId)
       case newState => streamStates.put(streamId, newState)
     }
+    // Enqueue the reset after the response's final frame, never ahead of the rejection response.
+    if (newState.isInstanceOf[HalfClosedLocal] && rejectedConnects(streamId)) finishRejectedConnect.invoke(streamId)
 
     debug(
       s"Incoming side of stream [$streamId] changed state: ${oldState.stateName} -> ${newState.stateName} after handling [$event${if (eventArg ne
@@ -429,18 +486,29 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
             // the request ends without the content its `content-length` announces, so it is malformed
             multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.PROTOCOL_ERROR))
             Closed
-          } else if (endStream) {
-            dispatchSubstream(frame, Left(ByteString.empty), correlationAttributes)
-            nextStateEmpty
-          } else if (noContentState.isDefined && isContentFreeFinalResponse(frame)) {
-            // A content-free response can end in a later empty DATA frame. Expose its known-empty entity now,
-            // but keep the wire stream alive until END_STREAM, without creating an unconsumed entity source.
-            dispatchSubstream(frame, Left(ByteString.empty), correlationAttributes)
-            noContentState.get
-          } else if (settings.minCollectStrictEntitySize > 0)
-            CollectingIncomingData(frame, correlationAttributes, ByteString.empty, extraInitialWindow = 0)
-          else
-            dispatchStream(streamId, frame, ByteString.empty, correlationAttributes, nextStateStream)
+          } else {
+            val isConnect = isServer && acceptConnectRequests && frame.keyValuePairs.exists {
+              case (name, value) => name == ":method" && (value eq HttpMethods.CONNECT)
+            }
+            val messageAttributes =
+              if (isConnect) {
+                val token = new Http2ConnectData.Acceptance
+                connectRequests.put(streamId, token)
+                correlationAttributes.updated(Http2ConnectData.acceptance, token)
+              } else correlationAttributes
+            if (endStream) {
+              dispatchSubstream(frame, Left(ByteString.empty), messageAttributes)
+              nextStateEmpty
+            } else if (noContentState.isDefined && isContentFreeFinalResponse(frame)) {
+              // A content-free response can end in a later empty DATA frame. Expose its known-empty entity now,
+              // but keep the wire stream alive until END_STREAM, without creating an unconsumed entity source.
+              dispatchSubstream(frame, Left(ByteString.empty), correlationAttributes)
+              noContentState.get
+            } else if (!isConnect && settings.minCollectStrictEntitySize > 0)
+              CollectingIncomingData(frame, correlationAttributes, ByteString.empty, extraInitialWindow = 0)
+            else
+              dispatchStream(streamId, frame, ByteString.empty, messageAttributes, nextStateStream)
+          }
 
         case x => receivedUnexpectedFrame(x)
       }
@@ -452,7 +520,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         correlationAttributes: Map[AttributeKey[?], ?],
         nextStateStream: IncomingStreamBuffer => StreamState): StreamState = {
       val subSource = new SubSourceOutlet[Any](s"substream-out-$streamId")
-      val buffer = new IncomingStreamBuffer(streamId, subSource)
+      val buffer = new IncomingStreamBuffer(streamId, subSource,
+        correlationAttributes.contains(Http2ConnectData.acceptance))
       if (initialData.nonEmpty) buffer.onDataFrame(DataFrame(streamId, endStream = false, initialData)) // fabricate frame
       dispatchSubstream(headers, Right(Source.fromGraph(subSource.source)), correlationAttributes)
       nextStateStream(buffer)
@@ -712,10 +781,15 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       buffer.onDataFrame(dataFrame)
       afterBufferEvent
     }
-    override protected def onTrailer(parsedHeadersFrame: ParsedHeadersFrame): StreamState = {
-      buffer.onTrailingHeaders(parsedHeadersFrame)
-      afterBufferEvent
-    }
+    override protected def onTrailer(parsedHeadersFrame: ParsedHeadersFrame): StreamState =
+      if (buffer.isRegularConnect) {
+        shutdown()
+        multiplexer.pushControlFrame(RstStreamFrame(parsedHeadersFrame.streamId, ErrorCode.PROTOCOL_ERROR))
+        Closed
+      } else {
+        buffer.onTrailingHeaders(parsedHeadersFrame)
+        afterBufferEvent
+      }
 
     override protected def onRstStreamFrame(rstStreamFrame: RstStreamFrame): Unit =
       buffer.onRstStreamFrame(rstStreamFrame)
@@ -817,7 +891,8 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     }
   }
 
-  class IncomingStreamBuffer(streamId: Int, outlet: SubSourceOutlet[Any]) extends OutHandler {
+  class IncomingStreamBuffer(streamId: Int, outlet: SubSourceOutlet[Any], val isRegularConnect: Boolean)
+      extends OutHandler {
     private var buffer: ByteString = ByteString.empty
     private var trailingHeaders: Option[HttpEntity.ChunkStreamPart] = None
     private var wasClosed: Boolean = false

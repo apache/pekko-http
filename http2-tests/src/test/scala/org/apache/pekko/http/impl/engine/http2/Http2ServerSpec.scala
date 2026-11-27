@@ -56,6 +56,154 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
   override def failOnSevereMessages: Boolean = true
 
   "The Http/2 server implementation" should {
+    "carry application tunnel bytes in both directions for regular CONNECT".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        override def settings: ServerSettings =
+          super.settings.mapHttp2Settings(_.withAcceptConnectRequests(true)
+            .withMinCollectStrictEntitySize(8)
+            .withIncomingConnectionLevelBufferSize(Http2Protocol.InitialWindowSize))
+
+        val streamId = 1
+        val greeting = ByteString("hello")
+        val payload = ByteString("echo")
+        val headerPairs = Seq(":method" -> "CONNECT", ":authority" -> "example.com:443")
+        network.sendHEADERS(streamId, endStream = false, endHeaders = true, network.encodeHeaderPairs(headerPairs))
+
+        val request = user.expectRequest()
+        request.method shouldBe HttpMethods.CONNECT
+        request.uri.authority shouldBe Uri.Authority(Uri.Host("example.com"), 443)
+        request.uri.scheme shouldBe empty
+        request.uri.path shouldBe Uri.Path.Empty
+        request.entity shouldBe HttpEntity.Empty
+        val tunnel = request.attribute(AttributeKeys.http2ConnectData).get
+        request.getAttribute(pekko.http.javadsl.model.AttributeKeys.http2ConnectData).get shouldBe tunnel
+
+        // Do not send any tunnel bytes until the application's response proves the server accepted CONNECT.
+        val outgoing = Source.single(greeting).concat(tunnel.data)
+        user.emitResponse(streamId,
+          tunnel.accept(HttpEntity.Chunked.fromData(ContentTypes.`application/octet-stream`, outgoing)))
+        val responseHeaders = network.expectDecodedResponseHEADERSPairs(streamId, endStream = false).toMap
+        responseHeaders should contain(":status" -> "200")
+        responseHeaders should not contain key("content-length")
+        responseHeaders should not contain key("content-type")
+        network.expectDATA(streamId, endStream = false, greeting)
+
+        val sibling = 3
+        network.sendRequest(sibling, Get("https://example.com/sibling"))
+        user.expectRequest().attribute(AttributeKeys.http2ConnectData) shouldBe None
+        user.emitResponse(sibling, HttpResponse())
+        network.expectDecodedResponseHEADERSPairs(sibling).toMap should contain(":status" -> "200")
+
+        network.sendDATA(streamId, endStream = true, payload)
+        val (endStream, echoed) = network.expectDATAFrame(streamId)
+        echoed shouldBe payload
+        if (!endStream)
+          network.expectDATA(streamId, endStream = true, ByteString.empty)
+      })
+    "preserve an IPv6 authority and accept regular CONNECT with the Java source API".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        import pekko.http.impl.util.JavaMapping.Implicits._
+
+        override def settings: ServerSettings = super.settings.mapHttp2Settings(_.withAcceptConnectRequests(true)
+          .withIncomingConnectionLevelBufferSize(Http2Protocol.InitialWindowSize))
+
+        val streamId = 1
+        val headers = Seq(":method" -> "CONNECT", ":authority" -> "[2001:db8::1]:8443")
+        network.sendHEADERS(streamId, endStream = false, endHeaders = true, network.encodeHeaderPairs(headers))
+
+        val request: pekko.http.javadsl.model.HttpRequest = user.expectRequest()
+        request.getUri.asScala.authority shouldBe Uri.Authority(Uri.Host("[2001:db8::1]"), 8443)
+        request.getUri.scheme shouldBe empty
+        request.getUri.path shouldBe empty
+        request.getUri.rawQueryString.isPresent shouldBe false
+
+        val tunnel = request.getAttribute(pekko.http.javadsl.model.AttributeKeys.http2ConnectData).get
+        val response = tunnel.accept(tunnel.getData().map(bytes => ByteString("local:") ++ bytes))
+        user.emitResponse(streamId, response.asScala)
+
+        network.expectDecodedResponseHEADERSPairs(streamId, endStream = false).toMap should contain(":status" -> "200")
+        network.sendDATA(streamId, endStream = true, ByteString("hello"))
+        network.expectDATA(streamId, endStream = true, ByteString("local:hello"))
+      })
+
+    "omit HTTP entity metadata from a successful CONNECT with a finite outgoing entity".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        override def settings: ServerSettings = super.settings.mapHttp2Settings(_.withAcceptConnectRequests(true))
+
+        val streamId = 1
+        val headerPairs = Seq(":method" -> "CONNECT", ":authority" -> "example.com:443")
+        network.sendHEADERS(streamId, endStream = false, endHeaders = true, network.encodeHeaderPairs(headerPairs))
+        val tunnel = user.expectRequest().attribute(AttributeKeys.http2ConnectData).get
+        val received = tunnel.getData().asScala.runFold(ByteString.empty)(_ ++ _)
+        user.emitResponse(streamId, tunnel.accept(HttpEntity("hello")))
+
+        val responseHeaders = network.expectDecodedResponseHEADERSPairs(streamId, endStream = false).toMap
+        responseHeaders should contain(":status" -> "200")
+        responseHeaders should not contain key("content-length")
+        responseHeaders should not contain key("content-type")
+        network.expectDATA(streamId, endStream = true, ByteString("hello"))
+        network.sendDATA(streamId, endStream = true, ByteString("peer"))
+        received.futureValue shouldBe ByteString("peer")
+      })
+
+    "emit a tunnel FIN as DATA when the outgoing CONNECT entity is empty".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        override def settings: ServerSettings = super.settings.mapHttp2Settings(_.withAcceptConnectRequests(true))
+        val streamId = 1
+        val headerPairs = Seq(":method" -> "CONNECT", ":authority" -> "example.com:443")
+        network.sendHEADERS(streamId, endStream = true, endHeaders = true, network.encodeHeaderPairs(headerPairs))
+        val tunnel = user.expectRequest().attribute(AttributeKeys.http2ConnectData).get
+        user.emitResponse(streamId, tunnel.accept(HttpEntity.Empty))
+
+        network.expectDecodedResponseHEADERSPairs(streamId, endStream = false).toMap should contain(":status" -> "200")
+        network.expectDATA(streamId, endStream = true, ByteString.empty)
+      })
+
+    "preserve the entity and its type on a rejected CONNECT even when accept was called".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        override def settings: ServerSettings = super.settings.mapHttp2Settings(_.withAcceptConnectRequests(true))
+
+        val headers = Seq(":method" -> "CONNECT", ":authority" -> "example.com:443")
+        for ((explicitAccept, streamId) <- Seq(false -> 1, true -> 3)) {
+          network.sendHEADERS(streamId, endStream = false, endHeaders = true, network.encodeHeaderPairs(headers))
+          val tunnel = user.expectRequest().attribute(AttributeKeys.http2ConnectData).get
+          val entity = HttpEntity("denied")
+          val response = if (explicitAccept) tunnel.accept(entity) else HttpResponse(entity = entity)
+          user.emitResponse(streamId, response.withStatus(StatusCodes.Forbidden))
+
+          val responseHeaders = network.expectDecodedResponseHEADERSPairs(streamId, endStream = false).toMap
+          responseHeaders should contain(":status" -> "403")
+          responseHeaders should contain("content-type" -> entity.contentType.toString)
+          network.expectDATA(streamId, endStream = true, ByteString("denied"))
+          network.expectRST_STREAM(streamId, ErrorCode.NO_ERROR)
+        }
+      })
+
+    "report a handler's unaccepted CONNECT success as 500 and warn once per connection".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        override def settings: ServerSettings = super.settings.mapHttp2Settings(_.withAcceptConnectRequests(true))
+
+        val headerPairs = Seq(":method" -> "CONNECT", ":authority" -> "example.com:443")
+        EventFilter.warning(
+          message = "HTTP/2 CONNECT handler returned success without explicitly accepting the tunnel",
+          occurrences = 1).intercept {
+          for (streamId <- Seq(1, 3)) {
+            network.sendHEADERS(streamId, endStream = false, endHeaders = true, network.encodeHeaderPairs(headerPairs))
+            user.expectRequest().attribute(AttributeKeys.http2ConnectData) should not be empty
+            user.emitResponse(streamId, HttpResponse())
+
+            network.expectDecodedResponseHEADERSPairs(streamId).toMap should contain(":status" -> "500")
+            network.expectRST_STREAM(streamId, ErrorCode.NO_ERROR)
+          }
+        }
+
+        val sibling = 5
+        network.sendRequest(sibling, Get("https://example.com/ordinary"))
+        user.expectRequest().uri.path.toString shouldBe "/ordinary"
+        user.emitResponse(sibling, HttpResponse())
+        network.expectDecodedResponseHEADERSPairs(sibling).toMap should contain(":status" -> "200")
+      })
+
     "answer a malformed header field with a 400 on its stream and keep the connection" should {
       abstract class MalformedHeaderSetup extends TestSetup with RequestResponseProbes {
         def badRequestThenStillUsable(streamId: Int, headerPairs: Seq[(String, String)]): Unit = {

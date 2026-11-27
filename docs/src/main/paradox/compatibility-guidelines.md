@@ -87,6 +87,9 @@ Scala
     org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings#withResponseEntitySubscriptionTimeout
     org.apache.pekko.http.scaladsl.settings.HostOverride
     org.apache.pekko.http.scaladsl.settings.Http2ServerSettings
+    org.apache.pekko.http.scaladsl.settings.Http2ServerSettings#acceptConnectRequests
+    org.apache.pekko.http.scaladsl.settings.Http2ServerSettings#getAcceptConnectRequests
+    org.apache.pekko.http.scaladsl.settings.Http2ServerSettings#withAcceptConnectRequests
     org.apache.pekko.http.scaladsl.settings.Http2ClientSettings
     org.apache.pekko.http.scaladsl.settings.ServerSentEventSettings
     org.apache.pekko.http.scaladsl.model.headers.CacheDirectives.immutableDirective
@@ -95,6 +98,8 @@ Scala
     org.apache.pekko.http.scaladsl.model.headers.Trailer
     org.apache.pekko.http.scaladsl.model.http2.PeerClosedStreamException
     org.apache.pekko.http.scaladsl.model.http2.Http2Exception
+    org.apache.pekko.http.scaladsl.model.AttributeKeys#http2ConnectData
+    org.apache.pekko.http.scaladsl.model.Http2ConnectData
     org.apache.pekko.http.scaladsl.model.SimpleRequestResponseAttribute
     org.apache.pekko.http.scaladsl.model.RequestResponseAssociation
     ```
@@ -114,6 +119,10 @@ Java
     org.apache.pekko.http.javadsl.settings.ConnectionPoolSettings#withResponseEntitySubscriptionTimeout
     org.apache.pekko.http.javadsl.settings.PoolImplementation
     org.apache.pekko.http.javadsl.settings.ServerSentEventSettings
+    org.apache.pekko.http.javadsl.settings.Http2ServerSettings#getAcceptConnectRequests
+    org.apache.pekko.http.javadsl.settings.Http2ServerSettings#withAcceptConnectRequests
+    org.apache.pekko.http.javadsl.model.AttributeKeys#http2ConnectData
+    org.apache.pekko.http.javadsl.model.Http2ConnectData
     ```
   
 ## Versioning and Compatibility
