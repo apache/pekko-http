@@ -58,6 +58,39 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           pushInput(input)
           expectMessage(BinaryMessage.Strict(ByteString.empty))
         }
+        for {
+          server <- Seq(false, true)
+          payload <- Seq(ByteString.empty, ByteString("payload"))
+        } {
+          val side = if (server) "server side, masked" else "client side"
+          val description = if (payload.isEmpty) "an empty" else "a nonempty"
+          s"deliver $description fragmented binary message with an empty final continuation ($side)" in new TestSetup {
+            protected def serverSide: Boolean = server
+
+            def frame(opcode: Opcode, payload: ByteString, fin: Boolean): FrameStart = {
+              val mask = if (server) Some(Random.nextInt()) else None
+              FrameEvent.fullFrame(opcode, mask, FrameEventParser.mask(payload, mask), fin)
+            }
+
+            try {
+              val next = ByteString("next")
+              val bytes = Source(List(
+                frame(Opcode.Binary, payload, fin = false),
+                frame(Opcode.Continuation, ByteString.empty, fin = true),
+                frame(Opcode.Binary, next, fin = true)))
+                .via(new FrameEventRenderer)
+                .runFold(ByteString.empty)(_ ++ _)
+              pushInput(Await.result(bytes, 3.seconds))
+
+              Await.result(expectBinaryMessage().toStrict(3.seconds), 3.seconds) shouldBe
+              BinaryMessage.Strict(payload)
+              expectBinaryMessage(BinaryMessage.Strict(next))
+            } finally {
+              try messageIn.cancel()
+              finally netOut.cancel()
+            }
+          }
+        }
         "for one complete, strict, single frame message" in new ClientTestSetup {
           val data = ByteString("abcdef", "ASCII")
           val input = frameHeader(Opcode.Binary, 6, fin = true) ++ data
