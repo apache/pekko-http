@@ -59,7 +59,7 @@ private[http2] object ResponseParsing {
         seenRegularHeader: Boolean = false,
         headers: VectorBuilder[HttpHeader] = new VectorBuilder[HttpHeader]): HttpResponse =
       if (remainingHeaders.isEmpty) {
-        // https://httpwg.org/specs/rfc7540.html#rfc.section.8.1.2.4: these pseudo header fields are mandatory for a response
+        // Required response status: https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.2
         checkRequiredPseudoHeader(":status", status)
 
         if (status == StatusCodes.SwitchingProtocols)

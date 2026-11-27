@@ -114,7 +114,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   /**
    * The "last peer-initiated stream that was or might be processed on the sending endpoint in this connection"
    *
-   * @see http://httpwg.org/specs/rfc7540.html#rfc.section.6.8
+   * @see https://www.rfc-editor.org/rfc/rfc9113.html#section-6.8
    */
   def lastStreamId(): Int = largestIncomingStreamId
 

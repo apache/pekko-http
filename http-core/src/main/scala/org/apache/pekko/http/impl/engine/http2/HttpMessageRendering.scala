@@ -44,9 +44,8 @@ private[http2] class ResponseRendering(settings: ServerSettings, val log: Loggin
 
   protected override def initialHeaderPairs(response: HttpResponse): VectorBuilder[(String, String)] = {
     val headerPairs = new VectorBuilder[(String, String)]()
-    // From https://tools.ietf.org/html/rfc7540#section-8.1.2.4:
-    //   HTTP/2 does not define a way to carry the version or reason phrase
-    //   that is included in an HTTP/1.1 status line.
+    // HTTP/2 carries only the status code in :status; the protocol version is implicit.
+    // https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.2
     headerPairs += ":status" -> response.status.intValue.toString
   }
 
