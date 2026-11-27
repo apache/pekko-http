@@ -80,6 +80,27 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
     }
   }
 
+  "Accept-Encoding should preserve three-decimal quality weights" in {
+    import scala.jdk.CollectionConverters._
+
+    val value = "gzip;q=0.001, deflate;q=0.999, identity;q=1.000"
+    val weights = Vector(0.001f, 0.999f, 1.0f)
+    val rendered = "gzip;q=0.001, deflate;q=0.999, identity"
+
+    val scalaHeader =
+      headers.`Accept-Encoding`.parseFromValueString(value).fold(errors => fail(errors.mkString(", ")), identity)
+    scalaHeader.encodings.map(_.qValue) shouldEqual weights
+    scalaHeader.value shouldEqual rendered
+
+    val javaHeader = pekko.http.javadsl.model.HttpHeader.parse("Accept-Encoding", value)
+    val javaEncoding = javaHeader match {
+      case header: pekko.http.javadsl.model.headers.AcceptEncoding => header
+      case other                                                   => fail(s"Expected a modeled Accept-Encoding, got $other")
+    }
+    javaEncoding.getEncodings().asScala.iterator.map(_.qValue()).toVector shouldEqual weights
+    javaHeader.value() shouldEqual rendered
+  }
+
   "MediaType should" - {
     "provide parse method" - {
       "successful parse run" in {
