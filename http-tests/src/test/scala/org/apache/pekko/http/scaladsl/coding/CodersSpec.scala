@@ -17,13 +17,19 @@
 
 package org.apache.pekko.http.scaladsl.coding
 
+import java.io.ByteArrayOutputStream
+import java.util.zip.GZIPOutputStream
+
 import scala.concurrent.duration._
 
 import org.apache.pekko
 import pekko.http.impl.util._
+import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model._
+import pekko.http.scaladsl.model.HttpEntity.{ Chunk, Chunked }
 import pekko.http.scaladsl.model.headers._
-import pekko.stream.scaladsl.Source
+import pekko.stream.scaladsl.{ Sink, Source }
+import pekko.stream.testkit.{ TestPublisher, TestSubscriber }
 import pekko.testkit._
 import pekko.util.ByteString
 
@@ -111,6 +117,65 @@ class CodersSpec extends AnyWordSpec with CodecSpecSupport {
     }
     "decode with the default coders if none are given" in {
       body(Coders.decodeMessage(encoded(Coders.Gzip))) shouldEqual smallText
+    }
+    "finish a chunked gzip response before reading an unencoded response on the same HTTP/1.1 connection" in {
+      val firstBody = ByteString("compressed report")
+      val secondBody = ByteString("unencoded report")
+      val target = new ByteArrayOutputStream()
+      val encoder = new GZIPOutputStream(target)
+      try encoder.write(firstBody.toArray)
+      finally encoder.close()
+      val gzipMember = ByteString.fromArray(target.toByteArray)
+      // RFC 1952 puts CRC32 and ISIZE in the final eight octets. Send them in their own HTTP data chunk.
+      val (compressedData, footer) = gzipMember.splitAt(gzipMember.length - 8)
+      val contentType = ContentTypes.`text/plain(UTF-8)`
+      val coding = `Content-Encoding`(HttpEncodings.gzip)
+      val compressed = HttpResponse(headers = List(coding),
+        entity = Chunked(contentType, Source(List(Chunk(compressedData), Chunk(footer)))))
+      val unencoded = HttpResponse(entity = HttpEntity(contentType, secondBody))
+      val http = Http()
+      val host = "127.0.0.1"
+      val timeout = 3.seconds.dilated
+      val binding = http.newServerAt(host, 0).bindSync { request =>
+        request.uri.path.toString match {
+          case "/gzip"  => compressed
+          case "/plain" => unencoded
+          case _        => HttpResponse(StatusCodes.NotFound)
+        }
+      }.awaitResult(timeout)
+      try {
+        val requests = TestPublisher.probe[HttpRequest]()
+        val responses = TestSubscriber.probe[HttpResponse]()
+        Source.fromPublisher(requests)
+          .via(http.connectionTo(host).toPort(binding.localAddress.getPort).http())
+          .runWith(Sink.fromSubscriber(responses))
+        try {
+          responses.request(1)
+          requests.sendNext(HttpRequest(uri = "/gzip", headers = List(`Accept-Encoding`(HttpEncodings.gzip))))
+          val first = responses.expectNext()
+          first.entity shouldBe a[Chunked]
+          val decodedFirst = Coders.decodeMessage(first)
+          decodedFirst.entity.toStrict(timeout, maxBytes = 1024L).awaitResult(timeout).data shouldBe firstBody
+          first.status shouldBe StatusCodes.OK
+          first.protocol shouldBe HttpProtocols.`HTTP/1.1`
+          first.header[`Content-Encoding`] shouldBe Some(coding)
+          decodedFirst.header[`Content-Encoding`] shouldBe None
+
+          // Do not pipeline: the first decoded entity has completed before the second request is sent.
+          responses.request(1)
+          requests.sendNext(HttpRequest(uri = "/plain"))
+          val second = responses.expectNext()
+          val decodedSecond = Coders.decodeMessage(second)
+          decodedSecond.entity.toStrict(timeout, maxBytes = 1024L).awaitResult(timeout).data shouldBe secondBody
+          second.status shouldBe StatusCodes.OK
+          second.protocol shouldBe HttpProtocols.`HTTP/1.1`
+          second.header[`Content-Encoding`] shouldBe None
+          decodedSecond.header[`Content-Encoding`] shouldBe None
+
+          requests.sendComplete()
+          responses.expectComplete()
+        } finally responses.cancel()
+      } finally binding.terminate(1.second.dilated).awaitResult(timeout)
     }
     "leave a message without Content-Encoding unchanged" in {
       val response = HttpResponse(entity = HttpEntity(smallText))
