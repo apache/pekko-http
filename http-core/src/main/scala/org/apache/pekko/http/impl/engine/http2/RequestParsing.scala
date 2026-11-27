@@ -105,9 +105,22 @@ private[http2] object RequestParsing {
           if (method == HttpMethods.HEAD && serverSettings.transparentHeadRequests) HttpMethods.GET else method
 
         val (path, rawQueryString) = pathAndRawQuery
+        val asterisk = path match {
+          case Uri.Path.Segment("*", Uri.Path.Empty) => true
+          case _                                     => false
+        }
+        if (asterisk) {
+          if (method != HttpMethods.OPTIONS)
+            parseError("An asterisk request target is only supported for OPTIONS", ":path")
+          if (!serverSettings.http2Settings.acceptAsteriskOptions)
+            parseError("Server-wide OPTIONS is disabled", ":path")
+        }
         val authorityOrDefault: Uri.Authority = if (authority == null) Uri.Authority.Empty else authority
-        val uri = Uri(scheme, authorityOrDefault, path, rawQueryString)
-        val attributes = baseAttributes.updated(Http2.streamId, subStream.streamId)
+        val uri = Uri(scheme, authorityOrDefault, if (asterisk) Uri.Path.Empty else path, rawQueryString)
+        val streamAttributes = baseAttributes.updated(Http2.streamId, subStream.streamId)
+        // Keep the raw target out of headers: the client uses Raw-Request-URI to override normal rendering.
+        val attributes =
+          if (asterisk) streamAttributes.updated(AttributeKeys.asteriskRequestTarget, "*") else streamAttributes
 
         new HttpRequest(effectiveMethod, uri, headers.result(), attributes, entity, HttpProtocols.`HTTP/2.0`)
       }

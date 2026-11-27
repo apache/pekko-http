@@ -25,6 +25,8 @@ import pekko.testkit.PekkoSpec
 
 import scala.concurrent.duration._
 
+import com.typesafe.config.ConfigFactory
+
 class Http2ServerSettingsSpec extends PekkoSpec {
 
   "Http2ServerSettings max-concurrent-streams" should {
@@ -44,6 +46,95 @@ class Http2ServerSettingsSpec extends PekkoSpec {
       val settings = Http2ServerSettings(system).withMaxConcurrentStreams(1)
       settings.maxConcurrentStreams shouldBe 1
       settings.getMaxConcurrentStreams shouldBe 1
+    }
+  }
+
+  "The server-wide OPTIONS opt-in" should {
+    "stay disabled when an existing config does not contain the key" in {
+      val config = ConfigFactory.load().withoutPath("pekko.http.server.http2.accept-asterisk-options")
+      Http2ServerSettings(config).acceptAsteriskOptions shouldBe false
+    }
+
+    "allow Java and Scala callers to opt in or out without changing other settings" in {
+      val original = Http2ServerSettings(system)
+      val internal = new Http2InternalServerSettings {}
+      val javaServer: javadsl.settings.ServerSettings =
+        ServerSettings(system).withHttp2Settings(original.withInternalSettings(internal))
+      val javaSettings = javaServer.getHttp2Settings
+      javaSettings.getAcceptAsteriskOptions shouldBe false
+
+      val enabled = javaServer.withHttp2Settings(javaSettings.withAcceptAsteriskOptions(true))
+      enabled.getHttp2Settings.getAcceptAsteriskOptions shouldBe true
+      javaSettings.getAcceptAsteriskOptions shouldBe false
+
+      val scalaSettings = original.withAcceptAsteriskOptions(true).withInternalSettings(internal)
+      scalaSettings.acceptAsteriskOptions shouldBe true
+      val disabled = scalaSettings.withAcceptAsteriskOptions(false).withMaxConcurrentStreams(128)
+      disabled.acceptAsteriskOptions shouldBe false
+      disabled.internalSettings shouldBe Some(internal)
+      disabled.maxConcurrentStreams shouldBe 128
+    }
+
+    "preserve the opt-in and other internal settings independently" in {
+      val settings = Http2ServerSettings("pekko.http.server.http2.accept-asterisk-options = on")
+      settings.internalSettings shouldBe None
+      val existingInternal = new Http2InternalServerSettings {}
+      val updated = settings.withInternalSettings(existingInternal).withMaxConcurrentStreams(128)
+      updated.acceptAsteriskOptions shouldBe true
+      updated.internalSettings shouldBe Some(existingInternal)
+    }
+
+    "transfer only the legacy value when receiving the internal slot from another settings instance" in {
+      val off = Http2ServerSettings(system)
+      val on = Http2ServerSettings("pekko.http.server.http2.accept-asterisk-options = on")
+      val legacy = new Http2InternalServerSettings {}
+      val seed = on.withInternalSettings(legacy)
+
+      val defaultDestination = off.withInternalSettings(seed.internalSettings.get)
+      defaultDestination.acceptAsteriskOptions shouldBe false
+      (defaultDestination.internalSettings.get should be).theSameInstanceAs(legacy)
+
+      val enabledDestination = on.withInternalSettings(seed.internalSettings.get)
+      enabledDestination.acceptAsteriskOptions shouldBe true
+      (enabledDestination.internalSettings.get should be).theSameInstanceAs(legacy)
+      on.internalSettings shouldBe None
+      off.internalSettings shouldBe None
+    }
+
+    "preserve the raw copy contract and compose with fluent setters in either order" in {
+      val off = Http2ServerSettings(system)
+      val legacy = new Http2InternalServerSettings {}
+      val initial = off.withInternalSettings(legacy)
+      initial.internalSettings shouldBe Some(legacy)
+      val scalaFirst = initial.withAcceptAsteriskOptions(true).withMaxConcurrentStreams(128)
+      val java: javadsl.settings.Http2ServerSettings = off
+      val javaFirst =
+        java.withMaxConcurrentStreams(128).withAcceptAsteriskOptions(true).asInstanceOf[Http2ServerSettings]
+          .withInternalSettings(legacy)
+      javaFirst shouldBe scalaFirst
+      (scalaFirst.withAcceptAsteriskOptions(false).internalSettings should be).theSameInstanceAs(
+        initial.internalSettings)
+
+      val inferred = scalaFirst.withFrameTypeThrottleFrameTypes(Set.empty[String])
+      val replacement = Some(new Http2InternalServerSettings {})
+      val replaced = inferred.copy(internalSettings = replacement)
+      replaced.acceptAsteriskOptions shouldBe true
+      (replaced.internalSettings should be).theSameInstanceAs(replacement)
+      val cleared = replaced.copy(internalSettings = None)
+      cleared.acceptAsteriskOptions shouldBe true
+      cleared.internalSettings shouldBe None
+      val restored = cleared.copy(internalSettings = inferred.internalSettings)
+      restored.acceptAsteriskOptions shouldBe true
+      restored.internalSettings shouldBe Some(legacy)
+    }
+
+    "survive copying settings returned by an existing inferred Scala setter" in {
+      val configured = Http2ServerSettings(system)
+        .withAcceptAsteriskOptions(true)
+        .withFrameTypeThrottleFrameTypes(Set.empty[String])
+      val copied = configured.copy(maxConcurrentStreams = 64)
+      copied.acceptAsteriskOptions shouldBe true
+      copied.maxConcurrentStreams shouldBe 64
     }
   }
 

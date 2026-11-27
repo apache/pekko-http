@@ -184,6 +184,38 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           network.expectDecodedResponseHEADERSPairs(1, endStream = true).toMap should contain(":status" -> "403")
         })
     }
+    "distinguish server-wide OPTIONS from OPTIONS on the root resource in an application handler"
+      .inAssertAllStagesStopped(new TestSetup with RequestResponseProbes {
+        override def settings: ServerSettings =
+          ServerSettings("pekko.http.server.http2.accept-asterisk-options = on").withServerHeader(None)
+
+        def rootHandler(request: HttpRequest): HttpResponse = {
+          request.method shouldBe HttpMethods.OPTIONS
+          val target = request.attribute(AttributeKeys.asteriskRequestTarget) match {
+            case Some("*") =>
+              request.uri shouldBe Uri("https://www.example.com")
+              "server-wide"
+            case None =>
+              request.uri shouldBe Uri("https://www.example.com/")
+              "root-resource"
+            case other => fail(s"Unexpected raw request target: $other")
+          }
+          HttpResponse(headers = List(RawHeader("x-options-target", target)))
+        }
+
+        def exchange(streamId: Int, path: String, expectedTarget: String): Unit = {
+          val headers = Seq(":method" -> "OPTIONS", ":scheme" -> "https", ":authority" -> "www.example.com",
+            ":path" -> path)
+          network.sendHEADERS(streamId, endStream = true, endHeaders = true, network.encodeHeaderPairs(headers))
+          user.emitResponse(streamId, rootHandler(user.expectRequest()))
+          val response = network.expectDecodedResponseHEADERSPairs(streamId).toMap
+          response should contain(":status" -> "200")
+          response should contain("x-options-target" -> expectedTarget)
+        }
+
+        exchange(1, "*", "server-wide")
+        exchange(3, "/", "root-resource")
+      })
 
     "support simple round-trips" should {
       abstract class SimpleRequestResponseRoundtripSetup extends TestSetup with RequestResponseProbes {

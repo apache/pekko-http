@@ -28,4 +28,12 @@ public final class AttributeKeys {
           (Object) org.apache.pekko.http.scaladsl.model.AttributeKeys.sslSession();
   public static final AttributeKey<Trailer> trailer =
       (AttributeKey<Trailer>) (Object) org.apache.pekko.http.scaladsl.model.AttributeKeys.trailer();
+
+  /**
+   * The original asterisk target of an accepted server-wide HTTP/2 OPTIONS request.
+   *
+   * @since 2.1.0
+   */
+  public static final AttributeKey<String> asteriskRequestTarget =
+      org.apache.pekko.http.scaladsl.model.AttributeKeys.asteriskRequestTarget();
 }

@@ -87,11 +87,30 @@ To extract URI components with directives, see following references:
 
 ### Obtaining the raw request URI
 
-Sometimes it may be needed to obtain the "raw" value of an incoming URI, without applying any escaping or parsing to it.
-While this use case is rare, it comes up every once in a while. It is possible to obtain the "raw" request URI in Apache Pekko
-HTTP Server side by turning on the `pekko.http.server.raw-request-uri-header` flag.
-When enabled, a `Raw-Request-URI` header will be added to each request. This header will hold the original raw request's
-URI that was used. For an example check the reference configuration.
+For incoming HTTP/1.x requests, turn on `pekko.http.server.raw-request-uri-header` to obtain the
+original request target in the synthetic `Raw-Request-URI` header.
+
+### Server-wide HTTP/2 OPTIONS
+
+To accept server-wide `OPTIONS *` over HTTP/2, set
+`pekko.http.server.http2.accept-asterisk-options = on` or opt in through the server settings:
+
+@scala[`settings.withHttp2Settings(settings.http2Settings.withAcceptAsteriskOptions(true))`]
+@java[`settings.withHttp2Settings(settings.getHttp2Settings().withAcceptAsteriskOptions(true))`]
+
+The HTTP/2 setting defaults to off. When enabled, the request's effective URI retains the scheme and any authority, with an empty path. The original `*` is available in a request attribute:
+
+@scala[Read the attribute with `request.attribute(AttributeKeys.asteriskRequestTarget).contains("*")`.]
+@java[Read the attribute with `request.getAttribute(AttributeKeys.asteriskRequestTarget).filter("*"::equals).isPresent()`.]
+
+Check the attribute before dispatching to HTTP/2 resource-specific OPTIONS routes: an empty effective
+path can also match root-path directives such as `pathEnd` and `pathEndOrSingleSlash`. An ordinary
+target with a query, even an empty query (`/?`), does not get the asterisk attribute.
+
+The HTTP/2 setting does not change HTTP/1.x handling. In a handler that serves both protocols,
+use the HTTP/2 attribute or, for HTTP/1.x with raw target capture enabled, check that the request is
+OPTIONS and the modeled `Raw-Request-URI` is `*`. The HTTP/2 attribute is independent of
+`raw-request-uri-header`, is not rendered on the wire, and does not override an outbound request URI.
 
 ### Query string in URI
 

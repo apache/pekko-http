@@ -150,6 +150,14 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       value1.exists(_._1 == "date") shouldBe false
     }
 
+    "render the rewritten target of an OPTIONS request retaining its original target attribute" in {
+      // The renderer reads the rewritten URI, not the server-side marker; keep that separation explicit.
+      val request = HttpRequest(HttpMethods.OPTIONS, uri = "https://example.com")
+        .addAttribute(AttributeKeys.asteriskRequestTarget, "*")
+        .withUri("https://example.com/internal")
+      pseudoHeaders(request, "https", Uri.Authority.Empty) should contain(":path" -> "/internal")
+    }
+
     "take ':scheme' and ':authority' of a relative URI from the connection" in {
       // RFC 9113 8.3.1: ':scheme' is mandatory and ':authority' must not be empty
       pseudoHeaders(HttpRequest(uri = "/foo"), "https", Uri.Authority(Uri.Host("example.com"))) shouldEqual

@@ -195,6 +195,22 @@ trait Http2ServerSettings extends javadsl.settings.Http2ServerSettings with Http
   def frameTypeThrottleInterval: FiniteDuration
   def withFrameTypeThrottleInterval(interval: FiniteDuration) = copy(frameTypeThrottleInterval = interval)
 
+  /**
+   * Whether the HTTP/2 server exposes server-wide OPTIONS requests to the application.
+   *
+   * @since 2.1.0
+   */
+  def acceptAsteriskOptions: Boolean = self.asteriskOptionsEnabled
+
+  /**
+   * Configure whether the HTTP/2 server exposes server-wide OPTIONS requests. Disabled by default.
+   *
+   * @since 2.1.0
+   */
+  override def withAcceptAsteriskOptions(enabled: Boolean): Http2ServerSettings =
+    if (enabled == acceptAsteriskOptions) this
+    else copy(asteriskOptionsEnabled = enabled)
+
   @InternalApi
   private[http] def internalSettings: Option[Http2InternalServerSettings]
   @InternalApi
@@ -226,7 +242,8 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       frameTypeThrottleCost: Int,
       frameTypeThrottleBurst: Int,
       frameTypeThrottleInterval: FiniteDuration,
-      internalSettings: Option[Http2InternalServerSettings])
+      internalSettings: Option[Http2InternalServerSettings],
+      asteriskOptionsEnabled: Boolean)
       extends Http2ServerSettings {
     require(maxConcurrentStreams > 0, "max-concurrent-streams must be > 0")
     require(maxHeaderListSize > 0, "max-header-list-size must be > 0")
@@ -251,10 +268,124 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
     require(maxConnectionAgeJitter >= 0 && maxConnectionAgeJitter < 1,
       "max-connection-age-jitter must be >= 0 and < 1")
     Http2CommonSettings.validate(this)
+
+    // Some public Scala withers infer this implementation as their result. Keep the published constructor
+    // and copy descriptors; a copy compiled before the new setting must preserve the current setting.
+    def this(
+        maxConcurrentStreams: Int,
+        maxHeaderListSize: Int,
+        maxFrameSize: Int,
+        requestEntityChunkSize: Int,
+        incomingConnectionLevelBufferSize: Int,
+        incomingStreamLevelBufferSize: Int,
+        minCollectStrictEntitySize: Int,
+        outgoingControlFrameBufferSize: Int,
+        logFrames: Boolean,
+        pingInterval: FiniteDuration,
+        pingTimeout: FiniteDuration,
+        maxConnectionAge: Duration,
+        maxConnectionAgeGrace: Duration,
+        maxConnectionAgeJitter: Double,
+        frameTypeThrottleFrameTypes: Set[String],
+        frameTypeThrottleCost: Int,
+        frameTypeThrottleBurst: Int,
+        frameTypeThrottleInterval: FiniteDuration,
+        internalSettings: Option[Http2InternalServerSettings]) =
+      this(
+        maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, minCollectStrictEntitySize,
+        outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout, maxConnectionAge,
+        maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes, frameTypeThrottleCost,
+        frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings, false)
+
+    def copy(
+        maxConcurrentStreams: Int,
+        maxHeaderListSize: Int,
+        maxFrameSize: Int,
+        requestEntityChunkSize: Int,
+        incomingConnectionLevelBufferSize: Int,
+        incomingStreamLevelBufferSize: Int,
+        minCollectStrictEntitySize: Int,
+        outgoingControlFrameBufferSize: Int,
+        logFrames: Boolean,
+        pingInterval: FiniteDuration,
+        pingTimeout: FiniteDuration,
+        maxConnectionAge: Duration,
+        maxConnectionAgeGrace: Duration,
+        maxConnectionAgeJitter: Double,
+        frameTypeThrottleFrameTypes: Set[String],
+        frameTypeThrottleCost: Int,
+        frameTypeThrottleBurst: Int,
+        frameTypeThrottleInterval: FiniteDuration,
+        internalSettings: Option[Http2InternalServerSettings]): Http2ServerSettingsImpl =
+      copy(
+        maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, minCollectStrictEntitySize,
+        outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout, maxConnectionAge,
+        maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes, frameTypeThrottleCost,
+        frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings,
+        asteriskOptionsEnabled =
+          this.asteriskOptionsEnabled)
+
+    def copy(
+        maxConcurrentStreams: Int = this.maxConcurrentStreams,
+        maxHeaderListSize: Int = this.maxHeaderListSize,
+        maxFrameSize: Int = this.maxFrameSize,
+        requestEntityChunkSize: Int = this.requestEntityChunkSize,
+        incomingConnectionLevelBufferSize: Int = this.incomingConnectionLevelBufferSize,
+        incomingStreamLevelBufferSize: Int = this.incomingStreamLevelBufferSize,
+        minCollectStrictEntitySize: Int = this.minCollectStrictEntitySize,
+        outgoingControlFrameBufferSize: Int = this.outgoingControlFrameBufferSize,
+        logFrames: Boolean = this.logFrames,
+        pingInterval: FiniteDuration = this.pingInterval,
+        pingTimeout: FiniteDuration = this.pingTimeout,
+        maxConnectionAge: Duration = this.maxConnectionAge,
+        maxConnectionAgeGrace: Duration = this.maxConnectionAgeGrace,
+        maxConnectionAgeJitter: Double = this.maxConnectionAgeJitter,
+        frameTypeThrottleFrameTypes: Set[String] = this.frameTypeThrottleFrameTypes,
+        frameTypeThrottleCost: Int = this.frameTypeThrottleCost,
+        frameTypeThrottleBurst: Int = this.frameTypeThrottleBurst,
+        frameTypeThrottleInterval: FiniteDuration = this.frameTypeThrottleInterval,
+        internalSettings: Option[Http2InternalServerSettings] = this.internalSettings,
+        asteriskOptionsEnabled: Boolean = this.asteriskOptionsEnabled): Http2ServerSettingsImpl =
+      new Http2ServerSettingsImpl(
+        maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, minCollectStrictEntitySize,
+        outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout, maxConnectionAge,
+        maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes, frameTypeThrottleCost,
+        frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings, asteriskOptionsEnabled)
   }
 
   private[http] object Http2ServerSettingsImpl
       extends pekko.http.impl.util.SettingsCompanionImpl[Http2ServerSettingsImpl]("pekko.http.server.http2") {
+    // Preserve the released factory descriptor as well as the constructor and copy descriptors.
+    def apply(
+        maxConcurrentStreams: Int,
+        maxHeaderListSize: Int,
+        maxFrameSize: Int,
+        requestEntityChunkSize: Int,
+        incomingConnectionLevelBufferSize: Int,
+        incomingStreamLevelBufferSize: Int,
+        minCollectStrictEntitySize: Int,
+        outgoingControlFrameBufferSize: Int,
+        logFrames: Boolean,
+        pingInterval: FiniteDuration,
+        pingTimeout: FiniteDuration,
+        maxConnectionAge: Duration,
+        maxConnectionAgeGrace: Duration,
+        maxConnectionAgeJitter: Double,
+        frameTypeThrottleFrameTypes: Set[String],
+        frameTypeThrottleCost: Int,
+        frameTypeThrottleBurst: Int,
+        frameTypeThrottleInterval: FiniteDuration,
+        internalSettings: Option[Http2InternalServerSettings]): Http2ServerSettingsImpl =
+      new Http2ServerSettingsImpl(
+        maxConcurrentStreams, maxHeaderListSize, maxFrameSize, requestEntityChunkSize,
+        incomingConnectionLevelBufferSize, incomingStreamLevelBufferSize, minCollectStrictEntitySize,
+        outgoingControlFrameBufferSize, logFrames, pingInterval, pingTimeout, maxConnectionAge,
+        maxConnectionAgeGrace, maxConnectionAgeJitter, frameTypeThrottleFrameTypes, frameTypeThrottleCost,
+        frameTypeThrottleBurst, frameTypeThrottleInterval, internalSettings)
+
     def fromSubConfig(root: Config, c: Config): Http2ServerSettingsImpl = Http2ServerSettingsImpl(
       maxConcurrentStreams = c.getInt("max-concurrent-streams"),
       maxHeaderListSize = c.getIntBytes("max-header-list-size"),
@@ -274,7 +405,8 @@ object Http2ServerSettings extends SettingsCompanion[Http2ServerSettings] {
       frameTypeThrottleCost = c.getInt("frame-type-throttle.cost"),
       frameTypeThrottleBurst = c.getInt("frame-type-throttle.burst"),
       frameTypeThrottleInterval = c.getFiniteDuration("frame-type-throttle.interval"),
-      None // no possibility to configure internal settings with config
+      internalSettings = None,
+      asteriskOptionsEnabled = c.hasPath("accept-asterisk-options") && c.getBoolean("accept-asterisk-options")
     )
   }
 }

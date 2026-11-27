@@ -27,7 +27,7 @@ import pekko.http.impl.engine.http2.RequestParsing.ParseRequestResult
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.{ Accept, Cookie, Host }
+import pekko.http.scaladsl.model.headers.{ Accept, Cookie, Host, `Raw-Request-URI` }
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Sink, Source }
@@ -571,16 +571,104 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
 
       }
 
-      // ... A request in asterisk form includes the
-      // value '*' for the ":path" pseudo-header field.
+      def asteriskOptionsSettings: ServerSettings =
+        ServerSettings("pekko.http.server.http2.accept-asterisk-options = on")
 
-      "handle a ':path' with an asterisk" in pendingUntilFixed {
-        val request: HttpRequest = parseExpectOk(
-          keyValuePairs = Vector(
+      "keep server-wide OPTIONS out of application routing by default" in {
+        val info = parseExpectError(Vector(
+          ":method" -> "OPTIONS",
+          ":scheme" -> "https",
+          ":authority" -> "example.com",
+          ":path" -> "*"))
+        info.summary should include("Server-wide OPTIONS is disabled")
+      }
+
+      "handle server-wide OPTIONS with an application-visible asterisk target" in {
+        val pseudoHeaders = Vector(
+          ":method" -> "OPTIONS",
+          ":scheme" -> "https",
+          ":authority" -> "example.com")
+        val asterisk = parseExpectOk(pseudoHeaders :+ (":path" -> "*"), settings = asteriskOptionsSettings)
+        asterisk.method shouldBe HttpMethods.OPTIONS
+        asterisk.uri shouldBe Uri("https://example.com")
+        asterisk.attribute(AttributeKeys.asteriskRequestTarget) shouldBe Some("*")
+        asterisk.header[`Raw-Request-URI`] shouldBe None
+
+        val root = parseExpectOk(pseudoHeaders :+ (":path" -> "/"), settings = asteriskOptionsSettings)
+        root.uri shouldBe Uri("https://example.com/")
+        root.attribute(AttributeKeys.asteriskRequestTarget) shouldBe None
+      }
+
+      "preserve a query on an ordinary OPTIONS root target when server-wide OPTIONS is enabled" in {
+        val pseudoHeaders = Vector(
+          ":method" -> "OPTIONS",
+          ":scheme" -> "https",
+          ":authority" -> "example.com")
+
+        // RFC 9113 §8.3.1 (see erratum 9175): a present query is not the server-wide target.
+        forAll(Seq("", "mode=full")) { query =>
+          val request = parseExpectOk(pseudoHeaders :+ (":path" -> s"/?$query"), settings = asteriskOptionsSettings)
+          request.method shouldBe HttpMethods.OPTIONS
+          request.uri shouldBe Uri(s"https://example.com/?$query")
+          request.uri.rawQueryString shouldBe Some(query)
+          request.attribute(AttributeKeys.asteriskRequestTarget) shouldBe None
+        }
+      }
+
+      "handle server-wide OPTIONS with an asterisk and no explicit authority" in {
+        val request = parseExpectOk(Vector(
             ":method" -> "OPTIONS",
             ":scheme" -> "http",
-            ":path" -> "*"))
-        request.uri.toString should ===("*") // FIXME: Compare in a better way
+            ":path" -> "*"), settings = asteriskOptionsSettings)
+        request.uri.scheme shouldBe "http"
+        request.uri.authority shouldBe Uri.Authority.Empty
+        request.attribute(AttributeKeys.asteriskRequestTarget) shouldBe Some("*")
+      }
+
+      "reject an asterisk ':path' for methods other than OPTIONS even when server-wide OPTIONS is enabled" in {
+        forAll(Seq("GET", "HEAD", "POST", "DELETE")) { method =>
+          val info = parseExpectError(Vector(
+              ":method" -> method,
+              ":scheme" -> "https",
+              ":authority" -> "example.com",
+              ":path" -> "*"), settings = asteriskOptionsSettings)
+          info.summary should include("An asterisk request target is only supported for OPTIONS")
+          info.errorHeaderName shouldBe ":path"
+        }
+      }
+
+      "reject an asterisk ':path' for HEAD when HEAD requests are handled transparently" in {
+        // The handler would see a GET here, which must not let the asterisk target through either.
+        val settings = asteriskOptionsSettings.withTransparentHeadRequests(true)
+        val info = parseExpectError(Vector(
+            ":method" -> "HEAD",
+            ":scheme" -> "https",
+            ":authority" -> "example.com",
+            ":path" -> "*"), settings = settings)
+        info.summary should include("An asterisk request target is only supported for OPTIONS")
+      }
+
+      "reject a ':path' that only starts with an asterisk when server-wide OPTIONS is enabled" in {
+        forAll(Seq("*?q", "*?", "*/x", "**", "*/")) { path =>
+          val info = parseExpectError(Vector(
+              ":method" -> "OPTIONS",
+              ":scheme" -> "https",
+              ":authority" -> "example.com",
+              ":path" -> path), settings = asteriskOptionsSettings)
+          info.summary should startWith("Illegal http2-path-pseudo-header")
+        }
+      }
+
+      "treat an origin-form ':path' containing an asterisk segment as an ordinary path" in {
+        forAll(Seq("/*", "/a/../*")) { path =>
+          val request = parseExpectOk(Vector(
+              ":method" -> "OPTIONS",
+              ":scheme" -> "https",
+              ":authority" -> "example.com",
+              ":path" -> path), settings = asteriskOptionsSettings)
+          request.uri shouldBe Uri("https://example.com/*")
+          request.attribute(AttributeKeys.asteriskRequestTarget) shouldBe None
+        }
       }
 
       // [The ":path"] pseudo-header field MUST NOT be empty for "http" or "https"
