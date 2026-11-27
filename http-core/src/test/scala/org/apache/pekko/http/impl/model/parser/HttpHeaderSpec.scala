@@ -821,6 +821,32 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     "Sec-WebSocket-Accept" in {
       "Sec-WebSocket-Accept: ZGgwOTM0Z2owcmViamRvcGcK" =!= `Sec-WebSocket-Accept`("ZGgwOTM0Z2owcmViamRvcGcK")
     }
+    "retain the Sec-WebSocket-Extensions case-class API" in {
+      val extensions = Vector(WebSocketExtension("permessage-deflate"))
+      val original = new `Sec-WebSocket-Extensions`(extensions)
+      val `Sec-WebSocket-Extensions`(extracted) = original.copy()
+      extracted shouldEqual extensions
+      original.productArity shouldEqual 1
+      original.copy(extensions = Vector(WebSocketExtension("x-custom"))) shouldEqual
+      `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("x-custom")))
+    }
+
+    "carry parser metadata without changing Sec-WebSocket-Extensions value semantics" in {
+      val extensions = Vector(WebSocketExtension("permessage-deflate"))
+      val ordinary = `Sec-WebSocket-Extensions`(extensions)
+      val marked = `Sec-WebSocket-Extensions`.fromParser(extensions, invalidPerMessageDeflateParameterSyntax = true)
+      val `Sec-WebSocket-Extensions`(extracted) = marked
+      ordinary.invalidPerMessageDeflateParameterSyntax shouldBe false
+      marked.invalidPerMessageDeflateParameterSyntax shouldBe true
+      marked.copy().invalidPerMessageDeflateParameterSyntax shouldBe true
+      extracted shouldEqual extensions
+      marked.productArity shouldEqual ordinary.productArity
+      marked shouldEqual ordinary
+      ordinary shouldEqual marked
+      marked.hashCode shouldEqual ordinary.hashCode
+      marked.value shouldEqual ordinary.value
+    }
+
     "Sec-WebSocket-Extensions" in {
       "Sec-WebSocket-Extensions: abc" =!=
         `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("abc")))

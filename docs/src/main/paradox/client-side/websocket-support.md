@@ -19,11 +19,23 @@ the lifetime of the connection. Therefore a WebSocket connection is modelled as 
 a @apidoc[Sink[Message, Mat]] to.
 
 @@@ note
-Client-side WebSocket compression is not currently implemented. Apache Pekko HTTP can negotiate
-`permessage-deflate` compression for server-side WebSocket connections when a client requests it.
-The client rejects responses that select a WebSocket extension it did not offer. An extension offered through
-`WebSocketRequest.extraHeaders` is accepted when the server selects it, but the client does not implement it:
-frames are passed through unchanged, so only extensions that don't change the framing can work this way.
+Client-side [RFC 7692](https://www.rfc-editor.org/rfc/rfc7692.html) `permessage-deflate` is off by
+default. Set `pekko.http.client.websocket.compression.enabled = on` to offer it from Scala or Java
+clients, or use `WebSocketSettings.withClientCompressionEnabled(true)` and pass the settings to
+`ClientConnectionSettings.withWebsocketSettings`. If the peer declines, messages are sent uncompressed. The client accepts the negotiated
+context-takeover parameters and can receive valid server streams that use a smaller window. It does
+not offer a reduced client window, which the JDK compressor cannot configure. Managed client compression
+limits each decompressed incoming message to 256 KiB by default; change this with
+`pekko.http.client.websocket.compression.max-allocation` (0 disables the limit). Set
+`pekko.http.client.websocket.compression.permessage-deflate.compression-level` (0-9, default 6) to
+adjust compression of outgoing messages.
+
+If `WebSocketRequest.extraHeaders` already offers `permessage-deflate`, Pekko HTTP leaves that offer
+unchanged and does not manage compression for that request. This preserves the existing behavior of
+caller-supplied extension headers. Omit the manual offer to use built-in compression. The client
+rejects a response that selects an extension it did not offer.
+
+Avoid enabling compression for connections that combine confidential and untrusted data.
 @@@
 
 A WebSocket request starts with a regular HTTP request which contains an `Upgrade` header (and possibly

@@ -26,11 +26,11 @@ import pekko.http.impl.engine.parsing.HttpMessageParser.StateResult
 import pekko.http.impl.engine.parsing.ParserOutput.{ MessageStartError, NeedMoreData, RemainingBytes, ResponseStart }
 import pekko.http.impl.engine.parsing.{ HttpHeaderParser, HttpResponseParser, ParserOutput }
 import pekko.http.impl.engine.rendering.{ HttpRequestRendererFactory, RequestRenderingContext }
-import pekko.http.impl.engine.ws.Handshake.Client.NegotiatedWebSocketSettings
+import pekko.http.impl.settings.{ WebSocketCompressionSettingsImpl, WebSocketSettingsImpl }
 import pekko.http.impl.util.LogByteStringTools
 import pekko.http.impl.util.{ SingletonException, StreamUtils }
 import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.model.headers.Host
+import pekko.http.scaladsl.model.headers.{ Host, `Sec-WebSocket-Extensions` }
 import pekko.http.scaladsl.model.ws._
 import pekko.http.scaladsl.model.{ HttpEntity, HttpMethods, HttpResponse }
 import pekko.http.scaladsl.settings.ClientConnectionSettings
@@ -44,6 +44,9 @@ import pekko.util.ByteString
 /** INTERNAL API */
 @InternalApi
 private[http] object WebSocketClientBlueprint {
+  private final class ManagedCompression(val settings: WebSocketCompressionSettingsImpl) {
+    val selected = Promise[Option[PerMessageDeflate.Negotiated]]()
+  }
 
   /**
    * Returns a WebSocketClientLayer that can be materialized once.
@@ -51,14 +54,24 @@ private[http] object WebSocketClientBlueprint {
   def apply(
       request: WebSocketRequest,
       settings: ClientConnectionSettings,
-      log: LoggingAdapter): Http.WebSocketClientLayer =
+      log: LoggingAdapter): Http.WebSocketClientLayer = {
+    val compression = settings.websocketSettings.asInstanceOf[WebSocketSettingsImpl].compression
+    val managedCompression =
+      if (compression.clientEnabled &&
+        !Handshake.Client.extensionNames(request.extraHeaders).contains(PerMessageDeflate.ExtensionName))
+        Some(new ManagedCompression(compression))
+      else None
+    val stack = managedCompression match {
+      case Some(managed) => WebSocket.clientStack(settings.websocketSettings, managed.selected.future, log)
+      case None          => WebSocket.stack(serverSide = false, settings.websocketSettings, log = log)
+    }
     LogByteStringTools.logTLSBidiBySetting("client-plain-text", settings.logUnencryptedNetworkBytes).reversed
       .atop(simpleTls)
-      .atopMat(handshake(request, settings, log))(Keep.right)
+      .atopMat(handshake(request, settings, log, managedCompression))(Keep.right)
       .atop(WebSocket.framing)
-      .atop(WebSocket.stack(serverSide = false, settings.websocketSettings,
-        log = log))
+      .atop(stack)
       .reversed
+  }
 
   /**
    * A bidi flow that injects and inspects the WS handshake and then goes out of the way. This BidiFlow
@@ -68,6 +81,14 @@ private[http] object WebSocketClientBlueprint {
       request: WebSocketRequest,
       settings: ClientConnectionSettings,
       log: LoggingAdapter)
+      : BidiFlow[ByteString, ByteString, ByteString, ByteString, Future[WebSocketUpgradeResponse]] =
+    handshake(request, settings, log, None)
+
+  private def handshake(
+      request: WebSocketRequest,
+      settings: ClientConnectionSettings,
+      log: LoggingAdapter,
+      managedCompression: Option[ManagedCompression])
       : BidiFlow[ByteString, ByteString, ByteString, ByteString, Future[WebSocketUpgradeResponse]] = {
     import request._
     val result = Promise[WebSocketUpgradeResponse]()
@@ -79,9 +100,12 @@ private[http] object WebSocketClientBlueprint {
     }
 
     val subprotocols: Seq[String] = subprotocol.toList.flatMap(_.split(",")).map(_.trim)
+    val requestHeaders = if (managedCompression.isDefined)
+      extraHeaders :+ `Sec-WebSocket-Extensions`(Seq(PerMessageDeflate.ClientOffer))
+    else extraHeaders
     val (initialRequest, key) =
-      Handshake.Client.buildRequest(uri, extraHeaders, subprotocols, settings.websocketRandomFactory())
-    val offeredExtensions = Handshake.Client.extensionNames(extraHeaders)
+      Handshake.Client.buildRequest(uri, requestHeaders, subprotocols, settings.websocketRandomFactory())
+    val offeredExtensions = Handshake.Client.extensionNames(requestHeaders)
     val hostHeader = Host(uri.authority.normalizedFor(uri.scheme))
     val renderedInitialRequest =
       HttpRequestRendererFactory.renderStrict(RequestRenderingContext(initialRequest, hostHeader), settings, log)
@@ -91,13 +115,17 @@ private[http] object WebSocketClientBlueprint {
       override def createLogic(attributes: Attributes): GraphStageLogic =
         new TimerGraphStageLogic(shape) with InHandler with OutHandler {
           private val OpeningDeadline = "websocket-opening"
-          override def preStart(): Unit =
+          override def preStart(): Unit = {
+            // The managed frame stages wait for negotiation before pulling. Drive the HTTP
+            // handshake independently of that demand, while leaving any coalesced frames buffered.
+            if (managedCompression.isDefined) pull(in)
             openingDeadline.foreach { case (timeout, dispatched) =>
               val startTimer = getAsyncCallback[Unit] { _ =>
                 if (!result.isCompleted) scheduleOnce(OpeningDeadline, timeout)
               }
               dispatched.future.foreach(startTimer.invoke)(ExecutionContext.parasitic)
             }
+          }
 
           override protected def onTimer(timerKey: Any): Unit =
             openingDeadline.foreach { case (timeout, _) =>
@@ -138,9 +166,20 @@ private[http] object WebSocketClientBlueprint {
               case NeedMoreData                                                        => pull(in)
               case ResponseStart(status, protocol, attributes, headers, entity, close) =>
                 val response = new HttpResponse(status, headers, attributes, HttpEntity.Empty, protocol)
-                Handshake.Client.validateResponse(response, subprotocols, key, offeredExtensions) match {
-                  case Right(NegotiatedWebSocketSettings(protocol)) =>
+                val validated =
+                  Handshake.Client.validateResponse(response, subprotocols, key, offeredExtensions).flatMap {
+                    negotiated =>
+                      managedCompression match {
+                        case Some(managed) =>
+                          PerMessageDeflate.negotiateClient(response.headers, managed.settings)
+                            .map(pmd => (negotiated.subprotocol, pmd))
+                        case None => Right((negotiated.subprotocol, None))
+                      }
+                  }
+                validated match {
+                  case Right((protocol, pmd)) =>
                     if (openingDeadline.isDefined) cancelTimer(OpeningDeadline)
+                    managedCompression.foreach(_.selected.success(pmd))
                     result.success(ValidUpgrade(response, protocol))
 
                     setHandler(in,
@@ -153,8 +192,8 @@ private[http] object WebSocketClientBlueprint {
                     require(parseResult == ParserOutput.MessageEnd,
                       s"parseResult should be MessageEnd but was $parseResult")
                     parser.onPull() match {
-                      case NeedMoreData          => pull(in)
-                      case RemainingBytes(bytes) => push(out, bytes)
+                      case NeedMoreData          => if (isAvailable(out)) tryPull(in)
+                      case RemainingBytes(bytes) => emit(out, bytes)
                       case other                 =>
                         throw new IllegalStateException(s"unexpected element of type ${other.getClass}")
                     }
@@ -169,7 +208,7 @@ private[http] object WebSocketClientBlueprint {
             }
           }
 
-          override def onPull(): Unit = pull(in)
+          override def onPull(): Unit = tryPull(in)
 
           setHandlers(in, out, this)
 
@@ -181,6 +220,7 @@ private[http] object WebSocketClientBlueprint {
           }
 
           override def postStop(): Unit = {
+            managedCompression.foreach(_.selected.trySuccess(None))
             // TimerGraphStageLogic cancels the deadline on stop, so an unexpected terminal path must settle the result.
             if (openingDeadline.isDefined && !result.isCompleted)
               result.tryFailure(new RuntimeException("WebSocket opening handshake stopped before completion."))

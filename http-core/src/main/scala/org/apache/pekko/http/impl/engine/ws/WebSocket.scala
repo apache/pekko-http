@@ -15,6 +15,7 @@ package org.apache.pekko.http.impl.engine.ws
 
 import java.util.Random
 
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
 
 import org.apache.pekko
@@ -80,13 +81,37 @@ private[http] object WebSocket {
       closeTimeout: FiniteDuration,
       log: LoggingAdapter,
       shouldCompress: Message => Boolean): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] =
+    stackWithExtension(serverSide, websocketSettings,
+      perMessageDeflate.map(_.messageBidiFlow).getOrElse(BidiFlow.identity),
+      closeTimeout, log, perMessageDeflate.map(_ => shouldCompress))
+
+  def clientStack(
+      settings: WebSocketSettings,
+      compression: Future[Option[PerMessageDeflate.Negotiated]],
+      log: LoggingAdapter): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] = {
+    implicit val ec: ExecutionContext = ExecutionContext.parasitic
+    // Both directions wait for the same negotiated value. Control frames and the message renderer
+    // stay unchanged: client deflation selects data frames at this layer, before client masking.
+    val extension = BidiFlow.fromFlows(
+      Flow.futureFlow(compression.map(_.fold(Flow[FrameEventOrError])(_.clientInflaterFlow))),
+      Flow.futureFlow(compression.map(_.fold(Flow[FrameEvent])(_.clientDeflaterFlow))))
+    stackWithExtension(false, settings, extension, settings.closeTimeout, log, None)
+  }
+
+  private def stackWithExtension(
+      serverSide: Boolean,
+      websocketSettings: WebSocketSettings,
+      extension: BidiFlow[FrameEventOrError, FrameEventOrError, FrameEvent, FrameEvent, NotUsed],
+      closeTimeout: FiniteDuration,
+      log: LoggingAdapter,
+      shouldCompress: Option[Message => Boolean]): BidiFlow[FrameEvent, Message, Message, FrameEvent, NotUsed] =
     masking(serverSide, websocketSettings.randomFactory).atop(
       idleTimeout(websocketSettings)).atop(
       FrameLogger.logFramesIfEnabled(websocketSettings.logFrames)).atop(
-      perMessageDeflate.map(_.messageBidiFlow).getOrElse(BidiFlow.identity)).atop(
+      extension).atop(
       frameHandling(serverSide, closeTimeout, log)).atop(
       periodicKeepAlive(websocketSettings)).atop(
-      messageAPI(serverSide, perMessageDeflate.map(_ => shouldCompress)))
+      messageAPI(serverSide, shouldCompress))
 
   /** The lowest layer that implements the binary protocol */
   def framing: BidiFlow[ByteString, FrameEvent, FrameEvent, ByteString, NotUsed] =

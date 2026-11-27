@@ -19,6 +19,7 @@ import org.apache.pekko
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.model.Uri.apply
 import pekko.http.scaladsl.model.AttributeKeys.webSocketUpgrade
+import pekko.http.scaladsl.model.headers.`Sec-WebSocket-Extensions`
 import pekko.http.scaladsl.model.ws._
 import pekko.stream._
 import pekko.stream.scaladsl._
@@ -29,7 +30,7 @@ import org.scalatest.concurrent.Eventually
 import java.net.InetSocketAddress
 import pekko.Done
 import pekko.http.impl.util.PekkoSpecWithMaterializer
-import pekko.http.scaladsl.settings.ClientConnectionSettings
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ServerSettings }
 import pekko.stream.stage.{ GraphStageLogic, GraphStageWithMaterializedValue, InHandler, OutHandler }
 import pekko.util.ByteString
 import pekko.stream.testkit.scaladsl.TestSink
@@ -160,6 +161,41 @@ class WebSocketIntegrationSpec extends PekkoSpecWithMaterializer(
       }
 
       binding.unbind()
+    }
+
+    "negotiate managed compression and echo a text message over a loopback connection" in Utils.assertAllStagesStopped {
+      val timeout = 3.seconds.dilated
+      val host = "127.0.0.1"
+      val serverSettings = ServerSettings("pekko.http.server.websocket.compression.enabled = on")
+      val clientSettings = ClientConnectionSettings("pekko.http.client.websocket.compression.max-allocation = 64")
+      val managedClient = clientSettings.withWebsocketSettings(
+        clientSettings.websocketSettings.withClientCompressionEnabled(true))
+      val bindingFuture = Http().newServerAt(host, 0).withSettings(serverSettings).bindSync {
+        _.attribute(webSocketUpgrade).get.handleMessages(Flow[Message], None)
+      }
+      val binding = Await.result(bindingFuture, timeout)
+      try {
+        val message = TextMessage("loopback echo")
+        val incoming = Flow[Message]
+          .mapAsync(1) {
+            case text: TextMessage => text.toStrict(timeout)
+            case other             => fail(s"Expected a text echo, got $other")
+          }
+          .toMat(Sink.head)(Keep.right)
+        // Keep the outgoing side open until the echo has been consumed.
+        val outgoing = Source.single[Message](message).concat(Source.maybe[Message])
+        val client = Flow.fromSinkAndSourceCoupledMat(incoming, outgoing)(Keep.left)
+        val (upgrade, echo) = Http().singleWebSocketRequest(
+          WebSocketRequest(s"ws://$host:${binding.localAddress.getPort}/echo"),
+          client,
+          settings = managedClient)
+
+        val result = Await.result(upgrade, timeout)
+        result shouldBe a[ValidUpgrade]
+        val extensions = result.response.header[`Sec-WebSocket-Extensions`]
+        extensions.map(_.extensions.map(_.name)) shouldBe Some(Seq("permessage-deflate"))
+        Await.result(echo, timeout) shouldBe message
+      } finally Await.result(binding.terminate(1.second.dilated), timeout)
     }
 
     "send back 100 elements and then terminate without error even when not ordinarily closed" in

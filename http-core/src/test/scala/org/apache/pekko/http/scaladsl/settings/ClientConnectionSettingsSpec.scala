@@ -23,6 +23,81 @@ import pekko.testkit.PekkoSpec
 
 class ClientConnectionSettingsSpec extends PekkoSpec {
   "ClientConnectionSettings" should {
+    "enable websocket compression only from an explicit client config override" in {
+      import pekko.http.impl.settings.WebSocketSettingsImpl
+
+      val section = system.settings.config.getConfig("pekko.http.client.websocket")
+      val older = section.withoutPath("compression")
+      WebSocketSettingsImpl.client(older).compression.clientEnabled shouldBe false
+      WebSocketSettingsImpl.client(section).compression.clientEnabled shouldBe false
+
+      val config = com.typesafe.config.ConfigFactory.parseString("compression.enabled = on").withFallback(section)
+      val javaSettings = pekko.http.javadsl.settings.WebSocketSettings.client(config)
+      javaSettings.asInstanceOf[WebSocketSettingsImpl].compression.clientEnabled shouldBe true
+      val scalaSettings = ClientConnectionSettings("pekko.http.client.websocket.compression.enabled = on")
+      scalaSettings.websocketSettings.clientCompressionEnabled shouldBe true
+      val enabledServer = WebSocketSettingsImpl.server(
+        config.withFallback(system.settings.config.getConfig("pekko.http.server.websocket")))
+      enabledServer.compression.enabled shouldBe true
+      enabledServer.compression.clientEnabled shouldBe false
+    }
+
+    "load client websocket compression limits and level independently of the opening timeout" in {
+      import pekko.http.impl.settings.WebSocketSettingsImpl
+
+      val defaults = system.settings.config.getConfig("pekko.http.client.websocket")
+      val overrides = com.typesafe.config.ConfigFactory.parseString("""
+        compression.enabled = on
+        compression.max-allocation = 512k
+        compression.permessage-deflate.compression-level = 3
+        opening-timeout = 10s
+        """)
+      val javaSettings = pekko.http.javadsl.settings.WebSocketSettings.client(overrides.withFallback(defaults))
+      val scalaSettings = ClientConnectionSettings("""
+        pekko.http.client.websocket {
+          compression.enabled = on
+          compression.max-allocation = 512k
+          compression.permessage-deflate.compression-level = 3
+          opening-timeout = 10s
+        }
+        """).websocketSettings
+      for (settings <- List(javaSettings, scalaSettings)) {
+        val impl = settings.asInstanceOf[WebSocketSettingsImpl]
+        impl.compression.clientEnabled shouldBe true
+        impl.compression.maxAllocation shouldBe 512L * 1024
+        impl.compression.compressionLevel shouldBe 3
+        impl.openingTimeout shouldBe 10.seconds
+      }
+    }
+
+    "set managed client websocket compression from Java and Scala without changing the other settings" in {
+      import pekko.http.impl.settings.WebSocketSettingsImpl
+
+      val original = ClientConnectionSettings("""
+        pekko.http.client.websocket {
+          compression.max-allocation = 512k
+          compression.permessage-deflate.compression-level = 3
+          opening-timeout = 10s
+        }
+        """)
+      val javaClient: pekko.http.javadsl.settings.ClientConnectionSettings = original
+      val javaEnabled =
+        javaClient.withWebsocketSettings(javaClient.getWebsocketSettings.withClientCompressionEnabled(true))
+      val scalaEnabled =
+        original.withWebsocketSettings(original.websocketSettings.withClientCompressionEnabled(true))
+      scalaEnabled.websocketSettings.clientCompressionEnabled shouldBe true
+      for (settings <- List(javaEnabled.getWebsocketSettings, scalaEnabled.websocketSettings)) {
+        val impl = settings.asInstanceOf[WebSocketSettingsImpl]
+        settings.getClientCompressionEnabled shouldBe true
+        impl.compression.enabled shouldBe false
+        impl.compression.maxAllocation shouldBe 512L * 1024
+        impl.compression.compressionLevel shouldBe 3
+        impl.openingTimeout shouldBe 10.seconds
+        settings.withClientCompressionEnabled(false).getClientCompressionEnabled shouldBe false
+      }
+      original.websocketSettings.clientCompressionEnabled shouldBe false
+    }
+
     "round-trip an infinite idle-timeout through the Java API" in {
       val settings = ClientConnectionSettings(system).withIdleTimeout(Duration.Inf)
       settings.getIdleTimeout should ===(ChronoUnit.FOREVER.getDuration)

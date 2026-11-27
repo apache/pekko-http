@@ -932,6 +932,14 @@ private[http] final case class `Sec-WebSocket-Accept`(key: String) extends Respo
 // https://tools.ietf.org/html/rfc6455#section-4.3
 @InternalApi
 private[http] object `Sec-WebSocket-Extensions` extends ModeledCompanion[`Sec-WebSocket-Extensions`] {
+  private[http] def fromParser(
+      extensions: Seq[WebSocketExtension],
+      invalidPerMessageDeflateParameterSyntax: Boolean): `Sec-WebSocket-Extensions` = {
+    val header = `Sec-WebSocket-Extensions`(extensions)
+    header.parserFoundInvalidPerMessageDeflateParameterSyntax = invalidPerMessageDeflateParameterSyntax
+    header
+  }
+
   implicit val extensionsRenderer: Renderer[immutable.Iterable[WebSocketExtension]] =
     Renderer.defaultSeqRenderer[WebSocketExtension]
 }
@@ -942,6 +950,17 @@ private[http] object `Sec-WebSocket-Extensions` extends ModeledCompanion[`Sec-We
 @InternalApi
 private[http] final case class `Sec-WebSocket-Extensions`(extensions: Seq[WebSocketExtension])
     extends RequestResponseHeader {
+  // Wire provenance belongs to this parsed header, not to its modeled extension values.
+  // It is assigned only at construction, before the new header is published.
+  private var parserFoundInvalidPerMessageDeflateParameterSyntax = false
+
+  private[http] def invalidPerMessageDeflateParameterSyntax: Boolean =
+    parserFoundInvalidPerMessageDeflateParameterSyntax
+
+  def copy(extensions: Seq[WebSocketExtension] = this.extensions): `Sec-WebSocket-Extensions` =
+    `Sec-WebSocket-Extensions`.fromParser(
+      extensions, (extensions eq this.extensions) && parserFoundInvalidPerMessageDeflateParameterSyntax)
+
   require(extensions.nonEmpty, "Sec-WebSocket-Extensions.extensions must not be empty")
   import `Sec-WebSocket-Extensions`.extensionsRenderer
   protected[http] def renderValue[R <: Rendering](r: R): r.type = r ~~ extensions
