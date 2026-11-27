@@ -514,6 +514,43 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
     }
   }
 
+  "implicit identity response encoding" should {
+    val identityRoute = responseEncodingAccepted(identity) { yeah }
+
+    "accept an unencoded response when the request lists only gzip" in {
+      Get("/") ~> `Accept-Encoding`(gzip.withQValue(0.4f)) ~> identityRoute ~> check {
+        responseAs[String] shouldEqual "Yeah!"
+        response should haveNoContentEncoding
+      }
+    }
+
+    "reject when identity is explicitly excluded or excluded by a wildcard" in {
+      val wildcardExcluded = HttpEncodingRange.`*`(0f)
+      for (accept <-
+          List(`Accept-Encoding`(gzip, identity.withQValue(0f)), `Accept-Encoding`(gzip, wildcardExcluded))) {
+        Get("/") ~> accept ~> identityRoute ~> check {
+          rejection shouldEqual UnacceptedResponseEncodingRejection(identity)
+        }
+      }
+    }
+
+    "give explicit identity precedence over a wildcard" in {
+      Get("/") ~> `Accept-Encoding`(HttpEncodingRange.`*`(0f), identity.withQValue(0.4f)) ~> identityRoute ~> check {
+        responseAs[String] shouldEqual "Yeah!"
+      }
+      Get("/") ~> `Accept-Encoding`(HttpEncodingRange.`*`, identity.withQValue(0f)) ~> identityRoute ~> check {
+        rejection shouldEqual UnacceptedResponseEncodingRejection(identity)
+      }
+    }
+
+    "not change the preference for an explicitly accepted compressor" in {
+      Get("/") ~> `Accept-Encoding`(gzip.withQValue(0.4f)) ~> encodeResponse { yeah } ~> check {
+        response should haveContentEncoding(gzip)
+        strictify(responseEntity) shouldEqual HttpEntity(ContentType(`text/plain`, `UTF-8`), yeahGzipped)
+      }
+    }
+  }
+
   "the encodeResponse directive" should {
     "produce a non-encoded response if the request has no Accept-Encoding header" in {
       Get("/") ~> {

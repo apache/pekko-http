@@ -194,8 +194,12 @@ final class EncodingNegotiator(requestHeaders: Seq[HttpHeader]) {
 
   /**
    * Determines whether the given encoding is accepted by the client.
+   * Identity is acceptable unless excluded explicitly or through a wildcard (RFC 9110 section 12.5.3).
+   * This default does not raise the quality used for ranking encodings.
    */
-  def isAccepted(encoding: HttpEncoding): Boolean = qValueFor(encoding) > 0f
+  def isAccepted(encoding: HttpEncoding): Boolean =
+    qValueFor(encoding) > 0f ||
+    (encoding.value.equalsIgnoreCase(HttpEncodings.identity.value) && !hasMatchingFor(encoding))
 
   /**
    * Determines whether the request has an `Accept-Encoding` clause matching the given encoding.

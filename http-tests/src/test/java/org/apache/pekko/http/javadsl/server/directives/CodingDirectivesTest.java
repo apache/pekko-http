@@ -27,6 +27,7 @@ import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
 import org.apache.pekko.http.javadsl.model.headers.ContentEncoding;
+import org.apache.pekko.http.javadsl.model.headers.HttpEncodingRanges;
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
 import org.apache.pekko.http.javadsl.testkit.*;
 import org.apache.pekko.stream.javadsl.Compression;
@@ -37,6 +38,32 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class CodingDirectivesTest extends JUnitJupiterRouteTest {
+
+  @Test
+  public void testResponseEncodingAcceptedForImplicitIdentity() {
+    TestRoute route =
+        testRoute(responseEncodingAccepted(HttpEncodings.IDENTITY, () -> complete("content")));
+
+    route
+        .run(HttpRequest.GET("/").addHeader(AcceptEncoding.create(HttpEncodings.GZIP)))
+        .assertStatusCode(200)
+        .assertEntity("content");
+    for (AcceptEncoding excluded :
+        List.of(
+            AcceptEncoding.create(
+                HttpEncodings.IDENTITY.toRange().withQValue(0f), HttpEncodingRanges.ALL),
+            AcceptEncoding.create(HttpEncodingRanges.ALL.withQValue(0f)))) {
+      route.run(HttpRequest.GET("/").addHeader(excluded)).assertStatusCode(406);
+    }
+    route
+        .run(
+            HttpRequest.GET("/")
+                .addHeader(
+                    AcceptEncoding.create(
+                        HttpEncodingRanges.ALL.withQValue(0f), HttpEncodings.IDENTITY.toRange())))
+        .assertStatusCode(200)
+        .assertEntity("content");
+  }
 
   @Test
   public void testAutomaticEncodingWhenNoEncodingRequested() throws Exception {
