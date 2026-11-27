@@ -500,6 +500,22 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Content-Encoding: compress, pipapo" =!= `Content-Encoding`(compress, HttpEncoding.custom("pipapo"))
     }
 
+    "Content-Encoding resolves a mixed-case registered coding" in {
+      val value = "GZip, pipapo"
+      val canonical = "gzip, pipapo"
+      s"Content-Encoding: $value" =!= `Content-Encoding`(gzip, HttpEncoding.custom("pipapo")).renderedTo(canonical)
+
+      pekko.http.javadsl.model.HttpHeader.parse("Content-Encoding", value) match {
+        case header: pekko.http.javadsl.model.headers.ContentEncoding =>
+          val encodings = header.getEncodings().iterator()
+          encodings.next().value() shouldBe "gzip"
+          encodings.next().value() shouldBe "pipapo"
+          encodings.hasNext shouldBe false
+          header.value shouldBe canonical
+        case other => fail(s"Expected a modeled Content-Encoding header, got $other")
+      }
+    }
+
     "Content-Length" in {
       "Content-Length: 42" =!= `Content-Length`(42)
       "Content-Length: 12345678901234567890123456789" =!= `Content-Length`(999999999999999999L)
