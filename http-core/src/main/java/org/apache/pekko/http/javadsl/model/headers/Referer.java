@@ -16,7 +16,8 @@ package org.apache.pekko.http.javadsl.model.headers;
 import org.apache.pekko.http.javadsl.model.Uri;
 
 /**
- * Model for the `Referer` header. Specification: http://tools.ietf.org/html/rfc7231#section-5.5.2
+ * Model for the {@code Referer} header. Specification:
+ * https://www.rfc-editor.org/rfc/rfc9110.html#section-10.1.3
  */
 public abstract class Referer extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Uri getUri();

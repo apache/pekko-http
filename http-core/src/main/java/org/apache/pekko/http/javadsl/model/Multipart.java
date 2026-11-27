@@ -182,8 +182,7 @@ public interface Multipart {
 
   /**
    * Model for `multipart/byteranges` content as defined by
-   * https://tools.ietf.org/html/rfc7233#section-5.4.1 and
-   * https://tools.ietf.org/html/rfc7233#appendix-A
+   * https://www.rfc-editor.org/rfc/rfc9110.html#section-14.6
    */
   interface ByteRanges extends Multipart {
     Source<? extends Multipart.ByteRanges.BodyPart, Object> getParts();

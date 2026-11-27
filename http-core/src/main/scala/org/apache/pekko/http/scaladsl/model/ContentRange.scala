@@ -40,7 +40,7 @@ sealed trait ByteContentRange extends ContentRange {
   def getInstanceLength: OptionalLong = instanceLength.toJavaPrimitive
 }
 
-// http://tools.ietf.org/html/rfc7233#section-4.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-14.4
 object ContentRange {
   def apply(first: Long, last: Long): Default = apply(first, last, None)
   def apply(first: Long, last: Long, instanceLength: Long): Default = apply(first, last, Some(instanceLength))

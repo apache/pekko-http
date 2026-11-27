@@ -265,8 +265,11 @@ object HttpCookie {
 }
 
 /**
- * The Cookie SameSite attribute as defined by <a href="https://tools.ietf.org/html/draft-ietf-httpbis-cookie-same-site-00">RFC6265bis</a>
- * and <a href="https://tools.ietf.org/html/draft-west-cookie-incrementalism-00">Incrementally Better Cookies</a>.
+ * Values of the cookie `SameSite` attribute. See
+ * <a href="https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-22#section-4.1.2.7">the RFC 6265bis draft</a>.
+ *
+ * Historical proposal:
+ * <a href="https://datatracker.ietf.org/doc/html/draft-west-cookie-incrementalism-00">Incrementally Better Cookies</a>.
  */
 sealed trait SameSite extends Renderable {
   def asJava: jm.headers.SameSite = this match {

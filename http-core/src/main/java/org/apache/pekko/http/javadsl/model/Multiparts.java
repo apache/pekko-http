@@ -27,8 +27,11 @@ import scala.collection.immutable.Nil$;
 /** Constructors for Multipart instances */
 public final class Multiparts {
   /**
-   * Constructor for `multipart/form-data` content as defined in http://tools.ietf.org/html/rfc2388.
-   * All parts must have distinct names. (This is not verified!)
+   * Creates {@code multipart/form-data} from the given parts, in order.
+   *
+   * <p>Part names may repeat. Multiple files for one field use separate parts with the same name.
+   * See <a href="https://www.rfc-editor.org/rfc/rfc7578.html#section-4.3">RFC 7578, Section 4.3</a>
+   * and <a href="https://www.rfc-editor.org/rfc/rfc7578.html#section-5.2">Section 5.2</a>.
    */
   public static Multipart.FormData createFormDataFromParts(Multipart.FormData.BodyPart... parts) {
     return org.apache.pekko.http.scaladsl.model.Multipart.FormData$.MODULE$.createNonStrict(
@@ -36,8 +39,11 @@ public final class Multiparts {
   }
 
   /**
-   * Constructor for `multipart/form-data` content as defined in http://tools.ietf.org/html/rfc2388.
-   * All parts must have distinct names. (This is not verified!)
+   * Creates {@code multipart/form-data} from the given source, in stream order.
+   *
+   * <p>Part names may repeat. Multiple files for one field use separate parts with the same name.
+   * See <a href="https://www.rfc-editor.org/rfc/rfc7578.html#section-4.3">RFC 7578, Section 4.3</a>
+   * and <a href="https://www.rfc-editor.org/rfc/rfc7578.html#section-5.2">Section 5.2</a>.
    */
   public static Multipart.FormData createFormDataFromSourceParts(
       Source<Multipart.FormData.BodyPart, ? extends Object> parts) {
@@ -46,8 +52,11 @@ public final class Multiparts {
   }
 
   /**
-   * Constructor for `multipart/form-data` content as defined in http://tools.ietf.org/html/rfc2388.
-   * All parts must have distinct names. (This is not verified!)
+   * Creates strict {@code multipart/form-data} from the given parts, in order.
+   *
+   * <p>Part names may repeat. Multiple files for one field use separate parts with the same name.
+   * See <a href="https://www.rfc-editor.org/rfc/rfc7578.html#section-4.3">RFC 7578, Section 4.3</a>
+   * and <a href="https://www.rfc-editor.org/rfc/rfc7578.html#section-5.2">Section 5.2</a>.
    */
   public static Multipart.FormData.Strict createStrictFormDataFromParts(
       Multipart.FormData.BodyPart.Strict... parts) {
@@ -56,8 +65,11 @@ public final class Multiparts {
   }
 
   /**
-   * Constructor for `multipart/form-data` content as defined in http://tools.ietf.org/html/rfc2388.
-   * All parts must have distinct names. (This is not verified!)
+   * Creates strict {@code multipart/form-data} with one part per map key.
+   *
+   * <p>Use {@link #createStrictFormDataFromParts} to supply multiple parts with the same field
+   * name. See <a href="https://www.rfc-editor.org/rfc/rfc7578.html#section-5.2">RFC 7578, Section
+   * 5.2</a>.
    */
   public static Multipart.FormData.Strict createFormDataFromFields(
       Map<String, HttpEntity.Strict> fields) {

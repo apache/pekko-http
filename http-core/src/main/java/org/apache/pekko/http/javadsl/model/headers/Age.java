@@ -13,7 +13,10 @@
 
 package org.apache.pekko.http.javadsl.model.headers;
 
-/** Model for the `Age` header. Specification: http://tools.ietf.org/html/rfc7234#section-5.1 */
+/**
+ * Model for the {@code Age} header. Specification:
+ * https://www.rfc-editor.org/rfc/rfc9111.html#section-5.1
+ */
 public abstract class Age extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract long deltaSeconds();
 

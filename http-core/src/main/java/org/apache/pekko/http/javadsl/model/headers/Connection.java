@@ -15,7 +15,7 @@ package org.apache.pekko.http.javadsl.model.headers;
 
 /**
  * Model for the `Connection` header. Specification:
- * https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.10
+ * https://www.rfc-editor.org/rfc/rfc9110.html#section-7.6.1
  */
 public abstract class Connection extends org.apache.pekko.http.scaladsl.model.HttpHeader {
   public abstract Iterable<String> getTokens();
