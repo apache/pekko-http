@@ -278,6 +278,12 @@ class Http2FramingSpec extends PekkoSpecWithMaterializer {
           Http2Protocol.SettingIdentifier.SETTINGS_MAX_FRAME_SIZE -> 0x424242,
           Http2Protocol.SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS -> 0x123)))
       }
+
+      "with repeated values for the same setting" in {
+        val id = Http2Protocol.SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS
+        val frame = SettingsFrame(List(Setting(id, 64), Setting(id, 128)))
+        parseToEvents(Seq(FrameRenderer.render(frame))) shouldBe Seq(frame)
+      }
       // 6.5.3: An endpoint that receives a SETTINGS frame with any unknown or unsupported identifier MUST ignore that setting
       "with an experimental, unknown setting" in {
         // As observed being sent by grpcc in the first SETTINGS frame:
