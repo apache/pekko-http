@@ -26,33 +26,37 @@ object MyRejectionHandler {
   import pekko.actor.ActorSystem
   import pekko.http.scaladsl.Http
   import pekko.http.scaladsl.model._
+  import pekko.http.scaladsl.model.headers.Allow
   import pekko.http.scaladsl.server._
   import StatusCodes._
   import Directives._
 
   object MyApp {
-    def main(args: Array[String]): Unit = {
-      def myRejectionHandler =
-        RejectionHandler.newBuilder()
-          .handle {
-            case MissingCookieRejection(cookieName) =>
-              complete(HttpResponse(BadRequest, entity = "No cookies, no service!!!"))
+    def myRejectionHandler =
+      RejectionHandler.newBuilder()
+        .handle {
+          case MissingCookieRejection(cookieName) =>
+            complete(HttpResponse(BadRequest, entity = "No cookies, no service!!!"))
+        }
+        .handle {
+          case AuthorizationFailedRejection =>
+            complete(Forbidden, "You're out of your depth!")
+        }
+        .handle {
+          case ValidationRejection(msg, _) =>
+            complete(InternalServerError, "That wasn't valid! " + msg)
+        }
+        .handleAll[MethodRejection] { methodRejections =>
+          val methods = methodRejections.map(_.supported)
+          val supported = methods.map(_.name).mkString(" or ")
+          respondWithHeader(Allow(methods)) {
+            complete(MethodNotAllowed, s"Can't do that! Supported: $supported!")
           }
-          .handle {
-            case AuthorizationFailedRejection =>
-              complete(Forbidden, "You're out of your depth!")
-          }
-          .handle {
-            case ValidationRejection(msg, _) =>
-              complete(InternalServerError, "That wasn't valid! " + msg)
-          }
-          .handleAll[MethodRejection] { methodRejections =>
-            val names = methodRejections.map(_.supported.name)
-            complete(MethodNotAllowed, s"Can't do that! Supported: ${names.mkString(" or ")}!")
-          }
-          .handleNotFound { complete((NotFound, "Not here!")) }
-          .result()
+        }
+        .handleNotFound { complete((NotFound, "Not here!")) }
+        .result()
 
+    def main(args: Array[String]): Unit = {
       implicit val system: ActorSystem = ActorSystem()
 
       val route: Route = handleRejections(myRejectionHandler) {
@@ -174,6 +178,24 @@ class RejectionHandlerExamplesSpec extends RoutingSpec with CompileOnlySpec {
       responseAs[String] shouldEqual """{"rejection": "Whoops, bad request!"}"""
     }
     // #example-json
+  }
+
+  "include the supported methods in the custom 405 response" in {
+    import pekko.http.scaladsl.model.ContentTypes
+    import pekko.http.scaladsl.model.HttpMethods.{ GET, POST }
+    import pekko.http.scaladsl.model.StatusCodes.MethodNotAllowed
+    import pekko.http.scaladsl.model.headers.Allow
+
+    val route = handleRejections(MyRejectionHandler.MyApp.myRejectionHandler) {
+      concat(get { complete("Received GET") }, post { complete("Received POST") })
+    }
+
+    Put() ~> route ~> check {
+      status shouldEqual MethodNotAllowed
+      header[Allow] shouldEqual Some(Allow(GET, POST))
+      contentType shouldEqual ContentTypes.`text/plain(UTF-8)`
+      responseAs[String] shouldEqual "Can't do that! Supported: GET or POST!"
+    }
   }
 
   "test custom handler example" in {
