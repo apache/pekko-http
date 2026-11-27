@@ -32,6 +32,12 @@ import pekko.http.scaladsl.model.HttpEntity._
 import pekko.http.scaladsl.model.HttpMethods._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.headers._
+import pekko.http.impl.engine.rendering.{
+  DateHeaderRendering,
+  HttpResponseRendererFactory,
+  ResponseRenderingContext,
+  ResponseRenderingOutput
+}
 import pekko.http.impl.util._
 import pekko.testkit._
 
@@ -632,6 +638,32 @@ class LowLevelOutgoingConnectionSpec extends PekkoSpecWithMaterializer with Insi
         netOut.expectComplete()
         requestsSub.expectCancellation()
         netInSub.expectCancellation()
+      }
+
+      "fail a chunked response entity when the connection closes before the first chunk" in new TestSetup {
+        sendStandardRequest()
+
+        // The peer starts a normal response, but its application has not produced a body chunk yet.
+        val response = HttpResponse(entity = Chunked(ContentTypes.`application/octet-stream`, Source.maybe))
+        val ResponseRenderingOutput.HttpData(initialHeaders) = Source.single(ResponseRenderingContext(response))
+          .via(new HttpResponseRendererFactory(None, 256, NoLogging, DateHeaderRendering()).renderer)
+          .runWith(Sink.head)
+          .awaitResult(3.seconds.dilated)
+        sendWireData(initialHeaders)
+
+        val received = expectResponse()
+        received.status shouldBe StatusCodes.OK
+        val Chunked(_, chunks) = received.entity
+        val probe = TestSubscriber.manualProbe[ChunkStreamPart]()
+        chunks.runWith(Sink.fromSubscriber(probe))
+        probe.expectSubscription().request(1)
+
+        closeNetworkInput()
+
+        probe.expectError() shouldBe an[EntityStreamException]
+        responses.expectComplete()
+        netOut.expectComplete()
+        requestsSub.expectCancellation()
       }
 
       for ((phase, lineEnding) <- List(
