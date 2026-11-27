@@ -746,6 +746,22 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       """Link: </>; rev=http://example.net/foo""" =!=> """</>; rev="http://example.net/foo""""
     }
 
+    "Link extension attributes" in {
+      val expected = Link(Uri("/site.css"), LinkParams.rel("preload"), LinkParams.extension("as", "style"),
+        LinkParams.extension("x-enabled"), LinkParams.title("Styles"), LinkParams.extension("x-empty", ""),
+        LinkParams.extension("x-label", "team \"blue\""), LinkParams.extension("x-tag", "first"),
+        LinkParams.extension("x-tag", "second"))
+      val value =
+        """</site.css>; rel=preload; as=style; x-enabled; title="Styles"; x-empty=""; x-label="team \"blue\""; x-tag=first; x-tag=second"""
+
+      s"Link: $value" =!= expected.renderedTo(value)
+      s"Link: ${value.replace("as=style", "As = \"style\"")}" =!= expected.renderedTo(value)
+
+      val spaced = Link(Uri("/site.css"), LinkParams.rel("preload"), LinkParams.extension("x-label", "team  notes"))
+      HeaderParser.parseFull("link", "</site.css>; rel=preload; x-label=\"team  notes\"",
+        HeaderParser.DefaultSettings) shouldBe HeaderParser.Success(spaced)
+    }
+
     "Origin" in {
       "Origin: null" =!= Origin(Nil)
       "Origin: http://spray.io" =!= Origin("http://spray.io")
