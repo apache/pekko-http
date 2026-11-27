@@ -39,3 +39,20 @@ Scala
 
 Java
 :  @@snip [CodingDirectivesExamplesTest.java](/docs/src/test/java/docs/http/javadsl/server/directives/CodingDirectivesExamplesTest.java) { #encodeResponseWith }
+
+## Route-local minimum size
+
+To opt a route into a minimum size for gzip, use a custom filter. The filter checks the original response entity's
+known length in bytes, before encoding. The examples keep the usual eligibility checks and only gzip an entity of
+at least 1024 bytes. They leave an entity of unknown length, such as a typical chunked response, unchanged without
+buffering the stream.
+
+This is an application policy, not a new default. These examples assume the client accepts gzip and permits an
+unencoded response. If the client excludes the identity coding, do not rely on a size filter alone to select an
+acceptable response: the filter sees the response, not the request's `Accept-Encoding`.
+
+Scala
+:  @@snip [CodingDirectivesExamplesSpec.scala](/docs/src/test/scala/docs/http/scaladsl/server/directives/CodingDirectivesExamplesSpec.scala) { #encodeResponseWithMinimumSize }
+
+Java
+:  @@snip [CodingDirectivesExamplesTest.java](/docs/src/test/java/docs/http/javadsl/server/directives/CodingDirectivesExamplesTest.java) { #encodeResponseWithMinimumSize }

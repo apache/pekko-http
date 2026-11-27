@@ -16,17 +16,14 @@ package docs.http.javadsl.server.directives;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.http.javadsl.model.HttpEntities;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
-import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.MediaTypes;
 import org.apache.pekko.http.javadsl.model.headers.AcceptEncoding;
 import org.apache.pekko.http.javadsl.model.headers.ContentEncoding;
 import org.apache.pekko.http.javadsl.model.headers.HttpEncodings;
 import org.apache.pekko.http.javadsl.coding.Coder;
 import org.apache.pekko.http.javadsl.server.Rejections;
-import org.apache.pekko.http.javadsl.server.Route;
 import org.apache.pekko.http.javadsl.testkit.JUnitJupiterRouteTest;
 import org.apache.pekko.util.ByteString;
-import org.apache.pekko.stream.javadsl.Compression;
 import org.apache.pekko.stream.javadsl.Flow;
 import org.apache.pekko.stream.javadsl.Source;
 import org.junit.jupiter.api.Test;
@@ -50,6 +47,18 @@ import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.encodeResponseWith;
 
 // #encodeResponseWith
+// #encodeResponseWithMinimumSize
+import org.apache.pekko.http.javadsl.coding.FlowCoder;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.apache.pekko.stream.javadsl.Compression;
+
+import static org.apache.pekko.http.javadsl.server.Directives.complete;
+import static org.apache.pekko.http.javadsl.server.Directives.concat;
+import static org.apache.pekko.http.javadsl.server.Directives.encodeResponseWithFlowCoder;
+import static org.apache.pekko.http.javadsl.server.Directives.path;
+
+// #encodeResponseWithMinimumSize
 // #decodeRequest
 import static org.apache.pekko.http.javadsl.server.Directives.complete;
 import static org.apache.pekko.http.javadsl.server.Directives.decodeRequest;
@@ -141,6 +150,50 @@ public class CodingDirectivesExamplesTest extends JUnitJupiterRouteTest {
         .run(HttpRequest.GET("/"))
         .assertHeaderExists(ContentEncoding.create(HttpEncodings.GZIP));
     // #encodeResponseWith
+  }
+
+  @Test
+  public void testEncodeResponseWithMinimumSize() {
+    // #encodeResponseWithMinimumSize
+    final long minimumBytes = 1024L;
+    final FlowCoder minimumSizeGzip =
+        FlowCoder.create(
+            "gzip",
+            Compression.gzip(),
+            Compression::gzipDecompress,
+            message -> {
+              final var entity = message.entity();
+              return (!(message instanceof HttpResponse response)
+                      || response.status().allowsEntity())
+                  && entity.getContentType().mediaType().isCompressible()
+                  && entity.getContentLengthOption().orElse(0L) >= minimumBytes;
+            });
+
+    final String report = "Example report line\n".repeat(100);
+    final Route route =
+        encodeResponseWithFlowCoder(
+            minimumSizeGzip,
+            () ->
+                concat(
+                    path("report", () -> complete(report)), path("summary", () -> complete("OK"))));
+
+    testRoute(route)
+        .run(HttpRequest.GET("/report").addHeader(AcceptEncoding.create(HttpEncodings.GZIP)))
+        .assertHeaderExists(ContentEncoding.create(HttpEncodings.GZIP));
+    testRoute(route)
+        .run(HttpRequest.GET("/summary").addHeader(AcceptEncoding.create(HttpEncodings.GZIP)))
+        .assertHeaderKindNotExists("Content-Encoding")
+        .assertEntity("OK");
+    // #encodeResponseWithMinimumSize
+
+    final var streamed =
+        HttpEntities.createChunked(
+            org.apache.pekko.http.javadsl.model.ContentTypes.TEXT_PLAIN_UTF8,
+            Source.single(ByteString.fromString(report)));
+    testRoute(encodeResponseWithFlowCoder(minimumSizeGzip, () -> complete(streamed)))
+        .run(HttpRequest.GET("/").addHeader(AcceptEncoding.create(HttpEncodings.GZIP)))
+        .assertHeaderKindNotExists("Content-Encoding")
+        .assertEntity(report);
   }
 
   @Test
