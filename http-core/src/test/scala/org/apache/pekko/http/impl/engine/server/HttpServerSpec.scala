@@ -1029,6 +1029,38 @@ class HttpServerSpec extends PekkoSpec(
         requests.expectError()
       })
 
+    "send an application-selected 413 without 100 Continue or waiting for the request body" in
+    assertAllStagesStopped(new TestSetup {
+      send(
+        """POST /upload HTTP/1.1
+           |Host: example.com
+           |Expect: 100-continue
+           |Content-Length: 4
+           |
+           |""")
+
+      val request = expectRequest()
+      request.method shouldEqual POST
+      request.header[Expect] shouldEqual Some(Expect.`100-continue`)
+      request.entity.contentLengthOption shouldEqual Some(4L)
+
+      // The application declines the upload without requesting the entity.
+      responses.sendNext(HttpResponse(StatusCodes.ContentTooLarge, entity = "Declined"))
+      expectResponseWithWipedDate(
+        """HTTP/1.1 413 Content Too Large
+           |Server: pekko-http/test
+           |Date: XXXX
+           |Connection: close
+           |Content-Type: text/plain; charset=UTF-8
+           |Content-Length: 8
+           |
+           |Declined""")
+
+      netOut.expectComplete()
+      netIn.sendComplete()
+      requests.expectError()
+    })
+
     "not fail with 'Cannot pull port (ControllerStage.requestParsingIn) twice' for early response to `100 Continue` request (after 100-Continue has been sent)" in
     assertAllStagesStopped(
       new TestSetup {
