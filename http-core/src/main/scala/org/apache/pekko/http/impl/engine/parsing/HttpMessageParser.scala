@@ -297,7 +297,7 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
           case EmptyHeader =>
             val lastChunk =
               if (extension.isEmpty && headers.isEmpty) HttpEntity.LastChunk
-              else HttpEntity.LastChunk(extension, headers)
+              else HttpEntity.LastChunk(extension, headers.reverse)
             emit(EntityChunk(lastChunk))
             emit(MessageEnd)
             setCompletionHandling(CompletionOk)

@@ -353,6 +353,33 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      "preserve trailer field order in parser output" in new Test {
+        val head = prep("""HTTP/1.1 200 OK
+          |Transfer-Encoding: chunked
+          |Content-Type: application/octet-stream
+          |Trailer: X-Menu-Order, X-Menu-Note
+          |
+          |""")
+        val input = head + crlf("4\nmenu\n0\n") + prep("""X-Menu-Order: starter
+          |X-Menu-Note: seasonal
+          |X-Menu-Order: dessert
+          |
+          |""")
+        // X-Menu-Order is an application list-valued field. Its repeated lines stay separate and ordered.
+        val expectedTrailers = List(
+          RawHeader("X-Menu-Order", "starter"),
+          RawHeader("X-Menu-Note", "seasonal"),
+          RawHeader("X-Menu-Order", "dessert"))
+        val outputs = collectBlocking(
+          Source.single(SessionBytes(TLSPlacebo.dummySession, ByteString(input))).via(newParserStage()))
+          .filterNot(_ == NeedNextRequestMethod)
+        outputs.head shouldBe a[ResponseStart]
+        outputs.tail shouldEqual Seq(
+          EntityChunk(Chunk(ByteString("menu"))),
+          EntityChunk(LastChunk(trailer = expectedTrailers)),
+          MessageEnd)
+      }
+
       "message end with extension, trailer and remaining content" in new Test {
         Seq(
           prep(start),
