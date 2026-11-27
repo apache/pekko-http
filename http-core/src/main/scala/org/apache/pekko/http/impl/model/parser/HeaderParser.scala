@@ -173,6 +173,7 @@ private[http] object HeaderParser {
     "connection",
     "content-disposition",
     "content-encoding",
+    "content-language",
     "content-length",
     "content-location",
     "content-range",

@@ -31,7 +31,7 @@ import org.parboiled2.util.Base64
 import org.apache.pekko
 import pekko.annotation.{ ApiMayChange, InternalApi }
 import pekko.event.Logging
-import pekko.http.impl.model.parser.CharacterClasses
+import pekko.http.impl.model.parser.{ CharacterClasses, LanguageTagSyntax }
 import pekko.http.impl.model.parser.CharacterClasses.`attr-char`
 import pekko.http.impl.util._
 import pekko.http.javadsl.{ model => jm }
@@ -557,6 +557,38 @@ final case class `Content-Encoding`(encodings: Seq[HttpEncoding]) extends jm.hea
 
   /** Java API */
   def getEncodings: Iterable[jm.headers.HttpEncoding] = encodings.asJava
+}
+
+object `Content-Language` extends ModeledCompanion[`Content-Language`] {
+  def apply(languages: Seq[Language]): `Content-Language` = {
+    require(languages.forall(LanguageTagSyntax.isWellFormed), "Expected RFC 5646 language tags")
+    new `Content-Language`(languages)
+  }
+
+  def apply(first: Language, more: Language*): `Content-Language` = apply(first +: more)
+
+  private val languagesRenderer = Renderer.defaultSeqRenderer[Language]
+}
+
+/**
+ * The language tags of the intended audience for the representation, as defined by RFC 9110 section 8.5.
+ *
+ * @since 2.1.0
+ */
+final class `Content-Language` private (val languages: Seq[Language]) extends jm.headers.ContentLanguage
+    with RequestResponseHeader {
+  def renderValue[R <: Rendering](r: R): r.type = `Content-Language`.languagesRenderer.render(r, languages)
+  protected def companion = `Content-Language`
+
+  override def equals(other: Any): Boolean = other match {
+    case that: `Content-Language` => languages == that.languages
+    case _                        => false
+  }
+
+  override def hashCode(): Int = languages.hashCode()
+
+  /** Java API */
+  def getLanguages: Iterable[jm.headers.Language] = languages.asJava
 }
 
 // https://tools.ietf.org/html/rfc7233#section-4.2

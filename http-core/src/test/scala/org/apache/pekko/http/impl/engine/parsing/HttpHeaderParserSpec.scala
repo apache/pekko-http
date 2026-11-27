@@ -369,6 +369,16 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
         "something; something")
     }
 
+    "model a valid Content-Language field by default" in new TestSetup() {
+      parseAndCache(s"Content-Language: mi, en${newLine}x")() shouldEqual
+      `Content-Language`(Language("mi"), Language("en"))
+    }
+
+    "retain a valid Content-Language field as raw with modeled parsing disabled" in new TestSetup(
+      parserSettings = createParserSettings(system).withModeledHeaderParsing(false)) {
+      parseAndCache(s"Content-Language: mi, en${newLine}x")() shouldEqual RawHeader("Content-Language", "mi, en")
+    }
+
     "parse most headers to RawHeader when `modeled-header-parsing = off`" in new TestSetup(
       parserSettings = createParserSettings(system).withModeledHeaderParsing(false)) {
       // Connection, Host, and Expect should still be modelled

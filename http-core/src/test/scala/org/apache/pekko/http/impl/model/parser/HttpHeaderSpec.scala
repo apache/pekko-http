@@ -500,6 +500,22 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Content-Encoding: compress, pipapo" =!= `Content-Encoding`(compress, HttpEncoding.custom("pipapo"))
     }
 
+    "Content-Language parses ordered language tags and renders their original spelling" in {
+      val expected = `Content-Language`(
+        Language("zh-Hant-TW"),
+        Language("es-419"),
+        Language("en-US-u-ca-gregory"),
+        Language("X-pekko"),
+        Language("i-default"),
+        Language("en"),
+        Language("en"))
+      "Content-Language: zh-Hant-TW, es-419, en-US-u-ca-gregory, X-pekko, i-default, en, en" =!=
+        expected.renderedTo("zh-Hant-TW, es-419, en-US-u-ca-gregory, X-pekko, i-default, en, en")
+      "Content-Language: " =!= `Content-Language`(Seq.empty).renderedTo("")
+      `Content-Language`.parseFromValueString("de-CH-1901, zh-cmn-Hans-CN, en-x-pekko").map(_.languages) shouldBe
+      Right(Seq(Language("de-CH-1901"), Language("zh-cmn-Hans-CN"), Language("en-x-pekko")))
+    }
+
     "Content-Length" in {
       "Content-Length: 42" =!= `Content-Length`(42)
       "Content-Length: 12345678901234567890123456789" =!= `Content-Length`(999999999999999999L)
