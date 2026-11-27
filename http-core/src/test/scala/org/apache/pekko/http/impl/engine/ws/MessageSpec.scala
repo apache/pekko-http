@@ -309,25 +309,24 @@ class MessageSpec extends PekkoSpecWithMaterializer(
             messageIn.expectNoMessage(100.millis)
           }
         }
-        "unmask masked input on the server side" in new ServerTestSetup {
-          val mask = Random.nextInt()
-          val (data, _) = maskedUTF8("äbcdef€", mask)
-          val data1 = data.take(3)
-          val data2 = data.drop(3)
-          val header = frameHeader(Opcode.Binary, data.size, fin = true, mask = Some(mask))
+        "decode a masked UTF-8 text frame across network chunks on the server side" in new ServerTestSetup {
+          val mask = 0x12345678
+          val (data, _) = maskedUTF8("bäcdef€", mask)
+          val header = frameHeader(Opcode.Text, data.size, fin = true, mask = Some(mask))
 
-          pushInput(header ++ data1)
-          val dataSource = expectBinaryMessage().dataStream
-          val sub = TestSubscriber.manualProbe[ByteString]()
-          dataSource.runWith(Sink.fromSubscriber(sub))
-          val s = sub.expectSubscription()
-          s.request(2)
-          sub.expectNext(ByteString("äb", UTF_8))
+          try {
+            // The first chunk ends inside the two-byte character, but starts with a complete ASCII character.
+            pushInput(header ++ data.take(2))
+            val text = expectTextMessage().textStream.runWith(TestSink[String]())
+            text.request(3).expectNext("b")
 
-          pushInput(data2)
-          sub.expectNext(ByteString("cdef€", UTF_8))
-          s.request(1)
-          sub.expectComplete()
+            pushInput(data.drop(2))
+            text.expectNext("äcdef€")
+            text.expectComplete()
+          } finally {
+            messageIn.cancel()
+            netOut.cancel()
+          }
         }
         "unmask masked input on the server side for empty frame" in new ServerTestSetup {
           val mask = Random.nextInt()
