@@ -99,11 +99,11 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   // ******************************************************************************************
 
   def `HTTP-date`: Rule1[DateTime] = rule {
-    (`rfc850-date` | `legacy-HTTP-date`) ~ OWS
+    (`rfc850-date` | `legacy-HTTP-date`(allowNormalizedAsctimeDay = true)) ~ OWS
   }
 
-  private def `legacy-HTTP-date`: Rule1[DateTime] = rule {
-    `IMF-fixdate` | `asctime-date` | '0' ~ push(DateTime.MinValue)
+  private def `legacy-HTTP-date`(allowNormalizedAsctimeDay: Boolean): Rule1[DateTime] = rule {
+    `IMF-fixdate` | parseAsctimeDate(allowNormalizedAsctimeDay) | '0' ~ push(DateTime.MinValue)
   }
 
   // `cookie-IMF-fixdate` below is a copy of this rule for cookie Expires dates: keep the two in sync when
@@ -163,8 +163,13 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
 
   // `cookie-asctime-date` below is a copy of this rule for cookie Expires dates: keep the two in sync when
   // the date shape changes.
-  def `asctime-date` = rule {
-    `day-name` ~ ' ' ~ date3 ~ ' ' ~ `time-of-day` ~ ' ' ~ year ~> {
+  def `asctime-date` = rule { parseAsctimeDate(allowNormalizedDay = false) }
+
+  private def parseAsctimeDate(allowNormalizedDay: Boolean): Rule1[DateTime] = rule {
+    // HttpHeader.parse normalizes the space padding before a one-digit asctime day.
+    // Only the HTTP-date rule accepts that normalized form, not the cookie expiry fallback.
+    `day-name` ~ ' ' ~
+    (date3 | test(allowNormalizedDay) ~ month ~ ' ' ~ digit) ~ ' ' ~ `time-of-day` ~ ' ' ~ year ~> {
       (wkday, month, day, hour, min, sec, year) => createDateTime(year, month, day, hour, min, sec, wkday)
     }
   }
@@ -329,7 +334,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   // Cookie receivers accept one or two digits per time component and interpret dates as UTC (RFC 6265, section 5.1.1).
   // Keep this separate from HTTP-date: this only extends the existing date shapes, not the full token algorithm.
   def `cookie-expires-date`: Rule1[DateTime] = rule {
-    (`cookie-IMF-fixdate` | `cookie-asctime-date` | `legacy-HTTP-date` |
+    (`cookie-IMF-fixdate` | `cookie-asctime-date` | `legacy-HTTP-date`(allowNormalizedAsctimeDay = false) |
     zeroOrMore(ANY) ~ push(DateTime.MinValue)) ~ OWS
   }
 

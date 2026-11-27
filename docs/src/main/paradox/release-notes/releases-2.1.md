@@ -28,3 +28,7 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
   `HttpCookie.partitioned` field instead of the generic `extension` field. If your code detects
   partitioned cookies by inspecting `extension` (`getExtension()` in Java), use `partitioned`
   (`partitioned()` in Java) instead ([PR1562](https://github.com/apache/pekko-http/pull/1562)).
+
+* `HttpHeader.parse` now accepts standard `asctime` dates with a space-padded single-digit day.
+  For example, a valid `Expires` date no longer falls back to an already-expired value.
+  Cookie expiry parsing and canonical date rendering are unchanged.
