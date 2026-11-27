@@ -129,6 +129,21 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         parser.onPull() shouldEqual MessageEnd
       }
 
+      "a response with repeated list-valued fields in their original order" in new Test {
+        val input = prep("""HTTP/1.1 200 OK
+          |Cache-Control: public
+          |Server: example/1
+          |Cache-Control: max-age=60
+          |Content-Length: 0
+          |
+          |""")
+        val responses = collectBlocking(rawParse(GET, input))
+        responses.size shouldBe 1
+        val cacheControl = responses.head.toOption.get.headers.collect { case header: `Cache-Control` => header }
+        cacheControl shouldEqual Seq(`Cache-Control`(CacheDirectives.`public`),
+          `Cache-Control`(CacheDirectives.`max-age`(60)))
+      }
+
       "a response with a simple body" in new Test {
         collectBlocking(rawParse(
           GET,
