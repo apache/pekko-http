@@ -374,6 +374,31 @@ class MessageSpec extends PekkoSpecWithMaterializer(
         expectFrameOnNetwork(Opcode.Binary, ByteString.empty, fin = false)
         expectFrameOnNetwork(Opcode.Continuation, ByteString.empty, fin = true)
       }
+      "finish a streamed message before rendering the next strict message" in {
+        val chunks = Source(List(ByteString("first"), ByteString("last")))
+        val frames = Source(List[Message](BinaryMessage(chunks), TextMessage("next")))
+          .via(MessageToFrameRenderer.create(serverSide = true))
+          .runWith(TestSink[FrameStart]())
+
+        def expectMessage(opcode: Opcode, expected: ByteString): Unit = {
+          val payload = ByteString.newBuilder
+          var frame = frames.request(1).expectNext()
+          frame.header.opcode shouldBe opcode
+          payload ++= frame.data
+          while (!frame.header.fin) {
+            frame = frames.request(1).expectNext()
+            frame.header.opcode shouldBe Opcode.Continuation
+            payload ++= frame.data
+          }
+          payload.result() shouldBe expected
+        }
+
+        try {
+          expectMessage(Opcode.Binary, ByteString("firstlast"))
+          expectMessage(Opcode.Text, ByteString("next"))
+          frames.request(1).expectComplete()
+        } finally frames.cancel()
+      }
       "not send a final frame when a streamed message fails" in {
         val error = new IllegalStateException("application message failed")
         Source.single(BinaryMessage(Source.failed[ByteString](error)))
