@@ -105,9 +105,16 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
         serverRequest.request.protocol shouldBe HttpProtocols.`HTTP/2.0`
         serverRequest.request.method shouldBe HttpMethods.POST
         val firstData = Promise[Done]()
-        val received = serverRequest.request.entity.dataBytes.runFold(ByteString.empty) { (all, bytes) =>
-          firstData.trySuccess(Done)
-          all ++ bytes
+        val received = serverRequest.request.entity match {
+          case HttpEntity.Chunked(_, chunks) =>
+            chunks.runFold((ByteString.empty, Vector.empty[HttpEntity.LastChunk])) {
+              case ((all, trailers), chunk: HttpEntity.Chunk) =>
+                firstData.trySuccess(Done)
+                (all ++ chunk.data, trailers)
+              case ((all, trailers), chunk: HttpEntity.LastChunk) =>
+                (all, trailers :+ chunk)
+            }
+          case other => fail(s"Expected a chunked HTTP/2 request entity, got ${other.getClass.getSimpleName}")
         }
 
         val bodyCompletion = TestProbe()
@@ -117,7 +124,9 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
         bodyCompletion.expectNoMessage(100.millis)
         received.isCompleted shouldBe false
         terminal.success(last)
-        received.futureValue shouldBe body
+        val (receivedBody, receivedLastChunks) = received.futureValue
+        receivedBody shouldBe body
+        receivedLastChunks.map(_.trailer) shouldBe Seq(Seq(trailer))
 
         serverRequest.sendResponse(HttpResponse(entity = "received"))
         val response = expectClientResponse()
