@@ -78,6 +78,8 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 
   val http = Http(system)
   val telemetry = TelemetrySpi.create(system)
+  private lazy val sendAsteriskOptions =
+    system.settings.config.getBoolean("pekko.http.client.http2.send-asterisk-options")
 
   // TODO: split up similarly to what `Http` does into `serverLayer`, `bindAndHandle`, etc.
   /**
@@ -278,7 +280,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
     }
 
     val stack = Http2Blueprint.clientStack(clientConnectionSettings, log, telemetry, "https",
-      connectionAuthority(host, port, "https")).addAttributes(
+      connectionAuthority(host, port, "https"), sendAsteriskOptions).addAttributes(
       prepareClientAttributes(host, port)).atop(
       Http2Blueprint.unwrapTls).atop(
       LogByteStringTools.logTLSBidiBySetting("client-plain-text",
@@ -293,7 +295,7 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
   def outgoingConnectionPriorKnowledge(host: String, port: Int, clientConnectionSettings: ClientConnectionSettings,
       log: LoggingAdapter): Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] = {
     val stack = Http2Blueprint.clientStack(clientConnectionSettings, log, telemetry, "http",
-      connectionAuthority(host, port, "http")).addAttributes(
+      connectionAuthority(host, port, "http"), sendAsteriskOptions).addAttributes(
       prepareClientAttributes(host, port)).atop(
       Http2Blueprint.unwrapTls).atop(
       LogByteStringTools.logTLSBidiBySetting("client-plain-text",

@@ -65,25 +65,37 @@ private[http2] class ResponseRendering(settings: ServerSettings, val log: Loggin
 @InternalApi
 private[http2] class RequestRendering(
     settings: ClientConnectionSettings, val log: LoggingAdapter,
-    connectionScheme: String = "", connectionAuthority: Uri.Authority = Uri.Authority.Empty)
+    connectionScheme: String = "", connectionAuthority: Uri.Authority = Uri.Authority.Empty,
+    sendAsteriskOptions: Boolean = false)
     extends MessageRendering[HttpRequest] {
+
+  def this(settings: ClientConnectionSettings, log: LoggingAdapter, connectionScheme: String,
+      connectionAuthority: Uri.Authority) =
+    this(settings, log, connectionScheme, connectionAuthority, sendAsteriskOptions = false)
 
   private val streamId = new AtomicInteger(1)
   protected override def nextStreamId(r: HttpRequest): Int = streamId.getAndAdd(2)
 
   protected override def initialHeaderPairs(request: HttpRequest): VectorBuilder[(String, String)] = {
     val headerPairs = new VectorBuilder[(String, String)]()
-    headerPairs += ":method" -> request.method.value
+    val method = request.method.value
+    val uri = request.uri
+    headerPairs += ":method" -> method
     // RFC 9113 8.3.1: ':scheme' is mandatory and ':authority', when present, must not be empty. A relative URI, as
     // used with the connection-level client API, carries neither, so they are taken from the connection.
-    headerPairs += ":scheme" -> (if (request.uri.scheme.nonEmpty) request.uri.scheme else connectionScheme)
+    headerPairs += ":scheme" -> (if (uri.scheme.nonEmpty) uri.scheme else connectionScheme)
     headerPairs += ":authority" -> authority(request)
     // a `Raw-Request-URI` header supplies the request target verbatim, as it does in the HTTP/1.1 renderer. `Uri`
     // percent-decodes path segments when parsing and re-encodes them with a keep-set that leaves sub-delims raw, so
     // it cannot round-trip an encoded pchar (`%2B` renders as `+`). Callers that must reproduce the target
     // byte-for-byte -- AWS SigV4 signs the encoded path, for instance -- pass it through this header.
-    headerPairs += ":path" -> rawRequestTarget(request).getOrElse(
-      request.uri.toHttpRequestTargetOriginForm.toString)
+    headerPairs += ":path" -> rawRequestTarget(request).getOrElse {
+      // RFC 9113 §8.3.1 (erratum 9175): only a server-wide OPTIONS has neither a path nor a query.
+      if (sendAsteriskOptions && method == HttpMethods.OPTIONS.value && uri.path.isEmpty &&
+        uri.rawQueryString.isEmpty &&
+        (uri.scheme == "http" || uri.scheme == "https") && !uri.authority.host.isEmpty) "*"
+      else uri.toHttpRequestTargetOriginForm.toString
+    }
     headerPairs
   }
 

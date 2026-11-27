@@ -604,3 +604,65 @@ class Http2PersistentInterimSpec extends PekkoSpecWithMaterializer with ScalaFut
     }
   }
 }
+
+class Http2OptionsDefaultClientSpec extends Http2OptionsClientSpec("", "/")
+class Http2OptionsOptInClientSpec
+    extends Http2OptionsClientSpec("pekko.http.client.http2.send-asterisk-options = on", "*")
+
+abstract class Http2OptionsClientSpec(configOverrides: String, expectedPath: String)
+    extends PekkoSpecWithMaterializer(configOverrides) {
+
+  "The HTTP/2 client" should {
+    for (managed <- Seq(false, true)) {
+      val mode = if (managed) "managed" else "direct"
+
+      s"send the configured OPTIONS target over a $mode connection" in StreamTestKit.assertAllStagesStopped {
+        class Peer extends Http2FrameHpackSupport {
+          val fromNet = TestPublisher.probe[ByteString]()
+          val frameProbeDelegate = Http2FrameProbe()
+          def sendBytes(bytes: ByteString): Unit = fromNet.sendNext(bytes)
+        }
+        val peer = new Peer
+        val transport = new ClientTransport {
+          override def connectTo(host: String, port: Int, settings: ClientConnectionSettings)(
+              implicit system: ActorSystem): Flow[ByteString, ByteString, Future[Http.OutgoingConnection]] = {
+            val address = InetSocketAddress.createUnresolved(host, port)
+            Flow.fromSinkAndSource(peer.sink, Source.fromPublisher(peer.fromNet))
+              .mapMaterializedValue(_ => Future.successful(Http.OutgoingConnection(address, address)))
+          }
+        }
+        val settings = ClientConnectionSettings(system).withTransport(transport)
+        val client = Http().connectionTo("example.test").withClientConnectionSettings(settings)
+        val flow =
+          if (managed) client.managedPersistentHttp2WithPriorKnowledge()
+          else client.http2WithPriorKnowledge()
+        val requests = TestPublisher.probe[HttpRequest]()
+        val responses = TestSubscriber.probe[HttpResponse]()
+        Source.fromPublisher(requests).via(flow).runWith(Sink.fromSubscriber(responses))
+
+        try {
+          responses.request(1)
+          requests.sendNext(HttpRequest(method = HttpMethods.OPTIONS, uri = "http://example.test"))
+          peer.expectBytes(Http2Protocol.ClientConnectionPreface)
+          peer.expectSETTINGS()
+          peer.expectDecodedResponseHEADERSPairs(1).filter(_._1.startsWith(":")) should contain theSameElementsAs Seq(
+            ":method" -> "OPTIONS",
+            ":scheme" -> "http",
+            ":authority" -> "example.test",
+            ":path" -> expectedPath)
+          peer.sendFrame(FrameEvent.SettingsFrame(Nil))
+          peer.expectSettingsAck()
+          peer.sendFrame(FrameEvent.SettingsAckFrame(Nil))
+          peer.sendHEADERS(1, endStream = true, Seq(headers.RawHeader(":status", "204")))
+          responses.expectNext().status shouldBe StatusCodes.NoContent
+          requests.sendComplete()
+          responses.expectComplete()
+        } finally {
+          responses.cancel()
+          peer.fromNet.sendComplete()
+          peer.frameProbeDelegate.plainDataProbe.cancel()
+        }
+      }
+    }
+  }
+}

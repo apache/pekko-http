@@ -169,6 +169,11 @@ private[http] object Http2Blueprint {
    */
   def clientStack(settings: ClientConnectionSettings, log: LoggingAdapter, telemetry: TelemetrySpi,
       connectionScheme: String, connectionAuthority: Uri.Authority)
+      : BidiFlow[HttpRequest, ByteString, ByteString, HttpResponse, NotUsed] =
+    clientStack(settings, log, telemetry, connectionScheme, connectionAuthority, sendAsteriskOptions = false)
+
+  def clientStack(settings: ClientConnectionSettings, log: LoggingAdapter, telemetry: TelemetrySpi,
+      connectionScheme: String, connectionAuthority: Uri.Authority, sendAsteriskOptions: Boolean)
       : BidiFlow[HttpRequest, ByteString, ByteString, HttpResponse, NotUsed] = {
     // This is master header parser, every other usage should do .createShallowCopy()
     // HttpHeaderParser is not thread safe and should not be called concurrently,
@@ -182,7 +187,8 @@ private[http] object Http2Blueprint {
           http2Settings.frameTypeThrottleInterval, http2Settings.frameTypeThrottleBurst)
       else BidiFlow.identity[FrameEvent, FrameEvent]
     telemetry.client.atop(
-      httpLayerClient(masterHttpHeaderParser, settings, log, connectionScheme, connectionAuthority)).atop(
+      httpLayerClient(masterHttpHeaderParser, settings, log, connectionScheme, connectionAuthority,
+        sendAsteriskOptions)).atop(
       clientDemux(http2Settings, masterHttpHeaderParser)).atop(
       FrameLogger.logFramesIfEnabled(http2Settings.logFrames)).atop( // enable for debugging
       hpackCoding(masterHttpHeaderParser, settings.parserSettings, http2Settings.maxHeaderListSize)).atop(
@@ -199,9 +205,16 @@ private[http] object Http2Blueprint {
   def httpLayerClient(masterHttpHeaderParser: HttpHeaderParser, settings: ClientConnectionSettings, log: LoggingAdapter,
       connectionScheme: String, connectionAuthority: Uri.Authority)
       : BidiFlow[HttpRequest, Http2SubStream, Http2SubStream, HttpResponse, NotUsed] =
+    httpLayerClient(masterHttpHeaderParser, settings, log, connectionScheme, connectionAuthority,
+      sendAsteriskOptions = false)
+
+  private def httpLayerClient(masterHttpHeaderParser: HttpHeaderParser, settings: ClientConnectionSettings,
+      log: LoggingAdapter, connectionScheme: String, connectionAuthority: Uri.Authority, sendAsteriskOptions: Boolean)
+      : BidiFlow[HttpRequest, Http2SubStream, Http2SubStream, HttpResponse, NotUsed] =
     BidiFlow.fromFlows(
       Flow[HttpRequest].statefulMap(() =>
-        new RequestRendering(settings, log, connectionScheme, connectionAuthority))((renderer, request) =>
+        new RequestRendering(settings, log, connectionScheme, connectionAuthority, sendAsteriskOptions))((renderer,
+            request) =>
           (renderer, renderer(request)), _ => None),
       StreamUtils.statefulAttrsMap[Http2SubStream, HttpResponse] { attrs =>
         val headerParser = masterHttpHeaderParser.createShallowCopy()
