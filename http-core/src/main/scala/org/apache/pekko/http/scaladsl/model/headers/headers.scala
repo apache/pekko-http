@@ -164,7 +164,7 @@ final case class Accept(mediaRanges: Seq[MediaRange]) extends jm.headers.Accept 
   def getMediaRanges: Iterable[jm.MediaRange] = mediaRanges.asJava
 }
 
-// https://tools.ietf.org/html/rfc7231#section-5.3.3
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.2
 object `Accept-Charset` extends ModeledCompanion[`Accept-Charset`] {
   def apply(first: HttpCharsetRange, more: HttpCharsetRange*): `Accept-Charset` =
     apply(Seq(first +: more: _*))
@@ -173,7 +173,6 @@ object `Accept-Charset` extends ModeledCompanion[`Accept-Charset`] {
 }
 final case class `Accept-Charset`(charsetRanges: Seq[HttpCharsetRange]) extends jm.headers.AcceptCharset
     with RequestHeader {
-  require(charsetRanges.nonEmpty, "charsetRanges must not be empty")
   import `Accept-Charset`.charsetRangesRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ charsetRanges
   protected def companion = `Accept-Charset`
@@ -201,7 +200,7 @@ final case class `Accept-Encoding`(encodings: Seq[HttpEncodingRange]) extends jm
   def getEncodings: Iterable[jm.headers.HttpEncodingRange] = encodings.asJava
 }
 
-// https://tools.ietf.org/html/rfc7231#section-5.3.5
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.4
 object `Accept-Language` extends ModeledCompanion[`Accept-Language`] {
   def apply(first: LanguageRange, more: LanguageRange*): `Accept-Language` = apply(Seq(first +: more: _*))
   implicit val languagesRenderer: Renderer[immutable.Iterable[LanguageRange]] =
@@ -209,7 +208,6 @@ object `Accept-Language` extends ModeledCompanion[`Accept-Language`] {
 }
 final case class `Accept-Language`(languages: Seq[LanguageRange]) extends jm.headers.AcceptLanguage
     with RequestHeader {
-  require(languages.nonEmpty, "languages must not be empty")
   import `Accept-Language`.languagesRenderer
   def renderValue[R <: Rendering](r: R): r.type = r ~~ languages
   protected def companion = `Accept-Language`
