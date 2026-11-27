@@ -14,6 +14,7 @@
 package org.apache.pekko.http.scaladsl.server
 package directives
 
+import scala.concurrent.Promise
 import scala.concurrent.duration._
 
 import org.apache.pekko
@@ -239,6 +240,71 @@ class CodingDirectivesSpec extends RoutingSpec with Inside {
         rejections shouldEqual Seq(
           UnsupportedRequestEncodingRejection(gzip),
           UnsupportedRequestEncodingRejection(identity))
+      }
+    }
+  }
+
+  "the default rejection handler for request encodings" should {
+    "advertise only the route's supported codings in their first spelling and drain the entity" in {
+      val custom = HttpEncoding.custom("Example-Codec")
+      val sameCoding = HttpEncoding.custom("example-codec")
+      val upload = path("upload") {
+        (requestEncodedWith(custom) | requestEncodedWith(sameCoding) | decodeRequestWith(NoCoding)) { yeah }
+      }
+      val other = path("other") {
+        decodeRequestWith(Gzip) { yeah }
+      }
+      val discarded = Promise[pekko.Done]()
+      val data =
+        Source.single(ByteString("ordinary upload")).watchTermination((_, done) => discarded.completeWith(done))
+      val entity = HttpEntity(`application/octet-stream`, data)
+      val request = Post("/upload", entity).addHeader(`Content-Encoding`(HttpEncoding.custom("other-codec")))
+
+      request ~> Route.seal(upload ~ other) ~> check {
+        status shouldBe UnsupportedMediaType
+        response.headers.filter(_.is("accept-encoding")) shouldEqual Seq(
+          `Accept-Encoding`(Seq(HttpEncodingRange(custom), HttpEncodingRange(identity))))
+        responseAs[String] shouldEqual
+        "The request's Content-Encoding is not supported. Expected:\nExample-Codec or example-codec or identity"
+      }
+      discarded.future.awaitResult(3.seconds.dilated) shouldBe pekko.Done
+    }
+
+    "not advertise a literal wildcard declaration as a supported coding" in {
+      val literalWildcard = requestEncodedWith(HttpEncoding.custom("*")) { yeah }
+      val gzipOnly = requestEncodedWith(gzip) { yeah }
+
+      Post() ~> Route.seal(literalWildcard ~ gzipOnly) ~> check {
+        status shouldBe UnsupportedMediaType
+        response.headers.filter(_.is("accept-encoding")) shouldEqual Seq(
+          `Accept-Encoding`(Seq(HttpEncodingRange(gzip))))
+      }
+      Post() ~> Route.seal(literalWildcard) ~> check {
+        status shouldBe UnsupportedMediaType
+        response.headers.exists(_.is("accept-encoding")) shouldBe false
+        responseAs[String] shouldEqual "The request's Content-Encoding is not supported. Expected:\n*"
+      }
+    }
+
+    "keep a content-type rejection ahead of a coding rejection without advertising codings" in {
+      val route = requestEncodedWith(gzip) { yeah } ~
+        reject(UnsupportedRequestContentTypeRejection(Set.empty, Some(`application/octet-stream`)))
+
+      Post("/", HttpEntity(`application/octet-stream`, ByteString("ordinary upload"))) ~> Route.seal(route) ~> check {
+        status shouldBe UnsupportedMediaType
+        response.headers.exists(_.is("accept-encoding")) shouldBe false
+        responseAs[String] shouldEqual "The request's Content-Type [application/octet-stream] is not supported."
+      }
+    }
+
+    "keep a later rejection after an alternative accepts the request coding" in {
+      val route = decodeRequestWith(Gzip) { yeah } ~
+        decodeRequestWith(NoCoding) { reject(ValidationRejection("A description is required.")) }
+
+      Post("/", "ordinary upload") ~> Route.seal(route) ~> check {
+        status shouldBe BadRequest
+        response.headers.exists(_.is("accept-encoding")) shouldBe false
+        responseAs[String] shouldEqual "A description is required."
       }
     }
   }
