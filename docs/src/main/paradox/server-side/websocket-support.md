@@ -14,6 +14,7 @@ upgraded HTTP(S) connection. Data is exchanged in messages whereby a message can
 
 Apache Pekko HTTP provides a stream-based implementation of the WebSocket protocol that hides the low-level details of the
 underlying binary framing wire-protocol and provides a simple API to implement services using WebSocket.
+This guide describes the [HTTP/1.1 opening handshake](https://www.rfc-editor.org/rfc/rfc6455.html#section-4.2).
 
 ## Model
 
@@ -114,7 +115,8 @@ first, a handler @scala[@apidoc[Flow[Message, Message, Any]]]@java[@apidoc[Flow[
 Second, the application can optionally choose one of the proposed application-level sub-protocols by inspecting the
 values of @scala[`WebSocketUpgrade.requestedProtocols`]@java[`WebSocketUpgrade.getRequestedProtocols`] and pass the chosen protocol value to @scala[`handleMessages`]@java[`handleMessagesWith`].
 These values are presented in client preference order, whether the client uses one or several
-`Sec-WebSocket-Protocol` request header lines.
+`Sec-WebSocket-Protocol` request header lines ([RFC 6455 section 11.3.4](https://www.rfc-editor.org/rfc/rfc6455.html#section-11.3.4)).
+Match the offered subprotocol names case-sensitively ([RFC 7936 section 2](https://www.rfc-editor.org/rfc/rfc7936.html#section-2)).
 
 ### Handling Messages
 
@@ -212,9 +214,9 @@ In case you need to keep inactive connections alive, you can either tweak your i
 
 ## WebSocket compression
 
-Apache Pekko HTTP can negotiate the RFC 7692 `permessage-deflate` WebSocket extension for server-side WebSocket
-connections. Compression is enabled by default, but is only used when the client requests it with the
-`Sec-WebSocket-Extensions: permessage-deflate` header during the WebSocket handshake.
+Apache Pekko HTTP can negotiate the [RFC 7692 `permessage-deflate`](https://www.rfc-editor.org/rfc/rfc7692.html#section-7)
+extension for server-side WebSocket connections. Compression is enabled by default, but is only used when the client
+requests it with the `Sec-WebSocket-Extensions: permessage-deflate` header during the WebSocket handshake.
 
 Compressed streamed messages support empty fragments, including an empty final fragment, with or without
 compression context takeover between messages.
@@ -271,7 +273,7 @@ initiated by either side of the connection, and the choice which side performs t
 This is supported in a transparent way via configuration in Apache Pekko HTTP, and you can enable it by setting the: 
 `pekko.http.server.websocket.periodic-keep-alive-max-idle = 1 second` to a specified max idle timeout. The keep alive triggers
 when no other messages are in-flight during the such configured period. Apache Pekko HTTP will then automatically send
-a [`Ping` frame](https://tools.ietf.org/html/rfc6455#section-5.5.2) for each of such idle intervals.
+a [`Ping` frame](https://www.rfc-editor.org/rfc/rfc6455.html#section-5.5.2) for each of such idle intervals.
 
 By default, the automatic keep-alive feature is disabled.
 
@@ -290,10 +292,9 @@ Java
 ### Uni-directional Pong keep-alive
 
 
-A Ping response will always be replied to by the client-side with an appropriate `Pong` reply, carrying the same payload.
-It is also possible to configure the keep-alive mechanism to send `Pong` frames instead of `Ping` frames, 
-which enables an [uni-directional heartbeat](https://tools.ietf.org/html/rfc6455#section-5.5.3) mechanism (in which case 
-the client side will *not* reply to such heartbeat). You can configure this mode by setting: 
+While the connection is open, Pekko HTTP replies to a `Ping` with a `Pong` carrying the same payload.
+The keep-alive mechanism can instead send [unsolicited `Pong` frames](https://www.rfc-editor.org/rfc/rfc6455.html#section-5.5.3)
+as a one-way heartbeat. The receiving peer is not expected to reply. Configure this mode by setting:
 `pekko.http.server.websocket.periodic-keep-alive-mode = pong`.
 
 ## Idle timeouts

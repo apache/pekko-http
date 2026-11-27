@@ -18,7 +18,10 @@ import scala.collection.immutable
 import org.apache.pekko.http.impl.util.{ Rendering, ValueRenderable }
 
 /**
- * A websocket extension as defined in http://tools.ietf.org/html/rfc6455#section-4.3
+ * One extension in a `Sec-WebSocket-Extensions` field.
+ *
+ * See RFC 6455 section 4.3 for syntax (https://www.rfc-editor.org/rfc/rfc6455.html#section-4.3)
+ * and section 9.1 for negotiation (https://www.rfc-editor.org/rfc/rfc6455.html#section-9.1).
  */
 final case class WebSocketExtension(
     name: String, params: immutable.Map[String, String] = Map.empty) extends ValueRenderable {
