@@ -343,6 +343,35 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         closeAfterResponseCompletion shouldEqual Seq(false)
       }
 
+      "retain a declared response trailer when the terminating empty line arrives separately" in new Test {
+        val field = RawHeader("X-Trace", "complete")
+        val declaration = headers.Trailer(Seq(field.name))
+        val terminalChunk = LastChunk(trailer = List(field))
+        val responseStart = prep(s"""HTTP/1.1 200 OK
+          |Transfer-Encoding: chunked
+          |Content-Type: application/pdf
+          |Trailer: ${field.name}
+          |
+          |""")
+        // Chunk sizes use CRLF; header and trailer fields use the suite's line ending.
+        val beforeEmptyLine = responseStart + crlf("0\n") + prep(s"${field.name}: ${field.value}\n")
+
+        val parsed = collectBlocking(
+          Source(List(beforeEmptyLine, newLine))
+            .map(input => SessionBytes(TLSPlacebo.dummySession, ByteString(input)))
+            .via(newParserStage())
+            .filterNot(_ == NeedNextRequestMethod))
+
+        parsed match {
+          case Seq(ResponseStart(status, protocol, _, headers, _, _), EntityChunk(chunk), MessageEnd) =>
+            status shouldBe OK
+            protocol shouldBe `HTTP/1.1`
+            headers should contain(declaration)
+            chunk shouldBe terminalChunk
+          case other => fail(s"Expected a response start, one terminal chunk and a message end, got ${other}")
+        }
+      }
+
       "message end" in new Test {
         Seq(
           prep(start),
