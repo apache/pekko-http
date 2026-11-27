@@ -878,6 +878,27 @@ class UriSpec extends AnyWordSpec with Matchers {
       }
     }
 
+    "distinguish absent and explicitly empty queries when resolving a URI reference" in {
+      val prefix = "https://example.com/catalog"
+      val base = Uri(s"$prefix?page=2")
+      val cases = Seq(
+        ("", "page=2", "?page=2"),
+        ("#details", "page=2", "?page=2#details"),
+        ("?", "", "?"),
+        ("?#details", "", "?#details"))
+
+      for ((reference, expectedQuery, expectedSuffix) <- cases) {
+        withClue(s"resolving '$reference': ") {
+          val parsedAndResolved = Uri.parseAndResolve(reference, base)
+          val resolvedModel = Uri(reference).resolvedAgainst(base)
+          parsedAndResolved shouldEqual resolvedModel
+          parsedAndResolved.path shouldEqual base.path
+          parsedAndResolved.rawQueryString shouldBe Some(expectedQuery)
+          parsedAndResolved.toString shouldEqual s"$prefix$expectedSuffix"
+        }
+      }
+    }
+
     "be properly copyable" in {
       val uri = Uri("http://host:80/path?query#fragment")
       uri.copy() shouldEqual uri
