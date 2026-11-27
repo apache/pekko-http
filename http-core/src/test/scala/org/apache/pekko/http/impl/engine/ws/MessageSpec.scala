@@ -541,6 +541,14 @@ class MessageSpec extends PekkoSpecWithMaterializer(
         pushInput(input)
         expectMaskedFrameOnNetwork(Opcode.Pong, ByteString("abcdef"), fin = true)
       }
+      "respond to a ping with a 125-byte payload on the server side" in new ServerTestSetup {
+        val data = ByteString("a" * 125)
+
+        pushInput(frame(Opcode.Ping, data, fin = true, mask = true))
+
+        expectFrameHeaderOnNetwork(Opcode.Pong, data.length, fin = true) shouldBe None
+        expectNetworkData(data.length) shouldBe data
+      }
       "respond to ping frames interleaved with data frames (without mixing frame data)" in new ServerTestSetup {
         // receive multi-frame message
         // receive and handle interleaved ping frame
