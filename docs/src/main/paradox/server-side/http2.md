@@ -92,6 +92,33 @@ server supports HTTP/2.
 For this reason the approach is known as HTTP/2 with
 [Prior Knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3).
 
+## Application-handled CONNECT streams
+
+Regular HTTP/2 CONNECT ([RFC 9113, Section 8.5](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.5))
+is disabled by default. Enable it for applications that handle the tunnel locally:
+
+```hocon
+pekko.http.server.http2.accept-connect-requests = true
+```
+
+An enabled server delivers the CONNECT request to the application before waiting for tunnel bytes. The target
+host and port are in the URI authority. The request entity is empty; read the incoming bytes once from the
+Scala `AttributeKeys.http2ConnectData` attribute's `data` source, or from the Java attribute's `getData()` source.
+The bytes belong to the tunnel, not to the HTTP request entity. Calling `discardEntityBytes` on the request does
+not consume them. If an accepted tunnel needs only the outgoing direction, drain the incoming source separately
+(for example, with `Sink.ignore`) and apply the lifetime limits appropriate for the application.
+
+After deciding to accept the request, return the response made by calling the attribute value's `accept` method
+with the outgoing byte stream (a response entity in Scala or a Java DSL source in Java). The returned response
+has status 200; you can add response headers. Changing the status to a non-2xx final status sends an ordinary
+rejection response, not a tunnel. Returning a regular 2xx response without explicit acceptance is a handler error:
+the server returns 500 rather than establishing a tunnel. Do not wait for incoming tunnel data before returning
+the response: the peer may wait for the success headers before sending data. Completion of the outgoing source closes that direction of the
+stream. Apply the authentication, target policy, and stream lifetime limits required by your application.
+
+Pekko HTTP does not open a connection to the specified authority. This setting does not change HTTP/1.1,
+add an HTTP/2 CONNECT client API, or enable extended CONNECT (including WebSocket over HTTP/2).
+
 ## Flow-control window updates
 
 Changes to a peer's `SETTINGS_INITIAL_WINDOW_SIZE` apply to existing HTTP/2 streams, including decreases.

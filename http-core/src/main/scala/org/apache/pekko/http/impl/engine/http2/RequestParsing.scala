@@ -86,9 +86,17 @@ private[http2] object RequestParsing {
           cookies: StringBuilder,
           headers: VectorBuilder[HttpHeader]): HttpRequest = {
         // https://httpwg.org/specs/rfc7540.html#rfc.section.8.1.2.3: these pseudo header fields are mandatory for a request
-        checkRequiredPseudoHeader(":scheme", scheme)
-        checkRequiredPseudoHeader(":method", method)
-        checkRequiredPseudoHeader(":path", pathAndRawQuery)
+        val regularConnect = method == HttpMethods.CONNECT && serverSettings.http2Settings.acceptConnectRequests
+        if (regularConnect) {
+          checkRequiredPseudoHeader(":authority", authority)
+          if (scheme != null || pathAndRawQuery != null || authority.host.isEmpty || authority.port <= 0 ||
+            authority.port > 65535 || authority.userinfo.nonEmpty)
+            protocolError("Invalid regular CONNECT request target")
+        } else {
+          checkRequiredPseudoHeader(":scheme", scheme)
+          checkRequiredPseudoHeader(":method", method)
+          checkRequiredPseudoHeader(":path", pathAndRawQuery)
+        }
 
         if (cookies != null) {
           // Compress 'cookie' headers if present
@@ -97,17 +105,27 @@ private[http2] object RequestParsing {
 
         if (tlsSessionInfoHeader.isDefined) headers += tlsSessionInfoHeader.get
 
-        val entity = subStream.createEntity(contentLength, contentType)
+        val entity = if (regularConnect) HttpEntity.Empty else subStream.createEntity(contentLength, contentType)
 
         // mirrors HttpServerBluePrint's ControllerStage for HTTP/1.1: the handler sees a GET, while the substream
         // handling in Http2StreamHandling still knows the request was a HEAD and strips the response body
         val effectiveMethod =
           if (method == HttpMethods.HEAD && serverSettings.transparentHeadRequests) HttpMethods.GET else method
 
-        val (path, rawQueryString) = pathAndRawQuery
-        val authorityOrDefault: Uri.Authority = if (authority == null) Uri.Authority.Empty else authority
-        val uri = Uri(scheme, authorityOrDefault, path, rawQueryString)
-        val attributes = baseAttributes.updated(Http2.streamId, subStream.streamId)
+        val uri =
+          if (regularConnect) Uri("", authority, Uri.Path.Empty, None)
+          else {
+            val (path, rawQueryString) = pathAndRawQuery
+            val authorityOrDefault = if (authority == null) Uri.Authority.Empty else authority
+            Uri(scheme, authorityOrDefault, path, rawQueryString)
+          }
+        val streamAttributes = baseAttributes.updated(Http2.streamId, subStream.streamId)
+        val attributes =
+          if (regularConnect)
+            streamAttributes.updated(AttributeKeys.http2ConnectData,
+              new Http2ConnectData(subStream.createEntity(-1, OptionVal.None).dataBytes,
+                subStream.correlationAttributes(Http2ConnectData.acceptance).asInstanceOf[Http2ConnectData.Acceptance]))
+          else streamAttributes
 
         new HttpRequest(effectiveMethod, uri, headers.result(), attributes, entity, HttpProtocols.`HTTP/2.0`)
       }

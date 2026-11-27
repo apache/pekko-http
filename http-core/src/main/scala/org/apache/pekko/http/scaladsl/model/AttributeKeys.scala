@@ -13,11 +13,21 @@
 
 package org.apache.pekko.http.scaladsl.model
 
-import org.apache.pekko.http.scaladsl.model.ws.WebSocketUpgrade
+import org.apache.pekko
+import pekko.annotation.ApiMayChange
+import pekko.http.scaladsl.model.ws.WebSocketUpgrade
 
 object AttributeKeys {
   val remoteAddress = AttributeKey[RemoteAddress]("remote-address")
   val webSocketUpgrade = AttributeKey[WebSocketUpgrade](name = "upgrade-to-websocket")
   val sslSession = AttributeKey[SslSessionInfo](name = "ssl-session")
   val trailer = AttributeKey[Trailer](name = "trailer")
+
+  /**
+   * The single-use incoming side of a regular HTTP/2 CONNECT stream.
+   *
+   * @since 2.1.0
+   */
+  @ApiMayChange
+  val http2ConnectData = AttributeKey[Http2ConnectData](name = "http2-connect-data")
 }

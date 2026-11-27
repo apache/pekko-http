@@ -19,7 +19,7 @@ import scala.concurrent.duration.DurationLong
 import scala.jdk.CollectionConverters._
 
 import org.apache.pekko
-import pekko.annotation.DoNotInherit
+import pekko.annotation.{ ApiMayChange, DoNotInherit }
 import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.scaladsl
 
@@ -29,6 +29,20 @@ import com.typesafe.config.Config
 trait Http2ServerSettings {
   self: scaladsl.settings.Http2ServerSettings
     with pekko.http.scaladsl.settings.Http2ServerSettings.Http2ServerSettingsImpl =>
+
+  /**
+   * Whether application-handled regular HTTP/2 CONNECT requests are enabled. Disabled by default.
+   *
+   * @since 2.1.0
+   */
+  @ApiMayChange
+  def getAcceptConnectRequests: Boolean = acceptConnectRequests
+
+  /** @since 2.1.0 */
+  @ApiMayChange
+  def withAcceptConnectRequests(value: Boolean): Http2ServerSettings =
+    withAcceptConnectRequestsImpl(value)
+
   def getRequestEntityChunkSize: Int = requestEntityChunkSize
   def withRequestEntityChunkSize(newRequestEntityChunkSize: Int): Http2ServerSettings
 

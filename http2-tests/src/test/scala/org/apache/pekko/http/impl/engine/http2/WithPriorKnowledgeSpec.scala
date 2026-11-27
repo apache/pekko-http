@@ -14,17 +14,34 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import java.util.Base64
+import java.util.concurrent.CompletionStage
 
-import scala.concurrent.Future
+import javax.net.ssl.SSLEngine
+
+import scala.concurrent.{ Future, Promise }
 import scala.concurrent.duration._
+import scala.jdk.FutureConverters._
 
 import org.apache.pekko
-import pekko.http.impl.util.PekkoSpecWithMaterializer
+import pekko.http.impl.engine.http2.FrameEvent.{ DataFrame, HeadersFrame, SettingsAckFrame, SettingsFrame }
+import pekko.http.impl.engine.http2.framing.FrameRenderer
+import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
+import pekko.http.javadsl
 import pekko.http.scaladsl.Http
-import pekko.http.scaladsl.model.{ HttpProtocols, HttpRequest, HttpResponse, StatusCodes }
-import pekko.stream.OverflowStrategy
-import pekko.stream.scaladsl.{ Keep, Source, Tcp }
-import pekko.stream.scaladsl.Sink
+import pekko.http.scaladsl.model.{
+  AttributeKeys,
+  ContentTypes,
+  HttpEntity,
+  HttpProtocols,
+  HttpRequest,
+  HttpResponse,
+  StatusCodes
+}
+import pekko.http.scaladsl.settings.ServerSettings
+import pekko.japi.function.Function
+import pekko.stream.{ OverflowStrategy, TLSClosing }
+import pekko.stream.TLSProtocol._
+import pekko.stream.scaladsl.{ BidiFlow, Flow, Keep, Sink, Source, TLS, Tcp }
 import pekko.util.ByteString
 
 class WithPriorKnowledgeSpec extends PekkoSpecWithMaterializer("""
@@ -87,6 +104,76 @@ class WithPriorKnowledgeSpec extends PekkoSpecWithMaterializer("""
       response.entity.discardBytes()
       response.status should ===(StatusCodes.ImATeapot)
       queue.complete()
+    }
+
+    for ((javaApi, https) <- Seq(false -> false, true -> false, true -> true)) {
+      val api = if (javaApi) "Java" else "Scala"
+      val transport = if (https) "HTTPS with h2 ALPN" else "cleartext"
+      s"serve application-handled HTTP/2 CONNECT through the $api ServerBuilder.bind over $transport" in {
+        val (port, unbind) =
+          if (javaApi) {
+            val settings = Http2ConnectJavaHandler.settings(system, Http2Protocol.InitialWindowSize)
+            val builder = pekko.http.javadsl.Http.get(system).newServerAt("127.0.0.1", 0).withSettings(settings)
+            val secured = if (https) builder.enableHttps(ExampleHttpContexts.getExampleServerContext()) else builder
+            val handler: Function[javadsl.model.HttpRequest, CompletionStage[javadsl.model.HttpResponse]] =
+              Http2ConnectJavaHandler.echo(_)
+            val server = secured.bind(handler).asScala.futureValue
+            (server.localAddress.getPort, () => server.unbind().asScala)
+          } else {
+            val settings = ServerSettings(system).mapHttp2Settings(_.withAcceptConnectRequests(true)
+              .withIncomingConnectionLevelBufferSize(Http2Protocol.InitialWindowSize))
+            val server = Http().newServerAt("127.0.0.1", 0).withSettings(settings).bind { request =>
+              val tunnel = request.attribute(AttributeKeys.http2ConnectData).get
+              Future.successful(tunnel.accept(HttpEntity.Chunked.fromData(ContentTypes.`application/octet-stream`,
+                tunnel.data.map(bytes => ByteString("local:") ++ bytes))))
+            }.futureValue
+            (server.localAddress.getPort, () => server.unbind())
+          }
+
+        val fromServer = Http2FrameProbe()
+        val tcp = Tcp(system).outgoingConnection("127.0.0.1", port)
+        val clientEngine = Promise[SSLEngine]()
+        val connection =
+          if (https) {
+            val commands = BidiFlow.fromFlows(
+              Flow[ByteString].map(SendBytes(_)),
+              Flow[SslTlsInbound].collect { case SessionBytes(_, bytes) => bytes })
+            val tls = TLS(() => {
+                // Use the example CA and the certificate's name without doing a DNS lookup.
+                val engine = ExampleHttpContexts.exampleClientContext.engineCreator(Some("pekko.example.org" -> port))
+                val params = engine.getSSLParameters
+                params.setApplicationProtocols(Array("h2"))
+                engine.setSSLParameters(params)
+                clientEngine.success(engine)
+                engine
+              }, TLSClosing.eagerClose)
+            commands.atop(tls).join(tcp)
+          } else tcp
+        val queue = Source.queue[ByteString](8, OverflowStrategy.fail)
+          .via(connection)
+          .toMat(fromServer.sink)(Keep.left)
+          .run()
+        try {
+          val codec = new HPackEncodingSupport {}
+          queue.offer(Http2Protocol.ClientConnectionPreface ++ FrameRenderer.render(SettingsFrame(Nil))).futureValue
+          fromServer.expectSETTINGS()
+          fromServer.expectSettingsAck()
+          if (https) clientEngine.future.futureValue.getApplicationProtocol shouldBe "h2"
+          queue.offer(FrameRenderer.render(SettingsAckFrame(Nil))).futureValue
+
+          val headers = codec.encodeHeaderPairs(Seq(":method" -> "CONNECT", ":authority" -> "example.com:443"))
+          queue.offer(FrameRenderer.render(HeadersFrame(
+            1, endStream = false, endHeaders = true, headers, None))).futureValue
+          fromServer.expectHeaderBlock(1, endStream = false) should not be empty
+
+          // Normal tunnel traffic addressed only to this loopback handler, not the request's authority.
+          queue.offer(FrameRenderer.render(DataFrame(1, endStream = true, ByteString("hello")))).futureValue
+          fromServer.expectDATA(1, endStream = true, ByteString("local:hello"))
+        } finally {
+          queue.complete()
+          unbind().futureValue
+        }
+      }
     }
 
     "send ':scheme' and ':authority' for a relative URI from the connection (connection level client API)" in {
