@@ -15,6 +15,15 @@ upgraded HTTP(S) connection. Data is exchanged in messages whereby a message can
 Apache Pekko HTTP provides a stream-based implementation of the WebSocket protocol that hides the low-level details of the
 underlying binary framing wire-protocol and provides a simple API to implement services using WebSocket.
 
+## Incoming frame payload limit
+
+Set `pekko.http.server.websocket.max-inbound-frame-payload-length` to limit the payload of each
+frame received by the server. It defaults to `infinite`; a finite value must be at least 125 bytes.
+The limit counts payload bytes before decompression and excludes the frame header and masking key.
+It is independent of the server's decompressed message limit, `websocket.compression.max-allocation`,
+and does not change how the server sends frames.
+Pekko HTTP closes the WebSocket if the configured limit is exceeded.
+
 ## Model
 
 The basic unit of data exchange in the WebSocket protocol is a message. A message can either be binary message,

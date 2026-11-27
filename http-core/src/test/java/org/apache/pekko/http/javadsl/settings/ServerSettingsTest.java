@@ -45,6 +45,24 @@ public class ServerSettingsTest {
   }
 
   @Test
+  public void testWebSocketFramePayloadLimit() {
+    ServerSettings server =
+        ServerSettings.create("pekko.http.server.websocket.max-inbound-frame-payload-length = 512");
+    ClientConnectionSettings client = ClientConnectionSettings.create("");
+    assertEquals(512L, server.getWebsocketSettings().getMaxInboundFramePayloadLength());
+    assertEquals(Long.MAX_VALUE, client.getWebsocketSettings().getMaxInboundFramePayloadLength());
+
+    ClientConnectionSettings updated =
+        client.withWebsocketSettings(
+            client
+                .getWebsocketSettings()
+                .withMaxInboundFramePayloadLength(256L)
+                .withLogFrames(true));
+    assertEquals(256L, updated.getWebsocketSettings().getMaxInboundFramePayloadLength());
+    assertEquals(512L, server.getWebsocketSettings().getMaxInboundFramePayloadLength());
+  }
+
+  @Test
   public void testTimeoutsGettersReturnJavaDurations() {
     ServerSettings.Timeouts timeouts =
         ServerSettings.create(

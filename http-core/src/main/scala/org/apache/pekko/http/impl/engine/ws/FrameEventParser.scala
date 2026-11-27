@@ -17,8 +17,9 @@ import java.lang.invoke.MethodHandles
 import java.nio.ByteOrder
 
 import org.apache.pekko
+import pekko.NotUsed
 import pekko.annotation.InternalApi
-import pekko.stream.Attributes
+import pekko.stream.{ Attributes, FlowShape, Graph }
 import pekko.stream.impl.io.ByteStringParser
 import pekko.util.ByteString
 
@@ -53,6 +54,8 @@ private[http] object FrameEventParser extends ByteStringParser[FrameEvent] {
   import ByteStringParser._
 
   override def createLogic(attr: Attributes) = new ParsingLogic {
+    private val maxPayloadLength = FrameEventParserStage.maxPayloadLength(attr)
+
     startWith(ReadFrameHeader)
 
     trait Step extends ParseStep[FrameEvent] {
@@ -84,6 +87,8 @@ private[http] object FrameEventParser extends ByteStringParser[FrameEvent] {
         val mask =
           if (maskBit) Some(reader.readIntBE())
           else None
+
+        if (length > maxPayloadLength) throw new FramePayloadLimitExceeded(length, maxPayloadLength)
 
         def isFlagSet(mask: Int): Boolean = (flags & mask) != 0
         val header =
@@ -172,4 +177,15 @@ private[http] object FrameEventParser extends ByteStringParser[FrameEvent] {
   }
 
   override def toString: String = "FrameEventParser"
+}
+
+private[ws] object FrameEventParserStage {
+  private final case class MaxPayloadLength(value: Long) extends Attributes.Attribute
+
+  def withPayloadLimit(maxPayloadLength: Long): Graph[FlowShape[ByteString, FrameEvent], NotUsed] =
+    if (maxPayloadLength == Long.MaxValue) FrameEventParser
+    else FrameEventParser.addAttributes(Attributes(MaxPayloadLength(maxPayloadLength)))
+
+  def maxPayloadLength(attributes: Attributes): Long =
+    attributes.get[MaxPayloadLength].fold(Long.MaxValue)(_.value)
 }

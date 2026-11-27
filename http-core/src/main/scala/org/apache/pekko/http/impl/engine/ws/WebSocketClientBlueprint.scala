@@ -55,7 +55,7 @@ private[http] object WebSocketClientBlueprint {
     LogByteStringTools.logTLSBidiBySetting("client-plain-text", settings.logUnencryptedNetworkBytes).reversed
       .atop(simpleTls)
       .atopMat(handshake(request, settings, log))(Keep.right)
-      .atop(WebSocket.framing)
+      .atop(WebSocket.framing(settings.websocketSettings.maxInboundFramePayloadLength))
       .atop(WebSocket.stack(serverSide = false, settings.websocketSettings,
         log = log))
       .reversed

@@ -90,8 +90,11 @@ private[http] object WebSocket {
 
   /** The lowest layer that implements the binary protocol */
   def framing: BidiFlow[ByteString, FrameEvent, FrameEvent, ByteString, NotUsed] =
+    framing(Long.MaxValue)
+
+  def framing(maxInboundFramePayloadLength: Long): BidiFlow[ByteString, FrameEvent, FrameEvent, ByteString, NotUsed] =
     BidiFlow.fromFlows(
-      Flow[ByteString].via(FrameEventParser),
+      Flow[ByteString].via(FrameEventParserStage.withPayloadLimit(maxInboundFramePayloadLength)),
       Flow[FrameEvent].via(new FrameEventRenderer))
       .named("ws-framing")
 

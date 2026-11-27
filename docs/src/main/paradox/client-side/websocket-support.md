@@ -64,6 +64,14 @@ The deadline may overlap transport setup, but does not replace the TCP connectio
 on a successful upgrade and is independent of idle timeouts and the WebSocket close handshake. It can also be
 configured through `ClientConnectionSettings` and `WebSocketSettings.withOpeningTimeout`.
 
+## Incoming frame payload limit
+
+Set `pekko.http.client.websocket.max-inbound-frame-payload-length` to limit the payload of each
+frame received by the client. It defaults to `infinite`; a finite value must be at least 125 bytes.
+The limit counts payload bytes before decompression and excludes the frame header and masking key.
+It does not limit the total size of a fragmented message or change how the client sends frames.
+Pekko HTTP closes the WebSocket if the configured limit is exceeded.
+
 ## Message
 
 Messages sent and received over a WebSocket can be either @apidoc[TextMessage] s or @apidoc[BinaryMessage] s and each

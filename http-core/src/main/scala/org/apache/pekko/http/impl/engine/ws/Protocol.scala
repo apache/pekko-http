@@ -99,3 +99,9 @@ private[http] object Protocol {
 /** INTERNAL API */
 @InternalApi
 private[http] case class ProtocolException(cause: String) extends RuntimeException(cause)
+
+/** INTERNAL API */
+@InternalApi
+private[http] final class FramePayloadLimitExceeded(length: Long, limit: Long)
+    extends RuntimeException(
+      s"Incoming WebSocket frame payload length $length exceeds the configured limit of $limit bytes")

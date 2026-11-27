@@ -77,4 +77,16 @@ abstract class WebSocketSettings extends pekko.http.javadsl.settings.WebSocketSe
   /** Client-only opening upgrade response timeout; use `Duration.Inf` to disable it. */
   override def withOpeningTimeout(newValue: Duration): WebSocketSettings = copy(openingTimeout = newValue)
 
+  /**
+   * Incoming WebSocket frame payload limit in bytes, before decompression.
+   * `Long.MaxValue` disables the limit.
+   *
+   * @since 2.1.0
+   */
+  def maxInboundFramePayloadLength: Long = Long.MaxValue
+
+  /** @since 2.1.0 */
+  override def withMaxInboundFramePayloadLength(newValue: Long): WebSocketSettings =
+    copy(maxInboundFramePayloadLength = newValue)
+
 }
