@@ -116,6 +116,25 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       (request.headers.map(h => h.lowercaseName -> h.value) should contain).allOf("x-a" -> "a b", "x-b" -> "")
     }
 
+    "preserve repeated Accept-Language field value order" in {
+      import scala.jdk.CollectionConverters._
+
+      val request = parseExpectOk(Vector(
+        ":method" -> "GET",
+        ":scheme" -> "https",
+        ":path" -> "/",
+        "accept-language" -> "da",
+        "x-example-marker" -> "kept",
+        "accept-language" -> "en"))
+      val expected = Seq("da", "en")
+      request.headers[headers.`Accept-Language`].map(_.value) shouldBe expected
+      request.header("x-example-marker").map(_.value) shouldBe Some("kept")
+
+      val javaRequest: pekko.http.javadsl.model.HttpRequest = request
+      val javaHeaders = javaRequest.getHeaders().iterator().asScala
+      javaHeaders.filter(_.is("accept-language")).map(_.value()).toVector shouldBe expected
+    }
+
     "decode non-ASCII octets in a header value as the HTTP/1.1 parser does" should {
       // HPACK hands out string literals as ISO-8859-1, one char per octet, and `encodeHeaderPairs` writes each
       // char back as that octet: a pair value here is what was on the wire
