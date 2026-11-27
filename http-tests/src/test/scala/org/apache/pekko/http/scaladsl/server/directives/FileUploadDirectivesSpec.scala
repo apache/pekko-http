@@ -433,6 +433,40 @@ class FileUploadDirectivesSpec extends RoutingSpec with Eventually {
 
     }
 
+    "remove the buffered file after its source is consumed while the actor system is running" in {
+      val separateSystem = pekko.actor.ActorSystem("file-upload-all-consumption-spec")
+      try {
+        val marker = UploadTempFiles(separateSystem).create()
+        val directory = marker.getParentFile
+        Files.delete(marker.toPath)
+
+        val payload = ByteString("small upload")
+        val route = fileUploadAll(SmallFileInfo.fieldName) { files =>
+          files should have size 1
+          val (info, bytes) = files.head
+          info shouldEqual SmallFileInfo
+          complete(HttpEntity(info.contentType, bytes))
+        }
+        val waitTime = 6.seconds.dilated
+        val send = Route.toFunction(route)(separateSystem)
+        val response = Await.result(send(Post("/", smallFileUpload("strict", payload))), waitTime)
+        response.status shouldEqual StatusCodes.OK
+
+        // The response source has not been materialized, so the upload must still be on disk.
+        val buffered = Option(directory.listFiles()).toList.flatten
+        buffered should have size 1
+        val file = buffered.head
+        file.isFile shouldBe true
+
+        val mat = pekko.stream.SystemMaterializer(separateSystem).materializer
+        Await.result(response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _)(mat), waitTime) shouldEqual payload
+        eventually(timeout(waitTime)) {
+          file.exists() shouldBe false
+        }
+        separateSystem.whenTerminated.isCompleted shouldBe false
+      } finally Await.ready(separateSystem.terminate(), 10.seconds.dilated)
+    }
+
     val str1 = "42" * 1000000 // ~2MB of data
     val str2 = "23" * 1000000 // ~2MB of data
 
