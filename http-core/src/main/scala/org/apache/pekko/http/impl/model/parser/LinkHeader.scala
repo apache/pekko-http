@@ -16,16 +16,16 @@ package org.apache.pekko.http.impl.model.parser
 import scala.annotation.tailrec
 import scala.collection.immutable.TreeMap
 
-import org.parboiled2.Parser
+import org.parboiled2.{ Parser, Rule0, Rule1 }
 
 import org.apache.pekko
 import pekko.http.scaladsl.model.headers._
-import pekko.http.scaladsl.model.{ IllegalUriException, ParsingException }
+import pekko.http.scaladsl.model.{ ErrorInfo, IllegalUriException, ParsingException }
 
 private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActions =>
   import CharacterClasses._
 
-  // http://tools.ietf.org/html/rfc5988#section-5
+  // https://www.rfc-editor.org/rfc/rfc8288.html#section-3
   def `link` = rule {
     listStart ~ zeroOrMore(`link-value`).separatedBy(listSep) ~ listEnd ~ EOI ~> (Link(_))
   }
@@ -34,16 +34,40 @@ private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActi
     ws('<') ~ UriReference('>') ~ ws('>') ~ oneOrMore(ws(';') ~ `link-param`) ~> (sanitize(_)) ~> (LinkValue(_, _))
   }
 
+  // The title* model keeps the encoded ext-value (https://www.rfc-editor.org/rfc/rfc8187.html#section-3.2.1).
   def `link-param` = rule(
-    ws("rel") ~ ws('=') ~ `relation-types`                           ~> LinkParams.rel.apply _
-    | ws("anchor") ~ ws('=') ~ ws('"') ~ UriReference('"') ~ ws('"') ~> LinkParams.anchor.apply _
-    | ws("rev") ~ ws('=') ~ `relation-types`                         ~> LinkParams.rev.apply _
-    | ws("hreflang") ~ ws('=') ~ language                            ~> LinkParams.hreflang.apply _
-    | ws("media") ~ ws('=') ~ word                                   ~> LinkParams.media.apply _
-    | ws("title") ~ ws('=') ~ word                                   ~> LinkParams.title.apply _
-    | ws("title*") ~ ws('=') ~ word                                  ~> LinkParams.`title*`.apply _ // support full `ext-value` notation from http://tools.ietf.org/html/rfc5987#section-3.2.1
-    | (ws("type") ~ ws('=') ~ (ws('"') ~ `link-media-type` ~ ws('"') | `link-media-type`) ~> LinkParams.`type`.apply _))
+    parameterName("rel") ~ `relation-types`                           ~> LinkParams.rel.apply _
+    | parameterName("anchor") ~ ws('"') ~ UriReference('"') ~ ws('"') ~> LinkParams.anchor.apply _
+    | parameterName("rev") ~ `relation-types`                         ~> LinkParams.rev.apply _
+    | parameterName("hreflang") ~ hreflangValue                       ~> LinkParams.hreflang.apply _
+    | parameterName("media") ~ word                                   ~> LinkParams.media.apply _
+    | parameterName("title") ~ word                                   ~> LinkParams.title.apply _
+    | parameterName("title*") ~ word                                  ~> LinkParams.`title*`.apply _
+    | (parameterName("type") ~ (ws('"') ~ `link-media-type` ~ ws('"') | `link-media-type`) ~>
+    LinkParams.`type`.apply _))
   // TODO: support `link-extension`
+
+  // RFC 8288 §2.2: attribute names are ASCII tokens and compare case-insensitively.
+  private def parameterName(name: String): Rule0 = rule {
+    (capture(ignoreCase(name)) ~> ((matched: String) => test(equalsAsciiCaseInsensitive(matched, name)))) ~ OWS ~
+    ws('=')
+  }
+
+  // Apply the existing language grammar after unquoting (RFC 8288 §§3 and 3.4.1).
+  private def hreflangValue: Rule1[Language] = rule {
+    language | `quoted-string` ~> ((value: String) => parseQuotedLanguage(value))
+  }
+
+  private def parseQuotedLanguage(value: String): Language = {
+    import Parser.DeliveryScheme.Either
+    val parser: Parser with LinkHeader = new HeaderParser(value)
+    parser.linkLanguage.run() match {
+      case Right(lang) => lang
+      case Left(_)     => throw ParsingException(ErrorInfo("Illegal Link hreflang parameter"))
+    }
+  }
+
+  private def linkLanguage: Rule1[Language] = rule { language ~ EOI }
 
   def `relation-types` = rule(
     ws('"') ~ oneOrMore(`relation-type`).separatedBy(oneOrMore(SP)) ~> (_.mkString(" ")) ~ ws('"')
