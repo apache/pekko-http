@@ -29,12 +29,12 @@ import pekko.http.impl.util._
  * Does not support TimeZones, all DateTime values are always GMT based.
  * Note that this implementation discards milliseconds (i.e. rounds down to full seconds).
  *
- * When an HTTP `Date` header describes a positive UTC leap second, its time has `second == 60`.
+ * A positive UTC leap second in an HTTP `Date`, `Last-Modified`, or `Expires` header has `second == 60`.
  * Its `clicks` projects onto the preceding second. Within the epoch factory's supported range,
  * reconstructing only from `clicks` therefore gives the preceding ordinary second.
  * Comparison uses the leap-second label to keep the instants ordered. The component and epoch
  * factories and the ISO parser do not create leap-second values. To round-trip a leap second,
- * use the HTTP `Date` representation rather than the ISO parser.
+ * use one of these HTTP-date headers rather than the ISO parser.
  * Ordinary epoch arithmetic is not leap-second-aware. From a parsed leap second, arithmetic
  * preserves that second until the result crosses into an adjacent ordinary second.
  */
@@ -211,7 +211,7 @@ object DateTime {
   }
 
   /**
-   * INTERNAL API: receive the structural form of a positive UTC leap second in an HTTP Date header.
+   * INTERNAL API: receive the structural form of a positive UTC leap second in an HTTP-date field.
    * This checks the calendar boundary without requiring a table of announced leap seconds.
    */
   @InternalApi private[http] def atUtcLeapSecond(year: Int, month: Int, day: Int): DateTime = {

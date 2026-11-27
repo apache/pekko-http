@@ -89,6 +89,52 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     projected.toRfc1123DateTimeString() shouldBe "Tue, 30 Jun 2015 23:59:59 GMT"
   }
 
+  "leap seconds in modeled response metadata" - {
+    val canonical = "Sat, 31 Dec 2016 23:59:60 GMT"
+
+    def checkDate(header: HttpHeader, date: pekko.http.javadsl.model.DateTime) = {
+      date.second() shouldBe 60
+      header.value shouldBe canonical
+    }
+
+    "parse and render Scala Last-Modified" in {
+      val header = `Last-Modified`.parseFromValueString(canonical).fold(
+        errors => fail(errors.mkString(", ")), header => header)
+      checkDate(header, header.date)
+    }
+
+    "parse and render Scala Expires" in {
+      val header = Expires.parseFromValueString(canonical).fold(
+        errors => fail(errors.mkString(", ")), header => header)
+      checkDate(header, header.date)
+    }
+
+    "parse and render Java Last-Modified" in {
+      pekko.http.javadsl.model.HttpHeader.parse("Last-Modified", canonical) match {
+        case header: pekko.http.javadsl.model.headers.LastModified => checkDate(header, header.date())
+        case other                                                 => fail(s"Expected a Java Last-Modified, got $other")
+      }
+    }
+
+    "parse and render Java Expires" in {
+      pekko.http.javadsl.model.HttpHeader.parse("Expires", canonical) match {
+        case header: pekko.http.javadsl.model.headers.Expires => checkDate(header, header.date())
+        case other                                            => fail(s"Expected a Java Expires, got $other")
+      }
+    }
+
+    "keep the Expires zero value already expired" in {
+      val scalaHeader = Expires.parseFromValueString("0").fold(
+        errors => fail(errors.mkString(", ")), header => header)
+      scalaHeader.date shouldBe DateTime.MinValue
+
+      pekko.http.javadsl.model.HttpHeader.parse("Expires", "0") match {
+        case header: pekko.http.javadsl.model.headers.Expires => header.date() shouldBe DateTime.MinValue
+        case other                                            => fail(s"Expected a Java Expires, got $other")
+      }
+    }
+  }
+
   "RFC 850 uses a rolling UTC timestamp cutoff without changing cookie expiry" in {
     def parseAt(now: String, name: String, value: String): HeaderParser.Result =
       HeaderParser.dispatch(new HeaderParser(value + org.parboiled2.EOI) {

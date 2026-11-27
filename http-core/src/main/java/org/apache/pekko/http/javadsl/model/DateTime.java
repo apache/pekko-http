@@ -39,7 +39,7 @@ public abstract class DateTime {
 
   /**
    * Returns the second of this instant in GMT, including 60 for a positive UTC leap second parsed
-   * from an HTTP {@code Date} header.
+   * from an HTTP {@code Date}, {@code Last-Modified}, or {@code Expires} header.
    */
   public abstract int second();
 
@@ -94,8 +94,8 @@ public abstract class DateTime {
 
   /**
    * Returns a new DateTime instance parsed from IsoDateTimeString as Some(dateTime). Returns None
-   * if parsing has failed. Use the HTTP {@code Date} representation, not this method, to round-trip
-   * a leap second.
+   * if parsing has failed. Use an HTTP {@code Date}, {@code Last-Modified}, or {@code Expires}
+   * representation, not this method, to round-trip a leap second.
    */
   public static Optional<DateTime> fromIsoDateTimeString(String isoDateTimeString) {
     return OptionalUtil.<DateTime, org.apache.pekko.http.scaladsl.model.DateTime>convertOption(

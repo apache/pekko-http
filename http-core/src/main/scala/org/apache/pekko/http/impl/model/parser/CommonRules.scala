@@ -90,7 +90,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
   // ******************************************************************************************
 
   def `expires-date`: Rule1[DateTime] = rule {
-    (`HTTP-date` | zeroOrMore(ANY) ~ push(DateTime.MinValue)) ~ OWS
+    (dateHeaderValue | zeroOrMore(ANY) ~ push(DateTime.MinValue)) ~ OWS
   }
 
   // ******************************************************************************************
@@ -102,7 +102,7 @@ private[parser] trait CommonRules extends StringBuilding { this: Parser =>
     parseHttpDate(allowLeapSecond = false)
   }
 
-  // Leave the other HTTP-date fields and cookie expiry on their existing date model behavior.
+  // Only modeled HTTP-date fields that use this rule preserve leap seconds.
   def dateHeaderValue: Rule1[DateTime] = rule {
     parseHttpDate(allowLeapSecond = true)
   }
