@@ -214,7 +214,7 @@ private[parser] trait SimpleHeaders {
     // The shared HTTP-date rule also accepts a bare '0' for compatibility.
     // Skip decimal padding while leaving at least one digit for the bounded parser.
     (zeroOrMore('0' ~ &(CharacterClasses.DIGIT)) ~ `delta-seconds` ~> (RetryAfterDuration(_)) |
-    `HTTP-date`                                                    ~> (RetryAfterDateTime(_))) ~ EOI ~> (`Retry-After`(_))
+    dateHeaderValue                                                ~> (RetryAfterDateTime(_))) ~ EOI ~> (`Retry-After`(_))
   }
 
   // http://tools.ietf.org/html/rfc7231#section-7.4.2

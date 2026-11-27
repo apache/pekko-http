@@ -193,6 +193,24 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
         javaHeader.getDateTime.orElseThrow() shouldEqual DateTime(2015, 10, 21, 7, 28)
         javaHeader.value shouldEqual value
       }
+      "parse and render an HTTP date containing a UTC leap second" in {
+        val value = "Sat, 31 Dec 2016 23:59:60 GMT"
+        val parsed = headers.`Retry-After`.parseFromValueString(value)
+          .fold(errors => fail(errors.mkString(", ")), header => header)
+        parsed.delaySecondsOrDateTime match {
+          case RetryAfterDateTime(dateTime) => dateTime.second shouldBe 60
+          case other                        => fail(s"Expected an absolute Retry-After date, got $other")
+        }
+        parsed.value shouldEqual value
+
+        val javaHeader = pekko.http.javadsl.model.HttpHeader.parse("Retry-After", value) match {
+          case header: pekko.http.javadsl.model.headers.RetryAfter => header
+          case other                                               => fail(s"Expected a Java Retry-After date, got $other")
+        }
+        javaHeader.getDateTime.orElseThrow().second() shouldBe 60
+        javaHeader.getDelaySeconds.isEmpty shouldBe true
+        javaHeader.value shouldEqual value
+      }
       "failing parse run" in {
         val Left(List(ErrorInfo(summary2, detail2))) = `Retry-After`.parseFromValueString("-10")
         summary2 should startWith("Illegal HTTP header 'Retry-After': Invalid input '-'")
