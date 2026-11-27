@@ -52,6 +52,11 @@ eventually be slowed down in sending requests.
 Any errors occurring on the underlying connection are surfaced as exceptions terminating the response stream (and
 canceling the request source).
 
+For a relative HTTP/1 request URI using origin-form, an empty path is sent as `/`, preserving any query component.
+For example, a query-only URI `?page=2` is sent as `/?page=2`
+([RFC 9112, Section 3.2.1](https://www.rfc-editor.org/rfc/rfc9112.html#section-3.2.1)).
+An explicit `Raw-Request-URI` header still takes precedence.
+
 ## Closing Connections
 
 Apache Pekko HTTP actively closes an established connection upon reception of a response containing `Connection: close` header.

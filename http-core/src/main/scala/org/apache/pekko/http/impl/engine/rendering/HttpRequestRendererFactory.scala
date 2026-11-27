@@ -53,7 +53,13 @@ private[http] class HttpRequestRendererFactory(
           r ~~ rawUri; true
         case _ => false
       }
-      if (!rawRequestUriRendered) UriRendering.renderUriWithoutFragment(r, uri, UTF8)
+      if (!rawRequestUriRendered) {
+        // RFC 9112 section 3.2.1: an origin-form target with no path starts at the root.
+        // Preserve the original query and leave absolute, authority and asterisk forms alone.
+        if (uri.path.isEmpty && uri.isRelative && uri.authority.isEmpty && method.value != HttpMethods.CONNECT.value)
+          r ~~ '/'
+        UriRendering.renderUriWithoutFragment(r, uri, UTF8)
+      }
       r ~~ ' ' ~~ protocol ~~ CrLf
     }
 

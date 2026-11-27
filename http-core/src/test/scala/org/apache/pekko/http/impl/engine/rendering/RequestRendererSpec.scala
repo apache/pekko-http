@@ -54,6 +54,38 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
         }
       }
 
+      "supply the root path for an empty origin-form path and preserve the query" in new TestSetup() {
+        val cases = Seq(Uri./ -> "/", Uri("?") -> "/?", Uri("?page=2") -> "/?page=2")
+        for ((uri, target) <- cases)
+          HttpRequest(GET, uri) should renderTo {
+            s"""GET $target HTTP/1.1
+               |Host: test.com:8080
+               |User-Agent: pekko-http/1.0.0
+               |
+               |"""
+          }
+      }
+
+      "preserve root OPTIONS, explicit asterisk, and absolute proxy targets" in new TestSetup() {
+        val cases = Seq(Uri("?page=2") -> "/?page=2", Uri("*") -> "*")
+        for ((uri, target) <- cases)
+          HttpRequest(OPTIONS, uri) should renderTo {
+            s"""OPTIONS $target HTTP/1.1
+               |Host: test.com:8080
+               |User-Agent: pekko-http/1.0.0
+               |Content-Length: 0
+               |
+               |"""
+          }
+        HttpRequest(GET, Uri("http://test.com:8080?page=2")) should renderTo {
+          """GET http://test.com:8080?page=2 HTTP/1.1
+            |Host: test.com:8080
+            |User-Agent: pekko-http/1.0.0
+            |
+            |"""
+        }
+      }
+
       "GET request with a URI that requires encoding" in new TestSetup() {
         HttpRequest(GET, "/abc<def") should renderTo {
           """GET /abc%3Cdef HTTP/1.1
@@ -315,6 +347,18 @@ class RequestRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfterA
     }
 
     "properly use URI from Raw-Request-URI header if present" - {
+      "preserve an explicit target for a pathless URI and preserve CONNECT authority" in new TestSetup() {
+        val cases = Seq((GET, Uri("?page=2"), "/selected"), (CONNECT, Uri./, "test.com:8080"))
+        for ((method, uri, target) <- cases)
+          HttpRequest(method, uri, List(`Raw-Request-URI`(target))) should renderTo {
+            s"""${method.value} $target HTTP/1.1
+               |Host: test.com:8080
+               |User-Agent: pekko-http/1.0.0
+               |
+               |"""
+          }
+      }
+
       "GET request with Raw-Request-URI" in new TestSetup() {
         HttpRequest(GET, "/abc", List(`Raw-Request-URI`("/def"))) should renderTo {
           """GET /def HTTP/1.1
