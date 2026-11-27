@@ -696,6 +696,19 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Last-Modified: Wed, 13 Jul 2011 08:12:31 GMT" =!= `Last-Modified`(DateTime(2011, 7, 13, 8, 12, 31))
     }
 
+    "Location retains a fragment in a relative URI reference" in {
+      val fragment = "overview"
+      val value = s"/guide#$fragment"
+      val expected = Location(Uri(path = Uri.Path.Empty / "guide", fragment = Some(fragment)))
+      s"Location: $value" =!= expected.renderedTo(value)
+
+      val javaHeader = pekko.http.javadsl.model.HttpHeader.parse("Location", value)
+      javaHeader shouldBe expected
+      val javaUri = javaHeader.asInstanceOf[pekko.http.javadsl.model.headers.Location].getUri()
+      javaUri.fragment() shouldBe java.util.Optional.of(fragment)
+      javaHeader.value() shouldBe value
+    }
+
     "Location" in {
       "Location: https://spray.io/secure" =!= Location(Uri("https://spray.io/secure"))
       "Location: /en-us/default.aspx" =!= Location(Uri("/en-us/default.aspx"))
