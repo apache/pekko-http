@@ -116,6 +116,41 @@ class MessageSpec extends PekkoSpecWithMaterializer(
           s.request(1)
           sub.expectComplete()
         }
+        "keep a fragmented client binary message separate from interleaved ping and pong frames" in
+        new ClientTestSetup {
+          val first = ByteString("first")
+          val last = ByteString("last")
+          val ping = ByteString("ping")
+          val unsolicitedPong = ByteString("heartbeat")
+
+          try {
+            pushInput(frame(Opcode.Binary, first, fin = false, mask = false))
+            val body = expectBinaryMessage().dataStream.runWith(TestSink[ByteString]())
+            body.request(3).expectNext(first)
+
+            pushInput(
+              frame(Opcode.Ping, ping, fin = true, mask = false) ++
+              frame(Opcode.Pong, unsolicitedPong, fin = true, mask = false) ++
+              frame(Opcode.Continuation, last, fin = true, mask = false))
+
+            val mask = expectFrameHeaderOnNetwork(Opcode.Pong, ping.size, fin = true)
+              .getOrElse(fail("Expected the client Pong to be masked"))
+            netOut.expectBytes(maskedBytes(ping, mask)._1)
+            body.expectNext(last)
+            body.expectComplete()
+
+            // A normal close bounds both streams without polling for unexpected messages or frames.
+            pushInput(closeFrame(Protocol.CloseCodes.Regular, mask = false))
+            expectComplete(messageIn)
+            messageOut.sendComplete()
+            expectCloseCodeOnNetwork(Protocol.CloseCodes.Regular)
+            netIn.sendComplete()
+            netOut.expectComplete()
+          } finally {
+            messageIn.cancel()
+            netOut.cancel()
+          }
+        }
         "for several messages" in new ClientTestSetup {
           val data1 = ByteString("abc", "ASCII")
           val header1 = frameHeader(Opcode.Binary, 3, fin = false)
