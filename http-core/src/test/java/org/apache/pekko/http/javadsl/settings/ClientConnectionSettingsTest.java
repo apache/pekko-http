@@ -14,6 +14,7 @@
 package org.apache.pekko.http.javadsl.settings;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -31,6 +32,18 @@ import org.apache.pekko.testkit.javadsl.TestKit;
 import org.junit.jupiter.api.Test;
 
 public class ClientConnectionSettingsTest {
+
+  @Test
+  public void testConfigureHpackIndexingPolicy() {
+    HpackIndexingPolicy policy = (name, value) -> name.equals("x-label") && value.equals("test");
+    ClientConnectionSettings client = ClientConnectionSettings.create("");
+    Http2ClientSettings clientHttp2 = client.getHttp2Settings().withHpackIndexingPolicy(policy);
+    assertSame(clientHttp2, client.withHttp2Settings(clientHttp2).getHttp2Settings());
+
+    ServerSettings server = ServerSettings.create("");
+    Http2ServerSettings serverHttp2 = server.getHttp2Settings().withHpackIndexingPolicy(policy);
+    assertSame(serverHttp2, server.withHttp2Settings(serverHttp2).getHttp2Settings());
+  }
 
   @Test
   public void testCreateWithActorSystem() {

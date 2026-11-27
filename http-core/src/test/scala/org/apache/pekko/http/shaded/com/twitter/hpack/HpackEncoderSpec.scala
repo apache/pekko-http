@@ -26,6 +26,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import org.apache.pekko.http.impl.util.{ ByteStringOutputStream, StringTools }
+import org.apache.pekko.http.javadsl.settings.HpackIndexingPolicy
 
 class HpackEncoderSpec extends AnyWordSpec with Matchers {
 
@@ -67,6 +68,73 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
     decodeHeaderFields(decoder, bytes).map { case (name, value, _) => name -> value }
 
   private def decodeHeaders(bytes: Array[Byte]): Seq[(String, String)] = decodeHeaders(new Decoder(8192, 4096), bytes)
+
+  "HPACK insertion policy" should {
+    "call an injected policy only when an entry can be inserted" in {
+      val encoder = new Encoder(4096)
+      val out = new ByteStringOutputStream(32)
+      val seen = scala.collection.mutable.Buffer.empty[(String, String)]
+      val policy: HpackIndexingPolicy = (name, value) => {
+        seen += name -> value
+        value == "skip-me"
+      }
+
+      encoder.encodeHeader(out, ":method", "GET", false, policy)
+      encoder.encodeHeader(out, "x-label", "kept", false, policy)
+      encoder.encodeHeader(out, "x-label", "kept", false, policy)
+      encoder.encodeHeader(out, "x-label", "kept", true, policy)
+      encoder.encodeHeader(out, "x-label", "skip-me", false, policy)
+      encoder.encodeHeader(out, "x-label", "x" * 5000, false, policy)
+      new Encoder(0).encodeHeader(out, "x-label", "zero-capacity", false, policy)
+
+      seen.toSeq shouldBe Seq("x-label" -> "kept", "x-label" -> "skip-me")
+      encoder.length() shouldBe 1
+    }
+
+    "retain ordinary Latin-1 values with an explicit insertion policy" in {
+      val encoder = new Encoder(4096)
+      val decoder = new Decoder(8192, 4096)
+      val out = new ByteStringOutputStream(32)
+      val policy: HpackIndexingPolicy = (_, _) => false
+      val value = "caf\u00e9"
+
+      encoder.encodeHeader(out, "x-label", value, false, policy)
+      val literal = out.takeByteString().toArray
+      (literal.head & 0xC0) shouldBe 0x40
+      decodeHeaders(decoder, literal) shouldBe Seq("x-label" -> value)
+
+      encoder.encodeHeader(out, "x-label", value, false, policy)
+      val indexed = out.takeByteString().toArray
+      (indexed.head & 0x80) shouldBe 0x80
+      decodeHeaders(decoder, indexed) shouldBe Seq("x-label" -> value)
+    }
+
+    "preserve exact indexes and sensitivity while declining new entries" in {
+      val encoder = new Encoder(4096)
+      val decoder = new Decoder(8192, 4096)
+      val out = new ByteStringOutputStream(32)
+      val name = "x-synthetic-trace"
+
+      val skip: HpackIndexingPolicy = (_, _) => true
+      def field(n: String, v: String, sensitive: Boolean = false, skipInsertion: Boolean = false): Int = {
+        if (skipInsertion) encoder.encodeHeader(out, n, v, sensitive, skip)
+        else encoder.encodeHeader(out, n, v, sensitive)
+        val bytes = out.takeByteString().toArray
+        decodeHeaderFields(decoder, bytes) shouldBe Seq((n, v, sensitive))
+        bytes.head & 0xFF
+      }
+
+      field(":method", "GET", skipInsertion = true) shouldBe 0x82
+      field(name, "retained") & 0xC0 shouldBe 0x40
+      encoder.length() shouldBe 1
+      field(name, "retained", skipInsertion = true) & 0x80 shouldBe 0x80
+      field(name, "ordinary", skipInsertion = true) & 0xF0 shouldBe 0
+      // Use the same ordinary value to verify that an exact indexed hit never overrides sensitivity.
+      field(name, "retained", sensitive = true, skipInsertion = true) & 0xF0 shouldBe 0x10
+      encoder.length() shouldBe 1
+      encoder.getHeaderField(0).value shouldBe "retained"
+    }
+  }
 
   "HuffmanEncoder" should {
     // the string literals from RFC 7541 Appendix C.4 with their expected Huffman codes

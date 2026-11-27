@@ -14,13 +14,16 @@
 package org.apache.pekko.http.impl.engine.http2.hpack
 
 import org.apache.pekko
+import pekko.NotUsed
 import pekko.annotation.InternalApi
 import pekko.http.impl.engine.http2.FrameEvent._
 import pekko.http.impl.engine.http2.Http2Protocol.SettingIdentifier
 import pekko.http.impl.engine.http2._
 import pekko.http.impl.util.ByteStringOutputStream
+import pekko.http.javadsl.settings.HpackIndexingPolicy
+import pekko.http.scaladsl.settings.Http2CommonSettings.HpackPolicyOptions
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler, StageLogging }
-import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
+import pekko.stream.{ Attributes, FlowShape, Graph, Inlet, Outlet }
 import pekko.util.ByteString
 
 /**
@@ -32,6 +35,11 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
   val eventsOut = Outlet[FrameEvent]("HeaderCompression.eventsOut")
 
   val shape = FlowShape(eventsIn, eventsOut)
+
+  private final case class Policy(options: HpackPolicyOptions) extends Attributes.Attribute
+
+  def withPolicy(options: Option[HpackPolicyOptions]): Graph[FlowShape[FrameEvent, FrameEvent], NotUsed] =
+    options.fold[Graph[FlowShape[FrameEvent, FrameEvent], NotUsed]](this)(o => addAttributes(Attributes(Policy(o))))
 
   /** RFC 9113 8.2.1: NUL, CR and LF are never valid in an HTTP/2 field name or value. */
   private[http2] def hasIllegalChar(s: String): Boolean =
@@ -55,6 +63,8 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
     new GraphStageLogic(shape) with StageLogging with InHandler with OutHandler { logic =>
       setHandlers(eventsIn, eventsOut, this)
       private val currentMaxFrameSize = Http2Protocol.InitialMaxFrameSize
+
+      private val policy: HpackIndexingPolicy = inheritedAttributes.get[Policy].map(_.options.policy).orNull
 
       val encoder = new pekko.http.shaded.com.twitter.hpack.Encoder(Http2Protocol.InitialMaxHeaderTableSize)
       val os = new ByteStringOutputStream(128)
@@ -82,7 +92,7 @@ private[http2] object HeaderCompression extends GraphStage[FlowShape[FrameEvent,
                   // here would be a log-flooding vector; the HTTP/1.1 renderer drops such headers silently too
                   log.debug("Dropping HTTP/2 header [{}] because its name or value contains a CR, LF or NUL", key)
                 else
-                  encoder.encodeHeader(os, key, value, false)
+                  encoder.encodeHeader(os, key, value, false, policy)
               case (key, value) =>
                 throw new IllegalStateException(
                   s"Didn't expect key-value-pair [$key] -> [$value](${value.getClass}) here.")

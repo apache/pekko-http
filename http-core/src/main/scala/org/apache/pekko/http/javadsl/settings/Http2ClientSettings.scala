@@ -23,6 +23,15 @@ import pekko.http.impl.util.JavaDurationConverter
 import pekko.http.scaladsl
 
 trait Http2ClientSettings { self: scaladsl.settings.Http2ClientSettings.Http2ClientSettingsImpl =>
+
+  /**
+   * Sets the outbound HPACK indexing policy, replacing the configured header-name list or a previously supplied policy.
+   *
+   * @since 2.1.0
+   */
+  def withHpackIndexingPolicy(policy: HpackIndexingPolicy): Http2ClientSettings =
+    (self: scaladsl.settings.Http2ClientSettings).withHpackIndexingPolicy(policy)
+
   def requestEntityChunkSize: Int
   def withRequestEntityChunkSize(newValue: Int): Http2ClientSettings = self.copy(requestEntityChunkSize = newValue)
 
