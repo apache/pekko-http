@@ -147,6 +147,31 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
         123)
     }
 
+    "retain empty Cache-Control without warning alongside ordinary fields" in {
+      val warnings = Vector.newBuilder[ErrorInfo]
+      val parser = HttpHeaderParser.prime(HttpHeaderParser.unprimed(createParserSettings(system), system.log,
+        warning => { warnings += warning; () }))
+      val emptyLine = s"Cache-Control:$newLine"
+      val valueLine = s"Cache-Control: max-age=60$newLine"
+      val input = ByteString(emptyLine + valueLine + newLine)
+
+      val next = parser.parseHeaderLine(input)()
+      next shouldBe emptyLine.length
+      val emptyHeader = parser.resultHeader
+      emptyHeader shouldBe RawHeader("cache-control", "")
+
+      val terminator = parser.parseHeaderLine(input, next)()
+      terminator shouldBe emptyLine.length + valueLine.length
+      val populatedHeader = parser.resultHeader
+      populatedHeader shouldBe `Cache-Control`(CacheDirectives.`max-age`(60))
+      parser.parseHeaderLine(input, terminator)()
+      parser.resultHeader shouldBe EmptyHeader
+      warnings.result() shouldBe empty
+
+      val request = pekko.http.scaladsl.model.HttpRequest(headers = List(emptyHeader, populatedHeader))
+      request.header[`Cache-Control`] shouldBe Some(populatedHeader)
+    }
+
     "parse and cache a Content-Type with empty parameter slots" in new TestSetup() {
       val mediaType = pekko.http.scaladsl.model.MediaTypes.`multipart/form-data`.withBoundary("x")
       parseAndCache(s"Content-Type: multipart/form-data;;boundary=x;${newLine}x")() shouldEqual

@@ -49,7 +49,7 @@ sealed abstract class ModeledCompanion[T: ClassTag] extends Renderable {
    * was successful and `Left(errors)` otherwise.
    */
   def parseFromValueString(value: String): Either[List[ErrorInfo], T] =
-    HttpHeader.parse(name, value) match {
+    HttpHeader.parseForModeledCompanion(name, value) match {
       case HttpHeader.ParsingResult.Ok(header: T, Nil) => Right(header)
       case res                                         => Left(res.errors)
     }

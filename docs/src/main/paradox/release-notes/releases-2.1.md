@@ -28,3 +28,6 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
   `HttpCookie.partitioned` field instead of the generic `extension` field. If your code detects
   partitioned cookies by inspecting `extension` (`getExtension()` in Java), use `partitioned`
   (`partitioned()` in Java) instead ([PR1562](https://github.com/apache/pekko-http/pull/1562)).
+* An empty `Cache-Control` field is retained as a `RawHeader` without a parse warning, as zero directives are allowed by
+  [RFC 9111, Section 5.2](https://www.rfc-editor.org/rfc/rfc9111.html#section-5.2). The modeled `Cache-Control` type still
+  requires at least one directive, so an empty field does not change typed header lookup.

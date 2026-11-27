@@ -27,7 +27,7 @@ import pekko.http.impl.engine.http2.RequestParsing.ParseRequestResult
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util.PekkoSpecWithMaterializer
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.{ Accept, Cookie, Host }
+import pekko.http.scaladsl.model.headers.{ Accept, `Cache-Control`, CacheDirectives, Cookie, Host, RawHeader }
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Sink, Source }
@@ -114,6 +114,15 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       val request = parseExpectOk(Vector(":method" -> "GET", ":scheme" -> "https", ":path" -> "/", "x-a" -> "a b",
         "x-b" -> ""))
       (request.headers.map(h => h.lowercaseName -> h.value) should contain).allOf("x-a" -> "a b", "x-b" -> "")
+    }
+
+    "retain empty Cache-Control before the modeled field" in {
+      val request = parseExpectOk(Vector(
+        ":method" -> "GET", ":scheme" -> "https", ":authority" -> "example.com", ":path" -> "/",
+        "cache-control" -> "", "cache-control" -> "max-age=60"))
+      val populated = `Cache-Control`(CacheDirectives.`max-age`(60))
+      request.headers.filter(_.is("cache-control")) shouldBe Seq(RawHeader("cache-control", ""), populated)
+      request.header[`Cache-Control`] shouldBe Some(populated)
     }
 
     "decode non-ASCII octets in a header value as the HTTP/1.1 parser does" should {

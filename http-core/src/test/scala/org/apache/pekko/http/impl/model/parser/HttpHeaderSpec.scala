@@ -417,6 +417,23 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Connection: pipapo, close" =!= Connection("pipapo", "close")
     }
 
+    "empty Cache-Control is preserved without errors by generic parsing" in {
+      val raw = RawHeader("cAcHe-CoNtRoL", "")
+      for (value <- Seq("", " \t")) {
+        HttpHeader.parse(raw.name, value) shouldBe HttpHeader.ParsingResult.Ok(raw, Nil)
+        org.apache.pekko.http.javadsl.model.HttpHeader.parse(raw.name, value) shouldBe raw
+      }
+      HttpHeader.parse("X-Example", "") shouldBe HttpHeader.ParsingResult.Ok(RawHeader("X-Example", ""), Nil)
+    }
+
+    "empty Cache-Control still fails explicitly modeled parsing" in {
+      `Cache-Control`.parseFromValueString("") match {
+        case Left(error :: Nil) => error.summary should startWith("Illegal HTTP header 'Cache-Control'")
+        case other              => fail(s"Expected one modeled parse error, got $other")
+      }
+      `Cache-Control`.parseFromValueString("max-age=60") shouldBe Right(`Cache-Control`(`max-age`(60)))
+    }
+
     "list headers with empty list elements (RFC 9110 section 5.6.1)" in {
       "Cache-Control: no-store,, public" =!= `Cache-Control`(`no-store`, `public`).renderedTo("no-store, public")
       "Cache-Control: , no-store, public" =!= `Cache-Control`(`no-store`, `public`).renderedTo("no-store, public")
