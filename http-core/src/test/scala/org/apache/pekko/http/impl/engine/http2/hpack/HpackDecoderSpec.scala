@@ -123,6 +123,13 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
       decode(new ByteArrayInputStream(encode(headers: _*))) shouldEqual headers
     }
 
+    "preserve identical header fields in the original order" in {
+      val vary = "vary" -> "accept-language"
+      val fields = Seq(vary, "content-language" -> "en", vary)
+
+      decode(new ByteArrayInputStream(encode(fields: _*))) shouldEqual fields
+    }
+
     "decode a header block from a stream that returns one byte per read" in {
       // string literals are read with a single call, so a short read must not be taken for truncation
       decode(new TricklingInputStream(encode(headers: _*), bytesPerRead = 1)) shouldEqual headers
