@@ -24,6 +24,10 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
 
 ### Behavior Changes
 
+* Server `Accept` negotiation now compares media parameter names case-insensitively, per
+  [RFC 9110 §5.6.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.6). Parameter values are compared as
+  before, and the public `MediaRange.matches` method and inbound content-type matching are unchanged.
+
 * A bare `Partitioned` attribute in a parsed `Set-Cookie` header is now stored in the typed
   `HttpCookie.partitioned` field instead of the generic `extension` field. If your code detects
   partitioned cookies by inspecting `extension` (`getExtension()` in Java), use `partitioned`

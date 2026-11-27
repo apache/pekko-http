@@ -13,6 +13,8 @@
 
 package org.apache.pekko.http.impl.util
 
+import scala.annotation.tailrec
+
 import org.apache.pekko
 import pekko.annotation.InternalApi
 
@@ -27,5 +29,18 @@ private[http] object CharUtils {
    */
   final def toLowerCase(c: Char): Char =
     if (c >= 'A' && c <= 'Z') (c + 0x20 /* - 'A' + 'a' */ ).toChar else c
+
+  /** Returns true if both strings contain only ASCII and match case-insensitively. */
+  def equalsAsciiCaseInsensitive(str1: String, str2: String): Boolean = {
+    @tailrec def stringEquals(at: Int, length: Int): Boolean =
+      if (at < length) {
+        val char1 = str1.charAt(at)
+        val char2 = str2.charAt(at)
+
+        (char1 | char2) < 0x80 && toLowerCase(char1) == toLowerCase(char2) && stringEquals(at + 1, length)
+      } else true
+
+    str1.length == str2.length && stringEquals(0, str1.length)
+  }
 
 }
