@@ -55,6 +55,36 @@ class ClientServerSpec extends ClientServerSpecBase(http2 = false) {
   import system.dispatcher
 
   "The HTTP/1.1 connection" should {
+    "preserve request data chunk extensions over HTTP/1.1" in Utils.assertAllStagesStopped {
+      val chunks: List[ChunkStreamPart] =
+        List(Chunk(ByteString("first"), "label=sample;part=first"), Chunk("second"), LastChunk)
+      val received = Promise[Seq[ChunkStreamPart]]()
+      val host = "127.0.0.1"
+      val binding = Http().newServerAt(host, 0).bind { request =>
+        request.entity match {
+          case entity: Chunked if request.protocol == HttpProtocols.`HTTP/1.1` =>
+            entity.chunks.runWith(Sink.seq).map { parts =>
+              received.success(parts)
+              HttpResponse()
+            }
+          case _ => Future.failed(new IllegalStateException("Expected an HTTP/1.1 chunked request"))
+        }
+      }.futureValue
+
+      try {
+        val request =
+          HttpRequest(POST, "/chunk-extensions",
+            entity = Chunked(ContentTypes.`application/octet-stream`, Source(chunks)))
+        val response = Source.single(request)
+          .via(Http().outgoingConnection(host, binding.localAddress.getPort))
+          .runWith(Sink.head).futureValue
+
+        response.protocol shouldBe HttpProtocols.`HTTP/1.1`
+        response.status shouldBe StatusCodes.OK
+        received.future.futureValue shouldBe chunks
+      } finally binding.terminate(3.seconds.dilated).futureValue
+    }
+
     "preserve the order of repeated list-valued fields in an HTTP/1.1 POST" in Utils.assertAllStagesStopped {
       // X-Menu-Selection is an application list field (#token); its values are processed in order.
       val body = ByteString("spring menu")
