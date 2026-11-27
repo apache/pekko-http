@@ -60,6 +60,7 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
   protected def settings: ParserSettings
   protected def headerParser: HttpHeaderParser
   protected def isResponseParser: Boolean
+  protected def publishMergedConnectionHeader: Boolean = false
 
   /** invoked if the specified protocol is unknown */
   protected def onBadProtocol(input: ByteString): Nothing
@@ -180,6 +181,14 @@ private[http] trait HttpMessageParser[Output >: MessageOutput <: ParserOutput] {
 
         case EmptyHeader =>
           val close = HttpMessage.connectionCloseExpected(protocol, ch)
+          if (ch.isDefined && publishMergedConnectionHeader) {
+            val merged = ch.get
+            val index = headers.indexWhere {
+              case h: Connection => h ne merged
+              case _             => false
+            }
+            if (index >= 0) headers(index) = merged
+          }
           setCompletionHandling(CompletionIsEntityStreamError)
           parseEntity(headers.toList, protocol, input, lineEnd, clh, cth, isChunked, e100c, hh, close, lastSession)
 

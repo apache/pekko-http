@@ -457,6 +457,36 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       }
     }
 
+    "deliver a message after an upgrade with split Connection response fields" in {
+      Utils.assertAllStagesStopped {
+        new TestSetup with ClientProbes {
+          try {
+            expectWireData(UpgradeRequestBytes)
+            messagesIn.request(1)
+            sendWireData("""HTTP/1.1 101 Switching Protocols
+                           |Upgrade: websocket
+                           |Sec-WebSocket-Accept: ujmZX4KXZqjwy6vi1aQFH5p4Ygk=
+                           |Connection: keep-alive
+                           |Server: pekko-http/test
+                           |Connection: upgrade
+                           |
+                           |""")
+            val upgrade = response.awaitResult(1.second.dilated)
+            upgrade shouldBe a[ValidUpgrade]
+            val connectionTokens = upgrade.response.headers.collect { case header: Connection => header.tokens }
+            connectionTokens shouldBe List(Seq("keep-alive", "upgrade"))
+            sendWSFrame(Protocol.Opcode.Text, ByteString("hello"), fin = true)
+            messagesIn.expectNext(TextMessage("hello"))
+          } finally {
+            messagesOut.sendComplete()
+            messagesIn.cancel()
+            netOut.cancel()
+            closeNetworkInput()
+          }
+        }
+      }
+    }
+
     "establish connection with header values sent in parts" in new TestSetup with ClientEchoes {
       expectWireData(UpgradeRequestBytes)
       sendWireData("""HTTP/1.1 101 """)
