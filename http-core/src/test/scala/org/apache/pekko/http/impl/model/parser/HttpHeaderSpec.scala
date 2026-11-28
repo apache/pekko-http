@@ -737,7 +737,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         Link(Uri("/"), LinkParams.`type`(`application/json`.withParams(Map("foo" -> "bar")))).renderedTo(
           """</>; type="application/json; foo=bar"""")
 
-      /* RFC 5988 examples */
+      /* Historical examples from RFC 5988; RFC 8288 defines the current Link field. */
       """Link: <http://example.com/TheBook/chapter2>; rel="previous"; title="previous chapter"""" =!=
         Link(Uri("http://example.com/TheBook/chapter2"), LinkParams.rel("previous"),
           LinkParams.title("previous chapter"))
@@ -750,7 +750,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
         Uri("http://example.org/"),
         LinkParams.rel("start http://example.net/relation/other"))
 
-      // only one 'rel=' is allowed, http://tools.ietf.org/html/rfc5988#section-5.3 requires any subsequent ones to be skipped
+      // RFC 8288 section 3.3 requires parsers to ignore any rel parameters after the first.
       "Link: </>; rel=prev; rel=next" =!=> "</>; rel=prev"
 
       // make sure we still parse unquoted rel uri

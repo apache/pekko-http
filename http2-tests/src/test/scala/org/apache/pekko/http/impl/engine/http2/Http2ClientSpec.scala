@@ -538,7 +538,7 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           user.emitRequest(Get("/"))
           val headerPayload = network.expectHeaderBlock(1)
 
-          // Dynamic Table Size Update (https://tools.ietf.org/html/rfc7541#section-6.3) is
+          // Dynamic Table Size Update (https://www.rfc-editor.org/rfc/rfc7541.html#section-6.3) is
           //
           // 0   1   2   3   4   5   6   7
           // +---+---+---+---+---+---+---+---+

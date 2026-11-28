@@ -21,7 +21,7 @@ import pekko.http.scaladsl.model.headers.RawHeader
 import pekko.stream.scaladsl.Source
 
 /**
- * Examples from the HPACK specification. See https://tools.ietf.org/html/rfc7541#appendix-C
+ * Examples from the HPACK specification. See https://www.rfc-editor.org/rfc/rfc7541.html#appendix-C
  */
 object HPackSpecExamples {
 
@@ -203,10 +203,8 @@ object HPackSpecExamples {
         headers.Date.parseFromValueString("Mon, 21 Oct 2013 20:13:22 GMT").toOption.get,
         headers.Location("https://www.example.com"),
         headers.`Content-Encoding`(HttpEncodings.gzip),
-        // The RFC example spells 'max-age' in lowercase, while the modeled `Set-Cookie` header renders it uppercase.
-        // Rendering it uppercase is consistent with https://tools.ietf.org/html/rfc6265#section-5.2.2 .
-        // https://tools.ietf.org/html/rfc7540#section-8.1.2 specifies HTTP/2 header fields ('Set-Cookie') must be
-        // converted to lowercase, but AFAICS has no such provision for header parameters.
+        // Preserve the spelling from the HPACK example. RFC 6265 section 5.2.2 matches Max-Age
+        // case-insensitively; RFC 9113 section 8.2.1 lowercases field names, not cookie attributes.
         RawHeader("Set-Cookie", "foo=ASDJKHQKBZXOQWEOPIUAXQWEOIU; max-age=3600; version=1")),
       entity = HttpEntity.CloseDelimited(ContentTypes.NoContentType, Source.empty))
 

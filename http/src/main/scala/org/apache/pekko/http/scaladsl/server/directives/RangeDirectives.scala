@@ -45,7 +45,7 @@ trait RangeDirectives {
    * it on the *inside* of the `conditional(...)` directive, i.e. `conditional(...)` must be
    * on a higher level in your route structure in order to function correctly.
    *
-   * @see [[https://tools.ietf.org/html/rfc7233]]
+   * @see [[https://www.rfc-editor.org/rfc/rfc9110.html#section-14]]
    *
    * @group range
    */

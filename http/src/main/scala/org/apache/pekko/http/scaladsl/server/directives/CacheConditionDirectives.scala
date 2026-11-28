@@ -32,10 +32,10 @@ trait CacheConditionDirectives {
 
   /**
    * Wraps its inner route with support for Conditional Requests as defined
-   * by http://tools.ietf.org/html/rfc7232
+   * by https://www.rfc-editor.org/rfc/rfc9110.html#section-13.
    *
-   * In particular the algorithm defined by http://tools.ietf.org/html/rfc7232#section-6
-   * is implemented by this directive.
+   * It uses the precondition evaluation order described in
+   * https://www.rfc-editor.org/rfc/rfc9110.html#section-13.2.2.
    *
    * Note: if you want to combine this directive with `withRangeSupport(...)` you need to put
    * it on the *outside* of the `withRangeSupport(...)` directive, i.e. `withRangeSupport(...)`
@@ -47,10 +47,10 @@ trait CacheConditionDirectives {
 
   /**
    * Wraps its inner route with support for Conditional Requests as defined
-   * by http://tools.ietf.org/html/rfc7232
+   * by https://www.rfc-editor.org/rfc/rfc9110.html#section-13.
    *
-   * In particular the algorithm defined by http://tools.ietf.org/html/rfc7232#section-6
-   * is implemented by this directive.
+   * It uses the precondition evaluation order described in
+   * https://www.rfc-editor.org/rfc/rfc9110.html#section-13.2.2.
    *
    * Note: if you want to combine this directive with `withRangeSupport(...)` you need to put
    * it on the *outside* of the `withRangeSupport(...)` directive, i.e. `withRangeSupport(...)`
@@ -62,10 +62,10 @@ trait CacheConditionDirectives {
 
   /**
    * Wraps its inner route with support for Conditional Requests as defined
-   * by http://tools.ietf.org/html/rfc7232
+   * by https://www.rfc-editor.org/rfc/rfc9110.html#section-13.
    *
-   * In particular the algorithm defined by http://tools.ietf.org/html/rfc7232#section-6
-   * is implemented by this directive.
+   * It uses the precondition evaluation order described in
+   * https://www.rfc-editor.org/rfc/rfc9110.html#section-13.2.2.
    *
    * Note: if you want to combine this directive with `withRangeSupport(...)` you need to put
    * it on the *outside* of the `withRangeSupport(...)` directive, i.e. `withRangeSupport(...)`
@@ -77,10 +77,10 @@ trait CacheConditionDirectives {
 
   /**
    * Wraps its inner route with support for Conditional Requests as defined
-   * by http://tools.ietf.org/html/rfc7232
+   * by https://www.rfc-editor.org/rfc/rfc9110.html#section-13.
    *
-   * In particular the algorithm defined by http://tools.ietf.org/html/rfc7232#section-6
-   * is implemented by this directive.
+   * It uses the precondition evaluation order described in
+   * https://www.rfc-editor.org/rfc/rfc9110.html#section-13.2.2.
    *
    * Note: if you want to combine this directive with `withRangeSupport(...)` you need to put
    * it on the *outside* of the `withRangeSupport(...)` directive, i.e. `withRangeSupport(...)`

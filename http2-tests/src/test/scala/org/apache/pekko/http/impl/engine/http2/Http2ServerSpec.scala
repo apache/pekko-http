@@ -656,7 +656,7 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
           user.emitResponse(streamId, HPackSpecExamples.FirstResponse)
           val headerPayload = network.expectHeaderBlock(1)
 
-          // Dynamic Table Size Update (https://tools.ietf.org/html/rfc7541#section-6.3) is
+          // Dynamic Table Size Update (https://www.rfc-editor.org/rfc/rfc7541.html#section-6.3) is
           //
           // 0   1   2   3   4   5   6   7
           // +---+---+---+---+---+---+---+---+
@@ -1426,7 +1426,7 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
 
       "distribute increases to SETTINGS_INITIAL_WINDOW_SIZE to streams correctly while sending out response".inAssertAllStagesStopped(
         new WaitingForResponseDataSetup {
-          // changes to SETTINGS_INITIAL_WINDOW_SIZE need to be distributed to active streams: https://httpwg.org/specs/rfc7540.html#InitialWindowSize
+          // A SETTINGS_INITIAL_WINDOW_SIZE change also adjusts active stream windows (RFC 9113 section 6.9.2).
           val bytesToSend = 70000 // > Http2Protocol.InitialWindowSize
           val missingWindow = bytesToSend - Http2Protocol.InitialWindowSize
           require(missingWindow >= 0)

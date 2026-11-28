@@ -188,7 +188,7 @@ class ContentNegotiationSpec extends AnyFreeSpec with Matchers {
         `text/html`.withParams(Map("level" -> "1", "format" -> "flowed")).withCharset(`UTF-8`))
     }
 
-    // https://tools.ietf.org/html/rfc7231#section-5.3.2
+    // Historical example from RFC 7231 section 5.3.2; see RFC 9110 section 12.5.1 for media range precedence.
     "Correctly calculate qValues" in {
       val negotiator = new MediaTypeNegotiator(parseHeaders(
         "Accept: text/*;q=0.3, text/html;q=0.7, text/html;level=1, text/html;level=2;q=0.4, */*;q=0.5"))
