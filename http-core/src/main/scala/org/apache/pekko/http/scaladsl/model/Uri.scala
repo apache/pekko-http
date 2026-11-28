@@ -295,7 +295,8 @@ object Uri {
   def from(scheme: String = "", userinfo: String = "", host: String = "", port: Int = 0, path: String = "",
       queryString: Option[String] = None, fragment: Option[String] = None,
       mode: Uri.ParsingMode = Uri.ParsingMode.Relaxed): Uri =
-    apply(scheme, Authority(Host(host, UTF8, mode), normalizePort(port, scheme), userinfo), Path(path), queryString,
+    apply(scheme, Authority(Host(host, UTF8, mode), normalizePortForScheme(port, scheme), userinfo), Path(path),
+      queryString,
       fragment)
 
   /**
@@ -428,8 +429,13 @@ object Uri {
     def nonEmpty = !isEmpty
     def normalizedForHttp(encrypted: Boolean = false) =
       normalizedFor(httpScheme(encrypted))
+
+    /**
+     * Removes the default port for the supplied scheme, irrespective of the scheme's case.
+     * The scheme is used only to look up the default port; it is not rewritten.
+     */
     def normalizedFor(scheme: String): Authority = {
-      val normalizedPort = normalizePort(port, scheme)
+      val normalizedPort = normalizePortForScheme(port, scheme)
       if (normalizedPort == port) this else copy(port = normalizedPort)
     }
     override def toString = UriRendering.AuthorityRenderer.render(new StringRendering, this).get
@@ -776,11 +782,16 @@ object Uri {
     }
   }
 
+  private final val NoDefaultPort = -1
+
   private val defaultPorts: Map[String, Int] =
     Map("ftp" -> 21, "ssh" -> 22, "telnet" -> 23, "smtp" -> 25, "domain" -> 53, "tftp" -> 69, "http" -> 80, "ws" -> 80,
       "pop3" -> 110, "nntp" -> 119, "imap" -> 143, "snmp" -> 161, "ldap" -> 389, "https" -> 443, "wss" -> 443,
       "imaps" -> 993,
-      "nfs" -> 2049).withDefaultValue(-1)
+      "nfs" -> 2049).withDefaultValue(NoDefaultPort)
+
+  private lazy val schemesByDefaultPort: Map[Int, List[String]] =
+    defaultPorts.toList.groupMap(_._2)(_._1)
 
   sealed trait ParsingMode extends pekko.http.javadsl.model.Uri.ParsingMode
   object ParsingMode {
@@ -894,6 +905,33 @@ object Uri {
       case -1 => scheme
       case ix => fail(s"Invalid URI scheme, unexpected character at pos $ix ('${scheme.charAt(ix)}')")
     }
+  }
+
+  // The parser uses normalizePort directly; component callers can supply a noncanonical scheme spelling.
+  private def normalizePortForScheme(port: Int, scheme: String): Int =
+    if ((port >> 16) != 0) normalizePort(port, scheme)
+    else if (port == 0) 0
+    else {
+      val default = defaultPorts(scheme)
+      if (default == port || (default == NoDefaultPort && matchesDefaultScheme(port, scheme))) 0
+      else port
+    }
+
+  private def matchesDefaultScheme(port: Int, scheme: String): Boolean = {
+    var candidates = schemesByDefaultPort.getOrElse(port, Nil)
+    while (candidates.nonEmpty) {
+      val candidate = candidates.head
+      val length = candidate.length
+      if (scheme.length == length) {
+        var i = 0
+        while (i < length && pekko.http.impl.util.CharUtils.toLowerCase(scheme.charAt(i)) == candidate.charAt(i)) {
+          i += 1
+        }
+        if (i == length) return true
+      }
+      candidates = candidates.tail
+    }
+    false
   }
 
   private[http] def normalizePort(port: Int, scheme: String): Int =
