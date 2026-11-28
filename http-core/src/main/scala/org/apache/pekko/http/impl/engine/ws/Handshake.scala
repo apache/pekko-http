@@ -43,47 +43,14 @@ private[http] object Handshake {
     private val CompressEveryFrame: FrameStart => Boolean = _ => true
 
     /**
-     *  Validates a client WebSocket handshake. Returns either `OptionVal.Some(UpgradeToWebSocketLowLevel)` or
-     *  `OptionVal.None`
+     * Checks the WebSocket opening handshake headers and returns an upgrade handler if they are accepted.
      *
-     *  From: http://tools.ietf.org/html/rfc6455#section-4.2.1
-     *
-     *  1.   An HTTP/1.1 or higher GET request, including a "Request-URI"
-     *        [RFC2616] that should be interpreted as a /resource name/
-     *        defined in Section 3 (or an absolute HTTP/HTTPS URI containing
-     *        the /resource name/).
-     *
-     *   2.   A |Host| header field containing the server's authority.
-     *
-     *   3.   An |Upgrade| header field containing the value "websocket",
-     *        treated as an ASCII case-insensitive value.
-     *
-     *   4.   A |Connection| header field that includes the token "Upgrade",
-     *        treated as an ASCII case-insensitive value.
-     *
-     *   5.   A |Sec-WebSocket-Key| header field with a base64-encoded (see
-     *        Section 4 of [RFC4648]) value that, when decoded, is 16 bytes in
-     *        length.
-     *
-     *   6.   A |Sec-WebSocket-Version| header field, with a value of 13.
-     *
-     *   7.   Optionally, an |Origin| header field.  This header field is sent
-     *        by all browser clients.  A connection attempt lacking this
-     *        header field SHOULD NOT be interpreted as coming from a browser
-     *        client.
-     *
-     *   8.   Optionally, a |Sec-WebSocket-Protocol| header field, with a list
-     *        of values indicating which protocols the client would like to
-     *        speak, ordered by preference.
-     *
-     *   9.   Optionally, a |Sec-WebSocket-Extensions| header field, with a
-     *        list of values indicating which extensions the client would like
-     *        to speak.  The interpretation of this header field is discussed
-     *        in Section 9.1.
-     *
-     *  10.   Optionally, other header fields, such as those used to send
-     *        cookies or request authentication to a server.  Unknown header
-     *        fields are ignored, as per [RFC2616].
+     * WebSocket handshake requirements: RFC 6455 section 4.2.1
+     * (https://www.rfc-editor.org/rfc/rfc6455.html#section-4.2.1).
+     * HTTP/1.1 request-line and target syntax: RFC 9112 section 3
+     * (https://www.rfc-editor.org/rfc/rfc9112.html#section-3).
+     * Base64 encoding of the key: RFC 4648 section 4
+     * (https://www.rfc-editor.org/rfc/rfc4648.html#section-4).
      */
     def websocketUpgrade(headers: List[HttpHeader], hostHeaderPresent: Boolean, settings: WebSocketSettings,
         log: LoggingAdapter): OptionVal[UpgradeToWebSocketLowLevel] = {
@@ -195,25 +162,9 @@ private[http] object Handshake {
       } else OptionVal.None
     }
 
-    /*
-      From: http://tools.ietf.org/html/rfc6455#section-4.2.2
-
-      1.  A Status-Line with a 101 response code as per RFC 2616
-          [RFC2616].  Such a response could look like "HTTP/1.1 101
-          Switching Protocols".
-
-      2.  An |Upgrade| header field with value "websocket" as per RFC
-          2616 [RFC2616].
-
-      3.  A |Connection| header field with value "Upgrade".
-
-      4.  A |Sec-WebSocket-Accept| header field.  The value of this
-          header field is constructed by concatenating /key/, defined
-          above in step 4 in Section 4.2.2, with the string "258EAFA5-
-          E914-47DA-95CA-C5AB0DC85B11", taking the SHA-1 hash of this
-          concatenated value to obtain a 20-byte value and base64-
-          encoding (see Section 4 of [RFC4648]) this 20-byte hash.
-     */
+    // WebSocket response headers: RFC 6455 section 4.2.2 (https://www.rfc-editor.org/rfc/rfc6455.html#section-4.2.2).
+    // HTTP Upgrade: RFC 9110 section 7.8 (https://www.rfc-editor.org/rfc/rfc9110.html#section-7.8).
+    // HTTP/1.1 status line: RFC 9112 section 4 (https://www.rfc-editor.org/rfc/rfc9112.html#section-4).
     def buildResponse(key: `Sec-WebSocket-Key`,
         handler: Either[Graph[FlowShape[FrameEvent, FrameEvent], Any], Graph[FlowShape[Message, Message], Any]],
         subprotocol: Option[String],
@@ -300,8 +251,8 @@ private[http] object Handshake {
         .toSet
 
     /**
-     * Tries to validate the HTTP response. Returns either Right(settings) or an error message if
-     * the response cannot be validated.
+     * Checks the server's HTTP/1.1 WebSocket handshake response and returns negotiated settings or an error message.
+     * See RFC 6455 section 4.1 (https://www.rfc-editor.org/rfc/rfc6455.html#section-4.1).
      *
      * @param offeredExtensions lower-cased names of the extensions the request offered (see `extensionNames`); the
      *                          response may only select these
@@ -309,48 +260,6 @@ private[http] object Handshake {
     def validateResponse(response: HttpResponse, subprotocols: Seq[String], key: `Sec-WebSocket-Key`,
         offeredExtensions: Set[String])
         : Either[String, NegotiatedWebSocketSettings] = {
-      /*
-       From http://tools.ietf.org/html/rfc6455#section-4.1
-
-       1.  If the status code received from the server is not 101, the
-           client handles the response per HTTP [RFC2616] procedures.  In
-           particular, the client might perform authentication if it
-           receives a 401 status code; the server might redirect the client
-           using a 3xx status code (but clients are not required to follow
-           them), etc.  Otherwise, proceed as follows.
-
-       2.  If the response lacks an |Upgrade| header field or the |Upgrade|
-           header field contains a value that is not an ASCII case-
-           insensitive match for the value "websocket", the client MUST
-           _Fail the WebSocket Connection_.
-
-       3.  If the response lacks a |Connection| header field or the
-           |Connection| header field doesn't contain a token that is an
-           ASCII case-insensitive match for the value "Upgrade", the client
-           MUST _Fail the WebSocket Connection_.
-
-       4.  If the response lacks a |Sec-WebSocket-Accept| header field or
-           the |Sec-WebSocket-Accept| contains a value other than the
-           base64-encoded SHA-1 of the concatenation of the |Sec-WebSocket-
-           Key| (as a string, not base64-decoded) with the string "258EAFA5-
-           E914-47DA-95CA-C5AB0DC85B11" but ignoring any leading and
-           trailing whitespace, the client MUST _Fail the WebSocket
-           Connection_.
-
-       5.  If the response includes a |Sec-WebSocket-Extensions| header
-           field and this header field indicates the use of an extension
-           that was not present in the client's handshake (the server has
-           indicated an extension not requested by the client), the client
-           MUST _Fail the WebSocket Connection_.  (The parsing of this
-           header field to determine which extensions are requested is
-           discussed in Section 9.1.)
-
-       6.  If the response includes a |Sec-WebSocket-Protocol| header field
-           and this header field indicates the use of a subprotocol that was
-           not present in the client's handshake (the server has indicated a
-           subprotocol not requested by the client), the client MUST _Fail
-           the WebSocket Connection_.
-       */
 
       trait Expectation extends (HttpResponse => Option[String]) { outer =>
         def &&(other: HttpResponse => Option[String]): Expectation =

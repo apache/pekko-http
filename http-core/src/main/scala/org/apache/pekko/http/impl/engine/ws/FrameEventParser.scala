@@ -23,9 +23,9 @@ import pekko.stream.impl.io.ByteStringParser
 import pekko.util.ByteString
 
 /**
- * Streaming parser for the WebSocket framing protocol as defined in RFC6455
+ * Streaming parser for the base WebSocket frame format defined in RFC 6455 section 5.2.
  *
- * http://tools.ietf.org/html/rfc6455
+ * https://www.rfc-editor.org/rfc/rfc6455.html#section-5.2
  *
  * 0                   1                   2                   3
  * 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1

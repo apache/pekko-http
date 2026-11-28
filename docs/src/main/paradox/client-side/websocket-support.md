@@ -26,9 +26,10 @@ The client rejects responses that select a WebSocket extension it did not offer.
 frames are passed through unchanged, so only extensions that don't change the framing can work this way.
 @@@
 
-A WebSocket request starts with a regular HTTP request which contains an `Upgrade` header (and possibly
-other regular HTTP request properties), so in addition to the flow of messages there also is an initial response
-from the server, this is modelled with @apidoc[WebSocketUpgradeResponse].
+The client starts with an [HTTP/1.1 opening handshake](https://www.rfc-editor.org/rfc/rfc6455.html#section-4.1)
+containing an `Upgrade` header. The initial response from the server is modeled by @apidoc[WebSocketUpgradeResponse].
+The `ws` and `wss` URI syntax is defined in [RFC 6455 section 3](https://www.rfc-editor.org/rfc/rfc6455.html#section-3).
+[RFC 8307](https://www.rfc-editor.org/rfc/rfc8307.html#section-1) extends the well-known URI convention to these schemes.
 
 The client API performs the opening handshake when the WebSocket stream is materialized and connects
 the message stream once the upgrade succeeds.
@@ -66,10 +67,9 @@ configured through `ClientConnectionSettings` and `WebSocketSettings.withOpening
 
 ## Message
 
-Messages sent and received over a WebSocket can be either @apidoc[TextMessage] s or @apidoc[BinaryMessage] s and each
-of those has two subtypes `Strict` (all data in one chunk) or `Streamed`. In typical applications messages will be `Strict` as
-WebSockets are usually deployed to communicate using small messages not stream data, the protocol does however
-allow this (by not marking the first fragment as final, as described in [RFC 6455 section 5.2](https://tools.ietf.org/html/rfc6455#section-5.2)).
+Messages sent and received over a WebSocket can be either @apidoc[TextMessage] s or @apidoc[BinaryMessage] s. Each can
+be `Strict` (all data is already available) or `Streamed`. These types describe how the application accesses the payload.
+On the wire, a message can span multiple frames as described in [RFC 6455 section 5.4](https://www.rfc-editor.org/rfc/rfc6455.html#section-5.4).
 
 The strict text is available from @scala[`TextMessage.Strict`]@java[`TextMessage.getStrictText`] and strict binary data from
 @scala[`BinaryMessage.Strict`]@java[`BinaryMessage.getStrictData`].
@@ -185,7 +185,7 @@ it is possible to configure the client-side to perform automatic keep-alive usin
 This is supported in a transparent way via configuration by setting the: 
 `pekko.http.client.websocket.periodic-keep-alive-max-idle = 1 second` to a specified max idle timeout. The keep-alive triggers
 when no other messages are in-flight during the such configured period. Apache Pekko HTTP will then automatically send
-a [`Ping` frame](https://tools.ietf.org/html/rfc6455#section-5.5.2) for each of such idle intervals.
+a [`Ping` frame](https://www.rfc-editor.org/rfc/rfc6455.html#section-5.5.2) for each of such idle intervals.
 
 By default, the automatic keep-alive feature is disabled.
 
@@ -204,10 +204,9 @@ Java
 ### Uni-directional Pong keep-alive
 
 
-A Ping response will always be replied to by the client-side with an appropriate `Pong` reply, carrying the same payload.
-It is also possible to configure the keep-alive mechanism to send `Pong` frames instead of `Ping` frames, 
-which enables an [uni-directional heartbeat](https://tools.ietf.org/html/rfc6455#section-5.5.3) mechanism (in which case 
-the client side will *not* reply to such heartbeat). You can configure this mode by setting: 
+While the connection is open, Pekko HTTP replies to a `Ping` with a `Pong` carrying the same payload.
+The keep-alive mechanism can instead send [unsolicited `Pong` frames](https://www.rfc-editor.org/rfc/rfc6455.html#section-5.5.3)
+as a one-way heartbeat. The receiving peer is not expected to reply. Configure this mode by setting:
 `pekko.http.client.websocket.periodic-keep-alive-mode = pong`.
 
 ## Idle timeouts

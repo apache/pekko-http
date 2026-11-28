@@ -51,8 +51,8 @@ private[http] object PerMessageDeflate {
   private val ClientNoContextTakeover = "client_no_context_takeover"
   private val ServerNoContextTakeover = "server_no_context_takeover"
   private val EmptyStoredBlock = ByteString(0x00, 0x00, 0xFF.toByte, 0xFF.toByte)
-  // Header of an empty non-final stored DEFLATE block: what remains of a sync flush once the
-  // EmptyStoredBlock tail is removed (RFC 7692, section 7.2.3.6).
+  // Header of an empty non-final stored DEFLATE block. RFC 7692 section 7.2.1 defines the tail removal;
+  // section 7.2.3.6 shows the resulting header for an empty final fragment.
   private val EmptyDeflateBlockHeader = ByteString(0x00)
 
   private[ws] trait CompressionFactory {

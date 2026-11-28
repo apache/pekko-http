@@ -30,9 +30,10 @@ import pekko.stream.{ FlowShape, Graph, SinkShape, SourceShape }
 trait WebSocketUpgrade {
 
   /**
-   * Returns the sequence of protocols the client accepts.
+   * Returns the subprotocols offered by the client. Subprotocol names are matched case-sensitively.
    *
-   * See http://tools.ietf.org/html/rfc6455#section-1.9
+   * See RFC 6455 section 4.1 (https://www.rfc-editor.org/rfc/rfc6455.html#section-4.1)
+   * and RFC 7936 section 2 (https://www.rfc-editor.org/rfc/rfc7936.html#section-2).
    */
   def getRequestedProtocols(): JIterable[String]
 

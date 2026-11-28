@@ -18,7 +18,7 @@ import org.parboiled2._
 import org.apache.pekko
 import pekko.http.scaladsl.model.headers._
 
-// see grammar at http://tools.ietf.org/html/rfc6455#section-4.3
+// WebSocket handshake field grammar: https://www.rfc-editor.org/rfc/rfc6455.html#section-4.3
 private[parser] trait WebSocketHeaders { this: Parser with CommonRules with CommonActions with StringBuilding =>
   import CharacterClasses._
   import Base64Parsing.rfc2045Alphabet

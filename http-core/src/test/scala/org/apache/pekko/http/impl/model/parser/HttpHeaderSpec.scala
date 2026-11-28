@@ -844,7 +844,7 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
       "Sec-WebSocket-Extensions: abc; param=\",xyz\", def" =!=
         `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("abc", Map("param" -> ",xyz")), WebSocketExtension("def")))
 
-      // real examples from https://tools.ietf.org/html/draft-ietf-hybi-permessage-compression-19
+      // Extension offer examples: https://www.rfc-editor.org/rfc/rfc7692.html#section-7.1.3
       "Sec-WebSocket-Extensions: permessage-deflate" =!=
         `Sec-WebSocket-Extensions`(Vector(WebSocketExtension("permessage-deflate")))
       "Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits; server_max_window_bits=10" =!=

@@ -16,8 +16,11 @@ package org.apache.pekko.http.scaladsl.model.ws
 import org.apache.pekko.http.javadsl
 
 /**
- * A PeerClosedConnectionException will be reported to the WebSocket handler if the peer has closed the connection.
- * `closeCode` and `closeReason` contain close messages as reported by the peer.
+ * The incoming WebSocket message stream fails with this exception when a Close frame from the peer is interpreted
+ * as an error. `closeCode` and `closeReason` describe that error.
+ *
+ * When no message is in progress, a peer Close with no status code or a status of 1000 (normal closure) or 1001
+ * (going away) completes the incoming stream without exposing the close code or reason through this exception.
  */
 class PeerClosedConnectionException(val closeCode: Int, val closeReason: String)
     extends RuntimeException(s"Peer closed connection with code $closeCode '$closeReason'")
