@@ -50,9 +50,11 @@ private[parser] trait ContentDispositionHeader { this: Parser with CommonRules w
 
   def `disposition-parm` = rule { (`filename-parm` | `disp-ext-parm`) ~> (_ -> _) }
 
+  // A complete extended filename may have SP or HTAB before the next parameter separator (RFC 6266 §4.1).
   def `filename-parm` = rule(
     ignoreCase("filename") ~ OWS ~ ws('=') ~ push("filename") ~ word
-    | ignoreCase("filename*") ~ OWS ~ ws('=') ~ push("filename*") ~ `ext-value`)
+    | ignoreCase("filename*") ~ OWS ~ ws('=') ~ push("filename*") ~ `ext-value` ~
+    optional(oneOrMore(CharacterClasses.WSP) ~ &(';')))
 
   def `disp-ext-parm` = rule(
     token ~ ws('=') ~ word
