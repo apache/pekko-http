@@ -401,6 +401,17 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
       }
     }
 
+    "round-trip an empty Huffman-encoded header value" in {
+      // RFC 7541 Section 5.2 permits an empty Huffman-coded string literal.
+      val name = "x-empty"
+      val bytes = encodeHeader(name, "", forceHuffmanOn = true, forceHuffmanOff = false)
+      // The empty value has no encoded data after its length prefix.
+      val valuePrefix = bytes.last
+      (valuePrefix & 0x80) shouldEqual 0x80
+      (valuePrefix & 0x7F) shouldEqual 0
+      decodeHeaders(bytes) shouldEqual Seq(name -> "")
+    }
+
     "use Huffman coding automatically only when it reduces the literal length" in {
       // RFC 7541 allows either representation. These assertions protect Pekko's size-selection policy.
       Seq("" -> false, "a" -> false, "aa" -> false, "aaa" -> true, "|" -> false).foreach {
