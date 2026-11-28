@@ -495,6 +495,17 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
           "attachment; filename=\"esc-???.x\"; filename*=UTF-8''esc-%22%5C%25.x")
     }
 
+    "Content-Disposition accepts whitespace after filename* before the next parameter" in {
+      val headerName = "Content-Disposition"
+      val expected =
+        `Content-Disposition`(ContentDispositionTypes.attachment, Map("filename" -> "report.txt", "size" -> "12"))
+      for (separator <- Seq(";", " ;")) {
+        val value = s"attachment; filename*=UTF-8''report.txt${separator} size=12"
+        HttpHeader.parse(headerName, value) shouldBe HttpHeader.ParsingResult.Ok(expected, Nil)
+        pekko.http.javadsl.model.HttpHeader.parse(headerName, value) shouldBe expected
+      }
+    }
+
     "Content-Encoding" in {
       "Content-Encoding: gzip" =!= `Content-Encoding`(gzip)
       "Content-Encoding: compress, pipapo" =!= `Content-Encoding`(compress, HttpEncoding.custom("pipapo"))

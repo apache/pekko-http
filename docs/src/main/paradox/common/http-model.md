@@ -388,6 +388,11 @@ whether the connection should be secure. HSTS addresses this problem by informin
 site should always use TLS/SSL. See also [RFC 6797](https://tools.ietf.org/html/rfc6797).
 
 
+### Extended Content-Disposition filenames
+
+When parsing `Content-Disposition`, Pekko HTTP allows spaces and horizontal tabs between a complete `filename*` value
+and the semicolon before the next parameter. This whitespace is not part of the filename.
+
 <a id="custom-headers"></a>
 ## Custom Headers
 
