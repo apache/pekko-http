@@ -85,6 +85,36 @@ class CodingDirectivesExamplesSpec extends RoutingSpec with CompileOnlySpec {
     // #encodeResponseWith
   }
 
+  "encodeResponseWithMinimumSize" in {
+    // #encodeResponseWithMinimumSize
+    import org.apache.pekko.http.scaladsl.coding.{ Coders, Encoder }
+
+    val minimumBytes = 1024L
+    val minimumSizeGzip = Coders.Gzip(messageFilter = message =>
+      Encoder.DefaultFilter(message) && message.entity.contentLengthOption.exists(_ >= minimumBytes))
+
+    val report = List.fill(100)("Example report line\n").mkString
+    val route = encodeResponseWith(minimumSizeGzip) {
+      path("report") { complete(report) } ~ path("summary") { complete("OK") }
+    }
+
+    Get("/report") ~> `Accept-Encoding`(gzip) ~> route ~> check {
+      response should haveContentEncoding(gzip)
+    }
+    Get("/summary") ~> `Accept-Encoding`(gzip) ~> route ~> check {
+      header[`Content-Encoding`] shouldBe None
+      responseAs[String] shouldEqual "OK"
+    }
+    // #encodeResponseWithMinimumSize
+
+    val streamed = HttpEntity.Chunked.fromData(pekko.http.scaladsl.model.ContentTypes.`text/plain(UTF-8)`,
+      pekko.stream.scaladsl.Source.single(ByteString(report)))
+    Get("/") ~> `Accept-Encoding`(gzip) ~> encodeResponseWith(minimumSizeGzip) { complete(streamed) } ~> check {
+      header[`Content-Encoding`] shouldBe None
+      responseAs[String] shouldEqual report
+    }
+  }
+
   val helloGzipped = compress("Hello", Coders.Gzip)
   val helloDeflated = compress("Hello", Coders.Deflate)
   "decodeRequest" in {
