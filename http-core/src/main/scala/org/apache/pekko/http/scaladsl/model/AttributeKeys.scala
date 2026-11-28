@@ -20,4 +20,11 @@ object AttributeKeys {
   val webSocketUpgrade = AttributeKey[WebSocketUpgrade](name = "upgrade-to-websocket")
   val sslSession = AttributeKey[SslSessionInfo](name = "ssl-session")
   val trailer = AttributeKey[Trailer](name = "trailer")
+
+  /**
+   * The original asterisk target of an accepted server-wide HTTP/2 OPTIONS request.
+   *
+   * @since 2.1.0
+   */
+  val asteriskRequestTarget = AttributeKey[String](name = "asterisk-request-target")
 }

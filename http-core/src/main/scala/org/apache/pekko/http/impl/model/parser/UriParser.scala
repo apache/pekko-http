@@ -352,7 +352,8 @@ private[http] final class UriParser(
   // https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.1
   def `http2-path-pseudo-header` = rule(
     `absolute-path` ~ optional('?' ~ rawQueryString) // origin-form
-  ) // TODO: asterisk-form
+    | '*' ~ run(setPath(Path.Segment("*", Path.Empty))) // asterisk-form
+  )
 
   /**
    * @return path and percent-encoded query string. When in in 'relaxed' mode, characters not permitted by https://tools.ietf.org/html/rfc3986#section-3.4

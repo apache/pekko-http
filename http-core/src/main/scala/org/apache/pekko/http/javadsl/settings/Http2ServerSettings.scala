@@ -29,6 +29,22 @@ import com.typesafe.config.Config
 trait Http2ServerSettings {
   self: scaladsl.settings.Http2ServerSettings
     with pekko.http.scaladsl.settings.Http2ServerSettings.Http2ServerSettingsImpl =>
+
+  /**
+   * Whether the HTTP/2 server exposes server-wide OPTIONS requests to the application.
+   *
+   * @since 2.1.0
+   */
+  def getAcceptAsteriskOptions: Boolean = acceptAsteriskOptions
+
+  /**
+   * Configure whether the HTTP/2 server exposes server-wide OPTIONS requests. Disabled by default.
+   *
+   * @since 2.1.0
+   */
+  def withAcceptAsteriskOptions(enabled: Boolean): Http2ServerSettings =
+    (self: scaladsl.settings.Http2ServerSettings).withAcceptAsteriskOptions(enabled)
+
   def getRequestEntityChunkSize: Int = requestEntityChunkSize
   def withRequestEntityChunkSize(newRequestEntityChunkSize: Int): Http2ServerSettings
 
