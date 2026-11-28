@@ -65,13 +65,6 @@ Java
 
 The Apache Pekko HTTP client doesn't support HTTP/1 to HTTP/2 negotiation over plaintext using the `Upgrade` mechanism.
 
-If the HTTP/2 connection reaches end-of-input normally while a delivered response entity is still open, consuming
-that entity fails with a connection-aborted `IllegalStateException`. Receiving response headers does not guarantee
-that the full response body is available to the application. This also applies when the peer has already ended the
-response stream but some of its data is still buffered and has not reached the application when the connection closes.
-
-This behavior applies only to HTTP/2 client response entities, not to HTTP/2 server request entities.
-
 ## Limiting managed persistent connection lifetime
 
 Managed persistent HTTP/2 clients can periodically retire long-lived connections so that later requests establish
@@ -100,6 +93,36 @@ even when requests are still in flight, terminating long-lived requests such as 
 The default maximum age is `infinite`, which disables age-based retirement. The settings can also be changed
 programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
 `Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
+
+## Peer-initiated connection retirement
+
+When the server sends a graceful `GOAWAY`, the HTTP/2 client stops opening streams on that connection.
+Requests already accepted by the server can finish their uploads and receive their responses. A later
+`GOAWAY` can reduce the set of accepted streams. See [RFC 9113, section 6.8](https://www.rfc-editor.org/rfc/rfc9113.html#section-6.8).
+
+Once the accepted responses have finished on the wire, the managed client can send new requests on a replacement
+connection, even while a previously accepted upload finishes on the old connection. It does not replay requests
+already dispatched on the old one: a request left without a response receives the usual
+`502 Bad Gateway`. You can still consume a fully received response body after the old connection closes.
+The client's `completion-timeout` bounds draining from the first graceful `GOAWAY`, unless an earlier
+connection completion deadline applies.
+
+## Consuming responses after the peer closes
+
+When the client observes clean transport read EOF after a complete HTTP/2 response has arrived, it can still
+deliver the already-received body and trailers. Buffered responses are retained for at most the HTTP/2 client
+`completion-timeout`, or until an earlier connection completion deadline expires. Consume or discard each
+response entity as usual.
+
+For TLS, `pekko.http.client.stream-cancellation-delay` (100 milliseconds by default) gives read completion
+time to reach the HTTP/2 client before the TLS layer's cancellation of the write side. If write cancellation
+arrives first, such as when the delay is disabled, buffered entities can still fail instead of draining.
+
+A clean read close does not make a response complete on its own: a streamed response body whose HTTP/2 stream
+has not ended fails with a connection-aborted `IllegalStateException`. These rules apply to client response
+entities, not server request entities. If dispatched requests never received a final response, a direct client reports failure
+after delivering already-received responses; a managed client uses its normal disconnect handling and does not
+replay dispatched requests.
 
 ## Request-response ordering
 

@@ -44,6 +44,9 @@ private[http2] trait Http2Multiplexer {
   def enqueueOutStream(streamId: Int): Unit
   def dequeueOutStream(streamId: Int): Unit
 
+  /** Drop queued frames for client streams the peer will not process, including requests not yet sent. */
+  def retireClientRequests(lastStreamId: Int): Int
+
   def currentInitialWindow: Int
 
   def reportTimings(): Unit
@@ -174,6 +177,21 @@ private[http2] trait Http2MultiplexerSupport { logic: GraphStageLogic with Stage
 
       private val controlFrameBuffer: mutable.Queue[FrameEvent] = new mutable.Queue[FrameEvent]
       private val sendableOutstreams: mutable.Queue[Int] = new mutable.Queue[Int]
+      override def retireClientRequests(lastStreamId: Int): Int = {
+        // Even a GOAWAY with the maximum stream ID forbids sending a new request's initial HEADERS.
+        val firstUnsent = controlFrameBuffer.collectFirst {
+          case h: ParsedHeadersFrame if h.keyValuePairs.exists(_._1 == ":method") => h.streamId
+        }
+        val accepted = firstUnsent.fold(lastStreamId)(id => math.min(lastStreamId, id - 1))
+        controlFrameBuffer.filterInPlace {
+          case f: StreamFrameEvent => f.streamId <= accepted
+          case _                   => true
+        }
+        if (controlFrameBuffer.isEmpty && (_state eq WaitingForNetworkToSendControlFrames))
+          updateState(_ => if (sendableOutstreams.isEmpty) Idle else WaitingForNetworkToSendData)
+        accepted
+      }
+
       private def enqueueStream(streamId: Int): Unit = {
         if (isDebugEnabled)
           require(!sendableOutstreams.contains(streamId), s"Stream [$streamId] was enqueued multiple times.") // requires expensive scanning -> avoid in production
