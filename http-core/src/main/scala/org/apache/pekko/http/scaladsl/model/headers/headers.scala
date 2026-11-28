@@ -194,6 +194,7 @@ object `Accept-Encoding` extends ModeledCompanion[`Accept-Encoding`] {
 final case class `Accept-Encoding`(encodings: Seq[HttpEncodingRange]) extends jm.headers.AcceptEncoding
     with RequestHeader {
   import `Accept-Encoding`.encodingsRenderer
+  override def renderInResponses: Boolean = true
   def renderValue[R <: Rendering](r: R): r.type = r ~~ encodings
   protected def companion = `Accept-Encoding`
 
