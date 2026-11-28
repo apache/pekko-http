@@ -20,7 +20,7 @@ import org.parboiled2.{ Parser, Rule0, Rule1 }
 
 import org.apache.pekko
 import pekko.http.scaladsl.model.headers._
-import pekko.http.scaladsl.model.{ ErrorInfo, IllegalUriException, ParsingException }
+import pekko.http.scaladsl.model.{ ErrorInfo, IllegalUriException, ParsingException, Uri }
 
 private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActions =>
   import CharacterClasses._
@@ -36,13 +36,13 @@ private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActi
 
   // The title* model keeps the encoded ext-value (https://www.rfc-editor.org/rfc/rfc8187.html#section-3.2.1).
   def `link-param` = rule(
-    parameterName("rel") ~ `relation-types`                           ~> LinkParams.rel.apply _
-    | parameterName("anchor") ~ ws('"') ~ UriReference('"') ~ ws('"') ~> LinkParams.anchor.apply _
-    | parameterName("rev") ~ `relation-types`                         ~> LinkParams.rev.apply _
-    | parameterName("hreflang") ~ hreflangValue                       ~> LinkParams.hreflang.apply _
-    | parameterName("media") ~ word                                   ~> LinkParams.media.apply _
-    | parameterName("title") ~ word                                   ~> LinkParams.title.apply _
-    | parameterName("title*") ~ word                                  ~> LinkParams.`title*`.apply _
+    parameterName("rel") ~ `relation-types`     ~> LinkParams.rel.apply _
+    | parameterName("anchor") ~ anchorValue     ~> LinkParams.anchor.apply _
+    | parameterName("rev") ~ `relation-types`   ~> LinkParams.rev.apply _
+    | parameterName("hreflang") ~ hreflangValue ~> LinkParams.hreflang.apply _
+    | parameterName("media") ~ word             ~> LinkParams.media.apply _
+    | parameterName("title") ~ word             ~> LinkParams.title.apply _
+    | parameterName("title*") ~ word            ~> LinkParams.`title*`.apply _
     | (parameterName("type") ~ (ws('"') ~ `link-media-type` ~ ws('"') | `link-media-type`) ~>
     LinkParams.`type`.apply _))
   // TODO: support `link-extension`
@@ -51,6 +51,11 @@ private[parser] trait LinkHeader { this: Parser with CommonRules with CommonActi
   private def parameterName(name: String): Rule0 = rule {
     (capture(ignoreCase(name)) ~> ((matched: String) => test(equalsAsciiCaseInsensitive(matched, name)))) ~ OWS ~
     ws('=')
+  }
+
+  // RFC 8288 §§3 and 3.2: a token can also represent an anchor URI-reference.
+  private def anchorValue: Rule1[Uri] = rule {
+    ws('"') ~ UriReference('"') ~ ws('"') | token ~> ((value: String) => newUriParser(value).parseUriReference())
   }
 
   // Apply the existing language grammar after unquoting (RFC 8288 §§3 and 3.4.1).

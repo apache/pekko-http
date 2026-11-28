@@ -24,6 +24,10 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
 
 ### Behavior Changes
 
+* The `Link` header parser now accepts unquoted `anchor` values that are valid HTTP tokens and URI references,
+  such as `anchor=chapter`, as specified by [RFC 8288 §3](https://www.rfc-editor.org/rfc/rfc8288.html#section-3).
+  Quoted anchors are still accepted and the renderer still emits quoted anchors.
+
 * The `Accept`, `Accept-Charset`, `Accept-Encoding`, and `Accept-Language` headers now recognize an uppercase
   `Q` parameter as a quality weight, just like lowercase `q`, as specified by [RFC 9110 §12.4.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-12.4.2).
 
