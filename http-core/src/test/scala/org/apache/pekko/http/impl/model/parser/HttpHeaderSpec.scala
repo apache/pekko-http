@@ -67,6 +67,23 @@ class HttpHeaderSpec extends AnyFreeSpec with Matchers {
     HeaderParser.Success(`Set-Cookie`(HttpCookie("sid", "value", expires = Some(DateTime(1976, 11, 23, 12)))))
   }
 
+  "parse a standard space-padded asctime day in date response headers" in {
+    val instant = DateTime(2026, 1, 5, 12, 34, 56)
+    val value = "Mon Jan  5 12:34:56 2026"
+    val canonical = "Mon, 05 Jan 2026 12:34:56 GMT"
+    val headers = Seq[HttpHeader](Date(instant), Expires(instant), `Last-Modified`(instant), `Retry-After`(instant))
+
+    for (expected <- headers) {
+      HttpHeader.parse(expected.name, value) match {
+        case HttpHeader.ParsingResult.Ok(header, Nil) =>
+          header shouldEqual expected
+          header.value shouldEqual canonical
+        case other =>
+          fail(s"Expected modeled ${expected.name}, got $other")
+      }
+    }
+  }
+
   "Partitioned Set-Cookie" - {
     "recognizes the bare attribute without consuming other extensions" in {
       val cookie = HttpCookie("theme", "light").withSecure(true).withExtension("Priority=High").withPartitioned(true)
