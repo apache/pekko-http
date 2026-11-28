@@ -83,6 +83,32 @@ class HttpServerSpec extends PekkoSpec(
       shutdownBlueprint()
     })
 
+    for {
+      captureRaw <- Seq(false, true)
+      (target, path) <- Seq("*" -> Uri.Path.Empty, "/" -> Uri.Path./)
+    } {
+      s"derive the HTTP/1.1 OPTIONS authority from Host (target=$target, raw capture=$captureRaw)" in
+      assertAllStagesStopped(new TestSetup {
+        override def settings: ServerSettings = super.settings.withRawRequestUriHeader(captureRaw)
+
+        try {
+          send(s"""OPTIONS $target HTTP/1.1
+                  |Host: example.test:8080
+                  |
+                  |""")
+
+          val request = expectRequest()
+          request.method shouldBe OPTIONS
+          request.uri shouldBe Uri(s"http://example.test:8080$path")
+          request.uri.path shouldBe path
+          request.uri.rawQueryString shouldBe None
+          request.header[Host] shouldBe Some(Host("example.test", 8080))
+          request.header[`Raw-Request-URI`].map(_.uri) shouldBe (if (captureRaw) Some(target) else None)
+          simpleResponse()
+        } finally shutdownBlueprint()
+      })
+    }
+
     "deliver one pending request per response when the HTTP/1 pipelining limit is reached" in
     assertAllStagesStopped(new TestSetup {
       override def settings = super.settings.withPipeliningLimit(2)

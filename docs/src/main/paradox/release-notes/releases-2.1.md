@@ -28,6 +28,11 @@ Pekko HTTP 2.1.0 has not been released yet. These notes list the changes merged 
   [RFC 9110 §5.6.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.6). Parameter values are compared as
   before, and the public `MediaRange.matches` method and inbound content-type matching are unchanged.
 
+* For HTTP/1.1 `OPTIONS *`, the server now builds the effective URI from the request's Host field with an empty
+  path and query, as specified by [RFC 9112 §3.3](https://www.rfc-editor.org/rfc/rfc9112.html#section-3.3).
+  The effective URI host is no longer `*`. Applications that need to distinguish the literal asterisk target
+  can enable `pekko.http.server.raw-request-uri-header` and inspect the unchanged `Raw-Request-URI` value.
+
 * A bare `Partitioned` attribute in a parsed `Set-Cookie` header is now stored in the typed
   `HttpCookie.partitioned` field instead of the generic `extension` field. If your code detects
   partitioned cookies by inspecting `extension` (`getExtension()` in Java), use `partitioned`
