@@ -88,6 +88,23 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       result shouldEqual Some("default server")
     }
 
+    "render an explicit typed Accept in a response" in {
+      val builder = new VectorBuilder[(String, String)]
+      renderServerHeaders(Seq(Accept(MediaRange(MediaTypes.`application/json`))), builder)
+      builder.result().collect { case ("accept", value) => value } shouldBe Seq("application/json")
+    }
+
+    "keep a modeled Accept out of response trailer fields" in {
+      val preferred = Accept(MediaRange(MediaTypes.`application/json`))
+      HttpMessageRendering.renderHeaders(
+        Seq(preferred),
+        NoLogging,
+        isServer = true,
+        shouldRenderAutoHeaders = false,
+        isTrailer = true,
+        dateHeaderRendering = DateHeaderRendering.Unavailable) shouldBe empty
+    }
+
     "keep server header if explicitly provided (in server mode)" in {
       val builder = new VectorBuilder[(String, String)]
       renderServerHeaders(Seq(Server("explicit server")), builder, Some(("server", "default server")))

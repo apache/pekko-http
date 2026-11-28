@@ -156,6 +156,7 @@ object Accept extends ModeledCompanion[Accept] {
 }
 final case class Accept(mediaRanges: Seq[MediaRange]) extends jm.headers.Accept with RequestHeader {
   import Accept.mediaRangesRenderer
+  override def renderInResponses: Boolean = true
   def renderValue[R <: Rendering](r: R): r.type = r ~~ mediaRanges
   protected def companion = Accept
   def acceptsAll = mediaRanges.exists(mr => mr.isWildcard && mr.qValue > 0f)

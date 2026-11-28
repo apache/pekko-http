@@ -169,7 +169,9 @@ private[http2] object HttpMessageRendering {
       case "te"                                                                               =>
         if (!isServer && !isTrailer && header.value.trim.equalsIgnoreCase("trailers")) true
         else suppress()
-      case _ => true
+      // The modeled Accept field only opts into initial response headers.
+      case "accept" if isServer && isTrailer && header.isInstanceOf[pekko.http.scaladsl.model.headers.Accept] => false
+      case _                                                                                                  => true
     }
   }
 
