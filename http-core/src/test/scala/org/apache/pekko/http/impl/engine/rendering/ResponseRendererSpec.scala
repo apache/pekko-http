@@ -141,6 +141,18 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         }
       }
 
+      "render an explicit typed Accept on a successful response" in new TestSetup(None) {
+        val preferred = pekko.http.javadsl.model.headers.Accept.create(MediaRange(MediaTypes.`application/json`))
+        HttpResponse(StatusCodes.OK, headers = List(preferred)) should renderTo {
+          """HTTP/1.1 200 OK
+            |Accept: application/json
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |Content-Length: 0
+            |
+            |"""
+        }
+      }
+
       "status 204 and a few headers (does not add content-length)" in new TestSetup() {
         HttpResponse(204, List(RawHeader("X-Fancy", "of course"), Age(0))) should renderTo {
           """HTTP/1.1 204 No Content

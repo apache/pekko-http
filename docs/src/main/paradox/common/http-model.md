@@ -309,6 +309,10 @@ Apache Pekko HTTP contains a rich model of the most common HTTP headers. Parsing
 applications don't need to care for the actual syntax of headers. Headers not modelled explicitly are represented
 as a @apidoc[RawHeader], which is essentially a String/String name/value pair.
 
+When [`Accept`](https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.1) is explicitly added to the initial headers of
+a response, it advertises the media types preferred for the content of a subsequent request to the same resource.
+Pekko HTTP does not add this header to responses automatically.
+
 See these examples of how to deal with headers:
 
 Scala
