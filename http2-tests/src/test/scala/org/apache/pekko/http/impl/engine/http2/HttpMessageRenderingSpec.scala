@@ -202,6 +202,48 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
       }
     }
 
+    "render server-wide OPTIONS for absolute HTTP and HTTPS URIs with no path or query" in {
+      val methods = Seq(HttpMethods.OPTIONS, HttpMethod.custom("OPTIONS"))
+      val authority = "example.test:8443"
+
+      for (scheme <- Seq("http", "https"); method <- methods) {
+        val request = HttpRequest(method = method, uri = s"$scheme://$authority")
+        withClue(s"$scheme $method: ") {
+          pseudoHeaders(request, "https", Uri.Authority(Uri.Host("fallback.test")),
+            sendAsteriskOptions = true) shouldEqual
+          Map(":method" -> "OPTIONS", ":scheme" -> scheme, ":authority" -> authority, ":path" -> "*")
+        }
+      }
+    }
+
+    "preserve resource paths and query presence for OPTIONS" in {
+      val cases = Seq(
+        "/" -> "/",
+        "/?" -> "/?",
+        "/?mode=full" -> "/?mode=full",
+        "https://example.test/" -> "/",
+        "https://example.test?" -> "/?",
+        "https://example.test?mode=full" -> "/?mode=full")
+
+      for ((target, expectedPath) <- cases) {
+        val request = HttpRequest(method = HttpMethods.OPTIONS, uri = target)
+        withClue(s"$target: ") {
+          pseudoHeaders(request, "https", Uri.Authority(Uri.Host("example.test")),
+            sendAsteriskOptions = true) shouldEqual
+          Map(":method" -> "OPTIONS", ":scheme" -> "https", ":authority" -> "example.test", ":path" -> expectedPath)
+        }
+      }
+    }
+
+    "honor an explicit raw request target before deriving the server-wide OPTIONS target" in {
+      val request = HttpRequest(
+        method = HttpMethods.OPTIONS,
+        uri = "https://example.test",
+        headers = List(`Raw-Request-URI`("/health")))
+      pseudoHeaders(request, "https", Uri.Authority(Uri.Host("fallback.test")), sendAsteriskOptions = true) should
+      contain(":path" -> "/health")
+    }
+
     "handle empty trailer" in {
       val config = ConfigFactory.load("reference.conf")
       Try {
@@ -356,10 +398,11 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
     }
   }
 
-  private def pseudoHeaders(request: HttpRequest, connectionScheme: String, connectionAuthority: Uri.Authority)
+  private def pseudoHeaders(request: HttpRequest, connectionScheme: String, connectionAuthority: Uri.Authority,
+      sendAsteriskOptions: Boolean = false)
       : Map[String, AnyRef] = {
     val rendering = new RequestRendering(ClientConnectionSettings(ConfigFactory.load("reference.conf")), NoLogging,
-      connectionScheme, connectionAuthority)
+      connectionScheme, connectionAuthority, sendAsteriskOptions)
     rendering(request).initialHeaders.keyValuePairs.filter(_._1.startsWith(":")).toMap
   }
 

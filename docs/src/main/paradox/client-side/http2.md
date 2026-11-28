@@ -120,3 +120,16 @@ Java
 :  @@snip [HttpClientExampleDocTest.java](/docs/src/test/java/docs/http/javadsl/Http2ClientApp.java) { #response-future-association }
 
 Connection-specific headers set on the model are dropped with a warning when sent over HTTP/2.
+
+## Server-wide OPTIONS requests
+
+To send server-wide `OPTIONS` to a peer that accepts asterisk-form requests, set
+`pekko.http.client.http2.send-asterisk-options = on` in the client actor system's configuration.
+With this enabled, an absolute HTTP or HTTPS URI that has no path or query, such as `https://example.net`,
+sends `*` as the request target ([RFC 9113 §8.3.1](https://www.rfc-editor.org/rfc/rfc9113.html#section-8.3.1)).
+Use an explicit trailing slash (for example, `https://example.net/`) to target the root resource instead.
+A query component, even an explicitly empty query (`https://example.net?`), is preserved.
+
+The setting is off by default, preserving `/` for clients of older servers and servers with asterisk-form support
+disabled. It applies to both direct and managed HTTP/2 clients and does not change server or HTTP/1.1 behavior.
+An explicit `Raw-Request-URI` header always takes precedence.
