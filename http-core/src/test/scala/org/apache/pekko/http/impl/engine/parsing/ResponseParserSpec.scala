@@ -24,7 +24,6 @@ import pekko.stream.scaladsl._
 import pekko.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import pekko.http.impl.util._
 import pekko.http.impl.engine.parsing.ParserOutput._
-import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.util.FastFuture
 import pekko.http.scaladsl.util.FastFuture._
 import pekko.http.scaladsl.model._
@@ -36,6 +35,7 @@ import pekko.http.scaladsl.model.MediaTypes._
 import pekko.http.scaladsl.model.StatusCodes._
 import pekko.http.scaladsl.model.headers._
 import pekko.http.scaladsl.settings.ParserSettings.ConflictingContentTypeHeaderProcessingMode
+import pekko.http.scaladsl.settings.{ ClientConnectionSettings, ParserSettings }
 import pekko.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import pekko.testkit._
 
@@ -190,6 +190,12 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         s"HTTP/1.1 200 OK${newLine}föo: bar${newLine}Content-Length: 0${newLine}${newLine}" should parseTo(
           HttpResponse(headers = List(RawHeader(name, "bar"))))
         closeAfterResponseCompletion shouldEqual Seq(false)
+      }
+
+      "a response at the default reason phrase limit" in new DefaultReasonLimitTest {
+        val reason = "r" * 512
+        s"HTTP/1.1 299 $reason\nContent-Length: 0\n\n" should parseTo(
+          HttpResponse(StatusCodes.custom(299, reason)))
       }
 
       "a response with a missing reason phrase" in new Test {
@@ -440,6 +446,13 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
             ErrorInfo("Response reason phrase exceeds the configured limit of 21 characters"))))
       }
 
+      "a response one byte over the default reason phrase limit" in new DefaultReasonLimitTest {
+        val reason = "r" * 513
+        s"HTTP/1.1 299 $reason\nContent-Length: 0\n\n" should parseToError(
+          MessageStartError(BadRequest,
+            ErrorInfo("Response reason phrase exceeds the configured limit of 512 characters")))
+      }
+
       "conflicting Content-Type headers" in new Test {
         """HTTP/1.1 200 OK
           |Content-Type: text/plain; charset=UTF-8
@@ -506,6 +519,10 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
           ErrorInfo("A 205 response must not contain content"))))
       }
     }
+  }
+
+  private class DefaultReasonLimitTest extends Test {
+    override protected val parserSettings: ParserSettings = ClientConnectionSettings("").parserSettings
   }
 
   private class Test {
