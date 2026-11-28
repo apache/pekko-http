@@ -593,6 +593,36 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
     }
 
   /**
+   * Like [[webSocketClientFlow]], but selects the Close code and UTF-8 reason when the outgoing stream completes
+   * normally and the client initiates the close. The reason must fit in 123 UTF-8 bytes.
+   */
+  def webSocketClientFlowWithCompletionClose(
+      request: WebSocketRequest,
+      closeCode: Int,
+      closeReason: String): Flow[Message, Message, CompletionStage[WebSocketUpgradeResponse]] =
+    adaptWsFlow(delegate.webSocketClientFlowWithCompletionClose(request.asScala, closeCode, closeReason))
+
+  /** Like [[webSocketClientFlowWithCompletionClose]] with explicit connection settings. */
+  def webSocketClientFlowWithCompletionClose(
+      request: WebSocketRequest,
+      closeCode: Int,
+      closeReason: String,
+      connectionContext: ConnectionContext,
+      localAddress: Optional[InetSocketAddress],
+      settings: ClientConnectionSettings,
+      log: LoggingAdapter): Flow[Message, Message, CompletionStage[WebSocketUpgradeResponse]] =
+    adaptWsFlow {
+      delegate.webSocketClientFlowWithCompletionClose(
+        request.asScala,
+        closeCode,
+        closeReason,
+        connectionContext.asScala,
+        localAddress.asScala,
+        settings.asScala,
+        log)
+    }
+
+  /**
    * Runs a single WebSocket conversation given a Uri and a flow that represents the client side of the
    * WebSocket conversation.
    *
@@ -642,6 +672,47 @@ class Http(system: ExtendedActorSystem) extends pekko.actor.Extension {
       delegate.singleWebSocketRequest(
         request.asScala,
         adaptWsFlow[T](clientFlow),
+        connectionContext.asScala,
+        localAddress.asScala,
+        settings.asScala,
+        log)(materializer)
+    }
+
+  /**
+   * Runs a single WebSocket conversation with a custom Close for normal completion of the outgoing stream.
+   * See [[webSocketClientFlowWithCompletionClose]].
+   */
+  def singleWebSocketRequestWithCompletionClose[T](
+      request: WebSocketRequest,
+      clientFlow: Flow[Message, ? <: Message, T],
+      closeCode: Int,
+      closeReason: String,
+      materializer: Materializer): Pair[CompletionStage[WebSocketUpgradeResponse], T] =
+    adaptWsResultTuple {
+      delegate.singleWebSocketRequestWithCompletionClose(
+        request.asScala,
+        adaptWsFlow[T](clientFlow),
+        closeCode,
+        closeReason)(materializer)
+    }
+
+  /** Like [[singleWebSocketRequestWithCompletionClose]] with explicit connection settings. */
+  def singleWebSocketRequestWithCompletionClose[T](
+      request: WebSocketRequest,
+      clientFlow: Flow[Message, ? <: Message, T],
+      closeCode: Int,
+      closeReason: String,
+      connectionContext: ConnectionContext,
+      localAddress: Optional[InetSocketAddress],
+      settings: ClientConnectionSettings,
+      log: LoggingAdapter,
+      materializer: Materializer): Pair[CompletionStage[WebSocketUpgradeResponse], T] =
+    adaptWsResultTuple {
+      delegate.singleWebSocketRequestWithCompletionClose(
+        request.asScala,
+        adaptWsFlow[T](clientFlow),
+        closeCode,
+        closeReason,
         connectionContext.asScala,
         localAddress.asScala,
         settings.asScala,
