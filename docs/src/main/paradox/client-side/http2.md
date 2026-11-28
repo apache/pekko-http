@@ -72,6 +72,12 @@ response stream but some of its data is still buffered and has not reached the a
 
 This behavior applies only to HTTP/2 client response entities, not to HTTP/2 server request entities.
 
+## Response trailers
+
+A response that permits content can carry trailing fields even when its content length is zero. If its initial
+headers leave the HTTP/2 stream open, consume the chunked response entity to read these fields from the final
+chunk. Reading only the entity's data bytes does not expose trailing fields.
+
 ## Limiting managed persistent connection lifetime
 
 Managed persistent HTTP/2 clients can periodically retire long-lived connections so that later requests establish
