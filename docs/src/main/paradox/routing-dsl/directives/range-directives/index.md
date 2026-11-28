@@ -13,6 +13,7 @@
 
 @@@ index
 
+* [getFromRangeResource](getFromRangeResource.md)
 * [withRangeSupport](withRangeSupport.md)
 
 @@@

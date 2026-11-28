@@ -21,7 +21,9 @@ import java.nio.file.{ Path, StandardOpenOption }
 
 import org.apache.pekko
 import pekko.event.LoggingAdapter
+import pekko.http.RangeResponsePolicy
 import pekko.http.impl.engine.rendering.BodyPartRenderer
+import pekko.http.impl.server.{ RangeResourceSource, RangeSelection }
 import pekko.http.impl.util._
 import pekko.http.scaladsl.marshalling.ToResponseMarshallable
 import pekko.http.scaladsl.model._
@@ -44,6 +46,39 @@ trait RangeDirectives {
   import pekko.http.scaladsl.server.directives.RouteDirectives._
 
   /**
+   * Serves a known-length representation through position-based reads. Pekko HTTP selects and renders the
+   * ranges; the reader supplies only their bytes. Uses the same limits and coalescing as [[withRangeSupport]].
+   * Setting `preserve-range-request-order` requests multipart order rather than increasing byte-offset order.
+   *
+   * The resource is opened only on body demand. To apply Range only to GET, keep
+   * `pekko.http.server.transparent-head-requests` off (the default); otherwise the server can pass HEAD to this
+   * route as GET. A zero-length representation needs no reader.
+   *
+   * Optional validators use the standard conditional directive. With If-Range, options other than comparable
+   * strong tags may result in sending the full representation.
+   *
+   * @group range
+   */
+  def getFromRangeResource(resource: RangeResource): Route = (MethodDirectives.get | MethodDirectives.head) {
+    CacheConditionDirectives.conditional(resource.entityTag, resource.lastModified) {
+      ctx =>
+        val range = ctx.request.header[`If-Range`] match {
+          case Some(`If-Range`(Left(_))) if resource.entityTag.exists(!_.weak) => ctx.request.header[Range]
+          case Some(_)                                                         => None
+          case None                                                            => ctx.request.header[Range]
+        }
+        val policy = RangeResponsePolicy.fromRoutingSettings(ctx.settings)
+        RangeResourceSource.plan(resource, ctx.request.method, range, policy, ctx.log) match {
+          case Some(RangeResourceSource.Serve(status, headers, entity)) => ctx.complete((status, headers, entity))
+          case Some(RangeResourceSource.TooMany(limit, _))              => ctx.reject(TooManyRangesRejection(limit))
+          case Some(RangeResourceSource.Unsatisfiable(ranges, length))  =>
+            ctx.reject(UnsatisfiableRangeRejection(ranges, length))
+          case None => ctx.reject()
+        }
+    }
+  }
+
+  /**
    * Answers GET requests with an `Accept-Ranges: bytes` header and converts HttpResponses coming back from its inner
    * route into partial responses if the initial request contained a valid `Range` request header. The requested
    * byte-ranges may be coalesced.
@@ -64,43 +99,17 @@ trait RangeDirectives {
 
   private def withRangeSupportFor(knownFile: Option[(HttpEntity.Default, Path)]): Directive0 =
     extractRequestContext.flatMap { ctx =>
+      import RangeSelection.{ coalesceRanges, indexRange, satisfiable }
       val settings = ctx.settings
       implicit val log = ctx.log
       import settings.{ rangeCountLimit, rangeCoalescingThreshold }
-
-      class IndexRange(val start: Long, val end: Long) {
-        def length = end - start
-        def apply(entity: UniversalEntity): UniversalEntity =
-          entity.transformDataBytes(length, StreamUtils.sliceBytesTransformer(start, length))
-        def distance(other: IndexRange) = mergedEnd(other) - mergedStart(other) - (length + other.length)
-        def mergeWith(other: IndexRange) = new IndexRange(mergedStart(other), mergedEnd(other))
-        def contentRange(entityLength: Long) = ContentRange(start, end - 1, entityLength)
-        private def mergedStart(other: IndexRange) = math.min(start, other.start)
-        private def mergedEnd(other: IndexRange) = math.max(end, other.end)
-      }
-
-      def indexRange(entityLength: Long)(range: ByteRange): IndexRange =
-        range match {
-          case ByteRange.Slice(start, end)    => new IndexRange(start, math.min(end + 1, entityLength))
-          case ByteRange.FromOffset(first)    => new IndexRange(first, entityLength)
-          case ByteRange.Suffix(suffixLength) => new IndexRange(math.max(0, entityLength - suffixLength), entityLength)
-        }
-
-      // See comment of the `range-coalescing-threshold` setting in `reference.conf` for the rationale of this behavior.
-      def coalesceRanges(iRanges: Seq[IndexRange]): Seq[IndexRange] =
-        iRanges.foldLeft(Seq.empty[IndexRange]) { (acc, iRange) =>
-          val (mergeCandidates, otherCandidates) = acc.partition(_.distance(iRange) <= rangeCoalescingThreshold)
-          val merged = mergeCandidates.foldLeft(iRange)(_.mergeWith(_))
-          // Merging into the current range keeps the surviving ranges in request order.
-          otherCandidates :+ merged
-        }
 
       def multipartRanges(
           ranges: Seq[ByteRange],
           entity: UniversalEntity,
           headers: Seq[HttpHeader]): ToResponseMarshallable = {
         val length = entity.contentLength
-        val coalescedRanges = coalesceRanges(ranges.map(indexRange(length)))
+        val coalescedRanges = coalesceRanges(ranges.map(indexRange(length)), rangeCoalescingThreshold)
         if (settings.preserveRangeRequestOrder && coalescedRanges.lengthCompare(1) > 0)
           entity match {
             case strict: HttpEntity.Strict =>
@@ -156,15 +165,11 @@ trait RangeDirectives {
 
       def rangeResponse(range: ByteRange, entity: UniversalEntity, length: Long, headers: Seq[HttpHeader]) = {
         val aiRange = indexRange(length)(range)
-        HttpResponse(PartialContent, `Content-Range`(aiRange.contentRange(length)) +: headers, aiRange(entity))
+        val selected =
+          entity.transformDataBytes(aiRange.length, StreamUtils.sliceBytesTransformer(aiRange.start, aiRange.length))
+        HttpResponse(PartialContent, `Content-Range`(aiRange.contentRange(length)) +: headers, selected)
       }
 
-      def satisfiable(entityLength: Long)(range: ByteRange): Boolean =
-        range match {
-          case ByteRange.Slice(firstPos, _)   => firstPos < entityLength
-          case ByteRange.FromOffset(firstPos) => firstPos < entityLength
-          case ByteRange.Suffix(length)       => length > 0
-        }
       def universal(entity: HttpEntity): Option[UniversalEntity] = entity match {
         case u: UniversalEntity => Some(u)
         case _                  => None
