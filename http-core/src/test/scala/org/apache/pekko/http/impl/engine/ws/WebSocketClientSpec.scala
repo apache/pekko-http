@@ -219,6 +219,33 @@ class WebSocketClientSpec extends PekkoSpecWithMaterializer("pekko.http.client.w
       }
     }
 
+    "expose separate Set-Cookie fields after a successful upgrade" in {
+      import pekko.http.scaladsl.model.headers.{ `Set-Cookie`, HttpCookie }
+
+      Utils.assertAllStagesStopped {
+        new TestSetup with ClientProbes {
+          try {
+            expectWireData(UpgradeRequestBytes)
+            messagesIn.request(1)
+            val fields = ByteString("Set-Cookie: theme=dark; Path=/\r\nSet-Cookie: layout=wide; Path=/\r\n\r\n")
+            // Add the two field lines before the successful response fixture's terminating blank line.
+            sendWireData(UpgradeResponseBytes.dropRight("\r\n".length) ++ fields)
+
+            val upgrade = response.awaitResult(1.second.dilated)
+            upgrade shouldBe a[ValidUpgrade]
+            upgrade.response.headers.filter(_.is("set-cookie")) should contain theSameElementsAs List(
+              `Set-Cookie`(HttpCookie("theme", "dark", path = Some("/"))),
+              `Set-Cookie`(HttpCookie("layout", "wide", path = Some("/"))))
+          } finally {
+            messagesOut.sendComplete()
+            messagesIn.cancel()
+            netOut.cancel()
+            closeNetworkInput()
+          }
+        }
+      }
+    }
+
     "time out the opening handshake only after dispatching its request" in {
       Utils.assertAllStagesStopped {
         new TestSetup with ClientProbes {
