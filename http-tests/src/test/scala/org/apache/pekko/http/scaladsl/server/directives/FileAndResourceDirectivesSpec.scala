@@ -201,6 +201,37 @@ class FileAndResourceDirectivesSpec extends RoutingSpec with Inspectors with Ins
       } finally file.delete
     }
 
+    "respect strong If-Range entity tags for a stable file" in {
+      val file = Files.createTempFile("pekkoHttpTest", null).toFile
+      try {
+        val content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        writeAllText(content, file)
+        val route = getFromFile(file)
+        val tag = Get() ~> route ~> check {
+          status shouldEqual StatusCodes.OK
+          responseAs[String] shouldEqual content
+          header[ETag].map(_.etag).getOrElse(fail("Expected an ETag for the file"))
+        }
+        tag.weak shouldBe false
+
+        val range = Range(ByteRange(5, 9))
+        Get().withHeaders(range, `If-Range`(tag)) ~> route ~> check {
+          status shouldEqual StatusCodes.PartialContent
+          header[ETag] shouldEqual Some(ETag(tag))
+          header[`Content-Range`] shouldEqual Some(`Content-Range`(ContentRange(5, 9, content.length)))
+          responseAs[String] shouldEqual "FGHIJ"
+        }
+
+        val differentTag = EntityTag(tag.tag + "-different")
+        Get().withHeaders(range, `If-Range`(differentTag)) ~> route ~> check {
+          status shouldEqual StatusCodes.OK
+          header[ETag] shouldEqual Some(ETag(tag))
+          header[`Content-Range`] shouldBe None
+          responseAs[String] shouldEqual content
+        }
+      } finally file.delete()
+    }
+
     "return multiple ranges from a file at once" in {
       val file = Files.createTempFile("pekkoHttpTest", null).toFile
       try {
