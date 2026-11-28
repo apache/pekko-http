@@ -127,10 +127,14 @@ trait CacheConditionDirectives {
             case _ => step4()
           }
         def step4(): Route =
-          if (isGetOrHead) {
+          if (isGetOrHead || method == QUERY) {
             header[`If-Modified-Since`] match {
-              case Some(`If-Modified-Since`(ims)) if lastModified.isDefined && unmodified(ims) => complete304()
-              case _                                                                           => step5()
+              // RFC 10008 section 2.6 and appendix A.5 extend date revalidation to QUERY.
+              case Some(`If-Modified-Since`(ims))
+                  if lastModified.isDefined && unmodified(ims) &&
+                  (method != QUERY || !request.headers.exists(_.is("if-none-match"))) =>
+                complete304()
+              case _ => step5()
             }
           } else step5()
         def step5(): Route =

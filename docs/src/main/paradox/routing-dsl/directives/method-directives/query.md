@@ -31,6 +31,12 @@ It is a safe and idempotent method that requests the target resource to process 
 enclosed content and respond with the result. Unlike `GET`, the `QUERY` method expects
 a request body containing the query payload.
 
+For date-based revalidation with `If-Modified-Since`, use
+@ref[`conditional`](../cache-condition-directives/conditional.md) after the application has
+selected the query result. Supply the last-modified time of that result, not of the target URI
+alone. When the result is unchanged, the directive can return a bodyless `304 Not Modified`,
+as shown in [RFC 10008, Appendix A.5](https://www.rfc-editor.org/rfc/rfc10008.html#appendix-A.5).
+
 ## Example
 
 Scala
