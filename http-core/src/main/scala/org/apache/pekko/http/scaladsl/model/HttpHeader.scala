@@ -77,12 +77,11 @@ object HttpHeader {
    *       a single [[ErrorInfo]] for the value parsing problem.
    *
    * 2. The header name does not correspond to a properly modelled header but the header name and the value are both
-   *    syntactically legal according to the basic header requirements from the HTTP specification.
-   *    (http://tools.ietf.org/html/rfc7230#section-3.2)
+   *    syntactically legal according to the generic field name and value rules (RFC 9110 sections 5.1 and 5.5).
    *    In this case the method returns a `ParsingResult.Ok` with a [[pekko.http.scaladsl.model.headers.RawHeader]] instance and no errors.
    *
-   * 3. The header name or value are illegal according to the basic requirements for HTTP headers
-   *    (http://tools.ietf.org/html/rfc7230#section-3.2). In this case the method returns a `ParsingResult.Error`.
+   * 3. The header name or value fails the generic syntax checks. In this case the method returns a
+   *    `ParsingResult.Error`.
    */
   def parse(
       name: String, value: String, settings: HeaderParser.Settings = HeaderParser.DefaultSettings): ParsingResult =
