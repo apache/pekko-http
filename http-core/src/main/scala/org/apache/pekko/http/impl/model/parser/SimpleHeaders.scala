@@ -132,7 +132,7 @@ private[parser] trait SimpleHeaders {
 
   // https://www.rfc-editor.org/rfc/rfc9110.html#section-6.6.1
   def `date` = rule {
-    `HTTP-date` ~ EOI ~> (Date(_))
+    dateHeaderValue ~ EOI ~> (Date(_))
   }
 
   // https://www.rfc-editor.org/rfc/rfc9110.html#section-8.8.3
@@ -207,9 +207,12 @@ private[parser] trait SimpleHeaders {
     uriReference ~ EOI ~> (Referer(_))
   }
 
-  // https://tools.ietf.org/html/rfc7231#section-7.1.3
+  // https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.3
   def `retry-after` = rule {
-    (`HTTP-date` ~> (RetryAfterDateTime(_)) | `delta-seconds` ~> (RetryAfterDuration(_))) ~ EOI ~> (`Retry-After`(_))
+    // The shared HTTP-date rule also accepts a bare '0' for compatibility.
+    // Skip decimal padding while leaving at least one digit for the bounded parser.
+    (zeroOrMore('0' ~ &(CharacterClasses.DIGIT)) ~ `delta-seconds` ~> (RetryAfterDuration(_)) |
+    dateHeaderValue                                                ~> (RetryAfterDateTime(_))) ~ EOI ~> (`Retry-After`(_))
   }
 
   // https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.4

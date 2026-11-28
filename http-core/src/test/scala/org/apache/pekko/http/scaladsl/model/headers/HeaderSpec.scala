@@ -193,15 +193,46 @@ class HeaderSpec extends AnyFreeSpec with Matchers {
 
   "Retry-After should" - {
     "provide parseFromValueString method" - {
-      "successful parse run" in {
-        headers.`Retry-After`.parseFromValueString("120") shouldEqual Right(headers.`Retry-After`(120))
-        headers.`Retry-After`.parseFromValueString("Wed, 21 Oct 2015 07:28:00 GMT") shouldEqual
-        Right(headers.`Retry-After`(DateTime(2015, 10, 21, 7, 28)))
+      "parse decimal delays and render them without padding" in {
+        for ((value, seconds) <- Seq("0" -> 0L, "011" -> 11L, "00000000000011" -> 11L, "120" -> 120L)) {
+          val parsed = headers.`Retry-After`.parseFromValueString(value)
+          parsed shouldEqual Right(headers.`Retry-After`(seconds))
+
+          val javaHeader: pekko.http.javadsl.model.headers.RetryAfter = parsed.toOption.get
+          javaHeader.getDelaySeconds.orElseThrow().longValue shouldEqual seconds
+          javaHeader.getDateTime.isEmpty shouldBe true
+          javaHeader.value shouldEqual seconds.toString
+        }
+      }
+      "parse and render an HTTP date" in {
+        val value = "Wed, 21 Oct 2015 07:28:00 GMT"
+        val parsed = headers.`Retry-After`.parseFromValueString(value)
+        parsed shouldEqual Right(headers.`Retry-After`(DateTime(2015, 10, 21, 7, 28)))
+
+        val javaHeader: pekko.http.javadsl.model.headers.RetryAfter = parsed.toOption.get
+        javaHeader.getDelaySeconds.isEmpty shouldBe true
+        javaHeader.getDateTime.orElseThrow() shouldEqual DateTime(2015, 10, 21, 7, 28)
+        javaHeader.value shouldEqual value
+      }
+      "parse and render an HTTP date containing a UTC leap second" in {
+        val value = "Sat, 31 Dec 2016 23:59:60 GMT"
+        val parsed = headers.`Retry-After`.parseFromValueString(value)
+          .fold(errors => fail(errors.mkString(", ")), header => header)
+        parsed.delaySecondsOrDateTime match {
+          case RetryAfterDateTime(dateTime) => dateTime.second shouldBe 60
+          case other                        => fail(s"Expected an absolute Retry-After date, got $other")
+        }
+        parsed.value shouldEqual value
+
+        val javaHeader = pekko.http.javadsl.model.HttpHeader.parse("Retry-After", value) match {
+          case header: pekko.http.javadsl.model.headers.RetryAfter => header
+          case other                                               => fail(s"Expected a Java Retry-After date, got $other")
+        }
+        javaHeader.getDateTime.orElseThrow().second() shouldBe 60
+        javaHeader.getDelaySeconds.isEmpty shouldBe true
+        javaHeader.value shouldEqual value
       }
       "failing parse run" in {
-        val Left(List(ErrorInfo(summary, detail))) = `Retry-After`.parseFromValueString("011")
-        summary shouldEqual
-        "Illegal HTTP header 'Retry-After': Invalid input '1', expected OWS or 'EOI' (line 1, column 2)"
         val Left(List(ErrorInfo(summary2, detail2))) = `Retry-After`.parseFromValueString("-10")
         summary2 should startWith("Illegal HTTP header 'Retry-After': Invalid input '-'")
         summary2 should endWith("(line 1, column 1)")
