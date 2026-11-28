@@ -24,6 +24,7 @@ import org.apache.pekko
 import pekko.Done
 import pekko.http.impl.engine.HttpIdleTimeoutException
 import pekko.http.impl.engine.ws.ByteStringSinkProbe
+import pekko.http.impl.settings.ParserSettingsImpl
 import pekko.http.impl.util.{ ExampleHttpContexts, PekkoSpecWithMaterializer }
 import pekko.http.scaladsl.Http
 import pekko.http.scaladsl.coding.Coders
@@ -31,6 +32,7 @@ import pekko.http.scaladsl.model.{
   headers,
   AttributeKey,
   ContentTypes,
+  ErrorInfo,
   HttpEntity,
   HttpHeader,
   HttpMethod,
@@ -39,6 +41,7 @@ import pekko.http.scaladsl.model.{
   HttpProtocols,
   HttpRequest,
   HttpResponse,
+  ParsingException,
   RequestResponseAssociation,
   StatusCode,
   StatusCodes,
@@ -316,20 +319,45 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       clientResponsesIn.expectError() shouldBe a[HttpIdleTimeoutException]
     }
 
-    "return bad request response when header parsing fails" in new TestSetup {
-      val badRequest = HttpRequest(
-        // easiest valid way to cause parsing to fail - unknown method
-        method = HttpMethod.custom("UNKNOWN_TO_SERVER"),
-        uri = "http://www.example.com/test"
-      )
-      sendClientRequest(badRequest)
-      val response = expectClientResponse()
-      response.status should be(StatusCodes.BadRequest)
+    val extensionMethod = HttpMethod.custom("UNKNOWN_TO_SERVER")
+
+    "return Not Implemented for an unregistered request method without dispatching it" in new TestSetup {
+      sendClientRequest(HttpRequest(method = extensionMethod, uri = "http://www.example.com/test"))
+      expectClientResponse().status should be(StatusCodes.NotImplemented)
+
+      sendClientRequest(HttpRequest(uri = "http://www.example.com/afterwards"))
+      val serverRequest = expectServerRequest()
+      serverRequest.request.method shouldBe HttpMethods.GET
+      serverRequest.request.uri.path.toString shouldBe "/afterwards"
+      serverRequest.sendResponse(HttpResponse(entity = "pong"))
+      expectClientResponse().status should be(StatusCodes.OK)
+    }
+
+    "dispatch the same request method when it is registered by the server" in new TestSetup {
+      override def serverSettings: ServerSettings = {
+        val settings = super.serverSettings
+        settings.withParserSettings(settings.parserSettings.withCustomMethods(extensionMethod))
+      }
+
+      sendClientRequest(HttpRequest(method = extensionMethod, uri = "http://www.example.com/test"))
+      val serverRequest = expectServerRequest()
+      serverRequest.request.method shouldBe extensionMethod
+      serverRequest.sendResponse(HttpResponse())
+      expectClientResponse().status should be(StatusCodes.OK)
     }
 
     "keep the connection usable after a header parsing failure" in new TestSetup {
+      override def serverSettings: ServerSettings = {
+        val settings = super.serverSettings
+        val parser = settings.parserSettings.asInstanceOf[ParserSettingsImpl]
+        // Both requests are valid. Inject a parsing failure in the test lookup to exercise error recovery.
+        settings.withParserSettings(parser.copy(customMethods = method =>
+          if (method == extensionMethod.value) throw ParsingException(ErrorInfo("Synthetic method lookup failure"))
+          else parser.customMethods(method)))
+      }
+
       sendClientRequest(HttpRequest(
-        method = HttpMethod.custom("UNKNOWN_TO_SERVER"),
+        method = extensionMethod,
         uri = "http://www.example.com/test").addAttribute(requestIdAttr, RequestId("bad")))
       expectClientResponse().status should be(StatusCodes.BadRequest)
 

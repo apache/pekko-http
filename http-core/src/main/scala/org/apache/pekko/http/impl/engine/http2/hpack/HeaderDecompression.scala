@@ -45,8 +45,11 @@ import pekko.util.ByteString
  */
 @InternalApi
 private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderParser, parserSettings: ParserSettings,
-    maxHeaderListSize: Int)
+    maxHeaderListSize: Int, acceptUnregisteredRequestMethods: Boolean)
     extends GraphStage[FlowShape[FrameEvent, FrameEvent]] {
+  def this(masterHeaderParser: HttpHeaderParser, parserSettings: ParserSettings, maxHeaderListSize: Int) =
+    this(masterHeaderParser, parserSettings, maxHeaderListSize, acceptUnregisteredRequestMethods = false)
+
   val UTF8 = StandardCharsets.UTF_8
   val US_ASCII = StandardCharsets.US_ASCII
 
@@ -116,6 +119,10 @@ private[http2] final class HeaderDecompression(masterHeaderParser: HttpHeaderPar
                   if (value.isEmpty)
                     throw new Http2ProtocolException("Malformed request: ':path' must not be empty")
                   handle(PathAndQuery.parse(name, value, parserSettings))
+                case ":method" if acceptUnregisteredRequestMethods =>
+                  val method = handle(Method.parseRequestMethod(value, parserSettings))
+                  // A miss in the server's custom lookup was never cached; recheck the next indexed use.
+                  if (method eq UnregisteredMethod) null else method
                 case ":method"        => handle(Method.parse(name, value, parserSettings))
                 case ":scheme"        => handle(Scheme.parse(name, value, parserSettings))
                 case "content-length" => handle(ContentLength.parse(name, value, parserSettings))

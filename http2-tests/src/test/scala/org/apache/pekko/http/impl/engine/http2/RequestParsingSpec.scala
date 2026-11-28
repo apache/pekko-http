@@ -60,7 +60,9 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         attributes)
 
       Source.single(frame)
-        .via(new HeaderDecompression(headerParser, parserSettings, serverSettings.http2Settings.maxHeaderListSize))
+        .via(new HeaderDecompression(
+          headerParser, parserSettings, serverSettings.http2Settings.maxHeaderListSize,
+          acceptUnregisteredRequestMethods = true))
         .map { // emulate demux
           case headers: ParsedHeadersFrame =>
             Http2SubStream(
@@ -81,8 +83,9 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         uriParsingMode: Uri.ParsingMode = Uri.ParsingMode.Relaxed,
         settings: ServerSettings = ServerSettings(system)): HttpRequest =
       parse(keyValuePairs, data, attributes, uriParsingMode, settings) match {
-        case RequestParsing.OkRequest(req)      => req
-        case RequestParsing.BadRequest(info, _) => fail(s"Failed parsing request: $info")
+        case RequestParsing.OkRequest(req)          => req
+        case RequestParsing.BadRequest(info, _)     => fail(s"Failed parsing request: $info")
+        case RequestParsing.MethodNotImplemented(_) => fail("Request method is not implemented")
       }
 
     def parseExpectError(
@@ -92,8 +95,9 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
         uriParsingMode: Uri.ParsingMode = Uri.ParsingMode.Relaxed,
         settings: ServerSettings = ServerSettings(system)): ErrorInfo =
       parse(keyValuePairs, data, attributes, uriParsingMode, settings) match {
-        case RequestParsing.OkRequest(req)      => fail("Unexpectedly succeeded parsing request")
-        case RequestParsing.BadRequest(info, _) => info
+        case RequestParsing.OkRequest(req)          => fail("Unexpectedly succeeded parsing request")
+        case RequestParsing.BadRequest(info, _)     => info
+        case RequestParsing.MethodNotImplemented(_) => fail("Expected a parse error, not an unregistered method")
       }
 
     def parseExpectProtocolError(
