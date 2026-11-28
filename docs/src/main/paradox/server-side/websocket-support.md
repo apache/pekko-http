@@ -218,6 +218,11 @@ Apache Pekko HTTP can negotiate the [RFC 7692 `permessage-deflate`](https://www.
 extension for server-side WebSocket connections. Compression is enabled by default, but is only used when the client
 requests it with the `Sec-WebSocket-Extensions: permessage-deflate` header during the WebSocket handshake.
 
+An explicit `client_max_window_bits` value must be a decimal integer from 8 to 15 without leading zeroes
+([RFC 7692, section 7.1.2.2](https://www.rfc-editor.org/rfc/rfc7692.html#section-7.1.2.2)). The server declines an
+offer with an invalid value and can still accept a subsequent supported offer. If none is supported, it can
+complete the WebSocket upgrade without compression.
+
 Compressed streamed messages support empty fragments, including an empty final fragment, with or without
 compression context takeover between messages.
 
