@@ -153,6 +153,31 @@ class ResponseRendererSpec extends AnyFreeSpec with Matchers with BeforeAndAfter
         }
       }
 
+      "omit modeled transfer coding from a 204 response" in new TestSetup() {
+        val transferCoding = `Transfer-Encoding`(TransferEncodings.gzip)
+        HttpResponse(StatusCodes.NoContent, List(transferCoding, Age(0))) should renderTo {
+          """HTTP/1.1 204 No Content
+            |Age: 0
+            |Server: pekko-http/1.0.0
+            |Date: Thu, 25 Aug 2011 09:10:29 GMT
+            |
+            |"""
+        }
+      }
+
+      "keep a 204 response to HEAD with a known-empty chunked entity free of framing headers" in new TestSetup() {
+        val entity = HttpEntity.Chunked(ContentTypes.NoContentType, Source.empty)
+        entity.isKnownEmpty shouldBe true
+
+        ResponseRenderingContext(response = HttpResponse(StatusCodes.NoContent, entity = entity),
+          requestMethod = HttpMethods.HEAD) should
+        renderTo("""HTTP/1.1 204 No Content
+                   |Server: pekko-http/1.0.0
+                   |Date: Thu, 25 Aug 2011 09:10:29 GMT
+                   |
+                   |""", close = false)
+      }
+
       "status 205 and a few headers (adds content-length)" in new TestSetup() {
         HttpResponse(205, List(RawHeader("X-Fancy", "of course"), Age(0))) should renderTo {
           """HTTP/1.1 205 Reset Content
