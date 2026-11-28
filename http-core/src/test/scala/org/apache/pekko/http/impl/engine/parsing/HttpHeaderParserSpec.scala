@@ -197,6 +197,18 @@ abstract class HttpHeaderParserSpec(mode: String, newLine: String) extends Pekko
       parseLine(fieldLine + newLine) shouldEqual (fieldLine.length -> RawHeader("X-Label", "spring  menu"))
     }
 
+    "trim surrounding optional whitespace from modeled WebSocket handshake fields" in new TestSetup() {
+      val headers = List[HttpHeader](
+        `Sec-WebSocket-Key`("dGhlIHNhbXBsZSBub25jZQ=="),
+        `Sec-WebSocket-Accept`("s3pPLMBiTxaQ9kYGzzhZRbK+xOo="))
+      headers.foreach { header =>
+        val canonical = s"${header.name}: ${header.value}$newLine"
+        val padded = s"${header.name}: \t ${header.value} \t $newLine"
+        parseLine(padded + newLine) shouldEqual (padded.length -> header)
+        parseLine(canonical + newLine) shouldEqual (canonical.length -> header)
+      }
+    }
+
     "parse and cache a header with a tab char in the value" in new TestSetup() {
       parseAndCache(s"Fancy: foo\tbar${newLine}x")() shouldEqual RawHeader("Fancy", "foo bar")
     }
