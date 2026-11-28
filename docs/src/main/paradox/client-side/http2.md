@@ -101,6 +101,13 @@ The default maximum age is `infinite`, which disables age-based retirement. The 
 programmatically with `Http2ClientSettings.withPersistentConnectionMaxAge` and
 `Http2ClientSettings.withPersistentConnectionMaxAgeJitter`.
 
+## Peer stream concurrency
+
+The peer can limit how many streams the client starts at once, including temporarily allowing none. If that limit
+drops while the client has already pulled a request, the client holds the request until the peer allows another stream.
+If the connection closes first, the client cancels the held request's streamed entity. The existing completion timeout
+still applies if the application completes its request stream while waiting.
+
 ## Request-response ordering
 
 For HTTP/2 connections the responses are not guaranteed to arrive in the same order that the requests were emitted to

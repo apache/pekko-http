@@ -44,6 +44,7 @@ import pekko.stream.Attributes
 import pekko.stream.BidiShape
 import pekko.stream.Inlet
 import pekko.stream.Outlet
+import pekko.stream.scaladsl.Sink
 import pekko.stream.scaladsl.Source
 import pekko.stream.stage.{
   GraphStageLogic,
@@ -379,7 +380,6 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         }
 
         pullFrameIn()
-        // applyRemoteSettings may or may not have pulled `substreamIn` already
         tryPullSubStreams()
 
         // both client and server must send a settings frame as first frame
@@ -418,12 +418,34 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       def pullFrameIn(): Unit =
         if (allowReadingIncomingFrames && !hasBeenPulled(frameIn) && !isClosed(frameIn)) pull(frameIn)
 
-      def tryPullSubStreams(): Unit = {
-        if (!hasBeenPulled(substreamIn) && !isClosed(substreamIn)) {
-          // While we don't support PUSH_PROMISE there's only capacity control on the client
-          if (isServer) pull(substreamIn)
-          else if (hasCapacityToCreateStreams) pull(substreamIn)
+      // The stage owns the pulled request and its unmaterialized entity until admission or shutdown.
+      private var pendingSubstream: OptionVal[Http2SubStream] = OptionVal.None
+      private var resumingPendingSubstream = false
+      private lazy val resumePendingSubstream = getAsyncCallback[Unit] { _ =>
+        resumingPendingSubstream = false
+        if (pendingSubstream.isDefined && hasCapacityToCreateStreams) {
+          val sub = pendingSubstream.get
+          pendingSubstream = OptionVal.None
+          admitOutgoingSubstream(sub)
         }
+      }
+
+      def tryPullSubStreams(): Unit = {
+        if (!hasBeenPulled(substreamIn) && (isServer || hasCapacityToCreateStreams)) {
+          // Only clients initiate streams. One pulled request may already be waiting for capacity.
+          if (pendingSubstream.isDefined) {
+            // Capacity can return while another stream is being closed. Do not re-enter its state machine.
+            if (!resumingPendingSubstream) {
+              resumingPendingSubstream = true
+              resumePendingSubstream.invoke(())
+            }
+          } else if (!isClosed(substreamIn)) pull(substreamIn)
+        }
+      }
+
+      private def admitOutgoingSubstream(sub: Http2SubStream): Unit = {
+        handleOutgoingCreated(sub)
+        tryPullSubStreams()
       }
 
       // -----------------------------------------------------------------
@@ -461,7 +483,8 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
               case SettingsFrame(settings) =>
                 if (settings.nonEmpty) debug(s"Got ${settings.length} settings!")
 
-                multiplexer.applyAndAcknowledgeSettings(settings)(applyRemoteSettings(settings))
+                if (multiplexer.applyAndAcknowledgeSettings(settings)(applyRemoteSettings(settings)))
+                  tryPullSubStreams()
 
               case SettingsAckFrame(_) =>
               // Currently, we only expect an ack for the initial settings frame, sent
@@ -522,7 +545,8 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       override def onAllDataFlushed(): Unit = completeIfDone()
 
       private def completeIfDone(): Unit = {
-        val noMoreOutgoingStreams = (terminating || isClosed(substreamIn)) && activeStreamCount() == 0
+        val noMoreOutgoingStreams =
+          (terminating || (isClosed(substreamIn) && pendingSubstream.isEmpty)) && activeStreamCount() == 0
         def allOutgoingDataFlushed = isClosed(frameOut) || multiplexer.hasFlushedAllData
         if (noMoreOutgoingStreams && allOutgoingDataFlushed) {
           log.debug("Closing connection after all streams are done and all data has been flushed.")
@@ -550,9 +574,10 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
         new InHandler {
           def onPush(): Unit = {
             val sub = grab(substreamIn)
-            handleOutgoingCreated(sub)
-            // Once the incoming stream is handled, we decide if we need to pull more.
-            tryPullSubStreams()
+            // SETTINGS can lower the peer's limit after we have pulled. Keep that single request until
+            // a SETTINGS update or a closed stream permits opening it.
+            if (isServer || hasCapacityToCreateStreams) admitOutgoingSubstream(sub)
+            else pendingSubstream = OptionVal.Some(sub)
           }
 
           override def onUpstreamFinish(): Unit =
@@ -597,8 +622,6 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
             multiplexer.updateMaxFrameSize(value)
           case Setting(Http2Protocol.SettingIdentifier.SETTINGS_MAX_CONCURRENT_STREAMS, value) =>
             setMaxConcurrentStreams(value)
-            // once maxConcurrentStreams is updated, see if we can pull again
-            tryPullSubStreams()
           case Setting(id, value) =>
             debug(s"Ignoring setting $id -> $value (in Demux)")
         }
@@ -642,8 +665,17 @@ private[http2] abstract class Http2Demux(http2Settings: Http2CommonSettings,
       }
 
       override def postStop(): Unit = {
-        shutdownStreamHandling()
-        terminationPromise.success(Http.HttpConnectionTerminated)
+        try {
+          if (pendingSubstream.isDefined) {
+            val sub = pendingSubstream.get
+            pendingSubstream = OptionVal.None
+            // Admission never materialized this entity. Cancel it outside the stopping stage's interpreter.
+            sub.data.foreach(_.runWith(Sink.cancelled)(materializer))
+          }
+        } finally {
+          shutdownStreamHandling()
+          terminationPromise.success(Http.HttpConnectionTerminated)
+        }
       }
     }
     (Logic, Logic)
