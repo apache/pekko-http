@@ -51,4 +51,4 @@ It is recommended that you use the latest Pekko 1.x release with this release. P
   be validated by the caller ([PR1410](https://github.com/apache/pekko-http/pull/1410))
 
 ### Dependency Changes
-* Jackson 2.21.7 ([PR1363](https://github.com/apache/pekko-http/pull/1363))
+* Jackson 2.21.9 ([PR1363](https://github.com/apache/pekko-http/pull/1363), [PR1837](https://github.com/apache/pekko-http/pull/1837))
