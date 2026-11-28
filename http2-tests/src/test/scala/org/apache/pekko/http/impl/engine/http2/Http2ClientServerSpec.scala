@@ -141,6 +141,41 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       Unmarshal(response.entity).to[String].futureValue shouldBe "pong"
       response.attribute(requestIdAttr).get.id shouldBe "request-1"
     }
+    "decode a streamed request with built-in gzip over HTTP/2" in new TestSetup {
+      import pekko.http.scaladsl.coding.Coders.Gzip
+      import pekko.http.scaladsl.server.Directives._
+      import pekko.http.scaladsl.server.Route
+
+      val contentType = ContentTypes.`text/plain(UTF-8)`
+      val first = ByteString("first part ")
+      val second = ByteString("second part")
+      val request = HttpRequest(
+        method = HttpMethods.POST,
+        entity = HttpEntity(contentType, Source(List(first, second))))
+
+      try {
+        sendClientRequest(Gzip.encodeMessage(request))
+
+        val incoming = expectServerRequest()
+        incoming.request.protocol shouldBe HttpProtocols.`HTTP/2.0`
+        val encoding = incoming.request.header[headers.`Content-Encoding`]
+        encoding shouldBe Some(headers.`Content-Encoding`(HttpEncodings.gzip))
+        incoming.request.entity.isStrict shouldBe false
+
+        val decode = Route.toFunction(decodeRequestWith(Gzip) {
+          entity(as[ByteString]) { decoded => complete(HttpEntity(contentType, decoded)) }
+        })
+        incoming.sendResponse(decode(incoming.request).futureValue)
+
+        val response = expectClientResponse()
+        response.protocol shouldBe HttpProtocols.`HTTP/2.0`
+        response.status shouldBe StatusCodes.OK
+        response.entity.toStrict(3.seconds).futureValue shouldBe HttpEntity(contentType, first ++ second)
+
+        clientRequestsOut.sendComplete()
+        clientResponsesIn.request(1).expectComplete()
+      } finally binding.terminate(1.second).futureValue
+    }
     "preserve repeated Set-Cookie field order across an HTTP/2 response" in new TestSetup {
       try {
         val theme = headers.`Set-Cookie`(headers.HttpCookie("theme", "dark"))
