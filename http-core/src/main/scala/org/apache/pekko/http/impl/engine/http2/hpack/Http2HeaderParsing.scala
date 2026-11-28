@@ -15,8 +15,8 @@ package org.apache.pekko.http.impl.engine.http2.hpack
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
-import pekko.http.impl.engine.http2.RequestParsing
 import pekko.http.impl.engine.http2.RequestParsing.parseError
+import pekko.http.impl.model.parser.CharacterClasses
 import pekko.http.scaladsl.model
 import pekko.http.scaladsl.model.HttpHeader.ParsingResult
 import model.{ HttpHeader, HttpMethod, HttpMethods, IllegalUriException, ParsingException, StatusCode, Uri }
@@ -43,11 +43,25 @@ private[pekko] object Http2HeaderParsing {
         case IllegalUriException(info) => throw new ParsingException(info)
       }
   }
+  private[http2] case object UnregisteredMethod
+
   object Method extends HeaderParser[HttpMethod](":method") {
     override def parse(name: String, value: String, parserSettings: ParserSettings): HttpMethod =
+      lookup(value, parserSettings).getOrElse(unknownMethod(value))
+
+    private[http2] def parseRequestMethod(value: String, parserSettings: ParserSettings): AnyRef =
+      lookup(value, parserSettings) match {
+        case Some(method)                                                       => method
+        case None if value.nonEmpty && CharacterClasses.tchar.matchesAll(value) => UnregisteredMethod
+        case None                                                               => unknownMethod(value)
+      }
+
+    private def lookup(value: String, parserSettings: ParserSettings): Option[HttpMethod] =
       HttpMethods.getForKey(value)
         .orElse(parserSettings.customMethods(value))
-        .getOrElse(RequestParsing.parseError(s"Unknown HTTP method: '$value'", ":method"))
+
+    private def unknownMethod(value: String): Nothing =
+      parseError(s"Unknown HTTP method: '$value'", ":method")
   }
   object PathAndQuery extends HeaderParser[(Uri.Path, Option[String])](":path") {
     override def parse(name: String, value: String, parserSettings: ParserSettings): (Uri.Path, Option[String]) =

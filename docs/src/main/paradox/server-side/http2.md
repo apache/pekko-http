@@ -92,6 +92,13 @@ server supports HTTP/2.
 For this reason the approach is known as HTTP/2 with
 [Prior Knowledge](https://www.rfc-editor.org/rfc/rfc9113.html#section-3.3).
 
+## Request methods
+
+An otherwise valid request whose method is neither built in nor registered in the server's parser settings
+receives `501 Not Implemented`, as described in [RFC 9110 §9.1](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.1).
+Built-in and registered methods still reach the application. For a recognized method that a resource does
+not support, routing can return `405 Method Not Allowed` as before.
+
 ## Flow-control window updates
 
 Changes to a peer's `SETTINGS_INITIAL_WINDOW_SIZE` apply to existing HTTP/2 streams, including decreases.

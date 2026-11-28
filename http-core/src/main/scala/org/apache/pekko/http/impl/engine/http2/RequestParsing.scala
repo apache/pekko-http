@@ -22,6 +22,7 @@ import scala.util.control.NoStackTrace
 
 import org.apache.pekko
 import pekko.annotation.InternalApi
+import pekko.http.impl.engine.http2.hpack.Http2HeaderParsing.UnregisteredMethod
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.scaladsl.model
@@ -41,6 +42,7 @@ private[http2] object RequestParsing {
   sealed trait ParseRequestResult
   final case class OkRequest(request: HttpRequest) extends ParseRequestResult
   final case class BadRequest(info: ErrorInfo, streamId: Int) extends ParseRequestResult
+  final case class MethodNotImplemented(streamId: Int) extends ParseRequestResult
 
   def parseRequest(httpHeaderParser: HttpHeaderParser, serverSettings: ServerSettings, streamAttributes: Attributes)
       : Http2SubStream => ParseRequestResult = {
@@ -77,14 +79,14 @@ private[http2] object RequestParsing {
 
     { subStream =>
       def createRequest(
-          method: HttpMethod,
+          method: AnyRef,
           scheme: String,
           authority: Uri.Authority,
           pathAndRawQuery: (Uri.Path, Option[String]),
           contentType: OptionVal[ContentType],
           contentLength: Long,
           cookies: StringBuilder,
-          headers: VectorBuilder[HttpHeader]): HttpRequest = {
+          headers: VectorBuilder[HttpHeader]): ParseRequestResult = {
         // https://httpwg.org/specs/rfc7540.html#rfc.section.8.1.2.3: these pseudo header fields are mandatory for a request
         checkRequiredPseudoHeader(":scheme", scheme)
         checkRequiredPseudoHeader(":method", method)
@@ -97,26 +99,43 @@ private[http2] object RequestParsing {
 
         if (tlsSessionInfoHeader.isDefined) headers += tlsSessionInfoHeader.get
 
-        val entity = subStream.createEntity(contentLength, contentType)
+        def targetUri: Uri = {
+          val (path, rawQueryString) = pathAndRawQuery
+          val authorityOrDefault: Uri.Authority = if (authority == null) Uri.Authority.Empty else authority
+          Uri(scheme, authorityOrDefault, path, rawQueryString)
+        }
 
-        // mirrors HttpServerBluePrint's ControllerStage for HTTP/1.1: the handler sees a GET, while the substream
-        // handling in Http2StreamHandling still knows the request was a HEAD and strips the response body
-        val effectiveMethod =
-          if (method == HttpMethods.HEAD && serverSettings.transparentHeadRequests) HttpMethods.GET else method
+        method match {
+          case UnregisteredMethod =>
+            // No request is created or dispatched, but still apply the request model's URI checks.
+            try {
+              HttpRequest.verifyUri(targetUri)
+              MethodNotImplemented(subStream.streamId)
+            } catch {
+              case ex: IllegalUriException => BadRequest(ex.info, subStream.streamId)
+            }
+          case supported: HttpMethod =>
+            val entity = subStream.createEntity(contentLength, contentType)
 
-        val (path, rawQueryString) = pathAndRawQuery
-        val authorityOrDefault: Uri.Authority = if (authority == null) Uri.Authority.Empty else authority
-        val uri = Uri(scheme, authorityOrDefault, path, rawQueryString)
-        val attributes = baseAttributes.updated(Http2.streamId, subStream.streamId)
+            // mirrors HttpServerBluePrint's ControllerStage for HTTP/1.1: the handler sees a GET, while the substream
+            // handling in Http2StreamHandling still knows the request was a HEAD and strips the response body
+            val effectiveMethod =
+              if (supported == HttpMethods.HEAD && serverSettings.transparentHeadRequests) HttpMethods.GET
+              else supported
+            val uri = targetUri
+            val attributes = baseAttributes.updated(Http2.streamId, subStream.streamId)
 
-        new HttpRequest(effectiveMethod, uri, headers.result(), attributes, entity, HttpProtocols.`HTTP/2.0`)
+            OkRequest(new HttpRequest(effectiveMethod, uri, headers.result(), attributes, entity,
+              HttpProtocols.`HTTP/2.0`))
+          case _ => throw new IllegalStateException("Expected a parsed HTTP/2 method")
+        }
       }
 
       @tailrec
       def rec(
           incomingHeaders: IndexedSeq[(String, AnyRef)],
           offset: Int,
-          method: HttpMethod = null,
+          method: AnyRef = null,
           scheme: String = null,
           authority: Uri.Authority = null,
           pathAndRawQuery: (Uri.Path, Option[String]) = null,
@@ -124,7 +143,7 @@ private[http2] object RequestParsing {
           contentLength: Long = -1,
           cookies: StringBuilder = null,
           seenRegularHeader: Boolean = false,
-          headers: VectorBuilder[HttpHeader] = new VectorBuilder[HttpHeader]): HttpRequest =
+          headers: VectorBuilder[HttpHeader] = new VectorBuilder[HttpHeader]): ParseRequestResult =
         if (offset == incomingHeaders.size)
           createRequest(method, scheme, authority, pathAndRawQuery, contentType, contentLength, cookies, headers)
         else {
@@ -141,7 +160,7 @@ private[http2] object RequestParsing {
               checkUniquePseudoHeader(":method", method)
               checkNoRegularHeadersBeforePseudoHeader(":method", seenRegularHeader)
 
-              rec(incomingHeaders, offset + 1, Method.get(value), scheme, authority, pathAndRawQuery, contentType,
+              rec(incomingHeaders, offset + 1, value, scheme, authority, pathAndRawQuery, contentType,
                 contentLength, cookies, seenRegularHeader, headers)
 
             case ":path" =>
@@ -207,7 +226,7 @@ private[http2] object RequestParsing {
             if (incomingHeaders.size > serverSettings.parserSettings.maxHeaderCount)
               parseError(
                 s"HTTP message contains more than the configured limit of ${serverSettings.parserSettings.maxHeaderCount} headers")
-            else OkRequest(rec(incomingHeaders, 0))
+            else rec(incomingHeaders, 0)
         }
       } catch {
         case bre: ParsingException => BadRequest(bre.info, subStream.streamId)

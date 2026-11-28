@@ -140,7 +140,8 @@ private[http] object Http2Blueprint {
       .atopKeepRight(serverDemux(settings.http2Settings, initialDemuxerSettings, upgraded,
         Some((settings, masterHttpHeaderParser)))) atop
       FrameLogger.logFramesIfEnabled(settings.http2Settings.logFrames) atop // enable for debugging
-      hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize)
+      hpackCoding(masterHttpHeaderParser, settings.parserSettings, settings.http2Settings.maxHeaderListSize,
+        acceptUnregisteredRequestMethods = true)
 
     val http2Settings = settings.http2Settings
     val frameTypesForThrottle = getFrameTypesForThrottle(http2Settings.frameTypeThrottleFrameTypes)
@@ -327,9 +328,15 @@ private[http] object Http2Blueprint {
    */
   def hpackCoding(masterHttpHeaderParser: HttpHeaderParser, parserSettings: ParserSettings, maxHeaderListSize: Int)
       : BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
+    hpackCoding(masterHttpHeaderParser, parserSettings, maxHeaderListSize, acceptUnregisteredRequestMethods = false)
+
+  private def hpackCoding(masterHttpHeaderParser: HttpHeaderParser, parserSettings: ParserSettings,
+      maxHeaderListSize: Int, acceptUnregisteredRequestMethods: Boolean)
+      : BidiFlow[FrameEvent, FrameEvent, FrameEvent, FrameEvent, NotUsed] =
     BidiFlow.fromFlows(
       Flow[FrameEvent].via(HeaderCompression),
-      Flow[FrameEvent].via(new HeaderDecompression(masterHttpHeaderParser, parserSettings, maxHeaderListSize)))
+      Flow[FrameEvent].via(new HeaderDecompression(masterHttpHeaderParser, parserSettings, maxHeaderListSize,
+        acceptUnregisteredRequestMethods)))
 
   /**
    * Creates substreams for every stream and manages stream state machines

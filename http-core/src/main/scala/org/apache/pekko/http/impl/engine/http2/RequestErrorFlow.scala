@@ -49,16 +49,21 @@ private[http2] final class RequestErrorFlow
     BidiShape(responseIn, responseOut, requestIn, requestOut)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
+    private def respondWithoutDispatch(response: HttpResponse, streamId: Int): Unit = {
+      emit(responseOut, response.addAttribute(Http2.streamId, streamId))
+      pull(requestIn)
+    }
+
     setHandlers(requestIn, requestOut,
       new InHandler with OutHandler {
         override def onPush(): Unit = {
           grab(requestIn) match {
-            case RequestParsing.OkRequest(request) => push(requestOut, request)
-            case notOk: RequestParsing.BadRequest  =>
-              emit(responseOut,
-                HttpResponse(StatusCodes.BadRequest, entity = notOk.info.summary).addAttribute(Http2.streamId,
-                  notOk.streamId))
-              pull(requestIn)
+            case RequestParsing.OkRequest(request)         => push(requestOut, request)
+            case RequestParsing.BadRequest(info, streamId) =>
+              respondWithoutDispatch(HttpResponse(StatusCodes.BadRequest, entity = info.summary), streamId)
+            case RequestParsing.MethodNotImplemented(streamId) =>
+              respondWithoutDispatch(HttpResponse(StatusCodes.NotImplemented, entity = "Unsupported HTTP method"),
+                streamId)
           }
         }
 
