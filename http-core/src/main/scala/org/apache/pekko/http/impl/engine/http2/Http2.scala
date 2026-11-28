@@ -35,6 +35,7 @@ import pekko.event.LoggingAdapter
 import pekko.http.impl.engine.HttpConnectionIdleTimeoutBidi
 import pekko.http.impl.engine.server.{
   GracefulTerminatorStage,
+  Http1Upgrade,
   MasterServerTerminator,
   ServerTerminator,
   UpgradeToOtherProtocolResponseHeader
@@ -93,7 +94,29 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
       interface: String, port: Int = DefaultPortForProtocol,
       connectionContext: ConnectionContext,
       settings: ServerSettings = ServerSettings(system),
-      log: LoggingAdapter = system.log)(implicit fm: Materializer): Future[ServerBinding] = {
+      log: LoggingAdapter = system.log)(implicit fm: Materializer): Future[ServerBinding] =
+    bindAndHandleAsyncInternal(handler, interface, port, connectionContext, settings, log, None)
+
+  // Match the same OpenTelemetry agent entry point (method name and first Function1 argument) without nesting hooks.
+  @noinline
+  private[http] def bindAndHandleAsync(
+      handler: HttpRequest => Future[HttpResponse],
+      interface: String,
+      port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      log: LoggingAdapter,
+      upgrade: Http1Upgrade.Registration)(implicit fm: Materializer): Future[ServerBinding] =
+    bindAndHandleAsyncInternal(handler, interface, port, connectionContext, settings, log, Some(upgrade))
+
+  private def bindAndHandleAsyncInternal(
+      handler: HttpRequest => Future[HttpResponse],
+      interface: String,
+      port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      log: LoggingAdapter,
+      upgrade: Option[Http1Upgrade.Registration])(implicit fm: Materializer): Future[ServerBinding] = {
 
     val httpPlusSwitching: HttpPlusSwitching =
       if (connectionContext.isSecure) httpsWithAlpn(connectionContext.asInstanceOf[HttpsConnectionContext])
@@ -106,10 +129,13 @@ private[http] final class Http2Ext(implicit val system: ActorSystem)
 
     val handlerWithErrorHandling = withErrorHandling(log, handler)
 
+    val baseHttp1Layer = http.serverLayer(settings, log = log)
+    val http1Layer =
+      upgrade.fold(baseHttp1Layer)(registration => baseHttp1Layer.addAttributes(Attributes(registration)))
     val http1: HttpImplementation =
       Flow[HttpRequest].mapAsync(settings.pipeliningLimit)(handleUpgradeRequests(handler, handlerWithErrorHandling,
         settings, log))
-        .joinMat(GracefulTerminatorStage(system, settings).atop(http.serverLayer(settings, log = log)))(Keep.right)
+        .joinMat(GracefulTerminatorStage(system, settings).atop(http1Layer))(Keep.right)
     val http2: HttpImplementation =
       Http2Blueprint.handleWithStreamIdHeader(settings.http2Settings.maxConcurrentStreams)(handlerWithErrorHandling)(
         system.dispatcher)

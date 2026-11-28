@@ -100,8 +100,10 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   private def fuseServerBidiFlow(
       settings: ServerSettings,
       connectionContext: ConnectionContext,
-      log: LoggingAdapter): ServerLayerBidiFlow = {
-    val httpLayer = serverLayer(settings, None, log, connectionContext.isSecure)
+      log: LoggingAdapter,
+      upgrade: Option[Http1Upgrade.Registration]): ServerLayerBidiFlow = {
+    val baseLayer = serverLayer(settings, None, log, connectionContext.isSecure)
+    val httpLayer = upgrade.fold(baseLayer)(registration => baseLayer.addAttributes(Attributes(registration)))
     val tlsStage = sslTlsServerStage(connectionContext)
 
     val serverBidiFlow =
@@ -157,6 +159,18 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   def newServerAt(interface: String, port: Int): ServerBuilder = ServerBuilder(interface, port, system)
 
   /**
+   * Creates a builder that permits the application to select the named custom protocol for a completed,
+   * bodyless HTTP/1.1 OPTIONS offer. Other requests, including the built-in upgrades, use their usual paths.
+   * Use [[pekko.http.scaladsl.model.Http1ProtocolUpgrade.fromRequest]] to accept an eligible offer.
+   *
+   * @since 2.1.0
+   */
+  def newServerAt(interface: String, port: Int, http1UpgradeProtocol: String): ServerBuilder =
+    ServerBuilder(interface, port, system,
+      Some(new Http1Upgrade.Registration(
+        pekko.http.scaladsl.model.headers.UpgradeProtocol(http1UpgradeProtocol))))
+
+  /**
    * Creates a [[pekko.stream.scaladsl.Source]] of [[pekko.http.scaladsl.Http.IncomingConnection]] instances which represents a prospective HTTP server binding
    * on the given `endpoint`.
    *
@@ -180,12 +194,19 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
   private[http] def bindImpl(interface: String, port: Int,
       connectionContext: ConnectionContext,
       settings: ServerSettings,
-      log: LoggingAdapter): Source[Http.IncomingConnection, Future[ServerBinding]] = {
+      log: LoggingAdapter): Source[Http.IncomingConnection, Future[ServerBinding]] =
+    bindImpl(interface, port, connectionContext, settings, log, None)
+
+  private[http] def bindImpl(interface: String, port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      log: LoggingAdapter,
+      upgrade: Option[Http1Upgrade.Registration]): Source[Http.IncomingConnection, Future[ServerBinding]] = {
     if (settings.enableHttp2)
       log.warning(
         "Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [{}]", port)
 
-    val fullLayer: ServerLayerBidiFlow = fuseServerBidiFlow(settings, connectionContext, log)
+    val fullLayer: ServerLayerBidiFlow = fuseServerBidiFlow(settings, connectionContext, log, upgrade)
 
     val masterTerminator = new MasterServerTerminator(log)
 
@@ -221,13 +242,22 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       interface: String, port: Int,
       connectionContext: ConnectionContext,
       settings: ServerSettings,
-      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] = {
+      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
+    bindAndHandleImpl(handler, interface, port, connectionContext, settings, log, None)
+
+  private[http] def bindAndHandleImpl(
+      handler: Flow[HttpRequest, HttpResponse, Any],
+      interface: String, port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      log: LoggingAdapter,
+      upgrade: Option[Http1Upgrade.Registration])(implicit fm: Materializer): Future[ServerBinding] = {
     if (settings.enableHttp2)
       log.warning(
         "Binding with a connection source not supported with HTTP/2. Falling back to HTTP/1.1 for port [{}].", port)
 
     val fullLayer: Flow[ByteString, ByteString, (Future[Done], ServerTerminator)] =
-      fuseServerFlow(fuseServerBidiFlow(settings, connectionContext, log), handler)
+      fuseServerFlow(fuseServerBidiFlow(settings, connectionContext, log, upgrade), handler)
 
     val masterTerminator = new MasterServerTerminator(log)
 
@@ -282,7 +312,17 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
       connectionContext: ConnectionContext,
       settings: ServerSettings,
       parallelism: Int,
-      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] = {
+      log: LoggingAdapter)(implicit fm: Materializer): Future[ServerBinding] =
+    bindAndHandleAsyncImpl(handler, interface, port, connectionContext, settings, parallelism, log, None)
+
+  private[http] def bindAndHandleAsyncImpl(
+      handler: HttpRequest => Future[HttpResponse],
+      interface: String, port: Int,
+      connectionContext: ConnectionContext,
+      settings: ServerSettings,
+      parallelism: Int,
+      log: LoggingAdapter,
+      upgrade: Option[Http1Upgrade.Registration])(implicit fm: Materializer): Future[ServerBinding] = {
     if (settings.enableHttp2) {
       log.debug("Binding server using HTTP/2")
 
@@ -290,14 +330,20 @@ class HttpExt @InternalStableApi /* constructor signature is hardcoded in Teleme
         if (parallelism > 0) settings.mapHttp2Settings(_.withMaxConcurrentStreams(parallelism))
         else if (parallelism < 0) throw new IllegalArgumentException("Only positive values allowed for `parallelism`.")
         else settings
-      Http2().bindAndHandleAsync(handler, interface, port, connectionContext, definitiveSettings, log)(fm)
+      upgrade match {
+        case None =>
+          Http2().bindAndHandleAsync(handler, interface, port, connectionContext, definitiveSettings, log)(fm)
+        case Some(registration) =>
+          Http2().bindAndHandleAsync(
+            handler, interface, port, connectionContext, definitiveSettings, log, registration)(fm)
+      }
     } else {
       val definitiveParallelism =
         if (parallelism > 0) parallelism
         else if (parallelism < 0) throw new IllegalArgumentException("Only positive values allowed for `parallelism`.")
         else settings.pipeliningLimit
       bindAndHandleImpl(Flow[HttpRequest].mapAsync(definitiveParallelism)(handler), interface, port, connectionContext,
-        settings, log)
+        settings, log, upgrade)
     }
   }
 

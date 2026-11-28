@@ -25,7 +25,7 @@ import org.apache.pekko
 import pekko.annotation.InternalApi
 import pekko.http.IllegalRequestContext
 import ParserOutput._
-import pekko.http.impl.engine.server.HttpAttributes
+import pekko.http.impl.engine.server.{ Http1Upgrade, HttpAttributes }
 import pekko.http.impl.engine.ws.Handshake
 import pekko.http.impl.model.parser.{ CharacterClasses, UriParser }
 import pekko.http.impl.util.ByteStringParserInput
@@ -75,21 +75,46 @@ private[http] final class HttpRequestParser(
       // whether `protocol` of the underlying parser belongs to the message currently being parsed
       private var protocolParsed: Boolean = false
 
+      private val upgradeRegistration = inheritedAttributes.get[Http1Upgrade.Registration]
+      private var awaitingUpgradeDecision = false
+      private var resumedInput = ByteString.empty
+      private lazy val resolveUpgrade = getAsyncCallback[Http1Upgrade.ParserDecision] {
+        case Http1Upgrade.SwitchCommitted     => completeStage()
+        case Http1Upgrade.ContinueHttp(bytes) =>
+          awaitingUpgradeDecision = false
+          resumedInput = bytes
+          if (isAvailable(out)) onPull()
+          else if (bytes.isEmpty && isClosed(in)) finishInput()
+      }
+
       override def onPush(): Unit = handleParserOutput(parseSessionBytes(grab(in)))
-      override def onPull(): Unit = handleParserOutput(doPull())
+
+      override def onPull(): Unit =
+        if (resumedInput.nonEmpty) {
+          val bytes = resumedInput
+          resumedInput = ByteString.empty
+          // No more SessionBytes were pulled since this remainder; the parser still has its original session.
+          handleParserOutput(parseBytes(bytes))
+        } else handleParserOutput(doPull())
 
       override def onUpstreamFinish(): Unit =
+        // Wait for the decision even after EOF so a declined offer can return already-read data to HTTP.
+        if (!awaitingUpgradeDecision && resumedInput.isEmpty) finishInput()
+
+      private def finishInput(): Unit =
         if (super.shouldComplete()) completeStage()
         else if (isAvailable(out)) handleParserOutput(doPull())
 
       setHandlers(in, out, this)
 
-      private def handleParserOutput(output: RequestOutput): Unit = {
-        output match {
-          case StreamEnd    => completeStage()
-          case NeedMoreData => pull(in)
-          case x            => push(out, x)
-        }
+      private def handleParserOutput(output: RequestOutput): Unit = output match {
+        case StreamEnd    => completeStage()
+        case NeedMoreData =>
+          if (!awaitingUpgradeDecision) {
+            if (isClosed(in)) finishInput()
+            else pull(in)
+          }
+        case x => push(out, x)
       }
 
       override def parseMessage(input: ByteString, offset: Int): StateResult =
@@ -213,7 +238,8 @@ private[http] final class HttpRequestParser(
 
           def emitRequestStart(
               createEntity: EntityCreator[RequestOutput, RequestEntity],
-              headers: List[HttpHeader] = headers) = {
+              headers: List[HttpHeader] = headers,
+              upgradeBoundary: Option[Http1Upgrade.Boundary] = None) = {
             val allHeaders0 =
               if (rawRequestUriHeader)
                 `Raw-Request-URI`(uriBytes.decodeString(HttpCharsets.`US-ASCII`.nioCharset)) :: headers
@@ -222,6 +248,11 @@ private[http] final class HttpRequestParser(
             val attributes: Map[AttributeKey[?], Any] =
               if (settings.includeSslSessionAttribute) Map(AttributeKeys.sslSession -> SslSessionInfo(sslSession))
               else Map.empty
+
+            val requestAttributes = upgradeBoundary match {
+              case Some(boundary) => attributes.updated(Http1Upgrade.boundaryKey, boundary)
+              case None           => attributes
+            }
 
             val requestStart =
               if (method == HttpMethods.GET) {
@@ -234,7 +265,7 @@ private[http] final class HttpRequestParser(
                     RequestStart(method, uri, protocol, attributes, allHeaders0, createEntity,
                       continueExpectationActive, closeAfterResponseCompletion)
                 }
-              } else RequestStart(method, uri, protocol, attributes, allHeaders0, createEntity,
+              } else RequestStart(method, uri, protocol, requestAttributes, allHeaders0, createEntity,
                 continueExpectationActive, closeAfterResponseCompletion)
 
             emit(requestStart)
@@ -246,9 +277,18 @@ private[http] final class HttpRequestParser(
               case None                        => 0
             }
             if (contentLength == 0) {
-              emitRequestStart(emptyEntity(cth))
+              val upgradeBoundary =
+                if (upgradeRegistration.isDefined && method == HttpMethods.OPTIONS &&
+                  protocol == HttpProtocols.`HTTP/1.1` && !continueExpectationActive && !closeAfterResponseCompletion)
+                  upgradeRegistration.filter(_.matches(headers)).map(registration =>
+                    new Http1Upgrade.Boundary(registration.protocol, input.drop(bodyStart), resolveUpgrade.invoke))
+                else None
+              emitRequestStart(emptyEntity(cth), upgradeBoundary = upgradeBoundary)
               setCompletionHandling(HttpMessageParser.CompletionOk)
-              startNewMessage(input, bodyStart)
+              if (upgradeBoundary.isDefined) {
+                awaitingUpgradeDecision = true
+                continue(startNewMessage)
+              } else startNewMessage(input, bodyStart)
             } else if (!method.isEntityAccepted) {
               failMessageStart(UnprocessableContent, s"${method.name} requests must not have an entity")
             } else if (contentLength <= input.size - bodyStart) {
