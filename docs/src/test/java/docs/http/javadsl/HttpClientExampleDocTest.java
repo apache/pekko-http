@@ -16,6 +16,7 @@ package docs.http.javadsl;
 import org.apache.pekko.Done;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.*;
+import org.apache.pekko.http.ExpectContinuePolicy;
 import org.apache.pekko.http.javadsl.ClientTransport;
 import org.apache.pekko.http.javadsl.Http;
 import org.apache.pekko.http.javadsl.OutgoingConnection;
@@ -54,6 +55,31 @@ import static org.apache.pekko.pattern.Patterns.pipe;
 
 @SuppressWarnings("unused")
 public class HttpClientExampleDocTest {
+
+  // #expect-continue-retry-example
+  Function<HttpRequest, CompletionStage<HttpResponse>> documentClient(ActorSystem system) {
+    return Http.get(system)
+        .singleRequestWithExpectContinueRetry(
+            Uri.create("https://example.com"),
+            ExpectContinuePolicy.retryIdempotentOnce(),
+            Duration.ofSeconds(5));
+  }
+
+  CompletionStage<HttpResponse> sendDocument(
+      Function<HttpRequest, CompletionStage<HttpResponse>> execute, boolean expectationIsSigned) {
+    HttpRequest request =
+        HttpRequest.PUT("https://example.com/document")
+            .addHeader(HttpHeader.parse("Expect", "100-continue"))
+            .withEntity("document");
+    if (expectationIsSigned) {
+      request =
+          request.addAttribute(
+              ExpectContinuePolicy.attributeKey(), ExpectContinuePolicy.disabled());
+    }
+    return execute.apply(request);
+  }
+
+  // #expect-continue-retry-example
 
   static HttpResponse responseFromSomewhere() {
     return HttpResponse.create();

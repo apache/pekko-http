@@ -25,6 +25,36 @@ import scala.concurrent.ExecutionContext
 
 class HttpClientExampleSpec extends AnyWordSpec with Matchers with CompileOnlySpec {
 
+  "expect-continue-retry-example" in compileOnlySpec {
+    // #expect-continue-retry-example
+    import org.apache.pekko
+    import pekko.actor.ActorSystem
+    import pekko.http.ExpectContinuePolicy
+    import pekko.http.scaladsl.Http
+    import pekko.http.scaladsl.model._
+    import pekko.http.scaladsl.model.headers.Expect
+
+    import scala.concurrent.Future
+    import scala.concurrent.duration._
+
+    implicit val system: ActorSystem = ???
+
+    val execute = Http().singleRequestWithExpectContinueRetry(
+      Uri("https://example.com"), ExpectContinuePolicy.retryIdempotentOnce, 5.seconds)
+
+    val request = HttpRequest(
+      method = HttpMethods.PUT,
+      uri = "https://example.com/document",
+      headers = List(Expect.`100-continue`),
+      entity = "document")
+
+    def send(expectationIsSigned: Boolean): Future[HttpResponse] =
+      if (expectationIsSigned)
+        execute(request.addAttribute(ExpectContinuePolicy.attributeKey, ExpectContinuePolicy.disabled))
+      else execute(request)
+    // #expect-continue-retry-example
+  }
+
   "manual-entity-consume-example-1" in compileOnlySpec {
     // #manual-entity-consume-example-1
     import org.apache.pekko
