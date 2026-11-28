@@ -133,6 +133,29 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
       } shouldEqual expectedTable
     }
 
+    "preserve a populated dynamic table across an empty header block" in {
+      val encoder = new Encoder(4096)
+      val decoder = new Decoder(8192, 4096)
+      val field = "x-example-note" -> "retained"
+
+      def encode(fields: (String, String)*): Array[Byte] = {
+        val out = new ByteStringOutputStream(32)
+        fields.foreach { case (name, value) => encoder.encodeHeader(out, name, value, false) }
+        out.takeByteString().toArray
+      }
+
+      decodeHeaders(decoder, encode(field)) shouldEqual Seq(field)
+      decodeHeaders(decoder, encode()) shouldBe empty
+      decoder.length() shouldBe 1
+      val retained = decoder.getHeaderField(0)
+      (retained.name -> retained.value) shouldEqual field
+
+      // The single octet for this custom field is a reference to the dynamic table.
+      val indexed = encode(field)
+      indexed.length shouldBe 1
+      decodeHeaders(decoder, indexed) shouldEqual Seq(field)
+    }
+
     "decode consecutive requests without Huffman coding from RFC 7541 Appendix C.3" in {
       val decoder = new Decoder(8192, 4096)
       val authority = ":authority" -> "www.example.com"
