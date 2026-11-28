@@ -110,6 +110,20 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
           futureValueEx.getCause.asInstanceOf[Http2ProtocolException]
       }
 
+    "count each field name once against the local decompressed header budget" in {
+      val fields = Vector("x-request-correlation" -> "abc-123", "x-request-label" -> "primary")
+      val headerPairs =
+        Vector(":method" -> "GET", ":scheme" -> "https", ":authority" -> "example.com", ":path" -> "/") ++ fields
+      // This is the local name-plus-value limit, not the advertised HTTP/2 field section size.
+      val fieldBytes = headerPairs.map { case (name, value) => name.length + value.length }.sum
+      val settings = ServerSettings(system).mapHttp2Settings(_.withMaxHeaderListSize(fieldBytes))
+
+      val request = parseExpectOk(headerPairs, settings = settings)
+      request.uri shouldBe Uri("https://example.com/")
+      val decodedFields = request.headers.filter(_.lowercaseName.startsWith("x-request-"))
+      decodedFields.map(header => header.lowercaseName -> header.value) shouldBe fields
+    }
+
     "accept a header value with whitespace inside it, or an empty value" in {
       val request = parseExpectOk(Vector(":method" -> "GET", ":scheme" -> "https", ":path" -> "/", "x-a" -> "a b",
         "x-b" -> ""))

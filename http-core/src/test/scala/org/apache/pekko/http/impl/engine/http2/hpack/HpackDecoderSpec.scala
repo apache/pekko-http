@@ -189,19 +189,26 @@ class HpackDecoderSpec extends AnyWordSpec with Matchers {
     for ((source, fields) <- Seq(
         "static" -> Seq(displayPreference, "accept" -> "text/html"),
         "dynamic" -> Seq("x-route" -> "primary", displayPreference, "x-route" -> "secondary"))) {
-      s"decode an ordinary block at its exact header budget with a $source indexed name" in {
+      s"count field names once against the header budget with a $source indexed name" in {
         val budget = fields.map { case (name, value) => name.length + value.length }.sum
-        val decoder = new Decoder(budget, maxHeaderTableSize)
-        val decoded = ListBuffer.empty[(String, String)]
-        decoder.decode(new ByteArrayInputStream(encode(fields: _*)),
-          new HeaderListener {
-            override def addHeader(name: String, value: String, parsed: AnyRef, sensitive: Boolean): AnyRef = {
-              decoded += (name -> value)
-              null
-            }
-          })
-        decoder.endHeaderBlock() shouldBe false
-        decoded.toList shouldEqual fields
+        val block = encode(fields: _*)
+
+        def decodeWithBudget(limit: Int): (Seq[(String, String)], Boolean) = {
+          val decoder = new Decoder(limit, maxHeaderTableSize)
+          val decoded = ListBuffer.empty[(String, String)]
+          decoder.decode(new ByteArrayInputStream(block),
+            new HeaderListener {
+              override def addHeader(name: String, value: String, parsed: AnyRef, sensitive: Boolean): AnyRef = {
+                decoded += (name -> value)
+                null
+              }
+            })
+          (decoded.toList, decoder.endHeaderBlock())
+        }
+
+        // Both sides use the same small, valid block. A missing name charge would also fit below the limit.
+        decodeWithBudget(budget) shouldEqual ((fields, false))
+        decodeWithBudget(budget - 1) shouldEqual ((fields.dropRight(1), true))
       }
     }
 
