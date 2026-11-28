@@ -20,6 +20,44 @@ On the server-side, for example, marshalling is used to convert an application-d
 contain an @apidoc[Accept] header that lists acceptable content types for the client, such as `application/json` and `application/xml`. A marshaller contains the logic to
 negotiate the result content types based on the @apidoc[Accept] and the `AcceptCharset` headers.
 
+### Choosing from application-supported charsets
+
+An application or framework that encodes responses itself can negotiate a charset without a
+Pekko HTTP marshaller. Pass the request's modeled headers and the charsets the application
+can encode, in preference order. Prefer the predefined `HttpCharsets` constants or look up
+names from other libraries in that registry.
+
+A named charset retains its own quality even when the request includes a wildcard.
+The highest positive quality wins. At equal quality, an explicitly named charset takes precedence;
+otherwise the first offered charset wins. Without charset preferences, the first offered charset
+is used. If none of the offered charsets is acceptable, the result is
+@scala[`None`]@java[`Optional.empty()`]. The application decides how to respond.
+
+For example, if the request explicitly excludes UTF-8 but accepts other charsets, an
+application offering UTF-8 and ISO-8859-1 can select ISO-8859-1. Use the selected charset
+for both the body and its `Content-Type`.
+
+@@@ div { .group-scala }
+
+Use `org.apache.pekko.http.scaladsl.server.CharsetNegotiator`:
+
+@@snip [ContentNegotiationSpec.scala](/http-tests/src/test/scala/org/apache/pekko/http/scaladsl/marshalling/ContentNegotiationSpec.scala) { #pick-charset }
+
+@@@
+
+@@@ div { .group-java }
+
+Use `org.apache.pekko.http.javadsl.server.CharsetNegotiator`:
+
+@@snip [CharsetNegotiatorTest.java](/http-tests/src/test/java/org/apache/pekko/http/javadsl/server/CharsetNegotiatorTest.java) { #pick-charset }
+
+@@@
+
+This opt-in API does not change the built-in charset selection used by marshallers or set
+any response headers. If charset negotiation affects a cacheable response, include
+`Accept-Charset` in `Vary` alongside any field names already listed.
+See [RFC 9110, Section 12.5.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-12.5.2).
+
 ## Basic Design
 
 Marshalling of instances of type `A` into instances of type `B` is performed by a @apidoc[Marshaller[A, B]].

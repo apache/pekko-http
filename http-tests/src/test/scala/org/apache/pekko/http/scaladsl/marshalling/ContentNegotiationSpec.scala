@@ -21,6 +21,7 @@ import pekko.http.impl.util._
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.model.HttpCharsets._
 import pekko.http.scaladsl.model.MediaTypes._
+import pekko.http.scaladsl.server.CharsetNegotiator
 import pekko.http.scaladsl.server.ContentNegotiator.Alternative
 import pekko.http.scaladsl.server.MediaTypeNegotiator
 import pekko.http.scaladsl.server.util.VarArgsFunction1
@@ -111,6 +112,37 @@ class ContentNegotiationSpec extends AnyFreeSpec with Matchers {
       accept(`text/plain`.withCharset(`UTF-16`)) should reject
     }
 
+    "Accept-Charset: UTF-8;q=0".test { accept =>
+      accept(`text/plain`) should reject
+      accept(`text/plain`.withCharset(`UTF-8`)) should reject
+    }
+
+    "Accept-Charset: UTF-8;q=0, *;q=0.5".test { accept =>
+      accept(`text/plain`) should select(`text/plain`.withCharset(`UTF-16`))
+      accept(`text/plain`.withCharset(`UTF-8`)) should reject
+    }
+
+    "Accept-Charset: UTF-16;q=0.3, *;q=0.9".test { accept =>
+      accept(`text/plain`) should select(`text/plain`.withCharset(`UTF-8`))
+    }
+
+    "Accept-Charset: UTF-8;q=0.3, *;q=0.9".test { accept =>
+      accept(`text/plain`) should select(`text/plain`.withCharset(`UTF-16`))
+    }
+
+    "Accept-Charset: UTF-16;q=0.9, *;q=0.3".test { accept =>
+      accept(`text/plain`) should select(`text/plain`.withCharset(`UTF-16`))
+    }
+
+    "Accept-Charset: UTF-16;q=0.5, *;q=0.5".test { accept =>
+      accept(`text/plain`) should select(`text/plain`.withCharset(`UTF-16`))
+    }
+
+    """Accept: text/plain, image/gif;q=0.5
+      |Accept-Charset: *;q=0""".test { accept =>
+      accept(`text/plain`, `image/gif`) should select(`image/gif`)
+    }
+
     "Accept-Charset: *;q=0.1".test { accept =>
       accept(`text/plain`) should select(`text/plain`.withCharset(`UTF-8`))
       accept(`image/gif`) should select(`image/gif`)
@@ -199,6 +231,59 @@ class ContentNegotiationSpec extends AnyFreeSpec with Matchers {
       negotiator.qValueFor(`image/jpeg`) should be(0.5f)
       negotiator.qValueFor(`text/html`.withParams(Map("level" -> "2"))) should be(0.4f)
       negotiator.qValueFor(`text/html`.withParams(Map("level" -> "3"))) should be(0.7f)
+    }
+  }
+
+  "Picking from application-supported charsets" - {
+    "honors a higher wildcard without selecting an explicitly excluded charset" in {
+      val request = HttpRequest(headers = parseHeaders("Accept-Charset: UTF-8;q=0, ISO-8859-1;q=0.4, *;q=0.8"))
+
+      val offered = List(`UTF-8`, `UTF-16LE`, `ISO-8859-1`)
+      val selected = new CharsetNegotiator(request.headers).pickCharset(offered)
+
+      selected shouldBe Some(`UTF-16LE`)
+      val negotiator = new CharsetNegotiator(request.headers)
+      negotiator.pickCharset(List(`UTF-16BE`, `UTF-16LE`)) shouldBe Some(`UTF-16BE`)
+      negotiator.pickCharset(List(`UTF-8`, `ISO-8859-1`)) shouldBe Some(`ISO-8859-1`)
+      negotiator.pickCharset(List(`UTF-8`)) shouldBe None
+    }
+
+    "prefers a named charset at equal quality, then honors the offered order" in {
+      val negotiator = new CharsetNegotiator(
+        parseHeaders("Accept-Charset: UTF-8;q=0.5, latin1;q=0.5, *;q=0.5"))
+
+      negotiator.pickCharset(List(`UTF-16`, `ISO-8859-1`, `UTF-8`)) shouldBe Some(`ISO-8859-1`)
+      negotiator.pickCharset(List(`UTF-16`, `UTF-8`, `ISO-8859-1`)) shouldBe Some(`UTF-8`)
+      negotiator.pickBest shouldBe Some(`UTF-8`)
+    }
+
+    "uses the first offered charset when there are no client preferences" in {
+      val negotiator = new CharsetNegotiator(Nil)
+      negotiator.pickCharset(List(`ISO-8859-1`, `UTF-8`)) shouldBe Some(`ISO-8859-1`)
+      negotiator.pickCharset(Nil) shouldBe None
+      negotiator.pickBest shouldBe Some(`UTF-8`)
+    }
+
+    "does not select a charset outside the offered alternatives" in {
+      val negotiator = new CharsetNegotiator(parseHeaders("Accept-Charset: UTF-8, latin1;q=0.5"))
+      negotiator.pickCharset(List(`ISO-8859-1`, `UTF-8`)) shouldBe Some(`UTF-8`)
+      negotiator.pickCharset(List(`UTF-16`, `ISO-8859-1`)) shouldBe Some(`ISO-8859-1`)
+      negotiator.pickCharset(List(`UTF-16`)) shouldBe None
+    }
+
+    "lets the application encode the entity in the selected charset" in {
+      val request = HttpRequest(headers = parseHeaders("Accept-Charset: UTF-8;q=0, *;q=0.8"))
+
+      // #pick-charset
+      val offered = List(`UTF-8`, `ISO-8859-1`)
+      val entity = new CharsetNegotiator(request.headers).pickCharset(offered).map { charset =>
+        HttpEntity(`text/plain`.withCharset(charset), "café")
+      }
+      // #pick-charset
+
+      val selected = entity.getOrElse(fail("no acceptable charset"))
+      selected.contentType shouldBe `text/plain`.withCharset(`ISO-8859-1`)
+      selected.data shouldBe ByteString.fromArray(Array[Byte](0x63, 0x61, 0x66, 0xE9.toByte))
     }
   }
 

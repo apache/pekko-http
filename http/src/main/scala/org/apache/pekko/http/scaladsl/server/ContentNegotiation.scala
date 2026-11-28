@@ -86,18 +86,69 @@ final class CharsetNegotiator(requestHeaders: Seq[HttpHeader]) {
   def isAccepted(charset: HttpCharset): Boolean = qValueFor(charset) > 0f
 
   /**
-   * Picks the charset that is most preferred by the client with a bias towards UTF-8,
-   * i.e. if the client accepts all charsets with equal preference then UTF-8 is picked.
-   * If the client doesn't accept any charsets the method returns `None`.
+   * Picks the highest-ranked acceptable charset. A wildcard applies only to charsets not named
+   * by the client; on equal quality a named charset wins. With no preferences or when selecting
+   * via a wildcard, prefer UTF-8 and then other standard JVM charsets. Returns `None` if no
+   * charset can be selected.
    *
    * See also: http://tools.ietf.org/html/rfc7231#section-5.3.3
    */
   def pickBest: Option[HttpCharset] =
     acceptedCharsetRanges match {
-      case Nil                                      => Some(`UTF-8`)
-      case HttpCharsetRange.One(cs, _) :: _         => Some(cs)
-      case HttpCharsetRange.`*`(qv) :: _ if qv > 0f => Some(`UTF-8`)
-      case _                                        => None
+      case Nil    => Some(`UTF-8`)
+      case ranges =>
+        val bestNamed = ranges.collectFirst { case named: HttpCharsetRange.One if named.qValue > 0f => named }
+        val bestNamedQuality = bestNamed.fold(0f)(_.qValue)
+        val wildcardWins = bestNamedQuality < 1f &&
+          ranges
+            .collectFirst { case HttpCharsetRange.`*`(q) => q }
+            .exists(_ > bestNamedQuality)
+        if (wildcardWins)
+          Iterator(`UTF-8`, HttpCharsets.`UTF-16`, HttpCharsets.`UTF-16BE`, HttpCharsets.`UTF-16LE`,
+            HttpCharsets.`ISO-8859-1`, HttpCharsets.`US-ASCII`).find { charset =>
+            !ranges.exists {
+              case named: HttpCharsetRange.One => named.matches(charset)
+              case _                           => false
+            }
+          }.orElse(bestNamed.map(_.charset))
+        else bestNamed.map(_.charset)
+    }
+
+  /**
+   * Picks a charset from the alternatives supported by the application, in preference order.
+   *
+   * A named charset uses its own quality, even when it is zero; a wildcard only applies to
+   * unmentioned charsets. If qualities are equal, a named charset wins over a wildcard, then the
+   * first alternative wins. If there are no charset preferences, the first alternative is used.
+   * Returns `None` if there is no acceptable alternative. Matching uses the same modeled names
+   * as [[qValueFor]].
+   *
+   * This method does not affect the default charset selection of Pekko HTTP marshallers.
+   *
+   * @since 2.1.0
+   */
+  def pickCharset(alternatives: Seq[HttpCharset]): Option[HttpCharset] =
+    if (acceptedCharsetRanges.isEmpty) alternatives.headOption
+    else {
+      val candidates = alternatives.iterator
+      var best = Option.empty[HttpCharset]
+      var bestQuality = 0f
+      var bestNamed = false
+      while ((bestQuality < 1f || !bestNamed) && candidates.hasNext) {
+        val candidate = candidates.next()
+        acceptedCharsetRanges.find(_.matches(candidate)) match {
+          case Some(range) if range.qValue > 0f =>
+            val named = range.isInstanceOf[HttpCharsetRange.One]
+            val quality = range.qValue
+            if (quality > bestQuality || (quality == bestQuality && named && !bestNamed)) {
+              best = Some(candidate)
+              bestQuality = quality
+              bestNamed = named
+            }
+          case _ =>
+        }
+      }
+      best
     }
 }
 
@@ -124,15 +175,19 @@ final class ContentNegotiator(requestHeaders: Seq[HttpHeader]) {
    *
    * If none of the given alternatives is acceptable to the client the methods return `None`.
    */
-  def pickContentType(alternatives: List[Alternative]): Option[ContentType] =
+  def pickContentType(alternatives: List[Alternative]): Option[ContentType] = {
+    lazy val openCharset = csn.pickBest
     alternatives
       .map(alt => alt -> qValueFor(alt))
       .sortBy(-_._2)
-      .collectFirst { case (alt, q) if q > 0f => alt }
+      .iterator
+      .takeWhile(_._2 > 0f)
       .flatMap {
-        case Alternative.ContentType(ct) => Some(ct)
-        case Alternative.MediaType(mt)   => csn.pickBest.map(mt.withCharset)
+        case (Alternative.ContentType(ct), _) => Some(ct)
+        case (Alternative.MediaType(mt), _)   => openCharset.map(mt.withCharset)
       }
+      .nextOption()
+  }
 }
 
 object ContentNegotiator {
