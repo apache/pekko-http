@@ -485,11 +485,13 @@ final case class `Content-Length` private[pekko] (length: Long) extends jm.heade
   protected def companion = `Content-Length`
 }
 
-// https://tools.ietf.org/html/rfc7231#section-3.1.4.2
+// https://www.rfc-editor.org/rfc/rfc9110.html#section-8.7
 object `Content-Location` extends ModeledCompanion[`Content-Location`]
 final case class `Content-Location`(uri: Uri) extends jm.headers.ContentLocation with ResponseHeader {
   require(uri.fragment.isEmpty, "Content-Location header URI must not contain a fragment")
   require(uri.authority.userinfo.isEmpty, "Content-Location header URI must not contain a userinfo component")
+
+  override def renderInRequests: Boolean = true
 
   def renderValue[R <: Rendering](r: R): r.type = { import UriRendering.UriRenderer; r ~~ uri }
   protected def companion = `Content-Location`

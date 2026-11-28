@@ -165,6 +165,11 @@ private[http2] object HttpMessageRendering {
       false
     }
     header.lowercaseName match {
+      // The modeled Content-Location field only opts into initial request headers.
+      case "content-location"
+          if !isServer && isTrailer && header.isInstanceOf[pekko.http.scaladsl.model.headers.`Content-Location`] =>
+        false
+
       case "connection" | "keep-alive" | "proxy-connection" | "transfer-encoding" | "upgrade" => suppress()
       case "te"                                                                               =>
         if (!isServer && !isTrailer && header.value.trim.equalsIgnoreCase("trailers")) true

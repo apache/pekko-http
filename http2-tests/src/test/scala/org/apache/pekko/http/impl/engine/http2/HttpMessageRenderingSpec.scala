@@ -254,6 +254,26 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
     val marker = RawHeader("x-end-to-end", "kept")
     val upgrade = Upgrade(immutable.Seq(UpgradeProtocol("websocket")))
 
+    "preserve Content-Location metadata in requests and responses" in {
+      val header = `Content-Location`(Uri("previous"))
+      val request = HttpRequest(HttpMethods.PUT, "/draft", headers = List(header), entity = HttpEntity("draft"))
+      val rendering = new RequestRendering(ClientConnectionSettings(ConfigFactory.load("reference.conf")), NoLogging,
+        "https", Uri.Authority(Uri.Host("example.com")))
+      val requestFields = rendering(request).initialHeaders.keyValuePairs
+
+      requestFields should contain(":method" -> "PUT")
+      requestFields should contain(":path" -> "/draft")
+      requestFields should contain("content-location" -> "previous")
+      responsePairs(header) should contain("content-location" -> "previous")
+      HttpMessageRendering.renderHeaders(
+        Seq(header),
+        NoLogging,
+        isServer = false,
+        shouldRenderAutoHeaders = false,
+        isTrailer = true,
+        dateHeaderRendering = DateHeaderRendering.Unavailable) shouldBe empty
+    }
+
     "omit modeled Upgrade from request initial fields" in {
       val pairs = requestPairs(upgrade, Connection("upgrade"), marker)
       withClue(s"Actual request fields: $pairs") {
