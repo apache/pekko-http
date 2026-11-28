@@ -13,11 +13,14 @@
 
 package org.apache.pekko.http.scaladsl.unmarshalling
 
+import java.security.SecureRandom
+
 import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.concurrent.duration._
 
 import org.apache.pekko
 import pekko.http.impl.util._
+import pekko.http.scaladsl.marshalling.{ Marshal, MultipartMarshallers }
 import pekko.http.scaladsl.model._
 import pekko.http.scaladsl.settings.ParserSettings
 import pekko.http.scaladsl.model.MediaTypes._
@@ -607,6 +610,35 @@ trait MultipartUnmarshallersSpec extends PekkoSpecWithMaterializer {
 
 class MultipartUnmarshallersSpecCRLF extends MultipartUnmarshallersSpec {
   override def lineFeed = "\r\n"
+
+  "Default multipart boundary generation" should {
+    "reuse a secure random source across marshallers" in {
+      class InspectableMarshallers extends MultipartMarshallers {
+        def boundaryRandom: java.util.Random = multipartBoundaryRandom
+      }
+      val random = new InspectableMarshallers().boundaryRandom
+      random shouldBe a[SecureRandom]
+      (new InspectableMarshallers().boundaryRandom should be).theSameInstanceAs(random)
+    }
+
+    "round-trip the standard boundary format through direct entities and marshalling" in {
+      val part = Multipart.FormData.BodyPart.Strict("name", HttpEntity("value"))
+      val models = Seq[Multipart.FormData](
+        Multipart.FormData.Strict(Seq(part)),
+        Multipart.FormData(Source.single(part)))
+
+      for (model <- models) {
+        val marshalled = Marshal(model)
+          .to[RequestEntity](MultipartMarshallers.multipartMarshaller[Multipart.FormData], ec)
+          .awaitResult(1.second.dilated)
+
+        for (entity <- Seq(model.toEntity, marshalled)) {
+          (entity.contentType.mediaType.params("boundary") should fullyMatch).regex("[A-Za-z0-9+-]{24}")
+          Unmarshal(entity).to[Multipart.FormData] should haveParts(part)
+        }
+      }
+    }
+  }
 }
 
 class MultipartUnmarshallersSpecLF extends MultipartUnmarshallersSpec {
