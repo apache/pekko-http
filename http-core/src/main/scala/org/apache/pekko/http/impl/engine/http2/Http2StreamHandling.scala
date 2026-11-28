@@ -55,9 +55,6 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
   def flowController: IncomingFlowController = IncomingFlowController.default(settings)
 
-  private def isHeadRequest(frame: ParsedHeadersFrame): Boolean =
-    frame.keyValuePairs.exists { case (name, value) => name == ":method" && (value eq HttpMethods.HEAD) }
-
   /**
    * Tries to generate demand of SubStreams on the inlet from the user handler. The
    * attemp to demand will succeed if the inlet is open and has no pending pull, and,
@@ -69,10 +66,20 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   def tryPullSubStreams(): Unit
 
   private val streamStates = new mutable.LongMap[StreamState](settings.maxConcurrentStreams)
-  // Stream ids of incoming HEAD requests. The response to a HEAD request must not carry content
-  // (RFC 9110 section 9.3.2), but the response path only ever sees an HttpResponse and so cannot know the request
-  // method. Entries are removed when the response is created or when the stream is closed.
-  private val headRequestStreamIds = mutable.Set.empty[Int]
+  // Original non-GET requests; the value distinguishes HEAD (which must not carry response content)
+  // from other methods. A GET-only connection needs neither a map nor a new entry per request.
+  // Absence is useful only after confirming that the stream is waiting for a response to native headers.
+  private var nonGetRequestStreamIds: mutable.LongMap[Boolean] = null
+
+  private def rememberNonGetRequest(frame: ParsedHeadersFrame): Unit = {
+    val fields = frame.keyValuePairs
+    val methodIndex = fields.indexWhere(_._1 == ":method")
+    val method = if (methodIndex < 0) null else fields(methodIndex)._2
+    if (method ne HttpMethods.GET) {
+      if (nonGetRequestStreamIds eq null) nonGetRequestStreamIds = new mutable.LongMap[Boolean]
+      nonGetRequestStreamIds.update(frame.streamId, method eq HttpMethods.HEAD)
+    }
+  }
 
   /**
    * Server side: for a request stream that declared a `content-length` and is still receiving DATA, the number of
@@ -161,13 +168,19 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
 
   /** Called by Http2ServerDemux when a stream comes in from the user-handler */
   def handleOutgoingCreated(outgoing: Http2SubStream): Unit = {
+    val nonGet =
+      if (nonGetRequestStreamIds eq null) None
+      else nonGetRequestStreamIds.remove(outgoing.streamId)
+    val response =
+      if (isServer) withNotModifiedRepresentationLength(outgoing, nonGet.isEmpty)
+      else outgoing
     // a response to a HEAD request must not carry content (RFC 9110 section 9.3.2); the headers are sent unchanged
     // so that the peer still learns the `content-length` it would have received for a GET
     val stream =
-      if (headRequestStreamIds.remove(outgoing.streamId) && outgoing.hasEntity) {
-        outgoing.data.foreach(_.runWith(Sink.cancelled)(subFusingMaterializer))
-        outgoing.withoutData
-      } else outgoing
+      if (nonGet.contains(true) && response.hasEntity) {
+        response.data.foreach(_.runWith(Sink.cancelled)(subFusingMaterializer))
+        response.withoutData
+      } else response
 
     stream.initialHeaders.priorityInfo.foreach(multiplexer.updatePriority)
     if (streamFor(stream.streamId) != Closed) {
@@ -185,6 +198,31 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
       // stream was cancelled by peer before our response was ready
       stream.data.foreach(_.runWith(Sink.cancelled)(subFusingMaterializer))
 
+  }
+
+  private def withNotModifiedRepresentationLength(
+      response: Http2SubStream, noNonGetMarker: Boolean): Http2SubStream = {
+    val marker = Http2.notModifiedRepresentationLength
+    response.correlationAttributes.get(marker) match {
+      case Some(length: Long) =>
+        val streamId = response.streamId
+        // Read the existing state before streamFor can initialize one. The first stream of an h2c
+        // upgrade did not receive native HTTP/2 request headers.
+        val awaitingNativeResponse = noNonGetMarker && !(isUpgraded && streamId == 1) &&
+          (streamStates.getOrNull(streamId) match {
+            case _: HalfClosedRemoteWaitingForOutgoingStream | _: OpenReceivingDataFirst => true
+            case _                                                                       => false
+          })
+        val headers = response.initialHeaders
+        val selectedHeaders =
+          if (awaitingNativeResponse)
+            // RFC 9110, section 8.6: use the selected 200 representation's size, not the 304 entity's size.
+            headers.copy(keyValuePairs =
+              headers.keyValuePairs.filterNot(_._1 == "content-length") :+ ("content-length" -> length.toString))
+          else headers
+        response.copy(initialHeaders = selectedHeaders, correlationAttributes = response.correlationAttributes - marker)
+      case _ => response
+    }
   }
 
   // Called by the outgoing stream multiplexer when that side of the stream is ended.
@@ -254,7 +292,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
    */
   private def streamClosed(streamId: Int): Unit = {
     streamStates.remove(streamId)
-    headRequestStreamIds -= streamId
+    if (nonGetRequestStreamIds ne null) nonGetRequestStreamIds -= streamId
     remainingContentLength -= streamId
     if (streamStates.isEmpty) onAllStreamsClosed()
     tryPullSubStreams()
@@ -417,7 +455,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
           this
 
         case frame @ ParsedHeadersFrame(streamId, endStream, _, _, _) =>
-          if (isServer && isHeadRequest(frame)) headRequestStreamIds += streamId
+          if (isServer) rememberNonGetRequest(frame)
           val contentLength = if (isServer) declaredContentLength(frame) else -1L
           if (!endStream && contentLength >= 0) remainingContentLength.update(streamId, contentLength)
           // Resolve the expectation before collecting or exposing any entity data. It is an

@@ -16,6 +16,7 @@ package org.apache.pekko.http.impl.engine.http2
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
+import java.util.Optional
 
 import FrameEvent._
 
@@ -24,10 +25,13 @@ import pekko.http.impl.engine.http2.hpack.HeaderDecompression
 import pekko.http.impl.engine.parsing.HttpHeaderParser
 import pekko.http.impl.engine.http2.Http2Compliance.Http2ProtocolException
 import pekko.http.impl.engine.http2.RequestParsing.ParseRequestResult
+import pekko.http.impl.engine.rendering.DateHeaderRendering
 import pekko.http.impl.engine.server.HttpAttributes
 import pekko.http.impl.util.PekkoSpecWithMaterializer
+import pekko.http.javadsl.server.{ Directives => JavaDirectives }
 import pekko.http.scaladsl.model._
-import pekko.http.scaladsl.model.headers.{ Accept, Cookie, Host }
+import pekko.http.scaladsl.model.headers.{ Accept, `Content-Length`, Cookie, Date, EntityTag, Host, `If-None-Match` }
+import pekko.http.scaladsl.server.Route
 import pekko.http.scaladsl.settings.ServerSettings
 import pekko.stream.Attributes
 import pekko.stream.scaladsl.{ Sink, Source }
@@ -114,6 +118,90 @@ class RequestParsingSpec extends PekkoSpecWithMaterializer with Inside with Insp
       val request = parseExpectOk(Vector(":method" -> "GET", ":scheme" -> "https", ":path" -> "/", "x-a" -> "a b",
         "x-b" -> ""))
       (request.headers.map(h => h.lowercaseName -> h.value) should contain).allOf("x-a" -> "a b", "x-b" -> "")
+    }
+
+    "preserve the HTTP/2 request model and defer an opted-in 304 length to the stream stage" in {
+      import pekko.http.scaladsl.server.Directives.{
+        complete,
+        conditional,
+        conditionalWithRepresentationLength,
+        mapResponse
+      }
+
+      val settings = ServerSettings(system).withTransparentHeadRequests(true)
+      val headerParser = HttpHeaderParser(settings.parserSettings, log)
+      val parseRequest = RequestParsing.parseRequest(headerParser, settings, Attributes())
+      val render = new ResponseRendering(settings, log, DateHeaderRendering.Unavailable)
+      val tag = EntityTag("current")
+      val validator = `If-None-Match`(tag)
+      val date = Date(DateTime(2026, 1, 1, 0, 0, 0))
+      val selected = HttpResponse(entity = HttpEntity("Current representation"))
+      val length = selected.entity.contentLengthOption.get
+
+      val scalaRoute = conditionalWithRepresentationLength(Some(tag), None, length) { complete(selected) }
+      val scalaRouteWithExplicitLength = mapResponse(_.addHeader(`Content-Length`(length))) { scalaRoute }
+      val javaRoute = JavaDirectives.conditionalWithRepresentationLength(
+        Optional.of[pekko.http.javadsl.model.headers.EntityTag](tag),
+        Optional.empty[pekko.http.javadsl.model.DateTime](),
+        length,
+        () => JavaDirectives.complete(selected)).asScala
+      val defaultRoute = conditional(tag) { complete(selected) }
+
+      def nativeRequest(method: HttpMethod, sendValidator: Boolean = true): HttpRequest = {
+        val uri = Uri("https://example.test/document")
+        val pseudoFields = Vector[(String, AnyRef)](
+          ":method" -> method, ":scheme" -> uri.scheme, ":authority" -> uri.authority,
+          ":path" -> (uri.path -> uri.rawQueryString))
+        val fields = if (sendValidator) pseudoFields :+ (validator.lowercaseName -> validator) else pseudoFields
+        val headers = ParsedHeadersFrame(1, endStream = true, fields, None, None)
+        parseRequest(Http2SubStream(HttpEntity.Empty, headers, OptionVal.None)) match {
+          case RequestParsing.OkRequest(request) => request
+          case other                             => fail(s"Expected a modeled request but got $other")
+        }
+      }
+
+      def applyRoute(route: Route, request: HttpRequest): HttpResponse =
+        Route.toFunction(route)(system)(request).futureValue
+
+      def renderResponse(route: Route, request: HttpRequest): Http2SubStream =
+        render(applyRoute(route, request).addHeader(date).addAttribute(Http2.streamId, 1))
+
+      def contentLength(stream: Http2SubStream): Seq[(String, AnyRef)] =
+        stream.initialHeaders.keyValuePairs.filter(_._1 == "content-length")
+
+      def expectDeferredLength(route: Route, request: HttpRequest, expected: Option[Long]): Unit = {
+        val notModified = renderResponse(route, request)
+        notModified.initialHeaders.keyValuePairs should contain(":status" -> "304")
+        notModified.initialHeaders.endStream shouldBe true
+        notModified.trailingHeaders.isEmpty shouldBe true
+        contentLength(notModified) shouldBe empty
+        notModified.correlationAttributes.get(Http2.notModifiedRepresentationLength) shouldBe expected
+      }
+
+      val get = nativeRequest(HttpMethods.GET)
+      val head = nativeRequest(HttpMethods.HEAD)
+      val expected = HttpRequest(uri = "https://example.test/document",
+        headers = List(validator), protocol = HttpProtocols.`HTTP/2.0`).addAttribute(Http2.streamId, 1)
+      get shouldBe expected
+      head shouldBe expected // Transparent HEAD is intentionally indistinguishable to the application.
+      val full = renderResponse(scalaRoute, nativeRequest(HttpMethods.GET, sendValidator = false))
+      full.initialHeaders.keyValuePairs should contain(":status" -> "200")
+      contentLength(full) shouldBe Vector("content-length" -> length.toString)
+
+      for (route <- Seq(scalaRoute, javaRoute)) {
+        expectDeferredLength(route, get, Some(length))
+        expectDeferredLength(route, head, Some(length))
+      }
+      expectDeferredLength(scalaRouteWithExplicitLength, get, Some(length))
+      expectDeferredLength(defaultRoute, get, None)
+
+      val initialHttp1 = HttpRequest(headers = List(validator))
+      for (request <- Seq(initialHttp1, initialHttp1.addAttribute(Http2.streamId, 1))) {
+        // HTTP/1.1 fallback and the original HTTP/1.1 request replayed to the server after an h2c upgrade.
+        val fallback = applyRoute(scalaRoute, request)
+        fallback.status shouldBe StatusCodes.NotModified
+        fallback.attribute(Http2.notModifiedRepresentationLength) shouldBe None
+      }
     }
 
     "decode non-ASCII octets in a header value as the HTTP/1.1 parser does" should {

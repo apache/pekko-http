@@ -86,4 +86,23 @@ abstract class CacheConditionDirectives extends BasicDirectives {
       D.conditional(eTag.asScala, lastModified.asScala) { inner.get.delegate }
     }
 
+  /**
+   * Like `conditional`, but on a 304 produced for a conditional GET received directly as HTTP/2, advertise the
+   * known content length of the selected representation. The octet count must match the 200 response the same
+   * request would otherwise receive, after any content coding. Use `conditional` if the size is unknown.
+   * The 304 has no content, and HTTP/1.x behavior, including for the initial h2c upgrade request, is unchanged.
+   *
+   * @since 2.1.0
+   */
+  def conditionalWithRepresentationLength(
+      eTag: Optional[EntityTag],
+      lastModified: Optional[DateTime],
+      representationLength: Long,
+      inner: Supplier[Route]): Route =
+    RouteAdapter {
+      D.conditionalWithRepresentationLength(eTag.asScala, lastModified.asScala, representationLength) {
+        inner.get.delegate
+      }
+    }
+
 }

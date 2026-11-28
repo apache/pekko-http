@@ -328,6 +328,9 @@ private[http] object Http2 extends ExtensionId[Http2Ext] with ExtensionIdProvide
    */
   val streamId = AttributeKey[Int]("x-http2-stream-id")
 
+  // Used only for the opt-in conditional directive, not derived from entity or header parsing.
+  val notModifiedRepresentationLength = AttributeKey[Long]("http2-not-modified-representation-length")
+
   override def get(system: ActorSystem): Http2Ext = super.get(system)
   override def get(system: ClassicActorSystemProvider): Http2Ext = super.get(system)
   def apply()(implicit system: ClassicActorSystemProvider): Http2Ext = super.apply(system)

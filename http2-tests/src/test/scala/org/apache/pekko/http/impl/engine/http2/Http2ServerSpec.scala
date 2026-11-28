@@ -674,6 +674,40 @@ class Http2ServerSpec extends Http2SpecWithMaterializer("""
         })
     }
 
+    "advertise a conditional representation length on native GET but not transparent HEAD".inAssertAllStagesStopped(
+      new TestSetup with RequestResponseProbes {
+        import pekko.http.scaladsl.model.headers.{ EntityTag, `If-None-Match` }
+        import pekko.http.scaladsl.server.Directives.{ complete, conditionalWithRepresentationLength }
+        import pekko.http.scaladsl.server.Route
+
+        override def settings: ServerSettings = super.settings.withTransparentHeadRequests(true)
+
+        val tag = EntityTag("current")
+        val selected = HttpResponse(entity = HttpEntity("Current representation"))
+        val length = selected.entity.contentLengthOption.get
+        val handle = Route.toFunction(conditionalWithRepresentationLength(Some(tag), None, length) {
+          complete(selected)
+        })(system)
+        val expectedRequest = HttpRequest(uri = "https://www.example.com/document",
+          headers = List(`If-None-Match`(tag)), protocol = HttpProtocols.`HTTP/2.0`)
+
+        for ((streamId, wireMethod, expectedLength) <- Seq(
+            (1, HttpMethods.GET, Vector("content-length" -> length.toString)),
+            (3, HttpMethods.HEAD, Vector.empty))) {
+          val requestFields = network.headerPairsForRequest(expectedRequest.withMethod(wireMethod)).map {
+            case (":authority", _) => ":authority" -> expectedRequest.uri.authority.toString
+            case field             => field
+          }
+          network.sendHEADERS(streamId, endStream = true, endHeaders = true, network.encodeHeaderPairs(requestFields))
+          val request = user.expectRequestRaw()
+          request shouldBe expectedRequest.addAttribute(Http2.streamId, streamId)
+          user.emitResponse(streamId, handle(request).futureValue)
+          val fields = network.expectDecodedResponseHEADERSPairs(streamId)
+          fields should contain(":status" -> "304")
+          fields.filter(_._1 == "content-length") shouldBe expectedLength
+        }
+      })
+
     "support HEAD requests" should {
       abstract class HeadRequestSetup extends TestSetup with RequestResponseProbes {
         val TheStreamId = 1
