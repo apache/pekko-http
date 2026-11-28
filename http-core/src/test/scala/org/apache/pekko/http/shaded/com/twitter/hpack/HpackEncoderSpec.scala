@@ -211,6 +211,7 @@ class HpackEncoderSpec extends AnyWordSpec with Matchers {
         expected.foreach { case (name, value) => encoder.encodeHeader(out, name, value, false) }
         val bytes = out.takeByteString().toArray
         decodeHeaders(decoder, bytes) shouldEqual expected
+        resize.foreach(capacity => decoder.getMaxHeaderTableSize() shouldBe capacity)
         // the decoder has to end up with the same dynamic table as the encoder
         decoder.length() shouldEqual encoder.length()
         decoder.size() shouldEqual encoder.size()
