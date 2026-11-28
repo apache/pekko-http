@@ -133,6 +133,11 @@ connection is closed even if they have not completed:
 pekko.http.server.http2.max-connection-age-grace = 30s
 ```
 
+When a client sends a graceful HTTP/2 `GOAWAY`, the server sends its own `GOAWAY` with the last client stream it accepted.
+Requests already accepted can finish their uploads and receive their complete responses before the connection closes.
+The same `max-connection-age-grace` bounds this drain, even when `max-connection-age` is disabled.
+A later peer `GOAWAY` does not restart a drain already in progress.
+
 The default grace period is 30 seconds. Set it to `infinite` to wait for all requests in flight to complete,
 however long they take.
 
