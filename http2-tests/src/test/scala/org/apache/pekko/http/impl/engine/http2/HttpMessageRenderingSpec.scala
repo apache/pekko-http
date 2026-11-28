@@ -220,7 +220,7 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
 
   }
 
-  "Outgoing HTTP/2 modeled fields" should {
+  "Outgoing HTTP/2 fields" should {
     def requestPairs(headers: HttpHeader*): Seq[(String, AnyRef)] = {
       val rendering = new RequestRendering(ClientConnectionSettings(ConfigFactory.load("reference.conf")), NoLogging,
         "https", Uri.Authority(Uri.Host("example.com")))
@@ -236,6 +236,14 @@ class HttpMessageRenderingSpec extends AnyWordSpec with Matchers {
 
     val marker = RawHeader("x-end-to-end", "kept")
     val upgrade = Upgrade(immutable.Seq(UpgradeProtocol("websocket")))
+
+    "lowercase a raw application initial field name without changing its value" in {
+      val header = RawHeader("X-Report-Label", "Spring Menu 2026")
+      val expected = Seq("x-report-label" -> "Spring Menu 2026")
+
+      requestPairs(header).filter(_._1.equalsIgnoreCase(header.name)) shouldEqual expected
+      responsePairs(header).filter(_._1.equalsIgnoreCase(header.name)) shouldEqual expected
+    }
 
     "omit modeled Upgrade from request initial fields" in {
       val pairs = requestPairs(upgrade, Connection("upgrade"), marker)
