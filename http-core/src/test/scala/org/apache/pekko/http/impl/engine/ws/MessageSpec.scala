@@ -51,6 +51,52 @@ class MessageSpec extends PekkoSpecWithMaterializer(
 
   "The WebSocket implementation should" should {
     "collect messages from frames" should {
+      for {
+        server <- Seq(false, true)
+        opcode <- Seq(Opcode.Text, Opcode.Binary)
+        (size, lengthMarker, extendedBytes) <- Seq((125, 125, 0), (126, 126, 2), (65535, 126, 2), (65536, 127, 8))
+      } {
+        val role = if (server) "server" else "client"
+        s"decode a complete $opcode frame at the payload length boundary of $size bytes ($role)" in new TestSetup {
+          protected def serverSide: Boolean = server
+
+          try {
+            val payload = ByteString.fromArray(Array.tabulate[Byte](size) { i =>
+              if (opcode == Opcode.Text) ('a' + i % 26).toByte
+              else (i * 73 + 211).toByte
+            })
+            val mask = Option.when(server)(0x39A5C271)
+            val maskBytes = mask.fold(ByteString.empty)(intBE)
+            // Use the byte-wise RFC masking rule as the peer's oracle, not the receiver's masking routine.
+            val wirePayload =
+              if (server) ByteString.fromArray(Array.tabulate[Byte](size)(i =>
+                (payload(i) ^ maskBytes(i % 4)).toByte))
+              else payload
+            val frame = FrameEvent.fullFrame(opcode, mask, wirePayload, fin = true)
+            val wire = Await.result(Source.single(frame).via(new FrameEventRenderer).runWith(Sink.head), 3.seconds)
+
+            wire.size shouldBe (2 + extendedBytes + maskBytes.size + payload.size)
+            wire(0) shouldBe (Protocol.FIN_MASK | opcode.code).toByte
+            (wire(1) & Protocol.LENGTH_MASK) shouldBe lengthMarker
+            ((wire(1) & Protocol.MASK_MASK) != 0) shouldBe server
+            if (extendedBytes > 0) {
+              val wireLength = wire.slice(2, 2 + extendedBytes).foldLeft(0L)((n, b) => (n << 8) | (b & 0xFF))
+              wireLength shouldBe size.toLong
+            }
+            wire.slice(2 + extendedBytes, 2 + extendedBytes + maskBytes.size) shouldBe maskBytes
+
+            pushInput(wire)
+            val expected =
+              if (opcode == Opcode.Text) TextMessage.Strict(payload.utf8String)
+              else BinaryMessage.Strict(payload)
+            expectMessage(expected)
+          } finally {
+            messageIn.cancel()
+            netOut.cancel()
+          }
+        }
+      }
+
       "for binary messages" should {
         "for an empty message" in new ClientTestSetup {
           val input = frameHeader(Opcode.Binary, 0, fin = true)
