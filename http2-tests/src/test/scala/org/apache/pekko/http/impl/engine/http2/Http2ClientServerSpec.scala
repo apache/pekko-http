@@ -14,6 +14,7 @@
 package org.apache.pekko.http.impl.engine.http2
 
 import java.io.ByteArrayInputStream
+import java.nio.charset.StandardCharsets
 import java.util.zip.InflaterInputStream
 
 import scala.concurrent.{ Future, Promise }
@@ -30,7 +31,9 @@ import pekko.http.scaladsl.coding.Coders
 import pekko.http.scaladsl.model.{
   headers,
   AttributeKey,
+  ContentType,
   ContentTypes,
+  HttpCharsets,
   HttpEntity,
   HttpHeader,
   HttpMethod,
@@ -39,6 +42,7 @@ import pekko.http.scaladsl.model.{
   HttpProtocols,
   HttpRequest,
   HttpResponse,
+  MediaTypes,
   RequestResponseAssociation,
   StatusCode,
   StatusCodes,
@@ -261,6 +265,30 @@ class Http2ClientServerSpec extends PekkoSpecWithMaterializer(
       } finally {
         tail.trySuccess(ByteString.empty)
         binding.terminate(1.second).futureValue
+      }
+    }
+
+    "preserve the charset of a streamed HTTP/2 text response" in new TestSetup {
+      try {
+        val charset = HttpCharsets.`ISO-8859-1`
+        val contentType = ContentType(MediaTypes.`text/plain`, charset)
+        val body = Source(List(ByteString("caf"), ByteString("\u00e9", StandardCharsets.ISO_8859_1)))
+
+        sendClientRequest(HttpRequest(uri = "/cafe"))
+        val serverRequest = expectServerRequest()
+        serverRequest.sendResponse(HttpResponse(entity = HttpEntity(contentType, body)))
+
+        val response = expectClientResponse()
+        response.protocol shouldBe HttpProtocols.`HTTP/2.0`
+        response.status shouldBe StatusCodes.OK
+        response.entity shouldBe a[HttpEntity.Chunked]
+        response.entity.contentType shouldBe contentType
+        val javaEntity: pekko.http.javadsl.model.HttpEntity = response.entity
+        javaEntity.getContentType.getCharsetOption shouldBe java.util.Optional.of(charset)
+        Unmarshal(response.entity).to[String].futureValue shouldBe "caf\u00e9"
+      } finally {
+        try clientRequestsOut.sendComplete()
+        finally binding.terminate(1.second).futureValue(timeout(3.seconds))
       }
     }
 
