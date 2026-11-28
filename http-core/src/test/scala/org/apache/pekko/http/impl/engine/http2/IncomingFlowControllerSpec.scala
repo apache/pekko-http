@@ -22,6 +22,22 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class IncomingFlowControllerSpec extends AnyWordSpec with Matchers {
   "The default incoming flow controller" should {
+    "restore shared receive credit once when local cleanup releases buffered data" in {
+      val windowSize = 16
+      val controller = IncomingFlowController.default(windowSize, windowSize)
+      val outstanding = 4
+
+      controller.onConnectionDataReceived(outstanding, totalBufferedData = 8) shouldBe 0
+
+      // Other streams still retain some buffered data after the cleanup.
+      val stillBuffered = 2
+      val increment = controller.onConnectionDataReceived(outstanding, stillBuffered)
+      outstanding + stillBuffered + increment shouldBe windowSize
+
+      // Applying the new credit must prevent advertising it a second time.
+      controller.onConnectionDataReceived(outstanding + increment, stillBuffered) shouldBe 0
+    }
+
     "restore shared receive credit after two streams consume data without restoring either stream window" in {
       val windowSize = Http2Protocol.InitialWindowSize
       val controller = IncomingFlowController.default(windowSize, windowSize)
