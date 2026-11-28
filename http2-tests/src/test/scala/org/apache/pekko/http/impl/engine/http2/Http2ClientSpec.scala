@@ -492,6 +492,38 @@ class Http2ClientSpec extends PekkoSpecWithMaterializer("""
           user.expectResponse().headers should be(HPackSpecExamples.FirstResponse.headers)
         })
 
+      "deliver only the final response after a split Early Hints field block" in StreamTestKit.assertAllStagesStopped {
+        val setup = new TestSetup with NetProbes
+        val network = setup.network
+        val user = setup.user
+        try {
+          user.emitRequest(Get("https://www.example.com/"))
+          network.expectDecodedResponseHEADERSPairs(1)
+
+          val finalLink = "</style.css>; rel=preload"
+          val hintOnlyLink = "</extra.js>; rel=preload"
+          val hintBlock =
+            network.encodeHeaderPairs(Seq(":status" -> "103", "link" -> finalLink, "link" -> hintOnlyLink))
+          val split = hintBlock.length / 2
+          network.sendHEADERS(1, endStream = false, endHeaders = false, hintBlock.take(split))
+          network.sendCONTINUATION(1, endHeaders = true, hintBlock.drop(split))
+
+          network.sendHEADERS(1, endStream = false, Seq(RawHeader(":status", "200"), RawHeader("link", finalLink)))
+          val finalBody = ByteString("final response")
+          network.sendDATA(1, endStream = true, finalBody)
+
+          val response = user.expectResponse()
+          response.status shouldBe StatusCodes.OK
+          response.headers.filter(_.is("link")).map(_.value) shouldBe Seq(finalLink)
+          response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue shouldBe finalBody
+          user.requestOut.sendComplete()
+          user.responseIn.expectComplete()
+        } finally {
+          network.fromNet.sendComplete()
+          network.toNet.cancel()
+        }
+      }
+
       "accept response with one HEADERS and two CONTINUATION frames".inAssertAllStagesStopped(
         new TestSetup with NetProbes {
           user.emitRequest(Get("https://www.example.com/"))
