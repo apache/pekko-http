@@ -206,6 +206,17 @@ abstract class ResponseParserSpec(mode: String, newLine: String) extends PekkoSp
         closeAfterResponseCompletion shouldEqual Seq(true)
       }
 
+      "a response with Via fields in forwarding order" in new Test {
+        """HTTP/1.1 200 OK
+          |Via: 1.0 edge.example.net
+          |Via: HTTP/1.1 relay.example.org
+          |Content-Length: 0
+          |
+          |""" should parseTo(HttpResponse(headers = List(
+          RawHeader("Via", "1.0 edge.example.net"),
+          RawHeader("Via", "HTTP/1.1 relay.example.org"))))
+      }
+
       "a response with several identical Content-Type headers" in new Test {
         """HTTP/1.1 200 OK
           |Content-Type: text/plain; charset=UTF-8
