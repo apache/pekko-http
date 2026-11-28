@@ -73,6 +73,9 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   // (RFC 9110 section 9.3.2), but the response path only ever sees an HttpResponse and so cannot know the request
   // method. Entries are removed when the response is created or when the stream is closed.
   private val headRequestStreamIds = mutable.Set.empty[Int]
+  // Server side: stream ids whose response is the 400 generated for a malformed request and is still being sent.
+  // Entries are removed when that response has been sent or when the stream is closed.
+  private val malformedRequestStreamIds = mutable.Set.empty[Int]
 
   /**
    * Server side: for a request stream that declared a `content-length` and is still receiving DATA, the number of
@@ -172,11 +175,14 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
     stream.initialHeaders.priorityInfo.foreach(multiplexer.updatePriority)
     if (streamFor(stream.streamId) != Closed) {
       multiplexer.pushControlFrame(stream.initialHeaders)
+      val malformedRequest = stream.correlationAttributes.contains(RequestErrorFlow.malformedRequest)
 
       if (stream.initialHeaders.endStream) {
         updateState(stream.streamId, _.handleOutgoingCreatedAndFinished(stream.correlationAttributes),
           "handleOutgoingCreatedAndFinished")
+        if (malformedRequest) resetMalformedRequestStream(stream.streamId)
       } else {
+        if (malformedRequest) malformedRequestStreamIds += stream.streamId
         val outStream = OutStream(stream)
         updateState(stream.streamId, _.handleOutgoingCreated(outStream, stream.correlationAttributes),
           "handleOutgoingCreated")
@@ -188,8 +194,21 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   }
 
   // Called by the outgoing stream multiplexer when that side of the stream is ended.
-  def handleOutgoingEnded(streamId: Int): Unit =
+  def handleOutgoingEnded(streamId: Int): Unit = {
     updateState(streamId, _.handleOutgoingEnded(), "handleOutgoingEnded")
+    if (malformedRequestStreamIds.remove(streamId)) resetMalformedRequestStream(streamId)
+  }
+
+  /**
+   * Called once the 400 response to a malformed request has been handed to the multiplexer. If the peer has not
+   * finished its request the stream is still open for it, so it is reset with `PROTOCOL_ERROR` (RFC 9113 section
+   * 8.1.1). A request that was already complete leaves the stream closed by the response, and nothing is sent.
+   */
+  private def resetMalformedRequestStream(streamId: Int): Unit =
+    if (streamFor(streamId) != Closed) {
+      multiplexer.pushControlFrame(RstStreamFrame(streamId, ErrorCode.PROTOCOL_ERROR))
+      updateState(streamId, { state => state.shutdown(); Closed }, "resetMalformedRequestStream")
+    }
 
   def handleOutgoingFailed(streamId: Int, cause: Throwable): Unit =
     updateState(streamId, _.handleOutgoingFailed(cause), "handleOutgoingFailed")
@@ -255,6 +274,7 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
   private def streamClosed(streamId: Int): Unit = {
     streamStates.remove(streamId)
     headRequestStreamIds -= streamId
+    malformedRequestStreamIds -= streamId
     remainingContentLength -= streamId
     if (streamStates.isEmpty) onAllStreamsClosed()
     tryPullSubStreams()
@@ -550,7 +570,18 @@ private[http2] trait Http2StreamHandling extends GraphStageLogic with LogHelper 
         if (outStream.isDone) this.handleOutgoingEnded()
         else this
 
-      (nextState, res)
+      res match {
+        case PullFrameResult.SendFrame(lastFrame, _)
+            if outStream.isDone && nextState != Closed && malformedRequestStreamIds.remove(outStream.streamId) =>
+          // The 400 response to a malformed request ends with this frame while the peer is still sending its request:
+          // reset the stream right after the frame (see `resetMalformedRequestStream`). This runs while the
+          // multiplexer is pulling the frame, so the RST_STREAM is returned with the frame instead of being pushed.
+          nextState.shutdown()
+          (Closed,
+            PullFrameResult.SendFrameAndTrailer(lastFrame,
+              RstStreamFrame(outStream.streamId, ErrorCode.PROTOCOL_ERROR)))
+        case _ => (nextState, res)
+      }
     }
 
     def handleWindowUpdate(windowUpdate: WindowUpdateFrame): StreamState =
